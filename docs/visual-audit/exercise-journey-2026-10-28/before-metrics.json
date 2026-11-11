@@ -1,0 +1,80 @@
+{
+  "dark": {
+    "media": {
+      "x": 16,
+      "y": 159.609375,
+      "width": 361,
+      "height": 388.1875,
+      "viewportPct": {
+        "x": 4.1,
+        "y": 18.7,
+        "width": 91.9,
+        "height": 45.6
+      }
+    },
+    "primaryCta": {
+      "x": 16,
+      "y": 740,
+      "width": 361,
+      "height": 44,
+      "viewportPct": {
+        "x": 4.1,
+        "y": 86.9,
+        "width": 91.9,
+        "height": 5.2
+      }
+    },
+    "firstCue": {
+      "x": 58.40625,
+      "y": 730.578125,
+      "width": 302.34375,
+      "height": 44,
+      "viewportPct": {
+        "x": 14.9,
+        "y": 85.7,
+        "width": 76.9,
+        "height": 5.2
+      }
+    },
+    "firstCueText": "Hold light dumbbells beside your thighs."
+  },
+  "light": {
+    "media": {
+      "x": 16,
+      "y": 159.609375,
+      "width": 361,
+      "height": 388.1875,
+      "viewportPct": {
+        "x": 4.1,
+        "y": 18.7,
+        "width": 91.9,
+        "height": 45.6
+      }
+    },
+    "primaryCta": {
+      "x": 16,
+      "y": 740,
+      "width": 361,
+      "height": 44,
+      "viewportPct": {
+        "x": 4.1,
+        "y": 86.9,
+        "width": 91.9,
+        "height": 5.2
+      }
+    },
+    "firstCue": {
+      "x": 58.40625,
+      "y": 730.578125,
+      "width": 302.34375,
+      "height": 44,
+      "viewportPct": {
+        "x": 14.9,
+        "y": 85.7,
+        "width": 76.9,
+        "height": 5.2
+      }
+    },
+    "firstCueText": "Hold light dumbbells beside your thighs."
+  }
+}

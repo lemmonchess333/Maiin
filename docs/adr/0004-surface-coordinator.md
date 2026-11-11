@@ -212,3 +212,43 @@ flagged that week.
 
 The rule is `src/features/program/runReturn.ts`; `homeSurfaceRegistry.test.ts`
 pins the registration, its place in the order and the suppression.
+
+## Amendment 2026-11-03 — the medal reveal (Soc15)
+
+Owner call 1 of Soc15: Social and rewards may be loud, including a
+full-screen reveal for a medal (DESIGN_GUIDE §14l).
+
+- **It is a tier-4 surface**, `medal-reveal`, priority 20, mounted by the
+  Social page alone (`MedalRevealGate`). Home's rule stands: a reward never
+  opens over Home by itself, so the reveal waits for the next visit to
+  Social, Together or the Feed. Being the coordinator's, it is the one
+  blocking surface of its app-open, and never opens over another.
+- **It waits rather than drops.** The amended badge rule dropped a missed
+  celebration because a stale one read as a bug. A medal stays in the
+  trophy case whatever happens to its reveal, and the reveal is offered
+  only within a fortnight of the tier being reached
+  (`MEDAL_REVEAL_WINDOW_DAYS`), so a later visit inside that window is not
+  a late one. No `dropWhenMissed`.
+- **It waits for the page's own overlays.** Notifications, People and the
+  full board are opened by a tap, outside the coordinator; while one is
+  open the reveal is not eligible, and it starts once they close.
+- **Once per medal and tier, per device.** What has been revealed is kept
+  on the device (`medalReveals.ts`), recorded as the reveal shows, not on
+  the server-owned medal, which no client may write. A second phone can
+  replay a medal from the last fortnight, once.
+
+## Amendment 2026-11-05 — the league result (Soc15 call 3)
+
+- **It is a tier-4 surface**, `league-result`, priority 21, mounted by the
+  Social page beside the medal reveal (`LeagueResultGate`). Home's rule
+  stands: it waits for the next visit to Social.
+- **It sits just above the medal.** A week's result is Monday's news and a
+  medal keeps for a fortnight; with one blocking surface an app-open, the
+  medal waits for the next visit rather than stacking on the result.
+- **It waits rather than drops, for a week.** The result is offered until
+  fourteen days after its week began (`RESULT_REVEAL_DAYS`): the week after
+  it was settled. The next Monday brings a newer one. No `dropWhenMissed`.
+- **It waits for the page's own overlays**, as the medal reveal does.
+- **Once per result, per device.** What has been revealed is kept on the
+  device (`leagueResultReveals.ts`), recorded as the reveal shows, not on
+  the server-owned result, which no client may write.

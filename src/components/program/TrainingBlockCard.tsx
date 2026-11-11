@@ -280,15 +280,15 @@ export default function TrainingBlockCard({
     });
     setBusy(false);
     if (!ok) {
-      toast.error("Couldn't start the block. Nothing changed — try again.");
+      toast.error("Couldn’t start the block. Nothing changed — try again.");
       return;
     }
     setShowCreate(false);
     haptic("light");
     toast.success(
       focus !== currentFocus
-        ? `${focusLabel(focus)} — ${duration} weeks. Your programme's updated.`
-        : `${duration} weeks. Your programme's unchanged.`
+        ? `${focusLabel(focus)} — ${duration} weeks. Your programme’s updated.`
+        : `${duration} weeks. Your programme’s unchanged.`
     );
   };
 
@@ -308,13 +308,13 @@ export default function TrainingBlockCard({
     // block's own, so trying again rewrites the same document.
     if (!(await archiveBlock(toArchive(block, outcome, opts.endedEarly)))) {
       setBusy(false);
-      toast.error("Couldn't close the block. Try again.");
+      toast.error("Couldn’t close the block. Try again.");
       return false;
     }
     const ok = opts.keepFocus ? await onKeepFocus() : await onRelease();
     setBusy(false);
     if (!ok) {
-      toast.error("Couldn't close the block. Try again.");
+      toast.error("Couldn’t close the block. Try again.");
       return false;
     }
     haptic("light");

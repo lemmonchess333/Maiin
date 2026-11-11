@@ -16,11 +16,52 @@
  *   - title=null + hideHeader=false renders the drag handle but no
  *     title row.
  */
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import { BottomSheet } from "../BottomSheet";
+import { BackDismissContext } from "@/lib/backDismiss";
 
 afterEach(cleanup);
+
+describe("BottomSheet — editor Back handling", () => {
+  it("keeps a custom editor handler sticky across repeated Back presses", () => {
+    let back = () => {};
+    const register = vi.fn((handler: () => void) => {
+      back = handler;
+      return () => {};
+    });
+    const onBack = vi.fn();
+    const onOpenChange = vi.fn();
+    render(
+      <BackDismissContext.Provider value={{ register, dispatchBack: () => false }}>
+        <BottomSheet open onOpenChange={onOpenChange} onBack={onBack} title="Move a run">
+          <p>Editor</p>
+        </BottomSheet>
+      </BackDismissContext.Provider>
+    );
+    expect(register).toHaveBeenCalledWith(expect.any(Function), { sticky: true });
+    act(() => { back(); back(); });
+    expect(onBack).toHaveBeenCalledTimes(2);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps the ordinary sheet's default close behaviour", () => {
+    let back = () => {};
+    const register = vi.fn((handler: () => void) => {
+      back = handler;
+      return () => {};
+    });
+    const onOpenChange = vi.fn();
+    render(
+      <BackDismissContext.Provider value={{ register, dispatchBack: () => false }}>
+        <BottomSheet open onOpenChange={onOpenChange} title="Comments"><p>Body</p></BottomSheet>
+      </BackDismissContext.Provider>
+    );
+    expect(register).toHaveBeenCalledWith(expect.any(Function), { sticky: false });
+    act(() => back());
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
 
 describe("BottomSheet — closed state", () => {
   it("renders no title or children when open=false", () => {

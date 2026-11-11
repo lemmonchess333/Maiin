@@ -14,6 +14,8 @@ import {
   formatWeekdayDayMonthYear,
   formatWeekday,
   formatMonth,
+  formatMonthYear,
+  formatShortWeekday,
   formatDuration,
   formatSigned,
   withSign,
@@ -215,6 +217,11 @@ describe("the long date forms", () => {
   it("name the weekday and the month alone, in full", () => {
     expect(formatWeekday(d)).toBe("Saturday");
     expect(formatMonth(d)).toBe("August");
+  });
+
+  it("write a short weekday, and a month with its year", () => {
+    expect(formatShortWeekday(d)).toBe("Sat");
+    expect(formatMonthYear(d)).toBe("August 2026");
   });
 });
 

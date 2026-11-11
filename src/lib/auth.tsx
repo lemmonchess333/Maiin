@@ -34,6 +34,7 @@ import {
   writesSettled,
 } from "./firestoreCacheClear";
 import { isNativePlatform } from "@/lib/platform";
+import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import {
   getGoogleCredentialNative,
   getAppleSignInNative,
@@ -42,6 +43,7 @@ import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
+import { onAppResume } from "./appResume";
 import {
   invalidatePushTokenLifecycle,
   stopListeningForForegroundPush,
@@ -65,9 +67,14 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+import {
+  PROFILE_REFRESH_ATTEMPTS,
+  PROFILE_REFRESH_WAIT_MS,
+} from "./profileRefresh";
 
 /** Set once any account signs in on this device; the signed-out screen
  *  reads it to tell a returning person from a new one. Device-level, not
@@ -166,6 +173,22 @@ export interface UserProfileCore {
    * set up before it was kept.
    */
   onboardingCompletedAt?: Timestamp | FieldValue;
+  /**
+   * Server-stamped at the first successful onboarding commit from a client
+   * that offers version 2: 2, or 1 for the comparison group and while the
+   * server's switch is off (functions/lib/activationCohort.js). Absent on
+   * accounts made before v2 and on older clients.
+   */
+  activationJourneyVersion?: 1 | 2;
+  /** First completed setup's platform, stamped by the server for v2. */
+  onboardingPlatform?: "ios" | "web" | "android";
+  /** Training type at the first completed setup, before later plan edits. */
+  onboardingSport?: "runner" | "lifter" | "hybrid" | "other";
+  /** First provider-verified trial and payment times. Server-owned. */
+  activationBillingFirsts?: {
+    trial?: { atMs: number; source: "ios_iap" | "stripe" };
+    paid?: { atMs: number; source: "ios_iap" | "stripe" };
+  };
 }
 
 /** Physical attributes and fitness metrics */
@@ -221,7 +244,9 @@ export interface UserProfileSubscription {
   subscriptionTier: "free" | "pro";
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  /** Apple IAP — set on first IAP purchase by `functions/applePurchase.js`.
+  /** Apple IAP original transaction id. Nothing writes it now (App Store
+   *  purchases go through RevenueCat, ADR-0006); an older account may
+   *  still carry it, and the rules keep it server-only.
    *  Used by `AccountSection.tsx` to surface the pre-deletion Apple-cancel
    *  warning, since Apple has no admin-cancellation API for standard IAP
    *  subscriptions (Sub1 R1A pin b, P0b). */
@@ -410,6 +435,22 @@ export interface UserProfileSocial {
    *  absent = not asked yet (their own board row offers "Show my week"),
    *  false = no. Server-written by setBoardSharing, never by the client. */
   showWeekOnBoard?: boolean;
+  /** Whether this person is in the weekly leagues (Soc15 call 3): absent
+   *  = never joined, false = left. Server-written by setLeagueSharing,
+   *  never by the client. */
+  leagueOptIn?: boolean;
+  /** This person's invite code (Soc15), as `inviteCodes/{code}` holds it:
+   *  absent until they first ask for it. Server-written by getInviteCode,
+   *  never by the client. */
+  inviteCode?: string;
+  /** When this account joined from someone's invite (a Firestore
+   *  timestamp): absent until it does, and then People stops offering a
+   *  code field. Server-written by redeemInvite, never by the client. */
+  invitedAt?: unknown;
+  /** Whose invite this account joined from (their uid), stamped with
+   *  `invitedAt`: a block of this account by that person renews their code
+   *  (Soc15). Server-written by redeemInvite. */
+  invitedBy?: string;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote
@@ -438,7 +479,12 @@ export interface UserProfileSocial {
 
 /** Run and schedule configuration */
 export interface UserProfileRunning {
-  runMode?: "freeform" | "structured" | "race_prep";
+  runMode?: "freeform" | "structured" | "race_prep" | "starter";
+  /** Run9's reopening: the goal of 30 minutes without stopping. The record
+   *  stays once it is over (`StarterGoal`); `runMode` is "starter" only
+   *  while it runs (`deriveRunMode`). Its stage is on the run plan. */
+  starterGoal?:
+    import("@/features/program/runModeResolution").StarterGoal | null;
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
   /**
@@ -457,13 +503,11 @@ export interface UserProfileRunning {
    *  completeOnboarding alongside the plan. */
   raceLegTrim?: boolean;
   runningBaseline?:
-    | import("@/features/program/runningBaseline").RunningBaseline
-    | null;
+    import("@/features/program/runningBaseline").RunningBaseline | null;
   nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
   liftTimeBudgetMinutes?: number | null;
   runTimeLimits?:
-    | import("@/features/program/runTimeLimits").RunTimeLimits
-    | null;
+    import("@/features/program/runTimeLimits").RunTimeLimits | null;
   // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
   // recovery exit can CLEAR a prior race (a merge write of `undefined` is
   // stripped and would leave the old goal stranded). Readers gate on
@@ -480,6 +524,9 @@ export interface UserProfileRunning {
     /** Optional race-space link (races plan Q4) — present only when the
      *  goal was set from the race catalogue; manual goals lack it. */
     eventSpaceId?: string;
+    /** A race entered, or the distance run on your own (Run9). Absent
+     *  reads as a race (`raceGoalEntry`). */
+    entry?: "race" | "own";
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**
@@ -628,6 +675,13 @@ export interface PublicProfile {
   createdAt: Timestamp | FieldValue;
   /** Optional — absent when the user has never earned a badge. */
   badgeSummary?: BadgeSummary;
+  /**
+   * The trophy case (Soc15): a line per challenge medal, the newest 40.
+   * SERVER-WRITTEN ONLY (functions/lib/medals.js); the rules hold a client
+   * write to leaving it as it is, so no mirror-write site sets it. Read
+   * through `parseMedalSummary` (src/features/challenges/medals.ts).
+   */
+  medalSummary?: Record<string, unknown>;
 }
 
 /* ================================
@@ -870,9 +924,34 @@ interface AuthContextType {
    * For mutations that go directly to Firestore (e.g. profile-photo
    * upload, which writes to `users/{uid}/public/profile` via its own
    * Storage-aware service rather than through `updateProfile`).
+   *
+   * `until`: after a write, re-read (a few times, briefly) until the read
+   * shows it. A read just after a committed write can be answered from the
+   * live listener's view of the document from before it
+   * (`src/lib/profileRefresh.ts`).
    */
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (options?: {
+    until?: (data: Record<string, unknown>) => boolean;
+  }) => Promise<void>;
+  /**
+   * Set while a changed account waits on clearing the last account's Watch
+   * run from this iPhone, after retrying failed. The app stays on its
+   * loading screen until `retry` succeeds, and says why.
+   */
+  watchAccountCleanup: { retry: () => void } | null;
+  /** Whether this account's profile is here, absent or could not be read.
+   *  Route on this, not on `profile === null`, which is true of both. */
+  profileLoad: ProfileLoad;
 }
+
+/**
+ * Where the signed-in account's own profile stands. `missing` and `failed`
+ * are different answers: a new account has no profile yet and goes to setup,
+ * while a profile that could not be read belongs to someone who may have
+ * weeks of training, and setup would replace their programme. Only `failed`
+ * offers a retry. Signed out, it reads `missing`; nothing asks then.
+ */
+export type ProfileLoad = "loading" | "ready" | "missing" | "failed";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -996,15 +1075,96 @@ async function outgoingWritesSettled(): Promise<boolean> {
   }
 }
 
+const WATCH_CLEANUP_ATTEMPTS = 3;
+const WATCH_CLEANUP_RETRY_MS = 400;
+
+/**
+ * Clears the outgoing account's Watch run, pending controls and heart rate
+ * before another account is shown. Off the release this is best effort:
+ * native start-up has already wiped that state, and a failure must not keep
+ * anyone out of the app. On it, a failure is retried and then thrown, and
+ * the caller holds the account back. Stops retrying once the account
+ * changes again, so a stale attempt can never bind the wrong account.
+ */
+/** Firebase's half of a native sign-in, timed for the step list a failed
+ *  sign-in can show (bootTrace.ts). */
+async function traceSignIn<T>(work: Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot("Firebase: signing in");
+  try {
+    const result = await work;
+    traceBoot(`Firebase: signed in after ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const code =
+      (error as { code?: unknown })?.code ??
+      (error instanceof Error ? error.message : String(error));
+    traceBoot(
+      `Firebase: failed after ${Date.now() - started} ms (${String(code)})`
+    );
+    throw error;
+  }
+}
+
+async function clearOutgoingWatchAccount(
+  uid: string | null,
+  previousUid: string | null,
+  isCurrent: () => boolean
+): Promise<void> {
+  const attempt = async () => {
+    const { syncWatchRunAccount } = await import("./watchRunBridge");
+    await syncWatchRunAccount(uid);
+    if (previousUid && previousUid !== uid) {
+      const [{ clearHeartRateSessionsForUser }, { clearWatchRunSyncStatus }] =
+        await Promise.all([
+          import("./heartRateSession"),
+          import("./watchRunSyncStatus"),
+        ]);
+      clearHeartRateSessionsForUser(previousUid);
+      clearWatchRunSyncStatus(previousUid);
+    }
+  };
+  if (!CONNECTED_TRAINING_RELEASED) {
+    try {
+      await attempt();
+    } catch (error) {
+      logger.warn("[AuthProvider] Watch account cleanup skipped", error);
+    }
+    return;
+  }
+  for (let tries = 1; ; tries++) {
+    try {
+      await attempt();
+      return;
+    } catch (error) {
+      if (tries >= WATCH_CLEANUP_ATTEMPTS || !isCurrent()) throw error;
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, WATCH_CLEANUP_RETRY_MS * tries)
+    );
+    if (!isCurrent()) throw new Error("Account changed");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* The last read of this account's profile failed. It matters only while
+     no profile is held: with one, the app carries on with it. */
+  const [profileReadFailed, setProfileReadFailed] = useState(false);
   /* A sign-out that clears the device's Firestore copy ends in a reload
      (firestoreCacheClear.ts). Until it does, the app stays on its loading
      screen: Login drawn on the page being left would take input the
      reload then throws away. */
   const [leavingForReload, setLeavingForReload] = useState(false);
+  const [watchAccountCleanup, setWatchAccountCleanup] = useState<{
+    retry: () => void;
+  } | null>(null);
+  // The account whose Watch state this iPhone was last cleared for. Moves
+  // only when a cleanup finishes, so a failed one is tried again by the next
+  // callback for the same account, with the right outgoing account.
+  const watchAccountRef = useRef<string | null>(null);
   // Guards the once-per-session boot reconciliation writes (timezone capture +
   // email mirror) so they don't re-fire on every onAuthStateChanged emission —
   // it fires several times per sign-in (session restore, token refresh, popup),
@@ -1034,6 +1194,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, [user, onboarded]);
 
+  // The device's zone, kept current each time the app comes back. The server
+  // reads the person's "today" from it (reminders, plan moves), and a phone
+  // changes zone with its owner without the app starting again.
+  const profileUid = profile?.uid ?? null;
+  const savedTimezone = profile?.timezone ?? null;
+  useEffect(() => {
+    if (!profileUid || user?.uid !== profileUid) return;
+    const uid = profileUid;
+    return onAppResume(() => {
+      const deviceTz = getDeviceTimezone();
+      if (!deviceTz || !shouldUpdateTimezone(savedTimezone, deviceTz)) return;
+      if (auth.currentUser?.uid !== uid) return;
+      setProfile((current) =>
+        current?.uid === uid ? { ...current, timezone: deviceTz } : current
+      );
+      void firestore()
+        .then(({ doc, db, updateDocGuarded }) =>
+          updateDocGuarded(doc(db, "users", uid), { timezone: deviceTz })
+        )
+        .catch((err) =>
+          logger.warn("[AuthProvider] timezone refresh failed", err)
+        );
+    });
+  }, [user?.uid, profileUid, savedTimezone]);
+
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
   useEffect(() => {
@@ -1043,17 +1228,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     let stopSubscriptionUpdates = () => {};
+    let stopHealthExportReconciler = () => {};
+    let stopWatchRunSyncReconciler = () => {};
 
+    traceBoot("Waiting for sign-in to answer");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
       const uid = firebaseUser?.uid ?? null;
+      traceBoot(`Sign-in answered: ${uid ? "signed in" : "signed out"}`);
 
       // A queued stale callback must not invalidate the current callback's
       // generation. Reject it before incrementing the epoch.
-      if ((auth.currentUser?.uid ?? null) !== uid) return;
+      if ((auth.currentUser?.uid ?? null) !== uid) {
+        traceBoot("Sign-in answer was out of date");
+        return;
+      }
 
       stopSubscriptionUpdates();
       stopSubscriptionUpdates = () => {};
+      stopHealthExportReconciler();
+      stopHealthExportReconciler = () => {};
+      stopWatchRunSyncReconciler();
+      stopWatchRunSyncReconciler = () => {};
       const epoch = ++authEpochRef.current;
       const previousUid = activeUidRef.current;
 
@@ -1068,6 +1264,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (auth.currentUser?.uid ?? null) === uid;
 
       activeUidRef.current = uid;
+      // Never leave the prior account visible while native account data is
+      // being cleared. Same-UID token refresh keeps the rendered profile.
+      if (previousUid !== uid) {
+        invalidatePushTokenLifecycle();
+        setUser(null);
+        setProfile(null);
+        setProfileReadFailed(false);
+        setLoading(true);
+      }
+      // The Watch bridge can retain an active run, pending controls and raw
+      // heart rate while the web view is suspended. Clear those native values
+      // before another account is exposed to the React tree. The bridge keeps
+      // a same-UID preference across a normal app restart, but sign-out or an
+      // externally driven account switch disables the prior account's Watch.
+      setWatchAccountCleanup(null);
+      const watchOwner = watchAccountRef.current;
+      if (watchOwner !== uid && isNativePlatform()) {
+        traceBoot("Clearing the last account’s Watch run");
+        for (;;) {
+          try {
+            await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
+            break;
+          } catch (error) {
+            // Off the release the cleanup is best effort and never throws.
+            if (!CONNECTED_TRAINING_RELEASED) break;
+            // A Watch holding the outgoing session cannot be exposed under a
+            // different signed-in account: keep the next account behind the
+            // loading gate, and let the person try again.
+            logger.error("[AuthProvider] Watch account cleanup failed", error);
+            if (!isCurrent()) return;
+            await new Promise<void>((retry) =>
+              setWatchAccountCleanup({ retry })
+            );
+            if (!isCurrent()) return;
+            setWatchAccountCleanup(null);
+          }
+        }
+        if (!isCurrent()) return;
+        watchAccountRef.current = uid;
+        traceBoot("Watch run cleared");
+      }
       setUser(firebaseUser);
       // This device has had an account: the signed-out screen greets the
       // person as returning, not as new (Login's welcome screen).
@@ -1077,16 +1314,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // on sign-out so orphaned errors don't leak to a stale UID.
       setErrorReportingUid(uid);
 
-      // Never expose the previous account while the next account hydrates.
-      // Same-uid token refresh keeps the rendered profile (avoids a flicker).
-      if (previousUid !== uid) {
-        // Packet 17 — abort any in-flight push registration captured under the
-        // old generation so it can't write under the new account. Safe after an
-        // externally-driven transition: local invalidation only; remote release
-        // still runs before app-controlled credential replacement (below).
-        invalidatePushTokenLifecycle();
-        setProfile(null);
-        setLoading(true);
+      // Export reconciliation belongs to one signed-in account at a time.
+      // The runner itself checks auth.currentUser before touching a queued
+      // workout, and this epoch guard prevents a late import from starting a
+      // previous account's runner after an account switch.
+      if (uid && isNativePlatform()) {
+        void import("./healthWorkoutExport")
+          .then((module) => {
+            if (isCurrent())
+              stopHealthExportReconciler =
+                module.startHealthExportReconciler(uid);
+          })
+          .catch((err) =>
+            logger.warn("[AuthProvider] Health export runner unavailable", err)
+          );
+        void import("./watchRunSyncStatus")
+          .then((module) => {
+            if (isCurrent())
+              stopWatchRunSyncReconciler =
+                module.startWatchRunSyncReconciler(uid);
+          })
+          .catch((err) =>
+            logger.warn("[AuthProvider] Watch sync runner unavailable", err)
+          );
       }
 
       if (firebaseUser) {
@@ -1099,6 +1349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
+        traceBoot("Loading Firestore");
         const {
           doc,
           getDoc,
@@ -1129,8 +1380,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+          traceBoot("Reading the profile");
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          traceBoot("Profile read");
           if (!isCurrent()) return;
+          setProfileReadFailed(false);
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
@@ -1189,7 +1443,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           if (!isCurrent()) return;
           logger.error("[AuthProvider] Failed to load profile", err);
-          setProfile(null);
+          /* A read that failed is not a profile that is missing. Clearing
+             the profile here would send a signed-in account to setup: on a
+             first read with no connection, and also mid-session, since
+             every token refresh comes back through here. Finishing setup
+             replaces the programme (completeOnboarding). Keep the copy this
+             account already shows, from the device's cache or an earlier
+             read; with none, `profileLoad` says "failed" and the app offers
+             a retry. */
+          setProfileReadFailed(true);
+          setProfile((previous) => (previous?.uid === uid ? previous : null));
         }
 
         if (!isCurrent()) return;
@@ -1223,10 +1486,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
+        setProfileReadFailed(false);
         syncDarkMode(true);
       }
 
-      if (isCurrent()) setLoading(false);
+      if (isCurrent()) {
+        traceBoot("Ready");
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -1234,6 +1501,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authEpochRef.current += 1;
       activeUidRef.current = null;
       stopSubscriptionUpdates();
+      stopHealthExportReconciler();
+      stopWatchRunSyncReconciler();
       unsubscribe();
     };
   }, []);
@@ -1251,6 +1520,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stopListeningForForegroundPush();
       await waitForPendingPushRegistration(outgoingUid);
       await unregisterDeviceToken(outgoingUid);
+      if (isNativePlatform()) {
+        const { clearWatchRunAccountState } = await import("./watchRunBridge");
+        await clearWatchRunAccountState();
+      }
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);
       await cancelOutgoingAccountReminders();
@@ -1380,9 +1653,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        capacitor://localhost, not a Firebase authorized domain — so it drives
        the native Google sheet and completes with the returned credential. */
     if (isNativePlatform()) {
+      traceBoot("Google: opening the account picker");
       const credential = await getGoogleCredentialNative();
+      traceBoot("Google: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       await finishOAuthSignIn(cred, "google");
       return;
     }
@@ -1414,9 +1689,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
+      traceBoot("Apple: opening the sign-in sheet");
       const { credential, displayName } = await getAppleSignInNative();
+      traceBoot("Apple: account chosen");
       await revokeOutgoingAccountDeviceState();
-      const cred = await signInWithCredential(auth, credential);
+      const cred = await traceSignIn(signInWithCredential(auth, credential));
       // The name Apple shares on the first sign-in, kept before the new
       // profile is made from the account. Never over a name it has.
       if (displayName && !cred.user.displayName) {
@@ -1455,8 +1732,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      users get their profile doc created via finishOAuthSignIn exactly like
      the popup path (onAuthStateChanged only READS a profile — it would set
      null for a brand-new OAuth user whose doc doesn't exist yet). Runs once
-     on mount; a null result means there was no pending redirect. */
+     on mount; a null result means there was no pending redirect.
+
+     Not inside the iPhone app: it signs in natively (nativeAuth.ts) and
+     never redirects, and its Auth has no popup/redirect resolver
+     (firebaseApp.ts), so asking throws auth/argument-error on every
+     launch, which errorReporting then files as a real error. */
   useEffect(() => {
+    if (isNativePlatform()) return;
     let cancelled = false;
     getRedirectResult(auth)
       .then((result) => {
@@ -1468,6 +1751,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return finishOAuthSignIn(result, method);
       })
       .catch((err) => {
+        traceBoot(
+          `Redirect result: ${err instanceof Error ? err.message : String(err)}`
+        );
         logger.error("[AuthProvider] OAuth redirect sign-in failed", err);
       });
     return () => {
@@ -1618,7 +1904,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onLateFailure: () => {
             if (auth.currentUser?.uid !== writeUid) return;
             toast.error(
-              "A change you made offline couldn't be saved. Check your settings.",
+              "A change you made offline couldn’t be saved. Check your settings.",
               { id: "update-profile-error" }
             );
           },
@@ -1653,7 +1939,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error("[auth] updateProfile failed", err);
         // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
         // a single visible message.
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };
@@ -1722,7 +2008,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return reverted ? { ...prev, shareDefaults: next } : prev;
         });
         logger.error("[auth] updateShareDefaults failed", err);
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };
@@ -1731,27 +2017,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, profile]
   );
 
-  const refreshProfile = useCallback(async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) return;
-    // Capture identity BEFORE the await; never re-read auth.currentUser after
-    // it to stamp a snapshot fetched under a different UID. If the account
-    // switched during the read, drop A's snapshot rather than hydrate it as B.
-    const uid = currentUser.uid;
-    const { doc, getDoc, db } = await firestore();
-    const snap = await getDoc(doc(db, "users", uid));
-    if (auth.currentUser?.uid !== uid) return;
-    if (snap.exists()) {
-      setProfile(
-        hydrateProfile(
-          uid,
-          snap.data() as Record<string, unknown>,
-          currentUser.displayName ?? "",
-          currentUser.email ?? ""
-        )
-      );
-    }
-  }, []);
+  const refreshProfile = useCallback(
+    async (options?: {
+      until?: (data: Record<string, unknown>) => boolean;
+    }) => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      // Capture identity BEFORE the await; never re-read auth.currentUser after
+      // it to stamp a snapshot fetched under a different UID. If the account
+      // switched during the read, drop A's snapshot rather than hydrate it as B.
+      const uid = currentUser.uid;
+      const { doc, getDoc, db } = await firestore();
+      const ref = doc(db, "users", uid);
+      let snap = await getDoc(ref);
+      // A write just made may not be in the first read yet (see `until`).
+      for (
+        let attempt = 1;
+        options?.until &&
+        attempt < PROFILE_REFRESH_ATTEMPTS &&
+        auth.currentUser?.uid === uid &&
+        !(
+          snap.exists() && options.until(snap.data() as Record<string, unknown>)
+        );
+        attempt++
+      ) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, PROFILE_REFRESH_WAIT_MS)
+        );
+        snap = await getDoc(ref);
+      }
+      if (auth.currentUser?.uid !== uid) return;
+      // The read answered, with a profile or without one: the retry screen's
+      // "Try again" lands here, and a new account then goes on to setup.
+      setProfileReadFailed(false);
+      if (snap.exists()) {
+        setProfile(
+          hydrateProfile(
+            uid,
+            snap.data() as Record<string, unknown>,
+            currentUser.displayName ?? "",
+            currentUser.email ?? ""
+          )
+        );
+      }
+    },
+    []
+  );
 
   // Stable identity for the Provider value — every consumer that
   // calls useAuth() depends on this. An inline object literal would
@@ -1774,10 +2085,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [signIn, signUp, signInWithGoogle, signInWithApple, signOutUser]
   );
 
+  const profileLoad: ProfileLoad =
+    loading || leavingForReload
+      ? "loading"
+      : profile
+        ? "ready"
+        : user && profileReadFailed
+          ? "failed"
+          : "missing";
+
   const value = useMemo(
     () => ({
       user,
       profile,
+      profileLoad,
       loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
@@ -1785,10 +2106,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateShareDefaults,
       refreshProfile,
+      watchAccountCleanup,
     }),
     [
       user,
       profile,
+      profileLoad,
       loading,
       leavingForReload,
       credentialActions,
@@ -1797,6 +2120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updateShareDefaults,
       refreshProfile,
+      watchAccountCleanup,
     ]
   );
 

@@ -1,0 +1,194 @@
+{
+  "exerciseId": "close-grip-bench",
+  "version": "anatomy-v4-2026-10-27-flat-close-grip-bench-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 production-player review",
+  "reviewedAt": "2026-10-27T18:57:57.132Z",
+  "reference": {
+    "path": "form-frames/close-grip-bench/2026-10-27/1.webp",
+    "sha256": "dbf354123bfbdafb7b68d795759cfd50af2e6ceb3d79d4a6c23f8cb1d15753be"
+  },
+  "cueSha256": "4fe9f55c23502a7af045b9f01f102f25d80c58f2b734eb6408912e99d78ce2d2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1536×1024 frames keep one white anatomical athlete, a flat bench, one rigid barbell, white shoes and the same triceps-first violet highlight."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed side-oblique camera keeps the flat bench, bar, anatomy and shoes in view. A common 1.13× stage camera at x=-0.02 gives a fuller centred phone view with at least 5% side margin; the source union remains inside all canvas borders."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Head, upper back and hips remain supported while both elbows bend and extend beneath a narrow two-hand bar grip. Neither arm changes side or detaches from the bar."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "The flat bench is one level pad with fixed supports. Left bench foot lower-left varies only (354,738–739); visible front span is 698–699 px. Both plates stay attached to a single straight bar."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands keep the same narrow bar grip; head and back stay on the pad; shoes remain planted. Right shoe lower-right varies by at most one native pixel across the set."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The bar lowers with tucked elbows until its underside reaches the lower pectoral surface with 0–1 native px separation around x715–795, then rises to extended arms without crossing the neck."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "The triceps retain the strongest violet accent, with chest and anterior shoulder supporting fields. Highlight ownership does not switch between frames."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, lower, bottom, hold, press and finish cues match the top→mid→lower-chest-touch→hold→mid→top poses, including planted feet and a grip inside shoulder width."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six lossless frames and 6→1 were stepped in the actual ExerciseFormFrames phone player. Frames 4=3, 5=2 and 6=1 are byte-identical reverse pairs, yielding a stable loop."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual light ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, complete anatomy/equipment and captions visible, no horizontal overflow or browser errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual dark ExerciseFormFrames player at 393×852: all six decoded frames and 6→1 reviewed, complete anatomy/equipment and captions visible, no horizontal overflow or browser errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/1.webp",
+      "sha256": "dbf354123bfbdafb7b68d795759cfd50af2e6ceb3d79d4a6c23f8cb1d15753be",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 738
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1401,
+          "y": 888
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 252,
+        "benchFrontVisibleHorizontalSpan": 699
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/1.png",
+        "sha256": "d2802bca4275de36f475bfec0af2346d78ec03289b959a2b9e62bbeb4a0091c6"
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/2.webp",
+      "sha256": "b8a96da737d40db6a7f148569b80c47856f77c396a55540191f278faa4430ec0",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 738
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1400,
+          "y": 888
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 252,
+        "benchFrontVisibleHorizontalSpan": 698
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/2.png",
+        "sha256": "d230ae4208e6661266bcff6e1dcd587435717051f0644e2a8889abb12dd3b47e"
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/3.webp",
+      "sha256": "b24c1cc35e70af170943d9792ed9457559be88df0d5df2b3f937c3a69a6bfdd4",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 739
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1400,
+          "y": 889
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 253,
+        "benchFrontVisibleHorizontalSpan": 699
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/3.png",
+        "sha256": "a85377321240adbe4408103450658cf0a18ab98e36fc68760bc4141dda81a2d2"
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/4.webp",
+      "sha256": "b24c1cc35e70af170943d9792ed9457559be88df0d5df2b3f937c3a69a6bfdd4",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 739
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1400,
+          "y": 889
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 253,
+        "benchFrontVisibleHorizontalSpan": 699
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/4.png",
+        "sha256": "a85377321240adbe4408103450658cf0a18ab98e36fc68760bc4141dda81a2d2"
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/5.webp",
+      "sha256": "b8a96da737d40db6a7f148569b80c47856f77c396a55540191f278faa4430ec0",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 738
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1400,
+          "y": 888
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 252,
+        "benchFrontVisibleHorizontalSpan": 698
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/5.png",
+        "sha256": "d230ae4208e6661266bcff6e1dcd587435717051f0644e2a8889abb12dd3b47e"
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2026-10-27/6.webp",
+      "sha256": "dbf354123bfbdafb7b68d795759cfd50af2e6ceb3d79d4a6c23f8cb1d15753be",
+      "anchors": {
+        "leftBenchFootBoundsLowerLeft": {
+          "x": 354,
+          "y": 738
+        },
+        "rightShoeBoundsLowerRight": {
+          "x": 1401,
+          "y": 888
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootHorizontalSpan": 252,
+        "benchFrontVisibleHorizontalSpan": 699
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/close-grip-bench/contact-v2/6.png",
+        "sha256": "d2802bca4275de36f475bfec0af2346d78ec03289b959a2b9e62bbeb4a0091c6"
+      }
+    }
+  ]
+}

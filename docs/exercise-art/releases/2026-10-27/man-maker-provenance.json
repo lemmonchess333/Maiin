@@ -1,0 +1,54 @@
+{
+  "exerciseId": "man-maker",
+  "supersedesReview": "docs/exercise-art/releases/2026-10-04/man-maker.json",
+  "historicalFrames": "The 2026-10-04 frame 1\u20136 WebPs remain at their original paths and hashes. Frames 1\u20133 of this release reuse their unchanged paths.",
+  "newFrames": [
+    {
+      "frame": 4,
+      "imagegenOutputId": "567950a2-e991-4589-93c0-319356fbab7f",
+      "imagegenOutputSha256": "1d4fd20ded2ae84b977391cef17d96fb3746782fd6ea2b450539baa7d350da9b",
+      "wholeSceneVerticalAlignmentPixels": 43,
+      "alignedSource": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/4-squat.png",
+        "sha256": "72ad61938a76ef3f71f1c726ae3a049a4138283035c21d9e19f0370e3bf8fbac"
+      },
+      "delivered": {
+        "path": "public/form-frames/man-maker/2026-10-27/4.webp",
+        "sha256": "0c2130a174e0ba15180b46173c277e8d66064a9c8794c4531caad9ebd0c4c84b"
+      },
+      "encoding": "Lossless WebP; decoded RGB pixels equal the retained aligned PNG."
+    },
+    {
+      "frame": 5,
+      "imagegenOutputId": "e51e0d2f-d517-4ece-8b9f-519b32604ea7",
+      "imagegenOutputSha256": "55165a3a31c4aa883191d9a871c1052e7d578fcbdcf97249e1b8c833b33821ef",
+      "wholeSceneVerticalAlignmentPixels": 10,
+      "alignedSource": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/5-press.png",
+        "sha256": "3a70070ce753a889bb6f7a2d2f494e2f6035ea7ab92344e0f374d4b35ac58e99"
+      },
+      "delivered": {
+        "path": "public/form-frames/man-maker/2026-10-27/5.webp",
+        "sha256": "b1c4713631d2b2e2e2f4da2f25f516059cadf879a0d30d5a9a0ec3d870540177"
+      },
+      "encoding": "Lossless WebP; decoded RGB pixels equal the retained aligned PNG."
+    },
+    {
+      "frame": 6,
+      "imagegenOutputId": "7822c8bf-e3ca-4eb6-b0e3-5cd38a5b747f",
+      "imagegenOutputSha256": "1e158a9ebc677adcefde218a8ca98158d76cc3ea34d9022195388bab542ee1e2",
+      "wholeSceneVerticalAlignmentPixels": 66,
+      "alignedSource": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/6-return.png",
+        "sha256": "ab47d8b3390583113316610e4bb87196c1d16d6539b544079e570d1739e63011"
+      },
+      "delivered": {
+        "path": "public/form-frames/man-maker/2026-10-27/6.webp",
+        "sha256": "0e7ee904114221fe82316191746e5ec9f166d30ff533217912f1d1f2b89c319b"
+      },
+      "encoding": "Lossless WebP; decoded RGB pixels equal the retained aligned PNG."
+    }
+  ],
+  "runtimeComposition": "The release JSON displayComposition pins the exact fixed-shoe and grounded-dumbbell overlays applied inside the player. It is verified against src/lib/formArtComposites.ts by check:form-art. Raw frames 5 and 6 alone do not meet fixed-contact measurements.",
+  "cardStill": "Frame 4 uses the delivered squat source without a runtime layer, so the card cutout can be regenerated from that reviewed still."
+}

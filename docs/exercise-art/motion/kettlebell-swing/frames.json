@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/kettlebell-swing.webp",
+  "still": "form-art/kettlebell-swing.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 305,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "8d4f3184b262f49facca4e555568d1e7078cef4691c98935d235b4904635fd40",
+  "thenSha256": "6fcab56f17f820ac5fc6d8cb31d501d95a93ae59f735583e35f7087260150030",
+  "sha256": "b977764e7cf5cce52846424982d86fd9942498601a9959d13867d22781938290"
+}

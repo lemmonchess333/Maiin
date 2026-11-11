@@ -1,25 +1,26 @@
 /**
- * Heart-rate source abstraction — the native-injection seam for live HR.
+ * Heart-rate source abstraction for live beats from the paired Watch.
  *
  * Mirrors `locationSource.ts`: features read the HR stream through this seam
  * instead of touching a platform API directly, so the *source* of beats can
  * differ by platform without changing the consumers (the zone maths in
  * `hrZones.ts`, the run HUD, the post-run distribution).
  *
- * Today there is NO web HR source — browsers have no first-class heart-rate
+ * There is NO web HR source — browsers have no first-class heart-rate
  * API (Web Bluetooth GATT exists but is unsupported in iOS WKWebView and off
  * by default elsewhere), so the web source is a deliberate NO-OP: it reports
  * `available === false` and never emits. That keeps the feature web-VISIBLE
  * (Settings can still preview zones from the user's max HR; consumers render a
  * "connect on the app" affordance) without pretending to stream.
  *
- * Step 2 (needs Mac/Xcode build): a `nativeHeartRateSource` backed by
- * HealthKit live workout samples (`HKWorkoutSession` + `HKAnchoredObjectQuery`
- * on `heartRate`) via a Capacitor plugin. The branch point is
- * `getHeartRateSource()` — flipping it on native is a one-line change once the
- * plugin lands. See docs/heart-rate-healthkit.md.
+ * The native source consumes `WatchRun.heartRateSample` events. Native
+ * availability here means this shell can subscribe; Settings checks the
+ * actual paired/installed Watch status separately. A missing bridge never
+ * invents a reading.
  */
 import { isNativePlatform } from "./platform";
+import { subscribeWatchHeartRateSamples } from "./watchRunBridge";
+import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 
 /** Handle to an active subscription; `stop()` ends the stream. */
 export interface HeartRateSubscription {
@@ -38,8 +39,9 @@ export interface HeartRateSource {
    * to call regardless.
    */
   subscribe(
-    onSample: (bpm: number, at: number) => void,
-    onError?: (err: Error) => void
+    onSample: (bpm: number, at: number, id?: string) => void,
+    onError?: (err: Error) => void,
+    sessionId?: string
   ): HeartRateSubscription;
 }
 
@@ -59,23 +61,51 @@ export const webHeartRateSource: HeartRateSource = {
   },
 };
 
+export const nativeHeartRateSource: HeartRateSource = {
+  available: true,
+  subscribe(onSample, onError, sessionId) {
+    if (!sessionId) return NOOP_SUBSCRIPTION;
+    let stopped = false;
+    let remove: (() => void) | null = null;
+    void subscribeWatchHeartRateSamples((sample) => {
+      if (
+        stopped ||
+        sample.sessionId !== sessionId ||
+        !Number.isFinite(sample.timestampMs) ||
+        !Number.isFinite(sample.bpm) ||
+        sample.bpm < 30 ||
+        sample.bpm > 250
+      )
+        return;
+      onSample(sample.bpm, sample.timestampMs, sample.sampleId);
+    })
+      .then((unsubscribe) => {
+        if (stopped) unsubscribe();
+        else remove = unsubscribe;
+      })
+      .catch((error: unknown) => {
+        if (!stopped)
+          onError?.(
+            error instanceof Error ? error : new Error("Watch HR unavailable")
+          );
+      });
+    return {
+      stop() {
+        stopped = true;
+        remove?.();
+      },
+    };
+  },
+};
+
 /**
  * Resolve the HR source for the current platform.
  *
- * Now: always the inert web source — native has no plugin wired yet, so it
- * also reports unavailable (honest: live HR genuinely isn't streaming until
- * the HealthKit plugin lands). The native branch is kept explicit so wiring
- * `nativeHeartRateSource` is a one-line change.
+ * The iOS shell receives Watch samples through the WatchRun bridge; web keeps
+ * the inert fallback. The hook subscribes only for an opted-in active run.
  */
 export function getHeartRateSource(): HeartRateSource {
-  if (isNativePlatform()) {
-    // TODO(Step 2, docs/heart-rate-healthkit.md): return
-    // nativeHeartRateSource, HealthKit live workout HR. The installed
-    // capacitor-health has no live stream (heart rate only arrives attached
-    // to a finished HKWorkout, which a Tropos run does not write), so it
-    // needs a plugin that streams. Until then native has no live stream
-    // either, and the inert source is the honest answer.
-    return webHeartRateSource;
-  }
+  if (CONNECTED_TRAINING_RELEASED && isNativePlatform())
+    return nativeHeartRateSource;
   return webHeartRateSource;
 }

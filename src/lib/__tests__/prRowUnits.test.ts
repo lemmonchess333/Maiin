@@ -38,6 +38,7 @@ import type { DistanceUnit } from "../distanceUnits";
 
 const NOW = new Date(2026, 8, 16, 14, 30, 0);
 const RANGE = {
+  todayKey: localDateString(NOW),
   recentSinceKey: localDateString(addLocalDays(NOW, -29)),
   newSinceKey: localDateString(addLocalDays(NOW, -7)),
 };

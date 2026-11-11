@@ -45,10 +45,10 @@ describe("display-name limit — one number everywhere", () => {
     const caps = [
       ...rules.matchAll(/\.(?:authorName|displayName)\.size\(\) <= (\d+)/g),
     ].map((m) => Number(m[1]));
-    // Activities, space posts, challenge participants and space members
-    // on create and update, and the public profile. Fewer means a cap
-    // went missing.
-    expect(caps).toHaveLength(7);
+    // Activities, space posts and challenge participants on create, space
+    // members on create and update, and the public profile. Fewer means a
+    // cap went missing. A participant row takes no client update at all.
+    expect(caps).toHaveLength(6);
     for (const cap of caps) expect(cap).toBe(DISPLAY_NAME_MAX);
   });
 

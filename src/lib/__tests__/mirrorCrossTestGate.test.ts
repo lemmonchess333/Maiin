@@ -114,6 +114,17 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // A post's photos (Soc15 call 2): the server's limit of four, its photo
+  // id rule and its "this post's own upload" URL check are held to the
+  // app's and the rules' by the paths cross-test. The rest of each module
+  // (the client's reader and alt text, the server's folder cleanup) has no
+  // counterpart on the other side.
+  "functions/lib/postPhotos.js":
+    "src/lib/__tests__/postPhotoPaths.cross.test.ts",
+  // The photo detail's cap: the field stops where analyzeFood starts
+  // refusing.
+  "functions/lib/foodPhotoDetail.js":
+    "src/lib/__tests__/foodPhotoDetail.cross.test.ts",
   "functions/lib/workoutSetRecord.js":
     "src/features/program/__tests__/workoutSetRecord.cross.test.ts",
   // Optimistic-concurrency merge for the programme command boundary. The
@@ -132,6 +143,8 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/runModeResolution.cross.test.ts",
   "functions/lib/runEligibility.js":
     "src/lib/__tests__/runEligibility.cross.test.ts",
+  "functions/lib/firstWeekActivation.js":
+    "src/lib/__tests__/firstWeekActivation.cross.test.ts",
   // Moderation predicate. BOTH copies run — the client for composer feedback,
   // the server as the trust boundary a curl request cannot bypass — so per
   // this file's own rule that is a cross-test, not an exemption.
@@ -180,13 +193,30 @@ const PINNED: Record<string, string> = {
   // maxLength. A basename pair with src/lib/commentLimit.ts.
   "functions/lib/commentLimit.js":
     "src/lib/__tests__/commentLimit.cross.test.ts",
+  // Soc15's live pulse: the server counts each session in `pulse/{its
+  // date}`; the app reads `pulse/{its local today}` and its `sessions`.
+  // A basename pair with src/lib/pulse.ts.
+  "functions/lib/pulse.js": "src/lib/__tests__/pulse.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",
+  // A renamed run's name, cut for its post as the rename sheet cuts it.
+  "functions/lib/runRename.js": "src/lib/__tests__/runRename.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":
     "src/features/challenges/__tests__/challengeTiers.cross.test.ts",
+  // Soc15: the medal the server writes and the one the app reads (its
+  // summary, and the finale card's own) must be the same medal.
+  "functions/lib/medals.js":
+    "src/features/challenges/__tests__/medals.cross.test.ts",
+  // Soc15 call 3: a league standing's planned sessions, the server copy of
+  // trainingWeek.ts's count, and the league's ranking and zones, which the
+  // page draws.
+  "functions/lib/leaguePlanned.js":
+    "src/lib/__tests__/leaguePlanned.cross.test.ts",
+  "functions/lib/leagueRules.js":
+    "src/features/league/__tests__/leagueRules.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
   // Packet 18 — CF programme reducer mirrors the client run-day transition
@@ -263,7 +293,7 @@ const PINNED: Record<string, string> = {
   "functions/lib/mealDocs.js":
     "src/lib/__tests__/mealActiveSingleSource.test.ts",
   // Effective subscription tier. The SERVER copy is the one that spends
-  // money (Vertex scan quota, Mapbox routing, adherence target); the client
+  // money (Vertex scan quota, adherence target); the client
   // copy decides what is offered. Invisible to this gate until 2026-08-22 —
   // its header says "mirrors client getSubscriptionInfo" and the detector
   // wanted the definite article. See PHRASINGS below.
@@ -296,6 +326,10 @@ const PINNED: Record<string, string> = {
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
 const NOT_EQUALITY_MIRROR: Record<string, string> = {
+  "functions/lib/healthWorkoutLedger.js":
+    "server deletion trigger only marks an existing receipt; the client module " +
+    "reserves exports, checks consent and reconciles native cleanup, so they " +
+    "have different inputs and outputs rather than shared decision logic",
   "functions/lib/dateUtils.js":
     "intentionally UTC (server) vs local (client) — an equality pin would be WRONG",
   "functions/lib/challengeDefs.js":

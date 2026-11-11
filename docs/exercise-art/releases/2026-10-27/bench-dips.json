@@ -1,0 +1,194 @@
+{
+  "exerciseId": "bench-dips",
+  "version": "anatomy-v4-2026-10-27-flat-bench-dips-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T17:28:14.098Z",
+  "reference": {
+    "path": "form-frames/bench-dips/2026-10-27/1.webp",
+    "sha256": "a8eb78ff621a4d8f7aad20aa37cf77dc3294daa0c3639614a71b3627514854ee"
+  },
+  "cueSha256": "8c8c51b2ddfe358a56e33e81e05982d7ff86964d81d40a5d7099c8c84d6b8f3c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1536×1024 native frames keep one faceless anatomical athlete in white trainers, a single flat bench, and triceps as the strongest violet muscle group."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed rear three-quarter view. Bench left end varies by only one pixel, (576–577,533–534), and right pad bottom is exactly (1357,684) in every PNG. Fixed 1.21× camera fills the phone stage with over 5% margin."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The arms extend in the start and finish, then elbows bend backward toward about 90 degrees as the torso lowers in front of the bench; no limb disappears or detaches."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One continuous bench pad and two visible supports retain their construction and position. Pad span measures 780–781 px and right base footprint 273–275 px, both within 1%."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands keep the bench edge and both shoe contact regions have identical bounding boxes across all six frames. Hips travel in front of the bench rather than sitting on it."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Elbow flexion lowers the torso while the bench and heels stay fixed, then palm pressure raises it back along the same path. The shoulders do not shrug into the ears."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Triceps use the darkest violet accent; chest/front shoulder support is lighter and stays attached to the same muscles through motion."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Start, lower, bottom, control, press and return cues match the extension, descent, deeper controlled bottom, rise and reset; the bench grip and heel contact remain stable."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and the 6→1 return were stepped in the real ExerciseFormFrames player. Frame 4 holds a slightly deeper bottom than frame 3, frame 5 repeats frame 2, and frame 6 is identical to frame 1 for a smooth return."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bench-dips/2026-10-27/1.webp",
+      "sha256": "a8eb78ff621a4d8f7aad20aa37cf77dc3294daa0c3639614a71b3627514854ee",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 577,
+          "y": 534
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 780,
+        "rightBenchBaseFootprint": 273
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/1.png",
+        "sha256": "7bea73b146e2b209d514c15e148773ab4cf073a6fdaa4eb492c4ec7f2ab980b0"
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2026-10-27/2.webp",
+      "sha256": "a79c7b16121e1cfdd8b76fd89ca54acb423a7be103807ec26c5bd6d800eccf2d",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 576,
+          "y": 533
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 781,
+        "rightBenchBaseFootprint": 274
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/2.png",
+        "sha256": "6662b513260e7009c80211060eeb8385c9b38d7d2d4bdf2359af85eea56bc29c"
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2026-10-27/3.webp",
+      "sha256": "24763712f75df03c3ffd1115bc4f9ec955ecae88616c77a15dd685ae9cfbbee3",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 576,
+          "y": 533
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 781,
+        "rightBenchBaseFootprint": 274
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/3.png",
+        "sha256": "0a6b50935d8259e9024d3b5ed33d37cffb2afe7c5e1652d80318d385c901efcf"
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2026-10-27/4.webp",
+      "sha256": "e93693ab6c56e4bbf04b3045b6993cf0090171677856357a97e7b0328057141b",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 576,
+          "y": 533
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 781,
+        "rightBenchBaseFootprint": 275
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/4.png",
+        "sha256": "fa2d52cb668a012a31990984fce1c14125a6e13da87c6ce746d346a1fd22ddbb"
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2026-10-27/5.webp",
+      "sha256": "a79c7b16121e1cfdd8b76fd89ca54acb423a7be103807ec26c5bd6d800eccf2d",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 576,
+          "y": 533
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 781,
+        "rightBenchBaseFootprint": 274
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/5.png",
+        "sha256": "6662b513260e7009c80211060eeb8385c9b38d7d2d4bdf2359af85eea56bc29c"
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2026-10-27/6.webp",
+      "sha256": "a8eb78ff621a4d8f7aad20aa37cf77dc3294daa0c3639614a71b3627514854ee",
+      "anchors": {
+        "benchLeftEnd": {
+          "x": 577,
+          "y": 534
+        },
+        "benchPadRightBottom": {
+          "x": 1357,
+          "y": 684
+        }
+      },
+      "invariantDimensions": {
+        "benchPadHorizontalSpan": 780,
+        "rightBenchBaseFootprint": 273
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/bench-dips/6.png",
+        "sha256": "7bea73b146e2b209d514c15e148773ab4cf073a6fdaa4eb492c4ec7f2ab980b0"
+      }
+    }
+  ]
+}

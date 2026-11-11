@@ -283,3 +283,37 @@ describe("useWeekPulse — the week the account began", () => {
     expect(result.current?.lifts).toMatchObject({ planned: 2 });
   });
 });
+
+describe("useWeekPulse — a session begun on Sunday night, reviewed after midnight", () => {
+  /** Mon 20 Jul 2026, 00:30: the week of the 13th has just ended. */
+  const MONDAY_NIGHT = new Date(2026, 6, 20, 0, 30, 0);
+  const SUNDAY = "2026-07-19";
+
+  it("shows the run with its own week, not the new one", async () => {
+    vi.setSystemTime(MONDAY_NIGHT);
+    seedFirestore({
+      "users/u1/workouts/tue": { date: IN_WEEK, exercises: [] },
+    });
+    const run = {
+      id: null,
+      date: SUNDAY,
+      distance: 6000,
+      duration: 2100,
+      isInvalid: false,
+    };
+    const { result } = renderHook(() => useWeekPulse(0, run));
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.runs).toMatchObject({ count: 1, km: 6 });
+    expect(result.current?.lifts).toMatchObject({ done: 1 });
+  });
+
+  it("shows a lift with the week of its start day", async () => {
+    vi.setSystemTime(MONDAY_NIGHT);
+    seedFirestore({
+      "users/u1/workouts/sun": { date: SUNDAY, exercises: [] },
+    });
+    const { result } = renderHook(() => useWeekPulse(0, null, SUNDAY));
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.lifts).toMatchObject({ done: 1 });
+  });
+});

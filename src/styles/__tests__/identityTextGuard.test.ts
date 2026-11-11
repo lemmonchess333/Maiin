@@ -137,7 +137,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-10-01: 4 → 6. The Settings pass: the Nutrition row's icon on the
   // Settings list and the Nutrition phase row's on the Programme page,
   // both ICONS; their words are foreground.
-  nutrition: 6,
+  // 6 → 2 with the light-mode pass: the orange identity is 2.6 to 2.8:1
+  // on white, under the 3:1 a graphic needs, so the Settings row's and
+  // the Go deeper tile's icons, and the food consistency card's two,
+  // take `text-nutrition-strong`.
+  nutrition: 2,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -154,7 +158,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-09-27: 10 → 11. The finish screen's New bests rows each end in
   // a gold Trophy ICON (3:1 non-text); the figure beside it, which is
   // text, takes `text-achievement-strong`.
-  achievement: 11, // Companion finish removes the decorative trophy.
+  // 2026-11-03: 11 → 12. A post's moment of a best (Soc15) sits in a
+  // gold-tinted tile whose only content is its ICON (3:1 non-text); the
+  // moment's words beside it are foreground and muted text.
+  achievement: 12, // Companion finish removes the decorative trophy.
 };
 
 /**
@@ -185,7 +192,9 @@ const EXPECTED_INLINE_USES = {
   // themes, where the coral measures about 5:1.
   // 2026-10-26: 17 → 16. The live run's 68px timer greys while the run is
   // paused, so its coral is one side of a choice and no longer counted.
-  "THEME.running": 16,
+  // 2026-11-10: 16 → 17. Together's race hero (Soc16) without a photo:
+  // its 160px ghosted flag, an icon, as the Space hero's fallback draws.
+  "THEME.running": 17,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
@@ -211,6 +220,8 @@ const EXPECTED_INLINE_USES = {
   // the EmptyState primitive too.
   // 32 → 33. The week pulse's streak flame, an icon, follows the streak
   // flame from amber to the brand purple.
+  // 33 → 34. The notification tray's league result (Soc15 call 3): its
+  // medal icon, in the brand purple Social's rewards wear.
   "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
@@ -225,7 +236,9 @@ const EXPECTED_INLINE_USES = {
   // took `text-nutrition-strong`.
   // 15 → 14: Home's first-meal eyebrow, 12px on the orange tint, took
   // `text-nutrition-strong` with the card's Log taking the fill step.
-  "THEME.semantic.nutrition": 14,
+  // 14 → 11 with the light-mode pass: Analytics' food empty state and
+  // day count, and Home's first-meal icon, took `text-nutrition-strong`.
+  "THEME.semantic.nutrition": 11,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;
@@ -311,7 +324,18 @@ function bareUses(token: string): string[] {
 // (Train, Analytics) in text-primary went with it.
 // 2026-10-06: 41 → 42. Home's strip for a store trial's last two days
 // carries the same sparkle icon as the free-week strip beside it.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
+// 42 → 41: Together's Circle rows draw their icon in text-primary-strong,
+// as the start-or-join card's does.
+// 2026-11-03: 41 → 42. A post's streak, plan or first-session moment
+// (Soc15) sits in a purple-tinted tile whose only content is its ICON;
+// its words are foreground and muted text.
+// 2026-11-04: 42 → 43. The signed-out invite line (Soc15) carries a
+// person icon in brand purple, as the sign-in notice beside it carries its
+// mail icon; its words are foreground and muted text.
+// 43 → 44 with the drawn pull to refresh: PullToRefreshIndicator's
+// arrow turns brand purple once a release would refresh. An ICON on the
+// card chip, with no words.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

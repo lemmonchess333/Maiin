@@ -30,6 +30,9 @@ function makeFirestore(
       if (name === "accountDeletionRequests" || name === "deletedAccounts") {
         return { doc: () => ({ _kind: "absent" }) };
       }
+      if (name === "blocks") {
+        return { doc: () => ({ collection: () => ({ doc: () => ({ _kind: "absent" }) }) }) };
+      }
       if (name === "activities") {
         return { doc: () => activityRef };
       }

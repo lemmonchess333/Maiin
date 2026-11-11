@@ -12,12 +12,66 @@
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
+		B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* TroposBridgeViewController.swift */; };
+		B10000000000000000000002 /* WatchRunPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* WatchRunPlugin.swift */; };
+		B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WatchRunCoordinator.swift */; };
+		B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* HealthWorkoutStore.swift */; };
+		B10000000000000000000005 /* TroposWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* TroposWatchApp.swift */; };
+		B10000000000000000000006 /* WatchRunModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* WatchRunModel.swift */; };
+		B10000000000000000000007 /* WatchRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* WatchRunView.swift */; };
+		B10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000A /* Assets.xcassets */; };
+		B10000000000000000000009 /* TroposWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000B /* TroposWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A36040AE92F07656ACA6F8F5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3361407890BE05F3F2B29A4F /* PrivacyInfo.xcprivacy */; };
+		E10000000000000000000001 /* LiveActivitiesBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000004 /* LiveActivitiesBundle.swift */; };
+		E10000000000000000000002 /* LiveActivitiesKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1000000000000000000000A /* LiveActivitiesKit */; };
+		E10000000000000000000003 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* LiveActivitiesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C10000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C10000000000000000000005;
+			remoteInfo = TroposWatch;
+		};
+		E10000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E10000000000000000000010;
+			remoteInfo = LiveActivitiesExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C10000000000000000000001 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B10000000000000000000009 /* TroposWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E10000000000000000000007 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E10000000000000000000003 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -25,6 +79,17 @@
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A10000000000000000000001 /* TroposBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposBridgeViewController.swift; sourceTree = "<group>"; };
+		A10000000000000000000002 /* WatchRunPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunPlugin.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* WatchRunCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunCoordinator.swift; sourceTree = "<group>"; };
+		A10000000000000000000004 /* HealthWorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000005 /* TroposWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposWatchApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000006 /* WatchRunModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000007 /* WatchRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunView.swift; sourceTree = "<group>"; };
+		A10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000009 /* TroposWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = TroposWatch.entitlements; sourceTree = "<group>"; };
+		A1000000000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000000000000000000000B /* TroposWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TroposWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -32,14 +97,33 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		E1E54997B5329BE3F4BA6C58 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		E10000000000000000000004 /* LiveActivitiesBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivitiesBundle.swift; sourceTree = "<group>"; };
+		E10000000000000000000005 /* LiveActivitiesExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivitiesExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E10000000000000000000009 /* LiveActivities.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveActivities.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C10000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1000000000000000000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E10000000000000000000002 /* LiveActivitiesKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -51,6 +135,8 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				C1000000000000000000000B /* TroposWatch */,
+				E1000000000000000000000C /* LiveActivities */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,6 +145,8 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				A1000000000000000000000B /* TroposWatch.app */,
+				E10000000000000000000005 /* LiveActivitiesExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -68,6 +156,10 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				A10000000000000000000001 /* TroposBridgeViewController.swift */,
+				A10000000000000000000002 /* WatchRunPlugin.swift */,
+				A10000000000000000000003 /* WatchRunCoordinator.swift */,
+				A10000000000000000000004 /* HealthWorkoutStore.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -80,6 +172,29 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C1000000000000000000000B /* TroposWatch */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000005 /* TroposWatchApp.swift */,
+				A10000000000000000000006 /* WatchRunModel.swift */,
+				A10000000000000000000007 /* WatchRunView.swift */,
+				A10000000000000000000008 /* Info.plist */,
+				A10000000000000000000009 /* TroposWatch.entitlements */,
+				A1000000000000000000000A /* Assets.xcassets */,
+			);
+			path = TroposWatch;
+			sourceTree = "<group>";
+		};
+		E1000000000000000000000C /* LiveActivities */ = {
+			isa = PBXGroup;
+			children = (
+				E10000000000000000000004 /* LiveActivitiesBundle.swift */,
+				E10000000000000000000008 /* Info.plist */,
+				E10000000000000000000009 /* LiveActivities.entitlements */,
+			);
+			path = LiveActivities;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -90,10 +205,14 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				C10000000000000000000001 /* Embed Watch Content */,
+				E10000000000000000000007 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C1000000000000000000000A /* PBXTargetDependency */,
+				E1000000000000000000000D /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -102,6 +221,43 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C10000000000000000000005 /* TroposWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C10000000000000000000006 /* Build configuration list for PBXNativeTarget "TroposWatch" */;
+			buildPhases = (
+				C10000000000000000000002 /* Sources */,
+				C10000000000000000000004 /* Frameworks */,
+				C10000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TroposWatch;
+			productName = TroposWatch;
+			productReference = A1000000000000000000000B /* TroposWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E10000000000000000000010 /* LiveActivitiesExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E10000000000000000000011 /* Build configuration list for PBXNativeTarget "LiveActivitiesExtension" */;
+			buildPhases = (
+				E10000000000000000000012 /* Sources */,
+				E1000000000000000000000B /* Frameworks */,
+				E10000000000000000000013 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LiveActivitiesExtension;
+			packageProductDependencies = (
+				E1000000000000000000000A /* LiveActivitiesKit */,
+			);
+			productName = LiveActivitiesExtension;
+			productReference = E10000000000000000000005 /* LiveActivitiesExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -117,6 +273,14 @@
 						LastSwiftMigration = 1100;
 						ProvisioningStyle = Automatic;
 					};
+					C10000000000000000000005 = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+					};
+					E10000000000000000000010 = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */;
@@ -130,17 +294,28 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
+				E1000000000000000000000E /* XCLocalSwiftPackageReference "../../node_modules/capacitor-live-activities" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				C10000000000000000000005 /* TroposWatch */,
+				E10000000000000000000010 /* LiveActivitiesExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C10000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000008 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -156,18 +331,60 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E10000000000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C10000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000005 /* TroposWatchApp.swift in Sources */,
+				B10000000000000000000006 /* WatchRunModel.swift in Sources */,
+				B10000000000000000000007 /* WatchRunView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				B10000000000000000000001 /* TroposBridgeViewController.swift in Sources */,
+				B10000000000000000000002 /* WatchRunPlugin.swift in Sources */,
+				B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */,
+				B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E10000000000000000000012 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E10000000000000000000001 /* LiveActivitiesBundle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C1000000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C10000000000000000000005 /* TroposWatch */;
+			targetProxy = C10000000000000000000009 /* PBXContainerItemProxy */;
+		};
+		E1000000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E10000000000000000000010 /* LiveActivitiesExtension */;
+			targetProxy = E10000000000000000000006 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -189,6 +406,58 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		C10000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TroposWatch/TroposWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = TroposWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				WATCH_RUN_RELEASE_ENABLED = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		C10000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TroposWatch/TroposWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = TroposWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				WATCH_RUN_RELEASE_ENABLED = NO;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
@@ -306,6 +575,8 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				EXCLUDED_SOURCE_FILE_NAMES = TroposWatch.app;
+				INCLUDED_SOURCE_FILE_NAMES = "$(TROPOS_WATCH_EMBED_$(WATCH_RUN_RELEASE_ENABLED))";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -316,9 +587,17 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WATCH_RUN_RELEASE_ENABLED = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
+				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
+				TROPOS_WATCH_EMBED_YES = TroposWatch.app;
 			};
 			name = Debug;
 		};
@@ -329,6 +608,8 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				EXCLUDED_SOURCE_FILE_NAMES = TroposWatch.app;
+				INCLUDED_SOURCE_FILE_NAMES = "$(TROPOS_WATCH_EMBED_$(WATCH_RUN_RELEASE_ENABLED))";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -338,6 +619,64 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WATCH_RUN_RELEASE_ENABLED = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
+				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
+				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
+				TROPOS_WATCH_EMBED_YES = TroposWatch.app;
+			};
+			name = Release;
+		};
+		E10000000000000000000014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = LiveActivities/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.LiveActivities;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E10000000000000000000015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = LiveActivities/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.LiveActivities;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -347,6 +686,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C10000000000000000000006 /* Build configuration list for PBXNativeTarget "TroposWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C10000000000000000000007 /* Debug */,
+				C10000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -365,12 +713,25 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		E10000000000000000000011 /* Build configuration list for PBXNativeTarget "LiveActivitiesExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E10000000000000000000014 /* Debug */,
+				E10000000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "CapApp-SPM";
+		};
+		E1000000000000000000000E /* XCLocalSwiftPackageReference "../../node_modules/capacitor-live-activities" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../node_modules/capacitor-live-activities";
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -379,6 +740,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
+		};
+		E1000000000000000000000A /* LiveActivitiesKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1000000000000000000000E /* XCLocalSwiftPackageReference "../../node_modules/capacitor-live-activities" */;
+			productName = LiveActivitiesKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -390,7 +390,7 @@ describe("removeProfilePhoto", () => {
     for (const currentUser of [{ uid: "someone-else" }, null]) {
       H.auth.currentUser = currentUser;
       await expect(removeProfilePhoto(UID)).rejects.toThrow(
-        "Cannot remove another user's profile photo."
+        "Cannot remove another user’s profile photo."
       );
     }
     expect(writeLog()).toHaveLength(0);

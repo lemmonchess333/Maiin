@@ -103,7 +103,7 @@ export default function RaceCockpitCard({
   return (
     <section
       aria-label="Race plan"
-      className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
+      className="rounded-xl bg-card border border-border dark:border-0 p-4 space-y-4 card-shadow"
     >
       {/* "Edit run plan" drops under the heading, at the right, once the
           heading would be narrower than 9em (a long event name, or larger
@@ -162,7 +162,7 @@ export default function RaceCockpitCard({
 
       {hasProgress && (
         <div className="space-y-2">
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div className="h-2 rounded-full track-cut overflow-hidden">
             <div
               className="h-full rounded-full transition-all bg-running"
               style={{ width: `${progress}%` }}
@@ -230,9 +230,9 @@ export default function RaceCockpitCard({
           transient message and the persistent one agree. */}
       {belowFloor ? (
         <p className="text-xs text-muted-foreground">
-          Mostly-easy plan — there aren&apos;t enough weeks for a full build at
-          this distance, so every session is easy running, with no quality
-          sessions. Aim to finish strong, not to PR.
+          Mostly-easy plan — there aren’t enough weeks for a full build at this
+          distance, so every session is easy running, with no quality sessions.
+          Aim to finish strong, not to PR.
         </p>
       ) : (
         compressed && (

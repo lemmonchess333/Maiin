@@ -2,27 +2,25 @@
    TROPOS DESIGN SYSTEM — ANIMATIONS & MICRO-INTERACTIONS
 ============================================================= */
 
-/* ─── START RUN BUTTON — PULSE GLOW ────────────────────────── */
-@keyframes ds-run-pulse {
-  0%,
+/* ─── LIVE PULSE (Social's "Today: 14 sessions on Tropos") ────
+   A ring grows out of the dot and fades, every 2.4 s: transform and
+   opacity only (§14h), the Feed's one ambient loop, and only when motion
+   is welcome. PulseLine also leaves the ring out under Reduce Motion. */
+@keyframes ds-live-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  70%,
   100% {
-    box-shadow:
-      0 4px 16px rgba(232, 115, 22, 0.22),
-      0 0 0 0 rgba(232, 115, 22, 0);
-  }
-  50% {
-    box-shadow:
-      0 6px 22px rgba(232, 115, 22, 0.32),
-      0 0 0 6px rgba(232, 115, 22, 0.06);
+    transform: scale(2.6);
+    opacity: 0;
   }
 }
-
-.btn-start-run-pulse {
-  animation: ds-run-pulse 2.5s ease-in-out infinite;
-}
-.btn-start-run-pulse:active {
-  animation: none;
-  transform: scale(0.96);
+@media (prefers-reduced-motion: no-preference) {
+  .ds-live-pulse {
+    animation: ds-live-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
 }
 
 /* ─── SKELETON (LoadingSkeleton's `Skeleton`) ─────────────────

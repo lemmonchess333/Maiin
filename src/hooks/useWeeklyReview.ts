@@ -25,8 +25,14 @@ import { useAuth } from "@/lib/auth";
 import { weekKeyMinusN } from "@/lib/performanceEngine";
 import { localWeekKey } from "@/lib/dateHelpers";
 import {
+  probeHasDoc,
+  probeReviewEligibility,
+  reviewedWeekKey,
+} from "@/lib/reviewEligibility";
+import {
   buildWeeklyReview,
   weekBounds,
+  type WeekAheadPlan,
   type WeekBest,
   type WeeklyReview,
   type WeeklyReviewData,
@@ -57,18 +63,13 @@ import {
   resolveLoadBand,
 } from "@/lib/performanceDocFields";
 
-/** Monday key of the last COMPLETED week (the reviewed week). */
-export function reviewedWeekKey(now: Date = new Date()): string {
-  return weekKeyMinusN(localWeekKey(now), 1);
-}
-
-/** localStorage key for the Home entry's viewed state (useDismissOnce). */
-/* No uid segment: `useDismissOnce` prefixes one, and it is the only
-   consumer. Both surfaces that share this key (the Home entry reads it,
-   the review page writes it) go through that hook, so they stay in step. */
-export function reviewViewedKey(weekKey: string): string {
-  return `tropos-review-viewed:${weekKey}`;
-}
+/* The reviewed week, the viewed key and the eligibility probes live in
+   lib/reviewEligibility, which the Monday notification reads too. */
+export {
+  probeReviewEligibility,
+  reviewedWeekKey,
+  reviewViewedKey,
+} from "@/lib/reviewEligibility";
 
 /* Matches useUserPRMap's bound — ~3 months of heavy logging. The PR
  * baseline is honest within the same window the rest of the app uses. */
@@ -207,22 +208,6 @@ function eligCacheKey(uid: string, weekKey: string): string {
   return `tropos.review.elig:${uid}:${weekKey}`;
 }
 
-async function probeHasDoc(
-  uid: string,
-  coll: string,
-  start: string,
-  end: string | null
-): Promise<boolean> {
-  const parts = [
-    end === null ? where("date", "<", start) : where("date", ">=", start),
-  ];
-  if (end !== null) parts.push(where("date", "<=", end));
-  const snap = await getDocs(
-    query(collection(db, "users", uid, coll), ...parts, limit(1))
-  );
-  return !snap.empty;
-}
-
 /**
  * Would the review render for the reviewed week? "eligible" covers both
  * the normal AND quiet variants (quiet needs the established check).
@@ -251,24 +236,7 @@ export function useReviewEligibility(): {
     let cancelled = false;
     (async () => {
       try {
-        const { start, end } = weekBounds(weekKey);
-        const [w, r, m] = await Promise.all([
-          probeHasDoc(user.uid, "workouts", start, end),
-          probeHasDoc(user.uid, "runs", start, end),
-          probeHasDoc(user.uid, "meals", start, end),
-        ]);
-        let result: ReviewEligibility;
-        if (w || r || m) {
-          result = "eligible";
-        } else {
-          // Quiet variant: only for established users.
-          const [pw, pr, pm] = await Promise.all([
-            probeHasDoc(user.uid, "workouts", start, null),
-            probeHasDoc(user.uid, "runs", start, null),
-            probeHasDoc(user.uid, "meals", start, null),
-          ]);
-          result = pw || pr || pm ? "eligible" : "none";
-        }
+        const result = await probeReviewEligibility(user.uid, weekKey);
         if (!cancelled) {
           setEligibility(result);
           try {
@@ -295,6 +263,9 @@ export function useReviewEligibility(): {
 interface WeeklyReviewState {
   loading: boolean;
   review: WeeklyReview | null;
+  /** The plan's week under way, read whether or not there is a review:
+   *  the page shows it before a first review exists. */
+  weekAhead: WeekAheadPlan | null;
   weekKey: string;
   /** The read failed: not the same as a week with nothing to review. */
   failed: boolean;
@@ -311,6 +282,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
   const [state, setState] = useState<WeeklyReviewState>({
     loading: true,
     review: null,
+    weekAhead: null,
     weekKey,
     failed: false,
   });
@@ -498,8 +470,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           now: readAt,
         });
         const runPlan = programState?.runPlan as
-          | { phase?: string | null }
-          | undefined;
+          { phase?: string | null } | undefined;
         const phaseNote =
           surface.kind === "race_goal"
             ? runPlan?.phase
@@ -562,13 +533,20 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         setState({
           loading: false,
           review: buildWeeklyReview(data),
+          weekAhead: data.weekAhead,
           weekKey,
           failed: false,
         });
       } catch (err) {
         logger.error("[useWeeklyReview] fetch failed", err);
         if (!cancelled)
-          setState({ loading: false, review: null, weekKey, failed: true });
+          setState({
+            loading: false,
+            review: null,
+            weekAhead: null,
+            weekKey,
+            failed: true,
+          });
       }
     })();
     return () => {

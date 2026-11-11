@@ -1,7 +1,6 @@
 import { useId } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
   flamePaletteFor,
   type FlamePalette,
@@ -99,20 +98,11 @@ export function StreakFlame({
   celebrate,
   display,
 }: StreakFlameProps) {
-  // Sprint 6: opt-out for the infinite flicker loop. Bounce +
-  // celebrate are kept (they're brief one-shots — users with
-  // reduced-motion still benefit from the state-change cue),
-  // but the always-on flicker pulse is suppressed entirely so the
-  // chip becomes a static illustration rather than a perpetual
-  // distractor. MotionRoot's MotionConfig downgrades repeat:Infinity
-  // to a single iteration which still loops awkwardly, hence the
-  // explicit override.
-  //
-  // Hook order: useReducedMotion runs unconditionally before the
-  // streak guard. The previous early-return on streak<=0 was safe
-  // before because the component used no hooks; now it does, so
-  // hook order must be stable.
-  const reducedMotion = useReducedMotion();
+  // The flame stands still. It flickered forever (scale and rotate on a
+  // 1.8 s loop), a second ambient loop on Home beside the water glass
+  // (DESIGN_GUIDE §14h: one per surface) on a chip seen on every visit,
+  // running on the main thread. Bounce and celebrate stay: brief
+  // one-shots that mark a change.
   if (streak <= 0) return null;
 
   const palette = flamePaletteFor(streak);
@@ -127,35 +117,15 @@ export function StreakFlame({
           ? { duration: 0.3, ease: "easeOut" }
           : { type: "spring", stiffness: 300 }
       }
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card"
-      style={{
-        // Neutral drop-shadow — no tier colour in the shadow, so the
-        // only warm element on the chip is the flame itself. Matches
-        // Cal AI's approach.
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
-      }}
+      // A neutral edge, with no tier colour in it, so the only warm thing
+      // on the chip is the flame. Light: a soft drop and a faint outline.
+      // Dark: the chip's fill is 1.06:1 against the page it sits on and a
+      // dark shadow cannot show there, so it takes the lit edge.
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card shadow-[0_1px_3px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)] dark:chip-edge"
     >
-      <motion.span
-        animate={
-          reducedMotion
-            ? undefined
-            : {
-                // Combined flicker: scale breathes + gentle rotational wobble
-                // at a different frequency. Flame looks alive, never
-                // translucent.
-                scale: [0.93, 1.02, 0.96, 1, 0.93],
-                rotate: [-2, 2, -1, 1.5, -2],
-              }
-        }
-        transition={
-          reducedMotion
-            ? undefined
-            : { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
-        }
-        style={{ display: "inline-flex", transformOrigin: "50% 75%" }}
-      >
+      <span style={{ display: "inline-flex" }}>
         <FlameSvg palette={palette} size={18} />
-      </motion.span>
+      </span>
       <span
         className={cn(
           "text-sm font-bold font-mono tabular-nums leading-none text-foreground"

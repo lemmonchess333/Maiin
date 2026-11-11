@@ -224,7 +224,7 @@ describe("useSavedRoutes", () => {
       await result.current.remove("a");
     });
     expect(toastError).toHaveBeenCalledWith(
-      "Couldn't delete the route. Try again."
+      "Couldn’t delete the route. Try again."
     );
     expect(names(result.current.routes)).toEqual(["Canal loop"]);
   });

@@ -10,7 +10,8 @@ import {
   cancelRestEndNotification,
 } from "@/lib/restTimerNotification";
 import { formatClock } from "@/utils/formatters";
-import CompactRestTimer from "./CompactRestTimer";
+import { showRestOutside } from "@/lib/restOutside";
+import CompactRestTimer, { type RestNextSet } from "./CompactRestTimer";
 
 function playChime() {
   try {
@@ -50,12 +51,15 @@ export default function WorkoutRestTimer({
   startedAt,
   initialTarget,
   exerciseName,
+  next,
   onStop,
   onAnnounce,
 }: {
   startedAt: number;
   initialTarget: number;
   exerciseName?: string;
+  /** The set the rest leads to, named under the countdown. */
+  next?: RestNextSet;
   onStop: () => void;
   onAnnounce?: (words: string) => void;
 }) {
@@ -84,6 +88,13 @@ export default function WorkoutRestTimer({
           void scheduleRestEndNotification(delay, exerciseName);
       } else {
         void cancelRestEndNotification();
+        // A rest that ended while the app was away has said so already,
+        // on the lock screen or in the tab's title: coming back to it
+        // does not sound it again.
+        if (!chimeFired.current && elapsedSecondsSince(startedAt) >= target) {
+          chimeFired.current = true;
+          announce("Rest over");
+        }
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -92,6 +103,12 @@ export default function WorkoutRestTimer({
       void cancelRestEndNotification();
     };
   }, [startedAt, target, exerciseName]);
+
+  // The rest outside the app: the tab's title, and the lock screen.
+  useEffect(
+    () => showRestOutside({ startedAt, target, exerciseName }),
+    [startedAt, target, exerciseName]
+  );
 
   useEffect(() => {
     if (seconds >= target && !chimeFired.current) {
@@ -106,6 +123,7 @@ export default function WorkoutRestTimer({
     <CompactRestTimer
       seconds={seconds}
       target={target}
+      next={next}
       onStop={onStop}
       onExtend={(extra) => {
         // Re-arm an expired rest, without carrying its extension to the next.

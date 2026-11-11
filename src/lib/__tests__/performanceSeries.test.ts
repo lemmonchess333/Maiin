@@ -44,7 +44,9 @@ describe("weeklyPerformanceSeries", () => {
     // still inside that week stands for it.
     const { weeks, previous } = weeklyPerformanceSeries(daily(20, [7, 8]), 3);
     expect(previous?.weekKey).toBe(key(9));
-    expect(weeks.map((w) => w.weekKey)).toEqual([key(14), key(9), key(0)]);
+    // Each document scores seven days. The 14-day-old snapshot overlaps
+    // the 9-day-old one, so use the 16-day-old snapshot instead.
+    expect(weeks.map((w) => w.weekKey)).toEqual([key(16), key(9), key(0)]);
   });
 
   it("leaves an empty week out, and never lets an older week pose as last week", () => {
@@ -119,4 +121,22 @@ describe("documentsForWeeks", () => {
     expect(documentsForWeeks(0)).toBe(1);
     expect(documentsForWeeks(-3)).toBe(1);
   });
+});
+
+it("does not count consecutive sparse snapshots as separate weeks", () => {
+  const { weeks } = weeklyPerformanceSeries([doc(14), doc(13), doc(0)], 3);
+  expect(weeks.map((w) => w.weekKey)).toEqual([key(13), key(0)]);
+});
+
+it("keeps every selected pair at least seven calendar days apart", () => {
+  for (let missing = 1; missing <= 12; missing++) {
+    const docs = daily(90).filter((_, index) => index % missing !== 0);
+    const { weeks } = weeklyPerformanceSeries(docs, 12);
+    for (let i = 1; i < weeks.length; i++) {
+      const nextAllowed = localDateString(
+        addLocalDays(parseLocalDate(weeks[i - 1].weekKey), 7)
+      );
+      expect(weeks[i].weekKey >= nextAllowed).toBe(true);
+    }
+  }
 });

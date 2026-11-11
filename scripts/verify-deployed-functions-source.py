@@ -23,7 +23,10 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
+    "onFollowerCreated", "onFollowRequestCreated",
     "onBlockWritten", "onPublicProfileIdentityChanged",
+    "onChallengeParticipantWritten", "onRaceGoalWritten",
+    "onFollowerEdgeWritten", "onFollowingEdgeWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -64,7 +67,8 @@ def source_targets():
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
-                      "lib/accountDeletionStatus.js", "lib/commentReactions.js"]
+                      "lib/accountDeletionStatus.js", "lib/commentReactions.js",
+                      "lib/leagues.js"]
     challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
                        "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",
@@ -77,6 +81,22 @@ def source_targets():
                                 "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
     circle_paths = ["index.js", "package-lock.json", "lib/goalSpaceMembership.js",
                     "lib/restriction.js", "lib/accountDeletionLocks.js"]
+    report_paths = ["index.js", "lib/reportTargets.js", "lib/postPhotos.js", "lib/routeMapFiles.js"]
+    invite_paths = ["index.js", "package-lock.json", "lib/inviteCodes.js",
+                    "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                    "lib/restriction.js", "lib/accountDeletionLocks.js"]
+    # Soc15 call 3: the leagues' one writer, its rules and its planned count.
+    league_lib = ["lib/leagues.js", "lib/leagueRules.js", "lib/leaguePlanned.js"]
+    # Soc15: the live pulse's one writer, and the deletion guard it reads.
+    pulse_lib = ["lib/pulse.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"]
+    follow_count_paths = ["index.js", "package-lock.json", "lib/followCounts.js",
+                          "lib/raceCohorts.js", "lib/spaceIds.js",
+                          "lib/deletionTransactionGuard.js",
+                          "lib/accountDeletionStatus.js", "lib/triggerRetry.js"]
+    league_paths = ["index.js", "package-lock.json"] + league_lib + [
+                    "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
+                    "lib/accountDeletionStatus.js", "lib/restriction.js",
+                    "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -85,7 +105,11 @@ def source_targets():
         "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
-        "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
+        # A reported post's preview carries its photos (Soc15 call 2), so the
+        # queue's reader and the hide action read back the same resolver.
+        "createReport": report_paths + ["lib/reportAlert.js"],
+        "listPendingReports": report_paths,
+        "resolveReport": report_paths,
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js", "lib/spacePostPhoto.js"],
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
@@ -100,6 +124,11 @@ def source_targets():
         # Who has blocked each account, the copy the blocked person's app reads.
         "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
                            "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],
+        # How many follow an account and how many it follows: the one
+        # writer of followCounts, the freshness rule it shares with the
+        # race counts, and the deletion freeze its transaction reads.
+        "onFollowerEdgeWritten": follow_count_paths,
+        "onFollowingEdgeWritten": follow_count_paths,
         # A Circle's invite code expires, and its owner replaces it.
         "joinGoalSpace": circle_paths,
         "renewGoalSpaceInviteCode": circle_paths,
@@ -108,6 +137,16 @@ def source_targets():
         "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
                                "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
                                "lib/restriction.js", "lib/accountDeletionLocks.js"],
+        # Soc15 invites: the one writer of follows both ways from a code, and
+        # of the codes themselves, with the checks it holds them to.
+        "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],
+        "getInviteCode": invite_paths,
+        # Soc15 call 3: weekly leagues. The turn settles, forms and notifies;
+        # the callable joins and leaves; the session triggers below keep each
+        # standing current.
+        "weeklyLeagueTurn": league_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js",
+                                            "lib/discoveryHidden.js"],
+        "setLeagueSharing": league_paths,
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
@@ -117,27 +156,41 @@ def source_targets():
         "liftRestriction": ["index.js"],
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
-        "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"],
+        "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"]
+                        + league_lib + pulse_lib,
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
-        "onWorkoutCreated": training_paths + challenge_paths[2:],
-        "onWorkoutUpdated": training_paths + challenge_paths[2:],
+        "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib + pulse_lib,
+        "onWorkoutUpdated": training_paths + challenge_paths[2:] + league_lib,
         # Monthly rotation and participation must execute the same source that
         # passed CI, including the new active-day/minute recomputation helper.
         # Checking index.js alone misses a stale independently changed library.
         "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
         "onChallengeParticipantCreated": challenge_paths,
-        "onRunUpdated": challenge_paths,
+        # Soc15: the one writer of medals and the public trophy case.
+        "onChallengeParticipantWritten": ["index.js", "package-lock.json", "lib/medals.js",
+                                          "lib/challengeActivityWindow.js", "lib/dateUtils.js",
+                                          "lib/deletionTransactionGuard.js",
+                                          "lib/accountDeletionStatus.js", "lib/triggerRetry.js",
+                                          "lib/accountDeletionLocks.js"],
+        "onRunUpdated": challenge_paths + league_lib,
         # The reversal is what a delete runs, and it fails the event when it
         # does not land so the retry can apply it.
         "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"],
+                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
         "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
-                                              "lib/triggerRetry.js"],
+                                              "lib/triggerRetry.js"] + league_lib + pulse_lib,
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
-        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
-        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js"],
+        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
+                              "lib/discoveryHidden.js"],
+        # A deleted post leaves the feeds, and its map files and photos go with it.
+        "onActivityDeleted": ["index.js", "package-lock.json", "lib/socialFanout.js",
+                              "lib/routeMapFiles.js", "lib/postPhotos.js"],
+        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
+        "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js",
+                              "lib/followBackfill.js", "lib/feedIndex.js"],
+        "onFollowRequestCreated": ["index.js", "package-lock.json", "lib/socialFanout.js"],
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.
         "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",
@@ -148,6 +201,12 @@ def source_targets():
         # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
         "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
                                          "lib/raceDayCompletion.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
+        # Soc15 plan groups: the one writer of raceCohorts, on a race goal's
+        # write and each night, and the space ids it counts.
+        "onRaceGoalWritten": ["index.js", "package-lock.json", "lib/raceCohorts.js",
+                              "lib/spaceIds.js", "lib/triggerRetry.js"],
+        "dailyRaceCohortRecount": ["index.js", "package-lock.json", "lib/raceCohorts.js",
+                                   "lib/spaceIds.js", "lib/jobRuns.js"],
         # Native APNs alerts share the existing send/ownership path. Every
         # executing sender and callable must have the new source, not only
         # the newly introduced monthly schedule.

@@ -20,12 +20,12 @@ const repoRoot = resolve(
 const read = (rel: string) => readFileSync(resolve(repoRoot, rel), "utf8");
 
 describe("rest between sets", () => {
-  it("an untouched setting reads the plan's suggestion", () => {
+  it("an untouched setting reads the plan’s suggestion", () => {
     expect(read("src/pages/settings/SettingsWorkoutPrefs.tsx")).toMatch(
       /defaultRestSeconds \?\? 0/
     );
     expect(read("src/components/settings/WorkoutPrefsSection.tsx")).toMatch(
-      /<option value=\{0\}>Plan's suggestion<\/option>/
+      /<option value=\{0\}>Plan’s suggestion<\/option>/
     );
   });
 

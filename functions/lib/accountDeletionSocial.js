@@ -57,6 +57,24 @@ async function removeCountedEdge({ firestore, ref, parent, counter }) {
   });
 }
 
+/** Takes a deleted account's name and photo off a post that named them
+ *  among the givers of its props (socialCounters.toggleKudos). Their
+ *  kudos edge goes with the legacy scan below, which moves the count. */
+async function removePropsGiver({ firestore, ref, uid }) {
+  await firestore.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const data = snap.data();
+    const givers = Array.isArray(data.recentPropsBy) ? data.recentPropsBy : [];
+    const uids = Array.isArray(data.recentPropsByUids) ? data.recentPropsByUids : [];
+    if (!uids.includes(uid) && !givers.some((g) => g && g.uid === uid)) return;
+    tx.update(ref, {
+      recentPropsBy: givers.filter((g) => !g || g.uid !== uid),
+      recentPropsByUids: uids.filter((value) => value !== uid),
+    });
+  });
+}
+
 /**
  * Cross-user erasure, including old records that predate membership indexes.
  * All scans are paged and checkpointed. In particular, a collection-group
@@ -122,6 +140,9 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
       });
     }
   }
+  await scan("props_givers", firestore.collection("activities")
+    .where("recentPropsByUids", "array-contains", uid), (doc) =>
+    removePropsGiver({ firestore, ref: doc.ref, uid }));
   // These old edges have the UID only in the document ID. Scan references,
   // not profile/content fields, and resume after the last committed edge.
   await scan("legacy_users", firestore.collectionGroup("users").select(), async (doc) => {
@@ -202,9 +223,9 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
   // billing tombstones keep what refunds need.
   await scan("checkout_audit", firestore.collection("audit_checkout_sessions")
     .where("uid", "==", uid), (doc) => doc.ref.delete());
-  // The Apple webhook's record of each notification it applied to this
-  // account (appleIAP.js), kept so a redelivery is skipped. Without it a
-  // late redelivery finds no binding and is recorded without a uid.
+  // Records of App Store notifications applied to this account, from
+  // before purchases went through RevenueCat. Nothing writes them now,
+  // but the ones that exist carry the uid.
   await scan("apple_notifications", firestore.collection("appleNotifications")
     .where("uid", "==", uid), (doc) => doc.ref.delete());
   // A comment the profanity filter removed (onCommentCreated) kept its
@@ -229,4 +250,10 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
   await firestore.doc(`globalRestrictedUids/${uid}`).delete();
 }
 
-module.exports = { cleanupSocial, anonymiseComment, removeReaction, removeCountedEdge };
+module.exports = {
+  cleanupSocial,
+  anonymiseComment,
+  removeReaction,
+  removeCountedEdge,
+  removePropsGiver,
+};

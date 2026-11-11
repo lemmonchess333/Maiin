@@ -4,13 +4,13 @@
   "width": 520,
   "height": 1240,
   "decision": "approved",
-  "reviewer": "Codex native and mobile visual review",
-  "reviewedAt": "2026-10-05T09:55:08.681Z",
+  "reviewer": "Codex native and phone-size cue re-review",
+  "reviewedAt": "2026-10-27T01:36:37.000Z",
   "reference": {
     "path": "form-frames/cuban-press/1.webp",
     "sha256": "8b18ad96b233bf2435842db651cc18761263c054416d50167917528eb40da8d5"
   },
-  "cueSha256": "9467e71b73c878d0cfaf55ff4c6f23bb7d385a0a3757f94eb4b9505f97824257",
+  "cueSha256": "6ca1db7eef3212db3f1943abaf75a29ffaf0c0af36d058e758a54d17f3593999",
   "checks": {
     "identity": {
       "passed": true,
@@ -42,7 +42,7 @@
     },
     "cueAgreement": {
       "passed": true,
-      "evidence": "Six cues at most seven words agree with Set,Row,Rotate,Press,Lower,Reverse and complete the catalogue sequence."
+      "evidence": "Re-reviewed all six poses at source resolution and 360px phone size on 2026-10-27. The setup frame has both dumbbells beside the thighs, so the Set cue and catalogue instruction now say beside rather than in front. The remaining Row, Rotate, Press, Lower and Reverse cues still match their frames and complete the sequence."
     },
     "sequenceAndLoop": {
       "passed": true,

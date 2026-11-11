@@ -145,7 +145,7 @@ describe("TodayEnergy — the Food page's ring and tiles", function () {
     renderAt(A_DAY);
     expect(screen.getByRole("heading", { name: "Food" })).toBeInTheDocument();
     expect(
-      screen.getByRole("region", { name: "Today's food" })
+      screen.getByRole("region", { name: "Today’s food" })
     ).toBeInTheDocument();
   });
 });
@@ -426,11 +426,11 @@ describe("TodayEnergy food read failures", () => {
   it("does not turn an unsuccessful empty read into remaining calories", () => {
     const retry = vi.fn();
     renderAt({
-      mealsError: "Couldn't load your food diary.",
+      mealsError: "Couldn’t load your food diary.",
       onRetryMeals: retry,
     });
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your food diary."
+      "Couldn’t load your food diary."
     );
     expect(screen.queryByRole("button", { name: / calories / })).toBeNull();
     expect(document.querySelector("[data-macro]")).toBeNull();
@@ -442,7 +442,7 @@ describe("TodayEnergy food read failures", () => {
   it("labels available totals as stale and suppresses a fresh recovery recommendation", () => {
     renderAt({
       ...A_DAY,
-      mealsError: "Couldn't load your food diary.",
+      mealsError: "Couldn’t load your food diary.",
       postWorkoutNudge: { type: "lift", proteinRemaining: 80 },
     });
     expect(

@@ -41,15 +41,31 @@ export function scaleQuickMeal(
 }
 
 /** The retry identity is retained until this phone has accepted the write. */
-export async function saveQuickMeal(uid: string, meal: QuickAddItem, date: string, slot?: string | null) {
+export async function saveQuickMeal(
+  uid: string,
+  meal: QuickAddItem,
+  date: string,
+  slot?: string | null
+) {
   if (meal.example) throw new Error("Describe your own meal before logging.");
   const payload = buildQuickAddMealPayload(meal);
-  const data = stripUndefined({ date, foodName: payload.foodName, items: payload.items,
-    totalCalories: meal.cal, totalProtein: meal.pro, totalCarbs: meal.carb, totalFat: meal.fat,
-    confidence: "quick-add", ...(slot ? { meal: slot } : {}) });
+  const data = stripUndefined({
+    date,
+    foodName: payload.foodName,
+    items: payload.items,
+    totalCalories: meal.cal,
+    totalProtein: meal.pro,
+    totalCarbs: meal.carb,
+    totalFat: meal.fat,
+    confidence: "quick-add",
+    ...(slot ? { meal: slot } : {}),
+  });
   const key = scopedKey(`tropos-quick-meal-retry:${JSON.stringify(data)}`, uid);
   const id = readString(key) ?? crypto.randomUUID();
-  if (!writeString(key, id)) throw new Error("Couldn't keep this entry for retry. Check device storage.");
+  if (!writeString(key, id))
+    throw new Error(
+      "Couldn’t keep this entry for retry. Check device storage."
+    );
   await createMealEntry(uid, { ...data, createdAt: Timestamp.now() }, id);
   remove(key);
   return () => undoMealEntries(uid, [id]);

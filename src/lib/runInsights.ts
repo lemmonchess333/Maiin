@@ -212,7 +212,12 @@ export function bestEfforts(
   window: Window
 ): BestEffortRow[] {
   const eligible = runs
-    .filter((r) => isPaceEligible(r) && (r.kmSplitSeconds?.length ?? 0) > 0)
+    .filter(
+      (r) =>
+        isPaceEligible(r) &&
+        runEvidenceDate(r) <= window.todayKey &&
+        (r.kmSplitSeconds?.length ?? 0) > 0
+    )
     .sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
   const rows: BestEffortRow[] = [];
   for (const km of BEST_EFFORT_KM) {
@@ -265,8 +270,8 @@ export interface RunningPageInsight {
  * Everything the Running page reads from a user's runs, in one place.
  *
  * `allRuns` is the one-shot read of every run; `windowRuns` the live
- * listener on the range, laid over it by id so a run saved after the
- * one-shot read still counts. Anything that says "ever", or needs the
+ * listener on the range, replacing that date span from the older read.
+ * This includes additions and edits without resurrecting deleted runs. Anything that says "ever", or needs the
  * user's first run, waits for `allRunsKnown`: until then the window's
  * runs are all there is, and best efforts built from them would call the
  * range's best the best ever (a 56:56 long-run 10K, "New best", with a
@@ -290,7 +295,12 @@ export function runningPageInsight({
   todayKey: string;
   bins: readonly SummaryBin[];
 }): RunningPageInsight {
-  const byId = new Map(allRuns.map((r) => [r.id, r]));
+  // The live window is the current list for this span, not a patch. Keeping
+  // absent IDs from the older read would bring deleted runs back into totals
+  // and records even after the distance chart has removed them.
+  const byId = new Map(
+    allRuns.filter((r) => runEvidenceDate(r) < sinceKey).map((r) => [r.id, r])
+  );
   for (const r of windowRuns) byId.set(r.id, r);
   const runs = [...byId.values()];
   let firstRunKey: string | null = null;

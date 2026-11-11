@@ -1,0 +1,302 @@
+{
+  "exerciseId": "man-maker",
+  "version": "anatomy-v4-2026-10-27-fixed-camera-composite-v1",
+  "width": 700,
+  "height": 920,
+  "decision": "approved",
+  "reviewer": "Codex source-resolution and 390px Chromium review",
+  "reviewedAt": "2026-10-27T13:14:38Z",
+  "reference": {
+    "path": "form-frames/man-maker/2026-10-27/4.webp",
+    "sha256": "0c2130a174e0ba15180b46173c277e8d66064a9c8794c4531caad9ebd0c4c84b"
+  },
+  "cueSha256": "0fd97b62b792938d85d607cc3f45ad5656fbd20c2b5c99901159e090da867db5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "The six side-view frames keep the same faceless white-grey anatomy model, white trainers, and purple muscle hierarchy. Source and 390px playback reviewed."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All six delivered frames share one 700x920 portrait canvas and one fixed app camera. The press shoe and reset dumbbell layers use source-canvas coordinates inside the same centered inner canvas; the camera does not move between phases."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Viewed the full six-pose loop at source and 390px size: straight push-up, alternating braced rows, squat rack, standing overhead press, and crouched return. Both hands and separate weights remain readable."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Exactly two separate dumbbells are visible. The frame-6 displayed outer ends are exact stationary frame-1 pixels, while moving handles, hands, and body remain from frame 6."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "The displayed frame-5 lower 130px is exactly frame 4, retaining both complete planted shoes. Frame-6 displayed grounded dumbbell ends are exact frame-1 crops. Raw frame 5 and raw frame 6 alone do not satisfy those contact claims; runtime layers are required and tested."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The push-up leads to alternating rows, feet step forward for the squat clean, legs extend for the overhead press, and the return crouch precedes the first push-up. Every still has supported feet or grounded dumbbells."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest, shoulders and upper back use strong purple; core and thighs use pale lilac across the six figures. The highlighted regions remain attached to the same anatomy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The six unchanged authored cues match the reviewed push-up, two rows, squat clean, overhead press, and reset images in order."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six different source poses play in order with one fixed canvas. The bent return pose leads into the first grounded push-up; adjacent stills and 6-to-1 handoff were reviewed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six rendered phases and the 6-to-1 handoff were reviewed in the 390px Chromium guide with light theme on 27 October 2026. Complete shoes, weights and caption are visible."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six rendered phases and the 6-to-1 handoff were reviewed in the 390px Chromium guide with dark theme on 27 October 2026. Complete shoes, weights and caption are visible."
+    }
+  },
+  "airborneFrames": [],
+  "contactPhases": [
+    {
+      "name": "Near dumbbell grounded",
+      "frames": [
+        1,
+        2,
+        6
+      ],
+      "referenceFrame": 1,
+      "anchorNames": [
+        "nearEndChordTop",
+        "nearEndChordBottom"
+      ],
+      "dimensionNames": [
+        "nearEndHeight",
+        "nearEndVerticalChord"
+      ],
+      "evidence": "Displayed near dumbbell end stays fixed in frames 1, 2 and 6; frame 6 composites the exact frame-1 outer end. Hand and handle are supplied by the frame-6 body."
+    },
+    {
+      "name": "Far dumbbell grounded",
+      "frames": [
+        1,
+        3,
+        6
+      ],
+      "referenceFrame": 1,
+      "anchorNames": [
+        "farEndChordTop",
+        "farEndChordBottom"
+      ],
+      "dimensionNames": [
+        "farEndHeight",
+        "farEndVerticalChord"
+      ],
+      "evidence": "Displayed far dumbbell end stays fixed in frames 1, 3 and 6; frame 6 composites the exact frame-1 outer end. Hand and handle are supplied by the frame-6 body."
+    },
+    {
+      "name": "Clean to press feet",
+      "frames": [
+        4,
+        5
+      ],
+      "referenceFrame": 4,
+      "anchorNames": [
+        "farSoleChordLeft",
+        "nearSoleChordLeft"
+      ],
+      "dimensionNames": [
+        "farSoleChordWidth",
+        "nearSoleChordWidth"
+      ],
+      "evidence": "Displayed frame-5 lower band (source y790..919) is exactly frame 4, preserving both entire shoes and source-pixel floor contact. Measurements are from displayed frames, not the raw frame-5 WebP."
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/man-maker/1.webp",
+      "sha256": "e0dd51ac354c36ba2334536467d424986896461ec7cd86aca7f959698523badf",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "path": "form-frames/man-maker/2.webp",
+      "sha256": "624aa3d6ef86ae6ea37651e77b2b841ac1038b21ec9d6051961bd836dcacfe98",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39
+      }
+    },
+    {
+      "path": "form-frames/man-maker/3.webp",
+      "sha256": "2d40b83660bea15c5aa1e641577ecff7ec685c23dcdd23e9ed98e9c918609a87",
+      "anchors": {
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "path": "form-frames/man-maker/2026-10-27/4.webp",
+      "sha256": "0c2130a174e0ba15180b46173c277e8d66064a9c8794c4531caad9ebd0c4c84b",
+      "anchors": {
+        "farSoleChordLeft": {
+          "x": 232,
+          "y": 810
+        },
+        "nearSoleChordLeft": {
+          "x": 285,
+          "y": 845
+        }
+      },
+      "invariantDimensions": {
+        "farSoleChordWidth": 88,
+        "nearSoleChordWidth": 115
+      },
+      "source": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/4-squat.png",
+        "sha256": "72ad61938a76ef3f71f1c726ae3a049a4138283035c21d9e19f0370e3bf8fbac"
+      }
+    },
+    {
+      "path": "form-frames/man-maker/2026-10-27/5.webp",
+      "sha256": "b1c4713631d2b2e2e2f4da2f25f516059cadf879a0d30d5a9a0ec3d870540177",
+      "anchors": {
+        "farSoleChordLeft": {
+          "x": 232,
+          "y": 810
+        },
+        "nearSoleChordLeft": {
+          "x": 285,
+          "y": 845
+        }
+      },
+      "invariantDimensions": {
+        "farSoleChordWidth": 88,
+        "nearSoleChordWidth": 115
+      },
+      "source": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/5-press.png",
+        "sha256": "3a70070ce753a889bb6f7a2d2f494e2f6035ea7ab92344e0f374d4b35ac58e99"
+      }
+    },
+    {
+      "path": "form-frames/man-maker/2026-10-27/6.webp",
+      "sha256": "0e7ee904114221fe82316191746e5ec9f166d30ff533217912f1d1f2b89c319b",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      },
+      "source": {
+        "path": "docs/exercise-art/releases/2026-10-27/man-maker-sources/6-return.png",
+        "sha256": "ab47d8b3390583113316610e4bb87196c1d16d6539b544079e570d1739e63011"
+      }
+    }
+  ],
+  "displayComposition": {
+    "required": true,
+    "implementation": "src/lib/formArtComposites.ts + src/components/ExerciseFormFrames.tsx",
+    "canvas": {
+      "width": 700,
+      "height": 920
+    },
+    "layers": [
+      {
+        "targetFrame": 5,
+        "sourceFrame": 4,
+        "rect": {
+          "left": 0,
+          "top": 790,
+          "width": 700,
+          "height": 130
+        },
+        "purpose": "complete fixed shoes and floor"
+      },
+      {
+        "targetFrame": 6,
+        "sourceFrame": 1,
+        "rect": {
+          "left": 40,
+          "top": 790,
+          "width": 55,
+          "height": 70
+        },
+        "purpose": "far stationary dumbbell end"
+      },
+      {
+        "targetFrame": 6,
+        "sourceFrame": 1,
+        "rect": {
+          "left": 165,
+          "top": 805,
+          "width": 65,
+          "height": 75
+        },
+        "purpose": "near stationary dumbbell end"
+      }
+    ],
+    "rawAssetLimitation": "Raw frame 5 shifts its shoes and raw frame 6 shifts grounded dumbbell ends. The exact-contact measurements apply only to the displayed composites."
+  }
+}

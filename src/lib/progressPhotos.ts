@@ -319,7 +319,7 @@ async function compress(file: File): Promise<Blob> {
       )
     );
   } catch {
-    throw new Error("Couldn't read that image. Try a different photo.");
+    throw new Error("Couldn’t read that image. Try a different photo.");
   }
 }
 
@@ -351,7 +351,7 @@ export async function uploadProgressPhoto(
     ));
   } catch {
     throw new Error(
-      "Couldn't encrypt the photo on this device. The upload was cancelled to keep it private. Try again."
+      "Couldn’t encrypt the photo on this device. The upload was cancelled to keep it private. Try again."
     );
   }
 
@@ -373,7 +373,7 @@ export async function uploadProgressPhoto(
   } catch (err) {
     // No document points at the file, so nothing could show or delete it.
     await deleteObject(fileRef).catch(() => undefined);
-    throw err instanceof Error ? err : new Error("Couldn't save the photo.");
+    throw err instanceof Error ? err : new Error("Couldn’t save the photo.");
   }
 
   return {

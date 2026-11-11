@@ -17,7 +17,11 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const challengeParticipation = require("../lib/challengeParticipationProgress");
 const friendsBoard = require("../lib/friendsBoard");
+const leagues = require("../lib/leagues");
 const activityReversal = require("../lib/activityReversal");
+const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
+const communityGoal = require("../lib/communityGoal");
+const pulse = require("../lib/pulse");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -55,6 +59,10 @@ beforeEach(() => {
     "reconcileParticipationChallenges"
   ).mockResolvedValue(undefined);
   vi.spyOn(friendsBoard, "refreshBoardWeek").mockResolvedValue(undefined);
+  vi.spyOn(leagues, "refreshLeagueStanding").mockResolvedValue({
+    written: false,
+  });
+  vi.spyOn(healthWorkoutLedger, "markDeletedRun").mockResolvedValue(false);
   vi.spyOn(
     activityReversal,
     "reverseChallengeProgressForSource"
@@ -66,7 +74,23 @@ beforeEach(() => {
       reversed.push("lifetime");
     }
   );
+  vi.spyOn(communityGoal, "reverseRunFromCommunityGoals").mockImplementation(
+    async () => {
+      reversed.push("community goal");
+    }
+  );
+  vi.spyOn(pulse, "reverseSessionFromPulse").mockImplementation(async () => {
+    reversed.push("pulse");
+  });
 });
+
+/* A run also comes off the community goal; a workout never went on it.
+   Both come off the live pulse (Soc15). */
+const all = (name) =>
+  name === "onRunDeleted"
+    ? ["challenges", "community goal", "lifetime", "pulse"]
+    : ["challenges", "lifetime", "pulse"];
+const without = (name, step) => all(name).filter((s) => s !== step);
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -74,9 +98,12 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
   const deliver = (timestamp = NOW) =>
     trigger.run(snapOf(data), { params, timestamp });
 
-  it("resolves once both reversals land", async () => {
+  it("resolves once every reversal lands", async () => {
     await expect(deliver()).resolves.toBeNull();
-    expect(reversed).toEqual(["challenges", "lifetime"]);
+    expect(reversed).toEqual(all(_name));
+    expect(healthWorkoutLedger.markDeletedRun).toHaveBeenCalledTimes(
+      _name === "onRunDeleted" ? 1 : 0
+    );
   });
 
   it("fails the event when the challenge reversal fails, after still reversing the lifetime total", async () => {
@@ -84,7 +111,7 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
       new Error("ABORTED")
     );
     await expect(deliver()).rejects.toThrow(/challenges failed/);
-    expect(reversed).toEqual(["lifetime"]);
+    expect(reversed).toEqual(without(_name, "challenges"));
   });
 
   it("fails the event when the lifetime reversal fails", async () => {
@@ -92,7 +119,34 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
       new Error("ABORTED")
     );
     await expect(deliver()).rejects.toThrow(/lifetime .* failed/);
-    expect(reversed).toEqual(["challenges"]);
+    expect(reversed).toEqual(without(_name, "lifetime"));
+  });
+
+  it.runIf(_name === "onRunDeleted")(
+    "fails the event when the community goal reversal fails, after the others land",
+    async () => {
+      communityGoal.reverseRunFromCommunityGoals.mockRejectedValueOnce(
+        new Error("ABORTED")
+      );
+      await expect(deliver()).rejects.toThrow(/community goal failed/);
+      expect(reversed).toEqual(["challenges", "lifetime", "pulse"]);
+    }
+  );
+
+  it("fails the event when the pulse reversal fails, after the others land", async () => {
+    pulse.reverseSessionFromPulse.mockRejectedValueOnce(new Error("ABORTED"));
+    await expect(deliver()).rejects.toThrow(/pulse failed/);
+    expect(reversed).toEqual(without(_name, "pulse"));
+    expect(pulse.reverseSessionFromPulse).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        uid: UID,
+        kind: _name === "onRunDeleted" ? "run" : "workout",
+        sessionId: _name === "onRunDeleted" ? "r1" : "w1",
+        // The event's own time, the same on every redelivery.
+        nowMs: Date.parse(NOW),
+      })
+    );
   });
 
   it("drops an event past the retry window without touching anything", async () => {

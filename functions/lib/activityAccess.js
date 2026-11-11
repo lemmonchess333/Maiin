@@ -1,4 +1,5 @@
 "use strict";
+const { isBlockedBetweenInTransaction } = require("./blockGuard");
 const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 
 /**
@@ -35,12 +36,20 @@ function notAccessible() {
  * @param {FirebaseFirestore.DocumentReference} args.activityRef
  * @param {string} args.uid
  */
-async function assertCanInteractWithActivity({ tx, firestore, activityRef, uid }) {
+async function assertCanInteractWithActivity({
+  tx, firestore, activityRef, uid, allowBlockedRemoval = false,
+}) {
   const activitySnap = await tx.get(activityRef);
   if (!activitySnap.exists) throw notAccessible();
 
   const activity = activitySnap.data() || {};
   await assertTransactionAccountsLive({ firestore, tx, uids: [uid, activity.authorId] });
+  if (
+    !allowBlockedRemoval &&
+    await isBlockedBetweenInTransaction(tx, firestore, activity.authorId, uid)
+  ) {
+    throw notAccessible();
+  }
   if (activity.authorId === uid || activity.visibility === "public") {
     return activity;
   }
@@ -65,4 +74,4 @@ async function assertCanInteractWithActivity({ tx, firestore, activityRef, uid }
   return activity;
 }
 
-module.exports = { assertCanInteractWithActivity };
+module.exports = { assertCanInteractWithActivity, notAccessible };

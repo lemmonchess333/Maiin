@@ -18,7 +18,14 @@
  * app handle.
  */
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import {
+  connectAuthEmulator,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+} from "firebase/auth";
+import { isNativePlatform } from "@/lib/platform";
+import { traceBoot } from "@/lib/bootTrace";
 import { logger } from "@/lib/logger";
 import { registerNativeAppCheck } from "@/lib/appCheckNative";
 import { initAppCheck } from "@/lib/appCheck";
@@ -43,6 +50,9 @@ if (!firebaseConfig.apiKey && import.meta.env.VITE_USE_EMULATORS !== "true") {
   );
 }
 
+traceBoot(
+  `Firebase config ${firebaseConfig.apiKey ? "present" : "MISSING"}, project ${firebaseConfig.projectId || "none"}`
+);
 export const app = initializeApp(firebaseConfig);
 
 // App Check runs BEFORE Firestore / Storage / Functions handles are
@@ -51,8 +61,10 @@ export const app = initializeApp(firebaseConfig);
 // That ordering still holds after the split: `firebase.ts` imports this
 // module, so this file's body runs to completion before any of those
 // handles exist. See src/lib/appCheck.ts for the web / native split.
+traceBoot("App Check starting");
 registerNativeAppCheck();
 initAppCheck(app);
+traceBoot("App Check started");
 
 // Analytics provider — the delivery backend behind analyticsClient.emit().
 // Web-only, lazily loaded, and a no-op unless VITE_FIREBASE_MEASUREMENT_ID
@@ -63,7 +75,19 @@ initAnalytics(app);
 // mobile-first app and a session that survives an app restart is the
 // expected behaviour. Destructive actions (account deletion) re-authenticate
 // on their own path rather than by shortening the session.
-export const auth = getAuth(app);
+//
+// Inside the iPhone app it is set up without the popup and redirect helper.
+// `getAuth` brings that helper, which waits on a frame from the auth domain
+// that never loads in the app's web view, so the first sign-in state never
+// arrives and the app sits on its startup spinner (first TestFlight build,
+// 2026-11-08). The app signs in natively (nativeAuth.ts →
+// signInWithCredential) and needs no popup. The persistence is the same
+// IndexedDB store `getAuth` would have picked, so a session still survives a
+// restart. `getAuth` elsewhere returns this same instance.
+export const auth = isNativePlatform()
+  ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
+  : getAuth(app);
+traceBoot(`Sign-in set up (${isNativePlatform() ? "iPhone app" : "web"})`);
 
 // Emulator wiring for AUTH only; the data services connect in `firebase.ts`
 // beside the handles they belong to. Each service connects at its own

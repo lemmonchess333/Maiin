@@ -31,17 +31,37 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
+const activationCohort = require("./lib/activationCohort");
+const weeklyRecap = require("./lib/weeklyRecap");
+const activationBilling = require("./lib/activationBilling");
+const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
+const runRename = require("./lib/runRename");
+const followRemoval = require("./lib/followRemoval");
+const followBackfill = require("./lib/followBackfill");
+const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
+// Soc15 call 3: weekly leagues, scored against each person's own plan.
+const leagues = require("./lib/leagues");
+const leagueRules = require("./lib/leagueRules");
+// Soc15: a medal per challenge edition, and the public trophy case.
+const medals = require("./lib/medals");
+// Soc15: plan groups, how many people are training for each race.
+const raceCohorts = require("./lib/raceCohorts");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
   ProgrammeConflictError,
 } = require("./lib/stateTransition");
-const { wholeRaceGoal, raceIdentityIsStale } = require("./lib/raceGoalWrite");
+const {
+  wholeRaceGoal,
+  wholeStarterGoal,
+  raceIdentityIsStale,
+} = require("./lib/raceGoalWrite");
 const {
   runProgramCommandTransaction,
 } = require("./lib/programCommandTransaction");
@@ -49,6 +69,7 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
 const blockMirror = require("./lib/blockMirror");
+const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
@@ -97,13 +118,7 @@ const {
 // Packet 19 — server-owned FCM token ownership (claim/release + send leases).
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
-const routePlanning = require("./lib/routePlanning");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
-
-const appleIAP = require("./appleIAP");
-exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
-exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
-exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
@@ -162,7 +177,15 @@ const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
 const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
+// The community goal: a total every saved run adds to, joined or not.
+const communityGoal = require("./lib/communityGoal");
+// The live pulse: each day's count of sessions across Tropos (Soc15).
+const pulse = require("./lib/pulse");
 const spacePostPhoto = require("./lib/spacePostPhoto");
+// A run post's map images, deleted with the post (Soc15 call 5).
+const routeMapFiles = require("./lib/routeMapFiles");
+// A shared session's photos, deleted with the post (Soc15 call 2).
+const postPhotos = require("./lib/postPhotos");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -180,6 +203,8 @@ const { engagementRejection } = require("./lib/engagementRejection");
 const { isDocumentId } = require("./lib/documentId");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
+// The same filter over every text a feed post shows (onActivityCreated).
+const activityModeration = require("./lib/activityModeration");
 // The email that tells the owner a report has come in (createReport).
 const reportAlert = require("./lib/reportAlert");
 // Retried triggers: the window an event is retried in, and the side
@@ -290,25 +315,19 @@ const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // needs no new accessor grant.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Money-path audit F8: deleteMyAccount tombstones Apple billing
-// identities before sweeping their bindings; the write hash needs the
-// same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
-// provisioned (bound on restoreApplePurchases) — no new secret to set.
+// identities before sweeping their bindings, each hash keyed with
+// BILLING_HMAC_SECRET. lib/restrictedIdentities keys a restricted
+// account's kept identities with the same secret.
 const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 // The key before a rotation. lib/restrictedIdentities looks a restricted
 // identity up under the active AND the previous key, so a function that
 // reads or forgets them must be able to read both: bound on
-// onAuthUserCreated and liftRestriction for that, as restoreApplePurchases
-// binds it (appleIAP.js). Already provisioned there, so no new secret and
-// no new accessor grant. Without it a restricted person who deleted and
-// signed up again during a rotation was not restricted again.
+// onAuthUserCreated and liftRestriction for that. Without it a restricted
+// person who deleted and signed up again during a rotation would not be
+// restricted again.
 const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
   "BILLING_PREVIOUS_HMAC_SECRET"
 );
-// Run11 (Mapbox supersession 2026-07-17): the Directions token lives ONLY
-// here — never in a VITE_* var, Actions variable, browser bundle, or
-// native app. A key in the client can be extracted and cannot enforce
-// the Pro gate.
-const MAPBOX_DIRECTIONS_TOKEN = defineSecret("MAPBOX_DIRECTIONS_TOKEN");
 
 // Scheduled (pubsub cron) sweeps iterate EVERY active user via
 // sweepActiveUsers. The Cloud Functions v1 default timeout is
@@ -767,7 +786,30 @@ exports.completeOnboarding = functions
         profileData: rawProfileData,
         programState,
         weekSchedule: rawWeekSchedule,
+        activationJourneyVersion,
+        onboardingPlatform,
       } = data;
+      // The cohort is chosen by this callable, never by a profile write.
+      // Omitted means an older client and keeps the legacy journey.
+      if (
+        activationJourneyVersion !== undefined &&
+        activationJourneyVersion !== 2
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Unsupported activation journey version."
+        );
+      }
+      if (
+        onboardingPlatform !== undefined &&
+        (activationJourneyVersion !== 2 ||
+          !activationBilling.validOnboardingPlatform(onboardingPlatform))
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Unsupported onboarding platform."
+        );
+      }
       if (
         !rawProfileData ||
         typeof rawProfileData !== "object" ||
@@ -879,12 +921,6 @@ exports.completeOnboarding = functions
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
-      // The day setup finished, which a new runner's first weeks count from
-      // (`profileNewRunnerUntil`). Setup's own plan counts from that day, so
-      // a plan made later has to as well: `createdAt` is sign-up, and setup
-      // can finish weeks after it. Server time, and not client-writable.
-      profileData.onboardingCompletedAt =
-        admin.firestore.FieldValue.serverTimestamp();
 
       const db = admin.firestore();
 
@@ -895,28 +931,20 @@ exports.completeOnboarding = functions
       // Pro trial on the offer page — the App Store introductory offer or
       // Stripe `trial_period_days`, with a payment method captured up
       // front — and it converts unless they cancel. New accounts start on
-      // the free tier and the offer page is the first screen after
-      // onboarding. A client-sent `trialExpiresAt` is stripped either way
+      // the free tier. A client-sent `trialExpiresAt` is stripped either way
       // (firestore.rules pins it null on create). Profiles that still
       // carry an expiry from the earlier onboarding grant keep their Pro
       // until it lapses (`computeEffectiveTier`) and are refused a second
       // trial at checkout (`checkoutTrial.js`).
       const userRef = db.collection("users").doc(uid);
-      const existing = await userRef.get();
       delete profileData.trialExpiresAt;
-      if (existing.exists) {
-        // Don't overwrite protected fields on update
-        delete profileData.createdAt;
-      } else if (!profileData.createdAt) {
-        profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
-      }
 
-      // P0-4: atomic batch write so profile + programState land
+      // P0-4: atomic write so profile + programState land
       // together. Pre-P0-4 wrote them sequentially; if the second
       // write failed, the user was left with a hydrated profile but no
       // programState — onboarding completed flag set, but Programme
-      // tab crashed on its first render. A batch commits both or
-      // neither, matching the contract the spec expects.
+      // tab crashed on its first render. A transaction commits both or
+      // neither and protects the first-commit cohort marker from retries.
       const programRef = userRef.collection("programState").doc("current");
       // The public profile carries the name every other person sees. The
       // app writes it too (Onboarding.tsx), best-effort, and a copy that
@@ -924,66 +952,10 @@ exports.completeOnboarding = functions
       // it lands with the profile. Merged, so sign-up's photo and the
       // streak mirror stay, and the name only when one was sent.
       const publicRef = userRef.collection("public").doc("profile");
-      const publicSnap = await publicRef.get();
       const publicName =
         typeof profileData.displayName === "string" && profileData.displayName
           ? profileData.displayName
           : null;
-      const storedRaceGoal = existing.exists
-        ? existing.data().raceGoal
-        : undefined;
-      const raceGoalAfter =
-        profileData.raceGoal !== undefined
-          ? profileData.raceGoal
-          : storedRaceGoal;
-      if (existing.exists && existing.data().subscriptionTier !== undefined) {
-        delete profileData.subscriptionTier;
-      }
-      const batch = db.batch();
-      if (existing.exists) {
-        batch.set(
-          userRef,
-          profileData.raceGoal !== undefined
-            ? {
-                ...profileData,
-                raceGoal: wholeRaceGoal(
-                  profileData.raceGoal,
-                  storedRaceGoal,
-                  admin.firestore.FieldValue.delete()
-                ),
-              }
-            : profileData,
-          { merge: true }
-        );
-      } else {
-        batch.set(userRef, profileData);
-      }
-      batch.set(
-        publicRef,
-        {
-          uid,
-          ...(publicSnap.exists &&
-            raceIdentityIsStale(
-              publicSnap.data().trainingForSpaceId,
-              raceGoalAfter
-            ) && { trainingForSpaceId: null }),
-          ...(publicName && {
-            displayName: publicName,
-            // searchUsers matches on this; the app's onboarding copy left
-            // it out, so a new account was not found by name.
-            displayNameLower: publicName.toLowerCase(),
-          }),
-          ...(typeof profileData.athleteType === "string" && {
-            athleteType: profileData.athleteType,
-          }),
-          ...(!publicSnap.exists && {
-            currentStreak: 0,
-            longestStreak: 0,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          }),
-        },
-        { merge: true }
-      );
       // Allow-list the programState doc before persisting. validatePlanPayload
       // gates SHAPE (and only for v7 payloads); this strips arbitrary
       // top-level fields a client could inject into its own programState doc.
@@ -1003,10 +975,114 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
-      batch.set(programRef, onbProgram.value);
-      await batch.commit();
+      // The server's cohort, not the client's (XB1 call 9): a comparison
+      // group and a switch that turns v2 off (lib/activationCohort.js).
+      const journey = await activationCohort.journeyFor(
+        db,
+        uid,
+        activationJourneyVersion
+      );
+      const acceptedVersion = await db.runTransaction(async (transaction) => {
+        const existing = await transaction.get(userRef);
+        const publicSnap = await transaction.get(publicRef);
+        const existingData = existing.exists ? existing.data() : {};
+        const nextProfileData = { ...profileData };
 
-      return { success: true };
+        // The timestamp and cohort describe the first successful setup
+        // commit. A retry, even from a newer client, must not move the
+        // activation window or enroll an existing account.
+        const alreadyCompleted = existingData.onboardingComplete === true;
+        if (!alreadyCompleted) {
+          nextProfileData.onboardingCompletedAt =
+            admin.firestore.FieldValue.serverTimestamp();
+          nextProfileData.onboardingSport = activationSport(
+            nextProfileData.athleteType
+          );
+          if (journey !== null) {
+            nextProfileData.activationJourneyVersion = journey;
+            if (onboardingPlatform) {
+              nextProfileData.onboardingPlatform = onboardingPlatform;
+            }
+          }
+        }
+        if (existing.exists) {
+          delete nextProfileData.createdAt;
+          if (existingData.subscriptionTier !== undefined) {
+            delete nextProfileData.subscriptionTier;
+          }
+        } else {
+          nextProfileData.createdAt =
+            admin.firestore.FieldValue.serverTimestamp();
+        }
+
+        // The starter goal is sent whole too (raceGoalWrite.js).
+        if (nextProfileData.starterGoal !== undefined) {
+          nextProfileData.starterGoal = wholeStarterGoal(
+            nextProfileData.starterGoal,
+            existingData.starterGoal,
+            admin.firestore.FieldValue.delete()
+          );
+        }
+        const storedRaceGoal = existingData.raceGoal;
+        const raceGoalAfter =
+          nextProfileData.raceGoal !== undefined
+            ? nextProfileData.raceGoal
+            : storedRaceGoal;
+        if (existing.exists) {
+          transaction.set(
+            userRef,
+            nextProfileData.raceGoal !== undefined
+              ? {
+                  ...nextProfileData,
+                  raceGoal: wholeRaceGoal(
+                    nextProfileData.raceGoal,
+                    storedRaceGoal,
+                    admin.firestore.FieldValue.delete()
+                  ),
+                }
+              : nextProfileData,
+            { merge: true }
+          );
+        } else {
+          transaction.set(userRef, nextProfileData);
+        }
+        transaction.set(
+          publicRef,
+          {
+            uid,
+            ...(publicSnap.exists &&
+              raceIdentityIsStale(
+                publicSnap.data().trainingForSpaceId,
+                raceGoalAfter
+              ) && { trainingForSpaceId: null }),
+            ...(publicName && {
+              displayName: publicName,
+              // searchUsers matches on this; the app's onboarding copy left
+              // it out, so a new account was not found by name.
+              displayNameLower: publicName.toLowerCase(),
+            }),
+            ...(typeof nextProfileData.athleteType === "string" && {
+              athleteType: nextProfileData.athleteType,
+            }),
+            ...(!publicSnap.exists && {
+              currentStreak: 0,
+              longestStreak: 0,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            }),
+          },
+          { merge: true }
+        );
+        transaction.set(programRef, onbProgram.value);
+
+        return alreadyCompleted
+          ? existingData.activationJourneyVersion === 2 ||
+            existingData.activationJourneyVersion === 1
+            ? existingData.activationJourneyVersion
+            : null
+          : journey;
+      });
+
+      return { success: true, activationJourneyVersion: acceptedVersion };
     } catch (err) {
       // Re-throw HttpsError as-is (validation errors, etc.)
       if (err instanceof functions.https.HttpsError) {
@@ -1166,19 +1242,24 @@ exports.configurePlan = functions
       const withRaceGoal = (patch, storedProfile, publicSnap, write) => {
         const stored = storedProfile.raceGoal;
         const after = "raceGoal" in patch ? patch.raceGoal : stored;
-        write(
-          userRef,
-          "raceGoal" in patch
-            ? {
-                ...patch,
-                raceGoal: wholeRaceGoal(
-                  patch.raceGoal,
-                  stored,
-                  admin.firestore.FieldValue.delete()
-                ),
-              }
-            : patch
-        );
+        write(userRef, {
+          ...patch,
+          ...("raceGoal" in patch && {
+            raceGoal: wholeRaceGoal(
+              patch.raceGoal,
+              stored,
+              admin.firestore.FieldValue.delete()
+            ),
+          }),
+          // The starter goal is sent whole too (raceGoalWrite.js).
+          ...("starterGoal" in patch && {
+            starterGoal: wholeStarterGoal(
+              patch.starterGoal,
+              storedProfile.starterGoal,
+              admin.firestore.FieldValue.delete()
+            ),
+          }),
+        });
         if (
           publicSnap.exists &&
           raceIdentityIsStale(publicSnap.data().trainingForSpaceId, after)
@@ -1320,6 +1401,19 @@ exports.applyProgramCommand = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
+    // A callable obtains its token asynchronously on the client. A queued
+    // command must never execute under an account switched in during that
+    // await. Older clients have no expectedUid and keep their bare payload.
+    if (
+      data &&
+      Object.prototype.hasOwnProperty.call(data, "expectedUid") &&
+      data.expectedUid !== uid
+    ) {
+      throw new functions.https.HttpsError(
+        "cancelled",
+        "Programme command belongs to another account."
+      );
+    }
     const firestore = admin.firestore();
 
     // R1A-Deletion: callable-actor lock OUTSIDE the try so its structured
@@ -1339,9 +1433,8 @@ exports.applyProgramCommand = functions
     }
 
     try {
-      // The callable payload IS the command — every shipped client sends it
-      // bare (`programCommandClient.ts`: `call(command)`), matching the
-      // sibling callables (configurePlan destructures straight off `data`).
+      // Older clients send the command bare. Account-bound clients wrap it
+      // with expectedUid, checked above before any server state is touched.
       //
       // This read was `data && data.command` from the day the boundary landed
       // (314f9c61), so `data.command` was ALWAYS undefined and every programme
@@ -1399,6 +1492,8 @@ exports.applyProgramCommand = functions
 // Permission before food goes to AI — shared by analyzeFood and
 // analyzeFoodText. See lib/aiConsent.js.
 const aiConsent = require("./lib/aiConsent");
+// The optional detail typed on a photo's result (Mob2, call 3).
+const foodPhotoDetail = require("./lib/foodPhotoDetail");
 
 exports.analyzeFood = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -1511,6 +1606,16 @@ exports.analyzeFood = functions
           res.status(400).json({ error: "Image too large" });
           return;
         }
+        // An optional few words typed on the photo's result, sent with
+        // the same photo: checked here, before the quota, like the image.
+        // See lib/foodPhotoDetail.js for how it reaches the model.
+        const photoDetail = foodPhotoDetail.readFoodDetail(
+          (req.body || {}).detail
+        );
+        if ("error" in photoDetail) {
+          res.status(400).json({ error: photoDetail.error });
+          return;
+        }
 
         // F1b — daily AI scan quota with per-action counters.
         // Image-AI is Pro-only (free=0/day, pro=100/day).
@@ -1574,26 +1679,41 @@ exports.analyzeFood = functions
             Authorization: "Bearer " + accessToken.access_token,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            contents: [
+          body: JSON.stringify(
+            foodPhotoDetail.withFoodDetail(
               {
-                role: "user",
-                parts: [
-                  { text: prompt },
-                  { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
+                contents: [
+                  {
+                    role: "user",
+                    parts: [
+                      { text: prompt },
+                      {
+                        inlineData: {
+                          mimeType: "image/jpeg",
+                          data: imageBase64,
+                        },
+                      },
+                    ],
+                  },
                 ],
+                // The model and its settings: lib/foodModel.js. A busy
+                // multi-item plate costs ~60 output tokens per item, and
+                // the model's thinking counts against the same cap, so the
+                // cap has headroom: a response cut off mid-JSON fails the
+                // parse below and charges the user's rate-limit slot for a
+                // 500.
+                generationConfig: foodGenerationConfig(),
               },
-            ],
-            // The model and its settings: lib/foodModel.js. A busy
-            // multi-item plate costs ~60 output tokens per item, and the
-            // model's thinking counts against the same cap, so the cap
-            // has headroom: a response cut off mid-JSON fails the parse
-            // below and charges the user's rate-limit slot for a 500.
-            generationConfig: foodGenerationConfig(),
-          }),
+              photoDetail.detail
+            )
+          ),
         });
 
-        const data = await response.json();
+        // A refusal can come back as a page rather than JSON (a wrong host
+        // answers with Google's HTML 404), so the body is read leniently:
+        // the status is what says who refused, and it must survive a body
+        // that is not JSON. A 200 that is not JSON fails as unreadable.
+        const data = await response.json().catch(() => null);
         // 2026-05-26 audit PR 4 (finding #10) — success-path full-body
         // log dropped; structural-metadata log on the error path only.
         if (!response.ok) {
@@ -1800,7 +1920,9 @@ exports.analyzeFoodText = functions
           body: JSON.stringify(buildFoodTextRequest(text)),
         });
 
-        const data = await response.json();
+        // Read leniently, as in analyzeFood: a refusal's status must
+        // survive a body that is not JSON.
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
           console.error(
@@ -2149,6 +2271,31 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
+/** A measurement, never billing: a failure is logged and the delivery goes
+ *  on, rather than answering Stripe 500 for a subscription already saved. */
+async function recordActivationBillingFirst(db, uid, observation) {
+  if (!observation) return;
+  const userRef = db.collection("users").doc(uid);
+  try {
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(userRef);
+      if (!snap.exists) return;
+      const firsts = activationBilling.nextBillingFirsts(
+        snap.data().activationBillingFirsts,
+        observation
+      );
+      if (firsts) txn.update(userRef, { activationBillingFirsts: firsts });
+    });
+  } catch (error) {
+    console.error("activationBilling.record_failed", {
+      uid,
+      kind: observation.kind,
+      source: observation.source,
+      message: error?.message,
+    });
+  }
+}
+
 exports.stripeWebhook = functions
   // ⛔ NEVER add `enforceAppCheck: true` here. This is an EXTERNAL webhook —
   // Stripe's servers call it and cannot send a Firebase App Check token, so
@@ -2328,6 +2475,26 @@ exports.stripeWebhook = functions
             .collection("users")
             .doc(firebaseUid)
             .set(update, { merge: true });
+          if (!completedDecision.conflict) {
+            if (
+              event.livemode === true &&
+              session.mode === "subscription" &&
+              session.subscription &&
+              session.payment_status === "no_payment_required" &&
+              session.metadata?.activationTrial === "true"
+            ) {
+              await recordActivationBillingFirst(dbRef, firebaseUid, {
+                kind: "trial",
+                source: "stripe",
+                atMs: event.created * 1000,
+              });
+            }
+            await recordActivationBillingFirst(
+              dbRef,
+              firebaseUid,
+              activationBilling.stripePaidObservation(event)
+            );
+          }
           console.log(`stripeWebhook: activated pro for ${firebaseUid}`);
           break;
         }
@@ -2436,10 +2603,61 @@ exports.stripeWebhook = functions
             },
             { merge: true }
           );
+          if (
+            event.livemode === true &&
+            !updateDecision.conflict &&
+            tier === "pro"
+          ) {
+            await recordActivationBillingFirst(
+              dbRef,
+              userDoc.id,
+              activationBilling.stripeTrialObservation(subscription)
+            );
+          }
 
           console.log(
             `stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`
           );
+          break;
+        }
+
+        case "invoice.paid": {
+          const invoice = event.data.object;
+          const paid = activationBilling.stripePaidObservation(event);
+          if (!paid || !invoice.customer) break;
+          const usersSnap = await dbRef
+            .collection("users")
+            .where("stripeCustomerId", "==", invoice.customer)
+            .limit(1)
+            .get();
+          if (usersSnap.empty) break;
+          const userDoc = usersSnap.docs[0];
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              dbRef,
+              userDoc.id,
+              "stripeWebhook:invoice.paid"
+            ))
+          ) {
+            await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+              provider: "stripe",
+              externalTxnId: invoice.id || null,
+              providerEventId: event.id,
+              eventType: "invoice.paid",
+              uid: userDoc.id,
+            });
+            break;
+          }
+          const invoiceSubscription =
+            invoice.subscription ||
+            invoice.parent?.subscription_details?.subscription;
+          if (
+            userDoc.data().subscriptionSource !== "stripe" ||
+            !invoiceSubscription ||
+            invoiceSubscription !== userDoc.data().stripeSubscriptionId
+          )
+            break;
+          await recordActivationBillingFirst(dbRef, userDoc.id, paid);
           break;
         }
 
@@ -2808,6 +3026,28 @@ exports.weeklyPerformanceRollup = functions
   );
 
 // ── 3) Scheduled: daily refresh (02:10 UTC) ──
+
+/**
+ * discoveryHiddenSweep — the accounts in DISCOVERY_HIDDEN_UIDS (App
+ * Review's demo account) share with their followers only (Soc15). New posts
+ * are made followers-only in onActivityCreated; this makes any public post
+ * such an account already has followers-only too, so adding a uid to the
+ * list clears its past posts from Explore and suggestions within a day
+ * (lib/discoveryHidden.js). With the list empty it reads nothing.
+ */
+exports.discoveryHiddenSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("40 3 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "discoveryHiddenSweep", async () => {
+      const { hidden } = await discoveryHidden.sweepDiscoveryHidden({
+        firestore: db,
+      });
+      functions.logger.info("discoveryHiddenSweep.done", { hidden });
+      return { hidden };
+    })
+  );
 
 exports.dailyPerformanceRefresh = functions
   .runWith(SCHEDULED_CAP)
@@ -3428,6 +3668,9 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
       )
     : null;
   const behind = !!(status && status.fellBehind);
+  // The recap opens the review, so it goes only when one waits.
+  if (!behind && !(await weeklyRecap.reviewWaits(db, uid, range.weekEnd)))
+    return false;
 
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
@@ -4015,6 +4258,74 @@ exports._utcDateString = _utcDateString;
 exports._decideReconciliationActions = _decideReconciliationActions;
 exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
 exports._recoveryEndDateForRace = _recoveryEndDateForRace;
+
+// ══════════════════════════════════════════════
+// Plan groups (Soc15): how many people are training for each race
+// ══════════════════════════════════════════════
+//
+// `raceCohorts/{spaceId}` = { count, updatedAt }, a count aggregation over
+// the race goals bound to that race space whose race is still ahead
+// (lib/raceCohorts.js). Recounted, never incremented.
+
+/**
+ * A write to a user document that sets, moves or clears a race goal bound
+ * to a race space recounts the old space and the new one.
+ *
+ * Why a trigger on `users/{uid}` rather than a call in each writer: the
+ * goal has many writers. `completeOnboarding` and `configurePlan` send it
+ * whole, `applyProgramCommand` writes it as a profile effect (the recovery
+ * exit), `dailyRaceReconciliationSweep` clears it after a race, the rules
+ * still let the owner's own client write it, and account deletion removes
+ * the document. One trigger sees all of them, deletion included, and a
+ * writer added later cannot forget to recount. Almost every write to the
+ * document leaves the goal's space and race day alone, and returns before
+ * it reads anything.
+ *
+ * Not held back for an account being deleted: the recount stores a number
+ * about the race, nothing about the person, and the deleted document is
+ * exactly what it must stop counting. Retried: a second delivery counts the
+ * same people, and an older count never replaces a newer one.
+ */
+exports.onRaceGoalWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const spaceIds = raceCohorts.spacesToRecount(
+      change.before.exists ? change.before.data() : null,
+      change.after.exists ? change.after.data() : null
+    );
+    if (spaceIds.length === 0) return null;
+    const steps = triggerSteps("onRaceGoalWritten");
+    for (const spaceId of spaceIds) {
+      await steps.run(spaceId, () =>
+        raceCohorts.recountRaceCohort(db, spaceId)
+      );
+    }
+    steps.settle();
+    return null;
+  });
+
+/**
+ * dailyRaceCohortRecount — every race still ahead, counted again each
+ * night at 04:30 UTC, after the race reconciliation sweep has cleared the
+ * goals of races that are over. It puts right a count whose trigger gave
+ * up and fills in the races nobody has changed a goal for since this
+ * shipped; a race already past is skipped.
+ */
+exports.dailyRaceCohortRecount = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 4 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "dailyRaceCohortRecount", async () => {
+      const summary = await raceCohorts.sweepRaceCohorts(db, {
+        log: functions.logger,
+      });
+      functions.logger.info("dailyRaceCohortRecount.done", summary);
+      return summary;
+    })
+  );
 
 // ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
@@ -4887,6 +5198,68 @@ exports.onChallengeParticipantDeleted = functions
     return null;
   });
 
+/**
+ * A medal for each challenge edition (Soc15, lib/medals.js): the
+ * person's highest tier, kept in users/{uid}/medals/{challengeId} and
+ * mirrored into their public profile's medalSummary, the trophy case.
+ *
+ * The one writer of medals. The participant's tier is written by several
+ * paths and a deleted run can lower it, so the medal is derived here from
+ * the participant document rather than by any of them. onWrite, so a
+ * rise, a reversal and a leave all reach it; a write that cannot move a
+ * medal (progress below bronze, a name carried by identityResync) returns
+ * before any read.
+ *
+ * Retried: every delivery reads the participant, the challenge and the
+ * medal as they are now, inside the transaction that writes the medal
+ * and the summary, and writes nothing already right. So a second
+ * delivery, or one arriving after a newer write, changes nothing. A
+ * medal is frozen once its challenge has settled (MEDAL_SETTLE_MS after
+ * its end); an account being deleted gets none.
+ */
+exports.onChallengeParticipantWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("challenges/{challengeId}/participants/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { challengeId, uid } = context.params;
+    const before = change.before.exists ? change.before.data() || {} : null;
+    const after = change.after.exists ? change.after.data() || {} : null;
+    if (!medals.participantChangeMayMoveMedal(before, after)) return null;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onChallengeParticipantWritten"
+      ))
+    )
+      return null;
+    const at = Date.parse(context.timestamp || "");
+    const result = await medals.syncMedal({
+      firestore: db,
+      uid,
+      challengeId,
+      // The event's own time, the same on every redelivery.
+      eventMs: Number.isFinite(at) ? at : Date.now(),
+      isDelete: !after,
+    });
+    if (result.changed) {
+      functions.logger.info("onChallengeParticipantWritten.medal", {
+        uid,
+        challengeId,
+        ...result,
+      });
+    }
+    return null;
+  });
+
+/** A trigger's event time (the source write's commit), the same on every
+ *  redelivery of it; the clock when the event carries none. */
+function eventTimeMs(context) {
+  const at = Date.parse((context && context.timestamp) || "");
+  return Number.isFinite(at) ? at : Date.now();
+}
+
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions
@@ -4938,6 +5311,9 @@ exports.onWorkoutCreated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data();
     // Which day this session belongs to — the workout's own local date,
     // NOT trigger delivery time. Drives challenge-window attribution.
@@ -5023,6 +5399,20 @@ exports.onWorkoutCreated = functions
       await applyPartnerActivity(db, uid, workoutStreakDay);
     });
 
+    // Soc15: the live pulse counts every saved workout on its own day
+    // (lib/pulse). Dated by the event, the same on every redelivery.
+    await steps.run("pulse", () =>
+      pulse.creditSessionToPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        data,
+        sourceRef: snap.ref,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
+    );
+
     steps.settle();
 
     // PI1a: skip recompute when the workout falls outside the rolling
@@ -5101,6 +5491,9 @@ exports.onRunCreated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data();
     // The run's own local day — drives challenge-window attribution, so a
     // run flushed offline in a later month still credits the right window.
@@ -5210,6 +5603,31 @@ exports.onRunCreated = functions
               )
         );
       }
+      // The community goal counts every run, joined or not
+      // (lib/communityGoal), through the same eligibility and bounds.
+      await steps.run("community goal", () =>
+        communityGoal.creditRunToCommunityGoals(db, {
+          uid,
+          runId,
+          data,
+          activityDateKey,
+          sourceRef: snap.ref,
+          fieldValue: admin.firestore.FieldValue,
+        })
+      );
+      // Soc15: the live pulse counts the run on its own day, through the
+      // same eligibility and the shared-credit bounds (lib/pulse).
+      await steps.run("pulse", () =>
+        pulse.creditSessionToPulse(db, {
+          uid,
+          kind: "run",
+          sessionId: runId,
+          data,
+          sourceRef: snap.ref,
+          fieldValue: admin.firestore.FieldValue,
+          nowMs: eventTimeMs(context),
+        })
+      );
     } else {
       console.log(
         `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
@@ -5297,6 +5715,9 @@ exports.onWorkoutUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -5320,7 +5741,7 @@ exports.onRunUpdated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/runs/{runId}")
   .onUpdate(async (change, context) => {
-    const { uid } = context.params;
+    const { uid, runId } = context.params;
     // Reconciles from the current source documents, so a retry is safe.
     if (pastRetryWindow(context)) return null;
     if (
@@ -5343,6 +5764,17 @@ exports.onRunUpdated = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // A renamed run's post takes the new name (lib/runRename), read from
+    // the current documents, so a retry writes it once.
+    if (
+      runRename.runNameMayHaveChanged(change.before.data(), change.after.data())
+    )
+      await runRename.syncSharedRunName(db, uid, runId, {
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
     return null;
   });
 
@@ -5412,6 +5844,9 @@ exports.onWorkoutDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     // Each reversal runs whatever happens to the other, and a failure
     // fails the event so failurePolicy delivers it again. The source is
     // already gone, so nothing else would ever re-fire: caught and logged,
@@ -5431,6 +5866,16 @@ exports.onWorkoutDeleted = functions
         workoutId,
         lifetimeAccrual.liftVolumeKgFor(data)
       )
+    );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "workout",
+        sessionId: workoutId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
     );
     steps.settle();
     console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
@@ -5458,6 +5903,15 @@ exports.onRunDeleted = functions
     ) {
       return null;
     }
+    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
+    await steps.run("health workout tombstone", () =>
+      healthWorkoutLedger.markDeletedRun(
+        db,
+        uid,
+        runId,
+        admin.firestore.FieldValue.serverTimestamp
+      )
+    );
     const sessionDays = challengeParticipation.affectedActivityDays(
       snap.data()
     );
@@ -5469,6 +5923,9 @@ exports.onRunDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
+    // Soc15 call 3: their standing in this week's league group, if they
+    // are in one. Recomputed from the sessions, so a retry is safe.
+    await leagues.refreshLeagueStanding(db, uid, sessionDays);
     const data = snap.data() || {};
     // No isVolumeEligibleRun re-check here, unlike the create side. An
     // ineligible run never credited, so it has no markers and every
@@ -5476,9 +5933,15 @@ exports.onRunDeleted = functions
     // of what happened; re-deriving that judgement from flags that may
     // since have been edited would be a second opinion where a fact is
     // available. Retried on failure, as onWorkoutDeleted says why.
-    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
     await steps.run("challenges", () =>
       activityReversal.reverseChallengeProgressForSource(db, uid, runId)
+    );
+    await steps.run("community goal", () =>
+      communityGoal.reverseRunFromCommunityGoals(db, {
+        uid,
+        runId,
+        fieldValue: admin.firestore.FieldValue,
+      })
     );
     await steps.run("lifetime distance", () =>
       activityReversal.reverseLifetimeStat(
@@ -5488,6 +5951,16 @@ exports.onRunDeleted = functions
         runId,
         lifetimeAccrual.runMetersFor(data)
       )
+    );
+    // Soc15: off the live pulse, by the day its credit recorded.
+    await steps.run("pulse", () =>
+      pulse.reverseSessionFromPulse(db, {
+        uid,
+        kind: "run",
+        sessionId: runId,
+        fieldValue: admin.firestore.FieldValue,
+        nowMs: eventTimeMs(context),
+      })
     );
     steps.settle();
     console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
@@ -5759,11 +6232,7 @@ exports.recreditMyLiftVolume = functions
     // bug, not a quota event, so it must not consume a rate-limit slot.
     const startAfter = data && data.startAfter;
     if (startAfter !== undefined && startAfter !== null) {
-      if (
-        typeof startAfter !== "string" ||
-        !startAfter ||
-        startAfter.includes("/")
-      ) {
+      if (!isDocumentId(startAfter)) {
         throw new functions.https.HttpsError(
           "invalid-argument",
           "startAfter must be a workout document id."
@@ -5973,12 +6442,13 @@ exports.onActivityCreated = functions
       }
     }
 
-    // Profanity scan + auto-flag. Runs before fanout so flagged posts
-    // get visibility=private and are then skipped by the fanout block
-    // below.
+    // Profanity scan and size check + auto-flag. Runs before fanout so
+    // flagged posts get visibility=private and are then skipped by the
+    // fanout block below.
     try {
-      const SCAN_FIELDS = ["caption", "workoutName", "runName"];
-      const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
+      // Every text the feed card shows, and the post's size
+      // (lib/activityModeration.js).
+      const flaggedField = activityModeration.flaggedActivityField(data);
       if (flaggedField) {
         functions.logger.warn("onActivityCreated.auto_flag", {
           activityId,
@@ -6005,6 +6475,22 @@ exports.onActivityCreated = functions
       // did, published to every follower a post the scan had just found
       // objectionable whenever the flag's write failed.
       throw err;
+    }
+
+    // Soc15: an account kept out of discovery (App Review's demo
+    // account, DISCOVERY_HIDDEN_UIDS) shares with its followers only, so
+    // its public post is made followers-only before it fans out
+    // (lib/discoveryHidden.js). A retry makes the same update.
+    if (
+      authorId &&
+      data.visibility === "public" &&
+      discoveryHidden.isDiscoveryHidden(authorId)
+    ) {
+      await snap.ref.update(discoveryHidden.HIDE_UPDATE);
+      data.visibility = discoveryHidden.HIDE_UPDATE.visibility;
+      functions.logger.info("onActivityCreated.discovery_hidden", {
+        activityId,
+      });
     }
 
     // 2026-05-26 audit PR 3 — server-side fan-out. Replaces the
@@ -6058,6 +6544,12 @@ exports.onActivityCreated = functions
  * deletion executor all delete `activities/{id}`, and each copy left behind
  * points at a post the rules no longer let anyone read.
  *
+ * A run post's map images go with it too (lib/routeMapFiles.js, Soc15
+ * call 5): its `route-maps/{authorId}/{activityId}/` folder. So do the
+ * post's photos (lib/postPhotos.js, Soc15 call 2): its
+ * `post-photos/{authorId}/{activityId}/` folder, whatever the post named,
+ * since an upload can land and never be named.
+ *
  * No account-deletion guard, unlike onWorkoutDeleted / onRunDeleted: those
  * write, and could re-create what the executor erased. This only deletes
  * copies of a post that is already gone, which can only shrink what the
@@ -6066,9 +6558,10 @@ exports.onActivityCreated = functions
 exports.onActivityDeleted = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("activities/{activityId}")
-  .onDelete(async (_snap, context) => {
+  .onDelete(async (snap, context) => {
     const { activityId } = context.params;
-    // Retried: removing copies already gone removes nothing.
+    // Retried: removing copies already gone removes nothing, and deleting
+    // a folder already empty deletes nothing.
     if (pastRetryWindow(context)) return null;
     try {
       const { removed } = await socialFanout.removeActivityFromFeeds({
@@ -6079,6 +6572,26 @@ exports.onActivityDeleted = functions
         activityId,
         removed,
       });
+      const mapFolder = await routeMapFiles.deleteRouteMapFiles({
+        data: snap.data(),
+        activityId,
+        getBucket: () => admin.storage().bucket(),
+        logger: functions.logger,
+      });
+      if (mapFolder)
+        functions.logger.info("onActivityDeleted.route_map_removed", {
+          activityId,
+        });
+      const photoFolder = await postPhotos.deletePostPhotoFiles({
+        data: snap.data(),
+        activityId,
+        getBucket: () => admin.storage().bucket(),
+        logger: functions.logger,
+      });
+      if (photoFolder)
+        functions.logger.info("onActivityDeleted.post_photos_removed", {
+          activityId,
+        });
     } catch (err) {
       functions.logger.error("onActivityDeleted.error", {
         activityId,
@@ -6246,7 +6759,8 @@ function queueReason(value) {
 
 /**
  * Screens a photo the caller just uploaded for other people to see, a
- * Space post's or their profile's, before the app uses it
+ * Space post's, a shared session's or their profile's, before the app
+ * uses it
  * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
  * refused as nudity, its file already deleted, and "unavailable" when it
  * could not be checked, so the app posts nothing it couldn't check.
@@ -6322,6 +6836,7 @@ exports.screenUploadedPhoto = functions
       const { refused, adult } = await photoScreen.screenStoredPhoto({
         bucket: admin.storage().bucket(object.bucket),
         path,
+        generation: object.generation,
         accessToken: accessToken.access_token,
       });
       if (refused)
@@ -6567,12 +7082,7 @@ exports.resolveReport = functions
     const restrictUser =
       data.restrictUser === undefined ? false : data.restrictUser;
     if (
-      typeof reportId !== "string" ||
-      !reportId ||
-      reportId !== reportId.trim() ||
-      reportId.includes("/") ||
-      reportId === "." ||
-      reportId === ".." ||
+      !isDocumentId(reportId) ||
       typeof hideActivity !== "boolean" ||
       typeof restrictUser !== "boolean"
     ) {
@@ -6787,14 +7297,7 @@ exports.liftRestriction = functions
     adminAuth.assertAdminCallable(context.auth.uid);
 
     const uid = data && typeof data === "object" ? data.uid : undefined;
-    if (
-      typeof uid !== "string" ||
-      !uid ||
-      uid !== uid.trim() ||
-      uid.includes("/") ||
-      uid === "." ||
-      uid === ".."
-    ) {
+    if (!isDocumentId(uid)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Which account? Send its uid."
@@ -7066,8 +7569,10 @@ exports.toggleKudosCallable = functions
       // now written server-side, atomically with the kudos doc.
       // Pre-PR-3 the client wrote `/notifications/...` directly
       // after the callable returned; that path is now rule-denied.
-      // Only notify on the ADD edge (kudosed=true) so re-tapping
-      // doesn't spam the recipient.
+      // Only the ADD edge (kudosed=true) notifies, under one id per giver
+      // and activity: props taken back and given again find that row and
+      // leave it as it is (keepExisting), so toggling them cannot fill the
+      // recipient's tray or bring the row back as unread.
       if (result && result.kudosed) {
         try {
           // Use the author verified inside the toggle txn — no post-txn
@@ -7089,6 +7594,8 @@ exports.toggleKudosCallable = functions
                 message: `${fromName} gave you props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `kudos_${activityId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
@@ -7185,8 +7692,10 @@ exports.toggleSpacePostLikeCallable = functions
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
         refuseAdd,
       });
-      // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
-      // self, never the retired coach author (not a notifiable user).
+      // SOC-P2g — notify on the ADD edge only, never self, never the
+      // retired coach author (not a notifiable user). One id per liker and
+      // post, kept once written (keepExisting), so a like taken back and
+      // given again cannot add a row or bring one back as unread.
       if (result && result.liked) {
         try {
           const postAuthorId = result.postAuthorId;
@@ -7211,6 +7720,8 @@ exports.toggleSpacePostLikeCallable = functions
                 message: `${fromName} gave your space post props`,
               },
               serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+              notificationId: `space_post_like_${spaceId}_${postId}_${context.auth.uid}`,
+              keepExisting: true,
             });
           }
         } catch (notifErr) {
@@ -7294,12 +7805,13 @@ exports.addSpacePostCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
+    const { spaceId, postId, text, authorName } = data || {};
+    // Each id names one document: a "/" in postId would point the comment
+    // and its counter at some other document under the post.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim()
+      !isDocumentId(postId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7344,7 +7856,6 @@ exports.addSpacePostCommentCallable = functions
         postId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
@@ -7407,13 +7918,14 @@ exports.deleteSpacePostCommentCallable = functions
       );
     }
     const { spaceId, postId, commentId } = data || {};
+    // Each id names one document, as in the add above: a "/" would let a
+    // delete reach a document nested under a comment and take it off the
+    // post's count.
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
+      !isDocumentId(postId) ||
+      !isDocumentId(commentId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7461,7 +7973,7 @@ exports.addCommentCallable = functions
       );
     }
     assertCallerEmailVerified(context);
-    const { activityId, text, authorName, authorPhotoURL } = data || {};
+    const { activityId, text, authorName } = data || {};
     if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7531,7 +8043,6 @@ exports.addCommentCallable = functions
         activityId,
         text,
         authorName: fromName,
-        authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
@@ -7588,12 +8099,8 @@ exports.deleteCommentCallable = functions
       );
     }
     const { activityId, commentId } = data || {};
-    if (
-      typeof activityId !== "string" ||
-      !activityId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim()
-    ) {
+    // Each id names one document: a "/" would point the delete elsewhere.
+    if (!isDocumentId(activityId) || !isDocumentId(commentId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId + commentId required."
@@ -7947,15 +8454,11 @@ function goalSpaceInviteCode() {
   return out;
 }
 
-/** Safe display projection from the caller's own profile doc —
- *  never trusted from client input. */
-async function goalSpaceCallerProfile(uid) {
-  const snap = await admin.firestore().doc(`users/${uid}`).get();
-  const data = snap.exists ? snap.data() : {};
-  return {
-    displayName: data.displayName || "Member",
-    photoURL: data.photoURL || null,
-  };
+/** The caller's public name and photo, never the request's
+ *  (lib/goalSpaceMembership callerIdentity; memberDoc holds them to the
+ *  rules every social copy keeps). */
+function goalSpaceCallerProfile(uid) {
+  return goalSpaceMembership.callerIdentity(admin.firestore(), uid);
 }
 
 function mapGoalSpaceError(err) {
@@ -8289,8 +8792,12 @@ exports.onGoalSpaceEventCreated = functions
         db.collection(`goalSpaces/${spaceId}/members`).get(),
         db.doc(`goalSpaces/${spaceId}/members/${authorUid}`).get(),
       ]);
+      // The member's copy of their name, held again to the rules it is
+      // written under (lib/goalSpaceMembership memberDoc), so a refused or
+      // overlong copy never reaches another member's tray.
       const authorName =
-        (authorSnap.exists && authorSnap.data().displayName) ||
+        (authorSnap.exists &&
+          identityResync.carriedName(authorSnap.data().displayName)) ||
         "A Circle member";
       // Member doc ids ARE member uids. Fan out to everyone but the
       // author (createNotification also no-ops any self-notify).
@@ -8306,6 +8813,7 @@ exports.onGoalSpaceEventCreated = functions
             data: { type: notifType, fromName: authorName },
             serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
             notificationId: `${spaceId}_${eventId}`,
+            sourceEvent: socialFanout.notificationSourceEvent(snap, context),
           })
         )
       );
@@ -8324,13 +8832,22 @@ exports.onGoalSpaceEventCreated = functions
  * The follow notices: "X started following you", "X asked to follow you"
  * and "X accepted your follow request". Each fires on a doc a client
  * writes (socialApi), so these triggers are the only place the server sees
- * a follow, a request or an answer. Each id is fixed per person, so a
- * re-delivery, or the same person following, asking or accepting again,
- * rewrites one row instead of adding another. createNotification holds the
- * block check and each recipient's switch, and skips an account that is
- * being deleted.
+ * a follow, a request or an answer. Each id is fixed per person, so the
+ * same person following, asking or accepting again refreshes one row
+ * instead of adding another, and its source receipt makes a retry of the
+ * same event keep the delivery time the recipient has already seen.
+ * createNotification holds the block check and each recipient's switch,
+ * and skips an account that is being deleted.
  */
-async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
+async function sendFollowNotice({
+  toUid,
+  fromUid,
+  type,
+  verb,
+  logKey,
+  sourceEvent,
+  fromInvite = false,
+}) {
   try {
     const profileSnap = await db.doc(`users/${fromUid}/public/profile`).get();
     const fromName =
@@ -8339,9 +8856,15 @@ async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
       firestore: admin.firestore(),
       fromUid,
       toUid,
-      data: { type, fromName, message: `${fromName} ${verb}` },
+      data: {
+        type,
+        fromName,
+        message: `${fromName} ${verb}`,
+        ...(fromInvite ? { fromInvite: true } : {}),
+      },
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
+      sourceEvent,
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {
@@ -8364,6 +8887,13 @@ async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
  * request", under the Follow requests switch. Only the person asked can
  * write an edge carrying `fromRequest` (firestore.rules), so the notice
  * cannot be forged by the asker.
+ *
+ * A follow made from an invite (`fromInvite`, written only by redeemInvite
+ * with the Admin SDK; the rules refuse it from a client) tells neither
+ * person: redeemInvite tells the inviter "X joined from your invite".
+ *
+ * Every way the new follower's Following gets the person's recent shared
+ * sessions (Soc15, lib/followBackfill), so a follow shows something today.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8371,25 +8901,43 @@ exports.onFollowerCreated = functions
   .onCreate(async (snap, context) => {
     const { uid, followerUid } = context.params;
     if (!uid || !followerUid || uid === followerUid) return null;
-    // Retried: the notification's id is fixed per follower (above).
+    // Retried: the notification's id is fixed per follower (above), and
+    // the backfill's rows are keyed by activity and skip ones that exist.
     if (pastRetryWindow(context)) return null;
-    if (snap.data() && snap.data().fromRequest === true) {
+    const edge = snap.data() || {};
+    if (edge.fromInvite === true) {
+      // Made by redeemInvite, both ways at once: the person who joined has
+      // just been told, and the inviter gets "joined from your invite"
+      // from the callable, so neither is told about a follow as well.
+    } else if (edge.fromRequest === true) {
       await sendFollowNotice({
         toUid: followerUid,
         fromUid: uid,
         type: "follow_accepted",
         verb: "accepted your follow request",
         logKey: "onFollowerCreated",
+        sourceEvent: socialFanout.notificationSourceEvent(snap, context),
       });
-      return null;
+    } else {
+      await sendFollowNotice({
+        toUid: uid,
+        fromUid: followerUid,
+        type: "follow",
+        verb: "started following you",
+        logKey: "onFollowerCreated",
+        sourceEvent: socialFanout.notificationSourceEvent(snap, context),
+      });
     }
-    await sendFollowNotice({
-      toUid: uid,
-      fromUid: followerUid,
-      type: "follow",
-      verb: "started following you",
-      logKey: "onFollowerCreated",
+    // Soc15: the new follower's Following shows this person's recent
+    // sessions at once, not only the next one (lib/followBackfill).
+    const { written } = await followBackfill.backfillFollowedPosts({
+      firestore: db,
+      followerUid,
+      authorUid: uid,
     });
+    if (written > 0) {
+      functions.logger.info("onFollowerCreated.backfill", { written });
+    }
     return null;
   });
 
@@ -8408,12 +8956,20 @@ exports.onFollowRequestCreated = functions
     if (!uid || !requesterUid || uid === requesterUid) return null;
     // Retried: the notification's id is fixed per asker (above).
     if (pastRetryWindow(context)) return null;
+    // A request made by joining from this person's invite (redeemInvite,
+    // when they approve followers) says so: it is the one notice of the
+    // join, and Accept on it makes the follow both ways.
+    const fromInvite = (snap.data() || {}).fromInvite === true;
     await sendFollowNotice({
       toUid: uid,
       fromUid: requesterUid,
       type: "follow_request",
-      verb: "asked to follow you",
+      verb: fromInvite
+        ? "joined from your invite and asked to follow you"
+        : "asked to follow you",
+      fromInvite,
       logKey: "onFollowRequestCreated",
+      sourceEvent: socialFanout.notificationSourceEvent(snap, context),
     });
     return null;
   });
@@ -8428,6 +8984,11 @@ exports.onFollowRequestCreated = functions
  * On every write, and each delivery sets the row to what the block is now,
  * read in the transaction that writes it, so a retry or a delivery out of
  * order changes nothing that is already right.
+ *
+ * A block of someone who joined from the blocker's invite also renews the
+ * blocker's code (lib/inviteCodes.js renewInviteCodeAfterBlock), so the
+ * person blocked cannot make a new account and join from it again. Read
+ * against the block and the code's age, so a retry renews nothing twice.
  */
 exports.onBlockWritten = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8441,6 +9002,48 @@ exports.onBlockWritten = functions
       blockedUid,
     });
     functions.logger.info("onBlockWritten.reconciled", { result });
+    const invite = await inviteCodes.renewInviteCodeAfterBlock({
+      firestore: admin.firestore(),
+      blockerUid,
+      blockedUid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    if (invite.renewed)
+      functions.logger.info("onBlockWritten.inviteCodeRenewed", {
+        blockerUid,
+      });
+    return null;
+  });
+
+/**
+ * onFollowerEdgeWritten and onFollowingEdgeWritten keep
+ * `followCounts/{uid}` (lib/followCounts.js): how many people follow an
+ * account and how many it follows, so a profile reads two numbers and
+ * nobody's lists.
+ *
+ * Each recounts one list for the account that owns it, and only when an
+ * edge was made or removed. A retry counts the same edges and stores the
+ * same number, and an account being deleted is left alone.
+ */
+exports.onFollowerEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "followers");
+    return null;
+  });
+
+exports.onFollowingEdgeWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("following/{uid}/users/{targetUid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!followCounts.edgeMovesCount(change.before.exists, change.after.exists))
+      return null;
+    await followCounts.recountFollowSide(db, context.params.uid, "following");
     return null;
   });
 
@@ -8484,124 +9087,355 @@ exports.setBoardSharing = functions
     return { share };
   });
 
-// ══════════════════════════════════════════════
-// ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
-// ══════════════════════════════════════════════
-
 /**
- * planRunningRoute — Pro-gated proxy to the Mapbox Directions walking
- * network (lib/routePlanning.js owns the pure logic). Two actions:
+ * setLeagueSharing — the person's answer to weekly leagues (Soc15 call 3):
+ * join or leave. Joining stores the answer and a Bronze membership; the
+ * person is placed in a group on the next Monday's turn. Leaving stores the
+ * answer, deletes their standing and takes them out of their group at once
+ * (lib/leagues.js). The answer is server-written, as setBoardSharing's is,
+ * so the membership and the answer cannot disagree.
  *
- *   { action: "align", waypoints: [{lat,lon} x2..12] }
- *   { action: "loop",  start: {lat,lon}, targetKm: 3|5|10|15 }
- *
- * Returns { points: [{lat,lon}], distanceM, durationS } only. Request
- * coordinates are never persisted or logged (privacy contract in the
- * rollout doc) — failures log action + error code, nothing else. The
- * Pro gate is the Run11 lock's enforceable half: the token lives only
- * in Secret Manager, so entitlement is checked where the key is.
+ * A restricted account cannot join (it reaches no one, S4e) but can always
+ * leave.
  */
-exports.planRunningRoute = functions
-  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [MAPBOX_DIRECTIONS_TOKEN] })
+exports.setLeagueSharing = functions
+  .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
     }
     const uid = context.auth.uid;
-    const firestore = admin.firestore();
-    await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
-
-    const userSnap = await firestore.doc(`users/${uid}`).get();
-    const tier = _computeEffectiveTier(
-      userSnap.exists ? userSnap.data() : null
-    );
-    if (tier !== "pro") {
-      throw new functions.https.HttpsError("permission-denied", "pro-required");
-    }
-
-    const action = data && data.action;
-    const isAlign = action === "align";
-    const isLoop = action === "loop";
-    if (!isAlign && !isLoop) {
+    const join = data && data.join;
+    if (typeof join !== "boolean") {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "Unknown action."
+        "join must be true or false."
       );
     }
-
-    // Per-action rate limits from the rollout doc: 15 manual alignments /
-    // 10 min, 4 loop generations / 10 min (each loop ≤4 provider calls).
-    const limited = await isRateLimited(
-      uid,
-      isAlign ? "planRouteAlign" : "planRouteLoop",
-      isAlign ? 15 : 4,
-      600_000
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
     );
+    if (join) await restriction.assertNotRestricted(db, uid, functions);
+    const limited = await isRateLimited(uid, "leagueSharing", 10, 60_000);
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many route requests. Try again in a few minutes."
+        "Too many attempts. Try again in a minute."
       );
     }
+    const { joined } = await leagues.setLeagueSharing(db, uid, join);
+    return { join, joined };
+  });
 
-    const token = process.env.MAPBOX_DIRECTIONS_TOKEN;
-    if (!token) {
-      // Bound secret missing at runtime — misconfiguration, not user error.
-      functions.logger.error("routePlanning.failed", {
-        action,
-        code: "token-missing",
+/**
+ * weeklyLeagueTurn — the leagues' week (Soc15 call 3), Monday 12:15 UTC:
+ * after every timezone's Sunday has ended (the last, UTC-12, ends at 12:00
+ * UTC). It settles last week's groups (each member's result, new tier and
+ * one notification), forms this week's from the people who opted in and
+ * trained in the last 14 days, and writes the figure the locked card reads.
+ * Keyed by this week's Monday in leagueWeeks/{weekKey}, so a second run
+ * does nothing twice (lib/leagues.js runLeagueTurn). It runs again at
+ * quarter past each hour until the end of Monday UTC: a scheduled function
+ * is not retried, and a run cut off part way (a timeout, one failed write)
+ * would otherwise leave the week with no groups. Once the week is finished
+ * a run reads its marker and stops.
+ */
+exports.weeklyLeagueTurn = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("15 12-23 * * 1")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "weeklyLeagueTurn", async () => {
+      const summary = await leagues.runLeagueTurn(db, {
+        isHidden: discoveryHidden.isDiscoveryHidden,
+        notify: (uid, result) =>
+          socialFanout.createNotification({
+            firestore: db,
+            fromUid: leagues.LEAGUE_SENDER,
+            toUid: uid,
+            anonymous: true,
+            notificationId: `league-${result.weekKey}`,
+            keepExisting: true,
+            data: {
+              type: "league_result",
+              message: leagueRules.resultMessage(result),
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          }),
       });
+      functions.logger.info("weeklyLeagueTurn.done", summary);
+      return summary;
+    })
+  );
+
+/**
+ * removeFollower — Remove follower on your own followers list (Mob2 call
+ * 7): deletes both edges of one follow of the caller (lib/followRemoval).
+ * Not refused to a restricted account, which may always narrow who
+ * reaches it, as unfollowing and blocking may.
+ */
+exports.removeFollower = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const followerUid = data && data.followerUid;
+    if (!isDocumentId(followerUid) || followerUid === uid) {
       throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Route planning is not configured."
+        "invalid-argument",
+        "followerUid must be another account's id."
       );
     }
-
-    try {
-      if (isAlign) {
-        const waypoints = routePlanning.validateAlignWaypoints(
-          data && data.waypoints
-        );
-        return await routePlanning.alignToRoads({
-          fetchImpl: fetch,
-          token,
-          waypoints,
-        });
-      }
-      const loopRequest = routePlanning.validateLoopRequest(data);
-      return await routePlanning.generateLoop({
-        fetchImpl: fetch,
-        token,
-        start: loopRequest.start,
-        targetKm: loopRequest.targetKm,
-      });
-    } catch (error) {
-      if (error instanceof routePlanning.RoutePlanningError) {
-        // No coordinates in logs — action + bounded code + numeric HTTP
-        // status only. The status is what distinguishes a dead/quota'd
-        // token (401/403/429) from a genuinely unroutable request.
-        functions.logger.warn("routePlanning.failed", {
-          action,
-          code: error.code,
-          status: typeof error.status === "number" ? error.status : null,
-        });
-        if (error.code === "invalid-request") {
-          throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Invalid route request."
-          );
-        }
-        if (error.code === "no-route") {
-          throw new functions.https.HttpsError(
-            "not-found",
-            "No route found for those points."
-          );
-        }
-        throw new functions.https.HttpsError(
-          "unavailable",
-          "Route planning is temporarily unavailable."
-        );
-      }
-      throw error;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    const limited = await isRateLimited(uid, "removeFollower", 30, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
     }
+    const removed = await followRemoval.removeFollower(db, uid, followerUid);
+    return { removed };
+  });
+
+// ═══════════════════════════════════════════════════════════════
+// Invites that carry who sent them (Soc15 calls 4 and 5). Each person's
+// code, the signed-out lookup of whose it is, and its use by a new account,
+// which the inviter follows at once, and which follows the inviter at once
+// or asks to, by the inviter's Approve followers (lib/inviteCodes.js,
+// Soc15 call 4 and its STATUS line). The rules refuse every
+// client read and write of `inviteCodes`, and no client writes an edge
+// carrying `fromInvite`: these callables are the only writers.
+// ═══════════════════════════════════════════════════════════════
+const inviteCodes = require("./lib/inviteCodes");
+
+/** A refusal from lib/inviteCodes as the callable's error, its reason in
+ *  `details.reason` for the app to word (src/lib/invites.ts). */
+function mapInviteError(err) {
+  if (err instanceof inviteCodes.InviteError) {
+    return new functions.https.HttpsError(err.code, err.reason, {
+      reason: err.reason,
+    });
+  }
+  if (err && err.code === "account-restricted") {
+    return restriction.restrictedError(functions);
+  }
+  functions.logger.error("invite callable failed", {
+    message: err && err.message,
+  });
+  return new functions.https.HttpsError("internal", "Something went wrong.");
+}
+
+/**
+ * getInviteCode — the caller's own invite code, made the first time they
+ * ask and the same one after. A restricted account gets none: an invite
+ * reaches the people who use it (S4e).
+ */
+exports.getInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "inviteCode", 10, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    }
+    try {
+      const { code } = await inviteCodes.getOrCreateInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { code };
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+  });
+
+/**
+ * renewInviteCode — the caller's new invite code (Soc15):
+ * the old one stops working at once, as a Circle owner's New code does. A
+ * restricted account gets none, as with getInviteCode: a code reaches the
+ * people who use it. Five a day: a code is renewed when it went somewhere
+ * it should not have, not to reset its daily cap.
+ */
+exports.renewInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "inviteCodeRenew", 5, 86_400_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "You've made a few new codes today. Try again tomorrow."
+      );
+    }
+    try {
+      const { code } = await inviteCodes.renewInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { code };
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+  });
+
+/**
+ * lookupInvite — whose code this is, for the signed-out welcome screen:
+ * `{ inviter: { firstName } }`, or `{ inviter: null }` for a code that is
+ * unknown, malformed, belongs to a restricted or deleting account, or when
+ * the caller has asked too often. UNAUTHENTICATED by design (the person has
+ * no account yet), so it answers with the first word of a public name and
+ * nothing else, and every miss looks the same.
+ *
+ * Limited per caller address (a hash of it, as the password reset keys on
+ * a hash of the address typed) and across the project per day, so the
+ * 6.6e11 codes cannot be walked for names. App Check is not enforced on
+ * any callable yet; this one joins the per-callable rollout in
+ * docs/app-check-rollout.md.
+ */
+exports.lookupInvite = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const code = inviteCodes.normaliseInviteCode(data && data.code);
+    if (!code) return { inviter: null };
+    const key = inviteCodes.lookupKey(
+      context.rawRequest && context.rawRequest.ip
+    );
+    if (
+      (await isRateLimited(key, "inviteLookup", 20, 3_600_000)) ||
+      (await isRateLimited(key, "inviteLookupDay", 60, 86_400_000)) ||
+      (await isRateLimited(
+        "invitelookup_all",
+        "inviteLookupAll",
+        inviteCodes.LOOKUPS_PER_DAY,
+        86_400_000
+      ))
+    ) {
+      return { inviter: null };
+    }
+    try {
+      return {
+        inviter: await inviteCodes.lookupInviter({
+          firestore: admin.firestore(),
+          code,
+        }),
+      };
+    } catch (err) {
+      functions.logger.warn("lookupInvite.failed", {
+        message: err && err.message,
+      });
+      return { inviter: null };
+    }
+  });
+
+/**
+ * redeemInvite — a new account uses someone's invite code: the two follow
+ * each other at once, whatever either's approveFollowers says, and the
+ * inviter is told (Soc15 call 4). The checks and the writes are one
+ * transaction in lib/inviteCodes.js; the account's age comes from Auth.
+ * Returns `{ inviterName, alreadyJoined }` for the app's one line.
+ */
+exports.redeemInvite = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    // A few tries at a time and a day's worth in all: a typo is retried,
+    // a walk through the codes is not.
+    if (
+      (await isRateLimited(uid, "inviteRedeem", 5, 600_000)) ||
+      (await isRateLimited(uid, "inviteRedeemDay", 20, 86_400_000))
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many tries. Wait a few minutes, then try again."
+      );
+    }
+    const account = await admin.auth().getUser(uid);
+    const createdAtMs = Date.parse(
+      (account.metadata && account.metadata.creationTime) || ""
+    );
+    let result;
+    try {
+      result = await inviteCodes.redeemInvite({
+        firestore: admin.firestore(),
+        uid,
+        code: data && data.code,
+        nowMs: Date.now(),
+        accountCreatedAtMs: createdAtMs,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      throw mapInviteError(err);
+    }
+    const firestore = admin.firestore();
+    const inviterName = await inviteCodes
+      .publicName(firestore, result.inviterUid)
+      .catch(() => null);
+    // A join that made a follow request is told by onFollowRequestCreated,
+    // which says it came from the invite; this notice is for the follow
+    // made both ways at once, to an inviter who does not approve followers.
+    if (!result.alreadyJoined && !result.requested) {
+      // Best-effort: the follows are made whether or not the notice lands.
+      try {
+        const fromName = await socialFanout.senderDisplayName(firestore, uid);
+        await socialFanout.createNotification({
+          firestore,
+          fromUid: uid,
+          toUid: result.inviterUid,
+          data: {
+            type: "invite_joined",
+            fromName,
+            message: `${fromName} joined from your invite. You follow each other now`,
+          },
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          notificationId: `invite_joined_${uid}`,
+          keepExisting: true,
+        });
+      } catch (notifErr) {
+        functions.logger.warn("redeemInvite.notification_failed", {
+          message: notifErr && notifErr.message,
+        });
+      }
+    }
+    functions.logger.info("redeemInvite", {
+      alreadyJoined: result.alreadyJoined,
+    });
+    return {
+      inviterName,
+      alreadyJoined: result.alreadyJoined,
+      requested: result.requested === true,
+    };
   });

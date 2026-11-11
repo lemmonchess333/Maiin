@@ -185,3 +185,19 @@ describe("aggregateWeeklyData", () => {
     expect(result[0].avgPace).toBe(285);
   });
 });
+
+it("preserves distance across weekly bins until display rounding", () => {
+  const weeks = aggregateWeeklyData(
+    Array.from({ length: 5 }, (_, i) =>
+      run({
+        distance: 1049,
+        avgPace: 300,
+        completedAt: new Date(2026, 8, 1 + i * 7, 12),
+      })
+    )
+  );
+  expect(weeks).toHaveLength(5);
+  const kilometres = weeks.reduce((sum, week) => sum + week.totalDistance, 0);
+  expect(kilometres).toBeCloseTo(5.245);
+  expect(kilometres.toFixed(1)).toBe("5.2");
+});

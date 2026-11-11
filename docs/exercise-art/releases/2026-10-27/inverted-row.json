@@ -1,0 +1,280 @@
+{
+  "exerciseId": "inverted-row",
+  "version": "anatomy-v4-2026-10-27-chest-to-bar-row-v1",
+  "width": 1672,
+  "height": 941,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review; QA-accepted ≤2 native px rack-foot exception",
+  "reviewedAt": "2026-10-27T18:51:07.926Z",
+  "reference": {
+    "path": "form-frames/inverted-row/2026-10-27/1.webp",
+    "sha256": "77e08a326592d05e4fe468cc935f78998adf20add1c5f32867fcce6fcb6e1acb"
+  },
+  "cueSha256": "d8dc3a04e17e96d081eb19d1c23c4c714563f07868d1953d8c2daad14617e692",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1672×941 frames retain one faceless white anatomical athlete, white trainers, one fixed two-post rack and one bar. Purple upper-back and lat fields stay attached to the same muscles."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One side view and 1672×941 canvas across the set. Bar cap top-left is (111,22–23), rear post top-left exactly (512,23). The rack-foot lower edge varies by up to 2 native px, a narrowly requested exception: at the actual 337 px player stage, the displacement is <0.41 display px and is not discernible on dark/light phone review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The athlete keeps a straight heel-to-shoulder plank. Elbows bend as the sternum moves near the bar and extend on the way down; no arm or leg disappears or changes side."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "A single straight bar stays on the same two rack posts. Front rack foot spans 210–211 px and rear post top-to-foot span 718–720 px, each well under 1% dimension variation. Front foot lower edge y901/902/903 and rear foot lower edge y740/741/742 are the sole measured ≤2 px native stationary-geometry exception."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands wrap the same fixed bar in every pose. Both heels and shoe soles stay supported; visible shoe sole bottoms are y896–897 native px. Rear rack and front foot do not visibly move at the delivered phone size."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The torso rises toward the bar as elbows flex, then retraces to straight arms without breaking the body line. The bar stays fixed above the athlete."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Upper-back and lat regions are the strongest violet field, with biceps and core as secondary regions. Highlights remain on the same anatomy throughout."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Hang, Pull, Chest, Squeeze, Lower, Extend captions align to poses 1,2,3,3,2,1. The top drawing brings the sternum near the fixed bar; the setup maintains a heel-supported plank."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "In the actual ExerciseFormFrames player all six frames decoded and 6→1 returned to the byte-identical hang pose. Frames 1=6, 2=5 and 3=4 are byte-identical; no reset snap was seen."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual light ExerciseFormFrames player at 393×852: all six frames and 6→1 reviewed, full subject and captions visible, no horizontal overflow or player errors. A local development favicon.ico 404 unrelated to the player was excluded from the browser-error check."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual dark ExerciseFormFrames player at 393×852: all six frames and 6→1 reviewed, full subject and captions visible, no horizontal overflow or player errors. A local development favicon.ico 404 unrelated to the player was excluded from the browser-error check."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/inverted-row/2026-10-27/1.webp",
+      "sha256": "77e08a326592d05e4fe468cc935f78998adf20add1c5f32867fcce6fcb6e1acb",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 23
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 296,
+          "y": 901
+        },
+        "rearRackFootBottomLeft": {
+          "x": 479,
+          "y": 740
+        },
+        "shoeSoleBottomRight": {
+          "x": 1508,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 210,
+        "rearPostTopToFootBottom": 718
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/1.png",
+        "sha256": "be4f7a41091e9ea2570bdc77d7edbcd3d91efac6e9c18ba294ebb552be34ec67"
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2026-10-27/2.webp",
+      "sha256": "dbf55043a81a39b6527045da967bb607d7ad3f28a6a03a8f3b9cca6187f9b751",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 23
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 296,
+          "y": 902
+        },
+        "rearRackFootBottomLeft": {
+          "x": 479,
+          "y": 741
+        },
+        "shoeSoleBottomRight": {
+          "x": 1509,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 210,
+        "rearPostTopToFootBottom": 719
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/2.png",
+        "sha256": "6e66086a90cd54947e34aebf5d76c3c3b46646b37a445da6cb2bbc0b3d3028bb"
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2026-10-27/3.webp",
+      "sha256": "45f5fa01b48849d712b2f557215ea1cc7c6716938bb00d2a99c4ddb76592de23",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 22
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 297,
+          "y": 903
+        },
+        "rearRackFootBottomLeft": {
+          "x": 478,
+          "y": 742
+        },
+        "shoeSoleBottomRight": {
+          "x": 1507,
+          "y": 897
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 211,
+        "rearPostTopToFootBottom": 720
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/3.png",
+        "sha256": "2c03393d6ce434b1e3dfd0fbcb28d65bdcb7e0c446803d1ca6e36743c96721ee"
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2026-10-27/4.webp",
+      "sha256": "45f5fa01b48849d712b2f557215ea1cc7c6716938bb00d2a99c4ddb76592de23",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 22
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 297,
+          "y": 903
+        },
+        "rearRackFootBottomLeft": {
+          "x": 478,
+          "y": 742
+        },
+        "shoeSoleBottomRight": {
+          "x": 1507,
+          "y": 897
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 211,
+        "rearPostTopToFootBottom": 720
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/4.png",
+        "sha256": "2c03393d6ce434b1e3dfd0fbcb28d65bdcb7e0c446803d1ca6e36743c96721ee"
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2026-10-27/5.webp",
+      "sha256": "dbf55043a81a39b6527045da967bb607d7ad3f28a6a03a8f3b9cca6187f9b751",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 23
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 296,
+          "y": 902
+        },
+        "rearRackFootBottomLeft": {
+          "x": 479,
+          "y": 741
+        },
+        "shoeSoleBottomRight": {
+          "x": 1509,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 210,
+        "rearPostTopToFootBottom": 719
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/5.png",
+        "sha256": "6e66086a90cd54947e34aebf5d76c3c3b46646b37a445da6cb2bbc0b3d3028bb"
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2026-10-27/6.webp",
+      "sha256": "77e08a326592d05e4fe468cc935f78998adf20add1c5f32867fcce6fcb6e1acb",
+      "anchors": {
+        "barCapTopLeft": {
+          "x": 111,
+          "y": 23
+        },
+        "rearPostTopLeft": {
+          "x": 512,
+          "y": 23
+        },
+        "frontRackFootBottomRight": {
+          "x": 296,
+          "y": 901
+        },
+        "rearRackFootBottomLeft": {
+          "x": 479,
+          "y": 740
+        },
+        "shoeSoleBottomRight": {
+          "x": 1508,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "frontRackFootWidth": 210,
+        "rearPostTopToFootBottom": 718
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/inverted-row/6.png",
+        "sha256": "be4f7a41091e9ea2570bdc77d7edbcd3d91efac6e9c18ba294ebb552be34ec67"
+      }
+    }
+  ],
+  "fixedAnchorExceptions": [
+    {
+      "anchor": "frontRackFootBottomRight",
+      "axis": "y",
+      "maxDriftPx": 2,
+      "evidence": "QA accepted the measured rack-foot edge movement of at most 2 native pixels (<0.5 display pixel at the 393×852 player size)."
+    },
+    {
+      "anchor": "rearRackFootBottomLeft",
+      "axis": "y",
+      "maxDriftPx": 2,
+      "evidence": "QA accepted the measured rack-foot edge movement of at most 2 native pixels (<0.5 display pixel at the 393×852 player size)."
+    }
+  ]
+}

@@ -14,6 +14,7 @@
  * a used id.
  */
 
+import { getAuth } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 import { flushCommandOutbox, type OutboxEntry } from "./commandOutbox";
@@ -22,13 +23,32 @@ import { flushCommandOutbox, type OutboxEntry } from "./commandOutbox";
  *  decide whether the failure was transport (queue it) or a rejection (drop
  *  it) via `isTransportFailure`. */
 export async function sendProgramCommand(
-  command: OutboxEntry["command"]
+  command: OutboxEntry["command"],
+  expectedUid?: string
 ): Promise<void> {
   const call = httpsCallable(getFunctions(), "applyProgramCommand");
-  await call(command);
+  // The SDK obtains its auth token asynchronously. The server must also
+  // check ownership in case the account switches after our local guard.
+  await call(expectedUid === undefined ? command : { command, expectedUid });
 }
 
 /** Replay this uid's queued commands. Returns how many entries were cleared. */
 export function flushProgramCommands(uid: string): Promise<number> {
-  return flushCommandOutbox(uid, sendProgramCommand);
+  return flushCommandOutbox(uid, async (command) => {
+    // A replay can await several requests. Recheck before EACH one, rather
+    // than trusting the uid from the online/auth event that began the flush.
+    const auth = getAuth();
+    const accountChanged = () => auth.currentUser?.uid !== uid;
+    const stopped = () => Object.assign(new Error("Programme replay account changed"), {
+      code: "functions/cancelled",
+    });
+    if (accountChanged()) throw stopped();
+    try {
+      await sendProgramCommand(command, uid);
+    } catch (err) {
+      // Signing out during a request is not a permanent server refusal.
+      if (accountChanged()) throw stopped();
+      throw err;
+    }
+  });
 }

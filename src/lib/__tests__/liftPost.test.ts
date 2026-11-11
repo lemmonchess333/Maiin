@@ -81,6 +81,14 @@ describe("liftPost", () => {
     expect(plank.summary).toBe("2×60 s × 20 kg");
   });
 
+  it("reads a measured clock in whole minutes and whole seconds", () => {
+    const measured = { ...LIFT, durationMinutes: 47 + 19 / 60 };
+    expect(liftPostPreview(measured).meta).toContain("47 min");
+    expect(liftPost(AUTHOR, measured, { visibility: "public" }).duration).toBe(
+      47 * 60 + 19
+    );
+  });
+
   it("counts weight moved, which a timed hold has none of", () => {
     const post = liftPost(AUTHOR, LIFT, { visibility: "public" });
     expect(post.totalVolume).toBe(8 * 60 + 8 * 60 + 6 * 60);
@@ -112,6 +120,33 @@ describe("liftPost", () => {
       authorName: "Athlete",
       authorPhotoURL: "https://img/a.png",
     });
+  });
+});
+
+describe("a superset on a lift post (Mob1 call 2)", () => {
+  it("is posted with each grouped exercise, and read back for the card", () => {
+    const fly = exercise("Cable Fly", [set(12, 20), set(12, 20)], {
+      exerciseId: "cable-fly",
+      superset: 1,
+    });
+    const posted = postedExercises([{ ...BENCH, superset: 1 }, fly, PLANK]);
+    expect(posted.map((row) => row.superset)).toEqual([1, 1, undefined]);
+    expect(posted[2]).not.toHaveProperty("superset");
+    expect(liftPostRows(posted).map((row) => row.superset)).toEqual([
+      1,
+      1,
+      undefined,
+    ]);
+  });
+
+  it("reads nothing into a post with no superset, or a field that is no group", () => {
+    expect(liftPostRows(postedExercises([BENCH]))[0]).not.toHaveProperty(
+      "superset"
+    );
+    const [odd] = liftPostRows([
+      { ...postedExercises([BENCH])[0], superset: "A" },
+    ]);
+    expect(odd).not.toHaveProperty("superset");
   });
 });
 
@@ -403,5 +438,53 @@ describe("liftPostLeadArt", () => {
     expect(liftPostLeadArt([{ name: "My Own Lift" }])).toBeNull();
     expect(liftPostLeadArt(undefined)).toBeNull();
     expect(liftPostLeadArt([null, 3, "x"])).toBeNull();
+  });
+});
+
+describe("moments on a lift post (Soc15)", () => {
+  it("carries the session's moments and counts its new bests for the PR chip", () => {
+    const post = liftPost(
+      AUTHOR,
+      {
+        ...LIFT,
+        moments: {
+          prs: [
+            { exercise: "Bench Press", weightKg: 62.5, reps: 8 },
+            // A second new best in the same exercise: counted, not named.
+            { exercise: "Bench Press", weightKg: 70, reps: 3 },
+            { exercise: "Weighted Plank", weightKg: 25, reps: 8 },
+          ],
+          streak: { before: 6, after: 7 },
+          firstSession: false,
+          plan: { week: 2, weeks: 6, ends: true, weekDone: true },
+        },
+      },
+      { visibility: "public" }
+    );
+    expect(post.prCount).toBe(3);
+    expect(post.moments).toEqual([
+      { kind: "streak", days: 7 },
+      { kind: "pr", exercise: "Bench Press", weightKg: 62.5, reps: 8 },
+      { kind: "pr", exercise: "Weighted Plank", weightKg: 25, reps: 8 },
+    ]);
+  });
+
+  it("writes neither field for a session with nothing to tell", () => {
+    for (const lift of [
+      LIFT,
+      {
+        ...LIFT,
+        moments: {
+          prs: [],
+          streak: { before: 8, after: 9 },
+          firstSession: false,
+          plan: null,
+        },
+      },
+    ]) {
+      const post = liftPost(AUTHOR, lift, { visibility: "public" });
+      expect(post).not.toHaveProperty("moments");
+      expect(post).not.toHaveProperty("prCount");
+    }
   });
 });

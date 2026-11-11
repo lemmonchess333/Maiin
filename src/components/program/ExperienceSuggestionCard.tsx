@@ -62,7 +62,7 @@ export default function ExperienceSuggestionCard({
   const copy = levelSuggestionCopy(suggestion, profile?.primaryGoal);
 
   return (
-    <Card className="mt-3">
+    <Card className="mt-3 rounded-xl">
       <div className="flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <GraduationCap className="size-4 text-primary" aria-hidden="true" />

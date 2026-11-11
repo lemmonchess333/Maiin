@@ -1,0 +1,194 @@
+{
+  "exerciseId": "seated-row",
+  "version": "anatomy-v4-2026-10-27-upright-seated-cable-row-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T17:28:14.098Z",
+  "reference": {
+    "path": "form-frames/seated-row/2026-10-27/1.webp",
+    "sha256": "8a1c1018a2acbd91784bd201aa5fa103d3ae3292190c5b2292f1256d8e89e48c"
+  },
+  "cueSha256": "21005b409fe4ae55971f870c1b88c4582ae746cc670dda9af13c636161ad498e",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1254×1254 frames retain one faceless white anatomical athlete, white trainers and one seated cable row machine; violet upper-back fields match the illustration style."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side view. Tower top-left (1002,72) and base bottom-right (1235,1101) are exact across six PNGs; the default camera fits the full tower and feet at 393×852."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Feet stay braced on the platform with knees softly bent. Elbows draw back toward the lower ribs while the torso remains mostly upright instead of swinging or leaning far back."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One cable stays connected from handle to low pulley and the selected stack rises as the handle approaches the torso. Static tower extent is exactly 313×1029 px in all six frames."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both shoe/footplate bounding boxes and bench contacts remain fixed. Both hands stay on the same handle and the cable remains taut through pull and return."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The handle travels toward the lower ribs as elbows move back and the stack rises; return reverses that path while the tower and platform remain fixed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Upper back is the primary violet field with smaller arm support. Highlights stay registered to the same body regions across all poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Reach, pull, row, squeeze, return and reset now correspond to poses 1,2,3,3,2,1. The instructions describe the actual upright row and no longer tell the user to hinge forward."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and 6→1 were stepped in the real ExerciseFormFrames player. Bottom/top duplicates and the return pose make a continuous pull and reset, with frame 6 identical to frame 1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/seated-row/2026-10-27/1.webp",
+      "sha256": "8a1c1018a2acbd91784bd201aa5fa103d3ae3292190c5b2292f1256d8e89e48c",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/1.png",
+        "sha256": "559fda63e0bf7d7785dc9b3afcc1667be72acdcb538abdd32a1f2583851b89c7"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2026-10-27/2.webp",
+      "sha256": "86fd57e65f266408abf107e0386b4d11b80814c00518f10bc6179d9b6c7e7cec",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/2.png",
+        "sha256": "9753e3719bc9459cb91399c7a30fe9c474755d600e0319a7bbf10fb3786467a5"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2026-10-27/3.webp",
+      "sha256": "34942a779880ecfceaff6bee490b990041f23fd64abae6d9fa5cf27bbaa47b19",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/3.png",
+        "sha256": "c84f6ca005ebb9a40bc14ccdeb715aef1cb3d7ba96e55d8ef7fd7803aceee955"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2026-10-27/4.webp",
+      "sha256": "34942a779880ecfceaff6bee490b990041f23fd64abae6d9fa5cf27bbaa47b19",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/4.png",
+        "sha256": "c84f6ca005ebb9a40bc14ccdeb715aef1cb3d7ba96e55d8ef7fd7803aceee955"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2026-10-27/5.webp",
+      "sha256": "86fd57e65f266408abf107e0386b4d11b80814c00518f10bc6179d9b6c7e7cec",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/5.png",
+        "sha256": "9753e3719bc9459cb91399c7a30fe9c474755d600e0319a7bbf10fb3786467a5"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2026-10-27/6.webp",
+      "sha256": "8a1c1018a2acbd91784bd201aa5fa103d3ae3292190c5b2292f1256d8e89e48c",
+      "anchors": {
+        "towerTopLeft": {
+          "x": 1002,
+          "y": 72
+        },
+        "towerBaseBottomRight": {
+          "x": 1235,
+          "y": 1101
+        }
+      },
+      "invariantDimensions": {
+        "towerHorizontalExtent": 313,
+        "towerVerticalExtent": 1029
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/seated-row/6.png",
+        "sha256": "559fda63e0bf7d7785dc9b3afcc1667be72acdcb538abdd32a1f2583851b89c7"
+      }
+    }
+  ]
+}

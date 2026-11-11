@@ -115,7 +115,7 @@ export default function WorkoutFeedShareSheet({
       toast.success("Shared to your feed");
     } catch (err) {
       logger.error("[WorkoutDetail] feed share failed:", err);
-      toast.error("Couldn't share that workout. Try again.");
+      toast.error("Couldn’t share that workout. Try again.");
     } finally {
       setPosting(false);
     }
@@ -197,8 +197,7 @@ export default function WorkoutFeedShareSheet({
           // the workout is already saved and this page will still be here
           // later, so deferring is honest and losing nothing.
           <p className="text-caption text-muted-foreground text-center">
-            You&apos;re offline — come back to this workout when you&apos;re
-            connected.
+            You’re offline — come back to this workout when you’re connected.
           </p>
         )}
       </div>

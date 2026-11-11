@@ -25,9 +25,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("../useChallengePercentile", () => ({
   useChallengePercentile: () => null,
 }));
-vi.mock("@/lib/editorialImages", () => ({
-  challengeEditorialImage: () => null,
-}));
 vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));
@@ -131,8 +128,8 @@ describe("featured monthly progress units", () => {
     expect(screen.getByText("12 days")).toBeInTheDocument();
     expect(screen.getByText("20 days")).toBeInTheDocument();
     expect(screen.getByText("5 days")).toBeInTheDocument();
-    expect(screen.getByText(/You're at/)).toHaveTextContent(
-      "You're at 5 days · Bronze at 6 days"
+    expect(screen.getByText(/You’re at/)).toHaveTextContent(
+      "You’re at 5 days · Bronze at 6 days"
     );
   });
 
@@ -153,8 +150,8 @@ describe("featured monthly progress units", () => {
     expect(screen.getByText("300 min")).toBeInTheDocument();
     expect(screen.getByText("600 min")).toBeInTheDocument();
     expect(screen.getByText("149 min")).toBeInTheDocument();
-    expect(screen.getByText(/You're at/)).toHaveTextContent(
-      "You're at 149 min · Bronze at 150 min"
+    expect(screen.getByText(/You’re at/)).toHaveTextContent(
+      "You’re at 149 min · Bronze at 150 min"
     );
   });
 });

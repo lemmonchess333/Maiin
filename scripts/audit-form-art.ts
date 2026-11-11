@@ -11,6 +11,7 @@ import {
   artworkReviewExpectation,
   validateArtworkReview,
 } from "../src/lib/formArtReview";
+import { validateFormArtCompositeRelease } from "../src/lib/formArtComposites";
 import {
   approvedReleases,
   readReleaseRecords,
@@ -89,6 +90,11 @@ for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
             text: sha256,
           })
         ).map((error) => `${id}: ${error}`)
+      );
+      errors.push(
+        ...validateFormArtCompositeRelease(id, review).map(
+          (error) => `${id}: ${error}`
+        )
       );
     } catch (error) {
       errors.push(`${id}: ${String(error)}`);

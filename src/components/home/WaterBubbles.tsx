@@ -1,94 +1,122 @@
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const BUBBLE_COUNT = 3;
 
 interface Bubble {
-  id: number;
   x: number; // percent from left
   size: number; // px
-  duration: number; // seconds
-  delay: number; // seconds
+  duration: number; // ms
+  delay: number; // ms before it rises
 }
 
-function makeBubbles(seed: number): Bubble[] {
-  const bubbles: Bubble[] = [];
-  for (let i = 0; i < BUBBLE_COUNT; i++) {
-    bubbles.push({
-      id: seed * 10 + i,
-      x: 20 + ((i * 37 + seed * 13) % 60),
-      size: 3 + (i % 2),
-      duration: 3 + i * 0.8,
-      delay: i * 1.2,
-    });
-  }
-  return bubbles;
+/**
+ * The `index`th bubble of its `round`: a new place along the glass each
+ * round, the three staggered so they never rise together.
+ */
+function bubbleFor(round: number, index: number): Bubble {
+  return {
+    x: 20 + ((index * 37 + round * 13) % 60),
+    size: 3 + (index % 2),
+    duration: 3000 + index * 800,
+    delay: round === 0 ? index * 1200 : 400 + index * 300,
+  };
 }
 
+/* Rises 60px with a little sway, fading in as it leaves and out at the
+   top. It starts INVISIBLE: a bubble waiting out its delay at full
+   opacity is a pale dot parked at the bottom of the card, which reads as
+   a smudge or a dead pixel rather than as a bubble. The steps ease out,
+   fast at the bottom and slow at the top, as the spring did. */
+const RISE: Keyframe[] = [
+  { transform: "translate(0px, 0px)", opacity: 0 },
+  { offset: 0.25, transform: "translate(3px, -27px)", opacity: 0.3 },
+  { offset: 0.5, transform: "translate(-2px, -45px)", opacity: 0.3 },
+  { offset: 0.75, transform: "translate(1px, -55px)", opacity: 0.15 },
+  { transform: "translate(0px, -60px)", opacity: 0 },
+];
+
+/**
+ * Three bubbles rising in the water hero card, past two glasses.
+ *
+ * Each is a Web Animations API animation of transform and opacity, which
+ * the compositor runs: no React render and no main-thread work per frame.
+ * When one reaches the top it starts again from a new place. Paused while
+ * the card is off-screen or the app is in the background; nothing at all
+ * under Reduce Motion, since the bubbles are decoration.
+ */
 export default function WaterBubbles() {
   const reducedMotion = useReducedMotion();
-  const [cycle, setCycle] = useState(0);
-  // Whether the bubble layer is actually visible to the user (on-screen AND
-  // the tab/app foregrounded). Starts true so it animates immediately; the
-  // observer corrects it on the next frame.
   const [active, setActive] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const bubbleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const running = useRef<(Animation | null)[]>([]);
+  const paused = useRef(false);
 
-  // Pause the cycle when the card is scrolled off-screen or the tab is
-  // backgrounded. The bubble layer is purely decorative, so driving a 4s
-  // Framer-Motion re-render of the Home tree while nobody can see it is
-  // wasted work for every steady-state (3+ glasses) user.
-  useEffect(
-    function () {
-      if (reducedMotion) return;
-      const el = containerRef.current;
-      if (!el || typeof IntersectionObserver === "undefined") return;
+  // Whether anyone can see them: on-screen and the app in the foreground.
+  useEffect(() => {
+    if (reducedMotion) return;
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
 
-      let onScreen = true;
-      const sync = function () {
-        setActive(onScreen && document.visibilityState === "visible");
-      };
-      const io = new IntersectionObserver(function (entries) {
-        onScreen = entries[0]?.isIntersecting ?? true;
-        sync();
-      });
-      io.observe(el);
-      document.addEventListener("visibilitychange", sync);
+    let onScreen = true;
+    const sync = () =>
+      setActive(onScreen && document.visibilityState === "visible");
+    const io = new IntersectionObserver((entries) => {
+      onScreen = entries[0]?.isIntersecting ?? true;
       sync();
-      return function () {
-        io.disconnect();
-        document.removeEventListener("visibilitychange", sync);
-      };
-    },
-    [reducedMotion]
-  );
+    });
+    io.observe(el);
+    document.addEventListener("visibilitychange", sync);
+    sync();
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [reducedMotion]);
 
-  useEffect(
-    function () {
-      // Sprint 6: skip the 4-second cycle interval entirely when the
-      // user opts out of motion. Bubble animation is decorative —
-      // omitting it is a strict improvement for vestibular safety,
-      // not a degraded experience. Also paused when off-screen/hidden.
-      if (reducedMotion || !active) return;
-      const interval = setInterval(function () {
-        setCycle(function (c) {
-          return c + 1;
-        });
-      }, 4000);
-      return function () {
-        clearInterval(interval);
-      };
-    },
-    [reducedMotion, active]
-  );
+  useEffect(() => {
+    if (reducedMotion) return;
+    let stopped = false;
+    const rise = (index: number, round: number) => {
+      const el = bubbleRefs.current[index];
+      if (stopped || !el || typeof el.animate !== "function") return;
+      const bubble = bubbleFor(round, index);
+      el.style.left = `${bubble.x}%`;
+      el.style.width = `${bubble.size}px`;
+      el.style.height = `${bubble.size}px`;
+      const animation = el.animate(RISE, {
+        duration: bubble.duration,
+        delay: bubble.delay,
+        easing: "linear",
+        fill: "both",
+      });
+      if (paused.current) animation.pause();
+      animation.onfinish = () => rise(index, round + 1);
+      running.current[index] = animation;
+    };
+    for (let index = 0; index < BUBBLE_COUNT; index += 1) rise(index, 0);
+    return () => {
+      stopped = true;
+      for (const animation of running.current) {
+        if (!animation) continue;
+        animation.onfinish = null;
+        animation.cancel();
+      }
+      running.current = [];
+    };
+  }, [reducedMotion]);
 
-  // Sprint 6: render nothing when reduced motion is set. The Water
-  // hero card's bubble layer is decorative — the card still works
-  // visually without it.
+  useEffect(() => {
+    paused.current = !active;
+    for (const animation of running.current) {
+      if (!animation) continue;
+      if (active) animation.play();
+      else animation.pause();
+    }
+  }, [active]);
+
   if (reducedMotion) return null;
-
-  const bubbles = makeBubbles(cycle);
 
   return (
     <div
@@ -96,46 +124,20 @@ export default function WaterBubbles() {
       className="absolute inset-0 pointer-events-none overflow-hidden"
       aria-hidden="true"
     >
-      <AnimatePresence mode="popLayout">
-        {bubbles.map(function (b) {
-          return (
-            <motion.div
-              key={b.id}
-              className="absolute rounded-full"
-              style={{
-                width: b.size,
-                height: b.size,
-                left: b.x + "%",
-                bottom: 4,
-                backgroundColor: "rgba(255, 255, 255, 0.20)",
-              }}
-              /* Starts INVISIBLE. Bubbles are staggered 0 / 1.2 / 2.4s
-                 apart, and an entry opacity of 0.3 meant the two
-                 delayed ones sat fully painted and motionless at
-                 `bottom: 4` for up to 2.4 seconds before they began to
-                 rise — a static pale dot parked near the bottom-left of
-                 the card, which reads as a smudge or a dead pixel
-                 rather than as a bubble. Caught from a device
-                 screenshot, where one was frozen mid-wait. Fading in as
-                 it leaves means a bubble is only ever visible while it
-                 is actually moving. */
-              initial={{ y: 0, opacity: 0 }}
-              animate={{
-                y: -60,
-                x: [0, 3, -2, 1, 0],
-                opacity: [0, 0.3, 0.3, 0],
-              }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: b.duration,
-                delay: b.delay,
-                ease: "easeOut",
-                x: { duration: b.duration, repeat: 0, ease: "easeInOut" },
-              }}
-            />
-          );
-        })}
-      </AnimatePresence>
+      {Array.from({ length: BUBBLE_COUNT }, (_, index) => (
+        <div
+          key={index}
+          ref={(el) => {
+            bubbleRefs.current[index] = el;
+          }}
+          data-water-bubble
+          className="absolute rounded-full opacity-0"
+          style={{
+            bottom: 4,
+            backgroundColor: "rgba(255, 255, 255, 0.20)",
+          }}
+        />
+      ))}
     </div>
   );
 }

@@ -92,7 +92,10 @@ async function createTrialCheckoutSession({
     mode,
     success_url: successUrl,
     cancel_url: cancelUrl,
-    metadata,
+    // Checkout completion is a signed provider event. Keep the server's
+    // trial decision on it so a completed trial can be measured without
+    // mistaking the earlier trial-slot reservation for an actual start.
+    metadata: { ...metadata, activationTrial: trialGranted ? "true" : "false" },
   };
 
   if (trialGranted) {

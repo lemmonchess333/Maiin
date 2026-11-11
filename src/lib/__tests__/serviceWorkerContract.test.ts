@@ -35,6 +35,14 @@ function assertClickBeforeMessagingImport(source: string, label: string) {
 }
 
 describe("service-worker file contract", () => {
+  it("public/sw.js lets Monday's recap open the weekly review", () => {
+    const source = readFileSync(
+      resolve(__dirname, "../../../public/sw.js"),
+      "utf8"
+    );
+    expect(source).toMatch(/requestedRoute === "\/review"/);
+  });
+
   it("public/sw.js installs notificationclick before importing FCM messaging", () => {
     assertClickBeforeMessagingImport(readFileSync(swPath, "utf8"), "sw.js");
   });

@@ -1,0 +1,566 @@
+{
+  "updatedOn": "2026-11-10",
+  "notes": "Provenance for covers that shipped with no source record. Twelve race and Space covers had no manifest record whose output hash matched the file; they were first committed in #1631 (2026-07-16) and #1690 (2026-07-20) and are byte-identical to those commits. Ten are traced here to exact free Unsplash photographs (Unsplash License; the API reports premium: false), each confirmed by aligning the 2400 px download to the shipped file (alignment score 0.993 or more, mean pixel difference 3.2 or less at 160 px wide, against about 70-107 for a different photograph of the same landmark) and by eye side by side. The shipped files were made from the operator's own July downloads, so they are not re-encodes of today's downloads, and each crop is recovered in the 2400 px download's coordinates. Not found after text, photographer and image searches: space-the-big-half and space-london-10000. The owner supplied them through ChatGPT (owner, 2026-11-10) and keeps them as they are. space-royal-parks-half is licensed correctly, but nothing in the photograph or its caption shows that it is Hyde Park (see its record).",
+  "images": [
+    {
+      "asset": "space-trail-running.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-hiking-up-a-mountain-lUNh8-Zhqo4",
+      "downloadUrl": "https://images.unsplash.com/photo-1699959560616-aa17ace76879?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Lucas Canino",
+      "photographerUrl": "https://unsplash.com/@lcanino",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "a group of people hiking up a mountain",
+      "originalSize": {
+        "width": 7081,
+        "height": 4426
+      },
+      "subject": "Three trail runners from behind on a grassy path below limestone peaks under a blue sky.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "aab005055f71c25fd723e7feb7b2a18990b7ab96026a76d3ed23c44d5d518c18",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1500
+      },
+      "sourceBytes": 1121143,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 172490,
+        "sha256": "acf120540aa8b820d58fd948c1c2272a33f9c954f69fbe8b92a3331e15cd6ceb"
+      },
+      "addedIn": {
+        "commit": "f972470d0ccccb550027798c3522fdbeb7130057",
+        "pr": 1631,
+        "date": "2026-07-16",
+        "title": "Editorial imagery for Community Spaces + challenge cards",
+        "provenanceRecord": "Commit message names \"space-trail-running.webp  lUNh8-Zhqo4  (Lucas Canino)\"; the operator's original download lucas-canino-lUNh8-Zhqo4-unsplash.jpg is in PR #1631 history (commit 14195e9e)."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9988,
+        "madRgb160px": 1.58,
+        "madRgbFullSize": 6.59,
+        "pearsonGrayFullSize": 0.9855,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      },
+      "operatorOriginal": {
+        "file": "lucas-canino-lUNh8-Zhqo4-unsplash.jpg",
+        "commit": "14195e9e",
+        "width": 7081,
+        "height": 4426,
+        "bytes": 6948295,
+        "sha256": "1590fd67aed92ca39ead2fa8af4781aa4082e8f068da9ece2c4d9717b8f3d34d",
+        "ncc": 0.999,
+        "mad160": 1.49,
+        "note": "Full-resolution Unsplash download committed in the PR branch and removed before merge; aligned to the shipped file the same way."
+      }
+    },
+    {
+      "asset": "space-travel-racecations.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/person-running-on-road-at-daytime-QVD3Xht9txA",
+      "downloadUrl": "https://images.unsplash.com/photo-1547483238-f400e65ccd56?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Andrea Leopardi",
+      "photographerUrl": "https://unsplash.com/@whatyouhide",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "person running on road at daytime; description: driving towards the Fitz Roy mountain in Patagonia, Argentina",
+      "originalSize": {
+        "width": 6000,
+        "height": 4000
+      },
+      "subject": "A lone runner on an empty straight road towards the snow-capped Fitz Roy massif, Patagonia (the photographer's self-portrait, per his caption).",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "b988d6a326dde5307ad714a496ec51d7983fb1b8312a6f0e969a66389e423cf8",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "sourceBytes": 637567,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 2400,
+        "height": 1598
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 853,
+        "bytes": 91700,
+        "sha256": "8ebf3571cf88482c074be10272e19e3c277939d872cc778e50af198f639fa519"
+      },
+      "addedIn": {
+        "commit": "f972470d0ccccb550027798c3522fdbeb7130057",
+        "pr": 1631,
+        "date": "2026-07-16",
+        "title": "Editorial imagery for Community Spaces + challenge cards",
+        "provenanceRecord": "Commit message names \"space-travel-racecations.webp  QVD3Xht9txA  (Andrea Leopardi)\"; the operator's original download andrea-leopardi-QVD3Xht9txA-unsplash.jpg is in PR #1631 history (commit 53581c90)."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9991,
+        "madRgb160px": 1.34,
+        "madRgbFullSize": 5.4,
+        "pearsonGrayFullSize": 0.9451,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      },
+      "operatorOriginal": {
+        "file": "andrea-leopardi-QVD3Xht9txA-unsplash.jpg",
+        "commit": "53581c90",
+        "width": 6000,
+        "height": 4000,
+        "bytes": 4398319,
+        "sha256": "11d567b377f25d0c10d54f22b1a91dd7d8abd582fe143a88dae4b63b03ab4b85",
+        "ncc": 0.9994,
+        "mad160": 1.34,
+        "note": "Full-resolution Unsplash download committed in the PR branch and removed before merge; aligned to the shipped file the same way."
+      }
+    },
+    {
+      "asset": "space-royal-parks-half.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/a-line-of-trees-and-sunlight-GGSfZJmWd6Q",
+      "downloadUrl": "https://images.unsplash.com/photo-1560706834-c8b400d29d37?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "V2F",
+      "photographerUrl": "https://unsplash.com/@iv2fi",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "a line of trees and sunlight (no description)",
+      "originalSize": {
+        "width": 4592,
+        "height": 3448
+      },
+      "subject": "Rows of plane trees on a lawn with the low sun breaking through the trunks and long shadows.",
+      "locationEvidence": "NOT CONFIRMED. The caption (\"a line of trees and sunlight\") names no place, the photo has no GPS data, and nothing in the frame is a recognisable Hyde Park landmark - only rows of trees on grass. The photographer is France-based and the camera clock was set to UTC+2 (CEST, 21 Aug 2018 19:32 local), which points away from London (BST is UTC+1) rather than towards it. The 2026-07-20 commit called it \"Hyde Park plane trees\" on the operator's say-so. The licence is clean; whether it shows the race's park is unproven.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "a52b05f1187c102536a9a8b0a122411eb5184a9682a07449a4d1a8ca0b202db8",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1802
+      },
+      "sourceBytes": 1744746,
+      "crop": {
+        "left": 0,
+        "top": 150,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 250320,
+        "sha256": "51fd6e04155937f5631211069499331671f754c3780e257c889debadaa1d65d4"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Hyde Park plane trees, golden hour (likely GGSfZJmWd6Q)\" - confirmed here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9983,
+        "madRgb160px": 3.13,
+        "madRgbFullSize": 16.12,
+        "pearsonGrayFullSize": 0.922,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-edinburgh-marathon.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/a-city-on-a-hill-xccv7VJKEf8",
+      "downloadUrl": "https://images.unsplash.com/photo-1666293937306-c84374b83e8d?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Mike Newbry",
+      "photographerUrl": "https://unsplash.com/@mikenewbry",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "a city on a hill; description: Sunset over Edinburgh",
+      "originalSize": {
+        "width": 6000,
+        "height": 4000
+      },
+      "subject": "Salisbury Crags and the path below them in Holyrood Park at sunset, with the Old Town and Edinburgh Castle on the skyline.",
+      "locationEvidence": "Photographer's caption: \"Sunset over Edinburgh\". In frame: the dolerite cliff of Salisbury Crags (Holyrood Park), Edinburgh Castle on its rock and the Old Town spires on the skyline - the Arthur's Seat/Old Town landmark the 2026-07-19 photo lock (Q7) set for this race.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "e7f5d8f0218ae39b3904a1a46cc4acca117689c1e481e691205ae15dafddd56d",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "sourceBytes": 1045842,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 2400,
+        "height": 1598
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 853,
+        "bytes": 142292,
+        "sha256": "d53a18a07654520df4ea2c2aeff3bd01d5f4e97f9d0cba5eb03f6e8f9c1062ce"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Salisbury Crags + castle, sunset (likely xccv7VJKEf8)\" - confirmed here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9997,
+        "madRgb160px": 1.94,
+        "madRgbFullSize": 7.48,
+        "pearsonGrayFullSize": 0.9887,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-cardiff-half.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/body-of-water-near-city-buildings-during-sunset-IDU1v-rDmQ4",
+      "downloadUrl": "https://images.unsplash.com/photo-1580987502658-6b7345783e6f?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Nick Fewings",
+      "photographerUrl": "https://unsplash.com/@jannerboy62",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "body of water near city buildings during sunset (no description)",
+      "originalSize": {
+        "width": 6000,
+        "height": 4000
+      },
+      "subject": "Cardiff Bay at twilight: the Pierhead Building's red-brick clock tower lit up, the boardwalk and the marina under a pink and violet sky.",
+      "locationEvidence": "The caption names no place. Identified from the photograph: the Pierhead Building (red terracotta, Gothic clock tower) on Cardiff Bay, with the bay's boardwalk and marina pontoons - Cardiff Bay is the landmark the photo lock set for this race. Photographer Nick Fewings is UK-based (Bournemouth).",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "b46da64dda8e56e3125abc5930772c60726b1559f76160ef0e78a24e316776ff",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "sourceBytes": 1110805,
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 82700,
+        "sha256": "1e5afce9944072f86e57c25898354b2601014a64ae85407359a88b659dbc581f"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Pierhead + marina, twilight (likely IDU1v-rDmQ4)\" - confirmed here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9975,
+        "madRgb160px": 2.95,
+        "madRgbFullSize": 8.19,
+        "pearsonGrayFullSize": 0.9546,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-great-north-run.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/brown-bridge-over-body-of-water-during-daytime-WcUArCQXXYE",
+      "downloadUrl": "https://images.unsplash.com/photo-1600076812904-299ab3d4bff4?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Jack Foster",
+      "photographerUrl": "https://unsplash.com/@jxckfoster",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "brown bridge over body of water during daytime; description: Tyne Bridge, Newcastle",
+      "originalSize": {
+        "width": 3024,
+        "height": 4032
+      },
+      "subject": "The Tyne Bridge's green steel arch and its granite tower over the Tyne, the Quayside buildings reflected in the river.",
+      "locationEvidence": "Photographer's caption: \"Tyne Bridge, Newcastle\". In frame: the Tyne Bridge's through-arch and Cornish-granite pylon, the Newcastle Quayside and its reflection. The Great North Run crosses the Tyne Bridge.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "74afd7749a71cc86ff74e5370a2f4140ed2aa1afe167baec3272246b8b125646",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3200
+      },
+      "sourceBytes": 1882983,
+      "crop": {
+        "left": 0,
+        "top": 968,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 169452,
+        "sha256": "f03be73eab6185b6bcbab6bed902823e22a35a437089442b74b642045779f3dc"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Tyne Bridge, golden daylight (tyne-bridge pool)\" - no photo id was recorded; traced here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.993,
+        "madRgb160px": 1.4,
+        "madRgbFullSize": 5.17,
+        "pearsonGrayFullSize": 0.9953,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-london-marathon.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/tower-bridge-and-london-skyscrapers-Q6UehpkBSnQ",
+      "downloadUrl": "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Charles Postiaux",
+      "photographerUrl": "https://unsplash.com/@charlespostiaux",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "Tower Bridge and London skyscrapers",
+      "originalSize": {
+        "width": 5616,
+        "height": 3744
+      },
+      "subject": "Tower Bridge in morning light, the City of London's towers between its two Gothic towers, a moored boat and autumn leaves in the foreground.",
+      "locationEvidence": "Caption: \"Tower Bridge and London skyscrapers\"; the photographer's note says it is London on the last morning of his trip. In frame: Tower Bridge's two towers, high-level walkways and blue suspension chains over the Thames, with City towers (22 Bishopsgate, the Scalpel) behind. The London Marathon crosses Tower Bridge.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "a3b74e9fc56362cec96ad5bf462693b39474c3ce1c694f3b08ecbe5c1f62951a",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "sourceBytes": 877545,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 2400,
+        "height": 1598
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1400,
+        "height": 933,
+        "bytes": 155966,
+        "sha256": "c173b6030ee719b3b33ccfe275c5380c07b779f632e90aa0489fa8cc2495d359"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Tower Bridge, daylight (tower-bridge pool)\" - no photo id was recorded; traced here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9997,
+        "madRgb160px": 1.91,
+        "madRgbFullSize": 8.07,
+        "pearsonGrayFullSize": 0.9654,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-great-birmingham-run.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/a-building-that-has-a-lot-of-circles-on-it-u44HcmdG0Oo",
+      "downloadUrl": "https://images.unsplash.com/photo-1548860258-be5cfff4f165?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Sarah Doffman",
+      "photographerUrl": "https://unsplash.com/@sarahdoffman",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "a building that has a lot of circles on it (no description)",
+      "originalSize": {
+        "width": 4500,
+        "height": 2858
+      },
+      "subject": "The curving aluminium-disc facade of Selfridges at the Bullring against a sunset sky.",
+      "locationEvidence": "The caption names no place. Identified from the photograph: the Selfridges building at the Bullring, Birmingham (UK) - its curved facade clad in thousands of aluminium discs is unique; the same photographer's sibling upload (v9Q-I6rnwQk) shows the same building. Not Birmingham, Alabama (the wrong-city trap the 2026-07-20 commit recorded).",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "9f922a11ff97320572af5a345a1652be885285d0191271b4820b78e922d168a7",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1524
+      },
+      "sourceBytes": 591340,
+      "crop": {
+        "left": 0,
+        "top": 22,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 77682,
+        "sha256": "f056faffbd7bb437aeb8c2a089c8f6b03b9fb26ca4cfa73de6ee3534301f1359"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Selfridges discs, sunset (birmingham-uk pool)\" - no photo id was recorded; traced here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.999,
+        "madRgb160px": 2.38,
+        "madRgbFullSize": 5.28,
+        "pearsonGrayFullSize": 0.9802,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-leeds-10k.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/an-aerial-view-of-a-city-with-a-clock-tower-RNkPUD4G4rI",
+      "downloadUrl": "https://images.unsplash.com/photo-1681642048507-eda6aa987b6a?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Paul Rigel",
+      "photographerUrl": "https://unsplash.com/@paulrigel",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "an aerial view of a city with a clock tower; description: Aerial image of the Parkinson Building at the University of Leeds, Leeds UK at sunset",
+      "originalSize": {
+        "width": 8064,
+        "height": 6048
+      },
+      "subject": "Aerial view at dusk of the Parkinson Building's Portland-stone clock tower at the University of Leeds, terraced houses in front.",
+      "locationEvidence": "Photographer's caption: \"Aerial image of the Parkinson Building at the University of Leeds, Leeds UK at sunset\" (Paul Rigel is a Leeds-based photographer; his other photo 2G6Jl7M7PJc is the leeds-marathon cover - a different photograph).",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "588114cbc3414b3b1ff3e10e22f9656e3f79295f4ff4cd755a83f12990256083",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1800
+      },
+      "sourceBytes": 1012069,
+      "crop": {
+        "left": 0,
+        "top": 300,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 93562,
+        "sha256": "9c5163acbf60469ceba43b2e49b4c546f54b38421b111d1a04a4ccd321d84dba"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Parkinson Building, dusk (leeds-uk pool)\" - no photo id was recorded; traced here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9997,
+        "madRgb160px": 1.9,
+        "madRgbFullSize": 4.63,
+        "pearsonGrayFullSize": 0.997,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    },
+    {
+      "asset": "space-brighton-marathon.webp",
+      "status": "traced",
+      "sourceUrl": "https://unsplash.com/photos/silhouette-of-people-walking-on-the-beach-during-sunset-0rDxfwxsVVg",
+      "downloadUrl": "https://images.unsplash.com/photo-1580638891730-52c8e40da663?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "photographer": "Rhys Kentish",
+      "photographerUrl": "https://unsplash.com/@rhyskentish",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "licenceEvidence": "Unsplash API returns premium: false and the CDN path is photo-… (Unsplash+ assets are premium_photo-…), so the free Unsplash License applies.",
+      "unsplashCaption": "silhouette of people walking on the beach during sunset; description: Brighton pier during golden hour",
+      "originalSize": {
+        "width": 3955,
+        "height": 5932
+      },
+      "subject": "Brighton Palace Pier at golden hour: the helter-skelter and pier-head rides, lamp posts, the sea, and the pier's railing finials out of focus in front.",
+      "locationEvidence": "Photographer's caption: \"Brighton pier during golden hour\" (Rhys Kentish is Brighton-based). In frame: the Palace Pier's striped helter-skelter, pier-head rides and its cast-iron lamp standards. The Brighton Marathon runs along the seafront past the Palace Pier.",
+      "retrievedOn": "2026-11-10",
+      "downloadRegistered": "Unsplash download endpoint called via the Unsplash MCP download_asset tool on 2026-11-10 before fetching.",
+      "sourceSha256": "8424360eb558f6f917f24dbb6068da99fdf7202182b60da2b8d9109b9b4af2c3",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3600
+      },
+      "sourceBytes": 774384,
+      "crop": {
+        "left": 0,
+        "top": 1590,
+        "width": 2400,
+        "height": 1500
+      },
+      "cropNote": "Recovered by alignment, in the coordinates of the 2400 px download (about +/-2 px). The shipped file was made in July 2026 from the operator's own download, resized to the output size; it is not a re-encode of this exact download.",
+      "output": {
+        "width": 1280,
+        "height": 800,
+        "bytes": 48912,
+        "sha256": "e5fd97c2cf34fba7eb577ef9537e55a4505573e778cfe7096b16518f4493c111"
+      },
+      "addedIn": {
+        "commit": "6982deb584938cc60f61950609e3c80c994a5348",
+        "pr": 1690,
+        "date": "2026-07-20",
+        "title": "Editorial photos for the twelve race spaces (course-landmark set)",
+        "provenanceRecord": "Commit message: \"Palace Pier helter-skelter, sunset (brighton-pier pool)\" - no photo id was recorded; traced here."
+      },
+      "match": {
+        "method": "Scale+translation search by normalised cross-correlation (grayscale), then the source crop resized to the shipped size and compared.",
+        "ncc": 0.9999,
+        "madRgb160px": 1.02,
+        "madRgbFullSize": 2.29,
+        "pearsonGrayFullSize": 0.9991,
+        "eye": "Same photograph: identical composition, every object and edge in place (side-by-side checked)."
+      }
+    }
+  ]
+}

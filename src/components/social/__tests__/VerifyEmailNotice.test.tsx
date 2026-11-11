@@ -9,7 +9,7 @@ const { sendVerificationEmail, toastSuccess, toastError } = vi.hoisted(() => ({
 
 vi.mock("@/lib/accountSecurity", () => ({
   sendVerificationEmail,
-  resendVerificationErrorMessage: () => "Couldn't send the email. Try again.",
+  resendVerificationErrorMessage: () => "Couldn’t send the email. Try again.",
 }));
 vi.mock("@/lib/toast", () => ({
   toast: { success: toastSuccess, error: toastError },
@@ -71,7 +71,7 @@ describe("VerifyEmailNotice", () => {
     fireEvent.click(screen.getByRole("button", { name: "I have verified" }));
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
-        expect.stringContaining("Couldn't check verification")
+        expect.stringContaining("Couldn’t check verification")
       )
     );
     expect(toastSuccess).not.toHaveBeenCalled();

@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
@@ -45,8 +46,15 @@ export default function PerformanceOverviewCard({
   hasLoggedSession: boolean;
   onOpenDetails: () => void;
 }) {
-  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
-    usePerformanceWeeks(WEEKS_SHOWN);
+  const {
+    weeks,
+    currentWeek,
+    previousWeek,
+    docsAvailable,
+    loading,
+    failed,
+    refresh,
+  } = usePerformanceWeeks(WEEKS_SHOWN);
   const arrival = useArrivedAfterLoading(loading);
 
   const details = (
@@ -75,6 +83,15 @@ export default function PerformanceOverviewCard({
     );
   }
 
+  if (failed) {
+    return (
+      <section aria-label="Performance" className="space-y-2">
+        <SectionHeading>Performance</SectionHeading>
+        <PerformanceReadError onRetry={refresh} />
+      </section>
+    );
+  }
+
   if (!currentWeek) {
     const copy = performanceEmptyCopy(hasLoggedSession);
     return (
@@ -90,7 +107,11 @@ export default function PerformanceOverviewCard({
               sub={copy.sub}
               action={
                 copy.showAction
-                  ? { label: "Start a workout", href: "/program" }
+                  ? {
+                      label: "Start a workout",
+                      href: "/program",
+                      variant: "neutral",
+                    }
                   : undefined
               }
             />
@@ -138,7 +159,7 @@ export default function PerformanceOverviewCard({
           {/* The words keep at least 9em and go under the score when they
             cannot, rather than one word to a line at larger text. */}
           <div className="flex flex-wrap items-start gap-3">
-            <p className="text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+            <p className="text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
               <span className="sr-only">Performance Index </span>
               {pi}
             </p>

@@ -308,6 +308,18 @@ describe("ProModal — checkout", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Card declined.");
   });
+
+  it("a purchase the store took shows a note, not an error", async () => {
+    purchaseMock.mockResolvedValueOnce({
+      success: false,
+      pending: "entitlement",
+    });
+    renderModal({ onClose: () => {} });
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    const note = await screen.findByText(/The App Store has your purchase\./);
+    expect(note.getAttribute("role")).toBe("status");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
 
 describe("ProModal — Sub1a P1 trial CTA", () => {
@@ -361,8 +373,26 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
       name: "How your free trial works",
     });
     expect(timeline.textContent).toContain(
-      "Day 7 — Your subscription starts at £34.99 a year unless you've cancelled."
+      "Day 7 — Your subscription starts at £34.99 a year unless you’ve cancelled."
     );
+  });
+
+  it("the timeline says the last day to cancel is the day before the trial ends", () => {
+    // The App Store needs a trial cancelled at least 24 hours before it
+    // ends, so "any time before then" was untrue on iPhone (Sub1).
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderModal({ onClose: () => {} });
+    const steps = within(
+      screen.getByRole("list", { name: "How your free trial works" })
+    )
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+    expect(steps).toEqual([
+      expect.stringMatching(/^Today — /),
+      "Day 6 — Last day to cancel, by the time of day you started the trial.",
+      expect.stringMatching(/^Day 7 — Your subscription starts at /),
+    ]);
+    expect(steps.join(" ")).not.toMatch(/any time before then/);
   });
 
   it("offers the price, not the trial, to an Apple ID the App Store says has had it", () => {
@@ -457,7 +487,7 @@ describe("ProModal — restore purchases visibility", () => {
     const onClose = vi.fn();
     renderModal({ onClose });
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn't on sale in this version of the app yet."
+      "Pro isn’t on sale in this version of the app yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: /Start/ })).toBeNull();

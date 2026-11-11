@@ -39,7 +39,27 @@ import {
   MoreHorizontal,
   SkipForward,
 } from "lucide-react";
+import type { Exercise } from "@/lib/exercises";
+import { exerciseAddedToday } from "@/features/program/sessionAdd";
+import { accountStartMs } from "@/lib/startDay";
+import {
+  cursorAfterRemoval,
+  isAddedToday,
+  removedFromSession,
+  withoutPlace,
+} from "@/features/program/sessionRemove";
+import { generateInstanceId } from "@/features/program/programTypes";
+import { workoutSourceForScope } from "@/features/program/emptyWorkout";
+import {
+  leaveSuperset,
+  nextInSuperset,
+  supersetAt,
+  supersetWith,
+  supersetWithNext,
+} from "@/features/program/superset";
+
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   FIELD_EDGE,
   SECONDARY_ON_CARD_EDGE,
@@ -65,10 +85,8 @@ import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
 import { loadContextFrom } from "@/features/program/startingLoads";
-import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
-import KeepSwapSheet, {
-  type SwapToKeep,
-} from "@/components/workout/KeepSwapSheet";
+import type { SwapToKeep } from "@/components/workout/KeepSwapSheet";
+import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -83,10 +101,6 @@ import {
   warmupRestSecondsFor,
 } from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import {
-  exercisesForLiftBadges,
-  liftWeightMilestoneBadges,
-} from "@/features/streaks/liftWeightMilestones";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import {
@@ -113,7 +127,6 @@ import {
 } from "@/lib/liftRecordsStore";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
-import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import {
   needsLoad,
   validateSet,
@@ -145,8 +158,8 @@ import {
   draftLayout,
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
-import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
 import SetCheck from "@/components/workout/SetCheck";
@@ -162,21 +175,52 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import type { SessionShareAction } from "@/lib/sessionPost";
 import {
   liftSessionDay,
+  liftWorkoutId,
   type LiftCompletionReceipt,
 } from "@/lib/liftCompletion";
+import {
+  earlierSessions,
+  isFirstOfSport,
+  isFirstSession,
+  type EarlierSessions,
+} from "@/lib/firstSession";
+import type { LiftMomentFacts, PostMoment } from "@/lib/postMoments";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { sessionWork, workFigure } from "@/lib/liftFigures";
 import {
   formatKitLoad,
   kitLoadIn,
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
-// The exercise list for "Swap for today", loaded when it is opened.
+// An exercise's menu (swap, skip, superset), loaded when it is first
+// opened: the workout screen's chunk has no room to spare.
+const ExerciseMenuSheet = lazyRetry(
+  () => import("@/components/workout/ExerciseMenuSheet")
+);
+// The screen of a session with no exercises yet, which most never show.
+const EmptySessionScreen = lazyRetry(
+  () => import("@/components/workout/EmptySessionScreen")
+);
+// The exercise list for "Swap for today" and "Add exercise", loaded when
+// it is opened.
+
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
 );
+// The finish screen, and Finish's question about today's swaps, load
+// beside the workout screen rather than in it. Both are fetched as soon as
+// this module is, before any session opens, so they are here at Finish,
+// offline too.
+const loadCompleteScreen = () =>
+  import("@/components/workout/SessionCompleteScreen");
+const loadKeepSwapSheet = () => import("@/components/workout/KeepSwapSheet");
+void loadCompleteScreen().catch(() => {});
+void loadKeepSwapSheet().catch(() => {});
+const SessionCompleteScreen = lazyRetry(loadCompleteScreen);
+const KeepSwapSheet = lazyRetry(loadKeepSwapSheet);
 
 interface WorkoutDay {
   dayName: string;
@@ -185,7 +229,12 @@ interface WorkoutDay {
   completed: boolean;
 }
 
+/** An exercise's rows, by its slot, or its place when it has none. */
+const rowKey = (ex: { instanceId?: string }, index: number) =>
+  ex.instanceId ?? `#${index}`;
+
 /** "Set 2" → "set 2", for the middle of a sentence. */
+
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
@@ -218,6 +267,25 @@ function targetLoad(
   if (exercise.weight > 0)
     return ` @ ${bodyweight ? "Bodyweight + " : ""}${formatKitLoad(exercise.weight, unit, exercise.exerciseId)}`;
   return bodyweight ? " @ Bodyweight" : "";
+}
+
+/** A set as the rest band names what comes next, in the lifter's unit:
+ *  "15 kg × 10", "+10 kg × 8" on a bodyweight lift with load added,
+ *  "12 reps" with no load, "30 s" for a hold. */
+function nextSetLoad(
+  set: { weight: number; reps: number },
+  exercise: Pick<ProgramExercise, "exerciseId" | "repUnit">,
+  unit: LiftUnit
+): string {
+  const count =
+    exercise.repUnit === "seconds"
+      ? `${set.reps} s`
+      : set.weight > 0
+        ? `${set.reps}`
+        : `${set.reps} ${set.reps === 1 ? "rep" : "reps"}`;
+  if (set.weight <= 0) return count;
+  const added = isBodyweightExerciseId(exercise.exerciseId) ? "+" : "";
+  return `${added}${formatKitLoad(set.weight, unit, exercise.exerciseId)} × ${count}`;
 }
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
@@ -290,6 +358,8 @@ interface Props {
     sessionData: CompletedSessionData
   ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
+  /** Open the exact saved record returned by the completion writer. */
+  onViewWorkout?: (workoutId: string) => void;
   /** The account has never finished a workout: the guide's first-set hint
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
@@ -317,6 +387,7 @@ export default function WorkoutSession({
   programmeContext,
   onCompleteDay,
   onClose,
+  onViewWorkout,
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
@@ -325,7 +396,7 @@ export default function WorkoutSession({
   // Loads are stored in kg; the lifter reads and types them in this unit.
   const liftUnit = useLiftUnit();
   const [initialDay] = useState(incomingDay);
-  const { awardEventBadge, awardEventBadges } = useStreaks();
+  const { awardEventBadge, awardEventBadges, streakWithDay } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
   // are positional over day.exercises, so a draft from a different
@@ -349,6 +420,7 @@ export default function WorkoutSession({
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
   const hasRecoveryDraft = useRef(initialDraft !== null);
+  const hasEnteredValues = useRef(false);
   // One completion id per session (packet 15). Resumed from the draft when
   // present so a retry/resume targets the SAME workout doc; persisted into
   // every draft save below. Never regenerated per Finish click.
@@ -373,6 +445,11 @@ export default function WorkoutSession({
     () => ({ ...initialDay, exercises: prescription.exercises }),
     [initialDay, prescription]
   );
+  /* The session's name as it is shown: an empty workout's as the lifter
+     named it on the finish screen (Mob2 call 11), else the day's. The
+     draft and the save still key on the day's stored name. */
+  const sessionName = prescription.dayName ?? day.dayName;
+  const source = workoutSourceForScope(draftScope);
   const [originalStartedAt, setOriginalStartedAt] = useState(
     () => initialDraft?.startedAt ?? Date.now()
   );
@@ -381,6 +458,23 @@ export default function WorkoutSession({
    *  best set at 00:05 in a session begun at 23:40 sat on a day the
    *  workout is not. */
   const sessionDay = liftSessionDay(originalStartedAt);
+  /* Whether the account had a session before this one, for the post's
+     "First session on Tropos" (Soc15): read once as the session opens, two
+     documents a kind, long before Finish. Null until known. */
+  const earlierSessionRef = useRef<EarlierSessions | null>(null);
+  const firstSessionUid = user?.uid;
+  useEffect(() => {
+    if (!firstSessionUid) return;
+    let current = true;
+    void earlierSessions(firstSessionUid, {
+      workoutId: liftWorkoutId(source, completionIdRef.current),
+    }).then((earlier) => {
+      if (current) earlierSessionRef.current = earlier;
+    });
+    return () => {
+      current = false;
+    };
+  }, [firstSessionUid, source]);
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
@@ -396,9 +490,22 @@ export default function WorkoutSession({
   const [currentSetIndex, setCurrentSetIndex] = useState(
     resumeCursor?.setIndex ?? 0
   );
-  // Set once each row has its start (`startingSetRows`); a resumed draft's
-  // rows already have theirs.
-  const rowsStarted = useRef(!!initialDraft?.setLogs);
+  /* The rows still to start from what they did last time
+     (`startingSetRows`), by their exercise's slot: the session's own at
+     first (a resumed draft's rows already have theirs), and any exercise
+     added, or set out again by Start fresh, before last time is read.
+     Started when it is (`history`, below), from the session as it is
+     then. */
+  const rowsToStart = useRef(
+    new Set<string>(
+      initialDraft?.setLogs
+        ? []
+        : initialDay.exercises.map((ex, i) => rowKey(ex, i))
+    )
+  );
+  /* Exercises added before last time was read: their first weight was a
+     first guess, and follows what they were last lifted at once it is. */
+  const weightsToFollow = useRef(new Set<string>());
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -415,8 +522,22 @@ export default function WorkoutSession({
   );
   /* The exercise whose menu is open, the one being swapped, and Finish's
      question about today's swaps. */
+  const [setHelpRequest, setSetHelpRequest] = useState(0);
   const [menuFor, setMenuFor] = useState<number | null>(null);
   const [swapFor, setSwapFor] = useState<number | null>(null);
+  /* "Add exercise" (Mob1 call 1): the picker, open to add to today. */
+  const [adding, setAdding] = useState(false);
+  /* An added exercise with sets done, whose removal is being asked
+     about (Mob2 call 11). Kept as the question closes, so its words hold
+     while it animates out. */
+  const [removing, setRemoving] = useState<{
+    index: number;
+    name: string;
+    sets: number;
+    open: boolean;
+  } | null>(null);
+  const closeRemoving = () =>
+    setRemoving((asked) => asked && { ...asked, open: false });
   const [keepQuestion, setKeepQuestion] = useState<{
     open: boolean;
     swaps: SwapToKeep[];
@@ -426,6 +547,15 @@ export default function WorkoutSession({
   const lastSetsById = useRef(
     new Map<string, { weight: number; reps: number }[]>()
   );
+  /** Last time, once it has been read: each lift's sets in its own slot
+   *  (or its exercise's, `lastSetsBySlot`). Null until then. */
+  const [history, setHistory] = useState<{
+    lastOf: (
+      ex: ProgramExercise
+    ) => { weight: number; reps: number }[] | undefined;
+  } | null>(null);
+  /** Bumped when rows are queued to start once `history` is in hand. */
+  const [rowsQueued, setRowsQueued] = useState(0);
   // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
   // for someone who can calibrate it and noise-plus-jargon for someone who
   // cannot, so an advanced lifter opens the session with it on and everyone
@@ -479,8 +609,7 @@ export default function WorkoutSession({
   useEffect(() => {
     const container = tabsRef.current;
     const activeBtn = container?.children[currentExIndex] as
-      | HTMLElement
-      | undefined;
+      HTMLElement | undefined;
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, which Reduce Motion turns to `auto`. An
        explicit "smooth" would animate the rail regardless. */
@@ -514,15 +643,49 @@ export default function WorkoutSession({
   );
   const [firedPRs, setFiredPRs] = useState<Map<string, RepBucket[]>>(new Map());
   const [prResults, setPrResults] = useState<Map<string, SetPR>>(new Map());
+  // History may arrive after a resumed set, or after a new set was logged.
+  // Rebuild from the session as it is then, never just the loaded baseline.
+  const currentRecordInputs = useRef({
+    exercises: day.exercises,
+    logs: setLogs,
+    date: sessionDay,
+  });
+  useEffect(() => {
+    currentRecordInputs.current = {
+      exercises: day.exercises,
+      logs: setLogs,
+      date: sessionDay,
+    };
+  }, [day.exercises, setLogs, sessionDay]);
+
+  /* Last time's sessions, read once for this session. The effect below
+     runs again whenever the exercise list changes (a swap, an added or
+     removed exercise) and derives from the same read: reading again
+     fetched the 50 newest workouts on every one of those. A read that
+     failed is forgotten, so the next change tries again. */
+  const recentWorkoutsRef = useRef<{
+    uid: string;
+    read: ReturnType<typeof fetchSavedWorkouts>;
+  } | null>(null);
 
   // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
-    if (!user?.uid || !day.exercises.length) return;
+    // An empty workout reads last time too: what it adds starts from there.
+    if (!user?.uid) return;
+    const uid = user.uid;
 
     const fetchPreviousWeights = async () => {
       // The 50 newest workouts, including one finished on this phone that
       // has not synced yet: it is the last session even offline.
-      const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
+      if (recentWorkoutsRef.current?.uid !== uid) {
+        const read = fetchSavedWorkouts(uid, { latest: 50 });
+        recentWorkoutsRef.current = { uid, read };
+        read.catch(() => {
+          if (recentWorkoutsRef.current?.read === read)
+            recentWorkoutsRef.current = null;
+        });
+      }
+      const recent = await recentWorkoutsRef.current.read;
 
       const notes: Record<number, { text: string; date: string }> = {};
 
@@ -567,30 +730,40 @@ export default function WorkoutSession({
       );
 
       // Each row starts from what that set did last time (Lift4,
-      // `startingSetRows`), once per session: a resumed draft's rows, and
-      // anything typed since, hold what the person put there.
-      if (!rowsStarted.current) {
-        rowsStarted.current = true;
-        setSetLogs((prev) =>
-          prev.map((rows, i) => {
-            const ex = day.exercises[i];
-            if (!ex || rows.some((set) => set.completed)) return rows;
-            return startingSetRows(rows, ex, lastSets[i]);
-          })
-        );
-      }
+      // `startingSetRows`), once: the effect below starts the rows still
+      // waiting, from the session as it is by then.
+      setHistory({
+        lastOf: (ex) => {
+          const sets = lastOf(ex);
+          return sets && asRows(sets);
+        },
+      });
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
-      // no bests and leaves the stored map alone.
+      // no bests and marks the map stale on finish. Read once: the list
+      // changing under the session (a swap, an added exercise) read it
+      // again, and the bests already set this session went with it.
+      if (loadedRecordsRef.current) return;
       try {
-        const records = await loadLiftRecords(user.uid, recent);
+        const records = await loadLiftRecords(uid, recent);
         loadedRecordsRef.current = records;
         recordBaseline.current = records.map;
-        setPrMap(records.map);
         setSessionCounts(records.sessionCounts);
         volumeBaseline.current = records.volumeBest;
-        setVolumeBest(records.volumeBest);
+        const current = currentRecordInputs.current;
+        const rebuilt = sessionRecords(
+          records.map,
+          records.volumeBest,
+          records.sessionCounts,
+          current.exercises,
+          current.logs,
+          current.date
+        );
+        setPrMap(rebuilt.map);
+        setPrResults(rebuilt.results);
+        setFiredPRs(rebuilt.fired);
+        setVolumeBest(rebuilt.volumeBest);
       } catch (error) {
         logger.warn("[WorkoutSession] best-lift map unavailable", error);
       }
@@ -598,6 +771,49 @@ export default function WorkoutSession({
 
     fetchPreviousWeights();
   }, [user?.uid, day.exercises, planLifts]);
+
+  /* The rows waiting to start, started once last time is read: from the
+     session as it is now, so an exercise added while the read was out
+     starts from its own last sets too, with the weight it was last lifted
+     at. A row with a set done, or a resumed draft's, holds what is
+     there. */
+  useEffect(() => {
+    if (!history || rowsToStart.current.size === 0) return;
+    const waiting = new Set(rowsToStart.current);
+    rowsToStart.current.clear();
+    const exercises = prescription.exercises;
+    const untouched = (i: number) =>
+      !(setLogs[i] ?? []).some((set) => set.completed);
+    const followed = exercises.map((ex, i) => {
+      const key = rowKey(ex, i);
+      if (!waiting.has(key) || !weightsToFollow.current.has(key)) return ex;
+      weightsToFollow.current.delete(key);
+      if (!untouched(i)) return ex;
+      const last = lastSetsById.current.get(ex.exerciseId);
+      const weight = last ? followedWeight(last) : null;
+      return weight && weight > 0 ? { ...ex, weight } : ex;
+    });
+    const rebuilt = buildInitialSetLogs(followed, liftUnit);
+    const byKey = new Map(followed.map((ex, i) => [rowKey(ex, i), ex]));
+    if (followed.some((ex, i) => ex !== exercises[i]))
+      setPrescription((current) => ({
+        ...current,
+        exercises: current.exercises.map(
+          (ex, i) => byKey.get(rowKey(ex, i)) ?? ex
+        ),
+      }));
+    setSetLogs((logs) =>
+      logs.map((rows, i) => {
+        const ex = followed[i];
+        if (!ex || !waiting.has(rowKey(ex, i))) return rows;
+        if (rows.some((set) => set.completed)) return rows;
+        const base: SetLog[] = ex !== exercises[i] ? rebuilt[i] : rows;
+        return startingSetRows(base, ex, history.lastOf(ex));
+      })
+    );
+    // The session as it is when last time arrives is all this reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history, rowsQueued]);
 
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
@@ -607,7 +823,21 @@ export default function WorkoutSession({
     );
     // Once a draft exists, Undo must also persist zero completed sets.
     // Keep the entered values, notes and session choices with that reversal.
-    if (!hasProgress && !hasRecoveryDraft.current) return;
+    // Entered values and notes count before the first completed set too.
+    // A session changed from how it was set out (an exercise added, a
+    // superset, a swap) is kept before any set is done: an empty workout
+    // with its exercises added is a workout to come back to.
+    const reshaped =
+      prescription.exercises.length !== initialDay.exercises.length ||
+      (prescription.supersets?.length ?? 0) > 0 ||
+      (prescription.swaps?.length ?? 0) > 0;
+    if (
+      !hasProgress &&
+      !reshaped &&
+      !hasRecoveryDraft.current &&
+      !hasEnteredValues.current
+    )
+      return;
     if (completionPendingRef.current) return;
     const stored = saveDraft({
       dayIndex,
@@ -633,6 +863,7 @@ export default function WorkoutSession({
     day.dayName,
     saveDraft,
     prescription,
+    initialDay.exercises.length,
     originalStartedAt,
     sessionProgrammeContext,
     sessionStartedAt,
@@ -723,6 +954,13 @@ export default function WorkoutSession({
   const [askingJump, setAskingJump] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null);
+  /* What the saved session's post says happened: the finish screen's
+     reward or summary is picked from it (DS4 call 3). */
+  const [finishMoments, setFinishMoments] = useState<PostMoment[] | null>(null);
+  /* The first workout on an account that has run before: a first on the
+     finish screen, though its post claims none. */
+  const [finishFirstOfSport, setFinishFirstOfSport] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
@@ -731,7 +969,7 @@ export default function WorkoutSession({
   >();
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(
     initialDraft?.completionPending
-      ? Math.round(initialDraft.elapsedSeconds / 60)
+      ? Math.max(1, initialDraft.elapsedSeconds) / 60
       : 0
   );
   useEffect(() => {
@@ -744,9 +982,7 @@ export default function WorkoutSession({
     void (async () => {
       try {
         const { doc, getDocFromServer } = await import("firebase/firestore");
-        const source = draftScope?.startsWith("routine:")
-          ? "routine"
-          : "programme";
+        const source = workoutSourceForScope(draftScope);
         const snapshot = await getDocFromServer(
           doc(
             db,
@@ -764,6 +1000,7 @@ export default function WorkoutSession({
         )
           return;
         clearDraft(initialDraft.completionId);
+        setSavedWorkoutId(snapshot.id);
         setSaved(true);
         setSaveStatus("synced");
       } catch {
@@ -791,7 +1028,9 @@ export default function WorkoutSession({
     // puts on screen from here on is inside the window.
     beginCompletionWindow();
     setSessionDurationMinutes(
-      Math.round((Date.now() - sessionStartedAt) / 60000)
+      // A measured short session must stay positive: the writer reserves
+      // zero for sessions without a clock and estimates their duration.
+      Math.max(1, (Date.now() - sessionStartedAt) / 1000) / 60
     );
     setSessionComplete(true);
   }, [sessionStartedAt]);
@@ -848,6 +1087,12 @@ export default function WorkoutSession({
   if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
 
   const currentExercise = day.exercises[safeExIndex];
+  /* "Superset with Push-Ups" under the exercise's name, in one. */
+  const supersetLine = supersetWith(
+    day.exercises,
+    prescription.supersets,
+    safeExIndex
+  );
 
   // Plates belong to a barbell only: the per-side hint and the plate
   // calculator both read this, so a cable or dumbbell lift offers neither.
@@ -868,12 +1113,37 @@ export default function WorkoutSession({
   const countedInSession = countedSets(setLogs.flat());
   const totalSetsCompleted = countedInSession.filter((s) => s.completed).length;
   const totalSetsTotal = countedInSession.length;
+  // The header's kg lifted: the finish screen's sum of the same sets.
+  const { volumeKg: workKg, reps: workReps } = sessionWork(
+    setLogs,
+    day.exercises
+  );
+  const sessionWorkFigure = workFigure(workKg, workReps, liftUnit);
   // Finishing early: once a working set is done, while sets remain.
   const finishEarlyOffered =
     nextIncompleteSet(setLogs) !== null &&
     setLogs.some((sets) =>
       sets.some((set) => set.completed && set.type !== "warmup")
     );
+
+  /* The set a rest leads to, named in the rest band (DS4): the cursor's
+     set, which ticking a set has already moved on, to the next exercise
+     once this one is done or round a superset. A warm-up passed over is
+     not it. */
+  const restNext = (() => {
+    const at = isSetOutstanding(currentSets, currentSetIndex)
+      ? { exerciseIndex: safeExIndex, setIndex: currentSetIndex }
+      : nextIncompleteSet(setLogs, safeExIndex);
+    const exercise = at ? day.exercises[at.exerciseIndex] : undefined;
+    const sets = at ? setLogs[at.exerciseIndex] : undefined;
+    const set = at && sets ? sets[at.setIndex] : undefined;
+    if (!at || !exercise || !sets || !set) return undefined;
+    return {
+      exerciseId: exercise.exerciseId,
+      name: setName(sets, at.setIndex),
+      load: nextSetLoad(set, exercise, liftUnit),
+    };
+  })();
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -969,6 +1239,7 @@ export default function WorkoutSession({
     const set = setLogs[exIdx]?.[setIdx];
     if (!set || set.type === type) return;
     if (set.completed && (completionPendingRef.current || saved)) return;
+    hasEnteredValues.current = true;
     const next = setLogs.map((sets, ei) =>
       sets.map((entry, si) =>
         ei === exIdx && si === setIdx ? { ...entry, type } : entry
@@ -983,15 +1254,22 @@ export default function WorkoutSession({
     }
   };
 
-  const updateSetRPE = (exIdx: number, setIdx: number, rpe: number) => {
+  const updateSetRPE = (
+    exIdx: number,
+    setIdx: number,
+    rpe: number | undefined
+  ) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      updated[exIdx][setIdx].rpe = rpe;
+      if (rpe === undefined) delete updated[exIdx][setIdx].rpe;
+      else updated[exIdx][setIdx].rpe = rpe;
       return updated;
     });
   };
 
   const addSet = (exIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       const lastSet = updated[exIdx][updated[exIdx].length - 1];
@@ -1030,6 +1308,7 @@ export default function WorkoutSession({
   };
 
   const removeSet = (exIdx: number, setIdx: number) => {
+    hasEnteredValues.current = true;
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx].splice(setIdx, 1);
@@ -1044,6 +1323,16 @@ export default function WorkoutSession({
     field: "reps" | "weight",
     value: number
   ) => {
+    // History may still be loading when someone starts typing. From this
+    // edit onward the exercise belongs to them, just as a completed set
+    // does; a late history read must not replace the numbers they entered.
+    hasEnteredValues.current = true;
+    const exercise = day.exercises[exIdx];
+    if (exercise) {
+      const key = rowKey(exercise, exIdx);
+      rowsToStart.current.delete(key);
+      weightsToFollow.current.delete(key);
+    }
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx][field] = value;
@@ -1197,6 +1486,32 @@ export default function WorkoutSession({
     );
     const isLastSet = isExerciseDone(updatedLogs[currentExIndex]);
     const next = nextIncompleteSet(updatedLogs, currentExIndex);
+    /* In a superset (Mob1 call 2) the next set is the next exercise's in
+       the group, A1 → B1 → A2 → B2, and the rest waits for the end of the
+       round: it runs after the group's last exercise, before its first
+       comes round again. A warm-up keeps to its exercise until its ramp
+       is done. Once the group has nothing left, the session moves on as
+       it does from any exercise. */
+    const members = supersetAt(
+      day.exercises,
+      prescription.supersets,
+      currentExIndex
+    );
+    const turn = members
+      ? nextInSuperset(
+          updatedLogs,
+          members,
+          currentExIndex,
+          set.type === "warmup"
+        )
+      : null;
+    const takeTurn = (to: NonNullable<typeof turn>) => {
+      setCurrentExIndex(to.exerciseIndex);
+      setCurrentSetIndex(to.setIndex);
+      if (!to.rest) stopRest();
+      else if (autoRest)
+        startRest(day.exercises[currentExIndex], set.type === "warmup");
+    };
 
     if (isLastSet) {
       // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
@@ -1243,7 +1558,9 @@ export default function WorkoutSession({
       // If nothing is eligible (an exercise logged as warm-ups only, or a lone
       // drop set) we skip entirely — there is no working-set evidence, and
       // inventing some would be worse than waiting for the next session.
-      if (!next) {
+      if (turn) {
+        takeTurn(turn);
+      } else if (!next) {
         completeSession();
       } else {
         setCurrentExIndex(next.exerciseIndex);
@@ -1251,6 +1568,8 @@ export default function WorkoutSession({
         if (autoRest)
           startRest(day.exercises[currentExIndex], set.type === "warmup");
       }
+    } else if (turn) {
+      takeTurn(turn);
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
@@ -1259,19 +1578,45 @@ export default function WorkoutSession({
     }
   };
 
-  const refreshRecords = (logs: SetLog[][]) => {
+  /* Supersets (Mob1 call 2), from an exercise's menu: with the exercise
+     after it, or out of its group again. */
+  const regroup = (index: number, withNext: boolean) =>
+    setPrescription((current) => ({
+      ...current,
+      supersets: (withNext ? supersetWithNext : leaveSuperset)(
+        current.exercises,
+        current.supersets,
+        index
+      ),
+    }));
+
+  const refreshRecords = (
+    logs: SetLog[][],
+    exercises = day.exercises,
+    date = sessionDay
+  ) => {
     const next = sessionRecords(
       recordBaseline.current,
       volumeBaseline.current,
       sessionCounts,
-      day.exercises,
+      exercises,
       logs,
-      sessionDay
+      date
     );
     setPrMap(next.map);
     setPrResults(next.results);
     setFiredPRs(next.fired);
     setVolumeBest(next.volumeBest);
+  };
+
+  /** The finish screen's "Started" (Mob2 call 12): the session began
+   *  earlier than it was opened, for a lift recorded late. It is dated by
+   *  the stated start, as by any start (Lift3): the workout, the plan's
+   *  records of it, the run before it and this session's bests. The clock
+   *  stays the clock: the workout's length is still the time it ran. */
+  const changeStart = (at: number) => {
+    setOriginalStartedAt(at);
+    refreshRecords(setLogs, day.exercises, liftSessionDay(at));
   };
 
   /** Saves an edited set, or hands back the question to ask first when
@@ -1368,7 +1713,11 @@ export default function WorkoutSession({
     const planned = plannedAt(index);
     if (!planned) return;
     const back = replacementId === planned.exerciseId;
-    const last = lastSetsById.current.get(replacementId);
+    // Returning to the plan restores this slot's history, not another
+    // day's copy of the same exercise (for example heavy and light bench).
+    const last = back
+      ? history?.lastOf(planned)
+      : lastSetsById.current.get(replacementId);
     const exercise = back
       ? planned
       : swappedForToday(planned, replacementId, {
@@ -1399,6 +1748,94 @@ export default function WorkoutSession({
     setLastCompleted(null);
     setCurrentExIndex(index);
     setCurrentSetIndex(0);
+  };
+
+  /**
+   * "Add exercise" (Mob1 call 1): the exercises picked join the end of the
+   * session, for today, with the numbers and first weights an added lift
+   * takes (`exerciseAddedToday`), each set starting from what it did last
+   * time. They are saved with the session and leave the plan as it is.
+   * The session moves on to the first of them.
+   */
+  const addExercises = (picked: readonly Exercise[]) => {
+    if (picked.length === 0) return;
+    const start = day.exercises.length;
+    const experience = toExperience(profile?.experience);
+    const loadContext = loadContextFrom(profile);
+    // Before last time is read, an added exercise starts from a first
+    // guess, and its rows wait to start (`rowsToStart`).
+    const known = history !== null;
+    const added = picked.map((exercise) => {
+      const last = known ? lastSetsById.current.get(exercise.id) : undefined;
+      return exerciseAddedToday(exercise.id, {
+        instanceId: generateInstanceId(),
+        goal: profile?.primaryGoal,
+        experience,
+        loadContext,
+        lastWeight: last ? followedWeight(last) : null,
+      });
+    });
+    // The warm-up ramp goes to the first loaded lift for each body part,
+    // so the rows are built as part of the whole session.
+    const rows = buildInitialSetLogs([...day.exercises, ...added], liftUnit)
+      .slice(start)
+      .map((built, k) =>
+        known
+          ? startingSetRows(
+              built,
+              added[k],
+              lastSetsById.current.get(added[k].exerciseId)
+            )
+          : built
+      );
+    if (!known)
+      added.forEach((ex, k) => {
+        const key = rowKey(ex, start + k);
+        rowsToStart.current.add(key);
+        weightsToFollow.current.add(key);
+      });
+    setPrescription((current) => ({
+      ...current,
+      exercises: [...current.exercises, ...added],
+    }));
+    setSetLogs((logs) => [...logs, ...rows]);
+    setLastCompleted(null);
+    setCurrentExIndex(start);
+    setCurrentSetIndex(0);
+    haptic("light");
+  };
+
+  /**
+   * "Remove from workout" (Mob2 call 11): an exercise added today goes,
+   * with its rows. Everything the session holds by place moves up one
+   * after it (`sessionRemove.ts`), and its bests are worked out again
+   * without its sets.
+   */
+  const doneSetsOf = (index: number) =>
+    countedSets(setLogs[index] ?? []).filter((set) => set.completed).length;
+  const removeExercise = (index: number) => {
+    closeRemoving();
+    if (!isAddedToday(index, initialDay.exercises.length)) return;
+    const key = rowKey(day.exercises[index] ?? {}, index);
+    rowsToStart.current.delete(key);
+    weightsToFollow.current.delete(key);
+    const exercises = day.exercises.filter((_, i) => i !== index);
+    const logs = setLogs.filter((_, i) => i !== index);
+    setPrescription((current) => removedFromSession(current, index));
+    setSetLogs(logs);
+    setSkippedRows((rows) => withoutPlace(rows, index));
+    setExerciseNotes((notes) => withoutPlace(notes, index));
+    setPreviousNotes((notes) => withoutPlace(notes, index));
+    setPreviousSets((sets) => withoutPlace(sets, index));
+    refreshRecords(logs, exercises);
+    setNewBest(null);
+    setLastCompleted(null);
+    const cursor = cursorAfterRemoval(logs, index, {
+      exerciseIndex: currentExIndex,
+      setIndex: currentSetIndex,
+    });
+    setCurrentExIndex(cursor.exerciseIndex);
+    setCurrentSetIndex(cursor.setIndex);
   };
 
   /** Skipping keeps the sets done and sets the rest aside. */
@@ -1453,6 +1890,47 @@ export default function WorkoutSession({
     await handleFinish(decided);
   };
 
+  /* The streak and the first-session answer as the first Finish found
+     them, kept for a retry, which posts the same: by then a save that
+     queued may count this session in the streak it is measured against.
+     Null until the first Finish. */
+  const atFirstFinish = useRef<Pick<
+    LiftMomentFacts,
+    "streak" | "firstSession"
+  > | null>(null);
+  /** What the session's post says happened (Soc15): the new bests the
+   *  finish screen lists, the streak milestone it reached, and whether it
+   *  is the first session. A moment never costs the save: the streak is
+   *  left out if it can't be worked out. */
+  const sessionMoments = (): LiftMomentFacts => {
+    if (!atFirstFinish.current) {
+      let streak: LiftMomentFacts["streak"] = null;
+      try {
+        streak = streakWithDay(sessionDay);
+      } catch (err) {
+        logger.warn("[WorkoutSession] streak for the post not read", err);
+      }
+      atFirstFinish.current = {
+        streak,
+        firstSession: isFirstSession(earlierSessionRef.current),
+      };
+    }
+    return {
+      ...atFirstFinish.current,
+      prs: [...prResults.entries()].flatMap(([key, result]) =>
+        result.kind === "best"
+          ? [
+              {
+                exercise: key.slice(0, key.lastIndexOf(":")),
+                weightKg: result.weight,
+                reps: result.reps,
+              },
+            ]
+          : []
+      ),
+    };
+  };
+
   const finishPending = useRef(false);
   const handleFinish = async (decided?: SessionPrescription) => {
     if (finishPending.current || saved) return;
@@ -1472,6 +1950,9 @@ export default function WorkoutSession({
     finishPending.current = true;
     setCompleting(true);
     const completionUid = user?.uid;
+    // Keep the baseline paired with this render's PR map. History arriving
+    // while the save awaits must not make its older map look complete.
+    const loadedRecords = loadedRecordsRef.current;
 
     try {
       completionPendingRef.current = true;
@@ -1519,11 +2000,15 @@ export default function WorkoutSession({
         // The draft is deleted the moment the workout commits, so Finish was
         // the last point at which they still existed.
         exerciseNotes,
+        moments: sessionMoments(),
       });
 
       // A callback from an outgoing account must never recreate its draft
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
+      setSavedWorkoutId(receipt.workoutId);
+      setFinishMoments(receipt.moments ?? null);
+      setFinishFirstOfSport(isFirstOfSport(earlierSessionRef.current, "lift"));
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
@@ -1536,11 +2021,19 @@ export default function WorkoutSession({
         // cracks now rather than after onWorkoutCreated's round-trip —
         // which was long enough for the owner to have left the screen. The
         // server still awards it; the transaction behind awardEventBadges
-        // makes the second arrival a no-op whichever side that is.
-        const lifts = liftWeightMilestoneBadges(
-          exercisesForLiftBadges(day.exercises, completionLogs)
+        // makes the second arrival a no-op whichever side that is. The
+        // rule loads on its own, after the save: nothing waits for it.
+        const exercises = day.exercises;
+        void import("@/features/streaks/liftWeightMilestones").then(
+          ({ exercisesForLiftBadges, liftWeightMilestoneBadges }) => {
+            if (completionUid && auth.currentUser?.uid !== completionUid)
+              return;
+            const lifts = liftWeightMilestoneBadges(
+              exercisesForLiftBadges(exercises, completionLogs)
+            );
+            if (lifts.length > 0) awardEventBadges(lifts);
+          }
         );
-        if (lifts.length > 0) awardEventBadges(lifts);
       };
       if (queuedReceipt) {
         setSaved(true);
@@ -1558,8 +2051,7 @@ export default function WorkoutSession({
 
       // Persist the best-lift map for history beyond the recent window.
       // Best-effort — the workout already committed above.
-      const loadedRecords = loadedRecordsRef.current;
-      if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
+      if (user?.uid) {
         void (async () => {
           try {
             // Saved on this phone, not yet on the server: the commit is a
@@ -1570,7 +2062,7 @@ export default function WorkoutSession({
             // rebuilt from the whole history, which holds the queued
             // workout (`fetchSavedWorkouts` includes this phone's queue).
             if (auth.currentUser?.uid !== user.uid) return;
-            if (queuedReceipt) {
+            if (queuedReceipt || !loadedRecords) {
               await markLiftRecordsStale(user.uid);
               return;
             }
@@ -1613,7 +2105,7 @@ export default function WorkoutSession({
       logger.error("[WorkoutSession] finish failed:", error);
       setSaveStatus("needs-attention");
       toast.error(
-        "Couldn't save your workout. Your completed session is still here, so try again."
+        "Couldn’t save your workout. Your completed session is still here, so try again."
       );
     } finally {
       finishPending.current = false;
@@ -1623,17 +2115,25 @@ export default function WorkoutSession({
 
   const handleStartFresh = () => {
     hasRecoveryDraft.current = false;
-    // A fresh start drops the draft's swaps and skips with its sets.
-    const planned = prescription.exercises.map((ex, i) =>
-      swapAt(i) ? (plannedAt(i) ?? ex) : ex
+    hasEnteredValues.current = false;
+    // A fresh start is the session as it was set out: the draft's swaps,
+    // skips, added exercises and supersets go with its sets and notes, so
+    // an empty workout starts empty again.
+    const fresh = sessionPrescription(
+      initialDay,
+      initialCompletionId,
+      progressionBaseline
     );
-    setPrescription((current) => ({
-      ...current,
-      exercises: planned,
-      swaps: [],
-    }));
+    setPrescription(fresh);
     setSkippedRows({});
-    setSetLogs(buildInitialSetLogs(planned, liftUnit));
+    setSetLogs(buildInitialSetLogs(fresh.exercises, liftUnit));
+    // Its rows start from last time, as a new session's do.
+    weightsToFollow.current.clear();
+    rowsToStart.current = new Set(
+      fresh.exercises.map((ex, i) => rowKey(ex, i))
+    );
+    setRowsQueued((n) => n + 1);
+
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
@@ -1647,30 +2147,68 @@ export default function WorkoutSession({
     setShowResumePrompt(false);
   };
 
-  // A day with no exercises cannot be logged, and every render path below
-  // dereferences `currentExercise`. Clamping cannot save this case — there is
-  // no valid index into an empty list — so bail to the caller rather than
-  // throw the whole /program route into the error boundary. Placed AFTER every
-  // hook: this file's own header warns that gated early returns flipping
-  // between renders are the classic cause of React error #310.
+  /* The picker for "Add exercise", in add mode: as many as are ticked. */
+  const addPicker = adding && (
+    <Suspense fallback={null}>
+      <ExercisePicker
+        open
+        headerTitle="Add exercise"
+        onSelect={(picked) => addExercises([picked])}
+        onMultiSelect={addExercises}
+        onClose={() => setAdding(false)}
+      />
+    </Suspense>
+  );
+  const openAddPicker = () => {
+    haptic("light");
+    setAdding(true);
+  };
+
+  // A session with no exercises yet: an empty workout (Mob1 call 1), or a
+  // day with nothing in it. Every render path below dereferences
+  // `currentExercise`, so it has a screen of its own, whose one action is
+  // to add the first exercise. Placed AFTER every hook: this file's own
+  // header warns that gated early returns flipping between renders are the
+  // classic cause of React error #310.
   if (day.exercises.length === 0) {
-    return null;
+    return (
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
+        <EmptySessionScreen
+          title={dayLabel ?? liftDayLine(sessionName)}
+          onClose={onClose}
+          onAdd={openAddPicker}
+        >
+          {addPicker}
+        </EmptySessionScreen>
+      </Suspense>
+    );
   }
 
   // Session complete screen
   if (sessionComplete) {
     return (
-      <>
+      <Suspense
+        fallback={
+          <div className="fixed inset-0 z-50 bg-background pt-[var(--safe-top)]" />
+        }
+      >
         <SessionCompleteScreen
-          dayName={dayLabel ?? day.dayName}
+          dayName={dayLabel ?? sessionName}
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
           prResults={prResults}
+          moments={finishMoments}
+          firstOfSport={finishFirstOfSport}
           sessionDurationMinutes={sessionDurationMinutes}
           sessionVariant={sessionVariant}
           completing={completing}
           saved={saved}
+          activationJourneyV2={isActivationJourneyV2(profile)}
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}
@@ -1678,7 +2216,25 @@ export default function WorkoutSession({
           onEdit={
             !completionPending ? () => setSessionComplete(false) : undefined
           }
+          startedAt={originalStartedAt}
+          onChangeStart={!completionPending ? changeStart : undefined}
+          planWeek={source === "programme"}
+          accountStart={accountStartMs(
+            profile?.createdAt,
+            user?.metadata?.creationTime
+          )}
+          onRename={
+            source === "free" && !completionPending
+              ? (name) =>
+                  setPrescription((current) => ({ ...current, dayName: name }))
+              : undefined
+          }
           onClose={onClose}
+          onViewWorkout={
+            savedWorkoutId && onViewWorkout
+              ? () => onViewWorkout(savedWorkoutId)
+              : undefined
+          }
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -1688,7 +2244,7 @@ export default function WorkoutSession({
             setKeepQuestion((question) => ({ ...question, open: false }))
           }
         />
-      </>
+      </Suspense>
     );
   }
 
@@ -1706,16 +2262,23 @@ export default function WorkoutSession({
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
       <GuideHint
+        key={setHelpRequest}
+        requested={setHelpRequest > 0}
+        action={{
+          label: "Exercise form",
+          onSelect: () => setShowFormGuide(true),
+        }}
         id="first-set"
         layer="session"
         placement="bottom"
         when={
-          firstWorkout &&
-          currentExIndex === 0 &&
-          !anySetDone &&
+          (setHelpRequest > 0 ||
+            (firstWorkout && currentExIndex === 0 && !anySetDone)) &&
+          menuFor === null &&
+          !showFormGuide &&
           !showResumePrompt &&
           !editingSet &&
-          !rest
+          (!rest || setHelpRequest > 0)
         }
         body={autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST}
       />
@@ -1777,9 +2340,12 @@ export default function WorkoutSession({
       )}
 
       {/* Top Bar — the day named as Train names it ("Pull B"), never its
-          stored name. A routine's own name reads as written. */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
-        <div className="min-w-0">
+          stored name. A routine's own name reads as written. Under it,
+          the session as figures (DS4): time, sets and kg lifted, where a
+          12 px grey line said them, so the session has a number to look
+          at between sets. */}
+      <div className="border-b border-border/50 px-4 pb-2.5 pt-1.5 short:pb-1.5">
+        <div className="flex min-h-11 items-center justify-between gap-3">
           {/* The session's title is the screen's heading, so a screen
               reader finds where it is from. A heading by role rather than
               an h1 element: the global h1 rule in index.css is unlayered,
@@ -1787,44 +2353,45 @@ export default function WorkoutSession({
           <p
             role="heading"
             aria-level={1}
-            className="truncate text-base font-bold text-foreground"
+            className="min-w-0 truncate text-base font-bold text-foreground"
           >
-            {dayLabel ?? liftDayLine(day.dayName)}
+            {dayLabel ?? liftDayLine(sessionName)}
           </p>
-          <WorkoutProgress
-            key={sessionStartedAt}
-            startedAt={sessionStartedAt}
-            completed={totalSetsCompleted}
-            total={totalSetsTotal}
-          />
+          {/* Finish sits by Close, as Hevy and Strong put it (an owner
+              call, DESIGN_GUIDE §8): under the set action it took a row
+              from the list on every set after the first. Offered once a working set is
+              done and while sets remain; when none remain, the bar's own
+              "Finish workout" takes over, so there is one Finish at a
+              time. It goes straight to the review, which is the check: the
+              review counts the sets left unticked and has Edit workout to go
+              back for them, so a dialog asking first was a second check on a
+              step that can be undone. */}
+          <div className="flex shrink-0 items-center gap-1">
+            {finishEarlyOffered && (
+              <Button
+                variant="secondary"
+                className={SECONDARY_ON_CARD_EDGE}
+                aria-label="Finish workout"
+                onClick={completeSession}
+              >
+                Finish
+              </Button>
+            )}
+            <IconButton
+              variant="ghost"
+              aria-label="Close workout"
+              onClick={onClose}
+              icon={<X className="size-5 text-muted-foreground" />}
+            />
+          </div>
         </div>
-        {/* Finish sits by Close, as Hevy and Strong put it (an owner
-            call, DESIGN_GUIDE §8): under the set action it took a row
-            from the list on every set after the first. Offered once a working set is
-            done and while sets remain; when none remain, the bar's own
-            "Finish workout" takes over, so there is one Finish at a
-            time. It goes straight to the review, which is the check: the
-            review counts the sets left unticked and has Edit workout to go
-            back for them, so a dialog asking first was a second check on a
-            step that can be undone. */}
-        <div className="flex shrink-0 items-center gap-1">
-          {finishEarlyOffered && (
-            <Button
-              variant="secondary"
-              className={SECONDARY_ON_CARD_EDGE}
-              aria-label="Finish workout"
-              onClick={completeSession}
-            >
-              Finish
-            </Button>
-          )}
-          <IconButton
-            variant="ghost"
-            aria-label="Close workout"
-            onClick={onClose}
-            icon={<X className="size-5 text-muted-foreground" />}
-          />
-        </div>
+        <WorkoutProgress
+          key={sessionStartedAt}
+          startedAt={sessionStartedAt}
+          completed={totalSetsCompleted}
+          total={totalSetsTotal}
+          work={sessionWorkFigure}
+        />
       </div>
 
       {/* Progress bar */}
@@ -1838,12 +2405,15 @@ export default function WorkoutSession({
       </div>
 
       {/* Exercise navigation pills: the last of the fixed part, so its
-          edge is where the list scrolls under. */}
+          edge is where the list scrolls under. It stays fixed (an owner
+          call, DESIGN_GUIDE §8) and is one 56 pt row (DS4 rule 18):
+          a name under every drawing made it 109 pt, 13% of a 393 × 852
+          phone, for words the list's own heading already says. */}
       <div className="relative border-b border-border/30">
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex gap-2 px-4 py-2 overflow-x-auto"
+          className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 short:py-1"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
@@ -1852,9 +2422,9 @@ export default function WorkoutSession({
             const done = !skipped && isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
-               The current one is ringed, a finished one carries a check,
-               and the full name is the button's name for assistive tech
-               however the label below truncates. */
+               The current one is ringed and named beside its drawing, a
+               finished one carries a check, and the full name is every
+               button's name for assistive tech. */
             return (
               <button
                 type="button"
@@ -1875,43 +2445,45 @@ export default function WorkoutSession({
                   );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
-                className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-xl pb-1 pt-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className={cn(
+                  "flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  active && "pl-0.5 pr-1"
+                )}
               >
                 <span
                   className={cn(
-                    "relative rounded-xl",
+                    "relative rounded-lg",
                     active &&
                       "ring-2 ring-primary ring-offset-2 ring-offset-background"
                   )}
                 >
                   <ExerciseThumb
                     exerciseId={ex.exerciseId}
+                    size="sm"
                     className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
-                      <Check className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
+                      <Check className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                   {skipped && (
-                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
-                      <SkipForward className="size-3" strokeWidth={3} />
+                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                      <SkipForward className="size-2.5" strokeWidth={3.5} />
                     </span>
                   )}
                 </span>
-                {/* Up to three lines: cut to one, "Barbell Row" and
-                    "Barbell Curl" both read "Barbell…", and cut to two,
-                    "Straight-Arm Pulldown" reads "Straight-Arm…". */}
-                <span
-                  className={cn(
-                    "line-clamp-3 w-full text-center text-xs leading-tight break-words",
-                    active
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground"
-                  )}
-                >
-                  {ex.name}
-                </span>
+                {/* Two lines beside the drawing: "Straight-Arm Pulldown"
+                    whole on a phone. A longer name is whole in the list's
+                    heading under the strip. */}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="line-clamp-2 max-w-[9rem] text-left text-xs font-bold leading-tight text-foreground break-words"
+                  >
+                    {ex.name}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -1940,24 +2512,32 @@ export default function WorkoutSession({
       {/* Main content area */}
       <div
         ref={contentRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth short:space-y-3"
       >
         {/* Exercise name + set counter, at the head of the list (an
             owner call, DESIGN_GUIDE §8): fixed above it, they took about
             110 px of a phone from the sets for the whole session. They scroll away as the
             sets below are reached, and an exercise change brings them
             back. DS3: the exercise's drawing beside its name, where a bare
-            dumbbell icon sat. Under 16em of row (larger text on the phone)
-            the drawing gives its room to the name, which beside it pushed
-            the form guide's button off the screen, and the name's two
-            buttons drop under it when beside it they would squeeze a word
-            ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
-        <div ref={headerRef} className="@container flex items-start gap-3 pt-3">
+            dumbbell icon sat. Under 19em of row (a 320px phone, or larger
+            text on the phone), the drawing gives its room to the name, which beside it pushed
+            the form guide's button off the screen. The name's two buttons
+            drop under it only under 16em, where beside it they would
+            squeeze a word ("Bench" at 2x on a 320px phone) out of its box:
+            on a 320px phone at the designed size they keep its line, and
+            the row they took is an exercise's fourth set (DS4 pass).
+            Wide-first. */}
+        <div
+          ref={headerRef}
+          data-guide-anchor={setHelpRequest > 0 ? "first-set" : undefined}
+          tabIndex={-1}
+          className="@container flex items-start gap-3 pt-3 short:pt-2"
+        >
           {currentExercise && (
             <ExerciseThumb
               exerciseId={currentExercise.exerciseId}
               size="lg"
-              className="@max-[16em]:hidden"
+              className="@max-[19em]:hidden"
             />
           )}
           <div className="min-w-0 flex-1">
@@ -1970,7 +2550,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`How to do ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={<Info className="size-5 text-muted-foreground" />}
                     onClick={() => {
                       haptic("light");
@@ -1980,7 +2559,6 @@ export default function WorkoutSession({
                   <IconButton
                     aria-label={`More for ${currentExercise.name}`}
                     variant="ghost"
-                    size="sm"
                     icon={
                       <MoreHorizontal className="size-5 text-muted-foreground" />
                     }
@@ -1992,6 +2570,11 @@ export default function WorkoutSession({
                 </div>
               )}
             </div>
+            {supersetLine && (
+              <p className="text-sm font-medium text-lifting-strong">
+                {supersetLine}
+              </p>
+            )}
             {skippedRows[safeExIndex] !== undefined && (
               <p className="text-sm text-muted-foreground">Skipped today</p>
             )}
@@ -2022,7 +2605,9 @@ export default function WorkoutSession({
             {/* Backlog #4 — effort cue as words (operator-approved copy set).
               Reserve cue expands via Tooltip; push/deload cues are plain
               lines. Guidance lives BEFORE the set, never as a verdict after
-              it (voice doc: never shame). */}
+              it (voice doc: never shame). On a short phone its 44 px
+              target reaches over the set line above and the gap below
+              rather than adding to the head's height. */}
             {(() => {
               if (!currentExercise) return null;
               const lastCounted = currentSets.reduce(
@@ -2039,7 +2624,7 @@ export default function WorkoutSession({
                   <Tooltip content={<p>{cue.tooltip}</p>}>
                     <button
                       type="button"
-                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 short:-mt-2.5 short:-mb-2.5"
                     >
                       {cue.text}
                     </button>
@@ -2073,6 +2658,7 @@ export default function WorkoutSession({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  hasEnteredValues.current = true;
                   setExerciseNotes((prev) => ({
                     ...prev,
                     [currentExIndex]: previousNotes[currentExIndex].text,
@@ -2125,10 +2711,12 @@ export default function WorkoutSession({
 
             return (
               <>
+                {/* Column headers keep capitals, one of the two places
+                    DESIGN_GUIDE §4 sets text in them. */}
                 <div
                   className={cn(
                     columns,
-                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground"
+                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground short:pt-2"
                   )}
                 >
                   <div className="text-center">Set</div>
@@ -2196,7 +2784,7 @@ export default function WorkoutSession({
                       <div
                         className={cn(
                           columns,
-                          "border-t border-border/40 px-3 py-1.5 transition-colors",
+                          "border-t border-border/40 px-3 py-1.5 transition-colors short:py-0.5",
                           !set.completed &&
                             setIdx === currentSetIndex &&
                             "bg-primary/10"
@@ -2301,7 +2889,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
                           )}
                         />
                         <input
@@ -2322,7 +2910,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
                           )}
                         />
                         {/* Keyed by exercise as well as set: a return to an
@@ -2334,6 +2922,7 @@ export default function WorkoutSession({
                           editLabel={`Edit completed ${lowerFirst(name)}`}
                           best={isBest}
                           guideAnchor={
+                            setHelpRequest === 0 &&
                             firstWorkout &&
                             currentExIndex === 0 &&
                             setIdx === currentSetIndex
@@ -2353,40 +2942,58 @@ export default function WorkoutSession({
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
                       {showRPE && !set.completed && set.type !== "warmup" && (
-                        /* One row of nine, never wrapping: a label in
-                           front of the chips pushed "10" onto a line of
-                           its own. The group carries the name. */
+                        /* Ratings keep full touch targets and wrap as text
+                           grows. Revealing them records no effort until
+                           the lifter chooses one. */
                         <div
-                          role="group"
-                          aria-label={`RPE for ${lowerFirst(name)}`}
-                          className="grid grid-cols-9 gap-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
+                          data-rpe-row
+                          className="space-y-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
                         >
-                          {RPE_OPTIONS.map((rpe) => (
-                            <button
-                              type="button"
-                              key={rpe}
-                              aria-pressed={set.rpe === rpe}
-                              onClick={() => {
-                                haptic(10);
-                                updateSetRPE(currentExIndex, setIdx, rpe);
-                              }}
-                              className={cn(
-                                "min-h-11 min-w-0 rounded text-xs font-mono tabular-nums transition-colors",
-                                set.rpe === rpe
-                                  ? "bg-primary-strong text-primary-foreground"
-                                  : "bg-muted text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {rpe}
-                            </button>
-                          ))}
+                          <SegmentedControl
+                            ariaLabel={`RPE for ${lowerFirst(name)}`}
+                            value={set.rpe ?? null}
+                            layout="wrap"
+                            tone="lifting"
+                            options={RPE_OPTIONS.map((rpe) => ({
+                              value: rpe,
+                              label: rpe,
+                            }))}
+                            onChange={(rpe) => {
+                              haptic(10);
+                              updateSetRPE(currentExIndex, setIdx, rpe);
+                            }}
+                            className="grid grid-cols-5 gap-1 @max-[14rem]:grid-cols-3 [&_button]:min-w-[44px] [&_button]:px-1 [&_button]:text-xs [&_button]:font-mono [&_button]:tabular-nums"
+                          />
                           {typeof set.rpe === "number" && (
-                            <span className="col-span-9 pl-1 pt-0.5 text-xs text-muted-foreground">
-                              <span className="font-mono tabular-nums">
-                                {set.rpe}
+                            <div className="flex flex-wrap items-center justify-between gap-x-2">
+                              <span className="pl-1 text-xs text-muted-foreground">
+                                <span className="font-mono tabular-nums">
+                                  {set.rpe}
+                                </span>{" "}
+                                · {rpeReserveWords(set.rpe)}
                               </span>{" "}
-                              · {rpeReserveWords(set.rpe)}
-                            </span>
+                              <Button
+                                variant="ghost"
+                                className="px-2 text-xs text-muted-foreground"
+                                aria-label={`Clear RPE for ${lowerFirst(name)}`}
+                                onClick={(event) => {
+                                  haptic(10);
+                                  event.currentTarget
+                                    .closest("[data-rpe-row]")
+                                    ?.querySelector<HTMLButtonElement>(
+                                      '[role="radio"]'
+                                    )
+                                    ?.focus();
+                                  updateSetRPE(
+                                    currentExIndex,
+                                    setIdx,
+                                    undefined
+                                  );
+                                }}
+                              >
+                                Clear
+                              </Button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -2458,12 +3065,13 @@ export default function WorkoutSession({
           placeholder="Add a note for next time"
           aria-label="Exercise notes"
           value={exerciseNotes[currentExIndex] || ""}
-          onChange={(e) =>
+          onChange={(e) => {
+            hasEnteredValues.current = true;
             setExerciseNotes((prev) => ({
               ...prev,
               [currentExIndex]: e.target.value,
-            }))
-          }
+            }));
+          }}
           className="ds-input min-h-11 w-full text-sm"
         />
 
@@ -2557,25 +3165,20 @@ export default function WorkoutSession({
             action — `secondary` per the Button-variant table, routed through
             the primitive so it inherits the 44px floor, the focus ring and the
             0.97 press instead of hand-rolling them. */}
-        <AnimatePresence>
-          {lastCompleted && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mx-auto"
+        {/* No entrance: it comes back after every set and clears after
+            4 s, and a fade there only delayed the one tap it offers. */}
+        {lastCompleted && (
+          <div className="mx-auto">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleUndo}
+              leftIcon={<RotateCcw className="size-3.5" />}
             >
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleUndo}
-                leftIcon={<RotateCcw className="size-3.5" />}
-              >
-                Undo last set
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Undo last set
+            </Button>
+          </div>
+        )}
 
         {/* What comes after this exercise (DS3): the next one with sets
             left, in session order from here, so the lifter can set up for
@@ -2586,6 +3189,17 @@ export default function WorkoutSession({
             <ExerciseRowSummary exercise={upNext} thumbSize="sm" />
           </Card>
         )}
+
+        {/* Another exercise, for today only (Mob1 call 1): it joins the
+            end of the session and leaves the plan as it is. */}
+        <Button
+          variant="secondary"
+          fullWidth
+          leftIcon={<Plus className="size-4" aria-hidden="true" />}
+          onClick={openAddPicker}
+        >
+          Add exercise
+        </Button>
       </div>
 
       {/* Docked above the bar, not in the scroll: it takes its room from
@@ -2619,10 +3233,13 @@ export default function WorkoutSession({
         {rest ? (
           <motion.div
             key="rest"
-            initial={reduceMotion ? false : { opacity: 0, y: 26 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 12 }}
-            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            /* A fade, no rise: it arrives after every set, and a 26 px
+               rise there out-moved the new best above it
+               (DESIGN_GUIDE §14h). */
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="mx-4 mb-3 shrink-0"
           >
             <WorkoutRestTimer
@@ -2630,6 +3247,7 @@ export default function WorkoutSession({
               startedAt={rest.startedAt}
               initialTarget={rest.target}
               exerciseName={day.exercises[currentExIndex]?.name}
+              next={restNext}
               onStop={stopRest}
               onAnnounce={announceRest}
             />
@@ -2658,18 +3276,24 @@ export default function WorkoutSession({
       </AnimatePresence>
 
       {/* Bottom action bar */}
-      <div className="px-4 py-3 border-t border-border/50 bg-background">
+      <div className="px-4 py-3 border-t border-border/50 bg-background short:py-2">
         {(() => {
           const allSetsComplete = isExerciseDone(currentSets);
           const next = nextIncompleteSet(setLogs, currentExIndex);
 
           /* DS3: the bar's three states through the Button primitive, in
-             sentence case. Finish is the lifting CTA like the other two:
-             green is for status (a done set's check), not for actions. */
+             sentence case. Green is for status (a done set's check), not
+             for actions. DS4 call 1a: the screen's one full-width filled
+             button is neutral, white on dark and ink on light, at Home's
+             and Train's Start height (44, rule 21): filled in purple it
+             was 97% of the screen's colour, where the largest colour is
+             the person's data (rule 10). The purple stays on the data: the
+             progress bar, the current exercise's ring, the rest's arc. */
           if (allSetsComplete && !next) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 // Everything skipped with nothing done leaves nothing to save.
                 disabled={
@@ -2687,7 +3311,8 @@ export default function WorkoutSession({
           if (allSetsComplete) {
             return (
               <Button
-                size="lg"
+                variant="neutral"
+                className="text-base"
                 fullWidth
                 onClick={() => {
                   if (next) {
@@ -2703,7 +3328,8 @@ export default function WorkoutSession({
           }
           return (
             <Button
-              size="lg"
+              variant="neutral"
+              className="text-base"
               fullWidth
               onClick={() => {
                 stopRest();
@@ -2753,23 +3379,67 @@ export default function WorkoutSession({
         }}
       />
 
+      <ConfirmDialog
+        open={removing?.open ?? false}
+        destructive
+        title={`Remove ${removing?.name ?? ""}?`}
+        description={
+          removing?.sets === 1
+            ? "The set you’ve done on it won’t be saved."
+            : `The ${removing?.sets ?? 0} sets you’ve done on it won’t be saved.`
+        }
+        confirmLabel="Remove"
+        cancelLabel="Keep it"
+        onCancel={closeRemoving}
+        onConfirm={() => removing && removeExercise(removing.index)}
+      />
+
       {menuFor !== null && day.exercises[menuFor] && (
-        <ExerciseMenuSheet
-          open
-          onClose={() => setMenuFor(null)}
-          exerciseName={day.exercises[menuFor].name}
-          nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
-          swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
-          skipped={skippedRows[menuFor] !== undefined}
-          onSwap={() => setSwapFor(menuFor)}
-          onSwapBack={() => {
-            const planned = plannedAt(menuFor);
-            if (planned) swapForToday(menuFor, planned.exerciseId);
-          }}
-          onSkip={() => skipExercise(menuFor)}
-          onUnskip={() => unskipExercise(menuFor)}
-        />
+        <Suspense fallback={null}>
+          <ExerciseMenuSheet
+            open
+            onClose={() => setMenuFor(null)}
+            exerciseName={day.exercises[menuFor].name}
+            onHelp={() => setSetHelpRequest((request) => request + 1)}
+            nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
+            swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
+            skipped={skippedRows[menuFor] !== undefined}
+            // An exercise added today stands in for nothing: there is no
+            // planned lift to swap it for.
+            onSwap={plannedAt(menuFor) ? () => setSwapFor(menuFor) : undefined}
+            onSwapBack={() => {
+              const planned = plannedAt(menuFor);
+              if (planned) swapForToday(menuFor, planned.exerciseId);
+            }}
+            onSkip={() => skipExercise(menuFor)}
+            session={{
+              exercises: day.exercises,
+              supersets: prescription.supersets,
+              index: menuFor,
+            }}
+            onSuperset={(withNext) => regroup(menuFor, withNext)}
+            onUnskip={() => unskipExercise(menuFor)}
+            onRemove={
+              isAddedToday(menuFor, initialDay.exercises.length)
+                ? () => {
+                    // Its done sets go with it, so that is asked first,
+                    // once the menu has gone.
+                    const sets = doneSetsOf(menuFor);
+                    if (sets === 0) removeExercise(menuFor);
+                    else
+                      setRemoving({
+                        index: menuFor,
+                        name: day.exercises[menuFor].name,
+                        sets,
+                        open: true,
+                      });
+                  }
+                : undefined
+            }
+          />
+        </Suspense>
       )}
+
       {swapFor !== null && day.exercises[swapFor] && (
         <Suspense fallback={null}>
           <ExercisePicker
@@ -2785,6 +3455,7 @@ export default function WorkoutSession({
           />
         </Suspense>
       )}
+      {addPicker}
 
       <PlateCalculatorSheet
         open={showPlates}
@@ -2801,6 +3472,7 @@ export default function WorkoutSession({
           exerciseName={currentExercise.name}
           open={showFormGuide}
           onOpenChange={setShowFormGuide}
+          compactGuide
         />
       )}
     </div>

@@ -15,9 +15,13 @@ import {
   useUid,
 } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { flushOnAppResume } from "@/lib/flushOnAppResume";
+import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
+import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
+import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
@@ -26,6 +30,9 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import BootStallNotice from "@/components/BootStallNotice";
+import ProfileUnavailable from "@/components/ProfileUnavailable";
+import { Button } from "@/components/ui/Button";
 import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
@@ -127,6 +134,7 @@ const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
+const TrainingHistory = lazyRetry(() => import("@/pages/TrainingHistory"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
 const SettingsProfile = lazyRetry(
   () => import("@/pages/settings/SettingsProfile")
@@ -172,8 +180,12 @@ const SettingsRecentlyDeleted = lazyRetry(
   () => import("@/pages/settings/SettingsRecentlyDeleted")
 );
 const SettingsData = lazyRetry(() => import("@/pages/settings/SettingsData"));
+const SettingsPantry = lazyRetry(
+  () => import("@/pages/settings/SettingsPantry")
+);
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
+const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
@@ -183,7 +195,11 @@ const SpacePost = lazyRetry(() => import("@/pages/SpacePost"));
 const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
+const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
+const FollowList = lazyRetry(() => import("@/pages/FollowList"));
+// Soc15 call 3: the weekly league, opened from its card on Social.
+const League = lazyRetry(() => import("@/pages/League"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
 // like every other page; not wired into any nav. Reachable only by
@@ -240,6 +256,13 @@ const BreakSocialLab =
 const BreakFoodLab =
   import.meta.env.MODE !== "production"
     ? lazyRetry(() => import("@/pages/dev/BreakFoodLab"))
+    : null;
+
+// Dev-only finish lab: the lift's finish screen as a reward and as a
+// summary, and the share card, with fixtures. Same build-time stripping.
+const FinishLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/FinishLab"))
     : null;
 
 // The ambient-emission bake-off (#1252) shipped a single brand-purple
@@ -391,7 +414,15 @@ class ErrorBoundary extends Component<
 ================================ */
 
 function AppRoutes() {
-  const { user, profile, loading } = useAuth();
+  const {
+    user,
+    profile,
+    profileLoad,
+    loading,
+    watchAccountCleanup,
+    refreshProfile,
+    signOut,
+  } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
   /* Email accounts verify after the plan, not before it: onboarding opens
@@ -404,6 +435,12 @@ function AppRoutes() {
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
+  // A tapped local notification (the Monday review) opens its page.
+  useLocalNotificationNavigation(!loading && !!user);
+  useNativeInviteNavigation(
+    !loading && !!user && !!profile?.onboardingComplete,
+    !loading && !!user && !profile?.onboardingComplete
+  );
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
@@ -478,9 +515,13 @@ function AppRoutes() {
     window.addEventListener("focus", resumeWater);
     window.addEventListener("storage", resumeWater);
     window.addEventListener("online", tryFlush);
+    // And when the person comes back to the app: `online` does not fire for
+    // a flush that failed while connected (flushOnAppResume.ts).
+    const stopResumeFlush = flushOnAppResume(tryFlush);
     return () => {
       cancelled = true;
       stopForegroundPush();
+      stopResumeFlush();
       window.removeEventListener("online", tryFlush);
       document.removeEventListener("visibilitychange", resumeWater);
       window.removeEventListener("focus", resumeWater);
@@ -491,7 +532,28 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" label="Loading Tropos" />
+        {CONNECTED_TRAINING_RELEASED && watchAccountCleanup ? (
+          /* AuthProvider holds the next account back until the last one's
+             Watch run is cleared from this iPhone. Only a build with the
+             Watch released can fail that, so only it carries this. */
+          <div role="alert" className="max-w-sm space-y-3 px-4 text-center">
+            <p className="text-sm font-semibold">
+              Couldn&apos;t clear Watch runs
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Tropos clears the last account&apos;s Watch run from this iPhone
+              before opening another, and that didn&apos;t finish.
+            </p>
+            <Button variant="secondary" onClick={watchAccountCleanup.retry}>
+              Try again
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center">
+            <Spinner size="lg" label="Loading Tropos" />
+            <BootStallNotice />
+          </div>
+        )}
       </div>
     );
   }
@@ -512,7 +574,14 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <MotionRoot>
-        <SignedInRoutes user={user} profile={profile} deletion={deletion} />
+        <SignedInRoutes
+          user={user}
+          profile={profile}
+          profileUnreadable={profileLoad === "failed"}
+          onRetryProfile={refreshProfile}
+          onSignOut={signOut}
+          deletion={deletion}
+        />
       </MotionRoot>
     </Suspense>
   );
@@ -525,10 +594,17 @@ type AuthState = ReturnType<typeof useAuth>;
 function SignedInRoutes({
   user,
   profile,
+  profileUnreadable,
+  onRetryProfile,
+  onSignOut,
   deletion,
 }: {
   user: NonNullable<AuthState["user"]>;
   profile: AuthState["profile"];
+  /** The profile could not be read and the device holds no copy. */
+  profileUnreadable: boolean;
+  onRetryProfile: () => Promise<void>;
+  onSignOut: () => Promise<void>;
   deletion: ReturnType<typeof useAccountDeletionStatus>;
 }) {
   if (deletion.pending || deletion.completed) {
@@ -541,6 +617,14 @@ function SignedInRoutes({
           <SettingsAccount duringSetup />
         </main>
       </Suspense>
+    );
+  }
+
+  // Before setup: no profile here means one of two things, and only an
+  // account that has none yet belongs in setup (`ProfileLoad`, auth.tsx).
+  if (profileUnreadable) {
+    return (
+      <ProfileUnavailable onRetry={onRetryProfile} onSignOut={onSignOut} />
     );
   }
 
@@ -637,6 +721,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <History />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/history/sessions"
+                          element={
+                            <RouteErrorBoundary>
+                              <TrainingHistory />
                             </RouteErrorBoundary>
                           }
                         />
@@ -786,6 +878,14 @@ function SignedInRoutes({
                           }
                         />
                         <Route
+                          path="/settings/pantry"
+                          element={
+                            <RouteErrorBoundary>
+                              <SettingsPantry />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
                           path="/settings/data"
                           element={
                             <RouteErrorBoundary>
@@ -810,6 +910,14 @@ function SignedInRoutes({
                           }
                         />
                         <Route
+                          path="/program/plan"
+                          element={
+                            <RouteErrorBoundary>
+                              <TrainingPlan />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
                           path="/social"
                           element={
                             <RouteErrorBoundary>
@@ -826,6 +934,30 @@ function SignedInRoutes({
                           }
                         />
                         <Route
+                          path="/followers"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="followers" />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/league"
+                          element={
+                            <RouteErrorBoundary>
+                              <League />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/following"
+                          element={
+                            <RouteErrorBoundary>
+                              <FollowList kind="following" />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
                           path="/routine/:routineId"
                           element={
                             <RouteErrorBoundary>
@@ -833,6 +965,15 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        <Route
+                          path="/empty-workout"
+                          element={
+                            <RouteErrorBoundary>
+                              <EmptyWorkout />
+                            </RouteErrorBoundary>
+                          }
+                        />
+
                         <Route
                           path="/run/:runId"
                           element={
@@ -983,6 +1124,16 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <BreakFoodLab />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                      )}
+                      {FinishLab && (
+                        <Route
+                          path="/dev/finish"
+                          element={
+                            <RouteErrorBoundary>
+                              <FinishLab />
                             </RouteErrorBoundary>
                           }
                         />

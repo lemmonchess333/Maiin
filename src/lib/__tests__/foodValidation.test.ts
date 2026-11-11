@@ -19,7 +19,7 @@ describe("validateFoodEntry — blocked", () => {
   it("blocks negative calories", () => {
     expect(validateFoodEntry({ calories: -50 })).toEqual({
       kind: "blocked",
-      reason: "Macros can't be negative.",
+      reason: "Macros can’t be negative.",
     });
   });
 
@@ -144,7 +144,7 @@ describe("checkAggregateAgainstTarget — AI/photo aggregate sanity", () => {
     expect(r).not.toBeNull();
     expect(r?.title).toBe("This meal looks unusually high");
     expect(r?.description).toContain("5700");
-    expect(r?.description).toContain("over a full day's target");
+    expect(r?.description).toContain("over a full day’s target");
   });
 
   it("rounds non-integer aggregates in the description copy", () => {

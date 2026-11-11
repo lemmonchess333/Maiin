@@ -92,8 +92,9 @@ describe("areRaceRunDaysStale", () => {
               weekStart: localWeekKey(new Date(`${todayKey}T12:00:00`)),
               recentLayoff: "none",
             });
+            // The calendar weeks from this one, a lead-in included.
             expect(honestRaceWeekIndex({ raceGoal, todayKey }).totalWeeks).toBe(
-              fresh.totalWeeks
+              fresh.weeks.length
             );
             expect(
               areRaceRunDaysStale({
@@ -150,7 +151,9 @@ describe("areRaceRunDaysStale", () => {
 
   it("IS stale on anchor drift (runDays generated for a prior week)", () => {
     // Generate for a week 3 weeks ago — weekKey no longer matches today's.
-    const threeWeeksAgo = localDateString(
+    // From its Monday: a plan made later in that week would have been a
+    // lead-in with none of its run days left.
+    const threeWeeksAgo = localWeekKey(
       addLocalDays(new Date(`${today}T12:00:00`), -21)
     );
     const stale = freshWeekFor(threeWeeksAgo, "marathon", raceDate);
@@ -202,7 +205,7 @@ describe("areRaceRunDaysStale", () => {
       addLocalDays(new Date(`${today}T12:00:00`), 5)
     );
     const fresh = freshWeekFor(today, "5k", raceDaysAway);
-    expect(fresh.totalWeeks).toBeGreaterThanOrEqual(2);
+    expect(fresh.weeks.length).toBeGreaterThanOrEqual(2);
     expect(fresh.weeks[0]?.some((d) => d.type === "race")).toBe(false);
 
     const thisWeekKey = localWeekKey(new Date(`${today}T12:00:00`));

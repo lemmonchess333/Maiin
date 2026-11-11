@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   doc,
@@ -28,25 +28,29 @@ export interface Shoe {
 
 export function useShoes() {
   const uid = useUid();
-  const [shoes, setShoes] = useState<Shoe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [snapshot, setSnapshot] = useState<{
+    uid: string;
+    shoes: Shoe[];
+    error: Error | null;
+  } | null>(null);
+  const currentUid = useRef<string | null>(null);
+  const ownsSnapshot = !!uid && snapshot?.uid === uid;
+  const shoes = ownsSnapshot ? snapshot.shoes : [];
+  const loading = !!uid && !ownsSnapshot;
+  const error = ownsSnapshot ? snapshot.error : null;
 
   useEffect(() => {
+    currentUid.current = uid;
+    let active = true;
     if (!uid) {
-      const reset = () => {
-        setShoes([]);
-        setLoading(false);
-      };
-      reset();
-      return;
+      return () => { currentUid.current = null; };
     }
 
     const ref = collection(db, "users", uid, "shoes");
     const unsub = onSnapshot(
       ref,
       (snap) => {
-        setError(null);
+        if (!active) return;
         const list: Shoe[] = snap.docs.map((d) => {
           const data = d.data();
           return {
@@ -62,23 +66,32 @@ export function useShoes() {
             alert100Shown: data.alert100Shown ?? false,
           };
         });
-        setShoes(
-          list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0))
-        );
-        setLoading(false);
+        setSnapshot({
+          uid,
+          shoes: list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0)),
+          error: null,
+        });
       },
       (err) => {
+        if (!active) return;
         logger.error("useShoes snapshot error:", err);
-        setError(err);
-        setLoading(false);
+        setSnapshot((previous) => ({
+          uid,
+          shoes: previous?.uid === uid ? previous.shoes : [],
+          error: err,
+        }));
       }
     );
 
-    return unsub;
+    return () => {
+      active = false;
+      currentUid.current = null;
+      unsub();
+    };
   }, [uid]);
 
   const addShoe = async (name: string, brand: string, maxKm: number = 600) => {
-    if (!uid) return;
+    if (!uid || currentUid.current !== uid) return;
     const ref = collection(db, "users", uid, "shoes");
     await addDocGuarded(ref, {
       name,
@@ -94,13 +107,13 @@ export function useShoes() {
   };
 
   const retireShoe = async (shoeId: string) => {
-    if (!uid) return;
+    if (!uid || currentUid.current !== uid) return;
     const ref = doc(db, "users", uid, "shoes", shoeId);
     await updateDocGuarded(ref, { retired: true, isDefault: false });
   };
 
   const setDefault = async (shoeId: string) => {
-    if (!uid) return;
+    if (!uid || currentUid.current !== uid) return;
     // Move the flag together: a rejected target write must not clear the
     // previous default and silently switch future runs to the fallback shoe.
     const batch = writeBatch(db);
@@ -118,7 +131,7 @@ export function useShoes() {
   };
 
   const updateMileage = async (shoeId: string, addKm: number) => {
-    if (!uid) return;
+    if (!uid || currentUid.current !== uid) return;
     const shoe = shoes.find((s) => s.id === shoeId);
     if (!shoe) return;
     const newTotal = shoe.totalKm + addKm;
@@ -165,9 +178,11 @@ export function useShoes() {
    * Retired shoes are left untouched — historical totals preserved.
    */
   const reconcileMileageFromRuns = useCallback(async () => {
-    if (!uid) return { updated: 0, totalRuns: 0 };
+    if (!uid || currentUid.current !== uid) return { updated: 0, totalRuns: 0 };
 
     const runs = await fetchSavedRuns(uid, { all: true });
+    // An account change during the history read must not start new writes.
+    if (currentUid.current !== uid) return { updated: 0, totalRuns: 0 };
     const currentDefaultId = defaultShoe?.id ?? null;
 
     const kmByShoe = new Map<string, number>();

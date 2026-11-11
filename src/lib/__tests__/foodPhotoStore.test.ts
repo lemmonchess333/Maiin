@@ -18,9 +18,13 @@
  * be a test of a stub wearing the name of a real thing. What it scales to
  * is (`downscaleFactor`, pure); the encode itself, photo and thumbnail,
  * is called out as device-only in the QA backlog — same status it had
- * under the Storage implementation.
+ * under the Storage implementation. The one decision around the encode,
+ * whether a photo that already fits is written as it came or drawn
+ * again, IS pinned below, with the decode and the canvas stubbed at the
+ * DOM boundary: what it checks is which bytes reach the file.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Filesystem } from "@capacitor/filesystem";
 
 /** In-memory stand-in for the plugin, shaped like the parts we call. */
 const files = new Map<string, { data: string; mtime: number; size: number }>();
@@ -79,6 +83,7 @@ import {
   planEviction,
   purgeFoodPhotos,
   readFoodPhotoSrc,
+  saveFoodPhoto,
   sweepFoodPhotos,
   sweepFoodPhotosOnce,
   type StoredPhoto,
@@ -317,6 +322,30 @@ describe("uid isolation", () => {
     expect((await listFoodPhotos("bob")).map((p) => p.mealId)).toEqual(["m2"]);
   });
 
+  it.each([
+    new Error("IndexedDB transaction failed"),
+    { code: "OS-PLUG-FILE-0013", message: "Permission denied" },
+  ])(
+    "reports a failed device purge instead of confirming cleanup: %j",
+    async (error) => {
+      await seed("alice", "private", 0);
+      vi.mocked(Filesystem.rmdir).mockRejectedValueOnce(error);
+      await expect(purgeFoodPhotos("alice")).rejects.toBe(error);
+      expect(await readFoodPhotoSrc("alice", "private")).not.toBeNull();
+    }
+  );
+
+  it.each([
+    new Error("Folder does not exist."),
+    { code: "OS-PLUG-FILE-0008", message: "File does not exist." },
+  ])(
+    "treats an already absent photo directory as cleaned: %j",
+    async (error) => {
+      vi.mocked(Filesystem.rmdir).mockRejectedValueOnce(error);
+      await expect(purgeFoodPhotos("never-scanned")).resolves.toBeUndefined();
+    }
+  );
+
   it("sweeping one account never touches another's expired photos", async () => {
     await seed("alice", "old", 200);
     await seed("bob", "old", 200);
@@ -460,5 +489,62 @@ describe("what a capture is scaled to", () => {
   it("never scales a small capture up", () => {
     expect(downscaleFactor(120, 90, THUMB_EDGE_PX, "short")).toBe(1);
     expect(downscaleFactor(800, 600, MAX_EDGE_PX, "long")).toBe(1);
+  });
+});
+
+describe("saveFoodPhoto — a photo that already fits is kept as it came", () => {
+  const natural = { w: 1280, h: 960 };
+  let encodes = 0;
+
+  class FakeImage {
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    naturalWidth = 0;
+    naturalHeight = 0;
+    set src(_url: string) {
+      queueMicrotask(() => {
+        this.naturalWidth = natural.w;
+        this.naturalHeight = natural.h;
+        this.onload?.();
+      });
+    }
+  }
+
+  beforeEach(() => {
+    files.clear();
+    encodes = 0;
+    vi.stubGlobal("Image", FakeImage);
+    vi.stubGlobal("document", {
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({ drawImage: () => undefined }),
+        toDataURL: () => `data:image/jpeg;base64,ENCODED${++encodes}`,
+      }),
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("writes the bytes the scan sent when the photo is within MAX_EDGE_PX, and draws only the thumbnail", async () => {
+    natural.w = 1280;
+    natural.h = 960;
+    expect(await saveFoodPhoto("u1", "m1", "AS_SENT")).toBe(true);
+    // The photo file holds the bytes the scan sent; the one encode is the
+    // thumbnail. (readFoodPhotoSrc prefers the thumbnail, so each file is
+    // checked by its path.)
+    expect(files.get("food-photos/u1/m1.jpg")?.data).toBe("AS_SENT");
+    expect(files.get("food-photos/u1/m1.thumb.jpg")?.data).toBe("ENCODED1");
+    expect(encodes).toBe(1);
+  });
+
+  it("draws a larger photo down, as before", async () => {
+    natural.w = 4032;
+    natural.h = 3024;
+    expect(await saveFoodPhoto("u1", "m2", "AS_SENT")).toBe(true);
+    expect(files.get("food-photos/u1/m2.jpg")?.data).toBe("ENCODED1");
+    expect(files.get("food-photos/u1/m2.thumb.jpg")?.data).toBe("ENCODED2");
+    expect(encodes).toBe(2);
   });
 });

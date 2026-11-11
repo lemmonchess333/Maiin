@@ -28,6 +28,7 @@ import {
 import { savedWorkoutDoc } from "@/test/sessionFixtures";
 import { writeBatch } from "firebase/firestore";
 import type { PRMap } from "../prTracking";
+import { checkSetPR } from "../prTracking";
 
 const RECORDS = "users/u1/stats/prMap";
 
@@ -65,6 +66,79 @@ beforeEach(() => {
 });
 
 describe("loadLiftRecords", () => {
+  it.each([true, false])(
+    "counts only trained sessions when rebuilding counts (invalidated: %s)",
+    async (invalidated) => {
+      const withSets = (date: string, sets: Record<string, unknown>[]) =>
+        savedWorkoutDoc(date, {
+          exercises: [
+            {
+              exerciseId: "bench-press",
+              exerciseName: "Bench Press",
+              sets,
+            },
+          ],
+        });
+      seedFirestore({
+        [RECORDS]: { revision: 2, invalidated },
+        "users/u1/workouts/skipped-1": withSets("2026-06-01", []),
+        "users/u1/workouts/skipped-2": withSets("2026-06-02", []),
+        "users/u1/workouts/warmup": withSets("2026-06-03", [
+          { weightKg: 20, reps: 5, type: "warmup" },
+        ]),
+        "users/u1/workouts/working": withSets("2026-06-04", [
+          { weightKg: 60, reps: 5 },
+        ]),
+      });
+      const records = await loadLiftRecords(
+        "u1",
+        await fetchSavedWorkouts("u1", { latest: 50 })
+      );
+      expect(records.sessionCounts).toEqual({ "Bench Press": 1 });
+      expect(benchBest(records)).toBe(60);
+      expect(
+        checkSetPR("Bench Press", 65, 5, records.map, records.sessionCounts, 3)
+      ).toBeNull();
+    }
+  );
+
+  it("counts a trained exercise once and preserves bodyweight, timed and other working sets", async () => {
+    seedFirestore({
+      [RECORDS]: { revision: 2, invalidated: true },
+      "users/u1/workouts/mixed": savedWorkoutDoc("2026-06-01", {
+        exercises: [
+          { exerciseName: "Bench Press", sets: [] },
+          { exerciseName: "Bench Press", sets: [{ weightKg: 60, reps: 5 }] },
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 40, reps: 8, type: "dropset" }],
+          },
+          { exerciseName: "Push-up", sets: [{ weightKg: 0, reps: 12 }] },
+          {
+            exerciseName: "Plank",
+            repUnit: "seconds",
+            sets: [{ weightKg: 0, reps: 60 }],
+          },
+          {
+            exerciseName: "Curl",
+            sets: [{ weightKg: 10, reps: 10, type: "failure" }],
+          },
+          {
+            exerciseName: "Warm-up only",
+            sets: [{ weightKg: 20, reps: 5, type: "warmup" }],
+          },
+        ],
+      }),
+    });
+    const records = await loadLiftRecords("u1", []);
+    expect(records.sessionCounts).toEqual({
+      "Bench Press": 1,
+      "Push-up": 1,
+      Plank: 1,
+      Curl: 1,
+    });
+  });
+
   it("keeps a stored map rather than rebuilding it from the recent window", async () => {
     // The window holds 85, the stored best is 100: a rebuild would let a
     // 90 kg set be celebrated as a best.

@@ -142,9 +142,7 @@ function truncateToken(token: string): string {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-3 py-2 border-b border-border/40 last:border-0">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">
-        {label}
-      </p>
+      <p className="text-xs text-muted-foreground shrink-0">{label}</p>
       <p className="text-xs font-mono text-foreground text-right break-all">
         {value}
       </p>
@@ -235,7 +233,7 @@ export default function Diagnostics() {
         </div>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
             App
           </p>
           <Row label="Version" value={`v${__APP_VERSION__}`} />
@@ -244,29 +242,29 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
-            Service Worker
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
+            Service worker
           </p>
           <Row label="State" value={swSummary} />
           {swState?.scope && <Row label="Scope" value={swState.scope} />}
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
             App Check
           </p>
           <Row label="Token" value={appCheckSummary} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
             Analytics
           </p>
           <Row label="Provider" value={analyticsStatus} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
             Crash reporting
           </p>
           <Row
@@ -292,7 +290,7 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
             Notifications
           </p>
           <Row label="Permission" value={permissionSummary} />
@@ -317,8 +315,8 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
-            Offline Queue
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
+            Offline queue
           </p>
           <Row label="Depth" value={`${queueLength} pending`} />
           <Row
@@ -332,8 +330,8 @@ export default function Diagnostics() {
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
-            Recent Crashes
+          <p className="text-xs font-semibold text-muted-foreground mb-1">
+            Recent crashes
           </p>
           {crashes === null ? (
             <Row label="Status" value="checking…" />

@@ -36,13 +36,19 @@ interface Props {
   // When false, defer the async demo fetch. Drawer consumers set this
   // based on open state to avoid fetching before the drawer is shown.
   active?: boolean;
+  /** Keep the movement cue in view inside the exercise picker sheet. */
+  compactGuide?: boolean;
 }
 
 // Collapsed instruction preview shows this many WHOLE steps (never a
 // mid-line clip — the old 60px max-height cut step two in half).
 const COLLAPSED_STEPS = 2;
 
-function ExerciseFormContent({ exerciseName, active = true }: Props) {
+function ExerciseFormContent({
+  exerciseName,
+  active = true,
+  compactGuide = false,
+}: Props) {
   const exerciseId = EXERCISES.find(
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
@@ -186,12 +192,22 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
      the depicted cycle. The catalogue's tip and common mistakes still
      render below, unchanged. */
   const steps = beats ? beats.map((b) => b.cue) : demo.instructions;
-  const collapsedSteps = beats ? steps.length : COLLAPSED_STEPS;
+  // The picker already shows the current beat beside the illustration.
+  // Keep its full numbered list one tap away without repeating that cue.
+  const collapsedSteps = beats
+    ? compactGuide
+      ? 0
+      : steps.length
+    : COLLAPSED_STEPS;
+  const visibleSteps = showInstructions
+    ? steps
+    : steps.slice(0, collapsedSteps);
+  const compactBeatGuide = compactGuide && beats !== null;
 
   return (
     <div>
       {/* Metadata tags */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {demo.category && (
           <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-small font-semibold text-white bg-lifting-fill">
             {demo.category}
@@ -216,6 +232,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           name={demo.name}
           active={active}
           tempo={demo.tempo}
+          compact={compactGuide}
           onStep={beats ? setActiveStep : undefined}
           stepRequest={stepRequest}
         />
@@ -227,6 +244,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           frames={demo.images}
           name={demo.name}
           active={active}
+          compact={compactGuide}
           mediaKind={
             // Demo1: provenance gates animation — borrowed free-exercise-db
             // pairs render static; only reviewed coach frames auto-play.
@@ -390,16 +408,36 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           nutrition-orange was food-domain colour on a lifting surface. */}
       {steps.length > 0 && (
         <div className="mt-6">
-          <p className="text-lg font-bold text-foreground">Instructions</p>
+          {compactBeatGuide ? (
+            <button
+              type="button"
+              onClick={() => setShowInstructions(!showInstructions)}
+              aria-expanded={showInstructions}
+              className="flex min-h-[44px] items-center gap-2 text-lg font-bold text-foreground"
+            >
+              {showInstructions ? (
+                <>
+                  <ChevronUp className="size-5 shrink-0" /> Hide steps
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-5 shrink-0" /> All {steps.length}{" "}
+                  steps
+                </>
+              )}
+            </button>
+          ) : (
+            <p className="text-lg font-bold text-foreground">Instructions</p>
+          )}
           {setupInstructions && setupInstructions.length > 0 && (
             <p className="mt-3 text-body text-foreground/80 leading-relaxed">
               <span className="font-semibold">Preparation: </span>
               {setupInstructions.join(" ")}
             </p>
           )}
-          <div className="flex flex-col gap-4 mt-3">
-            {(showInstructions ? steps : steps.slice(0, collapsedSteps)).map(
-              (step, i) => {
+          {visibleSteps.length > 0 && (
+            <div className="flex flex-col gap-4 mt-3">
+              {visibleSteps.map((step, i) => {
                 const live = beats !== null && i === activeStep;
                 return (
                   <div key={i} className="flex gap-2.5">
@@ -446,13 +484,14 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                     </p>
                   </div>
                 );
-              }
-            )}
-          </div>
-          {steps.length > collapsedSteps && (
+              })}
+            </div>
+          )}
+          {steps.length > collapsedSteps && !compactBeatGuide && (
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
+              aria-expanded={showInstructions}
               className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting-strong"
             >
               {showInstructions ? (

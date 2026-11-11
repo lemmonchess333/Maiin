@@ -47,7 +47,7 @@ export function isLosslessWebp(data: Buffer): boolean {
     data.toString("ascii", 8, 12) !== "WEBP"
   )
     return false;
-  for (let offset = 12; offset + 8 <= data.length; ) {
+  for (let offset = 12; offset + 8 <= data.length;) {
     const kind = data.toString("ascii", offset, offset + 4);
     const size = data.readUInt32LE(offset + 4);
     if (kind === "VP8L") return true;
@@ -83,7 +83,7 @@ export interface ShrinkSummary {
   bytesAfter: number;
 }
 
-/** Re-saves every frame under `dir` (`<exercise>/<n>.webp`) in place. */
+/** Re-saves every frame under `dir`, including dated release subfolders. */
 export async function shrinkFormFrames(
   dir: string,
   options: { cacheDir?: string } = {}
@@ -95,13 +95,13 @@ export async function shrinkFormFrames(
     bytesAfter: 0,
   };
   if (!existsSync(dir)) return summary;
-  const files = readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((entry) =>
-      readdirSync(join(dir, entry.name))
-        .filter((name) => name.endsWith(".webp"))
-        .map((name) => join(dir, entry.name, name))
-    );
+  const webpsBelow = (folder: string): string[] =>
+    readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(folder, entry.name);
+      if (entry.isDirectory()) return webpsBelow(path);
+      return entry.isFile() && entry.name.endsWith(".webp") ? [path] : [];
+    });
+  const files = webpsBelow(dir);
   const { cacheDir } = options;
   if (cacheDir) mkdirSync(cacheDir, { recursive: true });
   const queue = [...files];

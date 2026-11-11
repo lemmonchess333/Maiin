@@ -13,6 +13,10 @@
    this, Tailwind v4 compiles `dark:` to prefers-color-scheme, so the
    app's dark mode on a phone set to Light drew the light-mode edges. */
 @custom-variant dark (&:where(.dark, .dark *));
+/* A phone under 640 pt tall, the 320 x 568 iPhone SE: the live workout
+   takes in its padding there, so an exercise's four set rows fit its
+   first screen under the header's figures (DS4 pass, 8 November 2026). */
+@custom-variant short (@media (max-height: 640px));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
@@ -88,6 +92,8 @@
      a white label, iOS's dark-mode segmented control. Definitions in
      :root + .dark below. */
   --color-segment-selected: hsl(var(--segment-selected));
+  /* The fill of a track that holds progress on a card (`track-cut`). */
+  --color-track: hsl(var(--track));
   /* Semantic status colours — exposed to Tailwind so classes like
      bg-destructive, text-destructive, bg-destructive/10,
      text-destructive-foreground, text-success, bg-warning-bg
@@ -150,17 +156,31 @@
   --font-display:
     "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
     sans-serif;
-  /* The numeral / data font. Despite the historical `mono` name (and the
-     `font-mono` Tailwind utility it powers), this is NOT a monospace face —
-     it's Archivo, chosen in the brand bake-off (docs/visual-audit/bakeoff/
-     DECISION.md) to replace JetBrains Mono for all numbers. Archivo is
-     proportional, so digit alignment comes from tabular figures, forced on
-     every `.font-mono` element by the rule below. Sans fallbacks (NOT
-     monospace) for the variable-font-fails case. */
-  --font-mono: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Numbers come in two tiers (DESIGN_GUIDE §4).
+     `font-mono` is a number inside a line of text: "3 sets × 8 reps ·
+     52.5 kg", "about 59 min", "Last: 105 kg × 5". It is the text face,
+     Plus Jakarta Sans, so the digits share the words' x-height, cap
+     height and weight; the rule further down gives them tabular figures.
+     The `mono` name means "this is a number", not a monospace face.
+     `font-figure` is a figure that stands on its own at display size:
+     the calorie ring's 2,336, a tile's 81.7, a hero stat, a timer, a set
+     log's inputs. It is Archivo, the numeral face from the brand bake-off
+     (docs/visual-audit/bakeoff/DECISION.md), with tabular figures too.
+     Sans fallbacks (NOT monospace) for the variable-font-fails case. */
+  --font-mono:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-figure: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  /* `font-sans` takes a unit or a word inside a figure back to the text
+     face ("81.7 kg", "5.02 km"). Left at Tailwind's default it would be
+     the system font, a third face. */
+  --font-sans:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
+  --text-hero: var(--ds-text-hero);
   --text-h1: var(--ds-text-h1);
   --text-h2: var(--ds-text-h2);
   --text-h3: var(--ds-text-h3);
@@ -179,6 +199,19 @@
    single source of truth so a future elevation change is one line here. */
 @utility card-shadow {
   box-shadow: var(--ds-shadow-card);
+}
+
+/* A chip's or a pill button's lit edge, and a progress track cut into its
+   card (DESIGN_GUIDE §14o). Both go through Tailwind's shadow variable
+   rather than writing `box-shadow` themselves, so a focus ring or a
+   selection ring on the same element is drawn with them, not instead of
+   them. `track-cut` is for a track on a card: on the page there is no
+   darker to cut to, and a track there keeps `bg-muted`. */
+@utility chip-edge {
+  @apply shadow-[var(--ds-shadow-chip)];
+}
+@utility track-cut {
+  @apply bg-track shadow-[var(--ds-shadow-track)];
 }
 
 :root {
@@ -261,6 +294,9 @@
      light-mode user sees the page turn light only as it is revealed. */
   --launch: 240 10% 6%; /* #0E0E11 */
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
+  /* A progress track's fill. Light: the raised tile's colour, so
+     `track-cut` and `bg-muted` are the same there. */
+  --track: var(--muted);
   /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
      token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
      on --background (4.397:1) — which every BottomSheet body paints. 43%
@@ -319,6 +355,15 @@
      4.04:1 even on a plain card. Icons and the large PR numeral stay on
      the identity; the badge label and the "new PR" line move here. */
   --achievement-strong: 40 90% 26.5%; /* #805807 */
+  /* The light a new best stands in on the finish screen (DS4 §14m rule
+     31): the gold itself, not the deep text step above, which over a
+     light page turned the light into a beige wash. A fill, never text. */
+  --achievement-glow: 45 92% 55%;
+  /* The same light for a first or a finished plan, in its sport's hue: a
+     step deeper than the identity on a light page, where the identity's
+     light washed out to a tint that read as no colour at all. */
+  --lifting-glow: 245 75% 62%;
+  --running-glow: 348 70% 55%;
   /* Skeleton shimmer sweep. Must DARKEN in light mode: `LoadingSkeleton`
      sits on `bg-muted`, which here is hsl(240 6% 97.5%) = rgb(248,248,249),
      and the white-alpha sweep it used to hardcode inline moved that by
@@ -374,6 +419,9 @@
   --destructive-strong: 0 84% 73%; /* #F48080 — worst case 4.58:1 (20% tint over muted) */
   /* Raised: a chip, a track, a tile inside a card. */
   --muted: 240 8% 14.1%; /* #212127 */
+  /* A progress track's fill, darker than the card it is cut into
+     (#17171B), where `--muted` is lighter than it. */
+  --track: 240 13% 4.5%; /* #0A0A0D */
   --muted-foreground: 240 5% 65%; /* #A1A1AA */
   /* IDENTICAL to :root — a fill under white text is theme-independent. */
   --segment-selected: 240 4% 46%; /* #71717A */
@@ -420,6 +468,9 @@
   --achievement: 45 92% 58%;
   --achievement-bg: 42 50% 14%;
   --achievement-strong: 45 92% 58%;
+  --achievement-glow: 45 92% 58%;
+  --lifting-glow: 245 73% 68%;
+  --running-glow: 348 57% 61%;
 }
 
 /* Default border colour. Must live in @layer base so explicit
@@ -431,6 +482,28 @@
 @layer base {
   * {
     border-color: hsl(var(--border));
+  }
+}
+
+/* Line breaks (DESIGN_GUIDE §4). A heading balances its lines, so a
+   two-line card title does not leave one word on the first; running text
+   avoids a lone last word ("…Your programme / follows"). In @layer base so
+   a `text-wrap` utility on an element still wins. A number and its unit
+   are held together where they are written (`keepTogether`, or a
+   `whitespace-nowrap` span), which neither of these does. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  p,
+  li,
+  dd,
+  figcaption,
+  legend {
+    text-wrap: pretty;
   }
 }
 
@@ -567,30 +640,36 @@ body {
   }
 }
 
-/* Numeral font (Archivo) is proportional, so force tabular figures on every
-   `.font-mono` element — this gives the equal digit width that JetBrains Mono
-   provided inherently (stable count-up animations, aligned stat columns /
-   set-log grids / splits). tnum only affects digits, so units like "kg"/"km"
-   are unaffected. */
-.font-mono {
+/* Both number faces are proportional, so every number element takes
+   tabular figures: equal digit widths keep count-ups still and stat
+   columns, set-log grids and splits aligned. tnum only affects digits, so
+   units like "kg"/"km" are unaffected. */
+.font-mono,
+.font-figure {
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
 }
 
 /* ─── HEADING DEFAULTS ────────────────────────────────────── */
-h1,
-h2,
-h3,
-h4 {
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  font-kerning: normal;
-}
-/* Display-size headings (page titles, hero numbers) get a touch more
-   negative tracking so they read refined rather than airy. Pairs well
-   with Plus Jakarta Sans's geometric character at 24px+. */
-h1 {
-  letter-spacing: -0.02em;
+/* In @layer base, so a heading's own `tracking-*`, `leading-*` and
+   `text-*` line height win, as they do on any other element. Unlayered,
+   these would beat the utilities, and one title would set two ways by its
+   tag alone: the session card's is an h3 on Train and a p on Home. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-kerning: normal;
+  }
+  /* Display-size headings (page titles, hero numbers) get a touch more
+     negative tracking so they read refined rather than airy. Pairs well
+     with Plus Jakarta Sans's geometric character at 24px+. */
+  h1 {
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Safe area padding for bottom nav (iPhone notch) */

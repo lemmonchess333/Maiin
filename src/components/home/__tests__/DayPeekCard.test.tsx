@@ -15,7 +15,7 @@
  * this-week's runDay status.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import type { UserProfile } from "@/lib/auth";
@@ -190,6 +190,56 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.getByText("Easy 30")).toBeInTheDocument();
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
+  });
+
+  it("explains a recovery run as the recovery's, not race week's", () => {
+    // The plan's counter still points at race week while it recovers.
+    const fromToday = (days: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return localDateString(d);
+    };
+    const date = localDateString();
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["run", "run", "run", "run", "run", "run", "run"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: TODAY_DOW,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId: "easy_30",
+      }),
+    ]);
+    program.runPlan = {
+      mode: "race_prep",
+      currentWeek: 15,
+      totalWeeks: 16,
+      raceGoal: { distance: "marathon", targetDate: fromToday(-3) },
+      phase: "recovery",
+      recoveryEndDate: fromToday(25),
+    } as ProgramState["runPlan"];
+    renderCard(
+      <DayPeekCard
+        todayKey={date}
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
   });
 
   it("keeps the actual dose and strides visible while disclosing the coaching reason", () => {
@@ -959,6 +1009,20 @@ describe("DayPeekCard — lift row tap-through", () => {
     ).toHaveLength(2);
   });
 
+  it("reads a measured clock in whole minutes, on one row and on several", () => {
+    const measured = (id: string) => ({
+      ...savedWorkout(id),
+      durationMinutes: 47 + 19 / 60,
+    });
+    renderWithWorkouts([measured("w-1")]);
+    expect(screen.getByText(/· 47 min/)).toBeInTheDocument();
+    expect(screen.queryByText(/47\.3/)).not.toBeInTheDocument();
+    cleanup();
+    renderWithWorkouts([measured("w-1"), measured("w-2")]);
+    expect(screen.getAllByText(/· 47 min/)).toHaveLength(2);
+    expect(screen.queryByText(/47\.3/)).not.toBeInTheDocument();
+  });
+
   it("is NOT a button for a planned lift with nothing saved", () => {
     // There is no record to open yet.
     renderWithWorkouts([]);
@@ -1366,7 +1430,7 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
       /What it is.*finishing at your goal race pace/
     );
     expect(why).toHaveTextContent(/How it should feel.*Easy until the final/);
-    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    expect(why).toHaveTextContent(/Why it’s in your week.*rehearses race day/);
   });
 
   it("names a tempo at the goal race pace, and why", () => {
@@ -1374,7 +1438,7 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
     expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /Why it's in your week.*what race pace feels like/
+      /Why it’s in your week.*what race pace feels like/
     );
   });
 

@@ -4,9 +4,15 @@
  *
  * The notification tray opens it for props and a comment on your session:
  * the post is the thing the notice is about, and its comments are where
- * you answer. `?comments=1` opens the comments at once, for a comment
- * notice. A feed card's "+N more" opens it too: here a lift lists every
- * exercise, where the card lists three.
+ * you answer. They are on the page, under the post, with the field to add
+ * one pinned above the tab bar (ActivityPostComments), as Strava's and
+ * Hevy's are; the feed keeps its sheet. `?comments=1` puts the field in
+ * focus at once, for a comment notice. A feed card opens it too: here a
+ * lift lists every exercise, where the card lists three.
+ *
+ * Your own post has Add photos here, at any time (Soc15 call 2): the
+ * finish screen's posted row offers it as the session is shared, and this
+ * is where it stays (PostPhotosSheet).
  *
  * The post is read as anyone reads it, so the rules decide: a post that
  * was deleted, or one the viewer can no longer see, is refused rather than
@@ -14,7 +20,7 @@
  * or, when the tray sent the person who acted along (`fallbackUserId` in
  * the route state), opens that person's profile instead.
  */
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   Navigate,
   useLocation,
@@ -22,7 +28,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ChevronLeft, MessageCircleOff } from "lucide-react";
+import { Camera, ChevronLeft, MessageCircleOff } from "lucide-react";
 import { useUid } from "@/lib/auth";
 import { batchGetKudos, fetchActivitiesByIds } from "@/lib/socialApi";
 import { activityToFeedItem } from "@/lib/activityFeedItem";
@@ -31,10 +37,21 @@ import type { ActivityPostState } from "@/lib/notificationTarget";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import ActivityCard from "@/components/social/ActivityCard";
+import ActivityPostComments from "@/components/social/ActivityPostComments";
+import { commentQuickChips } from "@/lib/commentChips";
 import { ActivityCardSkeleton } from "@/components/LoadingSkeleton";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { POST_PHOTOS_COPY } from "@/components/social/postPhotosCopy";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { postPhotosOf, type PostPhoto } from "@/lib/postPhotos";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+
+/* Loaded the first time the author opens it. */
+const PostPhotosSheet = lazyRetry(
+  () => import("@/components/social/PostPhotosSheet")
+);
 
 type PostRead =
   | { status: "loading" }
@@ -72,6 +89,40 @@ function ActivityPostPage({
   const { blocked, ready: blocksReady } = useBlockedUsers();
   const [read, setRead] = useState<PostRead>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  /* Comments added or deleted on the page, which the card's count adds,
+     and a bump that puts the comment field in focus. */
+  const [commentDelta, setCommentDelta] = useState(0);
+  const [focusComment, setFocusComment] = useState(openComments ? 1 : 0);
+  const countChange = useCallback(
+    (delta: number) => setCommentDelta((d) => d + delta),
+    []
+  );
+  // The post became unreadable while its comments were open.
+  const lost = useCallback(() => setRead({ status: "unavailable" }), []);
+  const [photosOpen, setPhotosOpen] = useState(false);
+  /* The sheet stays mounted from its first open, so it animates closed. */
+  const [photosOpened, setPhotosOpened] = useState(false);
+  const openPhotos = useCallback((open: boolean) => {
+    if (open) setPhotosOpened(true);
+    setPhotosOpen(open);
+  }, []);
+  const { isOnline } = useOnlineStatus();
+  /* The author's photos as the sheet leaves them, on the card at once. */
+  const setPhotos = useCallback(
+    (photos: PostPhoto[]) =>
+      setRead((current) =>
+        current.status === "ready"
+          ? {
+              status: "ready",
+              item: {
+                ...current.item,
+                activity: { ...current.item.activity, photos },
+              },
+            }
+          : current
+      ),
+    []
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -130,12 +181,12 @@ function ActivityPostPage({
       {unavailable ? (
         <EmptyState
           icon={MessageCircleOff}
-          headline="This post isn't available"
-          sub="It may have been deleted, or it's no longer shared with you."
+          headline="This post isn’t available"
+          sub="It may have been deleted, or it’s no longer shared with you."
         />
       ) : read.status === "error" ? (
         <ErrorState
-          title="Couldn't load this post"
+          title="Couldn’t load this post"
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -145,13 +196,99 @@ function ActivityPostPage({
           }}
         />
       ) : read.status === "ready" && (blocksReady || authorId === uid) ? (
-        <ActivityCard
-          feedItem={read.item}
-          openComments={openComments}
-          allExercises
-        />
+        <>
+          <ActivityCard
+            feedItem={read.item}
+            allExercises
+            linkToPost={false}
+            onComment={() => setFocusComment((n) => n + 1)}
+            commentDelta={commentDelta}
+          />
+          {read.item.authorId === uid && (
+            <OwnPostPhotos
+              activityId={activityId}
+              photos={postPhotosOf(read.item.activity?.photos)}
+              visibility={
+                typeof read.item.activity?.visibility === "string"
+                  ? read.item.activity.visibility
+                  : undefined
+              }
+              online={isOnline}
+              open={photosOpen}
+              opened={photosOpened}
+              onOpenChange={openPhotos}
+              onPhotosChange={setPhotos}
+            />
+          )}
+          <ActivityPostComments
+            activityId={activityId}
+            activityAuthorId={read.item.authorId}
+            commentCount={Math.max(
+              0,
+              (read.item.activity?.commentCount ?? 0) + commentDelta
+            )}
+            quickChips={commentQuickChips(read.item.type)}
+            onCountChange={countChange}
+            onUnavailable={lost}
+            focusKey={focusComment}
+          />
+        </>
       ) : (
         <ActivityCardSkeleton />
+      )}
+    </div>
+  );
+}
+
+/** Your own post's Add photos (or Edit photos once it has some), and the
+ *  sheet it opens. Offline it is off, and says why. */
+function OwnPostPhotos({
+  activityId,
+  photos,
+  visibility,
+  online,
+  open,
+  opened,
+  onOpenChange,
+  onPhotosChange,
+}: {
+  activityId: string;
+  photos: PostPhoto[];
+  visibility?: string;
+  online: boolean;
+  open: boolean;
+  /** Opened at least once, so the sheet is loaded. */
+  opened: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPhotosChange: (photos: PostPhoto[]) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="secondary"
+        fullWidth
+        leftIcon={<Camera className="size-4" aria-hidden />}
+        disabled={!online}
+        onClick={() => onOpenChange(true)}
+      >
+        {photos.length > 0 ? POST_PHOTOS_COPY.edit : POST_PHOTOS_COPY.add}
+      </Button>
+      {!online && (
+        <p className="text-xs text-muted-foreground">
+          {POST_PHOTOS_COPY.offline}
+        </p>
+      )}
+      {opened && (
+        <Suspense fallback={null}>
+          <PostPhotosSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            activityId={activityId}
+            photos={photos}
+            onPhotosChange={onPhotosChange}
+            visibility={visibility}
+          />
+        </Suspense>
       )}
     </div>
   );

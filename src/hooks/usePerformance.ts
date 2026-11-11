@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   collection,
   limit,
@@ -33,20 +33,23 @@ function sortAsc(a: PerformanceWeekDoc, b: PerformanceWeekDoc) {
  * count, for `isEstablishingBaseline`'s "has the engine produced anything
  * yet" floor, which is about documents, not weeks.
  */
+const NO_PERFORMANCE_DOCS: PerformanceWeekDoc[] = [];
+
 export function usePerformanceWeeks(maxWeeks: number = 12) {
   const uid = useUid();
-  const [docs, setDocs] = useState<PerformanceWeekDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [request, setRequest] = useState(0);
+  const refresh = useCallback(() => setRequest((value) => value + 1), []);
+  const [loaded, setLoaded] = useState<{
+    uid: string;
+    maxWeeks: number;
+    request: number;
+    failed: boolean;
+    docs: PerformanceWeekDoc[];
+  } | null>(null);
 
   useEffect(() => {
-    if (!uid) {
-      const reset = () => {
-        setDocs([]);
-        setLoading(false);
-      };
-      reset();
-      return;
-    }
+    if (!uid) return;
+    let cancelled = false;
 
     const ref = collection(db, "users", uid, "performance");
     const q = query(
@@ -58,24 +61,36 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
     const unsub = onSnapshot(
       q,
       (snap) => {
+        if (cancelled) return;
         const next = snap.docs
           .map((d) =>
             normalisePerformanceDoc(d.id, d.data() as Record<string, unknown>)
           )
           .sort(sortAsc);
 
-        setDocs(next);
-        setLoading(false);
+        setLoaded({ uid, maxWeeks, request, failed: false, docs: next });
       },
       () => {
-        setDocs([]);
-        setLoading(false);
+        if (!cancelled)
+          setLoaded({ uid, maxWeeks, request, failed: true, docs: [] });
       }
     );
 
-    return unsub;
-  }, [uid, maxWeeks]);
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [uid, maxWeeks, request]);
 
+  // Hide the prior account's scores during the render that switches uid,
+  // rather than waiting for an effect or the next snapshot to clear them.
+  const current =
+    !!uid &&
+    loaded?.uid === uid &&
+    loaded.maxWeeks === maxWeeks &&
+    loaded.request === request;
+  const docs = current ? loaded.docs : NO_PERFORMANCE_DOCS;
+  const loading = !!uid && !current;
   const series = useMemo(
     () => weeklyPerformanceSeries(docs, maxWeeks),
     [docs, maxWeeks]
@@ -89,6 +104,8 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
     previousWeek: series.previous,
     docsAvailable: docs.length,
     loading,
+    failed: current && loaded.failed,
+    refresh,
   };
 }
 
@@ -184,8 +201,7 @@ export function normalisePerformanceDoc(
   const weekKey: string =
     typeof data.weekKey === "string" ? data.weekKey : docId;
   const breakdown = (data.breakdown as
-    | PerformanceWeekDoc["breakdown"]
-    | undefined) ?? {
+    PerformanceWeekDoc["breakdown"] | undefined) ?? {
     liftLoadScore: safeNum(data.liftLoadScore),
     runLoadScore: safeNum(data.runLoadScore),
     recoveryScore: safeNum(data.recoveryScore),
@@ -201,8 +217,7 @@ export function normalisePerformanceDoc(
      Multipliers default to 1.0 (no-effect) since their tooltip copy
      reads them as ratios above/below baseline. */
   const multipliers = (data.multipliers as
-    | PerformanceWeekDoc["multipliers"]
-    | undefined) ?? {
+    PerformanceWeekDoc["multipliers"] | undefined) ?? {
     liftProgression: safeNum(data.liftProgression) || 1,
     runVolume: safeNum(data.runVolume) || 1,
     runPaceAdjustmentPct: safeNum(data.runPaceAdjustmentPct),

@@ -26,17 +26,28 @@ vi.mock("@/lib/shareComposer", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/shareComposer")>()),
   compose: h.compose,
 }));
+// The post's map image (Soc15 call 5) is drawn with WebGL, which jsdom
+// has not got; what is held here is what the run hands it.
+vi.mock("@/lib/routeMapUpload", () => ({
+  attachRouteMap: vi.fn(async () => {}),
+}));
 
 import {
   completeRun,
+  earlierRunHistory,
+  runDay,
   runDocument,
   runPost,
-  runPostName,
   runPostPreview,
   runPostRoute,
   type FinishedRun,
 } from "../runCompletion";
+import type { SavedRun } from "../savedRuns";
+import { attachRouteMap } from "../routeMapUpload";
 import { pendingDocumentWrites } from "../offlineQueue";
+import { runPostName } from "../runName";
+import type { RacePaceWork } from "../racePace";
+import { freeformPlanMetadata, type RunPlanMetadata } from "../runPlanMetadata";
 
 /* Started at 23:50 the night before last, finished after midnight. */
 const START = new Date(Date.now() - 2 * 86_400_000);
@@ -96,6 +107,36 @@ describe("runDocument", () => {
   it("dates a run with no trace by when it was saved", () => {
     const saved = runDocument(run({ points: [] }), FINISH);
     expect(saved.date).toBe(localDateString(FINISH));
+  });
+
+  it("keeps the recording day and end when review is saved later in another time zone", () => {
+    const start = Date.UTC(2026, 6, 21, 6, 50);
+    const end = start + 35 * 60_000;
+    const saved = runDocument(
+      run({
+        points: [],
+        identity: {
+          uid: "runner",
+          sessionId: "run-origin",
+          runId: "run-origin",
+          scheduledRunId: null,
+          startedAt: start,
+          startLocalDate: "2026-07-20",
+          originTimeZone: "America/Los_Angeles",
+        },
+        recordingStartedAt: start + 2 * 60_000,
+        finishedAt: end,
+      }),
+      new Date(Date.UTC(2026, 6, 23, 12))
+    );
+    expect(saved.date).toBe("2026-07-20");
+    expect(saved.startedAt.toMillis()).toBe(start);
+    expect(saved.recordingStartedAt?.toMillis()).toBe(start + 2 * 60_000);
+    expect(saved.recordingEndedAt?.toMillis()).toBe(end);
+    expect(saved.duration).toBe(1830);
+    expect(saved.completedAt.toMillis()).toBe(Date.UTC(2026, 6, 23, 12));
+    expect(saved.originTimeZone).toBe("America/Los_Angeles");
+    expect(saved.sessionId).toBe("run-origin");
   });
 
   it.each(["clipped", "fully private"])(
@@ -241,23 +282,105 @@ describe("the run's post", () => {
     expect(clipped.routePreview[0].lat).toBeGreaterThan(51.5);
   });
 
-  it("is named for the kind of run", () => {
-    expect(runPostName({ runConfig: null })).toBe("Run");
+  describe("a run's name, from what it was", () => {
+    const config = (
+      activityType: string,
+      plan: Partial<RunPlanMetadata> = {}
+    ): FinishedRun["runConfig"] =>
+      ({
+        activityType,
+        planMetadata: { ...freeformPlanMetadata("structured"), ...plan },
+      }) as FinishedRun["runConfig"];
+    const at = (hour: number, minute = 0) => {
+      const d = new Date(START);
+      d.setHours(hour, minute, 0, 0);
+      return d.getTime();
+    };
+    const name = (
+      runConfig: FinishedRun["runConfig"],
+      startedAt = at(7, 30),
+      options: Parameters<typeof runPostName>[1] = {}
+    ) => runPostName({ runConfig, startedAt, points: [] }, options);
+
+    it("takes the planned session's name", () => {
+      expect(name(config("tempo", { actualTemplateId: "tempo_20" }))).toBe(
+        "20 Min Tempo"
+      );
+      expect(
+        name(config("easy", { plannedTemplateId: "easy_30", offPlan: false }))
+      ).toBe("Easy 30");
+    });
+
+    it("names a long run in the runner's unit, and a race-pace finish", () => {
+      const long = config("long", { actualTemplateId: "long_8k" });
+      expect(name(long, at(7), { unit: "mi" })).toBe("Long 5.0 mi");
+      expect(
+        name(long, at(7), {
+          unit: "km",
+          racePace: { kind: "finish" } as RacePaceWork,
+        })
+      ).toBe("Long 8K with race pace");
+    });
+
+    it("leaves the plan's name to a run that was something else", () => {
+      // Planned a tempo, ran free: the run is named for itself.
+      expect(
+        name(
+          config("freerun", { plannedTemplateId: "tempo_20", offPlan: true }),
+          at(18)
+        )
+      ).toBe("Evening run");
+      // A session launched as one type and changed to another.
+      expect(name(config("easy", { actualTemplateId: "tempo_20" }))).toBe(
+        "Easy run"
+      );
+    });
+
+    it("else takes the run type's name", () => {
+      expect(name(config("easy"))).toBe("Easy run");
+      expect(name(config("long"))).toBe("Long run");
+      expect(name(config("intervals"))).toBe("Intervals");
+      expect(name(config("guided"))).toBe("Guided run");
+    });
+
+    it("else says when in the day it was run", () => {
+      expect(name(config("freerun"), at(6, 10))).toBe("Morning run");
+      expect(name(config("freerun"), at(11, 59))).toBe("Morning run");
+      expect(name(config("freerun"), at(12))).toBe("Afternoon run");
+      expect(name(config("freerun"), at(17))).toBe("Evening run");
+      expect(name(config("freerun"), at(21))).toBe("Night run");
+      expect(name(config("freerun"), at(3, 30))).toBe("Night run");
+      expect(name(null, at(14))).toBe("Afternoon run");
+      // A run on the treadmill with no session of its own, too.
+      expect(name(config("manual"), at(8))).toBe("Morning run");
+    });
+
+    it("names a run by when it started, not when it was saved", () => {
+      // The fixture starts at 23:50 and is saved after midnight.
+      expect(runPostName(run())).toBe("Night run");
+    });
+  });
+
+  it("saves and posts the runner's own name, else the one it was given", () => {
+    const route = { routePreview: [], mapLine: [], note: "" };
+    const named = run({ name: "  Bridges loop " });
+    expect(runDocument(named, FINISH).name).toBe("Bridges loop");
+    expect(runPostPreview(named, route, "km").title).toBe("Bridges loop");
     expect(
-      runPostName({
-        runConfig: { activityType: "intervals" } as FinishedRun["runConfig"],
-      })
-    ).toBe("Interval Run");
+      runPost({ uid: "runner" }, named, route, { visibility: "followers" })
+    ).toMatchObject({ runName: "Bridges loop", activityTitle: "Bridges loop" });
+    // Cleared, it falls back rather than posting an empty title.
+    const cleared = run({ name: "   " });
+    expect(runDocument(cleared, FINISH).name).toBe("Night run");
     expect(
-      runPostName({
-        runConfig: { activityType: "guided" } as FinishedRun["runConfig"],
-      })
-    ).toBe("Guided Run");
+      runPost({ uid: "runner" }, cleared, route, { visibility: "followers" })
+        .runName
+    ).toBe("Night run");
   });
 
   it("previews the distance in the runner's unit", () => {
     // It said kilometres to a runner who reads miles.
-    const route = { routePreview: [], note: "" };
+    const route = { routePreview: [], mapLine: [], note: "" };
     expect(runPostPreview(run(), route, "mi").meta[0]).toBe("4.10 mi");
     expect(runPostPreview(run(), route, "km").meta[0]).toBe("6.60 km");
   });
@@ -266,7 +389,7 @@ describe("the run's post", () => {
     const route = runPostRoute(trace(600), { withheld: false, showEnds: true });
     expect(runPostPreview(run(), route, "km")).toEqual({
       type: "run",
-      title: "Run",
+      title: "Night run",
       routePreview: route.routePreview,
       routePrivacyNote: route.note,
       meta: ["6.60 km", "30:30", expect.stringMatching(/^420 /)],
@@ -282,8 +405,8 @@ describe("the run's post", () => {
       type: "run",
       visibility: "followers",
       caption: "Out and back",
-      runName: "Run",
-      activityTitle: "Run",
+      runName: "Night run",
+      activityTitle: "Night run",
       distance: 6600,
       duration: 1830,
       avgPace: 277,
@@ -294,8 +417,95 @@ describe("the run's post", () => {
   });
 });
 
+describe("moments on a run's post (Soc15)", () => {
+  const route = { routePreview: [], mapLine: [], note: "" };
+  const saved = (
+    id: string,
+    distance: number,
+    extra: Partial<SavedRun> = {}
+  ): SavedRun =>
+    ({
+      id,
+      distance,
+      duration: 1800,
+      avgPace: 300,
+      isInvalid: false,
+      savedAnyway: false,
+      ...extra,
+    }) as SavedRun;
+
+  it("compares the run with the earlier runs that count, less itself", () => {
+    const history = earlierRunHistory(
+      [
+        saved("a", 6000, {
+          bestEfforts: [{ distance: 5000, time: 1400 }],
+        }),
+        saved("b", 5200),
+        saved("c", 4100),
+        // Neither a run saved despite invalid figures, nor one saved
+        // anyway, is a run to beat.
+        saved("bad", 9000, { isInvalid: true }),
+        saved("anyway", 9500, {
+          savedAnyway: true,
+          bestEfforts: [{ distance: 5000, time: 900 }],
+        }),
+        // The run itself, once saved.
+        saved("this-run", 6600),
+      ],
+      "this-run"
+    );
+    expect(history).toEqual({
+      count: 3,
+      longestMeters: 6000,
+      fastestSeconds: { 5000: 1400 },
+    });
+    const post = runPost(
+      { uid: "runner" },
+      run({
+        moments: {
+          history,
+          streak: { before: 13, after: 14 },
+          firstSession: false,
+        },
+      }),
+      route,
+      { visibility: "public" }
+    );
+    expect(post.moments).toEqual([
+      { kind: "streak", days: 14 },
+      { kind: "fastestEffort", meters: 5000, seconds: 1385 },
+      { kind: "longestRun", meters: 6600 },
+    ]);
+  });
+
+  it("writes none for a run with nothing to tell, or saved despite invalid figures", () => {
+    const quiet = runPost({ uid: "runner" }, run(), route, {
+      visibility: "public",
+    });
+    expect(quiet).not.toHaveProperty("moments");
+    const invalid = runPost(
+      { uid: "runner" },
+      run({
+        isInvalid: true,
+        moments: { history: null, firstSession: true },
+      }),
+      route,
+      { visibility: "public" }
+    );
+    expect(invalid).not.toHaveProperty("moments");
+  });
+
+  it("never saves the moments on the run itself, and dates the streak by the run's day", () => {
+    const finished = run({ moments: { firstSession: true } });
+    const doc = runDocument(finished, FINISH);
+    expect(doc).not.toHaveProperty("moments");
+    expect(runDay(finished, FINISH)).toBe(doc.date);
+    expect(runDay(finished, FINISH)).toBe(localDateString(START));
+  });
+});
+
 describe("completeRun", () => {
-  const route = { routePreview: [], note: "" };
+  const route = { routePreview: [], mapLine: [], note: "" };
 
   it("queues the run under a new id before any server write", () => {
     const done = completeRun({
@@ -313,6 +523,42 @@ describe("completeRun", () => {
     expect(queued).toHaveLength(1);
     expect(queued[0].id).toBe(done.runId);
     expect(queued[0].data).toMatchObject({ distance: 6600 });
+  });
+
+  it("uses the run document ID allocated at Start, even before the first save", () => {
+    const identity = {
+      uid: "runner",
+      sessionId: "start-id",
+      runId: "start-id",
+      scheduledRunId: null,
+      startedAt: START.getTime(),
+      startLocalDate: localDateString(START),
+      originTimeZone: "UTC",
+    };
+    const done = completeRun({
+      uid: "runner",
+      author: {},
+      runId: null,
+      alreadySaved: false,
+      run: run({ identity }),
+      route,
+      unit: "km",
+    });
+    expect(done.runId).toBe("start-id");
+    expect(pendingDocumentWrites("runner", "users/runner/runs")).toMatchObject([
+      { id: "start-id" },
+    ]);
+    expect(() =>
+      completeRun({
+        uid: "other",
+        author: {},
+        runId: null,
+        alreadySaved: false,
+        run: run({ identity }),
+        route,
+        unit: "km",
+      })
+    ).toThrow(/identity/);
   });
 
   it("writes the run once it is online", async () => {
@@ -375,7 +621,7 @@ describe("completeRun", () => {
     await done.share!.post();
     expect(h.compose).toHaveBeenCalledWith(
       "runner",
-      expect.objectContaining({ type: "run", title: "Run" })
+      expect.objectContaining({ type: "run", title: "Night run" })
     );
     expect(
       completeRun({
@@ -388,5 +634,39 @@ describe("completeRun", () => {
         unit: "km",
       }).share
     ).toBeUndefined();
+  });
+
+  it("hands the post its map once it exists online: the route it shared, under its id", async () => {
+    vi.mocked(attachRouteMap).mockClear();
+    online.mockReturnValue(true);
+    const shared = runPostRoute(trace(600), {
+      withheld: false,
+      showEnds: false,
+    });
+    const done = completeRun({
+      uid: "runner",
+      author: {},
+      runId: "run-map",
+      alreadySaved: false,
+      run: run(),
+      route: shared,
+      unit: "km",
+    });
+    // Before the post exists there is nothing to put a map on.
+    expect(attachRouteMap).not.toHaveBeenCalled();
+    const outcome = await done.share!.post({
+      visibility: "public",
+      caption: "",
+    });
+    expect(outcome.status).toBe("posted");
+    if (outcome.status !== "posted") return;
+    // Its code is loaded once the post exists, so the call lands after.
+    await vi.waitFor(() =>
+      expect(attachRouteMap).toHaveBeenCalledExactlyOnceWith({
+        uid: "runner",
+        activityId: outcome.activityId,
+        route: shared,
+      })
+    );
   });
 });

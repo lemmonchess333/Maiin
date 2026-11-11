@@ -216,7 +216,7 @@ describe("useTrialReminderInternal — a store trial", () => {
     expect(payload.scheduleAt).toEqual(REMIND);
     expect(payload.title).toBe("Your free trial ends on Sunday 6 September");
     expect(payload.body).toBe(
-      "Cancel by 09:00 on Saturday 5 September if you don't want to pay £3.99 a month. Already cancelled? There's nothing to do."
+      "Cancel by 09:00 on Saturday 5 September if you don’t want to pay £3.99 a month. Already cancelled? There’s nothing to do."
     );
   });
 

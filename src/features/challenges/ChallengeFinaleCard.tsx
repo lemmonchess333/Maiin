@@ -1,4 +1,6 @@
+import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { Trophy, X } from "lucide-react";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
@@ -12,6 +14,8 @@ import {
 import { formatChallengeValue as formatValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import MedalSheet from "./MedalSheet";
+import { medalFromChallenge } from "./medals";
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
   bronze: "Bronze",
@@ -26,7 +30,10 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
  * end, participants see their final standing: tier earned (tier-tinted),
  * final value, and rank when they made the board. Dismiss-once per
  * challenge id. Calm by design — the celebration register belongs to the
- * badge seal; this is the results sheet.
+ * badge seal and the medal reveal; this is the results sheet.
+ *
+ * A tier reached is a medal (Soc15): "See your medal" opens it, with a
+ * way to the person's trophy case, where it stays after this card goes.
  */
 export function ChallengeFinaleCard({
   challenge,
@@ -44,7 +51,9 @@ export function ChallengeFinaleCard({
   const { dismissed, dismiss } = useDismissOnce(
     `challenge-finale-${challenge.id}`
   );
+  const [medalOpen, setMedalOpen] = useState(false);
   if (dismissed) return null;
+  const medal = medalFromChallenge(challenge, myProgress);
 
   const tier = myProgress.tierAchieved;
   const accent = tier ? TIER_COLORS[tier] : THEME.brand;
@@ -124,6 +133,16 @@ export function ChallengeFinaleCard({
               </>
             )}
           </p>
+          {medal && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-3 mt-1 min-h-[44px] text-primary-strong"
+              onClick={() => setMedalOpen(true)}
+            >
+              See your medal
+            </Button>
+          )}
         </div>
         <button
           type="button"
@@ -134,6 +153,11 @@ export function ChallengeFinaleCard({
           <X className="size-4" />
         </button>
       </div>
+      <MedalSheet
+        medal={medalOpen ? medal : null}
+        onClose={() => setMedalOpen(false)}
+        trophyCaseHref={selfUid ? "/user/" + selfUid : undefined}
+      />
     </motion.div>
   );
 }

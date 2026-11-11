@@ -79,6 +79,48 @@ describe("HoldToFinishButton", () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
+  it("a hold let go early only resets: no dialog, no finish", () => {
+    const { onFinish, onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 900; // a real hold, short of the threshold
+    fireEvent.pointerUp(btn);
+    flush();
+    fireEvent.click(btn);
+    expect(onRequestConfirm).not.toHaveBeenCalled();
+    expect(onFinish).not.toHaveBeenCalled();
+    // The next tap still opens the dialog.
+    fireEvent.pointerDown(btn);
+    now = 1000;
+    fireEvent.pointerUp(btn);
+    fireEvent.click(btn);
+    expect(onRequestConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("a hold let go early on a phone (lift, then leave, then click) only resets", () => {
+    // On touch the browser fires pointerleave after pointerup; the second
+    // cancel used to clear the "let go early" mark before the click came.
+    const { onFinish, onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 900;
+    fireEvent.pointerUp(btn);
+    fireEvent.pointerLeave(btn);
+    flush();
+    fireEvent.click(btn);
+    expect(onRequestConfirm).not.toHaveBeenCalled();
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it("a hold slid off with no click does not swallow a later keyboard press", () => {
+    const { onRequestConfirm, btn } = setup();
+    fireEvent.pointerDown(btn);
+    now = 400;
+    fireEvent.pointerLeave(btn); // slid off: no click follows
+    flush();
+    now = 5000; // a while later, Enter or a VoiceOver double-tap
+    fireEvent.click(btn);
+    expect(onRequestConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it("keyboard/AT activation (click with no hold) opens the confirm dialog", () => {
     const { onFinish, onRequestConfirm, btn } = setup();
     fireEvent.click(btn);
@@ -100,7 +142,7 @@ describe("HoldToFinishButton", () => {
 
 describe("Label in Name (WCAG 2.5.3)", () => {
   /* The visible label and the accessible name have to share their words, or
-     a voice-control user reading "FINISH" off the screen says a phrase the
+     a voice-control user reading "Finish" off the screen says a phrase the
      control does not answer to. Asserted as containment rather than
      equality so the name can stay more descriptive than the label. */
   it("the accessible name contains the visible label", () => {
@@ -112,9 +154,29 @@ describe("Label in Name (WCAG 2.5.3)", () => {
       />
     );
     const btn = screen.getByRole("button");
-    const visible = "FINISH";
+    const visible = "Finish";
     const accessible = btn.getAttribute("aria-label") ?? "";
     expect(screen.getByText(visible)).toBeInTheDocument();
     expect(accessible.toLowerCase()).toContain(visible.toLowerCase());
+  });
+});
+
+describe("the paused screen's Stop, at the large size", () => {
+  it("takes its own words and draws the ring inside the larger button", () => {
+    render(
+      <HoldToFinishButton
+        onFinish={vi.fn()}
+        onRequestConfirm={vi.fn()}
+        label="Stop"
+        ariaLabel="Hold to stop run"
+        size="lg"
+      />
+    );
+    const btn = screen.getByRole("button", { name: "Hold to stop run" });
+    expect(screen.getByText("Stop")).toBeInTheDocument();
+    expect(btn.className).toContain("size-[76px]");
+    const ring = btn.querySelector("svg");
+    expect(ring?.getAttribute("width")).toBe("76");
+    expect(ring?.querySelector("circle")?.getAttribute("r")).toBe("34");
   });
 });

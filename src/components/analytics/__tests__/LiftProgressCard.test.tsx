@@ -55,9 +55,10 @@ describe("each lift's line", () => {
       row({ name: "Deadlift", exerciseId: "deadlift", direction: "down" }),
       row({ name: "Barbell Squat", exerciseId: "squat", direction: "level" }),
     ]);
+    // Each fact is held whole by non-breaking spaces; read them as spaces.
     const lines = screen
       .getAllByTestId("lift-status")
-      .map((l) => l.textContent);
+      .map((l) => l.textContent?.replace(/\u00A0/g, " "));
     expect(lines).toEqual([
       "Down from 75 kg × 6 on 28 Aug",
       "Level with 75 kg × 6 on 28 Aug",
@@ -139,5 +140,28 @@ describe("how many it lists", () => {
       </MemoryRouter>
     );
     expect(screen.getByText("Repeat a lift to see progress")).toBeVisible();
+  });
+});
+
+describe("the card's reading", () => {
+  it("counts every lift whose top set went up, the hidden ones too", () => {
+    renderCard([
+      ...Array.from({ length: 6 }, (_, i) =>
+        row({ name: `Lift ${i}`, exerciseId: `lift-${i}` })
+      ),
+      row({ name: "Row", exerciseId: "row", direction: "level" }),
+    ]);
+    expect(screen.getByTestId("chart-reading")).toHaveTextContent(
+      "Your top set went up on 6 of 7 lifts in the last 30 days."
+    );
+  });
+
+  it("is absent while no lift has a second session", () => {
+    render(
+      <MemoryRouter>
+        <LiftProgressCard rows={[]} subtitle="Last 7 days" hasSessions />
+      </MemoryRouter>
+    );
+    expect(screen.queryByTestId("chart-reading")).not.toBeInTheDocument();
   });
 });

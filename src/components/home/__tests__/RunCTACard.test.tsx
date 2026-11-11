@@ -4,9 +4,11 @@
  * the easy one for the rest.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import RunCTACard from "../RunCTACard";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { runStartTarget } from "@/lib/todaySession";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
@@ -30,12 +32,59 @@ function runner(container: HTMLElement) {
   return container.querySelector("img");
 }
 
+/** The easy stride moves (heroMotion.data.ts): the hero draws its
+ *  flipbook, a sheet of the easy runner's frames, in place of the still. */
+function flipbook(container: HTMLElement) {
+  return container.querySelector<HTMLElement>("[data-hero-motion]");
+}
+
 describe("RunCTACard — the runner", () => {
+  it("distinguishes Home Start from Resume in the activation path", () => {
+    const navigate = vi.fn();
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={navigate}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(trackHomeEvent).toHaveBeenCalledWith("home_card_tapped", {
+      card: "today_run",
+      action: "start",
+    });
+    cleanup();
+    vi.mocked(trackHomeEvent).mockClear();
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={navigate}
+        inProgress={{
+          sport: "run",
+          name: "Free run",
+          sets: null,
+          elapsedSeconds: 60,
+          resumeTarget: "/run?resume=1",
+        }}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Resume Free run" }));
+    expect(trackHomeEvent).toHaveBeenCalledWith("home_card_tapped", {
+      card: "today_run",
+      action: "resume",
+    });
+    expect(navigate).toHaveBeenLastCalledWith("/run?resume=1");
+  });
+
   it("draws the fast stride for a tempo run", () => {
     const { container } = render(
       <RunCTACard
         unit="km"
         todayRun={runDay("tempo_20", "tempo")}
+        startTarget={runStartTarget(runDay("tempo_20", "tempo"))}
         navigate={vi.fn()}
       />
     );
@@ -49,18 +98,24 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={runDay("easy_30", "easy")}
+        startTarget={runStartTarget(runDay("easy_30", "easy"))}
         navigate={vi.fn()}
       />
     );
-    expect(runner(container)?.getAttribute("src")).toMatch(
-      /\/form-art\/run-easy\.webp$/
+    expect(flipbook(container)?.style.backgroundImage).toMatch(
+      /\/form-art\/motion\/run-easy\.webp"?\)$/
     );
     cleanup();
     const free = render(
-      <RunCTACard unit="km" todayRun={null} navigate={vi.fn()} />
+      <RunCTACard
+        unit="km"
+        todayRun={null}
+        startTarget={runStartTarget(null)}
+        navigate={vi.fn()}
+      />
     );
-    expect(runner(free.container)?.getAttribute("src")).toMatch(
-      /\/form-art\/run-easy\.webp$/
+    expect(flipbook(free.container)?.style.backgroundImage).toMatch(
+      /\/form-art\/motion\/run-easy\.webp"?\)$/
     );
   });
 
@@ -69,17 +124,30 @@ describe("RunCTACard — the runner", () => {
       <RunCTACard
         unit="km"
         todayRun={runDay("easy_30", "easy")}
+        startTarget={runStartTarget(runDay("easy_30", "easy"))}
         navigate={vi.fn()}
       />
     );
-    const image = runner(container)!;
-    expect(image).toHaveAttribute("alt", "");
-    expect(image).toHaveAttribute("aria-hidden", "true");
+    expect(flipbook(container)).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("img")).toBeNull();
     // The type's glyph tile is gone: the only drawing is in Start.
     expect(container.querySelectorAll("svg")).toHaveLength(1);
     expect(
       screen.getByRole("button", { name: "Start run" }).querySelector("svg")
     ).not.toBeNull();
+    cleanup();
+    // The fast stride has no flipbook: its still is decoration too.
+    const fast = render(
+      <RunCTACard
+        unit="km"
+        todayRun={runDay("tempo_20", "tempo")}
+        startTarget={runStartTarget(runDay("tempo_20", "tempo"))}
+        navigate={vi.fn()}
+      />
+    );
+    const image = runner(fast.container)!;
+    expect(image).toHaveAttribute("alt", "");
+    expect(image).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });

@@ -17,6 +17,8 @@ const h = vi.hoisted(() => ({
   signedInBefore: false,
   signInWithGoogle: vi.fn(),
   signInWithApple: vi.fn(),
+  resetPassword: vi.fn(),
+  native: false,
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -25,15 +27,17 @@ vi.mock("@/lib/auth", () => ({
     signUp: vi.fn(),
     signInWithGoogle: h.signInWithGoogle,
     signInWithApple: h.signInWithApple,
-    resetPassword: vi.fn(),
+    resetPassword: h.resetPassword,
     fetchSignInMethods: vi.fn(),
   }),
   hasSignedInOnThisDevice: () => h.signedInBefore,
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/platform", () => ({ isNativePlatform: () => h.native }));
 
 import Login from "../Login";
 import { track } from "@/lib/lifecycleAnalytics";
+import { traceBoot } from "@/lib/bootTrace";
 
 const show = () =>
   render(
@@ -50,6 +54,7 @@ const screens = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   h.signedInBefore = false;
+  h.native = false;
   localStorage.clear();
 });
 afterEach(cleanup);
@@ -172,6 +177,38 @@ describe("Login — agreeing to the Terms", () => {
   });
 });
 
+/* A1a: Apple first, then Google, then the email form under an "or", so
+   the one-tap ways in are on screen before the keyboard comes up. */
+describe("Login — Apple and Google come before the email form (A1)", () => {
+  function expectOrder() {
+    const order = [
+      screen.getByRole("button", { name: /Continue with Apple/ }),
+      screen.getByRole("button", { name: /Continue with Google/ }),
+      screen.getByText("or"),
+      screen.getByLabelText("Email address"),
+      document.querySelector('button[type="submit"]')!,
+    ];
+    for (let i = 1; i < order.length; i++) {
+      expect(
+        order[i - 1].compareDocumentPosition(order[i]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+  }
+
+  it("on Sign up", () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    expectOrder();
+  });
+
+  it("on Sign in", () => {
+    h.signedInBefore = true;
+    show();
+    expectOrder();
+  });
+});
+
 describe("Login — closing the Google or Apple sheet", () => {
   /* Only the web popup's code was silenced, so a cancel on the phone showed
      Google's or Apple's own sentence as an error. */
@@ -221,6 +258,21 @@ describe("Login — closing the Google or Apple sheet", () => {
     );
     await tap("Continue with Google");
     expect(screen.getByRole("alert")).toHaveTextContent(/Network issue/);
+    // The step list is for the iPhone, where nothing else can be inspected.
+    expect(screen.queryByText("Details")).toBeNull();
+  });
+
+  it("on the iPhone, a failed sign-in offers what each step did", async () => {
+    h.native = true;
+    traceBoot("Firebase: failed after 30012 ms (auth/network-request-failed)");
+    h.signInWithGoogle.mockRejectedValueOnce(
+      new Error("Firebase: Error (auth/network-request-failed).")
+    );
+    await tap("Continue with Google");
+    fireEvent.click(screen.getByText("Details"));
+    expect(
+      screen.getByRole("list", { name: "What Tropos has done so far" })
+    ).toHaveTextContent("auth/network-request-failed");
   });
 });
 
@@ -318,3 +370,44 @@ function BackLink() {
     </button>
   );
 }
+
+/* The reset callable replies the same whether or not the address has an
+   account, so the screen says the same either way. What it can refuse is
+   the request itself, and its "Too many" line says when to try again. */
+describe("Login — Forgot password", () => {
+  async function askForReset() {
+    h.signedInBefore = true;
+    show();
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "alice@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Forgot password?" }));
+    });
+  }
+
+  it("says a link is on its way only if there is an account", async () => {
+    h.resetPassword.mockResolvedValue(undefined);
+    await askForReset();
+    expect(h.resetPassword).toHaveBeenCalledWith("alice@example.com");
+    expect(
+      screen.getByText(
+        "If an account exists for alice@example.com, a reset link is on its way."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("shows the server's line when the address has asked too often today", async () => {
+    h.resetPassword.mockRejectedValue(
+      new Error(
+        "Too many reset requests for this address today. Try again tomorrow."
+      )
+    );
+    await askForReset();
+    // Before: "Couldn't send the link. Try again.", which cannot work
+    // until tomorrow.
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Too many reset requests for this address today. Try again tomorrow."
+    );
+  });
+});

@@ -86,12 +86,13 @@ describe("firstWeekNudgeAction", () => {
     expect(firstWeekNudgeAction(fwBase)).toBe("schedule");
   });
 
-  it("never schedules while loading / unconsented / disabled", () => {
+  it("never schedules while loading or unconsented, and cancels when switched off", () => {
     expect(firstWeekNudgeAction({ ...fwBase, loading: true })).toBe("none");
     expect(firstWeekNudgeAction({ ...fwBase, primingShown: false })).toBe(
       "none"
     );
-    expect(firstWeekNudgeAction({ ...fwBase, enabled: false })).toBe("none");
+    // Off cancels whatever was armed, though its marker never saved.
+    expect(firstWeekNudgeAction({ ...fwBase, enabled: false })).toBe("cancel");
   });
 
   it("only fires in the streak-1 window — at ≥ 2 the daily reminder owns the surface", () => {
@@ -173,6 +174,27 @@ describe("computeTomorrowOccurrence", () => {
     expect(result!.getHours()).toBe(20);
     expect(result!.getMinutes()).toBe(0);
     expect(result!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("holds the time to 08:00–21:59, and gives a claimed date that day's time", () => {
+    const inDays = (days: number) => {
+      const day = new Date();
+      day.setDate(day.getDate() + days);
+      day.setHours(8, 0, 0, 0);
+      return day.getTime();
+    };
+    expect(computeTomorrowOccurrence("07:00")!.getTime()).toBe(inDays(1));
+    expect(computeTomorrowOccurrence("22:30")!.getTime()).toBe(inDays(2));
+    const claimed = computeTomorrowOccurrence("20:15", "2026-11-04")!;
+    expect([
+      claimed.getFullYear(),
+      claimed.getMonth(),
+      claimed.getDate(),
+    ]).toEqual([2026, 10, 4]);
+    expect([claimed.getHours(), claimed.getMinutes()]).toEqual([20, 15]);
+    expect(computeTomorrowOccurrence("23:00", "2026-11-04")!.getHours()).toBe(
+      8
+    );
   });
 
   it("null on malformed input", () => {

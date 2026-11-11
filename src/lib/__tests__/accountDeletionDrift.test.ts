@@ -16,9 +16,8 @@
  *   - Static regex extraction; not an AST walk. Handles the common
  *     write patterns observed in Phase 0; unhandled exotic patterns
  *     should use the @deletion-classified annotation.
- *   - Limited to src/**\/*.{ts,tsx} (excluding tests/) and the three
- *     active functions/ entry files (index.js, appleIAP.js,
- *     performanceEngine.js).
+ *   - Limited to src/**\/*.{ts,tsx} (excluding tests/) and the two
+ *     active functions/ entry files (index.js, performanceEngine.js).
  *   - The scanner intentionally narrows to "first-segment user-keyed"
  *     and "known cross-user collection" writes — these are the
  *     categories that drove B1. False negatives are acceptable in v1
@@ -187,7 +186,6 @@ function listSourceFiles(): string[] {
 function listFunctionsFiles(): string[] {
   return [
     resolve(repoRoot, "functions/index.js"),
-    resolve(repoRoot, "functions/appleIAP.js"),
     resolve(repoRoot, "functions/performanceEngine.js"),
   ];
 }

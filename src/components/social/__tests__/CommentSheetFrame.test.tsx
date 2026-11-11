@@ -97,7 +97,7 @@ describe("the list", () => {
   it("says a failed read failed, with Try again", () => {
     const { onRetry } = renderFrame({ status: "failed" });
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load comments"
+      "Couldn’t load comments"
     );
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);

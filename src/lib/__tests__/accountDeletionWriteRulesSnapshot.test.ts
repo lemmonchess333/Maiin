@@ -51,6 +51,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/savedRoutes/{doc}",
   "match /users/{uid}/workouts/{doc}",
   "match /users/{uid}/runs/{doc}",
+  "match /users/{uid}/healthWorkoutExports/{doc}",
   "match /users/{uid}/weights/{doc}",
   "match /users/{uid}/settings/{doc}",
   "match /users/{uid}/foodFavourites/{doc}",
@@ -155,6 +156,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // for deletion); senders + the executor sweep use the Admin SDK.
   "match /users/{uid}/devices/{tokenHash}",
   "match /fcmTokenClaims/{tokenHash}",
+  // Soc15 invite codes: fully client-locked (`allow read, write: if
+  // false`). Written only by the getInviteCode and redeemInvite callables,
+  // both actor-locked for deletion; the executor sweeps by the uid field.
+  "match /inviteCodes/{code}",
   // SOC-P2c — space-post likes. Client READ only ("did I like this");
   // ALL writes are server-only via toggleSpacePostLikeCallable, whose
   // deletion actor-lock (assertCallableActorNotDeleting) covers the
@@ -178,12 +183,44 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /databases/{database}/documents",
   "match /{document=**}",
   "match /users/{uid}/performance/{doc}",
+  // Soc15: a medal per challenge edition. Owner READ only; written by
+  // onChallengeParticipantWritten and the medal backfill, which check
+  // the deletion freeze in their transaction, and swept with the user's
+  // tree (USER_SUBCOLLECTIONS, userMedals).
+  "match /users/{uid}/medals/{challengeId}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
   // Polish2: the week on followers' boards. Read-only for clients; the
   // setBoardSharing callable (actor-locked) and the session triggers
   // (system-writer guard) write it, and the executor deletes it.
   "match /friendsBoard/{uid}",
+  // How many follow an account and how many it follows. Read-only for
+  // clients; the two follow-edge triggers write it, reading the deletion
+  // state in their transaction, and the executor deletes it.
+  "match /followCounts/{uid}",
+  // Soc15 call 3: weekly leagues, server-written throughout. Members read
+  // their membership, their group and its standings; the turn's markers
+  // are server only, and the figure names no one. setLeagueSharing is
+  // actor-locked, the turn and the session triggers read the deletion
+  // state in their transactions, and the executor removes the account's
+  // membership, standing and place (leagues.removeLeagueTraces) and its
+  // results (USER_SUBCOLLECTIONS).
+  "match /users/{uid}/leagueResults/{weekKey}",
+  "match /leagueMembers/{uid}",
+  "match /leagueGroups/{groupId}",
+  "match /standings/{memberUid}",
+  "match /leagueWeeks/{weekKey}",
+  "match /leagueStatus/{doc}",
+  // Soc15 plan groups: how many people are training for each race, a
+  // count the server recounts (lib/raceCohorts.js). Read by anyone signed
+  // in, written by no client, and it names no one.
+  "match /raceCohorts/{spaceId}",
+  // Soc15: the live pulse. A day's count names no one: any signed-in
+  // reader, no client writer. The session triggers write it and each
+  // person's credit (users/{uid}/pulseCredits, no client access at all),
+  // reading the deletion state in their transaction; the executor sweeps
+  // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
+  "match /pulse/{dateKey}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).
@@ -384,6 +421,7 @@ describe("Blocker E — path-count reconciliation", () => {
     // explicit-deny block, → 37.
     // Polish2 (2026-10-20) added /followRequests/{uid}/users/{requesterUid}
     // (create frozen via isWriteFrozen on both sides), → 38.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
+    // Connected training adds an owner-writable, deletion-frozen receipt.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
   });
 });

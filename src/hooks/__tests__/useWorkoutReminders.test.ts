@@ -38,7 +38,24 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 import { useWorkoutRemindersInternal } from "../useWorkoutReminders";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import { scheduleNotification } from "@/lib/notifications";
+import {
+  setReminderLocallyOff,
+  isReminderLocallyOff,
+} from "@/lib/localReminderChoice";
+import {
+  seedFirestore,
+  deferReads,
+  pendingReads,
+  releaseAllReads,
+  resetFirestore,
+  failNextFirestore,
+  deferWrites,
+  releaseAllWrites,
+  releaseWrite,
+  pendingWrites,
+  resumeWrites,
+} from "@/test/firestoreHarness";
 import {
   resetNotifications,
   scheduledIds,
@@ -99,6 +116,7 @@ const SCHEDULE = [
 const ON = { enabled: true, time: "07:00" };
 
 beforeEach(() => {
+  localStorage.clear();
   resetFirestore();
   resetNotifications();
   vi.clearAllMocks();
@@ -192,6 +210,49 @@ describe("which days get reminded", () => {
     const { result } = renderHook(() => useWorkoutRemindersInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
     await expectNothingScheduled();
+  });
+});
+
+describe("what each day's reminder says (Mob1 call 3)", () => {
+  it("a lift day names the programme's next workout; a run day says run", async () => {
+    seedFirestore({ [PATH]: ON });
+    const { result } = renderHook(() =>
+      useWorkoutRemindersInternal(undefined, "Upper A")
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(scheduledIds()).toHaveLength(5));
+
+    for (const lift of [ID(1), ID(3), ID(5)]) {
+      expect(scheduledAt(lift)?.title, `id ${lift}`).toBe("Upper A today");
+    }
+    for (const run of [ID(2), ID(6)]) {
+      expect(scheduledAt(run)?.title, `id ${run}`).toBe("Time to run");
+    }
+  });
+
+  it("names the new next workout once one is logged", async () => {
+    seedFirestore({ [PATH]: ON });
+    let name = "Upper A";
+    const { result, rerender } = renderHook(() =>
+      useWorkoutRemindersInternal(undefined, name)
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() =>
+      expect(scheduledAt(ID(5))?.title).toBe("Upper A today")
+    );
+    name = "Lower A";
+    rerender();
+    await waitFor(() =>
+      expect(scheduledAt(ID(5))?.title).toBe("Lower A today")
+    );
+  });
+
+  it("keeps the plain reminder while the next workout is not known", async () => {
+    seedFirestore({ [PATH]: ON });
+    const { result } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(scheduledIds()).toHaveLength(5));
+    expect(scheduledAt(ID(1))?.title).toBe("Time to train");
   });
 });
 
@@ -422,4 +483,260 @@ it("moves today's completed session reminder to next week", async () => {
     await settleNotifications();
   });
   expect(scheduledAt(2004)?.scheduleAt?.getDate()).toBe(22);
+});
+
+describe("reminder recovery", () => {
+  it("preserves an existing OS reminder on a failed read, then retries", async () => {
+    await scheduleNotification({
+      id: 2004,
+      title: "Existing reminder",
+      body: "",
+      scheduleAt: new Date(Date.now() + 60_000),
+      repeats: true,
+    });
+    seedFirestore({ [PATH]: ON });
+    failNextFirestore("getDoc", { path: PATH, code: "unavailable" });
+    const { result } = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    await act(settleNotifications);
+    expect(scheduledIds()).toEqual([2004]);
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.failed).toBe(false);
+    await act(settleNotifications);
+    expect(scheduledIds().length).toBeGreaterThan(1);
+  });
+
+  it("keeps a failed off save off after reopening, until explicitly enabled", async () => {
+    seedFirestore({ [PATH]: ON });
+    const first = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    await act(settleNotifications);
+    expect(scheduledIds().length).toBeGreaterThan(1);
+    failNextFirestore("setDoc", { path: PATH, code: "permission-denied" });
+    await act(async () => {
+      await expect(
+        first.result.current.updateReminders({ enabled: false })
+      ).rejects.toThrow("saved on this phone");
+    });
+    await act(settleNotifications);
+    expect(scheduledIds()).toEqual([]);
+    first.unmount();
+    const reopened = renderHook(() => useWorkoutRemindersInternal());
+    await waitFor(() => expect(reopened.result.current.loading).toBe(false));
+    await act(settleNotifications);
+    expect(reopened.result.current.reminders.enabled).toBe(false);
+    expect(scheduledIds()).toEqual([]);
+    await act(async () => {
+      await reopened.result.current.updateReminders({ enabled: true });
+    });
+    await act(settleNotifications);
+    expect(reopened.result.current.reminders.enabled).toBe(true);
+    expect(scheduledIds().length).toBeGreaterThan(1);
+  });
+
+  it("preserves an existing reminder while activity is unresolved", async () => {
+    await scheduleNotification({
+      id: 2004,
+      title: "Existing reminder",
+      body: "",
+      scheduleAt: new Date(Date.now() + 60_000),
+      repeats: true,
+    });
+    seedFirestore({ [PATH]: ON });
+    const { result } = renderHook(() =>
+      useWorkoutRemindersInternal({
+        ready: false,
+        dateKey: "2026-07-15",
+        meals: [],
+        workout: false,
+      })
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(settleNotifications);
+    expect(scheduledIds()).toEqual([2004]);
+  });
+});
+
+it("turns off while an older save is still pending, and keeps the newer choice", async () => {
+  seedFirestore({ [PATH]: ON });
+  const { result } = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(settleNotifications);
+  expect(scheduledIds().length).toBeGreaterThan(1);
+  deferWrites();
+  let edit!: Promise<void>;
+  act(() => {
+    edit = result.current.updateReminders({ time: "19:00" });
+  });
+  await waitFor(() => expect(result.current.saving).toBe(true));
+  let off!: Promise<void>;
+  act(() => {
+    off = result.current.updateReminders({ enabled: false });
+  });
+  await act(settleNotifications);
+  expect(result.current.reminders.enabled).toBe(false);
+  expect(scheduledIds()).toEqual([]);
+  expect(pendingWrites()).toHaveLength(2);
+  await act(async () => {
+    releaseAllWrites();
+    await Promise.all([edit, off]);
+  });
+  await act(settleNotifications);
+  expect(result.current.reminders.enabled).toBe(false);
+  expect(result.current.saving).toBe(false);
+  expect(result.current.reminders.time).toBe("19:00");
+  expect(scheduledIds()).toEqual([]);
+  resumeWrites();
+  await act(async () => {
+    await result.current.updateReminders({ enabled: true });
+  });
+  await act(settleNotifications);
+  expect(scheduledAt(2004)?.scheduleAt?.getHours()).toBe(19);
+});
+
+it("cancels from the saved local off choice even when the settings read fails", async () => {
+  expect(setReminderLocallyOff("u1", "workout", true)).toBe(true);
+  expect(isReminderLocallyOff("another-user", "workout")).toBe(false);
+  await scheduleNotification({
+    id: 2004,
+    title: "Existing reminder",
+    body: "",
+    scheduleAt: new Date(Date.now() + 60_000),
+    repeats: true,
+  });
+  failNextFirestore("getDoc", { path: PATH, code: "unavailable" });
+  const { result } = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(result.current.failed).toBe(true));
+  await act(settleNotifications);
+  expect(scheduledIds()).toEqual([]);
+});
+
+it("does not let a late enable from a departed session clear a newer off choice", async () => {
+  seedFirestore({ [PATH]: { ...ON, enabled: false } });
+  const first = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(first.result.current.loading).toBe(false));
+  deferWrites();
+  let pending!: Promise<void>;
+  act(() => {
+    pending = first.result.current.updateReminders({ enabled: true });
+  });
+  await waitFor(() => expect(first.result.current.saving).toBe(true));
+  first.unmount();
+  expect(setReminderLocallyOff("u1", "workout", true)).toBe(true);
+  await act(async () => {
+    releaseAllWrites();
+    await pending;
+  });
+  expect(isReminderLocallyOff("u1", "workout")).toBe(true);
+  const next = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(next.result.current.loading).toBe(false));
+  await act(settleNotifications);
+  expect(next.result.current.reminders.enabled).toBe(false);
+  expect(scheduledIds()).toEqual([]);
+});
+
+it("ignores an old account's enable acknowledgement after a direct UID change", async () => {
+  seedFirestore({
+    [PATH]: { time: "07:00", enabled: false },
+    "users/u2/settings/workoutReminders": { time: "07:00", enabled: false },
+  });
+  const { result, rerender } = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  deferWrites();
+  let pending!: Promise<void>;
+  act(() => {
+    pending = result.current.updateReminders({ enabled: true });
+  });
+  await waitFor(() => expect(result.current.saving).toBe(true));
+  mockUser = { uid: "u2" };
+  rerender();
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(setReminderLocallyOff("u1", "workout", true)).toBe(true);
+  await act(async () => {
+    releaseAllWrites();
+    await pending;
+    await settleNotifications();
+  });
+  expect(result.current.reminders.enabled).toBe(false);
+  expect(result.current.saving).toBe(false);
+  expect(isReminderLocallyOff("u1", "workout")).toBe(true);
+  expect(scheduledIds()).toEqual([]);
+});
+
+it("keeps the new account's pending save separate from the old account", async () => {
+  seedFirestore({
+    [PATH]: { time: "07:00", enabled: false },
+    "users/u2/settings/workoutReminders": { time: "07:00", enabled: false },
+  });
+  const { result, rerender } = renderHook(() => useWorkoutRemindersInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  deferWrites();
+  let oldSave!: Promise<void>;
+  act(() => {
+    oldSave = result.current.updateReminders({ enabled: true });
+  });
+  await waitFor(() => expect(pendingWrites()).toHaveLength(1));
+  mockUser = { uid: "u2" };
+  rerender();
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.saving).toBe(false);
+  let newSave!: Promise<void>;
+  act(() => {
+    newSave = result.current.updateReminders({ time: "10:00" });
+  });
+  await waitFor(() => expect(pendingWrites()).toHaveLength(2));
+  await act(async () => {
+    expect(releaseWrite(0)).toBe(true);
+    await oldSave;
+  });
+  expect(result.current.saving).toBe(true);
+  expect(result.current.reminders.enabled).toBe(false);
+  await act(async () => {
+    releaseAllWrites();
+    await newSave;
+  });
+  expect(result.current.saving).toBe(false);
+  expect(result.current.reminders.time).toBe("10:00");
+});
+
+it("preserves native reminders while a switched account's settings are unknown", async () => {
+  seedFirestore({
+    [PATH]: { time: "07:00", enabled: true },
+    "users/u2/settings/workoutReminders": { time: "07:00", enabled: false },
+  });
+  const loadingRenders: Array<{ uid: string | undefined; loading: boolean }> =
+    [];
+  const { result, rerender } = renderHook(() => {
+    const value = useWorkoutRemindersInternal();
+    loadingRenders.push({ uid: mockUser?.uid, loading: value.loading });
+    return value;
+  });
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(settleNotifications);
+  await scheduleNotification({
+    id: 2001,
+    title: "Existing account B reminder",
+    body: "",
+    scheduleAt: new Date(Date.now() + 60_000),
+    repeats: true,
+  });
+  const before = scheduledAt(2001);
+  deferReads();
+  mockUser = { uid: "u2" };
+  rerender();
+  await waitFor(() =>
+    expect(pendingReads()).toEqual(["users/u2/settings/workoutReminders"])
+  );
+  expect
+    .soft(loadingRenders.find((render) => render.uid === "u2")?.loading)
+    .toBe(true);
+  expect(result.current.loading).toBe(true);
+  await act(settleNotifications);
+  expect(scheduledAt(2001)).toEqual(before);
+  await act(async () => {
+    releaseAllReads();
+  });
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await expectNothingScheduled();
 });

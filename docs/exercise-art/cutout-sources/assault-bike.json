@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "assault-bike.png",
+  "imageSha256": "218d682d7e3207630f907a8e6bb8ba62709c27e0afc7a4b48977ae1fe746031b",
+  "reference": "form-frames/assault-bike/2026-10-28/1.webp",
+  "referenceSha256": "c5bec20b1ade77eadb5b08620edc524d82f2d0eba00f08ab31d8b84a194d9ce0",
+  "method": "Native transparent Blender render from reviewed assault-bike frame 1; the six full-stage frames and fixed camera remain unchanged. Alpha preserves the athlete, apparatus and fine edges without dark-background keying.",
+  "reviewEvidence": "docs/exercise-art/pilots/redraw-20261028/assault-bike/1.png"
+}

@@ -300,10 +300,16 @@ export interface SetupAnswers {
     date: string;
     runsPerWeek: number;
     legTrim?: boolean;
+    /** The running the plan starts from (R5), which setup asks of someone
+     *  who runs already: minutes in a usual week, and the longest run. */
+    running?: { weekMinutes: number; longestRun: number };
   };
   equipment?: SetupOption<"equipment">;
   experience?: SetupOption<"experience">;
   weightKg: number;
+  /** Required by Lose fat, more than 1 kg under `weightKg` (A5 STATUS
+   *  2026-11-01); optional for every other aim. */
+  goalWeightKg?: number;
   heightCm: number;
   sex: SetupOption<"sexes">;
   age: SetupOption<"ages">;
@@ -322,12 +328,13 @@ async function next(page: Page) {
 
 /**
  * Setup's screens, as a person answers them, then Start my plan (answered by
- * the real `completeOnboarding`) and the offer's Continue with Free. Leaves
- * the page on Home.
+ * the real `completeOnboarding`). Leaves the page on Home. A legacy-client
+ * test can expect the existing offer before Home instead.
  */
 export async function setUpPlan(
   page: Page,
-  answers: SetupAnswers
+  answers: SetupAnswers,
+  { legacyClient = false }: { legacyClient?: boolean } = {}
 ): Promise<void> {
   await button(page, new RegExp(`^${answers.aim}`)).click();
   await next(page);
@@ -374,6 +381,24 @@ export async function setUpPlan(
       await page
         .getByRole("textbox", { name: SETUP.raceDate })
         .fill(answers.race.date);
+      // Run9 STATUS 2026-11-01: a race entered, or on your own; the
+      // journeys' races are entered ones.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
+      if ((answers.runner ?? "Regular runner") !== "New to running") {
+        const running = answers.race.running ?? {
+          weekMinutes: 180,
+          longestRun: 70,
+        };
+        await page
+          .getByRole("textbox", { name: SETUP.weekMinutes })
+          .fill(String(running.weekMinutes));
+        await page
+          .getByRole("textbox", { name: SETUP.longestRun })
+          .fill(String(running.longestRun));
+      }
       if (answers.activity === "Both") {
         const trim = page.getByRole("switch", {
           name: SETUP.legTrim,
@@ -416,18 +441,35 @@ export async function setUpPlan(
     .getByRole("radiogroup", { name: SETUP.age })
     .getByRole("radio", { name: answers.age, exact: true })
     .click();
+  if (answers.goalWeightKg !== undefined)
+    await page
+      .locator("#onboarding-goal-weight")
+      .fill(String(answers.goalWeightKg));
   await next(page);
 
+  // The public name starts empty for an email account (never the address).
+  await page
+    .getByRole("textbox", { name: SETUP.name, exact: true })
+    .fill("Journey tester");
   await button(page, SETUP.start).click();
-  await expect(page.getByRole("heading", { name: OFFER.ready })).toBeVisible({
-    timeout: 30_000,
-  });
-  await button(page, OFFER.free).click();
+  if (legacyClient) {
+    await expect(
+      page.getByRole("heading", { name: OFFER.ready }),
+      "a client without the version 2 marker keeps the existing offer"
+    ).toBeVisible({ timeout: 30_000 });
+    await button(page, OFFER.free).click();
+  }
   await expect(
     page.getByRole("heading", { name: HOME.heading, level: 1 })
   ).toBeVisible({
-    timeout: 20_000,
+    timeout: 30_000,
   });
+  await expect(page).toHaveURL(/\/Maiin\/$/);
+  if (!legacyClient)
+    await expect(
+      page.getByRole("dialog"),
+      "version 2 setup does not open an automatic Home tour"
+    ).toHaveCount(0);
 }
 
 /** The programme as stored. */

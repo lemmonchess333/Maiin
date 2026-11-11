@@ -10,9 +10,10 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * NOT the Start button — the primary action is its own control so the
  * overflow can live beside it without a nested-button violation.
  *
- * Sport-coded: running uses coral (`sport` Button variant), lifting uses
- * brand purple (`primary`). Tinted surface only — no gradients, no new
- * colours. 44px+ touch targets via the Button/IconButton primitives.
+ * Sport-coded on its wash, eyebrow and picture: coral for running, purple
+ * for lifting. Start is the `neutral` button, Home's (DS4). Tinted surface
+ * only — no gradients, no new colours. 44px+ touch targets via the
+ * Button/IconButton primitives.
  *
  * DS3: the sport wash is 12%, the Home Today card's, and the halo that sat
  * behind the icon corner is gone with the app's other glows. The title is
@@ -28,6 +29,8 @@ import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonVariant } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { HeroLineRow } from "@/components/home/SessionHero";
+import type { HeroLine } from "@/lib/homeHero";
 
 interface SessionCommandCardProps {
   /** Temporal status label — "Up next", "Due today", "Tomorrow", "Pending". */
@@ -70,6 +73,13 @@ interface SessionCommandCardProps {
   /** Drawn in the primary action's place: the day card carries the In
    *  progress strip there while its workout is under way. */
   action?: ReactNode;
+  /** Keep the command prominent while leaving more room for a surrounding agenda. */
+  compact?: boolean;
+  /** Home's numbers line for the same session (`liftHeroLine`,
+   *  `runHeroLine`): the lead lift's weight and reps against last time,
+   *  or a first session's step. Drawn as Home's hero draws it, under the
+   *  title and picture. */
+  line?: HeroLine | null;
 }
 
 export default function SessionCommandCard({
@@ -87,6 +97,8 @@ export default function SessionCommandCard({
   onFigurePress,
   figureLabel,
   action,
+  compact = false,
+  line,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -99,11 +111,16 @@ export default function SessionCommandCard({
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "relative overflow-hidden rounded-2xl card-shadow",
+        "relative overflow-hidden rounded-xl card-shadow",
         surfaceClass
       )}
     >
-      <div className="@container relative space-y-4 p-4">
+      <div
+        className={cn(
+          "@container relative",
+          compact ? "space-y-3 p-3" : "space-y-3 p-4"
+        )}
+      >
         {/* The picture gives its room to the title under 14em of card
             (larger text on the phone), where beside it "Lat focus" ran
             past the card. */}
@@ -114,19 +131,31 @@ export default function SessionCommandCard({
               "~57 min". */}
           <div className="flex-1 min-w-0">
             <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
-            <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
+            {/* The name at Home's hero size, 36px (DS4 §14m rule 2: the
+                hero holds the screen's largest text), so one session has
+                one size on Home and on Train. The plan page's compact
+                card keeps the H2 step. */}
+            <h3
+              className={cn(
+                "mt-1 font-extrabold tracking-tight text-foreground text-balance",
+                compact ? "text-h2 leading-tight" : "text-hero leading-[1.05]"
+              )}
+            >
               {title}
             </h3>
             {/* The description and the dose take the foreground: on the
                 sport wash the grey misses AA. */}
             {description && (
-              <p className="mt-2 text-sm text-foreground">
+              <p className="mt-2 text-sm font-medium text-foreground">
                 <InlineNumerals>{description}</InlineNumerals>
               </p>
             )}
             {meta.length > 0 && (
               <div className="mt-2">
-                <MetaLine items={meta} className="text-foreground" />
+                <MetaLine
+                  items={meta}
+                  className="font-medium text-foreground"
+                />
               </div>
             )}
             {figure && onFigurePress && figureLabel && (
@@ -161,7 +190,9 @@ export default function SessionCommandCard({
           ) : (
             <div
               className={cn(
-                "size-12 rounded-2xl flex @max-[14em]:hidden items-center justify-center shrink-0",
+                compact
+                  ? "size-10 rounded-xl flex @max-[14em]:hidden items-center justify-center shrink-0"
+                  : "size-12 rounded-lg flex @max-[14em]:hidden items-center justify-center shrink-0",
                 tileClass
               )}
             >
@@ -180,13 +211,20 @@ export default function SessionCommandCard({
           )}
         </div>
 
+        {line && <HeroLineRow line={line} sport={sport} onWash />}
+
         {action ??
           (primaryActionLabel && onPrimaryAction && (
             <Button
-              variant={
-                primaryActionVariant ?? (sport === "run" ? "sport" : "primary")
-              }
-              size="lg"
+              /* The screen's one full-width filled button is neutral, as
+                 Home's Start is (DS4, DESIGN_GUIDE §14i, §14m rule 12):
+                 the sport keeps its colour on the card's wash, its eyebrow
+                 and its picture, not on the button. */
+              variant={primaryActionVariant ?? "neutral"}
+              /* Home's height, 44: about 45 pt is the reference (§14m
+                 rule 21), and Train's 52 was the one Start that differed. */
+              size="md"
+              className="text-base"
               fullWidth
               leftIcon={
                 primaryActionIcon ?? (

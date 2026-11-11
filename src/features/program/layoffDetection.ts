@@ -43,7 +43,11 @@
  * generator, which is the only place that knows what a week should contain.
  */
 import { isVolumeEligible, type RunRecord } from "@/lib/runStatsEligibility";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 /**
  * Days away past which the plan's assumption about the runner's fitness is no
@@ -209,4 +213,116 @@ export function layoffFromRuns(
   const byRecency = classifyLayoff(daysSinceLastRun(runs, todayKey));
   if (byRecency === "detrained") return byRecency;
   return isInReentryWindow(runs, todayKey) ? "detrained" : byRecency;
+}
+
+/*
+ * What the recent runs say was done, for a running starting point that
+ * climbs from what was done rather than from the calendar
+ * (`runningClimb`). The runs are the ones the layoff is read from
+ * (`fetchRecentRunning`, the latest `RECENT_RUN_SCAN_LIMIT`); someone
+ * running every day for four weeks has more than that read holds, and the
+ * oldest then go unseen, which can only make the longest run read shorter.
+ */
+
+const shiftDays = (key: string, days: number) =>
+  localDateString(addLocalDays(parseLocalDate(key), days));
+
+const eligibleRuns = (runs: readonly DatedRun[]) =>
+  runs.filter((run) => !!run?.date && isVolumeEligible(run));
+
+/**
+ * A week is done with two or more saved runs dated in it, as Run9a's
+ * starter counts a week ("with two a week, both"). One definition, read by
+ * the running starting point's climb and there for the starter's stages.
+ */
+export const DONE_WEEK_RUNS = 2;
+
+/** How far back a run counts as recent: four weeks, the window the running
+ *  starting point is filled from (`recentRunningContext`). */
+export const RECENT_RUN_DAYS = 28;
+
+/** Whether the week starting `weekKey` was done: `DONE_WEEK_RUNS` or more
+ *  saved runs dated in it, or every run of a plan with fewer run days
+ *  (`runDays`): a plan on one run day a week is done with its one run, or
+ *  its running could never climb. */
+export function isWeekDone(
+  runs: readonly DatedRun[],
+  weekKey: string,
+  runDays: number = DONE_WEEK_RUNS
+): boolean {
+  const last = shiftDays(weekKey, 6);
+  return (
+    eligibleRuns(runs).filter(
+      (run) => run.date! >= weekKey && run.date! <= last
+    ).length >= Math.max(1, Math.min(DONE_WEEK_RUNS, runDays))
+  );
+}
+
+/**
+ * The runs of the `RECENT_RUN_DAYS` before `beforeKey`: the longest one's
+ * minutes, the farthest one's km, the most minutes one of its four weeks
+ * ran besides that week's longest run, and the pace of them all together
+ * (seconds a km), each null with none; and whether the last of those weeks
+ * was done (`isWeekDone`, for a plan of `runDays` run days a week). The
+ * weeks are the seven days ending at `beforeKey`, the seven before them,
+ * and so on. A pace outside 2:30 to 20:00 a km is a recording, not a run,
+ * and is left out.
+ */
+export function recentRunning(
+  runs: readonly DatedRun[],
+  beforeKey: string,
+  runDays: number = DONE_WEEK_RUNS
+): {
+  longestMinutes: number | null;
+  longestKm: number | null;
+  otherMinutes: number | null;
+  paceSPerKm: number | null;
+  lastWeekDone: boolean;
+} {
+  const from = shiftDays(beforeKey, -RECENT_RUN_DAYS);
+  const lastWeekDone = isWeekDone(runs, shiftDays(beforeKey, -7), runDays);
+  const recent = eligibleRuns(runs).filter(
+    (run) => run.date! >= from && run.date! < beforeKey
+  );
+  if (recent.length === 0)
+    return {
+      longestMinutes: null,
+      longestKm: null,
+      otherMinutes: null,
+      paceSPerKm: null,
+      lastWeekDone,
+    };
+  const minutes = (run: DatedRun) => (run.duration ?? 0) / 60;
+  const seconds = recent.reduce((sum, run) => sum + (run.duration ?? 0), 0);
+  const km = recent.reduce((sum, run) => sum + (run.distance ?? 0), 0) / 1000;
+  const pace = km > 0 ? seconds / km : NaN;
+  const weeks = Array.from({ length: RECENT_RUN_DAYS / 7 }, (_, i) => {
+    const start = shiftDays(beforeKey, -7 * (i + 1));
+    const end = shiftDays(beforeKey, -7 * i);
+    return recent
+      .filter((run) => run.date! >= start && run.date! < end)
+      .map(minutes);
+  });
+  return {
+    longestMinutes: Math.max(...recent.map(minutes)),
+    longestKm: Math.max(...recent.map((run) => (run.distance ?? 0) / 1000)),
+    otherMinutes: Math.max(
+      ...weeks.map((week) =>
+        week.length === 0
+          ? 0
+          : week.reduce((sum, m) => sum + m, 0) - Math.max(...week)
+      )
+    ),
+    paceSPerKm: pace >= 150 && pace <= 1200 ? pace : null,
+    lastWeekDone,
+  };
+}
+
+/** The pace of the runs of the `RECENT_RUN_DAYS` to `todayKey`, today's
+ *  included (`recentRunning`). */
+export function recentPace(
+  runs: readonly DatedRun[],
+  todayKey: string
+): number | null {
+  return recentRunning(runs, shiftDays(todayKey, 1)).paceSPerKm;
 }

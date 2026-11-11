@@ -16,6 +16,7 @@ import { Bell } from "lucide-react";
 import type { SubscriptionTrial } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import {
+  cancelByPassed,
   cancelByText,
   trialEndDayText,
   trialPhoneReminder,
@@ -37,19 +38,24 @@ export default function TrialDetails({ trial }: { trial: SubscriptionTrial }) {
   if (!trial.willRenew) {
     return (
       <p className="text-sm text-muted-foreground">
-        You&apos;ve turned off renewal, so nothing will be charged. Pro stays on
+        You’ve turned off renewal, so nothing will be charged. Pro stays on
         until {endDay}.
       </p>
     );
   }
   const price = trialPriceText(trial);
+  /* On the trial's last day the deadline has gone: naming it as if it
+     were ahead reads as a mistake, and a cancellation now still stops
+     the renewals after the first charge. */
+  const passed = cancelByPassed(trial, new Date());
+  const then = price ? `Then ${price}` : "Then your subscription starts";
   return (
     <div className="space-y-2">
       <p className="text-sm text-foreground">Free trial until {endDay}.</p>
       <p className="text-sm text-muted-foreground">
-        {price
-          ? `Then ${price}, unless you cancel by ${deadline}.`
-          : `Then your subscription starts, unless you cancel by ${deadline}.`}
+        {passed
+          ? `${then}. The time to cancel before that has passed; cancelling now stops the renewals after it.`
+          : `${then}, unless you cancel by ${deadline}.`}
       </p>
       <PhoneReminderOffer trial={trial} />
     </div>
@@ -77,7 +83,7 @@ function PhoneReminderOffer({ trial }: { trial: SubscriptionTrial }) {
   if (permission === "granted") {
     return (
       <p className="text-xs text-muted-foreground">
-        You&apos;ll get a reminder on this phone at{" "}
+        You’ll get a reminder on this phone at{" "}
         {formatTimeOfDay(reminder.fireAt)} on{" "}
         {formatWeekdayDayMonth(reminder.fireAt)}.
       </p>

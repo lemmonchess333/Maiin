@@ -20,9 +20,11 @@ import {
   rcGetLocalizedPrices,
   rcPurchase,
   rcRestore,
+  type PurchasePending,
 } from "@/lib/revenuecat";
+import { traceBoot } from "@/lib/bootTrace";
 
-export type { PlanId };
+export type { PlanId, PurchasePending };
 
 export interface PurchaseResult {
   success: boolean;
@@ -34,6 +36,9 @@ export interface PurchaseResult {
   /** The person closed the purchase sheet. Not a failure: callers say
    *  nothing, and `error` is unset. */
   cancelled?: boolean;
+  /** The store has the purchase and Pro is not active yet. Not a failure:
+   *  `error` is unset, and callers say what the person is waiting for. */
+  pending?: PurchasePending;
   /** Optional URL the caller can redirect to (Stripe portal, App
    *  Store manage-subscriptions page). When set, the caller is
    *  responsible for navigation — purchase() and manageSubscription()
@@ -96,8 +101,9 @@ export function isNativeIOS(): boolean {
 
 /**
  * Whether this build can take a purchase. On the iPhone that needs
- * RevenueCat, whose key `deploy-ios.yml` leaves out until its activation
- * order is done; without it `purchase()` can only refuse. A paywall that
+ * RevenueCat, whose key `deploy-ios.yml` passes from the
+ * `VITE_REVENUECAT_IOS_KEY` secret; a build made without it can only
+ * refuse in `purchase()`. A paywall that
  * shows prices and a button which cannot work is what App Review rejects
  * (Guideline 2.1), so the paywalls show neither in that build.
  */
@@ -175,7 +181,7 @@ async function purchaseWithStripe(
     logger.error("[purchase] Stripe checkout failed", err);
     return {
       success: false,
-      error: "Couldn't start checkout. Try again.",
+      error: "Couldn’t start checkout. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -196,10 +202,21 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   if (outcome.userCancelled) {
     return { success: false, cancelled: true };
   }
+  if (outcome.pending) {
+    // A purchase the store took is what the sync is for: it asks
+    // RevenueCat again from the server. An approval has nothing to sync
+    // until it is given, and the webhook brings that.
+    if (outcome.pending === "entitlement") {
+      await syncEntitlementBestEffort(
+        outcome.price ? reportedPrice(productId, outcome.price) : undefined
+      );
+    }
+    return { success: false, pending: outcome.pending };
+  }
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Purchase failed. Try again.",
+      error: outcome.error ?? "Couldn’t complete the purchase. Try again.",
       detail: outcome.detail,
     };
   }
@@ -232,11 +249,17 @@ function reportedPrice(productId: string, price: StorePrice): ReportedPrice {
  *  webhook lands the same write within seconds regardless. `price` is what
  *  Apple's sheet showed, for a trial's reminder email. */
 async function syncEntitlementBestEffort(price?: ReportedPrice): Promise<void> {
+  const started = Date.now();
+  traceBoot("Server: syncing Pro");
   try {
     const sync = httpsCallable(functions, "syncRevenueCatEntitlement");
     await sync(price ? { price } : {});
-  } catch {
+    traceBoot(`Server: Pro synced in ${Date.now() - started} ms`);
+  } catch (error) {
     /* tolerated: webhook is the source of truth */
+    traceBoot(
+      `Server: sync failed after ${Date.now() - started} ms (${error instanceof Error ? error.message : String(error)})`
+    );
   }
 }
 
@@ -285,7 +308,7 @@ export async function purchase(
     // failing somewhere further in.
     return {
       success: false,
-      error: "Purchases aren't available in this build.",
+      error: "Purchases aren’t available in this build.",
     };
   }
   return purchaseWithStripe(plan, uid, email, options);
@@ -325,7 +348,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
     if (!url) {
       return {
         success: false,
-        error: "Couldn't open billing portal. Try again.",
+        error: "Couldn’t open billing portal. Try again.",
       };
     }
     window.location.href = url;
@@ -337,7 +360,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
       // A failed-precondition carries a sentence the server wrote for the
       // person; any other code's message is the server's own.
       error:
-        describeRejection(err) ?? "Couldn't open billing portal. Try again.",
+        describeRejection(err) ?? "Couldn’t open billing portal. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -352,14 +375,14 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   }
 
   if (!isRevenueCatEnabled()) {
-    return { success: false, error: "Restore isn't available in this build." };
+    return { success: false, error: "Restore isn’t available in this build." };
   }
 
   const outcome = await rcRestore();
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Failed to restore purchases.",
+      error: outcome.error ?? "Couldn’t restore your purchases.",
       detail: outcome.detail,
     };
   }

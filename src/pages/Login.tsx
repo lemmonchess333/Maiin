@@ -17,8 +17,11 @@ import {
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
+import BootSteps from "@/components/BootSteps";
+import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import InviteNote from "@/components/onboarding/InviteNote";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
@@ -163,14 +166,18 @@ export default function Login() {
     } catch (err: unknown) {
       // Swallow user-not-found so the flow can't enumerate registered
       // emails; any OTHER failure (network, bad email format) is worth
-      // surfacing.
+      // surfacing. The server's own "Too many" line is shown as written:
+      // it says whether to wait minutes or until tomorrow, and a generic
+      // "Try again" would send someone at the day's limit round in circles.
       const message = err instanceof Error ? err.message : "";
       if (
         !message.includes("user-not-found") &&
         !message.includes("invalid-credential")
       ) {
         setError(
-          friendlyAuthError(message, "Couldn't send the link. Try again.")
+          message.startsWith("Too many")
+            ? message
+            : friendlyAuthError(message, "Couldn’t send the link. Try again.")
         );
         setLoadingAction(null);
         return;
@@ -198,7 +205,7 @@ export default function Login() {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
       // On a failed password sign-in, a Google/Apple-only account is the most
-      // confusing case: "Invalid email or password" implies a wrong password
+      // confusing case: "Wrong email or password" implies a wrong password
       // when really there's NO password. If the email is OAuth-only, point to
       // the right button instead. (Skipped on sign-up — nothing to look up.)
       if (!isSignUp && /invalid-credential|wrong-password/.test(message)) {
@@ -212,8 +219,8 @@ export default function Login() {
         friendlyAuthError(
           message,
           isSignUp
-            ? "Couldn't create your account. Try again."
-            : "Couldn't sign in. Try again."
+            ? "Couldn’t create your account. Try again."
+            : "Couldn’t sign in. Try again."
         )
       );
     } finally {
@@ -243,7 +250,7 @@ export default function Login() {
         }
       }
     }
-    setError(friendlyAuthError(message, "Couldn't sign in. Try again."));
+    setError(friendlyAuthError(message, "Couldn’t sign in. Try again."));
   };
 
   const handleGoogle = async () => {
@@ -283,6 +290,8 @@ export default function Login() {
               className="ds-auth-logo mx-auto overflow-hidden"
             />
             <div>
+              {/* The name as a wordmark beside the mark, one of the two
+                  places DESIGN_GUIDE §4 sets text in capitals. */}
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
                 Tropos
               </p>
@@ -295,6 +304,8 @@ export default function Login() {
               </p>
             </div>
           </div>
+          {/* Soc15: arrived from a friend's invite link. */}
+          <InviteNote />
           {/* Each row's picture gives way under 9em (double text on a
               narrow phone), leaving the words the row. Wide-first. */}
           <ul className="@container space-y-2" aria-label="What Tropos plans">
@@ -393,6 +404,100 @@ export default function Login() {
           </div>
         </div>
 
+        {/* Soc15: arrived from a friend's invite link; signing up keeps
+            the code for setup. Sign-in has nothing to say about it. */}
+        {isSignUp && <InviteNote />}
+
+        {/* Notices and errors sit above every way in, so one from the
+            Apple or Google sheet is read where the eye already is. */}
+        {accountDeleted && (
+          <div
+            role="status"
+            className="p-3 rounded-xl bg-success/10 border border-success/20 text-success-strong text-sm font-medium"
+          >
+            Your account and all data have been deleted.
+          </div>
+        )}
+        {error && (
+          <div
+            id="login-error"
+            role="alert"
+            className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive-strong text-sm font-medium"
+          >
+            <AlertCircle
+              className="size-4 shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <span>{error}</span>
+          </div>
+        )}
+        {/* On the iPhone, what each sign-in step did and how long it took,
+            for a failure nobody can inspect there (bootTrace.ts). */}
+        {error && isNativePlatform() && (
+          <details className="text-left">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Details
+            </summary>
+            <div className="mt-2">
+              <BootSteps />
+            </div>
+          </details>
+        )}
+
+        {shownNotice && (
+          <div
+            role="status"
+            className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
+          >
+            <Mail
+              className="size-4 shrink-0 mt-0.5 text-primary"
+              aria-hidden="true"
+            />
+            <span>{shownNotice}</span>
+          </div>
+        )}
+
+        {/* Apple, then Google, then the email form (A1a): the one-tap
+            ways in are on screen before the keyboard can cover them. */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleApple}
+            loading={loadingAction === "apple"}
+            disabled={isLoading && loadingAction !== "apple"}
+            fullWidth
+            // Apple brand styling: black-on-white in light mode,
+            // white-on-black in dark mode. The foreground/background
+            // token swap encodes that without a media query.
+            className="bg-foreground text-background hover:bg-foreground/90"
+            leftIcon={
+              <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
+              </svg>
+            }
+          >
+            Continue with Apple
+            {lastMethod === "apple" && <LastUsed />}
+          </Button>
+
+          <Button
+            onClick={handleGoogle}
+            loading={loadingAction === "google"}
+            disabled={isLoading && loadingAction !== "google"}
+            fullWidth
+            variant="outline"
+          >
+            Continue with Google
+            {lastMethod === "google" && <LastUsed />}
+          </Button>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
         {/* Form. When there's an error, the form is aria-describedby
             the error banner so screen-reader users hear the error
             associated with the form rather than as a free-floating
@@ -402,41 +507,6 @@ export default function Login() {
           className="space-y-4"
           aria-describedby={error ? "login-error" : undefined}
         >
-          {accountDeleted && (
-            <div
-              role="status"
-              className="p-3 rounded-xl bg-success/10 border border-success/20 text-success-strong text-sm font-medium"
-            >
-              Your account and all data have been deleted.
-            </div>
-          )}
-          {error && (
-            <div
-              id="login-error"
-              role="alert"
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive-strong text-sm font-medium"
-            >
-              <AlertCircle
-                className="size-4 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {shownNotice && (
-            <div
-              role="status"
-              className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
-            >
-              <Mail
-                className="size-4 shrink-0 mt-0.5 text-primary"
-                aria-hidden="true"
-              />
-              <span>{shownNotice}</span>
-            </div>
-          )}
-
           <div className="space-y-3">
             <div className="relative">
               <label htmlFor="login-email" className="sr-only">
@@ -524,46 +594,6 @@ export default function Login() {
           </Button>
         </form>
 
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        {/* Social Sign In */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleApple}
-            loading={loadingAction === "apple"}
-            disabled={isLoading && loadingAction !== "apple"}
-            fullWidth
-            // Apple brand styling: black-on-white in light mode,
-            // white-on-black in dark mode. The foreground/background
-            // token swap encodes that without a media query.
-            className="bg-foreground text-background hover:bg-foreground/90"
-            leftIcon={
-              <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
-              </svg>
-            }
-          >
-            Continue with Apple
-            {lastMethod === "apple" && <LastUsed />}
-          </Button>
-
-          <Button
-            onClick={handleGoogle}
-            loading={loadingAction === "google"}
-            disabled={isLoading && loadingAction !== "google"}
-            fullWidth
-            variant="outline"
-          >
-            Continue with Google
-            {lastMethod === "google" && <LastUsed />}
-          </Button>
-        </div>
-
         {/* Agreeing to the Terms. App Review 1.2 wants the people who
             post in an app to have agreed to terms that rule out
             objectionable content and abusive users. Every button on this
@@ -585,7 +615,7 @@ export default function Login() {
 
         {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button
             type="button"
             onClick={() => {
@@ -595,7 +625,7 @@ export default function Login() {
             aria-pressed={isSignUp}
             className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
-            {isSignUp ? "Sign In" : "Sign Up"}
+            {isSignUp ? "Sign In" : "Sign up"}
           </button>
         </p>
       </div>

@@ -1,13 +1,14 @@
 import { liftDayNameIn } from "@/lib/liftDayLabel";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
-import { formatShortWeekdayDayMonth } from "@/utils/formatters";
+import { formatDuration, formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -379,6 +380,10 @@ export default function DayPeekCard({
             resolved.run.runDay?.weekKey
           ),
           racePace: runRacePace?.kind,
+          inRecovery: isRecoveryRunDay(
+            programState?.runPlan,
+            resolved.run.runDay?.date
+          ),
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -418,7 +423,7 @@ export default function DayPeekCard({
           aria-hidden="true"
           className="mx-auto size-2.5 rotate-45 rounded-[2px] bg-card -mb-1.5"
         />
-        <div className="relative rounded-2xl bg-card px-3 py-3 space-y-2 card-shadow">
+        <div className="relative rounded-xl bg-card px-3 py-3 space-y-2 card-shadow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">
@@ -464,7 +469,7 @@ export default function DayPeekCard({
                         {(w.durationMinutes ?? 0) > 0 && (
                           <span className="text-muted-foreground font-mono tabular-nums">
                             {" · "}
-                            {w.durationMinutes} min
+                            {formatDuration((w.durationMinutes ?? 0) * 60)}
                           </span>
                         )}
                       </span>
@@ -506,7 +511,9 @@ export default function DayPeekCard({
                     {hasW && (totalMinutes > 0 || tonnage > 0) && (
                       <span className="text-muted-foreground font-mono tabular-nums">
                         {" · "}
-                        {totalMinutes > 0 ? `${totalMinutes} min` : ""}
+                        {totalMinutes > 0
+                          ? formatDuration(totalMinutes * 60)
+                          : ""}
                         {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
                         {/* The whole figure, grouped, as the diary row
                             below writes its calories. One session's

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/lib/toast";
 import { Check } from "lucide-react";
@@ -20,7 +20,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
-/** Keep the preview and feed on one formatter; only numbers use Archivo.
+/** Keep the preview and feed on one formatter; its numbers take the inline number tier.
  *  In the reader's unit, as the feed card's rows are (Lift18). */
 function ExerciseSummary(props: ExerciseSummaryInput) {
   const liftUnit = useLiftUnit();
@@ -37,7 +37,9 @@ interface Props {
   /** Default name shown in the input — usually the source workout's
    *  activityTitle / workoutName. User can edit before saving. */
   defaultName: string;
-  sourceActivityId: string;
+  /** The post it is saved from. Absent when saved from the person's own
+   *  workout (`/workout/:id`), which may never have been posted. */
+  sourceActivityId?: string;
   sourceAuthorId: string;
   sourceAuthorName: string;
   sourceWorkoutName?: string;
@@ -48,7 +50,8 @@ const NAME_MAX = 60;
 
 /**
  * "Save as routine" bottom sheet. Opened from the workout ActivityCard
- * action row. Captures the user's chosen name (defaults to the source
+ * action row, and from a saved workout's own page (`/workout/:id`), so a
+ * person who never posts can still keep a session to run again. Captures the user's chosen name (defaults to the source
  * workout's name) and persists a snapshot to users/{uid}/savedRoutines.
  *
  * The exercise list is shown read-only — this is a save-as-snapshot,
@@ -84,6 +87,15 @@ export default function SaveRoutineSheet({
      and the only confirmation was a toast that's easy to miss when the
      user has already moved on. */
   const [saved, setSaved] = useState(false);
+  /* The "Saved" hold before closing. Cancelled when the sheet goes, so
+     it never sets state on, or closes, a sheet that is no longer there. */
+  const closeTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   const handleSave = async () => {
     if (!uid || saving || saved) return;
@@ -97,7 +109,7 @@ export default function SaveRoutineSheet({
     try {
       const routineId = await saveRoutine(uid, {
         name: trimmed,
-        sourceActivityId,
+        ...(sourceActivityId ? { sourceActivityId } : {}),
         sourceAuthorId,
         sourceAuthorName,
         ...(sourceWorkoutName ? { sourceWorkoutName } : {}),
@@ -119,13 +131,14 @@ export default function SaveRoutineSheet({
         },
         duration: 5000,
       });
-      window.setTimeout(() => {
+      closeTimer.current = window.setTimeout(() => {
+        closeTimer.current = null;
         setSaved(false);
         onClose();
       }, 650);
     } catch (err) {
       logger.error("saveRoutine failed:", err);
-      toast.error("Couldn't save. Try again.");
+      toast.error("Couldn’t save. Try again.");
       setSaving(false);
     }
   };
@@ -144,7 +157,11 @@ export default function SaveRoutineSheet({
       open={open}
       onOpenChange={handleOpenChange}
       title="Save as routine"
-      description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from the Train tab.`}
+      description={
+        external
+          ? `Snapshot of ${sourceAuthorName}’s workout. You can run it later from the Train tab.`
+          : "A copy of this workout. You can run it again from the Train tab."
+      }
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Name input */}

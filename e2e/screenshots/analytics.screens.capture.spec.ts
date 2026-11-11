@@ -323,7 +323,9 @@ test.describe("analytics tab screenshots", () => {
     ).toBeVisible({ timeout: 30_000 });
 
     // The tab strip is a SegmentedControl, so its options are radios.
-    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
+    await page
+      .getByRole("radio", { name: /^Bests$/ })
+      .click({ timeout: 10_000 });
 
     await expect(page.getByText("Best pace · 5K+").first()).toBeVisible({
       timeout: 15_000,
@@ -448,8 +450,12 @@ test.describe("analytics tab screenshots", () => {
        three of them cannot come from the one-exercise account the
        other test uses — which is what stops this quietly becoming a
        second cold-start capture if the sign-in ever changes. */
-    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
-    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 15_000 });
+    await page
+      .getByRole("radio", { name: /^Bests$/ })
+      .click({ timeout: 10_000 });
+    await expect(page.getByText("Lifting bests")).toBeVisible({
+      timeout: 15_000,
+    });
     const oneRepMaxLines = page.getByText(/1RM$/);
     expect(
       await oneRepMaxLines.count(),

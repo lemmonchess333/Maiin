@@ -73,6 +73,30 @@ describe("session record corrections", () => {
     expect(rebuild([set(85, { confirmedWeight: 80 })]).map).toEqual(baseline);
   });
 
+  it.each([
+    [72, 84],
+    [84, 72],
+  ])(
+    "keeps legitimate rising sets completed in either row order (%s, %s)",
+    (first, second) => {
+      const after = rebuild([set(first), set(second)]);
+      expect(after.map["Bench Press"]["8rm"]?.weight).toBe(84);
+      expect(after.volumeBest["Bench Press"].volume).toBe(1248);
+    }
+  );
+
+  it("never lets an unconfirmed outlier validate itself or another outlier", () => {
+    const after = rebuild([set(84), set(100)]);
+    expect(after.map).toEqual(baseline);
+    expect(after.results.size).toBe(0);
+    expect(rebuild([set(84), set(72, { completed: false })]).map).toEqual(
+      baseline
+    );
+    expect(rebuild([set(84), set(72, { type: "warmup" })]).map).toEqual(
+      baseline
+    );
+  });
+
   it("excludes undone, warm-up, invalid, suspicious and timed sets", () => {
     const after = rebuild([
       set(65, { completed: false }),

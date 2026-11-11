@@ -37,7 +37,7 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
           {storedKmLabel(shoe.maxKm, unit)}
         </span>
       </div>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
+      <div className="h-2 rounded-full track-cut overflow-hidden">
         <div
           className={cn("h-full rounded-full transition-all", wearClass)}
           style={{ width: `${pct}%` }}
@@ -98,7 +98,7 @@ export default function ShoesManager() {
       await setDefault(shoeId);
     } catch (err) {
       logger.error("[ShoesManager] setDefault failed", err);
-      toast.error("Couldn't change your default shoe. Try again.");
+      toast.error("Couldn’t change your default shoe. Try again.");
     }
   };
 
@@ -118,7 +118,7 @@ export default function ShoesManager() {
       );
     } catch (err) {
       logger.error("[ShoesManager] reconcileMileageFromRuns failed", err);
-      toast.error("Couldn't recalculate mileage. Try again.");
+      toast.error("Couldn’t recalculate mileage. Try again.");
     } finally {
       setRecalculating(false);
     }
@@ -128,14 +128,16 @@ export default function ShoesManager() {
     return (
       <div className="flex items-center gap-2 py-4">
         <Spinner size="sm" variant="primary" label="Loading shoes" />
-        <p className="text-xs text-muted-foreground">Loading shoes...</p>
+        <p className="text-xs text-muted-foreground">Loading shoes…</p>
       </div>
     );
 
   if (error)
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-destructive-strong">Failed to load shoes</p>
+        <p className="text-xs text-destructive-strong">
+          Couldn’t load your shoes
+        </p>
         <p className="text-xs text-muted-foreground mt-1">Try again later</p>
       </div>
     );
@@ -165,7 +167,7 @@ export default function ShoesManager() {
       await addShoe(newName.trim(), newBrand.trim(), maxKm);
     } catch (err) {
       logger.error("[ShoesManager] addShoe failed", err);
-      toast.error("Couldn't add the shoe. Try again.");
+      toast.error("Couldn’t add the shoe. Try again.");
       return;
     } finally {
       setAdding(false);
@@ -182,7 +184,9 @@ export default function ShoesManager() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Footprints className="size-5 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">My shoes</h3>
+          <SectionHeading size="compact" as="h3">
+            My shoes
+          </SectionHeading>
         </div>
         <div className="flex items-center gap-3">
           {activeShoes.length > 0 && (
@@ -233,7 +237,7 @@ export default function ShoesManager() {
                 // click handler can run).
                 window.setTimeout(() => setShowSuggestions(false), 150);
               }}
-              placeholder="Shoe name (e.g., Pegasus 41)"
+              placeholder="Shoe name (e.g. Pegasus 41)"
               aria-label="Shoe name"
               className="ds-input text-sm"
             />
@@ -267,7 +271,7 @@ export default function ShoesManager() {
             type="text"
             value={newBrand}
             onChange={(e) => setNewBrand(e.target.value)}
-            placeholder="Brand (e.g., Nike)"
+            placeholder="Brand (e.g. Nike)"
             aria-label="Brand"
             className="ds-input text-sm"
           />
@@ -300,12 +304,12 @@ export default function ShoesManager() {
                   {distanceUnitLabel(unit)}
                 </span>
               </div>
-              <Button onClick={handleAdd} loading={adding}>
+              <Button variant="neutral" onClick={handleAdd} loading={adding}>
                 Save
               </Button>
             </div>
             <p id="shoe-max-km-hint" className="text-xs text-muted-foreground">
-              We'll flag the shoe for replacement at this mileage. Most daily
+              We’ll flag the shoe for replacement at this mileage. Most daily
               trainers last {storedKmLabel(500, unit, false)}–
               {storedKmLabel(800, unit)}; racing flats closer to{" "}
               {storedKmLabel(250, unit, false)}.

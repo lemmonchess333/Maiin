@@ -7,6 +7,7 @@ import {
   writeLog,
   readDoc,
   flushSnapshots,
+  failNextFirestore,
 } from "@/test/firestoreHarness";
 
 // The `user` identity must be STABLE across renders. `useFoodFavourites`
@@ -106,9 +107,23 @@ function makeDoc(
 
 describe("useFoodFavourites", () => {
   beforeEach(() => {
+    AUTH.user = { uid: "me" };
     resetFirestore();
     trackedEvents.length = 0;
     onlineState.isOnline = true;
+  });
+
+  it("does not count another account's initial pantry as new graduations", async () => {
+    seedFirestore({
+      "users/me/foodFavourites/shared": makeDoc({ id: "shared", useCount: 1 }).data,
+      "users/other/foodFavourites/shared": makeDoc({ id: "shared", useCount: 9 }).data,
+    });
+    const { result, rerender } = renderHook(() => useFoodFavourites());
+    await waitFor(() => expect(result.current.favourites[0]?.useCount).toBe(1));
+    AUTH.user = { uid: "other" };
+    rerender();
+    await waitFor(() => expect(result.current.favourites[0]?.useCount).toBe(9));
+    expect(trackedEvents.filter((item) => item.event === "food_pantry_graduated")).toEqual([]);
   });
 
   describe("snapshot parsing", () => {
@@ -336,6 +351,47 @@ describe("useFoodFavourites", () => {
       expect(faveSets()[1].data).not.toHaveProperty("source");
     });
 
+    it("keeps a typed-in product's barcode, and no later log clears it", async () => {
+      // F2d: a product the barcode database did not have is typed in, and
+      // the next scan of the same pack finds it here.
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() => pumpSnapshot([]));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      await act(async () => {
+        await result.current.addFavourite({
+          name: "Corner shop flapjack",
+          calories: 320,
+          protein: 5,
+          carbs: 40,
+          fat: 15,
+          source: "barcode",
+          barcode: "5012345678900",
+        });
+      });
+      expect(readDoc(`${FAVES}/corner_shop_flapjack`)!.barcode).toBe(
+        "5012345678900"
+      );
+      await act(async () => {
+        await result.current.addFavourite({
+          name: "Corner shop flapjack",
+          calories: 320,
+          protein: 5,
+          carbs: 40,
+          fat: 15,
+        });
+      });
+      expect(faveSets()[1].data).not.toHaveProperty("barcode");
+      expect(readDoc(`${FAVES}/corner_shop_flapjack`)!.barcode).toBe(
+        "5012345678900"
+      );
+      await waitFor(() =>
+        expect(
+          result.current.favourites.find((f) => f.barcode === "5012345678900")
+            ?.name
+        ).toBe("Corner shop flapjack")
+      );
+    });
+
     it("flags graduation when previousCount=1 transitions to 2", async () => {
       const { result } = renderHook(() => useFoodFavourites());
       act(() =>
@@ -401,6 +457,24 @@ describe("useFoodFavourites", () => {
         },
       }));
     }
+
+    it("never uses the old pantry to evict from a new account whose read fails", async () => {
+      const { result, rerender } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(51));
+      });
+      expect(result.current.favourites).toHaveLength(51);
+      seedFirestore({ "users/other/foodFavourites/fav-0": makeDoc({ id: "fav-0", name: "Keep me", useCount: 99 }).data });
+      failNextFirestore("onSnapshot", { code: "unavailable" });
+      AUTH.user = { uid: "other" };
+      rerender();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(readDoc("users/other/foodFavourites/fav-0")).toMatchObject({ name: "Keep me" });
+      expect(result.current.favourites).toEqual([]);
+      expect(writeLog()).toEqual([]);
+    });
 
     it("does NOT evict when length is at or below the cap", async () => {
       const { result } = renderHook(() => useFoodFavourites());
@@ -619,6 +693,94 @@ describe("useFoodFavourites", () => {
       });
       expect(faveDeletes()).toHaveLength(1);
       expect(faveDeletes()[0].path.split("/").pop()).toBe("oats");
+    });
+  });
+
+  /* My pantry's edit. A food is filed under its name, so a new name moves
+     it; a corrected figure leaves it where it is, whatever its id. */
+  describe("updateFavourite", () => {
+    const edit = {
+      servingSize: "1 cup",
+      calories: 150,
+      protein: 8,
+      carbs: 12,
+      fat: 7,
+    };
+
+    it("corrects a food's figures in place, keeping its count", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({ id: "audit-latte", name: "Latte", useCount: 4 }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(1));
+      let outcome = "";
+      await act(async () => {
+        outcome = await result.current.updateFavourite(
+          result.current.favourites[0],
+          { name: "Latte", ...edit }
+        );
+      });
+      expect(outcome).toBe("saved");
+      expect(faveDeletes()).toHaveLength(0);
+      const stored = readDoc(`${FAVES}/audit-latte`) as Record<string, unknown>;
+      expect(stored).toMatchObject({
+        name: "Latte",
+        servingSize: "1 cup",
+        calories: 150,
+        useCount: 4,
+      });
+    });
+
+    it("moves a renamed food to its new name, carrying its history", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({
+            id: "latte",
+            name: "Latte",
+            useCount: 4,
+            timeOfDay: "morning",
+          }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(1));
+      await act(async () => {
+        await result.current.updateFavourite(result.current.favourites[0], {
+          name: "Oat latte",
+          ...edit,
+        });
+      });
+      expect(readDoc(`${FAVES}/latte`)).toBeUndefined();
+      expect(readDoc(`${FAVES}/oat_latte`)).toMatchObject({
+        name: "Oat latte",
+        calories: 150,
+        useCount: 4,
+        timeOfDay: "morning",
+      });
+    });
+
+    it("refuses a name another saved food has", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      act(() =>
+        pumpSnapshot([
+          makeDoc({ id: "latte", name: "Latte" }),
+          makeDoc({ id: "mocha", name: "Mocha" }),
+        ])
+      );
+      await waitFor(() => expect(result.current.favourites).toHaveLength(2));
+      const latte = result.current.favourites.find((f) => f.id === "latte")!;
+      let outcome = "";
+      await act(async () => {
+        outcome = await result.current.updateFavourite(latte, {
+          name: "mocha",
+          ...edit,
+        });
+      });
+      expect(outcome).toBe("taken");
+      expect(faveSets()).toHaveLength(0);
+      expect(faveDeletes()).toHaveLength(0);
     });
   });
 });

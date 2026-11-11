@@ -1,5 +1,14 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   Info,
   AlertTriangle,
@@ -7,8 +16,10 @@ import {
   Share2,
   Bookmark,
   Repeat,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { applyPrivacyZones } from "@/lib/privacyZones";
 import { useShareRoute } from "@/hooks/useShareRoute";
@@ -20,7 +31,11 @@ import {
 } from "../lib/routeQuality";
 import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
-import { isOutdoorGpsRun, type RunSource } from "../lib/runGuards";
+import {
+  isOutdoorGpsRun,
+  isTreadmillRun,
+  type RunSource,
+} from "../lib/runGuards";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
@@ -48,11 +63,18 @@ import {
   paceUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
+import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { isRunDateKey } from "@/lib/runExecutionEvidence";
+
+const RenameRunSheet = lazyRetry(
+  () => import("@/components/run/RenameRunSheet")
+);
 
 /**
  * The finish screen's "How did it feel?" answer, as a saved run reads it
@@ -89,6 +111,7 @@ export default function RunDetail() {
   const unit = useDistanceUnit();
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const { user, profile } = useAuth();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -106,6 +129,11 @@ export default function RunDetail() {
     runId
   );
   const [shareOpen, setShareOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  /* The sheet loads on the first tap of the pencil, not with the page. */
+  const [renameWanted, setRenameWanted] = useState(false);
+  /* The name just saved, shown before the page reads the run again. */
+  const [renamed, setRenamed] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -115,7 +143,7 @@ export default function RunDetail() {
     () =>
       privacy.loading || privacy.error
         ? []
-        : applyPrivacyZones(run?.points ?? [], privacy.zones),
+        : applyPrivacyZones<GPSPoint>(run?.points ?? [], privacy.zones),
     [run?.points, privacy.loading, privacy.error, privacy.zones]
   );
 
@@ -190,10 +218,10 @@ export default function RunDetail() {
         loadingLabel="Loading run"
         missingHeadline="Run not found"
         missingSub="It may have been deleted, or the link belongs to another account."
-        failedHeadline="Couldn't load this run"
+        failedHeadline="Couldn’t load this run"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retryRun}
-        backHref="/history"
+        backHref={historyReturnTo ?? "/history"}
         backLabel="History"
       />
     );
@@ -254,7 +282,20 @@ export default function RunDetail() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const date = run.completedAt?.toDate?.();
+  /* The run's name, as it was saved and posted (`runName.ts`). A run
+     saved before runs were named reads as its type. A named treadmill
+     run says where it was run on its date line instead. */
+  const savedName =
+    typeof run.name === "string" && run.name.trim() ? run.name.trim() : null;
+  const runName = renamed ?? savedName;
+  const heading = runName ?? runTitle(kind);
+  const treadmillNote = runName && isTreadmillRun(kind) ? " · Treadmill" : "";
+
+  // A run synced later still belongs to the day it started. Legacy records
+  // without a valid date retain their completion-time fallback.
+  const date = isRunDateKey(run.date)
+    ? parseLocalDate(run.date)
+    : run.completedAt?.toDate?.();
   const dateStr =
     date?.toLocaleDateString("en-GB", {
       weekday: "long",
@@ -268,7 +309,7 @@ export default function RunDetail() {
   };
 
   const shareThisRoute = () => {
-    const label = runTitle(kind);
+    const label = heading;
     shareRouteWithPrivacy(
       `${label} · ${distanceLabel(run.distance, unit)}`,
       run.points
@@ -279,14 +320,14 @@ export default function RunDetail() {
   // "save/reuse" half of route planning v1. Same store the planner and GPX
   // import write to; it then appears under Saved routes in run setup.
   const saveThisRoute = async () => {
-    const label = runTitle(kind);
+    const label = heading;
     const ok = await saveRoute({
       name: `${label} · ${distanceLabel(run.distance, unit)}`,
       points: run.points,
       source: "run",
     });
     toast[ok ? "success" : "error"](
-      ok ? "Route saved — find it in run setup" : "Couldn't save route"
+      ok ? "Route saved — find it in run setup" : "Couldn’t save route"
     );
   };
 
@@ -450,10 +491,27 @@ export default function RunDetail() {
         <div>
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-0">
-              <p className="text-sm font-bold text-running-strong">
-                {runTitle(kind)}
-              </p>
-              <h1 className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+              <div className="-my-2 flex items-center gap-1">
+                <p
+                  dir="auto"
+                  className="min-w-0 break-words text-sm font-bold text-running-strong"
+                >
+                  {heading}
+                </p>
+                {user && runId && (
+                  <IconButton
+                    variant="ghost"
+                    aria-label="Rename run"
+                    icon={<Pencil aria-hidden="true" />}
+                    className="size-[44px] text-muted-foreground"
+                    onClick={() => {
+                      setRenameWanted(true);
+                      setRenameOpen(true);
+                    }}
+                  />
+                )}
+              </div>
+              <h1 className="mt-1 text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
                 {distanceValue(run.distance, unit, 2)}{" "}
                 <span className="font-sans text-h3 font-bold text-muted-foreground">
                   {distanceUnitLabel(unit)}
@@ -474,7 +532,10 @@ export default function RunDetail() {
               Share
             </Button>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {dateStr}
+            {treadmillNote}
+          </p>
         </div>
 
         <RunStatGrid
@@ -498,6 +559,8 @@ export default function RunDetail() {
           ]}
         />
 
+        <HeartRateSummaryCard summary={run.heartRate} />
+
         {/* No splits: say why, once, where the split bars would be.
             Splits are per-kilometre (or per-mile) segments of the GPS
             trace; a run has none without a trace, under one lap, or when
@@ -516,7 +579,7 @@ export default function RunDetail() {
             <span className="font-mono tabular-nums font-semibold text-foreground">
               {paceMinSec(gap.gapSecondsPerKm, unit)}
             </span>{" "}
-            {paceUnitLabel(unit)} — flat-equivalent for this climb
+            {paceUnitLabel(unit)}: the flat-ground equivalent of this climb
           </p>
         )}
 
@@ -626,6 +689,21 @@ export default function RunDetail() {
           />
         )}
       </div>
+
+      {user && runId && renameWanted && (
+        <Suspense fallback={null}>
+          <RenameRunSheet
+            key={renameOpen ? "open" : "closed"}
+            open={renameOpen}
+            onOpenChange={setRenameOpen}
+            uid={user.uid}
+            runId={runId}
+            currentName={heading}
+            shared={typeof run.sharedActivityId === "string"}
+            onRenamed={setRenamed}
+          />
+        </Suspense>
+      )}
 
       {/* S1 share-card system — customization sheet + new renderer */}
       <ShareCardSheet

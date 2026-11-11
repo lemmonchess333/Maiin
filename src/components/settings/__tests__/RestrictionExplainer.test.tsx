@@ -24,7 +24,7 @@ describe("RestrictionExplainer", () => {
     render(<RestrictionExplainer uid="sam" />);
     expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
     expect(
-      screen.getByText(/you can't post, comment, give props or likes/)
+      screen.getByText(/you can’t post, comment, give props or likes/)
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Everything else works as normal/)

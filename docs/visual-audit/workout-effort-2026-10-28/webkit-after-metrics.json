@@ -1,0 +1,1459 @@
+{
+  "kg": {
+    "errors": [
+      "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=uptVyKmcgStW12upI86i7g%3D%3D&AID=48&CI=0&TYPE=xmlhttp&zx=p3n8yxxi2sxf&t=1 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&SID=uptVyKmcgStW12upI86i7g%3D%3D&RID=64917&AID=48&zx=33154mc2gmta&t=1 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=uptVyKmcgStW12upI86i7g%3D%3D&AID=48&CI=0&TYPE=xmlhttp&zx=yjefb3yy4bz5&t=2 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&SID=uptVyKmcgStW12upI86i7g%3D%3D&RID=64917&AID=48&zx=po77zm1nekz8&t=2 due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks."
+    ],
+    "rpe": {
+      "phone-dark": {
+        "box": {
+          "x": 28,
+          "y": 429.1875,
+          "width": 337,
+          "height": 92
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 429.1875,
+            "width": 64.1875,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 96.1875,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 164.390625,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 232.59375,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 300.796875,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 477.1875,
+            "width": 64.1875,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 96.1875,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 164.390625,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 232.59375,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      },
+      "phone-light": {
+        "box": {
+          "x": 28,
+          "y": 429.1875,
+          "width": 337,
+          "height": 92
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 429.1875,
+            "width": 64.1875,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 96.1875,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 164.390625,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 232.59375,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 300.796875,
+            "y": 429.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 477.1875,
+            "width": 64.1875,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 96.1875,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 164.390625,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 232.59375,
+            "y": 477.1875,
+            "width": 64.203125,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      },
+      "small-dark": {
+        "box": {
+          "x": 28,
+          "y": 287.1875,
+          "width": 264,
+          "height": 92
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 81.59375,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 135.1875,
+            "y": 287.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 188.796875,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 242.390625,
+            "y": 287.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 81.59375,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 135.1875,
+            "y": 335.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 188.796875,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      },
+      "small-light": {
+        "box": {
+          "x": 28,
+          "y": 287.1875,
+          "width": 264,
+          "height": 92
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 81.59375,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 135.1875,
+            "y": 287.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 188.796875,
+            "y": 287.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 242.390625,
+            "y": 287.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 28,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 81.59375,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 135.1875,
+            "y": 335.1875,
+            "width": 49.609375,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 188.796875,
+            "y": 335.1875,
+            "width": 49.59375,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      },
+      "large-text-dark": {
+        "box": {
+          "x": 56,
+          "y": 922.390625,
+          "width": 281,
+          "height": 148
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 922.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 152.328125,
+            "y": 922.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 922.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 974.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 152.328125,
+            "y": 974.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 974.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 1026.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 152.328125,
+            "y": 1026.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 1026.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      },
+      "large-text-light": {
+        "box": {
+          "x": 56,
+          "y": 454.390625,
+          "width": 281,
+          "height": 148
+        },
+        "buttons": [
+          {
+            "name": "6",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 454.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "6.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 152.328125,
+            "y": 454.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 454.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "7.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 506.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8",
+            "role": "radio",
+            "checked": "true",
+            "x": 152.328125,
+            "y": 506.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "8.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 506.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9",
+            "role": "radio",
+            "checked": "false",
+            "x": 56,
+            "y": 558.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "9.5",
+            "role": "radio",
+            "checked": "false",
+            "x": 152.328125,
+            "y": 558.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          },
+          {
+            "name": "10",
+            "role": "radio",
+            "checked": "false",
+            "x": 248.65625,
+            "y": 558.390625,
+            "width": 88.328125,
+            "height": 44,
+            "clipped": false
+          }
+        ],
+        "overflow": false
+      }
+    },
+    "review": {
+      "phone-dark": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 353,
+          "height": 62,
+          "right": 373,
+          "bottom": 180
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 117.65625,
+              "height": 62,
+              "right": 137.65625,
+              "bottom": 180
+            },
+            "value": {
+              "x": 62.37805938720703,
+              "right": 94.27819061279297,
+              "y": 124.5,
+              "width": 31.900131225585938
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 137.65625,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 255.328125,
+              "bottom": 180
+            },
+            "value": {
+              "x": 152.8295135498047,
+              "right": 239.1548614501953,
+              "y": 124.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 255.328125,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 373,
+              "bottom": 180
+            },
+            "value": {
+              "x": 306.3265380859375,
+              "right": 322.0015869140625,
+              "y": 124.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "phone-light": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 353,
+          "height": 62,
+          "right": 373,
+          "bottom": 180
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 117.65625,
+              "height": 62,
+              "right": 137.65625,
+              "bottom": 180
+            },
+            "value": {
+              "x": 62.37805938720703,
+              "right": 94.27819061279297,
+              "y": 124.5,
+              "width": 31.900131225585938
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 137.65625,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 255.328125,
+              "bottom": 180
+            },
+            "value": {
+              "x": 152.8295135498047,
+              "right": 239.1548614501953,
+              "y": 124.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 255.328125,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 373,
+              "bottom": 180
+            },
+            "value": {
+              "x": 306.3265380859375,
+              "right": 322.0015869140625,
+              "y": 124.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "small-dark": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 280,
+          "height": 210,
+          "right": 300,
+          "bottom": 328
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 180
+            },
+            "value": {
+              "x": 144.0499267578125,
+              "right": 175.9500732421875,
+              "y": 124.5,
+              "width": 31.900146484375
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 20,
+              "y": 192,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 254
+            },
+            "value": {
+              "x": 116.83732604980469,
+              "right": 203.1626739501953,
+              "y": 198.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 20,
+              "y": 266,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 328
+            },
+            "value": {
+              "x": 152.1624755859375,
+              "right": 167.8375244140625,
+              "y": 272.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "small-light": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 280,
+          "height": 210,
+          "right": 300,
+          "bottom": 328
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 180
+            },
+            "value": {
+              "x": 144.0499267578125,
+              "right": 175.9500732421875,
+              "y": 124.5,
+              "width": 31.900146484375
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 20,
+              "y": 192,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 254
+            },
+            "value": {
+              "x": 116.83732604980469,
+              "right": 203.1626739501953,
+              "y": 198.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 20,
+              "y": 266,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 328
+            },
+            "value": {
+              "x": 152.1624755859375,
+              "right": 167.8375244140625,
+              "y": 272.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-dark": {
+        "box": {
+          "x": 40,
+          "y": 225.1875,
+          "width": 313,
+          "height": 376.78125,
+          "right": 353,
+          "bottom": 601.96875
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 40,
+              "y": 225.1875,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 334.78125
+            },
+            "value": {
+              "x": 170.34207153320312,
+              "right": 222.65792846679688,
+              "y": 235.484375,
+              "width": 52.31585693359375
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 40,
+              "y": 358.78125,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 468.375
+            },
+            "value": {
+              "x": 125.71370697021484,
+              "right": 267.2862777709961,
+              "y": 369.078125,
+              "width": 141.57257080078125
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 40,
+              "y": 492.375,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 601.96875
+            },
+            "value": {
+              "x": 183.64654541015625,
+              "right": 209.35345458984375,
+              "y": 502.671875,
+              "width": 25.7069091796875
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-light": {
+        "box": {
+          "x": 40,
+          "y": 225.1875,
+          "width": 313,
+          "height": 376.78125,
+          "right": 353,
+          "bottom": 601.96875
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 40,
+              "y": 225.1875,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 334.78125
+            },
+            "value": {
+              "x": 170.34207153320312,
+              "right": 222.65792846679688,
+              "y": 235.484375,
+              "width": 52.31585693359375
+            },
+            "clipped": false
+          },
+          {
+            "text": "12,210\n\nkg lifted",
+            "box": {
+              "x": 40,
+              "y": 358.78125,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 468.375
+            },
+            "value": {
+              "x": 125.71370697021484,
+              "right": 267.2862777709961,
+              "y": 369.078125,
+              "width": 141.57257080078125
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 40,
+              "y": 492.375,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 601.96875
+            },
+            "value": {
+              "x": 183.64654541015625,
+              "right": 209.35345458984375,
+              "y": 502.671875,
+              "width": 25.7069091796875
+            },
+            "clipped": false
+          }
+        ]
+      }
+    },
+    "keyboard": {
+      "selected": "true",
+      "focus": "10"
+    },
+    "cleared": 0,
+    "details": "Session details\nExercises\n\nKettlebell Swing\n\n16 kg × 20\n\n3/3 sets\n\nLeg Press\n\n250 kg × 15\n\n3/3 sets",
+    "savedRoute": "http://127.0.0.1:4182/Maiin/workout/free-4dd96ce5-d3bb-4890-b4d3-0a5e3e24827f",
+    "savedText": "Lift\n\nWorkout\nShare\n\nWednesday, 28 October 2026\n\n18\n\nminutes\n\n12,210\n\nkg lifted\n\n6\n\nsets\n\nExercises\nKettlebell Swing\n\n3 sets\n\n1\n16 kg × 20\nSet 1: 16 kg, 20 reps\n2\n16 kg × 20\nSet 2: 16 kg, 20 reps\n3\n16 kg × 20\nSet 3: 16 kg, 20 reps\nLeg Press\n\n3 sets\n\n1\n250 kg × 15\nSet 1: 250 kg, 15 reps\n2\n250 kg × 15\nSet 2: 250 kg, 15 reps\n3\n250 kg × 15\nSet 3: 250 kg, 15 reps\nCorrect workout\nSave as routine\nShare to feed\nShare to circle\n\nDelete this workout"
+  },
+  "lbs": {
+    "errors": [
+      "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=oBS8NliQhhbRIjo2ciypAQ%3D%3D&AID=52&CI=0&TYPE=xmlhttp&zx=vp94dt1pci6a&t=1 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&RID=rpc&SID=oBS8NliQhhbRIjo2ciypAQ%3D%3D&AID=52&CI=0&TYPE=xmlhttp&zx=1w69qm3n3yi1&t=2 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&SID=oBS8NliQhhbRIjo2ciypAQ%3D%3D&RID=9777&AID=52&zx=5yoyupizzljq&t=1 due to access control checks.",
+      "/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fdemo-tropos%2Fdatabases%2F(default)&SID=oBS8NliQhhbRIjo2ciypAQ%3D%3D&RID=9777&AID=52&zx=4pwb5cw231m7&t=2 due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/backfillMyActivityCategories due to access control checks.",
+      "/127.0.0.1:5001/demo-tropos/us-central1/recreditMyLiftVolume due to access control checks."
+    ],
+    "rpe": {},
+    "review": {
+      "phone-dark": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 353,
+          "height": 62,
+          "right": 373,
+          "bottom": 180
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 117.65625,
+              "height": 62,
+              "right": 137.65625,
+              "bottom": 180
+            },
+            "value": {
+              "x": 62.37805938720703,
+              "right": 94.27819061279297,
+              "y": 124.5,
+              "width": 31.900131225585938
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 137.65625,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 255.328125,
+              "bottom": 180
+            },
+            "value": {
+              "x": 152.8295135498047,
+              "right": 239.1548614501953,
+              "y": 124.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 255.328125,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 373,
+              "bottom": 180
+            },
+            "value": {
+              "x": 306.3265380859375,
+              "right": 322.0015869140625,
+              "y": 124.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "phone-light": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 353,
+          "height": 62,
+          "right": 373,
+          "bottom": 180
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 117.65625,
+              "height": 62,
+              "right": 137.65625,
+              "bottom": 180
+            },
+            "value": {
+              "x": 62.37805938720703,
+              "right": 94.27819061279297,
+              "y": 124.5,
+              "width": 31.900131225585938
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 137.65625,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 255.328125,
+              "bottom": 180
+            },
+            "value": {
+              "x": 152.8295135498047,
+              "right": 239.1548614501953,
+              "y": 124.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 255.328125,
+              "y": 118,
+              "width": 117.671875,
+              "height": 62,
+              "right": 373,
+              "bottom": 180
+            },
+            "value": {
+              "x": 306.3265380859375,
+              "right": 322.0015869140625,
+              "y": 124.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "small-dark": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 280,
+          "height": 210,
+          "right": 300,
+          "bottom": 328
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 180
+            },
+            "value": {
+              "x": 144.0499267578125,
+              "right": 175.9500732421875,
+              "y": 124.5,
+              "width": 31.900146484375
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 20,
+              "y": 192,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 254
+            },
+            "value": {
+              "x": 116.83732604980469,
+              "right": 203.1626739501953,
+              "y": 198.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 20,
+              "y": 266,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 328
+            },
+            "value": {
+              "x": 152.1624755859375,
+              "right": 167.8375244140625,
+              "y": 272.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "small-light": {
+        "box": {
+          "x": 20,
+          "y": 118,
+          "width": 280,
+          "height": 210,
+          "right": 300,
+          "bottom": 328
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 20,
+              "y": 118,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 180
+            },
+            "value": {
+              "x": 144.0499267578125,
+              "right": 175.9500732421875,
+              "y": 124.5,
+              "width": 31.900146484375
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 20,
+              "y": 192,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 254
+            },
+            "value": {
+              "x": 116.83732604980469,
+              "right": 203.1626739501953,
+              "y": 198.5,
+              "width": 86.32534790039062
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 20,
+              "y": 266,
+              "width": 280,
+              "height": 62,
+              "right": 300,
+              "bottom": 328
+            },
+            "value": {
+              "x": 152.1624755859375,
+              "right": 167.8375244140625,
+              "y": 272.5,
+              "width": 15.675048828125
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-dark": {
+        "box": {
+          "x": 40,
+          "y": 225.1875,
+          "width": 313,
+          "height": 376.78125,
+          "right": 353,
+          "bottom": 601.96875
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 40,
+              "y": 225.1875,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 334.78125
+            },
+            "value": {
+              "x": 170.34207153320312,
+              "right": 222.65792846679688,
+              "y": 235.484375,
+              "width": 52.31585693359375
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 40,
+              "y": 358.78125,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 468.375
+            },
+            "value": {
+              "x": 125.71370697021484,
+              "right": 267.2862777709961,
+              "y": 369.078125,
+              "width": 141.57257080078125
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 40,
+              "y": 492.375,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 601.96875
+            },
+            "value": {
+              "x": 183.64654541015625,
+              "right": 209.35345458984375,
+              "y": 502.671875,
+              "width": 25.7069091796875
+            },
+            "clipped": false
+          }
+        ]
+      },
+      "large-text-light": {
+        "box": {
+          "x": 40,
+          "y": 225.1875,
+          "width": 313,
+          "height": 376.78125,
+          "right": 353,
+          "bottom": 601.96875
+        },
+        "overflow": false,
+        "figures": [
+          {
+            "text": "<1\n\nminute",
+            "box": {
+              "x": 40,
+              "y": 225.1875,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 334.78125
+            },
+            "value": {
+              "x": 170.34207153320312,
+              "right": 222.65792846679688,
+              "y": 235.484375,
+              "width": 52.31585693359375
+            },
+            "clipped": false
+          },
+          {
+            "text": "26,920\n\nlb lifted",
+            "box": {
+              "x": 40,
+              "y": 358.78125,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 468.375
+            },
+            "value": {
+              "x": 125.71370697021484,
+              "right": 267.2862777709961,
+              "y": 369.078125,
+              "width": 141.57257080078125
+            },
+            "clipped": false
+          },
+          {
+            "text": "6\n\nsets",
+            "box": {
+              "x": 40,
+              "y": 492.375,
+              "width": 313,
+              "height": 109.59375,
+              "right": 353,
+              "bottom": 601.96875
+            },
+            "value": {
+              "x": 183.64654541015625,
+              "right": 209.35345458984375,
+              "y": 502.671875,
+              "width": 25.7069091796875
+            },
+            "clipped": false
+          }
+        ]
+      }
+    },
+    "keyboard": {
+      "selected": "true",
+      "focus": "10"
+    },
+    "cleared": 0,
+    "details": "Session details\nExercises\n\nKettlebell Swing\n\n35 lb × 20\n\n3/3 sets\n\nLeg Press\n\n551.2 lb × 15\n\n3/3 sets",
+    "savedRoute": "http://127.0.0.1:4182/Maiin/workout/free-c99d6fa7-e310-4206-bc3e-16065bad27ad",
+    "savedText": "Lift\n\nWorkout\nShare\n\nWednesday, 28 October 2026\n\n18\n\nminutes\n\n26,920\n\nlb lifted\n\n6\n\nsets\n\nExercises\nKettlebell Swing\n\n3 sets\n\n1\n35 lb × 20\nSet 1: 35 lb, 20 reps\n2\n35 lb × 20\nSet 2: 35 lb, 20 reps\n3\n35 lb × 20\nSet 3: 35 lb, 20 reps\nLeg Press\n\n3 sets\n\n1\n551.2 lb × 15\nSet 1: 551.2 lb, 15 reps\n2\n551.2 lb × 15\nSet 2: 551.2 lb, 15 reps\n3\n551.2 lb × 15\nSet 3: 551.2 lb, 15 reps\nCorrect workout\nSave as routine\nShare to feed\nShare to circle\n\nDelete this workout"
+  }
+}

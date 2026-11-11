@@ -133,10 +133,20 @@ describe("historyRange", () => {
     expect(range.accountDays).toBe(10);
   });
 
-  it("is the whole range for an account exactly as old as it", () => {
+  it("is the whole range for an account exactly as old as it, with nothing before it", () => {
+    // It began on the range's first day: every day of the range before is
+    // from before the account, so there is nothing to compare with yet.
     const range = range30(createdDaysAgo(29));
+    expect(range.joinedInRange).toBe(true);
+    expect(range.accountDays).toBe(30);
+    expect(range.prevSinceKey < range.startKey!).toBe(true);
+  });
+
+  it("compares once the range before has the account's first day in it", () => {
+    const range = range30(createdDaysAgo(30));
     expect(range.joinedInRange).toBe(false);
     expect(range.accountDays).toBe(30);
+    expect(range.sinceKey > range.startKey!).toBe(true);
   });
 
   it("counts an account stamped ahead of this device's clock as one day old", () => {
@@ -562,4 +572,66 @@ describe("periodSummaryFigures", () => {
     expect(figures.prevRunCount).toBeNull();
     expect(figures.prevRunM).toBeNull();
   });
+});
+
+describe("future-dated entries do not count as completed history", () => {
+  it("caps lift figures, records, sets and muscle volume at today", () => {
+    const current = [workout(0), workout(1)];
+    const future = [...current, workout(-1, [bench(200)])];
+    expect(liftFigures(future, range30())).toEqual(
+      liftFigures(current, range30())
+    );
+    expect(liftingPageFigures(future, range30(), { bins: [] })).toEqual(
+      liftingPageFigures(current, range30(), { bins: [] })
+    );
+  });
+
+  it("excludes prelogged meals from averages, sparklines and adherence", () => {
+    const range = historyRange(7, { now: NOW });
+    const current = Array.from({ length: 7 }, (_, i) => ({
+      date: key(i),
+      totalCalories: 2000,
+      totalProtein: 100,
+    }));
+    const future = [
+      ...current,
+      { date: key(-1), totalCalories: 4000, totalProtein: 200 },
+    ];
+    const figures = nutritionFigures(future, range);
+    expect(figures).toEqual(nutritionFigures(current, range));
+    expect(figures.adherence).toBe(100);
+  });
+
+  it("does not add tomorrow's lifts or runs to the current week's bar", () => {
+    const base = {
+      range: range30(),
+      workouts: [workout(0)],
+      windowRuns: [run("today", { daysAgo: 0, km: 5, pace: 300 })],
+      allRuns: [],
+      allRunsKnown: true,
+    };
+    expect(
+      periodSummaryFigures({
+        ...base,
+        workouts: [...base.workouts, workout(-1)],
+        windowRuns: [
+          ...base.windowRuns,
+          run("tomorrow", { daysAgo: -1, km: 10, pace: 300 }),
+        ],
+      })
+    ).toEqual(periodSummaryFigures(base));
+  });
+});
+
+it("keeps future outdoor and indoor runs out of records", () => {
+  const completed = [run("completed", { daysAgo: 1, km: 5, pace: 300 })];
+  const future = [
+    run("future-outdoor", { daysAgo: -1, km: 20, pace: 200 }),
+    run("future-indoor", { daysAgo: -1, km: 10, pace: 200, type: "treadmill" }),
+  ];
+  expect(runRecordRows([...completed, ...future], range30(), "km")).toEqual(
+    runRecordRows(completed, range30(), "km")
+  );
+  expect(runRecordRows(future, range30(), "km").hasAnyRecent).toBe(false);
+  expect(runRecordRows(future, range30(), "km").hasAnyIndoor).toBe(false);
 });

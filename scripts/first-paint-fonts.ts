@@ -11,7 +11,7 @@
  * Only the Latin subset of each, the one an English screen uses: the other
  * subsets (Cyrillic, Vietnamese, Latin Extended) stay on demand through
  * their `unicode-range`. Plus Jakarta Sans is the text face, Archivo the
- * numbers (`--font-display` / `--font-mono` in index.css).
+ * stand-alone figures (`--font-display` / `--font-figure` in index.css).
  */
 import type { HtmlTagDescriptor } from "vite";
 

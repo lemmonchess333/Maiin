@@ -139,13 +139,13 @@ describe("GoalReachedSheet", () => {
     );
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't switch to maintenance. Try again.",
+        "Couldn’t switch to maintenance. Try again.",
         expect.anything()
       )
     );
     expect(onResolved).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalledWith(
-      "Maintenance calories set. Nice work.",
+      "Maintenance calories set.",
       expect.anything()
     );
     expect(

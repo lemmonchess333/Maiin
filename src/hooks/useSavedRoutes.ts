@@ -136,7 +136,7 @@ export function useSavedRoutes() {
       } catch (e) {
         logger.warn("[useSavedRoutes] delete failed", e);
         // The refresh below puts the route back; say why it came back.
-        toast.error("Couldn't delete the route. Try again.");
+        toast.error("Couldn’t delete the route. Try again.");
       }
       // Settle the invalidated reload against the current server list. On
       // failure this also restores the route; a failed read stays retryable.

@@ -13,6 +13,7 @@ import type {
  * longer be read; the Space post page opens the Space instead. A Space
  * row stored without its post's id opens the Space. The rest open the
  * profile of whoever acted, except a Circle backing, which is anonymous.
+ * A league result opens the league.
  */
 
 /** What the post page is handed: who to show when the post can't be
@@ -30,7 +31,7 @@ export interface SpacePostState {
 /** Backing is anonymous in the tray — a profile deep-link would name
  *  the backer, so the row stays a non-navigating acknowledgement. */
 function navigatesToActor(type: NotificationType): boolean {
-  return type !== "circle_focus_backed";
+  return type !== "circle_focus_backed" && type !== "league_result";
 }
 
 /** The page for one Space post, with its comments open when asked. */
@@ -46,6 +47,7 @@ function spacePostPath(
 export function notificationTarget(
   n: NotificationItem
 ): { to: string; state?: ActivityPostState | SpacePostState } | null {
+  if (n.type === "league_result") return { to: "/league" };
   if (
     (n.type === "space_post_like" || n.type === "space_post_comment") &&
     n.spaceId

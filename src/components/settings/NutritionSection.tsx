@@ -282,13 +282,13 @@ export default function NutritionSection({
         {/* TDEE Results */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-muted rounded-lg p-3 text-center">
-            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+            <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.bmr}
             </p>
             <p className="text-xs text-muted-foreground">BMR</p>
           </div>
           <div className="bg-muted rounded-lg p-3 text-center">
-            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+            <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.tdee}
             </p>
             <p className="text-xs text-muted-foreground">TDEE</p>
@@ -326,7 +326,7 @@ export default function NutritionSection({
             <Minus className="size-4" />
           </button>
           <div className="text-center">
-            <p className="text-2xl font-mono tabular-nums font-bold text-foreground">
+            <p className="text-2xl font-figure tabular-nums font-bold text-foreground">
               {formatWeightInUnit(goalWeightKg, weightUnit)}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -565,8 +565,8 @@ export default function NutritionSection({
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
           <p className="text-micro text-muted-foreground leading-snug pt-2">
-            Protein follows your training block. Carbs and fat are a rest
-            day&apos;s; training days move some fat to carbs.
+            Protein follows your training block. Carbs and fat are a rest day’s;
+            training days move some fat to carbs.
           </p>
 
           {split.aggressive && !split.infeasible && (
@@ -652,7 +652,7 @@ export default function NutritionSection({
             </p>
             <p className="text-xs text-muted-foreground">
               Your daily calorie target already accounts for your training, so
-              there's no need to eat back exercise calories. Big training days
+              there’s no need to eat back exercise calories. Big training days
               shift more carbs for fuel.
             </p>
           </div>

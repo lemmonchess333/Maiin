@@ -103,7 +103,7 @@ export default function SetCheck({
       </motion.span>
       {best && (
         <span className="text-caption font-semibold leading-none text-achievement-strong">
-          PR
+          Best
         </span>
       )}
     </button>

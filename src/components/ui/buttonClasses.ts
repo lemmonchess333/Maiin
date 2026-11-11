@@ -17,8 +17,10 @@ export type ButtonVariant =
   | "outline"
   | "sport"
   | "sport-tinted"
+  | "lifting-tinted"
   | "nutrition"
-  | "nutrition-tinted";
+  | "nutrition-tinted"
+  | "neutral";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -55,9 +57,11 @@ const BASE_CLASSES = [
 /** The edge a secondary pill takes where it sits on the white card: the
  *  muted fill reads ~1.06:1 there in light, so the boundary carries the
  *  3:1 a control needs (muted-foreground/80 measures 3.2:1 or more on
- *  every light surface). Dark keeps the fill alone. */
+ *  every light surface). Dark has no border at all: the variant's
+ *  `chip-edge` is its edge, and a border under it, even a transparent
+ *  one, would push that lit line a pixel in from the pill's rim. */
 export const SECONDARY_ON_CARD_EDGE =
-  "border border-muted-foreground/80 dark:border-transparent";
+  "border border-muted-foreground/80 dark:border-0";
 
 /** The edge a field takes. In light its box reads 3:1 against the card
  *  (muted-foreground/80: 3.3:1). In dark it is the hairline `.ds-input`
@@ -72,10 +76,15 @@ export const FIELD_EDGE =
 export const FIELD_FOCUS_RING =
   "focus:border-primary focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-primary!";
 
+/* `chip-edge` (DESIGN_GUIDE §14o): the pills whose fill sits close to the
+ * surface under them, the muted one and the 10% tints, take a lit edge in
+ * the dark theme, where the fill alone measures about 1.1:1 against a
+ * card. The filled variants are their own edge, `outline` has a border,
+ * and `ghost` is meant to have none. */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
-  secondary: "bg-muted text-foreground hover:bg-muted/80",
+  secondary: "bg-muted text-foreground hover:bg-muted/80 chip-edge",
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   // 10% red tint + the AA red TEXT step — soft "danger zone" actions that
@@ -84,7 +93,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // a tint over the page background; `--destructive-strong` is the same
   // hue at the lightness AA needs. The TINT stays the identity.
   "destructive-tinted":
-    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20",
+    "bg-destructive/10 text-destructive-strong hover:bg-destructive/20 chip-edge",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   // Filled coral CTA. The fill is --running-fill, NOT the bare identity:
@@ -98,14 +107,24 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // `--running-strong`, because the identity itself only reaches 2.74:1
   // on that tint over the page background (RunDetail / RunSummary render
   // these buttons directly on the canvas, not inside a card).
-  "sport-tinted": "bg-running/10 text-running-strong",
+  "sport-tinted": "bg-running/10 text-running-strong chip-edge",
   // Nutrition domain CTA. Filled uses `--nutrition-fill` (#B45309) under
   // white text, mirroring how `primary` uses `--primary-strong`; the
   // identity orange (#D9884E) is too light for white text. The tinted
   // surface is the identity orange at 10%, with the theme-aware
   // `--nutrition-strong` text step on top.
   nutrition: "bg-nutrition-fill text-white",
-  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
+  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong chip-edge",
+  // The lifting analogue: a lift's quieter Start (the compact card under
+  // Home's hero), so a screen keeps one filled button and the lift keeps
+  // its colour. `--lifting-strong` is the AA text step for a 12% tint.
+  "lifting-tinted": "bg-lifting/10 text-lifting-strong chip-edge",
+  // A screen's one full-width filled button (DS4, DESIGN_GUIDE §14i):
+  // white on dark and ink on light, whatever its domain. Filled in a
+  // domain colour it was the largest patch of colour on the screen, where
+  // the largest colour is the person's data. The foreground and page
+  // tokens swap with the theme, so one class pair is both.
+  neutral: "bg-foreground text-background hover:bg-foreground/90",
 };
 
 /**

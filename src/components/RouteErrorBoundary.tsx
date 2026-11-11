@@ -39,7 +39,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
       // retry line in production.
       const isDev = import.meta.env.DEV;
       const errorText = isDev
-        ? this.state.error?.message || "This page couldn't load."
+        ? this.state.error?.message || "This page couldn’t load."
         : "Try again. If the problem keeps happening, restart Tropos.";
       return (
         <div

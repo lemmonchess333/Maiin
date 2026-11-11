@@ -1,5 +1,6 @@
 import { Check, ChevronRight, X } from "lucide-react";
 import Card from "@/components/ui/Card";
+import MetaLine from "@/components/ui/MetaLine";
 import IconButton from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -53,10 +54,10 @@ function ItemRow({ item }: { item: FirstWeekItem }) {
  * Home's card for a new account's first seven days (firstWeek.ts): what
  * to do first, ticked as it happens, and when the first recap comes.
  *
- * An item still to do opens its step (FV1): the first workout or run is
- * pointed out on its card, the first meal opens Food with the composer
- * pointed out, and the weigh-ins open the weigh-in sheet. A ticked item is
- * plain text. Without `onOpen` every row is plain, as the card was in FW1.
+ * A version 2 training row goes to the matching session's safe Start,
+ * Resume, or plan detail destination. Legacy rows retain their original
+ * guide and Food destinations. A ticked item is plain text. Without
+ * `onOpen` every row is plain, as the card was in FW1.
  */
 export default function FirstWeekCard({
   week,
@@ -68,7 +69,11 @@ export default function FirstWeekCard({
   onOpen?: (key: FirstWeekItemKey) => void;
 }) {
   return (
-    <Card as="section" aria-labelledby="first-week-title" className="space-y-3">
+    <Card
+      as="section"
+      aria-labelledby="first-week-title"
+      className="space-y-3 rounded-xl"
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <h2
@@ -77,10 +82,16 @@ export default function FirstWeekCard({
           >
             Your first week
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Day <span className="font-mono tabular-nums">{week.day}</span> of{" "}
-            <span className="font-mono tabular-nums">{FIRST_WEEK_DAYS}</span>
-          </p>
+          {/* Where the week is, and how much of it is done: the ticks
+              below say which, this says how many (Mob2 call 1). Two facts
+              on one line, each kept whole (DESIGN_GUIDE §4). */}
+          <MetaLine
+            size="xs"
+            items={[
+              `Day ${week.day} of ${FIRST_WEEK_DAYS}`,
+              `${week.items.filter((item) => item.done).length} of ${week.items.length} done`,
+            ]}
+          />
         </div>
         <IconButton
           aria-label="Hide your first week"
@@ -103,7 +114,7 @@ export default function FirstWeekCard({
                   haptic();
                   onOpen(item.key);
                 }}
-                className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               >
                 <ItemRow item={item} />
                 <ChevronRight

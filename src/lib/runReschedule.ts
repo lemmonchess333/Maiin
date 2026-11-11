@@ -11,6 +11,53 @@ import {
   getScheduledRunStatus,
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
+import type { SavedRun } from "@/lib/savedRuns";
+import { isRunDateKey } from "@/lib/runExecutionEvidence";
+
+/** The exact source and saved-run evidence the person reviewed. Optional on
+ * the existing command for older clients; the workspace always supplies it. */
+export interface RunMovePrecondition {
+  sourceSignature: string;
+  todayKey: string;
+  completionEvidence: string;
+}
+
+/** Canonical tuple, mirrored by functions/lib/runReschedule.js. This guards
+ * the actual prescription as well as its date without authoring a patch. */
+export function runMoveSourceSignature(source: ScheduledRunDay): string {
+  return JSON.stringify([
+    source.id ?? "", source.weekKey ?? "", source.date ?? "", source.dayIndex,
+    source.templateId, source.type, getScheduledRunStatus(source),
+    source.completed === true, source.userOverride ?? "",
+    source.timeLimit?.minutes ?? null, source.timeLimit?.originalTemplateId ?? "",
+    source.trainingBasis?.originalTemplateId ?? "",
+    source.trainingBasis?.confirmedAt ?? "", source.trainingBasis?.reason ?? "",
+    source.movedFromDate ?? "", source.movedToDate ?? "",
+    source.clashesWithLift === true,
+  ]);
+}
+
+type CompletionEvidenceRun = Pick<SavedRun,
+  "id" | "day" | "distance" | "duration" | "avgPace" | "templateId" |
+  "type" | "activityType" | "savedAtSeconds" | "isInvalid" | "savedAnyway">;
+
+/** Snapshot of the saved rows that could change the source's soft claim.
+ * This is freshness evidence, not a second implementation of claim rules. */
+export function runMoveCompletionEvidence(
+  runDays: readonly ScheduledRunDay[],
+  runs: readonly CompletionEvidenceRun[]
+): string {
+  const dates = runDays.flatMap(run => isRunDateKey(run.date) ? [run.date] : []).sort();
+  if (!dates.length) return JSON.stringify([[], []]);
+  const [y, m, d] = dates[dates.length - 1].split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+  return JSON.stringify([runDays.map(runMoveSourceSignature).sort(),
+    runs.filter(run => run.day >= dates[0] && run.day <= next)
+    .map(run => [run.id, run.day, run.distance, run.duration, run.avgPace,
+      run.templateId ?? "", run.type ?? "", run.activityType,
+      run.savedAtSeconds, run.isInvalid === true, run.savedAnyway === true])
+    .sort((a, b) => String(a[0]) < String(b[0]) ? -1 : String(a[0]) > String(b[0]) ? 1 : 0) ]);
+}
 
 /**
  * RUN-RESCHEDULE-01 — pure logic for the one-off "move a scheduled run to
@@ -66,6 +113,7 @@ export interface RunMovePatch {
  *  skipped / race_no_show) and race slots are immovable. */
 export function canRescheduleRun(source: ScheduledRunDay): boolean {
   if (isScheduledRaceRunDay(source)) return false;
+  if (source.completed === true) return false;
   return isScheduledRunEditable(getScheduledRunStatus(source));
 }
 

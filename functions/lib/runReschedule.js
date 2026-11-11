@@ -36,9 +36,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 function parseDayUTC(date) {
   if (typeof date !== "string") return NaN;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return NaN;
   const parts = date.split("-").map(Number);
   if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return NaN;
-  return Date.UTC(parts[0], parts[1] - 1, parts[2]);
+  const ms = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+  return formatDayUTC(ms) === date ? ms : NaN;
 }
 
 function formatDayUTC(ms) {
@@ -117,9 +119,71 @@ function computeRunMove(source, targetDayIndex, weekSchedule) {
   };
 }
 
+/** Reviewed source identity/prescription. Pinned against the TS helper. */
+function runMoveSourceSignature(source) {
+  return JSON.stringify([
+    source.id ?? "", source.weekKey ?? "", source.date ?? "", source.dayIndex,
+    source.templateId, source.type, source.status || (source.completed ? "completed_exact" : "planned"),
+    source.completed === true, source.userOverride ?? "",
+    source.timeLimit?.minutes ?? null, source.timeLimit?.originalTemplateId ?? "",
+    source.trainingBasis?.originalTemplateId ?? "",
+    source.trainingBasis?.confirmedAt ?? "", source.trainingBasis?.reason ?? "",
+    source.movedFromDate ?? "", source.movedToDate ?? "",
+    source.clashesWithLift === true,
+  ]);
+}
+
+function runMoveEvidenceWindow(runDays) {
+  const dates = runDays.flatMap(run => Number.isFinite(parseDayUTC(run.date)) ? [run.date] : []).sort();
+  if (!dates.length) return null;
+  return { since: dates[0], until: formatDayUTC(parseDayUTC(dates[dates.length - 1]) + DAY_MS) };
+}
+
+/** Same freshness tuple as the client. NOT a claim-engine mirror. */
+function runMoveCompletionEvidence(runDays, runs) {
+  const window = runMoveEvidenceWindow(runDays);
+  if (!window) return JSON.stringify([[], []]);
+  return JSON.stringify([runDays.map(runMoveSourceSignature).sort(),
+    runs.filter(run => run.day >= window.since && run.day <= window.until)
+      .map(run => [run.id, run.day, run.distance, run.duration, run.avgPace,
+        run.templateId ?? "", run.type ?? "", run.activityType,
+        run.savedAtSeconds, run.isInvalid === true, run.savedAnyway === true])
+      .sort((a, b) => String(a[0]) < String(b[0]) ? -1 : String(a[0]) > String(b[0]) ? 1 : 0) ]);
+}
+
+function timestampMs(value) {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  if (value && typeof value.toMillis === "function") return value.toMillis();
+  if (value && typeof value.seconds === "number") return value.seconds * 1000;
+  return NaN;
+}
+
+/** Only the fields used by the reviewed evidence, matching parseSavedRun. */
+function runMoveSavedEvidenceRow(id, data, localDateForInstant) {
+  const completedAt = timestampMs(data.completedAt);
+  if (!Number.isFinite(completedAt)) return null;
+  const finite = value => typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+  const text = value => typeof value === "string" && value ? value : undefined;
+  const savedAt = timestampMs(data.createdAt);
+  return {
+    id,
+    day: Number.isFinite(parseDayUTC(data.date)) ? data.date : localDateForInstant(completedAt),
+    distance: finite(data.distance), duration: finite(data.duration), avgPace: finite(data.avgPace),
+    templateId: text(data.actualTemplateId) ?? text(data.plannedTemplateId) ?? text(data.templateId),
+    type: text(data.type), activityType: data.activityType || "freerun",
+    savedAtSeconds: Math.floor((Number.isFinite(savedAt) ? savedAt : completedAt) / 1000),
+    isInvalid: data.isInvalid === true, savedAnyway: data.savedAnyway === true,
+  };
+}
+
 module.exports = {
   HARD_RUN_TYPES,
   computeRunMove,
   dateForDay,
   runOriginDate,
+  runMoveSourceSignature,
+  runMoveEvidenceWindow,
+  runMoveCompletionEvidence,
+  runMoveSavedEvidenceRow,
 };

@@ -1,101 +1,85 @@
-import { useState } from "react";
-import { Trophy } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { ChevronRight } from "lucide-react";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { challengeEditorialImage } from "@/lib/editorialImages";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { challengeGoal } from "./challengeFormat";
-import { challengeSport, SPORT_ACCENT } from "./challengeSport";
+import { challengeSport } from "./challengeSport";
 import { getTimeRemaining, type Challenge } from "./useChallenges";
+import SportIconTile from "./SportIconTile";
+import MedalArt from "./MedalArt";
+import { rowMedalFace } from "./rowMedal";
 
 /**
- * One not-joined challenge in the "See more" list, as a row in a grouped
- * card: a small picture, the name, the goal, and a small Join in the
- * challenge's sport (coral for running, the primary purple otherwise, as
- * the full card's Join). The big picture card is kept for the featured
- * challenge alone, so the list reads as a list rather than five lobbies.
+ * One challenge in Discover's list, as a row in a grouped card: the medal
+ * its first tier wins, the name and the goal. The whole row opens the challenge
+ * (`onOpen`), where its board and Join are, as the running apps' challenge
+ * lists do: a Join on every row made a wall of buttons, and the medal and
+ * the goal's own words already say the sport.
  *
  * Says how long is left only when asked to (`showTimeLeft`): the monthly
- * challenges all end on the same day, which the featured card says.
+ * challenges all end on the same day, so the list says it once, above.
  */
 export default function ChallengeRow({
   challenge,
-  onJoin,
+  onOpen,
   showTimeLeft = false,
 }: {
   challenge: Challenge;
-  onJoin: () => void | Promise<void>;
+  onOpen: () => void;
   showTimeLeft?: boolean;
 }) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
-  const [joining, setJoining] = useState(false);
-  const sport = challengeSport(challenge.metric);
-  const accent = SPORT_ACCENT[sport];
-  const photo = challengeEditorialImage(challenge);
   const goal =
     challengeGoal(challenge, liftUnit, distanceUnit) ?? challenge.description;
   const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
-
-  const handleJoin = async () => {
-    if (joining) return;
-    setJoining(true);
-    try {
-      await onJoin();
-    } finally {
-      setJoining(false);
-    }
-  };
+  const medal = rowMedalFace(challenge, null, liftUnit, distanceUnit);
 
   return (
-    <li className="flex items-start gap-[12px] p-3">
-      {/* The picture gives its room to the words once the row is under
-          14em (larger text on a narrow phone). px, so it does not grow
-          with the text. */}
-      <div
-        aria-hidden
-        className="relative size-[48px] shrink-0 rounded-xl overflow-hidden flex @max-[14em]:hidden items-center justify-center"
-        style={photo ? undefined : { background: `${accent}1F` }}
+    <li>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        onClick={onOpen}
+        className="flex w-full items-center gap-[12px] px-3 py-2 text-left active:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       >
-        {photo ? (
-          <img
-            src={photo}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-            loading="lazy"
-            decoding="async"
+        {/* The medal its first tier wins (Soc16), or the sport's tile for
+            a challenge that awards none. Either gives its room to the
+            words once the row is under 14em (larger text on a narrow
+            phone). */}
+        {medal ? (
+          <MedalArt
+            {...medal}
+            size={36}
+            className="shrink-0 @max-[14em]:hidden"
           />
         ) : (
-          <Trophy className="size-5" style={{ color: accent }} />
+          <SportIconTile
+            sport={challengeSport(challenge.metric)}
+            className="@max-[14em]:hidden"
+          />
         )}
-      </div>
-      {/* The Join drops under the words, at the right, once they would be
-          narrower than 8em beside it. */}
-      <div className="min-w-0 flex-1 flex flex-wrap items-center justify-end gap-x-[12px] gap-y-[8px]">
-        <div className="min-w-[min(8em,100%)] flex-1">
-          <p className="text-sm font-semibold text-foreground leading-snug break-words">
+        <span className="min-w-0 flex-1">
+          <span
+            data-challenge-name=""
+            className="block text-sm font-semibold text-foreground leading-snug break-words"
+          >
             {challenge.name}
-          </p>
-          <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+          </span>
+          <span className="block text-xs text-muted-foreground leading-snug mt-0.5">
             <InlineNumerals>{goal}</InlineNumerals>
-          </p>
+          </span>
           {timeLeft && (
-            <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+            <span className="block text-xs text-muted-foreground leading-snug mt-0.5">
               <InlineNumerals>{timeLeft}</InlineNumerals>
-            </p>
+            </span>
           )}
-        </div>
-        <Button
-          variant={sport === "running" ? "sport" : "primary"}
-          className="shrink-0"
-          loading={joining}
-          onClick={handleJoin}
-          aria-label={`Join ${challenge.name}`}
-        >
-          Join
-        </Button>
-      </div>
+        </span>
+        <ChevronRight
+          className="size-4 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
+      </button>
     </li>
   );
 }

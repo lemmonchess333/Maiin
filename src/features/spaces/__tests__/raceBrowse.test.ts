@@ -25,12 +25,14 @@ describe("race browsing", () => {
         (r) => r.id
       )
     ).toEqual([
-      "chicago-marathon",
-      "new-york-city-marathon",
+      // In date order: Chicago's and New York's bundled dates are their
+      // 2027 editions, after Boston's April.
       "honolulu-marathon",
       "houston-marathon",
       "los-angeles-marathon",
       "boston-marathon",
+      "chicago-marathon",
+      "new-york-city-marathon",
     ]);
     expect(allFull.map((r) => r.event!.dateKey)).toEqual(
       allFull.map((r) => r.event!.dateKey).sort()
@@ -67,9 +69,17 @@ describe("race browsing", () => {
       country: "DE",
       distance: "marathon",
     });
-    expect(berlin.map((r) => [r.id, r.event!.dateKey])).toEqual([
-      ["berlin-marathon", "2027-09-26"],
-    ]);
+    // Berlin's resolved date, not its bundled one, decides whether it is
+    // upcoming, and its calendar day comes through unshifted. Other German
+    // marathons with a date ahead (Frankfurt's) may sit beside it.
+    expect(berlin.find((r) => r.id === "berlin-marathon")?.event?.dateKey).toBe(
+      "2027-09-26"
+    );
+    expect(
+      berlin.every(
+        (r) => r.event?.countryCode === "DE" && r.event.distance === "marathon"
+      )
+    ).toBe(true);
     expect(
       upcomingResolvedRaceDefs(
         { "berlin-marathon": { dateKey: "2027-09-26" } },

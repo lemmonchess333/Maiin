@@ -35,7 +35,6 @@ import { logger } from "@/lib/logger";
 import type { SpacePostState } from "@/lib/notificationTarget";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
-import { SPACE_ACCENT_HEX } from "@/features/spaces/spaceAccent";
 import {
   isMemberFacing,
   type SpacePostDoc,
@@ -165,15 +164,15 @@ function SpacePostPage({
       {unavailable ? (
         <EmptyState
           icon={MessageCircleOff}
-          headline="This post isn't available"
-          sub="It may have been deleted, or it's no longer shared with you."
+          headline="This post isn’t available"
+          sub="It may have been deleted, or it’s no longer shared with you."
           action={
             def ? { label: `Open ${def.name}`, href: spacePath } : undefined
           }
         />
       ) : read.status === "error" ? (
         <ErrorState
-          title="Couldn't load this post"
+          title="Couldn’t load this post"
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -200,7 +199,6 @@ function SpacePostPage({
             spaceId={shown.def.id}
             postId={postId}
             post={shown.post}
-            accent={SPACE_ACCENT_HEX[shown.def.accent]}
             // The author deleted it: back to the Space it was in.
             onRemoved={() => navigate(spacePath, { replace: true })}
             liked={likes.liked.has(postId)}

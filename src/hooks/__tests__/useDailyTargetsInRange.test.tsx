@@ -24,10 +24,13 @@ import {
 } from "@/test/firestoreHarness";
 import { localDateString } from "@/lib/dateHelpers";
 
-const DAY = 24 * 60 * 60 * 1000;
 /** Local date key N days back, the form the snapshot docs are keyed by. */
-const dayKey = (back: number) =>
-  localDateString(new Date(Date.now() - back * DAY));
+const dayKey = (back: number) => {
+  const date = new Date();
+  // Elapsed 24-hour steps can repeat a date across the fall DST change.
+  date.setDate(date.getDate() - back);
+  return localDateString(date);
+};
 
 const snapshot = (back: number, calories: unknown, protein: unknown = 160) => ({
   [`users/u1/dailyNutrition/${dayKey(back)}`]: {
@@ -40,7 +43,24 @@ const snapshot = (back: number, calories: unknown, protein: unknown = 160) => ({
 });
 
 beforeEach(() => resetFirestore());
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.clearAllMocks();
+});
+
+describe("daily target fixtures", () => {
+  it.each([
+    { now: new Date(2026, 10, 5, 23, 30), fiveDaysAgo: "2026-10-31" },
+    { now: new Date(2026, 2, 12, 0, 30), fiveDaysAgo: "2026-03-07" },
+  ])("uses distinct calendar days from $now", ({ now, fiveDaysAgo }) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+
+    expect(dayKey(5)).toBe(fiveDaysAgo);
+    const keys = Array.from({ length: 150 }, (_, index) => dayKey(index + 1));
+    expect(new Set(keys).size).toBe(150);
+  });
+});
 
 describe("useDailyTargetsInRange", () => {
   it("gives each day the target it had, not one target for all", async () => {
@@ -64,6 +84,7 @@ describe("useDailyTargetsInRange", () => {
     const seed: Record<string, Record<string, unknown>> = {};
     for (let back = 1; back <= 150; back += 1)
       Object.assign(seed, snapshot(back, 2400));
+    expect(Object.keys(seed)).toHaveLength(150);
     seedFirestore(seed);
     const { result } = renderHook(() => useDailyTargetsInRange("u1", 180));
     await waitFor(() => expect(result.current.loading).toBe(false));

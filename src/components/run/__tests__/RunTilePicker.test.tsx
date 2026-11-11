@@ -79,3 +79,14 @@ describe("RunTilePicker", () => {
     expect(column).not.toHaveClass("justify-center");
   });
 });
+
+it("offers repeatable run help without starting or changing setup", () => {
+  const onHelp = vi.fn();
+  const { onPickType, onMoreOptions, onBack } = setup({ onHelp });
+  fireEvent.click(screen.getByRole("button", { name: "How runs work" }));
+  fireEvent.click(screen.getByRole("button", { name: "How runs work" }));
+  expect(onHelp).toHaveBeenCalledTimes(2);
+  expect(onPickType).not.toHaveBeenCalled();
+  expect(onMoreOptions).not.toHaveBeenCalled();
+  expect(onBack).not.toHaveBeenCalled();
+});

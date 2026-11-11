@@ -20,7 +20,9 @@ import { formatExerciseSummary, NO_SETS_SUMMARY } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
+import { liftPostMoments, type LiftMomentFacts } from "@/lib/postMoments";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { formatDuration } from "@/utils/formatters";
 
 /** A saved lift, as its post describes it. */
 export interface LiftForPost {
@@ -29,6 +31,10 @@ export interface LiftForPost {
   exercises: WorkoutExercise[];
   /** Minutes as saved. */
   durationMinutes: number;
+  /** What the finish screen knew about the session beyond its sets: its
+   *  new bests, the streak, the plan's week (Soc15). Absent for a workout
+   *  posted later from its own page, which has none to tell. */
+  moments?: LiftMomentFacts;
 }
 
 /**
@@ -57,6 +63,7 @@ export function postedExercises(
         setCount,
         targetReps,
         targetWeightKg,
+        ...(ex.superset !== undefined ? { superset: ex.superset } : {}),
       };
     });
 }
@@ -83,7 +90,8 @@ export function liftPostPreview(
       tonnageKg > 0
         ? `${Math.round(liftVolumeIn(tonnageKg, unit)).toLocaleString()} ${liftUnitLabel(unit)} volume`
         : "",
-      lift.durationMinutes > 0 ? `${lift.durationMinutes} min` : "",
+      // Saved minutes carry the clock's seconds; the preview reads whole ones.
+      lift.durationMinutes > 0 ? formatDuration(lift.durationMinutes * 60) : "",
     ].filter(Boolean),
   };
 }
@@ -100,6 +108,10 @@ export function liftPost(
 ): ActivityPost {
   const { done, tonnageKg } = liftFigures(lift);
   const caption = decision.caption?.trim();
+  const moments = liftPostMoments(lift.moments);
+  // Every new best the finish screen listed, which the card's PR chip
+  // counts; the moments name the strongest in each exercise.
+  const prCount = lift.moments?.prs?.length ?? 0;
   return {
     authorId: author.uid,
     authorName: author.displayName || "Athlete",
@@ -111,9 +123,11 @@ export function liftPost(
     activityTitle: lift.title,
     exerciseCount: done.length,
     totalVolume: tonnageKg,
-    duration: lift.durationMinutes * 60,
+    duration: Math.round(lift.durationMinutes * 60),
     muscleGroups: [...new Set(done.map((ex) => ex.category).filter(Boolean))],
     exercises: postedExercises(done),
+    ...(prCount > 0 ? { prCount } : {}),
+    ...(moments.length > 0 ? { moments } : {}),
   };
 }
 
@@ -129,6 +143,8 @@ export interface LiftPostRow {
     targetReps: number;
     targetWeightKg: number;
   } | null;
+  /** The superset it was done in (Mob1 call 2), on posts that say. */
+  superset?: number;
 }
 
 const isNumber = (value: unknown): value is number =>
@@ -167,6 +183,10 @@ function readRow(
     return { name, summary, structured: null };
   }
   if (Math.round(structured.setCount) <= 0) return "not done";
+  const superset =
+    isNumber(ex.superset) && ex.superset >= 1
+      ? Math.round(ex.superset)
+      : undefined;
   // Which lift it is decides "BW" and seconds. Older posts carry no id,
   // and the catalogue names the lift.
   const exerciseId =
@@ -177,6 +197,7 @@ function readRow(
     name,
     summary: formatExerciseSummary({ ...structured, exerciseId }, unit),
     structured,
+    ...(superset !== undefined ? { superset } : {}),
   };
 }
 

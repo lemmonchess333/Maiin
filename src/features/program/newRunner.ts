@@ -1,6 +1,7 @@
 import {
   addLocalDays,
   localDateString,
+  localWeekKey,
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/workoutTemplates";
 import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import { plannedRunMinutes } from "./runTimeLimits";
+import { STARTER_STAGES, starterNewRunnerUntil } from "./starterPlan";
 
 /**
  * A new runner's first weeks (Run20 (5)): no tempo or intervals in them, so
@@ -34,6 +36,12 @@ export interface NewRunnerProfile {
   runFrequency?: string;
   createdAt?: unknown;
   onboardingCompletedAt?: unknown;
+  /** Run9's starter goal: once over, where a race plan's first weeks start. */
+  starterGoal?: {
+    finishedOn?: string;
+    endedOn?: string;
+    stage?: number;
+  } | null;
 }
 
 /**
@@ -62,6 +70,21 @@ export function newRunnerUntil(
 export function profileNewRunnerUntil(
   profile: NewRunnerProfile | null | undefined
 ): string | null {
+  // A starter goal that is over says how far the running got, which the
+  // calendar does not: finished, the 30 minutes; ended for a race, the
+  // stage it reached (`starterNewRunnerUntil`). This holds whatever setup's
+  // answer was.
+  const starter = profile?.starterGoal;
+  const over = starter?.finishedOn
+    ? { day: starter.finishedOn, stage: STARTER_STAGES }
+    : starter?.endedOn
+      ? { day: starter.endedOn, stage: starter.stage ?? 1 }
+      : null;
+  if (over)
+    return starterNewRunnerUntil(
+      over.stage,
+      localWeekKey(parseLocalDate(over.day))
+    );
   return newRunnerUntil(
     profile?.runFrequency,
     startDayKey(profile?.onboardingCompletedAt) ??

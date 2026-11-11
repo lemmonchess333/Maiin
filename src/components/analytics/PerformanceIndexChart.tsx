@@ -20,7 +20,7 @@ import {
   CHART_AXIS_TICK,
 } from "./chartStyles";
 import ChartAreaGradient from "./ChartAreaGradient";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonthYear } from "@/utils/formatters";
 import {
   averageCaption,
   averagePerformanceIndex,
@@ -28,6 +28,7 @@ import {
   rollingAverageSeries,
 } from "@/lib/performanceAverage";
 import { formatBinLabel } from "@/lib/chartGranularity";
+import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -66,11 +67,11 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">
+        <h3 className="text-base font-bold text-foreground">
           Performance Index
         </h3>
         <span className="text-xs font-mono tabular-nums text-muted-foreground">
-          0–100 · last {data.length}w
+          0–100 · {data.length} {data.length === 1 ? "score" : "scores"}
         </span>
       </div>
 
@@ -191,10 +192,10 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             separator={CHART_TOOLTIP_SEPARATOR}
             labelFormatter={(label) => {
               const s = typeof label === "string" ? label : String(label ?? "");
-              const d = new Date(s + "T00:00:00");
+              const d = parseLocalDate(s);
               if (Number.isNaN(d.getTime())) return "";
               // Each score covers the seven days ENDING on its date.
-              return `Week to ${formatDayMonth(d)}`;
+              return `${formatDayMonthYear(addLocalDays(d, -6))} to ${formatDayMonthYear(d)}`;
             }}
             formatter={(value, name) => {
               const labels: Record<string, string> = {

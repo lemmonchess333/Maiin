@@ -1,0 +1,86 @@
+name: iOS native compile
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-native-compile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  simulator-build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The project copies this file into the app bundle. A synthetic plist
+      # lets PRs compile the native targets without exposing Firebase secrets
+      # or implying the resulting simulator app is suitable for release.
+      - name: Place compile-only Firebase plist
+        run: |
+          cat > ios/App/App/GoogleService-Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>API_KEY</key><string>compile-only</string>
+            <key>GCM_SENDER_ID</key><string>123456789</string>
+            <key>GOOGLE_APP_ID</key><string>1:123456789:ios:compileonly</string>
+            <key>PROJECT_ID</key><string>compile-only</string>
+            <key>BUNDLE_ID</key><string>com.tropos.app</string>
+          </dict></plist>
+          PLIST
+          plutil -lint ios/App/App/GoogleService-Info.plist
+      - name: Build Capacitor bundle and sync native project
+        run: npm run build:ios
+      # The same project builds both kinds of TestFlight build: a standard
+      # one, which embeds no Watch app and carries the short Health text, and
+      # the pilot, which overrides the release gate exactly as deploy-ios.yml
+      # does. Standard first: the pilot's embedded Watch app would otherwise
+      # be left behind in the shared products folder and read as the standard
+      # build's. Sharing the derived data lets the pilot reuse what it can.
+      - name: Compile a standard build for simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/tropos-ios-build" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Check the standard build carries no Watch app
+        run: |
+          python3 scripts/verify_ios_watch.py --unsigned \
+            --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
+            --expected-connected-training NO
+      - name: Compile the connected training pilot for simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/tropos-ios-build" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            WATCH_RUN_RELEASE_ENABLED=YES \
+            build
+      - name: Check the pilot build embeds the Watch app
+        run: |
+          python3 scripts/verify_ios_watch.py --unsigned \
+            --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
+            --expected-connected-training YES

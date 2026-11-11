@@ -10,7 +10,7 @@ export function ToastProvider() {
     <>
       <style>{`
         /* Modern toast — clean card surface, no cream-accent throwback.
-           Uses the same tokens as the rest of the app's cards so the
+           Uses the same tokens as the rest of the app’s cards so the
            toast reads as part of the design system, not a third-party
            overlay. */
         [data-sonner-toast] {
@@ -22,7 +22,7 @@ export function ToastProvider() {
           box-shadow: var(--ds-shadow-elevated) !important;
         }
         /* A toast with BOTH an action and a cancel ("Retry" + "Log
-           manually" on the Food page's failed-search toast) at phone width:
+           manually" on the Food page’s failed-search toast) at phone width:
            the pills are flex-shrink:0 below, so the title collapsed to its
            min-content — one character per line ("C o u l d n ' t …",
            reproduced at 393px). Let the row wrap so the
@@ -62,7 +62,7 @@ export function ToastProvider() {
         [data-sonner-toast][data-type="error"] [data-icon] svg {
           color: var(--ds-error) !important;
         }
-        /* Title/description hierarchy — sonner's flat default made the
+        /* Title/description hierarchy — sonner’s flat default made the
            whole toast read as one undifferentiated line. */
         [data-sonner-toast] [data-title] {
           font-weight: 600 !important;
@@ -70,11 +70,11 @@ export function ToastProvider() {
         [data-sonner-toast] [data-description] {
           color: hsl(var(--muted-foreground)) !important;
         }
-        /* Action button — sonner's default is an unstyled near-black pill
+        /* Action button — sonner’s default is an unstyled near-black pill
            that reads as a third-party artefact (the "Refresh" button on the
-           update toast). Restyle to the app's primary CTA language:
+           update toast). Restyle to the app’s primary CTA language:
            brand-strong fill (the AA text-on-colour step), pill radius,
-           semibold. 36px matches the Button primitive's sm size (the
+           semibold. 36px matches the Button primitive’s sm size (the
            sanctioned inline-control height). */
         [data-sonner-toast] [data-button] {
           background: hsl(var(--primary-strong)) !important;

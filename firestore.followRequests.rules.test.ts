@@ -322,3 +322,98 @@ suite("firestore.rules — follow approval", () => {
     });
   });
 });
+
+/* Soc15: joining from an invite follows both ways, written only by the
+   redeemInvite callable with the Admin SDK. Its edges carry `fromInvite`,
+   which tells onFollowerCreated to stay quiet; no client may write one, or
+   read or write an invite code. */
+suite("firestore.rules — invites", () => {
+  beforeEach(async () => {
+    await env.clearFirestore();
+    for (const uid of [ALICE, BOB, CAROL]) {
+      await seed(`users/${uid}`, { displayName: uid });
+    }
+  });
+
+  it("no client writes a follow edge that says it came from an invite", async () => {
+    // Alice accepts everyone, so a plain follow goes through: the marker
+    // is what is refused.
+    await seed(`users/${ALICE}`, { approveFollowers: false });
+    for (const [list, owner, other] of [
+      ["following", BOB, ALICE],
+      ["followers", ALICE, BOB],
+    ] as const) {
+      await assertFails(
+        setDoc(doc(db(BOB), list, owner, "users", other), {
+          followedAt: Timestamp.now(),
+          fromInvite: true,
+        })
+      );
+    }
+    await assertSucceeds(followDirectly(db(BOB)));
+  });
+
+  it("the person asked cannot mark an accepted request as an invite", async () => {
+    await ask(db(BOB));
+    const alice = db(ALICE);
+    const batch = writeBatch(alice);
+    const edge = {
+      followedAt: Timestamp.now(),
+      fromRequest: true,
+      fromInvite: true,
+    };
+    batch.set(doc(alice, "following", BOB, "users", ALICE), edge);
+    batch.set(doc(alice, "followers", ALICE, "users", BOB), edge);
+    batch.delete(doc(alice, "followRequests", ALICE, "users", BOB));
+    await assertFails(batch.commit());
+  });
+
+  it("an edge the server wrote from an invite is read like any other", async () => {
+    await seed(`following/${BOB}/users/${ALICE}`, {
+      followedAt: Timestamp.now(),
+      fromInvite: true,
+    });
+    await assertSucceeds(
+      getDoc(doc(db(CAROL), "following", BOB, "users", ALICE))
+    );
+    // And either person can still end it.
+    await assertSucceeds(
+      deleteDoc(doc(db(BOB), "following", BOB, "users", ALICE))
+    );
+  });
+
+  it("no client reads or writes an invite code, its own included", async () => {
+    await seed("inviteCodes/K7P49M2H", { uid: ALICE, createdAt: 1 });
+    await assertFails(getDoc(doc(db(ALICE), "inviteCodes", "K7P49M2H")));
+    await assertFails(getDoc(doc(db(BOB), "inviteCodes", "K7P49M2H")));
+    await assertFails(getDocs(collection(db(BOB), "inviteCodes")));
+    await assertFails(
+      setDoc(doc(db(BOB), "inviteCodes", "A2B3C4D5"), { uid: BOB })
+    );
+    await assertFails(
+      setDoc(doc(db(BOB), "inviteCodes", "K7P49M2H"), { uid: BOB })
+    );
+    await assertFails(deleteDoc(doc(db(ALICE), "inviteCodes", "K7P49M2H")));
+  });
+
+  it("no client writes its own code or its invite onto its profile", async () => {
+    await assertFails(
+      setDoc(
+        doc(db(BOB), "users", BOB),
+        { inviteCode: "A2B3C4D5" },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(db(BOB), "users", BOB),
+        { invitedAt: Timestamp.now() },
+        { merge: true }
+      )
+    );
+    // Guards the guard: an allowed field still saves.
+    await assertSucceeds(
+      setDoc(doc(db(BOB), "users", BOB), { darkMode: true }, { merge: true })
+    );
+  });
+});

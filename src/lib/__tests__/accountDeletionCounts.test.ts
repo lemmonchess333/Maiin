@@ -47,7 +47,17 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // foundation PR #1545 deferred).
 // Polish3 call 1 bumped to 59 — blockedByOwn and blockedByReverse, the
 // server-written copy of who has blocked each account.
-export const EXPECTED_INCLUDED_COUNT = 59;
+// Connected training adds the account-scoped Apple Health export ledger.
+// The community goal adds userCommunityGoalCredits, its per-run credits.
+// Soc15 bumped to 62 — userMedals, a medal per challenge edition.
+// Soc15 call 5 bumped to 63 — routeMapsStorage, run post map images.
+// Soc15 invites bumped to 64 — inviteCodesOwn, a person's invite code.
+// Soc15 call 2 bumped to 65 — postPhotosStorage, a shared session's photos.
+// Soc15 call 3 bumped to 69 — weekly leagues: userLeagueResults,
+// leagueMembersOwn, leagueGroupMemberships and leagueStandingsOwn.
+// Soc15 live pulse bumped to 70 — userPulseCredits, its per-session credits.
+// Follow counts bumped to 71 — followCountsOwn, the server's two numbers.
+export const EXPECTED_INCLUDED_COUNT = 71;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

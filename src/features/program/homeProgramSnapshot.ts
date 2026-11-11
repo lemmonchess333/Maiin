@@ -1,3 +1,4 @@
+import { repairRunPrescriptions } from "./runPrescriptionRepair";
 import type { UserProfile } from "@/lib/auth";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { normalizeProgramState, type ProgramState } from "./programTypes";
@@ -8,6 +9,7 @@ import {
 import { sameStoredValue } from "./stateTransition";
 import {
   raceWeekNeedsBuilding,
+  starterWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
 
@@ -25,14 +27,17 @@ export function homeProgramSnapshot(
     normalizeProgramState(raw, { primaryGoal: profile.primaryGoal }),
     week
   );
-  const anchor = weekRolloverAnchor(programState, profile)?.weekKey;
+  const repaired = repairRunPrescriptions(programState, profile, today);
+  const anchor = weekRolloverAnchor(repaired, profile)?.weekKey;
   return {
-    programState,
+    programState: repaired,
     needsMaintenance:
+      repaired !== programState ||
       !!backfillWeekScheduleIfMissing(profile) ||
       profile.runMode === "structured" ||
       !sameStoredValue(raw, programState) ||
       !!(anchor && anchor < week) ||
-      raceWeekNeedsBuilding(programState, profile, today),
+      raceWeekNeedsBuilding(programState, profile, today) ||
+      starterWeekNeedsBuilding(programState, profile),
   };
 }

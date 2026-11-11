@@ -85,5 +85,5 @@ export async function shareRoute(
  */
 export function announceRouteShare(result: ShareRouteResult): void {
   if (result === "downloaded") toast.success("Route downloaded");
-  else if (result === "failed") toast.error("Couldn't share route");
+  else if (result === "failed") toast.error("Couldn’t share route");
 }

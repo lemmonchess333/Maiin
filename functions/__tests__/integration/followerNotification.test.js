@@ -63,9 +63,9 @@ async function follow(edge = {}) {
 }
 
 /** Bob asks to follow Alice, then the trigger runs. */
-async function ask() {
+async function ask(request = {}) {
   const ref = db.doc(`followRequests/${RECIPIENT}/users/${FOLLOWER}`);
-  await ref.set({ requestedAt: new Date() });
+  await ref.set({ requestedAt: new Date(), ...request });
   await onFollowRequestCreated.run(await ref.get(), {
     params: { uid: RECIPIENT, requesterUid: FOLLOWER },
   });
@@ -140,6 +140,22 @@ suite("a follow request is announced unless switched off", () => {
     });
   });
 
+  it("says a request made by joining from the invite came from it", async () => {
+    // redeemInvite writes it for an inviter who approves followers
+    // (Soc15 call 4, STATUS 2026-11-05): this is the one notice of the join.
+    await db.doc(`users/${RECIPIENT}`).set({ displayName: "Alice" });
+    await ask({ fromInvite: true });
+    const rows = await items();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `follow_request_${FOLLOWER}`,
+      type: "follow_request",
+      fromUserId: FOLLOWER,
+      fromInvite: true,
+      message: "Bob joined from your invite and asked to follow you",
+    });
+  });
+
   it("writes nothing when the switch is off", async () => {
     await db
       .doc(`users/${RECIPIENT}`)
@@ -156,6 +172,87 @@ suite("a follow request is announced unless switched off", () => {
       .set({ notificationPreferences: { follows: true } });
     await follow({ fromRequest: true });
     expect(await items()).toEqual([]);
+  });
+});
+
+suite.each([
+  {
+    type: "follow",
+    collection: "followers",
+    param: "followerUid",
+    handler: () => onFollowerCreated,
+  },
+  {
+    type: "follow_request",
+    collection: "followRequests",
+    param: "requesterUid",
+    handler: () => onFollowRequestCreated,
+  },
+])("$type source-event delivery", ({ type, collection, param, handler }) => {
+  beforeEach(async () => {
+    await wipe();
+    await db
+      .doc(`users/${RECIPIENT}`)
+      .set({ notificationPreferences: { follows: true } });
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
+  });
+
+  const notice = () =>
+    db.doc(`notifications/${RECIPIENT}/items/${type}_${FOLLOWER}`);
+  const source = () => db.doc(`${collection}/${RECIPIENT}/users/${FOLLOWER}`);
+  const deliver = (snapshot, eventId) =>
+    handler().run(snapshot, {
+      eventId,
+      params: { uid: RECIPIENT, [param]: FOLLOWER },
+    });
+
+  it("preserves delivery time and TTL on same-event redelivery", async () => {
+    await source().create({});
+    const snapshot = await source().get();
+    await deliver(snapshot, "first-source-event");
+    const original = await notice().get();
+
+    await deliver(snapshot, "first-source-event");
+
+    const repeated = await notice().get();
+    expect(repeated.data()).toEqual(original.data());
+    expect(repeated.updateTime.isEqual(original.updateTime)).toBe(true);
+  });
+
+  it("commits only one notification write for concurrent same-event deliveries", async () => {
+    await source().create({});
+    const snapshot = await source().get();
+
+    await Promise.all(
+      Array.from({ length: 8 }, () => deliver(snapshot, "concurrent-event"))
+    );
+
+    const result = await notice().get();
+    expect(result.exists).toBe(true);
+    expect(result.createTime.isEqual(result.updateTime)).toBe(true);
+    expect(await items()).toHaveLength(1);
+  });
+
+  it("refreshes a new source but never lets an older source overwrite it afterwards", async () => {
+    await source().create({});
+    const first = await source().get();
+    await deliver(first, "source-A");
+    const initial = await notice().get();
+    await source().delete();
+    await source().create({});
+    const next = await source().get();
+    await deliver(next, "source-B");
+    const newest = await notice().get();
+    expect(newest.updateTime.isEqual(initial.updateTime)).toBe(false);
+
+    await deliver(first, "source-A");
+
+    const result = await notice().get();
+    expect(result.data()).toEqual(newest.data());
+    expect(result.updateTime.isEqual(newest.updateTime)).toBe(true);
+    expect(await items()).toHaveLength(1);
   });
 });
 

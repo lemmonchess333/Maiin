@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/romanian-deadlift.webp",
+  "still": "form-art/romanian-deadlift.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 382,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "72080efe8bbf3d23af2a840baf67653ac30d53081f9403d0f955ab8a7fd19b43",
+  "thenSha256": "92a016f28f4ca02d3d52cfa37c4ebb2006932f86d10b4a37ba1cd535246af78e",
+  "sha256": "061d67cccfea99df97a30c4a38c317b42895e6ba9447d2f172e5190a1068f458"
+}

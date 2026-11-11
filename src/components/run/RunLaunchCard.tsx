@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import type { RacePaceWork } from "@/lib/racePace";
 import RunAbout from "./RunAbout";
@@ -49,7 +50,11 @@ interface RunLaunchCardProps {
   onStart: () => void;
   onCustomize: () => void;
   onBack: () => void;
+  onHelp?: () => void;
   purpose?: string | null;
+  /** The GPS signal, warmed while this screen is open, at the header's
+   *  end. */
+  gpsSignal?: ReactNode;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
@@ -77,7 +82,9 @@ export default function RunLaunchCard({
   onStart,
   onCustomize,
   onBack,
+  onHelp,
   purpose,
+  gpsSignal,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const name = runSessionName(workout, racePace, unit);
@@ -126,7 +133,13 @@ export default function RunLaunchCard({
           icon={<ArrowLeft className="size-5" />}
           onClick={onBack}
         />
+        {gpsSignal && <div className="ml-auto">{gpsSignal}</div>}
       </header>
+      {onHelp && (
+        <Button variant="ghost" onClick={onHelp}>
+          How runs work
+        </Button>
+      )}
 
       <div className="flex-1 flex flex-col justify-center gap-4 min-h-0 overflow-y-auto">
         <div className="rounded-2xl bg-running/8 p-5">
@@ -188,7 +201,7 @@ export default function RunLaunchCard({
           fullWidth
           leftIcon={<Play className="size-5" fill="currentColor" />}
           onClick={onStart}
-          className="btn-start-run-pulse text-lg"
+          className="text-lg"
           data-guide-anchor="first-run"
         >
           Start {name}

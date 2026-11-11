@@ -155,3 +155,27 @@ describe("hide the number", () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+it("dates an older rate instead of calling it the last four weeks or steady now", () => {
+  const points = history(60, 86, 0).map((p) => ({
+    ...p,
+    date: localDateString(addLocalDays(parseLocalDate(p.date), -90)),
+  }));
+  renderCard({ points });
+  expect(screen.queryByText(/last 4 weeks|for now/)).toBeNull();
+  expect(
+    screen.getByText(
+      `kg a week, ${formatDayMonth(parseLocalDate(day(118)))} to ${formatDayMonth(parseLocalDate(day(90)))}`
+    )
+  ).toBeInTheDocument();
+  expect(screen.getByText("Holding steady.")).toBeInTheDocument();
+});
+
+it("includes the year when a historical rate comes from an earlier year", () => {
+  const points = history(60, 86, 0).map((p) => ({
+    ...p,
+    date: localDateString(addLocalDays(parseLocalDate(p.date), -365)),
+  }));
+  renderCard({ points });
+  expect(screen.getByText(/kg a week, .*2025 to .*2025/)).toBeInTheDocument();
+});

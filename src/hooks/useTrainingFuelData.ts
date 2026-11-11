@@ -6,7 +6,7 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { subscribeQueuedWrites } from "@/lib/offlineQueue";
 import {
   parseSavedRunDocs,
-  savedRunsQuery,
+  savedRunsQueries,
   withQueuedRuns,
   type RunWindow,
   type SavedRun,
@@ -143,16 +143,28 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
       }
     );
 
-    // One parse and the Lift3 day for runs, so a run begun before midnight
-    // burns on the day it began.
+    // Read event-day documents and the legacy completion window. A run
+    // synced days after it was recorded still burns on its original day.
     let savedRuns: SavedRun[] = [];
-    const unsubRuns = onSnapshot(savedRunsQuery(uid, runWindow), (snap) => {
-      savedRuns = parseSavedRunDocs(snap.docs);
-      publish({
-        runs: burnRows(uid, savedRuns, runWindow),
-        runsLoaded: true,
-      });
-    });
+    const runQueries = savedRunsQueries(uid, runWindow);
+    const runAnswers: Array<SavedRun[] | null> = runQueries.map(() => null);
+    const unsubRuns = runQueries.map((runQuery, index) =>
+      onSnapshot(runQuery, (snap) => {
+        runAnswers[index] = parseSavedRunDocs(snap.docs);
+        if (runAnswers.some((answer) => answer === null)) return;
+        savedRuns = [
+          ...new Map(
+            runAnswers.flatMap((answer) =>
+              (answer ?? []).map((run) => [run.id, run] as const)
+            )
+          ).values(),
+        ];
+        publish({
+          runs: burnRows(uid, savedRuns, runWindow),
+          runsLoaded: true,
+        });
+      })
+    );
     const unsubQueue = subscribeQueuedWrites(() =>
       publish({
         workouts: liftRows(uid, savedWorkouts, workoutWindow),
@@ -164,7 +176,7 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
       active = false;
       unsubProgram();
       unsubWorkouts();
-      unsubRuns();
+      unsubRuns.forEach((unsubscribe) => unsubscribe());
       unsubQueue();
     };
   }

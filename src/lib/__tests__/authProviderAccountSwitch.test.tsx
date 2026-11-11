@@ -45,8 +45,41 @@ const H = vi.hoisted(() => ({
     await wait();
     return true;
   }),
+  native: false,
+  released: false,
+  deviceTz: "UTC" as string | null,
+  realTzCheck: false,
+  watchSync: vi.fn(async (_uid: string | null) => {}),
+  watchClear: vi.fn(async () => {}),
+  clearHeartRateSessionsForUser: vi.fn(),
+  clearWatchRunSyncStatus: vi.fn(),
+  stopHealthExportReconciler: vi.fn(),
+  startHealthExportReconciler: vi.fn(() => H.stopHealthExportReconciler),
+  stopWatchRunSyncReconciler: vi.fn(),
+  startWatchRunSyncReconciler: vi.fn(() => H.stopWatchRunSyncReconciler),
 }));
 const mockAuth = H.mockAuth;
+
+vi.mock("../platform", () => ({ isNativePlatform: () => H.native }));
+vi.mock("../connectedTrainingRelease", () => ({
+  get CONNECTED_TRAINING_RELEASED() {
+    return H.released;
+  },
+}));
+vi.mock("../watchRunBridge", () => ({
+  syncWatchRunAccount: H.watchSync,
+  clearWatchRunAccountState: H.watchClear,
+}));
+vi.mock("../healthWorkoutExport", () => ({
+  startHealthExportReconciler: H.startHealthExportReconciler,
+}));
+vi.mock("../watchRunSyncStatus", () => ({
+  startWatchRunSyncReconciler: H.startWatchRunSyncReconciler,
+  clearWatchRunSyncStatus: H.clearWatchRunSyncStatus,
+}));
+vi.mock("../heartRateSession", () => ({
+  clearHeartRateSessionsForUser: H.clearHeartRateSessionsForUser,
+}));
 
 vi.mock("../firebase", () => ({
   auth: H.mockAuth,
@@ -120,8 +153,9 @@ vi.mock("@/lib/accountSecurity", () => ({
   sendInitialVerificationEmail: H.sendInitial,
 }));
 vi.mock("@/lib/captureTimezone", () => ({
-  getDeviceTimezone: () => "UTC",
-  shouldUpdateTimezone: () => false,
+  getDeviceTimezone: () => H.deviceTz,
+  shouldUpdateTimezone: (stored: string | null, device: string | null) =>
+    H.realTzCheck && device !== null && device !== stored,
 }));
 
 import { AuthProvider, useAuth } from "../auth";
@@ -133,6 +167,8 @@ import {
   pendingReads,
   releaseRead,
   rejectRead,
+  resumeReads,
+  seedCache,
   failNextFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
@@ -151,7 +187,14 @@ function Probe() {
       data-u={user?.uid ?? "null"}
       data-p={profile?.uid ?? "null"}
       data-loading={String(loading)}
-    />
+      data-load={auth.profileLoad}
+      data-watch-failed={String(!!auth.watchAccountCleanup)}
+    >
+      <button onClick={() => auth.watchAccountCleanup?.retry()}>retry</button>
+      <button onClick={() => void auth.refreshProfile().catch(() => {})}>
+        read profile again
+      </button>
+    </div>
   );
 }
 const state = () => {
@@ -160,6 +203,8 @@ const state = () => {
     u: el.getAttribute("data-u"),
     p: el.getAttribute("data-p"),
     loading: el.getAttribute("data-loading"),
+    load: el.getAttribute("data-load"),
+    watchFailed: el.getAttribute("data-watch-failed"),
   };
 };
 
@@ -172,6 +217,18 @@ async function emit(uid: string | null) {
 }
 
 beforeEach(() => {
+  H.native = false;
+  H.released = false;
+  H.deviceTz = "UTC";
+  H.realTzCheck = false;
+  H.watchSync.mockReset().mockResolvedValue(undefined);
+  H.watchClear.mockClear();
+  H.clearHeartRateSessionsForUser.mockClear();
+  H.clearWatchRunSyncStatus.mockClear();
+  H.stopHealthExportReconciler.mockClear();
+  H.startHealthExportReconciler.mockClear();
+  H.stopWatchRunSyncReconciler.mockClear();
+  H.startWatchRunSyncReconciler.mockClear();
   resetFirestore();
   mockAuth.currentUser = null;
   H.authCb = null;
@@ -194,6 +251,105 @@ afterEach(() => {
 });
 
 describe("AuthProvider — account switch isolation", () => {
+  it("clears native Watch state before exposing a new account", async () => {
+    H.native = true;
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    await waitFor(() =>
+      expect(H.startHealthExportReconciler).toHaveBeenCalledWith("A")
+    );
+    await waitFor(() =>
+      expect(H.startWatchRunSyncReconciler).toHaveBeenCalledWith("A")
+    );
+
+    let finishClear!: () => void;
+    const clearB = new Promise<void>((resolve) => (finishClear = resolve));
+    H.watchSync.mockImplementation(async (uid) => {
+      if (uid === "B") await clearB;
+    });
+    await emit("B");
+    expect(H.watchSync).toHaveBeenCalledWith("B");
+    expect(state()).toMatchObject({ u: "null", p: "null", loading: "true" });
+    await act(async () => finishClear());
+    await waitFor(() => expect(state().u).toBe("B"));
+    await waitFor(() =>
+      expect(H.startHealthExportReconciler).toHaveBeenCalledWith("B")
+    );
+    await waitFor(() =>
+      expect(H.startWatchRunSyncReconciler).toHaveBeenCalledWith("B")
+    );
+    expect(H.stopHealthExportReconciler).toHaveBeenCalled();
+    expect(H.stopWatchRunSyncReconciler).toHaveBeenCalled();
+    expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
+    expect(H.clearWatchRunSyncStatus).toHaveBeenCalledWith("A");
+  });
+
+  it("opens the account when the Watch is off the release and its cleanup fails", async () => {
+    // Native start-up already wipes Watch state when the release is off.
+    H.native = true;
+    H.watchSync.mockRejectedValue(new Error("plugin unavailable"));
+    await emit("A");
+    await waitFor(() => expect(state()).toMatchObject({ u: "A", p: "A" }));
+    expect(state().watchFailed).toBe("false");
+  });
+
+  it("retries a failed Watch cleanup on the release, then asks rather than hangs", async () => {
+    H.native = true;
+    H.released = true;
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+
+    H.watchSync.mockRejectedValue(new Error("native clear failed"));
+    await emit("B");
+    await waitFor(() => expect(state().watchFailed).toBe("true"), {
+      timeout: 5000,
+    });
+    // Retried before asking, and B is still held back.
+    expect(
+      H.watchSync.mock.calls.filter(([uid]) => uid === "B").length
+    ).toBeGreaterThan(1);
+    expect(state()).toMatchObject({ u: "null", p: "null", loading: "true" });
+
+    H.watchSync.mockResolvedValue(undefined);
+    await act(async () =>
+      screen.getByRole("button", { name: "retry" }).click()
+    );
+    await waitFor(() => expect(state()).toMatchObject({ u: "B", p: "B" }));
+    expect(state().watchFailed).toBe("false");
+    expect(H.clearHeartRateSessionsForUser).toHaveBeenCalledWith("A");
+  });
+
+  it("saves the device's new zone when the app comes back", async () => {
+    H.realTzCheck = true;
+    H.deviceTz = "Europe/London";
+    seedFirestore({ "users/A": { email: "A@x.z", timezone: "Europe/London" } });
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { updateDocGuarded } = await import("@/lib/firestoreWrite");
+    vi.mocked(updateDocGuarded).mockClear();
+
+    // The phone has flown to Tokyo with the app in the background.
+    H.deviceTz = "Asia/Tokyo";
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await waitFor(() =>
+      expect(vi.mocked(updateDocGuarded)).toHaveBeenCalledWith(
+        expect.anything(),
+        { timezone: "Asia/Tokyo" }
+      )
+    );
+    // Once: the profile now holds the new zone.
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(
+      vi
+        .mocked(updateDocGuarded)
+        .mock.calls.filter(([, data]) => "timezone" in (data as object))
+    ).toHaveLength(1);
+  });
+
   it("B wins when A's read resolves LAST", async () => {
     deferReads();
     await emit("A");
@@ -268,6 +424,119 @@ describe("AuthProvider — account switch isolation", () => {
     await emit("A");
     expect(state().p).toBe("A");
     expect(state().loading).toBe("false");
+  });
+});
+
+/* `profile === null` is true of an account with no profile and of one whose
+   profile could not be read. Only the first belongs in setup, where
+   finishing replaces the programme: `profileLoad` tells them apart. The
+   server read is held and then rejected, since an armed `getDoc` failure
+   would be spent on the cache read that comes first. */
+describe("AuthProvider — a profile that cannot be read", () => {
+  it("a first read that fails with nothing cached is failed, not missing", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    expect(state().load).toBe("loading");
+
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().loading).toBe("false"));
+    expect(state().u).toBe("A");
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("failed");
+  });
+
+  it("an account with no profile yet is missing, and goes to setup", async () => {
+    await emit("N");
+    await waitFor(() => expect(state().loading).toBe("false"));
+    expect(state().u).toBe("N");
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("missing");
+  });
+
+  it("a failed read keeps the profile this device had cached", async () => {
+    seedCache({ "users/A": { email: "A@x.z", onboardingComplete: true } });
+    deferReads();
+    await emit("A");
+    // Painted from the cache while the server read is still out.
+    await waitFor(() => expect(state().p).toBe("A"));
+    expect(pendingReads()).toEqual(["users/A"]);
+
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    expect(state().p).toBe("A");
+    expect(state().load).toBe("ready");
+  });
+
+  it("a read that fails on a token refresh keeps the profile already shown", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+
+    // The same account comes back through the listener, as a token refresh
+    // does, and this time the server does not answer.
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    expect(state().p).toBe("A");
+    expect(state().load).toBe("ready");
+    expect(state().loading).toBe("false");
+  });
+
+  it("reading again after a failure opens the account", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    await act(async () => {
+      screen.getByText("read profile again").click();
+    });
+    await waitFor(() => expect(state().p).toBe("A"));
+    expect(state().load).toBe("ready");
+  });
+
+  it("reading again and failing again stays failed", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    failNextFirestore("getDoc", { path: "users/A", code: "unavailable" });
+    await act(async () => {
+      screen.getByText("read profile again").click();
+    });
+    expect(unfiredFailures()).toEqual([]);
+    expect(state().p).toBe("null");
+    expect(state().load).toBe("failed");
+  });
+
+  it("another account signing in starts clean of the last one's failure", async () => {
+    deferReads();
+    await emit("A");
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A"]));
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().load).toBe("failed"));
+
+    resumeReads();
+    await emit("B");
+    await waitFor(() => expect(state().p).toBe("B"));
+    expect(state().load).toBe("ready");
   });
 });
 

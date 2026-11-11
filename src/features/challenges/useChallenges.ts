@@ -21,6 +21,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
+import { DISPLAY_NAME_MAX } from "@/lib/displayNameLimit";
 import { THEME } from "@/lib/theme";
 import {
   resolveTier,
@@ -62,6 +63,12 @@ export interface Challenge {
    *  per-user tier ladder. The `tiers` field is still set to a stub
    *  (gold = collectiveTarget) so existing sync logic doesn't break. */
   collectiveTarget?: number;
+  /** A community goal's total: every saved run in its window, joined or
+   *  not, in whole metres. Server-written (functions/lib/communityGoal.js);
+   *  read through `collectiveTotal`. */
+  collectiveMeters?: number;
+  /** How many people have a run in that total. Server-written. */
+  collectiveRunners?: number;
 }
 
 export interface ChallengeParticipant {
@@ -176,15 +183,6 @@ export function challengeLocalEndMs(
   const endKey = boundaryDayKey(endDate);
   if (!endKey) return null;
   return parseLocalDate(endKey).getTime();
-}
-
-/**
- * The collapsed entry to the not-joined challenges: how many more there
- * are, in plain words. No deadline: the monthly challenges all end on the
- * same day, and the featured card above already says when.
- */
-export function moreChallengesLabel(count: number): string {
-  return `See ${count} more ${count === 1 ? "challenge" : "challenges"}`;
 }
 
 /**
@@ -520,19 +518,30 @@ export function useChallenges() {
           }));
           return true;
         }
-        const profileSnap = await getDoc(doc(db, "users", uid));
-        const name = profileSnap.exists()
-          ? profileSnap.data().displayName || "Athlete"
-          : "Athlete";
-        const photoURL = profileSnap.exists()
-          ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
-          : null;
+        // The board shows the name and photo the public profile shows:
+        // that name is the one the word filter screens, and the rules
+        // refuse any other. With no public name the row carries none and
+        // the board says "Athlete".
+        const profileSnap = await getDoc(
+          doc(db, "users", uid, "public", "profile")
+        );
+        const publicProfile = profileSnap.exists() ? profileSnap.data() : {};
+        const name =
+          typeof publicProfile.displayName === "string" &&
+          publicProfile.displayName.length > 0 &&
+          publicProfile.displayName.length <= DISPLAY_NAME_MAX
+            ? publicProfile.displayName
+            : null;
+        const photoURL =
+          typeof publicProfile.photoURL === "string" && publicProfile.photoURL
+            ? publicProfile.photoURL
+            : null;
         if (!session.active || sessionRef.current !== session) return false;
         await setDocGuarded(participantRef, {
           currentValue: 0,
           tierAchieved: null,
           joinedAt: Timestamp.now(),
-          displayName: name,
+          ...(name ? { displayName: name } : {}),
           ...(photoURL ? { photoURL } : {}),
         });
         if (!session.active || sessionRef.current !== session) return false;
@@ -555,7 +564,7 @@ export function useChallenges() {
       } catch (error) {
         if (!session.active || sessionRef.current !== session) return false;
         logger.error("[Challenges] Join failed:", error);
-        toast.error("Couldn't join the challenge. Try again.");
+        toast.error("Couldn’t join the challenge. Try again.");
         return false;
       }
     },
@@ -581,7 +590,7 @@ export function useChallenges() {
       } catch (error) {
         if (!session.active || sessionRef.current !== session) return;
         logger.error("[Challenges] Leave failed:", error);
-        toast.error("Couldn't leave the challenge. Try again.");
+        toast.error("Couldn’t leave the challenge. Try again.");
       }
     },
     [uid, setMyProgress]

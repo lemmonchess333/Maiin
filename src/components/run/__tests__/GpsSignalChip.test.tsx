@@ -89,3 +89,43 @@ describe("GpsSignalChip", () => {
     expect(bars[0].style.background).toBe(colour.style.background);
   });
 });
+
+/* The same chip on the run setup screen's page (Mob2's Mobbin finding 7):
+   words for a run not started yet, announced as they change. */
+describe("GpsSignalChip — on the setup screen", () => {
+  it("says it is finding the GPS until a fix arrives", () => {
+    render(
+      <GpsSignalChip
+        accuracy={null}
+        isTracking
+        pointCount={0}
+        signalQuality="searching"
+        onPage
+      />
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Finding GPS");
+  });
+
+  it("says the GPS is ready on a good fix, and weak on a poor one", () => {
+    const { rerender } = render(
+      <GpsSignalChip
+        accuracy={6}
+        isTracking
+        pointCount={1}
+        signalQuality="strong"
+        onPage
+      />
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
+    rerender(
+      <GpsSignalChip
+        accuracy={48}
+        isTracking
+        pointCount={1}
+        signalQuality="weak"
+        onPage
+      />
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Weak GPS±48 m");
+  });
+});

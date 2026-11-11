@@ -10,7 +10,7 @@ interface StatCardProps {
   /**
    * What KIND of thing `value` is. Default "number".
    *
-   * This card is a numeral primitive — 30px extrabold Archivo, tabular
+   * This card is a numeral primitive — 30px extrabold Archivo (`font-figure`), tabular
    * figures, `whitespace-nowrap` — and that treatment is right for "47"
    * and wrong for a word. The Load band card passes "Establishing", which
    * at 30px extrabold is far wider than a half-width grid cell, so it ran
@@ -76,7 +76,7 @@ export default function StatCard({
           className={
             valueKind === "text"
               ? "min-w-0 text-xl font-bold text-foreground leading-tight break-words"
-              : "min-w-0 text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap"
+              : "min-w-0 text-3xl font-extrabold font-figure tabular-nums text-foreground leading-none whitespace-nowrap"
           }
         >
           {value}

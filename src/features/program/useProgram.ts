@@ -1,3 +1,4 @@
+import { repairRunPrescriptions } from "./runPrescriptionRepair";
 import {
   commitProgramTransition,
   commitProgramUpdate,
@@ -5,8 +6,10 @@ import {
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import {
+  isRunPlanFromNewerBuild,
   raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
+  starterWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
@@ -19,6 +22,8 @@ import {
   liftSessionDay,
   liftWorkoutId,
 } from "@/lib/liftCompletion";
+import { liftPlanFacts } from "@/lib/liftWeekLabel";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import {
   applySessionProgression,
   toSessionProgression,
@@ -68,12 +73,25 @@ import {
   normalizeProgramState,
   transitionStatus,
 } from "./programTypes";
-import { resolveRecoveryExit } from "./runModeResolution";
+import {
+  finishStarterGoalPatch,
+  resolveRecoveryExit,
+} from "./runModeResolution";
+import { starterWeekFrom } from "./starterWeek";
 import { rebuiltWeekFromToday } from "./racePlanContinuation";
-import { fetchRecentLayoff } from "./fetchRecentLayoff";
+import { fetchRecentRuns, type RecentRuns } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
+import {
+  readStoredRunSummary,
+  storedRunClears,
+  subscribeStoredRunClears,
+} from "@/lib/runResumeStorage";
+import {
+  earlierWeeksRunOnPhone,
+  planWeeksLiftOnPhone,
+} from "./sessionsOnPhone";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -171,10 +189,16 @@ export interface CompletedSessionData {
    *  session started (`useHardRunBefore`). Recorded on the workout, and a
    *  leg miss counts half (Lift4 (7)). */
   afterHardRun?: boolean;
+  /** What the workout screen knew for the session's post (Soc15): its new
+   *  bests, the streak, whether it is the first session. The plan's week
+   *  is added by the writer that holds the plan. Never saved on the
+   *  workout. */
+  moments?: LiftMomentFacts;
 }
 import type { RaceTiming } from "./runPlanTiming";
 import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
 import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import { getDeviceTimezone } from "@/lib/captureTimezone";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
@@ -184,13 +208,20 @@ import {
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
+import {
+  canRescheduleRun,
+  computeRunMove,
+  resolveRunMoveOptions,
+  runMoveSourceSignature,
+  type RunMovePrecondition,
+} from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
 import { generateInstanceId, normalizeExercise } from "./programTypes";
 import { enqueueCommand, isTransportFailure } from "./commandOutbox";
 import { repUnitForExerciseId } from "./repUnits";
 import { getExerciseById } from "@/lib/exercises";
 import { sendProgramCommand } from "./programCommandClient";
+import { profileShowsPatch } from "@/lib/profileRefresh";
 import { resolveLiftUnit, type LiftUnit } from "@/lib/liftLoad";
 import {
   APPLIED,
@@ -203,6 +234,9 @@ import {
 } from "./programOutcome";
 
 const PROGRAM_DOC = "current";
+
+/** No read: no layoff, and no runs known. */
+const NOTHING_READ: RecentRuns = { layoff: "none", runs: null };
 
 interface RefreshRunScheduleOverrides {
   profileUpdates?: Partial<UserProfile>;
@@ -251,9 +285,21 @@ function lighterWeekStarted(raceWeek: ProgramState["raceWeek"]): string {
 export type ProgramReadiness = "pending" | "ready" | "failed";
 
 /** A finish the week rollover must wait for: a programme session open on
- *  this device, or a finished one still waiting to sync. */
-function finishOutstanding(uid: string | undefined): boolean {
-  return isLiftSessionOpen() || (!!uid && hasPendingProgrammeCompletion(uid));
+ *  this device, a finished one still waiting to sync, or a session still
+ *  on this phone (`sessionsOnPhone`): a run from an earlier week, unsaved,
+ *  or a lift from the plan's week the app was closed partway through. */
+function finishOutstanding(
+  uid: string | undefined,
+  todayKey: string,
+  programState: ProgramState
+): boolean {
+  return (
+    isLiftSessionOpen() ||
+    (!!uid &&
+      (hasPendingProgrammeCompletion(uid) ||
+        earlierWeeksRunOnPhone(uid, todayKey) ||
+        planWeeksLiftOnPhone(uid, programState)))
+  );
 }
 
 export function useProgram() {
@@ -295,32 +341,43 @@ export function useProgram() {
     /** The day it was read for: a week's rollover waits for that day's. */
     day: string | null;
     cls: LayoffClass;
-  }>({ uid: null, day: null, cls: "none" });
+    /** The recent runs the read found (`fetchRecentRuns`): a starter week
+     *  is weighed by their days, and a running starting point climbs from
+     *  what they say was done. Null when they could not be read. */
+    runs: RecentRuns["runs"];
+    /** `storedRunClears()` when it was read: a read taken while a run was
+     *  still on the phone, unsaved, does not count for the rollover once
+     *  the run has gone (`earlierWeeksRunOnPhone`). */
+    clears: number;
+  }>({ uid: null, day: null, cls: "none", runs: null, clears: 0 });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
+  const recentRuns =
+    layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.runs : null;
   /**
    * One read per account and day, shared: the effect below holds its
    * answer, and a rebuild that starts before it lands waits on the same
-   * read rather than making a second.
+   * read rather than making a second. Read again once a run stored on this
+   * phone has gone (saved, it is a run the last read did not have).
    */
-  const layoffReads = useRef(new Map<string, Promise<LayoffClass>>());
-  const layoffFor = useCallback((uid: string, day: string) => {
-    const key = `${uid}|${day}`;
-    let read = layoffReads.current.get(key);
+  const recentRunReads = useRef(new Map<string, Promise<RecentRuns>>());
+  const recentRunsFor = useCallback((uid: string, day: string) => {
+    const key = `${uid}|${day}|${storedRunClears()}`;
+    let read = recentRunReads.current.get(key);
     if (!read) {
-      read = fetchRecentLayoff(uid, day);
-      layoffReads.current.set(key, read);
+      read = fetchRecentRuns(uid, day);
+      recentRunReads.current.set(key, read);
     }
     return read;
   }, []);
   /** The layoff a rebuild is planned from: today's, for this account,
    *  waited for when it has not landed. */
-  const resolveLayoff = useCallback((): Promise<LayoffClass> => {
+  const resolveLayoff = useCallback((): Promise<RecentRuns> => {
     const signedIn = user?.uid;
     return signedIn
-      ? layoffFor(signedIn, localDateString())
-      : Promise.resolve("none");
-  }, [user?.uid, layoffFor]);
+      ? recentRunsFor(signedIn, localDateString())
+      : Promise.resolve(NOTHING_READ);
+  }, [user?.uid, recentRunsFor]);
   const [loading, setLoading] = useState(true);
   /**
    * The mirror's gate — deliberately NOT `loading`.
@@ -449,6 +506,13 @@ export function useProgram() {
         if (profile.runMode === "structured") {
           next = { ...next, runDays: [] };
           delete next.runPlan;
+        } else if (starterWeekNeedsBuilding(next, profile)) {
+          // A starter goal just begun: its first week, from today, at the
+          // first stage. Its later weeks are the rollover's.
+          next = {
+            ...next,
+            ...starterWeekFrom({ weekSchedule, stage: 1, today }),
+          };
         } else if (
           profile.raceGoal &&
           // Earlier weeks belong to auto-rollover, which archives their
@@ -459,10 +523,11 @@ export function useProgram() {
           raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
-          const layoff = await layoffFor(user.uid, today);
+          const read = await recentRunsFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           const runs = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -475,6 +540,7 @@ export function useProgram() {
               ? {
                   currentWeek: next.runPlan.currentWeek,
                   totalWeeks: next.runPlan.totalWeeks,
+                  leadInWeek: next.runPlan.leadInWeek,
                   completedRaces: next.runPlan.completedRaces,
                 }
               : undefined,
@@ -494,6 +560,7 @@ export function useProgram() {
               : {}),
           };
         }
+        next = repairRunPrescriptions(next, profile, today);
         if (cancelled || auth.currentUser?.uid !== user.uid) return;
         if (!sameStoredValue(next, raw) || profile.runMode === "structured") {
           try {
@@ -551,17 +618,25 @@ export function useProgram() {
         // migrated structured user) gets no auto-assigned runDays.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (effectiveRunMode === "race_prep" && profile.raceGoal) {
+        if (effectiveRunMode === "starter") {
+          // A starter goal's first week, from today, at the first stage.
+          ({ runDays, runPlan } = starterWeekFrom({
+            weekSchedule: profile.weekSchedule ?? [],
+            stage: 1,
+            today: localDateString(),
+          }));
+        } else if (effectiveRunMode === "race_prep" && profile.raceGoal) {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           const today = localDateString();
           // A returner's first week has no strides, so even a first plan
           // waits for the read.
-          const layoff = await layoffFor(user.uid, today);
+          const read = await recentRunsFor(user.uid, today);
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           ({ runDays, runPlan } = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
@@ -765,7 +840,15 @@ export function useProgram() {
         if (auth.currentUser?.uid === user.uid) setProgramState(saved);
         if (profilePatch && written) {
           try {
-            await refreshProfile?.();
+            // Until the read shows the patch: straight after the commit it
+            // can still come from before it (`profileRefresh.ts`).
+            await refreshProfile?.({
+              until: (data) =>
+                profileShowsPatch(
+                  data,
+                  profilePatch as Record<string, unknown>
+                ),
+            });
           } catch (error) {
             logger.warn("[Program] Saved; profile refresh failed", error);
             window.location.reload();
@@ -787,13 +870,45 @@ export function useProgram() {
           toast.error(
             error instanceof ProgrammeConflictError
               ? error.message
-              : "Couldn't save your changes. Try again."
+              : "Couldn’t save your changes. Try again."
           );
         throw error;
       }
     },
     [user, profile, programState, refreshProfile]
   );
+
+  // A cached beginner schedule can arrive while the page stays open. Repair it from
+  // the live transaction snapshot, never mutate the raw mirror/base.
+  const repairAttempt = useRef<{ state: ProgramState; date: string } | null>(
+    null
+  );
+  useEffect(() => {
+    if (
+      !mirrorReady ||
+      !programState ||
+      !profile ||
+      (repairAttempt.current?.state === programState &&
+        repairAttempt.current.date === today)
+    )
+      return;
+    const repaired = repairRunPrescriptions(programState, profile, today);
+    if (sameStoredValue(repaired, programState)) return;
+    repairAttempt.current = { state: programState, date: today };
+    // Quiet persistence updates state only after the awaited transaction, as
+    // with the existing rollover effects below, never synchronously here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void saveProgram(
+      (base) => {
+        const next = repairRunPrescriptions(base, profile, today);
+        return sameStoredValue(next, base) ? null : next;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((error) => {
+      logger.warn("[useProgram] run prescription repair deferred", error);
+    });
+  }, [mirrorReady, programState, profile, today, saveProgram]);
 
   /**
    * Re-read the authoritative programme document.
@@ -803,11 +918,11 @@ export function useProgram() {
    * the tested-copy-vs-running-copy mistake. Extracted once three callers
    * wanted it — success, a rejected remove/add, and the deload command.
    *
-   * Returns what it read (undefined when there was nothing to read) so a
-   * caller that must ACT on the server's result can do so without waiting a
-   * render for `programState` to catch up. `applyEaseWeek` needs it to count
-   * how many runs the server actually changed; every other caller ignores
-   * the value and just wants the state refreshed.
+   * Returns what it read (undefined when there was nothing to read). It is
+   * NOT a way to see what a command just committed: the mirror below
+   * listens to this document, so the read can answer from the mirror's
+   * copy, which may still be the version before the command. A caller that
+   * must act on the committed document waits for it (`awaitProgramState`).
    */
   const refetchProgramState = useCallback(async (): Promise<
     ProgramState | undefined
@@ -827,6 +942,63 @@ export function useProgram() {
     setProgramState(raw);
     return raw;
   }, [user]);
+
+  /**
+   * The programme document once it shows what a command just committed:
+   * the first server-confirmed snapshot `committed` accepts, or undefined
+   * if none arrives within `timeoutMs`.
+   *
+   * Watched, not read. `getDocFromServer` looks like the read for this and
+   * is not: with the mirror listening to this same document, the SDK hands
+   * a new server read the mirror's last snapshot (`eventManagerListen`
+   * gives a listener its query's current view, and that view is not from
+   * cache) without asking the server. Straight after the callable answers,
+   * that view can still be the week before the command, because the
+   * callable's reply and the listener's update race. An easier week that
+   * had been saved said "Couldn't adjust the week. Try again." and kept
+   * its sheet open (the run-coaching capture spec, 2026-11-01).
+   */
+  const awaitProgramState = useCallback(
+    (
+      committed: (state: ProgramState) => boolean,
+      timeoutMs = 10_000
+    ): Promise<ProgramState | undefined> =>
+      new Promise((resolve) => {
+        if (!user) {
+          resolve(undefined);
+          return;
+        }
+        const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+        let done = false;
+        // Held in an object: the subscribe call can deliver, and finish,
+        // before it has returned the function that ends it.
+        const listener: { stop?: () => void } = {};
+        const finish = (state: ProgramState | undefined) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          listener.stop?.();
+          // RAW, as the refetch above and the mirror keep it.
+          if (state) setProgramState(state);
+          resolve(state);
+        };
+        const timer = setTimeout(() => finish(undefined), timeoutMs);
+        listener.stop = onSnapshot(
+          ref,
+          { includeMetadataChanges: true },
+          (snap) => {
+            if (snap.metadata.fromCache || snap.metadata.hasPendingWrites)
+              return;
+            if (!snap.exists()) return;
+            const state = snap.data() as ProgramState;
+            if (committed(state)) finish(state);
+          },
+          () => finish(undefined)
+        );
+        if (done) listener.stop();
+      }),
+    [user]
+  );
 
   /**
    * Run a programme command through the server boundary, optimistically.
@@ -874,13 +1046,17 @@ export function useProgram() {
       const before = programState;
       setProgramState(optimistic(before));
       try {
-        await sendProgramCommand(command);
+        await sendProgramCommand(command, user.uid);
       } catch (err) {
         if (isTransportFailure(err)) {
           // Durable: it replays on reconnect, and the server dedupes on
           // commandId. Keeping the optimistic state is correct — the intent
           // stands, it just has not landed yet.
-          enqueueCommand(user.uid, command);
+          if (!enqueueCommand(user.uid, command)) {
+            setProgramState(before);
+            toast.error("Couldn’t save that change on this device. Try again.");
+            return FAILED;
+          }
           logger.log(`[useProgram] ${command.kind} queued — offline`);
           return QUEUED;
         }
@@ -974,6 +1150,13 @@ export function useProgram() {
     liftSessionVersion,
     liftSessionVersion
   );
+  // A run on this phone from an earlier week holds them too, until it is
+  // saved or discarded (`earlierWeeksRunOnPhone`).
+  const runClears = useSyncExternalStore(
+    subscribeStoredRunClears,
+    storedRunClears,
+    storedRunClears
+  );
 
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
@@ -1030,9 +1213,16 @@ export function useProgram() {
     // And for TODAY's read: an app resumed on a later day still holds the
     // day it was opened on, and a runner who has been away since then would
     // roll into a full week on the old answer.
-    if (user && (layoffRead.uid !== user.uid || layoffRead.day !== today))
+    // And for a read taken since the last run on this phone went: saved
+    // after midnight, last week's run is in that one, not in the first.
+    if (
+      user &&
+      (layoffRead.uid !== user.uid ||
+        layoffRead.day !== today ||
+        layoffRead.clears !== runClears)
+    )
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1045,12 +1235,11 @@ export function useProgram() {
     // saveProgram below writes them all, and a plan further behind moves
     // again when this effect runs on the saved plan. Given the day, not
     // the week: the week reached plans no run before today.
-    const { state: rolling, weeks } = rollRunWeeks(
-      programState,
-      profile,
-      today,
-      recentLayoff
-    );
+    const {
+      state: rolling,
+      weeks,
+      starterFinishedOn,
+    } = rollRunWeeks(programState, profile, today, recentLayoff, recentRuns);
     if (weeks === 0) return;
 
     logger.log(
@@ -1065,29 +1254,53 @@ export function useProgram() {
     // copy can be behind it (see saveProgram), and a decline repaints from
     // the store, where the week has already moved.
     //
+    // A starter goal finished in a week moved past goes back to free running
+    // in the same write: the profile's goal is kept with its day
+    // (`finishStarterGoalPatch`), so the plan and the run mode never
+    // disagree. Declined, neither is written.
+    //
     // saveProgram sets state only after its awaited write, never
     // synchronously: the rule counts any call that reaches a setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     saveProgram(
       (stored) => {
-        const rolled = rollRunWeeks(stored, profile, today, recentLayoff);
+        const rolled = rollRunWeeks(
+          stored,
+          profile,
+          today,
+          recentLayoff,
+          recentRuns
+        );
         return rolled.weeks === 0 ? null : rolled.state;
       },
-      undefined,
+      starterFinishedOn
+        ? finishStarterGoalPatch(
+            profile.starterGoal ?? { startedOn: starterFinishedOn },
+            starterFinishedOn
+          )
+        : undefined,
       { quiet: true }
     ).catch((err) => {
       logger.warn("[auto-rollover] save failed", err);
+      // A finish refused over the profile: the profile held here is behind
+      // the stored one, and the next pass would be refused the same way.
+      // Read it again, so the next pass plans from what is stored.
+      if (starterFinishedOn && err instanceof ProgrammeConflictError)
+        void refreshProfile?.();
     });
   }, [
     programState,
     profile,
+    refreshProfile,
     saveProgram,
     layoffRead,
     recentLayoff,
+    recentRuns,
     user,
     mirrorReady,
     queuedWrites,
     openSessions,
+    runClears,
     today,
   ]);
 
@@ -1127,13 +1340,21 @@ export function useProgram() {
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void layoffFor(uid, today).then((cls) => {
-      if (!cancelled) setLayoffRead({ uid, day: today, cls });
+    const clears = runClears;
+    void recentRunsFor(uid, today).then((read) => {
+      if (!cancelled)
+        setLayoffRead({
+          uid,
+          day: today,
+          cls: read.layoff,
+          runs: read.runs,
+          clears,
+        });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode, today, layoffFor]);
+  }, [user?.uid, profile?.runMode, today, recentRunsFor, runClears]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1142,7 +1363,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1190,6 +1411,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    runClears,
     today,
   ]);
 
@@ -1207,7 +1429,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (finishOutstanding(user?.uid)) return;
+    if (finishOutstanding(user?.uid, today, programState)) return;
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover && rollover.weekKey < localWeekKey()) return;
     for (const dayIndex of raceRestSkips(programState, localDateString())) {
@@ -1239,6 +1461,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    runClears,
     runProgramCommand,
     today,
   ]);
@@ -1320,6 +1543,17 @@ export function useProgram() {
           )
         : programState;
 
+      // Soc15: the week of a plan with a set length that this lift
+      // finished, for its post. Only for the day the plan has in hand: a
+      // lift saved against a week that has moved on finishes none.
+      const plan = matchesCurrentDay
+        ? liftPlanFacts(
+            programState,
+            committedState,
+            liftSessionDay(sessionData.startedAt)
+          )
+        : null;
+
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
       // Pre-packet-15 the plan was saved and the workout written after it
@@ -1341,6 +1575,7 @@ export function useProgram() {
         ran,
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
+        supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
         title: day.dayName,
@@ -1362,6 +1597,7 @@ export function useProgram() {
           },
         },
         completion: completionContext,
+        moments: { ...sessionData.moments, plan },
       });
       if (receipt.syncStatus === "synced") committedState = committed ?? null;
       else
@@ -1386,7 +1622,7 @@ export function useProgram() {
       // P6: through the boundary. Equivalent — the reducer sets the same one
       // flag on the same day.
       const skipPrecondition = workoutDayPrecondition(programState, dayIndex);
-      if (!skipPrecondition) return declineStale("Couldn't skip that session.");
+      if (!skipPrecondition) return declineStale("Couldn’t skip that session.");
       return runProgramCommand(
         {
           kind: "skipWorkoutDay",
@@ -1399,7 +1635,7 @@ export function useProgram() {
             i === dayIndex ? { ...d, skipped: true } : d
           ),
         }),
-        "Couldn't skip that session."
+        "Couldn’t skip that session."
       );
     },
     [programState, user, runProgramCommand, declineStale]
@@ -1429,7 +1665,7 @@ export function useProgram() {
             const { nextWorkoutOverride: _cleared, ...rest } = state;
             return rest as ProgramState;
           },
-          "Couldn't go back to programme order."
+          "Couldn’t go back to programme order."
         );
       }
       const day = programState.workouts[dayIndex];
@@ -1438,7 +1674,7 @@ export function useProgram() {
           ? workoutDayPrecondition(programState, dayIndex)
           : null;
       if (!nextPrecondition)
-        return declineStale("Couldn't make that your next session.");
+        return declineStale("Couldn’t make that your next session.");
       return runProgramCommand(
         {
           kind: "setNextWorkout",
@@ -1446,7 +1682,7 @@ export function useProgram() {
           ...nextPrecondition,
         },
         (state) => ({ ...state, nextWorkoutOverride: dayIndex }),
-        "Couldn't make that your next session."
+        "Couldn’t make that your next session."
       );
     },
     [programState, runProgramCommand, declineStale]
@@ -1480,7 +1716,7 @@ export function useProgram() {
     //
     // Next week's runs are planned from today's layoff, waited for.
     const runsPlanned = !!profile?.runMode && profile.runMode !== "freeform";
-    const layoff = runsPlanned ? await resolveLayoff() : "none";
+    const read = runsPlanned ? await resolveLayoff() : NOTHING_READ;
     // Built against the live document, with the gate re-checked there: an
     // advance that overlaps the rollover's own transaction — which has just
     // advanced the week — declines rather than advancing a second time.
@@ -1502,7 +1738,8 @@ export function useProgram() {
                 date: localDateString(nextRunDate),
               },
               profile,
-              layoff
+              read.layoff,
+              read.runs
             )
           : null;
       const advanced = advanceWeek(
@@ -1596,7 +1833,7 @@ export function useProgram() {
         logger.warn(
           `[markManualComplete] no runDay matched id=${runDayId}; skipping`
         );
-        return declineStale("Couldn't mark that complete.");
+        return declineStale("Couldn’t mark that complete.");
       }
       const targetDay = programState.runDays[targetIndex];
 
@@ -1611,7 +1848,7 @@ export function useProgram() {
           `[markManualComplete] refusing to manually complete a scheduled race (id=${targetDay.id}); a race completes via a logged run`
         );
         return declineWithReason(
-          "Couldn't mark that complete.",
+          "Couldn’t mark that complete.",
           "A race is complete once you log it as a run."
         );
       }
@@ -1626,7 +1863,7 @@ export function useProgram() {
           logger.warn(
             `[markManualComplete] invalid transition ${fromStatus} → planned for runDay ${targetDay.id}; skipping`
           );
-          return declineStale("Couldn't mark that complete.");
+          return declineStale("Couldn’t mark that complete.");
         }
         updatedDays = programState.runDays.slice();
         updatedDays[targetIndex] = {
@@ -1653,7 +1890,7 @@ export function useProgram() {
           runDays: updatedDays,
           manualCompletions: updatedMap,
         }),
-        "Couldn't mark that complete."
+        "Couldn’t mark that complete."
       );
     },
     [programState, user, runProgramCommand, declineStale]
@@ -1686,7 +1923,7 @@ export function useProgram() {
           completed: false,
         },
         (state) => ({ ...state, manualCompletions: next }),
-        "Couldn't undo that."
+        "Couldn’t undo that."
       );
     },
     [programState, user, runProgramCommand]
@@ -1711,7 +1948,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return declineStale("Couldn't skip that run.");
+        return declineStale("Couldn’t skip that run.");
       }
       const targetDay = programState.runDays[targetIndex];
       // PR-0b-iii: legacy-completed-aware status read via the
@@ -1726,7 +1963,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
-        return declineStale("Couldn't skip that run.");
+        return declineStale("Couldn’t skip that run.");
       }
 
       // The command addresses the slot by STABLE ID, so the dayIndex overload
@@ -1737,7 +1974,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
         );
-        return declineStale("Couldn't skip that run.");
+        return declineStale("Couldn’t skip that run.");
       }
 
       const updatedDays = programState.runDays.slice();
@@ -1756,7 +1993,7 @@ export function useProgram() {
           to: toStatus,
         },
         (state) => ({ ...state, runDays: updatedDays }),
-        "Couldn't skip that run."
+        "Couldn’t skip that run."
       );
     },
     [programState, user, runProgramCommand, declineStale]
@@ -1785,7 +2022,7 @@ export function useProgram() {
         logger.warn(
           `[restoreRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return declineStale("Couldn't restore that run.");
+        return declineStale("Couldn’t restore that run.");
       }
       const targetDay = programState.runDays[targetIndex];
       const fromStatus = getScheduledRunStatus(targetDay);
@@ -1795,13 +2032,13 @@ export function useProgram() {
         logger.warn(
           `[restoreRunDay] invalid transition ${fromStatus} → planned for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
-        return declineStale("Couldn't restore that run.");
+        return declineStale("Couldn’t restore that run.");
       }
       if (!targetDay.id) {
         logger.warn(
           `[restoreRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
         );
-        return declineStale("Couldn't restore that run.");
+        return declineStale("Couldn’t restore that run.");
       }
 
       const updatedDays = programState.runDays.slice();
@@ -1818,7 +2055,7 @@ export function useProgram() {
           to: "planned",
         },
         (state) => ({ ...state, runDays: updatedDays }),
-        "Couldn't restore that run."
+        "Couldn’t restore that run."
       );
     },
     [programState, user, runProgramCommand, declineStale]
@@ -1839,7 +2076,7 @@ export function useProgram() {
         day && !day.completed
           ? workoutDayPrecondition(programState, dayIndex)
           : null;
-      if (!precondition) return declineStale("Couldn't restore that session.");
+      if (!precondition) return declineStale("Couldn’t restore that session.");
       return runProgramCommand(
         {
           kind: "restoreWorkoutDay",
@@ -1852,7 +2089,7 @@ export function useProgram() {
             i === dayIndex ? { ...d, skipped: false } : d
           ),
         }),
-        "Couldn't restore that session."
+        "Couldn’t restore that session."
       );
     },
     [programState, user, runProgramCommand, declineStale]
@@ -1869,7 +2106,8 @@ export function useProgram() {
   const moveRunDay = useCallback(
     async (
       idOrDayIndex: string | number,
-      targetDayIndex: number
+      targetDayIndex: number,
+      expected?: RunMovePrecondition
     ): Promise<ProgramOutcome> => {
       if (!programState?.runDays || !user) return FAILED;
       const target = programState.runDays.find((rd) =>
@@ -1881,15 +2119,57 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return declineStale("Couldn't move that run.");
+        return declineStale("Couldn’t move that run.");
       }
-      if (!canRescheduleRun(target)) {
+      // Read local storage at invocation time: a sheet can stay open while
+      // another tab starts a run after its in-flight snapshot was rendered.
+      const active = readStoredRunSummary(user.uid);
+      const activeId = active?.config.planMetadata?.scheduledRunId;
+      if (active && (!activeId || activeId === target.id)) {
+        return declineStale(
+          "Finish or discard the active run before moving it."
+        );
+      }
+      if (
+        !canRescheduleRun(target) ||
+        programState.manualCompletions?.[target.id ?? ""]
+      ) {
         logger.warn(
           `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
         );
-        return declineStale("Couldn't move that run.");
+        return declineStale("Couldn’t move that run.");
+      }
+      if (
+        expected &&
+        expected.sourceSignature !== runMoveSourceSignature(target)
+      ) {
+        return declineStale("Your plan changed. Review the latest week.");
+      }
+      if (expected && expected.todayKey !== localDateString(new Date())) {
+        return declineWithReason(
+          "Couldn’t move that run.",
+          "The day changed while this was open. Review the latest week."
+        );
       }
       if (targetDayIndex === target.dayIndex) return APPLIED; // same day
+      // Review callers get the exact same destination rules as the picker.
+      // Legacy callers already pass through that picker, and keep their
+      // existing signature/payload while the server enforces every date.
+      if (
+        expected &&
+        !resolveRunMoveOptions({
+          source: target,
+          runDays: programState.runDays,
+          weekSchedule: profile?.weekSchedule ?? [],
+          todayKey: expected.todayKey,
+        }).some(
+          (option) => option.dayIndex === targetDayIndex && option.available
+        )
+      ) {
+        return declineStale(
+          "That day is no longer available. Review the latest week."
+        );
+      }
       // Integrity guard: never double-book a day (the UI already blocks
       // occupied days, but two runs sharing a dayIndex corrupts the week).
       if (
@@ -1900,13 +2180,13 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] dayIndex=${targetDayIndex} already occupied; skipping`
         );
-        return declineStale("Couldn't move that run.");
+        return declineStale("Couldn’t move that run.");
       }
       if (!target.id) {
         logger.warn(
           `[moveRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
         );
-        return declineStale("Couldn't move that run.");
+        return declineStale("Couldn’t move that run.");
       }
       // Computed here for the OPTIMISTIC paint only. The command sends just
       // the run id and the target day: the date, the move markers and the
@@ -1923,15 +2203,20 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] could not resolve a date for dayIndex=${targetDayIndex}; skipping`
         );
-        return declineStale("Couldn't move that run.");
+        return declineStale("Couldn’t move that run.");
       }
       const targetId = target.id;
+      // The server judges "today" in this zone: the profile's is saved once
+      // a session, and is stale for anyone who has travelled since.
+      const timeZone = getDeviceTimezone();
       return runProgramCommand(
         {
           kind: "moveRunDay",
           commandId: generateInstanceId(),
           runDayId: targetId,
           targetDayIndex,
+          ...(timeZone ? { timeZone } : {}),
+          ...(expected ? { expected } : {}),
         },
         (state) => ({
           ...state,
@@ -1952,7 +2237,7 @@ export function useProgram() {
             return next;
           }),
         }),
-        "Couldn't move that run."
+        "Couldn’t move that run."
       );
     },
     [programState, user, profile?.weekSchedule, runProgramCommand, declineStale]
@@ -2052,7 +2337,7 @@ export function useProgram() {
               : rd
           ),
         }),
-        "Couldn't change that run."
+        "Couldn’t change that run."
       );
       // No success toast — the schedule UI shows the new run-day state.
       return changeStands(outcome);
@@ -2080,7 +2365,7 @@ export function useProgram() {
   const updateSettings = useCallback(
     async (
       updates: Partial<ProgramSettings>,
-      declinedMessage: string | null = "Couldn't save that setting."
+      declinedMessage: string | null = "Couldn’t save that setting."
     ): Promise<ProgramOutcome> => {
       if (!programState) return FAILED;
       const current = programState.settings ?? DEFAULT_PROGRAM_SETTINGS;
@@ -2168,10 +2453,10 @@ export function useProgram() {
         "recomp") as ProgramState["goal"];
       const weeklyTarget =
         weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
-      const layoff =
+      const read =
         profile.runMode === "race_prep" && profile.raceGoal
           ? await resolveLayoff()
-          : "none";
+          : NOTHING_READ;
       // Prefer programState's persisted primaryGoal (set at onboarding),
       // falling back to the profile value. Regenerate with goal-aware reps.
       const build = (base: ProgramState | null): ProgramState => {
@@ -2207,7 +2492,8 @@ export function useProgram() {
           if (profile.runMode === "race_prep" && profile.raceGoal) {
             const today = localDateString();
             ({ runDays, runPlan } = regenerateRacePlan({
-              recentLayoff: layoff,
+              recentLayoff: read.layoff,
+              recentRuns: read.runs,
               profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
@@ -2223,6 +2509,25 @@ export function useProgram() {
               today,
               weekStart
             );
+          } else if (profile.runMode === "starter") {
+            // The starter goal keeps its stage through a reset; its week is
+            // laid again from today on the layout. A plan not yet the
+            // starter's begins at the first stage.
+            const starter =
+              base?.runPlan?.mode === "starter" ? base : undefined;
+            ({ runDays, runPlan } = starterWeekFrom({
+              weekSchedule: effectiveSchedule,
+              stage: starter?.runPlan?.stage ?? 1,
+              stageStartedWeek:
+                starter?.runPlan?.stageStartedWeek ??
+                starter?.runPlan?.stageWeekKey,
+              today: localDateString(),
+              prior: starter?.runDays,
+            }));
+          } else if (isRunPlanFromNewerBuild(base?.runPlan)) {
+            // A newer build's plan: kept, not rebuilt as free running.
+            runDays = base?.runDays ?? [];
+            runPlan = base?.runPlan;
           } else {
             // RUN-M: structured retired — a non-race state is freeform.
             runDays = [];
@@ -2320,7 +2625,7 @@ export function useProgram() {
       const runTarget =
         overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
       const weekStart = localWeekKey();
-      const layoff = await resolveLayoff();
+      const read = await resolveLayoff();
       // Built against the live document: the overrides snapshot, the
       // recovery check and the carried week position all read the state
       // the store holds at commit, not the render the tap happened on.
@@ -2383,7 +2688,8 @@ export function useProgram() {
           // passed) and we're re-rendering race_prep, drop phase
           // and recoveryEndDate.
           ({ runDays, runPlan } = regenerateRacePlan({
-            recentLayoff: layoff,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
             profile,
             tuning: overrides?.tuning,
             raceGoal: profile.raceGoal,
@@ -2394,6 +2700,7 @@ export function useProgram() {
             carry: {
               currentWeek: base.runPlan?.currentWeek,
               totalWeeks: base.runPlan?.totalWeeks,
+              leadInWeek: base.runPlan?.leadInWeek,
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
@@ -2402,6 +2709,25 @@ export function useProgram() {
         ) {
           // The race has passed: race prep is the race lifecycle's to end,
           // from the plan and its race day, so both stay as they are.
+          runDays = base.runDays ?? [];
+          runPlan = base.runPlan;
+        } else if (profile.runMode === "starter") {
+          // A starter keeps its stage; its week is laid again on the new
+          // run days from today, the days already gone as they were. A plan
+          // not yet the starter's begins at the first stage.
+          const starter = base.runPlan?.mode === "starter" ? base : undefined;
+          ({ runDays, runPlan } = starterWeekFrom({
+            weekSchedule,
+            stage: starter?.runPlan?.stage ?? 1,
+            stageStartedWeek:
+              starter?.runPlan?.stageStartedWeek ??
+              starter?.runPlan?.stageWeekKey,
+            today: localDateString(),
+            prior: starter?.runDays,
+          }));
+        } else if (isRunPlanFromNewerBuild(base.runPlan)) {
+          // A newer build's plan: this build cannot rebuild it, and must
+          // not clear it.
           runDays = base.runDays ?? [];
           runPlan = base.runPlan;
         } else {
@@ -2424,8 +2750,9 @@ export function useProgram() {
             : rd;
         });
         // Run19: the layout changes the week from today. Its days already
-        // gone stay as they were, and none is planned before today.
-        if (runPlan) {
+        // gone stay as they were, and none is planned before today. A
+        // starter's week was built so (`starterWeekFrom`).
+        if (runPlan && runPlan.mode !== "starter") {
           runDays = rebuiltWeekFromToday(
             base.runDays ?? [],
             runDays,
@@ -2492,7 +2819,7 @@ export function useProgram() {
         delete nextRunPlan.recoveryEndDate;
         return { ...state, runPlan: nextRunPlan as unknown as RunPlan };
       },
-      "Couldn't end recovery."
+      "Couldn’t end recovery."
     );
 
     if (!changeStands(outcome)) return outcome;
@@ -2526,7 +2853,7 @@ export function useProgram() {
           delete next.pendingFellBehindPrompt;
           return next;
         },
-        "Couldn't dismiss that."
+        "Couldn’t dismiss that."
       );
     }, [programState, runProgramCommand]);
 
@@ -2662,7 +2989,7 @@ export function useProgram() {
               : d
           ),
         }),
-        "Couldn't remove that."
+        "Couldn’t remove that."
       );
       return changeStands(outcome);
     },
@@ -2745,7 +3072,7 @@ export function useProgram() {
             ),
           };
         },
-        "Couldn't add that."
+        "Couldn’t add that."
       );
       return changeStands(outcome);
     },
@@ -2778,7 +3105,7 @@ export function useProgram() {
           ...precondition,
         },
         (state) => state,
-        "Couldn't undo that."
+        "Couldn’t undo that."
       );
       return changeStands(outcome);
     },
@@ -2905,7 +3232,7 @@ export function useProgram() {
                 : replaced,
           };
         },
-        "Couldn't swap that."
+        "Couldn’t swap that."
       );
       return changeStands(outcome);
     },
@@ -2957,7 +3284,7 @@ export function useProgram() {
         ...(runSwaps.length > 0 ? { runSwaps } : {}),
       };
       try {
-        await sendProgramCommand(command);
+        await sendProgramCommand(command, user.uid);
         const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -2978,8 +3305,11 @@ export function useProgram() {
         // flush forever. `failed-precondition` is the live case here — the week
         // may already be deloaded by the time the queue drains.
         if (isTransportFailure(err)) {
-          enqueueCommand(user.uid, command);
-          logger.log(`[useProgram] ${kind} queued — offline`);
+          if (enqueueCommand(user.uid, command)) {
+            logger.log(`[useProgram] ${kind} queued — offline`);
+          } else {
+            toast.error("Couldn’t save that change on this device. Try again.");
+          }
         } else {
           logger.error(`[useProgram] ${kind} failed`, err);
         }
@@ -3016,7 +3346,6 @@ export function useProgram() {
       swaps: ReadonlyArray<{ key: string | number; toTemplateId: string }>
     ): Promise<number | null> => {
       if (!user || !programState || swaps.length === 0) return null;
-      const before = programState.runDays ?? [];
       const command = {
         kind: "applyEaseWeek" as const,
         commandId: generateInstanceId(),
@@ -3027,13 +3356,21 @@ export function useProgram() {
         })),
       };
       try {
-        await sendProgramCommand(command);
-        const next = await refetchProgramState();
-        const after = next?.runDays ?? before;
-        // A day counts as eased when its template now matches what we asked
-        // for AND it did not already. `runDayId` is the id when present and
-        // the dayIndex otherwise — the same key `applyDeloadRunSwaps` builds
-        // its map from, so the two sides agree on identity.
+        await sendProgramCommand(command, user.uid);
+        // The server stores the exact pre-ease days in easeSnapshot, so both
+        // sides of this count come from one committed document rather than
+        // a possibly stale client render. A read straight after the callable
+        // can still be the week before it (`awaitProgramState`), so this
+        // waits for the document that carries this week's snapshot.
+        const next = await awaitProgramState(
+          (state) =>
+            state.easeSnapshot?.weekNumber === command.expectedWeekNumber
+        );
+        if (!next?.easeSnapshot) return null;
+        const after = next.runDays ?? [];
+        const before = next.easeSnapshot.runDays;
+        // `runDayId` is the id when present and dayIndex otherwise — the
+        // same key `applyDeloadRunSwaps` builds its map from.
         const byKey = new Map(
           after.map((rd) => [
             rd.id != null ? String(rd.id) : String(rd.dayIndex),
@@ -3068,7 +3405,7 @@ export function useProgram() {
         return null;
       }
     },
-    [user, programState, refetchProgramState]
+    [user, programState, awaitProgramState]
   );
 
   /** RUN-EASE-01 — restore the pre-ease week from the server snapshot. */
@@ -3078,11 +3415,14 @@ export function useProgram() {
   }> => {
     if (!user || !programState) return { ok: false };
     try {
-      await sendProgramCommand({
-        kind: "revertEaseWeek" as const,
-        commandId: generateInstanceId(),
-        expectedWeekNumber: programState.weekNumber,
-      });
+      await sendProgramCommand(
+        {
+          kind: "revertEaseWeek" as const,
+          commandId: generateInstanceId(),
+          expectedWeekNumber: programState.weekNumber,
+        },
+        user.uid
+      );
       await refetchProgramState();
       return { ok: true };
     } catch (err) {
@@ -3177,7 +3517,7 @@ export function useProgram() {
                   state.settings?.loadUnit
                 ),
         }),
-        "Couldn't start that block."
+        "Couldn’t start that block."
       );
       return changeStands(outcome);
     },
@@ -3223,7 +3563,7 @@ export function useProgram() {
         delete next.trainingBlock;
         return next;
       },
-      "Couldn't end that block."
+      "Couldn’t end that block."
     );
     return changeStands(outcome);
   }, [programState, profile, runProgramCommand]);
@@ -3242,7 +3582,7 @@ export function useProgram() {
         delete next.trainingBlock;
         return next;
       },
-      "Couldn't end that block."
+      "Couldn’t end that block."
     );
     return changeStands(outcome);
   }, [programState, runProgramCommand]);
@@ -3305,18 +3645,18 @@ export function useProgram() {
    *  announce it as a realigned plan. */
   const realignRacePlan = useCallback(async (): Promise<RealignOutcome> => {
     const refuse = (reason: string): RealignOutcome => {
-      rejectedToast("Couldn't realign your plan.", reason);
+      rejectedToast("Couldn’t realign your plan.", reason);
       return { status: "declined", reason };
     };
     if (!programState || !profile) return { status: "failed" };
     if (profile.runMode !== "race_prep" || !profile.raceGoal)
-      return refuse("There's no race on your plan.");
+      return refuse("There’s no race on your plan.");
     // RUN-H1: realign re-plans race-training weeks; it is meaningless during an
     // active recovery window (the race is done) and would regenerate a race
     // plan that drops the recovery phase. The fell-behind prompt that triggers
     // realign is already suppressed during recovery, but guard explicitly so
     // recovery exit stays a deliberate decision (resolveRecoveryExit).
-    const inRecovery = "You're in recovery after your race.";
+    const inRecovery = "You’re in recovery after your race.";
     if (isInRecoveryOn(programState.runPlan, localDateString())) {
       return refuse(inRecovery);
     }
@@ -3332,7 +3672,7 @@ export function useProgram() {
     // the render it was tapped on, a realign that overlapped the rollover
     // was refused, and repaired only by tapping again.
     const raceGoal = profile.raceGoal;
-    const layoff = await resolveLayoff();
+    const read = await resolveLayoff();
     let planned: ProgramState["runPlan"];
     let saved: ProgramState | null;
     try {
@@ -3341,7 +3681,8 @@ export function useProgram() {
         if (isInRecoveryOn(base.runPlan, today)) return null;
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
-          recentLayoff: layoff,
+          recentLayoff: read.layoff,
+          recentRuns: read.runs,
           profile,
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],
@@ -3360,6 +3701,7 @@ export function useProgram() {
             // left generated a base week while the cockpit showed the carried
             // build phase.
             totalWeeks: prevRunPlan?.totalWeeks,
+            leadInWeek: prevRunPlan?.leadInWeek,
             completedRaces: prevRunPlan?.completedRaces,
           },
           prior: {
@@ -3410,9 +3752,14 @@ export function useProgram() {
     : null;
 
   return {
-    programState,
+    programState:
+      programState && profile
+        ? repairRunPrescriptions(programState, profile, today)
+        : programState,
     prescription,
     loading,
+    /** Refresh canonical state after a queued command is replayed. */
+    refreshProgram: refetchProgramState,
     /** Whether the plan can be acted on. `loading` turns false on the
      *  cached copy, which is right to show but can be behind the server, so
      *  a write built on it may be refused. "ready" once the server's copy
@@ -3459,6 +3806,8 @@ export function useProgram() {
      *  plan realign will actually produce (the answer to the same read
      *  every rebuild waits for; never a second read). */
     recentLayoff,
+    /** The recent runs that read found, for the race plan's weeks ahead. */
+    recentRuns,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

@@ -1,10 +1,10 @@
 /**
- * Route planner core (running roadmap P2 — route planning v1).
+ * Route planner core (running roadmap P2 — route planning).
  *
  * The builder places WAYPOINTS by tapping the map; segments between them are
- * straight lines (no external routing/snap-to-road service — deliberate v1:
- * zero API keys, works offline, and the honest "point-to-point distance"
- * label keeps the contract clear). The planned polyline saves through the
+ * straight lines. There is no external routing or snap-to-road service, by
+ * design: no API keys, nothing stored from a provider, it works offline, and
+ * the honest "point-to-point distance" label keeps the contract clear. The planned polyline saves through the
  * existing savedRoutes store (source "planned") and is followed exactly like
  * a GPX import or a re-run route.
  *
@@ -59,43 +59,4 @@ export function isLoopClosed(wps: Waypoint[]): boolean {
 export function closeLoop(wps: Waypoint[]): Waypoint[] {
   if (wps.length < 2 || isLoopClosed(wps)) return wps;
   return [...wps, { ...wps[0] }];
-}
-
-/** Cap applied to provider polylines before save — live route following
- *  runs an O(n) segment sweep per GPS tick (gps.ts routeProgress), so a
- *  5,000-point Mapbox polyline costs 5,000 projections every second of a
- *  multi-hour run. 1,000 points keeps segments ≤ ~10 m for typical
- *  planner distances (a 42.2 km worst case is ~42 m — still well inside
- *  the off-route threshold). */
-export const MAX_FOLLOW_POINTS = 1000;
-
-/**
- * Distance-based thinning: keep points at least (total/maxPoints) apart,
- * always preserving the first and last. Returns the input untouched when
- * it's already within budget — for typical 3–10 km road routes the
- * provider geometry is under the cap and this is a no-op.
- */
-export function downsampleRoute(
-  wps: Waypoint[],
-  maxPoints: number = MAX_FOLLOW_POINTS
-): Waypoint[] {
-  if (wps.length <= maxPoints || maxPoints < 2) return wps;
-  const totalM = plannerDistanceM(wps);
-  if (totalM <= 0) return wps.slice(0, maxPoints);
-  const spacingM = totalM / (maxPoints - 1);
-  const kept: Waypoint[] = [wps[0]];
-  let sinceKeptM = 0;
-  for (let i = 1; i < wps.length - 1; i++) {
-    sinceKeptM += gapM(wps[i - 1], wps[i]);
-    if (sinceKeptM >= spacingM) {
-      kept.push(wps[i]);
-      sinceKeptM = 0;
-    }
-  }
-  // The endpoint is always kept; if the budget is already spent, it
-  // replaces the last thinned point rather than overflowing maxPoints.
-  const last = wps[wps.length - 1];
-  if (kept.length >= maxPoints) kept[maxPoints - 1] = last;
-  else kept.push(last);
-  return kept;
 }

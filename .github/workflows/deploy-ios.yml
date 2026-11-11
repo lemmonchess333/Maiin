@@ -35,16 +35,18 @@
 #   development profile that will never exist; the export options named no
 #   profile for the manual export; and the app declared none of the
 #   entitlements Sign in with Apple and HealthKit need, so both would have
-#   failed on the phone. Signing now switches the App target alone to the
-#   imported App Store profile, and the profile is checked against the
+#   failed on the phone. Signing now switches the app targets to their
+#   imported App Store profiles, and each profile is checked against the
 #   certificate, the team and the app's entitlements before the archive.
 #
-# Canonical pattern: import a distribution cert + provisioning profile into
-# an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
-# with an App Store Connect API key. The cert and profile are the owner's
-# own when the IOS_DIST_CERT_* secrets are set; otherwise the run makes them
-# from the API key (scripts/ios/asc-signing.mjs), so the API key, the team ID
-# and the Firebase plist are all it needs. See docs/ios-release.md.
+# Canonical pattern: import a distribution cert + a provisioning profile for
+# each app target into an ephemeral keychain, archive with xcodebuild, export
+# an .ipa, upload with an App Store Connect API key. The targets come from
+# the project (scripts/ios_signed_targets.py). The cert and the iPhone and
+# Watch profiles are the owner's own when the IOS_DIST_CERT_* secrets are
+# set; otherwise the run makes the cert and every profile from the API key
+# (scripts/ios/asc-signing.mjs), so the API key, the team ID and the
+# Firebase plist are all it needs. See docs/ios-release.md.
 
 name: Deploy iOS to TestFlight
 
@@ -52,9 +54,16 @@ on:
   workflow_dispatch:
     inputs:
       notes:
-        description: "Optional what-to-test note for this TestFlight build"
+        description: "Optional What to Test note for this TestFlight build (a pilot's starts with the pilot line)"
         required: false
         default: ""
+      connected_training_pilot:
+        description: "Connected training pilot: Watch app and Health export on, its own tester group, never for release"
+        type: boolean
+        required: false
+        default: false
+
+run-name: TestFlight ${{ inputs.connected_training_pilot && 'connected training pilot' || 'standard' }} · ${{ github.ref_name }}
 
 # Never run two TestFlight uploads at once (build numbers must be unique).
 concurrency:
@@ -71,9 +80,15 @@ jobs:
     # the current Xcode as its default, which is what App Store Connect
     # accepts uploads from; the Archive step prints the version it used.
     runs-on: macos-26
+    # The production environment holds the release credentials: only a
+    # job that names it can read its secrets, and its branch rule decides
+    # where such a job may run. Repository secrets still reach this job.
+    environment: production
     # The first archive resolves every Swift package from scratch, and the
-    # Firebase SDK alone is large.
-    timeout-minutes: 60
+    # Firebase SDK alone is large. After the upload, a build that has notes
+    # or a tester group waits up to 40 minutes for App Store Connect to
+    # finish processing it.
+    timeout-minutes: 110
     env:
       # ── App identity (match capacitor.config.ts appId) ──────────────
       # Non-secret only. SIGNING secrets stay scoped to the individual
@@ -89,10 +104,60 @@ jobs:
       # by design (it ships inside the bundle); the scoping rule is about
       # the signing material, which is still nowhere near npm.
       BUNDLE_ID: com.tropos.app
+      WATCH_BUNDLE_ID: com.tropos.app.watchkitapp
       SCHEME: App
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # One explicit dispatch choice makes a build standard or a pilot. A
+      # standard build (the default, and the committed Release project)
+      # keeps both halves of the gate off, embeds no Watch app and asks
+      # Health for steps alone. The pilot turns the web gate on and passes
+      # WATCH_RUN_RELEASE_ENABLED=YES to this archive, which project.pbxproj
+      # turns into the native gate, the embedded Watch app and the expanded
+      # Health usage text. A pilot is made only by hand, from this form: a
+      # trigger added later (a tag, a schedule) can make standard builds only.
+      - name: Select connected training build mode
+        id: training-mode
+        env:
+          CONNECTED_TRAINING_PILOT: ${{ inputs.connected_training_pilot }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          case "$CONNECTED_TRAINING_PILOT" in
+            true)
+              if [ "$EVENT_NAME" != workflow_dispatch ]; then
+                echo "::error::A connected training pilot is made only from Run workflow, not from $EVENT_NAME."
+                exit 1
+              fi
+              echo "web=true" >> "$GITHUB_OUTPUT"
+              echo "native=YES" >> "$GITHUB_OUTPUT"
+              echo "kind=pilot" >> "$GITHUB_OUTPUT"
+              echo "Connected training pilot selected for this TestFlight build."
+              ;;
+            false|"")
+              echo "web=false" >> "$GITHUB_OUTPUT"
+              echo "native=NO" >> "$GITHUB_OUTPUT"
+              echo "kind=standard" >> "$GITHUB_OUTPUT"
+              echo "Standard TestFlight build; connected training remains off."
+              ;;
+            *) echo "::error::Unknown connected training build mode."; exit 1 ;;
+          esac
+
+      # Every app and extension target in the project is signed with its own
+      # App Store profile. The list comes from project.pbxproj, so a target
+      # added later (the Live Activity widget, docs/run-live-activity.md) is
+      # signed and exported without editing this workflow, and a kind of
+      # target the script does not know stops the run here, naming it.
+      - name: List the targets to sign
+        run: |
+          set -euo pipefail
+          python3 scripts/ios_signed_targets.py list \
+            ios/App/App.xcodeproj/project.pbxproj "$RUNNER_TEMP/signed-targets.json" \
+            --require "$BUNDLE_ID" --require "$WATCH_BUNDLE_ID"
+          SIGNED_BUNDLE_IDS=$(python3 -c 'import json, sys; print(" ".join(t["bundle_id"] for t in json.load(open(sys.argv[1]))))' "$RUNNER_TEMP/signed-targets.json")
+          echo "SIGNED_BUNDLE_IDS=$SIGNED_BUNDLE_IDS" >> "$GITHUB_ENV"
 
       # Every secret this run needs, checked together before `npm ci` and a
       # 20-minute archive, so a missing one is named in the first minute and
@@ -103,6 +168,7 @@ jobs:
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_WATCH_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_WATCH_PROVISIONING_PROFILE_BASE64 }}
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
@@ -118,21 +184,21 @@ jobs:
             echo "::error::Missing repository secrets:$missing. docs/ios-release.md says how to make each one, without a Mac."
             exit 1
           fi
-          # Your own certificate and profile are optional: all three secrets,
-          # or none, and then the run makes its signing from the API key.
+          # Your own certificate and both profiles are optional: all four
+          # secrets, or none, and then the run makes signing from the API key.
           own=0
           for name in IOS_DIST_CERT_P12_BASE64 IOS_DIST_CERT_PASSWORD \
-            IOS_PROVISIONING_PROFILE_BASE64; do
+            IOS_PROVISIONING_PROFILE_BASE64 IOS_WATCH_PROVISIONING_PROFILE_BASE64; do
             if [ -n "${!name}" ]; then own=$((own + 1)); fi
           done
-          if [ "$own" -ne 0 ] && [ "$own" -ne 3 ]; then
-            echo "::error::Only some of your own signing secrets are set. Set all of IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD and IOS_PROVISIONING_PROFILE_BASE64, or delete them and the run makes its signing from the API key."
+          if [ "$own" -ne 0 ] && [ "$own" -ne 4 ]; then
+            echo "::error::Only some of your own signing secrets are set. Set IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD, IOS_PROVISIONING_PROFILE_BASE64 and IOS_WATCH_PROVISIONING_PROFILE_BASE64 together, or delete them all and the run makes signing from the API key."
             exit 1
           fi
-          if [ "$own" -eq 3 ]; then
-            echo "Signing with your own certificate and profile."
+          if [ "$own" -eq 4 ]; then
+            echo "Signing with your own certificate and iPhone/Watch profiles: $SIGNED_BUNDLE_IDS."
           else
-            echo "Signing from the API key: this run makes its own certificate and profile."
+            echo "Signing from the API key: this run makes its own certificate and a profile for each of $SIGNED_BUNDLE_IDS."
           fi
           # A file's secret may hold the file's text as pasted, or its base64.
           write_secret_file() {
@@ -155,10 +221,37 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
+
+      # Where the build will go, checked before 20 minutes of archive: a
+      # pilot needs its own internal group, and no other internal group may
+      # receive every build automatically, or the pilot would reach it too.
+      # Runs only repository code with no packages, so it can go before npm ci.
+      - name: Check the TestFlight tester group
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          BUILD_KIND: ${{ steps.training-mode.outputs.kind }}
+          TESTFLIGHT_NOTES: ${{ inputs.notes }}
+          TESTFLIGHT_PILOT_GROUP_ID: ${{ vars.TESTFLIGHT_PILOT_GROUP_ID }}
+          TESTFLIGHT_STANDARD_GROUP_ID: ${{ vars.TESTFLIGHT_STANDARD_GROUP_ID }}
+        run: |
+          set -euo pipefail
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          KEY="$RUNNER_TEMP/testflight-check.p8"
+          trap 'rm -f "$KEY"' EXIT
+          write_secret_file "$ASC_API_KEY_P8_BASE64" "$KEY"
+          ASC_API_KEY_PATH="$KEY" node scripts/ios/testflight-build.mjs check
 
       - name: Install deps
         run: npm ci
@@ -245,15 +338,20 @@ jobs:
       - name: Build web bundle and sync into the iOS project
         run: npm run build:ios
         env:
+          VITE_CONNECTED_TRAINING_ENABLED: ${{ steps.training-mode.outputs.web }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-          # Parity with the web deploy — the Pro-gated road-align layer is
-          # not a web-only feature.
-          VITE_ROUTE_PLANNING_ENABLED: "true"
+          # RevenueCat's public iOS key (`appl_…`). Wired once the activation
+          # order in docs/iap/revenuecat-setup.md was done (2026-11-07): the
+          # App Store app with its In-App Purchase key, the `pro` entitlement,
+          # the `default` offering, the transfer behaviour, the webhook and
+          # Apple's notifications. A build made without the secret cannot
+          # sell, and its paywalls show no price (canSellInThisBuild).
+          VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
           #
           # Absent on purpose, so nobody has to re-derive why:
           #
@@ -264,12 +362,6 @@ jobs:
           #     appCheck.ts takes its isNativePlatform() branch before it ever
           #     reads the key, so passing it here would do nothing and imply
           #     native attestation is configured when it is not.
-          #   VITE_REVENUECAT_IOS_KEY — NOT wired, deliberately. Adding the
-          #     line arms RevenueCat the instant the GitHub secret exists, and
-          #     purchaseProvider routes iOS through it with no further gate.
-          #     Add it only after the activation order in
-          #     docs/iap/revenuecat-setup.md is complete, or a purchase is
-          #     taken by Apple and no entitlement is written.
 
       # Both failures above are invisible in a green build: the bundle
       # compiles either way and only misbehaves on a device, by which point
@@ -290,7 +382,8 @@ jobs:
       # Without the owner's own certificate secrets, the run makes its
       # signing from the API key: a private key and certificate request made
       # here, then an Apple Distribution certificate and an App Store profile
-      # from App Store Connect's API (scripts/ios/asc-signing.mjs). The key
+      # for each signed target from App Store Connect's API
+      # (scripts/ios/asc-signing.mjs, reading SIGNED_BUNDLE_IDS). The key
       # never leaves this runner, so every run makes a new certificate, and
       # the script revokes the one the run before made. The import step
       # below checks the result just as it checks the owner's own.
@@ -298,7 +391,7 @@ jobs:
       # /usr/bin/openssl is macOS's own LibreSSL, and the .p12 takes the older
       # encryption macOS's `security` imports; OpenSSL 3's default can fail
       # there with "MAC verification failed" (docs/ios-release.md).
-      - name: Make the signing certificate and profile from the API key
+      - name: Make the signing certificate and profiles from the API key
         env:
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
@@ -330,29 +423,30 @@ jobs:
             -name "Tropos CI" -out "$RUNNER_TEMP/dist-cert.p12" \
             -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
             -passout "file:$OUT/p12-password"
-          cp "$OUT/profile.mobileprovision" "$RUNNER_TEMP/profile.mobileprovision"
+          mkdir -p "$RUNNER_TEMP/profiles"
+          cp "$OUT"/profiles/*.mobileprovision "$RUNNER_TEMP/profiles/"
           rm -f "$OUT/dist.key" "$OUT/AuthKey.p8"
 
       # The owner has no Mac, so their own certificate comes from a CSR made
-      # with openssl and the profile from Apple's website, or the step above
-      # makes both (docs/ios-release.md). Either can be wrong in a way that
-      # only shows 20 minutes into the archive, so both are checked here
-      # first. The profile is checked against the team, the bundle id, the
-      # distribution type, its expiry and every entitlement the app declares.
-      # The certificate is checked against the profile it has to match.
-      - name: Import signing certificate + provisioning profile
+      # with openssl and the iPhone and Watch profiles from Apple's website,
+      # or the step above makes the certificate and every profile
+      # (docs/ios-release.md). They can be wrong in a way that only shows 20
+      # minutes into the archive, so check them here. Each signed target's
+      # profile must match its team, bundle ID, distribution type, expiry and
+      # entitlements, and every profile must name the certificate.
+      - name: Import signing certificate + provisioning profiles
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_WATCH_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_WATCH_PROVISIONING_PROFILE_BASE64 }}
         run: |
           set -euo pipefail
           KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
           CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
-          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
-          export PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
-          export FACTS="$RUNNER_TEMP/profile-facts"
+          export PROFILES="$RUNNER_TEMP/profiles"
+          mkdir -p "$PROFILES"
           # The keychain lives for this job only, so its password is made
           # here rather than kept as a secret.
           KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
@@ -366,56 +460,78 @@ jobs:
             CERT_SOURCE="IOS_DIST_CERT_P12_BASE64"
             IOS_DIST_CERT_PASSWORD=$(printf '%s' "$IOS_DIST_CERT_PASSWORD" | tr -d '\r\n')
             printf '%s' "$IOS_DIST_CERT_P12_BASE64" | tr -d '[:space:]' | base64 --decode > "$CERT_PATH"
-            printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILE_PATH"
+            printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILES/$BUNDLE_ID.mobileprovision"
+            printf '%s' "$IOS_WATCH_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILES/$WATCH_BUNDLE_ID.mobileprovision"
           fi
-          if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
-            echo "::error::The provisioning profile does not decode. IOS_PROVISIONING_PROFILE_BASE64 should be the base64 of the .mobileprovision file."
-            exit 1
-          fi
+          for bundle in $SIGNED_BUNDLE_IDS; do
+            if [ ! -f "$PROFILES/$bundle.mobileprovision" ]; then
+              echo "::error::The project also signs $bundle, and your own signing secrets hold profiles for $BUNDLE_ID and $WATCH_BUNDLE_ID only. Delete IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD and both profile secrets, and the run makes every profile from the API key (docs/ios-release.md)."
+              exit 1
+            fi
+            if ! security cms -D -i "$PROFILES/$bundle.mobileprovision" > "$PROFILES/$bundle.plist"; then
+              echo "::error::The provisioning profile for $bundle does not decode. Its secret should be the base64 of the App Store .mobileprovision file."
+              exit 1
+            fi
+          done
 
           # Presence alone is insufficient: a development APNs profile cannot
           # receive TestFlight pushes. Fail with setup instructions before Xcode.
-          python3 scripts/verify_ios_push.py --profile "$PROFILE_PLIST"
+          python3 scripts/verify_ios_push.py --profile "$PROFILES/$BUNDLE_ID.plist"
 
           python3 - <<'PY'
-          import datetime, hashlib, os, plistlib, sys
+          import datetime, hashlib, json, os, plistlib, sys
+          from scripts.verify_ios_entitlements import mismatched_entitlements
 
-          with open(os.environ["PROFILE_PLIST"], "rb") as f:
-              profile = plistlib.load(f)
-          with open("ios/App/App/App.entitlements", "rb") as f:
-              wanted = plistlib.load(f)
-          team, bundle = os.environ["APPLE_TEAM_ID"], os.environ["BUNDLE_ID"]
-          have = profile.get("Entitlements", {})
+          profiles = os.environ["PROFILES"]
+          team = os.environ["APPLE_TEAM_ID"]
+          with open(os.path.join(os.environ["RUNNER_TEMP"], "signed-targets.json")) as f:
+              targets = json.load(f)
           problems = []
-          app_id = have.get("application-identifier", "")
-          if not app_id.endswith("." + bundle):
-              problems.append(f"it is for {app_id}, not {bundle}")
-          if team not in profile.get("TeamIdentifier", []):
-              problems.append(f"it belongs to team {profile.get('TeamIdentifier')}, not APPLE_TEAM_ID {team}")
-          if "ProvisionedDevices" in profile or have.get("get-task-allow"):
-              problems.append("it is a development or ad hoc profile, and this needs an App Store Connect distribution profile")
-          now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-          if profile["ExpirationDate"] < now:
-              problems.append(f"it expired on {profile['ExpirationDate']:%Y-%m-%d}")
-          missing = sorted(key for key in wanted if key not in have)
-          if missing:
-              problems.append(
-                  "it lacks " + ", ".join(missing)
-                  + ". Turn the matching capabilities on for the App ID (Apple Developer → Identifiers),"
-                  + " then make the profile again; a run that signs from the API key makes a new one,"
-                  + " so for that just run this workflow again"
-              )
+          uuids = {}
+          for target in targets:
+              bundle = target["bundle_id"]
+              with open(os.path.join(profiles, bundle + ".plist"), "rb") as f:
+                  profile = plistlib.load(f)
+              wanted = {}
+              if target["entitlements"]:
+                  with open(target["entitlements"], "rb") as f:
+                      wanted = plistlib.load(f)
+              have = profile.get("Entitlements", {})
+              app_id = have.get("application-identifier", "")
+              if not app_id.endswith("." + bundle):
+                  problems.append(f"{bundle}: profile is for {app_id}")
+              if team not in profile.get("TeamIdentifier", []):
+                  problems.append(f"{bundle}: profile belongs to team {profile.get('TeamIdentifier')}, not {team}")
+              if "ProvisionedDevices" in profile or have.get("get-task-allow"):
+                  problems.append(f"{bundle}: expected an App Store profile, not development or ad hoc")
+              now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+              if profile["ExpirationDate"] < now:
+                  problems.append(f"{bundle}: profile expired on {profile['ExpirationDate']:%Y-%m-%d}")
+              mismatched = mismatched_entitlements(wanted, have)
+              if mismatched:
+                  # Name what the profile holds for each, so a format Apple
+                  # writes differently from the app's file is told apart from
+                  # a capability that is really off.
+                  for key in mismatched:
+                      print(f"{bundle}: app asks {key} = {wanted.get(key)!r}; profile has {have.get(key)!r}")
+                  problems.append(
+                      f"{bundle}: profile lacks matching " + ", ".join(mismatched)
+                      + ". Turn on those App ID capabilities in Apple Developer → Identifiers and regenerate the profile"
+                  )
+              print(f"Profile for {bundle}: {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
+              uuids[bundle] = profile["UUID"]
+              with open(os.path.join(profiles, bundle + ".uuid"), "w") as out:
+                  out.write(profile["UUID"] + "\n")
+              with open(os.path.join(profiles, bundle + ".certificates"), "w") as out:
+                  for der in profile.get("DeveloperCertificates", []):
+                      out.write(hashlib.sha1(der).hexdigest().upper() + "\n")
           for problem in problems:
               print(f"::error::The provisioning profile is wrong: {problem}.")
           if problems:
               sys.exit(1)
-          print(f"Profile {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
-          with open(os.environ["FACTS"], "w") as out:
-              out.write(profile["UUID"] + "\n")
-              for der in profile.get("DeveloperCertificates", []):
-                  out.write(hashlib.sha1(der).hexdigest().upper() + "\n")
+          with open(os.path.join(os.environ["RUNNER_TEMP"], "profile-uuids.json"), "w") as out:
+              json.dump(uuids, out, indent=2)
           PY
-          PROFILE_UUID=$(head -1 "$FACTS")
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
@@ -439,47 +555,31 @@ jobs:
             echo "::error::$CERT_SOURCE holds no valid Apple Distribution identity. The certificate must be an Apple Distribution certificate made from the private key that went into the .p12."
             exit 1
           fi
-          if ! tail -n +2 "$FACTS" | grep -qx "$CERT_SHA1"; then
-            echo "::error::The provisioning profile was made for a different certificate. Edit the profile on Apple's site, tick the certificate in this .p12, download it again and update IOS_PROVISIONING_PROFILE_BASE64."
-            exit 1
-          fi
+          for bundle in $SIGNED_BUNDLE_IDS; do
+            if ! grep -qx "$CERT_SHA1" "$PROFILES/$bundle.certificates"; then
+              echo "::error::The provisioning profile for $bundle was made for a different certificate. Edit the profile on Apple's site, tick the certificate in this .p12, download it again and update its secret."
+              exit 1
+            fi
+          done
 
           # Xcode 16 moved where it reads profiles from, so install in both.
           for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" \
             "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
             mkdir -p "$dir"
-            cp "$PROFILE_PATH" "$dir/$PROFILE_UUID.mobileprovision"
+            for bundle in $SIGNED_BUNDLE_IDS; do
+              cp "$PROFILES/$bundle.mobileprovision" "$dir/$(cat "$PROFILES/$bundle.uuid").mobileprovision"
+            done
           done
-          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
-      # The project as committed signs automatically. On a runner with no
-      # Apple account that looks for a development profile that will never
-      # exist, and the archive fails. Switch the App target alone to the
-      # profile imported above. Passing PROVISIONING_PROFILE_SPECIFIER to
-      # xcodebuild instead would set it on every Swift package target too,
-      # and xcodebuild refuses a profile on a package target.
-      - name: Sign the App target with the App Store profile
+      # Switch every signed target, in every configuration, to its imported
+      # profile in the project file. A command-line
+      # PROVISIONING_PROFILE_SPECIFIER would also reach Swift package
+      # targets, where Xcode rejects it.
+      - name: Sign every app target with its App Store profile
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import os, sys
-
-          path = "ios/App/App.xcodeproj/project.pbxproj"
-          with open(path) as f:
-              src = f.read()
-          automatic = "CODE_SIGN_STYLE = Automatic;"
-          found = src.count(automatic)
-          if found != 2:
-              print(f"::error::Expected the App target's Debug and Release settings to sign automatically (two '{automatic}'), found {found}. The project's signing settings changed, so update this step.")
-              sys.exit(1)
-          manual = (
-              "CODE_SIGN_STYLE = Manual;\n"
-              '\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";\n'
-              '\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "' + os.environ["PROFILE_UUID"] + '";'
-          )
-          with open(path, "w") as f:
-              f.write(src.replace(automatic, manual))
-          PY
+          python3 scripts/ios_signed_targets.py sign \
+            ios/App/App.xcodeproj/project.pbxproj "$RUNNER_TEMP/profile-uuids.json"
           grep -n -E 'CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER' \
             ios/App/App.xcodeproj/project.pbxproj
 
@@ -498,9 +598,14 @@ jobs:
       - name: Archive
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WATCH_RUN_RELEASE_ENABLED: ${{ steps.training-mode.outputs.native }}
         run: |
           set -euo pipefail
           APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
+          if [ "$WATCH_RUN_RELEASE_ENABLED" != YES ] && [ "$WATCH_RUN_RELEASE_ENABLED" != NO ]; then
+            echo "::error::The native connected training gate is not YES or NO."
+            exit 1
+          fi
           xcodebuild -version
           xcodebuild -list -project ios/App/App.xcodeproj
           APP_VERSION=$(node -p "require('./package.json').version")
@@ -518,19 +623,33 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             MARKETING_VERSION="$APP_VERSION" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            WATCH_RUN_RELEASE_ENABLED="$WATCH_RUN_RELEASE_ENABLED" \
             clean archive
 
-      - name: Verify archived app push signing
+      # A Watch app or extension target without SKIP_INSTALL installs beside
+      # App.app in the archive, and the export then sees no single iOS app.
+      - name: Verify archived iPhone and Watch signing
         run: |
           set -euo pipefail
+          ARCHIVED_APPS=$(ls "$RUNNER_TEMP/App.xcarchive/Products/Applications")
+          if [ "$ARCHIVED_APPS" != "App.app" ]; then
+            echo "::error::The archive should hold App.app alone, but holds: $ARCHIVED_APPS. Set SKIP_INSTALL = YES on every embedded target."
+            exit 1
+          fi
           python3 scripts/verify_ios_push.py \
             --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
             --bundle-id "$BUNDLE_ID"
+          python3 scripts/verify_ios_watch.py \
+            --app "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
+            --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID" \
+            --expected-connected-training "${{ steps.training-mode.outputs.native }}"
 
-      # A manual export has to be told which profile signs which bundle id;
-      # without the mapping it stops at "no profiles for com.tropos.app".
-      # The build number comes from the Archive step, so Xcode is told not
-      # to manage it, which it would otherwise try to do by contacting App
+      # A manual export needs a profile for each signed bundle in the
+      # archive; without one it stops at "no profiles for com.tropos.app".
+      # The map names what the archive holds, so a standard build's names no
+      # Watch profile, and a bundle with no profile fails here by name. The
+      # build number comes from the Archive step, so Xcode is told not to
+      # manage it, which it would otherwise try to do by contacting App
       # Store Connect with credentials this step does not have.
       - name: Export .ipa
         env:
@@ -538,25 +657,10 @@ jobs:
         run: |
           set -euo pipefail
           APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
-          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
-            <key>signingStyle</key><string>manual</string>
-            <key>signingCertificate</key><string>Apple Distribution</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${BUNDLE_ID}</key><string>${PROFILE_UUID}</string>
-            </dict>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-            <key>uploadSymbols</key><true/>
-            <key>destination</key><string>export</string>
-          </dict>
-          </plist>
-          PLIST
+          python3 scripts/ios_signed_targets.py export-options \
+            "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
+            "$RUNNER_TEMP/profile-uuids.json" "$APPLE_TEAM_ID" \
+            "$RUNNER_TEMP/ExportOptions.plist"
           plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
@@ -565,7 +669,7 @@ jobs:
 
       # Export may re-sign the app, so inspect the uploaded artifact as well as
       # the archive. Upload uses this exact verified path, never another IPA.
-      - name: Verify exported app push signing
+      - name: Verify exported iPhone and Watch signing
         run: |
           set -euo pipefail
           IPAS=("$RUNNER_TEMP"/export/*.ipa)
@@ -582,9 +686,13 @@ jobs:
             exit 1
           fi
           python3 scripts/verify_ios_push.py --app "${APPS[0]}" --bundle-id "$BUNDLE_ID"
+          python3 scripts/verify_ios_watch.py --app "${APPS[0]}" \
+            --bundle-id "$WATCH_BUNDLE_ID" --companion-id "$BUNDLE_ID" \
+            --expected-connected-training "${{ steps.training-mode.outputs.native }}"
           echo "VERIFIED_IPA=$IPA" >> "$GITHUB_ENV"
 
       - name: Upload to TestFlight
+        id: upload
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
@@ -607,12 +715,49 @@ jobs:
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_API_ISSUER_ID"
 
+      # A pilot's "What to Test" says it is a pilot, and it goes to the pilot
+      # group alone; a standard build carries the dispatch's notes and goes
+      # to TESTFLIGHT_STANDARD_GROUP_ID when that is set. The notes reach the
+      # script through the environment, never pasted into the command. For a
+      # pilot every App Store Connect call passes through a guard that
+      # refuses submission for review or release (testflight-build.mjs).
+      - name: Mark the TestFlight build and send it to its group
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          BUILD_KIND: ${{ steps.training-mode.outputs.kind }}
+          TESTFLIGHT_NOTES: ${{ inputs.notes }}
+          TESTFLIGHT_PILOT_GROUP_ID: ${{ vars.TESTFLIGHT_PILOT_GROUP_ID }}
+          TESTFLIGHT_STANDARD_GROUP_ID: ${{ vars.TESTFLIGHT_STANDARD_GROUP_ID }}
+        run: |
+          set -euo pipefail
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          KEY="$RUNNER_TEMP/testflight-distribute.p8"
+          trap 'rm -f "$KEY"' EXIT
+          write_secret_file "$ASC_API_KEY_P8_BASE64" "$KEY"
+          BUILD_NUMBER="$GITHUB_RUN_NUMBER" \
+            MARKETING_VERSION=$(node -p "require('./package.json').version") \
+            ASC_API_KEY_PATH="$KEY" \
+            node scripts/ios/testflight-build.mjs distribute
+
       # Crashlytics reads a native crash through the build's symbol files. A
       # local Xcode build uploads them from a run-script phase; this archive
       # is built on a runner, so they go up here, from the archive just sent
       # to TestFlight. After that upload, so a failure here turns the run red
-      # without keeping the build from testers.
+      # without keeping the build from testers, and whatever the step before
+      # did, so a slow App Store Connect does not cost the symbols. The tool
+      # itself has crashed once (a segmentation fault, build 12) with the
+      # build already in TestFlight, so a failed upload is tried once more
+      # before the run goes red.
       - name: Upload Crashlytics symbol files
+        if: ${{ !cancelled() && steps.upload.outcome == 'success' }}
         run: |
           set -euo pipefail
           UPLOAD=$(find "$HOME/Library/Developer/Xcode/DerivedData" \
@@ -623,7 +768,12 @@ jobs:
             exit 1
           fi
           "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
-            "$RUNNER_TEMP/App.xcarchive/dSYMs"
+            "$RUNNER_TEMP/App.xcarchive/dSYMs" || {
+            echo "::warning::upload-symbols failed once; trying again in 15 s"
+            sleep 15
+            "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
+              "$RUNNER_TEMP/App.xcarchive/dSYMs"
+          }
 
       # The runner is thrown away after the job, but the signing key should
       # not outlive the steps that needed it.

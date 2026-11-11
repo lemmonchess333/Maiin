@@ -10,10 +10,17 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-const counts = vi.hoisted(() => ({ followers: 2 }));
+const counts = vi.hoisted(() => ({
+  followers: 2,
+  fail: null as { code: string } | null,
+  asked: [] as [string, boolean][],
+}));
 vi.mock("@/lib/socialApi", () => ({
-  getFollowerCount: async () => counts.followers,
-  getFollowingCount: async () => 1,
+  getFollowCounts: async (uid: string, own: boolean) => {
+    counts.asked.push([uid, own]);
+    if (counts.fail) throw counts.fail;
+    return { followers: counts.followers, following: 1 };
+  },
   batchGetKudos: async (ids: string[]) =>
     Object.fromEntries(ids.map((id) => [id, id === "liked"])),
 }));
@@ -58,6 +65,9 @@ const post = (
 beforeEach(() => {
   resetFirestore();
   counts.followers = 2;
+  counts.fail = null;
+  counts.asked = [];
+  vi.mocked(logger.warn).mockClear();
 });
 
 async function settled(uid: string, viewer: string | null) {
@@ -237,6 +247,60 @@ describe("useUserProfileData — when there is nothing to show", () => {
   });
 });
 
+describe("useUserProfileData — follow counts", () => {
+  it("asks for someone else's counts as theirs, and your own as your own", async () => {
+    seedFirestore({
+      "users/alice/public/profile": { displayName: "Alice" },
+      "users/me": { displayName: "Me" },
+      "users/me/public/profile": { displayName: "Me" },
+    });
+    const theirs = await settled("alice", "me");
+    await waitFor(() => expect(theirs.result.current.followers).toBe(2));
+    expect(theirs.result.current.followingCount).toBe(1);
+    await settled("me", "me");
+    expect(counts.asked).toEqual([
+      ["alice", false],
+      ["me", true],
+    ]);
+  });
+
+  it("a failed read says so, and is logged", async () => {
+    counts.fail = { code: "unavailable" };
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    const { result } = await settled("alice", "viewer");
+    await waitFor(() => expect(result.current.countsFailed).toBe(true));
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[profile] follow counts read failed for alice",
+      counts.fail
+    );
+  });
+
+  it("counts the rules refuse a blocked reader are not logged as a failure", async () => {
+    counts.fail = { code: "permission-denied" };
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    const { result } = await settled("alice", "viewer");
+    await waitFor(() => expect(result.current.countsFailed).toBe(true));
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      "[profile] follow counts read failed for alice",
+      expect.anything()
+    );
+  });
+
+  it("your own counts refused is still worth a warning", async () => {
+    counts.fail = { code: "permission-denied" };
+    seedFirestore({
+      "users/me": { displayName: "Me" },
+      "users/me/public/profile": { displayName: "Me" },
+    });
+    const { result } = await settled("me", "me");
+    await waitFor(() => expect(result.current.countsFailed).toBe(true));
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[profile] follow counts read failed for me",
+      counts.fail
+    );
+  });
+});
+
 describe("useUserProfileData — following from the page", () => {
   it("moves the follower count at once, never below zero", async () => {
     counts.followers = 0;
@@ -247,5 +311,71 @@ describe("useUserProfileData — following from the page", () => {
     expect(result.current.followers).toBe(0);
     act(() => result.current.adjustFollowers(1));
     expect(result.current.followers).toBe(1);
+  });
+});
+
+describe("useUserProfileData — the trophy case (Soc15)", () => {
+  const medalLine = (over: Record<string, unknown> = {}) => ({
+    tier: "gold",
+    name: "November Mileage",
+    metric: "total_km",
+    type: "monthly",
+    value: 52.4,
+    goal: 50,
+    startDate: "2026-11-01",
+    endDate: "2026-12-01",
+    ...over,
+  });
+
+  it("reads someone else's medals from their public summary, newest first, skipping a line that is not one", async () => {
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        medalSummary: {
+          "monthly-2026-10-01": medalLine({
+            name: "October Mileage",
+            startDate: "2026-10-01",
+            endDate: "2026-11-01",
+          }),
+          "monthly-2026-11-01": medalLine(),
+          junk: { tier: "platinum" },
+        },
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.medals?.map((m) => m.challengeId)).toEqual([
+      "monthly-2026-11-01",
+      "monthly-2026-10-01",
+    ]);
+  });
+
+  it("reads your own medals from the same public summary", async () => {
+    seedFirestore({
+      "users/me": { displayName: "Me" },
+      "users/me/public/profile": {
+        displayName: "Me",
+        medalSummary: { "monthly-2026-11-01": medalLine() },
+      },
+    });
+    const { result } = await settled("me", "me");
+    expect(result.current.medals).toHaveLength(1);
+  });
+
+  it("holds no medals for a profile without a summary", async () => {
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.medals).toEqual([]);
+  });
+
+  it("knows no medals when the public read failed, rather than none", async () => {
+    seedFirestore({ "users/me": { displayName: "Me" } });
+    failNextFirestore("getDoc", {
+      path: "users/me/public/profile",
+      code: "unavailable",
+    });
+    const { result } = await settled("me", "me");
+    expect(result.current.status).toBe("ready");
+    expect(result.current.medals).toBeNull();
+    expect(unfiredFailures()).toEqual([]);
   });
 });

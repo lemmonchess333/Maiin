@@ -5,7 +5,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const require = createRequire(import.meta.url);
-const { isEmailRateLimited } = require("../lib/emailRateLimit");
+const {
+  isEmailRateLimited,
+  firstEmailLimitHit,
+  PASSWORD_RESET_LIMITS,
+  VERIFICATION_EMAIL_LIMITS,
+  DAY_MS,
+} = require("../lib/emailRateLimit");
 
 const __dirnameLocal = dirname(fileURLToPath(import.meta.url));
 
@@ -85,21 +91,85 @@ describe("isEmailRateLimited", () => {
   });
 });
 
+describe("firstEmailLimitHit", () => {
+  const limits = [
+    { action: "short", maxCalls: 3, windowMs: 1_000, message: "short" },
+    { action: "day", maxCalls: 5, windowMs: DAY_MS, message: "day" },
+  ];
+
+  it("checks every window, in order, with the handle first", async () => {
+    const firestore = { collection: vi.fn() };
+    const limiter = { isRateLimited: vi.fn().mockResolvedValue(false) };
+    await expect(
+      firstEmailLimitHit({ firestore, key: "k", limits, limiter })
+    ).resolves.toBeNull();
+    expect(limiter.isRateLimited.mock.calls).toEqual([
+      [firestore, "k", "short", 3, 1_000],
+      [firestore, "k", "day", 5, DAY_MS],
+    ]);
+  });
+
+  it("stops at the first window that refuses, so later ones do not count it", async () => {
+    const firestore = { collection: vi.fn() };
+    const limiter = { isRateLimited: vi.fn().mockResolvedValueOnce(true) };
+    await expect(
+      firstEmailLimitHit({ firestore, key: "k", limits, limiter })
+    ).resolves.toBe(limits[0]);
+    expect(limiter.isRateLimited).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the account-email windows", () => {
+  it("limit a reset address to 5 in 5 minutes and 3 a day", () => {
+    expect(
+      PASSWORD_RESET_LIMITS.map((l) => [l.action, l.maxCalls, l.windowMs])
+    ).toEqual([
+      ["passwordReset", 5, 300_000],
+      ["passwordResetDay", 3, DAY_MS],
+    ]);
+  });
+
+  it("limit an account's verification emails to 3 in 10 minutes and 5 a day", () => {
+    expect(
+      VERIFICATION_EMAIL_LIMITS.map((l) => [l.action, l.maxCalls, l.windowMs])
+    ).toEqual([
+      ["verificationEmail", 3, 600_000],
+      ["verificationEmailDay", 5, DAY_MS],
+    ]);
+  });
+
+  it("each say when to try again, in a line the client shows as written", () => {
+    // accountSecurity.ts and Login.tsx pass a "Too many" message through.
+    for (const limit of [
+      ...PASSWORD_RESET_LIMITS,
+      ...VERIFICATION_EMAIL_LIMITS,
+    ]) {
+      expect(limit.message).toMatch(
+        /^Too many .*Try again (in a few minutes|tomorrow)\.$/
+      );
+    }
+  });
+});
+
 describe("accountEmails wiring (regression guard for the arg-shift bug)", () => {
-  const source = readFileSync(
-    join(__dirnameLocal, "..", "email", "accountEmails.js"),
-    "utf8"
-  );
+  const read = (...parts) =>
+    readFileSync(join(__dirnameLocal, "..", ...parts), "utf8");
+  // The verification callable limits in accountEmails.js; the reset
+  // callable's request, limit included, is lib/passwordResetRequest.js.
+  const callables = read("email", "accountEmails.js");
+  const resetRequest = read("lib", "passwordResetRequest.js");
 
   it("routes both callables through the isEmailRateLimited adapter", () => {
-    const adapterCalls = source.match(/isEmailRateLimited\(/g) || [];
-    // Two call sites (password reset + verification) plus the import
-    // destructure => at least 2 invocation occurrences.
-    expect(adapterCalls.length).toBeGreaterThanOrEqual(2);
+    // firstEmailLimitHit calls the adapter once per window (pinned above).
+    expect(callables).toContain("firstEmailLimitHit(");
+    expect(callables).toContain("requestPasswordReset(");
+    expect(resetRequest).toContain("firstEmailLimitHit(");
   });
 
   it("no longer calls the raw shared rateLimiter.isRateLimited directly", () => {
-    expect(source).not.toMatch(/rateLimiter\.isRateLimited/);
-    expect(source).not.toMatch(/require\(["']\.\.\/rateLimiter["']\)/);
+    for (const source of [callables, resetRequest]) {
+      expect(source).not.toMatch(/rateLimiter\.isRateLimited/);
+      expect(source).not.toMatch(/require\(["']\.\.\/rateLimiter["']\)/);
+    }
   });
 });

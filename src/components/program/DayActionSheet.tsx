@@ -56,6 +56,7 @@ import {
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
 import {
+  isRecoveryRunDay,
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
@@ -92,6 +93,7 @@ import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import { Collapse } from "@/components/ui/Collapse";
 import { IconButton } from "@/components/ui/IconButton";
+import { goalDayName } from "@/lib/raceGoalEntry";
 
 interface DayActionSheetProps {
   open: boolean;
@@ -299,16 +301,13 @@ export default function DayActionSheet({
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
       distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
-        | "5k"
-        | "10k"
-        | "half"
-        | "marathon"
-        | undefined,
+        "5k" | "10k" | "half" | "marathon" | undefined,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey
       ),
       racePace: selectedRacePace?.kind,
+      inRecovery: isRecoveryRunDay(rp, run.runDay.date),
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
@@ -386,7 +385,7 @@ export default function DayActionSheet({
               className="size-3.5 mt-0.5 shrink-0"
               aria-hidden="true"
             />
-            Quality run and a lift share this day — if recovery's tight, go
+            Quality run and a lift share this day — if recovery’s tight, go
             easier on one of them.
           </p>
         )}
@@ -478,7 +477,7 @@ export default function DayActionSheet({
                 )}
                 {run.status === "race_no_show" && (
                   <span className="text-xs font-medium text-muted-foreground">
-                    Race day passed
+                    {goalDayName(profile?.raceGoal)} passed
                   </span>
                 )}
               </div>
@@ -510,7 +509,7 @@ export default function DayActionSheet({
                   disabled={!run.isStartable || isRaceTemplate}
                   aria-label={
                     isRaceTemplate
-                      ? "Race day · template locked"
+                      ? `${goalDayName(profile?.raceGoal)} · template locked`
                       : run.isStartable
                         ? "Run template"
                         : `${run.status} — template locked`
@@ -524,7 +523,7 @@ export default function DayActionSheet({
                 </Select>
                 {isRaceTemplate ? (
                   <span className="mt-1 block text-caption text-muted-foreground">
-                    Race day — the template is locked.
+                    {goalDayName(profile?.raceGoal)} — the template is locked.
                   </span>
                 ) : (
                   run.isStartable && (
@@ -622,7 +621,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNF — Started but didn&apos;t finish
+                          DNF — Started but didn’t finish
                         </button>
                         <button
                           type="button"
@@ -634,7 +633,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNS — Didn&apos;t start
+                          DNS — Didn’t start
                         </button>
                       </>
                     )}

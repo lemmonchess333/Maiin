@@ -68,8 +68,8 @@ export default function TermsOfService() {
               </li>
               <li>
                 Pro is offered as a monthly or a yearly auto-renewing
-                subscription, bought through Apple&apos;s In-App Purchase. The
-                price and billing period are shown before you confirm.
+                subscription, bought through Apple’s In-App Purchase. The price
+                and billing period are shown before you confirm.
               </li>
               <li>
                 Payment is charged to your Apple ID account when you confirm the

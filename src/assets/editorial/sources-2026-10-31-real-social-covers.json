@@ -1,0 +1,231 @@
+{
+  "updatedOn": "2026-10-31",
+  "notes": "Eight real free-to-use Pexels photographs replace the generated generic Social covers recorded in sources-2026-10-31-social-refresh.json. They illustrate interests and challenge themes, not Tropos members, endorsements, a specific event or a promised route. Each photo is used on one cover only. Historical source records are retained.",
+  "processing": "Downloaded Pexels JPEG at w=2400. Extracted the recorded 2:1 crop without retouching or recolouring, resized to 1200 x 600 using Sharp, and encoded as WebP effort 6 with the recorded quality.",
+  "images": [
+    {
+      "asset": "challenge-training-minutes.webp",
+      "sourceUrl": "https://www.pexels.com/photo/man-sitting-in-white-tank-top-looking-on-his-watch-and-holding-smartphone-8032958/",
+      "downloadUrl": "https://images.pexels.com/photos/8032958/pexels-photo-8032958.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "MART PRODUCTION",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "A gym session pause with an athlete checking his watch; distinct from running challenge art.",
+      "sourceSha256": "1d503d3f2878050d9478ae93bbd4c873ff7952981f65859b94d904dec2d3fb49",
+      "source": {
+        "width": 2400,
+        "height": 1600,
+        "bytes": 303822
+      },
+      "crop": {
+        "left": 0,
+        "top": 200,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 42780,
+        "sha256": "08e4bac8c3cc54391f67210850551f133de5a7bc528308b9d58852039895d017"
+      }
+    },
+    {
+      "asset": "challenge-strength.webp",
+      "sourceUrl": "https://www.pexels.com/photo/a-woman-doing-a-deadlift-14623740/",
+      "downloadUrl": "https://images.pexels.com/photos/14623740/pexels-photo-14623740.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Miguel Gonz\u00e1lez",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "An actual deadlift in a small gym, with hands, bar and athlete visible in the short crop.",
+      "sourceSha256": "2e3137426bfd2f6ea7afe4ce48c05385f933e302a44b7ff162421b68de10db94",
+      "source": {
+        "width": 2400,
+        "height": 3600,
+        "bytes": 1106894
+      },
+      "crop": {
+        "left": 0,
+        "top": 1250,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 46704,
+        "sha256": "eb75f12852b163274fb807c4080519368675e1f34e3e3adf2c972e20b7f276d6"
+      }
+    },
+    {
+      "asset": "space-lifters.webp",
+      "sourceUrl": "https://www.pexels.com/photo/three-people-relaxing-after-workout-6740291/",
+      "downloadUrl": "https://images.pexels.com/photos/6740291/pexels-photo-6740291.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Mikhail Nilov",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "Three gym friends talking after training; a human community image.",
+      "sourceSha256": "fe0c40ce22160d7c725b6c64924341f0eddef58e47633968642d0fbe4ed79fad",
+      "source": {
+        "width": 2400,
+        "height": 1600,
+        "bytes": 287644
+      },
+      "crop": {
+        "left": 0,
+        "top": 200,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 43724,
+        "sha256": "4a9adf5ff46c7b36d950e3208bda9542d75fa7d2fb15ffc276200a0706f860e4"
+      }
+    },
+    {
+      "asset": "space-womens-running.webp",
+      "sourceUrl": "https://www.pexels.com/photo/adult-sportswomen-jogging-together-on-street-7266745/",
+      "downloadUrl": "https://images.pexels.com/photos/7266745/pexels-photo-7266745.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Sarah Chai",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "Two women running together on a park path, with both faces clear.",
+      "sourceSha256": "7da5c9b62a0f2f433a054113165470b13d5ab9ca729c9b926a2ab184792599fc",
+      "source": {
+        "width": 2400,
+        "height": 1600,
+        "bytes": 567401
+      },
+      "crop": {
+        "left": 0,
+        "top": 100,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 111036,
+        "sha256": "09878ea4307cc5a9240d0c3bc347670ff10b27ee6db7b4f9684c003d0896e04b"
+      }
+    },
+    {
+      "asset": "space-runners.webp",
+      "sourceUrl": "https://www.pexels.com/photo/people-jogging-together-5319395/",
+      "downloadUrl": "https://images.pexels.com/photos/5319395/pexels-photo-5319395.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "cottonbro studio",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "Five adults running together on an urban path, visible in the directory and header crops.",
+      "sourceSha256": "607fde21efb836b5804577375d9cefdf259f9c3832f67d9173aeb41e330acdd3",
+      "source": {
+        "width": 2400,
+        "height": 1600,
+        "bytes": 339292
+      },
+      "crop": {
+        "left": 0,
+        "top": 100,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 61140,
+        "sha256": "62534f84aa08582613ff13c595033dac66b2ebf959cc81959e5c00627cad325b"
+      }
+    },
+    {
+      "asset": "challenge-fastest-5k.webp",
+      "sourceUrl": "https://www.pexels.com/photo/female-athlete-running-on-outdoor-track-36541479/",
+      "downloadUrl": "https://images.pexels.com/photos/36541479/pexels-photo-36541479.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Airam Dato-on",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "A runner on an outdoor track with an unobstructed athlete and no race branding.",
+      "sourceSha256": "24432b2f2e0bdf9ed09982e9ecb7be28c8153b3cd1af4537807ab7d09b9c00d3",
+      "source": {
+        "width": 2400,
+        "height": 3600,
+        "bytes": 1340104
+      },
+      "crop": {
+        "left": 0,
+        "top": 1050,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 76,
+        "bytes": 114420,
+        "sha256": "0c4b77d5a53ed8d236ada3009f08d67257f71c9001ea7aa21a55b18d3425833b"
+      }
+    },
+    {
+      "asset": "challenge-mileage.webp",
+      "sourceUrl": "https://www.pexels.com/photo/man-trail-running-through-forest-path-in-summer-32798746/",
+      "downloadUrl": "https://images.pexels.com/photos/32798746/pexels-photo-32798746.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Alin Serban",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "A steady trail run with a path continuing into the woods.",
+      "sourceSha256": "2e13149ddbd4d0ca32a12aa27ae8ab87ed0e2f6b03ec61743d1aa79cc992d90d",
+      "source": {
+        "width": 2400,
+        "height": 3600,
+        "bytes": 2136622
+      },
+      "crop": {
+        "left": 0,
+        "top": 1150,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 48,
+        "bytes": 118534,
+        "sha256": "eadf0aa86dbc967fa206a334feeb5345cd2c1ab3efdc4135dc05391062fc9211"
+      }
+    },
+    {
+      "asset": "challenge-together.webp",
+      "sourceUrl": "https://www.pexels.com/photo/group-of-people-running-together-8381747/",
+      "downloadUrl": "https://images.pexels.com/photos/8381747/pexels-photo-8381747.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "photographer": "Kampus Production",
+      "license": "Pexels License",
+      "licenseUrl": "https://www.pexels.com/license/",
+      "content": "Four runners close together, readable at challenge-card size.",
+      "sourceSha256": "efb2eef742a26608b21cbcb1909ac0e73532176f6c5733405003b73b04ee74ba",
+      "source": {
+        "width": 2400,
+        "height": 1602,
+        "bytes": 282071
+      },
+      "crop": {
+        "left": 0,
+        "top": 150,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 49526,
+        "sha256": "e772c02e9d837581f8739c7eed45167a83ae089633179744dcc834b35a4e21e2"
+      }
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import {
   FOOD_STOP_BODY,
   GUIDE_HINTS,
   guideAllowed,
+  guideHintsUnlocked,
   guideRequest,
   hintDue,
   hintSeenKey,
@@ -20,6 +21,7 @@ import type { TodaySession } from "../todaySession";
 import type { WorkoutDay } from "@/features/program/programTypes";
 import { cardSessionMinutes } from "@/features/program/expressSession";
 import { group } from "@/test/localeGrouping";
+import { liftTargets, runStartTarget } from "@/lib/todaySession";
 
 const workout = {
   name: "Full Body Circuit A",
@@ -33,6 +35,7 @@ const sessions: Record<TodayCard, TodaySession> = {
     lift: {
       workout,
       index: 0,
+      ...liftTargets(0),
       isStartable: true,
       status: "today" as never,
       muscleGroups: "Legs · Chest · Back",
@@ -44,7 +47,13 @@ const sessions: Record<TodayCard, TodaySession> = {
     type: "run",
     restContext: {},
     lift: null,
-    run: { runDay: null, completed: false, isFirst: true, dose: null },
+    run: {
+      runDay: null,
+      startTarget: runStartTarget(null),
+      completed: false,
+      isFirst: true,
+      dose: null,
+    },
     rest: null,
   },
   "first-workout": {
@@ -52,14 +61,20 @@ const sessions: Record<TodayCard, TodaySession> = {
     restContext: {},
     lift: null,
     run: null,
-    rest: { kind: "first-workout", workout, index: 0 },
+    rest: {
+      kind: "first-workout",
+      workout,
+      index: 0,
+      ...liftTargets(0),
+      ...liftTargets(0),
+    },
   },
   "free-run": {
     type: "rest",
     restContext: {},
     lift: null,
     run: null,
-    rest: { kind: "free-run" },
+    rest: { kind: "free-run", startTarget: runStartTarget(null) },
   },
   "first-meal": {
     type: "rest",
@@ -197,6 +212,7 @@ describe("today's stop names this person's session", () => {
         kind: "first-workout",
         workout: day,
         index: 0,
+        ...liftTargets(0),
         name: "Full Body A",
       },
     });
@@ -330,6 +346,34 @@ describe("walkOffered", () => {
       false
     );
   });
+
+  it("does not auto-open for a version 2 account", () => {
+    expect(
+      walkOffered({
+        startKey: start,
+        todayKey: start,
+        seen: false,
+        activationJourneyV2: true,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("guideHintsUnlocked", () => {
+  it("keeps legacy hints behind the Home walk", () => {
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: false, walkSeen: false })
+    ).toBe(false);
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: false, walkSeen: true })
+    ).toBe(true);
+  });
+
+  it("unlocks version 2 point-of-use hints without a Home walk", () => {
+    expect(
+      guideHintsUnlocked({ activationJourneyV2: true, walkSeen: false })
+    ).toBe(true);
+  });
 });
 
 describe("guideAllowed", () => {
@@ -417,13 +461,13 @@ describe("the guide's words", () => {
 
   // Lift4: the starting weights are an estimate, and the first set is the
   // one place that says so, with or without the automatic rest timer.
-  it("calls the first set's weights a first guess", () => {
+  it("calls starting weights estimates and explains how to choose a safe load", () => {
     for (const body of [
       GUIDE_HINTS["first-set"].body,
       FIRST_SET_BODY_NO_AUTO_REST,
     ])
       expect(body).toContain(
-        "The weights are a first guess. Feels easy? Add weight on the next set."
+        "Weights are estimates. Start light: use a weight you can control for every rep, with a few more left."
       );
   });
 

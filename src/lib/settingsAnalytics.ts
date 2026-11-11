@@ -13,8 +13,7 @@
 import { emit } from "./analyticsClient";
 
 export type SettingsEvent =
-  | "settings_section_viewed"
-  | "settings_toggle_changed";
+  "settings_section_viewed" | "settings_toggle_changed";
 
 /** Top-level accordion sections on the Settings page. Pinned so
  *  dashboards can key off a closed vocabulary rather than free-form
@@ -69,6 +68,7 @@ export type SettingsToggle =
   | "meal_reminders"
   | "workout_reminders"
   | "streak_reminder"
+  | "review_reminder"
   | "ai_analysis_enabled"
   | "hide_shared_route_ends"
   | "approve_followers"

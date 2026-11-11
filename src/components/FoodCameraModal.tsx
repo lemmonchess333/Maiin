@@ -10,10 +10,13 @@ import {
   CameraOff,
   Keyboard,
   Lock,
+  PenLine,
+  ScanBarcode,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import ScanProButton from "@/components/food/ScanProButton";
+import StepDetails from "@/components/StepDetails";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
@@ -22,6 +25,9 @@ import {
   useScanStages,
 } from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { stripDataUrlPrefix } from "@/lib/base64Helpers";
+import { MAX_EDGE_PX } from "@/lib/foodPhotoStore";
+import { blobToDataUrl, encodeJpeg } from "@/lib/imageEncode";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
@@ -101,7 +107,13 @@ type CameraState = "idle" | "granted" | "denied" | "unavailable";
  *                 connection, so we say so instantly instead of
  *                 burning the sweep on a fetch that must fail
  */
-export type ScanFailureKind = "no-food" | "error" | "offline";
+export type ScanFailureKind =
+  | "no-food"
+  | "error"
+  | "offline"
+  /* A barcode the food database does not have. The scanner resolves on
+     F2d's choice, Describe it or Type details, instead of a toast. */
+  | "barcode-not-found";
 
 /**
  * Photo scanning is not on this account's tier (a free account: its
@@ -164,6 +176,12 @@ type Props = {
    * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
+  /** A barcode with no match: describe the product in the composer
+   *  (F2d's primary choice). */
+  onDescribeProduct?: () => void;
+  /** A barcode with no match: type the product's details from the pack,
+   *  into the pantry under its code (F2d's second choice). */
+  onTypeProductDetails?: () => void;
   /** Set when photo scanning is not on the account's tier. The scanner
    *  opens on Barcode, which is free; the photo tabs show the Pro offer
    *  where the shutter would be; and the photo library is offered only
@@ -183,17 +201,42 @@ type Props = {
   onShown?: () => void;
 };
 
-function dataUrlToBase64(dataUrl: string) {
-  const parts = dataUrl.split(",");
-  return parts.length > 1 ? parts[1] : "";
+/** The JPEG quality of every photo the scan sends, taken or picked. */
+const SCAN_JPEG_QUALITY = 0.85;
+/** The longest side of every photo the scan sends, a frame or a picked
+ *  one: the size the local copy keeps, so each is well under the server's
+ *  image limit. */
+const SCAN_PHOTO_MAX_EDGE_PX = MAX_EDGE_PX;
+
+/**
+ * A library photo at the size the analysis needs, not the size it was
+ * taken. The server refuses an image over five million base64 characters,
+ * and a request past the platform's own limit never reaches it: that
+ * refusal carries no CORS headers, so the app saw only "Couldn't reach the
+ * server". A 48-megapixel JPEG is 11 MB as base64; at 1280 px on the long
+ * side it is under 1 MB. Drawing it through a canvas (encodeJpeg) also
+ * leaves the file's EXIF, the place it was taken among it, on the phone.
+ */
+async function libraryPhotoDataUrl(file: File): Promise<string> {
+  const { blob } = await encodeJpeg(file, {
+    maxEdge: SCAN_PHOTO_MAX_EDGE_PX,
+    quality: SCAN_JPEG_QUALITY,
+  });
+  return blobToDataUrl(blob);
 }
+
+/** The frame size asked of the camera. Without a size, an iPhone's camera
+ *  answers with 640 × 480: a quarter of the pixels the analysis reads a
+ *  plate from and the barcode reader finds a code in. `ideal` is a wish,
+ *  never a refusal: a camera without 720p gives its nearest. */
+const CAMERA_FRAME = { width: { ideal: 1280 }, height: { ideal: 720 } };
 
 async function startStream(
   videoEl: HTMLVideoElement,
   facingMode: "environment" | "user"
 ) {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode },
+    video: { facingMode, ...CAMERA_FRAME },
     audio: false,
   });
   videoEl.srcObject = stream;
@@ -217,6 +260,8 @@ export default function FoodCameraModal({
   failureDetail = null,
   onScanRetry,
   onRequestTypedInput,
+  onDescribeProduct,
+  onTypeProductDetails,
   photoLock = null,
   aiOff = null,
   initialTab = "food",
@@ -534,7 +579,8 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        if (!cancelled) setBarcodeHint("Scanner failed. Try again.");
+        if (!cancelled)
+          setBarcodeHint("Couldn’t start the scanner. Try again.");
       }
     };
 
@@ -556,53 +602,55 @@ export default function FoodCameraModal({
     e.target.value = "";
     if (!file) return;
 
+    setBusy(true);
     try {
-      setBusy(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const dataUrl = String(reader.result || "");
-          if (tab === "barcode") {
-            /* Barcode mode reads the code in the picture, on the device.
-               Sent for AI food analysis like the other tabs, a picture of
-               a barcode would spend a scan and come back "No food
-               detected". The live reader stops meanwhile, so it cannot
-               fire a second lookup of its own. */
-            stopZXingRef.current?.();
-            stopZXingRef.current = null;
-            const code = await decodeBarcodeFromDataUrl(dataUrl);
-            if (code) {
-              setBarcodeFound(true);
-              setBarcodeHint("Found it");
-              haptic("success");
-              await onBarcodeDetected(code);
-              setBarcodeHint(BARCODE_HINT);
-            } else {
-              setBarcodeHint("No barcode found in that photo");
-            }
-            // Still open (no code, or its lookup failed): scan live again.
-            setBarcodeFound(false);
-            setBarcodeRun((n) => n + 1);
-            return;
-          }
-          const base64 = dataUrlToBase64(dataUrl);
-          setPreview(dataUrl);
-          await onCaptureBase64(base64, tab === "label" ? "label" : "food");
-        } finally {
-          setBusy(false);
+      let dataUrl: string;
+      try {
+        /* A barcode photo is read as it was taken: the reader needs its
+           pixels. Any other goes at the size the analysis needs. */
+        dataUrl =
+          tab === "barcode"
+            ? await blobToDataUrl(file)
+            : await libraryPhotoDataUrl(file);
+      } catch (err) {
+        /* A photo that cannot be read or drawn (deleted between pick and
+           read, an iOS Files provider error, a format the web view cannot
+           decode) says so, and leaves the shutter and the library live. */
+        logger.warn("[FoodCameraModal] photo not readable", err);
+        toast.error("Couldn’t read that photo. Try another.");
+        return;
+      }
+      if (tab === "barcode") {
+        /* Barcode mode reads the code in the picture, on the device.
+           Sent for AI food analysis like the other tabs, a picture of
+           a barcode would spend a scan and come back "No food
+           detected". The live reader stops meanwhile, so it cannot
+           fire a second lookup of its own. */
+        stopZXingRef.current?.();
+        stopZXingRef.current = null;
+        const code = await decodeBarcodeFromDataUrl(dataUrl);
+        if (code) {
+          setBarcodeFound(true);
+          setBarcodeHint("Found it");
+          haptic("success");
+          await onBarcodeDetected(code);
+          setBarcodeHint(BARCODE_HINT);
+        } else {
+          setBarcodeHint("No barcode found in that photo");
         }
-      };
-      /* A read that never fires onload (file deleted between pick and
-         read, an iOS Files provider error) used to strand busy=true
-         forever — shutter greyed, library dead, no overlay showing,
-         and only close-and-reopen recovered. */
-      reader.onerror = () => {
-        logger.error(reader.error);
-        setBusy(false);
-      };
-      reader.readAsDataURL(file);
+        // Still open (no code, or its lookup failed): scan live again.
+        setBarcodeFound(false);
+        setBarcodeRun((n) => n + 1);
+        return;
+      }
+      setPreview(dataUrl);
+      await onCaptureBase64(
+        stripDataUrlPrefix(dataUrl),
+        tab === "label" ? "label" : "food"
+      );
     } catch (err) {
       logger.error(err);
+    } finally {
       setBusy(false);
     }
   };
@@ -617,16 +665,19 @@ export default function FoodCameraModal({
       const w = videoEl.videoWidth || 1280;
       const h = videoEl.videoHeight || 720;
 
-      canvas.width = w;
-      canvas.height = h;
+      /* The frame at the size the scan sends: a stream larger than that (a
+         4K camera) is drawn down, as a picked photo is. */
+      const scale = Math.min(1, SCAN_PHOTO_MAX_EDGE_PX / Math.max(w, h));
+      canvas.width = Math.max(1, Math.round(w * scale));
+      canvas.height = Math.max(1, Math.round(h * scale));
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
 
-      ctx.drawImage(videoEl, 0, 0, w, h);
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      return { dataUrl, base64: dataUrlToBase64(dataUrl) };
+      const dataUrl = canvas.toDataURL("image/jpeg", SCAN_JPEG_QUALITY);
+      return { dataUrl, base64: stripDataUrlPrefix(dataUrl) };
     } catch (e) {
       logger.error(e);
       return null;
@@ -642,7 +693,7 @@ export default function FoodCameraModal({
          failures (onCaptureBase64); this is only the capture. */
       const frame = captureFrame();
       if (!frame) {
-        toast.error("Couldn't take the photo. Try again.");
+        toast.error("Couldn’t take the photo. Try again.");
         return;
       }
       setPreview(frame.dataUrl);
@@ -698,7 +749,7 @@ export default function FoodCameraModal({
         "no-food":
           tab === "label"
             ? {
-                title: "Couldn't read the label",
+                title: "Couldn’t read the label",
                 sub: "Try a straighter, closer shot of the nutrition panel.",
               }
             : {
@@ -706,7 +757,7 @@ export default function FoodCameraModal({
                 sub: "Try a clearer shot of the plate, or type it in.",
               },
         error: {
-          title: "Couldn't read this one",
+          title: "Couldn’t read this one",
           /* The specific reason when we have one (server rate-limit /
              quota / auth copy, the hook's mapped network lines) —
              "wait a moment" must never render as "try again". */
@@ -715,8 +766,12 @@ export default function FoodCameraModal({
             "Might be the connection. Try again, or type it in.",
         },
         offline: {
-          title: "You're offline",
+          title: "You’re offline",
           sub: "Scanning needs a connection. Typing it in still works.",
+        },
+        "barcode-not-found": {
+          title: "No match for this barcode",
+          sub: "Describe it, or type the details from the pack.",
         },
       }[failure]
     : null;
@@ -760,6 +815,46 @@ export default function FoodCameraModal({
   ];
   if (failure === "offline" && failureButtons.length > 1)
     failureButtons.reverse();
+  /* A barcode with no match: F2d's two choices lead, Describe it in the
+     primary slot. Most products missing from the database are home or
+     shop-made, so a description is the likelier way in. Scan again is
+     last, for a code read off the wrong pack. */
+  const notFoundButtons = [
+    ...(onDescribeProduct
+      ? [
+          {
+            key: "describe",
+            icon: <Keyboard className="size-4" />,
+            label: "Describe it",
+            onClick: () => {
+              haptic("light");
+              onDescribeProduct();
+            },
+          },
+        ]
+      : []),
+    ...(onTypeProductDetails
+      ? [
+          {
+            key: "details",
+            icon: <PenLine className="size-4" />,
+            label: "Type details",
+            onClick: () => {
+              haptic("light");
+              onTypeProductDetails();
+            },
+          },
+        ]
+      : []),
+    {
+      key: "rescan",
+      icon: <ScanBarcode className="size-4" />,
+      label: "Scan again",
+      onClick: handleScanRetry,
+    },
+  ];
+  const actionButtons =
+    failure === "barcode-not-found" ? notFoundButtons : failureButtons;
 
   const failureActions = (
     <div className="flex w-full max-w-[300px] flex-col gap-2">
@@ -768,7 +863,7 @@ export default function FoodCameraModal({
           identity orange (#D9884E, ~2.8:1) keeps leaking under white
           text. The one surface where reading the button IS the way
           out cannot be the one that fails contrast. */}
-      {failureButtons.map((b, i) => (
+      {actionButtons.map((b, i) => (
         <button
           key={b.key}
           type="button"
@@ -815,7 +910,7 @@ export default function FoodCameraModal({
           line sweeps top → bottom whatever the stage's size.
         - Copy rotates through honest stages and HOLDS on the last.
           It is aria-hidden; the status div carries one stable label
-          so screen readers hear "Analyzing food" once, not a feed.
+          so screen readers hear "Analysing food" once, not a feed.
         - Reduced motion: corners + photo + static-but-advancing
           copy. No laser. Content change is information, not motion.
         - Barcode lookups (and any wait with no captured frame) fall
@@ -839,7 +934,7 @@ export default function FoodCameraModal({
         aria-live="polite"
         data-testid="scan-live-status"
       >
-        {locked ? "Done" : loading ? "Analyzing food" : ""}
+        {locked ? "Done" : loading ? "Analysing food" : ""}
       </span>
       <span className="sr-only" role="alert" data-testid="scan-live-alert">
         {failureCopy ? `${failureCopy.title}. ${failureCopy.sub}` : ""}
@@ -1002,6 +1097,13 @@ export default function FoodCameraModal({
                     </p>
                     <p className="text-sm text-white/75">{failureCopy.sub}</p>
                   </div>
+                  {/* On the iPhone, what the scan did and how long it
+                      took, for a failure nothing else can inspect. */}
+                  <StepDetails
+                    failed={failure === "error"}
+                    waiting={false}
+                    onDark
+                  />
                   {failureActions}
                 </motion.div>
               ) : (
@@ -1074,6 +1176,11 @@ export default function FoodCameraModal({
                 </p>
                 <p className="text-sm text-white/75">{failureCopy.sub}</p>
               </div>
+              <StepDetails
+                failed={failure === "error"}
+                waiting={false}
+                onDark
+              />
               {failureActions}
             </div>
           ) : (

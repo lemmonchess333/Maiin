@@ -34,6 +34,7 @@
  */
 
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
+const { isDocumentId } = require("./documentId");
 
 /** The most partner streaks one person holds. */
 const MAX_PARTNERS = 5;
@@ -67,12 +68,7 @@ function initialBond(a, b, createdAt) {
 
 /** A uid that can name a document: a short string with no path in it. */
 function isUid(value) {
-  return (
-    typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 128 &&
-    !value.includes("/")
-  );
+  return isDocumentId(value) && value.length <= 128;
 }
 
 /**

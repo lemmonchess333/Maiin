@@ -83,7 +83,10 @@ const RESTRICTED_SYNTAX = [
 ];
 
 // Colour tables that must be built from tokens alone: see the last block.
-const PALETTE_TABLES = ["src/features/streaks/flameTiers.ts"];
+const PALETTE_TABLES = [
+  "src/features/streaks/flameTiers.ts",
+  "src/features/league/leaguePalettes.ts",
+];
 
 export default defineConfig([
   globalIgnores(["dist", "functions", ".claude", "ios"]),

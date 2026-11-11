@@ -1,13 +1,30 @@
 # Run Live Activity (lock screen / Dynamic Island)
 
-**Status:** TypeScript half ✅ shipped — `src/lib/runLiveActivity.ts` (the
-seam, tested) + Run.tsx lifecycle wiring (start on active, throttled
-per-tick updates mirroring the HUD's rolling pace, end on
-finish/discard/unmount). The plugin (`capacitor-live-activities`) is
-installed. **Remaining is operator-bound**: the widget-extension half
-below needs a Mac + Xcode; until it exists the seam's `startActivity`
-rejects and every call is a swallowed no-op — web and un-provisioned
-native builds are unaffected.
+**Status:** both halves built.
+
+- **TypeScript:** `src/lib/runLiveActivity.ts` (the seam, tested) and the
+  Run.tsx lifecycle wiring (start on active, throttled per-tick updates
+  mirroring the HUD's rolling pace, end on finish/discard/unmount).
+- **Native (2026-11-10):** the `LiveActivitiesExtension` target, written
+  into `ios/App/App.xcodeproj` without a Mac: `ios/App/LiveActivities/`
+  (the widget bundle, its Info.plist and entitlements), `LiveActivitiesKit`
+  linked from the plugin's patched package, `NSSupportsLiveActivities` in
+  the app, and the App Group on both. CI's simulator build compiles it,
+  and `iosProjectWiring.test.ts` pins each piece. The owner registered
+  `com.tropos.app.LiveActivities` and the group in Apple Developer.
+- **Remaining:** the device checks below, on a TestFlight build. On iOS
+  before 16.2 the extension is never loaded and `startActivity` rejects
+  into a swallowed no-op, as on the web.
+
+The steps below are what Xcode would have done; the target in the
+project matches them.
+
+The same extension also shows a lift's rest (`src/lib/restLiveActivity.ts`):
+a dark card with a purple dumbbell, "Rest", the system's own countdown to
+the rest's end, which stops at 0:00, and "Next:" with the exercise, and in
+the Dynamic Island the
+dumbbell and the countdown. It needs nothing more than the steps below; its
+device check is in `docs/qa/pre-launch-backlog.md`.
 
 ## What ships on the lock screen
 
@@ -28,32 +45,48 @@ keeps counting through a pause.
 ## Operator steps (Mac + Xcode, once)
 
 Follow the plugin's setup (docs:
-https://github.com/ludufre/capacitor-live-activities — steps mirrored
-here against this repo's paths):
+https://github.com/ludufre/capacitor-live-activities), but not its Podfile
+step: this project has no CocoaPods. Capacitor 8 brings every plugin in
+through the local Swift package `ios/App/CapApp-SPM`, and the widget
+extension links the plugin's `LiveActivitiesKit` the same way. The plugin
+publishes `LiveActivitiesKit` only as a CocoaPods pod, so
+`patches/capacitor-live-activities+8.0.0.patch` also makes it a library
+product of the plugin's own Swift package; `npm install` applies it.
+The same patch makes the plugin's `endActivity` read
+`behavior.dismissalPolicy`: it always used iOS's default, which leaves an
+ended card on the Lock Screen for up to four hours. And it keeps the
+`countdown` timer from trapping when a card is drawn after its end. The
+app ends every card with `"immediate"` (`src/lib/liveActivities.ts`), and
+before a launch's first card it ends any card an earlier launch left.
 
-1. `npx cap sync ios` (installs the plugin pod).
-2. Xcode → File → New → Target → **Widget Extension**. Product name
-   **`LiveActivities`** (exactly). **Uncheck** "Include Live Activity",
-   "Include Control", "Include Configuration App Intent". Don't
-   activate the scheme when prompted.
+1. `npm run build:ios` (builds the web bundle and runs `cap sync ios`,
+   which resolves the plugin through `CapApp-SPM`).
+2. Open `ios/App/App.xcodeproj` (there is no `.xcworkspace`). File → New →
+   Target → **Widget Extension**. Product name **`LiveActivities`**
+   (exactly). **Uncheck** "Include Live Activity", "Include Control",
+   "Include Configuration App Intent". Don't activate the scheme when
+   prompted.
 3. Right-click the new `LiveActivities` folder → **Convert to Group**.
-4. `ios/App/Podfile` — add (target name must match the extension target
-   Xcode created):
-
-   ```ruby
-   target 'LiveActivitiesExtension' do
-     pod 'LiveActivitiesKit', :path => '../../node_modules/capacitor-live-activities'
-   end
-   ```
-
-5. `ios/App/App/Info.plist` — add:
+4. Link `LiveActivitiesKit` to the extension through Swift Package Manager:
+   File → Add Package Dependencies… → **Add Local…** → choose
+   `node_modules/capacitor-live-activities` at the repository root, and add
+   its **LiveActivitiesKit** product to the `LiveActivitiesExtension` target
+   only (not to `App`, which already has it through `CapApp-SPM`). If the
+   product list does not offer `LiveActivitiesKit`, run `npm install` so the
+   patch is applied, then File → Packages → Reset Package Caches.
+5. In the extension target's build settings, set **Targeted Device Family**
+   to iPhone (`TARGETED_DEVICE_FAMILY = 1`; the template's `1,2` fails
+   `iosProjectWiring.test.ts`) and check **Skip Install** is Yes (the
+   template sets it; an archive refuses an extension installed beside the
+   app).
+6. `ios/App/App/Info.plist` — add:
 
    ```xml
    <key>NSSupportsLiveActivities</key>
    <true/>
    ```
 
-6. Replace `ios/App/LiveActivities/LiveActivitiesBundle.swift` with:
+7. Replace `ios/App/LiveActivities/LiveActivitiesBundle.swift` with:
 
    ```swift
    import WidgetKit
@@ -69,10 +102,26 @@ here against this repo's paths):
    }
    ```
 
-7. **App Groups** capability on BOTH the app target and the extension
-   target: `group.com.tropos.app.liveactivities`.
-8. `pod install` in `ios/App`, build to a device (Live Activities need
-   iOS 16.2+; Dynamic Island needs iPhone 14 Pro+).
+8. **App Groups** capability on BOTH the app target and the extension
+   target: `group.com.tropos.app.liveactivities`. Xcode writes the
+   extension's entitlements file and adds the group to
+   `App/App.entitlements`.
+9. Build to a device (Live Activities need iOS 16.2+; Dynamic Island needs
+   iPhone 14 Pro+). There is no `pod install` step.
+
+### TestFlight signing for the extension
+
+`deploy-ios.yml` reads the targets it signs from the project
+(`scripts/ios_signed_targets.py`), so the new extension is signed, checked
+and exported with no change to the workflow. Apple's side needs, once:
+
+- Apple Developer → Identifiers: register the extension's bundle ID (Xcode
+  names it `com.tropos.app.LiveActivities`) with **App Groups** on and the
+  group above assigned, and assign the same group to `com.tropos.app`.
+- Signing from the API key (the default) makes the extension's profile on
+  every run. With your own certificate secrets, which hold the iPhone and
+  Watch profiles only, the run stops naming the extension: delete those
+  secrets and let the run sign from the API key.
 
 ## Device-test checklist (fill in on the Mac/Xcode session)
 
@@ -84,7 +133,7 @@ here against this repo's paths):
 | 4   | Finish run → card dismisses (no stale card after save)                               | ⬜     |       |
 | 5   | Discard run → card dismisses                                                         | ⬜     |       |
 | 6   | Dynamic Island (14 Pro+): compact distance, expanded three stats                     | ⬜     |       |
-| 7   | Kill the app mid-run → card does not zombie (OS reaps within its window)             | ⬜     |       |
+| 7   | Kill the app mid-run, reopen, resume → one card; the one left from before is gone    | ⬜     |       |
 | 8   | Treadmill/manual run → NO Live Activity (outdoor-GPS-only gate)                      | ⬜     |       |
 
 Legend: ⬜ not yet run · ✅ pass · ❌ fail (add a note).

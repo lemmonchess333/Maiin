@@ -19,7 +19,7 @@ import {
 import { MAX_PARTNERS } from "./streakEngine";
 
 /** The fallback. Says the streak did not start and nothing it cannot support. */
-export const START_FAILED_FALLBACK = "Couldn't start the streak. Try again.";
+export const START_FAILED_FALLBACK = "Couldn’t start the streak. Try again.";
 
 function reasonOf(err: unknown): string {
   const details = (err as { details?: unknown })?.details;
@@ -47,10 +47,10 @@ export function describeStartRejection(
     return `You and ${partnerName} need to follow each other to start a streak.`;
   }
   if (reason.includes("blocked-pair")) {
-    return "You can't start a streak with this person.";
+    return "You can’t start a streak with this person.";
   }
   if (reason.includes("account-unavailable")) {
-    return "This streak can't start right now.";
+    return "This streak can’t start right now.";
   }
   const code = String((err as { code?: unknown })?.code ?? "");
   if (code.endsWith("resource-exhausted")) {

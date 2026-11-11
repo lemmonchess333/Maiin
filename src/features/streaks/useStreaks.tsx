@@ -574,6 +574,29 @@ export function computeStreakState(
     : { live, savable: 0, anchor: null };
 }
 
+/**
+ * What a session saved on `day` does to the streak: the streak as it
+ * stands (`savable`, so the morning after a rest day it is the streak
+ * logging today keeps, not 0) and as it stands with `day` active. Equal
+ * when the day is already active, or too far back to reach the streak.
+ * A post names the milestone the session reached from it (Soc15,
+ * `streakMoment`), through the same walk, grace and anchor as the streak
+ * shown everywhere else.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function streakAcross(
+  activeDates: ReadonlySet<string>,
+  stored: StreakAnchor | null | undefined,
+  day: string,
+  now: Date = new Date()
+): { before: number; after: number } {
+  const before = computeStreakState(new Set(activeDates), stored, now).savable;
+  if (activeDates.has(day)) return { before, after: before };
+  const withDay = new Set(activeDates);
+  withDay.add(day);
+  return { before, after: computeStreakState(withDay, stored, now).savable };
+}
+
 /** The certificate a stored document carries: its anchor fields, or the
  *  {currentStreak, lastActiveDate} pair a document from before them has. */
 function storedAnchorOf(
@@ -997,6 +1020,22 @@ function useStreaksInternal() {
   }, [todayKey, allLoaded, workouts, runs, meals, storedAnchor]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
+
+  /* What a session saved on `day` would do to the streak (`streakAcross`),
+     for its post's moments. Null until every stream has loaded, and when
+     one failed: the streak counted then is not the person's. */
+  const streakWithDay = useCallback(
+    (day: string) =>
+      allLoaded && !readFailed
+        ? streakAcross(
+            activeDateSet,
+            storedAnchor,
+            day,
+            parseLocalDate(todayKey)
+          )
+        : null,
+    [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey]
+  );
 
   // Distinct dates with ≥1 logged meal item — feeds meal_prep_master (same
   // "non-empty meal" rule computeActiveDateSet uses for the active-day set).
@@ -1585,6 +1624,12 @@ function useStreaksInternal() {
     savableStreak,
     longestStreak,
     totalActiveDays,
+    /** The days the streak counts as active (a workout, a valid run or a
+     *  meal with items), over the window it reads. */
+    activeDates: activeDateSet,
+    /** The days grace covered inside the current streak, newest first. */
+    bridgedDates,
+    streakWithDay,
     hasLoggedToday,
     forgivenYesterday,
     backfillRescueStreak,

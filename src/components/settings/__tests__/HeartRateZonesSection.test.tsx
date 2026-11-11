@@ -144,6 +144,6 @@ describe("HeartRateZonesSection", () => {
     typeMaxHr("186");
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
-    expect(await screen.findByText(/couldn't save/i)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn’t save/i)).toBeInTheDocument();
   });
 });

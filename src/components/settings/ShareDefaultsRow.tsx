@@ -57,12 +57,12 @@ const DESCRIBE: Record<Exclude<Choice, "ask">, string> = {
   never: "Never shared",
 };
 
-const ASK_LINE = "Ask: you'll be asked when you next finish one.";
+const ASK_LINE = "Ask: you’ll be asked when you next finish one.";
 
 function confirmCopy(noun: string, choice: Choice): string {
   switch (choice) {
     case "ask":
-      return `You'll be asked when you next finish one`;
+      return `You’ll be asked when you next finish one`;
     case "followers":
       return `${noun} now share with your followers`;
     case "public":

@@ -16,6 +16,7 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
 
 import { runDocument, type FinishedRun } from "@/lib/runCompletion";
+import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import {
   journeyRunConfig,
   journeyRunFields,
@@ -23,6 +24,7 @@ import {
 } from "../../../e2e/helpers/journeyRunDoc";
 
 const WEEK = "2027-03-01";
+const RACE_DAY = localDateString(addLocalDays(new Date(), 200));
 function planned(
   id: string,
   date: string,
@@ -54,7 +56,9 @@ const plan: Pick<ProgramState, "runPlan" | "runDays"> = {
   runDays,
   runPlan: {
     mode: "race_prep",
-    raceGoal: { distance: "marathon", targetDate: "2027-10-17" },
+    // Ahead of the week by the clock, not a literal that passes: a race
+    // already run takes the plan off the run, and the long run lost its id.
+    raceGoal: { distance: "marathon", targetDate: RACE_DAY },
     totalWeeks: 53,
     currentWeek: 20,
   },

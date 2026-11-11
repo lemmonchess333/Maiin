@@ -80,6 +80,10 @@ export function useDiscoverFeed(
           }));
         }
 
+        // Explore is for finding other people: the person's own posts
+        // are on their profile and in Following, not here.
+        if (uid) feedItems = feedItems.filter((item) => item.authorId !== uid);
+
         // Filter out blocked users
         if (blockedUsers && blockedUsers.size > 0) {
           feedItems = feedItems.filter(

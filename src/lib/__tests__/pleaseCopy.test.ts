@@ -10,10 +10,11 @@
  * The scan covers every surface a person reads words from: the app
  * (`src/`), what the server sends back to it and to their phone
  * (`functions/`), the public pages and service workers (`public/`), and
- * the iOS permission prompts (`Info.plist`). Comments are stripped first,
- * so a comment may quote old copy; a string, a JSX text node or an HTML
- * text node may not say it. Tests and operator scripts are left out:
- * neither is shown to anyone.
+ * the iOS permission prompts (`Info.plist` and the build settings it reads
+ * from `project.pbxproj`). Comments are stripped first, so a comment may
+ * quote old copy; a string, a JSX text node or an HTML text node may not
+ * say it. Tests and operator scripts are left out: neither is shown to
+ * anyone.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -27,6 +28,9 @@ const SURFACES = [
   { cwd: "functions", pattern: "**/*.js" },
   { cwd: "public", pattern: "**/*.{js,html}" },
   { cwd: "ios/App/App", pattern: "Info.plist" },
+  // The Health permission prompts' text is a build setting, picked per
+  // build by the Watch release gate.
+  { cwd: "ios/App/App.xcodeproj", pattern: "project.pbxproj" },
 ];
 
 const NOT_SHOWN = [
@@ -101,6 +105,7 @@ describe('no "please" in user-visible copy', () => {
       "public/legal/support.html",
       "public/sw.js",
       "ios/App/App/Info.plist",
+      "ios/App/App.xcodeproj/project.pbxproj",
     ]) {
       expect(files).toContain(file);
     }

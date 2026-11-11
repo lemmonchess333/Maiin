@@ -60,7 +60,7 @@ export function deriveStrip(
   metadata: RunPlanMetadata,
   runPlan:
     | {
-        mode: "structured" | "race_prep";
+        mode: "structured" | "race_prep" | "starter";
         raceGoal?: { distance: string; targetDate: string };
         totalWeeks?: number;
         currentWeek?: number;

@@ -124,7 +124,7 @@ export async function reauthAndRevokeAppleNative(user: User): Promise<void> {
       }
     );
     if (!response.ok)
-      throw new Error("Couldn't disconnect Sign in with Apple. Try again.");
+      throw new Error("Couldn’t disconnect Sign in with Apple. Try again.");
   } finally {
     clearTimeout(timeout);
   }

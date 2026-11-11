@@ -86,6 +86,6 @@ describe("SetCheck", () => {
     check(true, true);
     expect(
       screen.getByRole("button", { name: "Edit completed set 1" })
-    ).toHaveTextContent("PR");
+    ).toHaveTextContent("Best");
   });
 });

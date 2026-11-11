@@ -12,18 +12,40 @@
  * a screen-reader activation opens the existing Stop confirm dialog instead
  * (via onRequestConfirm) — so hold users get the fast path and everyone else
  * (and every stray brush) gets the safe path. A completed hold ends the run
- * directly and swallows its trailing click. See spec `spec-run-fast-launch.md`
- * §12.
+ * directly and swallows its trailing click. A hold let go early only resets
+ * the ring and swallows its click too: the runner changed their mind, and a
+ * dialog mid-run would interrupt them (DESIGN_GUIDE §14h). See spec
+ * `spec-run-fast-launch.md` §12.
+ *
+ * The paused screen's Stop is the same control at the large size, with its
+ * own label and glyph: a hold there ends the run too, and a tap still opens
+ * the dialog.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Flag } from "lucide-react";
-import { RunControlButton } from "@/components/ui/RunControlButton";
+import {
+  RunControlButton,
+  type RunControlSize,
+} from "@/components/ui/RunControlButton";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
 const HOLD_MS = 1500;
-const RING_R = 24;
-const RING_C = 2 * Math.PI * RING_R;
+/** A press longer than this was a hold, not a tap. */
+const TAP_MAX_MS = 300;
+/** How long after a hold is let go its click is taken as that release's
+ *  own; a click later than this is a separate activation (Enter, a
+ *  VoiceOver double-tap) and opens the dialog. */
+const RELEASE_CLICK_MS = 400;
+/* The ring sits 4px inside the button's edge, at either size. */
+const BUTTON_PX: Record<RunControlSize, number> = { sm: 56, lg: 76 };
+const RING_INSET = 4;
 
 interface HoldToFinishButtonProps {
   /** Completed hold → end the run directly (the same action the confirm
@@ -34,16 +56,33 @@ interface HoldToFinishButtonProps {
   onRequestConfirm: () => void;
   /** Hold duration in ms; overridable for tests. */
   holdMs?: number;
+  /** The caption under the button. Its word is in `ariaLabel` too. */
+  label?: string;
+  /** Names the gesture and contains `label` (WCAG 2.5.3). */
+  ariaLabel?: string;
+  size?: RunControlSize;
+  /** The glyph inside the ring; the coral flag by default. */
+  icon?: ReactNode;
 }
 
 export default function HoldToFinishButton({
   onFinish,
   onRequestConfirm,
   holdMs = HOLD_MS,
+  label = "Finish",
+  ariaLabel = "Hold to finish run",
+  size = "sm",
+  icon,
 }: HoldToFinishButtonProps) {
+  const box = BUTTON_PX[size];
+  const ringR = box / 2 - RING_INSET;
+  const ringC = 2 * Math.PI * ringR;
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+  /** When the last press, a hold, was let go early: the click that
+   *  follows that release is swallowed. */
+  const abandonedAtRef = useRef<number | null>(null);
   const tickRef = useRef(0);
   const loopRef = useRef<(() => void) | null>(null);
   const [progress, setProgress] = useState(0);
@@ -85,6 +124,7 @@ export default function HoldToFinishButton({
 
   const begin = useCallback(() => {
     completedRef.current = false;
+    abandonedAtRef.current = null;
     tickRef.current = 0;
     startRef.current = performance.now();
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -95,6 +135,13 @@ export default function HoldToFinishButton({
   // trailing click (from a tap) is handled by handleClick below.
   const cancel = useCallback(() => {
     if (completedRef.current) return;
+    const started = startRef.current;
+    // No press in progress: an echo of one already ended. On touch the
+    // browser fires pointerleave after pointerup, and that second call
+    // must not wipe what the first one recorded.
+    if (started == null) return;
+    const now = performance.now();
+    abandonedAtRef.current = now - started > TAP_MAX_MS ? now : null;
     stop();
   }, [stop]);
 
@@ -103,6 +150,16 @@ export default function HoldToFinishButton({
     // the trailing click so it doesn't also open the confirm dialog.
     if (completedRef.current) {
       completedRef.current = false;
+      return;
+    }
+    // A hold let go early: the ring has reset, and that is all. Only the
+    // click that comes with that release; a later one is its own press.
+    const abandonedAt = abandonedAtRef.current;
+    abandonedAtRef.current = null;
+    if (
+      abandonedAt != null &&
+      performance.now() - abandonedAt < RELEASE_CLICK_MS
+    ) {
       return;
     }
     onRequestConfirm();
@@ -117,14 +174,14 @@ export default function HoldToFinishButton({
 
   return (
     <RunControlButton
-      /* The label says what the control does, as its siblings' do (LOCK,
-         PAUSE, STOP); the ring that fills under a press shows it wants a
+      /* The label says what the control does, as its siblings' do (Lock,
+         Pause, Stop); the ring that fills under a press shows it wants a
          hold. The accessible name CONTAINS the label (WCAG 2.5.3 Label in
          Name), so a voice-control user saying "tap finish" reaches it, and
          it names the gesture for a screen-reader user. */
-      aria-label="Hold to finish run"
-      label="FINISH"
-      size="sm"
+      aria-label={ariaLabel}
+      label={label}
+      size={size}
       variant="neutral"
       className="relative touch-none"
       onClick={handleClick}
@@ -136,26 +193,26 @@ export default function HoldToFinishButton({
         <>
           <svg
             className="absolute inset-0"
-            width="56"
-            height="56"
-            viewBox="0 0 56 56"
+            width={box}
+            height={box}
+            viewBox={`0 0 ${box} ${box}`}
             aria-hidden="true"
           >
             <circle
-              cx="28"
-              cy="28"
-              r={RING_R}
+              cx={box / 2}
+              cy={box / 2}
+              r={ringR}
               fill="none"
               stroke={THEME.running}
               strokeWidth="4"
               strokeLinecap="round"
-              strokeDasharray={RING_C}
-              strokeDashoffset={RING_C * (1 - progress)}
-              transform="rotate(-90 28 28)"
+              strokeDasharray={ringC}
+              strokeDashoffset={ringC * (1 - progress)}
+              transform={`rotate(-90 ${box / 2} ${box / 2})`}
               opacity={progress > 0 ? 1 : 0}
             />
           </svg>
-          <Flag className="size-5" style={{ color: THEME.running }} />
+          {icon ?? <Flag className="size-5" style={{ color: THEME.running }} />}
         </>
       }
     />

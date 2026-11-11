@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import WeightScaleDial from "@/components/home/WeightScaleDial";
 import { HEIGHT_CM, WEIGHT_KG, heightRangeInFeet } from "@/lib/bodyMetrics";
@@ -11,7 +11,7 @@ import {
 
 type WeightUnit = "kg" | "lbs" | "st";
 const valueClass =
-  "ds-input w-full min-w-0 min-h-16 text-center text-display font-mono tabular-nums";
+  "ds-input w-full min-w-0 min-h-16 text-center text-display font-figure tabular-nums";
 /* Each box says its unit under it, and, before anything is entered, shows
    the figure the dial points at as its placeholder: an unanswered box
    stays empty (nothing advances on numbers nobody entered), but an empty
@@ -62,6 +62,9 @@ export default function BodyInputs({
   onHeightUnit: (unit: "cm" | "ft") => void;
   onValidityChange: (valid: boolean) => void;
 }) {
+  const errorId = useId();
+  const weightErrorId = `${errorId}-weight`;
+  const heightErrorId = `${errorId}-height`;
   const weightText = (kg: number, unit: WeightUnit) =>
     unit === "st"
       ? String(kgToStonePounds(kg).stone)
@@ -98,8 +101,14 @@ export default function BodyInputs({
     [weightValid, heightValid, weightAnswered, heightAnswered, onValidityChange]
   );
   useEffect(
-    () => onAnsweredChange(weightAnswered && heightAnswered),
-    [weightAnswered, heightAnswered, onAnsweredChange]
+    // Only validated numbers reach the parent's draft. A nonempty typo
+    // must not mark its old/default number as the person's answer: after
+    // Back or a restart that would return as a valid measurement.
+    () =>
+      onAnsweredChange(
+        weightValid && heightValid && weightAnswered && heightAnswered
+      ),
+    [weightValid, heightValid, weightAnswered, heightAnswered, onAnsweredChange]
   );
   const editWeight = (text: string, remainder: string) => {
     setWeight(text);
@@ -152,17 +161,20 @@ export default function BodyInputs({
             ariaLabel="Weight unit"
             className="w-44 max-w-full shrink-0"
             value={weightUnit}
-            disabled={!weightValid}
             options={[
               { value: "kg", label: "kg" },
               { value: "lbs", label: "lb" },
               { value: "st", label: "st" },
             ]}
             onChange={(next) => {
-              setWeight(weightAnswered ? weightText(weightKg, next) : "");
+              // A unit correction must not accept the last valid/default value.
+              const keepAnswer = weightValid && weightAnswered;
+              setWeight(keepAnswer ? weightText(weightKg, next) : "");
               setPounds(
-                weightAnswered ? String(kgToStonePounds(weightKg).pounds) : ""
+                keepAnswer ? String(kgToStonePounds(weightKg).pounds) : ""
               );
+              setWeightAnswered(keepAnswer);
+              setWeightValid(true);
               onWeightUnit(next);
             }}
           />
@@ -179,6 +191,7 @@ export default function BodyInputs({
                 value={weight}
                 placeholder={weightText(weightKg, weightUnit)}
                 aria-invalid={!weightValid}
+                aria-describedby={!weightValid ? weightErrorId : undefined}
                 onChange={(event) => editWeight(event.target.value, pounds)}
               />
             </label>
@@ -196,6 +209,7 @@ export default function BodyInputs({
                   value={pounds}
                   placeholder={String(kgToStonePounds(weightKg).pounds)}
                   aria-invalid={!weightValid}
+                  aria-describedby={!weightValid ? weightErrorId : undefined}
                   onChange={(event) => editWeight(weight, event.target.value)}
                 />
               </label>
@@ -204,7 +218,11 @@ export default function BodyInputs({
           )}
         </div>
         {!weightValid && (
-          <p role="alert" className="text-sm text-destructive-strong">
+          <p
+            id={weightErrorId}
+            role="alert"
+            className="text-sm text-destructive-strong"
+          >
             Enter {WEIGHT_KG.min}–{WEIGHT_KG.max} kg, or the equivalent in
             pounds.
           </p>
@@ -239,16 +257,18 @@ export default function BodyInputs({
             ariaLabel="Height unit"
             className="w-36 max-w-full shrink-0"
             value={heightUnit}
-            disabled={!heightValid}
             options={[
               { value: "cm", label: "cm" },
               { value: "ft", label: "ft / in" },
             ]}
             onChange={(next) => {
-              setHeight(heightAnswered ? heightText(heightCm, next) : "");
+              const keepAnswer = heightValid && heightAnswered;
+              setHeight(keepAnswer ? heightText(heightCm, next) : "");
               setInches(
-                heightAnswered ? String(Math.round(heightCm / 2.54) % 12) : ""
+                keepAnswer ? String(Math.round(heightCm / 2.54) % 12) : ""
               );
+              setHeightAnswered(keepAnswer);
+              setHeightValid(true);
               onHeightUnit(next);
             }}
           />
@@ -263,6 +283,7 @@ export default function BodyInputs({
                 value={height}
                 placeholder={heightText(heightCm, heightUnit)}
                 aria-invalid={!heightValid}
+                aria-describedby={!heightValid ? heightErrorId : undefined}
                 onChange={(event) => editHeight(event.target.value, inches)}
               />
             </label>
@@ -278,6 +299,7 @@ export default function BodyInputs({
                   value={inches}
                   placeholder={String(Math.round(heightCm / 2.54) % 12)}
                   aria-invalid={!heightValid}
+                  aria-describedby={!heightValid ? heightErrorId : undefined}
                   onChange={(event) => editHeight(height, event.target.value)}
                 />
               </label>
@@ -286,7 +308,11 @@ export default function BodyInputs({
           )}
         </div>
         {!heightValid && (
-          <p role="alert" className="text-sm text-destructive-strong">
+          <p
+            id={heightErrorId}
+            role="alert"
+            className="text-sm text-destructive-strong"
+          >
             Enter {HEIGHT_CM.min}–{HEIGHT_CM.max} cm ({heightRangeInFeet()}).
           </p>
         )}

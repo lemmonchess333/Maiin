@@ -24,7 +24,7 @@ vi.mock("firebase/firestore");
 const { auth } = vi.hoisted(() => ({
   auth: { currentUser: { uid: "user-a" } as { uid: string } | null },
 }));
-vi.mock("@/lib/firebase", () => ({ auth }));
+vi.mock("@/lib/firebase", () => ({ auth, db: {} }));
 vi.mock("@/lib/errorReporting", () => ({ captureError: vi.fn() }));
 const db = {} as Firestore;
 const day = {
@@ -194,7 +194,31 @@ describe("durable workout completion replay", () => {
     expect(readDoc("users/user-a/workouts/programme-one")?.notes).toBe(
       "Edited later"
     );
-    expect(writeLog()).toHaveLength(0);
+    expect(
+      writeLog().filter((write) => write.path.includes("/workouts/"))
+    ).toHaveLength(0);
+    expect(readDoc("users/user-a/stats/prMap")?.invalidated).toBe(true);
+  });
+
+  it("commits the recovered workout and record invalidation together", async () => {
+    const receipt = queueWorkoutCompletion(
+      db,
+      "user-a",
+      "routine-one",
+      workout()
+    );
+    failNextFirestore("commit", { code: "unavailable" });
+    expect(await reconnect()).toBe(0);
+    await expect(receipt).resolves.toBe("failed");
+    expect(readDoc("users/user-a/workouts/routine-one")).toBeUndefined();
+    expect(readDoc("users/user-a/stats/prMap")).toBeUndefined();
+    expect(getQueueLength("user-a")).toBe(1);
+    expect(await reconnect()).toBe(1);
+    expect(readDoc("users/user-a/workouts/routine-one")?.notes).toBe(
+      "Original note"
+    );
+    expect(readDoc("users/user-a/stats/prMap")?.invalidated).toBe(true);
+    expect(getQueueLength("user-a")).toBe(0);
   });
 
   it("stops after an account switch during a transaction read, retaining the outgoing user's copy", async () => {

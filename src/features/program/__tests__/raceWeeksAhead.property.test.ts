@@ -42,6 +42,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { mulberry32 } from "@/test/prng";
 import { layoffFromRuns, type DatedRun } from "../layoffDetection";
 import { migrateProgramState } from "../migrations";
+import { runWeekKeyOf } from "../programMaintenance";
 import { normalizeProgramState, type ProgramState } from "../programTypes";
 import { calendarDaysBetween, isRunStepBackWeek } from "../runPlanTiming";
 import { raceBlockWeek } from "../weekPrescription";
@@ -167,7 +168,7 @@ function arrived(
 ): Omit<RaceWeekAhead, "weekKey"> & { weekKey: string | undefined } {
   const block = raceBlockWeek(state.runPlan);
   return {
-    weekKey: state.runDays?.[0]?.weekKey,
+    weekKey: runWeekKeyOf(state),
     lighter:
       !!block &&
       isRunStepBackWeek(block.weekIndex, block.totalWeeks, block.distance),
@@ -201,9 +202,15 @@ function live(c: Case) {
         runs.push(done(day.userOverride || day.templateId, day.date));
     }
     const moved = onDay(row.weekKey, () =>
-      rollRunWeeks(s, profile, row.weekKey, layoffFromRuns(runs, row.weekKey))
+      rollRunWeeks(
+        s,
+        profile,
+        row.weekKey,
+        layoffFromRuns(runs, row.weekKey),
+        null
+      )
     );
-    expect(moved.weeks).toBe(1);
+    expect(moved.weeks, JSON.stringify({ c, week: row.weekKey })).toBe(1);
     s = moved.state;
     weeks.push(arrived(s, profile));
   }

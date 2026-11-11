@@ -17,8 +17,15 @@ import {
   hintSeenKey,
 } from "@/lib/firstGuide";
 
-const track = vi.hoisted(() => vi.fn());
+const { track, auth } = vi.hoisted(() => ({
+  track: vi.fn(),
+  auth: { profile: null as { activationJourneyVersion?: number } | null },
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track }));
+vi.mock("@/lib/auth", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth")>()),
+  useAuth: () => ({ profile: auth.profile }),
+}));
 
 const UID = "hint-user";
 const asAccount = ({ children }: { children: ReactNode }) => (
@@ -70,6 +77,7 @@ async function settle() {
 beforeEach(() => {
   localStorage.clear();
   track.mockClear();
+  auth.profile = null;
 });
 
 afterEach(() => {
@@ -99,6 +107,15 @@ describe("GuideHint", () => {
     await settle();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(track).not.toHaveBeenCalled();
+  });
+
+  it("shows the point-of-use hint for version 2 without an automatic Home walk", async () => {
+    auth.profile = { activationJourneyVersion: 2 };
+    anchor();
+    renderHint();
+    expect(
+      await screen.findByRole("dialog", { name: "Your first set" })
+    ).toBeInTheDocument();
   });
 
   it("waits for the page to say its moment has come", async () => {
@@ -255,5 +272,37 @@ describe("GuideHint", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Got it" }));
     expect(localStorage.getItem(hintSeenKey("first-set"))).toBeNull();
     expect(localStorage.getItem(`anon:${hintSeenKey("first-set")}`)).toBeNull();
+  });
+});
+
+describe("requested guidance", () => {
+  it("can reopen a dismissed hint repeatedly without triggering the anchor", async () => {
+    metTheGuide();
+    const activate = vi.fn();
+    anchor(activate);
+    const view = renderHint();
+    await screen.findByRole("dialog");
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    for (const request of [1, 2]) {
+      view.rerender(<GuideHint key={request} id="first-set" when requested />);
+      await screen.findByRole("dialog");
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("dialog")).toBeNull();
+    }
+    expect(activate).not.toHaveBeenCalled();
+  });
+
+  it("closes guidance before opening existing exercise form help", async () => {
+    metTheGuide();
+    const activate = vi.fn();
+    const form = vi.fn();
+    anchor(activate);
+    renderHint({ action: { label: "Exercise form", onSelect: form } });
+    await screen.findByRole("dialog");
+    fireEvent.click(screen.getByRole("button", { name: "Exercise form" }));
+    expect(form).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(activate).not.toHaveBeenCalled();
   });
 });

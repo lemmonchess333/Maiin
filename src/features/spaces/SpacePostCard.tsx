@@ -49,7 +49,6 @@ export default function SpacePostCard({
   spaceId,
   postId,
   post,
-  accent,
   onRemoved,
   liked = false,
   likeDelta = 0,
@@ -60,7 +59,6 @@ export default function SpacePostCard({
   spaceId: string;
   postId: string;
   post: SpacePostDoc;
-  accent: string;
   onRemoved: (postId: string) => void;
   /** SOC-P2c — viewer's like state + optimistic count delta + toggle.
    *  When onToggleLike is absent the count renders read-only (the
@@ -103,7 +101,7 @@ export default function SpacePostCard({
       haptic("light");
       onRemoved(postId);
     } catch {
-      toast.error("Couldn't delete the post. Try again.");
+      toast.error("Couldn’t delete the post. Try again.");
     }
   };
 
@@ -118,27 +116,38 @@ export default function SpacePostCard({
             background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
           }}
         >
-          <RouteScene preview={activity.routePreview!} />
-          {(activity.distance ?? 0) > 0 && (
-            <div className="absolute bottom-2.5 left-3.5">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-                {distanceValue(activity.distance ?? 0, unit, 2)}
-              </p>
-              <SectionLabel className="mt-0.5">
-                {distanceUnitLabel(unit)}
-              </SectionLabel>
-            </div>
-          )}
-          {(activity.avgPace ?? 0) > 0 && (
-            <div className="absolute bottom-2.5 right-3.5 text-right">
-              <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
-                {paceMinSec(activity.avgPace!, unit)}
-              </p>
-              <SectionLabel className="mt-0.5">
-                {paceUnitLabel(unit)}
-              </SectionLabel>
-            </div>
-          )}
+          {/* The numbers in a row under the route, not over it, as on
+              the feed's card: laid over it, a route starting at a corner
+              drew its start ring on one. */}
+          <RouteScene
+            preview={activity.routePreview!}
+            footer={
+              ((activity.distance ?? 0) > 0 || (activity.avgPace ?? 0) > 0) && (
+                <div className="flex shrink-0 items-end gap-3 px-3.5 pb-2.5">
+                  {(activity.distance ?? 0) > 0 && (
+                    <div className="min-w-0">
+                      <p className="text-xl font-bold font-figure tabular-nums leading-none text-running">
+                        {distanceValue(activity.distance ?? 0, unit, 2)}
+                      </p>
+                      <SectionLabel className="mt-0.5">
+                        {distanceUnitLabel(unit)}
+                      </SectionLabel>
+                    </div>
+                  )}
+                  {(activity.avgPace ?? 0) > 0 && (
+                    <div className="ml-auto min-w-0 text-right">
+                      <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
+                        {paceMinSec(activity.avgPace!, unit)}
+                      </p>
+                      <SectionLabel className="mt-0.5">
+                        {paceUnitLabel(unit)}
+                      </SectionLabel>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+          />
         </div>
       )}
       {isLiftAttach && activity && (
@@ -171,7 +180,7 @@ export default function SpacePostCard({
           )}
           {(activity.totalVolume ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-lifting">
                 {Math.round(
                   liftVolumeIn(activity.totalVolume ?? 0, liftUnit)
                 ).toLocaleString()}
@@ -207,8 +216,6 @@ export default function SpacePostCard({
               photoURL={post.authorPhotoURL}
               displayName={post.authorName}
               size="md"
-              fallbackBg={`${accent}20`}
-              fallbackColor={accent}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -406,7 +413,7 @@ export default function SpacePostCard({
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Delete this post?"
-        description="This can't be undone."
+        description="This can’t be undone."
         confirmLabel="Delete"
         destructive
         onConfirm={async () => {
@@ -431,7 +438,7 @@ export default function SpacePostCard({
             addBlocked(post.authorId);
             toast.success(`Blocked ${post.authorName}`);
           } catch {
-            toast.error(`Couldn't block ${post.authorName}. Try again.`);
+            toast.error(`Couldn’t block ${post.authorName}. Try again.`);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}

@@ -66,7 +66,7 @@ export default function GoalReachedSheet({
       if (!payload) throw new Error("no current weight to anchor maintenance");
       await updateProfile(payload, { throwOnError: true });
     } catch (err) {
-      toast.error("Couldn't switch to maintenance. Try again.");
+      toast.error("Couldn’t switch to maintenance. Try again.");
       throw err;
     }
     // Same programState.goal mirror as SettingsNutrition — the profile copy
@@ -86,7 +86,7 @@ export default function GoalReachedSheet({
       logger.error("[GoalReachedSheet] programState goal mirror failed", error);
     }
     onResolved();
-    toast.success("Maintenance calories set. Nice work.");
+    toast.success("Maintenance calories set.");
   };
 
   const keepPlan = async () => {
@@ -115,8 +115,8 @@ export default function GoalReachedSheet({
       // Outside-tap / Escape / swipe resolve as "keep" — the ask is once per
       // goal either way, so dismissing is a decision, not a snooze.
       onClose={onResolved}
-      title="You've reached your goal weight"
-      description={`You set ${offer.goalWeightKg.toFixed(1).replace(/\.0$/, "")} kg and you're there. Keep pushing ${arrivedWord}, or hold steady at maintenance calories?`}
+      title="You’ve reached your goal weight"
+      description={`You set ${offer.goalWeightKg.toFixed(1).replace(/\.0$/, "")} kg and you’re there. Keep pushing ${arrivedWord}, or hold steady at maintenance calories?`}
       choices={choices}
       logTag="goalReached"
     />

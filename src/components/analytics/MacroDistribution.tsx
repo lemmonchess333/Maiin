@@ -165,10 +165,10 @@ export default function MacroDistribution({
                 `leading-none` because the hole is 56px across inside a
                 96px box, and two lines at default leading touch the ring.
 
-                The unit line stays out of the numeral face: Archivo's
+                The unit line stays out of the figure face: Archivo's
                 tabular figures align digits and do nothing for letters,
                 and the treatment is scoped to numeric displays. */}
-            <p className="text-xs font-extrabold font-mono leading-none text-foreground">
+            <p className="text-xs font-extrabold font-figure leading-none text-foreground">
               {formatCalories(avgCalories)}
             </p>
             <p className="text-caption leading-none text-muted-foreground mt-0.5">

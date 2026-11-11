@@ -1,0 +1,194 @@
+{
+  "exerciseId": "hip-abduction-machine",
+  "version": "anatomy-v4-2026-10-27-seated-hip-abduction-v2",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T18:03:28.375Z",
+  "reference": {
+    "path": "form-frames/hip-abduction-machine/2026-10-27/1.webp",
+    "sha256": "6c8be2f7e147b4894a090b98c75f9b547817a0cd548882c3f78dedc083cbcb60"
+  },
+  "cueSha256": "845cf419e63279faa3ca232d8b571aee75bfc57aa28d1e7b57b5fa9043970ec5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1254×1254 frames retain one faceless anatomical athlete, white trainers and one seated abduction machine; violet lateral hip fields follow the established illustration style."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed straight-front view. Both grip endcaps stay within 0.6 native pixels of their frame-1 centroids; the cabinet upper edge varies by only one pixel, and the full machine fits the phone stage."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The torso remains upright and seated while both thighs open symmetrically and return. Knees remain aligned with the moving pads, feet with the footrests, and both arms keep the outboard handles."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two thigh pads and attached foot platforms move outward while the seat, cabinet and rigid outboard handle posts stay fixed. Backrest width is 269 px and grip-endcap span 608.8–609.3 px across frames."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Seat/back contact and both clearly visible fixed handle grips persist; knees stay against both pads and shoes remain on the moving rests. The independent fixed handle positions were template-matched against the closed pose."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Pads, lever arms and feet open together to the widest pose, hold, then close along the same path. The weight stack rises while the fixed seat, cabinet and handles do not drift."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Outer hip/glute regions use the main violet accent in all six frames, with no false knee or machine activation mark."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, open, wide, hold, return and reset cues correspond to poses 1,2,3,3,2,1; the still seated torso matches the setup instructions."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and 6→1 were stepped in ExerciseFormFrames. Frame 4=3, 5=2 and 6=1 are byte-identical, so the return and loop do not jump."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/1.webp",
+      "sha256": "6c8be2f7e147b4894a090b98c75f9b547817a0cd548882c3f78dedc083cbcb60",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.6,
+          "y": 581.3
+        },
+        "rightGripEndcap": {
+          "x": 929.4,
+          "y": 581.8
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 608.8,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/1.png",
+        "sha256": "7a87be96d230cc2665ce862070eb809b8b4446b55fd3fb867e08921b2517c808"
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/2.webp",
+      "sha256": "0eae20e7231eb0f33e89d30d35142e3e5283551237ad1933a9d3c6bfcd7dbdea",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.5,
+          "y": 580.7
+        },
+        "rightGripEndcap": {
+          "x": 929.8,
+          "y": 581.3
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 609.3,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/2.png",
+        "sha256": "bda2d3e94ba0e1737133469fceed8f05ee139d0ef43457fba89a5a104f41f74e"
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/3.webp",
+      "sha256": "2e368c1bfd601ef3d76544daf3fec83a78b5edfea9d441d78dfa4ea0527fb4d7",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.8,
+          "y": 581.2
+        },
+        "rightGripEndcap": {
+          "x": 929.7,
+          "y": 581.7
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 608.9,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/3.png",
+        "sha256": "9bf932f26d9de33936871de31493eefbbd5ae2d8fb6e901ee5ec1a61a022fb94"
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/4.webp",
+      "sha256": "2e368c1bfd601ef3d76544daf3fec83a78b5edfea9d441d78dfa4ea0527fb4d7",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.8,
+          "y": 581.2
+        },
+        "rightGripEndcap": {
+          "x": 929.7,
+          "y": 581.7
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 608.9,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/4.png",
+        "sha256": "9bf932f26d9de33936871de31493eefbbd5ae2d8fb6e901ee5ec1a61a022fb94"
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/5.webp",
+      "sha256": "0eae20e7231eb0f33e89d30d35142e3e5283551237ad1933a9d3c6bfcd7dbdea",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.5,
+          "y": 580.7
+        },
+        "rightGripEndcap": {
+          "x": 929.8,
+          "y": 581.3
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 609.3,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/5.png",
+        "sha256": "bda2d3e94ba0e1737133469fceed8f05ee139d0ef43457fba89a5a104f41f74e"
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2026-10-27/6.webp",
+      "sha256": "6c8be2f7e147b4894a090b98c75f9b547817a0cd548882c3f78dedc083cbcb60",
+      "anchors": {
+        "leftGripEndcap": {
+          "x": 320.6,
+          "y": 581.3
+        },
+        "rightGripEndcap": {
+          "x": 929.4,
+          "y": 581.8
+        }
+      },
+      "invariantDimensions": {
+        "fixedGripSpan": 608.8,
+        "backrestWidth": 269
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hip-abduction-machine/6.png",
+        "sha256": "7a87be96d230cc2665ce862070eb809b8b4446b55fd3fb867e08921b2517c808"
+      }
+    }
+  ]
+}

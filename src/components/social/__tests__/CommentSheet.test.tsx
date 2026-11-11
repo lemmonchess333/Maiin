@@ -148,7 +148,7 @@ it("says a failed read failed, and Try again reads again", async () => {
   await act(async () => {
     H.reads[0].reject(new Error("offline"));
   });
-  expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load comments");
+  expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t load comments");
   expect(screen.queryByText("No comments yet")).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -184,10 +184,10 @@ describe("someone else's comment — Report and Block user", () => {
   it("offers its options; your own comment offers Delete instead", async () => {
     await openWith([PRIYA, MINE]);
     expect(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "More options for Me's comment" })
+      screen.queryByRole("button", { name: "More options for Me’s comment" })
     ).toBeNull();
     // Exactly one Delete: on your own comment, not on Priya's.
     expect(
@@ -198,7 +198,7 @@ describe("someone else's comment — Report and Block user", () => {
   it("files a report on the comment, in the sheet, then shows the list again", async () => {
     await openWith([PRIYA, MINE]);
     fireEvent.click(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Report comment" }));
 
@@ -230,7 +230,7 @@ describe("someone else's comment — Report and Block user", () => {
   it("blocks the author after a confirmation, and their comments go", async () => {
     await openWith([PRIYA, MINE]);
     fireEvent.click(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Block user" }));
     expect(
@@ -251,7 +251,7 @@ describe("someone else's comment — Report and Block user", () => {
   it("Cancel goes back to the list without blocking", async () => {
     await openWith([PRIYA]);
     fireEvent.click(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Block user" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -329,7 +329,7 @@ describe("a comment's row at large text", () => {
       name: "Add fire reaction",
     })[0];
     expect(reaction.parentElement).toHaveClass("flex-wrap");
-    for (const name of ["Delete comment", "More options for Priya's comment"]) {
+    for (const name of ["Delete comment", "More options for Priya’s comment"]) {
       expect(screen.getByRole("button", { name })).toHaveClass("size-[44px]");
     }
     expect(screen.getByText("Strong finish").closest("p")).toHaveClass(
@@ -365,7 +365,7 @@ describe("a restricted account (S4e)", () => {
     });
     expect(H.toggleCommentReaction).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
-      "Couldn't update your reaction. Try again."
+      "Couldn’t update your reaction. Try again."
     );
     expect(
       screen.getByRole("button", { name: "Add fire reaction" })
@@ -390,7 +390,7 @@ describe("a restricted account (S4e)", () => {
     });
     expect(H.toggleCommentReaction).not.toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith(
-      "Your account is restricted, so you can't do this for now.",
+      "Your account is restricted, so you can’t do this for now.",
       expect.anything()
     );
 
@@ -423,7 +423,7 @@ describe("a restricted account (S4e)", () => {
       fireEvent.click(screen.getByRole("button", { name: "Send" }));
     });
     expect(toast.error).toHaveBeenCalledWith(
-      "Your account is restricted, so you can't do this for now.",
+      "Your account is restricted, so you can’t do this for now.",
       expect.anything()
     );
   });

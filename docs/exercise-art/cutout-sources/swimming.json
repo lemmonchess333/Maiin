@@ -1,9 +1,9 @@
 {
   "reviewStatus": "reviewed",
   "image": "swimming.png",
-  "imageSha256": "f8d29e4d8cc11e2e5a4d736231fd12f75bc514a3180b9e254623592e6738a31d",
-  "reference": "form-frames/swimming/2.webp",
-  "referenceSha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
-  "method": "Existing reviewed native athlete alpha source remains byte-exact. New registered frame2 uses the same intact athlete with whole-body integer translation and a separate physical coping scene. Card isolates the same athlete without pool material or water-line remnants. Normal cutout exporter supplies the derivative.",
-  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-final-two-strict/review.json"
+  "imageSha256": "faaedbdd57d999cd679f7a0cb2a8939537b0086a2fc8f8797a9920e6577d821b",
+  "reference": "form-frames/swimming/2026-10-27/3.webp",
+  "referenceSha256": "824a76286341ef6f4fc59a1940be40ce6fd811454bc407ca85b53621eadd85b4",
+  "method": "Imagegen transparent cutout from the corrected side-breath frame. The pool coping and black stage are absent; the full swimmer, two arms, two legs, purple back highlights, and lateral head turn remain visible. The normal cutout exporter trims and scales this reviewed alpha source.",
+  "reviewEvidence": "docs/exercise-art/pilots/redraw-20261027/swimming/3.png"
 }

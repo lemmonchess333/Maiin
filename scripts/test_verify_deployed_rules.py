@@ -124,6 +124,37 @@ class RulesVerificationTest(unittest.TestCase):
             self.assertIsNone(request.data)
             self.assertEqual(request.full_url, verifier.API + RELEASE)
 
+    def answer(self):
+        return io.BytesIO(json.dumps(self.release).encode())
+
+    def test_http_reader_tries_a_read_google_did_not_answer_again(self):
+        for failure in [urllib.error.URLError("timed out"), TimeoutError(),
+                        urllib.error.HTTPError(verifier.API, 503, "busy", {}, io.BytesIO(b""))]:
+            waits = []
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = [failure, self.answer()]
+                self.assertEqual(verifier.make_reader("token", sleep=waits.append)(RELEASE), self.release)
+                self.assertEqual(build.return_value.open.call_count, 2)
+            self.assertEqual(len(waits), 1)
+
+    def test_http_reader_gives_up_after_three_tries_with_the_same_safe_code(self):
+        for failure, code in [(urllib.error.URLError("timed out"), "network-unavailable"),
+                              (urllib.error.HTTPError(verifier.API, 503, "busy", {}, io.BytesIO(b"")), "http-503")]:
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = failure
+                with self.assertRaisesRegex(verifier.VerificationError, f"^{code}$"):
+                    verifier.make_reader("token", sleep=lambda _: None)(RELEASE)
+                self.assertEqual(build.return_value.open.call_count, 3)
+
+    def test_http_reader_does_not_retry_a_refusal(self):
+        for code in [400, 401, 403, 404]:
+            with patch.object(verifier.urllib.request, "build_opener") as build:
+                build.return_value.open.side_effect = urllib.error.HTTPError(
+                    verifier.API, code, "no", {}, io.BytesIO(b""))
+                with self.assertRaisesRegex(verifier.VerificationError, f"^http-{code}$"):
+                    verifier.make_reader("token", sleep=lambda _: None)(RELEASE)
+                self.assertEqual(build.return_value.open.call_count, 1)
+
     def test_redirects_are_refused(self):
         with self.assertRaisesRegex(verifier.VerificationError, "unexpected-redirect"):
             verifier.NoRedirect().redirect_request(None, None, 302, "", {}, "https://evil.invalid")
@@ -138,6 +169,27 @@ class RulesVerificationTest(unittest.TestCase):
         with patch.object(verifier.subprocess, "check_output", side_effect=verifier.subprocess.CalledProcessError(1, "gcloud", stderr="secret")), contextlib.redirect_stderr(io.StringIO()) as output:
             self.assertEqual(verifier.main([]), 1)
             self.assertNotIn("secret", output.getvalue())
+
+
+    def test_cli_tries_a_timed_out_token_request_again(self):
+        timeout = verifier.subprocess.TimeoutExpired("gcloud", verifier.TOKEN_TIMEOUT_S)
+        with patch.object(verifier.subprocess, "check_output", side_effect=[timeout, "secret"]) as gcloud, patch.object(verifier.time, "sleep") as sleep, patch.object(verifier, "check_services", return_value=[{"service": "firestore", "status": "match"}]), patch.dict(verifier.os.environ, {"GITHUB_STEP_SUMMARY": ""}), contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(verifier.main(["--service", "firestore"]), 0)
+            self.assertEqual(gcloud.call_count, 2)
+            sleep.assert_called_once_with(verifier.TOKEN_PAUSES_S[0])
+            self.assertNotIn("secret", output.getvalue())
+
+    def test_cli_fails_once_every_token_request_timed_out(self):
+        timeout = verifier.subprocess.TimeoutExpired("gcloud", verifier.TOKEN_TIMEOUT_S)
+        with patch.object(verifier.subprocess, "check_output", side_effect=[timeout] * verifier.TOKEN_ATTEMPTS) as gcloud, patch.object(verifier.time, "sleep"), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(verifier.main([]), 1)
+            self.assertEqual(gcloud.call_count, verifier.TOKEN_ATTEMPTS)
+
+    def test_cli_does_not_retry_a_gcloud_error(self):
+        with patch.object(verifier.subprocess, "check_output", side_effect=verifier.subprocess.CalledProcessError(1, "gcloud")) as gcloud, patch.object(verifier.time, "sleep") as sleep, contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(verifier.main([]), 1)
+            self.assertEqual(gcloud.call_count, 1)
+            sleep.assert_not_called()
 
 
 if __name__ == "__main__":

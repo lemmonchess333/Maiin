@@ -36,9 +36,7 @@ const ARMS: RoutineLayout = {
 
 describe("routineSession", () => {
   it("names the routine a draft was kept from, and none for a programme day's", () => {
-    expect(draftRoutineId({ identity: routineDraftIdentity(ARMS) })).toBe(
-      "r1"
-    );
+    expect(draftRoutineId({ identity: routineDraftIdentity(ARMS) })).toBe("r1");
     expect(
       draftRoutineId({
         identity: computeDraftIdentity({

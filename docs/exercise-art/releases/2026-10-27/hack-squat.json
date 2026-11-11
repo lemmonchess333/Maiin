@@ -1,0 +1,194 @@
+{
+  "exerciseId": "hack-squat",
+  "version": "anatomy-v4-2026-10-27-rail-hack-squat-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex native and 393×852 player review",
+  "reviewedAt": "2026-10-27T17:23:05.051Z",
+  "reference": {
+    "path": "form-frames/hack-squat/2026-10-27/1.webp",
+    "sha256": "70ba0cac66f04eb1b23b08022badcd27cbaa960fa300b840ef81d8ac47d2c08f"
+  },
+  "cueSha256": "7614f8e8e0ed597deb6b1033146a6695547a1f7fe9799996d2666534898c9911",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six native 1254×1254 frames show one faceless anatomical athlete in white trainers on the same black sled and footplate; violet quad/glute fields retain the established hierarchy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side three-quarter camera. Footplate corner is (43,637) in all six PNGs; right stand foot varies only one pixel, (1209–1210,1146–1147), while the full machine remains within the phone stage."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The athlete keeps their back against the sled pad, hands near the shoulder handles, knees tracking over the shoes and heels on the footplate through a controlled deep flexion and rise."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One rail sled, carriage plate, two shoulder pads and footplate are coherent throughout. Static machine span is 1166–1167 px and right stand height 1031–1032 px, both below 0.1% variation."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both soles stay on the angled footplate and the back remains supported by the moving carriage; toe x=160 on the three distinct poses and the lower heel stays at y854–855."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The loaded carriage tracks down the rails as hips and knees flex, pauses at depth, then follows the same path up; the fixed rail/stand does not slide with it."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads and glutes stay the dominant violet regions through all positions, without coloring the moving machine as muscle."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, lower, bottom, hold, rise and stand cues align with poses 1,2,3,3,2,1 respectively; heels and back support remain visible as the cues request."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and return to frame 1 were stepped in ExerciseFormFrames. Frames 4=3, 5=2 and 6=1 are byte-identical reversals for a clean loop."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual light ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded frames and the 6→1 return were reviewed in the actual dark ExerciseFormFrames player at 393×852; complete artwork and captions were visible, document had no horizontal overflow, and the browser reported no page or console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hack-squat/2026-10-27/1.webp",
+      "sha256": "70ba0cac66f04eb1b23b08022badcd27cbaa960fa300b840ef81d8ac47d2c08f",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1209,
+          "y": 1146
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1166,
+        "rightStandHeight": 1031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/1.png",
+        "sha256": "5c37069fa564dcaff8916fcf4a0fdc8cefff41ebbc7b4720d08a534549d23172"
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2026-10-27/2.webp",
+      "sha256": "8d1d8ec9343aa5863a15752f70fd9ed55129bf43e30f5037540f744074f44698",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1209,
+          "y": 1146
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1166,
+        "rightStandHeight": 1031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/2.png",
+        "sha256": "a6af9f90c028f3ba678b6212463508799f193081291920111f93d583cbee89a3"
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2026-10-27/3.webp",
+      "sha256": "110cc843c38862c1974d52451a9afb8babf063bc84ff93a9b453c0615263da68",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1210,
+          "y": 1147
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1167,
+        "rightStandHeight": 1032
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/3.png",
+        "sha256": "43f342440a9edc9c8e9757709f8c2a37d10565857dadf3617b4bea8cc620d33f"
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2026-10-27/4.webp",
+      "sha256": "110cc843c38862c1974d52451a9afb8babf063bc84ff93a9b453c0615263da68",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1210,
+          "y": 1147
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1167,
+        "rightStandHeight": 1032
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/4.png",
+        "sha256": "43f342440a9edc9c8e9757709f8c2a37d10565857dadf3617b4bea8cc620d33f"
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2026-10-27/5.webp",
+      "sha256": "8d1d8ec9343aa5863a15752f70fd9ed55129bf43e30f5037540f744074f44698",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1209,
+          "y": 1146
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1166,
+        "rightStandHeight": 1031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/5.png",
+        "sha256": "a6af9f90c028f3ba678b6212463508799f193081291920111f93d583cbee89a3"
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2026-10-27/6.webp",
+      "sha256": "70ba0cac66f04eb1b23b08022badcd27cbaa960fa300b840ef81d8ac47d2c08f",
+      "anchors": {
+        "footplateOuterCorner": {
+          "x": 43,
+          "y": 637
+        },
+        "rightStandFoot": {
+          "x": 1209,
+          "y": 1146
+        }
+      },
+      "invariantDimensions": {
+        "machineHorizontalSpan": 1166,
+        "rightStandHeight": 1031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261027/hack-squat/6.png",
+        "sha256": "5c37069fa564dcaff8916fcf4a0fdc8cefff41ebbc7b4720d08a534549d23172"
+      }
+    }
+  ]
+}

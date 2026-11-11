@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-const { publicPhotoUrl } = createRequire(import.meta.url)(
+const { publicPhotoUrl, profilePhotoUrl } = createRequire(import.meta.url)(
   "../lib/publicPhotoUrl"
 );
 
@@ -11,11 +11,14 @@ const OWN =
 
 describe("public avatar URL boundary", () => {
   it.each([
-    `${OWN}.firebasestorage.app/o/profile-photos%2Fa.jpg?alt=media&token=synthetic`,
-    `${OWN}.appspot.com/o/a?alt=media`,
-    "https://lh3.googleusercontent.com/a.png",
+    // A profile photo as profilePhotoUpload stores it.
+    `${OWN}.firebasestorage.app/o/profile-photos%2Fuid%2F1714521600000.jpg?alt=media&token=synthetic&v=1714521600001`,
+    `${OWN}.appspot.com/o/space-photos%2Fuid%2F1.jpg?alt=media`,
+    // Google sign-in avatars, current and older.
+    "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+    "https://lh3.googleusercontent.com/a-/AOh14GgSynthetic=s96-c",
     "https://appleid.cdn-apple.com/a.png",
-    `${OWN}.firebasestorage.app/o/${"a".repeat(600)}`,
+    `${OWN}.firebasestorage.app/o/profile-photos%2F${"a".repeat(600)}`,
   ])("preserves supported URLs without truncation: %s", (value) => {
     expect(publicPhotoUrl(value)).toBe(value);
   });
@@ -41,6 +44,21 @@ describe("public avatar URL boundary", () => {
     "https://firebasestorage.googleapis.com/v0/b/demo-tropos.appspot.com/o/p.jpg",
     "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.evil.app/o/p.jpg",
     "https://firebasestorage.googleapis.com/photo.jpg",
+    // A browser resolves the dot segments before it fetches, which leaves
+    // this project's bucket for another's.
+    `${OWN}.appspot.com/o/../../attacker.appspot.com/o/p.png?alt=media`,
+    `${OWN}.appspot.com/o/profile-photos%2Fa/../../../attacker.appspot.com/o/p.png`,
+    `${OWN}.appspot.com/o/profile-photos%2Fa\\..\\..\\x.png`,
+    // Folders the photo screen never checks.
+    `${OWN}.firebasestorage.app/o/progress-photos%2Fuid%2Fx.jpg?alt=media`,
+    `${OWN}.firebasestorage.app/o/a.jpg?alt=media`,
+    // Google's host serves shared Photos and Drive files too.
+    "https://lh3.googleusercontent.com/a.png",
+    "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+    "https://lh3.googleusercontent.com/d/1SyntheticDriveId",
+    "https://lh3.googleusercontent.com/a/x/../../pw/AP1Gcz",
+    "https://lh3.googleusercontent.com/a/%2e%2e%2fpw%2fAP1Gcz",
+    "https://lh3.googleusercontent.com/a/x?sz=1",
   ])("drops unsupported input: %s", (value) => {
     expect(publicPhotoUrl(value)).toBeUndefined();
   });
@@ -73,10 +91,69 @@ describe("the server's answer is the rule's", () => {
     "https://firebasestorage.googleapis.com/v0/b/attacker.appspot.com/o/p.jpg",
     "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.evil.app/o/p.jpg",
     "https://firebasestorage.googleapis.com/photo.jpg",
+    `${OWN}.appspot.com/o/../../attacker.appspot.com/o/p.png?alt=media`,
+    `${OWN}.appspot.com/o/profile-photos%2Fa/../../../attacker.appspot.com/o/p.png`,
+    `${OWN}.firebasestorage.app/o/progress-photos%2Fuid%2Fx.jpg?alt=media`,
+    `${OWN}.firebasestorage.app/o/a.jpg?alt=media`,
+    "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+    "https://lh3.googleusercontent.com/a-/AOh14GgSynthetic=s96-c",
     "https://lh3.googleusercontent.com/a.png",
+    "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+    "https://lh3.googleusercontent.com/a/x/../../pw/AP1Gcz",
+    "https://lh3.googleusercontent.com/a/%2e%2e%2fpw%2fAP1Gcz",
     "https://appleid.cdn-apple.com/a.png",
     "https://tracker.example.test/pixel",
   ])("agrees on %s", (url) => {
     expect(publicPhotoUrl(url) !== undefined).toBe(ruleAllows(url));
+  });
+});
+
+/* A comment's avatar is the commenter's own profile photo, read on the
+   server: a URL the request names is never written. */
+describe("profilePhotoUrl", () => {
+  const txnWith = (docs) => ({
+    get: async (ref) => {
+      const data = docs[ref.path];
+      return { exists: data !== undefined, data: () => data };
+    },
+  });
+  const firestore = {
+    collection: (a) => ({
+      doc: (b) => ({
+        collection: (c) => ({
+          doc: (d) => ({ path: `${a}/${b}/${c}/${d}` }),
+        }),
+      }),
+    }),
+  };
+  const PHOTO = `${OWN}.firebasestorage.app/o/profile-photos%2Fu1%2F1.jpg?alt=media`;
+
+  it("reads the photo from the person's public profile", async () => {
+    const txn = txnWith({ "users/u1/public/profile": { photoURL: PHOTO } });
+    await expect(profilePhotoUrl(txn, firestore, "u1")).resolves.toBe(PHOTO);
+  });
+
+  it("gives nothing for a profile with no photo, an unsupported one, or none", async () => {
+    await expect(
+      profilePhotoUrl(
+        txnWith({ "users/u1/public/profile": { photoURL: "" } }),
+        firestore,
+        "u1"
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      profilePhotoUrl(
+        txnWith({
+          "users/u1/public/profile": {
+            photoURL: `${OWN}.appspot.com/o/progress-photos%2Fu1%2Fx.jpg`,
+          },
+        }),
+        firestore,
+        "u1"
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      profilePhotoUrl(txnWith({}), firestore, "u1")
+    ).resolves.toBeUndefined();
   });
 });

@@ -42,25 +42,47 @@ const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
   "BackgroundGeolocation"
 );
 
-/** Kept async-shaped so call sites read identically to the repo's other lazy
- *  plugin holders; the proxy itself is created synchronously above. Returns
- *  null off-native (belt-and-braces with getLocationSource's platform branch)
- *  so a stray web/test invocation is inert instead of tripping Capacitor's
- *  internal UNIMPLEMENTED rejection, which surfaces outside our promise chain. */
-function loadPlugin(): Promise<BackgroundGeolocationPlugin | null> {
-  return Promise.resolve(isNativePlatform() ? BackgroundGeolocation : null);
+/** The plugin, or null off-native (belt-and-braces with getLocationSource's
+ *  platform branch) so a stray web/test invocation is inert instead of
+ *  tripping Capacitor's internal UNIMPLEMENTED rejection.
+ *
+ *  Handed back as it is, never through a promise. It used to be
+ *  `Promise.resolve(plugin)`: a plugin is a Proxy that answers every property
+ *  with a native call, `then` included, so the promise called
+ *  `BackgroundGeolocation.then()`, which iOS does not implement, and never
+ *  settled. No watcher was ever added: iOS never asked for location, no
+ *  error came back to say it was off, and a run sat on "Finding GPS"
+ *  (CLAUDE.md, "Never resolve a promise with a Capacitor plugin"). */
+function nativePlugin(): BackgroundGeolocationPlugin | null {
+  return isNativePlatform() ? BackgroundGeolocation : null;
+}
+
+/**
+ * Whether a fix's altitude is real. iOS marks one it could not measure with
+ * a negative vertical accuracy and still sends a number, 0 for a Wi-Fi
+ * fix (CLLocation's `verticalAccuracy`). The web's Geolocation gives null
+ * then, and so does this: a run that started on Wi-Fi fixes and then found
+ * GPS counted the climb from 0 to the street as elevation gained.
+ */
+function hasAltitude(loc: PluginLocation): boolean {
+  return (
+    typeof loc.altitude === "number" &&
+    Number.isFinite(loc.altitude) &&
+    !(typeof loc.altitudeAccuracy === "number" && loc.altitudeAccuracy < 0)
+  );
 }
 
 /** Map a plugin fix to the Web Geolocation shape the pipeline consumes. */
 export function toGeolocationPosition(
   loc: PluginLocation
 ): GeolocationPosition {
+  const altitude = hasAltitude(loc);
   const coords = {
     latitude: loc.latitude,
     longitude: loc.longitude,
     accuracy: loc.accuracy,
-    altitude: loc.altitude,
-    altitudeAccuracy: loc.altitudeAccuracy,
+    altitude: altitude ? loc.altitude : null,
+    altitudeAccuracy: altitude ? loc.altitudeAccuracy : null,
     heading: loc.bearing,
     speed: loc.speed,
     toJSON() {
@@ -91,6 +113,17 @@ export function toGeolocationError(
   } as GeolocationPositionError;
 }
 
+/** The Web's TIMEOUT error, for a one-off fix that did not come in time. */
+function timeoutError(): GeolocationPositionError {
+  return {
+    code: 3,
+    message: "Timeout expired",
+    PERMISSION_DENIED: 1,
+    POSITION_UNAVAILABLE: 2,
+    TIMEOUT: 3,
+  } as GeolocationPositionError;
+}
+
 /** Foreground-service notification copy (Android requires it for a
  *  background watcher; iOS ignores it). Calm, specific, no alarm. */
 const BACKGROUND_TITLE = "Tropos is tracking your run";
@@ -102,28 +135,48 @@ export const nativeLocationSource: LocationSource = {
      returns the cached last-known fix immediately, which is exactly what the
      chipset pre-warm wants. No permission prompt here (requestPermissions
      false) — the real watcher below owns the prompt so it's tied to Start. */
-  getCurrent(_options, onFix, onError) {
+  getCurrent(options, onFix, onError) {
+    const plugin = nativePlugin();
+    if (!plugin) return; // plugin missing → silent, same as a slow fix
     let settled = false;
-    void loadPlugin().then((plugin) => {
-      if (!plugin) return; // plugin missing → silent, same as a slow fix
-      let id: string | null = null;
-      const finish = () => {
-        if (id) void plugin.removeWatcher({ id }).catch(() => {});
-      };
-      plugin
-        .addWatcher({ requestPermissions: false, stale: true }, (pos, err) => {
+    let id: string | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const finish = () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      if (id) void plugin.removeWatcher({ id }).catch(() => {});
+    };
+    /* Give up at `timeout`, as the Web's getCurrentPosition does. The run
+       screen polls one of these every 3 s while its watch is acquiring;
+       without this each one lived until a fix came, so a slow fix (indoors,
+       no cached location) left a watcher per poll, keeping location on
+       after the run screen had gone. */
+    const timeout = options?.timeout;
+    if (typeof timeout === "number" && Number.isFinite(timeout)) {
+      timer = setTimeout(
+        () => {
+          timer = null;
           if (settled) return;
           settled = true;
-          if (err) onError(toGeolocationError(err));
-          else if (pos) onFix(toGeolocationPosition(pos));
+          onError(timeoutError());
           finish();
-        })
-        .then((watcherId) => {
-          id = watcherId;
-          if (settled) finish(); // fix arrived before the id resolved
-        })
-        .catch(() => {});
-    });
+        },
+        Math.max(0, timeout)
+      );
+    }
+    plugin
+      .addWatcher({ requestPermissions: false, stale: true }, (pos, err) => {
+        if (settled) return;
+        settled = true;
+        if (err) onError(toGeolocationError(err));
+        else if (pos) onFix(toGeolocationPosition(pos));
+        finish();
+      })
+      .then((watcherId) => {
+        id = watcherId;
+        if (settled) finish(); // fix arrived before the id resolved
+      })
+      .catch(() => {});
   },
 
   /* Continuous fixes that SURVIVE screen-lock / backgrounding. The
@@ -135,8 +188,8 @@ export const nativeLocationSource: LocationSource = {
   watch(_options, onFix, onError) {
     let cleared = false;
     let id: string | null = null;
-    void loadPlugin().then((plugin) => {
-      if (!plugin) return;
+    const plugin = nativePlugin();
+    if (plugin) {
       plugin
         .addWatcher(
           {
@@ -161,17 +214,14 @@ export const nativeLocationSource: LocationSource = {
           }
         })
         .catch(() => {});
-    });
+    }
     const handle: LocationWatch = {
       clear() {
         cleared = true;
-        if (id) {
+        if (id && plugin) {
           const watcherId = id;
           id = null;
-          void loadPlugin().then((plugin) => {
-            if (plugin)
-              void plugin.removeWatcher({ id: watcherId }).catch(() => {});
-          });
+          void plugin.removeWatcher({ id: watcherId }).catch(() => {});
         }
       },
     };

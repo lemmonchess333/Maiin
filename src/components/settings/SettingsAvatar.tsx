@@ -98,8 +98,8 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
           } else {
             toast.error(
               code
-                ? `Couldn't upload (${code}). Try again.`
-                : "Couldn't upload. Try again."
+                ? `Couldn’t upload (${code}). Try again.`
+                : "Couldn’t upload. Try again."
             );
           }
         }
@@ -121,7 +121,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
       setOpen(false);
     } catch (err) {
       logger.error("removeProfilePhoto failed:", err);
-      toast.error("Couldn't remove. Try again.");
+      toast.error("Couldn’t remove. Try again.");
     } finally {
       setBusy(null);
     }

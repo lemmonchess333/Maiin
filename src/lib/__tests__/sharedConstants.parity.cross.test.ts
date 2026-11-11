@@ -9,9 +9,10 @@
  *
  *   GOAL_SPACE_MAX_MEMBERS  goalSpaceTypes.ts = 8, goalSpaceMembership.js = 8
  *   GOAL_SPACE_TEXT_MAX     the same two files, = 200
- *   LOOP_TARGETS_KM         routePlanningApi.ts and routePlanning.js
  *
- * A note on how the third one was found, because the method matters more
+ * A third pair, the road-routing loop distances, left with road routing.
+ *
+ * A note on how the second one was found, because the method matters more
  * than the constant. Grepping cross-tests for a constant's NAME says only
  * that no test mentions it — most of these are pinned BEHAVIOURALLY, by a
  * parity test that never names them. Mutating each server copy and
@@ -34,10 +35,6 @@
  *   9th member, and the user sees a space that is not full refusing
  *   them.
  *
- *   `LOOP_TARGETS_KM` is a server-side ALLOW-LIST: routePlanning.js
- *   rejects any km not in it. A distance offered by the client picker
- *   and absent from the server list is a button that always fails.
- *
  * Each pair is pinned two ways — equal to each other, and equal to a
  * literal. Equality alone passes when both copies are edited together in
  * the same wrong direction, which is the likelier mistake once someone
@@ -49,16 +46,12 @@ import {
   GOAL_SPACE_MAX_MEMBERS,
   GOAL_SPACE_TEXT_MAX,
 } from "@/features/goalSpace/goalSpaceTypes";
-import { LOOP_TARGETS_KM } from "@/lib/routePlanningApi";
 
 const require = createRequire(import.meta.url);
 const {
   GOAL_SPACE_MAX_MEMBERS: SERVER_MAX_MEMBERS,
   GOAL_SPACE_TEXT_MAX: SERVER_TEXT_MAX,
 } = require("../../../functions/lib/goalSpaceMembership");
-const {
-  LOOP_TARGETS_KM: SERVER_LOOP_TARGETS,
-} = require("../../../functions/lib/routePlanning");
 
 describe("goal-space capacity — client ↔ server", () => {
   it("the two copies agree", () => {
@@ -110,31 +103,5 @@ describe("goal-space text cap — client ↔ server", () => {
     );
     expect(client).toMatch(/length\s*>\s*GOAL_SPACE_TEXT_MAX/);
     expect(server).toMatch(/slice\(0,\s*GOAL_SPACE_TEXT_MAX\)/);
-  });
-});
-
-describe("route-planning loop targets — client ↔ server", () => {
-  it("the two copies agree", () => {
-    /* Compared as plain arrays: the server freezes its copy and the
-       client declares `as const`, so the values match while the object
-       identities and mutability never can. */
-    expect([...SERVER_LOOP_TARGETS]).toEqual([...LOOP_TARGETS_KM]);
-  });
-
-  it("and both are the locked set", () => {
-    expect([...LOOP_TARGETS_KM]).toEqual([3, 5, 10, 15]);
-    expect([...SERVER_LOOP_TARGETS]).toEqual([3, 5, 10, 15]);
-  });
-
-  it("the server treats its copy as an allow-list", () => {
-    /* Why the pairing matters at all: this is not two displays of the
-       same number, it is a picker on one side and a gate on the other.
-       Anchored on the real source so the claim cannot rot into prose. */
-    const { readFileSync } = require("node:fs");
-    const src = readFileSync(
-      new URL("../../../functions/lib/routePlanning.js", import.meta.url),
-      "utf8"
-    );
-    expect(src).toMatch(/!LOOP_TARGETS_KM\.includes\(/);
   });
 });

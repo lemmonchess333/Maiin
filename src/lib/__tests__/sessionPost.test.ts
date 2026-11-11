@@ -125,6 +125,56 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("work that adds to a post once it exists (a run's map)", () => {
+  function shareWithAfterPost(afterPost: (activityId: string) => void) {
+    const base = workoutShare();
+    return createSessionShare({
+      uid: UID,
+      type: base.type,
+      source: base.source,
+      preview: () => ({ type: "workout", title: "Push", meta: [] }),
+      payload: (d: ShareDecision): ActivityPost => ({
+        authorId: UID,
+        authorName: "Alex",
+        type: "workout",
+        visibility: d.visibility,
+        workoutName: "Push",
+      }),
+      afterPost,
+    });
+  }
+
+  it("runs once, with the new post's id, when the post is made online", async () => {
+    const afterPost = vi.fn();
+    const share = shareWithAfterPost(afterPost);
+    const outcome = await share.post({ visibility: "public", caption: "" });
+    expect(outcome.status).toBe("posted");
+    if (outcome.status !== "posted") return;
+    expect(afterPost).toHaveBeenCalledExactlyOnceWith(outcome.activityId);
+    // Asked again for the same session: the post it has, and no rerun.
+    await share.post({ visibility: "public", caption: "" });
+    expect(afterPost).toHaveBeenCalledOnce();
+  });
+
+  it("does not run for a post queued offline", async () => {
+    setOnline(false);
+    const afterPost = vi.fn();
+    const outcome = await shareWithAfterPost(afterPost).post({
+      visibility: "public",
+      caption: "",
+    });
+    expect(outcome.status).toBe("queued");
+    expect(afterPost).not.toHaveBeenCalled();
+  });
+
+  it("cannot fail the post", async () => {
+    const outcome = await shareWithAfterPost(() => {
+      throw new Error("no WebGL");
+    }).post({ visibility: "public", caption: "" });
+    expect(outcome.status).toBe("posted");
+  });
+});
+
 describe("posting a session", () => {
   it("posts with a decision and no sheet, and links the post to the session", async () => {
     const opened = vi.fn();

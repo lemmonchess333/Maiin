@@ -30,7 +30,7 @@ export default function StatFigure({
     <div className="px-2 text-center">
       <p
         className={cn(
-          "font-extrabold font-mono tabular-nums leading-tight text-foreground",
+          "font-extrabold font-figure tabular-nums leading-tight text-foreground",
           size === "lg" ? "text-h2" : "text-h3"
         )}
       >

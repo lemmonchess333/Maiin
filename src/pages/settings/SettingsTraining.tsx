@@ -35,6 +35,7 @@ export default function SettingsTraining() {
     regenerateProgram,
     refreshRunSchedule,
     recentLayoff,
+    recentRuns,
   } = useProgram();
 
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
@@ -58,6 +59,7 @@ export default function SettingsTraining() {
           programState={programState}
           readiness={readiness}
           recentLayoff={recentLayoff}
+          recentRuns={recentRuns}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}
           refreshProfile={refreshProfile}

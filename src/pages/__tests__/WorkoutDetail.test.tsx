@@ -18,7 +18,15 @@
  *     one workout in the feed twice.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  act,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import {
   MemoryRouter,
   Routes,
@@ -38,6 +46,7 @@ vi.mock("@/lib/auth", () => ({
     user: { uid: "u1" },
     profile: { displayName: "Alex", uid: "u1" },
   }),
+  useUid: () => "u1",
 }));
 // The share-card sheet pulls in html-to-image + the full renderer; the page's
 // contract with it is "opens with this workout's numbers", which the feed
@@ -56,6 +65,8 @@ import {
   resetFirestore,
   failNextFirestore,
   unfiredFailures,
+  allPaths,
+  readDoc,
 } from "@/test/firestoreHarness";
 
 const SAVED = {
@@ -94,6 +105,22 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("WorkoutDetail", () => {
+  it("is dated by the day it started, not the day it was saved (Lift3)", async () => {
+    // A session started on the 1st and saved on the 3rd: past midnight,
+    // offline, or with its start said to be earlier (Mob2 call 12).
+    const { Timestamp } = await import("firebase/firestore");
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        createdAt: Timestamp.fromDate(new Date(2026, 7, 3, 9, 0)),
+      },
+    });
+    renderAt("w1");
+    expect(
+      await screen.findByText("Saturday, 1 August 2026")
+    ).toBeInTheDocument();
+  });
+
   /* The headline is now per-state. This case used to assert "Workout not
      found" for BOTH, which is the conflation the split fixed: a failed
      read reported the user's session as possibly deleted, or the link as
@@ -102,7 +129,7 @@ describe("WorkoutDetail", () => {
      since stale data reads as data rather than as an error. */
   it.each([
     ["missing", "Workout not found"],
-    ["failed", "Couldn't load this workout"],
+    ["failed", "Couldn’t load this workout"],
   ])(
     "clears the previous workout when the next record is %s",
     async (state, headline) => {
@@ -252,5 +279,179 @@ describe("WorkoutDetail", () => {
         screen.queryByRole("button", { name: /share to feed/i })
       ).toBeNull();
     });
+  });
+
+  it("saves the session's own work as a routine, never posted", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save as routine" })
+    );
+    // Named after the session, as the post's save names it.
+    expect(screen.getByLabelText("Name")).toHaveValue("Push");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(
+        allPaths().filter((path) => path.startsWith("users/u1/savedRoutines/"))
+      ).toHaveLength(1)
+    );
+    const [path] = allPaths().filter((p) =>
+      p.startsWith("users/u1/savedRoutines/")
+    );
+    const routine = readDoc(path);
+    expect(routine).toMatchObject({
+      name: "Push",
+      sourceAuthorId: "u1",
+      sourceAuthorName: "Alex",
+    });
+    // Never posted: no post to point back to.
+    expect(routine).not.toHaveProperty("sourceActivityId");
+    // The work done, at the lifter's own loads; the warm-up is not work.
+    expect(routine?.exercises).toEqual([
+      expect.objectContaining({
+        name: "Barbell Bench Press",
+        exerciseId: "bench-press",
+        setCount: 2,
+        targetReps: 8,
+        targetWeightKg: 60,
+      }),
+    ]);
+  });
+
+  it("offers no routine for a session with no set done", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [{ ...SAVED.exercises[0], sets: [] }],
+      },
+    });
+    renderAt("w1");
+    expect(await screen.findByText("Barbell Bench Press")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Correct workout" })
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Save as routine" })
+    ).toBeNull();
+  });
+
+  it("shows the exercises done in a superset, and which one", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [
+          { ...SAVED.exercises[0], superset: 1 },
+          {
+            exerciseId: "cable-fly",
+            exerciseName: "Cable Fly",
+            category: "push",
+            caloriesBurned: 0,
+            superset: 1,
+            sets: [{ setNumber: 1, reps: 12, weightKg: 20 }],
+          },
+          {
+            exerciseId: "overhead-press",
+            exerciseName: "Overhead Press",
+            category: "push",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 8, weightKg: 35 }],
+          },
+        ],
+      },
+    });
+    renderAt("w1");
+    const card = async (name: RegExp) =>
+      within(await screen.findByRole("link", { name }));
+    expect(
+      (await card(/Barbell Bench Press/)).getByText("Superset A")
+    ).toBeTruthy();
+    expect((await card(/Cable Fly/)).getByText("Superset A")).toBeTruthy();
+    expect((await card(/Overhead Press/)).queryByText(/^Superset/)).toBeNull();
+  });
+
+  it("each exercise opens its own history", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    const link = await screen.findByRole("link", {
+      name: /Barbell Bench Press/,
+    });
+    expect(link).toHaveAttribute(
+      "href",
+      "/history/exercise/Barbell%20Bench%20Press"
+    );
+  });
+});
+
+describe("WorkoutDetail — the sets that were new bests", () => {
+  const bench = (date: string, sets: [number, number][]) => ({
+    ...SAVED,
+    date,
+    exercises: [
+      {
+        ...SAVED.exercises[0],
+        sets: sets.map(([weightKg, reps], i) => ({
+          setNumber: i + 1,
+          reps,
+          weightKg,
+          type: "working",
+        })),
+      },
+    ],
+  });
+
+  it("marks the set that beat the best before it, in gold, and says so", async () => {
+    seedFirestore({
+      "users/u1/workouts/a": bench("2026-07-20", [[60, 8]]),
+      "users/u1/workouts/b": bench("2026-07-24", [[60, 8]]),
+      "users/u1/workouts/c": bench("2026-07-28", [[60, 8]]),
+      "users/u1/workouts/w1": bench("2026-08-01", [
+        [60, 8],
+        [62.5, 8],
+      ]),
+      // A later, heavier session is not this one's to beat.
+      "users/u1/workouts/later": bench("2026-08-05", [[70, 8]]),
+    });
+    renderAt("w1");
+    await screen.findByText("Barbell Bench Press");
+    await waitFor(() => expect(screen.getAllByText("Best")).toHaveLength(1));
+    expect(screen.getByText("Set 2: 62.5 kg, 8 reps, a new best")).toBeTruthy();
+    expect(screen.getByText("Set 1: 60 kg, 8 reps")).toBeTruthy();
+  });
+
+  it("marks nothing for an exercise without three sessions behind it", async () => {
+    const fly = (weightKg: number) => ({
+      exerciseId: "cable-fly",
+      exerciseName: "Cable Fly",
+      category: "push",
+      caloriesBurned: 0,
+      sets: [{ setNumber: 1, reps: 12, weightKg, type: "working" }],
+    });
+    const withFly = (
+      date: string,
+      sets: [number, number][],
+      flyKg?: number
+    ) => {
+      const base = bench(date, sets);
+      return flyKg === undefined
+        ? base
+        : { ...base, exercises: [...base.exercises, fly(flyKg)] };
+    };
+    seedFirestore({
+      "users/u1/workouts/a": withFly("2026-07-20", [[60, 8]], 10),
+      "users/u1/workouts/b": bench("2026-07-24", [[60, 8]]),
+      "users/u1/workouts/c": bench("2026-07-28", [[60, 8]]),
+      "users/u1/workouts/w1": withFly("2026-08-01", [[62.5, 8]], 30),
+    });
+    renderAt("w1");
+    await screen.findByText("Cable Fly");
+    // The bench's best is marked, so the history has been read.
+    await waitFor(() =>
+      expect(
+        screen.getByText("Set 1: 62.5 kg, 8 reps, a new best")
+      ).toBeTruthy()
+    );
+    // The fly has one session behind it: far past it, still no best.
+    expect(screen.getByText("Set 1: 30 kg, 12 reps")).toBeTruthy();
+    expect(screen.getAllByText("Best")).toHaveLength(1);
   });
 });

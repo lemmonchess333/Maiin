@@ -1,0 +1,8 @@
+# Each line added to this file on main runs the "Backfill follow counts"
+# workflow (.github/workflows/backfill-follow-counts.yml) once, for every
+# account, as Actions → Run workflow does. Add a dated line saying why; the
+# workflow's run on that commit is its record. A count is stored only if it
+# was read after the one already there, so a second request is harmless.
+# Add the first line only after Deploy production has shipped
+# onFollowerEdgeWritten and onFollowingEdgeWritten.
+2026-11-10 first count of every account; merged after the release that shipped onFollowerEdgeWritten and onFollowingEdgeWritten

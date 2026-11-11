@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import PeriodSummaryCard, { type SummaryFigure } from "../PeriodSummaryCard";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { SummaryBin } from "@/lib/periodSummary";
 
 /**
@@ -109,8 +110,12 @@ describe("PeriodSummaryCard", () => {
 
   it("keeps the numeral face on the numbers, not on the words", () => {
     card();
-    expect(screen.getByText("52.8k").className).toContain("font-mono");
-    expect(screen.getByText("kg lifted").className).not.toContain("font-mono");
+    // The headline figure stands on its own at text-h2: the figure tier
+    // (Archivo). Its word is the text face, carrying neither number class.
+    expect(screen.getByText("52.8k").className).toContain("font-figure");
+    expect(screen.getByText("kg lifted").className).not.toMatch(
+      /font-(?:mono|figure)/
+    );
   });
 
   it("reads a rise in the status green and a drop in plain text", () => {
@@ -141,7 +146,7 @@ describe("PeriodSummaryCard", () => {
     expect(label).toContain("This week: 1 lift and 1 run, 5 planned");
   });
 
-  it("outlines the rest of this week's plan", () => {
+  it("outlines the rest of this week’s plan", () => {
     const { container } = card();
     expect(container.querySelectorAll("rect[stroke-dasharray]")).toHaveLength(
       1
@@ -389,4 +394,26 @@ describe("an account younger than the range", () => {
     expect(screen.queryByText(/Compared with/)).toBeNull();
     expect(screen.queryByText("↑", { exact: false })).toBeNull();
   });
+});
+
+it("announces the volume chart in pounds for a pounds preference", () => {
+  render(
+    <LiftUnitContext value="lbs">
+      <PeriodSummaryCard
+        title="Last 30 days"
+        comparedWith="the 30 days before"
+        figures={FIGURES.map((f) =>
+          f.metric === "volume" ? { ...f, unit: "lb lifted" } : f
+        )}
+        bins={WEEKS}
+        granularity="weekly"
+        plannedThisWeek={0}
+        distanceUnit="km"
+      />
+    </LiftUnitContext>
+  );
+  fireEvent.click(screen.getByRole("radio", { name: /lb lifted/ }));
+  const chart = screen.getByRole("img");
+  expect(chart.getAttribute("aria-label")).toMatch(/^Pounds lifted: /);
+  expect(chart.getAttribute("aria-label")).not.toContain("kg");
 });

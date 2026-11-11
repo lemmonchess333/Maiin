@@ -179,7 +179,7 @@ describe("FoodAnalyzer — scan outcome routing", () => {
     fireEvent.click(screen.getByText("stub-barcode"));
     await waitFor(() =>
       expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-        "You're offline — barcode lookup needs a connection.",
+        "You’re offline — barcode lookup needs a connection.",
         expect.anything()
       )
     );
@@ -355,7 +355,7 @@ describe("FoodAnalyzer — how a barcode lookup failed", () => {
     // The scanner tries it again, so the toast is one that updates in
     // place rather than a new one per try.
     expect(vi.mocked(toast.error)).toHaveBeenLastCalledWith(
-      "Couldn't reach the barcode database. Check your connection.",
+      "Couldn’t reach the barcode database. Check your connection.",
       expect.objectContaining({ id: expect.any(String) })
     );
     expect(

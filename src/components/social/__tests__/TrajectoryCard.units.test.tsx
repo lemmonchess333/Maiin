@@ -47,6 +47,14 @@ describe("TrajectoryCard's week", () => {
     expect(screen.queryByText(/pts/)).toBeNull();
   });
 
+  it("wraps the count's row, so at large text the change goes under it", () => {
+    renderIn("kg");
+    // A row that cannot wrap ran the +1 off a 320px screen at 200% text.
+    expect(screen.getByText("sessions").parentElement?.className).toContain(
+      "flex-wrap"
+    );
+  });
+
   it("one session is one session, and a level week says so", () => {
     renderIn("kg", {
       thisWeek: week(1, 0),

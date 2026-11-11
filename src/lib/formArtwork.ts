@@ -41,8 +41,8 @@ const approved = (
   status: "approved",
   width: release.width,
   height: release.height,
-  frames: formFramePaths(id),
-  reference: `form-frames/${id}/${release.reference}.webp`,
+  frames: release.frames ?? formFramePaths(id),
+  reference: (release.frames ?? formFramePaths(id))[release.reference - 1],
   reviewFile: `docs/exercise-art/releases/${release.folder}/${id}.json`,
 });
 
@@ -53,8 +53,23 @@ const approved = (
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
-export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> =
-  {};
+export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  // Redrawn at the owner's request on 2026-11-07 ("looks bad", "needs
+  // redoing"); the owner record supersedes the 2026-10-20 strict approval.
+  "straight-arm-pulldown": {
+    version: "anatomy-v3-2026-11-07-gemini-rear-three-quarter-v1",
+    status: "owner-released-with-findings",
+    width: 1000,
+    height: 1200,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/straight-arm-pulldown/2026-11-07/${i + 1}.webp`
+    ),
+    reference: "form-frames/straight-arm-pulldown/2026-11-07/1.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-11-07/straight-arm-pulldown.json",
+  },
+};
 
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
   ...HAND_LISTED_FORM_ARTWORK,

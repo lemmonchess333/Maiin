@@ -1,16 +1,15 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useMemo, useRef } from "react";
-import { UtensilsCrossed } from "lucide-react";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
-import EmptyState from "@/components/ui/EmptyState";
 import { MEAL_LABELS } from "./mealConstants";
 import { mealSlotFor, mealLoggedAt } from "@/lib/mealSlots";
-import { THEME } from "@/lib/theme";
+import { emptyDiaryLine, foodArtUrl } from "@/lib/foodArt";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
 import { formatTimeOfDay } from "@/utils/formatters";
+import { mealPortionCaption } from "@/lib/mealPortion";
 import {
   CALORIE_UNIT,
   formatCalories,
@@ -102,6 +101,9 @@ interface FoodTimelineProps {
   setOpenRowId: (id: string | null) => void;
   onDelete: (mealIds: string[], foodName: string) => void;
   onEdit: (group: { id: string; foodName: string; meals: Meal[] }) => void;
+  /** The day on screen is today: an empty diary says where today's meals
+   *  will show rather than that a past day had none. */
+  isToday?: boolean;
 }
 
 export default function FoodTimeline({
@@ -110,6 +112,7 @@ export default function FoodTimeline({
   setOpenRowId,
   onDelete,
   onEdit,
+  isToday = true,
 }: FoodTimelineProps) {
   // A serving step must copy/remove an equivalent recorded portion.
   // Include its contents in the stable key so adding/removing another
@@ -181,7 +184,6 @@ export default function FoodTimeline({
   const photoUrlOf = (group: (typeof entries)[number]) =>
     group.meals.map((meal) => localPhotoUrls[meal.id]).find(Boolean) ??
     group.meals.find((m) => m.photoUrl)?.photoUrl;
-  const dayHasPhotos = entries.some((group) => !!photoUrlOf(group));
 
   /* Same render-timing shape as the FoodMealSection probe it replaces —
      see that pattern's rationale in the Food6e lock. */
@@ -198,24 +200,35 @@ export default function FoodTimeline({
     }
   });
 
+  /* An empty day is a row, not the hexagon "nothing yet" block, which is
+     for no results and errors (DS4, DESIGN_GUIDE §0 rule 11): the plate a
+     meal without a name of its own is drawn with, greyed, and where the
+     day's meals will show. */
   if (entries.length === 0) {
     return (
-      <div className="bg-card rounded-xl card-shadow">
-        <EmptyState
-          compact
-          icon={UtensilsCrossed}
-          accent={THEME.semantic.nutrition}
-          headline="Nothing logged yet"
-          sub="Meals you log show here."
+      <div
+        data-food-diary-empty=""
+        className="flex items-center gap-3 rounded-xl bg-card p-3 card-shadow"
+      >
+        <img
+          src={foodArtUrl("plate")}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          draggable={false}
+          className="size-12 shrink-0 rounded-lg bg-muted object-contain p-0.5 opacity-60 grayscale"
         />
+        <p className="min-w-0 flex-1 text-sm text-muted-foreground">
+          {emptyDiaryLine(isToday)}
+        </p>
       </div>
     );
   }
 
   return (
-    <motion.div
-      layout
-      transition={{ duration: 0.22, ease: "easeOut" }}
+    /* No `layout` on the card: its rows fold their own height when one is
+       deleted, and the card's own tween stretched the rows inside it. */
+    <div
       className="bg-card rounded-xl overflow-hidden card-shadow"
       style={{ contain: "layout paint" }}
     >
@@ -258,6 +271,7 @@ export default function FoodTimeline({
                     .filter(Boolean)
                     .join(", ")
                 : undefined;
+            const portionCaption = mealPortionCaption(group.meals[0]);
             const rowGroup: FoodRowGroup = {
               id: group.id,
               foodName: group.foodName,
@@ -277,10 +291,20 @@ export default function FoodTimeline({
                 group={rowGroup}
                 accessibleFoodName={accessibleFoodName}
                 photoUrl={photoUrlOf(group)}
-                slot={group.slot}
-                thumbnailColumn={dayHasPhotos}
                 subLabel={
                   <>
+                    {/* The portion leads ("1.5 servings · Lunch · 13:17"):
+                        a wrong serving is spotted from the diary or not
+                        at all. Grouped rows share one portion, so the
+                        first meal's is every meal's. */}
+                    {portionCaption && (
+                      <>
+                        <span className="font-mono tabular-nums">
+                          {portionCaption}
+                        </span>
+                        {" · "}
+                      </>
+                    )}
                     {MEAL_LABELS[group.slot]}
                     {group.latestMs > 0 && (
                       <>
@@ -313,6 +337,6 @@ export default function FoodTimeline({
           })}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -21,7 +21,10 @@ vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), addBlocked: vi.fn() }),
 }));
 vi.mock("@/lib/socialApi", () => ({ blockUser: vi.fn() }));
-vi.mock("@/components/social/RouteScene", () => ({ default: () => null }));
+// The drawing left out; the numbers the card puts under it kept.
+vi.mock("@/components/social/RouteScene", () => ({
+  default: ({ footer }: { footer?: React.ReactNode }) => footer ?? null,
+}));
 vi.mock("@/components/social/MiniMuscleFigure", () => ({
   default: () => null,
   hasMuscleFigure: () => false,
@@ -56,7 +59,6 @@ function renderCard(post: SpacePostDoc) {
       spaceId="runners"
       postId="p1"
       post={post}
-      accent="#D4637A"
       onRemoved={() => {}}
     />
   );
@@ -96,7 +98,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 2 })}
-        accent="#D4637A"
         onRemoved={() => {}}
         onToggleLike={onToggleLike}
       />
@@ -112,7 +113,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 2 })}
-        accent="#D4637A"
         onRemoved={() => {}}
         liked
         likeDelta={1}
@@ -130,7 +130,6 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         spaceId="runners"
         postId="p1"
         post={makePost({ likeCount: 4 })}
-        accent="#D4637A"
         onRemoved={() => {}}
       />
     );

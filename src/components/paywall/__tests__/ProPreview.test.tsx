@@ -53,7 +53,12 @@ describe("ProPreview", () => {
     ).toBeNull();
   });
 
-  it("numerals in the frames take the numeral font with tabular figures", () => {
+  it("numerals in the frames take their number tier with tabular figures", () => {
+    /* Two tiers (DESIGN_GUIDE §4). Every number here carries one of the
+       two number classes with tabular figures; the headline figures —
+       the scan's 720 and the target's 2,336, each on its own at display
+       size — are the figure tier (Archivo), while the 95 in the "g
+       protein · g carbs" line and the diary row's 720 are inline. */
     const { container } = render(<ProPreview />);
     // The element whose OWN text is the number: a parent that only wraps
     // it (the calorie line wraps the number and its unit) is not it.
@@ -63,14 +68,22 @@ describe("ProPreview", () => {
         .map((c) => c.textContent ?? "")
         .join("")
         .trim();
-    for (const text of ["720", "2,336", "95"]) {
-      const el = Array.from(container.querySelectorAll("p, span")).find(
-        (n) => ownText(n) === text
-      );
-      expect(el, text).toBeDefined();
-      expect(el!.className).toContain("font-mono");
-      expect(el!.className).toContain("tabular-nums");
-    }
+    const tiers = (text: string) =>
+      Array.from(container.querySelectorAll("p, span"))
+        .filter((n) => ownText(n) === text)
+        .map((n) => {
+          expect(n.className, text).toContain("tabular-nums");
+          return /\bfont-figure\b/.test(n.className)
+            ? "figure"
+            : /\bfont-mono\b/.test(n.className)
+              ? "inline"
+              : "none";
+        });
+    expect(tiers("720")).toContain("figure");
+    expect(tiers("2,336")).toContain("figure");
+    expect(tiers("95")).toEqual(["inline"]);
+    for (const text of ["720", "2,336", "95"])
+      expect(tiers(text), text).not.toContain("none");
   });
 
   it("frame order follows the feature that brought the user, and never invents one", () => {

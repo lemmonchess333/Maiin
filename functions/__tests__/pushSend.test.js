@@ -159,12 +159,12 @@ import {
 } from "../lib/pushSend";
 
 describe("buildWeeklyRecapMessage", () => {
-  it("is DATA-ONLY with generic copy + home route, no week stats / digits (Q7)", () => {
+  it("is DATA-ONLY with generic copy + the review's route, no week stats / digits (Q7)", () => {
     const m = buildWeeklyRecapMessage();
     // Data-only (iOS PWA reliability): no top-level notification field.
     expect(m.notification).toBeUndefined();
     expect(m.data.type).toBe("recap");
-    expect(m.data.route).toBe("/");
+    expect(m.data.route).toBe("/review");
     expect(m.data.title).toBeTruthy();
     expect(m.data.body).toBeTruthy();
     // The "how the week went" detail lives in-app, never on the lock screen.

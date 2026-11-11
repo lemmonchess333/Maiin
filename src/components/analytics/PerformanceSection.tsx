@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { useEffect, useRef, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -46,7 +47,7 @@ export default function PerformanceSection({
 }: PerformanceSectionProps = {}) {
   /* usePerformanceWeeks here only gates loading / empty — PerformanceTab
      fetches its own 12-week window for the gauge, trend, and breakdown. */
-  const { currentWeek, loading } = usePerformanceWeeks(4);
+  const { currentWeek, loading, failed, refresh } = usePerformanceWeeks(4);
   const prefersReducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +96,22 @@ export default function PerformanceSection({
     );
   }
 
+  if (failed) {
+    return (
+      <section
+        id="analytics-performance"
+        ref={sectionRef}
+        aria-label="Performance Index"
+        className="space-y-2"
+      >
+        <SectionHeading className="text-lifting-strong">
+          Performance
+        </SectionHeading>
+        <PerformanceReadError onRetry={refresh} />
+      </section>
+    );
+  }
+
   /* No perf doc yet — designed hexagon empty state. Which sentence, and
      whether there is an action at all, depends on whether anything has been
      logged; performanceEmptyCopy owns that split for both surfaces. */
@@ -119,7 +136,11 @@ export default function PerformanceSection({
             sub={copy.sub}
             action={
               copy.showAction
-                ? { label: "Start a workout", href: "/program" }
+                ? {
+                    label: "Start a workout",
+                    href: "/program",
+                    variant: "neutral",
+                  }
                 : undefined
             }
           />

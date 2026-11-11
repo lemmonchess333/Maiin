@@ -14,14 +14,14 @@ import { APPROVED_FORM_ART_RELEASES } from "../formArtReleases.data";
 import { getFormPlayback } from "../formGuides";
 
 describe("the artwork registry", () => {
-  it("stops forward swimming and the ascent-only get-up while ordinary reps keep cycling", () => {
+  it("cycles the reviewed swimming rig while the ascent-only get-up stops", () => {
     expect(getFormPlayback("turkish-get-up")).toBe("sequence");
-    expect(getFormPlayback("swimming")).toBe("sequence");
+    expect(getFormPlayback("swimming")).toBe("cycle");
     expect(
       Object.keys(FORM_ARTWORK)
         .filter((id) => getFormPlayback(id) === "sequence")
         .sort()
-    ).toEqual(["swimming", "turkish-get-up"]);
+    ).toEqual(["turkish-get-up"]);
     expect(getFormPlayback("lu-raise")).toBe("cycle");
   });
   it("lists no set both by hand and from an approved record", () => {
@@ -34,8 +34,15 @@ describe("the artwork registry", () => {
     ).toEqual([]);
   });
 
-  it("has no owner-only sets left after the final two strict reviews", () => {
-    expect(HAND_LISTED_FORM_ARTWORK).toEqual({});
+  it("lists only the owner-released straight-arm pulldown redraw by hand", () => {
+    // The owner had the set redrawn on 2026-11-07; its owner record
+    // supersedes the 2026-10-20 strict approval until a strict review.
+    expect(Object.keys(HAND_LISTED_FORM_ARTWORK)).toEqual([
+      "straight-arm-pulldown",
+    ]);
+    expect(HAND_LISTED_FORM_ARTWORK["straight-arm-pulldown"].status).toBe(
+      "owner-released-with-findings"
+    );
   });
 
   it("builds every approved set from its record", () => {
@@ -50,8 +57,10 @@ describe("the artwork registry", () => {
         status: "approved",
         width: release.width,
         height: release.height,
-        frames: formFramePaths(id),
-        reference: `form-frames/${id}/${release.reference}.webp`,
+        frames: release.frames ?? formFramePaths(id),
+        reference: (release.frames ?? formFramePaths(id))[
+          release.reference - 1
+        ],
         reviewFile: `docs/exercise-art/releases/${release.folder}/${id}.json`,
       });
     }

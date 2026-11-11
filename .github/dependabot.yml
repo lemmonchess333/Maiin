@@ -5,6 +5,12 @@
 # auto-merge on Dependabot PRs that are minor + patch version bumps. Major
 # bumps still wait for human review because they can carry breaking
 # changes.
+#
+# Every merge to main deploys to production, and an auto-merged bump lands
+# as soon as the unit check passes. So each version update waits out a
+# 7-day cooldown after its release: a malicious release is usually found
+# and pulled within days, before Dependabot offers it. The cooldown applies
+# to version updates only; security updates still open at once.
 
 version: 2
 updates:
@@ -16,6 +22,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/London"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     versioning-strategy: "increase"
     labels:
@@ -79,6 +87,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/London"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 3
     versioning-strategy: "increase"
     labels:
@@ -93,6 +103,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/London"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 3
     labels:
       - "dependencies"

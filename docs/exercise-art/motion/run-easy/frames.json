@@ -1,0 +1,12 @@
+{
+  "src": "form-art/motion/run-easy.webp",
+  "still": "form-art/run-easy.webp",
+  "frames": 36,
+  "fps": 24,
+  "frameWidth": 269,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [26, 62],
+  "clipSha256": "af716fe6d9e403fbb3a57a1baa5a949bc53a8c2032289b116180031df6af6b15",
+  "sha256": "7861c73e3865785d1086bf0b597f7c3307f73ae00bf2ef3d5fb7a8c7a64388db"
+}

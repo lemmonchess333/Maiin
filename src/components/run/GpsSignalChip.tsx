@@ -25,11 +25,16 @@ export default function GpsSignalChip({
   isTracking,
   pointCount,
   signalQuality,
+  onPage = false,
 }: {
   accuracy: number | null;
   isTracking: boolean;
   pointCount: number;
   signalQuality: GPSSignalQuality;
+  /** On the run setup screen's page rather than the map: the page's own
+   *  muted fill, and words for a run not started yet ("GPS ready"). It
+   *  announces itself, since the signal arriving is news there. */
+  onPage?: boolean;
 }) {
   if (!isTracking) return null;
   const quality: GPSSignalQuality =
@@ -37,17 +42,25 @@ export default function GpsSignalChip({
   const { lit, colour } = gpsSignalBars(quality);
   const label =
     quality === "searching"
-      ? "Acquiring GPS"
+      ? onPage
+        ? "Finding GPS"
+        : "Acquiring GPS"
       : quality === "weak"
         ? "Weak GPS"
-        : "GPS";
+        : onPage
+          ? "GPS ready"
+          : "GPS";
   const metres =
     quality === "weak" && accuracy !== null ? Math.round(accuracy) : null;
 
   return (
     <div
-      className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
-      style={{ background: THEME.scrim }}
+      className={cn(
+        "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold",
+        onPage ? "bg-muted text-foreground" : "text-white backdrop-blur"
+      )}
+      style={onPage ? undefined : { background: THEME.scrim }}
+      role={onPage ? "status" : undefined}
       data-quality={quality}
     >
       <span
@@ -61,17 +74,30 @@ export default function GpsSignalChip({
           <span
             key={height}
             data-lit={i < lit}
-            className="w-[3px] rounded-full"
+            className={cn(
+              "w-[3px] rounded-full",
+              onPage && i >= lit && "bg-muted-foreground/40"
+            )}
             style={{
               height,
-              background: i < lit ? colour : "rgba(255,255,255,0.25)",
+              background:
+                i < lit
+                  ? colour
+                  : onPage
+                    ? undefined
+                    : "rgba(255,255,255,0.25)",
             }}
           />
         ))}
       </span>
       <span>{label}</span>
       {metres !== null && (
-        <span className="font-mono font-normal tabular-nums text-white/70">
+        <span
+          className={cn(
+            "font-mono font-normal tabular-nums",
+            onPage ? "text-muted-foreground" : "text-white/70"
+          )}
+        >
           {`±${metres} m`}
         </span>
       )}

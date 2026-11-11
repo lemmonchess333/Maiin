@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -126,7 +126,13 @@ export default function CalorieRing({
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
         // Never wider than its card: at larger text on the phone the
         // ring's rem size outgrew it.
-        compact ? "w-26 max-w-full shrink-0" : "w-40 max-w-full mx-auto"
+        /* The Food card's ring is 176 pt and its figure the screen's
+           largest text, about 1.4x the "Food" title (owner, 7 November
+           2026; DS4 §14m rule 2). A container, so the figure sizes from
+           the ring and never outgrows it at larger text. */
+        compact
+          ? "w-26 max-w-full shrink-0"
+          : "@container w-44 max-w-full mx-auto"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's
@@ -202,49 +208,45 @@ export default function CalorieRing({
         aria-hidden="true"
       >
         {hasTarget ? (
-          <AnimatePresence mode="wait" initial={drawIn}>
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2 }}
-              className="flex flex-col items-center"
-            >
-              {/* Zero is a real value, not a placeholder: full strength,
+          /* One figure for both modes: a tap counts it from the old value
+             to the new one, as the tiles do. Keyed by mode, it went blank
+             for 200 ms, then counted up from zero for 1.5 s. */
+          <div className="flex flex-col items-center">
+            {/* Zero is a real value, not a placeholder: full strength,
                   like any other number. */}
-              <p
-                className={cn(
-                  "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground",
-                  compact ? "text-2xl" : "text-4xl"
-                )}
-              >
-                <AnimatedNumber
-                  value={displayValue}
-                  duration={ringDurationSec}
-                  ease={RING_EASE}
-                  fromZero={drawIn}
-                />
-              </p>
-              {/* The label is the only mode indicator ("kcal left",
+            <p
+              className={cn(
+                "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
+                compact
+                  ? "text-2xl"
+                  : "text-[clamp(1.75rem,25cqw,var(--text-display))]"
+              )}
+            >
+              <AnimatedNumber
+                value={displayValue}
+                duration={ringDurationSec}
+                ease={RING_EASE}
+                fromZero={drawIn}
+              />
+            </p>
+            {/* The label is the only mode indicator ("kcal left",
                   "kcal logged", "kcal over"), in the tiles' register:
                   plain text. The whole ring is the tap target, and the
                   tiles switch the same way. */}
-              <p
-                className={cn(
-                  "text-xs font-medium text-muted-foreground",
-                  compact ? "mt-1" : "mt-1.5"
-                )}
-              >
-                {CALORIE_UNIT} {labelMode}
-              </p>
-              {trajectoryLabel && (
-                <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
-                  {trajectoryLabel}
-                </p>
+            <p
+              className={cn(
+                "text-xs font-medium text-muted-foreground",
+                compact ? "mt-1" : "mt-1.5"
               )}
-            </motion.div>
-          </AnimatePresence>
+            >
+              {CALORIE_UNIT} {labelMode}
+            </p>
+            {trajectoryLabel && (
+              <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
+                {trajectoryLabel}
+              </p>
+            )}
+          </div>
         ) : (
           <span
             className={cn(

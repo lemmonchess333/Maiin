@@ -96,17 +96,17 @@ describe("RunControlButton — variants", () => {
 describe("RunControlButton — visible label (decorative)", () => {
   it("renders the visible label below the button when provided", () => {
     render(
-      <RunControlButton aria-label="Pause run" label="PAUSE" icon={<svg />} />
+      <RunControlButton aria-label="Pause run" label="Pause" icon={<svg />} />
     );
-    expect(screen.getByText("PAUSE")).toBeTruthy();
+    expect(screen.getByText("Pause")).toBeTruthy();
   });
 
   it("the visible label is aria-hidden (decorative — accessible name is aria-label)", () => {
     render(
-      <RunControlButton aria-label="Pause run" label="PAUSE" icon={<svg />} />
+      <RunControlButton aria-label="Pause run" label="Pause" icon={<svg />} />
     );
     // The label <p> is aria-hidden so screen readers ignore it.
-    const label = screen.getByText("PAUSE");
+    const label = screen.getByText("Pause");
     expect(label.getAttribute("aria-hidden")).toBe("true");
   });
 

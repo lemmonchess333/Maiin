@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "elliptical.png",
+  "imageSha256": "694f6a404bba842c5e84d231b0fdefe96c7028d32d670982d239831ed889e093",
+  "reference": "form-frames/elliptical/2026-10-28/4.webp",
+  "referenceSha256": "d614ee076f2042399637038ed264ad06acf1aa9125167e0109f86a29c0a81cce",
+  "method": "Native transparent Blender render from reviewed elliptical frame 4; the six full-stage frames and fixed camera remain unchanged. Alpha preserves the athlete, apparatus and fine edges without dark-background keying.",
+  "reviewEvidence": "docs/exercise-art/pilots/redraw-20261028/elliptical/4.png"
+}

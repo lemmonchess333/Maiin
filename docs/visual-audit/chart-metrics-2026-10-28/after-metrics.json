@@ -1,0 +1,691 @@
+{
+  "kg": {
+    "errors": [],
+    "charts": {
+      "1RM-dark": {
+        "label": "Progression chart, Estimated one-rep max. 3 sessions from 25 Oct to 27 Oct. Latest value: 124 kg. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 262.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "true",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n124 kgPR"
+      },
+      "1RM-light": {
+        "label": "Progression chart, Estimated one-rep max. 3 sessions from 25 Oct to 27 Oct. Latest value: 124 kg. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 330.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "true",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n124 kgPR"
+      },
+      "Max Weight-dark": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 262.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n82.5 kg"
+      },
+      "Max Weight-light": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 229.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n82.5 kg"
+      },
+      "Volume-dark": {
+        "label": "Progression chart, Volume. 3 sessions from 25 Oct to 27 Oct. Latest value: 1,237.5 kg. 3 personal records.",
+        "prDots": 3,
+        "card": {
+          "x": 16,
+          "y": 262.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "true",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n1,237.5 kgPR"
+      },
+      "Volume-light": {
+        "label": "Progression chart, Volume. 3 sessions from 25 Oct to 27 Oct. Latest value: 1,237.5 kg. 3 personal records.",
+        "prDots": 3,
+        "card": {
+          "x": 16,
+          "y": 338.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "true",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n1,237.5 kgPR"
+      },
+      "small-dark": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 292.1875,
+          "width": 288,
+          "height": 292
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ]
+      },
+      "small-light": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 292.1875,
+          "width": 288,
+          "height": 292
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ]
+      },
+      "large-text-dark": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": -10.21875,
+          "width": 361,
+          "height": 644
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 289,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 289,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 289,
+            "height": 44
+          }
+        ]
+      },
+      "large-text-light": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 82.5 kg. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": -10.21875,
+          "width": 361,
+          "height": 644
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 289,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 289,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 289,
+            "height": 44
+          }
+        ]
+      },
+      "Push-Ups": {
+        "label": "Progression chart, Total reps. 3 sessions from 25 Oct to 27 Oct. Latest value: 12 reps. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 453.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Reps",
+            "role": "radio",
+            "checked": "true",
+            "width": 45.03125,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ]
+      },
+      "Plank": {
+        "label": "Progression chart, Longest hold. 3 sessions from 25 Oct to 27 Oct. Latest value: 45 seconds. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 310,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Seconds",
+            "role": "radio",
+            "checked": "true",
+            "width": 67.453125,
+            "height": 44
+          }
+        ]
+      }
+    },
+    "keyboard": {
+      "selected": "true",
+      "focus": "Volume"
+    },
+    "allWeight": {
+      "label": "Progression chart, Max weight. 4 sessions from 30 Jun to 27 Oct. Latest value: 82.5 kg. 1 personal record.",
+      "prDots": 1,
+      "card": {
+        "x": 16,
+        "y": 453.1875,
+        "width": 361,
+        "height": 268
+      },
+      "pageOverflow": false,
+      "controls": [
+        {
+          "name": "Est. 1RM",
+          "role": "radio",
+          "checked": "false",
+          "width": 63.53125,
+          "height": 44
+        },
+        {
+          "name": "Max Weight",
+          "role": "radio",
+          "checked": "true",
+          "width": 83.671875,
+          "height": 44
+        },
+        {
+          "name": "Volume",
+          "role": "radio",
+          "checked": "false",
+          "width": 59.78125,
+          "height": 44
+        }
+      ]
+    }
+  },
+  "lbs": {
+    "errors": [],
+    "charts": {
+      "1RM-dark": {
+        "label": "Progression chart, Estimated one-rep max. 3 sessions from 25 Oct to 27 Oct. Latest value: 273 lb. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 262.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "true",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n273 lbPR"
+      },
+      "1RM-light": {
+        "label": "Progression chart, Estimated one-rep max. 3 sessions from 25 Oct to 27 Oct. Latest value: 273 lb. 2 personal records.",
+        "prDots": 2,
+        "card": {
+          "x": 16,
+          "y": 296.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "true",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n273 lbPR"
+      },
+      "Max Weight-dark": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 181.9 lb. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 216.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n181.9 lb"
+      },
+      "Max Weight-light": {
+        "label": "Progression chart, Max weight. 3 sessions from 25 Oct to 27 Oct. Latest value: 181.9 lb. 0 personal records.",
+        "prDots": 0,
+        "card": {
+          "x": 16,
+          "y": 216.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "true",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "false",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n181.9 lb"
+      },
+      "Volume-dark": {
+        "label": "Progression chart, Volume. 3 sessions from 25 Oct to 27 Oct. Latest value: 2,728.22 lb. 3 personal records.",
+        "prDots": 3,
+        "card": {
+          "x": 16,
+          "y": 262.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "true",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n2,728.22 lbPR"
+      },
+      "Volume-light": {
+        "label": "Progression chart, Volume. 3 sessions from 25 Oct to 27 Oct. Latest value: 2,728.22 lb. 3 personal records.",
+        "prDots": 3,
+        "card": {
+          "x": 16,
+          "y": 339.1875,
+          "width": 361,
+          "height": 268
+        },
+        "pageOverflow": false,
+        "controls": [
+          {
+            "name": "Est. 1RM",
+            "role": "radio",
+            "checked": "false",
+            "width": 63.53125,
+            "height": 44
+          },
+          {
+            "name": "Max Weight",
+            "role": "radio",
+            "checked": "false",
+            "width": 83.671875,
+            "height": 44
+          },
+          {
+            "name": "Volume",
+            "role": "radio",
+            "checked": "true",
+            "width": 59.78125,
+            "height": 44
+          }
+        ],
+        "tooltip": "27 Oct 2026\n2,728.22 lbPR"
+      }
+    },
+    "keyboard": {
+      "selected": "true",
+      "focus": "Volume"
+    },
+    "allWeight": {
+      "label": "Progression chart, Max weight. 4 sessions from 30 Jun to 27 Oct. Latest value: 181.9 lb. 1 personal record.",
+      "prDots": 1,
+      "card": {
+        "x": 16,
+        "y": 453.1875,
+        "width": 361,
+        "height": 268
+      },
+      "pageOverflow": false,
+      "controls": [
+        {
+          "name": "Est. 1RM",
+          "role": "radio",
+          "checked": "false",
+          "width": 63.53125,
+          "height": 44
+        },
+        {
+          "name": "Max Weight",
+          "role": "radio",
+          "checked": "true",
+          "width": 83.671875,
+          "height": 44
+        },
+        {
+          "name": "Volume",
+          "role": "radio",
+          "checked": "false",
+          "width": 59.78125,
+          "height": 44
+        }
+      ]
+    }
+  }
+}

@@ -26,11 +26,7 @@ import type { LoadBand, PerformanceSignals } from "./performanceTypes";
 
 /** Verb-state — categorical state the card communicates. */
 export type VerbState =
-  | "recovering"
-  | "building"
-  | "cruising"
-  | "sharpening"
-  | "backing-off";
+  "recovering" | "building" | "cruising" | "sharpening" | "backing-off";
 
 /** Human-facing verb strings (English; i18n later). */
 export const VERB_LABEL: Record<VerbState, string> = {
@@ -149,7 +145,7 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
     case "recovering":
       // Recently active recovery vs lapsed/sick gap
       if (signals.daysSinceLastTraining > 7)
-        return "Quiet week. Log when you're back";
+        return "Quiet week. Log when you’re back";
       return "Light week. Take it easy";
   }
 }

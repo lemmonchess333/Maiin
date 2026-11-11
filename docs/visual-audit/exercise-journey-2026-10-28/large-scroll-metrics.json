@@ -1,0 +1,49 @@
+{
+  "scroller": {
+    "scrollTop": 750,
+    "maxScroll": 1162,
+    "clientHeight": 518
+  },
+  "initial": {
+    "cue": {
+      "top": 700.40625,
+      "bottom": 791.40625
+    },
+    "disclosure": {
+      "top": 1249.796875,
+      "bottom": 1305.796875
+    },
+    "cta": {
+      "top": 711.625,
+      "bottom": 755.625
+    }
+  },
+  "afterCue": {
+    "cue": {
+      "top": 430.40625,
+      "bottom": 521.40625
+    },
+    "disclosure": {
+      "top": 979.796875,
+      "bottom": 1035.796875
+    },
+    "cta": {
+      "top": 711.625,
+      "bottom": 755.625
+    }
+  },
+  "afterDisclosure": {
+    "cue": {
+      "top": -49.59375,
+      "bottom": 41.40625
+    },
+    "disclosure": {
+      "top": 499.796875,
+      "bottom": 555.796875
+    },
+    "cta": {
+      "top": 711.625,
+      "bottom": 755.625
+    }
+  }
+}

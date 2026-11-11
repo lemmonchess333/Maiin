@@ -8,7 +8,7 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/accountSecurity", () => ({
   sendVerificationEmail: h.send,
-  resendVerificationErrorMessage: () => "Couldn't send the email. Try again.",
+  resendVerificationErrorMessage: () => "Couldn’t send the email. Try again.",
   changePassword: vi.fn(),
   requestEmailChange: vi.fn(),
 }));
@@ -46,7 +46,7 @@ describe("account verification", () => {
   it("refreshes the security token before displaying Verified", async () => {
     const user = makeUser();
     render(<SecuritySection inline user={user} />);
-    fireEvent.click(screen.getByRole("button", { name: "I've verified" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified" }));
     await screen.findByText("Verified", { exact: true });
     expect(user.getIdToken).toHaveBeenCalledWith(true);
     expect(h.success).toHaveBeenCalledWith("Email verified");
@@ -57,16 +57,16 @@ describe("account verification", () => {
     const user = makeUser();
     user.getIdToken.mockRejectedValueOnce(new Error("offline"));
     render(<SecuritySection inline user={user} />);
-    fireEvent.click(screen.getByRole("button", { name: "I've verified" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve verified" }));
     await waitFor(() =>
       expect(h.error).toHaveBeenCalledWith(
-        expect.stringContaining("Couldn't check verification")
+        expect.stringContaining("Couldn’t check verification")
       )
     );
     expect(
       screen.queryByText("Verified", { exact: true })
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "I've verified" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "I’ve verified" })).toBeEnabled();
     expect(h.success).not.toHaveBeenCalled();
   });
 });

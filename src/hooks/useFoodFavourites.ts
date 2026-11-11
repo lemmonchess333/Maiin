@@ -30,6 +30,10 @@ export interface FoodFavourite {
   useCount: number;
   timeOfDay: "morning" | "midday" | "evening" | "any";
   source: "manual" | "photo" | "barcode" | "search" | "nl";
+  /** The product's barcode, for a product typed in after a scan found
+   *  nothing (F2d). The scanner looks here before Open Food Facts, so the
+   *  next scan of the same pack finds it. */
+  barcode?: string;
 }
 
 /** Pantry collection ceiling. Once the user has accumulated >50
@@ -112,14 +116,25 @@ function parseFavouriteDoc(
     useCount: safeNum(raw.useCount),
     timeOfDay,
     source,
+    ...(typeof raw.barcode === "string" && raw.barcode
+      ? { barcode: raw.barcode }
+      : {}),
   };
 }
+
+const NO_FAVOURITES: FoodFavourite[] = [];
 
 export function useFoodFavourites() {
   const uid = useUid();
   const { isOnline } = useOnlineStatus();
-  const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<{
+    uid: string;
+    favourites: FoodFavourite[];
+  } | null>(null);
+  // A previous account's pantry must never drive quick-add or eviction.
+  const ownsSnapshot = !!uid && snapshot?.uid === uid;
+  const favourites = ownsSnapshot ? snapshot.favourites : NO_FAVOURITES;
+  const loading = !!uid && !ownsSnapshot;
   /** Re-entrancy guard for eviction. The snapshot can re-fire while
    *  a deleteDoc is in flight — without the guard, the effect would
    *  pick the same target (still present in the cached snapshot) and
@@ -137,14 +152,10 @@ export function useFoodFavourites() {
   const initialSnapshotSeenRef = useRef(false);
 
   useEffect(() => {
-    if (!uid) {
-      const reset = () => {
-        setFavourites([]);
-        setLoading(false);
-      };
-      reset();
-      return;
-    }
+    initialSnapshotSeenRef.current = false;
+    previousByIdRef.current = new Map();
+    if (!uid) return;
+    let active = true;
 
     const ref = collection(db, "users", uid, "foodFavourites");
     // Firestore order by useCount desc — coarse sort, cheap, single
@@ -156,6 +167,7 @@ export function useFoodFavourites() {
     const unsub = onSnapshot(
       q,
       (snap) => {
+        if (!active) return;
         const parsed = snap.docs.map((d) =>
           parseFavouriteDoc(d.id, d.data() as Record<string, unknown>)
         );
@@ -199,8 +211,7 @@ export function useFoodFavourites() {
         }
         previousByIdRef.current = new Map(parsed.map((f) => [f.id, f]));
 
-        setFavourites(parsed);
-        setLoading(false);
+        setSnapshot({ uid, favourites: parsed });
       },
       // Favourites are a "nice to have" quick-log surface — if the
       // subscription fails, drop loading so the UI doesn't hang and leave
@@ -208,12 +219,19 @@ export function useFoodFavourites() {
       // / removeFavourite will either succeed against the server or
       // surface their own errors to the caller.
       (err) => {
+        if (!active) return;
         logger.error("[useFoodFavourites] snapshot subscription failed", err);
-        setLoading(false);
+        setSnapshot((previous) => ({
+          uid,
+          favourites: previous?.uid === uid ? previous.favourites : [],
+        }));
       }
     );
 
-    return unsub;
+    return () => {
+      active = false;
+      unsub();
+    };
   }, [uid]);
 
   /** Snapshot-driven eviction. Runs when the favourites snapshot
@@ -311,6 +329,9 @@ export function useFoodFavourites() {
       sodium?: number;
       servingSize?: string;
       source?: FoodFavourite["source"];
+      /** Written only when given, so a later log of the same food from
+       *  another path never clears it. */
+      barcode?: string;
     }) => {
       if (!uid) return { isNew: false, count: 0 };
 
@@ -353,6 +374,7 @@ export function useFoodFavourites() {
         useCount: ReturnType<typeof increment>;
         timeOfDay?: FoodFavourite["timeOfDay"];
         source?: FoodFavourite["source"];
+        barcode?: string;
       };
       const payload: FavouritePayload = {
         name: meal.name.trim(),
@@ -366,6 +388,7 @@ export function useFoodFavourites() {
         servingSize: meal.servingSize || "1 serving",
         lastUsed: Timestamp.now(),
         useCount: increment(1),
+        ...(meal.barcode ? { barcode: meal.barcode } : {}),
       };
 
       // Set timeOfDay + source ONLY on first write. merge:true would
@@ -444,6 +467,7 @@ export function useFoodFavourites() {
             useCount: favourite.useCount,
             timeOfDay: favourite.timeOfDay,
             source: favourite.source,
+            ...(favourite.barcode ? { barcode: favourite.barcode } : {}),
           },
           { merge: false }
         );
@@ -456,6 +480,80 @@ export function useFoodFavourites() {
     [uid]
   );
 
+  /** My pantry's edit: a saved food's name, serving and figures, as the
+   *  person corrects them. Its use count, time of day, source and barcode
+   *  are kept. A food is filed under its name (`makeKey`), so a new name
+   *  moves it to the new name's place, and a name another saved food
+   *  already has is refused rather than merged into it. */
+  const updateFavourite = useCallback(
+    async (
+      favourite: FoodFavourite,
+      changes: Pick<
+        FoodFavourite,
+        "name" | "servingSize" | "calories" | "protein" | "carbs" | "fat"
+      >
+    ): Promise<"saved" | "taken" | "failed"> => {
+      if (!uid) return "failed";
+      const name = changes.name.trim();
+      const key = makeKey(name);
+      if (!key) return "failed";
+      /* Moved only when the name itself changes: a food saved under an
+         older id scheme keeps its id while its figures are corrected. */
+      const renamed = key !== makeKey(favourite.name) && key !== favourite.id;
+      if (
+        renamed &&
+        favourites.some(
+          (f) =>
+            f.id !== favourite.id && (f.id === key || makeKey(f.name) === key)
+        )
+      )
+        return "taken";
+      const next = {
+        name,
+        servingSize: changes.servingSize.trim() || "1 serving",
+        calories: safeNum(changes.calories),
+        protein: safeNum(changes.protein),
+        carbs: safeNum(changes.carbs),
+        fat: safeNum(changes.fat),
+      };
+      try {
+        if (!renamed) {
+          await setDocGuarded(
+            doc(db, "users", uid, "foodFavourites", favourite.id),
+            next,
+            { merge: true }
+          );
+          return "saved";
+        }
+        /* The new place first, the old one after: a failure between the
+           two leaves the food under both names, never under neither. */
+        await setDocGuarded(
+          doc(db, "users", uid, "foodFavourites", key),
+          {
+            ...next,
+            fiber: favourite.fiber ?? null,
+            sugar: favourite.sugar ?? null,
+            sodium: favourite.sodium ?? null,
+            lastUsed: favourite.lastUsed,
+            useCount: favourite.useCount,
+            timeOfDay: favourite.timeOfDay,
+            source: favourite.source,
+            ...(favourite.barcode ? { barcode: favourite.barcode } : {}),
+          },
+          { merge: false }
+        );
+        await deleteDocGuarded(
+          doc(db, "users", uid, "foodFavourites", favourite.id)
+        );
+        return "saved";
+      } catch (err) {
+        logger.error("[useFoodFavourites] updateFavourite failed", err);
+        return "failed";
+      }
+    },
+    [uid, favourites]
+  );
+
   return {
     favourites,
     loading,
@@ -463,5 +561,6 @@ export function useFoodFavourites() {
     addFavourite,
     removeFavourite,
     restoreFavourite,
+    updateFavourite,
   };
 }

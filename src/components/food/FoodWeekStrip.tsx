@@ -110,7 +110,7 @@ export default function FoodWeekStrip({
                 color={THEME.semantic.nutrition}
                 trackColor={drawn ? undefined : "transparent"}
               >
-                {/* Day numbers are numeric displays: Archivo, tabular. */}
+                {/* Day numbers: the inline number tier, tabular. */}
                 <span
                   className={cn(
                     "text-sm font-semibold font-mono tabular-nums",

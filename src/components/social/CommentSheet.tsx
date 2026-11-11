@@ -1,52 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { IconButton } from "@/components/ui/IconButton";
-import { motion, AnimatePresence } from "framer-motion";
-import { MoreHorizontal, Trash2 } from "lucide-react";
-import { useAuth } from "../../lib/auth";
-import {
-  getComments,
-  addComment,
-  deleteComment,
-  toggleCommentReaction,
-  isPermissionDenied,
-  type CommentReaction,
-} from "../../lib/socialApi";
-import { OBJECTIONABLE_COMMENT_MESSAGE } from "@/lib/objectionableMessages";
-import { loadWordFilter } from "@/lib/wordFilter";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { commentReportTargetId } from "@/lib/reportTargetIds";
-import { getTimeAgo } from "../../lib/timeAgo";
-import { haptic } from "../../lib/haptic";
-import type { DocumentSnapshot } from "firebase/firestore";
-import BlockAwareAvatar from "./BlockAwareAvatar";
-import CommentPanels, { type CommentPanel } from "./CommentPanels";
+import { useActivityComments } from "@/hooks/useActivityComments";
+import CommentPanels from "./CommentPanels";
 import CommentSheetFrame from "./CommentSheetFrame";
-import { toast } from "@/lib/toast";
-import { logger } from "../../lib/logger";
-import { describeRejection } from "@/lib/callableErrors";
-import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
-import { useBlockedUsers } from "@/hooks/useBlockedUsers";
-import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import {
-  isRestrictedRefusal,
-  showRestrictedToast,
-} from "@/lib/accountRestriction";
-
-interface Comment {
-  id: string;
-  authorId?: string;
-  authorName?: string;
-  authorPhotoURL?: string;
-  text?: string;
-  createdAt?: { toDate?: () => Date };
-  /** One-tap reactions — uid arrays per key (server-written). */
-  reactions?: Partial<Record<CommentReaction, string[]>>;
-}
-
-const REACTION_EMOJI: Record<CommentReaction, string> = {
-  muscle: "💪",
-  fire: "🔥",
-};
-const REACTION_KEYS = Object.keys(REACTION_EMOJI) as CommentReaction[];
+import ActivityCommentRows from "./ActivityCommentRows";
 
 interface CommentSheetProps {
   activityId: string;
@@ -60,6 +17,11 @@ interface CommentSheetProps {
   onCountChange?: (delta: number) => void;
 }
 
+/**
+ * A post's comments in a sheet, opened from its card in the feed. The
+ * post's own page shows the same thread on the page instead
+ * (ActivityPostComments); both run on useActivityComments.
+ */
 export default function CommentSheet({
   activityId,
   activityAuthorId,
@@ -69,72 +31,22 @@ export default function CommentSheet({
   quickChips,
   onCountChange,
 }: CommentSheetProps) {
-  const { user, profile } = useAuth();
-  const gate = useEmailVerificationGate(user);
-  const { blocked } = useBlockedUsers();
-  // A restricted account can read the thread but not add to it (S4e).
-  const { isRestricted } = useRestrictedStatus(user?.uid);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  /* One comment being acted on (options, report, block, delete) shows in
-     place of the list; null is the list. A closed sheet reopens on the
-     list. */
-  const [panel, setPanel] = useState<CommentPanel | null>(null);
+  const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const thread = useActivityComments({
+    activityId,
+    activityAuthorId,
+    active: open,
+    onCountChange,
+    onUnavailable: close,
+  });
+  const { setPanel } = thread;
+  // A closed sheet reopens on the list.
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
     if (!open) setPanel(null);
   }
-  const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
-  /* Which read the list answers. Until the current one settles an empty
-     list means "not loaded yet", not "no comments": the sheet said "No
-     comments yet" under "Comments (3)" while it loaded, and kept saying
-     it when the read failed. */
-  const [attempt, setAttempt] = useState(0);
-  const loadKey = `${activityId}#${attempt}`;
-  const [settled, setSettled] = useState<{ key: string; failed: boolean }>();
-  const loading = settled?.key !== loadKey;
-  const failed = !loading && settled.failed;
-
-  // The word filter loads with the sheet, so Send rarely waits for it.
-  useEffect(() => {
-    if (open) void loadWordFilter().catch(() => {});
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    getComments(activityId)
-      .then((result) => {
-        if (cancelled) return;
-        setComments(result.comments as Comment[]);
-        lastDocRef.current = result.lastDoc;
-        setHasMore(result.hasMore);
-        setSettled({ key: loadKey, failed: false });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        // Packet 13 — the activity became inaccessible after the sheet opened.
-        // Clear the stale comments, close the sheet, and show a neutral notice
-        // rather than leave now-private text on screen.
-        if (isPermissionDenied(err)) {
-          setComments([]);
-          setHasMore(false);
-          onOpenChange(false);
-          toast.error("This activity is unavailable.");
-        } else {
-          logger.error("[CommentSheet] load failed", err);
-        }
-        setSettled({ key: loadKey, failed: true });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [activityId, open, onOpenChange, loadKey]);
 
   // Focus input when sheet opens
   useEffect(() => {
@@ -143,312 +55,29 @@ export default function CommentSheet({
     return () => clearTimeout(id);
   }, [open]);
 
-  const handleLoadMore = async () => {
-    if (!lastDocRef.current) return;
-    try {
-      const result = await getComments(activityId, 20, lastDocRef.current);
-      setComments((prev) => [...prev, ...(result.comments as Comment[])]);
-      lastDocRef.current = result.lastDoc;
-      setHasMore(result.hasMore);
-    } catch (err) {
-      if (isPermissionDenied(err)) {
-        setComments([]);
-        setHasMore(false);
-        onOpenChange(false);
-        toast.error("This activity is unavailable.");
-      } else {
-        logger.error("[CommentSheet] load more failed", err);
-      }
-    }
-  };
-
-  const handleSend = async () => {
-    // Comments are public content: the callable refuses an unverified
-    // email. Held here too so Enter cannot bypass the disabled button.
-    if (!user || !text.trim() || gate.needsVerification || isRestricted) return;
-    // Client-side profanity check — UX-only; the server is the
-    // trust boundary (addCommentCallable refuses the same text with
-    // the same sentence, and the onCommentCreated trigger deletes
-    // anything that got past it). Catching it here saves a round-trip.
-    setSending(true);
-    const filter = await loadWordFilter().catch(() => null);
-    if (!filter || filter.containsProfanity(text)) {
-      setSending(false);
-      toast.error(
-        filter
-          ? OBJECTIONABLE_COMMENT_MESSAGE
-          : "Couldn't post comment. Try again."
-      );
-      haptic("error");
-      return;
-    }
-    haptic("light");
-    try {
-      await addComment(
-        activityId,
-        user.uid,
-        profile?.displayName || "User",
-        text.trim(),
-        activityAuthorId,
-        profile?.photoURL || undefined
-      );
-      setText("");
-      onCountChange?.(1);
-      const result = await getComments(activityId);
-      setComments(result.comments as Comment[]);
-      lastDocRef.current = result.lastDoc;
-      setHasMore(result.hasMore);
-    } catch (err) {
-      logger.error("[CommentSheet] send failed", err);
-      if (isRestrictedRefusal(err)) {
-        showRestrictedToast();
-      } else {
-        const reason = describeRejection(err);
-        toast.error(
-          reason
-            ? `Couldn't post comment. ${reason}`
-            : "Couldn't post comment. Try again."
-        );
-      }
-      haptic("error");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleDelete = async (commentId: string) => {
-    setDeletingId(commentId);
-    try {
-      await deleteComment(activityId, commentId);
-      onCountChange?.(-1);
-      haptic("light");
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (err) {
-      // The callable's failed-precondition sentence is the diagnosis; a
-      // swallowed error leaves the row in place with no explanation.
-      logger.error("[CommentSheet] delete failed", err);
-      const reason = describeRejection(err);
-      toast.error(
-        reason
-          ? `Couldn't delete comment. ${reason}`
-          : "Couldn't delete comment. Try again."
-      );
-      haptic("error");
-    }
-    setDeletingId(null);
-  };
-
-  // Optimistic reaction toggle — flip locally, reconcile via the callable,
-  // revert on failure (same optimistic pattern as the feed's kudos flame).
-  const applyReaction = (
-    prev: Comment[],
-    commentId: string,
-    reaction: CommentReaction,
-    uid: string
-  ): Comment[] =>
-    prev.map((c) => {
-      if (c.id !== commentId) return c;
-      const current = c.reactions?.[reaction] ?? [];
-      const next = current.includes(uid)
-        ? current.filter((u) => u !== uid)
-        : [...current, uid];
-      return { ...c, reactions: { ...c.reactions, [reaction]: next } };
-    });
-
-  const handleReact = async (commentId: string, reaction: CommentReaction) => {
-    if (!user) return;
-    // A restricted account can take a reaction back, not add one (S4e).
-    const adding = !(
-      comments.find((c) => c.id === commentId)?.reactions?.[reaction] ?? []
-    ).includes(user.uid);
-    if (adding && isRestricted) {
-      haptic("error");
-      showRestrictedToast();
-      return;
-    }
-    haptic("light");
-    setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
-    try {
-      await toggleCommentReaction(activityId, commentId, reaction);
-    } catch (err) {
-      // Revert the optimistic flip (toggle is symmetric).
-      setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
-      haptic("error");
-      if (isRestrictedRefusal(err)) showRestrictedToast();
-      // The haptic alone says nothing on the web.
-      else toast.error("Couldn't update your reaction. Try again.");
-    }
-  };
-
-  /* Comments by someone you blocked, or who blocked you, drop out of the
-     list, as their posts drop out of the feed (S4a: a block takes effect
-     on the next render). Your own are never in the blocked set. */
-  const visibleComments = comments.filter(
-    (c) => !c.authorId || !blocked.has(c.authorId)
-  );
-
   return (
     <CommentSheetFrame
       open={open}
       onOpenChange={onOpenChange}
       commentCount={commentCount}
       panel={
-        panel && (
+        thread.panel && (
           <CommentPanels
-            panel={panel}
+            panel={thread.panel}
             onChange={setPanel}
             reportTarget={(comment) => ({
               targetType: "comment",
               targetId: commentReportTargetId(activityId, comment.id),
             })}
-            onDelete={(comment) => void handleDelete(comment.id)}
+            onDelete={(comment) => void thread.remove(comment.id)}
           />
         )
       }
-      status={
-        visibleComments.length > 0
-          ? null
-          : loading
-            ? "loading"
-            : failed
-              ? "failed"
-              : "empty"
-      }
-      onRetry={() => setAttempt((n) => n + 1)}
-      composer={{
-        text,
-        onTextChange: setText,
-        onSend: handleSend,
-        sending,
-        needsVerification: gate.needsVerification,
-        onRecheck: gate.recheck,
-        isRestricted,
-        quickChips,
-        inputRef,
-      }}
+      status={thread.status}
+      onRetry={thread.retry}
+      composer={{ ...thread.composer, quickChips, inputRef }}
     >
-      <AnimatePresence>
-        {visibleComments.map((c) => {
-          const timeAgo = c.createdAt?.toDate
-            ? getTimeAgo(c.createdAt.toDate())
-            : "";
-          const isOwn = user?.uid === c.authorId;
-
-          return (
-            <motion.div
-              key={c.id}
-              layout
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -100, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="flex gap-2 group"
-            >
-              <BlockAwareAvatar
-                uid={c.authorId}
-                photoURL={c.authorPhotoURL}
-                displayName={c.authorName}
-                size="sm"
-              />
-              {/* Phase-6 hierarchy fix (visual audit W9): the message is
-              the primary content — it reads at text-sm in foreground,
-              with author (semibold) and timestamp (caption) as the
-              supporting metadata. Previously author, body AND meta
-              were all text-xs with the body in muted grey. */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug break-words">
-                  <span className="text-xs font-semibold text-foreground">
-                    {c.authorName}
-                  </span>{" "}
-                  <span className="text-foreground/90">{c.text}</span>
-                </p>
-                {/* The time and the reactions wrap under each other when
-                    the column is too narrow for both (large text on a
-                    small phone) rather than running past the sheet. */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                  <p className="text-caption text-muted-foreground">
-                    {timeAgo}
-                  </p>
-                  {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
-                  hit area toward the 44px floor without bloating the
-                  row visually (the sibling flame's -m trick). */}
-                  {REACTION_KEYS.map((k) => {
-                    const uids = c.reactions?.[k] ?? [];
-                    const mine = !!user && uids.includes(user.uid);
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => handleReact(c.id, k)}
-                        aria-pressed={mine}
-                        aria-label={`${mine ? "Remove" : "Add"} ${
-                          k === "muscle" ? "strong" : "fire"
-                        } reaction`}
-                        className="p-2.5 -m-1.5"
-                      >
-                        <span
-                          className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
-                            mine
-                              ? "bg-primary/10 text-lifting-strong"
-                              : uids.length > 0
-                                ? "bg-muted/70 text-foreground/80"
-                                : "bg-muted/40 text-muted-foreground"
-                          }`}
-                        >
-                          {REACTION_EMOJI[k]}
-                          {uids.length > 0 && (
-                            <span className="font-mono tabular-nums font-medium">
-                              {uids.length}
-                            </span>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* Always visible (W10): the old opacity-0 group-hover reveal
-              made delete unreachable on touch — this is a mobile bottom
-              sheet; there is no hover. 44 px at every text size, so the
-              comment keeps the width the text gains. */}
-              {isOwn ? (
-                <button
-                  type="button"
-                  onClick={() => setPanel({ kind: "delete", comment: c })}
-                  disabled={deletingId === c.id}
-                  className="size-[44px] inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
-                  aria-label="Delete comment"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              ) : c.authorId ? (
-                // Someone else's comment: Report and Block user (App
-                // Review 1.2), one tap away like the feed card's menu.
-                <IconButton
-                  aria-label={
-                    c.authorName
-                      ? `More options for ${c.authorName}'s comment`
-                      : "More options for this comment"
-                  }
-                  onClick={() => setPanel({ kind: "options", comment: c })}
-                  icon={<MoreHorizontal className="size-4" />}
-                  className="size-[44px] text-muted-foreground"
-                />
-              ) : null}
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
-
-      {hasMore && (
-        <button
-          type="button"
-          onClick={handleLoadMore}
-          className="text-xs text-lifting-strong font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
-        >
-          Load more comments
-        </button>
-      )}
+      <ActivityCommentRows thread={thread} />
     </CommentSheetFrame>
   );
 }

@@ -2,10 +2,9 @@
  * CIRCLE-INVITE-ACTIVATION-01 — a new circle is useful immediately:
  * (a) creating hands off straight into the "Your circle is ready"
  *     invite sheet with the RETURNED code (Share / Copy / Not now);
- * (b) a one-member circle's featured card leads with "Invite someone"
- *     (the focus action moves to the detail sheet); multi-member
- *     circles keep the focus button; a non-owner solo member (no
- *     inviteCode) falls back to the focus button.
+ * (b) a one-member circle's row leads with "Invite someone" and offers
+ *     no check-in; multi-member circles keep the check-in; a non-owner
+ *     solo member (no inviteCode) falls back to the check-in.
  */
 import {
   describe,
@@ -149,6 +148,7 @@ function hookValue(overrides: Record<string, unknown> = {}) {
  */
 afterEach(async () => {
   cleanup();
+  vi.unstubAllGlobals();
   await new Promise((resolve) => setTimeout(resolve, 0));
 });
 beforeEach(() => {
@@ -267,9 +267,34 @@ describe("post-create invite hand-off", () => {
       })
     );
   });
+
+  it("Share invite sends the app's public address, not the page's own origin", async () => {
+    // From the iPhone app the page's origin is capacitor://localhost, which
+    // opens nothing for the friend the invite is sent to.
+    expect(window.location.origin).not.toBe("https://troposfit.com");
+    const share = vi.fn(async () => {});
+    vi.stubGlobal("navigator", { ...navigator, share });
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Solo Circle", 1, "code-1")] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /invite someone/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /share invite/i })
+    );
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+    expect(share).toHaveBeenCalledWith(
+      expect.objectContaining({ url: "https://troposfit.com" })
+    );
+    vi.unstubAllGlobals();
+  });
 });
 
-describe("one-member featured circle", () => {
+describe("a one-member circle's row", () => {
   it("leads with Invite someone (owner) and opens the hand-off with that circle's code", async () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c1", "Solo Circle", 1, "code-1")] })
@@ -280,14 +305,14 @@ describe("one-member featured circle", () => {
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByText(/Your Circle is ready — invite someone/i)
-    ).toBeInTheDocument();
     const invite = screen.getByRole("button", { name: /invite someone/i });
-    // The focus action moves to the detail sheet for a solo circle.
-    expect(
-      screen.queryByRole("button", { name: /set weekly focus/i })
-    ).toBeNull();
+    // A quiet text button, not filled: the Together page keeps one filled
+    // button, and the row says which Circle it invites to.
+    expect(invite.className).toContain("bg-transparent");
+    expect(invite.className).not.toContain("bg-primary-strong");
+    expect(invite).toHaveAccessibleDescription(/Solo Circle/);
+    // A circle of one has no check-in to offer.
+    expect(screen.queryByRole("button", { name: /check in/i })).toBeNull();
 
     fireEvent.click(invite);
     await waitFor(() =>
@@ -295,7 +320,7 @@ describe("one-member featured circle", () => {
     );
   });
 
-  it("multi-member circles keep the focus button; a non-owner solo member falls back to it", () => {
+  it("multi-member circles keep the check-in; a non-owner solo member falls back to it", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c2", "Full Circle", 3, "code-2")] })
     );
@@ -305,7 +330,7 @@ describe("one-member featured circle", () => {
       </MemoryRouter>
     );
     expect(
-      screen.getByRole("button", { name: /set weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
     unmount();
 
@@ -322,8 +347,74 @@ describe("one-member featured circle", () => {
       screen.queryByRole("button", { name: /invite someone/i })
     ).toBeNull();
     expect(
-      screen.getByRole("button", { name: /set weekly focus/i })
+      screen.getByRole("button", { name: /^check in$/i })
     ).toBeInTheDocument();
+  });
+});
+
+describe("a circle of one leads with Invite someone in its sheet", () => {
+  /* A weekly focus, a milestone or a nudge in a circle of one reaches
+     nobody, so until someone joins the sheet's one action is the invite,
+     which opens the same hand-off as the card's. */
+  async function openSolo(inviteCode: string | null) {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Hear", 1, inviteCode)] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Hear/ }));
+    return screen.findByRole("dialog");
+  }
+
+  it("offers the invite and no check-ins to the owner", async () => {
+    const sheet = await openSolo("K7P49M2H");
+    const invite = await within(sheet).findByRole("button", {
+      name: "Invite someone",
+    });
+    for (const name of ["Weekly focus", "Milestone", "Need a nudge"])
+      expect(within(sheet).queryByRole("button", { name })).toBeNull();
+    expect(
+      within(sheet).getByText(
+        "Nothing yet. Check-ins start once someone joins."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(invite);
+    await screen.findByText("K7P4-9M2H");
+    expect(
+      screen.getByRole("button", { name: /share invite/i })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the check-ins for a member left alone without the code", async () => {
+    const sheet = await openSolo(null);
+    expect(
+      await within(sheet).findByRole("button", { name: "Weekly focus" })
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).queryByRole("button", { name: "Invite someone" })
+    ).toBeNull();
+  });
+
+  it("keeps the check-ins once someone has joined", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({ circles: [summary("c1", "Hear", 2, "K7P49M2H")] })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Hear/ }));
+    const sheet = await screen.findByRole("dialog");
+    expect(
+      await within(sheet).findByRole("button", { name: "Need a nudge" })
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).queryByRole("button", { name: "Invite someone" })
+    ).toBeNull();
   });
 });
 
@@ -499,15 +590,16 @@ describe("an invite code expires", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
     await screen.findByRole("dialog");
-    expect(
-      await screen.findByText("This code has expired.")
-    ).toBeInTheDocument();
+    const expired = await screen.findByText("This code has expired.");
     expect(
       screen.queryByRole("button", { name: /copy invite code/i })
     ).toBeNull();
+    const renew = screen.getByRole("button", { name: /make a new code/i });
+    // The state before the action: the sheet says the code has expired,
+    // then offers the new one.
     expect(
-      screen.getByRole("button", { name: /make a new code/i })
-    ).toBeInTheDocument();
+      expired.compareDocumentPosition(renew) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
 

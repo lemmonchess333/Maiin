@@ -1,22 +1,30 @@
 /**
- * heartRateSource — the native-injection seam for live HR. Today both platforms
- * resolve to the inert WEB source (no browser HR API; native plugin not wired
- * yet). The contract consumers depend on is: `available === false` (so the run
- * HUD / Settings fall back to the STATIC zone preview rather than erroring), and
- * a `subscribe()` that never emits but hands back a safe `stop()`. A regression
- * (available accidentally true, or subscribe throwing) would break HR on web.
+ * Web stays inert; the native source receives only beats for the named run.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const isNativePlatform = vi.fn();
+const subscribeWatchHeartRateSamples = vi.fn();
 vi.mock("../platform", () => ({
   isNativePlatform: () => isNativePlatform(),
 }));
+vi.mock("../watchRunBridge", () => ({
+  subscribeWatchHeartRateSamples: (handler: unknown) =>
+    subscribeWatchHeartRateSamples(handler),
+}));
+vi.mock("../connectedTrainingRelease", () => ({
+  CONNECTED_TRAINING_RELEASED: true,
+}));
 
-import { getHeartRateSource, webHeartRateSource } from "../heartRateSource";
+import {
+  getHeartRateSource,
+  nativeHeartRateSource,
+  webHeartRateSource,
+} from "../heartRateSource";
 
 beforeEach(() => {
   isNativePlatform.mockReset();
+  subscribeWatchHeartRateSamples.mockReset();
 });
 
 describe("webHeartRateSource (inert fallback contract)", () => {
@@ -40,14 +48,35 @@ describe("getHeartRateSource", () => {
     expect(src).toBe(webHeartRateSource);
   });
 
-  it("also returns the inert source on native until the HealthKit plugin lands (honest 'no stream')", () => {
+  it("uses the Watch stream only for an active native run", async () => {
     isNativePlatform.mockReturnValue(true);
     const src = getHeartRateSource();
-    expect(src.available).toBe(false);
-    // The subscribe no-op must hold on native too — consumers branch on
-    // `available`, not on platform.
+    expect(src).toBe(nativeHeartRateSource);
+    expect(src.available).toBe(true);
     const onSample = vi.fn();
-    src.subscribe(onSample).stop();
-    expect(onSample).not.toHaveBeenCalled();
+    let deliver: (sample: unknown) => void = () => {};
+    const remove = vi.fn();
+    subscribeWatchHeartRateSamples.mockImplementation((handler) => {
+      deliver = handler;
+      return Promise.resolve(remove);
+    });
+    const subscription = src.subscribe(onSample, undefined, "active-run");
+    await Promise.resolve();
+    deliver({
+      sessionId: "old-run",
+      sampleId: "a",
+      timestampMs: 1_000,
+      bpm: 130,
+    });
+    deliver({
+      sessionId: "active-run",
+      sampleId: "b",
+      timestampMs: 2_000,
+      bpm: 142,
+    });
+    expect(onSample).toHaveBeenCalledOnce();
+    expect(onSample).toHaveBeenCalledWith(142, 2_000, "b");
+    subscription.stop();
+    expect(remove).toHaveBeenCalledOnce();
   });
 });

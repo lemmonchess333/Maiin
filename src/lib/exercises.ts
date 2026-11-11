@@ -623,14 +623,14 @@ export const EXERCISES: Exercise[] = [
     category: "Back",
     muscleGroup: "Lats",
     mechanic: "isolation",
-    secondaryMuscles: ["Teres Major", "Core"],
+    secondaryMuscles: ["Teres Major", "Triceps", "Core"],
     equipment: "Cable Machine",
     caloriesPerMinute: 5.5,
     instructions: [
-      "Stand facing a high pulley, grip the bar with straight arms, hinge slightly forward.",
-      "Lock your elbows into a soft, fixed bend — don't change it on the set.",
-      "Pull the bar down in an arc to your thighs, feeling the lats squeeze.",
-      "Return slowly to a full overhead stretch without losing tension.",
+      "Stand facing two high pulleys and hold one handle in each hand at shoulder height.",
+      "Brace your torso and keep a soft, fixed bend in both elbows.",
+      "Sweep the handles down in an arc toward your thighs, feeling the lats squeeze.",
+      "Return the handles slowly to shoulder height without losing tension.",
     ],
   },
   {
@@ -896,7 +896,7 @@ export const EXERCISES: Exercise[] = [
     equipment: "Dumbbells",
     caloriesPerMinute: 5,
     instructions: [
-      "Stand with light dumbbells hanging in front of your thighs.",
+      "Stand with light dumbbells hanging beside your thighs.",
       "Upright-row to chest height with elbows leading.",
       "From there, rotate your shoulders so the dumbbells point up.",
       "Press overhead, then reverse each segment back to the start.",
@@ -1400,7 +1400,7 @@ export const EXERCISES: Exercise[] = [
     equipment: "Barbell",
     caloriesPerMinute: 9,
     instructions: [
-      "Rack the bar on your front delts with elbows pointing forward and high.",
+      "Rest the bar on your front delts. Cross your forearms above it and lightly secure it near the opposite shoulders, keeping elbows high.",
       "Feet shoulder-width, toes slightly out, core braced hard.",
       "Squat down with an upright torso until thighs are at or below parallel.",
       "Drive up through your whole foot, keeping elbows high all the way.",
@@ -1473,7 +1473,7 @@ export const EXERCISES: Exercise[] = [
       "Set your back flat against the pad, shoulders under the pads, feet mid-platform.",
       "Rotate the hooks off and brace your core.",
       "Lower until your thighs are parallel to the platform, knees tracking over toes.",
-      "Press back up through your heels without locking out hard.",
+      "Drive through your whole foot with heels down, without locking out hard.",
     ],
     tip: "Heels lifting off the plate at depth. Set your feet high enough on the platform that you can sit deep with flat feet.",
     commonMistakes: [
@@ -2258,10 +2258,10 @@ export const EXERCISES: Exercise[] = [
     instructions: [
       "Set up over the bar like a deadlift, feet hip-width, back flat.",
       "Explosively extend hips and catch the bar on your front delts.",
-      "Dip into a quarter squat and drive the bar overhead to lockout.",
-      "Lower to shoulders, then to the floor with control before the next rep.",
+      "Brace and press the bar overhead to lockout with straight legs; do not dip your knees.",
+      "Lower to your front shoulders, then guide the bar to high thigh and floor with control before the next rep.",
     ],
-    tip: "This is a technical Olympic-style lift — go light until the catch is clean. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
+    tip: "This is a technical lift — go light until the catch and strict press are controlled. A soft back or a bar that lands on your collarbones means the pull needs more work first.",
   },
   {
     id: "kettlebell-swing",

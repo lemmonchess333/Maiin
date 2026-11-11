@@ -34,11 +34,14 @@ export function useDeletedMeals(uid: string | null | undefined): {
   deletedMeals: Meal[];
   loading: boolean;
 } {
-  const [deletedMeals, setDeletedMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [settled, setSettled] = useState<{
+    uid: string;
+    meals: Meal[];
+  } | null>(null);
 
   useEffect(() => {
     if (!uid) return;
+    let active = true;
     const q = query(
       collection(db, "users", uid, "meals"),
       where("deletedAt", ">=", FIRST_TIMESTAMP),
@@ -47,6 +50,7 @@ export function useDeletedMeals(uid: string | null | undefined): {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        if (!active) return;
         /* No client-side `deletedAt` re-check. Restoring writes
            `deletedAt: null`, and the `where` above already excludes that —
            null sorts below every timestamp in Firestore's type ordering,
@@ -54,25 +58,29 @@ export function useDeletedMeals(uid: string | null | undefined): {
            A filter here would be unreachable code dressed as a safety net;
            `useDeletedMeals.test.tsx` pins the restored-meal case on the
            query instead. */
-        setDeletedMeals(
-          snapshot.docs.map((d) =>
+        setSettled({
+          uid,
+          meals: snapshot.docs.map((d) =>
             parseMealDoc(d.id, d.data() as Record<string, unknown>)
-          )
-        );
-        setLoading(false);
+          ),
+        });
       },
       (err) => {
+        if (!active) return;
         logger.error("[useDeletedMeals] subscription failed", err);
-        setDeletedMeals([]);
-        setLoading(false);
+        setSettled({ uid, meals: [] });
       }
     );
-    return unsubscribe;
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [uid]);
 
   /* Derived, not stored — see `useMealsInRange`. A signed-out caller is a
      fact about the argument, not something to write into state. */
-  return uid
-    ? { deletedMeals, loading }
-    : { deletedMeals: EMPTY, loading: false };
+  if (!uid) return { deletedMeals: EMPTY, loading: false };
+  return settled?.uid === uid
+    ? { deletedMeals: settled.meals, loading: false }
+    : { deletedMeals: EMPTY, loading: true };
 }

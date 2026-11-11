@@ -23,6 +23,8 @@ import {
   resetFirestore,
   readDoc,
   seedFirestore,
+  failNextFirestore,
+  allPaths,
 } from "@/test/firestoreHarness";
 
 const h = vi.hoisted(() => ({
@@ -88,6 +90,11 @@ import { completeLift } from "@/lib/liftCompletion";
 import { listWorkoutDrafts } from "@/hooks/useWorkoutDraft";
 import { resumableWorkout, routineInProgress } from "@/lib/sessionsInFlight";
 import { sessionDayContext } from "@/features/program/sessionDay";
+import {
+  flushQueue,
+  getQueueLength,
+  getFailedWorkoutCompletionCount,
+} from "@/lib/offlineQueue";
 
 const day: ComponentProps<typeof WorkoutSession>["day"] = {
   dayName: "Audit strength",
@@ -190,6 +197,68 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+it("can retry a failed online empty workout after leaving its finish screen", async () => {
+  const complete: ComponentProps<
+    typeof WorkoutSession
+  >["onCompleteDay"] = async (_index, done) =>
+    completeLift({
+      uid: h.user.uid,
+      author: {},
+      source: "free",
+      completionId: done.completionId,
+      startedAt: done.startedAt,
+      ran: done.prescription?.exercises ?? day.exercises,
+      setLogs: done.setLogs,
+      exerciseNotes: done.exerciseNotes,
+      durationMinutes: done.durationMinutes,
+      bodyweightKg: 80,
+      title: "Workout",
+      notes: "Workout",
+    });
+  const view = await open({
+    draftScope: "empty:failed-free-session",
+    dayIndex: -2,
+    onCompleteDay: complete,
+  });
+  expect(navigator.onLine).toBe(true);
+  failNextFirestore("commit", { code: "unavailable" });
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  const save = await screen.findByRole("button", { name: "Save workout" });
+  await act(async () => {
+    fireEvent.click(save);
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Retry sync" })).toBeVisible()
+  );
+  const retained = draft();
+  expect(retained.completionPending).toBe(true);
+  expect(getQueueLength(h.user.uid)).toBe(1);
+  expect(getFailedWorkoutCompletionCount(h.user.uid)).toBe(1);
+  view.unmount();
+  // Global retry needs no old URL or mutable plan/routine reconstruction.
+  await act(async () => {
+    await flushQueue({} as never, h.user.uid);
+  });
+  expect(
+    readDoc(`users/${h.user.uid}/workouts/free-${retained.completionId}`)
+  ).toMatchObject({
+    source: "free",
+    completionId: retained.completionId,
+    notes: "Workout",
+    exercises: [{ sets: [{ reps: 8 }, { reps: 8 }, { reps: 8 }] }],
+  });
+  expect(getQueueLength(h.user.uid)).toBe(0);
+  expect(readDoc(`users/${h.user.uid}/stats/prMap`)?.invalidated).toBe(true);
+  expect(draft()).toBeNull();
+  await flushQueue({} as never, h.user.uid);
+  expect(allPaths().filter((path) => path.includes("/workouts/"))).toHaveLength(
+    1
+  );
 });
 
 it("requires an explicit recovery choice and safely leaves the workout on modal dismissal", async () => {
@@ -527,6 +596,47 @@ it("counter-control: Undo persists correctly while a different completed set rem
   expect(screen.getByRole("spinbutton", { name: "Set 2 reps" })).toBeEnabled();
 });
 
+it("keeps entered values before completing the first set", async () => {
+  const session = await open();
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "12.5" },
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
+    target: { value: "6" },
+  });
+  await waitFor(() => expect(draft()?.setLogs[0][0].weight).toBe(12.5));
+  expect(draft().setLogs[0][0]).toMatchObject({ reps: 6, completed: false });
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("spinbutton", { name: "Set 1 weight" })).toHaveValue(
+    12.5
+  );
+  expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(6);
+  expect(screen.queryByRole("dialog", { name: "Resume workout?" })).toBeNull();
+});
+
+it("keeps a note entered before completing any set", async () => {
+  const session = await open();
+  fireEvent.change(screen.getByRole("textbox", { name: "Exercise notes" }), {
+    target: { value: "Rack pin 4" },
+  });
+  await waitFor(() => expect(draft()?.exerciseNotes[0]).toBe("Rack pin 4"));
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("textbox", { name: "Exercise notes" })).toHaveValue(
+    "Rack pin 4"
+  );
+});
+
+it("keeps an added set before completing any set", async () => {
+  const session = await open();
+  fireEvent.click(screen.getByRole("button", { name: "Add set" }));
+  await waitFor(() => expect(draft()?.setLogs[0]).toHaveLength(4));
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(screen.getByRole("spinbutton", { name: "Set 4 reps" })).toHaveValue(8);
+});
+
 it("keeps entered values after undoing the last completion, and Start fresh still retires that draft", async () => {
   const session = await open();
   fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
@@ -569,7 +679,7 @@ it("keeps entered values after undoing the last completion, and Start fresh stil
   fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
     target: { value: "7" },
   });
-  expect(draft()).toBeNull();
+  await waitFor(() => expect(draft()?.setLogs[0][0].reps).toBe(7));
 });
 
 /* A routine's workout under way. Home's and Train's strip offers it from

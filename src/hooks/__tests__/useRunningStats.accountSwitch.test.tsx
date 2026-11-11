@@ -61,6 +61,15 @@ function releaseSnapshot(
 
 const A_RUNS = "users/A/runs";
 const B_RUNS = "users/B/runs";
+// A bounded run window reads modern event-day rows and legacy completion-time
+// rows. Both answers are required before the hook can claim complete evidence.
+const A_RUN_READS = [A_RUNS, A_RUNS];
+const B_RUN_READS = [B_RUNS, B_RUNS];
+
+function releaseRunReads(index = 0) {
+  expect(releaseSnapshot(index)).toBe(true);
+  expect(releaseSnapshot(index)).toBe(true);
+}
 
 /** A run inside the 30-day window the hook queries. */
 const run = () => ({
@@ -147,18 +156,20 @@ describe("useRunningStats — account switch", () => {
   it("B's later data wins even when A resolves last", async () => {
     deferSnapshots();
     const { result, rerender } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(A_RUN_READS));
 
     currentUser = { uid: "B" };
     rerender();
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS, B_RUNS]));
+    await waitFor(() =>
+      expect(pendingSnapshots()).toEqual([...A_RUN_READS, ...B_RUN_READS])
+    );
 
     // B answers first, then A answers LATE — the leak interleaving.
     await act(async () => {
-      expect(releaseSnapshot(1)).toBe(true); // B
+      releaseRunReads(2); // B's event-day and legacy reads
     });
     await act(async () => {
-      expect(releaseSnapshot(0)).toBe(true); // A, stale
+      releaseRunReads(); // A's two stale reads
     });
 
     // The id proves WHOSE document survived, not merely that a row did.
@@ -168,9 +179,9 @@ describe("useRunningStats — account switch", () => {
   it("clears A's rows immediately on switch to B", async () => {
     deferSnapshots();
     const { result, rerender } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(A_RUN_READS));
     await act(async () => {
-      releaseSnapshot();
+      releaseRunReads();
     });
     expect(result.current.runs.map((r) => r.id)).toEqual(["a-run"]);
 
@@ -242,7 +253,7 @@ describe("useRunningStats — account switch", () => {
     deferSnapshots();
     currentUser = { uid: "B" };
     rerender();
-    await waitFor(() => expect(pendingSnapshots()).toEqual([B_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(B_RUN_READS));
     expect(result.current.loading).toBe(true);
     expect(result.current.failed).toBe(false);
 
@@ -255,10 +266,10 @@ describe("useRunningStats — account switch", () => {
   it("unmount cancels the outstanding resolution (no state update)", async () => {
     deferSnapshots();
     const { result, unmount } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(A_RUN_READS));
     unmount();
     await act(async () => {
-      releaseSnapshot();
+      releaseRunReads();
     });
     expect(result.current.runs).toEqual([]);
   });
@@ -266,9 +277,9 @@ describe("useRunningStats — account switch", () => {
   it("a same-uid refresh keeps current rows while loading", async () => {
     deferSnapshots();
     const { result } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(A_RUN_READS));
     await act(async () => {
-      releaseSnapshot();
+      releaseRunReads();
     });
     expect(result.current.runs).toHaveLength(1);
 
@@ -281,12 +292,12 @@ describe("useRunningStats — account switch", () => {
     // Pull-to-refresh (same uid): rows stay visible while in flight, so
     // the list doesn't blank out under the user's thumb.
     act(() => result.current.refresh());
-    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual(A_RUN_READS));
     expect(result.current.runs).toHaveLength(1);
     expect(result.current.loading).toBe(true);
 
     await act(async () => {
-      releaseSnapshot();
+      releaseRunReads();
     });
     await waitFor(() => expect(result.current.runs).toHaveLength(2));
   });
@@ -307,42 +318,57 @@ describe("running evidence authority", () => {
       exercises: [{ movementCategory: "knee_dominant" }],
     } as WorkoutDay;
     const { result } = renderHook(() => useEasierTodayRecommendation(day));
-    const initial = deliveries[0];
+    const initial = deliveries.slice(0, 2);
+    expect(initial).toHaveLength(2);
     for (const metadata of [
       { fromCache: true, hasPendingWrites: false },
       { fromCache: false, hasPendingWrites: true },
     ]) {
-      act(() => initial.next(Object.assign(initial.snapshot, { metadata })));
+      act(() => {
+        for (const delivery of initial)
+          delivery.next(Object.assign(delivery.snapshot, { metadata }));
+      });
       expect(result.current?.recommended).toBe(false);
     }
     act(() => {
-      releaseSnapshot();
+      expect(releaseSnapshot()).toBe(true);
+    });
+    expect(result.current?.recommended).toBe(false);
+    act(() => {
+      expect(releaseSnapshot()).toBe(true);
     });
     expect(result.current?.reason).toContain("hard run yesterday");
   });
   it("displays cached facts but waits for server confirmation before coaching", () => {
     deferSnapshots();
     const { result } = renderHook(() => useRunningStats(30));
-    const initial = deliveries[0];
-    act(() =>
-      initial.next(
-        Object.assign(initial.snapshot, {
-          metadata: { fromCache: true, hasPendingWrites: false },
-        })
-      )
-    );
+    const initial = deliveries.slice(0, 2);
+    expect(initial).toHaveLength(2);
+    act(() => {
+      for (const delivery of initial)
+        delivery.next(
+          Object.assign(delivery.snapshot, {
+            metadata: { fromCache: true, hasPendingWrites: false },
+          })
+        );
+    });
     expect(result.current.runs).toHaveLength(1);
     expect(result.current.evidenceReady).toBe(false);
-    act(() =>
-      initial.next(
-        Object.assign(initial.snapshot, {
-          metadata: { fromCache: false, hasPendingWrites: true },
-        })
-      )
-    );
+    act(() => {
+      for (const delivery of initial)
+        delivery.next(
+          Object.assign(delivery.snapshot, {
+            metadata: { fromCache: false, hasPendingWrites: true },
+          })
+        );
+    });
     expect(result.current.evidenceReady).toBe(false);
     act(() => {
-      releaseSnapshot();
+      expect(releaseSnapshot()).toBe(true);
+    });
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => {
+      expect(releaseSnapshot()).toBe(true);
     });
     expect(result.current.evidenceReady).toBe(true);
   });

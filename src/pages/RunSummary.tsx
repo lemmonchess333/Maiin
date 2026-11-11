@@ -1,6 +1,6 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { cn } from "@/lib/utils";
 import {
   useState,
   useEffect,
@@ -26,6 +26,8 @@ import {
 import EditDistance from "@/components/run/EditDistance";
 import { auth, db } from "../lib/firebase";
 import { localDateString } from "../lib/dateHelpers";
+import { racePlanWeek, racePlanWeekLabel } from "../lib/racePlanWeek";
+import { resolveRunPlan } from "../lib/runPlanResolver";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
@@ -36,7 +38,11 @@ import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
-import PaceLegend from "../components/run/PaceLegend";
+import FinishHero from "@/components/workout/FinishHero";
+import { IconButton } from "@/components/ui/IconButton";
+import { finishKicker, finishRegister, rewardLine } from "@/lib/finishMoment";
+import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import { formatClock } from "@/utils/formatters";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsTable from "../components/run/SplitsTable";
 import BestEffortsCard from "../components/run/BestEffortsCard";
@@ -47,7 +53,7 @@ import { Button } from "@/components/ui/Button";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
-import { fetchSavedRuns, type SavedRun } from "../lib/savedRuns";
+import { readRunHistory, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
 import {
   usePaceInsightFromRuns,
@@ -75,10 +81,49 @@ import {
   elevationUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
+import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
-import { completeRun, runPostRoute } from "@/lib/runCompletion";
+import {
+  allocateRunId,
+  completeRun,
+  earlierRunHistory,
+  runDay,
+  runPostRoute,
+  type FinishedRun,
+} from "@/lib/runCompletion";
+import {
+  earlierSessions,
+  isFirstOfSport,
+  isFirstSession,
+  type EarlierSessions,
+} from "@/lib/firstSession";
+import {
+  runPostMoments,
+  type PostMoment,
+  type RunHistory,
+  type StreakChange,
+} from "@/lib/postMoments";
+import { useStreaks } from "@/features/streaks/useStreaks";
+import {
+  RUN_NAME_MAX,
+  runNameOf,
+  runNameTemplate,
+  runPostName,
+} from "@/lib/runName";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { isPaceEligible } from "../lib/runStatsEligibility";
-import { clearStoredRun } from "../lib/runResumeStorage";
+import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
+import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
+import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
+import {
+  clearHeartRateSession,
+  getRecoveredHeartRateSession,
+} from "@/lib/heartRateSession";
+import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
+import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
+import { clearWatchRunSession } from "@/lib/watchRunBridge";
+import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -88,6 +133,8 @@ import {
   Trophy,
   ChevronLeft,
   AlertCircle,
+  Pencil,
+  Share,
 } from "lucide-react";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import {
@@ -115,7 +162,7 @@ import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
  *  (offline before they had loaded, or the read refused). Shown in the
  *  Retry banner, under "Couldn't save your run". */
 const PRIVACY_ZONES_UNCHECKED =
-  "Privacy zones are cut from the route before it's saved, and they couldn't be checked. Try again when you're online.";
+  "Privacy zones are cut from the route before it’s saved, and they couldn’t be checked. Try again when you’re online.";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -140,10 +187,10 @@ function RetryBanner({
       />
       <div className="flex-1 text-xs text-foreground/80">
         <p className="font-medium text-running-strong">
-          Couldn&apos;t save your run
+          Couldn’t save your run
         </p>
         <p className="mt-0.5 text-muted-foreground">
-          {error || "We couldn't save this run."}
+          {error || "Couldn’t save this run."}
         </p>
       </div>
       <Button variant="sport" className="shrink-0" onClick={onRetry}>
@@ -347,11 +394,18 @@ function InvalidRunReview({
 }
 
 interface RunData {
+  identity?: RunSessionIdentity | null;
+  recordingStartedAt?: number | null;
+  finishedAt?: number;
+  watchRevision?: number;
+  watchCompanionUsed?: boolean;
   savedRun?: {
     uid: string;
     id: string;
     notes: string;
     relativeEffort: "easier" | "matched" | "harder" | null;
+    /** The name the run was saved and posted under. */
+    name?: string;
   };
   points: GPSPoint[];
   distance: number;
@@ -369,9 +423,74 @@ interface RunData {
 }
 
 export default function RunSummary() {
-  const { state } = useLocation() as { state: RunData };
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const recoveryUid = user?.uid;
+  const {
+    prefs: connectedPrefs,
+    loading: connectedPrefsLoading,
+    failed: connectedPrefsFailed,
+  } = useConnectedTrainingPrefs();
+  const recoveredState = useMemo<RunData | null>(() => {
+    if (location.state || !recoveryUid) return null;
+    const stored = readStoredRun(recoveryUid);
+    if (stored?.phase !== "finished" || !stored.finish) return null;
+    return {
+      ...stored.finish,
+      identity: stored.identity ?? null,
+      recordingStartedAt: stored.recordingStartedAt ?? null,
+      watchRevision: stored.watchRevision,
+      points: stored.points,
+      runConfig: stored.config,
+    };
+  }, [location.state, recoveryUid]);
+  const routeState = location.state as RunData | null;
+  const state =
+    routeState?.identity && user?.uid && routeState.identity.uid !== user.uid
+      ? null
+      : (routeState ?? recoveredState);
+  const [heartRatePreview, setHeartRatePreview] =
+    useState<ReturnType<typeof summarizeHeartRate>>(null);
+  useEffect(() => {
+    if (
+      !user?.uid ||
+      !state?.identity ||
+      state.identity.uid !== user.uid ||
+      !state.watchCompanionUsed ||
+      !isOutdoorGpsRun(state.runConfig)
+    )
+      return;
+    let active = true;
+    void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
+      .then(({ samples, activeIntervals }) => {
+        if (!active) return;
+        const measuredMax = profile?.maxHeartRate ?? 0;
+        const maxHr =
+          measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+        const summary = summarizeHeartRate(
+          samples,
+          activeIntervals,
+          maxHr,
+          state.elapsed
+        );
+        if (summary) setHeartRatePreview(summary);
+      })
+      .catch((error) =>
+        logger.warn("[RunSummary] Watch heart rate unavailable", error)
+      );
+    return () => {
+      active = false;
+    };
+  }, [
+    user?.uid,
+    state?.identity,
+    state?.watchCompanionUsed,
+    state?.elapsed,
+    state?.runConfig,
+    profile?.maxHeartRate,
+    profile?.age,
+  ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
   const darkTheme = useIsDarkTheme();
@@ -393,6 +512,26 @@ export default function RunSummary() {
   // "yes I did do this scheduled run" reconciliation path
   // (Q5 P74 — DayActionSheet's contextual hint).
   const { markManualComplete, skipRunDay, programState } = useProgram();
+  /* The streak a run's post measures against (Soc15), and whether it is
+     the first session, as the first Save found them: a retry finds the run
+     already in the streak. Null until then. */
+  const { streakWithDay } = useStreaks();
+  /* What the saved run's post says happened, and the earlier runs it was
+     measured against: the finish's reward or summary is picked from them
+     (DS4 call 3). Null until this screen saves the run. */
+  /* When the screen opened: the kicker's end time for a run that kept
+     no finish time. */
+  const [openedAt] = useState(() => Date.now());
+  const [finishFacts, setFinishFacts] = useState<{
+    moments: PostMoment[];
+    history: RunHistory | null;
+    /** The account's first run though it has lifted before. */
+    firstOfSport: boolean;
+  } | null>(null);
+  const atFirstSave = useRef<{
+    streak: StreakChange | null;
+    firstSession: boolean;
+  } | null>(null);
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -407,7 +546,9 @@ export default function RunSummary() {
   const [savedRunId, setSavedRunId] = useState<string | null>(
     receipt?.id ?? null
   );
-  const runIdRef = useRef<string | null>(receipt?.id ?? null);
+  const runIdRef = useRef<string | null>(
+    receipt?.id ?? state?.identity?.runId ?? null
+  );
   const savingRef = useRef(false);
   useSyncExternalStore(
     subscribeQueuedWrites,
@@ -502,6 +643,10 @@ export default function RunSummary() {
   const [relativeEffort, setRelativeEffort] = useState<
     "easier" | "matched" | "harder" | null
   >(receipt?.relativeEffort ?? null);
+  /* The run's name as typed in its field; null until the runner types,
+     so the field shows the name the run was given (`runPostName`) and
+     follows it while the plan and profile load. */
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   /* Sprint 3 Edit-distance: when the user corrects a fat-fingered
      manual / treadmill distance from InvalidRunReview, the new
@@ -526,28 +671,40 @@ export default function RunSummary() {
   const [historyRead, setHistoryRead] = useState<{
     uid: string;
     runs: SavedRun[];
+    /** The whole history (readRunHistory): the post's firsts and bests are
+     *  claimed only from that; the pace widgets read the runs either way. */
+    known: boolean;
   } | null>(null);
   useEffect(() => {
     if (!uid || !hasRun) return;
     let cancelled = false;
     (async () => {
-      let runs: SavedRun[] = [];
-      try {
-        /* Saved runs carry their source and validity fields, so
-           paceTrends can exclude treadmill / manual / invalid /
-           savedAnyway records — a treadmill 2:38/km can't masquerade as
-           a PR against historical outdoor runs. */
-        runs = await fetchSavedRuns(uid, { all: true });
-      } catch (err) {
-        if (cancelled) return;
-        logger.error("[RunSummary] pace-history load failed", err);
-      }
-      if (!cancelled) setHistoryRead({ uid, runs });
+      /* Saved runs carry their source and validity fields, so paceTrends
+         can exclude treadmill / manual / invalid / savedAnyway records — a
+         treadmill 2:38/km can't masquerade as a PR against historical
+         outdoor runs. */
+      const { runs, known } = await readRunHistory(uid);
+      if (!cancelled) setHistoryRead({ uid, runs, known });
     })();
     return () => {
       cancelled = true;
     };
   }, [uid, hasRun]);
+  /* Whether the account had a session before this run, for its post's
+     "First session on Tropos" (Soc15): two documents a kind, read once as
+     the screen opens. Null until known, and whenever it can't be. */
+  const earlierSessionRef = useRef<EarlierSessions | null>(null);
+  const ownRunId = state?.identity?.runId ?? receipt?.id ?? null;
+  useEffect(() => {
+    if (!uid || !hasRun) return;
+    let cancelled = false;
+    void earlierSessions(uid, { runId: ownRunId }).then((earlier) => {
+      if (!cancelled) earlierSessionRef.current = earlier;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, hasRun, ownRunId]);
   const paceHistory = useMemo<PaceInsightRun[]>(
     () => (historyRead && historyRead.uid === uid ? historyRead.runs : []),
     [historyRead, uid]
@@ -640,7 +797,11 @@ export default function RunSummary() {
     [state, privacyZones]
   );
   // Keep the run's clock independently of the coordinates privacy zones cut.
-  const startedAt = state?.points[0]?.timestamp;
+  const startedAt = state?.identity?.startedAt ?? state?.points[0]?.timestamp;
+  /* The date the run goes out of the app under (the share card, a GPX's
+     track): its start, as the saved run's own page has it. A run begun on
+     Sunday night and shared after midnight is Sunday's. */
+  const runDate = startedAt !== undefined ? new Date(startedAt) : new Date();
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -654,7 +815,9 @@ export default function RunSummary() {
     return {
       id: savedRunId,
       // A run with no trace (entered by hand) is today's.
-      date: startedAt ? localDateString(new Date(startedAt)) : null,
+      date:
+        state.identity?.startLocalDate ??
+        (startedAt ? localDateString(new Date(startedAt)) : null),
       distance: runDistance,
       duration: state.elapsed,
       isInvalid: type
@@ -672,7 +835,11 @@ export default function RunSummary() {
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
   // commits would fire it twice.
-  if (!state || (state.savedRun && state.savedRun.uid !== user?.uid)) {
+  if (
+    !state ||
+    (state.savedRun && state.savedRun.uid !== user?.uid) ||
+    (state.identity && state.identity.uid !== user?.uid)
+  ) {
     return <Navigate to="/" replace />;
   }
 
@@ -786,7 +953,7 @@ export default function RunSummary() {
       toast.success("Changes saved");
     } catch (err) {
       logger.error("[RunSummary] field update failed", err);
-      toast.error("Couldn't save your changes. Try again.");
+      toast.error("Couldn’t save your changes. Try again.");
     } finally {
       setUpdating(false);
     }
@@ -800,18 +967,60 @@ export default function RunSummary() {
     const tmpl = RUN_TEMPLATES.find((t) => t.id === tmplId);
     return tmpl ? runTemplateName(tmpl.name, unit) : null;
   })();
+  /* The name the run is given before the runner changes it: the planned
+     session's, a race-pace finish included (Run21 (2)), else its type's,
+     else the time of day it started. */
+  const nameTemplate = runNameTemplate(runConfig);
+  const givenName = runPostName(
+    { runConfig, startedAt, points: state.points },
+    {
+      unit,
+      racePace: racePaceWorkFor(nameTemplate, profile, programState?.runPlan),
+    }
+  );
+  const runName = nameDraft ?? givenName;
+  /* What Save writes: the field's name, trimmed, else the given one. */
+  const nameToSave = runName.trim() ? runNameOf({ name: runName }) : givenName;
+
+  /* DS4 call 3: the reward or the calm summary, from what the saved run's
+     post says happened. Before the save, and on a return to a run saved
+     earlier, it is the summary. */
+  const finishRegistered = finishFacts
+    ? finishRegister(finishFacts.moments, "run", {
+        firstOfSport: finishFacts.firstOfSport,
+      })
+    : null;
+  const finishReward =
+    finishRegistered?.register === "reward" ? finishRegistered : null;
+  const finishLine = finishReward
+    ? rewardLine(finishReward.moment, {
+        sport: "run",
+        distanceUnit: unit,
+        loadIn: (kg) => kg,
+        loadUnit: "kg",
+        fastestBefore:
+          finishReward.moment.kind === "fastestEffort"
+            ? (finishFacts?.history?.fastestSeconds[
+                finishReward.moment.meters
+              ] ?? null)
+            : null,
+      })
+    : null;
+
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
     /* "Run saved" is a claim about the WRITE, so it waits for one — see
        `unsizedRunHeading`, which owns the rule and its reasoning. */
     if (!sized) return unsizedRunHeading({ saveStatus });
+    /* The session done, as the lift's finish names it ("Pull A done"),
+       never a cheer or a save's confirmation (DS4 words rules). */
     if (heroTemplateName && adherenceLabel === "Planned") {
-      return `${heroTemplateName} complete ✓`;
+      return `${heroTemplateName} done`;
     }
     if (heroTemplateName && adherenceLabel === "Custom") {
       return `${heroTemplateName} · custom`;
     }
-    return "Nice run";
+    return "Run done";
   })();
 
   // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
@@ -880,8 +1089,21 @@ export default function RunSummary() {
     return null;
   })();
 
-  const runPlanCurrentWeek = programState?.runPlan?.currentWeek;
-  const runPlanTotalWeeks = programState?.runPlan?.totalWeeks;
+  /* A race plan's week, as Train's header says it (`racePlanWeek`): the
+     plan's week up to race day, the recovery's after it, and none once
+     the race has passed with no recovery running. Read on the run's own
+     day, as the week card is: a run begun on Sunday night and reviewed
+     after midnight is still that week's, and a race run late on race day
+     is still race week's. */
+  const summaryDay = pendingWeekRun?.date ?? localDateString();
+  const raceWeek =
+    profile?.runMode === "race_prep"
+      ? racePlanWeek({
+          raceGoal: resolveRunPlan(profile, programState, summaryDay).raceGoal,
+          runPlan: programState?.runPlan,
+          todayKey: summaryDay,
+        })
+      : null;
 
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
@@ -929,7 +1151,13 @@ export default function RunSummary() {
       // Phase B3: invalid-run shortcut also clears any persisted
       // snapshot so the discarded run can't be resurrected by the
       // chooser on next /run open.
-      if (user?.uid) clearStoredRun(user.uid);
+      if (user?.uid) {
+        clearStoredRun(user.uid);
+        if (state.identity) {
+          clearHeartRateSession(user.uid, state.identity.sessionId);
+          void clearWatchRunSession(state.identity.sessionId);
+        }
+      }
       navigate("/");
     } else {
       setShowDiscardConfirm(true);
@@ -993,35 +1221,116 @@ export default function RunSummary() {
          saved but a later step failed resumes against that id rather than
          writing a second run, which onRunCreated would credit twice
          (challenges, lifetime totals, weekly distance). */
+      let heartRate: ReturnType<typeof summarizeHeartRate> = null;
+      if (state.identity && outdoorGps) {
+        try {
+          const captured = await getRecoveredHeartRateSession(
+            user.uid,
+            state.identity.sessionId
+          );
+          if (auth.currentUser?.uid !== user.uid) {
+            setSaveStatus("idle");
+            return;
+          }
+          const measuredMax = profile?.maxHeartRate ?? 0;
+          const maxHr =
+            measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+          heartRate = summarizeHeartRate(
+            captured.samples,
+            captured.activeIntervals,
+            maxHr,
+            elapsed
+          );
+          if (heartRate) setHeartRatePreview(heartRate);
+        } catch (error) {
+          logger.warn("[RunSave] Watch heart rate unavailable:", error);
+        }
+      }
+      // Stage optional export before the durable run write. A process kill
+      // between those writes must not lose the opt-in. The worker waits for
+      // this exact run on the server and checks current consent before it
+      // writes HealthKit, so an uncompleted Save cannot create a workout.
+      const saveRunId =
+        savedRunId ??
+        runIdRef.current ??
+        state.identity?.runId ??
+        allocateRunId(user.uid);
+      runIdRef.current = saveRunId;
+      const healthCandidate =
+        outdoorGps &&
+        !isInvalid &&
+        state.recordingStartedAt != null &&
+        state.finishedAt != null;
+      const healthIntentReady =
+        !healthCandidate ||
+        queueHealthWorkoutExport(
+          user.uid,
+          saveRunId,
+          connectedPrefs.saveWorkoutsToHealth,
+          {
+            provisional:
+              !connectedPrefs.saveWorkoutsToHealth &&
+              (connectedPrefsLoading || connectedPrefsFailed),
+          }
+        );
+      const finishedRun: FinishedRun = {
+        ...(state.identity ? { identity: state.identity } : {}),
+        startedAt,
+        recordingStartedAt: state.recordingStartedAt ?? undefined,
+        finishedAt: state.finishedAt,
+        heartRate,
+        points: savedPoints,
+        distance,
+        elapsed,
+        avgPaceSeconds,
+        calories,
+        elevationGain,
+        splits,
+        runConfig,
+        intervalData,
+        notes,
+        relativeEffort,
+        paceVerdictTone: paceVerdict?.tone ?? null,
+        isInvalid,
+        invalidReason: invalidReason ?? null,
+        routeQuality: state.routeQuality ?? null,
+        workPortion: state.workPortion ?? null,
+        shoeId: effectiveShoeId,
+        bestEfforts,
+        name: nameToSave,
+      };
+      /* What the run's post says happened (Soc15): the earlier runs this
+         screen read, the streak and whether it is the first session. A
+         moment never costs the save: the streak is left out if it can't
+         be worked out. */
+      if (!atFirstSave.current) {
+        let streak: StreakChange | null = null;
+        try {
+          streak = streakWithDay(runDay(finishedRun));
+        } catch (err) {
+          logger.warn("[RunSave] streak for the post not read", err);
+        }
+        atFirstSave.current = {
+          streak,
+          firstSession: isFirstSession(earlierSessionRef.current),
+        };
+      }
+      finishedRun.moments = {
+        ...atFirstSave.current,
+        history:
+          historyRead && historyRead.uid === user.uid && historyRead.known
+            ? earlierRunHistory(historyRead.runs, saveRunId)
+            : null,
+      };
       const completion = completeRun({
         uid: user.uid,
         author: {
           displayName: profile?.displayName,
           photoURL: profile?.photoURL,
         },
-        runId: savedRunId ?? runIdRef.current,
+        runId: saveRunId,
         alreadySaved: savedRunId !== null,
-        run: {
-          startedAt,
-          points: savedPoints,
-          distance,
-          elapsed,
-          avgPaceSeconds,
-          calories,
-          elevationGain,
-          splits,
-          runConfig,
-          intervalData,
-          notes,
-          relativeEffort,
-          paceVerdictTone: paceVerdict?.tone ?? null,
-          isInvalid,
-          invalidReason: invalidReason ?? null,
-          routeQuality: state.routeQuality ?? null,
-          workPortion: state.workPortion ?? null,
-          shoeId: effectiveShoeId,
-          bestEfforts,
-        },
+        run: finishedRun,
         // Loading or unread privacy settings withhold the route.
         route: runPostRoute(savedPoints, {
           withheld: Boolean(privacyZonesLoading || privacyZonesError),
@@ -1030,6 +1339,31 @@ export default function RunSummary() {
         unit,
       });
       const savedId = completion.runId;
+      if (
+        state.identity &&
+        state.watchCompanionUsed &&
+        state.finishedAt !== undefined
+      ) {
+        const queuedOnWatch = queueWatchRunSyncStatus({
+          uid: user.uid,
+          runId: savedId,
+          sessionId: state.identity.sessionId,
+          revision: (state.watchRevision ?? 0) + 1,
+          elapsedSeconds: elapsed,
+          distanceMeters: distance,
+          paceSecondsPerKm:
+            elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : null,
+          recordedAtMs: state.finishedAt,
+          unit,
+        });
+        if (!queuedOnWatch) void clearWatchRunSession(state.identity.sessionId);
+      } else if (state.identity) {
+        void clearWatchRunSession(state.identity.sessionId);
+      }
+      if (!healthIntentReady)
+        toast.warning(
+          "Run saved, but Apple Health export could not be prepared."
+        );
       runIdRef.current = savedId;
       setSavedRunId(savedId);
       // A reload of this browser-history entry must reopen the same saved run.
@@ -1043,6 +1377,7 @@ export default function RunSummary() {
             id: savedId,
             notes: notes.trim(),
             relativeEffort,
+            name: nameToSave,
           },
         },
       });
@@ -1084,12 +1419,25 @@ export default function RunSummary() {
           );
       }
 
+      setFinishFacts({
+        moments: runPostMoments(
+          { distance, bestEfforts },
+          finishedRun.moments ?? undefined
+        ),
+        history: finishedRun.moments?.history ?? null,
+        firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+      });
       setSaveStatus("saved");
       setSaveError(null);
 
       // The complete run is now durable in the retry queue. The active-run
       // snapshot can be cleared without losing the recovery copy.
-      if (user?.uid) clearStoredRun(user.uid);
+      if (user?.uid) {
+        clearStoredRun(user.uid);
+        if (state.identity) {
+          clearHeartRateSession(user.uid, state.identity.sessionId);
+        }
+      }
 
       // ── Phase B1: programme reconciliation ───────────────────────
       // Mark the scheduled run day complete IFF the saved run is a
@@ -1112,13 +1460,13 @@ export default function RunSummary() {
       logger.error("[RunSave] Failed:", error);
       // The privacy-zone and storage sentences are the app's own; an
       // SDK error's text is not copy.
-      const message = appErrorMessage(error, "Failed to save run");
+      const message = appErrorMessage(error, "Couldn’t save this run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
-      toast.error("Failed to save run. Tap Retry below.");
+      toast.error("Couldn’t save this run. Try again below.");
     } finally {
       savingRef.current = false;
     }
@@ -1130,12 +1478,12 @@ export default function RunSummary() {
 
   const handleExportGPX = () => {
     if (privacyZonesLoading || privacyZonesError) {
-      toast.error("Couldn't check your privacy settings. Try again");
+      toast.error("Couldn’t check your privacy settings. Try again");
       return;
     }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
-    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
+    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(runDate)}`);
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
        the same words as RunDetail's Export GPX. */
@@ -1217,15 +1565,20 @@ export default function RunSummary() {
         paddingBottom: "var(--page-bottom-pad)",
       }}
     >
-      <div className="px-4 pt-4">
-        <button
-          type="button"
+      {/* Back sits over the run's band, out of the way of its map. */}
+      <div
+        className={cn(
+          "px-4",
+          isInvalid || points.length < 2 ? "pt-4" : "absolute z-20 pt-3"
+        )}
+      >
+        <IconButton
+          aria-label="Back"
+          variant="secondary"
+          className="bg-background/85 backdrop-blur-sm"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]"
-        >
-          <ChevronLeft className="size-4" />
-          Back
-        </button>
+          icon={<ChevronLeft className="size-5" aria-hidden="true" />}
+        />
       </div>
 
       {isInvalid ? (
@@ -1258,81 +1611,92 @@ export default function RunSummary() {
         />
       ) : (
         <>
-          {/* DS3: the finish leads with the map and the distance, the way
-              the run detail does. The route map comes first, coloured by
-              pace when there is an average to colour it against, and its
-              key sits under it, outside the map's rounded frame. Without
-              an average the map draws a plain line and there is nothing
-              for a key to explain. */}
-          {points.length > 1 && (
-            <div className="mx-4 mb-4">
-              <div className="rounded-2xl overflow-hidden">
-                <RunMap
-                  points={points}
-                  currentPoint={null}
-                  interactive={true}
-                  distanceMarkers={true}
-                  markerUnit={unit}
-                  height="h-64"
-                  paceColored={avgPaceSeconds > 0}
-                  avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={darkTheme}
-                />
-              </div>
-              {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
+          {/* DS4 (§14m rules 23 and 29-31): the finish opens on the run's
+              map as a full-bleed band, or on the runner without one; then
+              the date and time, the run done, the distance as the one
+              display figure, and one line. A first, a new best or a streak
+              milestone is the reward, in its own colour; any other run is
+              the calm summary. The route is the run's coral. Saved, the
+              map's band grows to fill the screen above the footer (6rem)
+              less 4.5rem, so the top of the stats card peeks above Share
+              and Done as the cue that there is more. */}
+          <div
+            className={cn(
+              "flex flex-col",
+              doneShown &&
+                "min-h-[calc(100svh-var(--safe-top)-var(--safe-bottom)-10.5rem)]"
+            )}
+          >
+            <div className="flex flex-1 flex-col px-4">
+              <FinishHero
+                fill={doneShown}
+                kicker={finishKicker(
+                  startedAt,
+                  state.finishedAt ??
+                    (startedAt !== undefined
+                      ? startedAt + elapsed * 1000
+                      : openedAt)
+                )}
+                tone={finishReward?.tone ?? null}
+                confetti={finishReward?.confetti ?? false}
+                band={
+                  points.length > 1 ? (
+                    <div
+                      data-finish-band
+                      className="absolute inset-y-0 -inset-x-4 overflow-hidden"
+                    >
+                      <RunMap
+                        points={points}
+                        currentPoint={null}
+                        interactive={true}
+                        distanceMarkers={true}
+                        markerUnit={unit}
+                        height="h-full"
+                        darkMode={darkTheme}
+                      />
+                    </div>
+                  ) : undefined
+                }
+                picture={
+                  points.length > 1 ? undefined : (
+                    <img
+                      src={runPoseUrl(
+                        runPoseFor(
+                          activityType === "tempo" ||
+                            activityType === "intervals" ||
+                            activityType === "race"
+                            ? activityType
+                            : undefined
+                        )
+                      )}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      decoding="async"
+                      className="h-full max-h-80 w-[min(70%,17rem)] object-contain"
+                    />
+                  )
+                }
+                title={heroCopy}
+                titleLevel={1}
+                figure={{
+                  to: distance,
+                  format: (metres) => distanceValue(metres, unit, 2),
+                }}
+                caption={`${distanceUnitLabel(unit)} in ${formatClock(elapsed)}`}
+                line={
+                  finishLine ?? (paceVerdict?.speaks ? paceVerdict.line : null)
+                }
+                lineIcon={
+                  finishReward?.tone === "achievement" ? "trophy" : null
+                }
+              />
             </div>
-          )}
-
-          <div className="pb-4 px-4">
-            <h1 className="text-base font-bold text-running-strong">
-              {heroCopy}
-            </h1>
-            {/* The distance is the page's one big number, in the reader's
-                unit. It was a tile reading km whatever the unit setting
-                said, beside a pace that also ignored it. It counts up as
-                the finish screen's figures do on a lift (StatFigure's
-                0.6s); a corrected distance counts from the one shown. */}
-            <p className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
-              <AnimatedNumber
-                value={distance}
-                format={(metres) => distanceValue(metres, unit, 2)}
-                duration={0.6}
-              />{" "}
-              <span className="font-sans text-h3 font-bold text-muted-foreground">
-                {distanceUnitLabel(unit)}
-              </span>
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {/* en-GB, like every other dated surface in the app. This
-                  was one of two rendered dates still pinned to en-US. */}
-              {new Date().toLocaleDateString("en-GB", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-            {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). It speaks only
-                when the run didn't match its type (Run21 (6)). */}
-            {paceVerdict?.speaks && (
-              <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
-                {paceVerdict.line}
-              </p>
-            )}
-
-            {/* The run half of the completion delight beat. The lift side
-                (SessionCompleteScreen) has shipped `getVolumeComparison`
-                since the module landed; the distance twin was written at
-                the same time and never wired, so only lifters got it —
-                an odd gap in an app whose identity is hybrid. Lives in
-                the VALID branch, so a sub-threshold GPS glitch never
-                claims "40 Olympic pool lengths". */}
-            {funComparison && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                {funComparison}
-              </p>
-            )}
           </div>
+
+          {/* Below the first screen: the week, the run's numbers, its
+              splits and climb, and what the runner adds to it. */}
+          <div className="h-6" aria-hidden="true" />
 
           {/* Offline notice */}
           {!isOnline && !saved && (
@@ -1350,34 +1714,10 @@ export default function RunSummary() {
               <WifiOff size={20} className="text-warning-strong" />
               <div>
                 <p className="font-medium text-warning-strong text-xs">
-                  You're offline
+                  You’re offline
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Saved confirmation */}
-          {saved && (
-            <div
-              className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
-              /* Was emerald-400 (#34D399) — stock Tailwind, never a
-                 Tropos green — under a text-success-strong label. */
-              style={{
-                background: "hsl(var(--success) / 0.12)",
-                border: "1px solid hsl(var(--success) / 0.25)",
-              }}
-            >
-              <CheckCircle size={20} className="text-success-strong" />
-              <div>
-                <p className="font-medium text-success-strong text-xs">
-                  {pendingSync
-                    ? isOnline
-                      ? "Saved on this phone · waiting to sync"
-                      : "Saved locally — will sync when online"
-                    : "Run saved"}
                 </p>
               </div>
             </div>
@@ -1456,7 +1796,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
+                      {`This didn’t match today’s ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -1581,7 +1921,7 @@ export default function RunSummary() {
               other run goes from the headline to the stats card. */}
           {primaryStat && (
             <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
-              <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">
+              <p className="text-3xl font-extrabold font-figure tabular-nums leading-tight text-running">
                 {primaryStat.value}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -1616,6 +1956,21 @@ export default function RunSummary() {
               ]}
             />
           </div>
+          {/* The run half of the completion delight beat (the lift side
+              has `getVolumeComparison`), under the stats card, which peeks
+              above the footer. Lives in the VALID branch, so a
+              sub-threshold GPS glitch never claims "40 Olympic pool
+              lengths". */}
+          {funComparison && (
+            <p className="px-4 -mt-2 mb-4 text-sm text-muted-foreground">
+              {funComparison}
+            </p>
+          )}
+          {heartRatePreview && (
+            <div className="px-4 mb-4">
+              <HeartRateSummaryCard summary={heartRatePreview} />
+            </div>
+          )}
 
           {/* Grade-adjusted pace — one calm line, only when the climb was
               material (Run13 item 4, display-only). */}
@@ -1625,7 +1980,7 @@ export default function RunSummary() {
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {paceMinSec(gap.gapSecondsPerKm, unit)}
               </span>{" "}
-              {paceUnitLabel(unit)} — flat-equivalent for this climb
+              {paceUnitLabel(unit)}: the flat-ground equivalent of this climb
             </p>
           )}
 
@@ -1699,15 +2054,13 @@ export default function RunSummary() {
 
           {/* A race plan's week. The week's runs against the plan's are
               the card's above: this row counted them a second time. */}
-          {profile?.runMode === "race_prep" &&
-            runPlanTotalWeeks &&
-            runPlanCurrentWeek != null && (
-              <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
-                <span className="font-semibold text-foreground">
-                  Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
-                </span>
-              </div>
-            )}
+          {raceWeek && (
+            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
+              <span className="font-semibold text-foreground">
+                {racePlanWeekLabel(raceWeek, "long")}
+              </span>
+            </div>
+          )}
 
           {/* Best efforts: the quickest 1K / 5K / 10K anywhere in the
               track. The same card a saved run shows. */}
@@ -1743,6 +2096,44 @@ export default function RunSummary() {
           plus optional caption, so duplicating the toggle here would
           be confusing. */}
           <div className="px-4 space-y-2">
+            {/* The run's name, edited where it stands: prefilled, and given
+                back if left empty. Once the run is written its name has
+                gone with it, and out on the post, so it is shown, not
+                edited; a Retry after that resumes the same run. */}
+            {savedRunId === null &&
+            (canShowNormalSave({ isInvalid: false, saveStatus }) ||
+              canShowRetrySave({ saveStatus })) ? (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={runName}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={() => {
+                    if (!runName.trim()) setNameDraft(null);
+                  }}
+                  aria-label="Run name"
+                  readOnly={saveStatus === "saving"}
+                  maxLength={RUN_NAME_MAX}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                  dir="auto"
+                  className="ds-input pr-11 text-base font-bold"
+                />
+                <Pencil
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+              </div>
+            ) : (
+              receipt?.name && (
+                <p
+                  dir="auto"
+                  className="px-1 text-base font-bold text-foreground break-words"
+                >
+                  {receipt.name}
+                </p>
+              )
+            )}
             {/* RUN-03: optional one-tap effort check-in. Hidden for invalid
                 runs (nothing meaningful to calibrate against). Skippable —
                 null is a first-class answer, so no segment starts selected
@@ -1772,19 +2163,11 @@ export default function RunSummary() {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any notes about this run..."
+              placeholder="Any notes about this run…"
               aria-label="Run notes"
               rows={3}
               className="ds-input resize-none text-sm"
             />
-
-            {canShowRetrySave({ saveStatus }) && (
-              /* Same RetryBanner used by InvalidRunReview — durable
-             affordance for save failures. Toast still fires but can be
-             hidden behind Safari PWA bottom chrome; the banner sits in
-             the action row where the user is already looking. */
-              <RetryBanner error={saveError} onRetry={handleSave} />
-            )}
 
             {/* A manually-entered distance is a TYPED number, so it can be
                 wrong by any amount — 5 km for a 6 km treadmill run is as
@@ -1805,17 +2188,6 @@ export default function RunSummary() {
                 />
               )}
 
-            {canShowNormalSave({ isInvalid: false, saveStatus }) && (
-              <Button
-                variant="sport"
-                fullWidth
-                onClick={handleSave}
-                loading={saveStatus === "saving"}
-              >
-                Save run
-              </Button>
-            )}
-
             {/* Pace insight (Pro) — surfaced at the post-run decision moment,
                 before navigation. Only in this valid-run post-save stack;
                 explicit approve/dismiss, never a silent benchmark change. */}
@@ -1829,11 +2201,14 @@ export default function RunSummary() {
 
             {saved &&
               (() => {
+                /* After the run's own day, as the kicker reads it: a run
+                   begun on Sunday night and saved after midnight leaves
+                   Monday's run next, not Tuesday's. */
                 const next = programState?.runDays
                   ?.filter(
                     (day) =>
                       day.date &&
-                      day.date > localDateString() &&
+                      day.date > summaryDay &&
                       !day.completed &&
                       day.status !== "skipped" &&
                       day.status !== "race_no_show"
@@ -1855,7 +2230,13 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
-            {saved && <CompletionExtras share={shareAction} />}
+            {saved && (
+              <CompletionExtras
+                share={shareAction}
+                kind="run"
+                activationJourneyV2={isActivationJourneyV2(profile)}
+              />
+            )}
 
             {/* The save action the post-save fields never had. It appears
                 only once they differ from what was written, so a user who
@@ -1892,18 +2273,6 @@ export default function RunSummary() {
               </Button>
             )}
 
-            {/* One Share: the card, and under it the run's other ways out
-                (its Circle, its race's community, its GPX file), which
-                were three more buttons here. */}
-            {canShowShare({ isInvalid: false, saveStatus }) && (
-              <button
-                type="button"
-                onClick={handleShare}
-                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-              >
-                Share
-              </button>
-            )}
             {canShowDiscard({ saveStatus }) && (
               <Button
                 variant="destructive-tinted"
@@ -1915,20 +2284,75 @@ export default function RunSummary() {
             )}
           </div>
 
-          {/* Saved, Done comes last and stays in thumb reach, as on the
+          {/* The page's one main action stays in thumb reach, as on the
               lift's finish (Pol1): pinned to the bottom of the screen
-              while the page scrolls under it. */}
-          {doneShown && (
-            <div className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
-              <Button
-                ref={doneRef}
-                variant="sport"
-                size="lg"
-                fullWidth
-                onClick={() => navigate("/program?tab=run")}
-              >
-                Done
-              </Button>
+              while the page scrolls under it. Save run before the save,
+              wherever the splits run to, then Done in its place. */}
+          {(canShowNormalSave({ isInvalid: false, saveStatus }) ||
+            canShowRetrySave({ saveStatus }) ||
+            doneShown) && (
+            <div
+              data-testid="summary-footer"
+              className="sticky bottom-0 z-10 mt-4 bg-background px-4 pt-3 pb-[calc(0.75rem+var(--safe-bottom))]"
+            >
+              {canShowRetrySave({ saveStatus }) ? (
+                /* A failed save keeps its answer where Save run was: the
+                   same RetryBanner InvalidRunReview uses. A toast fires
+                   too, but Safari's bottom chrome can hide it. */
+                <RetryBanner error={saveError} onRetry={handleSave} />
+              ) : doneShown ? (
+                /* One Share: the card, and under it the run's other ways
+                   out (its Circle, its race's community, its GPX file).
+                   Done is the screen's one filled button, neutral (DS4
+                   call 1a); under them, the save's state. */
+                <>
+                  <div className="flex gap-3">
+                    {canShowShare({ isInvalid: false, saveStatus }) && (
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={handleShare}
+                        leftIcon={
+                          <Share className="size-4" aria-hidden="true" />
+                        }
+                      >
+                        Share
+                      </Button>
+                    )}
+                    <Button
+                      ref={doneRef}
+                      variant="neutral"
+                      className="flex-[1.4]"
+                      onClick={() => navigate("/program?tab=run")}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                  <p
+                    role="status"
+                    className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground"
+                  >
+                    <CheckCircle
+                      className="size-4 text-success-strong"
+                      aria-hidden="true"
+                    />
+                    {pendingSync
+                      ? isOnline
+                        ? "Saved on this phone · waiting to sync"
+                        : "Saved locally — will sync when online"
+                      : "Run saved"}
+                  </p>
+                </>
+              ) : (
+                <Button
+                  variant="neutral"
+                  fullWidth
+                  onClick={handleSave}
+                  loading={saveStatus === "saving"}
+                >
+                  Save run
+                </Button>
+              )}
             </div>
           )}
         </>
@@ -1952,7 +2376,13 @@ export default function RunSummary() {
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",
-          date: new Date().toLocaleDateString("en-GB", {
+          // The finish screen's words and colour, on the card (DS4).
+          headline: heroCopy,
+          line: finishLine
+            ? `${finishLine.before}${finishLine.figure}${finishLine.after}`
+            : undefined,
+          tone: finishReward?.tone,
+          date: runDate.toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",
             year: "numeric",
@@ -1972,12 +2402,18 @@ export default function RunSummary() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {
           setShowDiscardConfirm(false);
-          if (user?.uid) clearStoredRun(user.uid);
+          if (user?.uid) {
+            clearStoredRun(user.uid);
+            if (state.identity) {
+              clearHeartRateSession(user.uid, state.identity.sessionId);
+              void clearWatchRunSession(state.identity.sessionId);
+            }
+          }
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}

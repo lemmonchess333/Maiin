@@ -105,7 +105,7 @@ describe("RunFitnessSection — a race time typed in", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     enter("12:00");
     expect(
-      screen.getByText("That time doesn't look right. Check it and try again.")
+      screen.getByText("That time doesn’t look right. Check it and try again.")
     ).toBeInTheDocument();
     expect(updateProfile).not.toHaveBeenCalled();
   });

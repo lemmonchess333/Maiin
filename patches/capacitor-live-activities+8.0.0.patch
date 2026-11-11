@@ -1,0 +1,82 @@
+diff --git a/node_modules/capacitor-live-activities/Package.swift b/node_modules/capacitor-live-activities/Package.swift
+index 5942995..f40bd73 100644
+--- a/node_modules/capacitor-live-activities/Package.swift
++++ b/node_modules/capacitor-live-activities/Package.swift
+@@ -7,7 +7,10 @@ let package = Package(
+     products: [
+         .library(
+             name: "CapacitorLiveActivities",
+-            targets: ["LiveActivitiesPlugin"])
++            targets: ["LiveActivitiesPlugin"]),
++        .library(
++            name: "LiveActivitiesKit",
++            targets: ["LiveActivitiesKit"])
+     ],
+     dependencies: [
+         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
+diff --git a/node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Parser/JSONLayoutParser+ProgressTimer.swift b/node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Parser/JSONLayoutParser+ProgressTimer.swift
+index 19404a3..6158951 100644
+--- a/node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Parser/JSONLayoutParser+ProgressTimer.swift
++++ b/node_modules/capacitor-live-activities/ios/LiveActivitiesKit/Parser/JSONLayoutParser+ProgressTimer.swift
+@@ -46,8 +46,11 @@ extension JSONLayoutParser {
+         Logger.viewCycle.error("📀 buildTimerView -> endDate: \(endDate) / style: \(style ?? "-")")
+         
+         if(style == "countdown"){
++            // A range whose end has passed traps: a card drawn again after
++            // its countdown shows 0:00 instead.
++            let now = Date.now
+             return AnyView(Text(
+-                timerInterval: Date.now...endDate,
++                timerInterval: now...max(endDate, now),
+                 pauseTime: nil,
+                 countsDown: true,
+                 showsHours: false
+diff --git a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
+index 8d2aad6..010503d 100644
+--- a/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
++++ b/node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift
+@@ -1,6 +1,7 @@
+ import Foundation
+ import OSLog
+ import SwiftUI
++import LiveActivitiesKit
+ 
+ #if canImport(ActivityKit)
+ import ActivityKit
+@@ -135,14 +136,12 @@ import ActivityKit
+         finalData: [String: Any]?,
+         behavior: [String: Any]?
+     ) async throws {
+-        guard let activity = activities[activityId] else {
+-            // Tentar recuperar
++        if activities[activityId] == nil {
++            // An activity from an earlier launch: find it, then end it.
+             await syncExistingActivities()
+-            guard let activity = activities[activityId] else {
+-                throw LiveActivitiesError.activityNotFound
+-            }
+-            
+-            return
++        }
++        guard let activity = activities[activityId] else {
++            throw LiveActivitiesError.activityNotFound
+         }
+         
+         // Limpar dados do App Group
+@@ -162,9 +161,15 @@ import ActivityKit
+             ActivityContent(state: $0, staleDate: nil)
+         }
+         
++        // "immediate" takes the card off the Lock Screen now; the default
++        // leaves an ended card there for up to four hours.
++        let dismissalPolicy: ActivityUIDismissalPolicy =
++            (behavior?["dismissalPolicy"] as? String) == "immediate"
++            ? .immediate
++            : .default
+         await activity.end(
+             finalContent,
+-            dismissalPolicy: .default
++            dismissalPolicy: dismissalPolicy
+         )
+         
+         activities.removeValue(forKey: activityId)

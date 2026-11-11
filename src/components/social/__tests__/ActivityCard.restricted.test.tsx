@@ -116,7 +116,7 @@ describe("ActivityCard props — a restricted account (S4e)", () => {
     await giveProps();
     expect(screen.getByRole("button", { name: "Give props" })).toBeEnabled();
     expect(H.toastError).toHaveBeenCalledWith(
-      "Couldn't give props. Try again."
+      "Couldn’t give props. Try again."
     );
   });
 

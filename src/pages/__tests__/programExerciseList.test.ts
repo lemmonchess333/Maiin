@@ -202,7 +202,7 @@ describe("the day cells name the day, not the programme", () => {
 
 describe("the two repeats the card no longer carries", () => {
   it("does not count the exercises above a list of them", () => {
-    expect(code).toMatch(/~\$\{estimatedMinutes\} min/);
+    expect(code).toMatch(/aboutMinutes\(estimatedMinutes\)/);
     expect(code).not.toMatch(/\$\{exerciseCount\} exercises/);
     expect(code).not.toMatch(/\bexerciseCount\b/);
   });
@@ -213,16 +213,35 @@ describe("the two repeats the card no longer carries", () => {
   });
 });
 
-describe("the card says which lift the day starts with", () => {
-  it("on a line of its own that wraps, not in the meta", () => {
-    /* The day is named by its type ("Pull A"), so the lift it opens with
-       is said in words. A meta item holds together, so a long lift's name
-       there would run past the card at the largest text; the description
-       wraps. A finished or missed day drops it with the minutes. */
+describe("the card carries Home's line, and names the first lift without one", () => {
+  it("passes Home's numbers line, and says the first lift on a line of its own when there is none", () => {
+    /* DS4: the card draws Home's line for the same session
+       (`liftHeroLine`). Where the day has no line, the lift it opens with
+       is said in words, on a description that wraps: a meta item holds
+       together, so a long lift's name there would run past the card at
+       the largest text. A finished or missed day drops both. */
+    expect(code).toMatch(/line=\{sessionLine\}/);
     expect(code).toMatch(
-      /description=\{\s*sessionFirstLift && status !== "completed" && !missed\s*\?\s*`Starts with \$\{sessionFirstLift\}`/
+      /sessionLine =\s*selectedWorkout && status !== "completed" && !missed\s*\?\s*liftHeroLine\(/
+    );
+    expect(code).toMatch(
+      /description=\{\s*!sessionLine &&\s*sessionFirstLift &&\s*status !== "completed" &&\s*!missed\s*\?\s*`Starts with \$\{sessionFirstLift\}`/
     );
     expect(code).not.toMatch(/meta=\{[^}]*Starts with/);
     expect(card).toMatch(/\{description && \(/);
+  });
+});
+
+describe("an exercise row's long press", () => {
+  it("is useLongPress's, so a tremor keeps it and its lift does not also open the history", () => {
+    expect(code).toMatch(/const exercisePress = useLongPress</);
+    expect(code).toMatch(/onTouchMove=\{exercisePress\.move\}/);
+    expect(code).toMatch(/onTouchCancel=\{exercisePress\.end\}/);
+    // The row's tap asks first, and goes nowhere for the press's own lift.
+    expect(code).toMatch(
+      /if \(exercisePress\.swallowClick\(\)\)\s*return;\s*navigate\(\s*`\/history\/exercise\//
+    );
+    // The press that cancelled on any movement at all is gone.
+    expect(code).not.toMatch(/onTouchMove=\{handleLongPressCancel\}/);
   });
 });

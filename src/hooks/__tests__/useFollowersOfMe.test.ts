@@ -44,7 +44,7 @@ describe("useFollowersOfMe", () => {
      exercised, one cache notifying sibling instances, is the same
      mechanism `useBlockedUsers` uses, where a consumer genuinely mutates
      it; coverage of that shape lives with the hook that has a caller. */
-  it("isolates cached sets per uid (different signed-in users don't share followers)", async () => {
+  it("isolates cached sets per uid (different signed-in users don’t share followers)", async () => {
     /* Seeded through the fetch — the only path that fills the cache now
        that the imperative mutators are gone. Alice follows user A only. */
     mockGetFollowerIds.mockImplementation(

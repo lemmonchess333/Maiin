@@ -429,39 +429,41 @@ export function applyEquipmentFilterToWorkouts(
     let pick = firstUnderCap(
       options.filter((o) => eligible(o) && offerableTo(experience, o))
     );
-    // Vertical-pull coverage floor: at home/minimal every pull a beginner
-    // may be offered is a cable (pulldowns), and every pull an elbow
-    // injury leaves is one too, so nothing survives the equipment check;
-    // for a beginner the ungated fallback below would restore the
-    // pull-up. The honest coaching answer at that tier is the inverted
-    // row — bodyweight, difficulty scaled by foot position, THE reference
-    // novice pull regression, and a neutral-grip pull that spares the
-    // elbow. It is a horizontal_pull by category (which is why it cannot
-    // live in the vertical_pull pool), so it re-points here the same way
-    // the pinned calf fallback does, and the slot's category follows the
-    // movement honestly. Like the calf raise, it holds even when the week
-    // has it twice: a beginner's other choice is the pull-up, and anyone
-    // else reaches it only when nothing else fits.
-    const invertedRowFits =
-      ex.movementCategory === "vertical_pull" &&
-      isAvailable("inverted-row") &&
-      !usedIds.has("inverted-row") &&
-      !isInjuryContra("inverted-row");
+    // At home a beginner's scalable vertical pulls need a cable. Prefer
+    // the inverted row, then another available row if it already occupies
+    // this day. With only the inverted-row fallback, a five/six-day plan
+    // whose pull day already held it restored unassisted pull-ups through
+    // the ungated fallback below. A row's load/angle can be reduced; a
+    // pull-up's whole-body minimum cannot. Injury and equipment checks
+    // still apply, and the replacement's category and load follow its ID.
+    const beginner = toExperience(experience) === "beginner";
     if (
-      invertedRowFits &&
-      (toExperience(experience) === "beginner"
-        ? !pick
-        : !pick && !options.some(eligible))
+      ex.movementCategory === "vertical_pull" &&
+      !pick &&
+      (beginner || !options.some(eligible))
     ) {
-      return swapTo("inverted-row");
+      const rows = [
+        ...exerciseBank.horizontal_pull.filter((o) => o.id === "inverted-row"),
+        ...exerciseBank.horizontal_pull.filter((o) => o.id !== "inverted-row"),
+      ].filter(eligible);
+      const row =
+        rows.find((o) => offerableTo(experience, o)) ??
+        rows.find((o) => !o.bodyweightFloor);
+      if (row) return swapTo(row.id);
     }
-    pick = pick ?? firstUnderCap(options.filter(eligible));
+    // Complexity can give way when kit has no simpler choice, but never
+    // reintroduce the bodyweight floor a beginner's level gate removed.
+    pick =
+      pick ??
+      firstUnderCap(
+        options.filter((o) => eligible(o) && !(beginner && o.bodyweightFloor))
+      );
     if (pick) return swapTo(pick.id);
     // No fitting alternative — keep but flag.
     return {
       ...ex,
       notes:
-        `${ex.name} needs equipment you don't have — replace it manually ` +
+        `${ex.name} needs equipment you don’t have — replace it manually ` +
         `or use a bodyweight variation.`,
     };
   };

@@ -158,3 +158,26 @@ replace — the decision above.
 - **The RC webhook is not an App Check surface.** It authenticates via a
   shared `Authorization` header (constant-time compare) + event-id
   idempotency — separate from the app callables' App Check rollout.
+
+## STATUS 2026-11-01 — the hand-rolled Apple path is deleted
+
+`functions/appleIAP.js`, `functions/applePurchase.js` and
+`functions/lib/stripeAutoCancel.js` are gone, and with them the
+`verifyApplePurchase`, `restoreApplePurchases` and `appleIAPWebhook`
+exports and the `APPLE_KEY_ID`, `APPLE_ISSUER_ID` and `APPLE_PRIVATE_KEY`
+bindings. The app had not called them since purchases and restores moved to
+RevenueCat (#2434), but they were still deployed: `restoreApplePurchases`
+took a raw transaction id from any signed-in caller, and once RevenueCat
+sold a subscription nothing had bound that id, so another account could
+claim it; neither it nor the webhook read refunds. The deploy runs with
+`--force`, so the next release deletes the three functions.
+`functions/__tests__/triggerMetadata.test.js` fails if any of them, or an
+`APPLE_*` secret binding, comes back.
+
+What stays: the `appleSubscriptions` and `appleNotifications` documents
+already written (account deletion still removes a deleted account's), the
+`deletedBillingIdentities` tombstones account deletion writes, the
+`appleOriginalTransactionId` / `appleProductId` profile fields the rules
+keep server-only, and `subscriptionReconciliation.js`, which RevenueCat's
+entitlement write uses. App Store Server Notifications go to RevenueCat
+only (`docs/launch/owner-steps-2026-10-14.md`, 4.1).

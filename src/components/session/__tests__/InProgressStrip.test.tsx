@@ -78,4 +78,27 @@ describe("InProgressStrip", () => {
     fireEvent.click(screen.getByRole("button", { name: "Resume Free run" }));
     expect(h.unlock).toHaveBeenCalledOnce();
   });
+
+  it("offers review for a finished recording without restarting run audio", () => {
+    const onReview = vi.fn();
+    render(
+      <InProgressStrip
+        session={{
+          sport: "run",
+          name: "Easy run",
+          sets: null,
+          elapsedSeconds: 1800,
+          resumeTarget: "/run-summary",
+          reviewPending: true,
+        }}
+        onResume={onReview}
+      />
+    );
+    expect(
+      screen.getByRole("group", { name: "Easy run ready to review" })
+    ).toHaveTextContent("Ready to review");
+    fireEvent.click(screen.getByRole("button", { name: "Review Easy run" }));
+    expect(onReview).toHaveBeenCalledOnce();
+    expect(h.unlock).not.toHaveBeenCalled();
+  });
 });

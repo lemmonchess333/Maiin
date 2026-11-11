@@ -139,7 +139,7 @@ export function notifyMealsLogged(
   toast.success(
     navigator.onLine
       ? message
-      : "Saved on this phone — syncs when you're back online",
+      : "Saved on this phone — syncs when you’re back online",
     {
       duration: 5000,
       action: {
@@ -156,7 +156,7 @@ export function notifyMealsLogged(
             toast.error(
               error instanceof Error
                 ? error.message
-                : "Couldn't undo this entry."
+                : "Couldn’t undo this entry."
             );
           }
         },

@@ -430,7 +430,7 @@ export function blockConsequence(input: {
     // Build muscle → Get stronger, the first two entries in the picker and
     // the likeliest change anyone makes, which lowers every target.
     const loadDrops = targetsRise(currentFocus, focus, experience);
-    const aiming = changes ? " — only what you're aiming for changes." : ".";
+    const aiming = changes ? " — only what you’re aiming for changes." : ".";
     const tail =
       pace === "easing"
         ? ` ${hold}`

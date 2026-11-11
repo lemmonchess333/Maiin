@@ -95,7 +95,7 @@ function Player({
       {!ready && fallback}
       <div
         className={cn(
-          "mx-auto w-full max-w-[320px] rounded-3xl border border-border bg-card overflow-hidden card-shadow",
+          "mx-auto w-full max-w-[320px] rounded-3xl border border-border dark:border-0 bg-card overflow-hidden card-shadow",
           // Off-flow until it plays: the poster holds the slot, and the
           // element stays rendered (not display:none) so the browser
           // treats it as a visible autoplay candidate.

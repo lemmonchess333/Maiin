@@ -23,6 +23,7 @@ const accountDeletionStatus = require("./accountDeletionStatus");
 const accountDeletionLocks = require("./accountDeletionLocks");
 const deletedAccountsTombstone = require("./deletedAccountsTombstone");
 const accountDeletionLedger = require("./accountDeletionLedger");
+const { runMoveEvidenceWindow, runMoveCompletionEvidence, runMoveSavedEvidenceRow } = require("./runReschedule");
 const {
   sanitizeProgramState,
   programStateTooLarge,
@@ -111,6 +112,39 @@ async function runProgramCommandTransaction({ firestore, uid, command, now }) {
       command,
       now,
     });
+
+    // Soft completion is derived by the client's catalogue-aware claim map,
+    // not persisted on the planned slot. Guard the entire evidence the person
+    // reviewed instead of introducing a second claim engine or permanently
+    // blocking an unrelated saved run. Query reads participate in transaction
+    // conflict detection; a newly saved/corrected run invalidates the preview.
+    if (command.kind === "moveRunDay" && command.expected) {
+      const currentDays = programSnap.data().runDays || [];
+      const window = runMoveEvidenceWindow(currentDays);
+      if (!window) {
+        throw new functions.https.HttpsError("failed-precondition", "Your plan changed. Review the latest week.");
+      }
+      const runs = profileRef.collection("runs");
+      const lower = Date.parse(window.since) - 14 * 60 * 60 * 1000;
+      const upper = Date.parse(window.until) + 38 * 60 * 60 * 1000;
+      const [dated, timed] = await Promise.all([
+        tx.get(runs.where("date", ">=", window.since).where("date", "<=", window.until).limit(257)),
+        tx.get(runs.where("completedAt", ">=", admin.firestore.Timestamp.fromMillis(lower))
+          .where("completedAt", "<=", admin.firestore.Timestamp.fromMillis(upper)).limit(257)),
+      ]);
+      if (dated.size > 256 || timed.size > 256) {
+        throw new functions.https.HttpsError("failed-precondition", "Too many saved activities to review this change. Refresh your plan.");
+      }
+      const unique = new Map([...dated.docs, ...timed.docs].map(doc => [doc.id, doc]));
+      const timezone = profileSnap.data()?.timezone;
+      const rows = [...unique.values()].flatMap(doc => {
+        const row = runMoveSavedEvidenceRow(doc.id, doc.data(), instant => programCommands.localDateInZone(instant, timezone));
+        return row ? [row] : [];
+      });
+      if (runMoveCompletionEvidence(currentDays, rows) !== command.expected.completionEvidence) {
+        throw new functions.https.HttpsError("failed-precondition", "Your saved activities changed. Review the latest week.");
+      }
+    }
 
     const sanitized = sanitizeProgramState(result.state);
     if (sanitized.dropped.length > 0 || programStateTooLarge(sanitized.value)) {

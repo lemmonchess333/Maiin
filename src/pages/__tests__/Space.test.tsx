@@ -284,13 +284,13 @@ describe("Space page", () => {
     );
   });
 
-  it("says the posts couldn't load, rather than that there are none, and tries again", async () => {
+  it("says the posts couldn’t load, rather than that there are none, and tries again", async () => {
     failNextFirestore("getDocs", { path: `${SPACE}/posts` });
     seedFirestore({ [`${SPACE}/posts/coach-2026-09-21`]: COACH });
     renderSpace();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load posts"
+      "Couldn’t load posts"
     );
     expect(unfiredFailures()).toEqual([]);
     expect(screen.queryByText("No posts from members yet")).toBeNull();
@@ -298,14 +298,14 @@ describe("Space page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     // The retry reads again; the space really has no member posts.
     await screen.findByText("No posts from members yet");
-    expect(screen.queryByText("Couldn't load posts")).toBeNull();
+    expect(screen.queryByText("Couldn’t load posts")).toBeNull();
   });
 
   it("an empty answer from this phone's cache is not an empty space", async () => {
     setSnapshotMetadata(`${SPACE}/posts`, { fromCache: true });
     renderSpace();
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load posts"
+      "Couldn’t load posts"
     );
   });
 
@@ -369,7 +369,7 @@ describe("Space page", () => {
       fireEvent.click(screen.getByRole("button", { name: "Load more posts" }));
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith(
-          "Couldn't load more posts. Try again."
+          "Couldn’t load more posts. Try again."
         )
       );
       expect(screen.getAllByTestId("space-post")).toHaveLength(POSTS_PAGE_SIZE);
@@ -431,7 +431,7 @@ describe("a restricted account (S4e)", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Join" }));
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
-      "Your account is restricted, so you can't do this for now.",
+      "Your account is restricted, so you can’t do this for now.",
       expect.anything()
     );
     expect(screen.getByRole("button", { name: "Join" })).toBeInTheDocument();

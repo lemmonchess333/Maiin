@@ -49,7 +49,7 @@ const Figure = memo(function Figure({
   return (
     <div
       ref={figureRef}
-      className="mx-auto max-w-[190px]"
+      className="mx-auto h-[360px] max-w-[360px] [&>svg]:size-full"
       dangerouslySetInnerHTML={html}
     />
   );
@@ -101,6 +101,28 @@ const PHASE_LABEL: Record<RepPhase, string> = {
   lockout: "Lockout",
   done: "Rep complete",
   cycle: "Steady rhythm",
+};
+
+/** Movement-specific cues where the generic direction omits essential form
+ * or describes the wrong path. */
+const MOVEMENT_PHASE_LABEL: Record<string, Partial<Record<RepPhase, string>>> = {
+  "front-squat": {
+    drive: "Stand tall with elbows high",
+    eccentric: "Squat down with elbows high",
+  },
+  "clean-and-press": {
+    drive: "Clean to rack, then press overhead",
+    eccentric: "Lower to rack, then floor",
+  },
+  "seated-row": {
+    drive: "Pull handle to lower ribs",
+    eccentric: "Reach forward under control",
+  },
+  "hip-abduction-machine": {
+    drive: "Press knees apart",
+    eccentric: "Bring knees together slowly",
+  },
+  burpees: { cycle: "Brace in plank, land softly" },
 };
 
 /**
@@ -301,32 +323,46 @@ export default function LegacyExerciseRigDemo({
    * showing through — the exact contrast the muscle-map art was
    * designed against. A light backing would wash the gaps out. */
   if (reducedMotion) {
+    const burpeeStills = exerciseId === "burpees";
+    const stills = [
+      { t: openingT, label: burpeeStills ? "Squat" : null },
+      {
+        t: burpeeStills ? 0.84 : cycle ? 0.5 : openingT === 0 ? 1 : 0,
+        label: burpeeStills ? "Jump" : null,
+      },
+    ];
     return (
       <div
         role="img"
-        aria-label={`${name} demonstration · start and end positions`}
+        aria-label={
+          burpeeStills
+            ? `${name} demonstration · squat and jump positions`
+            : cycle
+              ? `${name} demonstration · two cycle positions`
+              : `${name} demonstration · start and end positions`
+        }
         className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
         data-demo-still="two-up"
       >
         {/* START position first, then the far end — so a deadlift reads
             floor-then-standing rather than the reverse. A cycle's far
             end is its opposite phase (t=0.5): the other foot forward,
-            the other pedal down. */}
-        <div
-          className="w-1/2 max-w-[150px]"
-          dangerouslySetInnerHTML={{
-            __html: renderBodyDemo(exerciseId, openingT),
-          }}
-        />
-        <div
-          className="w-1/2 max-w-[150px]"
-          dangerouslySetInnerHTML={{
-            __html: renderBodyDemo(
-              exerciseId,
-              cycle ? 0.5 : openingT === 0 ? 1 : 0
-            ),
-          }}
-        />
+            the other pedal down. Burpees shows its jump instead. */}
+        {stills.map((still) => (
+          <div key={still.t} className="w-1/2 max-w-[150px]">
+            <div
+              className="[&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+              dangerouslySetInnerHTML={{
+                __html: renderBodyDemo(exerciseId, still.t),
+              }}
+            />
+            {still.label && (
+              <p className="mt-1 text-center text-micro text-stage-muted">
+                {still.label}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
     );
   }
@@ -352,7 +388,7 @@ export default function LegacyExerciseRigDemo({
             and a label that only has to be recognised does not. */}
         <p
           aria-live="polite"
-          className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
+          className="mt-2 text-center text-micro text-stage-muted"
         >
           {beat.label}
           <span className="ml-2 font-mono tabular-nums opacity-70">
@@ -372,9 +408,9 @@ export default function LegacyExerciseRigDemo({
           the phase to screen-reader users without interrupting. */}
       <p
         aria-live="polite"
-        className="mt-2 text-center text-micro uppercase tracking-wider text-stage-muted"
+        className="mt-2 text-center text-micro text-stage-muted"
       >
-        {PHASE_LABEL[phase]}
+        {MOVEMENT_PHASE_LABEL[exerciseId]?.[phase] ?? PHASE_LABEL[phase]}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUid } from "@/lib/auth";
@@ -21,6 +22,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { shouldShowFollowingFeed } from "@/lib/socialGates";
 import PageShell from "@/components/ui/PageShell";
+import MedalRevealGate from "@/features/challenges/MedalRevealGate";
+import LeagueResultGate from "@/features/league/LeagueResultGate";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 /* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
@@ -59,38 +62,75 @@ export default function Social() {
   // deep-link directly to a tab and means browser back/forward
   // navigates between tabs naturally. URL writes are {replace:true}
   // so each tab tap doesn't accumulate browser history entries.
-  // Default 'feed' is the URL-clean state (`?tab=` is stripped when
-  // on feed). The Soc5c smart-default below may rewrite the URL to
-  // 'find' for genuine new users (zero follows).
+  // With no `?tab=`, the visit's own default below decides.
   const [searchParams, setSearchParams] = useSearchParams();
-  /* Legacy param compatibility (explicit contract): ?tab=crews (the
-     old Community tab — Spaces/Challenges/Circles now live on
-     Together) and ?tab=find (the old People tab — now the search
-     overlay, opened by the effect below) both keep resolving. Any
-     other/missing value lands on Together, the URL-clean default
-     (`?tab=` stripped). ?tab=feed remains the explicit Feed link. */
+  /* An explicit ?tab= always wins: ?tab=feed opens Feed, and any other
+     value lands on Together, ?tab=together and the legacy ?tab=crews (the
+     old Community tab — Spaces/Challenges/Circles now live on Together)
+     and ?tab=find (the old People tab — now the search overlay, opened by
+     the effect below) among them. With none, a visit opens on Feed once
+     the viewer follows anyone and on Together until then (Mob2 call 6:
+     Soc12 gave every account a feed with posts in it; Strava and Hevy
+     open on the feed), and stays there: a follow made during the visit
+     doesn't move them. A count that cannot be read opens on Together.
+     Until the count is known neither tab shows, so the page never opens
+     on one and jumps. */
   const tabFromUrl = searchParams.get("tab");
-  const tab: SocialTab = tabFromUrl === "feed" ? "feed" : "together";
+  /* Starting a Circle from a plan card (`?circleCreate=`) is Together's
+     for the whole visit: Together's Circles section strips the hand-off
+     from the URL as soon as it has read it. */
+  const [arrivedToStartCircle] = useState(() =>
+    searchParams.has("circleCreate")
+  );
+  /* Whether the viewer followed anyone when the count first came in
+     (false when it could not be read): the visit's tab and its feed's
+     source (below) both open from it. */
+  const [openedFollowing, setOpenedFollowing] = useState<boolean | null>(null);
+  if (
+    openedFollowing === null &&
+    (followingCount !== null || followingCountFailed)
+  ) {
+    setOpenedFollowing((followingCount ?? 0) > 0);
+  }
+  const tab: SocialTab | null =
+    tabFromUrl === "feed"
+      ? "feed"
+      : tabFromUrl || arrivedToStartCircle || openedFollowing === false
+        ? "together"
+        : openedFollowing
+          ? "feed"
+          : null;
 
   /* People overlay — a full-screen search surface, not a tab. State-
      driven like NotificationsSheet; the legacy ?tab=find deep link
      opens it once on arrival and normalises the URL to Together so
      back/refresh behave predictably. */
+  /* Every URL write here sets one param in place ({replace:true}). */
+  const setParam = useCallback(
+    (key: "tab" | "feed", value: string) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          updated.set(key, value);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const [peopleOpen, setPeopleOpen] = useState(false);
   const legacyFindHandledRef = useRef(false);
   useEffect(() => {
-    if (tabFromUrl !== "find" || legacyFindHandledRef.current) return;
+    if (tabFromUrl !== "find") {
+      legacyFindHandledRef.current = false;
+      return;
+    }
+    if (legacyFindHandledRef.current) return;
     legacyFindHandledRef.current = true;
     setPeopleOpen(true);
-    setSearchParams(
-      (params) => {
-        const updated = new URLSearchParams(params);
-        updated.delete("tab");
-        return updated;
-      },
-      { replace: true }
-    );
-  }, [tabFromUrl, setSearchParams]);
+    setParam("tab", "together");
+  }, [tabFromUrl, setParam]);
   const openPeople = useCallback(() => {
     setPeopleOpen(true);
     trackSocialEvent("social_tab_selected", { tab: "find" });
@@ -98,18 +138,10 @@ export default function Social() {
 
   const setTab = useCallback(
     (next: SocialTab) => {
-      setSearchParams(
-        (params) => {
-          const updated = new URLSearchParams(params);
-          if (next === "together") updated.delete("tab");
-          else updated.set("tab", next);
-          return updated;
-        },
-        { replace: true }
-      );
+      setParam("tab", next);
       trackSocialEvent("social_tab_selected", { tab: next });
     },
-    [setSearchParams]
+    [setParam]
   );
 
   // Explicit source selection always wins. Otherwise a visit opens on
@@ -119,28 +151,17 @@ export default function Social() {
   // on the first one emptied the screen under the tap. The next visit
   // opens on Following.
   const feedFromUrl = searchParams.get("feed");
-  const [openedOn, setOpenedOn] = useState<FeedSubTab | null>(null);
-  if (openedOn === null && followingCount !== null) {
-    setOpenedOn(followingCount > 0 ? "following" : "explore");
-  }
   const feedSubTab: FeedSubTab =
     feedFromUrl === "following" ||
     feedFromUrl === "explore" ||
     feedFromUrl === "communities"
       ? feedFromUrl
-      : (openedOn ?? "explore");
+      : openedFollowing
+        ? "following"
+        : "explore";
   const selectFeedSubTab = useCallback(
-    (next: FeedSubTab) => {
-      setSearchParams(
-        (params) => {
-          const updated = new URLSearchParams(params);
-          updated.set("feed", next);
-          return updated;
-        },
-        { replace: true }
-      );
-    },
-    [setSearchParams]
+    (next: FeedSubTab) => setParam("feed", next),
+    [setParam]
   );
 
   /* The old Soc5c smart default (send brand-new users to the People
@@ -197,6 +218,8 @@ export default function Social() {
 
   const {
     isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
     triggerRefresh,
     bindProps: pullBindProps,
   } = usePullToRefresh({ onRefresh: performRefresh });
@@ -218,6 +241,32 @@ export default function Social() {
     <PageShell
       {...pullBindProps}
       title="Social"
+      /* Together's hero (the person's race, or the weekly challenge) names
+         the screen, so no large title sits above it (DS4, Soc16): the
+         title is for screen readers, and the Together/Feed switch takes
+         its place beside search and notifications, one row of chrome. It
+         is hidden while FeedView's full board overlays the page. */
+      titleHidden
+      lead={
+        chromeHidden ? undefined : (
+          <SegmentedControl
+            ariaLabel="Social section"
+            size="sm"
+            value={tab}
+            onChange={setTab}
+            options={[
+              /* Together leads (SOCIAL-HOME-01). Legacy ?tab=crews still
+                 resolves to Together; ?tab=find opens the People overlay. */
+              { value: "together", label: "Together" },
+              { value: "feed", label: "Feed" },
+            ]}
+          />
+        )
+      }
+      /* The canonical --page-bottom-pad token (tab-bar height + the home
+         indicator's inset + 1rem), as Food pins it, so the last card on
+         Together or the Feed scrolls clear of the floating tab bar. */
+      style={{ paddingBottom: "var(--page-bottom-pad)" }}
       actions={
         <>
           <IconButton
@@ -251,6 +300,35 @@ export default function Social() {
         </>
       }
     >
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+        label="Refreshing feed"
+      />
+      {/* A new medal's reveal (Soc15), once per medal and tier, on the
+          next visit to Social and never over Home. A blocking surface in
+          the coordinator, so it never opens over another sheet; it waits
+          while the page's own overlays (notifications, People, the full
+          board) are open. */}
+      {uid && (
+        <MedalRevealGate
+          key={uid}
+          uid={uid}
+          held={showNotifications || peopleOpen || chromeHidden}
+        />
+      )}
+      {/* A league week's result (Soc15 call 3), once per result on this
+          device, the first time Social opens after Monday's turn. Through
+          the same coordinator, so it and a medal never open together. */}
+      {uid && (
+        <LeagueResultGate
+          key={uid}
+          uid={uid}
+          held={showNotifications || peopleOpen || chromeHidden}
+        />
+      )}
+
       <NotificationsSheet
         open={showNotifications}
         onOpenChange={setShowNotifications}
@@ -259,28 +337,6 @@ export default function Social() {
         error={notifications.error}
         onRetry={notifications.retry}
       />
-
-      {/* Tab bar — primary navigation on the canonical iOS "track"
-          SegmentedControl (44pt floor + full radiogroup a11y handled by
-          the primitive). Was a hand-rolled button row; migrated in the
-          Social-uniformity pass so every switcher across the app shares
-          one control. Hidden while the FullLeaderboard overlay shows
-          (chromeHidden mirrors FeedView's overlay state). */}
-      {!chromeHidden && (
-        <SegmentedControl
-          ariaLabel="Social section"
-          value={tab}
-          onChange={setTab}
-          options={[
-            /* Together leads (SOCIAL-HOME-01): the user's active
-               Circle + shared-goal surfaces. Feed is the second
-               track. Legacy ?tab=crews still resolves to Together;
-               ?tab=find opens the People overlay. */
-            { value: "together", label: "Together" },
-            { value: "feed", label: "Feed" },
-          ]}
-        />
-      )}
 
       {/* ========== FEED TAB ========== */}
       <FeedView
@@ -296,7 +352,6 @@ export default function Social() {
         blockedUsers={blockedUsers}
         blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}
-        pullRefreshing={pullRefreshing}
         refreshRef={feedRefreshRef}
         onOverlayChange={setChromeHidden}
       />

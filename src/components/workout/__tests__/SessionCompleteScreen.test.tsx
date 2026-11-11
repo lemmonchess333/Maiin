@@ -81,21 +81,25 @@ function renderScreen(
   );
 }
 
+/** The display figure: the work done, the screen's one figure (DS4). */
+const figure = () => document.querySelector("[data-finish-figure]")!;
+/** What the figure counts, and how long the session took. */
+const caption = () => document.querySelector("[data-finish-caption]")!;
+
 describe("SessionCompleteScreen — header stats agree with each other", () => {
   it("shows the result before Save without opening Session details", async () => {
     renderScreen([
       [{ reps: 12, weight: 10, completed: true, type: "working" }],
     ]);
-    await waitFor(() => expect(screen.getByText("24")).toBeVisible());
-    expect(screen.getByText("120")).toBeVisible();
-    expect(screen.getByText("1")).toBeVisible();
-    expect(screen.getByText("24").closest("details")).toBeNull();
+    await waitFor(() => expect(figure()).toHaveTextContent("120"));
+    expect(figure()).toBeVisible();
+    expect(caption()).toHaveTextContent("kg lifted in 24 min");
+    expect(caption()).toBeVisible();
+    expect(figure().closest("details")).toBeNull();
     expect(
-      screen
-        .getByText("24")
-        .compareDocumentPosition(
-          screen.getByRole("button", { name: "Save workout" })
-        ) & Node.DOCUMENT_POSITION_FOLLOWING
+      figure().compareDocumentPosition(
+        screen.getByRole("button", { name: "Save workout" })
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });
 
@@ -113,9 +117,11 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
 
     // The per-exercise row is the number the user reads as authoritative.
     expect(screen.getByText("2/2 sets")).toBeInTheDocument();
-    // The header stat must now say the same thing.
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.queryByText("4")).toBeNull();
+    // The session's count must now say the same thing.
+    expect(document.querySelector("[data-session-sets]")).toHaveTextContent(
+      "2 sets"
+    );
+    expect(screen.queryByText("4 sets")).toBeNull();
   });
 
   it("does not count sets the user never completed", () => {
@@ -188,6 +194,22 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(screen.getByText("60 s")).toBeInTheDocument();
   });
 
+  it("compares timed sets by duration when their loads differ", () => {
+    renderScreen(
+      [
+        [
+          { reps: 30, weight: 20, completed: true, type: "working" },
+          { reps: 60, weight: 0, completed: true, type: "working" },
+          { reps: 90, weight: 0, completed: true, type: "warmup" },
+          { reps: 120, weight: 0, completed: false, type: "working" },
+        ],
+      ],
+      [{ ...exercise("Plank", 3), repUnit: "seconds" }]
+    );
+    expect(screen.getByText("60 s")).toBeInTheDocument();
+    expect(screen.queryByText("20 kg × 30 s")).toBeNull();
+  });
+
   it("keeps the loaded best set based on weight times reps", () => {
     renderScreen(
       [
@@ -227,8 +249,10 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
-    // A generated day handed no week is its type (Lift19).
-    expect(screen.getByText("Legs")).toBeInTheDocument();
+    // A generated day handed no week is its type (Lift19), named in the
+    // kicker before the date.
+    expect(screen.getByText(/^Legs · /)).toBeInTheDocument();
+    expect(screen.queryByText(/· legs/)).toBeNull();
   });
 });
 
@@ -356,16 +380,17 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
 
   it("names each number by what it counts", () => {
     renderWith({});
-    expect(screen.getByText("minutes")).toBeInTheDocument();
-    expect(screen.getByText("kg lifted")).toBeInTheDocument();
-    expect(screen.getByText("set")).toBeInTheDocument();
+    // One figure, its caption saying what it counts and how long it took.
+    expect(caption()).toHaveTextContent("kg lifted in 24 min");
+    expect(document.querySelector("[data-session-sets]")).toHaveTextContent(
+      "1 set"
+    );
   });
 
   it("writes an hour or more as hours and minutes", () => {
     renderWith({ sessionDurationMinutes: 65 });
-    expect(screen.getByText("1:05")).toBeInTheDocument();
-    expect(screen.getByText("hr:min")).toBeInTheDocument();
-    expect(screen.queryByText("hours")).toBeNull();
+    expect(caption()).toHaveTextContent("kg lifted in 1 h 5 min");
+    expect(screen.queryByText(/hours/)).toBeNull();
   });
 
   it("gives a bodyweight session its reps rather than 0 kg lifted", () => {
@@ -375,12 +400,12 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
         { reps: 7, weight: 0, completed: true, type: "working" },
       ],
     ]);
-    expect(screen.getByText("15")).toBeInTheDocument();
-    expect(screen.getByText("reps")).toBeInTheDocument();
-    expect(screen.queryByText("kg lifted")).toBeNull();
+    expect(figure()).toHaveTextContent("15");
+    expect(caption()).toHaveTextContent("reps in 24 min");
+    expect(screen.queryByText(/kg lifted/)).toBeNull();
   });
 
-  it("puts a new best in gold, with its drawing and what it beat", () => {
+  it("puts a new best in gold, with its reviewed drawing", () => {
     renderWith(
       { prResults: new Map([["Bench Press:8rm", benchBest]]) },
       [[{ reps: 8, weight: 80, completed: true, type: "working" }]],
@@ -464,16 +489,17 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
       "Chest3 sets",
       "Triceps1 set",
     ]);
-    /* The picture is the main lift drawn, as Train and Home picture the
-       day, not the muscle figure. */
+    /* Bench Press has a released drawing and is the first working lift:
+       it is the first screen's object, so the muscles card draws the
+       muscles. */
     expect(
-      heading
-        .closest("div")!
-        .parentElement!.querySelector("[data-lead-drawing]")
+      document.querySelector("[data-finish-object] [data-lead-drawing]")
     ).toHaveAttribute("data-lead-drawing", "Bench Press");
     expect(
-      screen.queryByRole("img", { name: "Muscles trained this session" })
-    ).toBeNull();
+      within(heading.closest(".\\@container")!).getByRole("img", {
+        name: "Muscles trained this session",
+      })
+    ).toBeInTheDocument();
   });
 
   it("draws the first lift that got a working set, and the muscles when none is drawn", () => {
@@ -506,10 +532,9 @@ describe("SessionCompleteScreen — the figures count up (DS3)", () => {
       renderScreen([
         [{ reps: 12, weight: 10, completed: true, type: "working" }],
       ]);
-      const weight = screen.getByText("kg lifted").previousElementSibling!;
       // Anchored on a positive: it starts at nothing, then lands.
-      expect(weight.textContent).toBe("0");
-      await waitFor(() => expect(weight.textContent).toBe("120"));
+      expect(figure().textContent).toBe("0");
+      await waitFor(() => expect(figure().textContent).toBe("120"));
     } finally {
       motionPref.reduce = true;
     }
@@ -519,8 +544,6 @@ describe("SessionCompleteScreen — the figures count up (DS3)", () => {
     renderScreen([
       [{ reps: 12, weight: 10, completed: true, type: "working" }],
     ]);
-    expect(
-      screen.getByText("kg lifted").previousElementSibling!.textContent
-    ).toBe("120");
+    expect(figure().textContent).toBe("120");
   });
 });

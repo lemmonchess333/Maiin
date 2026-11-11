@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 /**
  * Slice 3 (#1099) — enabled-path tests for purchase / restore / prices.
@@ -18,9 +19,9 @@ const mockPurchases = {
   restorePurchases: vi.fn(),
 };
 
-vi.mock("@revenuecat/purchases-capacitor", () => ({
-  Purchases: mockPurchases,
-}));
+vi.mock("@revenuecat/purchases-capacitor", () => {
+  return { Purchases: capacitorPlugin(mockPurchases) };
+});
 
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true },
@@ -100,7 +101,7 @@ describe("rcPurchase", () => {
     const { rcPurchase } = await loadModule();
 
     const outcome = await rcPurchase(PID);
-    expect(outcome.error).toBe("Purchase failed. Try again.");
+    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
     expect(outcome.detail).toBe("There was a problem with the App Store.");
   });
 
@@ -114,17 +115,87 @@ describe("rcPurchase", () => {
     expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
   });
 
-  it("does not report success when the entitlement is absent post-purchase", async () => {
+  it("a purchase the store took without Pro yet is pending, not failed", async () => {
     mockPurchases.getOfferings.mockResolvedValue(
-      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "£3.99",
+            price: 3.99,
+            currencyCode: "GBP",
+          },
+        },
+      ])
     );
     mockPurchases.purchasePackage.mockResolvedValue({
       customerInfo: proInactiveInfo,
     });
     const { rcPurchase } = await loadModule();
 
+    // No `error`: "Couldn't complete the purchase. Try again." would ask the person to
+    // pay for something the store already has. The price still goes out,
+    // for the sync that asks RevenueCat again.
     const outcome = await rcPurchase(PID);
-    expect(outcome).toEqual({ success: false, isProActive: false });
+    expect(outcome).toEqual({
+      success: false,
+      isProActive: false,
+      pending: "entitlement",
+      price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
+    });
+  });
+
+  it("a payment held for approval is pending, not failed", async () => {
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    // What the plugin rejects with when Ask to Buy holds the payment.
+    mockPurchases.purchasePackage.mockRejectedValue(
+      Object.assign(new Error("The payment is pending."), { code: "20" })
+    );
+    const { rcPurchase } = await loadModule();
+
+    const outcome = await rcPurchase(PID);
+    expect(outcome).toEqual({
+      success: false,
+      isProActive: false,
+      pending: "approval",
+    });
+  });
+
+  it("reads the pending code the SDK really uses", async () => {
+    // The plugin re-exports this package's list; the plugin itself cannot
+    // load here, where @capacitor/core is a double.
+    const sdk = await vi.importActual<
+      typeof import("@revenuecat/purchases-capacitor")
+    >("@revenuecat/purchases-typescript-internal-esm");
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    mockPurchases.purchasePackage.mockRejectedValue(
+      Object.assign(new Error("The payment is pending."), {
+        code: sdk.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR,
+      })
+    );
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID)).pending).toBe("approval");
+  });
+
+  it("any other store error is still a failure", async () => {
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    mockPurchases.purchasePackage.mockRejectedValue(
+      Object.assign(new Error("There was a problem with the App Store."), {
+        code: "2",
+      })
+    );
+    const { rcPurchase } = await loadModule();
+
+    const outcome = await rcPurchase(PID);
+    expect(outcome.pending).toBeUndefined();
+    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
   });
 
   it("is a guarded no-op without the public key", async () => {
@@ -146,7 +217,7 @@ describe("rcRestore", () => {
     const { rcRestore } = await loadModule();
 
     const outcome = await rcRestore();
-    expect(outcome.error).toBe("Failed to restore purchases.");
+    expect(outcome.error).toBe("Couldn’t restore your purchases.");
     expect(outcome.detail).toBe("Error performing request.");
   });
 

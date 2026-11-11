@@ -132,12 +132,79 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                          "lib/accountDeletionLocks.js"}.issubset(paths))
         self.assertEqual(len(paths), len(set(paths)))
 
+    def test_invite_callables_read_back_the_checks_they_hold(self):
+        targets = verifier.source_targets()
+        for name in ("redeemInvite", "getInviteCode"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/inviteCodes.js",
+                                 "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                                 "lib/accountDeletionLocks.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/notificationPreferences.js", targets["redeemInvite"])
+
+    def test_plan_group_counts_read_back_their_one_writer(self):
+        targets = verifier.source_targets()
+        for name in ("onRaceGoalWritten", "dailyRaceCohortRecount"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/raceCohorts.js",
+                                 "lib/spaceIds.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/triggerRetry.js", targets["onRaceGoalWritten"])
+        self.assertIn("onRaceGoalWritten", verifier.RETRY_REQUIRED)
+
+    def test_league_functions_read_back_the_rules_and_the_plan_count(self):
+        targets = verifier.source_targets()
+        for name in ("weeklyLeagueTurn", "setLeagueSharing"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/leagues.js",
+                                 "lib/leagueRules.js", "lib/leaguePlanned.js",
+                                 "lib/restriction.js",
+                                 "lib/accountDeletionLocks.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/notificationPreferences.js", targets["weeklyLeagueTurn"])
+        # The session triggers keep a standing current, so they read the
+        # leagues' files back too.
+        for name in ("onWorkoutCreated", "onWorkoutUpdated", "onWorkoutDeleted",
+                     "onRunCreated", "onRunUpdated", "onRunDeleted"):
+            with self.subTest(function=name):
+                self.assertIn("lib/leagues.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_session_triggers_read_back_the_pulse_and_its_deletion_guard(self):
+        targets = verifier.source_targets()
+        # Soc15: the session create and delete triggers are the live pulse's
+        # one writer, and read the deletion freeze in its transaction.
+        for name in ("onWorkoutCreated", "onWorkoutDeleted", "onRunCreated", "onRunDeleted"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/pulse.js", "lib/deletionTransactionGuard.js",
+                                 "lib/accountDeletionStatus.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",
                          "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
+
+    def test_follow_count_triggers_read_back_their_writer_and_its_guards(self):
+        targets = verifier.source_targets()
+        for name in ("onFollowerEdgeWritten", "onFollowingEdgeWritten"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/followCounts.js",
+                                 "lib/raceCohorts.js", "lib/deletionTransactionGuard.js",
+                                 "lib/accountDeletionStatus.js",
+                                 "lib/triggerRetry.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+                self.assertIn(name, verifier.RETRY_REQUIRED)
+
+    def test_medal_trigger_reads_back_its_rules_freeze_guard_and_retry_guard(self):
+        paths = verifier.source_targets()["onChallengeParticipantWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/medals.js",
+                         "lib/challengeActivityWindow.js", "lib/deletionTransactionGuard.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onChallengeParticipantWritten", verifier.RETRY_REQUIRED)
 
     def test_comment_callables_and_deletion_read_back_the_shared_comment_rules(self):
         targets = verifier.source_targets()
@@ -154,16 +221,35 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {
-            "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"},
-            "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js"},
+            "onActivityCreated": {"index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js",
+                                  "lib/discoveryHidden.js"},
+            "onGoalSpaceEventCreated": {"index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"},
+            "onFollowerCreated": {"index.js", "package-lock.json", "lib/socialFanout.js",
+                                  "lib/followBackfill.js", "lib/feedIndex.js"},
+            "onFollowRequestCreated": {"index.js", "package-lock.json", "lib/socialFanout.js"},
         }
         for name, artifacts in expected.items():
             with self.subTest(function=name):
                 self.assertTrue(artifacts.issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
+    def test_post_deletion_reads_back_its_route_map_and_photo_cleanup(self):
+        paths = verifier.source_targets()["onActivityDeleted"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/socialFanout.js",
+                         "lib/routeMapFiles.js", "lib/postPhotos.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+
+    def test_report_callables_read_back_the_preview_that_shows_post_photos(self):
+        targets = verifier.source_targets()
+        for name in ("createReport", "listPendingReports", "resolveReport"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "lib/reportTargets.js", "lib/postPhotos.js",
+                                 "lib/routeMapFiles.js"}.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        self.assertIn("lib/reportAlert.js", targets["createReport"])
+
     def test_retry_enabled_social_fanout_exports_require_deployed_retries(self):
-        self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated"}
+        self.assertTrue({"onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"}
                         .issubset(verifier.RETRY_REQUIRED))
 
     def test_native_push_targets_cover_every_changed_sender_and_owner(self):
@@ -274,7 +360,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                     self.check(self.deployed(stale), name)
 
     def test_social_fanout_exact_bundles_accept_enabled_empty_retry_objects(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             with self.subTest(function=name):
                 self.use_source_target(name)
                 printed, reader = self.check(self.deployed(), name)
@@ -282,7 +368,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                 self.assertEqual(reader.call_count, 3)
 
     def test_any_stale_social_fanout_artifact_fails_despite_active_retry_enabled_function(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             self.use_source_target(name)
             for path in self.paths:
                 with self.subTest(function=name, artifact=path):
@@ -291,7 +377,7 @@ class DeployedSourceIdentityTest(unittest.TestCase):
                         self.check(self.deployed(stale), name)
 
     def test_missing_social_fanout_artifacts_fail_readback(self):
-        for name in ("onActivityCreated", "onGoalSpaceEventCreated"):
+        for name in ("onActivityCreated", "onGoalSpaceEventCreated", "onFollowerCreated", "onFollowRequestCreated"):
             self.use_source_target(name)
             for path in self.paths:
                 with self.subTest(function=name, artifact=path):

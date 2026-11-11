@@ -1,4 +1,3 @@
-import QuickMealPortionSheet from "@/components/food/QuickMealPortionSheet";
 import { saveQuickMeal } from "@/lib/quickMealEntry";
 import {
   useState,
@@ -37,8 +36,9 @@ const ManualFoodLogger = lazyRetry(() =>
     default: m.ManualFoodLogger,
   }))
 );
-import { useMeals, type Meal } from "@/hooks/useMeals";
+import { useMeals, type Meal, type MealItem } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/ui/PullToRefreshIndicator";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
@@ -50,8 +50,30 @@ import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
+/* The sheets a tap opens load with the tap, not with the page: Food's
+   chunk is the page's first paint. They are fetched once the page has
+   drawn (below), so the first tap does not wait on the network. */
+const loadCopyEntrySheet = () => import("@/components/food/CopyEntrySheet");
+const loadCopyMealsSheet = () => import("@/components/food/CopyMealsSheet");
+const loadQuickMealPortionSheet = () =>
+  import("@/components/food/QuickMealPortionSheet");
+const loadHeroDrillDownSheet = () =>
+  import("@/components/food/HeroDrillDownSheet");
+const loadServingSizeDrawer = () =>
+  import("@/components/nutrition/ServingSizeDrawer").then((m) => ({
+    default: m.ServingSizeDrawer,
+  }));
+const CopyEntrySheet = lazyRetry(loadCopyEntrySheet);
+const CopyMealsSheet = lazyRetry(loadCopyMealsSheet);
+const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
+const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
+const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
-import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
+/* The water row reads the water hook, which Home's glass reads too.
+   Loaded on its own, the hook goes into a chunk of its own rather than
+   into the one Home and Food share for the calorie ring. It loads as the
+   diary first draws, under the meals. */
+const FoodWaterRow = lazyRetry(() => import("@/components/food/FoodWaterRow"));
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
@@ -62,6 +84,7 @@ import {
   type QuickAddItem,
 } from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
+import { isQuickAddName } from "@/lib/quickAddName";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -69,19 +92,24 @@ import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
-import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
-import CopyMealsSheet from "@/components/food/CopyMealsSheet";
+import {
+  entryPortion,
+  mealFromItems,
+  nameFromItems,
+  rescaleMealPortion,
+} from "@/lib/mealPortion";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
@@ -104,9 +132,15 @@ import {
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { sumMealTotals } from "@/lib/mealTotals";
+import type { DayBudget } from "@/lib/portionLeft";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 import Card from "@/components/ui/Card";
+
+/** Quick add rows shown when the box is focused, and how many its More
+ *  row opens to. */
+const QUICK_ADD_SHOWN = 5;
+const QUICK_ADD_MORE = 15;
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -217,6 +251,14 @@ export default function Food() {
      it would close it, and a second tap would be needed to open it.
      Keying it by session remounts it, and its camera opens on every tap. */
   const [scanSession, setScanSession] = useState(0);
+  /* A barcode with no match (F2d). Type details opens the product form
+     with its code; leaving the form without saving reopens the scanner on
+     the same choice, so Describe it is still one tap away. Describe it
+     opens the composer asking what the product is. */
+  const [manualBarcode, setManualBarcode] = useState<string | null>(null);
+  const manualSavedRef = useRef(false);
+  const [scanForkCode, setScanForkCode] = useState<string | null>(null);
+  const [describeHint, setDescribeHint] = useState(false);
   /* The opening animation: the Scan button's box when tapped, until the
      layer that grows out of it has faded (null under reduced motion). */
   const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
@@ -250,6 +292,21 @@ export default function Food() {
   // (calories + macros + activity-burn adjustment). Read-only — the
   // sheet is a drill-down for review, not an editing surface.
   const [heroSheetOpen, setHeroSheetOpen] = useState(false);
+  const [heroSheetUsed, setHeroSheetUsed] = useState(false);
+  /* Fetch the tap-opened sheets once the page is up (see their loaders). */
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      for (const load of [
+        loadHeroDrillDownSheet,
+        loadServingSizeDrawer,
+        loadQuickMealPortionSheet,
+        loadCopyMealsSheet,
+        loadCopyEntrySheet,
+      ])
+        void load().catch(() => {});
+    }, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   /* Food9 retention sweep. Meal photos live on the device now, so
      nothing server-side ages them out — this is what enforces the 90-day
@@ -406,6 +463,8 @@ export default function Food() {
       haptic();
       setScannerShown(false);
       setScanGrowFrom(origin && !reducedMotion ? origin : null);
+      setScanForkCode(null);
+      setDescribeHint(false);
       setScanSession((n) => n + 1);
       setScanOpen(true);
     }
@@ -454,7 +513,7 @@ export default function Food() {
             return next;
           }),
         report: (name) =>
-          toast.error(`Couldn't delete ${name}. Try again.`, {
+          toast.error(`Couldn’t delete ${name}. Try again.`, {
             id: "food-delete-error",
           }),
       }),
@@ -563,6 +622,14 @@ export default function Food() {
     () => sumMealTotals(visibleTodaysMeals),
     [visibleTodaysMeals]
   );
+  /* The day as the portion sheets count against it: what is logged and
+     the targets, for their "left after this" line. */
+  const dayBudget: DayBudget = {
+    calories: dailyTotals.calories,
+    protein: dailyTotals.protein,
+    calorieTarget: dailyTargets.finalTarget,
+    proteinTarget: dailyTargets.protein,
+  };
 
   /* The day the account began, as Home's strip and Analytics read it, so
      the week strip draws no ring before it (Food10 (3)). */
@@ -703,7 +770,7 @@ export default function Food() {
       meals: mealCount,
     }).catch((err) => {
       logger.error("[Food] daily log save failed", err);
-      toast.error("Couldn't update today's log", { id: "food-save-error" });
+      toast.error("Couldn’t update today’s log", { id: "food-save-error" });
     });
   }, [
     todaysMeals.length,
@@ -873,7 +940,7 @@ export default function Food() {
            fallback action so the user has somewhere to go. */
         setOffResults([]);
         setOffEmpty(false);
-        toast.error("Couldn't search foods.", {
+        toast.error("Couldn’t search foods.", {
           id: "food-off-error",
           // Retry re-runs the fetch (bumps the nonce in the effect deps);
           // Log manually is the fallback. sonner allows one action + one
@@ -966,7 +1033,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Couldn't save. Try again.", {
+      toast.error("Couldn’t save. Try again.", {
         id: "food-save-error",
       });
     }
@@ -1028,7 +1095,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Couldn't read that. Try rewording it, or add it manually.", {
+      toast.error("Couldn’t read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
         action: { label: "Log manually", onClick: () => setManualOpen(true) },
       });
@@ -1043,7 +1110,7 @@ export default function Food() {
           return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
         });
         toast.warning(
-          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             duration: 10000,
@@ -1068,7 +1135,7 @@ export default function Food() {
       const unresolved = items.filter((i) => i.unrecognized);
       if (unresolved.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             action: {
@@ -1199,7 +1266,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Couldn't save. Try again.", {
+        toast.error("Couldn’t save. Try again.", {
           id: "food-save-error",
         });
       }
@@ -1228,6 +1295,34 @@ export default function Food() {
     meals: Meal[];
   } | null>(null);
 
+  /* A row's entries on their way to another day (the edit sheet's Copy to
+     another day). */
+  const [copyingEntries, setCopyingEntries] = useState<Meal[] | null>(null);
+  const handleCopyEntry = async (
+    date: string,
+    selections: readonly MealCopySelection[]
+  ) => {
+    if (!uid) return { created: [], error: new Error("Sign in again.") };
+    const result = await copySelectedMeals(uid, date, selections);
+    if (result.created.length > 0) {
+      haptic(15);
+      const name = selections[0]?.source.foodName ?? "Meal";
+      const dayName =
+        date === todayStr
+          ? "today"
+          : formatShortWeekdayDayMonth(parseLocalDate(date));
+      notifyMealsLogged(
+        uid,
+        result.created.map((entry) => entry.id),
+        `Copied ${name} to ${dayName}`,
+        { path: "copy" }
+      );
+    }
+    if (result.error !== null)
+      logger.error("[copy-entry] Failed:", result.error);
+    return result;
+  };
+
   const applyServingsChange = async (changes: {
     targetCount: number;
     targetMeal: MealKey | null;
@@ -1238,11 +1333,20 @@ export default function Food() {
       totalCarbs?: number;
       totalFat?: number;
     } | null;
+    targetPortion: number | null;
+    targetItems: MealItem[] | null;
   }) => {
     if (!uid || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
-    const { targetCount, targetMeal, targetName, targetMacros } = changes;
+    const {
+      targetCount,
+      targetMeal,
+      targetName,
+      targetMacros,
+      targetPortion,
+      targetItems,
+    } = changes;
 
     // F5a: slot + rename + macro changes ALL fan out to one editMeal
     // per doc in the group. Combine them into a SINGLE editMeal call
@@ -1251,20 +1355,37 @@ export default function Food() {
     // totals (per-serving values were already computed in the sheet
     // — passing them through to editMeal sets each doc's total to the
     // per-serving figure, which makes the group total = N × value).
-    if (targetMeal || targetName || targetMacros) {
+    // A new portion (one entry only) rescales the entry's items and totals
+    // from what it holds, and writes the multiplier into the items'
+    // portions the way every scaled log does. Typed figures still win.
+    // Edited items (an entry of several foods) replace the entry's items,
+    // its totals become their sum, and a name made from the items follows
+    // the ones that are left; a name typed in the sheet still wins.
+    if (
+      targetMeal ||
+      targetName ||
+      targetMacros ||
+      targetPortion ||
+      targetItems
+    ) {
       try {
         await Promise.all(
-          groupMeals.map((m) =>
-            editMeal(m.id, {
+          groupMeals.map((m) => {
+            const itemName =
+              !targetName && targetItems ? nameFromItems(m, targetItems) : null;
+            return editMeal(m.id, {
+              ...(targetPortion ? rescaleMealPortion(m, targetPortion) : {}),
+              ...(targetItems ? mealFromItems(m, targetItems) : {}),
               ...(targetMeal ? { meal: targetMeal } : {}),
               ...(targetName ? { foodName: targetName } : {}),
+              ...(itemName ? { foodName: itemName } : {}),
               ...(targetMacros ?? {}),
-            })
-          )
+            });
+          })
         );
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
-        toast.error("Could not save changes");
+        toast.error("Couldn’t save your changes");
         // Keep the editor open and do not change servings or announce success
         // after any of the existing entries failed to update.
         return;
@@ -1283,7 +1404,7 @@ export default function Food() {
         toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
           id: `food-slot-${foodName}`,
         });
-      } else if (targetMacros) {
+      } else if (targetMacros || targetPortion || targetItems) {
         toast.success(`Updated ${foodName}`, {
           id: `food-macros-${editingGroup.id}`,
         });
@@ -1364,7 +1485,7 @@ export default function Food() {
           `Added ${createdIds.length} servings; the remaining servings could not be saved`
         );
       } else {
-        toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+        toast.error("Couldn’t update. Try again.", { id: "food-edit-error" });
       }
     }
   };
@@ -1458,7 +1579,8 @@ export default function Food() {
   //      see suggestions.
   //
   // Dedupe is by normalized food name across all three sources.
-  // Capped at 5 to keep the row scannable.
+  // Five show at first, to keep the list scannable; its More row opens
+  // up to fifteen in the same order, so the first five never move.
   const quickMealCandidates = useMemo(() => {
     /* Build the live key→item map first. Cap is enforced AFTER
        cache application via orderQuickAddItems (was previously
@@ -1522,7 +1644,8 @@ export default function Food() {
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
-      if (!key) continue;
+      // A nameless Quick add entry is a number, not a food to repeat.
+      if (!key || isQuickAddName(key)) continue;
       const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;
@@ -1622,9 +1745,21 @@ export default function Food() {
       )
     );
   }
-  const quickMeals = useMemo(
-    () => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5),
+  /* The ranked list runs to fifteen. `orderQuickAddItems` fills in rank
+     order and stops at its cap, so the first five of fifteen are exactly
+     the five a cap of five gives. */
+  const quickMealsRanked = useMemo(
+    () =>
+      orderQuickAddItems(
+        cachedQuickOrder ?? [],
+        quickMealCandidates,
+        QUICK_ADD_MORE
+      ),
     [cachedQuickOrder, quickMealCandidates]
+  );
+  const quickMeals = useMemo(
+    () => quickMealsRanked.slice(0, QUICK_ADD_SHOWN),
+    [quickMealsRanked]
   );
 
   const hasStrongQuickAddSuggestions = useMemo(() => {
@@ -1644,6 +1779,10 @@ export default function Food() {
   }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
+  /* The day the Quick add list's More row was opened on. Another day
+     opens on five again. */
+  const [moreRecentsDate, setMoreRecentsDate] = useState<string | null>(null);
+  const moreRecentsOpen = moreRecentsDate === selectedDate;
   // Synchronous latch closing the same-frame double-tap window that the
   // `quickAdding` state guard alone can't (iOS ghost-click → duplicate meal).
   const quickAddGuard = useInFlightGuard();
@@ -1676,7 +1815,7 @@ export default function Food() {
         next.delete(favouriteId);
         return next;
       });
-      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      toast.error("Couldn’t remove. Try again.", { id: "pantry-remove-error" });
       return;
     }
 
@@ -1700,7 +1839,7 @@ export default function Food() {
               return next;
             });
           } else {
-            toast.error("Couldn't undo. The item stays removed.", {
+            toast.error("Couldn’t undo. The item stays removed.", {
               id: "pantry-undo-error",
             });
           }
@@ -1748,7 +1887,7 @@ export default function Food() {
       toast.success(
         navigator.onLine
           ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
-          : "Saved on this phone — syncs when you're back online",
+          : "Saved on this phone — syncs when you’re back online",
         {
           duration: 5000,
           action: {
@@ -1761,7 +1900,7 @@ export default function Food() {
                 toast.success("Meal entry undone");
               } catch (err) {
                 logger.error("[Food] meal undo failed", err);
-                toast.error(appErrorMessage(err, "Couldn't undo meal."));
+                toast.error(appErrorMessage(err, "Couldn’t undo meal."));
                 undoing = false;
               }
             },
@@ -1773,7 +1912,7 @@ export default function Food() {
       toast.error(
         appErrorMessage(
           err,
-          "Couldn't save. Check your connection and retry this meal."
+          "Couldn’t save. Check your connection and retry this meal."
         ),
         { id: "food-save-error" }
       );
@@ -1835,9 +1974,21 @@ export default function Food() {
      `inputRef`, and comparing the section during render reads as a ref
      access to the React Compiler. */
   const showQuickAdd = inputFocused && !nlInput.trim() && quickMeals.length > 0;
+  /* More opens the rest of the ranked list. Examples are never more than
+     the six seeded meals, so a new account is not offered More. */
+  const canShowMoreRecents =
+    hasStrongQuickAddSuggestions &&
+    !moreRecentsOpen &&
+    quickMealsRanked.length > quickMeals.length;
   const quickAddSection: QuickAddSection | null = showQuickAdd
     ? {
-        items: quickMeals,
+        items:
+          moreRecentsOpen && hasStrongQuickAddSuggestions
+            ? quickMealsRanked
+            : quickMeals,
+        onShowMore: canShowMoreRecents
+          ? () => setMoreRecentsDate(selectedDate)
+          : undefined,
         asExamples: !hasStrongQuickAddSuggestions,
         adding: quickAdding,
         onAdd: handleQuickMealAdd,
@@ -1848,12 +1999,16 @@ export default function Food() {
 
   // Retry the subscription as well as acknowledging the gesture. A terminated
   // listener otherwise leaves a failed diary read stuck until a full reload.
-  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
-    usePullToRefresh({
-      onRefresh: refreshMeals,
-      minDisplayMs: 600,
-      excludeSelector: "[data-food-row]",
-    });
+  const {
+    isRefreshing: pullRefreshing,
+    pull,
+    readyAt: pullReadyAt,
+    bindProps: pullBindProps,
+  } = usePullToRefresh({
+    onRefresh: refreshMeals,
+    minDisplayMs: 600,
+    excludeSelector: "[data-food-row]",
+  });
 
   const dateBar = (
     <FoodDateBar
@@ -1877,7 +2032,7 @@ export default function Food() {
       role="alert"
       className="ds-card flex items-center justify-between gap-3 p-4"
     >
-      <p className="text-sm">Couldn't load your food diary.</p>
+      <p className="text-sm">Couldn’t load your food diary.</p>
       <Button
         variant="secondary"
         className="min-h-[44px]"
@@ -1925,18 +2080,11 @@ export default function Food() {
          notched iPhones. A hardcoded pb ignores the inset. */
       style={{ paddingBottom: "var(--page-bottom-pad)" }}
     >
-      {pullRefreshing && (
-        <div
-          className="flex justify-center py-2"
-          role="status"
-          aria-label="Refreshing"
-        >
-          <div
-            className="h-1 w-12 rounded-full bg-muted motion-safe:animate-pulse"
-            aria-hidden="true"
-          />
-        </div>
-      )}
+      <PullToRefreshIndicator
+        pull={pull}
+        readyAt={pullReadyAt}
+        refreshing={pullRefreshing}
+      />
       {readError}
 
       <motion.div variants={pageItemVariant}>
@@ -1959,25 +2107,38 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          onTapDrillDown={() => setHeroSheetOpen(true)}
+          onTapDrillDown={() => {
+            setHeroSheetUsed(true);
+            setHeroSheetOpen(true);
+          }}
         />
       </motion.div>
-      <HeroDrillDownSheet
-        open={heroSheetOpen}
-        onOpenChange={setHeroSheetOpen}
-        selectedDate={selectedDate}
-        isToday={isToday}
-        dailyTotals={{
-          calories: dailyTotals.calories,
-          protein: dailyTotals.protein,
-          carbs: dailyTotals.carbs,
-          fat: dailyTotals.fat,
-          fiber: dailyTotals.fiber,
-          sugar: dailyTotals.sugar,
-          sodium: dailyTotals.sodium,
-        }}
-        dailyTargets={dailyTargets}
-      />
+      {/* Mounted from the first open on, so it closes with its animation
+          and its queued Pro sheet opens after it has gone. */}
+      {heroSheetUsed && (
+        <Suspense fallback={null}>
+          <HeroDrillDownSheet
+            open={heroSheetOpen}
+            onOpenChange={setHeroSheetOpen}
+            selectedDate={selectedDate}
+            isToday={isToday}
+            dailyTotals={{
+              calories: dailyTotals.calories,
+              protein: dailyTotals.protein,
+              carbs: dailyTotals.carbs,
+              fat: dailyTotals.fat,
+              fiber: dailyTotals.fiber,
+              sugar: dailyTotals.sugar,
+              sodium: dailyTotals.sodium,
+            }}
+            dailyTargets={dailyTargets}
+            onOpenWeek={() => {
+              setHeroSheetOpen(false);
+              navigate("/history?view=food");
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
           RunSummary's "Log recovery food" deep link (?context=post-run),
@@ -2077,10 +2238,16 @@ export default function Food() {
                 slot: targetMeal ?? mealSlotFor(undefined),
               });
             }
+            // The no-match prompt is for the moment after the scan.
+            if (!v) setDescribeHint(false);
             setInputFocused(v);
           }}
           setSuggestionsActive={setSuggestionsActive}
-          placeholderPrompt={NL_EXAMPLE_PROMPTS[placeholderIdx]}
+          placeholderPrompt={
+            describeHint
+              ? "What is this product?"
+              : NL_EXAMPLE_PROMPTS[placeholderIdx]
+          }
           onParse={handleNLParse}
           inputRef={inputRef}
           targetMeal={targetMeal}
@@ -2184,14 +2351,27 @@ export default function Food() {
         </Card>
       )}
       {copyPreviewOpen && (
-        <CopyMealsSheet
-          key={`${uid}:${selectedDate}`}
-          sources={slotsToCopyFromYesterday.flatMap(
-            (slot) => yesterdaySegmented[slot] ?? []
-          )}
-          onClose={() => setCopyPreviewOpen(false)}
-          onSave={handleCopySelectedFromYesterday}
-        />
+        <Suspense fallback={null}>
+          <CopyMealsSheet
+            key={`${uid}:${selectedDate}`}
+            sources={slotsToCopyFromYesterday.flatMap(
+              (slot) => yesterdaySegmented[slot] ?? []
+            )}
+            onClose={() => setCopyPreviewOpen(false)}
+            onSave={handleCopySelectedFromYesterday}
+          />
+        </Suspense>
+      )}
+      {copyingEntries && (
+        <Suspense fallback={null}>
+          <CopyEntrySheet
+            sources={copyingEntries}
+            todayKey={todayStr}
+            minDate={minDateStr}
+            onClose={() => setCopyingEntries(null)}
+            onSave={handleCopyEntry}
+          />
+        </Suspense>
       )}
 
       {scanGrowFrom && (
@@ -2205,7 +2385,7 @@ export default function Food() {
         <Suspense
           fallback={
             <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-              Loading scanner...
+              Loading scanner…
             </div>
           }
         >
@@ -2221,6 +2401,7 @@ export default function Food() {
                bonus calories) via useEffectiveTargets, so the
                threshold scales with the user's planned day. */
             effectiveDailyTarget={dailyTargets.finalTarget}
+            day={dayBudget}
             /* No photo scans on this tier: the scanner opens on Barcode,
                which is free, and its photo tabs carry the Pro offer. The
                offer closes the scanner before opening the Pro sheet, the
@@ -2249,6 +2430,25 @@ export default function Food() {
               setScanOpen(false);
               setTimeout(() => setManualOpen(true), 50);
             }}
+            notFoundBarcode={scanForkCode}
+            onDescribeProduct={() => {
+              // F2d's primary choice: the composer, asking what the
+              // product is, with nothing typed for the person.
+              setScanOpen(false);
+              setScanForkCode(null);
+              setDescribeHint(true);
+              setTimeout(() => {
+                inputRef.current?.focus();
+                setSuggestionsActive(true);
+              }, 100);
+            }}
+            onTypeProductDetails={(code) => {
+              setScanOpen(false);
+              setScanForkCode(null);
+              manualSavedRef.current = false;
+              setManualBarcode(code);
+              setTimeout(() => setManualOpen(true), 50);
+            }}
             onRequestTypedInput={() => {
               // Camera denied fallback path — close the scanner and
               // focus the NL composer so the user can type the meal
@@ -2272,13 +2472,26 @@ export default function Food() {
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
       <motion.div variants={pageItemVariant} className="space-y-3">
+        {/* Keyed by day, as the hero above is: a new day is a new list,
+            not the old day's rows folding away among the new ones. */}
         <FoodTimeline
+          key={selectedDate}
           meals={visibleTodaysMeals}
           openRowId={openRowId}
           setOpenRowId={setOpenRowId}
           onDelete={handleDeleteMeal}
           onEdit={setEditingGroup}
+          isToday={isToday}
         />
+
+        {/* Water for the day on screen, past days included (Mob2, call
+            2). Isolated: a failed water read costs this row, not the
+            diary above it. */}
+        <SectionErrorBoundary sectionName="food-water">
+          <Suspense fallback={null}>
+            <FoodWaterRow date={selectedDate} />
+          </Suspense>
+        </SectionErrorBoundary>
 
         {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
             commitment + derived progress; the only social affordance
@@ -2300,8 +2513,8 @@ export default function Food() {
             const inFlight = copyingMealKey === "__all__";
             const label =
               slotsToCopyFromYesterday.length === 1
-                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-                : "Copy yesterday's meals";
+                ? `Copy yesterday’s ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
+                : "Copy yesterday’s meals";
             return (
               <div className="flex justify-center pt-2">
                 <Button
@@ -2329,27 +2542,54 @@ export default function Food() {
              that case (no default slot, matches NL convention). */
           meal={targetMeal}
           open={manualOpen}
-          onClose={() => setManualOpen(false)}
+          barcode={manualBarcode}
+          onSaved={() => {
+            manualSavedRef.current = true;
+          }}
+          onClose={() => {
+            setManualOpen(false);
+            const code = manualBarcode;
+            const saved = manualSavedRef.current;
+            manualSavedRef.current = false;
+            setManualBarcode(null);
+            /* Back from a product's form without saving: the scanner
+               reopens on the no-match choice for the same code. */
+            if (code && !saved) {
+              setScannerShown(false);
+              setScanGrowFrom(null);
+              setScanForkCode(code);
+              setScanSession((n) => n + 1);
+              setScanOpen(true);
+            }
+          }}
         />
       </Suspense>
-      <ServingSizeDrawer
-        food={offDrawerFood}
-        open={offDrawerFood !== null}
-        onClose={() => setOffDrawerFood(null)}
-        onConfirm={handleOFFConfirm}
-      />
+      {offDrawerFood && (
+        <Suspense fallback={null}>
+          <ServingSizeDrawer
+            food={offDrawerFood}
+            open
+            onClose={() => setOffDrawerFood(null)}
+            onConfirm={handleOFFConfirm}
+            day={dayBudget}
+          />
+        </Suspense>
+      )}
 
       {/* Mount the sheet only while a group is being edited and key it
           on the group id. Each open gets a fresh component instance so
           the stepper's local target state can't be stomped by a parent
           re-render rebuilding the `source` prop with a new identity. */}
       {portionMeal && (
-        <QuickMealPortionSheet
-          meal={portionMeal}
-          onClose={() => setPortionMeal(null)}
-          slot={usualSlot}
-          onLog={handleQuickMealAdd}
-        />
+        <Suspense fallback={null}>
+          <QuickMealPortionSheet
+            meal={portionMeal}
+            onClose={() => setPortionMeal(null)}
+            slot={usualSlot}
+            onLog={handleQuickMealAdd}
+            day={dayBudget}
+          />
+        </Suspense>
       )}
       {editingGroup && (
         <EditServingsSheet
@@ -2385,9 +2625,42 @@ export default function Food() {
               );
               return allSame ? first : null;
             })(),
+            /* A row of one entry is corrected by amount; a row of
+               repeats keeps the stepper that repeats or removes them. */
+            currentPortion:
+              editingGroup.meals.length === 1
+                ? entryPortion(editingGroup.meals[0])
+                : null,
+            /* One entry of several foods is corrected food by food. */
+            currentItems:
+              editingGroup.meals.length === 1 &&
+              (editingGroup.meals[0].items?.length ?? 0) > 1
+                ? editingGroup.meals[0].items
+                : null,
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}
+          onCopy={() => {
+            setCopyingEntries(editingGroup.meals);
+            setEditingGroup(null);
+          }}
+          /* The day without this row, which the sheet adds back at the
+             edited amount. */
+          day={{
+            ...dayBudget,
+            calories:
+              dayBudget.calories -
+              editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalCalories),
+                0
+              ),
+            protein:
+              dayBudget.protein -
+              editingGroup.meals.reduce(
+                (s, m) => s + safeNum(m.totalProtein),
+                0
+              ),
+          }}
           onDelete={() => {
             // Reuse the same optimistic-hide + Undo-toast path the
             // swipe uses, then close the sheet. Capture ids before the

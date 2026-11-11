@@ -40,7 +40,7 @@ export function isSignInCancelled(err: unknown): boolean {
  * return a message steering the user to that button — otherwise null (they
  * have a password, or the provider is unknown because Email-Enumeration-
  * Protection returned an empty list). This is what turns the dead-end
- * "Invalid email or password" / silent-reset trap into an actionable hint
+ * "Wrong email or password" / silent-reset trap into an actionable hint
  * for Google/Apple accounts.
  */
 export function providerHint(methods: string[]): string | null {
@@ -85,7 +85,7 @@ export function friendlyAuthError(
     message.includes("wrong-password") ||
     message.includes("invalid-credential")
   ) {
-    return "Invalid email or password";
+    return "Wrong email or password";
   }
   if (message.includes("email-already-in-use")) {
     return "An account with this email already exists";

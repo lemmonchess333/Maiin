@@ -206,7 +206,7 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
     queueDurableWrite(uid, meals, "first", meal);
     renderLayout();
     expect(banner()).toHaveTextContent(
-      "You're offline · 1 change saved on this phone · waiting to sync"
+      "You’re offline · 1 change saved on this phone · waiting to sync"
     );
     expect(banner()).not.toHaveTextContent("needs attention");
     expect(
@@ -220,7 +220,7 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
     ).toBeEnabled();
     setNetwork(false);
     expect(banner()).toHaveTextContent(
-      "You're offline · 1 meal needs attention · saved on this phone"
+      "You’re offline · 1 meal needs attention · saved on this phone"
     );
     expect(
       screen.queryByRole("button", { name: /Retry syncing/ })
@@ -369,7 +369,7 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
       runId: "actual-run",
       alreadySaved: false,
       run,
-      route: { routePreview: [], note: "" },
+      route: { routePreview: [], mapLine: [], note: "" },
       unit: "km",
     });
     await waitFor(() => expect(getQueueLength(uid)).toBe(0));
@@ -481,14 +481,14 @@ describe("a meal the server refuses for good", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Discard changes that won't save" })
+      screen.getByRole("button", { name: "Discard changes that won’t save" })
     );
     expect(
       screen.getByRole("alertdialog", {
-        name: "Discard the change that won't save?",
+        name: "Discard the change that won’t save?",
       })
     ).toHaveTextContent(
-      "Retrying won't save it. Discarding removes it from this phone, and it can't be brought back."
+      "Retrying won’t save it. Discarding removes it from this phone, and it can’t be brought back."
     );
     expect(getQueueLength(uid)).toBe(2);
     await act(async () =>
@@ -507,7 +507,7 @@ describe("a meal the server refuses for good", () => {
     await refuseMeal();
     renderLayout();
     fireEvent.click(
-      screen.getByRole("button", { name: "Discard changes that won't save" })
+      screen.getByRole("button", { name: "Discard changes that won’t save" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(getQueueLength(uid)).toBe(1);
@@ -522,7 +522,7 @@ describe("a meal the server refuses for good", () => {
       screen.getByRole("button", { name: "Retry syncing meals" })
     ).toBeEnabled();
     expect(
-      screen.queryByRole("button", { name: "Discard changes that won't save" })
+      screen.queryByRole("button", { name: "Discard changes that won’t save" })
     ).toBeNull();
   });
 });

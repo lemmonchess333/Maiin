@@ -134,7 +134,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         {!loading && leaderboardUnlocked && myPercentile !== null && (
           <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/15 px-3 py-2 mb-1.5">
             <span className="text-sm font-semibold text-foreground">
-              You&apos;re in the top{" "}
+              You’re in the top{" "}
               <span className="font-mono tabular-nums">{myPercentile}%</span>
             </span>
             <span className="text-xs text-muted-foreground font-mono tabular-nums">

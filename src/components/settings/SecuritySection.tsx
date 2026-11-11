@@ -93,7 +93,7 @@ export default function SecuritySection({
     } catch (err) {
       logger.error("[SecuritySection] verification check failed", err);
       toast.error(
-        "Couldn't check verification. Check your connection and try again."
+        "Couldn’t check verification. Check your connection and try again."
       );
     } finally {
       setCheckingVerify(false);
@@ -107,7 +107,7 @@ export default function SecuritySection({
       return;
     }
     if (newPassword !== confirmPassword) {
-      setFormError("New passwords don't match");
+      setFormError("New passwords don’t match");
       return;
     }
     setBusy(true);
@@ -118,7 +118,7 @@ export default function SecuritySection({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       setFormError(
-        friendlyAuthError(msg, "Couldn't change your password. Try again.")
+        friendlyAuthError(msg, "Couldn’t change your password. Try again.")
       );
     } finally {
       setBusy(false);
@@ -133,7 +133,7 @@ export default function SecuritySection({
       return;
     }
     if (email.toLowerCase() === (user.email ?? "").toLowerCase()) {
-      setFormError("That's already your email");
+      setFormError("That’s already your email");
       return;
     }
     setBusy(true);
@@ -144,7 +144,7 @@ export default function SecuritySection({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       setFormError(
-        friendlyAuthError(msg, "Couldn't change your email. Try again.")
+        friendlyAuthError(msg, "Couldn’t change your email. Try again.")
       );
     } finally {
       setBusy(false);
@@ -223,7 +223,7 @@ export default function SecuritySection({
                 loading={checkingVerify}
                 onClick={handleVerifiedRefresh}
               >
-                I've verified
+                I’ve verified
               </Button>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function SecuritySection({
         open={dialog === "email"}
         onClose={busy ? () => {} : closeDialog}
         title="Change email"
-        description="We'll send a confirmation link to the new address — your sign-in email changes once you tap it."
+        description="We’ll send a confirmation link to the new address — your sign-in email changes once you tap it."
       >
         <div className="space-y-3">
           <input

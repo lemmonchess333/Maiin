@@ -50,6 +50,9 @@ export interface MealItem {
   fiber?: number;
   sugar?: number;
   sodium?: number;
+  /** F1d per-item locks: the fields of this item a person has set by
+   *  hand, which a later automatic refinement must leave alone. */
+  userEditedFields?: string[];
 }
 
 export interface Meal {
@@ -134,6 +137,11 @@ export interface EditMealUpdates {
   totalProtein?: number;
   totalCarbs?: number;
   totalFat?: number;
+  /** Scaled with the rest when a portion is corrected
+   *  (`rescaleMealPortion`), so a fixed amount moves every figure. */
+  totalFiber?: number;
+  totalSugar?: number;
+  totalSodium?: number;
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
 }
 
@@ -289,7 +297,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
           meals: prev?.scope === scope ? prev.meals : [],
           lastDoc: null,
           hasMore: false,
-          error: "Couldn't load your food diary.",
+          error: "Couldn’t load your food diary.",
           serverConfirmed: false,
         }));
         finish();

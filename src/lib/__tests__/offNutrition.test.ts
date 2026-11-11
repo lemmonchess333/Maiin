@@ -252,3 +252,15 @@ describe("OFF_CREDIT", () => {
     expect(OFF_CREDIT).toMatch(/Open Food Facts/);
   });
 });
+
+it("scales every nutrient by the whole fractional count, not its last digit", () => {
+  expect(offProductToPortion(bar({ serving_size: "0.5 x 100g" }))).toMatchObject({
+    servingSize: "0.5 x 100g",
+    servingGrams: 50,
+    calories: 200,
+    protein: 5,
+    carbs: 30,
+    fat: 6,
+    unitConfidence: "high",
+  });
+});

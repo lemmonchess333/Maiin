@@ -8,15 +8,19 @@ the hexagon's bounding box spans a fixed band:
   medal  x 5.5..94.5, y 0.5..99.5 of 100 — the framing every badge medal
          under public/badges/ has always shipped with, so a regenerated
          set drops into the grid without shifting anything.
+  coin   x 2..98, y 2..98 of 100 — a round challenge medal under
+         public/medals/ (generate-medals.py): its circle fills 96% of the
+         square, the box MedalArt.tsx draws the art in, so the
+         illustration's rim meets the drawn one.
 
 Writes a PNG (alpha) and a WebP.
-Usage: python3 scripts/art/key-hexagon.py in.png out-stem [size] [seal|medal]"""
+Usage: python3 scripts/art/key-hexagon.py in.png out-stem [size] [seal|medal|coin]"""
 import sys, numpy as np
 from PIL import Image, ImageFilter
 src, stem = sys.argv[1], sys.argv[2]
 size = int(sys.argv[3]) if len(sys.argv) > 3 else 512
 frame = sys.argv[4] if len(sys.argv) > 4 else "seal"
-FRAMES = {"seal": (0.86, 0.94, 0.03), "medal": (0.89, 0.99, 0.005)}
+FRAMES = {"seal": (0.86, 0.94, 0.03), "medal": (0.89, 0.99, 0.005), "coin": (0.96, 0.96, 0.02)}
 fw, fh, ftop = FRAMES[frame]
 im = Image.open(src).convert("RGB")
 a = np.asarray(im).astype(np.int16)
@@ -29,6 +33,15 @@ rgb = a.astype(np.float32)
 spill = np.clip((np.minimum(r, b) - g), 0, 255).astype(np.float32) * (1 - alpha)
 rgb[..., 0] -= spill * 0.5
 rgb[..., 2] -= spill * 0.5
+if frame == "coin":
+    # A coin's reeded edge leaves a ring of faintly pink pixels that the
+    # ramp keeps fully opaque, so the partial despill above never reaches
+    # them. None of the three metals nor the black enamel has red and blue
+    # both above green, so any pixel that does carries magenta: bring red
+    # and blue down to green there, whatever its alpha.
+    spill_all = np.clip(np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1], 0, 255)
+    rgb[..., 0] -= spill_all
+    rgb[..., 2] -= spill_all
 rgb = np.clip(rgb, 0, 255).astype(np.uint8)
 A = (alpha * 255).astype(np.uint8)
 # Hexagon bbox from the solid pixels.

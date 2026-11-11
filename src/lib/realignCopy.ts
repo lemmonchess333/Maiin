@@ -38,7 +38,7 @@ export function realignResultMessage(input: {
       // word only (Run21 (4)).
       return `Not enough weeks for a full ${dist} build — switched to a mostly-easy plan: all easy runs, no quality sessions. Aim to finish strong, not to PR.`;
     case "compressible":
-      return `Plan realigned — ${input.totalWeeks} weeks to your ${dist}. It's a tighter build, so expect fewer easy weeks.`;
+      return `Plan realigned — ${input.totalWeeks} weeks to your ${dist}. It’s a tighter build, so expect fewer easy weeks.`;
     case "healthy":
     default:
       return `Plan realigned to today — ${input.totalWeeks} weeks to your ${dist}.`;

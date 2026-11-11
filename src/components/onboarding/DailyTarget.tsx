@@ -29,7 +29,7 @@ export default function DailyTarget({
       <SectionLabel className="text-nutrition-strong">
         Your daily target
       </SectionLabel>
-      <p className="text-3xl font-mono tabular-nums font-extrabold">
+      <p className="text-3xl font-figure tabular-nums font-extrabold">
         {formatCalories(calories)}{" "}
         <span className="text-base font-sans font-semibold text-muted-foreground">
           {CALORIE_UNIT}

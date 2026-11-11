@@ -28,7 +28,11 @@ export default function CorrectWorkoutSheet({
   onSaved: () => void;
 }) {
   const [correctionId] = useState(createWorkoutCompletionId);
-  const [minutes, setMinutes] = useState(String(workout.durationMinutes ?? 0));
+  // Saved minutes carry the clock's seconds. The field shows whole minutes,
+  // and an untouched field writes back the saved value, never the rounding.
+  const savedMinutes = workout.durationMinutes ?? 0;
+  const [shownMinutes] = useState(() => String(Math.round(savedMinutes)));
+  const [minutes, setMinutes] = useState(shownMinutes);
   // Each weight as first shown, in the lifter's unit.
   const [shown] = useState(() =>
     workout.exercises.map((ex) =>
@@ -49,7 +53,7 @@ export default function CorrectWorkoutSheet({
   const [question, setQuestion] = useState<CorrectionQuestion | null>(null);
   const number = (value: string) => (value.trim() ? Number(value) : NaN);
   const changed =
-    minutes !== String(workout.durationMinutes ?? 0) ||
+    minutes !== shownMinutes ||
     sets.some((row, i) =>
       row.some(
         (set, j) =>
@@ -60,7 +64,8 @@ export default function CorrectWorkoutSheet({
   async function save(confirmed: boolean) {
     if (pending.current || !changed) return;
     const edits = {
-      durationMinutes: number(minutes),
+      durationMinutes:
+        minutes === shownMinutes ? savedMinutes : number(minutes),
       exercises: sets.map((row, i) => ({
         sets: row.map((set, j) => ({
           // Untouched, a weight keeps the kg it was logged at, so reading
@@ -104,7 +109,7 @@ export default function CorrectWorkoutSheet({
       setError(
         failure instanceof Error
           ? failure.message
-          : "Couldn't save your corrections. Try again."
+          : "Couldn’t save your corrections. Try again."
       );
     } finally {
       pending.current = false;
@@ -239,6 +244,7 @@ export default function CorrectWorkoutSheet({
                 Change it
               </Button>
               <Button
+                variant="neutral"
                 fullWidth
                 disabled={saving}
                 onClick={() => void save(true)}
@@ -258,7 +264,12 @@ export default function CorrectWorkoutSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" fullWidth disabled={saving || !changed}>
+            <Button
+              variant="neutral"
+              type="submit"
+              fullWidth
+              disabled={saving || !changed}
+            >
               {saving ? "Saving…" : "Save corrections"}
             </Button>
           </div>

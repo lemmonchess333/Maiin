@@ -17,6 +17,8 @@ type PushSettingsState = {
   uid: string | null;
   consent: PushConsent;
   loading: boolean;
+  configured: boolean;
+  failed: boolean;
 };
 
 export function usePushSettings() {
@@ -25,23 +27,39 @@ export function usePushSettings() {
     uid: null,
     consent: DEFAULT_PUSH_CONSENT,
     loading: false,
+    configured: false,
+    failed: false,
   });
 
   const consent = state.uid === uid ? state.consent : DEFAULT_PUSH_CONSENT;
   const loading = uid !== null && (state.uid !== uid || state.loading);
+  const configured = state.uid === uid && state.configured;
+  const failed = state.uid === uid && state.failed;
 
   useEffect(() => {
     let cancelled = false;
 
     if (!uid) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on sign-out
-      setState({ uid: null, consent: DEFAULT_PUSH_CONSENT, loading: false });
+      setState({
+        uid: null,
+        consent: DEFAULT_PUSH_CONSENT,
+        loading: false,
+        configured: false,
+        failed: false,
+      });
       return () => {
         cancelled = true;
       };
     }
 
-    setState({ uid, consent: DEFAULT_PUSH_CONSENT, loading: true });
+    setState({
+      uid,
+      consent: DEFAULT_PUSH_CONSENT,
+      loading: true,
+      configured: false,
+      failed: false,
+    });
 
     void getDoc(doc(db, "users", uid, "settings", "push"))
       .then((snapshot) => {
@@ -55,12 +73,20 @@ export function usePushSettings() {
               : {}),
           },
           loading: false,
+          configured: snapshot.exists(),
+          failed: false,
         });
       })
       .catch((error) => {
         if (cancelled || auth.currentUser?.uid !== uid) return;
         logger.error("[push] settings load failed", error);
-        setState({ uid, consent: DEFAULT_PUSH_CONSENT, loading: false });
+        setState({
+          uid,
+          consent: DEFAULT_PUSH_CONSENT,
+          loading: false,
+          configured: false,
+          failed: true,
+        });
       });
 
     return () => {
@@ -86,7 +112,12 @@ export function usePushSettings() {
         if (auth.currentUser?.uid !== uid) return false;
         setState((previous) =>
           previous.uid === uid
-            ? { ...previous, consent: { ...previous.consent, ...updates } }
+            ? {
+                ...previous,
+                consent: { ...previous.consent, ...updates },
+                configured: true,
+                failed: false,
+              }
             : previous
         );
         return true;
@@ -98,5 +129,5 @@ export function usePushSettings() {
     [loading, uid]
   );
 
-  return { consent, update, loading };
+  return { consent, update, loading, configured, failed };
 }

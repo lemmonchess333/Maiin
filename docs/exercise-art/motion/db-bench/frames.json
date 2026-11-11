@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/db-bench.webp",
+  "still": "form-art/db-bench.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 461,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "4967cb55c6fcc2b871ca7192c909eff184c32c9bc3ab14ec3b4c29047a774a55",
+  "thenSha256": "b27657345f47316bee5dda87b246c64f87f0961214afe924fe3544303f211689",
+  "sha256": "7775807de203c098e19154af1ff1b71b7861f26ba1eff87b8b451869c3ecf0ef"
+}

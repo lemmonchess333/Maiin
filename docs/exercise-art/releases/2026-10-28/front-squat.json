@@ -1,0 +1,194 @@
+{
+  "exerciseId": "front-squat",
+  "version": "anatomy-v4-2026-10-28-cross-arm-front-squat-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native, biomechanics, and 393×852 player review",
+  "reviewedAt": "2026-10-28T00:45:27.052Z",
+  "reference": {
+    "path": "form-frames/front-squat/2026-10-28/1.webp",
+    "sha256": "b513b9831f11cf1465c965e423b6d56a9183d289a218d2faaac63b8ef44cb88f"
+  },
+  "cueSha256": "407f0a5539bdc7117afb06cc27fda96e31110346c2753b546a548a40cb1430b2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1024px frames retain one faceless anatomical lifter, graphite bar and equal plates, white trainers, and violet quadriceps. The same rig, atlas, shelf mask, camera, and equipment persist at every depth."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "A fixed orthographic camera shows the complete lifter and both plates on a 1024×1024 canvas. Left and right shoe bounds move no more than 0.037px while the bar and torso descend and rise."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "The cross-arm rack remains on the front delts with high elbows. The knees track over toes, heels stay planted, and the upright trunk lowers until hip center 0.3945m is below knee center 0.4157m. Native and 360px art reviews found continuous arms, legs, shoulders, shorts, and shoes."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bar shaft end span stays 754.0303–754.0304px with 4.7257–4.7258° screen tilt across all frames; plates remain equal sized and on the same shaft. Plate-center screen span stays constant and the bar moves with the shoulder shelf."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Fixed shape-key shelf lets the bar rest on both front-deltoid surfaces: shelf tangent 15.6mm from shaft center versus 16mm shaft radius. Styled-mesh throat clearance is 23.2mm. Both sole z minima stay 0.0059m and shoe bounds drift under 0.037px."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Depths 0, 0.28, 0.65, 1, 0.65, 0.28 descend then rise with planted feet. Bar remains within about 4–5cm of foot support at bottom. Hip passes knee at depth; plates do not resize and the rack does not slide into the throat."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Bilateral quadriceps keep a continuous feathered violet highlight through every depth. The cleaned atlas removes white holes in the quads and the former hard core band while retaining readable anatomical contours at phone size."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The six captions describe the visible high-elbow crossed-arm front rack, braced descent, full depth, and rise. Exercise instructions explicitly teach this crossed-arm version and the bar resting on front delts."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "The 360px six-frame sheet was reviewed in order and back to frame 1. Frames 2 and 6, and 3 and 5, are byte-identical symmetric return poses, so the 6→1 step reverses the 1→2 step. All six ordered frames preserve one rig and one camera."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Six candidate frames and the 6→1 return decoded in the 393×852 light-theme player, with no horizontal overflow, page error, console error, clipping, or unreadable captions; the phone screenshot and six-stage sheet were reviewed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Six candidate frames and the 6→1 return decoded in the 393×852 dark-theme player, with no horizontal overflow, page error, console error, clipping, or unreadable captions; the phone screenshot and six-stage sheet were reviewed."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/front-squat/2026-10-28/1.webp",
+      "sha256": "b513b9831f11cf1465c965e423b6d56a9183d289a218d2faaac63b8ef44cb88f",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.297,
+          "y": 899.721
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.286,
+          "y": 888.081
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0303,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/1.png",
+        "sha256": "9a50ee4d019e5c80cfb2a6b62aedc37ba725de54489fcdafa60239d01aa70bac"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2026-10-28/2.webp",
+      "sha256": "2e747e094098949b3c3a7d4ec10f79f5af5df7f49c15d2c3e6604f3ad395dd7e",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.299,
+          "y": 899.747
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.284,
+          "y": 888.108
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0303,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/2.png",
+        "sha256": "8d55139927469996722725183aabaa8aae4e6cc075646f91025c9420ba475158"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2026-10-28/3.webp",
+      "sha256": "0de81da06ac021faf7f599842aa359b1f5f9fb9dc57227ce334477b0e7a5ce4a",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.298,
+          "y": 899.731
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.286,
+          "y": 888.092
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0304,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/3.png",
+        "sha256": "731c1b8d6b8eeb6cb9ef5f115a33c71cd4d922a709372ef5c13bd1a3d512099b"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2026-10-28/4.webp",
+      "sha256": "d33d66c7e811d1fcdc3c6d55468237d7eb428a9f94f0da3164460293a6962f89",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.307,
+          "y": 899.757
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.284,
+          "y": 888.117
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0303,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/4.png",
+        "sha256": "f2d765d947e193dd16635b20d1a5e0bb4c87fa546537d5ea21452add9da721c2"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2026-10-28/5.webp",
+      "sha256": "0de81da06ac021faf7f599842aa359b1f5f9fb9dc57227ce334477b0e7a5ce4a",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.298,
+          "y": 899.731
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.286,
+          "y": 888.092
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0304,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/5.png",
+        "sha256": "731c1b8d6b8eeb6cb9ef5f115a33c71cd4d922a709372ef5c13bd1a3d512099b"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2026-10-28/6.webp",
+      "sha256": "2e747e094098949b3c3a7d4ec10f79f5af5df7f49c15d2c3e6604f3ad395dd7e",
+      "anchors": {
+        "leftShoeVisibleTopLeft": {
+          "x": 521.299,
+          "y": 899.747
+        },
+        "rightShoeVisibleTopLeft": {
+          "x": 357.284,
+          "y": 888.108
+        }
+      },
+      "invariantDimensions": {
+        "barShaftEndSpan": 754.0303,
+        "plateCenterSpan": 598.3069
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/front-squat/6.png",
+        "sha256": "8d55139927469996722725183aabaa8aae4e6cc075646f91025c9420ba475158"
+      }
+    }
+  ]
+}

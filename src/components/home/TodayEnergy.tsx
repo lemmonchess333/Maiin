@@ -120,11 +120,11 @@ export default function TodayEnergy({
 
   return (
     <section
-      aria-label="Today's food"
-      className={cardClasses({ className: "@container" })}
+      aria-label="Today’s food"
+      className={cardClasses({ className: "@container rounded-xl" })}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold text-foreground">Food</h2>
+        <h2 className="text-base font-bold text-foreground">Food</h2>
         {/* The one way into the food log: nutrition-tinted, a full 44px
             target. The orange is the -strong step, not the identity: the
             identity is a fill colour and reads 2.77:1 as text here. */}
@@ -149,7 +149,7 @@ export default function TodayEnergy({
           under the ring instead: beside it they ran into each other. */}
       {mealsError && (
         <div role="alert" className="mt-3 space-y-2">
-          <p className="text-sm">Couldn't load your food diary.</p>
+          <p className="text-sm">Couldn’t load your food diary.</p>
           {hasIntake && (
             <p className="text-xs text-muted-foreground">
               Showing last available totals.
@@ -171,7 +171,7 @@ export default function TodayEnergy({
           {caloriesPending ? (
             <span
               role="status"
-              aria-label="Today's calories still loading"
+              aria-label="Today’s calories still loading"
               className="shrink-0"
             >
               <Skeleton className="size-26 rounded-full" />
@@ -184,6 +184,10 @@ export default function TodayEnergy({
               mode={mode}
               onToggleMode={toggleMode}
               trajectoryLabel={null}
+              /* The macro tiles beside it count for 600 ms, as Food's
+                 ring does; at the default 1500 the calories landed a
+                 second after them on every Home visit. */
+              ringDurationMs={600}
             />
           )}
           <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">

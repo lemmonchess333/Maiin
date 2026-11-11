@@ -136,13 +136,13 @@ export default function RunResumePrompt({
           >
             <div>
               <p
-                className="text-micro uppercase tracking-wider"
+                className="text-micro"
                 style={{ color: "rgba(255,255,255,0.5)" }}
               >
                 Time
               </p>
               <p
-                className="font-mono tabular-nums text-xl font-bold"
+                className="font-figure tabular-nums text-xl font-bold"
                 style={{ color: "white" }}
               >
                 {formatElapsed(accumulatedSeconds)}
@@ -150,16 +150,19 @@ export default function RunResumePrompt({
             </div>
             <div className="text-right">
               <p
-                className="text-micro uppercase tracking-wider"
+                className="text-micro"
                 style={{ color: "rgba(255,255,255,0.5)" }}
               >
                 Distance
               </p>
               <p
-                className="font-mono tabular-nums text-xl font-bold"
+                className="font-figure tabular-nums text-xl font-bold"
                 style={{ color: "white" }}
               >
-                {distance} {distanceUnitLabel(unit)}
+                {distance}{" "}
+                <span className="font-sans text-sm font-medium">
+                  {distanceUnitLabel(unit)}
+                </span>
               </p>
             </div>
           </div>

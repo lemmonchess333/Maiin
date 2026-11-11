@@ -21,8 +21,13 @@ import {
 } from "./chartStyles";
 import { formatBinLabel } from "@/lib/chartGranularity";
 import ChartAreaGradient from "./ChartAreaGradient";
-import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
+import {
+  evaluateLoadGuardrails,
+  type LoadPoint,
+  type LoadGuardrails,
+} from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import ErrorState from "@/components/ui/ErrorState";
 import EmptyState from "@/components/ui/EmptyState";
 import { formatSigned } from "@/utils/formatters";
 
@@ -58,16 +63,27 @@ const TRAINING_LOAD_EXPLAINER = (
 
 const numberFmt = (n: number) => Math.round(n).toString();
 
+/** Days with a session before the curve draws, for an account with no
+ *  base from before the range. */
+const MIN_SESSION_DAYS = 3;
+
 /** The daily bars' own scale. The curves keep Recharts' default axis. */
 const DAY_AXIS = "day";
 
 export default function TrainingLoadCard({
   points,
   loading,
+  failed = false,
+  onRetry,
+  guardrails: historyGuardrails,
   range,
 }: {
   points: LoadPoint[];
   loading: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
+  /** Computed from history before cropping the chart, including the 28-day base. */
+  guardrails?: LoadGuardrails;
   /** The range the curve covers, as the card's own control: on the
    *  Performance page it scopes this card and nothing else, so it sits
    *  under the card's title rather than across the page. It stays put
@@ -83,7 +99,7 @@ export default function TrainingLoadCard({
     if (!range) return <Skeleton className="h-56 w-full rounded-2xl" />;
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
-        <h3 className="mb-3 text-sm font-bold text-foreground">
+        <h3 className="mb-3 text-base font-bold text-foreground">
           Training load
         </h3>
         {rangeRow}
@@ -92,12 +108,34 @@ export default function TrainingLoadCard({
     );
   }
 
-  const hasAnyLoad = points.some((p) => p.load > 0 || p.fitness > 0.5);
-  if (!hasAnyLoad) {
+  if (failed) {
+    return (
+      <div className="p-4 rounded-2xl bg-card card-shadow">
+        <h3 className="mb-3 text-base font-bold text-foreground">
+          Training load
+        </h3>
+        {rangeRow}
+        <ErrorState
+          title="Couldn’t load your training history"
+          description="Your training load is unavailable until your sessions can be read."
+          retry={onRetry ? { onClick: onRetry } : undefined}
+        />
+      </div>
+    );
+  }
+
+  /* The curve waits for something to draw: three days with a session, or
+     a base carried in from before the range. One session drew a month of
+     zeros, a spike at its end and a "Form −3" chip, a verdict on day 3
+     of a new account. */
+  const sessionDays = points.filter((p) => p.load > 0).length;
+  const carriesHistory =
+    points.length > 0 && points[0].load === 0 && points[0].fitness > 0.5;
+  if (sessionDays < MIN_SESSION_DAYS && !carriesHistory) {
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
         {range && (
-          <h3 className="mb-3 text-sm font-bold text-foreground">
+          <h3 className="mb-3 text-base font-bold text-foreground">
             Training load
           </h3>
         )}
@@ -106,7 +144,11 @@ export default function TrainingLoadCard({
           compact
           icon={Activity}
           headline="Your training load curve builds here"
-          sub="Every workout and run feeds one fitness/fatigue curve — log a few sessions and the trend appears."
+          sub={
+            sessionDays === 0
+              ? "Every workout and run feeds one curve of fitness and fatigue. Log a few sessions and the trend appears."
+              : `${sessionDays} of ${MIN_SESSION_DAYS} days with a session. The trend appears at ${MIN_SESSION_DAYS}.`
+          }
         />
       </div>
     );
@@ -115,7 +157,7 @@ export default function TrainingLoadCard({
   const last = points[points.length - 1];
   const formFresh = last.form >= 0;
   // B1 guardrails — pure evaluation over the same points the chart draws.
-  const guardrails = evaluateLoadGuardrails(points);
+  const guardrails = historyGuardrails ?? evaluateLoadGuardrails(points);
 
   // Sparse x labels: ~5 ticks across the window.
   const tickEvery = Math.max(1, Math.floor(points.length / 5));
@@ -157,7 +199,7 @@ export default function TrainingLoadCard({
             style={{ color: THEME.brand }}
             aria-hidden="true"
           />
-          <h3 className="text-sm font-bold text-foreground">Training load</h3>
+          <h3 className="text-base font-bold text-foreground">Training load</h3>
           {/* How to read the chart, on request. It was a permanent
               paragraph under the plot — help text, re-read on every
               visit, holding ~60px between two charts on a page that is

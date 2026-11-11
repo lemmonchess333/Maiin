@@ -22,8 +22,7 @@ const h = vi.hoisted(() => ({
   onAuth: null as ((user: User | null) => void) | null,
   checkout: null as UseProCheckoutResult["startCheckout"] | null,
   updateProfile: null as
-    | ((patch: Partial<UserProfile>) => Promise<UpdateProfileResult>)
-    | null,
+    ((patch: Partial<UserProfile>) => Promise<UpdateProfileResult>) | null,
   sync: vi.fn(),
 }));
 
@@ -53,6 +52,13 @@ vi.mock("firebase/functions", () => ({
 }));
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true, getPlatform: () => "ios" },
+  // AuthProvider clears native Watch state before exposing another account.
+  // This subscription test keeps that cleanup available without a native
+  // bridge; account-transition behavior has its own focused tests.
+  registerPlugin: () => ({
+    clearSession: vi.fn().mockResolvedValue(undefined),
+    addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
+  }),
 }));
 vi.mock("../nativeAuth", () => ({
   getGoogleCredentialNative: vi.fn(),
@@ -267,7 +273,8 @@ describe("AuthProvider — live subscription state", () => {
         ref,
         options as SnapshotListenOptions,
         (snapshot: DocumentSnapshot) => {
-          const deliver = () => (next as (s: DocumentSnapshot) => void)(snapshot);
+          const deliver = () =>
+            (next as (s: DocumentSnapshot) => void)(snapshot);
           if (hold) queued.push(deliver);
           else deliver();
         },

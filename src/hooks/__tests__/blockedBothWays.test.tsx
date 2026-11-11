@@ -126,7 +126,8 @@ describe("what the person blocked no longer sees of the blocker", () => {
 
 /* Every surface that leaves people out reads the merged `blocked`. The
    tray, badge and photos are driven above; these are pinned by their
-   own suites against `blocked` (CommentSheet, SpaceCommentSheet, Space,
+   own suites against `blocked` (CommentSheet, ActivityPostComments,
+   SpaceCommentSheet, Space, FollowList,
    SpacePost, Social, PeopleView, ActivityCard, useFriendsBoard,
    useChallenges),
    so what is left to hold is that each one reads the merged set. */
@@ -134,7 +135,9 @@ const ROOT = resolve(__dirname, "../../..");
 const FILTERING_SURFACES: Record<string, string> = {
   "src/pages/Social.tsx": "the feed, Explore, search and suggestions",
   "src/pages/Space.tsx": "a Space's posts",
-  "src/components/social/CommentSheet.tsx": "comments on a post",
+  "src/pages/FollowList.tsx": "your followers and following",
+  // The feed sheet's and the post page's comments both read through it.
+  "src/hooks/useActivityComments.ts": "comments on a post",
   "src/features/spaces/SpaceCommentSheet.tsx": "comments on a Space post",
   "src/components/social/ActivityCard.tsx": "the props list",
   "src/components/social/BlockAwareAvatar.tsx": "photos on every list",

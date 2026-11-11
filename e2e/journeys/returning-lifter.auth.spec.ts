@@ -107,7 +107,7 @@ test("a light trainer, three weeks away, eases back in", async ({ page }) => {
       await openTab(page, TABS.home);
       const sheet = page.getByRole("dialog", { name: WELCOME_BACK.sheet });
       await expect(sheet).toBeVisible();
-      await expect(sheet).toContainText("It's been about 4 weeks");
+      await expect(sheet).toContainText("It’s been about 4 weeks");
       const choices = sheet.getByRole("button", {
         name: new RegExp(
           `${WELCOME_BACK.easeBack.source}|${WELCOME_BACK.keep.source}`

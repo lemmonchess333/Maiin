@@ -105,7 +105,7 @@ export function resendVerificationErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : "";
   return msg.includes("Too many")
     ? msg
-    : "Couldn't send the email. Try again in a moment.";
+    : "Couldn’t send the email. Try again in a moment.";
 }
 
 /** Reauth with the current password, then set the new one. */

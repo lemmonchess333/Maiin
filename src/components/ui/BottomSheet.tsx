@@ -45,6 +45,10 @@ interface BottomSheetProps {
   /** When false, the sheet cannot be dismissed by drag/backdrop/
    *  escape — only by parent state change. Default true. */
   dismissible?: boolean;
+  /** A multi-step editor can handle Back without closing the sheet (return
+   * to its previous step or ask to discard). This callback is sticky, so
+   * repeated Back presses remain trapped while the editor stays open. */
+  onBack?: () => void;
   /** Render no header strip (drag handle + title row). Useful for
    *  full-bleed sheets where the body owns the entire surface
    *  including its own close affordance. Default false. */
@@ -69,6 +73,7 @@ export function BottomSheet({
   description,
   maxHeight = "max-h-[85vh]",
   dismissible = true,
+  onBack,
   hideHeader = false,
   className,
   overlayClassName,
@@ -77,9 +82,14 @@ export function BottomSheet({
   // Device/browser BACK closes the sheet instead of navigating the page away.
   // A non-dismissible sheet still registers (with a no-op) so back is trapped,
   // not passed through to the router. See lib/backDismiss.ts.
-  useBackDismiss(open, () => {
-    if (dismissible) onOpenChange(false);
-  });
+  useBackDismiss(
+    open,
+    () => {
+      if (onBack) onBack();
+      else if (dismissible) onOpenChange(false);
+    },
+    { sticky: !!onBack }
+  );
   /**
    * Lift the sheet clear of the on-screen keyboard.
    *

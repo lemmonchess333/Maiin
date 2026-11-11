@@ -21,6 +21,7 @@ import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
 import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
 import { BadgeHex } from "../features/streaks/BadgeHex";
+import TrophyCase from "@/features/challenges/TrophyCase";
 import {
   Flame,
   MoreHorizontal,
@@ -81,7 +82,7 @@ function ProfileUnavailable({ back }: { back: ReactNode }) {
       {back}
       <EmptyState
         icon={UserX}
-        headline="This profile isn't available"
+        headline="This profile isn’t available"
         sub="The account may have been deleted, or the link is out of date."
         action={{
           label: "Go back",
@@ -159,6 +160,7 @@ function ProfileContent({
     countsFailed,
     badges,
     badgesFailed,
+    medals,
     posts,
     postsLoading,
     postsFailed,
@@ -200,7 +202,7 @@ function ProfileContent({
         {back}
         <EmptyState
           icon={WifiOff}
-          headline="Couldn't load this profile"
+          headline="Couldn’t load this profile"
           sub="Check your connection and try again."
           action={{ label: "Try again", onClick: retry }}
         />
@@ -221,7 +223,7 @@ function ProfileContent({
       toast.success(`Blocked ${name}`);
       navigate(-1);
     } catch {
-      toast.error("Couldn't block user. Try again.");
+      toast.error("Couldn’t block user. Try again.");
     }
   };
 
@@ -234,7 +236,7 @@ function ProfileContent({
       removeBlocked(uid);
       toast.success(`Unblocked ${name}`);
     } catch {
-      toast.error("Couldn't unblock. Try again.");
+      toast.error("Couldn’t unblock. Try again.");
     }
   };
 
@@ -263,10 +265,38 @@ function ProfileContent({
           </h1>
           {countsFailed ? (
             <p className="mt-1 text-small text-muted-foreground">
-              Couldn't load follower counts.
+              Couldn’t load follower counts.
             </p>
           ) : followers === null || followingCount === null ? (
             <Skeleton className="mt-1.5 h-4 w-36 rounded" />
+          ) : isOwnProfile ? (
+            /* Your own counts open your lists (Mob2 call 7). Anyone
+               else's stay plain text: their lists are theirs. */
+            <p className="mt-1 flex flex-wrap items-center gap-x-1 text-small text-muted-foreground">
+              <Link
+                to="/followers"
+                className="inline-flex min-h-[44px] items-center hover:text-foreground"
+              >
+                <span>
+                  <span className="font-mono tabular-nums font-semibold text-foreground">
+                    {followers.toLocaleString()}
+                  </span>{" "}
+                  {plural(followers, "follower", "followers")}
+                </span>
+              </Link>
+              <span aria-hidden="true"> · </span>
+              <Link
+                to="/following"
+                className="inline-flex min-h-[44px] items-center hover:text-foreground"
+              >
+                <span>
+                  <span className="font-mono tabular-nums font-semibold text-foreground">
+                    {followingCount.toLocaleString()}
+                  </span>{" "}
+                  following
+                </span>
+              </Link>
+            </p>
           ) : (
             <p className="mt-1 text-small text-muted-foreground">
               <span className="font-mono tabular-nums font-semibold text-foreground">
@@ -280,13 +310,18 @@ function ProfileContent({
               following
             </p>
           )}
-          {trainingForSpaceId && !youBlockedThem && (
-            <div className="mt-2">
-              <TrainingForChip spaceId={trainingForSpaceId} />
-            </div>
-          )}
         </div>
       </div>
+
+      {/* The race chip under the header row, across the page. Beside the
+          avatar it had the name's column, a third of a 320px screen at
+          large text, and the race's name broke inside its words. Hidden
+          while empty: the chip shows nothing for a race that has passed. */}
+      {trainingForSpaceId && !youBlockedThem && (
+        <div className="empty:hidden">
+          <TrainingForChip spaceId={trainingForSpaceId} />
+        </div>
+      )}
 
       {isOwnProfile ? (
         <div className="space-y-2">
@@ -417,7 +452,7 @@ function ProfileContent({
               <Skeleton className="mt-3 h-12 w-full rounded-lg" />
             ) : postsFailed ? (
               <p className="mt-2 text-small text-muted-foreground">
-                Couldn't load this week's sessions.
+                Couldn’t load this week’s sessions.
               </p>
             ) : week.sessions > 0 ? (
               <div className="mt-3 grid grid-cols-3 divide-x divide-border">
@@ -445,7 +480,7 @@ function ProfileContent({
 
           {badgesFailed && (
             <p className="text-small text-muted-foreground">
-              Couldn't load badges.
+              Couldn’t load badges.
             </p>
           )}
           {badges.length > 0 && (
@@ -467,6 +502,11 @@ function ProfileContent({
             </ul>
           )}
 
+          {/* The trophy case (Soc15): a medal for every challenge
+              edition they reached a tier in. Drawn once the public
+              profile has been read; a read that failed draws nothing. */}
+          {medals && <TrophyCase medals={medals} isOwn={isOwnProfile} />}
+
           <section className="space-y-2" aria-labelledby="profile-sessions">
             <SectionHeading id="profile-sessions">
               Recent sessions
@@ -478,7 +518,7 @@ function ProfileContent({
               </>
             ) : postsFailed ? (
               <ErrorState
-                title="Couldn't load sessions"
+                title="Couldn’t load sessions"
                 description="Check your connection and try again."
                 retry={{ onClick: retry }}
               />
@@ -490,7 +530,7 @@ function ProfileContent({
               <EmptyState
                 icon={Users}
                 headline="Nothing shared yet"
-                sub="Sessions you share show here and in your followers' feeds."
+                sub="Sessions you share show here and in your followers’ feeds."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             ) : (

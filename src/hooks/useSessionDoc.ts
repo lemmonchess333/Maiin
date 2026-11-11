@@ -116,10 +116,15 @@ export function useSessionDoc<T extends { id: string }>(
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
-  // A completed run remains readable on this phone until sync is acknowledged.
+  // A completed run or workout remains readable on this phone until sync is
+  // acknowledged: the lists that link to one (the run list, an exercise's
+  // history) already show it from the same queue.
   let local = data;
-  if (uid && id && collection === "runs") {
-    for (const entry of pendingDocumentWrites(uid, `users/${uid}/runs`)) {
+  if (uid && id) {
+    for (const entry of pendingDocumentWrites(
+      uid,
+      `users/${uid}/${collection}`
+    )) {
       if (entry.id !== id || (entry.merge && !local)) continue;
       local = { ...(entry.merge ? local : {}), ...entry.data, id } as T;
     }

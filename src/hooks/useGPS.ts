@@ -13,11 +13,7 @@ import { logger } from "../lib/logger";
 import type { GPSPoint } from "../lib/gps";
 
 export type GPSSignalQuality =
-  | "searching"
-  | "weak"
-  | "fair"
-  | "good"
-  | "strong";
+  "searching" | "weak" | "fair" | "good" | "strong";
 
 interface GPSState {
   points: GPSPoint[];
@@ -162,7 +158,13 @@ export function useGPS(elapsedSeconds = 0) {
           signalQuality: getSignalQuality(pos.coords.accuracy),
         }));
       },
-      () => {} // silence errors — this is best-effort
+      // Best-effort, except that a refusal is worth knowing: the setup
+      // screen then stops showing a signal it cannot get, and the
+      // acquiring screen says how to turn location on.
+      (err) => {
+        if (err.code === 1)
+          setState((s) => ({ ...s, permissionState: "denied" }));
+      }
     );
   }, []);
 
@@ -233,8 +235,16 @@ export function useGPS(elapsedSeconds = 0) {
 
         const GOOD_FIX_M = 150;
         const makePoint = (useKalman: boolean): GPSPoint => {
+          // The filter takes the fixes that become points, so the time
+          // since the last point is the time it has gone without a fix,
+          // across a gap in the signal or a hold.
           const c = useKalman
-            ? kalmanRef.current.process(latitude, longitude, accuracy)
+            ? kalmanRef.current.process(
+                latitude,
+                longitude,
+                accuracy,
+                lastPoint ? (fixAt - lastPoint.timestamp) / 1000 : 1
+              )
             : { lat: latitude, lon: longitude };
           return {
             lat: c.lat,
@@ -340,7 +350,11 @@ export function useGPS(elapsedSeconds = 0) {
         if (verdict !== "ok") {
           // A fix that has not moved is not a bad one: route quality reads
           // this count, and a runner standing at a crossing has a signal.
-          if (verdict !== "still") rejectedFixCountRef.current += 1;
+          if (verdict === "still") {
+            // The route must not accumulate jitter, but auto-pause needs the
+            // current speed, not the speed of the last point that moved.
+            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+          } else rejectedFixCountRef.current += 1;
           return;
         }
         const point = makePoint(true);

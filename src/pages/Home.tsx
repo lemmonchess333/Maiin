@@ -21,8 +21,16 @@ import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { isWithinActivationWindow } from "@/lib/activationFraming";
 import { homeMealsWindow } from "@/lib/homeMealsWindow";
-import { firstWeek, type FirstWeekItemKey } from "@/lib/firstWeek";
+import {
+  firstWeek,
+  isFirstWeekWorkoutEligible,
+  type FirstWeekItemKey,
+} from "@/lib/firstWeek";
+import { firstWeekAction, firstWeekPriorityTask } from "@/lib/firstWeekAction";
+import { unlockSpeech } from "@/lib/speechUnlock";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
+import StarterDoneCard from "@/components/run/StarterDoneCard";
+import { starterGoalReached } from "@/features/program/starterProgress";
 import {
   guideAllowedHere,
   guideRequest,
@@ -40,6 +48,7 @@ import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
+import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -55,11 +64,28 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
 import { todaySession } from "@/lib/todaySession";
+import {
+  freeRunHeroLine,
+  heroIsFreeRun,
+  heroKicker,
+  nextSessionLine,
+  planPosition,
+  weekSessions,
+} from "@/lib/homeHero";
+import { useSavedRuns } from "@/hooks/useSavedRuns";
+import type { RunWindow } from "@/lib/savedRuns";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -68,9 +94,12 @@ import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
+import WeekSessions from "@/components/home/WeekSessions";
+import InlineNumerals from "@/components/ui/InlineNumerals";
+import { cardClasses } from "@/components/ui/cardClasses";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
@@ -86,6 +115,8 @@ import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
 import WeekSummary from "@/components/home/WeekSummary";
 import Card from "@/components/ui/Card";
+import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -96,6 +127,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
+import { isActivationJourneyV2 } from "@/lib/activationJourney";
+import { usePriorHomeVisit } from "@/hooks/usePriorHomeVisit";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { DEFAULT_PLAN } from "@/lib/proPlans";
 import {
@@ -124,6 +157,8 @@ const GuideWalk = lazyRetry(() => import("@/components/guide/GuideWalk"));
    Home fetches it once it has drawn (below) and the tap does not wait. */
 const loadWeightLogSheet = () => import("@/components/home/WeightLogSheet");
 const WeightLogSheet = lazyRetry(loadWeightLogSheet);
+const loadStreakSheet = () => import("@/features/streaks/StreakSheet");
+const StreakSheet = lazyRetry(loadStreakSheet);
 const BadgeEarnedModal = lazyRetry(() =>
   import("@/features/streaks/BadgeEarnedModal").then((m) => ({
     default: m.BadgeEarnedModal,
@@ -144,6 +179,14 @@ const RunReturnSheet = lazyRetry(
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
+  const activationJourneyV2 = isActivationJourneyV2(profile);
+  const homeVisitUid = user?.uid ?? null;
+  const {
+    hadPriorVisit: hadPriorHomeVisit,
+    markVisited: markHomeVisited,
+    firstVisitThisOpen: firstHomeVisitThisOpen,
+  } = usePriorHomeVisit(homeVisitUid);
+  const firstHomeVisit = activationJourneyV2 && !hadPriorHomeVisit;
   // home-declutter 6b — uid-scoped monthly snooze for the post-trial
   // upgrade strip (shared-device rule: one account's snooze must not
   // hide the funnel for the next).
@@ -155,6 +198,7 @@ export default function Home() {
     workouts,
     getWorkoutsForDate,
     loading: workoutsLoading,
+    failed: workoutsFailed,
   } = useWorkouts();
 
   const effectiveTargets = useEffectiveTargets();
@@ -165,6 +209,7 @@ export default function Home() {
   const {
     programState,
     loading: programLoading,
+    maintenanceFailed: programMaintenanceFailed,
     overrideRunDay,
     markManualComplete,
     skipRunDay,
@@ -245,10 +290,17 @@ export default function Home() {
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
-  // After Home's first paint, not in it: the weight tile's tap opens
-  // a sheet that is already here. A failed fetch is the lazy()'s to retry.
+  // The flame's sheet: mounted on the first tap and kept, so it closes
+  // with its own motion rather than vanishing.
+  const [streakSheet, setStreakSheet] = useState<"unopened" | boolean>(
+    "unopened"
+  );
+  // After Home's first paint, not in it: the weight tile's and the
+  // flame's taps open a sheet that is already here. A failed fetch is
+  // the lazy()'s to retry.
   useEffect(() => {
     void loadWeightLogSheet().catch(() => {});
+    void loadStreakSheet().catch(() => {});
   }, []);
   const [showProModal, setShowProModal] = useState(false);
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
@@ -273,6 +325,18 @@ export default function Home() {
     runs: savedRuns,
     loading: savedRunsLoading,
   } = useClaimMapForProgram(programState);
+
+  // Run9's starter goal reached, by the days of the saved runs as the
+  // rollover weighs them: Home says Done, with the next goal offered once.
+  const starterDone = useMemo(
+    () =>
+      starterGoalReached(
+        profile,
+        programState,
+        savedRuns.map((run) => run.day)
+      ),
+    [profile, programState, savedRuns]
+  );
 
   // What was done, by date: the strip fills a day for a logged lift
   // session or run, and the week's counts read the same records.
@@ -404,6 +468,8 @@ export default function Home() {
     previousWeek: perfPrevWeek,
     docsAvailable: perfDocsAvailable,
     loading: perfLoading,
+    failed: perfFailed,
+    refresh: refreshPerformance,
   } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
@@ -425,6 +491,16 @@ export default function Home() {
     },
     [profile?.createdAt]
   );
+  const onboardingCompletedAtMs = useMemo(() => {
+    const completed = profile?.onboardingCompletedAt as
+      { toMillis?: () => number } | undefined;
+    return completed && typeof completed.toMillis === "function"
+      ? completed.toMillis()
+      : null;
+  }, [profile?.onboardingCompletedAt]);
+  const activationStartMs = activationJourneyV2
+    ? onboardingCompletedAtMs
+    : createdAtMs;
   // Home's Pro strip for a free account (homeProStrip.ts). Trial
   // eligibility decides the copy: a first-timer is offered the trial,
   // an account that has had one is offered the plans, and so is anyone
@@ -441,14 +517,23 @@ export default function Home() {
     snoozed: proStripSnoozed,
     hadFreeWeek: !!profile?.trialExpiresAt,
     createdAtMs,
+    onboardingCompletedAtMs,
+    activationJourneyV2,
+    hadPriorHomeVisit,
     nowMs,
   });
   // Only pay for the full lifetime-runs read while the user is inside the
   // activation window — an established runner never reads their whole runs
   // collection just to drive cold-start copy.
-  const inActivationWindow = isWithinActivationWindow(createdAtMs, nowMs);
-  const { runCount: lifetimeRunCount, loading: runStatsLoading } =
-    useLifetimeRunStats({ enabled: inActivationWindow });
+  const inActivationWindow = isWithinActivationWindow(activationStartMs, nowMs);
+  const {
+    runCount: lifetimeRunCount,
+    loading: runStatsLoading,
+    failed: runStatsFailed,
+  } = useLifetimeRunStats({
+    enabled: inActivationWindow,
+    refreshOnFocus: activationJourneyV2,
+  });
   // A workout closed with its sets kept, or a run left before it was
   // saved, is offered back on the session card (`todaySession`).
   const {
@@ -465,7 +550,10 @@ export default function Home() {
         programState,
         claimMap,
         workouts,
-        createdAtMs,
+        validWorkoutCount: activationJourneyV2
+          ? workouts.filter(isFirstWeekWorkoutEligible).length
+          : undefined,
+        createdAtMs: activationStartMs,
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
@@ -481,7 +569,8 @@ export default function Home() {
       programState,
       claimMap,
       workouts,
-      createdAtMs,
+      activationJourneyV2,
+      activationStartMs,
       nowMs,
       runStatsLoading,
       lifetimeRunCount,
@@ -491,6 +580,69 @@ export default function Home() {
       routinesInFlight,
     ]
   );
+  // The hero's words around the session (homeHero.ts): the kicker beside
+  // the date, the week's count and the next session beside the segments.
+  const heroPositionLabel = useMemo(
+    () => planPosition(programState, todayKey),
+    [programState, todayKey]
+  );
+  const kicker = heroKicker(session, heroPositionLabel);
+  /* A free run's line is the week's distance against last week's
+     (`freeRunHeroLine`), so the runs from last week's Monday on are read,
+     and only while the hero is a free run. A day early, as the claim
+     window reads, for a run recorded east of here before this midnight. */
+  const freeRunHero = heroIsFreeRun(session);
+  const freeRunWindow = useMemo<RunWindow | null>(
+    () =>
+      freeRunHero
+        ? {
+            since: localDateString(
+              addLocalDays(
+                parseLocalDate(localWeekKey(parseLocalDate(todayKey))),
+                -8
+              )
+            ),
+          }
+        : null,
+    [freeRunHero, todayKey]
+  );
+  const freeRunRead = useSavedRuns(freeRunWindow);
+  const freeRunLine = useMemo(
+    () =>
+      freeRunHero
+        ? freeRunHeroLine({
+            // No line while the runs are read, or when they could not be:
+            // an empty list would say no run was ever saved.
+            runs:
+              freeRunRead.loading || freeRunRead.failed
+                ? null
+                : freeRunRead.runs
+                    .filter((r) => isVolumeEligible(r))
+                    .map((r) => ({ day: r.day, distance: r.distance })),
+            todayKey,
+            unit: resolveDistanceUnit(profile?.preferredDistanceUnit),
+            first:
+              session.run?.isFirst ??
+              (inActivationWindow &&
+                !runStatsLoading &&
+                lifetimeRunCount === 0),
+          })
+        : null,
+    [
+      freeRunHero,
+      freeRunRead.loading,
+      freeRunRead.failed,
+      freeRunRead.runs,
+      todayKey,
+      profile?.preferredDistanceUnit,
+      session.run?.isFirst,
+      inActivationWindow,
+      runStatsLoading,
+      lifetimeRunCount,
+    ]
+  );
+  const weekSessionCount = weekSessions(weekCounts);
+  const nextSession = nextSessionLine(session.next, session);
 
   // Relative time string for weight tile
   const weightRelativeTime = useMemo(
@@ -630,10 +782,7 @@ export default function Home() {
         realignResultMessage({
           timing: result.timing,
           distance: profile.raceGoal.distance as
-            | "5k"
-            | "10k"
-            | "half"
-            | "marathon",
+            "5k" | "10k" | "half" | "marathon",
           totalWeeks: result.totalWeeks,
         })
       );
@@ -669,36 +818,62 @@ export default function Home() {
   // count it ticks from, so no row ticks and then unticks as they load.
   const countsLoaded =
     !workoutsLoading && !mealsLoading && !runStatsLoading && !homeDataLoading;
+  const firstWeekLifts = (programState?.workouts?.length ?? 0) > 0;
+  const firstWeekRuns =
+    profile?.athleteType === "Runner" ||
+    profile?.athleteType === "Hybrid" ||
+    profile?.runMode === "race_prep";
+  const v2RacePlanNeedsBuild =
+    activationJourneyV2 &&
+    !!profile &&
+    !!programState &&
+    raceWeekNeedsBuilding(programState, profile, todayKey);
+  const firstWeekCountsLoaded = activationJourneyV2
+    ? !programLoading &&
+      !!programState &&
+      !v2RacePlanNeedsBuild &&
+      (!firstWeekLifts || (!workoutsLoading && !workoutsFailed)) &&
+      (!firstWeekRuns || (!runStatsLoading && !runStatsFailed))
+    : countsLoaded;
+  const firstWeekStartKey = activationJourneyV2
+    ? startDayKey(profile?.onboardingCompletedAt)
+    : startKey;
+  const firstWeekWorkoutCount = activationJourneyV2
+    ? workouts.filter(isFirstWeekWorkoutEligible).length
+    : workouts.length;
+  const priorityTask = activationJourneyV2
+    ? firstWeekPriorityTask(session)
+    : null;
   const firstWeekState = useMemo(
     () =>
-      countsLoaded
+      firstWeekCountsLoaded
         ? firstWeek({
-            startKey,
+            startKey: firstWeekStartKey,
             todayKey,
-            lifts: (programState?.workouts?.length ?? 0) > 0,
-            runs:
-              profile?.athleteType === "Runner" ||
-              profile?.athleteType === "Hybrid" ||
-              profile?.runMode === "race_prep",
-            workoutCount: workouts.length,
+            lifts: firstWeekLifts,
+            runs: firstWeekRuns,
+            workoutCount: firstWeekWorkoutCount,
             runCount: lifetimeRunCount,
             mealCount: totalLifetimeMeals,
             weighInCount,
             dismissed: welcomeDismissed,
+            trainingOnly: activationJourneyV2,
+            priorityTask,
           })
         : null,
     [
-      countsLoaded,
-      startKey,
+      firstWeekCountsLoaded,
+      firstWeekStartKey,
       todayKey,
-      programState?.workouts?.length,
-      profile?.athleteType,
-      profile?.runMode,
-      workouts.length,
+      firstWeekLifts,
+      firstWeekRuns,
+      firstWeekWorkoutCount,
       lifetimeRunCount,
       totalLifetimeMeals,
       weighInCount,
       welcomeDismissed,
+      activationJourneyV2,
+      priorityTask,
     ]
   );
   const welcomeCard = useEducationCard({
@@ -706,6 +881,33 @@ export default function Home() {
     priority: 30,
     eligible: firstWeekState !== null,
   });
+  const firstWeekImpressionUid = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !activationJourneyV2 ||
+      !welcomeCard.visible ||
+      !firstWeekState ||
+      !user?.uid ||
+      firstWeekImpressionUid.current === user.uid
+    )
+      return;
+    firstWeekImpressionUid.current = user.uid;
+    trackLifecycle("first_week_card_viewed", {
+      sport:
+        profile?.athleteType === "Runner"
+          ? "runner"
+          : profile?.athleteType === "Hybrid"
+            ? "hybrid"
+            : "lifter",
+      firstWeekDay: firstWeekState.day,
+    });
+  }, [
+    activationJourneyV2,
+    welcomeCard.visible,
+    firstWeekState,
+    user?.uid,
+    profile?.athleteType,
+  ]);
 
   /* The first-visit guide (FV1, firstGuide.ts). A new account's first visit
      gets the walk: once, in its first seven days, as the visit's one
@@ -732,10 +934,43 @@ export default function Home() {
     [guideCard, firstWeekItems, guideAbout, guideCalories]
   );
   const homeSettled = countsLoaded && !programLoading;
+  const homeVisitSettled = firstWeekCountsLoaded;
+  // A race plan's week being built is loading, not an error: the engine
+  // builds it as Home opens. Only a build that failed says so.
+  const v2RaceWeekBuilding = v2RacePlanNeedsBuild && !programMaintenanceFailed;
+  const v2TrainingUnavailable =
+    activationJourneyV2 &&
+    !programLoading &&
+    (!programState ||
+      (firstWeekLifts && !workoutsLoading && workoutsFailed) ||
+      (v2RacePlanNeedsBuild && programMaintenanceFailed));
+  /* The hero waits for what decides it: the programme, a race plan's
+     week being built, and a new account's workouts (the first-workout
+     offer must not flash before the real count). */
+  const heroPlaceholder =
+    programLoading ||
+    v2RaceWeekBuilding ||
+    (activationJourneyV2 && firstWeekLifts && workoutsLoading);
+  const showWeekStrip =
+    !activationJourneyV2 ||
+    (!programLoading &&
+      (!firstWeekLifts || (!workoutsLoading && !workoutsFailed)) &&
+      !!programState &&
+      !v2RacePlanNeedsBuild);
+  useEffect(() => {
+    if (!activationJourneyV2 || !homeVisitSettled || homeVisitUid === null)
+      return;
+    markHomeVisited();
+  }, [activationJourneyV2, homeVisitSettled, homeVisitUid, markHomeVisited]);
   const walkDue =
     guideAllowed &&
     homeSettled &&
-    walkOffered({ startKey, todayKey, seen: walkSeen });
+    walkOffered({
+      startKey,
+      todayKey,
+      seen: walkSeen,
+      activationJourneyV2,
+    });
   const walkReady = useGuideWalkReady(walkDue, guideStops[0]?.target);
   const guideSurface = useSurface({
     id: "first-visit-guide",
@@ -800,6 +1035,28 @@ export default function Home() {
      sheet. */
   const openFirstWeekItem = (key: FirstWeekItemKey) => {
     closePeek();
+    if (activationJourneyV2 && (key === "workout" || key === "run")) {
+      if (firstWeekState) {
+        trackLifecycle("first_week_task_selected", {
+          sport:
+            profile?.athleteType === "Runner"
+              ? "runner"
+              : profile?.athleteType === "Hybrid"
+                ? "hybrid"
+                : "lifter",
+          task: key,
+          firstWeekDay: firstWeekState.day,
+        });
+      }
+      const action = firstWeekAction(key, session);
+      trackHomeEvent("home_card_tapped", {
+        card: key === "run" ? "first_week_run" : "first_week_workout",
+        action: action.mode,
+      });
+      if (action.unlockRunSpeech) unlockSpeech();
+      navigate(action.target);
+      return;
+    }
     if (key === "weigh-in") {
       setShowWeightSheet(true);
       return;
@@ -892,39 +1149,40 @@ export default function Home() {
          down (homeSettled) came in about 0.7 s after them when the launch
          was filmed on the emulator, and are not waited for. */
       data-page-ready={!mealsLoading && !programLoading ? "" : undefined}
-      /* DS3: Home names the day, as every other page names itself. The
-         TROPOS wordmark it replaced is already on the launch icon and the
-         splash; here the date and "Today" say what the page is about.
-         The mark before the date signs the app's first page, small, so
-         "Today" keeps the left edge every card below it starts on. */
+      /* DS4 call 2: no large title above the hero, which names the
+         screen; the date is its kicker, with the plan's position or a new
+         person's first session beside it (`heroKicker`). "Today" stays the
+         page's h1 for a screen reader. The mark before the date signs the
+         app's first page, small, and is where the launch animation and
+         the first-visit walk set their mark down. */
       eyebrow={
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex flex-wrap items-center gap-x-1.5">
           <BrandMark />
-          {formatWeekdayDayMonth(today)}
+          <span className="font-bold text-foreground">
+            {formatShortWeekdayDayMonth(today)}
+          </span>
+          {/* The kicker is the hero's, so it waits with it: "Your first
+              workout" is not said before the workouts say so. */}
+          {kicker && !heroPlaceholder && !v2TrainingUnavailable && (
+            <span>
+              <span aria-hidden="true">· </span>
+              <InlineNumerals>{kicker}</InlineNumerals>
+            </span>
+          )}
         </span>
       }
       title="Today"
+      titleHidden
       actions={
         <>
-          {/* Streak pill is tappable — deep-links into History → Badges
-                so the user can see what streak-tier they're chasing next
-                (e.g. "4 more days to Week Warrior"). The pill is a real
-                achievement with reward context behind it; leaving it as
-                an inert ornament threw away the motivation loop. The
-                History page restores its last tab on mount, so we also
-                persist the target in sessionStorage to force the Badges
-                tab even if the user last looked at Lifting / Performance. */}
+          {/* The flame opens the streak's days (Mob1 call 4): a month of
+              logged and covered days, and the way to the badges. */}
           {streak > 0 ? (
-            <Link
-              to="/history"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem("history-tab", "milestones");
-                } catch {
-                  /* private mode — fine, user lands on the default tab */
-                }
-              }}
-              aria-label={`View milestones — ${streak}-day streak`}
+            <button
+              type="button"
+              onClick={() => setStreakSheet(true)}
+              aria-haspopup="dialog"
+              aria-label={`${streak}-day streak, show the days`}
               className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <StreakFlame
@@ -932,7 +1190,7 @@ export default function Home() {
                 bounce={streakBounce}
                 display={<motion.span>{streakDisplay}</motion.span>}
               />
-            </Link>
+            </button>
           ) : (
             <StreakFlame
               streak={streak}
@@ -953,7 +1211,7 @@ export default function Home() {
               photoURL={profile.photoURL}
               displayName={profile.displayName || user?.displayName}
               size="md"
-              fallbackBg="hsl(var(--lifting) / 0.2)"
+              fallbackBg="hsl(var(--lifting) / 0.12)"
               fallbackColor="hsl(var(--lifting-strong))"
             />
           </Link>
@@ -1041,61 +1299,12 @@ export default function Home() {
       {/* Streak count stays in the header. Recovery remains available through
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
-      {/* DS3 Home: the week, then today's session, food, water and weight,
-          then how the week is going. The page title already says "Today",
-          so the week strip and today's cards carry no section heading of
-          their own; "This week" heads the summary at the foot. */}
-      <motion.div
-        ref={weekStripRef}
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-        className="space-y-3"
-      >
-        {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
-            Isolated in a SectionErrorBoundary so a data-shape bug here
-            degrades to a single "couldn't load" card (and still logs via
-            captureError) instead of taking the whole Home page into
-            RouteErrorBoundary. */}
-        <SectionErrorBoundary sectionName="week-strip">
-          <WeekStrip
-            todayKey={todayKey}
-            dayMap={weeklyDayMap}
-            profile={profile}
-            programState={programState}
-            claimMap={claimMap}
-            selectedDate={peekDate}
-            onDayTap={handleDayTap}
-            loggedLiftDates={loggedLiftDates}
-            extraRunDates={extraRunDates}
-            startKey={startKey}
-          />
-          <AnimatePresence>
-            {peekDate && (
-              <DayPeekCard
-                dateKey={peekDate}
-                todayKey={todayKey}
-                profile={profile}
-                programState={programState}
-                claimMap={claimMap}
-                extras={unclaimedByDate.get(peekDate) ?? []}
-                workouts={peekW}
-                dailyTotals={peekT}
-                sessionsLoading={workoutsLoading || savedRunsLoading}
-                onClose={function () {
-                  setPeekDate(null);
-                }}
-                onManage={function (dk) {
-                  setManageDate(dk);
-                }}
-              />
-            )}
-          </AnimatePresence>
-        </SectionErrorBoundary>
-      </motion.div>
+      {/* DS4 Home: today's session as the hero, then the week under it,
+          then food, water and weight, then how the week is going. The hero
+          names the screen, so nothing above it carries a title; "This
+          week" heads the summary at the foot.
 
-      {/* home-declutter 4a — sessions FIRST. Today's lift, run or rest is
+          home-declutter 4a — sessions FIRST. Today's lift, run or rest is
           the page's primary action and leads. A group, so its name is
           one a screen reader can use: a name on a roleless div is not. */}
       <motion.div
@@ -1106,14 +1315,29 @@ export default function Home() {
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
         }}
       >
-        {programLoading ? (
-          <div className="h-48 rounded-2xl bg-muted motion-safe:animate-pulse" />
+        {heroPlaceholder ? (
+          // The hero's own height, so the week below it does not jump
+          // when the session lands.
+          <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />
+        ) : v2TrainingUnavailable ? (
+          <Banner
+            variant="neutral"
+            title="Training isn’t ready"
+            description="Couldn’t load today’s training. Open your plan to try again."
+            action={
+              <Button variant="secondary" onClick={() => navigate("/program")}>
+                Open training plan
+              </Button>
+            }
+          />
         ) : (
           <TrackSectionView section="stacked_cta">
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
                 session={session}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
+                liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
+                freeRunLine={freeRunLine}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
@@ -1123,6 +1347,83 @@ export default function Home() {
           </TrackSectionView>
         )}
       </motion.div>
+
+      {/* The week folds into the hero (DS4 call 5): a card one step down
+          from it, the week's sessions done and the next one over seven
+          segments, each a day that opens its peek. */}
+      {showWeekStrip && (
+        <motion.div
+          ref={weekStripRef}
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="space-y-3"
+        >
+          {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
+            Isolated in a SectionErrorBoundary so a data-shape bug here
+            degrades to a single "couldn't load" card (and still logs via
+            captureError) instead of taking the whole Home page into
+            RouteErrorBoundary. */}
+          <SectionErrorBoundary sectionName="week-strip">
+            <div
+              className={cardClasses({
+                size: "compact",
+                padded: false,
+                className: "space-y-2 px-4 pt-3.5 pb-1.5",
+              })}
+            >
+              <WeekSessions
+                done={weekSessionCount.done}
+                of={weekSessionCount.of}
+                next={nextSession}
+              />
+              <WeekStrip
+                todayKey={todayKey}
+                dayMap={weeklyDayMap}
+                profile={profile}
+                programState={programState}
+                claimMap={claimMap}
+                selectedDate={peekDate}
+                onDayTap={handleDayTap}
+                loggedLiftDates={loggedLiftDates}
+                extraRunDates={extraRunDates}
+                startKey={startKey}
+              />
+            </div>
+            <AnimatePresence>
+              {peekDate && (
+                <DayPeekCard
+                  dateKey={peekDate}
+                  todayKey={todayKey}
+                  profile={profile}
+                  programState={programState}
+                  claimMap={claimMap}
+                  extras={unclaimedByDate.get(peekDate) ?? []}
+                  workouts={peekW}
+                  dailyTotals={peekT}
+                  sessionsLoading={workoutsLoading || savedRunsLoading}
+                  onClose={function () {
+                    setPeekDate(null);
+                  }}
+                  onManage={function (dk) {
+                    setManageDate(dk);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </SectionErrorBoundary>
+        </motion.div>
+      )}
+
+      {/* Run9's starter goal reached: a plain Done under today's session,
+          with the next goal offered once (dismissed here or on Train). */}
+      {starterDone && profile?.starterGoal?.startedOn && (
+        <StarterDoneCard
+          startedOn={profile.starterGoal.startedOn}
+          navigate={navigate}
+        />
+      )}
 
       {/* A new account's first seven days, under today's session: the
           session is the day's action, this is what the week is for.
@@ -1250,7 +1551,7 @@ export default function Home() {
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <Card className="space-y-4">
+          <Card className="space-y-4 rounded-xl">
             <SectionErrorBoundary sectionName="week-summary">
               <WeekSummary
                 counts={weekCounts}
@@ -1267,6 +1568,8 @@ export default function Home() {
                     previousWeek={perfPrevWeek}
                     weeksAvailable={perfDocsAvailable}
                     loading={perfLoading}
+                    failed={perfFailed}
+                    onRetry={refreshPerformance}
                     /* The perf doc is written by the server, so "no doc" is
                        not "no session" — this keeps the row from telling
                        someone who has just logged their first workout that
@@ -1317,6 +1620,15 @@ export default function Home() {
             invitation: Train's Run tab carries the same card where run
             plans live, and this copy only worked on days 8 to 14. */}
       </div>
+
+      {streakSheet !== "unopened" && (
+        <Suspense fallback={null}>
+          <StreakSheet
+            open={streakSheet}
+            onOpenChange={(open) => setStreakSheet(open)}
+          />
+        </Suspense>
+      )}
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
@@ -1399,7 +1711,7 @@ export default function Home() {
             }}
             onEaseBack={async () => {
               if (!(await easeBackIn(liftReturn.easeBackShare))) {
-                throw new Error("The plan wasn't eased back");
+                throw new Error("The plan wasn’t eased back");
               }
             }}
             daysAway={liftReturn.daysAway}
@@ -1471,7 +1783,7 @@ export default function Home() {
               // A rebuild that didn't land keeps the sheet open to try
               // again, as the weekly prompt's flag would stay set.
               if (!(await realignAndSay()))
-                throw new Error("The plan wasn't rebuilt");
+                throw new Error("The plan wasn’t rebuilt");
             }}
             onRaceMoved={() => {
               closeRunReturn();
@@ -1497,12 +1809,18 @@ export default function Home() {
 
       {/* Steps priming (surface B) — native only, at most once ever. `open`
           is derived: connecting or dismissing persists primingShown, which
-          flips this false. On web status is "unavailable" so it never opens. */}
+          flips this false. On web status is "unavailable" so it never opens.
+          Not in the open of the app that held the first Home visit: that
+          visit leads to the first session, whose finish screen has already
+          asked about sharing and reminders, and back on Home this would be
+          the third question in a minute. */}
       <StepsPrimingModal
         open={
           stepsData.ready &&
           stepsData.status === "unprompted" &&
           !stepsData.primingShown &&
+          !firstHomeVisit &&
+          !firstHomeVisitThisOpen &&
           !walkHoldsPrompts
         }
         onConnect={stepsData.connect}

@@ -2,7 +2,7 @@
  * Design-system invariants as tests, not vigilance (D15).
  *
  * CLAUDE.md names three invariants that "regress constantly and keep getting
- * swept up after the fact": (1) numeric displays use font-mono + tabular-nums,
+ * swept up after the fact": (1) numeric displays use font-mono or font-figure + tabular-nums,
  * (2) every colour is a THEME/token (no hex), (3) interactive elements clear
  * 44px via the Button/IconButton/Toggle primitives.
  *
@@ -195,53 +195,191 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
   });
 });
 
-describe("D15 · DS invariant — numeric displays use the mono numeral font", () => {
-  /* Only ONE direction of this is a defect, and it is worth saying so
-     because the other one scans as if it were. `font-mono` WITHOUT
-     `tabular-nums` looks like the same class of miss and is not: `index.css`
-     applies `font-variant-numeric: tabular-nums` (and `tnum`) to every
-     `.font-mono` element, precisely because Archivo is proportional. So the
-     class is redundant wherever `font-mono` is present, and a sweep to add
-     it — the live run HUD's big numbers among them — would change nothing.
-     That rests entirely on the stylesheet rule, so the rule is pinned below
-     rather than trusted: if it ever goes, those sites become real defects
-     the same day.
+describe("D15 · DS invariant — numbers take one of the two number tiers", () => {
+  /* Two tiers (DESIGN_GUIDE §0 rule 3, §4). A number inside a line of
+     text is `font-mono`: the text face, Plus Jakarta Sans, with tabular
+     figures, at the weight of the words beside it. A figure that stands
+     on its own at display size is `font-figure`: Archivo, also tabular.
+     The owner's call: Archivo digits inside a Jakarta sentence ("3 sets
+     × 8 reps · 52.5 kg") have their own x-height and cap height and
+     look heavier, so the line read as misaligned.
 
-     The direction after that IS real: `tabular-nums` alone opts into aligned
-     columns while leaving the text in the proportional UI face, which is the
-     week-strip bug's exact shape. */
+     `font-mono` or `font-figure` WITHOUT `tabular-nums` is not a defect:
+     `index.css` applies `font-variant-numeric: tabular-nums` (and `tnum`)
+     to every element of either class, because both faces are
+     proportional. That rests entirely on the stylesheet rule, so the
+     rule is pinned below rather than trusted.
 
-  it("`.font-mono` forces tabular figures, so the class alone is enough", () => {
-    // Archivo is proportional (it replaced JetBrains Mono in the brand
-    // bake-off), so digit alignment is not inherent to the face — it comes
-    // from this rule. Everything that writes `font-mono` and omits
-    // `tabular-nums` depends on it.
-    const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
-    const rule = /\.font-mono\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
-    expect(rule, "no `.font-mono` rule in index.css").not.toBe("");
+     The direction after that IS real: `tabular-nums` with neither class
+     is a number that has not said which tier it is, the week-strip bug's
+     exact shape. */
+
+  const css = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
+
+  it("`.font-mono` and `.font-figure` force tabular figures, so either class alone is enough", () => {
+    const rule =
+      /\.font-mono,\s*\.font-figure\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
+    expect(rule, "no `.font-mono, .font-figure` rule in index.css").not.toBe(
+      ""
+    );
     expect(rule).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    expect(rule).toMatch(/font-feature-settings:\s*"tnum" 1/);
+  });
+
+  /** The first family a `@theme` font token names. */
+  function firstFamily(token: string): string {
+    const m = new RegExp(`--font-${token}:\\s*"([^"]+)"`).exec(css);
+    return m?.[1] ?? "";
+  }
+
+  it("an inline number is the text face; a figure is Archivo", () => {
+    expect(firstFamily("display")).toBe("Plus Jakarta Sans Variable");
+    // `font-mono` means "a number", not a monospace face: inside a line
+    // of text it is the words' own face.
+    expect(firstFamily("mono")).toBe(firstFamily("display"));
+    expect(firstFamily("figure")).toBe("Archivo Variable");
+    // A unit or word inside a figure steps back to the text face with
+    // `font-sans`; Tailwind's default there is the system font, a third
+    // face.
+    expect(firstFamily("sans")).toBe(firstFamily("display"));
+  });
+
+  /* Sizes, by tier. A figure stands on its own at display size, so
+     `font-figure` below text-lg is a ring's or a donut's centre, where
+     the ring is the block; each one is named here. And `font-mono` at
+     text-xl or larger is a figure left in the inline tier. */
+  const SMALL = /^text-(?:xs|sm|base|caption|micro|small|body)$/;
+  const LARGE = /^text-(?:xl|[2-9]xl|h1|h2|h3|display)$/;
+  const SMALL_FIGURES = new Map([
+    // The Performance Index inside Home's progress ring.
+    ["src/components/home/PerformanceHeroCard.tsx", 2],
+    // The average day's calories inside Analytics' macro donut.
+    ["src/components/analytics/MacroDistribution.tsx", 1],
+  ]);
+  const LARGE_INLINE = new Map([
+    // "Easy run 5 km": the dose sits on the session name's line, beside
+    // the heading, so it takes the heading's face.
+    ["src/components/run/RunLaunchCard.tsx", 2],
+  ]);
+
+  function tierOutliers(cls: "font-mono" | "font-figure", size: RegExp) {
+    const found = new Map<string, number>();
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      for (const chunk of classNameChunks(readFileSync(file, "utf8"))) {
+        const tokens = chunk.split(/\s+/);
+        if (!tokens.includes(cls)) continue;
+        // A chunk can carry a size per branch (`compact ? "text-xl" :
+        // "text-2xl"`); it is an outlier only when every size it can
+        // take is.
+        const sizes = tokens.filter((t) =>
+          /^text-(?:xs|sm|base|lg|xl|[2-9]xl|h1|h2|h3|display|caption|micro|small|body)$/.test(
+            t
+          )
+        );
+        if (sizes.length > 0 && sizes.every((t) => size.test(t)))
+          found.set(rel, (found.get(rel) ?? 0) + 1);
+      }
+    }
+    return found;
+  }
+
+  it("a figure below text-lg is one of the named ring centres", () => {
+    expect(Object.fromEntries(tierOutliers("font-figure", SMALL))).toEqual(
+      Object.fromEntries(SMALL_FIGURES)
+    );
+  });
+
+  it("an inline number at text-xl or larger is one of the named heading lines", () => {
+    expect(Object.fromEntries(tierOutliers("font-mono", LARGE))).toEqual(
+      Object.fromEntries(LARGE_INLINE)
+    );
   });
 
   // Invariant #1 proxy: `tabular-nums` is a NUMERIC-display utility — if a
   // className opts into tabular figures, it's rendering numbers, so it must
-  // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
-  // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
-  // wrong (proportional UI) font.
-  const MONO_BASELINE = 0; // fully burned down from 30 → 14 → 0 (price/macro/usage/rank/date displays given font-mono; the FoodMealSection uppercase-label tabular-nums removed as spurious). Floor is 0: any tabular-nums without font-mono now fails. Keep numbers on the Archivo numeral font.
-  it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
+  // also say which tier it is.
+  const MONO_BASELINE = 0; // Floor is 0: any tabular-nums without font-mono or font-figure fails.
+  it("tabular-nums classes also carry font-mono or font-figure", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
       for (const cls of classNameChunks(src)) {
-        if (cls.includes("tabular-nums") && !cls.includes("font-mono")) n += 1;
+        if (
+          cls.includes("tabular-nums") &&
+          !/\bfont-(?:mono|figure)\b/.test(cls)
+        )
+          n += 1;
       }
       return n;
     });
     expectRatchet(
-      "tabular-nums without font-mono",
+      "tabular-nums without font-mono or font-figure",
       total,
       MONO_BASELINE,
       byFile
     );
+  });
+
+  /* A unit inside a stand-alone figure is a word, so it steps back to the
+     text face: `font-sans`, smaller, medium — the weight tile's "kg" and
+     the water tile's "ml" (§4 Units). Without it the unit inherits
+     Archivo from the figure ("0 m", "1.61 km" set whole in the figure
+     face). Read per element whose className carries `font-figure`: inside
+     it, a unit (a `*UnitLabel(…)` call, a `{unit}`/`{unitLabel}`/`{label}`
+     expression, or a unit typed as text) has to sit in an element that
+     carries `font-sans`. Screen-reader-only text is skipped. The share
+     card is rasterised and keeps its own register. */
+  it("a unit inside a font-figure figure is the text face (font-sans)", () => {
+    const UNIT_EXPR =
+      /\{\s*(?:unit|unitLabel|label)\s*\}|\b\w*[uU]nitLabel\(|`[^`]*\$\{[^}]*\}\s?(?:kg|lb|km|mi|kcal|ml|m|ft)\b/;
+    const UNIT_TEXT = /(?<![\w$])(?:kg|lbs?|km|mi|kcal|ml|bpm|ft)(?![\w])/;
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      if (rel === "src/components/share/ShareCardRenderer.tsx") continue;
+      const src = readFileSync(file, "utf8");
+      const open = /<(\w+)\b((?:[^>{]|\{[^}]*\})*)>/g;
+      for (const m of src.matchAll(open)) {
+        if (!/className=(?:"[^"]*|\{[^}]*)\bfont-figure\b/.test(m[2])) continue;
+        if (m[2].trimEnd().endsWith("/")) continue;
+        // The element's body, to its own closing tag.
+        const tag = new RegExp(
+          `<(/?)${m[1]}\\b((?:[^>{]|\\{[^}]*\\})*?)(/?)>`,
+          "g"
+        );
+        tag.lastIndex = m.index + m[0].length;
+        let depth = 1;
+        let end = -1;
+        for (let t = tag.exec(src); t; t = tag.exec(src)) {
+          if (t[1]) depth--;
+          else if (!t[3]) depth++;
+          if (depth === 0) {
+            end = t.index;
+            break;
+          }
+        }
+        if (end < 0) continue;
+        let body = src.slice(m.index + m[0].length, end);
+        // Drop what is already the text face, comments and reader-only text.
+        body = body.replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+        for (let i = 0; i < 4; i++)
+          body = body.replace(
+            /<(\w+)\b[^>]*(?:font-sans|sr-only)[^>]*>[\s\S]*?<\/\1>/g,
+            ""
+          );
+        const text = body.replace(/\{[^{}]*\}/g, "").replace(/<[^>]*>/g, "");
+        if (UNIT_EXPR.test(body) || UNIT_TEXT.test(text)) {
+          const line = src.slice(0, m.index).split("\n").length;
+          offenders.push(`${rel}:${line}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      `A unit set in the figure face. Wrap it in ` +
+        `<span className="font-sans text-sm font-medium">:\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
   });
 });
 
@@ -259,7 +397,9 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 293;
+  // 291 → 292: the "Ended circles" fold under the Circles list (Soc16), a
+  // full-width row that opens the list's ended rows.
+  const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -458,34 +598,46 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
   });
 
-  /* Uppercase tracked labels hand-rolled beside `SectionLabel`. The
-     primitive consolidated ~60 variants; the survivors below re-drift on
-     every axis it fixed (size, tracking, weight, colour) and cannot take
-     the role tiers. Counted: any class string carrying `uppercase` and a
-     `tracking-*` utility. Grandfathered until touched (Diagnostics carries
-     8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
-     the scan as usual. */
-  const HAND_ROLLED_LABEL_BASELINE = 20;
+  /* Capitals with letter-spacing are one register with two places, both
+     named in DESIGN_GUIDE §4: a table's column headers (the workout's set
+     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs) and
+     the brand name set as a wordmark beside the mark on the welcome and
+     sign-in screens. Every other label, caption, eyebrow, pill and control
+     caption is written in sentence case, the run screen's included.
+     An exact list, not a ratchet: a new site is a design decision, and it
+     goes into the guide and this list together. Counted: any string
+     literal carrying `uppercase` and a wide `tracking-*` utility (so a
+     class constant outside `className=` is seen too), and any inline
+     `textTransform: "uppercase"`. The share card is rasterised and keeps
+     its own register; `pages/dev/*` is outside the scan as usual. */
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
-  it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
-    const { total, byFile } = scan((src, rel) => {
-      if (rel === LABEL_PRIMITIVE) return 0;
+  const CAPS_REGISTER: Record<string, number> = {
+    "src/components/WorkoutSession.tsx": 1,
+    "src/pages/Login.tsx": 2,
+  };
+  const CAPS_EXEMPT = new Set(["src/components/share/ShareCardRenderer.tsx"]);
+  it("capitals with letter-spacing appear only in the two documented places", () => {
+    const caps = (lit: string) =>
+      /\buppercase\b/.test(lit) &&
+      /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(lit);
+    const { byFile } = scan((raw, rel) => {
+      if (CAPS_EXEMPT.has(rel)) return 0;
+      // Comments name the register too; only code counts.
+      const src = raw.replace(/\/\*[\s\S]*?\*\//g, (c) =>
+        c.replace(/[^\n]/g, " ")
+      );
       let n = 0;
-      for (const chunk of classNameChunks(src)) {
-        if (
-          /\buppercase\b/.test(chunk) &&
-          /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(chunk)
-        )
-          n++;
+      for (const line of src.split("\n")) {
+        for (const m of line.matchAll(/(["'`])([^"'`]*)\1/g))
+          if (caps(m[2])) n++;
       }
+      // A className template that spans lines, which the line scan misses.
+      for (const m of src.matchAll(/className=\{`([^`]*\n[^`]*)`\}/g))
+        if (caps(m[1])) n++;
+      n += (src.match(/textTransform:\s*["']uppercase["']/g) ?? []).length;
       return n;
     });
-    expectRatchet(
-      "hand-rolled uppercase label",
-      total,
-      HAND_ROLLED_LABEL_BASELINE,
-      byFile
-    );
+    expect(Object.fromEntries(byFile)).toEqual(CAPS_REGISTER);
   });
 
   it("SectionLabel's caption tier is sentence case, and the section tier stays 12px (positive pin)", () => {
@@ -639,18 +791,28 @@ describe("DS ratchets — surface-level drift", () => {
 });
 
 describe("type tiers", () => {
+  /* Line breaks (§4): headings balance, running text avoids a lone last
+     word. One base rule rather than a class at each of several hundred
+     sites; a `text-wrap` utility on an element still overrides it. */
+  it("headings balance and running text wraps pretty (positive pin)", () => {
+    const css = readFileSync(resolve(srcRoot, "index.css"), "utf8");
+    expect(css).toMatch(
+      /@layer base\s*\{\s*h1,\s*h2,\s*h3,\s*h4\s*\{\s*text-wrap:\s*balance;\s*\}\s*p,\s*li,[^{]*\{\s*text-wrap:\s*pretty;/
+    );
+  });
+
   /* `text-caption` (11px) is the floor for dense numerals and units
-     (DESIGN_GUIDE §10). A unit with neither `font-mono` nor `tabular-nums`
+     (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
      The count holds the remaining word uses and may only fall. */
-  const CAPTION_WORDS_BASELINE = 66;
+  const CAPTION_WORDS_BASELINE = 58;
   it("text-caption on words does not increase (words sit on text-micro)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
       for (const chunk of classNameChunks(src)) {
         if (
           /\btext-caption\b/.test(chunk) &&
-          !/\b(?:font-mono|tabular-nums)\b/.test(chunk)
+          !/\b(?:font-mono|font-figure|tabular-nums)\b/.test(chunk)
         )
           n++;
       }
@@ -665,13 +827,14 @@ describe("type tiers", () => {
   });
 
   /* "Never mix 700 and 800 in the same visual tier" (§4 weight rules). A
-     tier is a size step plus its register: numerals (`font-mono` or
+     tier is a size step plus its register: numerals (`font-mono`, `font-figure` or
      `tabular-nums`) are hero figures and words are headings, so the two
      registers are separate tiers. Every tier listed here carries one
      weight; a tier joins the list once it is aligned. */
   const SINGLE_WEIGHT_TIERS = [
     "text-display num",
     "text-3xl num",
+    "text-hero word",
     "text-h1 word",
     "text-h2 word",
     "text-h2 num",
@@ -689,11 +852,12 @@ describe("type tiers", () => {
         );
         if (weights.length !== 1) continue;
         const size = tokens.find((t) =>
-          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|display)$/.test(t)
+          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|hero|display)$/.test(t)
         );
         if (!size) continue;
         const register = tokens.some(
-          (t) => t === "font-mono" || t === "tabular-nums"
+          (t) =>
+            t === "font-mono" || t === "font-figure" || t === "tabular-nums"
         )
           ? "num"
           : "word";
@@ -823,9 +987,9 @@ describe("form controls share the field primitive", () => {
       count: 1,
       why: "an sr-only date input that the visible day button opens",
     },
-    "src/components/nutrition/ServingSizeDrawer.tsx": {
+    "src/components/nutrition/PortionAmountField.tsx": {
       count: 1,
-      why: "the stepper's readout between its minus and plus",
+      why: "the portion amount's readout between its minus and plus",
     },
     "src/components/program/ExercisePicker.tsx": {
       count: 1,
@@ -909,12 +1073,33 @@ describe("form controls share the field primitive", () => {
    a lift. A label built at run time is not seen, which is why the test
    also names the controls it must find. */
 describe("an action takes its domain's colour wherever it appears", () => {
-  type Hue = "food" | "running" | "lifting" | "other";
+  type Hue = "food" | "running" | "lifting" | "neutral" | "other";
   interface Control {
     file: string;
     line: number;
     label: string;
     hue: Hue;
+    /** The control spans its row (`w-full` or `fullWidth`). */
+    fullWidth: boolean;
+  }
+
+  /* DS4 (owner, 7 November 2026; DESIGN_GUIDE §14i): a screen's one
+     full-width filled button is neutral, white on dark and ink on light,
+     whatever its domain. Filled in a domain colour it was the largest
+     patch of colour on Home, where the largest colour is the person's
+     data. Named, so a neutral domain action anywhere else still fails;
+     the domain keeps its colour on these screens' smaller controls (the
+     compact card's Start, "Log food"). */
+  const NEUTRAL_MAIN_ACTIONS = new Set([
+    "src/components/home/LiftCTACard.tsx Start workout",
+    "src/components/home/RunCTACard.tsx Start run",
+  ]);
+  function neutralMain(c: Control): boolean {
+    return (
+      c.hue === "neutral" &&
+      c.fullWidth &&
+      NEUTRAL_MAIN_ACTIONS.has(`${c.file} ${c.label}`)
+    );
   }
 
   /** Comments blanked to spaces, so offsets and line numbers still hold
@@ -995,9 +1180,11 @@ describe("an action takes its domain's colour wherever it appears", () => {
         ? "food"
         : variant.startsWith("sport")
           ? "running"
-          : variant === "primary"
+          : variant === "primary" || variant === "lifting-tinted"
             ? "lifting"
-            : "other";
+            : variant === "neutral"
+              ? "neutral"
+              : "other";
     if (
       /\b(bg|text)-nutrition(-fill|-strong|\/)|THEME\.semantic\.nutrition/.test(
         open
@@ -1048,7 +1235,14 @@ describe("an action takes its domain's colour wherever it appears", () => {
         for (const label of labelsOf(open, body)) {
           const domain = domainOf(label, file, tag);
           if (!domain) continue;
-          found.push({ file, line, label, hue: hueOf(tag, open), domain });
+          found.push({
+            file,
+            line,
+            label,
+            hue: hueOf(tag, open),
+            fullWidth: /\bw-full\b|\bfullWidth\b/.test(open),
+            domain,
+          });
           break;
         }
       }
@@ -1089,7 +1283,7 @@ describe("an action takes its domain's colour wherever it appears", () => {
 
   it("every one of them wears its domain's colour", () => {
     const wrong = domainControls()
-      .filter((c) => c.hue !== c.domain)
+      .filter((c) => c.hue !== c.domain && !neutralMain(c))
       .map(
         (c) =>
           `${c.file}:${c.line} "${c.label}" is ${c.hue}, should be ${c.domain}`
@@ -1098,8 +1292,34 @@ describe("an action takes its domain's colour wherever it appears", () => {
       wrong,
       `An action takes its domain's colour on every page (DESIGN_GUIDE ` +
         `§14i): logging food is \`nutrition\` / \`nutrition-tinted\`, a ` +
-        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`.\n` +
+        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`, and ` +
+        `a screen's one full-width filled button is \`neutral\` only ` +
+        `where NEUTRAL_MAIN_ACTIONS names it.\n` +
         wrong.join("\n")
     ).toEqual([]);
+  });
+
+  it("Home's hero starts its session on the neutral full-width button (positive pin)", () => {
+    const controls = domainControls();
+    for (const known of NEUTRAL_MAIN_ACTIONS) {
+      expect(
+        controls.some(
+          (c) => `${c.file} ${c.label}` === known && neutralMain(c)
+        ),
+        `${known} is no longer the neutral full-width button`
+      ).toBe(true);
+    }
+  });
+
+  it("logging food keeps its colour beside a neutral main action (positive pin)", () => {
+    // The rule moved the screen's one full-width button off the domain
+    // colours, not the domain's other actions: Home's "Log food" is orange.
+    const log = domainControls().filter(
+      (c) =>
+        c.file === "src/components/home/TodayEnergy.tsx" &&
+        c.label === "Log food"
+    );
+    expect(log.length).toBeGreaterThan(0);
+    for (const c of log) expect(c.hue).toBe("food");
   });
 });

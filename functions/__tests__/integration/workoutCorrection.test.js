@@ -134,6 +134,7 @@ describe.skipIf(!enabled)(
             exerciseId: "bench",
             exerciseName: "Bench",
             sets: [{ reps: 6, weightKg: 50 }],
+            superset: 1,
           },
         ],
       });
@@ -161,6 +162,7 @@ describe.skipIf(!enabled)(
             weightKg: 50,
             targetReps: 6,
             targetWeightKg: 50,
+            superset: 1,
           },
         ],
       });

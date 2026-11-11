@@ -6,6 +6,7 @@ function memoryFirestore(seed = {}) {
   const operations = [];
   const failures = new Map();
   let autoIds = 0;
+  let lastReadMs = 0;
   function check(path, operation) {
     const key = `${operation}:${path}`;
     if (failures.has(key)) throw failures.get(key);
@@ -29,16 +30,25 @@ function memoryFirestore(seed = {}) {
           const keys = field.split(".");
           const last = keys.pop();
           const parent = keys.reduce((obj, key) => (obj[key] ||= {}), next);
-          parent[last] = v;
+          parent[last] = isIncrement(v)
+            ? (Number(parent[last]) || 0) + v.__increment
+            : v;
         }
         data.set(ref.path, next);
-      } else
-        data.set(
-          ref.path,
-          options?.merge
-            ? { ...data.get(ref.path), ...value }
-            : structuredClone(value)
-        );
+      } else {
+        // An increment in a set adds to the stored number (merge) or to 0
+        // (a fresh document), as Firestore's does.
+        const merge = !!options?.merge;
+        const before = merge ? data.get(ref.path) || {} : {};
+        const next = merge ? { ...before } : {};
+        for (const [field, v] of Object.entries(
+          merge ? value : structuredClone(value)
+        ))
+          next[field] = isIncrement(v)
+            ? (Number(before[field]) || 0) + v.__increment
+            : v;
+        data.set(ref.path, next);
+      }
     }
   }
   function ref(path) {
@@ -99,7 +109,22 @@ function memoryFirestore(seed = {}) {
       orderBy: () => q,
       select: () => q,
       limit: (n) => collection(path, group, filters, cursor, n),
-      startAfter: (r) => collection(path, group, filters, r.path || r, cap),
+      // A reference, a document snapshot (as Firestore takes) or a path.
+      startAfter: (r) =>
+        collection(path, group, filters, r.path || r.ref?.path || r, cap),
+      // An aggregation, as Firestore's count(): the matching documents'
+      // number, without them, and the time it was read. Each read is
+      // later than the last, as Firestore's read times are.
+      count: () => ({
+        get: async () => {
+          const result = await q.get();
+          const readMs = (lastReadMs = Math.max(Date.now(), lastReadMs + 1));
+          return {
+            readTime: { toMillis: () => readMs },
+            data: () => ({ count: result.size }),
+          };
+        },
+      }),
       get: async () => {
         check(path, "query");
         const paths = [...data.keys()]
@@ -127,6 +152,7 @@ function memoryFirestore(seed = {}) {
               if (op === ">=") return actual >= expected;
               if (op === "<=") return actual != null && actual <= expected;
               if (op === "<") return actual < expected;
+              if (op === ">") return actual != null && actual > expected;
               throw new Error(`Unsupported query: ${op}`);
             });
           })
@@ -188,4 +214,12 @@ function memoryFirestore(seed = {}) {
     },
   };
 }
-module.exports = { memoryFirestore };
+// A stand-in for FieldValue.increment, for code that takes its FieldValue
+// as an argument: `update` adds it to the stored number, as Firestore does.
+function increment(n) {
+  return { __increment: n };
+}
+function isIncrement(v) {
+  return !!v && typeof v === "object" && typeof v.__increment === "number";
+}
+module.exports = { memoryFirestore, increment };

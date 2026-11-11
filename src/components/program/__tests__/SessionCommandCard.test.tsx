@@ -76,7 +76,9 @@ describe("SessionCommandCard", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("sport-codes the primary action: coral for run, purple for lift", () => {
+  it("draws Start as the one neutral filled button for both sports", () => {
+    // DS4 (§14m rule 12): the sport's colour stays on the card, not the
+    // button, as on Home's Start workout and Start run.
     const { rerender } = render(
       <SessionCommandCard
         sport="run"
@@ -87,9 +89,9 @@ describe("SessionCommandCard", () => {
         onPrimaryAction={() => {}}
       />
     );
-    // Run → coral `sport` Button variant (DS1b --running token class).
     const runBtn = screen.getByRole("button", { name: /Start run/i });
-    expect(runBtn.className).toContain("bg-running");
+    expect(runBtn.className).toContain("bg-foreground");
+    expect(runBtn.className).not.toContain("bg-running");
 
     rerender(
       <SessionCommandCard
@@ -101,10 +103,9 @@ describe("SessionCommandCard", () => {
         onPrimaryAction={() => {}}
       />
     );
-    // Lift → brand-purple `primary` Button variant (Tailwind class, no
-    // inline coral background).
     const liftBtn = screen.getByRole("button", { name: /Start lift/i });
-    expect(liftBtn.className).toContain("bg-primary-strong");
+    expect(liftBtn.className).toContain("bg-foreground");
+    expect(liftBtn.className).not.toContain("bg-primary-strong");
   });
 });
 
@@ -200,5 +201,34 @@ describe("runTemplateIcon", () => {
     expect(runTemplateIcon("flag")).toBe(Flag);
     expect(runTemplateIcon("no-such-icon")).toBe(Footprints);
     expect(runTemplateIcon(undefined)).toBe(Footprints);
+  });
+});
+
+describe("SessionCommandCard — Home's hero for the same session (DS4)", () => {
+  it("names the session at Home's hero size and draws Home's numbers line", () => {
+    renderCard({
+      sport: "lift",
+      title: "Pull A",
+      line: {
+        title: "Barbell Row 35 kg × 8",
+        detail: "2.5 kg more than last time",
+        mark: "up",
+      },
+    });
+    const heading = screen.getByRole("heading", { name: "Pull A" });
+    expect(heading.className).toMatch(/\btext-hero\b/);
+    expect(screen.getByText(/Barbell Row/)).toBeInTheDocument();
+    expect(screen.getByText(/more than last time/)).toBeInTheDocument();
+    // Home's Start: 44 tall.
+    expect(
+      screen.getByRole("button", { name: /Start run/ }).className
+    ).toContain("min-h-[44px]");
+  });
+
+  it("keeps the H2 step on the plan page's compact card", () => {
+    renderCard({ compact: true, title: "Easy 30" });
+    expect(screen.getByRole("heading", { name: "Easy 30" }).className).toMatch(
+      /\btext-h2\b/
+    );
   });
 });

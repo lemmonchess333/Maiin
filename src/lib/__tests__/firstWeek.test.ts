@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { firstWeek, type FirstWeekInput } from "../firstWeek";
+import {
+  firstWeek,
+  isFirstWeekWorkoutEligible,
+  type FirstWeekInput,
+} from "../firstWeek";
 
 // Friday 2 October 2026; the first recap comes Monday 5 October.
 const base: FirstWeekInput = {
@@ -87,5 +91,47 @@ describe("firstWeek", () => {
       firstWeek({ ...base, startKey: "2026-09-26", todayKey: "2026-09-28" })!
         .day
     ).toBe(3);
+  });
+
+  it("uses training-only tasks and the supplied plan-completion day for version 2", () => {
+    const journey = {
+      ...base,
+      trainingOnly: true,
+      startKey: "2026-10-06",
+      todayKey: "2026-10-06",
+    };
+    const week = firstWeek(journey)!;
+    expect(week.day).toBe(1);
+    expect(week.items.map((item) => item.key)).toEqual(["workout", "run"]);
+    expect(week.recapKey).toBeNull();
+    expect(firstWeek({ ...journey, todayKey: "2026-10-12" })?.day).toBe(7);
+    expect(firstWeek({ ...journey, todayKey: "2026-10-13" })).toBeNull();
+    expect(firstWeek({ ...journey, startKey: null })).toBeNull();
+  });
+
+  it("puts the only incomplete sport or resumable sport first", () => {
+    const journey = { ...base, trainingOnly: true };
+    expect(
+      firstWeek({ ...journey, workoutCount: 1 })!.items.map((item) => item.key)
+    ).toEqual(["run", "workout"]);
+    expect(
+      firstWeek({ ...journey, priorityTask: "run" })!.items.map(
+        (item) => item.key
+      )
+    ).toEqual(["run", "workout"]);
+    expect(firstWeek({ ...journey, workoutCount: 1, runCount: 1 })).toBeNull();
+  });
+
+  it("does not tick a workout for a session without performed work", () => {
+    const eligible = (exercises: unknown) =>
+      isFirstWeekWorkoutEligible({ exercises } as never);
+    expect(eligible([])).toBe(false);
+    expect(eligible([{ sets: [{ reps: 0 }] }])).toBe(false);
+    expect(eligible([{ sets: [{ reps: 8 }] }])).toBe(true);
+    expect(eligible([{ repUnit: "seconds", sets: [{ reps: 30 }] }])).toBe(true);
+    expect(
+      eligible([{ repUnit: "seconds", durationMinutes: 3, sets: [] }])
+    ).toBe(true);
+    expect(eligible([{ durationMinutes: 3, sets: [] }])).toBe(false);
   });
 });

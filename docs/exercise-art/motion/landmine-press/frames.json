@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/landmine-press.webp",
+  "still": "form-art/landmine-press.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 480,
+  "frameHeight": 354,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "ecdf9e1fdf887bb265aad8515836d89baee146336733f4bc83a8e65fdb7bbab7",
+  "thenSha256": "d1c99f6f62e2e06e94aefacc0ad6fb7dbe6419272b88ca3e5e90b87194cce6fa",
+  "sha256": "a5181ecd552c1c87a67aaf7e4ba9e8e887bd20b1392ae905fac33e19ffc8dd56"
+}

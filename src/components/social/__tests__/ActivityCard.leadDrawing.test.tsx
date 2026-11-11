@@ -105,8 +105,8 @@ describe("a lift post's hero", () => {
       liftPost(
         [
           {
-            name: "Bench Press",
-            exerciseId: "bench-press",
+            name: "Barbell Squat",
+            exerciseId: "squat",
             summary: "3×8×60 kg",
           },
         ],
@@ -114,7 +114,7 @@ describe("a lift post's hero", () => {
       )
     );
     expect(card.querySelector("img[data-lead-drawing]")).not.toBeNull();
-    expect(screen.getAllByText("2 PRs")).toHaveLength(1);
+    expect(screen.getAllByText("2 bests")).toHaveLength(1);
     expect(screen.getAllByText(/kg volume/)).toHaveLength(1);
   });
 });

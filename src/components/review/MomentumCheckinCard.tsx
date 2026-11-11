@@ -156,15 +156,15 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
       await settleWrite(setDocGuarded(checkinRef(uid, weekKey), record), {
         label: "momentumCheckin",
         onLateFailure: () =>
-          toast.error("Your check-in from offline couldn't be saved."),
+          toast.error("Your check-in from offline couldn’t be saved."),
       });
       setExisting(record);
     } catch (err) {
       logger.error("momentumCheckin: save failed", err);
       toast.error(
         record.dismissed
-          ? "Couldn't hide the check-in. Try again."
-          : "Couldn't save your check-in. Try again."
+          ? "Couldn’t hide the check-in. Try again."
+          : "Couldn’t save your check-in. Try again."
       );
     } finally {
       setSaving(false);
@@ -241,7 +241,13 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => navigate(action.to)}
+          onClick={() =>
+            navigate(action.to, {
+              state: action.to.startsWith("/program/plan")
+                ? { returnTo: "/review", resetFeel: existing.feel }
+                : undefined,
+            })
+          }
         >
           {action.label}
         </Button>
@@ -260,7 +266,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
           <div>
             <SectionLabel as="h2">Momentum check-in</SectionLabel>
             <p className="text-sm font-semibold text-foreground">
-              How did this week&apos;s plan feel?
+              How did this week’s plan feel?
             </p>
           </div>
         </div>
@@ -284,7 +290,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
       {feel && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            One focus for next week — optional, pick what&apos;s realistic.
+            One focus for next week — optional, pick what’s realistic.
           </p>
           <div
             className="grid grid-cols-2 gap-2"
@@ -317,7 +323,7 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
                 optional.
               </p>
               <ExperienceScale
-                label="Did this week's plan make sense?"
+                label="Did this week’s plan make sense?"
                 value={clarity}
                 onChange={setClarity}
               />
@@ -328,7 +334,12 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
               />
             </div>
           )}
-          <Button onClick={submit} loading={saving} className="w-full">
+          <Button
+            variant="neutral"
+            onClick={submit}
+            loading={saving}
+            className="w-full"
+          >
             Save check-in
           </Button>
         </div>

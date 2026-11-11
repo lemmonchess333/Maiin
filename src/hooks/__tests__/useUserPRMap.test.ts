@@ -121,6 +121,24 @@ describe("useUserPRMap", () => {
     expect(result.current.prMap).toBeNull();
   });
 
+  it("retries after a failed read when the compare sheet is reopened", async () => {
+    const uid = "pr-reopen-after-error";
+    seedFirestore({
+      [`users/${uid}/workouts/w1`]: session("2026-07-01", 100, 5),
+    });
+    failNextFirestore("getDocs", { path: `users/${uid}/workouts`, code: "unavailable" });
+    const { result, rerender } = renderHook(
+      ({ open }) => useUserPRMap(open ? uid : null),
+      { initialProps: { open: true } }
+    );
+    await waitFor(() => expect(result.current.error).toBe(true));
+    expect(unfiredFailures()).toEqual([]);
+    rerender({ open: false });
+    rerender({ open: true });
+    await waitFor(() => expect(result.current.prMap?.["Bench Press"]?.["5rm"]).toMatchObject({ weight: 100 }));
+    expect(result.current.error).toBe(false);
+  });
+
   it("drops malformed workout documents", async () => {
     seedFirestore({
       "users/pr-malformed/workouts/ok": session("2026-07-01", 100, 5),

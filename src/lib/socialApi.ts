@@ -168,19 +168,25 @@ export interface FollowRequest {
   requestedAt: Date | null;
 }
 
+/** How many waiting requests People lists, newest first. */
+const FOLLOW_REQUESTS_SHOWN = 50;
+
+/** The newest requests waiting for `currentUid`. */
+function waitingRequestsQuery(currentUid: string, max: number) {
+  return query(
+    collection(db, "followRequests", currentUid, "users"),
+    orderBy("requestedAt", "desc"),
+    limit(max)
+  );
+}
+
 /** The requests waiting for the signed-in person, newest first, each with
  *  the asker's public name and photo. */
 export async function getFollowRequests(
   currentUid: string,
-  max = 50
+  max = FOLLOW_REQUESTS_SHOWN
 ): Promise<FollowRequest[]> {
-  const snap = await getDocs(
-    query(
-      collection(db, "followRequests", currentUid, "users"),
-      orderBy("requestedAt", "desc"),
-      limit(max)
-    )
-  );
+  const snap = await getDocs(waitingRequestsQuery(currentUid, max));
   return Promise.all(
     snap.docs.map(async (d) => {
       const profile = await getDoc(
@@ -211,20 +217,77 @@ export async function isFollowing(
   return snap.exists();
 }
 
-/* Counted on the server: a profile with 1,284 followers is one
-   aggregation read, not 1,284 documents downloaded to show a number. */
-export async function getFollowerCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "followers", uid, "users")
-  );
+export interface FollowCounts {
+  followers: number;
+  following: number;
+}
+
+/* Counted on the server: a list of 1,284 followers is one aggregation
+   read, not 1,284 documents downloaded to show a number. */
+async function countFollowList(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  const snap = await getCountFromServer(collection(db, kind, uid, "users"));
   return snap.data().count;
 }
 
-export async function getFollowingCount(uid: string): Promise<number> {
-  const snap = await getCountFromServer(
-    collection(db, "following", uid, "users")
-  );
-  return snap.data().count;
+/**
+ * Someone else's list, counted for a side the server has no number for.
+ * While the rules let any account count a list, this is that side's real
+ * size for an account the backfill has not reached. Once the rules keep a
+ * list to its owner the count is refused, and by then every account has
+ * been counted, so no stored number means nobody.
+ */
+async function countOrNobody(
+  kind: "followers" | "following",
+  uid: string
+): Promise<number> {
+  try {
+    return await countFollowList(kind, uid);
+  } catch (err) {
+    if ((err as { code?: string } | undefined)?.code === "permission-denied") {
+      return 0;
+    }
+    throw err;
+  }
+}
+
+/** A stored count, or null for a side the server has not counted. */
+function storedCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : null;
+}
+
+/**
+ * How many people follow `uid` and how many `uid` follows.
+ *
+ * Someone else's come from `followCounts/{uid}`, which the server keeps
+ * (functions/lib/followCounts.js): one document, and nobody's lists. A
+ * side it has not counted is read from the list while the rules allow
+ * that, and is 0 once they do not (`countOrNobody`). Your own come from
+ * your own lists, which are right the moment you follow someone or accept
+ * a request; the server's copy trails that by a second or two.
+ */
+export async function getFollowCounts(
+  uid: string,
+  own: boolean
+): Promise<FollowCounts> {
+  if (own) {
+    const [followers, following] = await Promise.all([
+      countFollowList("followers", uid),
+      countFollowList("following", uid),
+    ]);
+    return { followers, following };
+  }
+  const snap = await getDoc(doc(db, "followCounts", uid));
+  const stored = snap.exists() ? snap.data() : {};
+  const [followers, following] = await Promise.all([
+    storedCount(stored.followers) ?? countOrNobody("followers", uid),
+    storedCount(stored.following) ?? countOrNobody("following", uid),
+  ]);
+  return { followers, following };
 }
 
 /**
@@ -428,8 +491,7 @@ export async function getKudosList(
           doc(db, "users", uid, "public", "profile")
         );
         const data = userSnap.data() as
-          | { displayName?: string; photoURL?: string }
-          | undefined;
+          { displayName?: string; photoURL?: string } | undefined;
         return {
           userId: uid,
           userName: data?.displayName || "Athlete",
@@ -712,9 +774,13 @@ export interface SuggestedPerson {
  * activity recently is someone worth following (they're active AND
  * they share publicly, so they'll show up on your feed).
  *
- * Filters: self, already-followed, blocked. No graph traversal, no
- * ML, no collaborative filtering — a v1 good enough to turn the
- * Find tab from a dead stub into a working discovery surface.
+ * Filters: self, already-followed, blocked, and anyone with a follow
+ * request waiting either way: one who asked to follow you is answered in
+ * the requests above the suggestions, not offered as someone to follow
+ * as well, and one you asked already shows Requested wherever you meet
+ * them. No graph traversal, no ML, no collaborative filtering — a v1
+ * good enough to turn the Find tab from a dead stub into a working
+ * discovery surface.
  *
  * If the pool comes back empty after filtering, the caller should
  * render the honest "suggestions appear as the community grows"
@@ -749,6 +815,21 @@ export async function getSuggestedPeople(
     // follows — acceptable degraded-state rather than failing outright.
     captureError(e instanceof Error ? e : new Error(String(e)), "error", {
       fn: "getSuggestedPeople.getFollowingIds",
+    });
+  }
+
+  // Exclude people who asked to follow you: People lists their requests
+  // (Accept / Decline) above the suggestions, and the same person in both
+  // offered Follow beside the answer. The same newest requests that list
+  // reads, so nobody it shows is suggested.
+  try {
+    const waiting = await getDocs(
+      waitingRequestsQuery(uid, FOLLOW_REQUESTS_SHOWN)
+    );
+    waiting.docs.forEach((d) => excludeIds.add(d.id));
+  } catch (e) {
+    captureError(e instanceof Error ? e : new Error(String(e)), "error", {
+      fn: "getSuggestedPeople.followRequests",
     });
   }
 
@@ -827,24 +908,37 @@ export async function getSuggestedPeople(
   // Enrich with display names + avatars from the public profile
   // projection. Parallel getDoc — small list (≤ limitCount), no
   // pagination, runs once.
+  //
+  // Alongside each, whether you have already asked to follow them. Your
+  // own requests are filed under each person asked, so there is no list
+  // of them to read; one read per suggestion, the read each row's Follow
+  // button would otherwise make (useSuggestedPeople tells the buttons
+  // that everyone listed is someone you have not followed or asked).
   const list = Array.from(candidates.values()).slice(0, limitCount);
-  await Promise.all(
+  const asked = await Promise.all(
     list.map(async (p) => {
-      try {
-        const snap = await getDoc(doc(db, "users", p.uid, "public", "profile"));
-        const data = snap.data() as
-          | { displayName?: string; photoURL?: string }
-          | undefined;
-        if (data?.displayName) p.displayName = data.displayName;
-        if (data?.photoURL) p.photoURL = data.photoURL;
-      } catch {
-        // Fall through with default 'Athlete' — a missing public profile
-        // shouldn't break the whole list.
-      }
+      const [, requested] = await Promise.all([
+        getDoc(doc(db, "users", p.uid, "public", "profile")).then(
+          (snap) => {
+            const data = snap.data() as
+              { displayName?: string; photoURL?: string } | undefined;
+            if (data?.displayName) p.displayName = data.displayName;
+            if (data?.photoURL) p.photoURL = data.photoURL;
+          },
+          () => {
+            // Fall through with default 'Athlete' — a missing public
+            // profile shouldn't break the whole list.
+          }
+        ),
+        // A failed check keeps them: at worst their button says Follow,
+        // and a tap finds the request still standing.
+        hasRequestedFollow(uid, p.uid).catch(() => false),
+      ]);
+      return requested;
     })
   );
 
-  return list;
+  return list.filter((_, i) => !asked[i]);
 }
 
 // ============================================
@@ -955,11 +1049,7 @@ export async function batchGetKudos(
 // working without breaking the existing client-server contract.
 export type ReportReason = "spam" | "harassment" | "inappropriate" | "other";
 export type ReportCategory =
-  | "harassment"
-  | "spam"
-  | "inappropriate"
-  | "impersonation"
-  | "other";
+  "harassment" | "spam" | "inappropriate" | "impersonation" | "other";
 
 /** What can be reported: exactly the server's TARGET_TYPES
  *  (functions/lib/reportTargets.js), pinned by reportTargets.cross.test.ts.

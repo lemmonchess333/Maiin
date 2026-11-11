@@ -70,6 +70,7 @@ interface GuideHintProps {
   /** Words other than the hint's own, when the page knows better (the
    *  first set without the automatic rest timer). */
   body?: string;
+  action?: { label: string; onSelect: () => void };
   /** Full-screen views (the workout, the run screen) sit at z-50; a hint
    *  there has to sit above them. */
   layer?: "page" | "session";
@@ -103,6 +104,7 @@ export default function GuideHint({
   when,
   requested = false,
   body,
+  action,
   layer = "page",
   placement = "bottom",
   onClose,
@@ -259,11 +261,22 @@ export default function GuideHint({
           </div>
           <p
             id={bodyId}
-            className="mt-1 text-sm leading-snug text-muted-foreground"
+            className="mt-1 whitespace-pre-line text-sm leading-snug text-muted-foreground"
           >
             {body ?? words.body}
           </p>
-          <div className="mt-1 flex justify-end">
+          <div className="mt-1 flex flex-wrap justify-end gap-2">
+            {action && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  close();
+                  action.onSelect();
+                }}
+              >
+                {action.label}
+              </Button>
+            )}
             <Button variant="ghost" className="-mr-2" onClick={() => close()}>
               Got it
             </Button>

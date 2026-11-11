@@ -177,9 +177,9 @@ describe("useSessionsInFlight", () => {
       exercises: [expect.objectContaining({ setCount: 3 })],
     });
     expect(routinesFollowed()).toEqual(["users/user-A/savedRoutines/r1"]);
-    expect(
-      routineReads().filter((read) => !read.path.endsWith("/r1"))
-    ).toEqual([]);
+    expect(routineReads().filter((read) => !read.path.endsWith("/r1"))).toEqual(
+      []
+    );
 
     // Deleted, on this phone or another: no longer there to offer.
     await act(async () => {

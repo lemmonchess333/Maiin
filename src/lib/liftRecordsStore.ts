@@ -5,8 +5,8 @@
  *
  * It is a cache. Every figure in it can be rebuilt from the saved workouts,
  * and the workout screen keeps it so a session can tell a new best from the
- * whole history without reading the whole history. This module is the only
- * reader and writer, and keeps the one protocol that makes a cache safe:
+ * whole history without reading the whole history. This module and liftRecordsCache keep
+ * the one protocol that makes a cache safe:
  *
  * - `revision` counts writes. A session commits only over the revision it
  *   loaded; if anything changed the map since, the session marks it stale
@@ -17,18 +17,13 @@
  *   mis-logged session must not stay the best to beat, and a session
  *   deleted from the history must not stay counted.
  */
-import {
-  doc,
-  getDoc,
-  increment,
-  runTransaction,
-  Timestamp,
-  type DocumentData,
-  type DocumentReference,
-  type SetOptions,
-} from "firebase/firestore";
+import { getDoc, runTransaction, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
-import { setDocGuarded } from "./firestoreWrite";
+import { liftRecordsRef as recordsRef } from "./liftRecordsCache";
+export {
+  markLiftRecordsStale,
+  invalidateLiftRecords,
+} from "./liftRecordsCache";
 import {
   buildPRMap,
   buildVolumeBest,
@@ -55,10 +50,6 @@ export interface SessionLift {
   name: string;
   repUnit?: "reps" | "seconds";
   sets: { weightKg: number; reps: number }[];
-}
-
-function recordsRef(uid: string): DocumentReference {
-  return doc(db, "users", uid, "stats", "prMap");
 }
 
 /**
@@ -128,14 +119,20 @@ function projectForRecords(workout: Workout) {
   };
 }
 
-/** Sessions per exercise, each session counted once. */
+/** Trained sessions per exercise, matching the live completion path. */
 function countSessions(
   history: ReturnType<typeof projectForRecords>[]
 ): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const workout of history) {
-    for (const name of new Set(workout.exercises.map((e) => e.exerciseName)))
-      counts[name] = (counts[name] ?? 0) + 1;
+    const trained = workout.exercises
+      .filter(
+        (exercise) =>
+          exercise.exerciseName &&
+          exercise.sets.some((set) => set.type !== "warmup")
+      )
+      .map((exercise) => exercise.exerciseName);
+    for (const name of new Set(trained)) counts[name] = (counts[name] ?? 0) + 1;
   }
   return counts;
 }
@@ -191,42 +188,4 @@ export async function commitLiftRecords(
     );
     return "saved";
   });
-}
-
-/**
- * Mark the map stale on its own, for a session whose workout saved but
- * whose records did not. Left as it was, the map is complete and at the
- * revision the next session loads, so that session would build on it
- * without this one's sets, for good. Stale, it is rebuilt from the whole
- * history, which holds the saved workout.
- */
-export function markLiftRecordsStale(uid: string): Promise<void> {
-  return setDocGuarded(
-    recordsRef(uid),
-    { invalidated: true, revision: increment(1) },
-    { merge: true }
-  );
-}
-
-/**
- * Mark the map stale in the same commit as the change that made it so: a
- * corrected workout (a transaction) or a deleted one (a batch). Bumping the
- * revision also stops a session that loaded the old map from writing it
- * back.
- */
-export function invalidateLiftRecords(
-  writer: {
-    set(
-      ref: DocumentReference,
-      data: DocumentData,
-      options: SetOptions
-    ): unknown;
-  },
-  uid: string
-): void {
-  writer.set(
-    recordsRef(uid),
-    { invalidated: true, revision: increment(1) },
-    { merge: true }
-  );
 }

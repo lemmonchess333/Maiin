@@ -1,0 +1,18 @@
+{
+  "query": "exercise progress chart with weight units and metric selection",
+  "platform": "ios",
+  "screens": [
+    {
+      "app_name": "Tonal",
+      "mobbin_url": "https://mobbin.com/screens/49b9079a-87e6-434d-802e-25a9a9858077",
+      "image_url": "https://mobbin.com/api/mcp/short/xytAPjEm",
+      "observed": "Strength, Power, Volume and Workouts tabs; LBS chart label and a 59 lbs callout."
+    },
+    {
+      "app_name": "Hevy",
+      "mobbin_url": "https://mobbin.com/screens/e08c325b-da4c-4dcc-a871-2f119fbddde6",
+      "image_url": "https://mobbin.com/api/mcp/short/Hliz9R0j",
+      "observed": "Measurements screen with Bodyweight, Body Fat and Neck controls; 78.8 kg on the chart. Supports unit and fractional-value presentation, not exercise record arithmetic."
+    }
+  ]
+}

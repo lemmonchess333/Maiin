@@ -10,8 +10,10 @@ import {
   formatWeekRange,
   type WeekBest,
   type WeeklyReview as Review,
+  type WeekAheadPlan,
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
+import { retireReviewReminder } from "@/hooks/useReviewReminder";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
@@ -67,7 +69,7 @@ function StatRow({
         <p
           className={cn(
             "text-display font-extrabold leading-none text-foreground",
-            numeral && "font-mono tabular-nums"
+            numeral && "font-figure tabular-nums"
           )}
         >
           {value}
@@ -123,7 +125,7 @@ function YourWeek({
       <div className="flex items-start justify-between gap-3">
         {/* The week the account began is reviewed from that day: "Your
             first 3 days", and food out of those days, not seven. */}
-        <h2 className="text-h1 font-extrabold text-foreground">
+        <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
           {firstDays
             ? firstDays.count === 1
               ? "Your first day"
@@ -350,14 +352,14 @@ function BestMoment({
           {best.exerciseName}
         </p>
         <p className="text-foreground">
-          <span className="text-display font-extrabold font-mono tabular-nums">
+          <span className="text-display font-extrabold font-figure tabular-nums">
             {loadIn(best.weight, liftUnit)}
           </span>
           <span className="text-xl font-semibold text-muted-foreground">
             {" "}
             {liftUnitLabel(liftUnit)} ×{" "}
           </span>
-          <span className="text-display font-extrabold font-mono tabular-nums">
+          <span className="text-display font-extrabold font-figure tabular-nums">
             {best.reps}
           </span>
         </p>
@@ -388,23 +390,58 @@ function BestMoment({
 }
 
 function WeekAhead({
-  review,
+  plan,
   trainingWhy,
   uid,
   weekKey,
   onDone,
 }: {
-  review: Review;
+  plan: WeekAheadPlan;
   trainingWhy: string | undefined;
   uid: string | null;
   weekKey: string;
   onDone: () => void;
 }) {
-  const { lifts, runs, phaseNote } = review.weekAhead;
   return (
     <div className="flex flex-1 flex-col">
-      <h2 className="text-h1 font-extrabold text-foreground">The week ahead</h2>
-      <div className="mt-6 space-y-6">
+      <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
+        The week ahead
+      </h2>
+      <WeekAheadBody
+        plan={plan}
+        trainingWhy={trainingWhy}
+        uid={uid}
+        weekKey={weekKey}
+        className="mt-6"
+      />
+      <div className="mt-auto pt-8">
+        <Button variant="neutral" fullWidth onClick={onDone}>
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** The week ahead's plan, why the person trains and the momentum
+ *  check-in: the recap's last card, and the page before a first review. */
+function WeekAheadBody({
+  plan,
+  trainingWhy,
+  uid,
+  weekKey,
+  className,
+}: {
+  plan: WeekAheadPlan;
+  trainingWhy: string | undefined;
+  uid: string | null;
+  weekKey: string;
+  className?: string;
+}) {
+  const { lifts, runs, phaseNote } = plan;
+  return (
+    <>
+      <div className={cn("space-y-6", className)}>
         {/* The plan's week in the figures "Your week" counts the last one
             in, so the card says it at the recap's size rather than as a
             line over an empty page. */}
@@ -450,12 +487,7 @@ function WeekAhead({
         {/* CHECKIN-01 — disappears for the week once answered or dismissed. */}
         {uid && <MomentumCheckinCard uid={uid} weekKey={weekKey} />}
       </div>
-      <div className="mt-auto pt-8">
-        <Button fullWidth onClick={onDone}>
-          Done
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -468,7 +500,8 @@ function WeekAhead({
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
+  const { loading, review, weekAhead, weekKey, failed, retry } =
+    useWeeklyReview();
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -482,6 +515,8 @@ export default function WeeklyReview() {
     if (loading || failed || viewedRef.current) return;
     viewedRef.current = true;
     dismiss();
+    // Monday's notification for this week has nothing left to say.
+    if (review) void retireReviewReminder(weekKey).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
   }, [loading, failed]);
 
@@ -516,17 +551,17 @@ export default function WeeklyReview() {
     slides = [
       {
         key: "failed",
-        label: "Couldn't load",
+        label: "Couldn’t load",
         render: () => (
           <div className="flex flex-1 flex-col" role="alert">
-            <h2 className="text-h1 font-extrabold text-foreground">
+            <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
               Couldn&rsquo;t load your review
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
               Check your connection and try again.
             </p>
             <div className="mt-auto space-y-2 pt-8">
-              <Button fullWidth onClick={retry}>
+              <Button variant="neutral" fullWidth onClick={retry}>
                 Try again
               </Button>
               <Button fullWidth variant="ghost" onClick={close}>
@@ -544,15 +579,28 @@ export default function WeeklyReview() {
         label: "Your first review",
         render: () => (
           <div className="flex flex-1 flex-col">
-            <h2 className="text-h1 font-extrabold text-foreground">
+            <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
               Your first review
             </h2>
             <p className="mt-3 text-base text-muted-foreground">
               Your first review appears after your first week with a logged
               workout, run, meal or weigh-in.
             </p>
+            {/* Until then the page shows the plan for the week under way,
+                not a sentence on an empty page. */}
+            {weekAhead && (
+              <div className="mt-8 space-y-3">
+                <SectionHeading size="compact">The week ahead</SectionHeading>
+                <WeekAheadBody
+                  plan={weekAhead}
+                  trainingWhy={trainingWhy}
+                  uid={user?.uid ?? null}
+                  weekKey={weekKey}
+                />
+              </div>
+            )}
             <div className="mt-auto pt-8">
-              <Button fullWidth onClick={close}>
+              <Button variant="neutral" fullWidth onClick={close}>
                 Done
               </Button>
             </div>
@@ -568,7 +616,7 @@ export default function WeeklyReview() {
       label: "The week ahead",
       render: () => (
         <WeekAhead
-          review={review}
+          plan={review.weekAhead}
           trainingWhy={trainingWhy}
           uid={user?.uid ?? null}
           weekKey={weekKey}
@@ -583,7 +631,7 @@ export default function WeeklyReview() {
           label: "A quiet week",
           render: (next) => (
             <div className="flex flex-1 flex-col">
-              <h2 className="text-h1 font-extrabold text-foreground">
+              <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
                 A quiet week
               </h2>
               <p className="mt-3 text-base text-muted-foreground">

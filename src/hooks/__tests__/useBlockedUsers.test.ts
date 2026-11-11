@@ -103,7 +103,7 @@ describe("useBlockedUsers", () => {
     expect(hook.result.current.blocked.has("baduser")).toBe(false);
   });
 
-  it("isolates cached sets per uid so different signed-in users don't share blocks", () => {
+  it("isolates cached sets per uid so different signed-in users don’t share blocks", () => {
     currentAuthUser = { uid: "test-isolation-a" };
     const a = renderHook(() => useBlockedUsers());
     act(() => {
@@ -149,6 +149,32 @@ describe("useBlockedUsers", () => {
     });
     expect(result.current.ready).toBe(true);
     expect(result.current.blocked.has("blocked-1")).toBe(true);
+  });
+
+  it("reads the block list once for every consumer that mounts before it settles", async () => {
+    currentAuthUser = { uid: "test-one-read" };
+    let resolveFetch: (ids: string[]) => void = () => {};
+    mockGetBlockedUsers.mockImplementation(
+      () => new Promise<string[]>((res) => (resolveFetch = res))
+    );
+
+    // A table of rows: each one a consumer, all mounted before the read
+    // comes back.
+    const rows = [1, 2, 3, 4].map(() => renderHook(() => useBlockedUsers()));
+    expect(mockGetBlockedUsers).toHaveBeenCalledTimes(1);
+    act(() => latest("test-one-read").deliver([]));
+
+    await act(async () => {
+      resolveFetch(["blocked-1"]);
+      await Promise.resolve();
+    });
+    for (const row of rows) {
+      expect(row.result.current.ready).toBe(true);
+      expect(row.result.current.blocked.has("blocked-1")).toBe(true);
+    }
+    // Settled: a later consumer reads nothing.
+    renderHook(() => useBlockedUsers());
+    expect(mockGetBlockedUsers).toHaveBeenCalledTimes(1);
   });
 
   it("becomes ready (fail-open) even if the block-list fetch rejects", async () => {

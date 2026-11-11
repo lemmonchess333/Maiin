@@ -30,9 +30,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("../useChallengePercentile", () => ({
   useChallengePercentile: () => null,
 }));
-vi.mock("@/lib/editorialImages", () => ({
-  challengeEditorialImage: () => null,
-}));
 vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));
@@ -142,7 +139,7 @@ function renderJoined(
 
 /** The bar's fill: the one child of the track. */
 function barFill(container: HTMLElement): HTMLElement {
-  const fill = container.querySelector(".h-2.bg-muted > div");
+  const fill = container.querySelector(".h-2.track-cut > div");
   expect(fill, "the progress bar renders").not.toBeNull();
   return fill as HTMLElement;
 }
@@ -176,6 +173,7 @@ describe("the challenge card's bar", () => {
   it("fills a reached group goal in its sport's colour, not gold", () => {
     const c = challenge("total_km", {
       collectiveTarget: 100,
+      collectiveMeters: 110000,
       tiers: { bronze: 100, silver: 100, gold: 100 },
     });
     const { container } = renderJoined(c, participant("me", 60, null), [
@@ -185,6 +183,22 @@ describe("the challenge card's bar", () => {
     const bar = barFill(container);
     expect(bar.className).toContain("bg-running");
     expect(bar.style.backgroundColor).toBe("");
+  });
+
+  it("reads a group goal's total off the server, not the loaded board", () => {
+    // Everyone's runs, joined or not: far more than the two members' 110.
+    const c = challenge("total_km", {
+      collectiveTarget: 1000,
+      collectiveMeters: 412000,
+      tiers: { bronze: 1000, silver: 1000, gold: 1000 },
+    });
+    const { container } = renderJoined(c, participant("me", 60, null), [
+      participant("me", 60, null),
+      participant("b", 50, null),
+    ]);
+    const line = (container.textContent ?? "").replace(/\s+/g, " ");
+    expect(line).toMatch(/412 km \/ .* together/);
+    expect(line).not.toMatch(/110 km \/ /);
   });
 
   it("rings the tier badge in the metal, round a trophy in the text colour", () => {
