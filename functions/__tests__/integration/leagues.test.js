@@ -53,7 +53,7 @@ const lift = (date) => ({
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   idx = require("../../index");
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

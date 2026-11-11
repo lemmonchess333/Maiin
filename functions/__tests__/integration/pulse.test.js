@@ -30,7 +30,7 @@ const day = () => new Date().toISOString().slice(0, 10);
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   idx = require("../../index");
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

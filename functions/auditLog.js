@@ -35,7 +35,7 @@
  * reconstructing the user's session.
  */
 
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 const CHECKOUT_AUDIT_COLLECTION = "audit_checkout_sessions";
 

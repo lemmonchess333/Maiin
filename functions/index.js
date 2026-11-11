@@ -11,7 +11,7 @@
 // lives under /v1. Importing /v1 keeps the entire trigger surface intact.
 const functions = require("firebase-functions/v1");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 // Idempotent — admin keeps an app registry as module-level state
 // that survives Vitest's per-file module-cache reset. Without this

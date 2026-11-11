@@ -18,7 +18,7 @@
  */
 
 const { pruneOldTimestamps } = require("./helpers");
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 /**
  * Checks whether a user has exceeded `maxCalls` within `windowMs`.

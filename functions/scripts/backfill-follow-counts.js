@@ -29,7 +29,7 @@ if (require.main === module) {
       if (!projectId) {
         throw new Error("Pass the Firebase project id as the first argument.");
       }
-      const admin = require("firebase-admin");
+      const admin = require("../lib/adminSdk");
       admin.initializeApp({ projectId });
       const totals = await backfillFollowCounts(admin.firestore(), {
         documentId: () => admin.firestore.FieldPath.documentId(),

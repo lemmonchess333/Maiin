@@ -26,7 +26,7 @@ if (require.main === module) {
       if (!projectId) {
         throw new Error("Pass the Firebase project id.");
       }
-      const admin = require("firebase-admin");
+      const admin = require("../lib/adminSdk");
       admin.initializeApp({ projectId });
       const db = admin.firestore();
       const totals = await backfillMedals(db, {

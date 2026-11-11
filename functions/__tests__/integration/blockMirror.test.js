@@ -30,7 +30,7 @@ beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ onBlockWritten } = require("../../index"));
   ({ backfillBlockMirrors } = require("../../lib/blockMirror"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

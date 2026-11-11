@@ -26,7 +26,7 @@ if (require.main === module) {
           "Pass the Firebase project id and the goal's challenge id."
         );
       }
-      const admin = require("firebase-admin");
+      const admin = require("../lib/adminSdk");
       admin.initializeApp({ projectId });
       const totals = await backfillCommunityGoal(admin.firestore(), {
         challengeId,

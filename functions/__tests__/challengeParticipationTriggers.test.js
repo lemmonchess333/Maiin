@@ -3,10 +3,25 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
+const admin = require("../lib/adminSdk");
+const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const projection = require("../lib/challengeParticipationProgress");
 const deletion = require("../lib/accountDeletionLocks");
 const board = require("../lib/friendsBoard");
 const leagues = require("../lib/leagues");
+
+// index.js takes its `db` as it loads, so the in-memory one has to be in
+// place first. With the real client, every step these tests do not stand
+// in (the Health tombstone, the reversals) tried to reach Firestore, failed
+// on credentials inside its step, and from firebase-admin 14 the client
+// also rejects a promise nobody holds, which fails the run.
+const { FieldValue, Timestamp, FieldPath } = admin.firestore;
+const memoryDb = memoryFirestore({});
+Object.defineProperty(admin, "firestore", {
+  configurable: true,
+  get: () =>
+    Object.assign(() => memoryDb, { FieldValue, Timestamp, FieldPath }),
+});
 const fns = require("../index");
 const source = { date: "2027-01-10", durationMinutes: 30 };
 const snap = { data: () => source };

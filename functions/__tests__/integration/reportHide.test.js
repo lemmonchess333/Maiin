@@ -104,7 +104,7 @@ suite("resolveReport Hide content — what a third account reads after", () => {
     if (process.env.GCLOUD_PROJECT !== "demo-tropos")
       throw new Error("Demo project required");
     ({ resolveReport } = require("../../index"));
-    admin = require("firebase-admin");
+    admin = require("../../lib/adminSdk");
     db = admin.firestore();
     previousAdminUids = process.env.ADMIN_UIDS;
     process.env.ADMIN_UIDS = ADMIN.auth.uid;

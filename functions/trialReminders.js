@@ -12,7 +12,7 @@
 // 1st-gen, like every export here: firebase-functions/v1.
 const functions = require("firebase-functions/v1");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 const { SCHEDULED_CAP } = require("./lib/runtimeCaps");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const trialReminder = require("./lib/trialReminder");
