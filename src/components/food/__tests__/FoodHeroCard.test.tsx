@@ -9,6 +9,12 @@
  * tapping the ring OR any tile flips all four together, and the choice
  * persists under the calorie-ring storage key.
  *
+ * Since Food11 the macros are `FoodMacroRow`, a sibling the page sets
+ * under the week strip, and the two meet only through the mode store. So
+ * `renderHero` draws the pair, as the page does: the invariant is about
+ * the two together, and a suite that rendered one would pass with the
+ * other reading a mode of its own.
+ *
  * isToday={false} keeps the test on the mode wiring only — it skips the
  * glance line, warmup bar, and celebration sequence, none of which are
  * relevant to the shared-mode contract.
@@ -18,6 +24,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import FoodHeroCard from "../FoodHeroCard";
+import FoodMacroRow from "../FoodMacroRow";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
@@ -53,6 +60,7 @@ function renderHero() {
         dailyTargets={dailyTargets}
         dailyTotals={dailyTotals}
       />
+      <FoodMacroRow dailyTargets={dailyTargets} dailyTotals={dailyTotals} />
     </MemoryRouter>
   );
 }
@@ -83,28 +91,6 @@ describe("FoodHeroCard — the targets gear has left the card", () => {
     expect(
       screen.queryByRole("link", { name: /adjust nutrition targets/i })
     ).toBeNull();
-  });
-});
-
-describe("FoodHeroCard — the macros are one row with no boxes", () => {
-  it("draws the three macros in the row form, outside any card", () => {
-    // Food11 call 4. Three boxed tiles under the boxed ring were four of
-    // the twelve boxes the first screen carried.
-    const { container } = renderHero();
-    const macros = Array.from(container.querySelectorAll("[data-macro]"));
-    expect(macros.map((m) => m.getAttribute("data-macro"))).toEqual([
-      "protein",
-      "carbs",
-      "fat",
-    ]);
-    for (const macro of macros) {
-      expect(macro).toHaveClass("text-left");
-      expect(macro.closest(".card-shadow")).toBeNull();
-      expect(macro.closest(".bg-card")).toBeNull();
-    }
-    const grid = macros[0].parentElement!;
-    expect(grid).toHaveClass("grid", "grid-cols-3");
-    expect(macros.every((m) => m.parentElement === grid)).toBe(true);
   });
 });
 
@@ -302,6 +288,19 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
           }
           dailyTotals={{ calories: 900, protein: 80, carbs: 56, fat: 38 }}
         />
+        <FoodMacroRow
+          dailyTargets={
+            {
+              ...dailyTargets,
+              protein: 0,
+              carbs: 0,
+              fat: 42,
+              targetInfeasible: true,
+              minFeasibleKcal: 378,
+            } as unknown as EffectiveTargets
+          }
+          dailyTotals={{ protein: 80, carbs: 56, fat: 38 }}
+        />
       </MemoryRouter>
     );
     const tiles = Array.from(document.querySelectorAll("[data-macro]"));
@@ -321,9 +320,10 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
 });
 
 describe("FoodHeroCard — drawIn", () => {
-  /* Food remounts the hero per day so a day switch fires no log haptic
-     or celebration. drawIn={false} makes that remount arrive at the
-     day's figures rather than counting every number up from zero.
+  /* Food remounts the hero and the macros per day so a day switch fires
+     no log haptic or celebration. drawIn={false} makes that remount
+     arrive at the day's figures rather than counting every number up
+     from zero.
      Protein in the left view: 150 − 50 = 100g left.
 
      The mode store keeps its last value in memory, and an earlier test
@@ -339,6 +339,11 @@ describe("FoodHeroCard — drawIn", () => {
         <FoodHeroCard
           selectedDate="2026-06-09"
           isToday={false}
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+          drawIn={drawIn}
+        />
+        <FoodMacroRow
           dailyTargets={dailyTargets}
           dailyTotals={dailyTotals}
           drawIn={drawIn}

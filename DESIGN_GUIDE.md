@@ -488,12 +488,16 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
   number.
 - **Food:** on 11 Nov 2026 the owner picked a new Food page (Food11 in the
-  plan file, which names its evidence), built a step at a time. Built so far: no large "Food" title, with the
-  date switcher as the header row and the targets gear at its end; the
-  three macros as one row with no boxes; and the calorie wheel, the macro
-  bars and the Details sheet's bars drawn as what is logged in both the
-  left and the logged view, on Home's food card too (`loggedFill`), so a
-  day with nothing logged is a grey track. Read Food11 before changing
+  plan file, which names its evidence), built a step at a time. Built so
+  far: no large "Food" title, with the date switcher as the header row
+  and the targets gear at its end; the
+  three macros as one row with no boxes (`FoodMacroRow`); the calorie
+  wheel, the macro bars and the Details sheet's bars drawn as what is
+  logged in both the left and the logged view, on Home's food card too
+  (`loggedFill`), so a day with nothing logged is a grey track; and the
+  week as seven short bars under the wheel, edge to edge, in the deeper
+  orange in light, where it was seven rings with the date above the
+  calorie card. Read Food11 before changing
   any of it. What follows is the screen as it stood before, and stays
   true of the parts not yet rebuilt. The owner kept the original screen
   (title, week strip, macro cards with their icons and colours, draining
@@ -1374,7 +1378,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Lit edges on every dark surface.** A card, a compact tile, a chip and a pill button take a hairline of light along the top and a faint outline all round. They come from the shadow tokens (`--ds-shadow-card` and its hover step), so `card-shadow` stays the one place a card's elevation is set and no component writes its own edge. On a dark page the edge is light, not shadow: a black shadow cannot show there. A fill may fall from a slightly lighter top to the surface colour, inside one neutral. The light theme keeps its shadows.
 - **Tracks are cut in.** A track that holds progress (the week's segments, a ring's groove, a slider's rail) is darker than its surface, with an inner shadow above and a hairline of light below, so what fills it sits in something.
 - **Where each is set.** `card-shadow` is a card's edge. `chip-edge` is a chip's or a pill's: the muted and tinted `Button` and `IconButton` variants carry it, and so does the streak chip. `track-cut` is a track's, fill and cut together (`--track`, `--ds-shadow-track`), and a ring asks for its groove with `ProgressRing`'s `cut`. The two utilities draw through Tailwind's shadow variable, so a focus ring or a selection ring on the same element is drawn with the edge and not in its place; their tokens are a transparent shadow in the light theme, never `none`, which would void that list. A card that has `card-shadow` carries no border in the dark theme: the two stack into a doubled edge.
-- **A track on the page is not cut.** On a card the cut track measures 1.11:1 against it, as the lighter one did (1.12:1), and a lifting fill rises from 4.1:1 to 5.1:1 against its track. The page is already near black: a cut track there measures about 1.03:1 and all but goes, so a track that sits on the page (setup's progress, Food's week rings) keeps its lighter fill. The calorie ring keeps its plain grey groove (DS3's quiet-ring call): on Food it sits on a wash, not a card.
+- **A track on the page is not cut.** On a card the cut track measures 1.11:1 against it, as the lighter one did (1.12:1), and a lifting fill rises from 4.1:1 to 5.1:1 against its track. The page is already near black: a cut track there measures about 1.03:1 and all but goes, so a track that sits on the page (setup's progress, Food's week bars) keeps its lighter fill. The calorie ring keeps its plain grey groove (DS3's quiet-ring call): on Food it sits on a wash, not a card.
 - **Glass on what floats, and only there.** A surface that sits over scrolling content and moves or can be dismissed may be frosted: the tab bar (so since 8 September 2026), header chips over a hero, a sheet and its handle, a toast, and the workout's docked rest and new-best cards. It is a static backdrop blur with a translucent fill and a lit rim. A card that holds the person's numbers in the page's flow is never glass. Every frosted surface keeps opaque labels, a solid fallback under Reduce Transparency and where backdrop blur is unsupported, and the §10 contrast floors measured over the busiest content that can pass behind it. The blur is never animated (§14h).
 - **One light on the hero.** A screen's hero picture may stand in one soft light of its session's colour, a static radial that fades into the surface, with a floor under the figure. One per screen, behind the hero only, counted in rule 1's colour budget, and quieter than the reward register's light so a finish still reads as an event.
 - **Still out.** Neon (a saturated outline or glow on chrome, text or buttons), a "nice blue", a two-hue or rainbow gradient, a coloured wash over a whole page, and glass on data.

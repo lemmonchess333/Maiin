@@ -5,9 +5,7 @@ import {
   setCalorieRingMode,
 } from "@/hooks/useCalorieRingMode";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, ChevronRight, Share2 } from "lucide-react";
-import { Avocado } from "@/components/icons/Avocado";
-import { THEME } from "@/lib/theme";
+import { ChevronRight, Share2 } from "lucide-react";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth, useUidForStorageKey } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
@@ -19,7 +17,7 @@ import {
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing from "./CalorieRing";
-import MacroColumn from "./MacroColumn";
+import { LOG_MOMENT_MS } from "./logMoment";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 import { beforeStart, startDayKey } from "@/lib/startDay";
@@ -56,10 +54,6 @@ interface FoodHeroCardProps {
    other's on a shared phone. */
 const CELEBRATED_KEY_BASE = "tropos.food.celebratedDate";
 
-// All log-moment animations share this duration so they finish in sync.
-const LOG_MOMENT_MS = 600;
-const LOG_MOMENT_SEC = LOG_MOMENT_MS / 1000;
-
 export default function FoodHeroCard({
   selectedDate,
   isToday,
@@ -88,16 +82,17 @@ export default function FoodHeroCard({
     beforeStart(selectedDate, startDayKey(profile?.createdAt)) &&
     dailyTotals.calories === 0;
 
-  // Single shared display mode for the whole hero — the calorie ring AND
-  // all three macro tiles read the same left⇄eaten framing. Persisted under
-  // the calorie-ring key so the choice survives reloads. Synchronous init
-  // prevents a first-paint flash of the wrong mode.
+  // Single shared display mode for the wheel AND the three macros under it
+  // (`FoodMacroRow`): all four read the same left⇄eaten framing from one
+  // store. Persisted under the calorie-ring key so the choice survives
+  // reloads. Synchronous init prevents a first-paint flash of the wrong
+  // mode.
   //
   // Was previously split: the ring owned `mode` while each macro tile carried
   // its own independent state (the #848 per-tile pattern). That let the ring
   // read "2,583 kcal LEFT" while all three tiles read "Xg eaten" — two
-  // opposite framings on one card. Unifying to one mode makes the hero speak
-  // with a single voice; tapping the ring OR any tile flips all four at once.
+  // opposite framings on one screen. With one mode, tapping the ring OR any
+  // macro flips all four at once.
   const mode = useCalorieRingMode();
 
   // Celebration state — driven by a log that completes all three macros today
@@ -363,7 +358,7 @@ export default function FoodHeroCard({
           )}
 
           {/* Only actionable setup guidance belongs here; the ring and
-              macro cards already show the day's numbers. */}
+              macros under it already show the day's numbers. */}
           {glanceLine && (
             <p
               className={`text-center text-xs font-medium mt-3 px-2 text-muted-foreground`}
@@ -371,9 +366,10 @@ export default function FoodHeroCard({
               {glanceLine}
             </p>
           )}
-          {/* A target below the essential-fat floor's own cost: the macro
-            tiles below would otherwise present "0g" as the goal. Same
-            sentence as Settings and Home (macroInfeasibility.ts). */}
+          {/* A target below the essential-fat floor's own cost: the
+            macros under the week strip would otherwise present "0g" as
+            the goal. Same sentence as Settings and Home
+            (macroInfeasibility.ts). */}
           {dailyTargets.targetInfeasible && (
             <p
               role="status"
@@ -385,70 +381,6 @@ export default function FoodHeroCard({
           )}
         </div>
       </div>
-
-      {/* The macros: one row, no boxes (Food11 call 4). Three boxed tiles
-        under the boxed ring made four cards of the page's first screen,
-        with the macro's name as a 12px caption at the bottom of each;
-        the row reads as three lines of text with a thin bar under each.
-        Each reads the SAME shared `mode` as the calorie ring, and
-        tapping any of them flips that one shared mode (via toggleMode)
-        so the ring and all three stay in lockstep.
-
-        An explicit 3-column GRID rather than flex-1 children: flex-1
-        sizes from content, so the widest macro number could take space
-        from its neighbours. grid-cols-3 makes the columns equal by
-        construction, and `min-w-0` on each lets a long number shrink
-        inside its own column. Under 14em (larger text on a narrow
-        phone) they stack: three across, "Protein" beside its icon ran
-        past an 85px column at 1.35x text on a 320px phone. */}
-      {!beforeJoined && (
-        <div className="@container mt-4">
-          <div className="grid grid-cols-3 @max-[14em]:grid-cols-1 gap-x-4 gap-y-3">
-            <MacroColumn
-              size="row"
-              macroKey="protein"
-              Icon={Beef}
-              consumed={dailyTotals.protein}
-              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-              label="Protein"
-              color={THEME.macros.protein}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-            <MacroColumn
-              size="row"
-              macroKey="carbs"
-              Icon={Wheat}
-              consumed={dailyTotals.carbs}
-              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-              label="Carbs"
-              color={THEME.macros.carbs}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-            <MacroColumn
-              size="row"
-              macroKey="fat"
-              Icon={Avocado}
-              consumed={dailyTotals.fat}
-              target={dailyTargets.fat}
-              label="Fat"
-              color={THEME.macros.fat}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Wave3 G — the training-aware day annotation (the free→premium
         conversion hook: "Hard training day" / "Race week — carb load")

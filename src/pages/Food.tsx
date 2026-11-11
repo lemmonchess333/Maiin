@@ -15,7 +15,7 @@ import { useGuideHint } from "@/hooks/useGuideHint";
 import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth, useUid } from "@/lib/auth";
-import { startDayKey } from "@/lib/startDay";
+import { beforeStart, startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -92,6 +92,7 @@ import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
+import FoodMacroRow from "@/components/food/FoodMacroRow";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodTargetsLink from "@/components/food/FoodTargetsLink";
@@ -2093,14 +2094,10 @@ export default function Food() {
       />
       {readError}
 
-      <motion.div variants={pageItemVariant}>
-        {/* Isolated as Home's strip is: a bad day's data costs the strip,
-            not the diary under it. */}
-        <SectionErrorBoundary sectionName="food-week-strip">
-          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
-        </SectionErrorBoundary>
-      </motion.div>
-      <motion.div variants={pageItemVariant}>
+      {/* The wheel, then the week it belongs to, then the macros (Food11
+          call 4), 8px apart as one group. The week strip sat above the
+          calorie card until then, a section of its own. */}
+      <motion.div variants={pageItemVariant} className="space-y-2">
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
@@ -2118,6 +2115,30 @@ export default function Food() {
             setHeroSheetOpen(true);
           }}
         />
+        {/* Isolated as Home's strip is: a bad day's data costs the strip,
+            not the diary under it. Not inside the hero: that is remounted
+            on every day change, which would drop the focus from the day
+            just tapped. */}
+        <SectionErrorBoundary sectionName="food-week-strip">
+          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+        </SectionErrorBoundary>
+        {/* No macros on a day before the account began with nothing
+            logged on it (Food10 (3)), as the hero draws no wheel for it. */}
+        {!(
+          beforeStart(selectedDate, accountStartKey) &&
+          dailyTotals.calories === 0
+        ) && (
+          <FoodMacroRow
+            key={selectedDate}
+            drawIn={heroDrawIn}
+            dailyTargets={dailyTargets}
+            dailyTotals={{
+              protein: dailyTotals.protein,
+              carbs: dailyTotals.carbs,
+              fat: dailyTotals.fat,
+            }}
+          />
+        )}
       </motion.div>
       {/* Mounted from the first open on, so it closes with its animation
           and its queued Pro sheet opens after it has gone. */}

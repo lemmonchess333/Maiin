@@ -42,6 +42,38 @@ describe("Food page order", () => {
     expect(bar, "the cluster is not pinned").not.toMatch(/["\s]sticky[\s"]/);
   });
 
+  it("the wheel leads, then the week, then the macros (Food11 call 4)", () => {
+    const hero = food.indexOf("<FoodHeroCard");
+    const week = food.indexOf("<FoodWeekStrip");
+    const macros = food.indexOf("<FoodMacroRow");
+    const composerAt = food.indexOf("<FoodComposerCard");
+    expect(hero).toBeGreaterThan(-1);
+    expect(week).toBeGreaterThan(hero);
+    expect(macros).toBeGreaterThan(week);
+    expect(composerAt).toBeGreaterThan(macros);
+    // The week strip is a sibling of the hero, not inside it: the hero is
+    // remounted on every day change, which would drop the focus from the
+    // day just tapped.
+    const heroSource = readFileSync(
+      resolve(root, "src/components/food/FoodHeroCard.tsx"),
+      "utf8"
+    );
+    expect(heroSource).not.toContain("FoodWeekStrip");
+    expect(heroSource).not.toContain("MacroColumn");
+  });
+
+  it("draws no macros on a day before the account began with nothing logged", () => {
+    // Food10 (3). The hero leaves its own wheel out for such a day; the
+    // macros are the page's to leave out since they became its sibling.
+    const guard = food.slice(
+      food.indexOf("<FoodWeekStrip"),
+      food.indexOf("<FoodMacroRow")
+    );
+    expect(guard).toMatch(
+      /beforeStart\(selectedDate, accountStartKey\) &&\s+dailyTotals\.calories === 0/
+    );
+  });
+
   it("the Pro gate is the composer's hint line, and the strip is gone", () => {
     expect(food).toContain("proHint={");
     expect(food).toContain("<FoodProHint");
