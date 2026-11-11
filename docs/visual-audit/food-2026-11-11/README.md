@@ -5,6 +5,9 @@ that the Breakfast, Lunch, Dinner and Snacks buttons look the wrong size, and
 that it may be the orange, the sizing or the plainness. This is the critique
 (the `screen-critique` skill), the evidence, and three prototypes to pick from.
 
+**Picked (owner, 11 November 2026):** A's page, with the calorie wheel as it
+is today. Section 10 has it.
+
 **Nothing in production changed.** This folder holds words, captures and the
 prototype's source.
 
@@ -296,18 +299,18 @@ text.
 
 ## 7. What each direction breaks
 
-| Earlier decision or rule                                                 | A                                     | B                    | C                   |
-| ------------------------------------------------------------------------ | ------------------------------------- | -------------------- | ------------------- |
-| The quiet ring, DS3 29 Sep: one plain arc, grey groove, no extras        | adds ticks, an over lap, a soft light | the ring leaves Food | half ring, band     |
-| One ring in two sizes, Food and Home (DS3)                               | Home's ring differs                   | Home keeps it alone  | Home's ring differs |
-| The ring empties in "left" mode (Food10)                                 | fills with logged                     | bar fills            | arc fills           |
-| The week strip as rings (DS3)                                            | bars                                  | bars                 | bars                |
-| One timeline leads the page (Food8)                                      | kept                                  | meal slots lead      | kept                |
-| Figure 40 to 48 px on an everyday screen (rule 5)                        | kept, 48                              | kept, 48             | 72                  |
-| Display type only on finish, best, streak, live (rule 6)                 | kept                                  | kept                 | broken              |
-| A band is for a session or a place (rule 23)                             | kept                                  | kept                 | broken              |
-| Words in the first screen, 60 at most                                    | 59                                    | 67                   | 67                  |
-| The orange meal picker (a comment in `FoodComposerCard.tsx`, not a lock) | neutral, orange dot                   | tiles, orange dot    | neutral, orange dot |
+| Earlier decision or rule                                                  | A                                     | B                    | C                   |
+| ------------------------------------------------------------------------- | ------------------------------------- | -------------------- | ------------------- |
+| The quiet ring, DS3 29 Sep: one plain arc, grey groove, no extras         | adds ticks, an over lap, a soft light | the ring leaves Food | half ring, band     |
+| One ring in two sizes, Food and Home (DS3)                                | Home's ring differs                   | Home keeps it alone  | Home's ring differs |
+| The wheel and macro bars empty in "left" mode (today; Food10 built on it) | fill with logged                      | fill with logged     | fill with logged    |
+| The week strip as rings (DS3)                                             | bars                                  | bars                 | bars                |
+| One timeline leads the page (Food8)                                       | kept                                  | meal slots lead      | kept                |
+| Figure 40 to 48 px on an everyday screen (rule 5)                         | kept, 48                              | kept, 48             | 72                  |
+| Display type only on finish, best, streak, live (rule 6)                  | kept                                  | kept                 | broken              |
+| A band is for a session or a place (rule 23)                              | kept                                  | kept                 | broken              |
+| Words in the first screen, 60 at most                                     | 59                                    | 67                   | 67                  |
+| The orange meal picker (a comment in `FoodComposerCard.tsx`, not a lock)  | neutral, orange dot                   | tiles, orange dot    | neutral, orange dot |
 
 That comment says a neutral picker was tried before and put back, because
 Food was left with no colour of its own. Here the orange stays on Food. It
@@ -325,7 +328,7 @@ Each step is one pull request with before and after captures and the
 direction is picked.
 
 0. **Lock the pick** in the plan file on its own `claude/lock-<id>` branch,
-   naming what it reverses: the quiet ring's single arc, Food10's emptying
+   naming what it reverses: the quiet ring's single arc, the emptying
    ring, the week strip as rings.
 1. **Header.** Drop the "Food" title. The date bar is the header row.
 2. **Composer.** One neutral 48 px meal picker with 14 px labels that wraps
@@ -373,6 +376,86 @@ drawing. It never leaves the device (Food9) and it is their own picture
 - Today's page was not read for contrast or for controls under 44 px.
 - The two word counts (today's page, the prototypes) use the same rule,
   visible words in the first 852 px with the tab bar, from two scripts.
+
+## 10. The owner's pick (11 November 2026)
+
+The owner, on seeing the canvas: "I like a bit with our calorie wheel the same
+as currently without the food inside and with the calories inside instead like
+we have now". Read as: A's page, but the hero is the calorie wheel as it is
+today, with the calories inside it and no food on it.
+
+It is on the canvas as the second row, live, with its light, 320 px and
+empty-day boards.
+
+**What it is.** Everything section 4 lists as shared: no title, the date as
+the header row, the neutral 48 px meal picker, the 48 px field with scan
+inside, the macros as one row, the week as bars. The hero is today's wheel,
+unchanged: one plain orange arc on a grey groove, the number in the text
+colour, the grey label, a deeper orange lap when over, a tap to switch left
+and logged, and Details under it. It sits on the page at 264 px. Today it is
+176 px in a card.
+
+**What moves on a log.** The food rises from the field to the end of the arc
+and fades into it (560 ms). Then the wheel redraws and the number counts
+(600 ms, starting at 300 ms). About 0.9 s; today the wheel alone takes 1.5 s.
+The board has a switch that turns the food off. With reduced motion there is
+no flight, no count and no draw.
+
+![The pick, a log, frame by frame](d-wheel-log-sequence.webp)
+
+| Measure (393 x 852, dark, four meals) | Food today | The pick   |
+| ------------------------------------- | ---------- | ---------- |
+| Hero share                            | 25%        | 33.2%      |
+| Hero top                              | 170 px     | 80 px      |
+| Largest text                          | 44 px      | 48 px      |
+| Text sizes                            | 7          | 5          |
+| Words in the first screen (limit 60)  | 62         | 64         |
+| Words at 12 px or smaller             | 42 (68%)   | 21 (33%)   |
+| Colour, dark (limit 8%)               | 2.91%      | 1.45%      |
+| Colour, light (limit 15%)             | 2.78%      | 1.41%      |
+| Colour held by filled buttons         | 60%        | 0%         |
+| Colour, nothing logged                | 4.70%      | 5.23%      |
+| Colour, heavy day                     | 3.69%      | 2.21%      |
+| Boxed things above the tab bar        | 12         | 3          |
+| Lowest text contrast, dark and light  | not read   | 4.86, 4.54 |
+| Controls under 44 x 44                | not read   | none       |
+
+Checked in 13 cases (the 11 of section 5 and the two ring settings below): no
+text under 4.5 to 1, no control under 44 px, nothing cut off, colour at most
+6.31% (nothing logged, 320 px). It shows 64 words, 4 over the limit, because
+two diary rows fit where today shows one.
+
+**What stays as it is, because the wheel does.** Two of the ten findings in
+section 1 are about the wheel itself, and this pick keeps them. Each has a
+switch on the board so both can be seen.
+
+1. The wheel and the macro bars empty as you log. With 410 left the wheel is
+   19% full and today's bar in the week row is 81% full. With nothing logged
+   the wheel is fully orange (`d-wheel-empty-393-dark`). The switch "ring"
+   set to "fills" shows them filling with what is logged, grey at nothing
+   (`d-wheel-fills-typical-393-dark`, `d-wheel-fills-empty-393-dark`).
+2. Whether the food flies to the wheel at all. The switch "flight" turns it
+   off, leaving the wheel's own redraw.
+
+**What it changes in earlier decisions.** Nothing about the wheel: the quiet
+ring stands, Food10 stands, and Home keeps the same wheel. It replaces the
+orange meal picker with the neutral one, turns the week strip's rings into
+bars, and takes the wheel out of its card.
+
+**The build plan, shorter.** From section 8, steps 1 (header), 2 (composer),
+3 (macros) and 5 (week strip) stand as written. Step 4 (one truth for the
+ring) only if the owner sets "ring" to "fills". Steps 6 to 9 (more drawings,
+the plate, Home) fall away. In their place:
+
+- **The wheel on the page.** Take `CalorieRing` out of `FoodHeroCard`'s card,
+  draw it at 264 px with Details under it, and move the targets gear to the
+  header row. One pull request.
+- **The flight.** The food rising to the arc and fading, with the
+  reduced-motion path. Transform and opacity through `Element.animate`. One
+  pull request, and only if the owner keeps "flight" on.
+- **Checks**, as step 10.
+
+Captures: `d-wheel-*`.
 
 ## The prototype's source
 

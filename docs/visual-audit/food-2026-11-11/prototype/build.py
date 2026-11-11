@@ -52,7 +52,7 @@ body{margin:0}
 .d-empty.n0 .nothing{display:flex}
 .sheet{display:none}
 .open .sheet{display:block;animation:fade .12s linear both}
-.open .tabbar{display:none}
+.open .tabbar{display:none !important}
 .opt.on{display:none !important}
 .m-reduced .slide{transition:none}
 .m-reduced .row.add.on{animation:fade .15s linear both}
@@ -359,7 +359,7 @@ def part(text, mt=0):
     return text.replace("@@MT@@", str(mt)).replace("@@ICON@@", ICON)
 
 
-def page(name, title, css, body, extra, behind="", delay=320, ms=600):
+def page(name, title, css, body, extra, behind="", delay=320, ms=600, more_props=""):
     logic = LOGIC.replace("@@EXTRA@@", extra.strip()).replace("COUNT_DELAY", str(delay)).replace("COUNT_MS", str(ms))
     html = (
         PAGE.replace("@@TITLE@@", title)
@@ -367,7 +367,7 @@ def page(name, title, css, body, extra, behind="", delay=320, ms=600):
         .replace("@@BEHIND@@", behind.strip())
         .replace("@@BODY@@", body.strip())
         .replace("@@NAV@@", NAV.strip())
-        .replace("@@PROPS@@", PROPS)
+        .replace("@@PROPS@@", PROPS.replace('"$preview"', more_props + '"$preview"'))
         .replace("@@LOGIC@@", logic.strip())
     )
     assert "@@" not in html, [l for l in html.splitlines() if "@@" in l][:3]
@@ -672,3 +672,87 @@ C_BEHIND = '<div data-hero aria-hidden="true" style="position: absolute; left: 0
 C_BODY = part(HEADER) + C_HERO + part(MACROS, 16) + part(WEEK, 20) + part(TRACK, 8) + part(FIELD, 8) + part(LOG, 14)
 
 page("C-Arch.dc.html", "Food, direction C: the arch", C_CSS, C_BODY, C_EXTRA, behind=C_BEHIND, delay=300, ms=600)
+
+
+
+# ---------------------------------------------------------------- D. The wheel
+# The owner's pick, 11 November: A's page, with the calorie wheel as it is
+# today as the hero. The calories sit inside it. No food sits on it.
+
+D_CSS = """
+.phone{--glow:rgba(217,136,78,.12);--glow2:rgba(217,136,78,.04)}
+.phone.t-light{--glow:rgba(217,136,78,.14);--glow2:rgba(217,136,78,.05)}
+.ring{stroke-dasharray:464.96;transition:stroke-dashoffset .6s cubic-bezier(.32,.72,0,1) .3s;animation:draw .8s cubic-bezier(.32,.72,0,1) backwards}
+@keyframes draw{from{stroke-dashoffset:464.96}}
+.fl{position:absolute;display:none;width:44px;height:44px;margin:-22px 0 0 -22px;z-index:3;pointer-events:none}
+.fl img{display:block;width:100%;height:100%;filter:var(--art-shadow)}
+.fl.on{display:block;animation:rise .56s cubic-bezier(.4,0,.2,1) both}
+.noflight .fl.on{display:none}
+@keyframes rise{from{transform:translate(var(--fx),var(--fy));opacity:0}14%{opacity:1}76%{opacity:1}to{transform:translate(0,0) scale(.45);opacity:0}}
+.m-reduced .ring{transition:none;animation:none}
+.m-reduced .fl.on{display:none}
+@media (prefers-reduced-motion: reduce){
+.ring{transition:none;animation:none}
+.fl.on{display:none}
+}
+"""
+
+D_HERO = (
+    """
+<div data-hero style="position: relative; display: flex; flex-direction: column; align-items: center; margin-top: 8px">
+<div aria-hidden="true" style="position: absolute; left: 50%; top: -34px; width: 340px; height: 340px; margin-left: -170px; border-radius: 50%; background: radial-gradient(closest-side, var(--glow), var(--glow2) 58%, transparent); pointer-events: none"></div>
+<button class="{{flyCls}}" onClick="{{toggleMode}}" aria-label="{{figureAria}}" style="position: relative; width: 264px; height: 264px; flex: none; border-radius: 50%">
+<svg aria-hidden="true" viewBox="0 0 160 160" width="264" height="264" style="display: block">
+<circle cx="80" cy="80" r="74" fill="none" style="stroke: var(--groove)" stroke-width="12"></circle>
+<circle class="ring" cx="80" cy="80" r="74" fill="none" style="stroke: var(--or); stroke-dashoffset: {{ringOff}}; opacity: {{ringOn}}" stroke-width="12" stroke-linecap="round" transform="rotate(-90 80 80)"></circle>
+<circle class="ring" cx="80" cy="80" r="74" fill="none" style="stroke: var(--or-deep); stroke-dashoffset: {{lapOff}}; opacity: {{lapOn}}" stroke-width="12" stroke-linecap="round" transform="rotate(-90 80 80)"></circle>
+</svg>
+<span style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none">
+<span class="fig" style="font-size: 48px; line-height: 1">{{figure}}</span>
+<span style="margin-top: 8px; font-size: 14px; color: var(--mut)">{{figureLabel}}</span>
+</span>
+"""
+    + "\n".join(flyer(i + 1, a[2]) for i, a in enumerate(ADDS))
+    + """
+</button>
+<button aria-label="Details" style="position: relative; display: flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px; font-size: 14px; font-weight: 500">Details<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" @@ICON@@><path d="m9 18 6-6-6-6"></path></svg></button>
+</div>
+"""
+)
+
+D_EXTRA = r"""
+// The wheel as it is today: in "left" mode it empties as you log, in "logged" mode it fills.
+// The ring switch tries the other choice: it always fills with what is logged.
+const ringMode = this.props.ring ?? "as now";
+const C = 464.96;
+const prog = (i) => Math.min(1, sum("kcal", i) / TARGET);
+const fillAt = (i) => (ringMode === "fills" || mode !== "left" ? prog(i) : 1 - prog(i));
+out.ringOff = (C * (1 - fillAt(n))).toFixed(1);
+out.ringOn = fillAt(n) > 0 ? 1 : 0;
+out.lapOff = (C * (1 - Math.max(0, Math.min(1, (logged - TARGET) / TARGET)))).toFixed(1);
+out.lapOn = over ? 1 : 0;
+out.flyCls = (this.props.flight ?? true) ? "" : "noflight";
+// As today, the macro bars run the same way as the wheel: in "left" mode they show what is left.
+if (ringMode !== "fills" && mode === "left") {
+[["m1", "p", 140], ["m2", "c", 273], ["m3", "f", 61]].forEach(([key, k2, goal]) => {
+const rest = Math.max(0, goal - sum(k2, n));
+out[key].shift = "-" + (100 - Math.round((rest / goal) * 100)) + "%";
+});
+}
+// Food rises from the field to where the arc ends, and fades into it.
+const k = 264 / 160;
+const fieldX = 110 - 16 - (w - 32 - 264) / 2;
+const fieldY = w < 360 ? 562 : 516;
+for (let i = 0; i < ADDS.length; i++) {
+const a = 2 * Math.PI * fillAt(i);
+const X = (80 + 74 * Math.sin(a)) * k;
+const Y = (80 - 74 * Math.cos(a)) * k;
+out["f" + (i + 1)] = { x: X.toFixed(0) + "px", y: Y.toFixed(0) + "px", fx: (fieldX - X).toFixed(0) + "px", fy: (fieldY - Y).toFixed(0) + "px" };
+}
+"""
+
+D_PROPS = '"ring":{"editor":"enum","options":["as now","fills"],"default":"as now","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
+
+D_BODY = part(HEADER) + part(D_HERO) + part(WEEK, 6) + part(MACROS, 8) + part(TRACK, 14) + part(FIELD, 8) + part(LOG, 14)
+
+page("D-Wheel.dc.html", "Food, the pick: A's page with the calorie wheel", D_CSS, D_BODY, D_EXTRA, delay=300, ms=600, more_props=D_PROPS)
