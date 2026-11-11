@@ -14,16 +14,17 @@ his own Train tab, sent the same day, are the fixed case.
 This file is the summary. Each section names the slice file that holds its
 evidence, with file and line for every code claim.
 
-| File                       | What it holds                                                 |
-| -------------------------- | ------------------------------------------------------------- |
-| `lifting-session-shape.md` | Lifts per day, sets per lift, and the rules that make them    |
-| `lifting-adaptation.md`    | What level, time, kit, injury and the person's edits change   |
-| `running-engine.md`        | Twelve printed run plans read as a coach would, 18 defects    |
-| `hybrid-week.md`           | The combined week for 20 lift and run counts, 14 defects      |
-| `market-lifting.md`        | Reference programmes and apps in numbers, with sources        |
-| `market-running.md`        | Runna, Strava, Nike Run Club, Garmin and others, with sources |
-| `why-it-did-not-land.md`   | The repo's record: what was researched, decided and measured  |
-| `evidence/`, `harness/`    | Printed plans, and the harnesses that regenerate everything   |
+| File                          | What it holds                                                 |
+| ----------------------------- | ------------------------------------------------------------- |
+| `lifting-session-shape.md`    | Lifts per day, sets per lift, and the rules that make them    |
+| `lifting-adaptation.md`       | What level, time, kit, injury and the person's edits change   |
+| `running-engine.md`           | Twelve printed run plans read as a coach would, 18 defects    |
+| `hybrid-week.md`              | The combined week for 20 lift and run counts, 14 defects      |
+| `market-lifting.md`           | Reference programmes and apps in numbers, with sources        |
+| `market-running.md`           | Runna, Strava, Nike Run Club, Garmin and others, with sources |
+| `why-it-did-not-land.md`      | The repo's record: what was researched, decided and measured  |
+| `panel-1-six-days-general.md` | The first printed week under Pgm9: today beside a target      |
+| `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything   |
 
 ## 1. The answers
 
