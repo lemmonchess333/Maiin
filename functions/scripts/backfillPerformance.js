@@ -53,7 +53,7 @@ const BATCH_SIZE = 10; // matches sweepActiveUsers bounded concurrency
  * admin init because it calls admin.firestore() at module load.
  */
 function buildDefaultDeps() {
-  const admin = require("firebase-admin");
+  const admin = require("../lib/adminSdk");
   if (!admin.apps.length) {
     admin.initializeApp({ credential: admin.credential.applicationDefault() });
   }
@@ -65,7 +65,11 @@ function buildDefaultDeps() {
     Timestamp: admin.firestore.Timestamp,
     computeFn: computeAndWritePerformanceForUser,
     shouldProceed: (uid) =>
-      accountDeletionLocks.shouldSystemWriteProceed(db, uid, "backfillPerformance"),
+      accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "backfillPerformance"
+      ),
   };
 }
 
@@ -83,7 +87,9 @@ function parseArgs(argv) {
       args.cutoffDays = n;
     } else {
       console.error(`Unknown argument: ${a}`);
-      console.error("Usage: node scripts/backfillPerformance.js [--dry-run] [--cutoff-days=N]");
+      console.error(
+        "Usage: node scripts/backfillPerformance.js [--dry-run] [--cutoff-days=N]"
+      );
       process.exit(1);
     }
   }
@@ -100,7 +106,14 @@ function parseArgs(argv) {
  * @param {Function} opts.shouldProceed    (uid) => Promise<boolean> tombstone guard
  * @returns {Promise<{recomputed:number, skippedDeletion:number, errors:number}>}
  */
-async function main({ dryRun, cutoffDays, db, Timestamp, computeFn, shouldProceed }) {
+async function main({
+  dryRun,
+  cutoffDays,
+  db,
+  Timestamp,
+  computeFn,
+  shouldProceed,
+}) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - cutoffDays);
   const cutoffTs = Timestamp.fromDate(cutoff);
@@ -119,7 +132,10 @@ async function main({ dryRun, cutoffDays, db, Timestamp, computeFn, shouldProcee
       .where("lastActiveAt", ">=", cutoffTs)
       .get();
   } catch (err) {
-    console.error("[backfill-perf] lastActiveAt query failed, aborting:", err.message);
+    console.error(
+      "[backfill-perf] lastActiveAt query failed, aborting:",
+      err.message
+    );
     throw err;
   }
 

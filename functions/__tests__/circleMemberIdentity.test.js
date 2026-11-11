@@ -18,7 +18,7 @@ const require = createRequire(import.meta.url);
 
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const restriction = require("../lib/restriction");
@@ -187,7 +187,7 @@ describe("the Circle callables read the public profile", () => {
 describe("onGoalSpaceEventCreated — the name in the other members' trays", () => {
   const SPACE = "circle-1";
   let firestore;
-  const db = require("firebase-admin").firestore();
+  const db = require("../lib/adminSdk").firestore();
 
   async function deliverJoinedEventWithAuthorName(displayName) {
     firestore = memoryFirestore({

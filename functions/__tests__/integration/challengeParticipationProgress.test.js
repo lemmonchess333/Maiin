@@ -21,7 +21,7 @@ describe.skipIf(!enabled)(
 
     beforeAll(() => {
       fns = require("../../index");
-      admin = require("firebase-admin");
+      admin = require("../../lib/adminSdk");
       db = admin.firestore();
     });
 

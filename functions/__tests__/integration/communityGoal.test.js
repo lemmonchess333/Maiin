@@ -33,7 +33,7 @@ beforeAll(() => {
   const idx = require("../../index");
   onRunCreated = idx.onRunCreated;
   onRunDeleted = idx.onRunDeleted;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 }, 30_000);
 

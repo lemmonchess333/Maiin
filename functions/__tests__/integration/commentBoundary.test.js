@@ -23,7 +23,7 @@ suite("comment HTTP boundary with emulator identities", () => {
     if (process.env.GCLOUD_PROJECT !== "demo-tropos")
       throw new Error("Demo project required");
     const handlers = require("../../index");
-    admin = require("firebase-admin");
+    admin = require("../../lib/adminSdk");
     db = admin.firestore();
     const express = require("express");
     const app = express();

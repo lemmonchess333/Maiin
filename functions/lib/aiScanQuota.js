@@ -55,7 +55,7 @@
  * Pinned-by-test invariants live in `__tests__/aiScanQuota.test.js`.
  */
 
-const admin = require("firebase-admin");
+const admin = require("./adminSdk");
 const { computeEffectiveTier } = require("./../helpers");
 const { utcDateString } = require("./dateUtils");
 

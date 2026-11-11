@@ -91,7 +91,7 @@ describe("withFoodDetail", () => {
 /* The handler, driven whole as aiConsent.test.js drives it: a detail it
    refuses is refused before the day's scan is counted. */
 describe("analyzeFood — a refused detail costs no scan", () => {
-  const admin = require("firebase-admin");
+  const admin = require("../lib/adminSdk");
   const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
   const { analyzeFood } = require("../index");
 

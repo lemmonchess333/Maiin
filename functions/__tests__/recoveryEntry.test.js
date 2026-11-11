@@ -20,7 +20,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 if (!admin.apps.length) {
   admin.initializeApp({
     projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test",

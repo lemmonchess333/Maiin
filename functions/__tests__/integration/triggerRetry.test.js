@@ -41,7 +41,7 @@ beforeAll(() => {
   const idx = require("../../index");
   onRunCreated = idx.onRunCreated;
   onFollowerCreated = idx.onFollowerCreated;
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 /**

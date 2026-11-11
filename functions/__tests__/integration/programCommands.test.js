@@ -12,7 +12,7 @@ import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const admin = require("firebase-admin");
+const admin = require("../../lib/adminSdk");
 const programCommands = require("../../lib/programCommands");
 const {
   runProgramCommandTransaction,

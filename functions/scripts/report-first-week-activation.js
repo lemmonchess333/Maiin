@@ -15,7 +15,7 @@
  * Cohorts enrolled before those writers were deployed can undercount billing;
  * the output cannot repair missing historical purchase events.
  */
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const {
   ACTIVATION_WINDOW_MS,
   activationSport,

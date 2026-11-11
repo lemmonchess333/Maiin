@@ -43,7 +43,7 @@ beforeAll(() => {
   if (!EMULATOR_HOST) return;
   const idx = require("../../index");
   onWorkoutCreated = idx.onWorkoutCreated;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
   const engine = require("../../performanceEngine");
   getComputeKey = engine.getComputeKey;

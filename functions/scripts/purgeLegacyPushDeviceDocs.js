@@ -133,7 +133,7 @@ module.exports = {
 };
 
 if (require.main === module) {
-  const admin = require("firebase-admin");
+  const admin = require("../lib/adminSdk");
   admin.initializeApp();
   const dryRun = process.env.DRY_RUN === "true";
   purgeLegacyPushDeviceDocs({

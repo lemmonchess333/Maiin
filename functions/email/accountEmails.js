@@ -19,7 +19,7 @@
  * wiring + Resend transport.
  */
 const functions = require("firebase-functions/v1");
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const { defineSecret } = require("firebase-functions/params");
 const { DEFAULT_HTTP_CAP } = require("../lib/runtimeCaps");
 const {

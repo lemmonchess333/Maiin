@@ -31,7 +31,7 @@ let weeklyPerformanceRollup;
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   weeklyPerformanceRollup = require("../../index").weeklyPerformanceRollup;
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 /** Answer only the sweep's `users where lastActiveAt >=` query, read a

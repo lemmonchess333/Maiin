@@ -23,7 +23,7 @@ const HOUR = 3_600_000;
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ _sweepActiveUsers: sweep } = require("../../index"));
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

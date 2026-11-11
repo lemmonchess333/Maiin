@@ -32,7 +32,7 @@ beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ startPartnerStreak } = require("../../index"));
   ({ MAX_PARTNERS } = require("../../lib/partnerBonds"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function follow(a, b) {

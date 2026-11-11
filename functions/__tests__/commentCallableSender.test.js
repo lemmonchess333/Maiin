@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url);
 
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const restriction = require("../lib/restriction");

@@ -34,7 +34,7 @@
  * src/lib/workoutBurn.ts — if that formula changes, mirror the change here.
  */
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 
 // ── Formula (mirror of src/lib/workoutBurn.ts) ───────────────────────
 function selectLiftMET(tonnageKg, durationMinutes) {
@@ -46,10 +46,14 @@ function selectLiftMET(tonnageKg, durationMinutes) {
   return 5.5;
 }
 
-function estimateLiftBurn({ durationMinutes, tonnageKg, bodyweightKg, completedSetCount }) {
-  const effectiveDuration = durationMinutes > 0
-    ? durationMinutes
-    : completedSetCount * 3;
+function estimateLiftBurn({
+  durationMinutes,
+  tonnageKg,
+  bodyweightKg,
+  completedSetCount,
+}) {
+  const effectiveDuration =
+    durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
   if (effectiveDuration === 0 || bodyweightKg <= 0) return 0;
   const met = selectLiftMET(tonnageKg, effectiveDuration);
   return Math.round((effectiveDuration * bodyweightKg * met) / 60);
@@ -65,7 +69,9 @@ async function main() {
   if (!admin.apps.length) admin.initializeApp();
   const db = admin.firestore();
 
-  console.log(`[backfill] mode=${DRY_RUN ? "DRY_RUN" : "WRITE"}  batch=${BATCH_SIZE}`);
+  console.log(
+    `[backfill] mode=${DRY_RUN ? "DRY_RUN" : "WRITE"}  batch=${BATCH_SIZE}`
+  );
 
   const usersSnap = await db.collection("users").get();
   console.log(`[backfill] scanning ${usersSnap.size} users`);
@@ -135,7 +141,12 @@ async function main() {
 
         // Anomaly guards — collect first, halt before writing.
         if (newKcal > MAX_PLAUSIBLE_KCAL) {
-          anomalies.push({ uid, id: doc.id, reason: `>${MAX_PLAUSIBLE_KCAL}`, newKcal });
+          anomalies.push({
+            uid,
+            id: doc.id,
+            reason: `>${MAX_PLAUSIBLE_KCAL}`,
+            newKcal,
+          });
         }
         if (newKcal < 0) {
           anomalies.push({ uid, id: doc.id, reason: "negative", newKcal });
@@ -159,7 +170,8 @@ async function main() {
   const newValues = allDeltas.map((d) => d.newKcal);
   const oldValues = allDeltas.map((d) => d.oldKcal);
   const deltaValues = allDeltas.map((d) => d.delta);
-  const mean = (a) => (a.length === 0 ? 0 : a.reduce((s, v) => s + v, 0) / a.length);
+  const mean = (a) =>
+    a.length === 0 ? 0 : a.reduce((s, v) => s + v, 0) / a.length;
   const stats = {
     processed,
     wouldUpdate,
@@ -173,28 +185,52 @@ async function main() {
     mean_delta: Math.round(mean(deltaValues)),
   };
 
-  const largestPositive = [...allDeltas].sort((a, b) => b.delta - a.delta).slice(0, 5);
-  const largestNegative = [...allDeltas].sort((a, b) => a.delta - b.delta).slice(0, 5);
+  const largestPositive = [...allDeltas]
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 5);
+  const largestNegative = [...allDeltas]
+    .sort((a, b) => a.delta - b.delta)
+    .slice(0, 5);
 
   console.log("\n[backfill] stats:");
   console.log(JSON.stringify(stats, null, 2));
   console.log("\n[backfill] skip reasons:", skipReasons);
   console.log("\n[backfill] 5 largest positive deltas:");
-  largestPositive.forEach((d) => console.log(`  +${d.delta}  uid=${d.uid}  id=${d.id}  ${d.oldKcal}→${d.newKcal}`));
+  largestPositive.forEach((d) =>
+    console.log(
+      `  +${d.delta}  uid=${d.uid}  id=${d.id}  ${d.oldKcal}→${d.newKcal}`
+    )
+  );
   console.log("\n[backfill] 5 largest negative deltas:");
-  largestNegative.forEach((d) => console.log(`  ${d.delta}  uid=${d.uid}  id=${d.id}  ${d.oldKcal}→${d.newKcal}`));
+  largestNegative.forEach((d) =>
+    console.log(
+      `  ${d.delta}  uid=${d.uid}  id=${d.id}  ${d.oldKcal}→${d.newKcal}`
+    )
+  );
 
   // ── Anomaly guards — halt before any write ───────────────────────────
   if (anomalies.length > 0) {
     console.error(`\n[backfill] HALT — ${anomalies.length} anomaly record(s):`);
-    anomalies.slice(0, 20).forEach((a) => console.error(`  ${a.reason}  uid=${a.uid}  id=${a.id}  new=${a.newKcal}`));
-    console.error("\nNo writes performed. Investigate the formula before re-running.");
+    anomalies
+      .slice(0, 20)
+      .forEach((a) =>
+        console.error(
+          `  ${a.reason}  uid=${a.uid}  id=${a.id}  new=${a.newKcal}`
+        )
+      );
+    console.error(
+      "\nNo writes performed. Investigate the formula before re-running."
+    );
     process.exitCode = 1;
     return;
   }
   if (allDeltas.length > 0 && stats.mean_new < stats.mean_old) {
-    console.error(`\n[backfill] HALT — new mean (${stats.mean_new}) is lower than old mean (${stats.mean_old}).`);
-    console.error("Expected increase (old values were artificially low). Investigate before writing.");
+    console.error(
+      `\n[backfill] HALT — new mean (${stats.mean_new}) is lower than old mean (${stats.mean_old}).`
+    );
+    console.error(
+      "Expected increase (old values were artificially low). Investigate before writing."
+    );
     process.exitCode = 1;
     return;
   }
@@ -207,17 +243,22 @@ async function main() {
 
   console.log(`\n[backfill] WRITE mode — updating ${wouldUpdate} records...`);
   for (const d of allDeltas) {
-    const ref = db.collection("users").doc(d.uid).collection("workouts").doc(d.id);
+    const ref = db
+      .collection("users")
+      .doc(d.uid)
+      .collection("workouts")
+      .doc(d.id);
     await ref.set(
       {
         totalCalories: d.newKcal,
         totalCaloriesLegacy: d.oldKcal,
         backfilledAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
     updated++;
-    if (updated % BATCH_SIZE === 0) console.log(`  ...${updated}/${wouldUpdate}`);
+    if (updated % BATCH_SIZE === 0)
+      console.log(`  ...${updated}/${wouldUpdate}`);
   }
   console.log(`\n[backfill] DONE — ${updated} records updated.`);
 }

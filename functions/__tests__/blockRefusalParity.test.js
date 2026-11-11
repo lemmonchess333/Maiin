@@ -35,7 +35,7 @@ const {
   toggleCommentReactionCallable,
   toggleSpacePostLikeCallable,
 } = require("../index");
-const db = require("firebase-admin").firestore();
+const db = require("../lib/adminSdk").firestore();
 
 const ME = "blocked-person";
 const CONTEXT = { auth: { uid: ME, token: { email_verified: true } } };
