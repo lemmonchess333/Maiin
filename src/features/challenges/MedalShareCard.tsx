@@ -1,12 +1,6 @@
 import type { Ref } from "react";
 import { THEME } from "@/lib/theme";
-import {
-  MARK_CHEVRON,
-  MARK_CHEVRON_WIDTH,
-  MARK_CORNER,
-  MARK_HEXAGON,
-  MARK_VIEWBOX,
-} from "@/lib/brandMark";
+import { MARK_BAR, MARK_STEM, MARK_VIEWBOX } from "@/lib/brandMark";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
 import MedalArt from "./MedalArt";
@@ -106,21 +100,8 @@ export default function MedalShareCard({
         aria-hidden="true"
         style={{ position: "absolute", left: 64, bottom: 64, height: 56 }}
       >
-        <polygon
-          points={MARK_HEXAGON}
-          fill={THEME.brand}
-          stroke={THEME.brand}
-          strokeWidth={MARK_CORNER}
-          strokeLinejoin="round"
-        />
-        <polyline
-          points={MARK_CHEVRON}
-          fill="none"
-          stroke={THEME.bg}
-          strokeWidth={MARK_CHEVRON_WIDTH}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
+        <path d={MARK_BAR} fill={THEME.brand} />
+        <path d={MARK_STEM} fill={THEME.brand} />
       </svg>
     </div>
   );

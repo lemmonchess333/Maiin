@@ -1,6 +1,6 @@
 /**
  * The launch overlay: it takes over index.html's static first frame, hands
- * the native launch image over to it, raises the chevron, stays while the
+ * the native launch image over to it, raises the stem, stays while the
  * app loads (breathing if that is slow), and leaves once the app is ready,
  * by flying into Home's header mark on Home and by lifting away anywhere
  * else. It never shows under automation. The flight's arithmetic is
@@ -14,7 +14,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { hexagonClipPath } from "@/lib/launchSplash";
+import { MARK_BAR, MARK_STEM } from "@/lib/brandMark";
 
 const auth: {
   user: { uid: string } | null;
@@ -65,7 +65,12 @@ function staticFrame() {
 }
 
 const overlay = () => document.querySelector("[data-launch-splash]");
-const chevronLayer = () => overlay()?.querySelector(".launch-splash-chevron");
+const stemLayer = () => overlay()?.querySelector(".launch-splash-stem");
+/** The paths of the mark's own drawing, the one the flight moves. */
+const drawn = () =>
+  [...overlay()!.querySelectorAll("svg.launch-splash-mark > path")].map((el) =>
+    el.getAttribute("d")
+  );
 
 function show(path = "/") {
   return render(
@@ -186,23 +191,20 @@ describe("LaunchSplash", () => {
     }
   });
 
-  it("draws the hexagon alone first, as the launch image does", () => {
+  it("draws the bar alone first, as the launch image does", () => {
     show();
-    // Nothing moves before the first frame is on screen, and the chevron
-    // is not yet cut out of the hexagon.
+    // Nothing moves before the first frame is on screen, and the stem is
+    // not yet part of the drawing.
     expect(played).toHaveLength(0);
-    expect(overlay()!.querySelector("mask")).toBeNull();
-    expect(overlay()!.querySelector("svg > polygon")).not.toHaveAttribute(
-      "mask"
-    );
-    expect(chevronLayer()).not.toBeNull();
+    expect(drawn()).toEqual([MARK_BAR]);
+    expect(stemLayer()).not.toBeNull();
   });
 
-  it("hands the native launch image over, then raises the chevron in view", async () => {
+  it("hands the native launch image over, then raises the stem in view", async () => {
     show();
     await wait(100);
     expect(native.order).toEqual(["native image hidden"]);
-    const [rise, solid] = motionsOf(".launch-splash-chevron");
+    const [rise, solid] = motionsOf(".launch-splash-stem");
     expect(rise.keyframes).toEqual([
       { transform: "translateY(11%)" },
       { transform: "translateY(0)" },
@@ -215,38 +217,27 @@ describe("LaunchSplash", () => {
     );
   });
 
-  it("cuts the rising chevron out only inside the hexagon's outline", () => {
+  it("raises the mark's own stem, on a layer of its own", () => {
     show();
-    const cut = overlay()!.querySelector(".launch-splash-cut") as HTMLElement;
-    expect(cut.style.clipPath).toBe(hexagonClipPath());
-    expect(chevronLayer()!.parentElement).toBe(cut);
+    expect(stemLayer()!.querySelector("path")).toHaveAttribute("d", MARK_STEM);
   });
 
-  it("once risen, the chevron is a hole in the hexagon, not a shape", async () => {
-    // A hole shows the launch ground, then the page as the ground fades:
-    // what Home's mark shows when the flight lands on it, in either theme.
+  it("once risen, the stem is part of the one drawing the flight moves", async () => {
     show();
     await wait(800);
-    expect(chevronLayer()).toBeNull();
-    const chevron = overlay()!.querySelector("polyline")!;
-    const mask = chevron.closest("mask");
-    expect(mask).not.toBeNull();
-    expect(chevron).toHaveAttribute("stroke", "black");
-    expect(overlay()!.querySelector("svg > polygon")).toHaveAttribute(
-      "mask",
-      `url(#${mask!.id})`
-    );
+    expect(stemLayer()).toBeNull();
+    expect(drawn()).toEqual([MARK_BAR, MARK_STEM]);
   });
 
-  it("under Reduce Motion the chevron fades in where it stays", async () => {
+  it("under Reduce Motion the stem fades in where it stays", async () => {
     prefersReducedMotion(true);
     show();
     await wait(100);
-    const motions = motionsOf(".launch-splash-chevron");
+    const motions = motionsOf(".launch-splash-stem");
     expect(motions).toHaveLength(1);
     expect(motions[0].keyframes).toEqual([{ opacity: 0 }, { opacity: 1 }]);
     await wait(300);
-    expect(overlay()!.querySelector("mask")).not.toBeNull();
+    expect(drawn()).toEqual([MARK_BAR, MARK_STEM]);
   });
 
   it("breathes while the app is still loading, and stops when it leaves", async () => {
@@ -271,10 +262,10 @@ describe("LaunchSplash", () => {
     prefersReducedMotion(true);
     show("/food");
     await wait(3000);
-    // Whole, still holding for the app, and its one motion (the chevron's
+    // Whole, still holding for the app, and its one motion (the stem's
     // fade) recorded, so the recorder would have seen a breath.
-    expect(overlay()!.querySelector("mask")).not.toBeNull();
-    expect(motionsOf(".launch-splash-chevron")).toHaveLength(1);
+    expect(drawn()).toEqual([MARK_BAR, MARK_STEM]);
+    expect(motionsOf(".launch-splash-stem")).toHaveLength(1);
     expect(motionsOf(".launch-splash-body")).toHaveLength(0);
   });
 

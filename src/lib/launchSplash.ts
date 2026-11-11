@@ -2,7 +2,6 @@
  * The launch animation's arithmetic, kept out of the component so it can be
  * tested without a layout engine (jsdom measures every box as zero).
  */
-import { MARK_HEXAGON, MARK_VIEWBOX } from "./brandMark";
 
 export interface Box {
   left: number;
@@ -30,7 +29,7 @@ export function flightBetween(from: Box, to: Box): Flight {
 
 /** How far along the flight the path's control point sits, across and up.
  *  More of the climb than of the crossing comes first, so the mark leaves
- *  upward, the way the chevron rose, and lands on the diagonal. */
+ *  upward, the way its stem rose, and lands on the diagonal. */
 const ARC_ACROSS = 0.2;
 const ARC_UP = 0.6;
 
@@ -85,23 +84,6 @@ const round = (v: number, places = 2) => {
   const r = Number(v.toFixed(places));
   return Object.is(r, -0) ? 0 : r;
 };
-
-/**
- * The hexagon's corner-inset polygon as a CSS clip-path over the mark's
- * box: the rising chevron is cut out only inside it, so the hexagon's
- * rounded rim stays whole while the chevron comes up from low in the
- * mark. Derived from brandMark.ts, so it cannot drift from the mark.
- */
-export function hexagonClipPath(): string {
-  const [vx, vy, vw, vh] = MARK_VIEWBOX.split(" ").map(Number);
-  const points = MARK_HEXAGON.split(" ").map((pair) => {
-    const [x, y] = pair.split(",").map(Number);
-    return `${percent((x - vx) / vw)} ${percent((y - vy) / vh)}`;
-  });
-  return `polygon(${points.join(", ")})`;
-}
-
-const percent = (share: number) => `${Number((share * 100).toFixed(3))}%`;
 
 /** Whether a box has not moved or resized since the last frame. Home's
  *  header slides up 12 px as the page enters, easing out, so its last

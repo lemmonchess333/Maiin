@@ -8,6 +8,7 @@ import ShareCardRenderer, {
   type ShareBackground,
 } from "../ShareCardRenderer";
 import { groupText, groupTextRe } from "@/test/localeGrouping";
+import { MARK_BAR, MARK_STEM } from "@/lib/brandMark";
 
 afterEach(() => cleanup());
 
@@ -102,11 +103,13 @@ describe("ShareCardRenderer", () => {
     expect(true).toBe(true);
   });
 
-  it("brands with a small hexagon mark + handle — NOT an oversized wordmark", () => {
+  it("brands with the small mark + handle — NOT an oversized wordmark", () => {
     render(<ShareCardRenderer data={base} offscreen={false} />);
-    // The corner mark is an inline SVG hexagon (polygon), not big text.
-    const polys = document.querySelectorAll("polygon");
-    expect(polys.length).toBeGreaterThan(0);
+    // The corner mark is the brand mark drawn inline, not big text.
+    const mark = document.querySelector("[data-share-mark]")!;
+    expect(
+      [...mark.querySelectorAll("path")].map((p) => p.getAttribute("d"))
+    ).toEqual([MARK_BAR, MARK_STEM]);
     expect(screen.getByText("Alex")).toBeTruthy();
     expect(screen.getByText("12 Jun 2026")).toBeTruthy();
     // The old card's giant "TROPOS" header is gone.
@@ -129,7 +132,9 @@ describe("ShareCardRenderer", () => {
       const look = {
         stage: root.style.backgroundColor,
         light: root.style.backgroundImage,
-        route: document.querySelector("path[d]")?.getAttribute("stroke"),
+        route: document
+          .querySelector("svg:not([data-share-mark]) path[d]")
+          ?.getAttribute("stroke"),
       };
       unmount();
       return look;
@@ -174,7 +179,7 @@ describe("ShareCardRenderer", () => {
 
   it("RUN draws the abstract route polyline from the supplied path", () => {
     render(<ShareCardRenderer data={base} offscreen={false} />);
-    const path = document.querySelector("path");
+    const path = document.querySelector("svg:not([data-share-mark]) path");
     expect(path?.getAttribute("d")).toBe("M100,100L500,300L800,900");
   });
 
@@ -185,7 +190,10 @@ describe("ShareCardRenderer", () => {
         offscreen={false}
       />
     );
-    expect(document.querySelector("path")).toBeNull();
+    // The brand mark is the card's only drawing.
+    expect(
+      document.querySelector("svg:not([data-share-mark]) path")
+    ).toBeNull();
     // Stats still render — the card stands on the numbers.
     expect(screen.getByText("kilometres")).toBeTruthy();
   });
