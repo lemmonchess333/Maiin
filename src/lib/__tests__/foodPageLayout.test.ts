@@ -1,9 +1,12 @@
 /**
  * The Food page's order, as the owner set it from the Food options page
- * (2026-09-20): the date switcher shares the title row; the composer's
- * meal pills head its field; the Pro gate is one line under the field,
- * not a card above the composer; and the weekly-focus card follows the
- * diary instead of interrupting it.
+ * (2026-09-20): the composer's meal pills head its field; the Pro gate
+ * is one line under the field, not a card above the composer; and the
+ * weekly-focus card follows the diary instead of interrupting it.
+ *
+ * Since Food11 (2026-11-11, call 1) the page draws no large title: the
+ * date switcher, which shared the title's row, is the header row, and
+ * the targets gear closes it.
  *
  * Source-level, because the page is a 2,000-line orchestrator no unit
  * render reaches whole, and every one of these is a question of WHERE
@@ -23,10 +26,13 @@ const composer = readFileSync(
 );
 
 describe("Food page order", () => {
-  it("the date switcher is the header's action, not a row of its own", () => {
-    // Both shells (cold read and loaded) hand the bar to PageShell's
-    // action slot; nothing renders it as a child beneath the title.
-    expect(food.match(/actions=\{dateBar\}/g)?.length).toBe(2);
+  it("the date switcher is the header row, with no large title above the wheel", () => {
+    // Both shells (cold read and loaded) hide the title, lead with the
+    // bar and close the row with the targets gear; nothing renders the
+    // bar as a child beneath the header.
+    expect(food.match(/titleHidden\s+lead=\{dateBar\}/g)?.length).toBe(2);
+    expect(food.match(/actions=\{<FoodTargetsLink \/>\}/g)?.length).toBe(2);
+    expect(food).not.toMatch(/actions=\{dateBar\}/);
     expect(food).not.toMatch(/^\s*\{dateBar\}\s*$/m);
     const bar = readFileSync(
       resolve(root, "src/components/food/FoodDateBar.tsx"),

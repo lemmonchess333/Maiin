@@ -4,15 +4,8 @@ import {
   useCalorieRingMode,
   setCalorieRingMode,
 } from "@/hooks/useCalorieRingMode";
-import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Beef,
-  Wheat,
-  Settings as SettingsIcon,
-  ChevronRight,
-  Share2,
-} from "lucide-react";
+import { Beef, Wheat, ChevronRight, Share2 } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -298,14 +291,11 @@ export default function FoodHeroCard({
                 ) : null}
               </AnimatePresence>
             </div>
-            {/* Top right: share on a goal-hit day, and the targets gear.
-            The gear deep-links straight to the focused Nutrition editor
-            (/settings/nutrition: goal weight, calorie targets, macros,
-            activity), so a wrong target is one tap from being fixed, as
-            each Train tab's plan edit goes to its own editor. Muted so it
-            doesn't compete with the ring for attention. */}
-            <div className="absolute -right-2 -top-2 z-10 flex items-center">
-              {goalHit && (
+            {/* Top right: share, on a goal-hit day. The targets gear that
+            sat beside it is in the page's header row since Food11
+            (`FoodTargetsLink`). */}
+            {goalHit && (
+              <div className="absolute -right-2 -top-2 z-10 flex items-center">
                 <button
                   type="button"
                   aria-label="Share your day"
@@ -317,16 +307,8 @@ export default function FoodHeroCard({
                 >
                   <Share2 className="size-4" aria-hidden="true" />
                 </button>
-              )}
-              <Link
-                to="/settings/nutrition"
-                aria-label="Adjust nutrition targets"
-                onClick={() => haptic("light")}
-                className="size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
-              >
-                <SettingsIcon className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
+              </div>
+            )}
 
             {beforeJoined ? (
               <div className="flex flex-col items-center justify-center gap-1 px-10 py-12 text-center">
