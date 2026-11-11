@@ -487,20 +487,40 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   stands for a session, a person or an award carries its own picture
   (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
   number.
-- **Food:** the owner kept the original screen (title, week strip, macro cards with
-  their icons and colours, draining ring, filled meal pill) and took three
-  fixes (7 Nov 2026): a faint one-hue orange glow in place of the
-  orange-into-purple wash behind the ring; a bigger ring (176 pt) and
-  figure, the screen's largest text at about 1.4x the "Food" title; and a
-  picture on every diary row, the meal's own photo from the device or one
-  of our food drawings (`foodArt.ts`, `docs/food-art/`), with an empty day
-  a row and a greyed plate rather than the hexagon block. Against §14m it
-  still misses: a large title above the hero (rule 2), more than one
-  filled control (rule 21: the selected meal pill and Scan, and the usual
-  row's Log), more than three hues (rule 11: the macros' pink, gold and
-  green beside the orange) and an empty day's colour (rules 9 and 16: a
-  full orange ring and full macro bars before anything is logged).
-  Measured in `docs/visual-audit/ds4-2026-11-07/README.md`, "Built: Food".
+- **Food:** the owner's pick of 11 Nov 2026 (Food11 in the plan file,
+  which names its evidence and what each call replaced; read it before
+  changing any of this). From the top: no large title, the date switcher
+  as the header row with the targets gear at its end; the calorie wheel
+  on the page, 264 pt and in no card, in one soft light of the food
+  orange, with the target in its label ("kcal left of 2,200"), a small
+  mark that says it can be tapped (Home's wheel has none) and Details
+  under it; the week as seven short bars, edge to edge, the deeper orange
+  in light; the three macros as one row with no boxes (`FoodMacroRow`);
+  then one 48 pt field holding the meal chip (`FoodMealChip`, a menu of
+  the four meals), the pencil while the field is at rest, the text and,
+  at its end, the camera for Scan: an icon in the food orange, 24 pt in
+  a 48 pt tap area, with no fill (the owner, 11 Nov 2026: as the food
+  apps do it; it replaces the filled square beside the field of 23 Sep
+  2026, and §14 has the count);
+  then the diary, a picture on every row. The wheel, the macro bars and
+  the Details sheet's bars are drawn as what is logged in both the left
+  and the logged view (`loggedFill`), on Home's food card too, so a day
+  with nothing logged is a grey track and going over is a second lap
+  whose head stands clear of the first. The usual foods are ranked for
+  the meal being added to. A food logged today flies to the wheel
+  (`FoodLogFlight`, `nextFlight`): 400 ms in the air, the arc growing
+  from 250 ms, 600 ms in all; never on an edit, a delete, another day or
+  under Reduce Motion. The edit sheet's four meals are on the neutral
+  track, and the segmented control has no filled-pill look.
+  Measured on the built page (the pull requests carry each step's
+  figures): the hero is 39% of the first screen from 92 pt, its figure
+  48 pt and 2.4 times the next largest text, 6 text sizes, one hue, and
+  colour at 4.7% in dark, most of it the person's data, with no filled,
+  coloured control on the measured screen (the usual row's Log, for an
+  account that has a usual, is the page's one). The §14m checks the
+  scorer runs all pass;
+  the first screen has 62 words against the ceiling of 60. The paywall's
+  scan demo still draws the page as it stood before.
 - **Badges:** the owner kept the current hexagon set (8 Nov 2026), after
   samples with three silhouettes and the number in the art, and with the
   emblem plus a ribbon. §14m rule 27 carries the note.
@@ -1286,6 +1306,27 @@ record of what each button was for:
   filled orange meal pill, Scan and the usual row's Log, so Food has more
   than DS4's one filled button (§14m rule 21). The fixes and the rules it
   still misses are in §6.
+- **2026-11-11 — Food11: the meal is a chip, not a filled pill.** The
+  owner picked a new Food page (§6 has it whole). Of the buttons above:
+  the filled orange meal pill is gone, with the row of four meals it sat
+  in, for one neutral chip in the field whose dot is the food orange;
+  the edit sheet's meal picker is on the neutral track. The usual row's
+  Log and Copy yesterday's Log are unchanged. Scan has the next entry.
+- **2026-11-11 — Food11: Scan is an icon inside the field.** The owner
+  asked for scanning to be placed as the food apps place it. Of ten apps
+  surveyed, none draws a filled, coloured camera button on its day
+  screen and five keep the camera one tap away in a plus menu. Of five
+  text fields with a scan control seen in four of them, three hold it
+  inside the field as an icon (MacroFactor, Yazio, Lifesum's AI box),
+  two set a plain icon beside the field (Lifesum's search, Fitbit) and
+  none has a filled button. So the camera is at the end of the
+  composer's field: 24 pt, the food orange (the deeper orange on the
+  light field), a 48 pt tap area, and it stays there while there is
+  text, with send before it. This replaces the 23 September filled
+  square. That square had replaced a 20 pt icon that read as decoration;
+  this one is larger and keeps its colour, where the three apps draw
+  theirs grey or black. The usual row's Log is now Food's one filled
+  control.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,
@@ -1366,7 +1407,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Lit edges on every dark surface.** A card, a compact tile, a chip and a pill button take a hairline of light along the top and a faint outline all round. They come from the shadow tokens (`--ds-shadow-card` and its hover step), so `card-shadow` stays the one place a card's elevation is set and no component writes its own edge. On a dark page the edge is light, not shadow: a black shadow cannot show there. A fill may fall from a slightly lighter top to the surface colour, inside one neutral. The light theme keeps its shadows.
 - **Tracks are cut in.** A track that holds progress (the week's segments, a ring's groove, a slider's rail) is darker than its surface, with an inner shadow above and a hairline of light below, so what fills it sits in something.
 - **Where each is set.** `card-shadow` is a card's edge. `chip-edge` is a chip's or a pill's: the muted and tinted `Button` and `IconButton` variants carry it, and so does the streak chip. `track-cut` is a track's, fill and cut together (`--track`, `--ds-shadow-track`), and a ring asks for its groove with `ProgressRing`'s `cut`. The two utilities draw through Tailwind's shadow variable, so a focus ring or a selection ring on the same element is drawn with the edge and not in its place; their tokens are a transparent shadow in the light theme, never `none`, which would void that list. A card that has `card-shadow` carries no border in the dark theme: the two stack into a doubled edge.
-- **A track on the page is not cut.** On a card the cut track measures 1.11:1 against it, as the lighter one did (1.12:1), and a lifting fill rises from 4.1:1 to 5.1:1 against its track. The page is already near black: a cut track there measures about 1.03:1 and all but goes, so a track that sits on the page (setup's progress, Food's week rings) keeps its lighter fill. The calorie ring keeps its plain grey groove (DS3's quiet-ring call): on Food it sits on a wash, not a card.
+- **A track on the page is not cut.** On a card the cut track measures 1.11:1 against it, as the lighter one did (1.12:1), and a lifting fill rises from 4.1:1 to 5.1:1 against its track. The page is already near black: a cut track there measures about 1.03:1 and all but goes, so a track that sits on the page (setup's progress, Food's week bars) keeps its lighter fill. The calorie ring keeps its plain grey groove (DS3's quiet-ring call): on Food it sits on a wash, not a card.
 - **Glass on what floats, and only there.** A surface that sits over scrolling content and moves or can be dismissed may be frosted: the tab bar (so since 8 September 2026), header chips over a hero, a sheet and its handle, a toast, and the workout's docked rest and new-best cards. It is a static backdrop blur with a translucent fill and a lit rim. A card that holds the person's numbers in the page's flow is never glass. Every frosted surface keeps opaque labels, a solid fallback under Reduce Transparency and where backdrop blur is unsupported, and the §10 contrast floors measured over the busiest content that can pass behind it. The blur is never animated (§14h).
 - **One light on the hero.** A screen's hero picture may stand in one soft light of its session's colour, a static radial that fades into the surface, with a floor under the figure. One per screen, behind the hero only, counted in rule 1's colour budget, and quieter than the reward register's light so a finish still reads as an event.
 - **Still out.** Neon (a saturated outline or glow on chrome, text or buttons), a "nice blue", a two-hue or rainbow gradient, a coloured wash over a whole page, and glass on data.

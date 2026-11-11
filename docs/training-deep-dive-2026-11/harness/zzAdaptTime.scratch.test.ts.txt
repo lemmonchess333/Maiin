@@ -1,0 +1,137 @@
+// Scratch, not committed: an existing plan through settings saves, a lighter week, easing back, and the one-off day options.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { advanceWeek, applyDeload, easeBackIn } from "../programEngine";
+import type { ProgramState, WorkoutDay } from "../programTypes";
+import { represcribeWorkouts } from "../represcribe";
+import { estimateSessionMinutes, buildExpressSession, expressChoices } from "../expressSession";
+import { buildEasierSession } from "../easierToday";
+import { buildTimeBudgetSession } from "../liftTimeBudget";
+
+const BASE: PlanBuilderInput = {
+  primaryGoal: "hypertrophy",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  preferredSplit: "auto" as never,
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: "2026-11-09",
+  preserveHistory: false,
+};
+const showDay = (d: { dayName?: string; exercises: WorkoutDay["exercises"] }) => ({
+  name: d.dayName ?? "",
+  minutes: estimateSessionMinutes(d.exercises as never),
+  sets: d.exercises.reduce((t, e) => t + e.sets, 0),
+  ex: d.exercises.map(
+    (e) => `${e.name} ${e.sets}x${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""} @${e.weight}${e.isAccessory ? "" : " [M]"}`
+  ),
+});
+const show = (w: WorkoutDay[]) => w.map(showDay);
+const total = (w: WorkoutDay[]) => w.reduce((t, d) => t + d.exercises.reduce((s, e) => s + e.sets, 0), 0);
+
+it("time dimension", () => {
+  const out: Record<string, unknown> = {};
+  const first = buildPlan(BASE).programState;
+  const save = (over: Partial<PlanBuilderInput>, state: ProgramState = first) =>
+    buildPlan({
+      ...BASE,
+      previousExperience: BASE.experience,
+      previousSessionMinutes: BASE.sessionMinutes,
+      existingState: state,
+      preserveHistory: true,
+      ...over,
+    }).programState;
+
+  // Session length changed on a plan the person has, against a new plan at that length.
+  out.minutes = [30, 45, 75].map((m) => {
+    const kept = save({ sessionMinutes: m });
+    const fresh = buildPlan({ ...BASE, sessionMinutes: m }).programState;
+    return {
+      to: m,
+      keptTotal: total(kept.workouts),
+      freshTotal: total(fresh.workouts),
+      kept: show(kept.workouts),
+      fresh: show(fresh.workouts),
+    };
+  });
+  // And back again: 60 -> 30 -> 60.
+  const to30 = save({ sessionMinutes: 30 });
+  const back60 = buildPlan({
+    ...BASE,
+    previousExperience: "intermediate",
+    previousSessionMinutes: 30,
+    sessionMinutes: 60,
+    existingState: to30,
+    preserveHistory: true,
+  }).programState;
+  out.roundTrip = { start: total(first.workouts), at30: total(to30.workouts), back60: total(back60.workouts), back: show(back60.workouts) };
+
+  // Focus change, with "update sessions".
+  const kept = save({ primaryGoal: "strength" });
+  out.goalStrengthRepresc = show(represcribeWorkouts(kept.workouts, "strength", "intermediate"));
+  out.goalStrengthFresh = show(buildPlan({ ...BASE, primaryGoal: "strength" }).programState.workouts);
+  out.goalRunningRepresc = show(represcribeWorkouts(save({ primaryGoal: "running" }).workouts, "running", "intermediate"));
+
+  // A lighter week, and the rollover into week 4.
+  out.deload = show(applyDeload(first.workouts));
+  let s: ProgramState = first;
+  const phases: string[] = [];
+  for (let w = 1; w <= 9; w++) {
+    s = advanceWeek(
+      { ...s, workouts: s.workouts.map((d) => ({ ...d, completed: true })) },
+      "intermediate",
+      `2026-11-${String(9 + 7 * w).padStart(2, "0")}`,
+      null,
+      { primaryGoal: "hypertrophy" }
+    );
+    phases.push(`into week ${s.weekNumber}: ${s.currentPhase}, ${total(s.workouts)} sets`);
+  }
+  out.phases = phases;
+  // Beginner and a 2-day intermediate: any lighter week?
+  for (const [label, over] of [
+    ["beginner-4d", { experience: "beginner" }],
+    ["intermediate-2d", { liftDays: 2 }],
+    ["advanced-6d", { experience: "advanced", liftDays: 6 }],
+  ] as Array<[string, Partial<PlanBuilderInput>]>) {
+    let st = buildPlan({ ...BASE, ...over }).programState;
+    const ph: string[] = [];
+    for (let w = 1; w <= 8; w++) {
+      st = advanceWeek(
+        { ...st, workouts: st.workouts.map((d) => ({ ...d, completed: true })) },
+        (over.experience ?? "intermediate") as never,
+        `2027-01-${String(4 + 7 * (w % 4)).padStart(2, "0")}`,
+        null,
+        { primaryGoal: "hypertrophy" }
+      );
+      ph.push(`${st.weekNumber}:${st.currentPhase}:${total(st.workouts)}`);
+    }
+    out[`phases:${label}`] = ph;
+  }
+
+  // Easing back after a break.
+  out.easeBack10 = show(easeBackIn(first, 0.1).workouts).slice(0, 2);
+  out.easeBack20 = show(easeBackIn(first, 0.2).workouts).slice(0, 2);
+
+  // One-off day options on day 3 (the 17-set upper day).
+  const day = first.workouts[2];
+  out.day = showDay(day);
+  out.expressChoices = expressChoices(day);
+  for (const v of ["express45", "express30"] as const) {
+    const p = buildExpressSession(day, v);
+    out[v] = { est: p.estimatedMinutes, trim: p.trim, ex: showDay({ exercises: p.exercises }).ex };
+  }
+  const easier = buildEasierSession(day, false);
+  out.easier = { ex: showDay({ exercises: easier.exercises }).ex, est: easier.estimatedMinutes };
+  for (const b of [30, 45]) {
+    const p = buildTimeBudgetSession(day, b);
+    out[`budget${b}`] = { est: p.estimatedMinutes, trim: p.trim, ex: showDay({ exercises: p.exercises }).ex };
+  }
+  writeFileSync("/tmp/work/train/adapt-time.json", JSON.stringify(out, null, 1));
+});

@@ -1,0 +1,20 @@
+vdot 26 easy-mid 8:51/km marathon-pace-mid 450s/km -> max long 15 km
+vdot 28 easy-mid 8:22/km marathon-pace-mid 425s/km -> max long 15 km
+vdot 30 easy-mid 7:56/km marathon-pace-mid 403s/km -> max long 15 km
+vdot 32 easy-mid 7:33/km marathon-pace-mid 383s/km -> max long 15 km
+vdot 34 easy-mid 7:13/km marathon-pace-mid 365s/km -> max long 20 km
+vdot 36 easy-mid 6:54/km marathon-pace-mid 349s/km -> max long 20 km
+vdot 38 easy-mid 6:37/km marathon-pace-mid 334s/km -> max long 20 km
+vdot 40 easy-mid 6:22/km marathon-pace-mid 321s/km -> max long 20 km
+vdot 42 easy-mid 6:07/km marathon-pace-mid 308s/km -> max long 20 km
+vdot 44 easy-mid 5:53/km marathon-pace-mid 297s/km -> max long 25 km
+vdot 46 easy-mid 5:41/km marathon-pace-mid 287s/km -> max long 25 km
+vdot 48 easy-mid 5:30/km marathon-pace-mid 277s/km -> max long 25 km
+vdot 50 easy-mid 5:19/km marathon-pace-mid 268s/km -> max long 25 km
+vdot 52 easy-mid 5:10/km marathon-pace-mid 259s/km -> max long 25 km
+vdot 54 easy-mid 5:00/km marathon-pace-mid 252s/km -> max long 30 km
+vdot 56 easy-mid 4:52/km marathon-pace-mid 244s/km -> max long 30 km
+vdot 58 easy-mid 4:43/km marathon-pace-mid 238s/km -> max long 30 km
+vdot 60 easy-mid 4:36/km marathon-pace-mid 231s/km -> max long 30 km
+vdot 62 easy-mid 4:29/km marathon-pace-mid 225s/km -> max long 30 km
+no benchmark -> max long 25 km

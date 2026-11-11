@@ -354,22 +354,6 @@ describe("SegmentedControl", () => {
     );
   });
 
-  it("the solid emphasis keeps the filled nutrition pill", () => {
-    render(
-      <SegmentedControl
-        options={DAYS}
-        value={4}
-        onChange={() => {}}
-        ariaLabel="Meal"
-        emphasis="solid"
-        tone="nutrition"
-      />
-    );
-    const selected = screen.getByRole("radio", { name: "4" }).className;
-    expect(selected).toContain("bg-nutrition-fill");
-    expect(selected).not.toContain("bg-segment-selected");
-  });
-
   /* A second level under a track control is text on a hairline: the
      selected tab is underlined, and none of the tabs is a filled pill. */
   it("the tabs emphasis underlines the selected tab and fills none", () => {

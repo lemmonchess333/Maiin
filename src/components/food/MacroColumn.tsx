@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { haptic } from "@/lib/haptic";
+import { loggedFill } from "@/lib/calorieRingFill";
 import { cn } from "@/lib/utils";
 import type { CalorieRingMode } from "./CalorieRing";
 
@@ -41,12 +42,18 @@ interface MacroColumnProps {
    *  (the default). False mounts it at its figures. */
   drawIn?: boolean;
   /**
-   * "tile" is the Food page's macro card. "compact" is the same tile at
-   * the size Home's food card draws it, on a tinted tile beside the
-   * calorie ring: a smaller icon and number, the 12px labels unchanged,
-   * and a bar track that shows on the tint.
+   * "row" is the Food page's macro (Food11 call 4): no box, read from
+   * the left as a line of text is. The icon and the name, then the
+   * figure with its word beside it, then a thin bar. Three of them make
+   * one row under the calorie wheel.
+   *
+   * "tile" is the centred form on a card, which the paywall's demo of a
+   * scan still draws. "compact" is that tile at the size Home's food
+   * card draws it, on a tinted tile beside the calorie ring: a smaller
+   * icon and number, the 12px labels unchanged, and a bar track that
+   * shows on the tint.
    */
-  size?: "tile" | "compact";
+  size?: "tile" | "compact" | "row";
 }
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
@@ -66,27 +73,22 @@ export default function MacroColumn({
   size = "tile",
 }: MacroColumnProps) {
   const compact = size === "compact";
+  const row = size === "row";
   const framerReduce = useFramerReducedMotion();
   const reduce = framerReduce === true;
   const settled = reduce || !drawIn;
 
   const hasTarget = target > 0;
-  const pct = hasTarget ? Math.min(consumed / target, 1) : 0;
   const remaining = Math.max(0, target - consumed);
   const isOver = consumed > target && hasTarget;
   const isLeftMode = mode === "left";
 
-  // Bar fill direction is mode-locked to the big number's direction so
-  // both signals move in lockstep:
-  //   LEFT mode → fill = remaining %   (drains as you log; matches the
-  //                                    big number which counts down)
-  //   LOGGED mode → fill = consumed %  (grows as you log; matches the
-  //                                    big number which counts up)
-  // Over-target in LEFT mode pins to 100% (a full bar reads as
-  // "maxed out + over by N" combined with the big number; an empty
-  // bar would falsely read as "nothing left to eat").
-  // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
-  const barFillPct = !hasTarget ? 0 : isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
+  /* The bar is what is logged, in both modes, as the calorie wheel's arc
+     is (Food11 call 5; `loggedFill` has the reasons and the one rule the
+     wheel, these bars and the Details sheet share). The number and its
+     word beside the bar follow the left and logged switch; the bar does
+     not. */
+  const barFillPct = loggedFill(consumed, target);
 
   // Overshoot — only when consumed exceeds target. Capped at one full
   // extra lap; going 3× over wouldn't read any differently than 2×.
@@ -195,6 +197,161 @@ export default function MacroColumn({
     if (controls.length) return () => controls.forEach((c) => c.stop());
   }, [consumed, target, reduce, pulseOpacity, iconScale]);
 
+  /* Icon — a bare glyph in every state. No disc behind it.
+      Deliberate, and it has been wrong in both directions:
+
+      It USED to render a macro-tinted disc only once the goal was
+      met. On a real screen with protein and fat met and carbs short,
+      two icons had a circle and the wheat had none, and that was
+      reported as the wheat icon being broken. Nothing on the tile
+      said the circle meant anything, so "one of these is drawn
+      differently" was the only reading available.
+
+      The first fix rendered the disc ALWAYS and moved the signal to
+      intensity, which removed the misreading. The operator's call on
+      seeing it was that the tiles are cleaner with no disc at all —
+      and that answers the same problem more completely: with no disc
+      in any state, all three tiles are identical whatever the
+      numbers do, so there is nothing left to misread.
+
+      Nothing is lost by dropping it, because the halo was never the
+      only goal signal: the progress bar fills and overshoots, the
+      tertiary "X / Yg" line shows the ratio, LEFT mode's label flips
+      to "over", and the sr-only announcement below still tells
+      screen readers. Only the decorative mark is gone.
+
+      Keep the scale pop — that is per-log feedback, not a state. */
+  const icon = (
+    <motion.span
+      className="relative inline-flex shrink-0 items-center justify-center"
+      style={{ scale: iconScale }}
+    >
+      <Icon
+        className={cn(
+          "relative",
+          row ? "size-4" : compact ? "size-5" : "size-6"
+        )}
+        style={{ color }}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+    </motion.span>
+  );
+
+  /* Big number — Food7: neutral foreground (not the macro hue). The
+      macro identity is carried by the icon + progress bar; a neutral
+      number is the calorie ring's unified-colour story applied to the
+      tiles. text-foreground is theme-aware (dark on light, light on
+      dark) so there's no AA concern. */
+  /* The unit is SECONDARY to the figure. It rendered at text-2xl —
+     identical to the number — so "128g" read as one four-character
+     token rather than a value with a unit, and the tile lost its
+     numeric hierarchy at exactly the widths where it matters. The
+     number keeps text-2xl: it is glanceable data, and shrinking it
+     to fix a problem caused by its neighbour is the wrong lever.
+     whitespace-nowrap keeps a three-digit value and its unit on one
+     line now that the column can be narrower.
+     The "g" is a word, so it takes the text face at the weight of the
+     tile's other words, about two thirds of the figure's size, as the
+     weight tile's "kg" does. A 12px bold "g" under a 20px figure read
+     as a subscript. It stays unspaced: grams on the food surface are
+     "128g". */
+  const FigureTag = row ? "span" : "p";
+  const figure = (
+    <FigureTag
+      className={cn(
+        "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
+        row ? "text-xl" : compact ? "text-xl mt-1.5" : "text-2xl mt-2"
+      )}
+    >
+      <AnimatedNumber
+        value={displayValue}
+        duration={numberDurationSec}
+        ease={RING_EASE}
+        fromZero={drawIn}
+      />
+      <span
+        data-macro-unit=""
+        className={cn(
+          "font-sans font-medium tracking-normal text-muted-foreground",
+          row || compact ? "text-sm" : "text-base"
+        )}
+      >
+        g
+      </span>
+    </FigureTag>
+  );
+
+  /* Progress bar */
+  /* Track — inset shadow reads as a recessed channel cut into the
+      white card surface, with the coloured fill sitting inside the
+      groove. Shadow is deliberately subtle (0.06 opacity). An EMPTY
+      bar fades the whole track to reduce visual noise without
+      causing a layout jump on first log.
+
+      An empty bar is a macro with nothing logged, in both modes. Only
+      the tile's solid track fades. The row and the compact tile sit
+      beside the calorie wheel on its grey groove, and since the bar and
+      the wheel both start the day empty (Food11 call 5) a faded groove
+      would be 8% grey under a wheel track at 20%: the same "not yet"
+      drawn two ways, on every account's every morning. */
+  const bar = (
+    <div
+      data-macro-bar=""
+      className={cn(
+        "relative w-full rounded-full overflow-hidden transition-opacity duration-300",
+        row ? "h-1 mt-1.5" : compact ? "h-1.5 mt-2" : "h-1.5 mt-2.5"
+      )}
+      style={{
+        /* A compact tile sits on Home's card beside the calorie ring,
+           so its track is the ring's grey groove (CalorieRing's
+           COLOR_TRACK): one grey for "not yet" across the card. The
+           row sits on the page under the wheel and takes the same
+           groove; it is 4px of line, not a channel cut into a card,
+           so it has no inner shadow. */
+        background:
+          compact || row
+            ? "hsl(var(--muted-foreground) / 0.2)"
+            : "hsl(var(--muted))",
+        boxShadow: row ? undefined : "inset 0 1px 2px rgb(0 0 0 / 0.06)",
+        opacity: barFillPct === 0 && !compact && !row ? 0.4 : 1,
+      }}
+    >
+      <motion.div
+        className="h-full rounded-full"
+        style={{ background: overColor, opacity: pulseOpacity }}
+        initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
+        animate={{ width: `${barFillPct * 100}%` }}
+        transition={{
+          width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
+        }}
+      />
+      {/* Overshoot overlay — darker shade layered from the left,
+          width = overshoot %. Mirrors CalorieRing.tsx's overshoot
+          arc. Slight delay so it reads as "filled, then leaked over"
+          rather than racing the base bar. */}
+      {isOver && (
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            background: overColor,
+            filter: "brightness(0.65) saturate(1.2)",
+            opacity: pulseOpacity,
+          }}
+          initial={{ width: settled ? `${overshootPct * 100}%` : "0%" }}
+          animate={{ width: `${overshootPct * 100}%` }}
+          transition={{
+            width: {
+              duration: reduce ? 0 : barDurationSec,
+              ease: RING_EASE,
+              delay: reduce ? 0 : 0.15,
+            },
+          }}
+        />
+      )}
+    </div>
+  );
+
   return (
     <button
       type="button"
@@ -218,7 +375,12 @@ export default function MacroColumn({
         (goalReached ? `. ${label} goal reached` : "") +
         `. ${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
       }
-      className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
+      className={cn(
+        "min-w-0 flex-1 flex flex-col bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg",
+        row
+          ? "w-full min-h-[44px] items-stretch justify-center text-left"
+          : "items-center text-center"
+      )}
     >
       {/* Kept ALONGSIDE the aria-label above, not replaced by it. Two
           existing unit tests assert this sr-only TEXT, while
@@ -227,161 +389,47 @@ export default function MacroColumn({
           exactly how the regression hid: text-based tests stayed green
           while the name lost the state. Both now carry it. */}
       {goalReached && <span className="sr-only">{label} goal reached</span>}
-      {/* Icon — a bare glyph in every state. No disc behind it.
-          Deliberate, and it has been wrong in both directions:
-
-          It USED to render a macro-tinted disc only once the goal was
-          met. On a real screen with protein and fat met and carbs short,
-          two icons had a circle and the wheat had none, and that was
-          reported as the wheat icon being broken. Nothing on the tile
-          said the circle meant anything, so "one of these is drawn
-          differently" was the only reading available.
-
-          The first fix rendered the disc ALWAYS and moved the signal to
-          intensity, which removed the misreading. The operator's call on
-          seeing it was that the tiles are cleaner with no disc at all —
-          and that answers the same problem more completely: with no disc
-          in any state, all three tiles are identical whatever the
-          numbers do, so there is nothing left to misread.
-
-          Nothing is lost by dropping it, because the halo was never the
-          only goal signal: the progress bar fills and overshoots, the
-          tertiary "X / Yg" line shows the ratio, LEFT mode's label flips
-          to "over", and the sr-only announcement below still tells
-          screen readers. Only the decorative mark is gone.
-
-          Keep the scale pop — that is per-log feedback, not a state. */}
-      <motion.span
-        className="relative inline-flex items-center justify-center"
-        style={{ scale: iconScale }}
-      >
-        <Icon
-          className={cn("relative", compact ? "size-5" : "size-6")}
-          style={{ color }}
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-      </motion.span>
-
-      {/* Big number — Food7: neutral foreground (not the macro hue). The
-          macro identity is carried by the icon + progress bar; a neutral
-          number is the calorie ring's unified-colour story applied to the
-          tiles. text-foreground is theme-aware (dark on light, light on
-          dark) so there's no AA concern. */}
-      {/* The unit is SECONDARY to the figure. It rendered at text-2xl —
-         identical to the number — so "128g" read as one four-character
-         token rather than a value with a unit, and the tile lost its
-         numeric hierarchy at exactly the widths where it matters. The
-         number keeps text-2xl: it is glanceable data, and shrinking it
-         to fix a problem caused by its neighbour is the wrong lever.
-         whitespace-nowrap keeps a three-digit value and its unit on one
-         line now that the column can be narrower.
-         The "g" is a word, so it takes the text face at the weight of the
-         tile's other words, about two thirds of the figure's size, as the
-         weight tile's "kg" does. A 12px bold "g" under a 20px figure read
-         as a subscript. It stays unspaced: grams on the food surface are
-         "128g". */}
-      <p
-        className={cn(
-          "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
-          compact ? "text-xl mt-1.5" : "text-2xl mt-2"
-        )}
-      >
-        <AnimatedNumber
-          value={displayValue}
-          duration={numberDurationSec}
-          ease={RING_EASE}
-          fromZero={drawIn}
-        />
-        <span
-          data-macro-unit=""
-          className={cn(
-            "font-sans font-medium tracking-normal text-muted-foreground",
-            compact ? "text-sm" : "text-base"
-          )}
-        >
-          g
-        </span>
-      </p>
-
-      {/* Mode-aware label sits below the big number. Always-rendered
-          rather than conditionally suppressed so the line height stays
-          stable across mode toggles. */}
-      <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-        {displayLabel}
-      </p>
-
-      {/* Progress bar */}
-      {/* Track — inset shadow reads as a recessed channel cut into the
-          white card surface, with the coloured fill sitting inside the
-          groove. Shadow is deliberately subtle (0.06 opacity). An EMPTY
-          bar fades the whole track to reduce visual noise without
-          causing a layout jump on first log.
-
-          Empty means the fill, not the intake: `consumed === 0` is an
-          empty bar only in the logged view. In LEFT mode — the default —
-          nothing logged is a FULL bar, and fading on intake would dim
-          three full macro-coloured bars to 40% every morning (maroon,
-          olive, dark green on the dark card), then brighten them as the
-          first log drained them. */}
-      <div
-        data-macro-bar=""
-        className={cn(
-          "relative w-full h-1.5 rounded-full overflow-hidden transition-opacity duration-300",
-          compact ? "mt-2" : "mt-2.5"
-        )}
-        style={{
-          /* A compact tile sits on Home's card beside the calorie ring,
-             so its track is the ring's grey groove (CalorieRing's
-             COLOR_TRACK): one grey for "not yet" across the card. */
-          background: compact
-            ? "hsl(var(--muted-foreground) / 0.2)"
-            : "hsl(var(--muted))",
-          boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
-          opacity: barFillPct === 0 ? 0.4 : 1,
-        }}
-      >
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: overColor, opacity: pulseOpacity }}
-          initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
-          animate={{ width: `${barFillPct * 100}%` }}
-          transition={{
-            width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
-          }}
-        />
-        {/* Overshoot overlay — darker shade layered from the left,
-            width = overshoot %. Mirrors CalorieRing.tsx's overshoot
-            arc. Slight delay so it reads as "filled, then leaked over"
-            rather than racing the base bar. */}
-        {isOver && (
-          <motion.div
-            className="absolute inset-y-0 left-0 rounded-full"
-            style={{
-              background: overColor,
-              filter: "brightness(0.65) saturate(1.2)",
-              opacity: pulseOpacity,
-            }}
-            initial={{ width: settled ? `${overshootPct * 100}%` : "0%" }}
-            animate={{ width: `${overshootPct * 100}%` }}
-            transition={{
-              width: {
-                duration: reduce ? 0 : barDurationSec,
-                ease: RING_EASE,
-                delay: reduce ? 0 : 0.15,
-              },
-            }}
-          />
-        )}
-      </div>
-
-      {/* Macro label — intentionally muted (same tone as the
-          `X / Yg` ratio line above) so the card's colour identity is
-          carried by the icon + big number + progress bar, not duplicated
-          four times. The label is a caption, not a headline. */}
-      <SectionLabel className={compact ? "mt-1.5" : "mt-2"}>
-        {label}
-      </SectionLabel>
+      {row ? (
+        <>
+          {/* The name leads, as a line of text does, with the macro's
+              colour on its icon alone (Food7). 14px, the size of the
+              page's other names; the tile's 12px caption under a bar was
+              the smallest text on the screen's first third. */}
+          <span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
+            {icon}
+            <span className="min-w-0 truncate">{label}</span>
+          </span>
+          {/* The figure and its word on one line ("15g left"), wrapping
+              the word under the figure when the column is too narrow
+              for both ("logged" at larger text). */}
+          <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1">
+            {figure}
+            <span className="text-sm text-muted-foreground lowercase">
+              {displayLabel}
+            </span>
+          </span>
+          {bar}
+        </>
+      ) : (
+        <>
+          {icon}
+          {figure}
+          {/* Mode-aware label sits below the big number. Always-rendered
+              rather than conditionally suppressed so the line height stays
+              stable across mode toggles. */}
+          <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+            {displayLabel}
+          </p>
+          {bar}
+          {/* Macro label — intentionally muted (same tone as the
+              `X / Yg` ratio line above) so the card's colour identity is
+              carried by the icon + big number + progress bar, not duplicated
+              four times. The label is a caption, not a headline. */}
+          <SectionLabel className={compact ? "mt-1.5" : "mt-2"}>
+            {label}
+          </SectionLabel>
+        </>
+      )}
     </button>
   );
 }

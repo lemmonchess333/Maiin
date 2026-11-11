@@ -65,7 +65,7 @@ export interface SegmentedControlProps<T extends string | number> {
   value: T | null | undefined;
   onChange: (value: T) => void;
   /** Optional action when the selected option is clicked or activated with
-   *  Space/Enter. Used by the Food composer to clear its meal target.
+   *  Space/Enter (the Feed's sub-tabs scroll to the top on it).
    *  Arrow/Home/End navigation never reactivates the selected option. */
   onReselect?: (value: T) => void;
   /** Required accessible name for the radiogroup. */
@@ -73,20 +73,14 @@ export interface SegmentedControlProps<T extends string | number> {
   /** Selected-segment colour. `brand` = the neutral grey fill (default),
    *  `running` = the coral fill, `lifting` = the purple fill, each under
    *  a white label and (currentColor) icon, so the Programme Lift/Run
-   *  switch reads its sport identity symmetrically. `nutrition` = the
-   *  food orange fill, and exists for `emphasis="solid"`; on the track it
-   *  takes the neutral fill, because `--nutrition-fill` is under 3:1
-   *  against the dark track. */
-  tone?: "brand" | "running" | "lifting" | "nutrition";
-  /** `track` = the iOS track look (default). `solid` = rounded-full pills
-   *  with the SELECTED one filled in the tone colour. Solid is for a
-   *  domain whose colour IS the meaning — today that is the Food
-   *  surface's meal slot, and `mealSlotPickerIdentity.test.tsx` pins it
-   *  there. Reach for `track` everywhere else; a second solid group on a
-   *  neutral surface is the drift this primitive exists to stop. `tabs` =
-   *  underlined text tabs, only for a second level under a track control
-   *  (see the header). */
-  emphasis?: "track" | "solid" | "tabs";
+   *  switch reads its sport identity symmetrically. */
+  tone?: "brand" | "running" | "lifting";
+  /** `track` = the iOS track look (default). `tabs` = underlined text
+   *  tabs, only for a second level under a track control (see the
+   *  header). There is no filled-pill look: the one group that had it,
+   *  Food's meal picker, is a chip with a menu since Food11, and
+   *  `mealSlotPickerIdentity.test.tsx` keeps a second from appearing. */
+  emphasis?: "track" | "tabs";
   /** `fill` = equal-width row (default); `wrap` = auto-width pills;
    *  `fill-wrap` = the equal-width row, wrapping onto more rows rather
    *  than cutting a label short. */
@@ -192,21 +186,19 @@ function SegmentedControl<T extends string | number>({
         // Track look for the equal-width row; wrap mode can't share a
         // single contiguous track, so it drops the track and lets each
         // pill carry its own background below.
-        emphasis === "solid"
-          ? "flex-wrap items-center gap-2"
-          : emphasis === "tabs"
-            ? cn("border-b border-border/60", layout !== "fill" && "flex-wrap")
-            : layout === "wrap"
-              ? "flex-wrap gap-1.5"
-              : slim
-                ? /* The track is the group's own backdrop, inset 4px top
-                     and bottom of the 44pt row: 36pt, 12pt corners, so
-                     the 10pt pill 2px inside it is concentric. */
-                  "relative isolate gap-0.5 px-0.5 before:absolute before:inset-x-0 before:inset-y-1 before:-z-10 before:rounded-[12px] before:bg-muted before:content-['']"
-                : cn(
-                    "gap-1 p-1 rounded-xl bg-muted",
-                    layout === "fill-wrap" && "flex-wrap"
-                  ),
+        emphasis === "tabs"
+          ? cn("border-b border-border/60", layout !== "fill" && "flex-wrap")
+          : layout === "wrap"
+            ? "flex-wrap gap-1.5"
+            : slim
+              ? /* The track is the group's own backdrop, inset 4px top
+                   and bottom of the 44pt row: 36pt, 12pt corners, so
+                   the 10pt pill 2px inside it is concentric. */
+                "relative isolate gap-0.5 px-0.5 before:absolute before:inset-x-0 before:inset-y-1 before:-z-10 before:rounded-[12px] before:bg-muted before:content-['']"
+              : cn(
+                  "gap-1 p-1 rounded-xl bg-muted",
+                  layout === "fill-wrap" && "flex-wrap"
+                ),
         className
       )}
     >
@@ -230,22 +222,20 @@ function SegmentedControl<T extends string | number>({
               slim && "flex-1 min-w-0 rounded-[10px]",
               emphasis === "tabs"
                 ? "flex-1 min-w-max rounded-none px-[8px]"
-                : emphasis === "solid"
-                  ? "rounded-full border px-4"
-                  : slim
-                    ? ""
-                    : layout === "fill"
-                      ? // Equal parts end a label in "…" when it no longer
-                        // fits, as iOS's own segmented control does, rather
-                        // than pushing the row off the screen at larger text
-                        // ("Analytics PRs Badges" on a 320px phone).
-                        "flex-1 min-w-0 truncate"
-                      : layout === "fill-wrap"
-                        ? // Equal parts from a zero basis, none narrower than
-                          // its label: the row wraps where they can't share
-                          // it. The inset is px so it doesn't grow with text.
-                          "flex-1 min-w-max px-[8px]"
-                        : "px-4",
+                : slim
+                  ? ""
+                  : layout === "fill"
+                    ? // Equal parts end a label in "…" when it no longer
+                      // fits, as iOS's own segmented control does, rather
+                      // than pushing the row off the screen at larger text
+                      // ("Analytics PRs Badges" on a 320px phone).
+                      "flex-1 min-w-0 truncate"
+                    : layout === "fill-wrap"
+                      ? // Equal parts from a zero basis, none narrower than
+                        // its label: the row wraps where they can't share
+                        // it. The inset is px so it doesn't grow with text.
+                        "flex-1 min-w-max px-[8px]"
+                      : "px-4",
               emphasis === "tabs"
                 ? selected
                   ? // The underline is the selected state: primary is over
@@ -254,31 +244,22 @@ function SegmentedControl<T extends string | number>({
                   : "text-muted-foreground hover:text-foreground"
                 : slim
                   ? "text-muted-foreground aria-checked:text-white"
-                  : emphasis === "solid"
-                    ? selected
-                      ? cn(
-                          "border-transparent text-white",
-                          tone === "nutrition"
-                            ? "bg-nutrition-fill"
-                            : "bg-primary"
-                        )
-                      : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
-                    : selected
-                      ? cn(
-                          // The fill is the selected state: 3:1 or more
-                          // against the track, white 4.5:1 or more on it.
-                          "text-white",
-                          tone === "running"
-                            ? "bg-running-fill"
-                            : tone === "lifting"
-                              ? "bg-lifting-fill"
-                              : "bg-segment-selected"
-                        )
-                      : // Unselected: transparent on the shared track (fill), or
-                        // an individual muted pill when wrapped (no track behind).
-                        layout === "wrap"
-                        ? "bg-muted text-muted-foreground"
-                        : "text-muted-foreground"
+                  : selected
+                    ? cn(
+                        // The fill is the selected state: 3:1 or more
+                        // against the track, white 4.5:1 or more on it.
+                        "text-white",
+                        tone === "running"
+                          ? "bg-running-fill"
+                          : tone === "lifting"
+                            ? "bg-lifting-fill"
+                            : "bg-segment-selected"
+                      )
+                    : // Unselected: transparent on the shared track (fill), or
+                      // an individual muted pill when wrapped (no track behind).
+                      layout === "wrap"
+                      ? "bg-muted text-muted-foreground"
+                      : "text-muted-foreground"
             )}
           >
             {slim ? (

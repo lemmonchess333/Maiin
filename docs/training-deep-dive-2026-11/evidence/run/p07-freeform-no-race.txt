@@ -1,0 +1,37 @@
+p07-freeform-no-race · seed 1 · base model · 8 weeks from 2026-03-09 · no race
+runner: VDOT 38.0 · 150 min a week · 80 weeks running · no benchmark
+
+w1 2026-03-09  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.0 km/40 min 6:43 · Thu free 6.1 km/40 min 6:31 · Sun free 10.6 km/70 min 6:35
+  week    150 min · 22.7 km · easy 100% · longest ×1.41 the month's
+  runner  VDOT 38.02 · fitness 150 min · easy own 6:15–7:02, prescribed none
+w2 2026-03-16  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.0 km/40 min 6:37 · Thu free 6.1 km/40 min 6:35 · Sun free 10.4 km/70 min 6:43
+  week    150 min · 22.6 km · easy 100% · longest ×0.98 the month's
+  runner  VDOT 38.03 · fitness 151 min · easy own 6:15–7:02, prescribed none
+w3 2026-03-23  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.0 km/40 min 6:40 · Thu free 6.1 km/40 min 6:33 · Sun free 10.6 km/70 min 6:35
+  week    150 min · 22.8 km · easy 100% · longest ×1.00 the month's
+  runner  VDOT 38.04 · fitness 151 min · easy own 6:15–7:02, prescribed none
+w4 2026-03-30  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.1 km/40 min 6:35 · Thu free 5.9 km/40 min 6:45 · Sun free 10.7 km/70 min 6:32
+  week    150 min · 22.7 km · easy 100% · longest ×1.01 the month's
+  runner  VDOT 38.05 · fitness 152 min · easy own 6:15–7:02, prescribed none
+w5 2026-04-06  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.0 km/40 min 6:40 · Thu free 6.1 km/40 min 6:37 · Sun free 10.8 km/70 min 6:29
+  week    150 min · 22.8 km · easy 100% · longest ×1.01 the month's
+  runner  VDOT 38.06 · fitness 152 min · easy own 6:15–7:02, prescribed none
+w6 2026-04-13  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.1 km/40 min 6:31 · Thu free 6.1 km/40 min 6:32 · Sun free 10.7 km/70 min 6:33
+  week    150 min · 22.9 km · easy 100% · longest ×0.99 the month's
+  runner  VDOT 38.06 · fitness 152 min · easy own 6:15–7:02, prescribed none
+w7 2026-04-20  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.1 km/40 min 6:31 · Thu free 6.0 km/40 min 6:37 · Sun free 10.5 km/70 min 6:40
+  week    150 min · 22.7 km · easy 100% · longest ×0.97 the month's
+  runner  VDOT 38.07 · fitness 152 min · easy own 6:15–7:02, prescribed none
+w8 2026-04-27  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  ran     Tue free 6.0 km/40 min 6:42 · Thu free 5.9 km/40 min 6:44 · Sun free 10.4 km/70 min 6:44
+  week    150 min · 22.3 km · easy 100% · longest ×0.96 the month's
+  runner  VDOT 38.07 · fitness 152 min · easy own 6:15–7:02, prescribed none
+
+runs 24 · counted 0 of the 0 planned · injuries 0 · VDOT 38.0 → 38.07

@@ -1,0 +1,313 @@
+{
+ "new plan": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 49,
+   "fits": true,
+   "ex": [
+    "Pull-Ups 3x4@0",
+    "Barbell Row 3x4@55",
+    "Lat Pulldown 3x6@47.5",
+    "Dumbbell Curl 3x8@6"
+   ]
+  },
+  {
+   "name": "Push — Chest Focus",
+   "n": 6,
+   "sets": 15,
+   "est": 60,
+   "fits": true,
+   "ex": [
+    "Bench Press 3x4@57.5",
+    "Overhead Press 3x4@37.5",
+    "Dumbbell Bench Press 3x6@20",
+    "Rope Tricep Pushdown 2x8@15",
+    "Overhead Tricep Extension 2x8@10",
+    "Lateral Raise 2x10@10"
+   ]
+  },
+  {
+   "name": "Legs — Squat Focus",
+   "n": 5,
+   "sets": 13,
+   "est": 58,
+   "fits": true,
+   "ex": [
+    "Barbell Squat 3x4@90",
+    "Deadlift 3x4@105",
+    "Hack Squat 3x6@80",
+    "Cable Crunch 2x10@37.5",
+    "Standing Calf Raise 2x10@27.5"
+   ]
+  },
+  {
+   "name": "Pull — Row Focus",
+   "n": 3,
+   "sets": 8,
+   "est": 31,
+   "fits": true,
+   "ex": [
+    "Barbell Row 3x8@55",
+    "Lat Pulldown 3x10@47.5",
+    "Seated Cable Row 2x10@50"
+   ]
+  },
+  {
+   "name": "Push — Shoulder Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 41,
+   "fits": true,
+   "ex": [
+    "Overhead Press 3x8@37.5",
+    "Dumbbell Bench Press 3x10@20",
+    "Dumbbell Shoulder Press 3x10@12.5",
+    "Lateral Raise 3x14@10"
+   ]
+  },
+  {
+   "name": "Legs — Deadlift Focus",
+   "n": 5,
+   "sets": 12,
+   "est": 53,
+   "fits": true,
+   "ex": [
+    "Deadlift 3x6@105",
+    "Barbell Squat 3x8@90",
+    "Seated Leg Curl 2x12@27.5",
+    "Hack Squat 2x10@80",
+    "Cable Crunch 2x14@37.5"
+   ]
+  }
+ ],
+ "strong lifter, before any re-fit": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 49,
+   "fits": true,
+   "ex": [
+    "Pull-Ups 3x4@0",
+    "Barbell Row 3x4@110",
+    "Lat Pulldown 3x6@95",
+    "Dumbbell Curl 3x8@12"
+   ]
+  },
+  {
+   "name": "Push — Chest Focus",
+   "n": 6,
+   "sets": 15,
+   "est": 62,
+   "fits": false,
+   "ex": [
+    "Bench Press 3x4@115",
+    "Overhead Press 3x4@75",
+    "Dumbbell Bench Press 3x6@40",
+    "Rope Tricep Pushdown 2x8@30",
+    "Overhead Tricep Extension 2x8@20",
+    "Lateral Raise 2x10@20"
+   ]
+  },
+  {
+   "name": "Legs — Squat Focus",
+   "n": 5,
+   "sets": 13,
+   "est": 58,
+   "fits": true,
+   "ex": [
+    "Barbell Squat 3x4@180",
+    "Deadlift 3x4@210",
+    "Hack Squat 3x6@160",
+    "Cable Crunch 2x10@75",
+    "Standing Calf Raise 2x10@55"
+   ]
+  },
+  {
+   "name": "Pull — Row Focus",
+   "n": 3,
+   "sets": 8,
+   "est": 31,
+   "fits": true,
+   "ex": [
+    "Barbell Row 3x8@110",
+    "Lat Pulldown 3x10@95",
+    "Seated Cable Row 2x10@100"
+   ]
+  },
+  {
+   "name": "Push — Shoulder Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 43,
+   "fits": true,
+   "ex": [
+    "Overhead Press 3x8@75",
+    "Dumbbell Bench Press 3x10@40",
+    "Dumbbell Shoulder Press 3x10@25",
+    "Lateral Raise 3x14@20"
+   ]
+  },
+  {
+   "name": "Legs — Deadlift Focus",
+   "n": 5,
+   "sets": 12,
+   "est": 53,
+   "fits": true,
+   "ex": [
+    "Deadlift 3x6@210",
+    "Barbell Squat 3x8@180",
+    "Seated Leg Curl 2x12@55",
+    "Hack Squat 2x10@160",
+    "Cable Crunch 2x14@75"
+   ]
+  }
+ ],
+ "strong lifter, re-fitted as a week's turn does": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 49,
+   "fits": true,
+   "ex": [
+    "Pull-Ups 3x4@0",
+    "Barbell Row 3x4@110",
+    "Lat Pulldown 3x6@95",
+    "Dumbbell Curl 3x8@12"
+   ]
+  },
+  {
+   "name": "Push — Chest Focus",
+   "n": 6,
+   "sets": 14,
+   "est": 59,
+   "fits": true,
+   "ex": [
+    "Bench Press 3x4@115",
+    "Overhead Press 3x4@75",
+    "Dumbbell Bench Press 2x6@40",
+    "Rope Tricep Pushdown 2x8@30",
+    "Overhead Tricep Extension 2x8@20",
+    "Lateral Raise 2x10@20"
+   ]
+  },
+  {
+   "name": "Legs — Squat Focus",
+   "n": 5,
+   "sets": 13,
+   "est": 58,
+   "fits": true,
+   "ex": [
+    "Barbell Squat 3x4@180",
+    "Deadlift 3x4@210",
+    "Hack Squat 3x6@160",
+    "Cable Crunch 2x10@75",
+    "Standing Calf Raise 2x10@55"
+   ]
+  },
+  {
+   "name": "Pull — Row Focus",
+   "n": 3,
+   "sets": 8,
+   "est": 31,
+   "fits": true,
+   "ex": [
+    "Barbell Row 3x8@110",
+    "Lat Pulldown 3x10@95",
+    "Seated Cable Row 2x10@100"
+   ]
+  },
+  {
+   "name": "Push — Shoulder Focus",
+   "n": 4,
+   "sets": 12,
+   "est": 43,
+   "fits": true,
+   "ex": [
+    "Overhead Press 3x8@75",
+    "Dumbbell Bench Press 3x10@40",
+    "Dumbbell Shoulder Press 3x10@25",
+    "Lateral Raise 3x14@20"
+   ]
+  },
+  {
+   "name": "Legs — Deadlift Focus",
+   "n": 5,
+   "sets": 15,
+   "est": 60,
+   "fits": true,
+   "ex": [
+    "Deadlift 3x6@210",
+    "Barbell Squat 3x8@180",
+    "Seated Leg Curl 3x12@55",
+    "Hack Squat 3x10@160",
+    "Cable Crunch 3x14@75"
+   ]
+  }
+ ],
+ "a 8-lift day, re-fitted to 60 minutes": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 8,
+   "sets": 16,
+   "est": 65,
+   "fits": false,
+   "ex": [
+    "Pull-Ups 2x4@0",
+    "Barbell Row 2x4@55",
+    "Lat Pulldown 2x6@47.5",
+    "Dumbbell Curl 2x8@6",
+    "Rope Tricep Pushdown 2x8@15",
+    "Overhead Tricep Extension 2x8@10",
+    "Lateral Raise 2x10@10",
+    "Cable Crunch 2x10@37.5"
+   ]
+  }
+ ],
+ "a 10-lift day, re-fitted to 60 minutes": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 10,
+   "sets": 20,
+   "est": 79,
+   "fits": false,
+   "ex": [
+    "Pull-Ups 2x4@0",
+    "Barbell Row 2x4@55",
+    "Lat Pulldown 2x6@47.5",
+    "Dumbbell Curl 2x8@6",
+    "Rope Tricep Pushdown 2x8@15",
+    "Overhead Tricep Extension 2x8@10",
+    "Lateral Raise 2x10@10",
+    "Cable Crunch 2x10@37.5",
+    "Standing Calf Raise 2x10@27.5",
+    "Seated Cable Row 2x10@50"
+   ]
+  }
+ ],
+ "a 12-lift day, re-fitted to 60 minutes": [
+  {
+   "name": "Pull — Lat Focus",
+   "n": 11,
+   "sets": 22,
+   "est": 87,
+   "fits": false,
+   "ex": [
+    "Pull-Ups 2x4@0",
+    "Barbell Row 2x4@55",
+    "Lat Pulldown 2x6@47.5",
+    "Dumbbell Curl 2x8@6",
+    "Rope Tricep Pushdown 2x8@15",
+    "Overhead Tricep Extension 2x8@10",
+    "Lateral Raise 2x10@10",
+    "Cable Crunch 2x10@37.5",
+    "Standing Calf Raise 2x10@27.5",
+    "Seated Cable Row 2x10@50",
+    "Seated Leg Curl 2x12@27.5"
+   ]
+  }
+ ]
+}

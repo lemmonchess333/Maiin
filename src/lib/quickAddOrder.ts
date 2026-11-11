@@ -165,6 +165,46 @@ export function pickRepresentativeMeal<
   return best ? best.latest : meals[0];
 }
 
+/** How often one food was logged in the ranking window. */
+export interface QuickAddTally {
+  /** Logs in the window, at any meal. */
+  count: number;
+  /** Of those, the logs at the meal being added to. 0 when no meal is
+   *  chosen. */
+  atMeal: number;
+  /** The latest day it was logged, as a local "YYYY-MM-DD". */
+  lastLogged: string;
+}
+
+/**
+ * The usual foods' order for the meal being added to (Food11 call 7).
+ *
+ * What is logged at that meal comes first, most often first. Then
+ * everything else, by how often it is logged at all. A tie goes to the
+ * food logged more recently, so a change of habit wins once it has been
+ * logged as often.
+ *
+ * Counted at any meal alone, the list led with the day's most logged
+ * foods whatever was being added: the lunch bowl first at breakfast.
+ * People repeat by meal, and breakfast most of all (in 1,581 food
+ * diaries 93% repeated breakfast foods and 58% dinner foods; Pai and
+ * Sabharwal 2022). A food never logged at this meal is still offered,
+ * after the ones that are. With no meal chosen every `atMeal` is 0 and
+ * the order is the count's.
+ *
+ * A comparator for `Array.prototype.sort`: negative puts `a` first.
+ */
+export function compareQuickAddTallies(
+  a: QuickAddTally,
+  b: QuickAddTally
+): number {
+  return (
+    b.atMeal - a.atMeal ||
+    b.count - a.count ||
+    b.lastLogged.localeCompare(a.lastLogged)
+  );
+}
+
 /**
  * Apply a cached order to a current set of items.
  *

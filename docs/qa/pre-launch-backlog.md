@@ -4285,3 +4285,66 @@ are checked on the first TestFlight build that carries it.
 - [ ] **Reduce Motion.** With Reduce Motion on in iOS Settings, repeat
       the first check. Passing: sheets and screens still appear and
       close, with a fade in place of the slide.
+
+## Food leads with the calorie wheel (Food11, 2026-11-11)
+
+Affects: the Food page (`Food.tsx`, `FoodHeroCard`, `CalorieRing`,
+`FoodWeekStrip`, `FoodMacroRow`, `FoodComposerCard`, `FoodMealChip`,
+`FoodLogFlight`) and Home's food card, which draws the same wheel. The
+captures in `docs/visual-audit/food-2026-11-11/` are the real components
+in a desktop Chrome on the emulator. A phone decides the rest: the
+keyboard, the safe areas, Dynamic Type, and how the flight runs in
+WKWebView.
+
+- [ ] **The first screen.** On a TestFlight build, open Food on an iPhone
+      13 mini or an SE in Display Zoom. Passing: the wheel, Details, the
+      week's bars, the macros and the whole composer field (the camera at
+      its end included) are above the tab bar without scrolling.
+- [ ] **The wheel fills.** Log a food on a day with nothing logged.
+      Passing: the wheel starts as a grey track and grows by what was
+      logged, in both the "left" and the "logged" view (tap the wheel to
+      switch); the number alone changes between the two. Home's food card
+      shows the same arc.
+- [ ] **Over the target.** On a day over its target, the second lap is a
+      deeper orange and its head stands clear of the first lap by a thin
+      line of the page's colour. Passing: the two laps can be told apart
+      at arm's length, in light and in dark.
+- [ ] **The flight.** Log a food by typing, and again from the Quick add
+      list. Passing: its drawing rises from the field to the end of the
+      arc and the arc then grows, in about half a second, with no stutter
+      and no jump of the page; the keyboard stays up and the next food
+      can be typed straight away. Scroll the wheel off the screen and log
+      again: nothing flies. Edit a meal, delete one, and log on
+      yesterday: nothing flies.
+- [ ] **Reduce Motion.** With Settings → Accessibility → Motion → Reduce
+      Motion on, log a food. Passing: nothing flies, and the wheel and
+      the macros are at their new figures at once.
+- [ ] **The meal chip.** Tap the chip in the field. Passing: the four
+      meals open under it, the chosen one marked; a tap on another closes
+      the menu, changes the chip and puts the cursor in the field with
+      the keyboard up; a tap outside closes it and changes nothing. With
+      VoiceOver the chip reads "Add to Lunch. Change meal" and the menu's
+      rows read as checked or not. On an SE in Display Zoom, where the
+      menu opens over the text's row, each of the four meals can be
+      picked.
+- [ ] **The camera in the field.** Tap the camera at the end of the
+      field. Passing: the scanner opens, growing out of the camera; a
+      thumb finds it without looking (its tap area is 48 pt); the orange
+      camera can be made out on the light field in daylight. Type a few
+      words and tap the send arrow, then the camera: each does its own
+      thing and neither fires the other.
+- [ ] **The field while typing.** Type a long line ("200g chicken and
+      rice with a side salad"). Passing: the pencil has gone, the text
+      wraps inside the field, the field grows with it, and the send arrow
+      and the camera stay level with the field's middle. On an SE in
+      Display Zoom the pencil and the text are the row under the chip,
+      and the field does not change height when it is tapped.
+- [ ] **Larger text.** At the largest standard text size and at the
+      largest accessibility size, open Food. Passing: the header row, the
+      wheel's label (it may wrap inside the ring), the week, the macros
+      (they stack) and the composer (the text drops under the chip) all
+      fit the screen, with nothing cut off and no sideways scroll.
+- [ ] **The usual foods follow the meal.** With a history of breakfast
+      and lunch foods, focus the field with the chip on Breakfast, then
+      on Lunch. Passing: each list leads with that meal's foods, and
+      logging one does not reshuffle the list on screen.

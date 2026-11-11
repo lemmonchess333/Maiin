@@ -1,0 +1,100 @@
+// Scratch, not committed: what a week rollover does to an untouched and a reordered plan; added-lift first weights.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { advanceWeek } from "../programEngine";
+import type { ProgramState, WorkoutDay } from "../programTypes";
+import { addedExerciseWeight, loadContextFrom } from "../startingLoads";
+import { estimateSessionSeconds } from "../expressSession";
+import { warmupsOutgrewFit } from "../sessionFit";
+import { warmupSetCounts } from "../warmupRamp";
+import { EXERCISES } from "@/lib/exercises";
+import { exerciseRole } from "../exerciseRole";
+
+const BASE: PlanBuilderInput = {
+  primaryGoal: "hypertrophy",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  preferredSplit: "auto" as never,
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: "2026-11-09",
+  preserveHistory: false,
+};
+
+const show = (workouts: WorkoutDay[]) =>
+  workouts.map((d) => ({
+    name: d.dayName,
+    seconds: Math.round(estimateSessionSeconds(d.exercises as never)),
+    outgrew: warmupsOutgrewFit(d.exercises, 60),
+    warmups: warmupSetCounts(d.exercises as never),
+    ex: d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}-${e.repRangeMax ?? ""} @${e.weight}`),
+  }));
+
+const done = (s: ProgramState): ProgramState => ({
+  ...s,
+  workouts: s.workouts.map((d) => ({ ...d, completed: true })),
+});
+const roll = (s: ProgramState, exp = "intermediate", goal = "hypertrophy") =>
+  advanceWeek(done(s), exp as never, "2026-11-16", null, { primaryGoal: goal as never });
+
+it("rollover and added weights", () => {
+  const out: Record<string, unknown> = {};
+  const first = buildPlan(BASE).programState;
+  out.first = show(first.workouts);
+  out.rolledUntouched = show(roll(first).workouts);
+
+  // Reorder only: each possible "move X first" on each day, then roll.
+  const reorders: unknown[] = [];
+  first.workouts.forEach((day, d) => {
+    day.exercises.forEach((ex, e) => {
+      if (e === 0) return;
+      const moved: ProgramState = {
+        ...first,
+        workouts: first.workouts.map((dd, i) =>
+          i !== d ? dd : { ...dd, exercises: [ex, ...dd.exercises.filter((x) => x !== ex)] }
+        ),
+      };
+      const before = show(moved.workouts)[d];
+      const after = show(roll(moved).workouts)[d];
+      const setsBefore = moved.workouts[d].exercises.reduce((t, x) => t + x.sets, 0);
+      const rolled = roll(moved).workouts.find((w) => w.dayName === day.dayName)!;
+      const setsAfter = rolled.exercises.reduce((t, x) => t + x.sets, 0);
+      reorders.push({
+        day: day.dayName,
+        movedFirst: ex.name,
+        secondsBefore: before.seconds,
+        outgrew: before.outgrew,
+        warmups: before.warmups,
+        setsBefore,
+        setsAfter,
+        cut: rolled.exercises
+          .map((x) => {
+            const b = moved.workouts[d].exercises.find((y) => y.instanceId === x.instanceId)!;
+            return b.sets !== x.sets ? `${x.name} ${b.sets}->${x.sets}` : null;
+          })
+          .filter(Boolean),
+        afterSeconds: after.seconds,
+      });
+    });
+  });
+  out.reorders = reorders;
+
+  // First weights Train's "Add exercise" gives an 80 kg intermediate man, per catalogue lift.
+  const ctx = loadContextFrom({ weightKg: 80, experience: "intermediate", sex: "male" } as never);
+  out.addedWeights = EXERCISES.filter((e) => e.category !== "Cardio").map((e) => ({
+    id: e.id,
+    name: e.name,
+    equipment: e.equipment,
+    muscle: e.muscleGroup,
+    role: exerciseRole({ exerciseId: e.id, movementCategory: "accessory" } as never),
+    weight: addedExerciseWeight(e.id, ctx),
+  }));
+  writeFileSync("/tmp/work/train/adapt-rollover.json", JSON.stringify(out, null, 1));
+});

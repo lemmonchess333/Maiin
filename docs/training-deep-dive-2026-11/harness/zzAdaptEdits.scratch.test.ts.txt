@@ -1,0 +1,221 @@
+// Scratch, not committed: do a person's plan edits survive a settings save and a week rollover?
+import { it } from "vitest";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { advanceWeek } from "../programEngine";
+import { normalizeExercise, type ProgramState, type WorkoutDay } from "../programTypes";
+import { withRoleNumbers } from "../represcribe";
+import { weightAfterExerciseSwap, loadContextFrom } from "../startingLoads";
+import { getExerciseById } from "@/lib/exercises";
+import { estimateSessionMinutes } from "../expressSession";
+
+const BASE: PlanBuilderInput = {
+  primaryGoal: "hypertrophy",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  preferredSplit: "auto" as never,
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: "2026-11-09",
+  preserveHistory: false,
+};
+const ctx = loadContextFrom({ weightKg: 80, experience: "intermediate", sex: "male" } as never);
+
+function show(workouts: WorkoutDay[]) {
+  return workouts.map((d) => ({
+    name: d.dayName,
+    minutes: estimateSessionMinutes(d.exercises as never),
+    ex: d.exercises.map(
+      (e) =>
+        `${e.name} ${e.sets}x${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""} @${e.weight}${e.isAccessory ? "" : " [M]"}${e.instanceId?.startsWith("cmd-") ? " {edited}" : ""}`
+    ),
+  }));
+}
+
+function replace(state: ProgramState, dayIndex: number, fromId: string, toId: string, tag: string): ProgramState {
+  const old = state.workouts[dayIndex].exercises.find((e) => e.exerciseId === fromId);
+  if (!old) throw new Error(`no ${fromId} on day ${dayIndex}`);
+  const cal = weightAfterExerciseSwap(old, toId, ctx);
+  const instanceId = `cmd-${tag}`;
+  const replaced = state.workouts.map((d, i) =>
+    i !== dayIndex
+      ? d
+      : {
+          ...d,
+          exercises: d.exercises.map((ex) =>
+            ex !== old
+              ? ex
+              : normalizeExercise({
+                  name: getExerciseById(toId)?.name ?? toId,
+                  exerciseId: toId,
+                  instanceId,
+                  sets: old.sets,
+                  reps: old.reps,
+                  weight: cal.weight,
+                  movementCategory: cal.movementCategory,
+                  baseReps: old.baseReps,
+                  progressionType: old.progressionType,
+                  ...(old.repRangeMax !== undefined ? { repRangeMax: old.repRangeMax } : {}),
+                  ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
+                  ...(old.isAccessory !== undefined ? { isAccessory: old.isAccessory } : {}),
+                })
+          ),
+        }
+  );
+  return { ...state, workouts: replaced };
+}
+
+function add(state: ProgramState, dayIndex: number, id: string, tag: string): ProgramState {
+  const instanceId = `cmd-${tag}`;
+  const added = state.workouts.map((d, i) =>
+    i !== dayIndex
+      ? d
+      : {
+          ...d,
+          exercises: [
+            ...d.exercises,
+            normalizeExercise({
+              name: getExerciseById(id)?.name ?? id,
+              exerciseId: id,
+              instanceId,
+              sets: 3,
+              reps: 10,
+              weight: 10,
+            }),
+          ],
+        }
+  );
+  return {
+    ...state,
+    workouts: withRoleNumbers(added, dayIndex, instanceId, state.primaryGoal ?? "general", "intermediate"),
+  };
+}
+
+function remove(state: ProgramState, dayIndex: number, id: string): ProgramState {
+  return {
+    ...state,
+    workouts: state.workouts.map((d, i) =>
+      i !== dayIndex ? d : { ...d, exercises: d.exercises.filter((e) => e.exerciseId !== id) }
+    ),
+  };
+}
+
+function moveFirst(state: ProgramState, dayIndex: number, id: string): ProgramState {
+  return {
+    ...state,
+    workouts: state.workouts.map((d, i) => {
+      if (i !== dayIndex) return d;
+      const ex = d.exercises.find((e) => e.exerciseId === id);
+      if (!ex) throw new Error(`no ${id}`);
+      return { ...d, exercises: [ex, ...d.exercises.filter((e) => e !== ex)] };
+    }),
+  };
+}
+
+/** A person bumps a lift's sets by hand (no UI does this; shows what the engine would do with it). */
+function setSets(state: ProgramState, dayIndex: number, id: string, sets: number, withBase: boolean): ProgramState {
+  return {
+    ...state,
+    workouts: state.workouts.map((d, i) =>
+      i !== dayIndex
+        ? d
+        : {
+            ...d,
+            exercises: d.exercises.map((e) =>
+              e.exerciseId === id ? { ...e, sets, ...(withBase ? { baseSets: sets } : {}) } : e
+            ),
+          }
+    ),
+  };
+}
+
+it("edits vs rebuild", () => {
+  mkdirSync("/tmp/work/train", { recursive: true });
+  const first = buildPlan(BASE).programState;
+  let edited = first;
+  edited = replace(edited, 0, "bench-press", "incline-db-press", "repl-bench");
+  edited = add(edited, 0, "face-pulls", "add-facepull");
+  edited = remove(edited, 1, "cable-crunch");
+  edited = moveFirst(edited, 2, "lateral-raise");
+  edited = replace(edited, 3, "deadlift", "romanian-deadlift", "repl-dl");
+  edited = add(edited, 3, "leg-press", "add-legpress");
+  // logged progress on a lift, to see whether loads carry
+  edited = {
+    ...edited,
+    workouts: edited.workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) =>
+        e.exerciseId === "squat" ? { ...e, weight: 111, lastSuccessfulWeight: 111 } : e
+      ),
+    })),
+  };
+
+  const out: Record<string, unknown> = { first: show(first.workouts), edited: show(edited.workouts) };
+
+  const save = (label: string, over: Partial<PlanBuilderInput>, state: ProgramState = edited) => {
+    try {
+      const res = buildPlan({
+        ...BASE,
+        previousExperience: BASE.experience,
+        previousSessionMinutes: BASE.sessionMinutes,
+        existingState: state,
+        preserveHistory: true,
+        ...over,
+      });
+      out[label] = show(res.programState.workouts);
+    } catch (err) {
+      out[label] = { error: String(err).slice(0, 300) };
+    }
+  };
+  save("save:nothing-changed", {});
+  save("save:minutes=45", { sessionMinutes: 45 });
+  save("save:minutes=75", { sessionMinutes: 75 });
+  save("save:liftDays=5", { liftDays: 5 });
+  save("save:liftDays=3", { liftDays: 3 });
+  save("save:equipment=home_gym", { equipment: "home_gym" });
+  save("save:injury=shoulder", { injuries: ["shoulder"] });
+  save("save:experience=advanced", { experience: "advanced" });
+  save("save:experience=beginner", { experience: "beginner" });
+  save("save:goal=strength", { primaryGoal: "strength" });
+
+  // Week rollover on the edited plan (all days done).
+  const done = { ...edited, workouts: edited.workouts.map((d) => ({ ...d, completed: true })) };
+  const rolled = advanceWeek(done, "intermediate", "2026-11-16", null, { primaryGoal: "hypertrophy" });
+  out["rollover:week2"] = show(rolled.workouts);
+
+  // A hand-set set count, with and without its anchor, through a rollover and a no-op save.
+  const bumped = setSets(edited, 1, "squat", 5, false);
+  const bumpedDone = { ...bumped, workouts: bumped.workouts.map((d) => ({ ...d, completed: true })) };
+  out["sets5-noBase:rollover"] = show(
+    advanceWeek(bumpedDone, "intermediate", "2026-11-16", null, { primaryGoal: "hypertrophy" }).workouts
+  )[1];
+  const bumpedB = setSets(edited, 1, "squat", 5, true);
+  const bumpedBDone = { ...bumpedB, workouts: bumpedB.workouts.map((d) => ({ ...d, completed: true })) };
+  out["sets5-withBase:rollover"] = show(
+    advanceWeek(bumpedBDone, "intermediate", "2026-11-16", null, { primaryGoal: "hypertrophy" }).workouts
+  )[1];
+  save("sets5-withBase:save-nothing", {}, bumpedB);
+  save("sets5-withBase:save-minutes45", { sessionMinutes: 45 }, bumpedB);
+
+  // Level change on a beginner's plan: what a "graduated" beginner keeps.
+  const beginner = buildPlan({ ...BASE, experience: "beginner" }).programState;
+  out["beginner:first"] = show(beginner.workouts);
+  const grad = buildPlan({
+    ...BASE,
+    experience: "intermediate",
+    previousExperience: "beginner",
+    previousSessionMinutes: 60,
+    existingState: beginner,
+    preserveHistory: true,
+  }).programState;
+  out["beginner->intermediate:save"] = show(grad.workouts);
+  out["intermediate:fresh"] = show(first.workouts);
+
+  writeFileSync("/tmp/work/train/adapt-edits.json", JSON.stringify(out, null, 1));
+});

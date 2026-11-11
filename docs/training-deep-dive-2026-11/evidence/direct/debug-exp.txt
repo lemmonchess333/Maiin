@@ -1,0 +1,17 @@
+2026-03-09 wk1 :: easy_30 easy_30_strides easy_30 easy_30 easy_30 long_12k
+2026-03-09 wk1 :: easy_30 easy_30_strides easy_30 easy_30 easy_30 long_12k
+2026-03-16 wk2 :: easy_30 easy_30_strides easy_30 easy_30 easy_30 long_15k
+2026-03-23 wk3 :: easy_40 easy_30_strides easy_30 easy_30 easy_30 long_15k
+2026-03-30 wk4 :: easy_30 easy_30_strides easy_30 easy_30 easy_30 long_12k
+2026-04-06 wk5 :: easy_50 easy_30_strides easy_30 easy_30 easy_30 long_15k
+2026-04-13 wk6 :: easy_50 4x1k easy_30_strides easy_30 easy_30 long_20k
+2026-04-20 wk7 :: easy_40_strides tempo_20 easy_40 easy_60 easy_40 long_20k
+2026-04-27 wk8 :: easy_50 4x1k easy_30_strides easy_30 easy_30 long_15k
+2026-05-04 wk9 :: easy_40_strides tempo_30 easy_40 easy_50(was easy_60:weekly) easy_40 long_20k
+2026-05-11 wk10 :: easy_40_strides 5x1k easy_40 easy_60(was easy_75:weekly) easy_40 long_25k
+2026-05-18 wk11 :: easy_40_strides tempo_30(was tempo_40:weekly) easy_40 easy_50(was easy_75:weekly) easy_40 long_25k
+2026-05-25 wk12 :: easy_50_strides 6x1k easy_50 easy_40(was easy_90:weekly) easy_40(was easy_50:weekly) long_25k
+2026-06-01 wk13 :: easy_30 8x400 easy_30 easy_60 easy_30 long_15k
+2026-06-08 wk14 :: easy_50 8x400 easy_30 easy_30 easy_30 long_15k
+2026-06-15 wk15 :: easy_30 8x400 easy_30 easy_30 easy_30 easy_30
+2026-06-22 wk16 :: easy_30 easy_30 easy_30 easy_30 easy_30 easy_30 marathon_race

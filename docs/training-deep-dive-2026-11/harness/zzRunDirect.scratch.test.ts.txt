@@ -1,0 +1,164 @@
+/**
+ * SCRATCH (git-ignored): direct calls into the run scheduler.
+ */
+import { mkdirSync, writeFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import {
+  generateRacePlanV2,
+  maxSchedulableLongKm,
+  type RacePlanV2Input,
+} from "../runScheduler";
+import { trainingBands } from "@/lib/runPaces";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { addLocalDays, localDateString, parseLocalDate } from "@/lib/dateHelpers";
+
+const OUT = "/tmp/work/train/direct";
+mkdirSync(OUT, { recursive: true });
+
+const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const sched = (runDays: number[]): ScheduleDay[] =>
+  [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+    day,
+    type: runDays.includes(day) ? "run" : "rest",
+  })) as ScheduleDay[];
+
+const START = "2026-03-09";
+const after = (weeks: number, days = 6) =>
+  localDateString(addLocalDays(parseLocalDate(START), (weeks - 1) * 7 + days));
+
+function outline(input: RacePlanV2Input) {
+  const plan = generateRacePlanV2(input);
+  return {
+    totalWeeks: plan.totalWeeks,
+    compressed: plan.compressed,
+    belowFloor: plan.belowFloor,
+    weeks: plan.weeks.map((w) =>
+      w.map((r) => `${DAY[r.dayIndex]}:${r.templateId}`).join(" · ")
+    ),
+  };
+}
+
+describe("zz run direct (scratch)", () => {
+  it("long-run ceiling by VDOT (Run17)", () => {
+    const rows: string[] = [];
+    for (let vdot = 26; vdot <= 62; vdot += 2) {
+      const [fast, slow] = trainingBands(vdot).easy;
+      const mid = Math.round((fast + slow) / 2);
+      const m = trainingBands(vdot).marathon;
+      rows.push(
+        `vdot ${String(vdot)} easy-mid ${String(Math.floor(mid / 60))}:${String(mid % 60).padStart(2, "0")}/km marathon-pace-mid ${String(Math.round((m[0] + m[1]) / 2))}s/km -> max long ${String(maxSchedulableLongKm(mid))} km`
+      );
+    }
+    rows.push(`no benchmark -> max long ${String(maxSchedulableLongKm(null))} km`);
+    writeFileSync(`${OUT}/ceiling.txt`, rows.join("\n"));
+    expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it("outlines", () => {
+    const base = {
+      weekSchedule: sched([1, 3, 5, 0]),
+      weeklyRunDays: 4,
+      currentDate: START,
+      weekStart: START,
+      recentLayoff: "none" as const,
+    };
+    const cases: Record<string, RacePlanV2Input> = {
+      // no benchmark, no baseline: the nominal marathon, 18 weeks
+      "marathon-18w-nominal": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(18) },
+      },
+      "marathon-18w-easy-415": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(18) },
+        easyPaceSPerKm: 415,
+      },
+      "marathon-18w-easy-300": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(18) },
+        easyPaceSPerKm: 300,
+      },
+      "marathon-12w-nominal": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(12) },
+      },
+      "marathon-6w-easy-415": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(6) },
+        easyPaceSPerKm: 415,
+      },
+      "marathon-4w-nominal": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(4) },
+      },
+      "marathon-3w-nominal": {
+        ...base,
+        raceGoal: { distance: "marathon", targetDate: after(3) },
+      },
+      "half-14w-nominal": {
+        ...base,
+        raceGoal: { distance: "half", targetDate: after(14) },
+      },
+      "half-8w-nominal": {
+        ...base,
+        raceGoal: { distance: "half", targetDate: after(8) },
+      },
+      "10k-12w-nominal": {
+        ...base,
+        raceGoal: { distance: "10k", targetDate: after(12) },
+      },
+      "10k-6w-nominal": {
+        ...base,
+        raceGoal: { distance: "10k", targetDate: after(6) },
+      },
+      "5k-10w-nominal": {
+        ...base,
+        weekSchedule: sched([3, 5, 0]),
+        weeklyRunDays: 3,
+        raceGoal: { distance: "5k", targetDate: after(10) },
+      },
+      "5k-6w-nominal": {
+        ...base,
+        weekSchedule: sched([3, 5, 0]),
+        weeklyRunDays: 3,
+        raceGoal: { distance: "5k", targetDate: after(6) },
+      },
+      "marathon-18w-harder-6days-easy-323": {
+        ...base,
+        weekSchedule: sched([1, 2, 3, 4, 5, 6]),
+        weeklyRunDays: 6,
+        raceGoal: { distance: "marathon", targetDate: after(18) },
+        easyPaceSPerKm: 323,
+        tuning: { volume: "bigger", difficulty: "harder" },
+      },
+      "marathon-18w-2days": {
+        ...base,
+        weekSchedule: sched([3, 0]),
+        weeklyRunDays: 2,
+        raceGoal: { distance: "marathon", targetDate: after(18) },
+      },
+      "half-12w-7days": {
+        ...base,
+        weekSchedule: sched([0, 1, 2, 3, 4, 5, 6]),
+        weeklyRunDays: 7,
+        raceGoal: { distance: "half", targetDate: after(12) },
+      },
+    };
+    const out: Record<string, unknown> = {};
+    for (const [name, input] of Object.entries(cases)) out[name] = outline(input);
+    writeFileSync(`${OUT}/outlines.json`, JSON.stringify(out, null, 1));
+    writeFileSync(
+      `${OUT}/templates-min.json`,
+      JSON.stringify(
+        Object.fromEntries(
+          RUN_TEMPLATES.map((t) => [
+            t.id,
+            { type: t.type, min: t.estimatedDuration, km: t.config.targetDistanceKm ?? null },
+          ])
+        )
+      )
+    );
+    expect(Object.keys(out).length).toBeGreaterThan(0);
+  });
+});
