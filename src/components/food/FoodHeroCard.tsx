@@ -22,7 +22,6 @@ import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
-import Card from "@/components/ui/Card";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
@@ -387,71 +386,66 @@ export default function FoodHeroCard({
         </div>
       </div>
 
-      {/* Macro tile row — three floating tiles. Each reads the SAME shared
-        `mode` as the calorie ring, and tapping any tile flips that one
-        shared mode (via toggleMode) so the ring + all three tiles stay in
-        lockstep. mt-4 = 16px gap to the calorie card above.
+      {/* The macros: one row, no boxes (Food11 call 4). Three boxed tiles
+        under the boxed ring made four cards of the page's first screen,
+        with the macro's name as a 12px caption at the bottom of each;
+        the row reads as three lines of text with a thin bar under each.
+        Each reads the SAME shared `mode` as the calorie ring, and
+        tapping any of them flips that one shared mode (via toggleMode)
+        so the ring and all three stay in lockstep.
 
         An explicit 3-column GRID rather than flex-1 children: flex-1
         sizes from content, so the widest macro number could take space
-        from its neighbours and the three tiles stopped being the same
-        width exactly when the numbers got long. grid-cols-3 makes the
-        columns equal by construction, and `min-w-0` on each cell lets a
-        long number shrink inside its own tile instead of pushing the
-        row wider. gap-2 matches the compact-grid rule in the design
-        system and the Analytics period summary's figures. Under 10em
-        (double text on a 320px phone) they stack: three across, "101g"
-        ran into its neighbours. */}
+        from its neighbours. grid-cols-3 makes the columns equal by
+        construction, and `min-w-0` on each lets a long number shrink
+        inside its own column. Under 14em (larger text on a narrow
+        phone) they stack: three across, "Protein" beside its icon ran
+        past an 85px column at 1.35x text on a 320px phone. */}
       {!beforeJoined && (
         <div className="@container mt-4">
-          <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
-            <Card size="compact" className="min-w-0 flex">
-              <MacroColumn
-                macroKey="protein"
-                Icon={Beef}
-                consumed={dailyTotals.protein}
-                target={
-                  dailyTargets.targetInfeasible ? 0 : dailyTargets.protein
-                }
-                label="Protein"
-                color={THEME.macros.protein}
-                mode={mode}
-                onTap={toggleMode}
-                numberDurationSec={LOG_MOMENT_SEC}
-                barDurationSec={LOG_MOMENT_SEC}
-                drawIn={drawIn}
-              />
-            </Card>
-            <Card size="compact" className="min-w-0 flex">
-              <MacroColumn
-                macroKey="carbs"
-                Icon={Wheat}
-                consumed={dailyTotals.carbs}
-                target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-                label="Carbs"
-                color={THEME.macros.carbs}
-                mode={mode}
-                onTap={toggleMode}
-                numberDurationSec={LOG_MOMENT_SEC}
-                barDurationSec={LOG_MOMENT_SEC}
-                drawIn={drawIn}
-              />
-            </Card>
-            <Card size="compact" className="min-w-0 flex">
-              <MacroColumn
-                macroKey="fat"
-                Icon={Avocado}
-                consumed={dailyTotals.fat}
-                target={dailyTargets.fat}
-                label="Fat"
-                color={THEME.macros.fat}
-                mode={mode}
-                onTap={toggleMode}
-                numberDurationSec={LOG_MOMENT_SEC}
-                barDurationSec={LOG_MOMENT_SEC}
-                drawIn={drawIn}
-              />
-            </Card>
+          <div className="grid grid-cols-3 @max-[14em]:grid-cols-1 gap-x-4 gap-y-3">
+            <MacroColumn
+              size="row"
+              macroKey="protein"
+              Icon={Beef}
+              consumed={dailyTotals.protein}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
+              label="Protein"
+              color={THEME.macros.protein}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+            <MacroColumn
+              size="row"
+              macroKey="carbs"
+              Icon={Wheat}
+              consumed={dailyTotals.carbs}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
+              label="Carbs"
+              color={THEME.macros.carbs}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+            <MacroColumn
+              size="row"
+              macroKey="fat"
+              Icon={Avocado}
+              consumed={dailyTotals.fat}
+              target={dailyTargets.fat}
+              label="Fat"
+              color={THEME.macros.fat}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
           </div>
         </div>
       )}

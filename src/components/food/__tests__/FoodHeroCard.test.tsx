@@ -86,6 +86,28 @@ describe("FoodHeroCard — the targets gear has left the card", () => {
   });
 });
 
+describe("FoodHeroCard — the macros are one row with no boxes", () => {
+  it("draws the three macros in the row form, outside any card", () => {
+    // Food11 call 4. Three boxed tiles under the boxed ring were four of
+    // the twelve boxes the first screen carried.
+    const { container } = renderHero();
+    const macros = Array.from(container.querySelectorAll("[data-macro]"));
+    expect(macros.map((m) => m.getAttribute("data-macro"))).toEqual([
+      "protein",
+      "carbs",
+      "fat",
+    ]);
+    for (const macro of macros) {
+      expect(macro).toHaveClass("text-left");
+      expect(macro.closest(".card-shadow")).toBeNull();
+      expect(macro.closest(".bg-card")).toBeNull();
+    }
+    const grid = macros[0].parentElement!;
+    expect(grid).toHaveClass("grid", "grid-cols-3");
+    expect(macros.every((m) => m.parentElement === grid)).toBe(true);
+  });
+});
+
 describe("FoodHeroCard — single shared display mode", () => {
   beforeEach(() => {
     window.localStorage.clear();

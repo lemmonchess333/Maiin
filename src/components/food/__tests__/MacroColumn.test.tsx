@@ -424,7 +424,7 @@ describe("MacroColumn — compact size", () => {
     return out;
   }
 
-  it("keeps the Food page's tile as the default", () => {
+  it("keeps the centred tile as the default", () => {
     const tile = draw();
     expect(tile.icon).toContain("size-6");
     expect(tile.number).toContain("text-2xl");
@@ -436,5 +436,83 @@ describe("MacroColumn — compact size", () => {
     expect(compact.icon).toContain("size-5");
     expect(compact.number).toContain("text-xl");
     expect(compact.track).toContain("var(--muted-foreground)");
+  });
+});
+
+/**
+ * The row is Food's (Food11 call 4): no box, read from the left. The
+ * name leads at the page's 14px, the figure has its word beside it, and
+ * the bar is a 4px line on the wheel's grey groove.
+ */
+describe("MacroColumn — the row form", () => {
+  function drawRow(mode: "left" | "eaten" = "left") {
+    return render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={172}
+        target={273}
+        label="Carbs"
+        color="#EAB308"
+        mode={mode}
+        size="row"
+        drawIn={false}
+      />
+    );
+  }
+
+  it("reads name, then figure and word, then bar, from the left", () => {
+    const { container } = drawRow();
+    const button = container.querySelector("[data-macro]")!;
+    expect(button).toHaveClass("text-left", "items-stretch");
+    expect(button).not.toHaveClass("text-center", "items-center");
+
+    const [nameLine, figureLine, bar] = Array.from(button.children);
+    expect(nameLine).toHaveTextContent(/^Carbs$/);
+    expect(nameLine).toHaveClass("text-sm", "font-semibold", "text-foreground");
+    expect(nameLine.querySelector("svg")).toHaveClass("size-4");
+    expect(figureLine).toHaveTextContent(/^101g\s*left$/);
+    expect(bar).toHaveAttribute("data-macro-bar");
+  });
+
+  it("sets the figure at 20px with its g and its word at 14px", () => {
+    const { container } = drawRow();
+    const unit = container.querySelector("[data-macro-unit]")!;
+    expect(unit).toHaveClass("text-sm", "font-sans", "font-medium");
+    const figure = unit.parentElement!;
+    expect(figure).toHaveClass("text-xl", "font-figure", "whitespace-nowrap");
+    expect(figure).not.toHaveClass("text-2xl");
+    const word = figure.nextElementSibling!;
+    expect(word).toHaveTextContent(/^left$/);
+    expect(word).toHaveClass("text-sm", "text-muted-foreground");
+    // The word may drop under the figure in a narrow column, never clip.
+    expect(figure.parentElement).toHaveClass("flex-wrap");
+  });
+
+  it("draws a 4px bar on the wheel's groove, with no inner shadow", () => {
+    const { container } = drawRow();
+    const track = container.querySelector<HTMLElement>("[data-macro-bar]")!;
+    expect(track).toHaveClass("h-1");
+    expect(track).not.toHaveClass("h-1.5");
+    expect(track.style.background).toContain("var(--muted-foreground)");
+    expect(track.style.boxShadow).toBe("");
+  });
+
+  it("is at least 44px tall and fills its column", () => {
+    const { container } = drawRow();
+    expect(container.querySelector("[data-macro]")).toHaveClass(
+      "min-h-[44px]",
+      "w-full",
+      "min-w-0"
+    );
+  });
+
+  it("keeps the tile's name for screen readers", () => {
+    drawRow("eaten");
+    expect(
+      screen.getByRole("button", {
+        name: "Show carbs remaining. 172g logged of 273g",
+      })
+    ).toBeInTheDocument();
   });
 });
