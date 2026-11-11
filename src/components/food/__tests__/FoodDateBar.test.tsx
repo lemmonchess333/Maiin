@@ -27,7 +27,7 @@ vi.mock("@/lib/haptic", function () {
 import FoodDateBar from "../FoodDateBar";
 
 describe("FoodDateBar", function () {
-  it("renders 'Today' when isToday is true", function () {
+  it("renders 'Today' with the date beside it when isToday is true", function () {
     render(
       <FoodDateBar
         selectedDate="2024-01-15"
@@ -38,6 +38,38 @@ describe("FoodDateBar", function () {
       />
     );
     expect(screen.getByText("Today")).toBeInTheDocument();
+    // The header row has room for the date now that no title shares it
+    // (Food11 call 1).
+    expect(screen.getByText("Mon 15 Jan")).toBeInTheDocument();
+  });
+
+  it("names the day button by what it shows, then what it does", function () {
+    render(
+      <FoodDateBar
+        selectedDate="2024-01-15"
+        isToday
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onPick={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Today, Mon 15 Jan. Select date" })
+    ).toBeInTheDocument();
+  });
+
+  it("is not a pill: the header row carries no box of its own", function () {
+    const { container } = render(
+      <FoodDateBar
+        selectedDate="2024-01-15"
+        isToday
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onPick={vi.fn()}
+      />
+    );
+    const row = container.firstElementChild as HTMLElement;
+    expect(row.className).not.toMatch(/bg-card|card-shadow|rounded-full/);
   });
 
   it("renders formatted date when not today", function () {
@@ -51,8 +83,8 @@ describe("FoodDateBar", function () {
       />
     );
     // date-fns "EEE d MMM" → "Mon 15 Jan" (en-GB day-before-month, the
-    // app's one date treatment; the short month so the cluster shares
-    // the title row)
+    // app's one date treatment; the short month keeps the header row
+    // on one line)
     expect(screen.getByText("Mon 15 Jan")).toBeInTheDocument();
   });
 

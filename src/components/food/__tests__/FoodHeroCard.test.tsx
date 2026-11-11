@@ -77,13 +77,12 @@ function ringButton() {
   });
 }
 
-describe("FoodHeroCard — adjust-targets gear", () => {
-  it("deep-links to the focused nutrition editor, not the Settings list", () => {
+describe("FoodHeroCard — the targets gear has left the card", () => {
+  it("draws no targets link: it is in the page's header row (Food11)", () => {
     renderHero();
-    const gear = screen.getByRole("link", {
-      name: /adjust nutrition targets/i,
-    });
-    expect(gear).toHaveAttribute("href", "/settings/nutrition");
+    expect(
+      screen.queryByRole("link", { name: /adjust nutrition targets/i })
+    ).toBeNull();
   });
 });
 
