@@ -1,0 +1,85 @@
+# Build plan: the lifting session, built to its minutes
+
+11 November 2026. What follows Lift21 (#3190) and Pgm9 (#3189). Each slice is
+one PR or a short run of them, and each PR that changes what is built carries
+its printed panel.
+
+## What the owner sees, and when
+
+| After   | On his phone                                                                                                           |
+| ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Slice 2 | Settings, Programme, Reset gives the new week. On the web build at once; in the iOS app with the next TestFlight build |
+| Slice 4 | Train says when a day runs far past its length and offers the rebuild itself. His 12-lift Pull A is the first case     |
+| Slice 5 | The minutes on each day match what his saved sessions took                                                             |
+
+## Slices
+
+### 1. Prove the rules on every split, in prints
+
+A pure module that sizes a day from an ordered list (`Lift21` calls 1 to 5),
+with no production caller, and a harness that prints the panel: 3, 4, 5 and 6
+days; 30, 45, 60 and 75 minutes; beginner and intermediate; Build muscle,
+General fitness and Get stronger. Beside each print, what main builds.
+
+Done when every print meets these, checked in the harness:
+
+- no day over its time on the engine's clock (45-minute leg days excepted
+  until slice 5, at no more than 4 minutes over);
+- no day under 85% of its time while its list has lifts left;
+- no lift under 3 sets for a non-beginner outside a 30-minute day;
+- paired days within one lift of each other;
+- each kind of day holds what call 4 says.
+
+### 2. The builder makes those weeks
+
+- Day lists in `programEngine.ts` rewritten as ordered slots with a place
+  (main, second, support), for full body, upper/lower, push/pull/legs and the
+  five-day mix.
+- `roleTable.ts`: 4 sets on the main lift from 60 minutes.
+- `sessionFit.ts`: lifts come off the end before sets are cut; the old order
+  goes, with its tests.
+- `volumeModel.ts`: `SECONDARY_SET_WEIGHT` to 0.5; the ceiling drops
+  (`extraPastCeiling`, `accessoriesPastCeiling`, the hinge drop) leave the
+  builder. A new ADR records it over ADR-0010.
+- Day roles apply only to a lift that is a main lift twice in the week.
+- The golden sweep is replaced by the panel's prints, with an under check
+  beside the over check. A six-day lifter joins the simulator's personas.
+- STATUS lines on Lift4, Lift9, Lift10, Lift11, Lift12 and Lift17; the lifting
+  handoff and `GLOSSARY.md` updated.
+- New plans only. A plan a person has is untouched.
+
+Risks: the simulator's ratchets were fitted to the old volumes and will move;
+each move is explained in the PR or the change is wrong. Injury and kit swaps
+must still leave no contraindicated lift (8,640 plans in the sweep).
+
+### 3. The defects that need no decision
+
+From the README's step 1, as small PRs beside slice 2: an added lift's first
+weight, the lower-back swaps, the bodyweight cap, one-rep ranges, the lifting
+taper in the week a plan is made, lift order chosen last, and one weight for a
+lift held on two days.
+
+### 4. A kept plan that has outgrown its time
+
+When a day prices at more than 125% of the session length, Train shows one
+line with the day's real minutes and two choices: rebuild the plan for the
+length, or keep the day as it is. A mockup comes first (DESIGN_GUIDE, pictures
+before code). This is the deep dive's decision 5, taken as "ask".
+
+### 5. The clock
+
+Compare the estimator with saved sessions' durations and set its constants
+from them (45 s a set, 60 s a warm-up set, 90 s a lift, the rests). Until then
+no set is cut for a few minutes on leg days.
+
+### 6. Running
+
+Not part of Lift21. The marathon long run (decision 9) and starting from the
+runner's own week (decision 10) come to the owner as printed seasons for his
+own race, beside what main plans, before either changes.
+
+## Not in this plan
+
+Sets that rise through a block, a priority muscle, supersets written into
+short plans, the split as a choice, the combined week (hybrid) and the watch.
+Each is in the README's steps 2 to 5 and waits for its own decision.

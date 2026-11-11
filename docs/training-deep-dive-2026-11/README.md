@@ -14,17 +14,18 @@ his own Train tab, sent the same day, are the fixed case.
 This file is the summary. Each section names the slice file that holds its
 evidence, with file and line for every code claim.
 
-| File                          | What it holds                                                 |
-| ----------------------------- | ------------------------------------------------------------- |
-| `lifting-session-shape.md`    | Lifts per day, sets per lift, and the rules that make them    |
-| `lifting-adaptation.md`       | What level, time, kit, injury and the person's edits change   |
-| `running-engine.md`           | Twelve printed run plans read as a coach would, 18 defects    |
-| `hybrid-week.md`              | The combined week for 20 lift and run counts, 14 defects      |
-| `market-lifting.md`           | Reference programmes and apps in numbers, with sources        |
-| `market-running.md`           | Runna, Strava, Nike Run Club, Garmin and others, with sources |
-| `why-it-did-not-land.md`      | The repo's record: what was researched, decided and measured  |
-| `panel-1-six-days-general.md` | The first printed week under Pgm9: today beside a target      |
-| `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything   |
+| File                          | What it holds                                                     |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `lifting-session-shape.md`    | Lifts per day, sets per lift, and the rules that make them        |
+| `lifting-adaptation.md`       | What level, time, kit, injury and the person's edits change       |
+| `running-engine.md`           | Twelve printed run plans read as a coach would, 18 defects        |
+| `hybrid-week.md`              | The combined week for 20 lift and run counts, 14 defects          |
+| `market-lifting.md`           | Reference programmes and apps in numbers, with sources            |
+| `market-running.md`           | Runna, Strava, Nike Run Club, Garmin and others, with sources     |
+| `why-it-did-not-land.md`      | The repo's record: what was researched, decided and measured      |
+| `panel-1-six-days-general.md` | The first printed week under Pgm9: today beside a target          |
+| `build-plan.md`               | The slices that follow Lift21, and what the owner sees after each |
+| `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything       |
 
 ## 1. The answers
 
@@ -121,6 +122,22 @@ What that shows:
    the cause, the plan kept them because a plan is preserved whenever the day
    count is unchanged (`planBuilder.ts:402-412`), and nothing since has told
    him the day runs to twice its length.
+
+   STATUS 2026-11-11, later: the owner handed the question back ("You figure
+   it out"), so this is the conclusion without his export. Two more facts
+   date it. Add and Replace have taken their role's numbers, a range of reps,
+   since 2026-10-11 (Lift5, #2630), so seven lifts at a flat 10 were added
+   before then. And on 28 March 2026 the owner reported that the exercise
+   picker's Done button added whatever was ticked without the "Add to workout"
+   bar being pressed; that button was removed afterwards. The most likely
+   account: one batch went onto the day through the picker in that period,
+   by the Done button or a tap he does not remember, and every settings
+   change since has kept it, because the day count never changed. It has been
+   trained since (the squat there has climbed to 87.5 kg), and the October
+   re-fit cut all twelve lifts to 2 sets. Confidence: likely, not proved; the
+   command receipts would prove it. Nothing in today's code repeats it. What
+   remains wrong today is that a kept plan can hold a day at twice its length
+   and say nothing, which is decision 5 and slice 4 of `build-plan.md`.
 
 2. **Legs A is the 45-minute plan.** Ten sets priced at 44 minutes is 4.4
    minutes a set. At 45 minutes the builder gives every lift 2 sets, in every
