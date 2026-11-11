@@ -153,7 +153,9 @@ export default function FoodMealChip({
             aria-label="Add to meal"
             tabIndex={-1}
             onKeyDown={onMenuKeyDown}
-            className="absolute left-[-4px] top-[calc(100%+8px)] z-20 w-[190px] max-w-[calc(100vw-32px)] rounded-2xl bg-card py-1 card-shadow"
+            /* At least 190px, and as wide as its longest meal: at
+               double text "Breakfast" is wider than 190px. */
+            className="absolute left-[-4px] top-[calc(100%+8px)] z-20 w-max min-w-[190px] max-w-[calc(100vw-32px)] rounded-2xl bg-card py-1 card-shadow"
           >
             {MEAL_ORDER.map((key) => {
               const chosen = key === meal;

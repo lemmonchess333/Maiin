@@ -487,49 +487,40 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   stands for a session, a person or an award carries its own picture
   (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
   number.
-- **Food:** on 11 Nov 2026 the owner picked a new Food page (Food11 in the
-  plan file, which names its evidence), built a step at a time. Built so
-  far: no large "Food" title, with the date switcher as the header row
-  and the targets gear at its end; the
-  three macros as one row with no boxes (`FoodMacroRow`); the calorie
-  wheel, the macro bars and the Details sheet's bars drawn as what is
-  logged in both the left and the logged view, on Home's food card too
-  (`loggedFill`), so a day with nothing logged is a grey track; and the
-  week as seven short bars under the wheel, edge to edge, in the deeper
-  orange in light, where it was seven rings with the date above the
-  calorie card; and the wheel itself on the page, 264 pt and in no card,
-  with Details under it, the target in its label ("kcal left of 2,200"),
-  a small mark after the label that says it can be tapped (DS3's quiet
-  ring had no mark; Home's still has none) and a sliver of the page's
-  colour ahead of the second lap's head; the usual foods ranked for the
-  meal being added to; and the meal as one chip inside a 48 pt field
-  (`FoodMealChip`, a menu of the four meals), where a row of four meal
-  pills with a filled orange one headed a 56 pt field. The edit sheet
-  keeps four meals, on the neutral track, and the segmented control has
-  no filled-pill look any more. Scan is a camera at the end of that
-  field, in the food orange, 24 pt in a 48 pt tap area, with no fill
-  (the owner, 11 Nov 2026: as the food apps do it; it replaces the
-  filled square beside the field of 23 Sep 2026, and §14 has the
-  count). A food logged today flies to the wheel: its drawing rises
-  from the field to the end of the arc in 400 ms and the arc grows from
-  250 ms, 600 ms in all (`FoodLogFlight`, `nextFlight`); never on an
-  edit, a delete, another day or under Reduce Motion. Read Food11 before
-  changing
-  any of it. What follows is the screen as it stood before, and stays
-  true of the parts not yet rebuilt. The owner kept the original screen
-  (title, week strip, macro cards with their icons and colours, draining
-  ring, filled meal pill) and took three fixes (7 Nov 2026): a faint one-hue orange glow in place of the
-  orange-into-purple wash behind the ring; a bigger ring (176 pt) and
-  figure, the screen's largest text at about 1.4x the "Food" title; and a
-  picture on every diary row, the meal's own photo from the device or one
-  of our food drawings (`foodArt.ts`, `docs/food-art/`), with an empty day
-  a row and a greyed plate rather than the hexagon block. Against §14m it
-  still misses: a large title above the hero (rule 2), more than one
-  filled control (rule 21: the selected meal pill and Scan, and the usual
-  row's Log), more than three hues (rule 11: the macros' pink, gold and
-  green beside the orange) and an empty day's colour (rules 9 and 16: a
-  full orange ring and full macro bars before anything is logged).
-  Measured in `docs/visual-audit/ds4-2026-11-07/README.md`, "Built: Food".
+- **Food:** the owner's pick of 11 Nov 2026 (Food11 in the plan file,
+  which names its evidence and what each call replaced; read it before
+  changing any of this). From the top: no large title, the date switcher
+  as the header row with the targets gear at its end; the calorie wheel
+  on the page, 264 pt and in no card, in one soft light of the food
+  orange, with the target in its label ("kcal left of 2,200"), a small
+  mark that says it can be tapped (Home's wheel has none) and Details
+  under it; the week as seven short bars, edge to edge, the deeper orange
+  in light; the three macros as one row with no boxes (`FoodMacroRow`);
+  then one 48 pt field holding the meal chip (`FoodMealChip`, a menu of
+  the four meals), the pencil while the field is at rest, the text and,
+  at its end, the camera for Scan: an icon in the food orange, 24 pt in
+  a 48 pt tap area, with no fill (the owner, 11 Nov 2026: as the food
+  apps do it; it replaces the filled square beside the field of 23 Sep
+  2026, and §14 has the count);
+  then the diary, a picture on every row. The wheel, the macro bars and
+  the Details sheet's bars are drawn as what is logged in both the left
+  and the logged view (`loggedFill`), on Home's food card too, so a day
+  with nothing logged is a grey track and going over is a second lap
+  whose head stands clear of the first. The usual foods are ranked for
+  the meal being added to. A food logged today flies to the wheel
+  (`FoodLogFlight`, `nextFlight`): 400 ms in the air, the arc growing
+  from 250 ms, 600 ms in all; never on an edit, a delete, another day or
+  under Reduce Motion. The edit sheet's four meals are on the neutral
+  track, and the segmented control has no filled-pill look.
+  Measured on the built page (the pull requests carry each step's
+  figures): the hero is 39% of the first screen from 92 pt, its figure
+  48 pt and 2.4 times the next largest text, 6 text sizes, one hue, and
+  colour at 4.7% in dark, most of it the person's data, with no filled,
+  coloured control on the measured screen (the usual row's Log, for an
+  account that has a usual, is the page's one). The §14m checks the
+  scorer runs all pass;
+  the first screen has 62 words against the ceiling of 60. The paywall's
+  scan demo still draws the page as it stood before.
 - **Badges:** the owner kept the current hexagon set (8 Nov 2026), after
   samples with three silhouettes and the number in the art, and with the
   emblem plus a ribbon. §14m rule 27 carries the note.
@@ -1315,6 +1306,12 @@ record of what each button was for:
   filled orange meal pill, Scan and the usual row's Log, so Food has more
   than DS4's one filled button (§14m rule 21). The fixes and the rules it
   still misses are in §6.
+- **2026-11-11 — Food11: the meal is a chip, not a filled pill.** The
+  owner picked a new Food page (§6 has it whole). Of the buttons above:
+  the filled orange meal pill is gone, with the row of four meals it sat
+  in, for one neutral chip in the field whose dot is the food orange;
+  the edit sheet's meal picker is on the neutral track. The usual row's
+  Log and Copy yesterday's Log are unchanged. Scan has the next entry.
 - **2026-11-11 — Food11: Scan is an icon inside the field.** The owner
   asked for scanning to be placed as the food apps place it. Of ten apps
   surveyed, none draws a filled, coloured camera button on its day
