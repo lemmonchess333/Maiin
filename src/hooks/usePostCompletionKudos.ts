@@ -91,7 +91,7 @@ export function usePostCompletionKudos(opts: {
     } catch (e) {
       logger.error("[kudos] send failed", e);
       if (isRestrictedRefusal(e)) showRestrictedToast();
-      else toast.error("Couldn't give props. Try again.");
+      else toast.error("Couldn’t give props. Try again.");
     } finally {
       setSending(false);
     }

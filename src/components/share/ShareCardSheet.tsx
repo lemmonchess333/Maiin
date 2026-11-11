@@ -242,7 +242,7 @@ export function ShareCardSheet({
         background,
       });
       if (!file) {
-        toast.error("Couldn't create the share image. Try again.");
+        toast.error("Couldn’t create the share image. Try again.");
         track("share_card_exported", {
           template: data.template,
           format,
@@ -283,7 +283,7 @@ export function ShareCardSheet({
       if (outcome === "shared" || outcome === "downloaded") {
         onOpenChange(false);
       } else if (outcome === "failed") {
-        toast.error("Couldn't share. Try again.");
+        toast.error("Couldn’t share. Try again.");
       }
     } finally {
       setExporting(false);

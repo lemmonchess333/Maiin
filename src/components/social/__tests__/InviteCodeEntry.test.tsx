@@ -37,7 +37,7 @@ import { readPendingInvite, savePendingInvite } from "@/lib/pendingInvite";
 import { INVITE_REFUSAL_WORDS, NOT_A_CODE } from "@/lib/invites";
 
 const field = () =>
-  screen.getByLabelText("Enter their invite code and they'll follow you.");
+  screen.getByLabelText("Enter their invite code and they’ll follow you.");
 const use = () =>
   fireEvent.click(screen.getByRole("button", { name: "Use code" }));
 

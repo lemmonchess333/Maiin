@@ -482,7 +482,7 @@ export default function SessionCompleteScreen({
               {onEdit && unticked > 0 && (
                 <p className="text-center text-sm text-muted-foreground">
                   <InlineNumerals>
-                    {`${unticked} ${unticked === 1 ? "set" : "sets"} you haven't ticked won't be saved.`}
+                    {`${unticked} ${unticked === 1 ? "set" : "sets"} you haven’t ticked won’t be saved.`}
                   </InlineNumerals>
                 </p>
               )}

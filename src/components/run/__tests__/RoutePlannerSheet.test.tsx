@@ -152,7 +152,7 @@ describe("RoutePlannerSheet — the straight-line planner", () => {
     fireEvent.click(screen.getByRole("button", { name: "Undo last point" }));
     fireEvent.click(screen.getByRole("button", { name: "Close the loop" }));
     expect(
-      screen.getByText("Point-to-point distance — segments don't follow roads.")
+      screen.getByText("Point-to-point distance — segments don’t follow roads.")
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Save & follow/ }));

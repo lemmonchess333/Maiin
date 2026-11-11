@@ -101,7 +101,7 @@ export default function RoutePreviewSheet({
     setSaving(true);
     const ok = await onSave(name.trim() || defaultName, points, source);
     setSaving(false);
-    toast[ok ? "success" : "error"](ok ? "Route saved" : "Couldn't save route");
+    toast[ok ? "success" : "error"](ok ? "Route saved" : "Couldn’t save route");
     if (ok) onClose();
   };
 

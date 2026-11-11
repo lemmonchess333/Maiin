@@ -63,7 +63,7 @@ describe("SavedRoutinesSection's load states", () => {
     renderSection();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load your saved routines"
+      "Couldn’t load your saved routines"
     );
     expect(unfiredFailures()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

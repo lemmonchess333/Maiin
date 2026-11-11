@@ -103,7 +103,7 @@ describe("useBlockedUsers", () => {
     expect(hook.result.current.blocked.has("baduser")).toBe(false);
   });
 
-  it("isolates cached sets per uid so different signed-in users don't share blocks", () => {
+  it("isolates cached sets per uid so different signed-in users don’t share blocks", () => {
     currentAuthUser = { uid: "test-isolation-a" };
     const a = renderHook(() => useBlockedUsers());
     act(() => {

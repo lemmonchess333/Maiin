@@ -142,7 +142,7 @@ export function ManualFoodLogger({
       onSaved?.();
       onClose();
     } catch {
-      toast.error("Couldn't save this meal. Try again.", {
+      toast.error("Couldn’t save this meal. Try again.", {
         id: "food-save-error",
       });
     } finally {

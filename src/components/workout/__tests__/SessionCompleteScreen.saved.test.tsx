@@ -201,7 +201,7 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
         await screen.findByRole(
           "switch",
           {
-            name: "Evening reminder if you haven't logged",
+            name: "Evening reminder if you haven’t logged",
           },
           { timeout: 5_000 }
         )
@@ -425,7 +425,7 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       "lifting"
     );
     expect(line()).toHaveTextContent(
-      "You've trained 7 days in a row. 14 is next."
+      "You’ve trained 7 days in a row. 14 is next."
     );
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();

@@ -56,7 +56,7 @@ export default function StartTimeSheet({
   const problem = startProblem(at, bounds);
   const message =
     problem === "later-than-now"
-      ? "That's later than now."
+      ? "That’s later than now."
       : problem === "before-the-floor"
         ? `The earliest that day is ${formatTimeOfDay(new Date(bounds.earliest))}.`
         : null;

@@ -221,7 +221,7 @@ export default function IntervalStepShell({
         {manualDistance && isDistanceBased && (
           <div className="space-y-3 pt-2">
             <p className="text-xs text-white/70">
-              Distance isn't tracked live. Mark this step complete when you've
+              Distance isn’t tracked live. Mark this step complete when you’ve
               covered its target; enter the full run distance below when
               finished.
             </p>

@@ -109,7 +109,7 @@ export default function CorrectWorkoutSheet({
       setError(
         failure instanceof Error
           ? failure.message
-          : "Couldn't save your corrections. Try again."
+          : "Couldn’t save your corrections. Try again."
       );
     } finally {
       pending.current = false;

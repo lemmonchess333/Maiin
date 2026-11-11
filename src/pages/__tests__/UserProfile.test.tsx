@@ -298,7 +298,7 @@ describe("a profile that isn't there", () => {
   it("says it isn't available instead of spinning forever", async () => {
     renderAt("/user/ghost");
     expect(
-      await screen.findByText("This profile isn't available")
+      await screen.findByText("This profile isn’t available")
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Go back" })).toBeInTheDocument();
     expect(
@@ -314,7 +314,7 @@ describe("a profile that isn't there", () => {
     });
     renderAt("/user/alice");
     expect(
-      await screen.findByText("Couldn't load this profile")
+      await screen.findByText("Couldn’t load this profile")
     ).toBeInTheDocument();
     expect(unfiredFailures()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -325,17 +325,17 @@ describe("a profile that isn't there", () => {
 });
 
 describe("a read that failed is not an empty profile", () => {
-  it("says the counts couldn't load, rather than 0 followers", async () => {
+  it("says the counts couldn’t load, rather than 0 followers", async () => {
     H.countsFail = true;
     seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
     renderAt("/user/alice");
     expect(
-      await screen.findByText("Couldn't load follower counts.")
+      await screen.findByText("Couldn’t load follower counts.")
     ).toBeInTheDocument();
     expect(screen.queryByText(/followers?$/)).toBeNull();
   });
 
-  it("says the sessions couldn't load, rather than none shared, and tries again", async () => {
+  it("says the sessions couldn’t load, rather than none shared, and tries again", async () => {
     seedFirestore({
       "users/alice/public/profile": { displayName: "Alice" },
       ...post("r1", "alice", { distance: 5000 }),
@@ -344,11 +344,11 @@ describe("a read that failed is not an empty profile", () => {
     renderAt("/user/alice");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load sessions"
+      "Couldn’t load sessions"
     );
     expect(unfiredFailures()).toEqual([]);
     expect(
-      screen.getByText("Couldn't load this week's sessions.")
+      screen.getByText("Couldn’t load this week’s sessions.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No shared sessions yet")).toBeNull();
     expect(screen.queryByText("Nothing yet.")).toBeNull();
@@ -359,7 +359,7 @@ describe("a read that failed is not an empty profile", () => {
     ).toBeInTheDocument();
   });
 
-  it("says your badges couldn't load on your own profile", async () => {
+  it("says your badges couldn’t load on your own profile", async () => {
     H.viewer = "alice";
     seedFirestore({
       "users/alice": { displayName: "Alice" },
@@ -368,7 +368,7 @@ describe("a read that failed is not an empty profile", () => {
     failNextFirestore("getDoc", { path: "users/alice/streaks/data" });
     renderAt("/user/alice");
     expect(
-      await screen.findByText("Couldn't load badges.")
+      await screen.findByText("Couldn’t load badges.")
     ).toBeInTheDocument();
     expect(unfiredFailures()).toEqual([]);
   });
@@ -448,7 +448,7 @@ describe("someone who blocked you", () => {
     seedFirestore(BLOCKERS_PROFILE);
     renderAt("/user/alice");
     expect(
-      await screen.findByText("This profile isn't available")
+      await screen.findByText("This profile isn’t available")
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -465,7 +465,7 @@ describe("someone who blocked you", () => {
     seedFirestore(BLOCKERS_PROFILE);
     renderAt("/user/alice");
     expect(
-      await screen.findByText("This profile isn't available")
+      await screen.findByText("This profile isn’t available")
     ).toBeInTheDocument();
     expectNothingOfTheirs();
   });
@@ -480,7 +480,7 @@ describe("someone who blocked you", () => {
 
     act(() => H.deliver(["alice"]));
     expect(
-      await screen.findByText("This profile isn't available")
+      await screen.findByText("This profile isn’t available")
     ).toBeInTheDocument();
     expectNothingOfTheirs();
   });
@@ -496,10 +496,10 @@ describe("someone who blocked you", () => {
     });
     renderAt("/user/alice");
     expect(
-      await screen.findByText("This profile isn't available")
+      await screen.findByText("This profile isn’t available")
     ).toBeInTheDocument();
     expect(unfiredFailures()).toEqual([]);
-    expect(screen.queryByText("Couldn't load this profile")).toBeNull();
+    expect(screen.queryByText("Couldn’t load this profile")).toBeNull();
     expect(screen.queryByText("Alice")).toBeNull();
   });
 });

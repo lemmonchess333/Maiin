@@ -580,7 +580,7 @@ export default function FoodCameraModal({
       } catch (e: unknown) {
         logger.error(e);
         if (!cancelled)
-          setBarcodeHint("Couldn't start the scanner. Try again.");
+          setBarcodeHint("Couldn’t start the scanner. Try again.");
       }
     };
 
@@ -617,7 +617,7 @@ export default function FoodCameraModal({
            read, an iOS Files provider error, a format the web view cannot
            decode) says so, and leaves the shutter and the library live. */
         logger.warn("[FoodCameraModal] photo not readable", err);
-        toast.error("Couldn't read that photo. Try another.");
+        toast.error("Couldn’t read that photo. Try another.");
         return;
       }
       if (tab === "barcode") {
@@ -693,7 +693,7 @@ export default function FoodCameraModal({
          failures (onCaptureBase64); this is only the capture. */
       const frame = captureFrame();
       if (!frame) {
-        toast.error("Couldn't take the photo. Try again.");
+        toast.error("Couldn’t take the photo. Try again.");
         return;
       }
       setPreview(frame.dataUrl);
@@ -749,7 +749,7 @@ export default function FoodCameraModal({
         "no-food":
           tab === "label"
             ? {
-                title: "Couldn't read the label",
+                title: "Couldn’t read the label",
                 sub: "Try a straighter, closer shot of the nutrition panel.",
               }
             : {
@@ -757,7 +757,7 @@ export default function FoodCameraModal({
                 sub: "Try a clearer shot of the plate, or type it in.",
               },
         error: {
-          title: "Couldn't read this one",
+          title: "Couldn’t read this one",
           /* The specific reason when we have one (server rate-limit /
              quota / auth copy, the hook's mapped network lines) —
              "wait a moment" must never render as "try again". */
@@ -766,7 +766,7 @@ export default function FoodCameraModal({
             "Might be the connection. Try again, or type it in.",
         },
         offline: {
-          title: "You're offline",
+          title: "You’re offline",
           sub: "Scanning needs a connection. Typing it in still works.",
         },
         "barcode-not-found": {

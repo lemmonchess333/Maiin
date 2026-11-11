@@ -42,7 +42,7 @@ export default function ShowMyWeekRow({ onShared }: { onShared: () => void }) {
               showRestrictedToast();
             } else {
               logger.error("[friendsBoard] share failed", err);
-              toast.error("Couldn't share your week. Try again.");
+              toast.error("Couldn’t share your week. Try again.");
             }
           } finally {
             setBusy(false);

@@ -167,7 +167,7 @@ test.describe("slow-scan escape", () => {
          failure kept from the abandoned scan would show as this card
          within a frame of the answer landing; a second is ample. */
       await page.waitForTimeout(1_000);
-      await expect(page.getByText("Couldn't identify food.")).toHaveCount(0);
+      await expect(page.getByText("Couldn’t identify food.")).toHaveCount(0);
 
       // The next scan opens on the live viewfinder: the fake camera's
       // frames are playing, the shutter is ready, and no failure waits.
@@ -184,7 +184,7 @@ test.describe("slow-scan escape", () => {
       ).toBeEnabled();
       await expect(page.getByTestId("scan-failure")).toHaveCount(0);
       await expect(page.getByTestId("scan-laser")).toHaveCount(0);
-      await expect(page.getByText("Couldn't read this one")).toHaveCount(0);
+      await expect(page.getByText("Couldn’t read this one")).toHaveCount(0);
     } finally {
       await profile.delete();
       await auth.deleteUser(user.uid);

@@ -121,6 +121,12 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
   these into the calm-chrome register.
 - **Buttons are sentence case** ("Start workout", "Add exercise") — the
   Title Case strays kept reading unpolished next to the majority.
+- **One spelling, one ellipsis, one apostrophe.** Programme, analyse,
+  fibre; "…" as one character; and ’ for an apostrophe, never ' or
+  `&apos;` ("Couldn’t save. Try again.", "Maya’s run"). `copyMechanics.test.ts`
+  holds each at zero. The content libraries (exercises, templates, foods,
+  shoes, races, Spaces, the spoken run cues) keep their text: a name in
+  them is an identity, saved in people's history under that spelling.
 - Reference register when unsure: Strava (data-forward, terse), Hevy
   (minimal utility), MyFitnessPal (plain), MacroFactor (never shames a
   high day), Happy Scale (a stall reads as "expected", not failure).

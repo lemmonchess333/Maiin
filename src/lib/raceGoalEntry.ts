@@ -41,6 +41,6 @@ export const RACE_GOAL_ENTRY_OPTIONS: readonly {
   value: RaceGoalEntry;
   label: string;
 }[] = [
-  { value: "race", label: "A race I've entered" },
+  { value: "race", label: "A race I’ve entered" },
   { value: "own", label: "On my own" },
 ];

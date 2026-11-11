@@ -51,7 +51,7 @@ export default function RenameRunSheet({
       onOpenChange(false);
     } catch (err) {
       logger.error("renameRun failed:", err);
-      toast.error("Couldn't rename the run. Try again.");
+      toast.error("Couldn’t rename the run. Try again.");
     } finally {
       setSaving(false);
     }

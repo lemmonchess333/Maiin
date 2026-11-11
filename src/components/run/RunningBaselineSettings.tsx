@@ -138,7 +138,7 @@ export default function RunningBaselineSettings({
           {!valid && (
             <p role="status" className="text-xs text-muted-foreground">
               Your running in a usual week, and your longest run lately. The
-              longest run is part of the week, so it can't be more.
+              longest run is part of the week, so it can’t be more.
             </p>
           )}
           <label className="block space-y-2 text-xs text-muted-foreground">

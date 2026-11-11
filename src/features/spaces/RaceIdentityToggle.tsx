@@ -67,7 +67,7 @@ export default function RaceIdentityToggle({ spaceId }: { spaceId: string }) {
     } catch (err) {
       logger.error("[RaceIdentity] toggle failed", err);
       setShared(!next);
-      toast.error("Couldn't update. Try again.");
+      toast.error("Couldn’t update. Try again.");
     } finally {
       setBusy(false);
     }

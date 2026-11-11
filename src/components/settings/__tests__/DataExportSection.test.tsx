@@ -154,7 +154,7 @@ describe("DataExportSection", () => {
     fireEvent.click(screen.getByRole("button", { name: /export meals/i }));
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
-        "Couldn't export your data. Try again."
+        "Couldn’t export your data. Try again."
       )
     );
     expect(toastSuccess).not.toHaveBeenCalled();

@@ -116,9 +116,9 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Apple Health (optional):
                 </strong>{" "}
-                if you connect it, today&apos;s step count for Home. With Apple
-                Watch runs enabled, Tropos also reads heart rate during a run.
-                Saving a completed Tropos run as a workout in Apple Health is a
+                if you connect it, today’s step count for Home. With Apple Watch
+                runs enabled, Tropos also reads heart rate during a run. Saving
+                a completed Tropos run as a workout in Apple Health is a
                 separate choice. See section 8.
               </li>
               <li>
@@ -130,8 +130,8 @@ export default function PrivacyPolicy() {
                 were stored in an earlier format without that encryption. See
                 section 3 for what the encryption does and does not mean. If you
                 share one, the image is made on your device and goes only where
-                you send it from your phone&apos;s share sheet; Tropos does not
-                post it anywhere.
+                you send it from your phone’s share sheet; Tropos does not post
+                it anywhere.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -168,7 +168,7 @@ export default function PrivacyPolicy() {
                   Subscription Records:
                 </strong>{" "}
                 whether you have Pro, where you bought it, its product and
-                dates, and the store&apos;s transaction identifiers.
+                dates, and the store’s transaction identifiers.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -191,8 +191,8 @@ export default function PrivacyPolicy() {
                   Preferences and Time Zone:
                 </strong>{" "}
                 units, theme, notification and sharing choices, and your
-                device&apos;s time zone, so daily limits and reminders follow
-                your local day.
+                device’s time zone, so daily limits and reminders follow your
+                local day.
               </li>
             </ul>
           </section>
@@ -374,7 +374,7 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Right to data portability:
                 </strong>{" "}
-                You can export your data in CSV format through the app's
+                You can export your data in CSV format through the app’s
                 settings.
               </li>
               <li>
@@ -396,18 +396,18 @@ export default function PrivacyPolicy() {
                 Protected billing identifiers are retained for 13 months to
                 prevent purchase theft. If a moderator had restricted your
                 account, we keep a coded form of its email address and its Apple
-                or Google sign-in for 13 months, which can&apos;t be read back,
-                so that a new account made with them is restricted too. Expired
+                or Google sign-in for 13 months, which can’t be read back, so
+                that a new account made with them is restricted too. Expired
                 records are removed by scheduled retention policies; removal is
                 not instantaneous. An outstanding subscription cancellation
                 request is kept until it is resolved. Deletion also leaves
                 records of password-reset requests, which hold the email address
-                a reset was asked for, and the records of Apple&apos;s
-                subscription notifications, kept so each is handled once.
-                Outside Tropos, RevenueCat keeps its subscription records,
-                Stripe keeps its records of any purchase made on the web, and
-                Google keeps analytics data under its Google Analytics retention
-                settings, each under its own policy.
+                a reset was asked for, and the records of Apple’s subscription
+                notifications, kept so each is handled once. Outside Tropos,
+                RevenueCat keeps its subscription records, Stripe keeps its
+                records of any purchase made on the web, and Google keeps
+                analytics data under its Google Analytics retention settings,
+                each under its own policy.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -450,8 +450,8 @@ export default function PrivacyPolicy() {
                 </strong>{" "}
                 a photo you set as your profile photo, add to a session you
                 share or attach to a Space post is checked by Google Cloud
-                Vision&apos;s SafeSearch before other people can see it, and a
-                photo with nudity is deleted. Google processes the photo only to
+                Vision’s SafeSearch before other people can see it, and a photo
+                with nudity is deleted. Google processes the photo only to
                 return the check and does not use it to train its models.
               </li>
               <li>
@@ -459,13 +459,13 @@ export default function PrivacyPolicy() {
                   AI Food Analysis (Google Gemini):
                 </strong>{" "}
                 if you allow it, the photo you take of a meal or a nutrition
-                label, or a meal you type (Pro), is sent to Google&apos;s Gemini
-                on Vertex AI to estimate what is in it and its macros. Tropos
-                asks before the first one is sent, and you can turn it off at
-                any time in Settings &gt; Social &amp; privacy. Google processes
-                it to return the estimate and may hold it briefly under its
-                terms for this service, for example to detect abuse. Google does
-                not use it to train its models.{" "}
+                label, or a meal you type (Pro), is sent to Google’s Gemini on
+                Vertex AI to estimate what is in it and its macros. Tropos asks
+                before the first one is sent, and you can turn it off at any
+                time in Settings &gt; Social &amp; privacy. Google processes it
+                to return the estimate and may hold it briefly under its terms
+                for this service, for example to detect abuse. Google does not
+                use it to train its models.{" "}
                 <strong className="text-foreground">
                   Tropos does not store your food photos on its servers.
                 </strong>{" "}
@@ -493,8 +493,8 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Stripe:</strong> payments
                 for Pro bought on the web. Stripe handles the card details; we
-                receive the subscription&apos;s status and Stripe&apos;s
-                customer and subscription identifiers.
+                receive the subscription’s status and Stripe’s customer and
+                subscription identifiers.
               </li>
               <li>
                 <strong className="text-foreground">Resend:</strong> sends
@@ -529,12 +529,12 @@ export default function PrivacyPolicy() {
                 Road-aware planning is no longer offered. In earlier builds, the
                 map points you tapped (or, for a generated loop, your chosen
                 start point plus a handful of nearby points we compute from it
-                and your chosen distance) were sent from our server to
-                Mapbox&apos;s Directions service to calculate a walking route.
-                We sent only those coordinates — never your name, account
-                details, saved routes, or run history — and did not separately
-                log the request coordinates. When you chose Save &amp; follow,
-                the returned route geometry was saved privately to your account.
+                and your chosen distance) were sent from our server to Mapbox’s
+                Directions service to calculate a walking route. We sent only
+                those coordinates — never your name, account details, saved
+                routes, or run history — and did not separately log the request
+                coordinates. When you chose Save &amp; follow, the returned
+                route geometry was saved privately to your account.
               </li>
               <li>
                 <strong className="text-foreground">GitHub:</strong> the
@@ -550,11 +550,10 @@ export default function PrivacyPolicy() {
               <strong className="text-foreground">Error Reporting:</strong> We
               automatically collect crash reports and error logs to improve app
               stability. They are stored with your account, and in the iPhone
-              app Google&apos;s Firebase Crashlytics also receives them, with
-              your account&apos;s ID but not your name or email address. Reports
-              include error messages and stack traces but do not contain
-              sensitive personal data such as passwords, meal content, or
-              workout details.
+              app Google’s Firebase Crashlytics also receives them, with your
+              account’s ID but not your name or email address. Reports include
+              error messages and stack traces but do not contain sensitive
+              personal data such as passwords, meal content, or workout details.
             </p>
           </section>
 
@@ -571,20 +570,20 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you
-              connect steps, Tropos reads today&apos;s step count to show it on
-              Home. The step count is not stored or sent to Tropos. If you use
-              Apple Watch runs, Tropos reads heart rate during that run to show
-              a live reading and calculate a run summary. Raw heart rate samples
-              are held on your device until you save or discard the run; a saved
-              run can include average and maximum heart rate and time in heart
-              rate zones. Those values are not used to change calorie targets or
-              sent to product analytics. If you separately turn on workout
-              export, Tropos writes a completed run to Apple Health after it is
-              saved to your account. The exported workout contains its time,
-              distance and estimated energy, without a GPS route. Tropos does
-              not import Apple Health workouts into your training plan. You can
-              change either choice in Tropos settings and remove Apple Health
-              access in the Health app.
+              connect steps, Tropos reads today’s step count to show it on Home.
+              The step count is not stored or sent to Tropos. If you use Apple
+              Watch runs, Tropos reads heart rate during that run to show a live
+              reading and calculate a run summary. Raw heart rate samples are
+              held on your device until you save or discard the run; a saved run
+              can include average and maximum heart rate and time in heart rate
+              zones. Those values are not used to change calorie targets or sent
+              to product analytics. If you separately turn on workout export,
+              Tropos writes a completed run to Apple Health after it is saved to
+              your account. The exported workout contains its time, distance and
+              estimated energy, without a GPS route. Tropos does not import
+              Apple Health workouts into your training plan. You can change
+              either choice in Tropos settings and remove Apple Health access in
+              the Health app.
             </p>
             <p>
               <strong className="text-foreground">Disclaimer:</strong> Tropos is
@@ -598,7 +597,7 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              9. Children's Privacy
+              9. Children’s Privacy
             </h2>
             <p>
               Tropos is not intended for children under 16. We do not knowingly

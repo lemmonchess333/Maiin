@@ -325,10 +325,10 @@ describe("FoodCameraModal — the failure beat", () => {
     const { unmount } = render(
       <FoodCameraModal {...props} loading={false} failure="error" />
     );
-    expect(failureText()).toContain("Couldn't read this one");
+    expect(failureText()).toContain("Couldn’t read this one");
     unmount();
     render(<FoodCameraModal {...props} loading={false} failure="offline" />);
-    expect(failureText()).toContain("You're offline");
+    expect(failureText()).toContain("You’re offline");
     expect(failureText()).toContain("Scanning needs a connection");
   });
 
@@ -369,7 +369,7 @@ describe("FoodCameraModal — the failure beat", () => {
     render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
     fireEvent.click(screen.getByRole("button", { name: "Label" }));
     const failureText = screen.getByTestId("scan-failure").textContent ?? "";
-    expect(failureText).toContain("Couldn't read the label");
+    expect(failureText).toContain("Couldn’t read the label");
     expect(failureText).not.toContain("No food detected");
   });
 
@@ -378,7 +378,7 @@ describe("FoodCameraModal — the failure beat", () => {
     // user came in through.
     render(<FoodCameraModal {...props} loading={false} failure="error" />);
     expect(screen.getByTestId("scan-failure").textContent).toContain(
-      "Couldn't read this one"
+      "Couldn’t read this one"
     );
     expect(screen.getByText("Retake photo")).toBeTruthy();
     expect(screen.queryByText(/fetching nutrition/i)).toBeNull();

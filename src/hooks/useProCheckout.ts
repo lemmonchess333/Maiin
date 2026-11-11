@@ -75,9 +75,9 @@ const SIGN_IN_MESSAGE = "Sign in to start Pro.";
  *  again. */
 const PENDING_MESSAGE: Record<PurchasePending, string> = {
   approval:
-    "Your purchase is waiting for approval. Pro switches on once it's approved.",
+    "Your purchase is waiting for approval. Pro switches on once it’s approved.",
   entitlement:
-    "The App Store has your purchase. Pro switches on once it's confirmed. If it hasn't in a few minutes, tap Restore.",
+    "The App Store has your purchase. Pro switches on once it’s confirmed. If it hasn’t in a few minutes, tap Restore.",
 };
 
 export interface UseProCheckoutResult {
@@ -168,7 +168,7 @@ export function useProCheckout(): UseProCheckoutResult {
             pending: result.pending,
           });
         } else if (!result.success) {
-          const message = result.error || "Couldn't start checkout. Try again.";
+          const message = result.error || "Couldn’t start checkout. Try again.";
           setError(message);
           toast.error(message);
           track("checkout_failed", {
@@ -187,7 +187,7 @@ export function useProCheckout(): UseProCheckoutResult {
         // webhook when the best-effort sync fails. Restore uses the same
         // listener, so neither surface needs its own refresh race.
       } catch (err) {
-        const message = "Couldn't start checkout. Try again.";
+        const message = "Couldn’t start checkout. Try again.";
         setError(message);
         toast.error(message);
         track("checkout_failed", {

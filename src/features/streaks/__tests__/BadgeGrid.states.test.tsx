@@ -69,7 +69,7 @@ describe("BadgeGrid's states", () => {
     streaks({ loadFailed: true, currentStreak: 0, longestStreak: 0 });
     render(<BadgeGrid />);
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your badges"
+      "Couldn’t load your badges"
     );
     expect(screen.queryByText("0")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));

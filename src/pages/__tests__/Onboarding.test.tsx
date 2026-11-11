@@ -697,7 +697,7 @@ describe("a race needs a date", () => {
       target: { value: RACE_DATE },
     });
     // Run9 STATUS 2026-11-01: neither is chosen until the person answers.
-    for (const name of ["A race I've entered", "On my own"])
+    for (const name of ["A race I’ve entered", "On my own"])
       expect(screen.getByRole("radio", { name })).toHaveAttribute(
         "aria-checked",
         "false"
@@ -1075,7 +1075,7 @@ describe("new runners", () => {
     fireEvent.change(screen.getByLabelText("Race target date"), {
       target: { value: localDateString(addLocalDays(new Date(), daysOut)) },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "A race I've entered" }));
+    fireEvent.click(screen.getByRole("radio", { name: "A race I’ve entered" }));
   };
 
   it("says so when the plan can't build to the race, and still goes on (R14c)", () => {
@@ -1156,7 +1156,7 @@ describe("a recent race at setup", () => {
     // Nobody has run a 5K in nine minutes.
     type("Minutes", "9");
     expect(within(recentRace()!).getByRole("alert")).toHaveTextContent(
-      "That time doesn't look right."
+      "That time doesn’t look right."
     );
     expect(back()).toBeDisabled();
     type("Minutes", "");

@@ -32,7 +32,7 @@ export default function RestrictionExplainer({
         <div className="space-y-1.5">
           <p>
             A moderator restricted your account after a report. Until it is
-            lifted, you can't post, comment, give props or likes, follow people,
+            lifted, you can’t post, comment, give props or likes, follow people,
             or join spaces, challenges or circles.
           </p>
           <p>

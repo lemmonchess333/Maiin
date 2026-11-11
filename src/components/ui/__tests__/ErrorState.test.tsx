@@ -12,21 +12,21 @@ import { ErrorState } from "../ErrorState";
 
 describe("ErrorState — base contract", () => {
   it("renders as role=alert with aria-live=assertive", () => {
-    render(<ErrorState title="Couldn't load" />);
+    render(<ErrorState title="Couldn’t load" />);
     const alert = screen.getByRole("alert");
     expect(alert).toBeTruthy();
     expect(alert.getAttribute("aria-live")).toBe("assertive");
   });
 
   it("renders the title", () => {
-    render(<ErrorState title="Couldn't load the feed" />);
-    expect(screen.getByText("Couldn't load the feed")).toBeTruthy();
+    render(<ErrorState title="Couldn’t load the feed" />);
+    expect(screen.getByText("Couldn’t load the feed")).toBeTruthy();
   });
 
   it("renders the description when provided", () => {
     render(
       <ErrorState
-        title="Couldn't load"
+        title="Couldn’t load"
         description="Check your connection and try again."
       />
     );
@@ -36,7 +36,7 @@ describe("ErrorState — base contract", () => {
   });
 
   it("omits the description element entirely when not provided", () => {
-    const { container } = render(<ErrorState title="Couldn't load" />);
+    const { container } = render(<ErrorState title="Couldn’t load" />);
     // Only the title <p> + the icon container; no description <p>.
     const ps = container.querySelectorAll("p");
     expect(ps.length).toBe(1);

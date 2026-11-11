@@ -85,7 +85,7 @@ describe("TrialDetails", () => {
     render(<TrialDetails trial={trial({ willRenew: false })} />);
     expect(
       screen.getByText(
-        "You've turned off renewal, so nothing will be charged. Pro stays on until Saturday 10 October."
+        "You’ve turned off renewal, so nothing will be charged. Pro stays on until Saturday 10 October."
       )
     ).toBeInTheDocument();
     await settleNotifications();
@@ -105,7 +105,7 @@ describe("TrialDetails", () => {
     fireEvent.click(offer);
     expect(
       await screen.findByText(
-        "You'll get a reminder on this phone at 10:00 on Wednesday 7 October."
+        "You’ll get a reminder on this phone at 10:00 on Wednesday 7 October."
       )
     ).toBeInTheDocument();
     expect(scheduledIds()).toEqual([TRIAL_NOTIFICATION_ID]);

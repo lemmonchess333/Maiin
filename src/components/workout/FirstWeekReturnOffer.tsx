@@ -113,7 +113,7 @@ export default function FirstWeekReturnOffer({
       await answer("enabled");
       toast.success("Training-day reminders are on");
     } catch {
-      toast.error("Couldn't turn on reminders. Try again.");
+      toast.error("Couldn’t turn on reminders. Try again.");
     } finally {
       setBusy(false);
     }
@@ -123,8 +123,8 @@ export default function FirstWeekReturnOffer({
     return (
       <Card size="compact" as="section" aria-label="Reminder permission">
         <p role="status" className="text-sm text-muted-foreground">
-          Notifications are off for Tropos. Allow them in your phone&apos;s
-          Settings, then turn reminders on in Settings → Notifications.
+          Notifications are off for Tropos. Allow them in your phone’s Settings,
+          then turn reminders on in Settings → Notifications.
         </p>
       </Card>
     );

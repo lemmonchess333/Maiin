@@ -95,7 +95,7 @@ export default function SetupReminderRow({
       {refused && !on && (
         <p role="status" className="text-sm text-muted-foreground">
           {isNativePlatform()
-            ? "Notifications are off for Tropos. Allow them in your phone's Settings, then turn this on in Settings → Notifications."
+            ? "Notifications are off for Tropos. Allow them in your phone’s Settings, then turn this on in Settings → Notifications."
             : "Notifications are off for Tropos in this browser. Allow them in its site settings, then turn this on in Settings → Notifications."}
         </p>
       )}

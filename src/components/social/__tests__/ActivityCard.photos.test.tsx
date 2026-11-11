@@ -137,7 +137,7 @@ describe("a post's photos on its card", () => {
         expect(img).toHaveAttribute("height", String(photos(count)[i].h));
         expect(img).toHaveAttribute(
           "alt",
-          `Photo ${i + 1} of ${count} from Maya Chen's run`
+          `Photo ${i + 1} of ${count} from Maya Chen’s run`
         );
       });
     }
@@ -164,7 +164,7 @@ describe("a post's photos on its card", () => {
     ).toBeTruthy();
     expect(within(box).getAllByRole("img")[0]).toHaveAttribute(
       "alt",
-      "Photo 1 of 2 from Maya Chen's workout"
+      "Photo 1 of 2 from Maya Chen’s workout"
     );
   });
 
@@ -174,7 +174,7 @@ describe("a post's photos on its card", () => {
     fireEvent.error(img);
     expect(tiles(container)[1].querySelector("img")).toBeNull();
     expect(tiles(container)[1]).toHaveAccessibleName(
-      "Photo 2 of 2 from Maya Chen's run"
+      "Photo 2 of 2 from Maya Chen’s run"
     );
   });
 });
@@ -190,14 +190,14 @@ describe("the full-screen viewer", () => {
     return { ...view, tile };
   };
   const viewer = () =>
-    screen.getByRole("dialog", { name: "Photos from Maya Chen's run" });
+    screen.getByRole("dialog", { name: "Photos from Maya Chen’s run" });
   const shown = () => within(viewer()).getByRole("img");
 
   it("opens at the photo tapped, whole, with its count and its name", async () => {
     await open(1);
     expect(viewer()).toHaveAttribute("aria-modal", "true");
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
-    expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen's run");
+    expect(shown()).toHaveAttribute("alt", "Photo 2 of 3 from Maya Chen’s run");
     expect(shown()).toHaveAttribute("src", photo(2).url);
     expect(shown().className).toMatch(/object-contain/);
     // Over everything, on the dark stage, below the status bar.
@@ -225,7 +225,7 @@ describe("the full-screen viewer", () => {
     expect(within(viewer()).getByText("2 of 3")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "ArrowRight" });
     expect(within(viewer()).getByText("3 of 3")).toBeInTheDocument();
-    expect(shown()).toHaveAttribute("alt", "Photo 3 of 3 from Maya Chen's run");
+    expect(shown()).toHaveAttribute("alt", "Photo 3 of 3 from Maya Chen’s run");
     const next = within(viewer()).getByRole("button", { name: "Next photo" });
     expect(next).toHaveAttribute("aria-disabled", "true");
     fireEvent.keyDown(document, { key: "ArrowRight" });

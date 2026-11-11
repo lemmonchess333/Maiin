@@ -95,7 +95,7 @@ export default function RaceWeeksAhead(props: RaceWeeksAheadProps) {
     <PurposeDisclosure label="The weeks ahead" onToggle={setOpen}>
       <p>
         The plan as it stands today. Each week is set when it starts, from what
-        you&apos;ve run.
+        you’ve run.
       </p>
       {open && (
         <SectionErrorBoundary sectionName="race-weeks-ahead">

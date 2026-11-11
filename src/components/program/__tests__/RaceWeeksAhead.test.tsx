@@ -111,7 +111,7 @@ describe("RaceWeeksAhead", () => {
     await open();
     expect(
       screen.getByText(
-        "The plan as it stands today. Each week is set when it starts, from what you've run."
+        "The plan as it stands today. Each week is set when it starts, from what you’ve run."
       )
     ).toBeVisible();
   });

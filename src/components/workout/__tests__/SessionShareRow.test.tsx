@@ -170,7 +170,7 @@ describe("no saved answer: ask once", () => {
     // The callback is published by an effect after the render that shows
     // the question, so the heading can be on screen a moment before it.
     await waitFor(() => expect(asking).toHaveBeenLastCalledWith(true));
-    fireEvent.click(screen.getByRole("button", { name: "Don't share" }));
+    fireEvent.click(screen.getByRole("button", { name: "Don’t share" }));
     await waitFor(() => expect(asking).toHaveBeenLastCalledWith(false));
   });
 
@@ -180,7 +180,7 @@ describe("no saved answer: ask once", () => {
     const answers = [
       "Share with followers",
       "Share publicly",
-      "Don't share",
+      "Don’t share",
     ].map((name) => screen.getByRole("button", { name }));
     const classes = new Set(answers.map((b) => b.className));
     expect(classes.size).toBe(1);
@@ -190,10 +190,10 @@ describe("no saved answer: ask once", () => {
     expect(screen.getByRole("region", QUESTION)).toHaveClass("bg-card");
   });
 
-  it('"Don\'t share" posts nothing, is saved, and leaves the one-off share', async () => {
+  it('"Don’t share" posts nothing, is saved, and leaves the one-off share', async () => {
     const a = action("run");
     render(<SessionShareRow action={a} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Don't share" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Don’t share" }));
     expect(
       await screen.findByRole("button", { name: "Share this session" })
     ).toBeInTheDocument();
@@ -298,7 +298,7 @@ describe("a saved answer", () => {
       })
     );
     render(<SessionShareRow action={a} />);
-    await screen.findByText("Couldn't share this session.");
+    await screen.findByText("Couldn’t share this session.");
     expect(
       screen.getByRole("button", { name: "Share this session" })
     ).toBeInTheDocument();
@@ -386,7 +386,7 @@ describe("the account's answer, read before acting on it", () => {
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(
-      "Will share with your followers when you're back online"
+      "Will share with your followers when you’re back online"
     );
     expect(h.refresh).not.toHaveBeenCalled();
   });
@@ -422,11 +422,11 @@ describe("Undo", () => {
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(
-      "Will share with your followers when you're back online"
+      "Will share with your followers when you’re back online"
     );
     h.withdraw.mockResolvedValue("cancelled");
     fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
-    await screen.findByText("It won't be shared.");
+    await screen.findByText("It won’t be shared.");
   });
 
   it("an offline post that went out before Undo says it was removed, not that it won't be shared", async () => {
@@ -440,13 +440,13 @@ describe("Undo", () => {
     );
     render(<SessionShareRow action={a} />);
     await screen.findByText(
-      "Will share with your followers when you're back online"
+      "Will share with your followers when you’re back online"
     );
     // Back online, the queue posted it before the tap; Undo deleted it.
     h.withdraw.mockResolvedValue("removed");
     fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
     await screen.findByText("Removed from the feed.");
-    expect(screen.queryByText("It won't be shared.")).toBeNull();
+    expect(screen.queryByText("It won’t be shared.")).toBeNull();
   });
 
   it("keeps showing the post when Undo fails", async () => {
@@ -490,7 +490,7 @@ describe("photos on the post (Soc15 call 2)", () => {
     render(<SessionShareRow action={a} />);
     // Anchor: the queued post is on screen, with its Undo.
     await screen.findByText(
-      "Will share with your followers when you're back online"
+      "Will share with your followers when you’re back online"
     );
     expect(screen.getByRole("button", { name: "Undo sharing" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Add photos" })).toBeNull();

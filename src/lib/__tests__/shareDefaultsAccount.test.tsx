@@ -433,7 +433,7 @@ describe("one answer, on the account", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't save your settings. Try again.",
+        "Couldn’t save your settings. Try again.",
         expect.anything()
       )
     );

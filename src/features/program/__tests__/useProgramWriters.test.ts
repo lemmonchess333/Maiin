@@ -3112,7 +3112,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       reason: "A race is complete once you log it as a run.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't mark that complete. A race is complete once you log it as a run.",
+      "Couldn’t mark that complete. A race is complete once you log it as a run.",
     ]);
     // As above: the command channel is what carries the write now.
     expect(
@@ -3171,7 +3171,7 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
       reason: "Your race date has passed.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't realign your plan. Your race date has passed.",
+      "Couldn’t realign your plan. Your race date has passed.",
     ]);
     expect(setDocCalls().length).toBe(0);
   });
@@ -3182,10 +3182,10 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
 
     expect(await realign()).toEqual({
       status: "declined",
-      reason: "There's no race on your plan.",
+      reason: "There’s no race on your plan.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't realign your plan. There's no race on your plan.",
+      "Couldn’t realign your plan. There’s no race on your plan.",
     ]);
     expect(setDocCalls().length).toBe(0);
   });

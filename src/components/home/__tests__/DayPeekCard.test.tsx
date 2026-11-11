@@ -1430,7 +1430,7 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
       /What it is.*finishing at your goal race pace/
     );
     expect(why).toHaveTextContent(/How it should feel.*Easy until the final/);
-    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    expect(why).toHaveTextContent(/Why it’s in your week.*rehearses race day/);
   });
 
   it("names a tempo at the goal race pace, and why", () => {
@@ -1438,7 +1438,7 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
     expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /Why it's in your week.*what race pace feels like/
+      /Why it’s in your week.*what race pace feels like/
     );
   });
 

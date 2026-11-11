@@ -139,7 +139,7 @@ describe("injury coverage over the generator's plans", () => {
                 seen.add(ex.exerciseId);
                 const kit = getExerciseById(ex.exerciseId)?.equipment;
                 const said = ex.notes?.includes(
-                  "needs equipment you don't have"
+                  "needs equipment you don’t have"
                 );
                 if (
                   kit &&

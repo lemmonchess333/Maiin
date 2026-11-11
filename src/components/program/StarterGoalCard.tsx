@@ -29,7 +29,7 @@ export default function StarterGoalCard({
       {weekDone ? (
         <p className="text-sm text-muted-foreground">
           {progress.reached
-            ? "You've done it."
+            ? "You’ve done it."
             : "This stage is complete. The next one starts on Monday."}
         </p>
       ) : progress.repeated ? (

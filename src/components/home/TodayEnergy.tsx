@@ -120,7 +120,7 @@ export default function TodayEnergy({
 
   return (
     <section
-      aria-label="Today's food"
+      aria-label="Today’s food"
       className={cardClasses({ className: "@container rounded-xl" })}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -149,7 +149,7 @@ export default function TodayEnergy({
           under the ring instead: beside it they ran into each other. */}
       {mealsError && (
         <div role="alert" className="mt-3 space-y-2">
-          <p className="text-sm">Couldn't load your food diary.</p>
+          <p className="text-sm">Couldn’t load your food diary.</p>
           {hasIntake && (
             <p className="text-xs text-muted-foreground">
               Showing last available totals.
@@ -171,7 +171,7 @@ export default function TodayEnergy({
           {caloriesPending ? (
             <span
               role="status"
-              aria-label="Today's calories still loading"
+              aria-label="Today’s calories still loading"
               className="shrink-0"
             >
               <Skeleton className="size-26 rounded-full" />

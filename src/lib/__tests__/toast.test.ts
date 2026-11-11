@@ -113,7 +113,7 @@ describe("how long a toast stays", () => {
 
   it("gives an error, and a warning, six seconds to read", () => {
     expect(TOAST_DURATION_MS.error).toBe(6000);
-    expect(durationOf(() => toast.error("Couldn't save. Try again."))).toBe(
+    expect(durationOf(() => toast.error("Couldn’t save. Try again."))).toBe(
       6000
     );
     expect(durationOf(() => toast.warning("Shoes near their mileage"))).toBe(

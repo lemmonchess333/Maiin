@@ -150,7 +150,7 @@ describe("FoodCameraModal — a photo from the library", () => {
     pick();
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
-        "Couldn't read that photo. Try another."
+        "Couldn’t read that photo. Try another."
       )
     );
     expect(p.onCaptureBase64).not.toHaveBeenCalled();

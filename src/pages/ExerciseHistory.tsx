@@ -363,7 +363,7 @@ export default function ExerciseHistory() {
     return (
       <div className="pt-2">
         <ErrorState
-          title="Couldn't load your sessions"
+          title="Couldn’t load your sessions"
           retry={{ onClick: retryWorkouts }}
         />
       </div>
@@ -380,7 +380,7 @@ export default function ExerciseHistory() {
         icon={Search}
         accent={THEME.lifting}
         headline="Exercise not found"
-        sub={`"${decodedName}" isn't in your logs or the exercise database.`}
+        sub={`"${decodedName}" isn’t in your logs or the exercise database.`}
         action={{ label: "Browse exercises", onClick: goBack }}
       />
     );

@@ -1206,7 +1206,7 @@ export default function ProgrammeRunSection({
           description={
             currentMode === "starter"
               ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
-              : `You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+              : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
           }
           action={
             <Button
@@ -1234,7 +1234,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title="Recovery complete"
-          description="What's next?"
+          description="What’s next?"
           action={
             <div className="flex flex-wrap gap-2">
               <Button
@@ -1267,7 +1267,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "fell-behind" && raceGoal && (
         <Banner
           variant="info"
-          title="Last week didn't go to plan"
+          title="Last week didn’t go to plan"
           description="Realign keeps your race date and re-plans the remaining weeks from today."
           action={
             <div className="flex flex-col gap-2">
@@ -1414,13 +1414,13 @@ export default function ProgrammeRunSection({
             <p className="text-xs text-muted-foreground">
               Your last run was {freeformCadence.lastRunDaysAgo} day
               {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago — pick it
-              back up whenever you're ready.
+              back up whenever you’re ready.
             </p>
           ) : (
             <Card className="space-y-3 rounded-xl">
               {/* R2-1 descriptive cadence headline (not a target). */}
               <p className="text-sm font-semibold text-foreground">
-                You've run {freeformCadence.count}× in the last{" "}
+                You’ve run {freeformCadence.count}× in the last{" "}
                 {freeformCadence.weeks} weeks
               </p>
               {/* DS3: the week as three plain numbers, where one grey line
@@ -1558,7 +1558,7 @@ export default function ProgrammeRunSection({
                     Training for a race?
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Pick a distance and date — we'll build the plan.
+                    Pick a distance and date — we’ll build the plan.
                   </p>
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
@@ -1611,7 +1611,7 @@ export default function ProgrammeRunSection({
                 {raceDistanceLabel(raceGoal.distance)} · Today
               </p>
               <p className="text-micro text-muted-foreground">
-                This is the one you've been training for. Good luck out there.
+                This is the one you’ve been training for. Good luck out there.
               </p>
             </div>
             {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
@@ -1706,7 +1706,7 @@ export default function ProgrammeRunSection({
                 dismissRaceRecent();
               }}
             >
-              {ownGoal ? "I didn't run it" : "I didn't race"}
+              {ownGoal ? "I didn’t run it" : "I didn’t race"}
             </Button>
           </div>
         </div>

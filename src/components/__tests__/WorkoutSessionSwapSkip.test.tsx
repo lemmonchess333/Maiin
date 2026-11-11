@@ -218,7 +218,7 @@ describe("Skip", () => {
     expect(data.prescription?.swaps ?? []).toEqual([]);
   });
 
-  it("brings the sets back with Don't skip", async () => {
+  it("brings the sets back with Don’t skip", async () => {
     openSession();
     await menu("Bench Press");
     await choose(/^Skip/);
@@ -227,7 +227,7 @@ describe("Skip", () => {
     );
     expect(screen.getByText("Skipped today")).toBeInTheDocument();
     await menu("Bench Press");
-    await choose(/^Don't skip/);
+    await choose(/^Don’t skip/);
     expect(screen.queryByText("Skipped today")).toBeNull();
     expect(
       screen.getAllByRole("button", { name: "Mark set complete" })

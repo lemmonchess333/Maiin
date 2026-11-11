@@ -62,7 +62,7 @@ function blockCopy(reason: MoveBlockReason, goalDay: string): string {
       return `${goalDay} stays on its date`;
     case "post_race":
       return goalDay === "Race day"
-        ? "After this week's race"
+        ? "After this week’s race"
         : `After ${goalDay.replace(/^Your/, "your")}`;
     case "malformed":
       return "This date is unavailable";
@@ -190,11 +190,11 @@ export default function MoveRunSheet({
           result.status === "declined"
             ? (result.reason ??
                 "Your plan changed. Keep this week and review the latest dates.")
-            : "Couldn't move this run. Your change is still here. Try again."
+            : "Couldn’t move this run. Your change is still here. Try again."
         );
       }
     } catch {
-      setError("Couldn't move this run. Your change is still here. Try again.");
+      setError("Couldn’t move this run. Your change is still here. Try again.");
     } finally {
       pending.current = false;
       setSaving(false);

@@ -129,7 +129,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
         true
       );
       haptic("error");
-      toast.error("Couldn't join the space. Try again.");
+      toast.error("Couldn’t join the space. Try again.");
     } finally {
       setBusy(false);
     }
@@ -157,7 +157,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
         true
       );
       haptic("error");
-      toast.error("Couldn't leave the space. Try again.");
+      toast.error("Couldn’t leave the space. Try again.");
     } finally {
       setBusy(false);
     }

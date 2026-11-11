@@ -513,7 +513,7 @@ export default function Food() {
             return next;
           }),
         report: (name) =>
-          toast.error(`Couldn't delete ${name}. Try again.`, {
+          toast.error(`Couldn’t delete ${name}. Try again.`, {
             id: "food-delete-error",
           }),
       }),
@@ -770,7 +770,7 @@ export default function Food() {
       meals: mealCount,
     }).catch((err) => {
       logger.error("[Food] daily log save failed", err);
-      toast.error("Couldn't update today's log", { id: "food-save-error" });
+      toast.error("Couldn’t update today’s log", { id: "food-save-error" });
     });
   }, [
     todaysMeals.length,
@@ -940,7 +940,7 @@ export default function Food() {
            fallback action so the user has somewhere to go. */
         setOffResults([]);
         setOffEmpty(false);
-        toast.error("Couldn't search foods.", {
+        toast.error("Couldn’t search foods.", {
           id: "food-off-error",
           // Retry re-runs the fetch (bumps the nonce in the effect deps);
           // Log manually is the fallback. sonner allows one action + one
@@ -1033,7 +1033,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Couldn't save. Try again.", {
+      toast.error("Couldn’t save. Try again.", {
         id: "food-save-error",
       });
     }
@@ -1095,7 +1095,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Couldn't read that. Try rewording it, or add it manually.", {
+      toast.error("Couldn’t read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
         action: { label: "Log manually", onClick: () => setManualOpen(true) },
       });
@@ -1110,7 +1110,7 @@ export default function Food() {
           return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
         });
         toast.warning(
-          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             duration: 10000,
@@ -1135,7 +1135,7 @@ export default function Food() {
       const unresolved = items.filter((i) => i.unrecognized);
       if (unresolved.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             action: {
@@ -1266,7 +1266,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Couldn't save. Try again.", {
+        toast.error("Couldn’t save. Try again.", {
           id: "food-save-error",
         });
       }
@@ -1385,7 +1385,7 @@ export default function Food() {
         );
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
-        toast.error("Couldn't save your changes");
+        toast.error("Couldn’t save your changes");
         // Keep the editor open and do not change servings or announce success
         // after any of the existing entries failed to update.
         return;
@@ -1485,7 +1485,7 @@ export default function Food() {
           `Added ${createdIds.length} servings; the remaining servings could not be saved`
         );
       } else {
-        toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+        toast.error("Couldn’t update. Try again.", { id: "food-edit-error" });
       }
     }
   };
@@ -1815,7 +1815,7 @@ export default function Food() {
         next.delete(favouriteId);
         return next;
       });
-      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      toast.error("Couldn’t remove. Try again.", { id: "pantry-remove-error" });
       return;
     }
 
@@ -1839,7 +1839,7 @@ export default function Food() {
               return next;
             });
           } else {
-            toast.error("Couldn't undo. The item stays removed.", {
+            toast.error("Couldn’t undo. The item stays removed.", {
               id: "pantry-undo-error",
             });
           }
@@ -1887,7 +1887,7 @@ export default function Food() {
       toast.success(
         navigator.onLine
           ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
-          : "Saved on this phone — syncs when you're back online",
+          : "Saved on this phone — syncs when you’re back online",
         {
           duration: 5000,
           action: {
@@ -1900,7 +1900,7 @@ export default function Food() {
                 toast.success("Meal entry undone");
               } catch (err) {
                 logger.error("[Food] meal undo failed", err);
-                toast.error(appErrorMessage(err, "Couldn't undo meal."));
+                toast.error(appErrorMessage(err, "Couldn’t undo meal."));
                 undoing = false;
               }
             },
@@ -1912,7 +1912,7 @@ export default function Food() {
       toast.error(
         appErrorMessage(
           err,
-          "Couldn't save. Check your connection and retry this meal."
+          "Couldn’t save. Check your connection and retry this meal."
         ),
         { id: "food-save-error" }
       );
@@ -2032,7 +2032,7 @@ export default function Food() {
       role="alert"
       className="ds-card flex items-center justify-between gap-3 p-4"
     >
-      <p className="text-sm">Couldn't load your food diary.</p>
+      <p className="text-sm">Couldn’t load your food diary.</p>
       <Button
         variant="secondary"
         className="min-h-[44px]"
@@ -2513,8 +2513,8 @@ export default function Food() {
             const inFlight = copyingMealKey === "__all__";
             const label =
               slotsToCopyFromYesterday.length === 1
-                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-                : "Copy yesterday's meals";
+                ? `Copy yesterday’s ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
+                : "Copy yesterday’s meals";
             return (
               <div className="flex justify-center pt-2">
                 <Button

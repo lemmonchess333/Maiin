@@ -197,7 +197,7 @@ export default function TreadmillMode({
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This can't be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

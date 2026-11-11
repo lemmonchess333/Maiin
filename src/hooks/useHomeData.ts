@@ -189,7 +189,7 @@ export function useHomeData(
           }
         } else {
           logger.error("[useHomeData] runs fetch failed:", results[0].reason);
-          errors.push("Couldn't load your runs");
+          errors.push("Couldn’t load your runs");
         }
 
         // Weight
@@ -267,7 +267,7 @@ export function useHomeData(
           }
         } else {
           logger.error("[useHomeData] weight fetch failed:", results[1].reason);
-          errors.push("Couldn't load your weight");
+          errors.push("Couldn’t load your weight");
           // Fallback to profile weight
           if (profile?.weightKg) {
             const w = formatWeightInUnit(profile.weightKg, weightUnit);

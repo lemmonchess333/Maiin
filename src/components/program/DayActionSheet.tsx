@@ -385,7 +385,7 @@ export default function DayActionSheet({
               className="size-3.5 mt-0.5 shrink-0"
               aria-hidden="true"
             />
-            Quality run and a lift share this day — if recovery's tight, go
+            Quality run and a lift share this day — if recovery’s tight, go
             easier on one of them.
           </p>
         )}
@@ -621,7 +621,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNF — Started but didn&apos;t finish
+                          DNF — Started but didn’t finish
                         </button>
                         <button
                           type="button"
@@ -633,7 +633,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNS — Didn&apos;t start
+                          DNS — Didn’t start
                         </button>
                       </>
                     )}

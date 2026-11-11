@@ -105,10 +105,10 @@ describe("weekly challenge membership", () => {
     });
     // The join says which edition it is and when the next one opens.
     expect(h.toastSuccess).toHaveBeenCalledWith(
-      "You're in for this week. Next week's opens on Monday."
+      "You’re in for this week. Next week’s opens on Monday."
     );
     expect(
-      screen.getByRole("button", { name: /Start today's session/ })
+      screen.getByRole("button", { name: /Start today’s session/ })
     ).toBeInTheDocument();
     fireEvent.click(leave);
     await screen.findByRole("button", { name: "Join weekly challenge" });
@@ -124,7 +124,7 @@ describe("weekly challenge membership", () => {
     fireEvent.click(join);
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith(
-        "Couldn't join the challenge. Try again."
+        "Couldn’t join the challenge. Try again."
       )
     );
     await waitFor(() => expect(join).toBeEnabled());
@@ -145,7 +145,7 @@ describe("weekly challenge membership", () => {
     fireEvent.click(leave);
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith(
-        "Couldn't leave the challenge. Try again."
+        "Couldn’t leave the challenge. Try again."
       )
     );
     await waitFor(() => expect(leave).toBeEnabled());
@@ -242,7 +242,7 @@ describe("a restricted account (S4e)", () => {
     await flushSnapshots();
     expect(readDoc(PATH)).toBeUndefined();
     expect(h.toastError).toHaveBeenCalledWith(
-      "Your account is restricted, so you can't do this for now.",
+      "Your account is restricted, so you can’t do this for now.",
       expect.anything()
     );
   });
@@ -360,7 +360,7 @@ describe("the featured monthly challenge", () => {
       })
     );
     expect(h.toastSuccess).toHaveBeenCalledWith(
-      "You're in for September. October's opens on 1 Oct."
+      "You’re in for September. October’s opens on 1 Oct."
     );
     expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
   });
@@ -458,7 +458,7 @@ describe("the featured monthly challenge", () => {
       currentValue: 0,
     });
     expect(h.toastSuccess).toHaveBeenCalledWith(
-      "You're in for September. October's opens on 1 Oct."
+      "You’re in for September. October’s opens on 1 Oct."
     );
     expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
     expect(readDoc(participantPath(STRENGTH_ID))).toBeUndefined();

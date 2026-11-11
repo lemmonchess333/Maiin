@@ -60,7 +60,7 @@ export default function VerifyEmailNotice({
     } catch (err) {
       logger.error("[VerifyEmailNotice] verification check failed", err);
       toast.error(
-        "Couldn't check verification. Check your connection and try again."
+        "Couldn’t check verification. Check your connection and try again."
       );
     } finally {
       setChecking(false);

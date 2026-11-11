@@ -44,7 +44,7 @@ async function deliver(file: File, name: string): Promise<void> {
       action: { label: "Share", onClick: () => void deliver(file, name) },
     });
   } else if (outcome === "failed") {
-    toast.error("Couldn't export your data. Try again.");
+    toast.error("Couldn’t export your data. Try again.");
   }
 }
 
@@ -77,7 +77,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
                 name
               );
             } catch (err) {
-              toast.error("Couldn't export your data. Try again.");
+              toast.error("Couldn’t export your data. Try again.");
               logger.error(err);
             }
             setExporting(null);

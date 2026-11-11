@@ -418,7 +418,7 @@ export default function CirclesSection({
         setExtendOpen(false);
         setNewTargetDate("");
       } else {
-        toast.error("Couldn't update the target. Try again.");
+        toast.error("Couldn’t update the target. Try again.");
       }
     },
     [newTargetDate, targetBusy, resolveTarget]
@@ -434,7 +434,7 @@ export default function CirclesSection({
         haptic("light");
         toast.success("Circle wrapped.");
       } else {
-        toast.error("Couldn't wrap the circle. Try again.");
+        toast.error("Couldn’t wrap the circle. Try again.");
       }
     },
     [targetBusy, resolveTarget]
@@ -617,7 +617,7 @@ export default function CirclesSection({
     const invite = await renewInviteCode(spaceId);
     setRenewing(false);
     if (!invite) {
-      toast.error("Couldn't make a new code. Try again.");
+      toast.error("Couldn’t make a new code. Try again.");
       return;
     }
     const seenAt = Date.now();
@@ -664,7 +664,7 @@ export default function CirclesSection({
         toast.success("Invite copied.");
         trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
       } catch {
-        toast.error("Couldn't copy. Long-press the code to select it.");
+        toast.error("Couldn’t copy. Long-press the code to select it.");
       }
     }
   };
@@ -692,7 +692,7 @@ export default function CirclesSection({
       toast.success("Invite code copied.");
       trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
     } catch {
-      toast.error("Couldn't copy. Long-press the code to select it.");
+      toast.error("Couldn’t copy. Long-press the code to select it.");
     }
   };
 
@@ -703,7 +703,7 @@ export default function CirclesSection({
     // display name does; the server refuses it with the same sentence.
     const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
     if (!filter) {
-      toast.error("Couldn't start the circle. Try again.");
+      toast.error("Couldn’t start the circle. Try again.");
       return;
     }
     if (filter.containsProfanity(trimmed)) {
@@ -726,7 +726,7 @@ export default function CirclesSection({
       // Straight into the invite hand-off — a circle of one isn't done.
       setInviteHandoff({ title: trimmed, ...res, seenAt: Date.now() });
     } else {
-      toast.error("Couldn't start the circle. Check the title and try again.");
+      toast.error("Couldn’t start the circle. Check the title and try again.");
     }
   };
 
@@ -745,7 +745,7 @@ export default function CirclesSection({
     if (outcome.ok) {
       setShowJoin(false);
       setJoinInput("");
-      toast.success("You're in.");
+      toast.success("You’re in.");
       trackSocialEvent("circle_joined");
     } else {
       // The server distinguishes a full circle, a closed one, a wrong code
@@ -765,7 +765,7 @@ export default function CirclesSection({
       setEvents(detail.events);
       toast.success("Shared with your circle.");
     } else {
-      toast.error("Couldn't share. Try again.");
+      toast.error("Couldn’t share. Try again.");
     }
   };
 
@@ -791,7 +791,7 @@ export default function CirclesSection({
     const res = await setWeeklyFocus(spaceId, focus);
     setFocusBusy(false);
     if (!res) {
-      toast.error("Couldn't update your focus. Try again.");
+      toast.error("Couldn’t update your focus. Try again.");
       return;
     }
     setFocusSheetOpen(false);
@@ -852,7 +852,7 @@ export default function CirclesSection({
         )
       );
     } else {
-      toast.error("Couldn't back this focus. Try again.");
+      toast.error("Couldn’t back this focus. Try again.");
     }
     setBackingId(null);
   };
@@ -872,7 +872,7 @@ export default function CirclesSection({
       {!loading && loadFailed && (
         <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Couldn't load your circles.
+            Couldn’t load your circles.
           </p>
           <Button
             variant="secondary"
@@ -1031,7 +1031,7 @@ export default function CirclesSection({
                        a Circle has, so it takes the step's place. */
                       <div className="space-y-2">
                         <p className="text-xs text-muted-foreground">
-                          You've reached your target date. Keep training
+                          You’ve reached your target date. Keep training
                           together, or wrap this circle up.
                         </p>
                         {extendOpen ? (
@@ -1508,7 +1508,7 @@ export default function CirclesSection({
                             })
                             .catch(() =>
                               toast.error(
-                                "Couldn't copy. Long-press to select it."
+                                "Couldn’t copy. Long-press to select it."
                               )
                             );
                         }}
@@ -1660,7 +1660,7 @@ export default function CirclesSection({
                       if (ok) {
                         setDetailOf(null);
                         toast.success("You left the circle.");
-                      } else toast.error("Couldn't leave. Try again.");
+                      } else toast.error("Couldn’t leave. Try again.");
                     });
                   }}
                 >

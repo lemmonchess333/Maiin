@@ -172,7 +172,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         : null;
       break;
     case "structured_today":
-      line1 = `This week's plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
+      line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
       break;
     case "rest_day":
       line1 = "Rest day in your plan.";

@@ -32,16 +32,16 @@ function boundaryDay(value: Timestamp | Date | undefined): Date | null {
 export function joinedMessage(challenge: Edition): string {
   const start = boundaryDay(challenge.startDate);
   const next = boundaryDay(challenge.endDate);
-  if (!start || !next) return "You're in.";
+  if (!start || !next) return "You’re in.";
   switch (challenge.type) {
     case "monthly":
-      return `You're in for ${formatMonth(start)}. ${formatMonth(next)}'s opens on ${formatDayMonth(next)}.`;
+      return `You’re in for ${formatMonth(start)}. ${formatMonth(next)}’s opens on ${formatDayMonth(next)}.`;
     case "weekly":
-      return `You're in for this week. Next week's opens on ${formatWeekday(next)}.`;
+      return `You’re in for this week. Next week’s opens on ${formatWeekday(next)}.`;
     case "seasonal":
-      return `You're in for this season. The next one opens on ${formatDayMonth(next)}.`;
+      return `You’re in for this season. The next one opens on ${formatDayMonth(next)}.`;
     default:
-      return "You're in.";
+      return "You’re in.";
   }
 }
 

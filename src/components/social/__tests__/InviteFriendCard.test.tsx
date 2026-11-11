@@ -60,7 +60,7 @@ describe("the invite card's code", () => {
     fireEvent.click(screen.getByRole("button", { name: "New code" }));
     await vi.waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't make a new code. Try again."
+        "Couldn’t make a new code. Try again."
       )
     );
     expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();

@@ -277,7 +277,7 @@ describe("RunSummary — privacy zones are cut before a run is written", () => {
 
     expect(
       await screen.findByText(
-        /Privacy zones are cut from the route before it's saved, and they couldn't be checked/
+        /Privacy zones are cut from the route before it’s saved, and they couldn’t be checked/
       )
     ).toBeTruthy();
     expect(queued()).toHaveLength(0);

@@ -65,10 +65,10 @@ describe("newPostPhotoId", () => {
 describe("postPhotoAlt", () => {
   it("names the photo, its place and whose session it is", () => {
     expect(postPhotoAlt(1, 3, "Maya Chen", "run")).toBe(
-      "Photo 2 of 3 from Maya Chen's run"
+      "Photo 2 of 3 from Maya Chen’s run"
     );
     expect(postPhotoAlt(0, 1, "Sam", "workout")).toBe(
-      "Photo 1 of 1 from Sam's workout"
+      "Photo 1 of 1 from Sam’s workout"
     );
   });
 

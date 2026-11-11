@@ -38,10 +38,7 @@ import {
  * `@capacitor/app` listener.
  */
 export type StepsStatus =
-  | "unavailable"
-  | "unprompted"
-  | "connected"
-  | "ambiguous";
+  "unavailable" | "unprompted" | "connected" | "ambiguous";
 
 interface HealthKitFlags {
   primingShown: boolean;
@@ -125,7 +122,7 @@ export function useSteps(): UseStepsResult {
         });
       } catch (err) {
         logger.error("[steps] settings save failed", err);
-        toast.error("Couldn't save your Apple Health setting. Try again.");
+        toast.error("Couldn’t save your Apple Health setting. Try again.");
       }
     },
     [settingsRef]
@@ -213,7 +210,7 @@ export function useSteps(): UseStepsResult {
       // would leave the tile at 0 with no way back to Connect. Close the
       // prompt, keep Connect on the tile.
       await persist({ primingShown: true });
-      toast.error("Couldn't connect Apple Health");
+      toast.error("Couldn’t connect Apple Health");
       return;
     }
     await persist({ connected: true, primingShown: true });

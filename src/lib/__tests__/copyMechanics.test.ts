@@ -3,9 +3,11 @@
  *
  * Counted across every string the app can show (`docs/words-2026-11/`):
  * 43 "programme" against 2 "program", 55 "…" against 9 "...", 385
- * contractions, and "Couldn't … Try again." as the shape of an error.
+ * contractions, and "Couldn’t … Try again." as the shape of an error.
  * Each rule here is the majority the strays broke, so a new string cannot
  * pick the other spelling, the other ellipsis or the other error voice.
+ * The apostrophe is the one rule the owner set against the majority
+ * (Words1 call 1): ’ in every string the app shows.
  *
  * It reads string literals and JSX text that hold a space, which is where
  * copy lives, and skips a line that logs, throws or imports. A rule with
@@ -43,7 +45,10 @@ function withoutCommentsAndLogs(source: string): string {
 interface Hit {
   file: string;
   line: number;
+  /** With an apostrophe written one way, so a rule about words reads both. */
   text: string;
+  /** As the source has it. */
+  raw: string;
 }
 
 function copyStrings(): Hit[] {
@@ -55,18 +60,51 @@ function copyStrings(): Hit[] {
     lines.forEach((source, index) => {
       if (NOT_COPY.test(source)) return;
       for (const match of source.matchAll(LITERAL)) {
-        const text = (match[1] ?? match[2] ?? match[3] ?? match[4] ?? "")
-          .replace(/&apos;|&rsquo;/g, "'")
-          .trim();
-        if (!/\s/.test(text) || !/[a-z]{2}/.test(text)) continue;
-        hits.push({ file, line: index + 1, text });
+        const raw = match[1] ?? match[2] ?? match[3] ?? match[4] ?? "";
+        const text = raw.replace(/&apos;|&rsquo;/g, "'").trim();
+        hits.push({ file, line: index + 1, text, raw });
       }
     });
   }
   return hits;
 }
 
-const STRINGS = copyStrings();
+/** Every literal on a line that is not a log, a throw or an import. */
+const LITERALS = copyStrings();
+/** The ones that hold a space, which is where copy lives. */
+const STRINGS = LITERALS.filter(
+  (hit) => /\s/.test(hit.text) && /[a-z]{2}/.test(hit.text)
+);
+
+/** The exercise, template, shoe, food, race and Space libraries and the
+ *  spoken run cues. Words1 left their text as it is, and a name in them is
+ *  an identity: "Farmer's Carry" is saved in people's history and held by
+ *  the server's catalogue under that spelling. */
+const CONTENT_LIBRARIES = [
+  "lib/releasedFormPlacards.ts",
+  "lib/exercises.ts",
+  "lib/shoeDatabase.ts",
+  "lib/workoutTemplates.ts",
+  "lib/exerciseDemo.ts",
+  "lib/runCueCopy.ts",
+  "lib/guidedRun.ts",
+  "lib/funComparisons.ts",
+  "lib/foodDatabase.ts",
+  "lib/commonFoods.ts",
+  "lib/runSegments.ts",
+  "lib/coachPrompts.ts",
+  "lib/raceEvents",
+  "features/program/injurySubstitutions.ts",
+  "features/program/variationBank.ts",
+  "features/program/templates.ts",
+  "features/program/programEngine.ts",
+  "features/spaces/spaceDefs.ts",
+  "features/streaks/badges.ts",
+  "components/paywall/ScanDemo.tsx",
+  "components/paywall/ProDemoVideo.tsx",
+  "components/paywall/ProPreview.tsx",
+  "src/data/",
+] as const;
 
 function offenders(pattern: RegExp, allowed: readonly string[] = []): string[] {
   return STRINGS.filter(
@@ -104,6 +142,19 @@ describe("copy mechanics", () => {
         "lib/appCheckNative.ts",
         "lib/purchaseProvider.ts",
       ])
+    ).toEqual([]);
+  });
+
+  it("writes an apostrophe curly: ’, not ' or &apos;", () => {
+    const straight = /[A-Za-z0-9](?:'|\\'|&apos;|&#39;)[A-Za-z]/;
+    expect(
+      // One word counts too ("Don’t"): nothing but copy holds a letter,
+      // an apostrophe and a letter.
+      LITERALS.filter(
+        (hit) =>
+          straight.test(hit.raw) &&
+          !CONTENT_LIBRARIES.some((f) => hit.file.includes(f))
+      ).map((hit) => `${hit.file}:${hit.line} ${hit.raw.trim()}`)
     ).toEqual([]);
   });
 

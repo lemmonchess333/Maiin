@@ -1454,7 +1454,7 @@ export default function History() {
                      network or a wedged stream) clears on a second go. */
                   <div className="p-4 rounded-2xl bg-card space-y-2 card-shadow">
                     <p className="text-sm font-semibold text-foreground">
-                      Couldn&apos;t load your runs
+                      Couldn’t load your runs
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Your runs are safe — this was a problem reading them, not

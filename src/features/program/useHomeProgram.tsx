@@ -99,7 +99,7 @@ export function useHomeProgram() {
       if (value.readiness !== "pending") {
         pending.current.splice(0).forEach(({ resolve, reject }) => {
           if (value.readiness === "ready" && value.programState) resolve(value);
-          else reject(new Error("Couldn't load your programme. Try again."));
+          else reject(new Error("Couldn’t load your programme. Try again."));
         });
       }
     },

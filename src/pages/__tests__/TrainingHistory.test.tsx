@@ -271,7 +271,7 @@ describe("Training history", () => {
     open();
     expect(screen.getByText("Loading sessions…")).toBeInTheDocument();
     expect(
-      screen.queryByText("This period isn't fully loaded")
+      screen.queryByText("This period isn’t fully loaded")
     ).not.toBeInTheDocument();
     expect(screen.queryByText("0 sessions shown")).not.toBeInTheDocument();
   });
@@ -286,7 +286,7 @@ describe("Training history", () => {
       refresh: vi.fn(),
     });
     open("?q=tempo");
-    await screen.findByText("This period isn't fully loaded");
+    await screen.findByText("This period isn’t fully loaded");
     expect(screen.queryByText("No matching sessions")).not.toBeInTheDocument();
     expect(
       screen.queryByText("No saved sessions in this period")
@@ -358,7 +358,7 @@ describe("Training history", () => {
   it("retains available lifts when runs fail and retries the missing source", async () => {
     failNextFirestore("onSnapshot", { path: "users/history-owner/runs" });
     open();
-    await screen.findByText("Run history couldn't load");
+    await screen.findByText("Run history couldn’t load");
     expect(unfiredFailures()).toEqual([]);
     expect(screen.getByText("Full body B")).toBeInTheDocument();
     expect(screen.getByText("1 session shown")).toBeInTheDocument();
@@ -366,14 +366,14 @@ describe("Training history", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByText("2 sessions");
     expect(
-      screen.queryByText("Run history couldn't load")
+      screen.queryByText("Run history couldn’t load")
     ).not.toBeInTheDocument();
   });
 
   it("never calls a failed run history an empty search result", async () => {
     failNextFirestore("onSnapshot", { path: "users/history-owner/runs" });
     open("?sport=runs&q=tempo");
-    await screen.findByText("Run history couldn't load");
+    await screen.findByText("Run history couldn’t load");
     expect(unfiredFailures()).toEqual([]);
     expect(screen.getByText("History unavailable")).toBeInTheDocument();
     expect(screen.queryByText("No matching sessions")).not.toBeInTheDocument();

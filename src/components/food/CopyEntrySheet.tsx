@@ -86,10 +86,10 @@ export default function CopyEntrySheet({
         setError(
           result.created.length > 0
             ? "Some of it was saved. Try again for the rest."
-            : "Couldn't save this copy. Try again."
+            : "Couldn’t save this copy. Try again."
         );
     } catch {
-      setError("Couldn't save this copy. Try again.");
+      setError("Couldn’t save this copy. Try again.");
     } finally {
       pending.current = false;
       setSaving(false);

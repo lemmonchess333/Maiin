@@ -147,7 +147,7 @@ describe("ShareDefaultsRow", () => {
   it("says what Ask does once for the card, not under each type", () => {
     render(<Harness />);
     expect(
-      screen.getAllByText("Ask: you'll be asked when you next finish one.")
+      screen.getAllByText("Ask: you’ll be asked when you next finish one.")
     ).toHaveLength(1);
     cleanup();
     render(<Harness initial={{ run: "public", workout: "never" }} />);

@@ -162,8 +162,8 @@ function AccountSectionContent({
       // getting the account's notifications, which needs the server.
       toast.error(
         navigator.onLine === false
-          ? "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
-          : "Couldn't sign out. Try again."
+          ? "Signing out needs a connection, so this phone stops getting this account’s notifications. Try again when you’re online."
+          : "Couldn’t sign out. Try again."
       );
     }
   };
@@ -189,7 +189,7 @@ function AccountSectionContent({
     writeString("tropos.account_deleted", "1");
     if (cleanup.some((result) => result.status === "rejected")) {
       toast.error(
-        "Account deleted. Some saved data on this device couldn't be cleared.",
+        "Account deleted. Some saved data on this device couldn’t be cleared.",
         {
           duration: 10000,
         }
@@ -203,7 +203,7 @@ function AccountSectionContent({
     } catch (error) {
       logger.error("Deleted-account sign-out failed", error);
       setDeleteError(
-        "Your account has been deleted. Sign-out didn't finish. Try again."
+        "Your account has been deleted. Sign-out didn’t finish. Try again."
       );
     } finally {
       setFinishing(false);
@@ -262,8 +262,8 @@ function AccountSectionContent({
               ? "Your session has expired. Sign out and back in, then retry account deletion."
               : fe?.code === "functions/deadline-exceeded" ||
                   fe?.code === "functions/unavailable"
-                ? "Couldn't confirm the deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
-                : "Account cleanup couldn't finish. Try deleting your account again. Your sign-in is kept until cleanup succeeds.";
+                ? "Couldn’t confirm the deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
+                : "Account cleanup couldn’t finish. Try deleting your account again. Your sign-in is kept until cleanup succeeds.";
         setDeleteError(message);
         dispatchModal({ type: "CANCEL_REAUTH" });
       }
@@ -300,7 +300,7 @@ function AccountSectionContent({
       logger.error("AccountSection reauth failed", err);
       if (failedAttempts + 1 >= 3) {
         toast.error(
-          "Couldn't verify your identity. Sign out and back in, then try again.",
+          "Couldn’t verify your identity. Sign out and back in, then try again.",
           {
             action: {
               label: "Sign out",
@@ -317,7 +317,7 @@ function AccountSectionContent({
       setReauthError(
         friendlyAuthError(
           code || msg,
-          "Couldn't confirm your identity. Use the same sign-in account and try again."
+          "Couldn’t confirm your identity. Use the same sign-in account and try again."
         )
       );
       dispatchModal({ type: "REAUTH_FAIL" });
@@ -362,7 +362,7 @@ function AccountSectionContent({
         activeUser.current?.uid === user.uid
       ) {
         setDeleteError(
-          "Deletion continues on the server. Some saved data on this device couldn't be cleared; you can clear it by removing the app."
+          "Deletion continues on the server. Some saved data on this device couldn’t be cleared; you can clear it by removing the app."
         );
       }
     });
@@ -431,7 +431,7 @@ function AccountSectionContent({
         open={showAppleWarning}
         onClose={() => setShowAppleWarning(false)}
         title="Cancel your App Store subscription first"
-        description="Tropos can't cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
+        description="Tropos can’t cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
         role="alertdialog"
       >
         {/* All three on the primitive. They were three bespoke class
@@ -482,7 +482,7 @@ function AccountSectionContent({
             : pending
               ? "Account deletion in progress"
               : inReauthFlight || modalState.phase === "needs-reauth"
-                ? "Confirm it's you"
+                ? "Confirm it’s you"
                 : "Delete account"
         }
         size="md"

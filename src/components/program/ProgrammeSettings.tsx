@@ -794,11 +794,11 @@ export default function ProgrammeSettings({
         code === "functions/invalid-argument" ||
         code === "invalid-argument"
       ) {
-        toast.error("Plan didn't validate. Try a different combination.");
+        toast.error("Plan didn’t validate. Try a different combination.");
       } else if (isRateLimitedRejection(err)) {
         toast.error(PLAN_SAVES_TOO_OFTEN);
       } else {
-        toast.error("Couldn't save your plan. Try again.");
+        toast.error("Couldn’t save your plan. Try again.");
       }
     } finally {
       setSaving(false);
@@ -816,7 +816,7 @@ export default function ProgrammeSettings({
     } catch (err) {
       logger.error("[ProgrammeSettings] reset failed:", err);
       toast.error(
-        appErrorMessage(err, "Couldn't reset your programme. Try again.")
+        appErrorMessage(err, "Couldn’t reset your programme. Try again.")
       );
     }
   }
@@ -831,7 +831,7 @@ export default function ProgrammeSettings({
   const loadFailedLine = (id: string, className: string) =>
     loadFailed ? (
       <p id={id} className={cn("text-xs text-muted-foreground", className)}>
-        Couldn't load your programme. Reopen this page to try again.
+        Couldn’t load your programme. Reopen this page to try again.
       </p>
     ) : null;
   const dialogLoadFailedId = `${loadFailedId}-dialog`;

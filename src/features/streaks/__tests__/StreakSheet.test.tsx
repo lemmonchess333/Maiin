@@ -61,7 +61,7 @@ describe("StreakSheet", () => {
     const sheet = screen.getByRole("dialog", { name: "12-day streak" });
     expect(
       within(sheet).getByText(
-        "Yesterday's rest day is covered. Still on a 12-day streak."
+        "Yesterday’s rest day is covered. Still on a 12-day streak."
       )
     ).toBeInTheDocument();
   });

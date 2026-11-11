@@ -575,7 +575,7 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     await vi.waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't reset your programme. Try again."
+        "Couldn’t reset your programme. Try again."
       )
     );
     expect(toast.success).not.toHaveBeenCalledWith("Programme reset");
@@ -601,7 +601,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
     weekHistory: [],
   } as unknown as ProgramState;
   const LOAD_FAILED =
-    "Couldn't load your programme. Reopen this page to try again.";
+    "Couldn’t load your programme. Reopen this page to try again.";
 
   it("Save changes waits while the programme loads, then saves on it", async () => {
     const page = setup({}, "lift", undefined, {

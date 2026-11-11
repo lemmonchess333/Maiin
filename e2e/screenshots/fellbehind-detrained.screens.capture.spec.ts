@@ -70,7 +70,7 @@ test.describe("fell-behind detrained screenshots", () => {
     // Home mounts the sheet from pendingFellBehindPrompt; the layoff
     // read lands async, so wait for the DETRAINED register specifically
     // (the standard register would show "Realign my plan" instead).
-    await expect(page.getByText(/It's been a while between runs/i)).toBeVisible(
+    await expect(page.getByText(/It’s been a while between runs/i)).toBeVisible(
       { timeout: 25_000 }
     );
     await expect(

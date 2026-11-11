@@ -65,7 +65,7 @@ describe("current run planning explanation", () => {
     expect(terms).toEqual([
       "What it is",
       "How it should feel",
-      "Why it's in your week",
+      "Why it’s in your week",
       "If it feels wrong",
       "Coaches also call this",
     ]);

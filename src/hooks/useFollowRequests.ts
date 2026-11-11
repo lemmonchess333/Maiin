@@ -70,8 +70,8 @@ export function useFollowRequests(enabled: boolean) {
           );
         toast.error(
           accept
-            ? "Couldn't accept the request. Try again."
-            : "Couldn't decline the request. Try again."
+            ? "Couldn’t accept the request. Try again."
+            : "Couldn’t decline the request. Try again."
         );
         return false;
       }
@@ -129,8 +129,8 @@ export function useFollowRequestFrom(requesterUid: string | undefined) {
         logger.error("[followRequests] answer failed", err);
         toast.error(
           accept
-            ? "Couldn't accept the request. Try again."
-            : "Couldn't decline the request. Try again."
+            ? "Couldn’t accept the request. Try again."
+            : "Couldn’t decline the request. Try again."
         );
         return false;
       } finally {

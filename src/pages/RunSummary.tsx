@@ -162,7 +162,7 @@ import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
  *  (offline before they had loaded, or the read refused). Shown in the
  *  Retry banner, under "Couldn't save your run". */
 const PRIVACY_ZONES_UNCHECKED =
-  "Privacy zones are cut from the route before it's saved, and they couldn't be checked. Try again when you're online.";
+  "Privacy zones are cut from the route before it’s saved, and they couldn’t be checked. Try again when you’re online.";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -187,10 +187,10 @@ function RetryBanner({
       />
       <div className="flex-1 text-xs text-foreground/80">
         <p className="font-medium text-running-strong">
-          Couldn&apos;t save your run
+          Couldn’t save your run
         </p>
         <p className="mt-0.5 text-muted-foreground">
-          {error || "Couldn't save this run."}
+          {error || "Couldn’t save this run."}
         </p>
       </div>
       <Button variant="sport" className="shrink-0" onClick={onRetry}>
@@ -953,7 +953,7 @@ export default function RunSummary() {
       toast.success("Changes saved");
     } catch (err) {
       logger.error("[RunSummary] field update failed", err);
-      toast.error("Couldn't save your changes. Try again.");
+      toast.error("Couldn’t save your changes. Try again.");
     } finally {
       setUpdating(false);
     }
@@ -1460,13 +1460,13 @@ export default function RunSummary() {
       logger.error("[RunSave] Failed:", error);
       // The privacy-zone and storage sentences are the app's own; an
       // SDK error's text is not copy.
-      const message = appErrorMessage(error, "Couldn't save this run");
+      const message = appErrorMessage(error, "Couldn’t save this run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
-      toast.error("Couldn't save this run. Try again below.");
+      toast.error("Couldn’t save this run. Try again below.");
     } finally {
       savingRef.current = false;
     }
@@ -1478,7 +1478,7 @@ export default function RunSummary() {
 
   const handleExportGPX = () => {
     if (privacyZonesLoading || privacyZonesError) {
-      toast.error("Couldn't check your privacy settings. Try again");
+      toast.error("Couldn’t check your privacy settings. Try again");
       return;
     }
     // Track name travels into other apps with the export — a stable
@@ -1714,7 +1714,7 @@ export default function RunSummary() {
               <WifiOff size={20} className="text-warning-strong" />
               <div>
                 <p className="font-medium text-warning-strong text-xs">
-                  You're offline
+                  You’re offline
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
@@ -1796,7 +1796,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
+                      {`This didn’t match today’s ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -2402,7 +2402,7 @@ export default function RunSummary() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This can't be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

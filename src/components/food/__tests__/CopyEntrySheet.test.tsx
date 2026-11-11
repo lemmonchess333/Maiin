@@ -110,7 +110,7 @@ describe("CopyEntrySheet", () => {
     const { onClose } = renderSheet(onSave);
     fireEvent.click(screen.getByRole("button", { name: "Log to Today" }));
     expect(
-      await screen.findByText("Couldn't save this copy. Try again.")
+      await screen.findByText("Couldn’t save this copy. Try again.")
     ).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Log to Today" }));

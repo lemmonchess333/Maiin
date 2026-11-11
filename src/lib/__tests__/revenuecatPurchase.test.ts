@@ -101,7 +101,7 @@ describe("rcPurchase", () => {
     const { rcPurchase } = await loadModule();
 
     const outcome = await rcPurchase(PID);
-    expect(outcome.error).toBe("Couldn't complete the purchase. Try again.");
+    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
     expect(outcome.detail).toBe("There was a problem with the App Store.");
   });
 
@@ -195,7 +195,7 @@ describe("rcPurchase", () => {
 
     const outcome = await rcPurchase(PID);
     expect(outcome.pending).toBeUndefined();
-    expect(outcome.error).toBe("Couldn't complete the purchase. Try again.");
+    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
   });
 
   it("is a guarded no-op without the public key", async () => {
@@ -217,7 +217,7 @@ describe("rcRestore", () => {
     const { rcRestore } = await loadModule();
 
     const outcome = await rcRestore();
-    expect(outcome.error).toBe("Couldn't restore your purchases.");
+    expect(outcome.error).toBe("Couldn’t restore your purchases.");
     expect(outcome.detail).toBe("Error performing request.");
   });
 

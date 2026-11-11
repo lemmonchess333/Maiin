@@ -16,10 +16,10 @@ describe("ProfileUnavailable", () => {
   it("says the account could not be loaded, and that it has not changed", () => {
     render(<ProfileUnavailable onRetry={vi.fn()} onSignOut={vi.fn()} />);
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your account"
+      "Couldn’t load your account"
     );
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Your account hasn't changed."
+      "Your account hasn’t changed."
     );
   });
 

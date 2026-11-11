@@ -84,7 +84,7 @@ export default function ExerciseMenuSheet({
     onSelect: async () => run(),
   });
   const choices: Choice[] = skipped
-    ? [choice("unskip", "Don't skip", onUnskip)]
+    ? [choice("unskip", "Don’t skip", onUnskip)]
     : [
         ...(nothingDone && onSwap
           ? [

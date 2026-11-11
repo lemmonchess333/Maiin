@@ -180,7 +180,7 @@ describe("run save recovery", () => {
       throw new DOMException("Full", "QuotaExceededError");
     });
     expect(() => queueDurableWrite("run-a", path, "one-run", data())).toThrow(
-      "Couldn't save on this phone"
+      "Couldn’t save on this phone"
     );
     expect(pendingDocumentWrites("run-a", path)).toEqual([]);
   });

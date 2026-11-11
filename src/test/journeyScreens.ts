@@ -36,7 +36,7 @@ export const SETUP = {
   raceDate: "Race target date",
   /** Run9: asked of every distance goal, nothing chosen. */
   raceEntry: "Race or on your own",
-  raceEntered: "A race I've entered",
+  raceEntered: "A race I’ve entered",
   /** The running a race plan starts from (R5), asked of someone who runs
    *  already. */
   weekMinutes: "Minutes a week",
@@ -202,7 +202,7 @@ export const RUN_ABOUT = {
   open: "Why this run",
   what: "What it is",
   feel: "How it should feel",
-  why: "Why it's in your week",
+  why: "Why it’s in your week",
   ifWrong: "If it feels wrong",
   alsoCalled: "Coaches also call this",
 } as const;

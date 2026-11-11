@@ -548,7 +548,7 @@ test.describe("large text", () => {
         page,
         page
           .getByText("Nothing from people you follow yet")
-          .or(page.getByText("You don't follow anyone yet"))
+          .or(page.getByText("You don’t follow anyone yet"))
           .or(
             page
               .getByRole("button", { name: /^(Add a comment|View comments)$/ })
@@ -795,7 +795,7 @@ test.describe("large text", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       await page.goto("space/womens-running/post/no-such-post");
-      await ready(page, page.getByText("This post isn't available"));
+      await ready(page, page.getByText("This post isn’t available"));
       await measure(page, "space-post-unavailable", width, found);
 
       expect(found).toEqual([]);
@@ -835,7 +835,7 @@ test.describe("large text", () => {
       await page.goto("program/plan");
       await ready(page, page.getByRole("heading", { name: "Your plan" }));
       await page
-        .getByRole("region", { name: "This week's plan" })
+        .getByRole("region", { name: "This week’s plan" })
         .getByRole("listitem")
         .first()
         .waitFor({ timeout: 20_000 });
@@ -903,7 +903,7 @@ test.describe("large text", () => {
       await page.waitForTimeout(800);
       await measure(page, "week-reset-heavy", width, found);
       const express = page.getByRole("button", {
-        name: "Use this week's Express session",
+        name: "Use this week’s Express session",
       });
       if (await express.isVisible().catch(() => false)) {
         await express.click();

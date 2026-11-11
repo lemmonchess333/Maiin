@@ -619,7 +619,7 @@ export function ChallengeCard({
                 </span>
               ) : nextTier && nextValue ? (
                 <span>
-                  You&apos;re at{" "}
+                  You’re at{" "}
                   <span className="font-semibold text-foreground">
                     {formatChallengeValue(
                       challenge.metric,

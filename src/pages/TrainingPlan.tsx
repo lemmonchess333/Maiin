@@ -325,7 +325,7 @@ export default function TrainingPlan() {
       )}
       {refreshFailed && (
         <ErrorState
-          title="Couldn't refresh the latest plan"
+          title="Couldn’t refresh the latest plan"
           retry={{
             onClick: () => {
               void refreshProgram()
@@ -337,7 +337,7 @@ export default function TrainingPlan() {
       )}
       {readiness === "failed" && (
         <ErrorState
-          title="Couldn't load the latest plan"
+          title="Couldn’t load the latest plan"
           description="Any cached week is shown below. Reload before making changes."
           retry={{ onClick: () => navigate(0) }}
         />
@@ -408,7 +408,7 @@ export default function TrainingPlan() {
           ) : null}
           {evidenceFailed && (
             <ErrorState
-              title="Some saved activities couldn't load"
+              title="Some saved activities couldn’t load"
               description="The plan is still here. Reload activity before changing a run."
               retry={{
                 onClick: () => {
@@ -478,7 +478,7 @@ export default function TrainingPlan() {
               }
             />
           )}
-          <section className="space-y-2" aria-label="This week's plan">
+          <section className="space-y-2" aria-label="This week’s plan">
             <SectionHeading
               action={
                 canEdit && eligibleRuns.length > 0 ? (

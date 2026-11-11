@@ -77,7 +77,7 @@ export default function InviteCodeField({
           aria-describedby={invalid ? `${noteId} ${errorId}` : noteId}
         />
         <p id={noteId} className="text-sm text-muted-foreground">
-          They'll follow you once your plan is made.
+          They’ll follow you once your plan is made.
         </p>
         {invalid && (
           <p id={errorId} className="text-sm text-destructive-strong">

@@ -177,12 +177,12 @@ describe("FoodAnalyzer — Add a detail", () => {
     await scanPhoto();
     h.analyzeFood.mockImplementationOnce(async () => ({
       data: null,
-      errorMessage: "Couldn't reach the server.",
+      errorMessage: "Couldn’t reach the server.",
     }));
     await addDetail("cooked in butter");
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't reach the server. The first result is still here.",
+        "Couldn’t reach the server. The first result is still here.",
         expect.anything()
       )
     );

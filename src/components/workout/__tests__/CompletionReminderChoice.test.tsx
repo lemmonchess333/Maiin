@@ -35,7 +35,7 @@ describe("saved-session reminder control", () => {
       <CompletionReminderChoice kind="lift" activationJourneyV2={false} />
     );
     const toggle = screen.getByRole("switch", {
-      name: "Evening reminder if you haven't logged",
+      name: "Evening reminder if you haven’t logged",
     });
     expect(toggle).toHaveAttribute("aria-checked", "false");
     fireEvent.click(toggle);

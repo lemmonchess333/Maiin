@@ -96,7 +96,7 @@ describe("DeleteSessionAction", () => {
     expect(dialog).toHaveTextContent(/streaks and badges .* stay/i);
   });
 
-  it("says the feed post goes when the session was shared, and stays when it wasn't", async () => {
+  it("says the feed post goes when the session was shared, and stays when it wasn’t", async () => {
     const { unmount } = renderAction({ sharedActivityId: "act-1" });
     fireEvent.click(
       screen.getByRole("button", { name: /delete this workout/i })

@@ -137,6 +137,6 @@ describe("Run launch card — a long run that finishes at race pace", () => {
   it("names none without a goal time", () => {
     const { finish, purpose } = launchLong();
     expect(finish).toBe("none");
-    expect(purpose).toMatch(/^The week's anchor run/);
+    expect(purpose).toMatch(/^The week’s anchor run/);
   });
 });

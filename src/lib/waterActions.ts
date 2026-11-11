@@ -274,7 +274,7 @@ export function flushWater(uid: string): Promise<void> {
       } catch (error) {
         errors.set(
           uid,
-          error instanceof Error ? error.message : "Couldn't sync water."
+          error instanceof Error ? error.message : "Couldn’t sync water."
         );
         notify();
         break;
