@@ -181,7 +181,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 3,
     expected: [
-      "lift moved 3 | week 2 progression | lifts 2026-09-28 | history 1 | sets 56 load 2573.0 | runs -  | plan -",
+      "lift moved 3 | week 2 progression | lifts 2026-09-28 | history 1 | sets 64 load 2948.0 | runs -  | plan -",
     ],
   },
   {
@@ -189,8 +189,8 @@ const cases: {
     answers: { daysPerWeek: 3, experience: "beginner", primaryGoal: "general" },
     weeksBehind: 20,
     expected: [
-      "lift moved 12 | week 1 progression | lifts 2026-11-30 | history 0 | sets 40 load 1609.0 | runs -  | plan -",
-      "lift moved 8 | week 1 progression | lifts 2027-01-25 | history 0 | sets 40 load 1609.0 | runs -  | plan -",
+      "lift moved 12 | week 1 progression | lifts 2026-11-30 | history 0 | sets 45 load 1746.5 | runs -  | plan -",
+      "lift moved 8 | week 1 progression | lifts 2027-01-25 | history 0 | sets 45 load 1746.5 | runs -  | plan -",
     ],
   },
   {
@@ -199,7 +199,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -208,7 +208,7 @@ const cases: {
     weeksBehind: 2,
     layoff: "detrained",
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -223,7 +223,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 39 load 1879.5 | runs 2026-10-12 easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
     ],
   },
   {
@@ -240,8 +240,8 @@ const cases: {
     // F6: the runs stop at race week and the plan stays, for the race's
     // own ending; the lifts carry the calendar on, to the same place.
     expected: [
-      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 16 load 524.5 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
-      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 29 load 1094.0 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
+      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 18 load 615.0 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
+      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 30 load 1177.5 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
     ],
   },
   {
@@ -257,7 +257,7 @@ const cases: {
     }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 1/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 1/13",
     ],
   },
   {
@@ -266,7 +266,7 @@ const cases: {
     edit: (s) => ({ ...s, liftWeekKey: shift(s.liftWeekKey ?? START, 7) }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
 ];

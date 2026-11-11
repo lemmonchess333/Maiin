@@ -23,11 +23,8 @@ import {
 import {
   advanceWeek,
   applyDeload,
-  assignDayRoles,
   easeBackIn,
   raceLegSets,
-  repFloorFor,
-  undulationDeltaFor,
 } from "../programEngine";
 import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
 import { loadsTheLegs } from "../easierToday";
@@ -891,12 +888,8 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     );
     const swapped = edited.programState.workouts[1].exercises[2];
     expect(swapped.exerciseId).not.toBe("leg-extension");
-    // Day 2 of 4 is a heavier day: its role's bottom, two under.
-    const row = roleRepsFor("hypertrophy", swapped, "intermediate");
-    const reps = Math.max(
-      repFloorFor(swapped),
-      row.bottom + undulationDeltaFor(swapped, assignDayRoles(4)[1])
-    );
+    // Its role's bottom: a built plan's sessions are moderate (Lift21).
+    const reps = roleRepsFor("hypertrophy", swapped, "intermediate").bottom;
     expect(swapped.reps).toBe(reps);
     expect(swapped.baseReps).toBe(reps);
     // …and the slots the edit left alone are as they were.
@@ -1144,21 +1137,20 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
     }
   });
 
-  it("gives an intermediate's main lifts a range, heavier and lighter by day", () => {
+  it("gives an intermediate's main lifts their role's range", () => {
     const { edited } = changed("beginner", "intermediate");
     for (const day of edited.workouts) {
-      const shift =
-        day.dayRole === "heavy" ? -2 : day.dayRole === "pump" ? 2 : 0;
+      // A built plan's sessions are moderate (Lift21): no day shifts reps.
+      expect(day.dayRole, day.dayName).toBe("moderate");
       for (const lift of day.exercises.filter(
         (e) => exerciseRole(e) === "main"
       )) {
         expect(lift.progressionType, lift.name).toBe("double");
         expect(lift.repRangeMax, lift.name).toBeGreaterThan(lift.reps);
-        // The pump day's +2 skips a hinge (`undulationDeltaFor`).
-        const expected =
-          6 +
-          (shift > 0 && lift.movementCategory === "hip_dominant" ? 0 : shift);
-        expect(lift.reps, `${day.dayName}: ${lift.name}`).toBe(expected);
+        // 6 to 10, and the deadlift's own 5 to 8.
+        expect(lift.reps, `${day.dayName}: ${lift.name}`).toBe(
+          roleRepsFor("hypertrophy", lift, "intermediate").bottom
+        );
       }
     }
   });

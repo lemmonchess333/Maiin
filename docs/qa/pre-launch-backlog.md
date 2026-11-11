@@ -4348,6 +4348,16 @@ WKWebView.
       and lunch foods, focus the field with the chip on Breakfast, then
       on Lunch. Passing: each list leads with that meal's foods, and
       logging one does not reshuffle the list on screen.
+- [ ] **The Pro scan demo shows this page.** On a free account tap the
+      camera in Food's field and watch the demo in the Pro offer through
+      twice, then open Upgrade and watch it there. Passing: the Food
+      page in the drawn phone has no title, the wheel on the page with
+      its target in the label, the week as bars, and one field with
+      Dinner on a chip and the camera inside it. After Log, the food's
+      picture rises from the field to the wheel, the wheel, the week and
+      the macros take the meal, the earlier diary rows move down for the
+      new one, and nothing stutters. With Reduce Motion on it is the
+      result sheet, still.
 
 ## The mark is a T whose stem rises (DS7, 2026-11-11)
 

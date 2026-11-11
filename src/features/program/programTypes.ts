@@ -145,6 +145,13 @@ export interface ProgramExercise {
    */
   baseSets?: number;
   /**
+   * Build-time only (Lift21): the lift's place in the order its day gives
+   * lifts up when the day is sized to its time. The lower, the longer it is
+   * kept. `generateProgram` removes it before a plan leaves the builder, so
+   * no stored plan holds one.
+   */
+  keepRank?: number;
+  /**
    * Load stored on entering an automatic deload week and restored
    * (max(live, stored)) on meso exit, then removed. Absent outside a
    * deload cycle.

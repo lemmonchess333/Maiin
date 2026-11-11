@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { generateProgram } from "../programEngine";
 import { buildPlan } from "../planBuilder";
+import { maxSessionSets } from "../sessionFit";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "../volumeModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import type { WorkoutDay } from "../programTypes";
@@ -229,20 +230,28 @@ describe("generator audit — prescriptions stay physically plausible", () => {
 });
 
 describe("generator audit — sessions stay inside a length budget", () => {
-  it("the balancers never grow a session past 18 working sets", () => {
-    // Backlog #15 was deferred on exactly this ("needs a volume-budget
-    // decision first — a full-body day is already long") and its STATUS then
-    // dismissed the worry. Measured: marking the full-body slots as
-    // accessories made them growable for the first time and took a 3-day
-    // week from 42 to 54 sets, 14 → 20 in one session. The balancing is
-    // right; it needed the bound it was deferred on.
-    for (const goal of GOALS) {
-      for (const days of DAYS) {
-        for (const day of week(days, goal)) {
-          const sets = day.exercises.reduce((n, e) => n + e.sets, 0);
-          expect(sets, `${goal}/${days}d ${day.dayName}`).toBeLessThanOrEqual(
-            18
+  it("never builds a session past its set ceiling", () => {
+    // Measured before the ceiling: a three-day week went from 42 to 54
+    // sets, 14 to 20 in one session.
+    for (const minutes of [30, 45, 60, 75]) {
+      for (const goal of GOALS) {
+        for (const days of DAYS) {
+          const { workouts } = generateProgram(
+            days,
+            undefined,
+            goal,
+            CTX,
+            undefined,
+            "beginner",
+            minutes
           );
+          for (const day of workouts) {
+            const sets = day.exercises.reduce((n, e) => n + e.sets, 0);
+            expect(
+              sets,
+              `${goal}/${String(days)}d/${String(minutes)} ${day.dayName}`
+            ).toBeLessThanOrEqual(maxSessionSets(minutes));
+          }
         }
       }
     }

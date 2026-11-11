@@ -22,7 +22,9 @@ import type { Experience, PrimaryGoal } from "./programTypes";
  * injuries and bodyweight as well as their days, focus, level and session
  * length, so their own plan, untouched, never reads below it. A muscle under
  * that is short of what the week can hold, which is worth saying; one under
- * the floor but at what fits is not. The ceiling stays the band's own.
+ * the floor but at what fits is not. The ceiling is the band's, or what that
+ * same first plan holds where it holds more (Lift21: no ceiling takes a set
+ * from a built plan), so only what the person added past both reads high.
  */
 export function weeklyVolumeTargets(input: {
   goal: PrimaryGoal | undefined;
@@ -55,10 +57,19 @@ export function weeklyVolumeTargets(input: {
   return new Map(
     JUDGEMENT_MUSCLE_ORDER.map((muscle) => {
       const band = judgementLandmark(input.goal, muscle, experience);
-      const low = Math.min(band.low, fits.get(muscle) ?? 0);
+      const fitted = fits.get(muscle) ?? 0;
+      const low = Math.min(band.low, fitted);
       // The minimum below the floor comes down with it: a floor lowered to
       // what fits under a higher minimum still read the fitted week as low.
-      return [muscle, { ...band, mv: Math.min(band.mv, low), low }];
+      return [
+        muscle,
+        {
+          ...band,
+          mv: Math.min(band.mv, low),
+          low,
+          high: Math.max(band.high, fitted),
+        },
+      ];
     })
   );
 }

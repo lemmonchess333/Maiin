@@ -11,10 +11,11 @@
  *
  * The fix is the catalogue-pinned named slot (`makeNamedAccessory`), plus
  * three guards these tests hold in place:
- *   - fitting a session to the time the person has (`sessionFit.ts`) keeps
- *     a muscle's last direct lift while anything else can give way, so a
- *     plan of an hour or more keeps its calf slot; the time decides its
- *     sets, and a shorter plan keeps its main lifts first;
+ *   - sizing a session to the time the person has (`sessionFit.ts`, Lift21)
+ *     takes lifts off the end of a day's order, where the calf raise sits
+ *     after the day's big lifts: a 75-minute plan keeps its calf slot, a
+ *     plan of four days or more keeps one from an hour, and a shorter or
+ *     smaller week gives it up before it thins every lift to fit it;
  *   - meso rotation must NOT rotate the slot within its `knee_dominant` bank
  *     pool (measured pre-guard: the calf slot became `squat` at the first
  *     mesocycle restart — coverage silently deleted after 4 weeks);
@@ -71,15 +72,15 @@ const calfSlots = (w: WorkoutDay[]) =>
   w.flatMap((d) => d.exercises).filter((e) => CALF_IDS.has(e.exerciseId));
 
 describe("generated plans carry direct calf work", () => {
-  it("every goal × day count has a calf slot in sessions of an hour or more (full gym)", () => {
+  it("every goal × day count has a calf slot at 75 minutes, and four days or more from an hour (full gym)", () => {
     for (const goal of GOALS) {
       for (const days of [2, 3, 4, 5, 6]) {
-        for (const minutes of [60, 75]) {
+        for (const minutes of days >= 4 ? [60, 75] : [75]) {
           const at = `${goal}/${days}d/${minutes}min`;
           const slots = calfSlots(plan(goal, days, "full_gym", minutes));
           expect(slots.length, at).toBeGreaterThanOrEqual(1);
-          // The slot is assistance work, so the time fit may cut its sets
-          // and the accessory ramp shapes it week to week.
+          // The slot is assistance work: the accessory ramp shapes it week
+          // to week.
           slots.forEach((s) => expect(s.isAccessory, at).toBe(true));
         }
       }
@@ -106,7 +107,8 @@ describe("generated plans carry direct calf work", () => {
   it("limited equipment keeps calf coverage via the bodyweight fallback", () => {
     for (const tier of ["home_gym", "minimal"] as const) {
       for (const days of [2, 4, 6]) {
-        const slots = calfSlots(plan("hypertrophy", days, tier));
+        // With the time for it: the point here is the kit, not the clock.
+        const slots = calfSlots(plan("hypertrophy", days, tier, 75));
         expect(slots.length, `${tier}/${days}d`).toBeGreaterThanOrEqual(1);
         // …and never as a machine the user does not own.
         for (const s of slots) {

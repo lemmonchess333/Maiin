@@ -359,6 +359,33 @@ export const OVER_55: LiftPersona = {
   tracked: BIG_FOUR_DUMBBELL_PRESS,
 };
 
+/** Six 45-minute days of General fitness, the week Lift21 was decided on:
+ *  push, pull and legs twice, four lifts a day. Knows his lifts. */
+export const SIX_DAYS_GENERAL: LiftPersona = {
+  name: "six-days-general",
+  answers: {
+    experience: "intermediate",
+    primaryGoal: "general",
+    daysPerWeek: 6,
+    sessionMinutes: 45,
+    weightKg: 80,
+  },
+  nutrition: "recomp",
+  lifter: {
+    trainingAge: "intermediate",
+    start1RM: {
+      "bench-press": 90,
+      squat: 120,
+      deadlift: 150,
+      "overhead-press": 55,
+    },
+    seedRir: 3,
+  },
+  sessionShare: 0.9,
+  calibrates: true,
+  tracked: BIG_FOUR,
+};
+
 export const LIFT_PERSONAS: readonly LiftPersona[] = [
   NOVICE_MAN,
   NOVICE_WOMAN,
@@ -375,4 +402,5 @@ export const LIFT_PERSONAS: readonly LiftPersona[] = [
   HOLIDAYS,
   CUTTING,
   OVER_55,
+  SIX_DAYS_GENERAL,
 ];

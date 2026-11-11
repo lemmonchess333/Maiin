@@ -34,15 +34,12 @@ interface CalorieRingProps {
    * target ("kcal left of 2,200") and a small mark that says the wheel
    * can be tapped.
    *
-   * "card" is the wheel as Food drew it in its card until Food11, 176px
-   * with the short label. The paywall's scan demo still draws it.
-   *
    * "compact" is the same wheel at the size Home's food card draws it:
    * one wheel, so the screens show the same object (owner call; DS3's
    * STATUS lines). The drawing scales with the box; the number steps
    * down, and the label keeps its 12px text so it stays readable.
    */
-  size?: "hero" | "card" | "compact";
+  size?: "hero" | "compact";
 }
 
 /* Drawn on a 160 box. Nothing may paint past r + stroke / 2 = SIZE / 2:
@@ -98,8 +95,8 @@ export default function CalorieRing({
 }: CalorieRingProps) {
   const compact = size === "compact";
   const hero = size === "hero";
-  /* What the wheel stands on: the page for Food's, a card for the other
-     two. The sliver ahead of the second lap's head is this colour. */
+  /* What the wheel stands on: the page for Food's, a card for Home's.
+     The sliver ahead of the second lap's head is this colour. */
   const surface = hero ? "hsl(var(--background))" : "hsl(var(--card))";
   const reduce = useReducedMotion();
   const settled = reduce || !drawIn;
@@ -174,11 +171,9 @@ export default function CalorieRing({
            phone, and its figure is the screen's largest text. A
            container, so the figure sizes from the ring and never
            outgrows it at larger text. */
-        compact
-          ? "w-26 max-w-full shrink-0"
-          : hero
-            ? "@container w-[264px] max-w-full mx-auto"
-            : "@container w-44 max-w-full mx-auto"
+        hero
+          ? "@container w-[264px] max-w-full mx-auto"
+          : "w-26 max-w-full shrink-0"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's
@@ -313,9 +308,7 @@ export default function CalorieRing({
                 "font-medium text-muted-foreground",
                 hero
                   ? "mt-2 max-w-[72cqw] text-center text-balance text-sm font-mono tabular-nums"
-                  : compact
-                    ? "mt-1 text-xs"
-                    : "mt-1.5 text-xs"
+                  : "mt-1 text-xs"
               )}
             >
               {hero ? (
