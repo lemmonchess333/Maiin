@@ -10,17 +10,14 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  batchGetKudos,
-  getFollowerCount,
-  getFollowingCount,
-} from "@/lib/socialApi";
+import { batchGetKudos, getFollowCounts } from "@/lib/socialApi";
 import { activityToFeedItem, createdAtMs } from "@/lib/activityFeedItem";
 import { BADGE_DEFINITIONS, type EarnedBadge } from "@/features/streaks/badges";
 import { logger } from "@/lib/logger";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import { publicStreakAsOf } from "@/features/streaks/publicStreak";
 import { localDateString } from "@/lib/dateHelpers";
+import { parseMedalSummary, type Medal } from "@/features/challenges/medals";
 
 /** Posts the profile lists, newest first. Also the window "This week"
  *  is counted from, so it is larger than a week's sessions for anyone. */
@@ -139,6 +136,9 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
   const [countsFailed, setCountsFailed] = useState(false);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [badgesFailed, setBadgesFailed] = useState(false);
+  // The trophy case (Soc15): null until the public profile has been read,
+  // so a failed read is not drawn as "no medals".
+  const [medals, setMedals] = useState<Medal[] | null>(null);
   const [posts, setPosts] = useState<PostsState>(POSTS_LOADING);
   const [attempt, setAttempt] = useState(0);
 
@@ -179,13 +179,18 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
             ? pubData.trainingForSpaceId
             : null
         );
+        // The public summary for your own profile too: a profile shows how
+        // it looks to other people.
+        setMedals(parseMedalSummary(pubData.medalSummary));
         if (!isOwn) {
           const summary = pubData.badgeSummary as
-            | { earnedMap?: Record<string, unknown> }
-            | undefined;
+            { earnedMap?: Record<string, unknown> } | undefined;
           setBadges(newestBadges(summary?.earnedMap ?? {}));
         }
       }
+      // A profile with no public copy yet holds no medals; a read that
+      // failed says nothing either way.
+      if (!pubData && pub.status === "fulfilled") setMedals([]);
       const source = ownData ?? pubData;
       if (source) {
         setIdentity({
@@ -220,14 +225,23 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     });
 
     const countFailed = (err: unknown) => {
-      logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      /* The rules refuse the counts to a reader their owner blocked, as
+         they do the profile, which is drawn as not available. That is
+         the rules working, not a read worth a warning. */
+      const refused =
+        !isOwn &&
+        (err as { code?: string } | undefined)?.code === "permission-denied";
+      if (!refused) {
+        logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      }
       if (live()) setCountsFailed(true);
     };
-    getFollowerCount(uid)
-      .then((n) => live() && setFollowers(n))
-      .catch(countFailed);
-    getFollowingCount(uid)
-      .then((n) => live() && setFollowingCount(n))
+    getFollowCounts(uid, isOwn)
+      .then((counts) => {
+        if (!live()) return;
+        setFollowers(counts.followers);
+        setFollowingCount(counts.following);
+      })
       .catch(countFailed);
 
     // Your own badges come from the live record (owner-only), so their
@@ -280,6 +294,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     setFollowingCount(null);
     setCountsFailed(false);
     setBadgesFailed(false);
+    setMedals(null);
     setAttempt((n) => n + 1);
   }, []);
 
@@ -303,6 +318,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     countsFailed,
     badges,
     badgesFailed,
+    medals,
     posts: posts.items,
     postsLoading: posts.loading,
     postsFailed: posts.failed,

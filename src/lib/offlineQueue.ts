@@ -45,6 +45,8 @@ interface QueuedWrite {
   data: Record<string, unknown>;
   timestamp: number;
   durable?: boolean;
+  /** New best-effort entries use the same Timestamp codec as durable ones. */
+  encoded?: boolean;
   workoutCompletion?: { programme?: ProgrammeCompletionContext };
   failed?: boolean;
   /** The last failure was one no retry can change (`refusedForGood`), so
@@ -53,6 +55,18 @@ interface QueuedWrite {
 }
 
 const queueListeners = new Set<() => void>();
+const syncedRunListeners = new Set<
+  (receipt: { uid: string; runId: string }) => void
+>();
+/** Fires only after the server acknowledges a canonical run create. */
+export const subscribeSyncedRunWrites = (
+  listener: (receipt: { uid: string; runId: string }) => void
+) => {
+  syncedRunListeners.add(listener);
+  return () => {
+    syncedRunListeners.delete(listener);
+  };
+};
 let queueVersion = 0;
 export const subscribeQueuedWrites = (listener: () => void) => {
   queueListeners.add(listener);
@@ -65,12 +79,18 @@ function notifyQueue() {
   queueVersion++;
   queueListeners.forEach((listener) => listener());
 }
-// Durable entries encode SDK timestamps explicitly; JSON alone loses their type.
+// Encode SDK timestamps explicitly; JSON alone loses their type. Other class
+// instances retain JSON's own serialization (for example Date.toJSON).
 function encode(value: unknown): unknown {
   if (value instanceof Timestamp)
     return { __queuedTimestamp: [value.seconds, value.nanoseconds] };
   if (Array.isArray(value)) return value.map(encode);
-  if (value && typeof value === "object")
+  if (
+    value &&
+    typeof value === "object" &&
+    (Object.getPrototypeOf(value) === Object.prototype ||
+      Object.getPrototypeOf(value) === null)
+  )
     return Object.fromEntries(
       Object.entries(value).map(([key, child]) => [key, encode(child)])
     );
@@ -113,7 +133,7 @@ function saveQueue(queue: QueuedWrite[]) {
   // Never evict an accepted durable meal to make space for another write.
   if (queue.some((item) => item.durable))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   // A refused write with no storage at all is not a full store: there is
   // nothing to shed into, and every shed would be reported as a drop.
@@ -160,7 +180,8 @@ export function queueWrite(
     collectionPath,
     docId,
     merge,
-    data,
+    data: encode(data) as Record<string, unknown>,
+    encoded: true,
     timestamp: Date.now(),
   });
   saveQueue(queue);
@@ -189,7 +210,7 @@ export function queueDurableWrite(
   // Strict persistence: no quota shedding and no success on unavailable storage.
   if (!writeJson(QUEUE_KEY, queue))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   notifyQueue();
 }
@@ -231,15 +252,13 @@ export function hasPendingProgrammeCompletion(uid: string): boolean {
   );
 }
 
-/** The complete, timestamp-encoded workout survives programme rollover and
- * view teardown. Replays never restore a stale whole programme document. */
-export function queueWorkoutCompletion(
-  db: Firestore,
+/** Retain the first completion payload before any network attempt. */
+function retainWorkoutCompletion(
   uid: string,
   workoutId: string,
   data: Record<string, unknown>,
   programme?: ProgrammeCompletionContext
-): Promise<"synced" | "failed"> {
+): string {
   const queue = getQueue();
   const existing = queue.find(
     (item) =>
@@ -262,9 +281,74 @@ export function queueWorkoutCompletion(
     });
   if (!writeJson(QUEUE_KEY, queue))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   notifyQueue();
+  return id;
+}
+
+/**
+ * An online save needs the same durable retry as an offline one: being
+ * connected does not mean the transaction will succeed. Retain its exact
+ * payload before the first await, so closing the app during that attempt
+ * cannot strand a finished draft outside the app's retry surface.
+ */
+export async function commitRecoverableWorkoutCompletion(
+  db: Firestore,
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  programme?: ProgrammeCompletionContext
+): ReturnType<typeof commitWorkoutCompletion> {
+  let retained: string | undefined;
+  try {
+    retained = retainWorkoutCompletion(uid, workoutId, data, programme);
+  } catch (error) {
+    // A browser that denies local storage can still save to the server.
+    // Nothing is acknowledged until that transaction succeeds.
+    logger.warn("[OfflineQueue] workout recovery storage unavailable", error);
+  }
+  let committed: Awaited<ReturnType<typeof commitWorkoutCompletion>>;
+  try {
+    committed = await commitWorkoutCompletion(
+      db,
+      uid,
+      workoutId,
+      data,
+      programme
+    );
+  } catch (error) {
+    if (retained) {
+      const latest = getQueue().map((item) =>
+        item.uid === uid && item.id === retained
+          ? { ...item, failed: true, refused: refusedForGood(error) }
+          : item
+      );
+      if (writeJson(QUEUE_KEY, latest)) notifyQueue();
+    }
+    throw error;
+  }
+  if (retained) {
+    // Subtract from the latest queue; another save may have arrived while
+    // this transaction was out. A failed cleanup is safe to replay.
+    const latest = getQueue().filter(
+      (item) => item.uid !== uid || item.id !== retained
+    );
+    if (writeJson(QUEUE_KEY, latest)) notifyQueue();
+  }
+  return committed;
+}
+
+/** The complete, timestamp-encoded workout survives programme rollover and
+ * view teardown. Replays never restore a stale whole programme document. */
+export function queueWorkoutCompletion(
+  db: Firestore,
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  programme?: ProgrammeCompletionContext
+): Promise<"synced" | "failed"> {
+  const id = retainWorkoutCompletion(uid, workoutId, data, programme);
   const settled = new Promise<"synced" | "failed">((resolve) => {
     const unsubscribe = subscribeQueuedWrites(() => {
       const pending = getQueue().find(
@@ -401,7 +485,7 @@ export function discardRefusedSaves(uid: string): Promise<number> {
         queue.filter((item) => !discarded.includes(item))
       )
     )
-      throw new Error("Couldn't update this phone. Try again.");
+      throw new Error("Couldn’t update this phone. Try again.");
     notifyQueue();
     const completions = discarded
       .filter((item) => item.workoutCompletion)
@@ -435,22 +519,29 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   // failure once did, left everything queued behind it unsynced, on every
   // flush, for good.
   const refused = new Set<string>();
+  // Documents whose best-effort write failed in a way a later flush can
+  // land. A later write to the same document waits, as behind a refusal:
+  // the merges here carry whole figures (a day's log, a session's notes),
+  // so one landing first was overwritten by the older one on the next
+  // flush. Other documents go ahead.
+  const waiting = new Set<string>();
   const { auth } = await import("@/lib/firebase");
 
   for (const item of queue) {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
     const target = item.docId ? `${item.collectionPath}/${item.docId}` : null;
-    if (target && refused.has(target)) continue;
+    if (target && (refused.has(target) || waiting.has(target))) continue;
     try {
       // A queued flush can start after sign-out, or resume after another
       // account signs in while an earlier write awaits acknowledgement.
       // Check the live identity for EVERY write, including legacy entries.
       if (auth.currentUser?.uid !== uid) break;
       if (item.durable && !navigator.onLine) break;
-      const decoded = item.durable
-        ? (decode(item.data) as Record<string, unknown>)
-        : item.data;
+      const decoded =
+        item.durable || item.encoded
+          ? (decode(item.data) as Record<string, unknown>)
+          : item.data;
       const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);
@@ -460,7 +551,11 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
             uid,
             item.docId,
             payload,
-            item.workoutCompletion.programme
+            item.workoutCompletion.programme,
+            // The finish screen may be gone. Invalidate with the workout
+            // commit, never leave a create queued just for a cache retry:
+            // deleting that saved workout must not let a retry restore it.
+            { invalidateRecords: true }
           );
         } else if (item.durable && !item.merge) {
           await runTransaction(db, async (transaction) => {
@@ -487,6 +582,20 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
         if (auth.currentUser?.uid === uid)
           clearCompletedWorkoutDraft(uid, decoded.completionId);
       }
+      if (
+        item.durable &&
+        !item.merge &&
+        item.collectionPath === `users/${uid}/runs` &&
+        item.docId
+      ) {
+        for (const listener of syncedRunListeners) {
+          try {
+            listener({ uid, runId: item.docId });
+          } catch (error) {
+            logger.warn("[OfflineQueue] synced-run listener failed", error);
+          }
+        }
+      }
       landed.add(item.id);
       flushed++;
     } catch (e) {
@@ -511,6 +620,8 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       } else if (forGood) {
         // A best-effort write no flush can land, retried on every one.
         dropped.add(item.id);
+      } else if (target) {
+        waiting.add(target);
       }
     }
   }

@@ -168,8 +168,8 @@ export default function PrivacySection({
               Hide route start &amp; end on shared runs
             </p>
             <p className="text-xs text-muted-foreground">
-              Followers don&apos;t see the first and last 200 m. Your own map
-              keeps the whole route.
+              Followers don’t see the first and last 200 m. Your own map keeps
+              the whole route.
             </p>
           </div>
           <Toggle
@@ -197,7 +197,7 @@ export default function PrivacySection({
                 Privacy zones
               </p>
               <p className="text-xs text-muted-foreground">
-                Hide route start/end near saved locations
+                Hide where a route starts and ends near saved locations
               </p>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default function PrivacySection({
                 setNewZoneName("");
                 toast.success("Privacy zone added");
               } catch {
-                toast.error("Could not get your location");
+                toast.error("Couldn’t get your location");
               }
             }}
           >
@@ -295,7 +295,7 @@ export default function PrivacySection({
                   Blocked users
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Manage users you&apos;ve blocked
+                  Manage users you’ve blocked
                 </p>
               </div>
             </div>
@@ -338,7 +338,7 @@ export default function PrivacySection({
                     setBlockedUsersList(users);
                     setBlockedUsersLoaded(true);
                   } catch {
-                    toast.error("Couldn't load your blocked users. Try again.");
+                    toast.error("Couldn’t load your blocked users. Try again.");
                   } finally {
                     setBlockedUsersLoading(false);
                   }
@@ -351,7 +351,7 @@ export default function PrivacySection({
           {blockedUsersLoaded &&
             (blockedUsersList.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-2">
-                You haven&apos;t blocked anyone
+                You haven’t blocked anyone
               </p>
             ) : (
               <div className="space-y-2">
@@ -417,7 +417,7 @@ export default function PrivacySection({
             await removeZone(zone.id);
             toast.success("Privacy zone removed");
           } catch {
-            toast.error("Couldn't remove the privacy zone. Try again.");
+            toast.error("Couldn’t remove the privacy zone. Try again.");
           }
         }}
         onCancel={() => setPendingZoneRemoval(null)}

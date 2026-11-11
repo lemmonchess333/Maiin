@@ -88,7 +88,9 @@ export default function RacePredictionsCard() {
     <div className="p-4 rounded-2xl bg-card card-shadow mt-2">
       <div className="flex items-center gap-2 mb-3">
         <Timer className="size-4 text-running" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Race predictions</h3>
+        <h3 className="text-base font-bold text-foreground">
+          Race predictions
+        </h3>
       </div>
 
       {/* Two across while 13em of card allows, one per row below that:
@@ -96,9 +98,9 @@ export default function RacePredictionsCard() {
       <div className="@container">
         <div className="grid grid-cols-2 @max-[13em]:grid-cols-1 gap-2">
           {ROWS.map(({ key, label, km }) => (
-            <div key={key} className="rounded-xl bg-muted p-3">
+            <div key={key} className="rounded-lg bg-muted p-3">
               <SectionLabel>{label}</SectionLabel>
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
+              <p className="text-lg font-bold font-figure tabular-nums text-foreground mt-0.5">
                 {finishTimeLabel(times[key])}
               </p>
               <p className="text-xs text-muted-foreground font-mono tabular-nums">

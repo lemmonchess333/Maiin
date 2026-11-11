@@ -308,6 +308,52 @@ describe("SegmentedControl", () => {
     );
   });
 
+  it("fill-wrap keeps the track, and no part gets narrower than its label", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Feed source"
+        layout="fill-wrap"
+      />
+    );
+    const track = screen
+      .getByRole("radiogroup", { name: "Feed source" })
+      .className.split(" ");
+    expect(track).toEqual(
+      expect.arrayContaining(["bg-muted", "rounded-xl", "flex-wrap"])
+    );
+    // Equal parts that wrap rather than cut: a zero-basis flex-1 held
+    // at its label's width, never the fill layout's truncation.
+    const part = screen.getByRole("radio", { name: "3" }).className.split(" ");
+    expect(part).toEqual(expect.arrayContaining(["flex-1", "min-w-max"]));
+    expect(part).not.toContain("truncate");
+    expect(part).not.toContain("min-w-0");
+    // Unselected parts stay transparent on the shared track.
+    expect(part).not.toContain("bg-muted");
+    expect(screen.getByRole("radio", { name: "4" }).className).toContain(
+      "bg-segment-selected"
+    );
+  });
+
+  it("the plain fill layout still truncates and never wraps", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Lift days"
+      />
+    );
+    expect(
+      screen.getByRole("radiogroup", { name: "Lift days" }).className
+    ).not.toContain("flex-wrap");
+    expect(screen.getByRole("radio", { name: "3" }).className).toContain(
+      "truncate"
+    );
+  });
+
   it("the solid emphasis keeps the filled nutrition pill", () => {
     render(
       <SegmentedControl
@@ -322,6 +368,30 @@ describe("SegmentedControl", () => {
     const selected = screen.getByRole("radio", { name: "4" }).className;
     expect(selected).toContain("bg-nutrition-fill");
     expect(selected).not.toContain("bg-segment-selected");
+  });
+
+  /* A second level under a track control is text on a hairline: the
+     selected tab is underlined, and none of the tabs is a filled pill. */
+  it("the tabs emphasis underlines the selected tab and fills none", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Feed source"
+        emphasis="tabs"
+        layout="fill-wrap"
+      />
+    );
+    const group = screen.getByRole("radiogroup", { name: "Feed source" });
+    expect(group.className).toContain("border-b");
+    expect(group.className).not.toContain("bg-muted");
+    const selected = screen.getByRole("radio", { name: "4" }).className;
+    expect(selected).toContain("hsl(var(--primary))");
+    expect(selected).not.toContain("bg-segment-selected");
+    const other = screen.getByRole("radio", { name: "3" }).className;
+    expect(other).toContain("text-muted-foreground");
+    expect(other).not.toContain("hsl(var(--primary))");
   });
 
   it("eases the press rather than snapping it", () => {
@@ -377,4 +447,64 @@ describe("SegmentedControl", () => {
       );
     }
   );
+});
+
+describe("SegmentedControl — the 36pt track (size sm, §14m rule 18)", () => {
+  function renderSlim() {
+    render(
+      <SegmentedControl
+        ariaLabel="Train mode"
+        value="lift"
+        onChange={() => {}}
+        tone="lifting"
+        size="sm"
+        options={[
+          { value: "lift", label: "Lift" },
+          { value: "run", label: "Run" },
+        ]}
+      />
+    );
+    return {
+      group: screen.getByRole("radiogroup", { name: "Train mode" }),
+      lift: screen.getByRole("radio", { name: "Lift" }),
+      run: screen.getByRole("radio", { name: "Run" }),
+    };
+  }
+
+  it("keeps each option's 44pt hit area and draws a 36pt track inside it", () => {
+    const { group, lift } = renderSlim();
+    expect(lift.className).toMatch(/min-h-\[44px\]/);
+    // The track is the group's backdrop, 4pt in from the 44pt row.
+    expect(group.className).toMatch(/before:inset-y-1\b/);
+    expect(group.className).not.toMatch(/(^|\s)bg-muted(\s|$)/);
+  });
+
+  it("puts the selected fill on a 32pt pill inside the option, in its tone", () => {
+    const { lift, run } = renderSlim();
+    const pill = lift.firstElementChild as HTMLElement;
+    expect(pill.className).toMatch(/\bh-8\b/);
+    expect(pill.className).toContain("bg-lifting-fill");
+    expect(lift.className).not.toContain("bg-lifting-fill");
+    expect((run.firstElementChild as HTMLElement).className).not.toMatch(
+      /bg-(lifting|running)-fill/
+    );
+  });
+
+  it("is the md track for anything but a filled track row", () => {
+    render(
+      <SegmentedControl
+        ariaLabel="Meal"
+        value="a"
+        onChange={() => {}}
+        size="sm"
+        layout="wrap"
+        options={[
+          { value: "a", label: "A" },
+          { value: "b", label: "B" },
+        ]}
+      />
+    );
+    const a = screen.getByRole("radio", { name: "A" });
+    expect(a.firstElementChild).toBeNull();
+  });
 });

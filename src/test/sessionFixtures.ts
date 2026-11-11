@@ -3,10 +3,9 @@
  *
  * Every saved run carries `completedAt` (a Timestamp, the instant it was
  * saved) and `date` (the local "YYYY-MM-DD" it STARTED, Lift3). Readers go
- * through `src/lib/savedRuns.ts`, which windows by `completedAt`, so a
- * fixture without it is left out of every query, as Firestore leaves it
- * out. Tests that seeded `date` alone passed only while readers queried by
- * `date`; this builder keeps fixtures honest about both fields.
+ * through `src/lib/savedRuns.ts`, which combines `date` and a legacy
+ * `completedAt` window. A fixture without `completedAt` still cannot be
+ * parsed as a saved run. This builder keeps fixtures honest about both.
  *
  * Call it inside a suite that mocks `firebase/firestore` with the shared
  * fake (bare `vi.mock("firebase/firestore")`), so the Timestamp is the

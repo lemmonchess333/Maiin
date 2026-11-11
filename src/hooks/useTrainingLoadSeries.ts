@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchSavedRuns } from "@/lib/savedRuns";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import { useUid } from "@/lib/auth";
@@ -7,6 +7,8 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   loadCurve,
+  evaluateLoadGuardrails,
+  type LoadGuardrails,
   MINUTES_PER_SET,
   type LoadPoint,
   type TrainingSession,
@@ -14,9 +16,11 @@ import {
 
 /**
  * Data feed for the training-load (fitness/fatigue/form) curve. One-shot
- * getDocs over runs + workouts for the display window PLUS warmup history —
- * the 42-day fitness EWMA needs ~60 days of context before the window edge
- * or the curve fake-ramps from zero (loadCurve's warmup contract).
+ * getDocs over runs + workouts with a consistent history floor: the longest
+ * supported chart range (one year) plus warmup. Changing the display window
+ * must not change today's estimated fitness by changing its starting state.
+ * This reads more history for shorter charts, but remains bounded at the
+ * amount already needed by the one-year chart.
  *
  * Session → load mapping (the trainingLoad model):
  *  - runs: through the saved-run reader, on their Lift3 day (the day they
@@ -27,8 +31,7 @@ import {
  *  - workouts: durationMinutes, falling back to 3 min per logged set for
  *    sessions saved without a duration
  *
- * Failures degrade to an empty series (error logged) so Analytics renders
- * the card's empty state rather than crashing the page.
+ * Failed reads are reported separately from an empty training history.
  *
  * A series is stored with the uid and window it was computed for, and
  * `points` / `loading` are read off that during render: another account's
@@ -41,11 +44,15 @@ import {
  * only, and reads nothing for it on the others.
  */
 const WARMUP_DAYS = 60;
+const MIN_HISTORY_DAYS = 365 + WARMUP_DAYS;
 const QUALITY_TYPES = new Set(["tempo", "intervals", "race"]);
 
 interface LoadedSeries {
   uid: string | null;
   displayDays: number | null;
+  request: number;
+  failed: boolean;
+  guardrails?: LoadGuardrails;
   points: LoadPoint[];
 }
 
@@ -57,11 +64,18 @@ export function useTrainingLoadSeries(
 ): {
   points: LoadPoint[];
   loading: boolean;
+  failed: boolean;
+  refresh: () => void;
+  guardrails?: LoadGuardrails;
 } {
   const uid = useUid();
+  const [request, setRequest] = useState(0);
+  const refresh = useCallback(() => setRequest((value) => value + 1), []);
   const [loaded, setLoaded] = useState<LoadedSeries>({
     uid: null,
     displayDays: null,
+    request: -1,
+    failed: false,
     points: NO_POINTS,
   });
 
@@ -71,7 +85,7 @@ export function useTrainingLoadSeries(
 
     const load = async () => {
       try {
-        const fetchDays = displayDays + WARMUP_DAYS;
+        const fetchDays = Math.max(displayDays + WARMUP_DAYS, MIN_HISTORY_DAYS);
         const since = new Date();
         since.setDate(since.getDate() - fetchDays);
         const sinceKey = localDateString(since);
@@ -106,17 +120,28 @@ export function useTrainingLoadSeries(
         }
 
         if (cancelled) return;
+        const history = loadCurve(sessions, {
+          endDateKey: localDateString(new Date()),
+          days: fetchDays + 1,
+        });
         setLoaded({
           uid,
           displayDays,
-          points: loadCurve(sessions, {
-            endDateKey: localDateString(new Date()),
-            days: displayDays,
-          }),
+          request,
+          failed: false,
+          guardrails: evaluateLoadGuardrails(history),
+          points: history.slice(-displayDays),
         });
       } catch (e) {
         logger.error("[useTrainingLoadSeries] load failed", e);
-        if (!cancelled) setLoaded({ uid, displayDays, points: NO_POINTS });
+        if (!cancelled)
+          setLoaded({
+            uid,
+            displayDays,
+            request,
+            failed: true,
+            points: NO_POINTS,
+          });
       }
     };
 
@@ -124,14 +149,18 @@ export function useTrainingLoadSeries(
     return () => {
       cancelled = true;
     };
-  }, [uid, displayDays, enabled]);
+  }, [uid, displayDays, enabled, request]);
 
   const ownSeries = enabled && uid !== null && loaded.uid === uid;
+  const currentSeries =
+    ownSeries &&
+    loaded.displayDays === displayDays &&
+    loaded.request === request;
   return {
+    failed: currentSeries && loaded.failed,
+    refresh,
+    guardrails: currentSeries ? loaded.guardrails : undefined,
     points: ownSeries ? loaded.points : NO_POINTS,
-    loading:
-      enabled &&
-      uid !== null &&
-      !(ownSeries && loaded.displayDays === displayDays),
+    loading: enabled && uid !== null && !currentSeries,
   };
 }

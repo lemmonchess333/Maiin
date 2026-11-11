@@ -21,6 +21,7 @@
 
 import type { ProFeatureKey } from "./proFeatures";
 import type { PlanId } from "./proPlans";
+import type { PurchasePending } from "./revenuecat";
 import { emit } from "./analyticsClient";
 
 export type PaywallEvent =
@@ -31,6 +32,8 @@ export type PaywallEvent =
   | "checkout_failed"
   /** The person closed the store's purchase sheet without buying. */
   | "checkout_cancelled"
+  /** The store has the purchase and Pro is not on yet (`pending` says why). */
+  | "checkout_pending"
   | "checkout_success_returned"
   | "checkout_cancelled_returned"
   | "restore_purchases_clicked"
@@ -59,6 +62,7 @@ export interface PaywallEventMetadata {
   selectedPlan?: PlanId;
   platform?: "web" | "ios" | "android";
   error?: string;
+  pending?: PurchasePending;
 }
 
 /**

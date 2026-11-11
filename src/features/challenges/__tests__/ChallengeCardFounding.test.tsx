@@ -22,9 +22,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("../useChallengePercentile", () => ({
   useChallengePercentile: () => null,
 }));
-vi.mock("@/lib/editorialImages", () => ({
-  challengeEditorialImage: () => null,
-}));
 vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));
@@ -76,7 +73,7 @@ describe("ChallengeCard: the joined count below the floor", () => {
 
   it("says nothing for an enrolled person either: the card is theirs already", () => {
     const { container } = renderCard(1, true);
-    expect(text(container)).not.toMatch(/joined|founding|You're in/i);
+    expect(text(container)).not.toMatch(/joined|founding|You’re in/i);
     expect(text(container)).not.toContain("—");
   });
 

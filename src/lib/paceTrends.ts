@@ -116,7 +116,7 @@ export function calculatePaceTrend(
   if (currentRun.avgPace < bestPace) {
     return {
       trend: "pr",
-      label: "PR!",
+      label: "New best",
       className: "bg-achievement/10 text-achievement-strong",
     };
   }

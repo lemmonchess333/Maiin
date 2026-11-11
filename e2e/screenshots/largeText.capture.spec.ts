@@ -8,20 +8,29 @@
  *
  * The screens: Home, Train, History's five pages (and its charts again
  * on a Monday), Food and its manual entry and edit sheets, Social's
- * Together tab (again with its other challenges opened) and its feed, a
- * Space, a profile, Settings and every
- * section of it, Train's exercise menu, a workout, a run before, during
- * and after, the exercise, run and workout detail pages, the Weekly
- * review, sign-up, setup and the Pro page. The sheets: the weight log,
- * Social's notifications and a run's share sheet, with Food's two
- * above.
+ * Together tab (again with a challenge's sheet open) and its feed
+ * on Following and on Explore, a Space, a profile and its followers and
+ * following, Settings and every section of it, Train's exercise menu, a
+ * workout, a run before, during and after, the exercise, run and workout
+ * detail pages, the Weekly review, sign-up, setup and the Pro page. The
+ * sheets: the weight log,
+ * the streak's days, Social's notifications and a run's share and
+ * rename sheets,
+ * with Food's two above.
  *
  * And the surfaces the notification tray, a return and a session left
  * open lead to: one shared session and one Space post on their own pages,
- * each with its comments open and the Space post's not-available state; a
+ * each with its comments and the Space post's not-available state; a
  * runner's welcome back on Home; a Circle's invite code live and expired,
  * in both sheets that show it; and the In progress strip on Home and on
- * Train, for a programme workout and for a saved routine's.
+ * Train, for a programme workout and for a saved routine's; and an empty
+ * workout's review, with the sheets that say when it started and name it.
+ *
+ * And the training plan's week and all sessions: the plan page, its week
+ * reset (as opened, and after a week that felt like a bit much) with the
+ * Express chooser and the usual-week editor it opens, a race plan's week
+ * with the sheet that moves a run, and Training history with its dates
+ * sheet and a period with nothing in it.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -40,6 +49,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
@@ -87,6 +97,7 @@ const SETTINGS_PAGES = [
   "run-plan",
   "workout-prefs",
   "nutrition",
+  "pantry",
   "data",
   "recently-deleted-meals",
   "health",
@@ -127,7 +138,8 @@ test.describe("large text", () => {
     page: Page,
     screen: string,
     width: number,
-    found: string[]
+    found: string[],
+    more?: (page: Page) => Promise<string[]>
   ) {
     for (const scale of SCALES) {
       await page.evaluate((s) => {
@@ -137,6 +149,7 @@ test.describe("large text", () => {
       const breaks = [
         ...(await layoutBreaks(page, "body *", "html", IGNORE)),
         ...(await brokenWords(page, IGNORE)),
+        ...(more ? await more(page) : []),
       ];
       // The page itself, which the per-element check cannot see when what
       // widens it is skipped (a chart's axis labels are aria-hidden).
@@ -181,6 +194,30 @@ test.describe("large text", () => {
     await page.waitForTimeout(600);
   }
 
+  /* The Feed's sources, each name whole in its part. A part cut short
+     is clipped inside the switch, where no check above looks: nothing
+     leaves the screen. Explore's new-content dot made it reach past the
+     screen too, but only when it showed, which depends on which read
+     lands first. */
+  async function wholeSources(page: Page): Promise<string[]> {
+    return page
+      .getByRole("radiogroup", { name: "Feed source" })
+      .getByRole("radio")
+      .evaluateAll((radios) =>
+        radios.flatMap((radio) => {
+          const label = radio.firstElementChild;
+          const over = label
+            ? label.getBoundingClientRect().width - radio.clientWidth
+            : 0;
+          return over > 1
+            ? [
+                `cuts "${radio.textContent?.trim()}" by ${Math.round(over)}px in the feed's source switch`,
+              ]
+            : [];
+        })
+      );
+  }
+
   for (const width of WIDTHS) {
     test(`the main screens at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
@@ -192,6 +229,18 @@ test.describe("large text", () => {
       await page.goto("");
       await ready(page, nav);
       await measure(page, "home", width, found);
+
+      // The streak's days (Mob1 call 4): the seeded meals make a streak,
+      // so the flame opens its sheet.
+      await page
+        .getByRole("button", { name: /-day streak, show the days$/ })
+        .click();
+      await page
+        .getByRole("dialog", { name: /-day streak$/ })
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "home-streak-sheet", width, found);
+      await page.keyboard.press("Escape");
 
       await page.goto("program");
       await ready(page, page.getByRole("heading", { name: "Train" }));
@@ -209,6 +258,38 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: "Enter manually" }).click();
       await page.waitForTimeout(800);
       await measure(page, "food-manual-entry", width, found);
+      await page.keyboard.press("Escape");
+
+      // The focused box's Quick add list, its More row and its Quick add
+      // row (Mob2), opened to fifteen.
+      await page.waitForTimeout(600);
+      await page.getByLabel("What did you eat").focus();
+      const more = page.getByRole("button", { name: "More", exact: true });
+      if (await more.isVisible({ timeout: 3_000 }).catch(() => false))
+        await more.click();
+      await page
+        .getByRole("button", { name: /^Quick add Calories/ })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await measure(page, "food-quick-add", width, found);
+      await page.getByLabel("What did you eat").blur();
+
+      // A diary row's sheet, with the day's line and Copy to another day,
+      // and the copy sheet it opens.
+      await page.waitForTimeout(600);
+      await page
+        .getByRole("button", { name: /^Edit / })
+        .first()
+        .click();
+      const copy = page.getByRole("button", { name: "Copy to another day" });
+      await copy.waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "food-edit", width, found);
+      await copy.click();
+      await page
+        .getByRole("dialog", { name: "Copy to another day" })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "food-copy-entry", width, found);
       await page.keyboard.press("Escape");
 
       await page.goto("settings");
@@ -368,6 +449,12 @@ test.describe("large text", () => {
       await page.getByRole("button", { name: /regular runner/i }).click();
       await page.getByRole("radio", { name: /race prep/i }).click();
       await page.getByRole("radio", { name: /^full$/i }).click();
+      // Run9: nothing is chosen for a new goal's event, and setup holds
+      // until it is.
+      await page
+        .getByRole("radiogroup", { name: SETUP.raceEntry })
+        .getByRole("radio", { name: SETUP.raceEntered, exact: true })
+        .click();
       await page
         .getByLabel(/race target date/i)
         .fill(
@@ -378,6 +465,9 @@ test.describe("large text", () => {
       await recentRace.getByRole("radio", { name: "10K" }).click();
       await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
       await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
+      // R5: the running the plan starts from, which setup holds for.
+      await page.getByRole("textbox", { name: SETUP.weekMinutes }).fill("180");
+      await page.getByRole("textbox", { name: SETUP.longestRun }).fill("70");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();
@@ -408,6 +498,15 @@ test.describe("large text", () => {
         await ready(page, page.getByRole("heading", { level: 1 }).first());
         await measure(page, `settings-${section}`, width, found);
       }
+      // My pantry's food sheet, on the food seed:rich saves.
+      await page.goto("settings/pantry");
+      await page.getByRole("button", { name: /^Flat white/ }).click();
+      await page
+        .getByRole("dialog", { name: "Edit food" })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "settings-pantry-food", width, found);
+      await page.keyboard.press("Escape");
       expect(found).toEqual([]);
     });
 
@@ -418,23 +517,54 @@ test.describe("large text", () => {
       const found: string[] = [];
       const nav = page.getByRole("navigation").first();
 
-      await page.goto("social");
+      await page.goto("social?tab=together");
       await ready(page, nav);
       await settleCommunity(page);
       await measure(page, "social-together", width, found);
 
-      // The challenges behind "See N more", opened into their compact rows.
+      // A challenge row, opened into its sheet.
       await page
-        .getByRole("button", { name: /^See \d+ more challenges?$/ })
+        .getByRole("region", { name: "Community" })
+        .locator('li > button[aria-haspopup="dialog"]')
+        .first()
         .click();
       await page
-        .getByRole("heading", { name: "Available" })
+        .getByRole("dialog")
         .waitFor({ state: "visible", timeout: 10_000 });
-      await measure(page, "social-together-more", width, found);
+      await measure(page, "social-together-challenge", width, found);
+      await page.keyboard.press("Escape");
+
+      // The weekly league's page (Soc15 call 3): for the seeded account,
+      // which has not joined, what joining shows and Join.
+      await page.goto("league");
+      await ready(page, page.getByRole("button", { name: "Join the league" }));
+      await measure(page, "league", width, found);
+
+      /* The Feed on Following, where Social opens for anyone who follows
+         someone: its posts or its empty state, then the week card under
+         them past its spinner. */
+      await page.goto("social?tab=feed&feed=following");
+      await ready(
+        page,
+        page
+          .getByText("Nothing from people you follow yet")
+          .or(page.getByText("You don’t follow anyone yet"))
+          .or(
+            page
+              .getByRole("button", { name: /^(Add a comment|View comments)$/ })
+              .first()
+          )
+      );
+      await expect(
+        page.locator(
+          'main [class*="animate-pulse"], main [aria-label="Loading trajectory"]'
+        )
+      ).toHaveCount(0, { timeout: 20_000 });
+      await measure(page, "social-feed-following", width, found, wholeSources);
 
       await page.goto("social?tab=feed&feed=explore");
       await ready(page, page.getByText("Maya Chen").first());
-      await measure(page, "social-feed", width, found);
+      await measure(page, "social-feed", width, found, wholeSources);
 
       // A Space the seeded user has joined, with posts in it.
       await page.goto("space/womens-running");
@@ -452,6 +582,14 @@ test.describe("large text", () => {
       await page.waitForURL(/\/user\//);
       await ready(page, page.getByRole("heading", { level: 1 }));
       await measure(page, "profile", width, found);
+
+      // Its counts open the person's own followers and following.
+      for (const list of ["followers", "following"] as const) {
+        await page.goto(list);
+        await ready(page, page.getByRole("heading", { level: 1 }));
+        await page.waitForTimeout(1500);
+        await measure(page, list, width, found);
+      }
 
       expect(found).toEqual([]);
     });
@@ -491,6 +629,14 @@ test.describe("large text", () => {
       await dialog.waitFor({ timeout: 10_000 });
       await page.waitForTimeout(1500);
       await measure(page, "share-sheet", width, found);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+
+      // The same run's rename sheet.
+      await page.getByRole("button", { name: "Rename run" }).click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "rename-run-sheet", width, found);
 
       expect(found).toEqual([]);
     });
@@ -609,9 +755,10 @@ test.describe("large text", () => {
     });
 
     /* The pages the notification tray opens: one shared session (seed:rich
-       gives Maya's push day five props and two comments) and one Space
-       post (her "6 weeks in!", with one comment), each again with its
-       comments open, and a post that is not there. */
+       gives Maya's push day five props and two comments), whose comments
+       are on the page, and one Space post (her "6 weeks in!", with one
+       comment), again with its comments open, and a post that is not
+       there. */
     test(`the one-post pages at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
@@ -626,14 +773,13 @@ test.describe("large text", () => {
       await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
       await measure(page, "activity-post", width, found);
 
+      // The session's comments are on its page, with the field in focus.
       await page.goto("activity/rich-feed-push?comments=1");
-      await dialog
+      await page
         .getByText("Strong session.", { exact: false })
         .waitFor({ timeout: 20_000 });
       await page.waitForTimeout(800);
       await measure(page, "activity-post-comments", width, found);
-      await page.keyboard.press("Escape");
-      await expect(page.getByRole("dialog")).toHaveCount(0);
 
       await page.goto("space/womens-running/post/seed-maya");
       await ready(page, page.getByRole("link", { name: "Women's Running" }));
@@ -649,7 +795,7 @@ test.describe("large text", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       await page.goto("space/womens-running/post/no-such-post");
-      await ready(page, page.getByText("This post isn't available"));
+      await ready(page, page.getByText("This post isn’t available"));
       await measure(page, "space-post-unavailable", width, found);
 
       expect(found).toEqual([]);
@@ -670,6 +816,167 @@ test.describe("large text", () => {
         .waitFor({ timeout: 25_000 });
       await page.waitForTimeout(800);
       await measure(page, "run-return", width, found);
+      expect(found).toEqual([]);
+    });
+
+    /* The training plan and all sessions: the plan page (with Add
+       activity when today is a rest day), its week reset as opened and
+       after a heavy week, the Express chooser and the usual-week editor
+       the reset opens, Training history, its dates sheet and an empty
+       period; then seed:fellbehind's race plan, whose week has runs to
+       move, with the move sheet. */
+    test(`the plan and all sessions at ${width}px`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const dialog = page.getByRole("dialog").first();
+
+      await page.goto("program/plan");
+      await ready(page, page.getByRole("heading", { name: "Your plan" }));
+      await page
+        .getByRole("region", { name: "This week’s plan" })
+        .getByRole("listitem")
+        .first()
+        .waitFor({ timeout: 20_000 });
+      await measure(page, "training-plan", width, found);
+      if (
+        !(await page
+          .getByText("Add activity:")
+          .isVisible()
+          .catch(() => false))
+      )
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "plan-add-activity: today is not a rest day",
+        });
+
+      await page.goto("program/plan?reset=1");
+      const layout = page.getByRole("button", {
+        name: "Change usual weekly layout",
+      });
+      // A fresh account's plan can still be settling from the first visit.
+      await layout.waitFor({ state: "visible", timeout: 60_000 });
+      await ready(page, layout);
+      await measure(page, "week-reset", width, found);
+      await layout.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "layout-sheet", width, found);
+      // One lifting day made a rest day (Lift, Run, Both, Rest), so the
+      // review has a change to say and the plan stays valid.
+      const liftDay = dialog.getByRole("button", { name: /: Lift\. / }).first();
+      const dayName = ((await liftDay.getAttribute("aria-label")) ?? "").split(
+        ":"
+      )[0];
+      const sameDay = dialog.getByRole("button", {
+        name: new RegExp(`^${dayName}: `),
+      });
+      for (let i = 0; i < 3; i++) await sameDay.click({ timeout: 10_000 });
+      await dialog
+        .getByRole("button", { name: "Review change" })
+        .click({ timeout: 10_000 });
+      await dialog
+        .getByRole("heading", { name: "Review usual week" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "layout-review", width, found);
+      await page.keyboard.press("Escape");
+
+      // The reset as the weekly review opens it after "a bit much": the
+      // dose comes first. The router reads the feel from history state.
+      await page.goto("program/plan?reset=1");
+      await layout.waitFor({ state: "visible", timeout: 60_000 });
+      await page.evaluate(() => {
+        const state = window.history.state as { idx?: number } | null;
+        const next = {
+          usr: { resetFeel: "a_bit_much" },
+          key: "large-text",
+          idx: (state?.idx ?? 0) + 1,
+        };
+        window.history.pushState(next, "", window.location.href);
+        window.dispatchEvent(new PopStateEvent("popstate", { state: next }));
+      });
+      await page
+        .getByText("You said last week felt like a bit much.")
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "week-reset-heavy", width, found);
+      const express = page.getByRole("button", {
+        name: "Use this week’s Express session",
+      });
+      if (await express.isVisible().catch(() => false)) {
+        await express.click();
+        await page
+          .getByRole("dialog")
+          .getByText("How do you want to train today?")
+          .waitFor({ timeout: 20_000 });
+        await page.waitForTimeout(800);
+        await measure(page, "reset-express", width, found);
+        await page.keyboard.press("Escape");
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "reset-express: no lift left this week",
+        });
+      }
+
+      await page.goto("history/sessions");
+      const dates = page.locator('button[aria-haspopup="dialog"]').first();
+      await ready(page, dates);
+      await page
+        .getByRole("region", { name: "Saved sessions" })
+        .getByRole("link")
+        .first()
+        .waitFor({ timeout: 20_000 });
+      await measure(page, "training-history", width, found);
+      await dates.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "history-dates", width, found);
+      await page.keyboard.press("Escape");
+
+      // A period with nothing in it offers the last session.
+      await page.goto("history/sessions?from=2099-01-01&to=2099-01-31");
+      const jump = page.getByRole("button", {
+        name: "Jump to your last session",
+      });
+      await jump.waitFor({ timeout: 20_000 });
+      await ready(page, jump);
+      await measure(page, "history-empty", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    test(`a race plan's week and its run move at ${width}px`, async ({
+      page,
+    }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page, {
+        email: "fellbehind-capture@tropos.test",
+        password: "test-password-123",
+      });
+      const found: string[] = [];
+      const dialog = page.getByRole("dialog").first();
+      await page.goto("program/plan");
+      await ready(page, page.getByRole("heading", { name: "Your plan" }));
+      await measure(page, "race-plan", width, found);
+      // A week whose runs have all passed (late on a Sunday) has none to
+      // move; the plan page above still measured.
+      const move = page.getByRole("button", { name: "Move a run" });
+      if (await move.isVisible({ timeout: 5_000 }).catch(() => false)) {
+        await move.click();
+        await dialog.waitFor({ timeout: 10_000 });
+        await page.waitForTimeout(800);
+        await measure(page, "move-run", width, found);
+      } else {
+        test.info().annotations.push({
+          type: "skipped-surface",
+          description: "move-run: no run left to move this week",
+        });
+      }
+
       expect(found).toEqual([]);
     });
 
@@ -798,6 +1105,66 @@ test.describe("large text", () => {
       await page.goto("program");
       await ready(page, strip(/^Push day in progress$/));
       await measure(page, "train-in-progress-routine", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* An empty workout's review (Mob2 calls 11 and 12): its Name and
+       Started rows, and the sheet each opens. Push-ups, so the set needs
+       no weight, and Finish after the first working set. */
+    test(`an empty workout's review at ${width}px`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await page.goto("empty-workout");
+      const add = page.getByRole("button", {
+        name: "Add exercise",
+        exact: true,
+      });
+      await ready(page, add);
+      await add.click();
+      await page
+        .getByRole("textbox", { name: "Search exercises" })
+        .fill("Push-Ups");
+      await page
+        .getByRole("checkbox", { name: "Push-Ups", exact: true })
+        .first()
+        .click();
+      await page.getByRole("button", { name: /Add to workout$/ }).click();
+      for (let i = 0; i < 4; i++) {
+        const next = page.getByRole("button", { name: /^Complete / }).first();
+        await next.waitFor({ timeout: 20_000 });
+        const name = (await next.textContent())?.replace(/\s+/g, " ").trim();
+        await next.click();
+        await page.waitForTimeout(500);
+        if (name === "Complete set 1") break;
+      }
+      await page
+        .getByRole("button", { name: "Finish workout", exact: true })
+        .first()
+        .click();
+      const started = page.getByRole("button", { name: /^Started: / });
+      await started.waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "workout-review", width, found);
+
+      await started.click();
+      await page
+        .getByRole("dialog", { name: "When you started" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "start-time-sheet", width, found);
+      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      await page.waitForTimeout(600);
+
+      await page.getByRole("button", { name: /^Name: / }).click();
+      await page
+        .getByRole("dialog", { name: "Name this workout" })
+        .waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "rename-sheet", width, found);
 
       expect(found).toEqual([]);
     });

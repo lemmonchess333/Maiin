@@ -38,8 +38,8 @@ jobs:
     # room for a slow runner on top.
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: "npm"
@@ -71,12 +71,6 @@ jobs:
           # FCM Web push public VAPID key (#963). Public by design (ships in the
           # client bundle); kept as a secret only to match the other VITE_ vars.
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
-          # Run11 road-aware route planning — enables the Pro-gated Mapbox
-          # road-align / loop layer in RoutePlannerSheet (routePlanningApi.ts
-          # gates on this). The `planRunningRoute` callable + its
-          # MAPBOX_DIRECTIONS_TOKEN secret are live in production (2026-07-18).
-          # Non-secret public flag; the road buttons only render for Pro users.
-          VITE_ROUTE_PLANNING_ENABLED: "true"
           # Admin allowlist for /admin/moderation. Absent from every deploy
           # until now, so the queue 403'd for everyone including the owner.
           # Public by design (client-side route gate); listPendingReports
@@ -97,7 +91,7 @@ jobs:
             exit 1
           fi
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
-      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ./dist
       - id: deployment

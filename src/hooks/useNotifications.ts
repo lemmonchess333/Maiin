@@ -61,6 +61,14 @@ export const TRAY_NOTIFICATION_TYPES = [
   // carries no post id), not the actor's profile.
   "space_post_like",
   "space_post_comment",
+  // Soc15 — someone joined from the recipient's invite, and the two now
+  // follow each other: a recipient who takes followers without approving
+  // them. One who approves gets a follow_request marked fromInvite instead
+  // (Soc15 call 4 and its STATUS line). The row opens their profile.
+  "invite_joined",
+  // Soc15 call 3 — how the recipient's league week went. From the league,
+  // not a person: no sender, and the row opens the league.
+  "league_result",
 ] as const;
 
 export type NotificationType = (typeof TRAY_NOTIFICATION_TYPES)[number];
@@ -76,6 +84,9 @@ export interface NotificationItem {
   spaceId?: string;
   postId?: string;
   message?: string;
+  /** On a follow_request: the asker joined from the recipient's invite
+   *  (Soc15 call 4 and its STATUS line), and the row says so. */
+  fromInvite?: boolean;
   /** Resolved server timestamp; null only in the brief pending window. */
   createdAt: Date | null;
 }
@@ -201,6 +212,7 @@ export function useNotifications() {
             postId: typeof data.postId === "string" ? data.postId : undefined,
             message:
               typeof data.message === "string" ? data.message : undefined,
+            ...(data.fromInvite === true ? { fromInvite: true } : {}),
             createdAt:
               ts && typeof ts.toDate === "function" ? ts.toDate() : null,
           });

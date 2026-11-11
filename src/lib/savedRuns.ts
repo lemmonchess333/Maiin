@@ -9,11 +9,11 @@
  * Food's burn or the training-load chart.
  *
  * This module is the one place that knows the stored shape:
- * - the field a query orders and windows by (`completedAt`, which every
- *   saved run carries);
+ * - day-window reads combine the stored `date` with the legacy
+ *   `completedAt` window, so a run synced late still appears on its run day;
  * - how the stored timestamp becomes a `Date`, and the old field forms;
- * - the day a run belongs to: Lift3, the day it STARTED (`date`, written
- *   from the first GPS point), falling back to the day it completed for
+ * - the day a run belongs to: Lift3, the day it STARTED (`date`),
+ *   falling back to the day it completed for
  *   runs saved before `date` existed;
  * - how runs accepted on this phone but not yet synced join the list.
  *
@@ -32,6 +32,7 @@ import {
   type Query,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { logger } from "./logger";
 import { parseLocalDate } from "./dateHelpers";
 import { pendingDocumentWrites } from "./offlineQueue";
 import { fetchSaved, type SavedSessionSource } from "./savedSessions";
@@ -114,6 +115,11 @@ export interface SavedRun extends RunSummaryItem {
    *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
    *  goal was, not what the runner can do. */
   workPacePinned?: boolean;
+  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
+   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
+   *  timed none, and for runs saved before they were kept. A new run's
+   *  post compares its own with them (Soc15). */
+  bestEfforts?: { distance: number; time: number }[];
 }
 
 /**
@@ -190,6 +196,19 @@ function workPortionOf(
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value ? value : undefined;
 
+/** A saved run's best efforts, each a positive distance and time; those
+ *  that can't be read are left out. */
+function bestEffortsOf(value: unknown): { distance: number; time: number }[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((effort: unknown) => {
+    if (!effort || typeof effort !== "object") return [];
+    const { distance, time } = effort as { distance?: unknown; time?: unknown };
+    return measured(distance) && measured(time) && distance > 0 && time > 0
+      ? [{ distance, time }]
+      : [];
+  });
+}
+
 /**
  * A stored run document as a `SavedRun`, or null when it has no readable
  * completion time (such a document cannot be windowed or dated).
@@ -199,6 +218,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   if (!completedAt) return null;
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
+  const bestEfforts = bestEffortsOf(data.bestEfforts);
 
   return {
     id,
@@ -256,6 +276,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     workPacePinned:
       Array.isArray(data.runConfig?.segments) &&
       pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
+    ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
   };
 }
 
@@ -272,11 +293,10 @@ function dayStart(key: string): Date {
 }
 
 /**
- * The query for a window. Windows are by day but the stored field is the
- * completion time, so the query is a little wider than the window and
- * `inRunWindow` trims it: a run that belongs to `since` completed on or
- * after `since` began, and a run that belongs to `until` may complete after
- * midnight, so the upper bound reaches one day past it.
+ * Legacy completion-time query. Modern runs also need an event-day query:
+ * a run saved or synced days later may have `completedAt` outside a bounded
+ * history window. The companion query below supplies it; this one retains
+ * older documents without `date`.
  */
 export function savedRunsQuery(uid: string, window: RunWindow): Query {
   const runs = collection(db, "users", uid, "runs");
@@ -301,6 +321,25 @@ export function savedRunsQuery(uid: string, window: RunWindow): Query {
     orderBy("completedAt", "desc"),
     ...capped
   );
+}
+
+/** Read the event day as well as the legacy completion window. A saved run
+ *  has carried `date` for years, but older records may lack it. Neither
+ *  query alone can provide complete history across both document shapes. */
+export function savedRunsQueries(uid: string, window: RunWindow): Query[] {
+  const legacy = savedRunsQuery(uid, window);
+  if (!("since" in window)) return [legacy];
+  const runs = collection(db, "users", uid, "runs");
+  const capped = window.cap != null ? [limit(window.cap)] : [];
+  const upper = window.until == null ? [] : [where("date", "<=", window.until)];
+  const byDay = query(
+    runs,
+    where("date", ">=", window.since),
+    ...upper,
+    orderBy("date", "desc"),
+    ...capped
+  );
+  return [byDay, legacy];
 }
 
 /** Fields that, when a queued merge write touches none of them, leave the
@@ -382,10 +421,32 @@ export const SAVED_RUNS: SavedSessionSource<SavedRun, RunWindow> = {
   collection: "runs",
   windowKey: runWindowKey,
   query: savedRunsQuery,
+  queries: savedRunsQueries,
   parseDocs: parseSavedRunDocs,
   inWindow: inRunWindow,
   withQueued: withQueuedRuns,
 };
+
+/**
+ * Every saved run, for a finished run's pace badges and its post's firsts
+ * and bests (RunSummary). `known` is whether the read is the whole history:
+ * a failed read, or one answered offline from this phone's cache, could
+ * miss older runs, and a first claimed from it would call a seasoned
+ * runner's half marathon their first (as `earlierSessions` guards in
+ * firstSession.ts). The runs are returned either way, for what can use a
+ * partial history.
+ */
+export async function readRunHistory(
+  uid: string
+): Promise<{ runs: SavedRun[]; known: boolean }> {
+  const online = typeof navigator === "undefined" || navigator.onLine !== false;
+  try {
+    return { runs: await fetchSavedRuns(uid, { all: true }), known: online };
+  } catch (err) {
+    logger.error("[savedRuns] run history not read", err);
+    return { runs: [], known: false };
+  }
+}
 
 /**
  * One read of a window, for readers that do not stay subscribed. Runs saved

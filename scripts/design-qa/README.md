@@ -97,3 +97,21 @@ smoothness for regressions and to surface frames worth eyeballing.
 - A smoothness baseline/regression GATE — compare each transition's smoothness
   to a stored reference (like Playwright's screenshot snapshots) and fail on a
   drop. That's the point to flip the CI step from non-blocking to blocking.
+
+## Screen scores
+
+`screenScore.ts` is a second pure brain: it checks one screen against
+DESIGN_GUIDE §14m's measured rules (hero share and top, the hero holding the
+largest text, text sizes, colour share and hues by the design-rules
+research's own pixel test, chrome, filled buttons, rows with pictures).
+`e2e/helpers/screenScore.ts` reads the figures off a live page, and
+`e2e/design-qa/screenScore.capture.spec.ts` scores the main screens in both
+themes into `screenshots/score/report.md`. Opt-in, so the capture gate does
+not run it:
+
+```bash
+npm run score:screens   # inside emulators:exec, after the full seed chain
+```
+
+The `screen-critique` skill (`.claude/skills/screen-critique/`) starts from
+this report.

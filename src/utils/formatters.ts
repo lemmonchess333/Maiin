@@ -80,13 +80,11 @@ export function formatDayMonthYear(d: Date): string {
   });
 }
 
-/** "Sat 11 Oct" — the short weekday form (a session's day in a list). */
+/** "Sat 11 Oct" — the short weekday form (a session's day in a list, Home's
+ *  kicker). Built from its two parts because engines disagree on the
+ *  whole: Chromium's ICU writes "Sat, 11 Oct", Node's "Sat 11 Oct". */
 export function formatShortWeekdayDayMonth(d: Date): string {
-  return d.toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${formatDayMonth(d)}`;
 }
 
 /** "Saturday 22 August" — the long weekday form (sheet subtitles). The
@@ -107,9 +105,29 @@ export function formatDayMonthLong(d: Date): string {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
+/** "Mon": the weekday alone, short ("Done Tue", a day column's head). */
+export function formatShortWeekday(d: Date): string {
+  return d.toLocaleDateString("en-GB", { weekday: "short" });
+}
+
 /** "Monday": the weekday alone, in full ("The next one starts Monday."). */
 export function formatWeekday(d: Date): string {
   return d.toLocaleDateString("en-GB", { weekday: "long" });
+}
+
+/** "November 2026": a month and its year (a heading over a month's list). */
+export function formatMonthYear(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}
+
+/** "Nov 2026": a month and its year, short (the edition a medal carries). */
+export function formatShortMonthYear(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+}
+
+/** "Nov": the month alone, short (a medal's edition across two months). */
+export function formatShortMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", { month: "short" });
 }
 
 /** "November": the month alone, in full ("You're in for November."). */

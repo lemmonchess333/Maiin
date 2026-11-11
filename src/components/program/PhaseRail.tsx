@@ -14,7 +14,7 @@
 import { cn } from "@/lib/utils";
 
 /** The engine's real phases (getPhaseForWeek), ordered for the rail. */
-export const PHASE_RAIL = ["Base", "Build", "Taper", "Race"] as const;
+const PHASE_RAIL = ["Base", "Build", "Taper", "Race"] as const;
 
 interface PhaseRailProps {
   /** Phase to highlight ("Base" | "Build" | "Taper" | "Race"), or null for none. */

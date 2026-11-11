@@ -32,6 +32,8 @@ import {
   setDocGuarded,
 } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
+import { postedExercises } from "@/lib/liftPost";
+import type { WorkoutExercise } from "@/lib/savedWorkouts";
 
 export interface SavedRoutineExercise {
   /** Display name e.g. "Bench Press" — denormalised from the source. */
@@ -53,8 +55,10 @@ export interface SavedRoutine {
   id: string;
   /** User-chosen name (defaults to the source workout name). */
   name: string;
-  /** Original activity doc id, kept for "go to source post" links. */
-  sourceActivityId: string;
+  /** Original activity doc id, kept for "go to source post" links. Absent
+   *  on a routine saved from the person's own workout that was never
+   *  posted. */
+  sourceActivityId?: string;
   sourceAuthorId: string;
   sourceAuthorName: string;
   /** Optional — original workout's display name on the activity card. */
@@ -66,7 +70,7 @@ export interface SavedRoutine {
 
 export interface SaveRoutineInput {
   name: string;
-  sourceActivityId: string;
+  sourceActivityId?: string;
   sourceAuthorId: string;
   sourceAuthorName: string;
   sourceWorkoutName?: string;
@@ -132,7 +136,9 @@ export async function saveRoutine(
     collection(db, "users", uid, "savedRoutines"),
     {
       name: input.name,
-      sourceActivityId: input.sourceActivityId,
+      ...(input.sourceActivityId
+        ? { sourceActivityId: input.sourceActivityId }
+        : {}),
       sourceAuthorId: input.sourceAuthorId,
       sourceAuthorName: input.sourceAuthorName,
       ...(input.sourceWorkoutName
@@ -230,6 +236,26 @@ export function watchSavedRoutine(
           : null
       ),
     () => onChange(null)
+  );
+}
+
+/**
+ * A saved workout's exercises as a routine: what was done, in the shape a
+ * lift post lists them (`postedExercises`), so a routine saved from your
+ * own workout matches one saved from its post. Warm-ups are not the
+ * session's work and are left out; an exercise with no working set done
+ * is left out as the post leaves it out.
+ */
+export function workoutExercisesToRoutine(
+  exercises: readonly WorkoutExercise[]
+): SavedRoutineExercise[] {
+  return activityExercisesToRoutine(
+    postedExercises(
+      exercises.map((ex) => ({
+        ...ex,
+        sets: (ex.sets ?? []).filter((set) => set.type !== "warmup"),
+      }))
+    )
   );
 }
 

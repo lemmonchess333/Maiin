@@ -29,6 +29,7 @@ const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
+const leagues = require("./lib/leagues");
 
 /**
  * Every subcollection under users/{uid}.
@@ -56,6 +57,7 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
   "workouts",
   "runs",
+  "healthWorkoutExports",
   "bodyweightLogs",
   "waterLog",
   "progressPhotos",
@@ -87,6 +89,18 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // owned badge state — century_km / tonnage_100). Same enumerate-not-recurse
   // reason as above: these docs orphan under a deleted user without an entry.
   "lifetime",
+  // The community goal's per-run credits and per-goal tallies
+  // (lib/communityGoal.js). Server-owned, like `lifetime`.
+  "communityGoal",
+  // The live pulse's per-session credits (lib/pulse.js, Soc15).
+  // Server-owned, like `communityGoal`; each also expires by TTL.
+  "pulseCredits",
+  // A medal per challenge edition (lib/medals.js, Soc15). Server-owned,
+  // owner-read; the public summary goes with `public` below.
+  "medals",
+  // How each league week went (lib/leagues.js, Soc15 call 3). Server-owned,
+  // owner-read.
+  "leagueResults",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",
@@ -148,6 +162,15 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   // The Firestore posts are deleted by the spaces cleanup step (3d);
   // this sweep removes their blobs.
   "space-photos/__UID__/",
+  // Run post map images (Soc15 call 5, src/lib/routeMapUpload.ts),
+  // route-maps/{uid}/{activityId}/. Each folder goes with its post
+  // (onActivityDeleted); this sweep removes every one the account has.
+  "route-maps/__UID__/",
+  // A shared session's photos (Soc15 call 2, src/lib/postPhotoUpload.ts),
+  // post-photos/{uid}/{activityId}/. Each folder goes with its post
+  // (onActivityDeleted); this sweep removes every one the account has,
+  // the uploads no post ever named included.
+  "post-photos/__UID__/",
 ]);
 
 function storagePrefixesFor(uid) {
@@ -486,23 +509,38 @@ async function deleteAccount({
       );
     }
 
+    // 3b'. The account's invite code (Soc15, lib/inviteCodes.js):
+    // `inviteCodes/{code}` carries the uid under a code id, so neither the
+    // users/{uid} sweep nor the uid-keyed sweep reaches it. Deleted, so the
+    // code joins no one to a deleted account. One per person; queried by
+    // the field in case an old one was replaced.
+    const inviteCodesSnap = await firestore
+      .collection("inviteCodes")
+      .where("uid", "==", uid)
+      .get();
+    if (!inviteCodesSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        inviteCodesSnap.docs.map((d) => d.ref)
+      );
+    }
+
     // 3d. Community Spaces (Spc1 PR4) — memberships + authored posts,
     // swept per KNOWN space id (lib/spacesCleanup; bounded config, no
     // collectionGroup blast radius). Failures preserve Auth and the worker
     // retries. The earlier collection-group pass also covers retired rooms.
     await spacesCleanup.cleanupSpacesForUser({ firestore, uid, logger });
 
-    // 3c. Apple subscription bindings (money-path audit F8). The
-    // binding's uid is about to dangle; deleting it alone would re-open
-    // F7 (first-claim-wins theft of a now-unclaimed transaction), so
-    // each binding's identity is tombstoned into
-    // deletedBillingIdentities FIRST — restoreApplePurchases already
-    // refuses tombstoned identities (rotation-aware lookup reads the
-    // same collection). Order is the safety property: tombstone, THEN
-    // delete the binding. Fail-safe: if BILLING_HMAC_SECRET is
-    // unprovisioned the binding is KEPT (a locked-out re-signup is
-    // recoverable via support; a theft window is not) — log and move
-    // on, never block the remaining steps.
+    // 3c. Apple subscription bindings (money-path audit F8). Each
+    // binding carries the uid, so it goes with the account. Deleting it
+    // alone would leave the transaction unclaimed (F7), so its identity
+    // is tombstoned into deletedBillingIdentities FIRST: the record any
+    // path that binds an Apple transaction to an account must refuse.
+    // None does now (RevenueCat owns purchases, ADR-0006). Order is the
+    // safety property: tombstone, THEN delete the binding. Fail-safe: if
+    // BILLING_HMAC_SECRET is unprovisioned the binding is KEPT (a
+    // locked-out re-signup is recoverable via support; a theft window is
+    // not) — log and move on, never block the remaining steps.
     const billingRetentionUntil = new Date(now);
     billingRetentionUntil.setUTCMonth(billingRetentionUntil.getUTCMonth() + 13);
     const appleSubsSnap = await firestore
@@ -557,6 +595,15 @@ async function deleteAccount({
     // Polish2: the week shown on followers' boards. The session triggers
     // that recompute it write nothing for an account being deleted.
     await firestore.doc(`friendsBoard/${uid}`).delete();
+    // How many follow this account and how many it follows
+    // (lib/followCounts.js). Its triggers read the deletion state in the
+    // transaction that writes, so the edges going below put nothing back.
+    await firestore.doc(`followCounts/${uid}`).delete();
+    // Soc15 call 3: the account's league membership, its standing in this
+    // week's group and its place in the group's members (lib/leagues.js).
+    // The writers (the turn, the session triggers, setLeagueSharing) each
+    // read the deletion state before writing.
+    await leagues.removeLeagueTraces(firestore, uid);
 
     // 5. The user document itself
     stage = "user_document";

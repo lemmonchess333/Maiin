@@ -24,40 +24,44 @@ export default function WeekPulseView({ pulse }: { pulse: WeekPulse | null }) {
       <SectionLabel>Your week so far</SectionLabel>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {pulse.lifts && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
             <Dumbbell className="size-4 text-lifting" aria-hidden="true" />
-            <span className="font-mono tabular-nums">
-              {pulse.lifts.done}
-              {pulse.lifts.planned !== null && ` of ${pulse.lifts.planned}`}
-            </span>{" "}
-            <span className="font-normal text-muted-foreground">
-              {pulse.lifts.done === 1 && pulse.lifts.planned === null
-                ? "lift"
-                : "lifts"}
+            <span>
+              <span className="font-mono tabular-nums">
+                {pulse.lifts.done}
+                {pulse.lifts.planned !== null && ` of ${pulse.lifts.planned}`}
+              </span>{" "}
+              <span className="text-muted-foreground">
+                {pulse.lifts.done === 1 && pulse.lifts.planned === null
+                  ? "lift"
+                  : "lifts"}
+              </span>
             </span>
           </span>
         )}
         {pulse.runs && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
             <Footprints className="size-4 text-running" aria-hidden="true" />
-            <span className="font-mono tabular-nums">
-              {/* Stored KILOMETRES — a bare `km` here showed a miles
-                  reader the metric figure. */}
-              {storedKmLabel(pulse.runs.km, unit, true, 1)}
-              {pulse.runs.planned !== null &&
-                ` · ${pulse.runs.count} of ${pulse.runs.planned}`}
-            </span>{" "}
-            <span className="font-normal text-muted-foreground">
-              {pulse.runs.planned !== null
-                ? "runs"
-                : pulse.runs.count === 1
-                  ? "run"
-                  : "runs"}
+            <span>
+              <span className="font-mono tabular-nums">
+                {/* Stored KILOMETRES — a bare `km` here showed a miles
+                    reader the metric figure. */}
+                {storedKmLabel(pulse.runs.km, unit, true, 1)}
+                {pulse.runs.planned !== null &&
+                  ` · ${pulse.runs.count} of ${pulse.runs.planned}`}
+              </span>{" "}
+              <span className="text-muted-foreground">
+                {pulse.runs.planned !== null
+                  ? "runs"
+                  : pulse.runs.count === 1
+                    ? "run"
+                    : "runs"}
+              </span>
             </span>
           </span>
         )}
         {pulse.streak !== null && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+          <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
             {/* The streak's flame is brand purple, as Home's streak pill
                 draws it (StreakFlame). Amber is the warning register and
                 orange the food's. */}
@@ -66,9 +70,9 @@ export default function WeekPulseView({ pulse }: { pulse: WeekPulse | null }) {
               style={{ color: THEME.brand }}
               aria-hidden="true"
             />
-            <span className="font-mono tabular-nums">{pulse.streak}</span>{" "}
-            <span className="font-normal text-muted-foreground">
-              day streak
+            <span>
+              <span className="font-mono tabular-nums">{pulse.streak}</span>{" "}
+              <span className="text-muted-foreground">day streak</span>
             </span>
           </span>
         )}

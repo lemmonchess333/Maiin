@@ -38,7 +38,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
       // primary/10 styling.
       return (
         <ErrorState
-          title="This section couldn't load."
+          title="This section couldn’t load."
           retry={{
             label: "Retry",
             onClick: () => this.setState({ hasError: false }),

@@ -81,7 +81,7 @@ export default function SettingsRecentlyDeleted() {
       toast.success(`${meal.foodName || "Meal"} restored.`);
     } catch (e) {
       logger.error("[SettingsRecentlyDeleted] restore failed", e);
-      toast.error("Couldn't restore. Try again.");
+      toast.error("Couldn’t restore. Try again.");
     } finally {
       setPendingId(null);
     }
@@ -99,7 +99,7 @@ export default function SettingsRecentlyDeleted() {
       toast.error(
         e instanceof Error && !("code" in e)
           ? e.message
-          : "Couldn't delete. Try again."
+          : "Couldn’t delete. Try again."
       );
     } finally {
       setPendingId(null);

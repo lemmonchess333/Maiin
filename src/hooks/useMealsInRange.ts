@@ -36,7 +36,7 @@ export function useMealsInRange(
   uid: string | null | undefined,
   days: number
 ): { meals: Meal[]; loading: boolean } {
-  /* The loaded meals tagged with the boundary they were fetched for. When
+  /* The loaded meals tagged with the account and boundary they were fetched for. When
      the range changes, the previous result stops matching and the hook
      reports `loading` again — so a 1Y label can never be drawn over 1M's
      numbers, even for a frame. Storing a bare `loading` flag and flipping
@@ -60,8 +60,11 @@ export function useMealsInRange(
     [nowMs, days]
   );
 
+  const key = `${uid ?? ""}:${sinceKey}`;
+
   useEffect(() => {
     if (!uid) return;
+    let active = true;
     const q = query(
       collection(db, "users", uid, "meals"),
       where("date", ">=", sinceKey),
@@ -70,8 +73,9 @@ export function useMealsInRange(
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        if (!active) return;
         setSettled({
-          key: sinceKey,
+          key: `${uid}:${sinceKey}`,
           meals: activeMealDocs(
             snapshot.docs.map((d) =>
               parseMealDoc(d.id, d.data() as Record<string, unknown>)
@@ -80,19 +84,23 @@ export function useMealsInRange(
         });
       },
       (err) => {
+        if (!active) return;
         // Settle EMPTY rather than leave the caller spinning: a chart that
         // never resolves reads as a hang, and the error is logged here.
         logger.error("[useMealsInRange] subscription failed", err);
-        setSettled({ key: sinceKey, meals: [] });
+        setSettled({ key: `${uid}:${sinceKey}`, meals: [] });
       }
     );
-    return unsubscribe;
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [uid, sinceKey]);
 
   /* Derived, not stored. A signed-out caller is a fact about the argument,
      so answering it here avoids a setState in the effect body and the
      frame of stale state that comes with one. */
-  const fresh = settled?.key === sinceKey;
+  const fresh = settled?.key === key;
   if (!uid) return { meals: EMPTY, loading: false };
   return fresh
     ? { meals: settled.meals, loading: false }

@@ -91,10 +91,10 @@ export default function FollowButton({
       haptic("error");
       toast.error(
         before === "following"
-          ? "Couldn't unfollow. Try again."
+          ? "Couldn’t unfollow. Try again."
           : before === "requested"
-            ? "Couldn't cancel the request. Try again."
-            : "Couldn't follow. Try again."
+            ? "Couldn’t cancel the request. Try again."
+            : "Couldn’t follow. Try again."
       );
     }
   };
@@ -123,19 +123,19 @@ export default function FollowButton({
         "inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 aria-disabled:opacity-50",
         engaged
           ? "bg-muted text-muted-foreground border border-border"
-          : "bg-primary-strong text-white",
+          : /* Neutral (DS4 call 1): Follow is a generic action, and
+               purple means lifting and the brand. */
+            "bg-foreground text-background",
         className
       )}
     >
       {showSpinner ? (
-        // The button itself sets the foreground colour (white for
-        // not-following, muted-foreground for following), so the
-        // Spinner inherits via variant="inverse" / "muted". Using
-        // "inverse" universally because both states' contrast is
-        // close enough — keeps the markup branch-free.
+        // The button sets the foreground colour (the page's own ink on
+        // the neutral fill, muted-foreground once followed), and the
+        // Spinner takes it: "current" before, "muted" after.
         <Spinner
           size="xs"
-          variant={engaged ? "muted" : "inverse"}
+          variant={engaged ? "muted" : "current"}
           label={
             following ? "Unfollowing" : requested ? "Cancelling" : "Following"
           }

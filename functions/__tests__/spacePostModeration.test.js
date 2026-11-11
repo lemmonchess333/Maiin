@@ -18,8 +18,10 @@ const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const {
   removeObjectionableSpacePost,
+  SPACE_POST_MAX_BYTES,
   SPACE_POST_TEXT_FIELDS,
 } = require("../lib/spacePostModeration");
+const { storedSize } = require("../lib/storedSize");
 
 const POST = "spaces/runners/posts/p1";
 
@@ -85,6 +87,51 @@ describe("removeObjectionableSpacePost", () => {
         { path: POST, authorId: "author-1", field },
       ],
     ]);
+  });
+
+  it("keeps the largest post the composer writes", async () => {
+    const largest = post({
+      title: "t".repeat(120),
+      body: "b".repeat(4000),
+      authorName: "a".repeat(50),
+      authorPhotoURL: `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F${"u".repeat(1900)}`,
+      photoUrl: `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/space-photos%2F${"u".repeat(1900)}`,
+      activity: {
+        type: "run",
+        distance: 42195,
+        avgPace: 330,
+        duration: 13925,
+        elevationGain: 220,
+        routePreview: Array.from({ length: 100 }, (_, i) => ({
+          lat: 51.5 + i / 1000,
+          lon: -0.12,
+        })),
+      },
+    });
+    expect(storedSize(largest)).toBeLessThan(SPACE_POST_MAX_BYTES / 3);
+    const db = memoryFirestore({ [POST]: largest });
+    const { result } = await run(db, { before: null, after: largest });
+    expect(result).toEqual({ removed: false });
+    expect(db.data.has(POST)).toBe(true);
+  });
+
+  it("removes a new post past the size limit", async () => {
+    // The rules cannot see inside the route's points.
+    const heavy = post({
+      activity: {
+        type: "run",
+        routePreview: Array(100).fill({
+          lat: 0,
+          lon: 0,
+          note: "y".repeat(9000),
+        }),
+      },
+    });
+    const db = memoryFirestore({ [POST]: heavy });
+    const { result, logger } = await run(db, { before: null, after: heavy });
+    expect(result).toEqual({ removed: true, field: "size" });
+    expect(db.data.has(POST)).toBe(false);
+    expect(logger.lines[0][1]).toMatchObject({ path: POST, field: "size" });
   });
 
   it("removes the likes and comments under a removed post", async () => {

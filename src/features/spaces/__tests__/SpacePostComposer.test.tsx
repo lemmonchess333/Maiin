@@ -60,7 +60,17 @@ import SpacePostComposer from "../SpacePostComposer";
 import { toast } from "@/lib/toast";
 import { PhotoRefusedError, PHOTO_REFUSED_MESSAGE } from "@/lib/photoScreen";
 import type { RecentSession } from "../useRecentSessions";
-import { allPaths, readDoc, resetFirestore } from "@/test/firestoreHarness";
+import {
+  allPaths,
+  failNextFirestore,
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+  setSnapshotMetadata,
+  unfiredFailures,
+} from "@/test/firestoreHarness";
+import { haversine } from "@/lib/gps";
+import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 
 const RUN: RecentSession = {
   kind: "run",
@@ -175,6 +185,66 @@ describe("SpacePostComposer — a run's route", () => {
     expect(route[0]).toEqual(ROUTE[0]);
     expect(route.at(-1)).toEqual(ROUTE.at(-1));
   });
+
+  /* A zone the runner added after saving the run: the stored route was cut
+     without it, so only the post can cut it. Mid-route, 300 m across, which
+     takes in three of the route's points. */
+  const LATER_ZONE = {
+    name: "Work",
+    lat: ROUTE[10].lat,
+    lon: ROUTE[10].lon,
+    radiusMeters: 300,
+  };
+
+  it.each([
+    ["with the ends hidden", undefined],
+    ["with the ends shown", false],
+  ])(
+    "cuts a privacy zone added after the run was saved, %s",
+    async (_, hideSharedRouteEnds) => {
+      h.profile = { ...h.profile, hideSharedRouteEnds };
+      seedFirestore({ "users/viewer/privacyZones/work": LATER_ZONE });
+      renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+      const route = routeOf(await postAndRead()) as {
+        lat: number;
+        lon: number;
+        breakBefore?: boolean;
+      }[];
+
+      expect(route.length).toBeGreaterThan(1);
+      for (const p of route) {
+        expect(
+          haversine(p.lat, p.lon, LATER_ZONE.lat, LATER_ZONE.lon)
+        ).toBeGreaterThan(LATER_ZONE.radiusMeters);
+      }
+      // The two sides of the zone are drawn apart, not joined across it.
+      expect(route.some((p) => p.breakBefore)).toBe(true);
+      expect(screen.queryByText(ROUTE_WITHHELD_NOTE)).toBeNull();
+    }
+  );
+
+  it("posts no route while the privacy zones are still loading, and says so", async () => {
+    // Only the cache has answered: an empty cache is not evidence that no
+    // zone is set.
+    setSnapshotMetadata("users/viewer/privacyZones", { fromCache: true });
+    renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+    expect(screen.getByText(ROUTE_WITHHELD_NOTE)).toBeInTheDocument();
+
+    const post = await postAndRead();
+    expect(post.activity).toMatchObject({ type: "run", distance: 10000 });
+    expect(post.activity).not.toHaveProperty("routePreview");
+  });
+
+  it("posts no route when the privacy zones cannot be read, and says so", async () => {
+    failNextFirestore("onSnapshot", { path: "users/viewer/privacyZones" });
+    renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+    expect(unfiredFailures()).toEqual([]);
+    expect(screen.getByText(ROUTE_WITHHELD_NOTE)).toBeInTheDocument();
+
+    const post = await postAndRead();
+    expect(post.activity).toMatchObject({ type: "run", distance: 10000 });
+    expect(post.activity).not.toHaveProperty("routePreview");
+  });
 });
 
 describe("SpacePostComposer — attachLatest", () => {
@@ -228,7 +298,7 @@ describe("SpacePostComposer — attachLatest", () => {
     expect(screen.queryByText("10.0 km run")).toBeNull();
   });
 
-  it("names the workout's lead lift, so the card can draw it", async () => {
+  it("includes the lead drawing when the workout's artwork is released", async () => {
     renderComposer({ sessions: [WORKOUT], attachLatest: true });
     fireEvent.change(screen.getByLabelText("Post body"), {
       target: { value: "Bench day." },
@@ -242,9 +312,10 @@ describe("SpacePostComposer — attachLatest", () => {
     const path = allPaths().find((p) =>
       p.startsWith("spaces/womens-running/posts/")
     )!;
-    expect(readDoc(path)).toMatchObject({
-      activity: { type: "workout", leadExerciseId: "bench-press" },
-    });
+    const activity = (readDoc(path) as { activity: Record<string, unknown> })
+      .activity;
+    expect(activity.type).toBe("workout");
+    expect(activity.leadExerciseId).toBe("bench-press");
   });
 
   it("attaches nothing when opened as a plain post", () => {

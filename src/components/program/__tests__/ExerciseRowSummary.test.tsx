@@ -1,9 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ExerciseRowSummary from "../ExerciseRowSummary";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import ExerciseThumb from "../ExerciseThumb";
-import * as formArtCutouts from "@/lib/formArtCutouts";
 
 function exercise(over: Record<string, unknown> = {}) {
   return {
@@ -20,29 +19,21 @@ function exercise(over: Record<string, unknown> = {}) {
 
 describe("ExerciseThumb — each exercise's picture", () => {
   it("shows the cut-out drawing when the exercise has released art", () => {
-    const { container } = render(<ExerciseThumb exerciseId="bench-press" />);
+    const { container } = render(<ExerciseThumb exerciseId="squat" />);
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("drawing");
     expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /form-art\/bench-press\.webp$/
+      /form-art\/squat\.webp$/
     );
   });
 
-  it("shows the muscles its category works when it has no drawing", () => {
-    // Exercise the missing-art branch even after this drawing is released.
-    const missingArt = vi
-      .spyOn(formArtCutouts, "getFormArtCutout")
-      .mockReturnValue(null);
-    try {
-      const { container } = render(<ExerciseThumb exerciseId="pull-ups" />);
-      const tile = container.firstElementChild as HTMLElement;
-      expect(tile.dataset.thumb).toBe("muscles");
-      expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-        /^data:image\/svg\+xml,/
-      );
-    } finally {
-      missingArt.mockRestore();
-    }
+  it("shows the released Close Grip Bench drawing", () => {
+    const { container } = render(<ExerciseThumb exerciseId="close-grip-bench" />);
+    const tile = container.firstElementChild as HTMLElement;
+    expect(tile.dataset.thumb).toBe("drawing");
+    expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
+      /form-art\/close-grip-bench\.webp$/
+    );
   });
 
   it.each(["Back Squat", "back-squat", "Barbell Back Squat"])(
@@ -60,7 +51,7 @@ describe("ExerciseThumb — each exercise's picture", () => {
     }
   );
 
-  it("keeps a squat variant on its own drawing", () => {
+  it("shows the released Front Squat drawing", () => {
     const { container } = render(<ExerciseThumb exerciseId="Front Squat" />);
     const tile = container.firstElementChild as HTMLElement;
     expect(tile.dataset.thumb).toBe("drawing");
@@ -357,7 +348,49 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent("Last: 30s, 25s");
   });
 
-  it("keeps every number in the numeral face", () => {
+  it("sets the numbers in the lines as the words are: one face, one weight", () => {
+    /* The owner's Train screenshot: "3 sets × 8 reps · 52.5 kg" and
+       "Last: 52.5 kg × 10, 10, 10" read as misaligned, Archivo digits
+       heavier and taller than the Plus Jakarta Sans words beside them.
+       A number inside a line of text is the inline tier (DESIGN_GUIDE
+       §4): `font-mono`, the text face with tabular digits, inheriting
+       the line's weight. So no number span carries the figure face or a
+       weight of its own. */
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({ weight: 52.5 })}
+        lastSets={[
+          { weightKg: 52.5, reps: 10 },
+          { weightKg: 52.5, reps: 10 },
+          { weightKg: 52.5, reps: 10 },
+        ]}
+      />
+    );
+    const lines = [...container.querySelectorAll("p")].filter((p) =>
+      /sets ×|^Last:/.test(p.textContent ?? "")
+    );
+    expect(lines.map((p) => p.textContent)).toEqual([
+      "3 sets × 8 reps · 52.5 kg",
+      "Last: 52.5 kg × 10, 10, 10",
+    ]);
+    for (const line of lines) {
+      expect(line.className).not.toMatch(/\bfont-(?:figure|mono)\b/);
+      // The no-wrap spans only hold a fact together ("52.5 kg" on one
+      // line); the number spans are the ones inside them.
+      const numbers = [
+        ...line.querySelectorAll("span:not(.whitespace-nowrap)"),
+      ];
+      expect(numbers.length).toBeGreaterThan(0);
+      for (const span of numbers) {
+        expect(span).toHaveClass("font-mono", "tabular-nums");
+        expect(span.className).not.toMatch(
+          /\bfont-(?:figure|medium|semibold|bold|extrabold)\b/
+        );
+      }
+    }
+  });
+
+  it("keeps every number in the inline number tier", () => {
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise()}

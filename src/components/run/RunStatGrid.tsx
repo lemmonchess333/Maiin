@@ -37,7 +37,7 @@ export default function RunStatGrid({ stats }: { stats: RunStat[] }) {
             )}
           >
             <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className="mt-1 text-h3 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+            <p className="mt-1 text-h3 font-extrabold font-figure tabular-nums leading-tight text-foreground">
               {stat.value}
               {/* A real space before the unit, so it reads "30 m" to a
                   screen reader as well as on screen. */}

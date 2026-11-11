@@ -69,7 +69,7 @@ describe("Routine's load states", () => {
     renderRoutine();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load this routine"
+      "Couldn’t load this routine"
     );
     expect(unfiredFailures()).toEqual([]);
     expect(screen.queryByText("Routine not found")).toBeNull();

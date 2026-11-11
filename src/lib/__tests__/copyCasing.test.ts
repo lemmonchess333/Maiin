@@ -54,7 +54,7 @@ const NAMED = [
 const PROPER = new Set(
   `Tropos Pro Apple Google Stripe Firebase iOS Android Strava Garmin Nike
    HealthKit RevenueCat Gemini VoiceOver PWA GPS GPX TDEE PI PR PRs AI App Store
-   Health
+   Health Today
    Monday Tuesday Wednesday Thursday Friday Saturday Sunday January February
    March April May June July August September October November December
    I I'm I've`.split(/\s+/)

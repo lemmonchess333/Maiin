@@ -24,6 +24,24 @@ export function startDayKey(createdAt: unknown): string | null {
   return Number.isFinite(ms) ? localDateString(new Date(ms)) : null;
 }
 
+/**
+ * The moment an account began, in ms: the profile's `createdAt` once it
+ * has reached the server, else the sign-in record's creation time; null
+ * when neither is known yet. A lift's start is never said to be earlier
+ * (`sessionStart.ts`).
+ */
+export function accountStartMs(
+  createdAt: unknown,
+  creationTime?: string | null
+): number | null {
+  const c = createdAt as { toMillis?: () => number } | null | undefined;
+  const fromProfile =
+    c && typeof c.toMillis === "function" ? c.toMillis() : NaN;
+  if (Number.isFinite(fromProfile)) return fromProfile;
+  const fromAuth = creationTime ? Date.parse(creationTime) : NaN;
+  return Number.isFinite(fromAuth) ? fromAuth : null;
+}
+
 /** Whether a day came before the account began. */
 export function beforeStart(
   dateKey: string,

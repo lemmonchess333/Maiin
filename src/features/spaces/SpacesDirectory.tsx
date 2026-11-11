@@ -1,26 +1,27 @@
 /**
- * Community Spaces directory carousel (Spc1 PR2) — the marquee of the
- * Community tab. Horizontally snap-scrolling photo cards, the Runna
- * Spaces pattern: each card is a full-bleed licensed photo (editorial
- * pipeline, `space-<id>` stems) with a sport-coded tint wash + scrim
- * and the space name overlaid. Until photos land the card renders the
- * designed fallback band (accent gradient + ghosted icon — the same
- * grammar as the challenge hero).
+ * The races and Spaces directory at the head of Together's Discover
+ * section (Spc1 PR2; first since Soc16, as the page's pictures). Horizontally snap-scrolling photo cards, the Runna
+ * Spaces pattern: each card is a full-bleed editorial photo
+ * (`space-<id>` stems) under the one dark shade every photo card uses,
+ * with the space name over it. Until photos land the card renders the
+ * designed fallback band (accent gradient + ghosted icon, the same
+ * grammar as the challenge hero). Interest Spaces are the smaller cards.
  *
- * Races & Events (races plan PR2): a second row of race-kind spaces —
- * RACE chip, race date + city under the name (Runna's card anatomy),
- * soonest first, then evergreen races awaiting their next date,
- * filtered by a row of chips (two selects before the Social
- * pass). The Feed's compact "Spaces for you" row went in the same pass:
- * Together already leads with this directory.
+ * Races & Events (races plan PR2): the first row, of race-kind spaces,
+ * with the race's distance chip and date + city under the name (Runna's
+ * card anatomy), soonest first, then evergreen races awaiting their next
+ * date, filtered by a row of chips.
  *
- * Density gate (Spc1c): a member count below
- * SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing stands in for
- * it until the count is real. No animation loops (WKWebView).
+ * The line under a Space's name is its member count, and only a real one:
+ * a count below SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing
+ * stands in for it (Spc1c). How many posts a Space had this week is not
+ * read here (the directory reads a member count and membership only), so
+ * no card says it. No animation loops (WKWebView).
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import PhotoCaption from "@/components/ui/PhotoCaption";
 import RaceFilterChips from "./RaceFilterChips";
 import {
   ALL_RACE_FILTERS,
@@ -77,7 +78,20 @@ const ACCENT_INK: Record<SpaceDef["accent"], string> = {
   brand: "hsl(var(--primary-strong))",
 };
 
-function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
+/* An interest Space is a smaller card than a race: its name and one line
+   are all it carries, and the row shows more of them at once. */
+const CARD_SIZE = {
+  small: { box: "w-[160px] h-[136px]", name: "text-sm" },
+  regular: { box: "w-[236px] h-[148px]", name: "text-base" },
+} as const;
+
+function SpaceCard({
+  entry,
+  size,
+}: {
+  entry: SpaceDirectoryEntry;
+  size: keyof typeof CARD_SIZE;
+}) {
   const { def, memberCount, joined } = entry;
   const photo = spaceEditorialImage(def.id);
   const accent = SPACE_ACCENT_HEX[def.accent];
@@ -89,7 +103,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   return (
     <Link
       to={`/space/${def.id}`}
-      className="relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform w-[236px] h-[148px]"
+      className={`relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform ${CARD_SIZE[size].box}`}
       style={
         photo
           ? undefined
@@ -99,27 +113,15 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
       }
       aria-label={`${def.name} space`}
     >
+      {/* Every photo card on the one dark shade (PhotoCaption's scrim),
+          with no tint of its own, so the white words read alike on each. */}
       {photo ? (
-        <>
-          <img
-            src={photo}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 size-full object-cover"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
-            }}
-          />
-        </>
+        <img
+          src={photo}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 size-full object-cover"
+        />
       ) : (
         <Icon
           size={96}
@@ -131,7 +133,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
 
       {event && (
         <span
-          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold uppercase tracking-wider ${
+          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
             photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           /* Same chip grammar as Joined. On a photo the pill is the SCRIM
@@ -155,7 +157,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
 
       {joined && (
         <span
-          className={`absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
+          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
             photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
           }`}
           style={
@@ -169,9 +171,13 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
         </span>
       )}
 
-      <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
+      {/* The name takes two lines before it gives way, on every card, so
+          a long name wraps at a word rather than being cut on its first
+          line. The tags above sit over the caption's scrim (z-10), which
+          reaches them at larger text. */}
+      <PhotoCaption onPhoto={!!photo} className="px-3.5">
         <p
-          className={`text-base font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
+          className={`${CARD_SIZE[size].name} font-bold leading-tight line-clamp-2 break-words ${
             photo ? "text-white" : "text-foreground"
           }`}
         >
@@ -214,7 +220,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
             )}
           </p>
         )}
-      </div>
+      </PhotoCaption>
     </Link>
   );
 }
@@ -223,14 +229,20 @@ function CardRow({
   hideLabel = false,
   label,
   entries,
+  size,
 }: {
   hideLabel?: boolean;
   label: string;
   entries: SpaceDirectoryEntry[];
+  size: keyof typeof CARD_SIZE;
 }) {
   return (
     <div className="space-y-2">
-      {!hideLabel && <SectionHeading>{label}</SectionHeading>}
+      {!hideLabel && (
+        <SectionHeading as="h3" size="compact">
+          {label}
+        </SectionHeading>
+      )}
       {/* -mx-[16px]/px-[16px] (the page gutter, px) bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance).
           data-no-page-swipe: a horizontal swipe to scroll this carousel
@@ -249,7 +261,7 @@ function CardRow({
       >
         {entries.map((entry) => (
           <div role="listitem" key={entry.def.id} className="contents">
-            <SpaceCard entry={entry} />
+            <SpaceCard entry={entry} size={size} />
           </div>
         ))}
       </div>
@@ -267,13 +279,19 @@ export default function SpacesDirectory() {
 
   return (
     <div className="space-y-4">
-      {interest.length > 0 && <CardRow label="Spaces" entries={interest} />}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
-          <SectionHeading>Races & events</SectionHeading>
+          <SectionHeading as="h3" size="compact">
+            Races & events
+          </SectionHeading>
           <RaceFilterChips value={filters} onChange={setFilters} />
           {races.length > 0 ? (
-            <CardRow label="Race directory" entries={races} hideLabel />
+            <CardRow
+              label="Race directory"
+              entries={races}
+              size="regular"
+              hideLabel
+            />
           ) : (
             <EmptyState
               compact
@@ -289,6 +307,9 @@ export default function SpacesDirectory() {
             />
           )}
         </section>
+      )}
+      {interest.length > 0 && (
+        <CardRow label="Spaces" entries={interest} size="small" />
       )}
     </div>
   );

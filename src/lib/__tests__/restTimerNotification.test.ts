@@ -91,7 +91,7 @@ describe("restNotificationDelaySeconds (pure planner)", () => {
 });
 
 describe("scheduleRestEndNotification", () => {
-  it("schedules id 3001 at now + delay with the exercise in the body", async () => {
+  it("schedules its own id at now + delay with the exercise in the body", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-15T10:00:00Z"));
     const ok = await scheduleRestEndNotification(90, "Bench Press");

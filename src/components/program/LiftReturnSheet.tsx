@@ -110,7 +110,7 @@ export default function LiftReturnSheet({
           <p className="text-base font-semibold text-foreground mt-0.5">
             {/* The gap as a fact, in weeks: "24 days" invites arithmetic
                 where "3 weeks" reads at a glance. */}
-            {`It's been about ${Math.round(daysAway / 7)} weeks`}
+            {`It’s been about ${Math.round(daysAway / 7)} weeks`}
           </p>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function LiftReturnSheet({
         {easeBackFirst
           ? "Your plan still has the weights you left on. "
           : "Your plan is where you left it. "}
-        {`Easing back takes ${percent}% off each lift and a set off this week's sessions, then each lift climbs back a step a session to where it was.`}
+        {`Easing back takes ${percent}% off each lift and a set off this week’s sessions, then each lift climbs back a step a session to where it was.`}
       </p>
     </ChoiceSheet>
   );

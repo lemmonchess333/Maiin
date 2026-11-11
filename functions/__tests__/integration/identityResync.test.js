@@ -27,9 +27,9 @@ let onPublicProfileIdentityChanged;
 const UID = "identity-resync-alice";
 const OTHER = "identity-resync-bob";
 const OLD_PHOTO =
-  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/old.jpg";
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fu%2Fold.jpg";
 const NEW_PHOTO =
-  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/new.jpg";
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fu%2Fnew.jpg";
 const DAY = 86400000;
 const ago = (days) => new Date(Date.now() - days * DAY);
 

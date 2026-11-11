@@ -161,7 +161,7 @@ describe("SettingsRecentlyDeleted — actions", () => {
         screen.getByRole("button", { name: "Permanently delete Toast" })
       );
     });
-    expect(feedback.error).toHaveBeenCalledWith("Couldn't delete. Try again.");
+    expect(feedback.error).toHaveBeenCalledWith("Couldn’t delete. Try again.");
     expect(feedback.success).not.toHaveBeenCalled();
   });
 

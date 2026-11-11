@@ -190,4 +190,18 @@ describe("the usual row's copy", () => {
     expect(bundle.portionSize).toBe("1 meal");
     expect(usualMealPortion(bundle)).toBeNull();
   });
+
+  /* An entry saved without a name is a number, not a meal to offer
+     back: "Your usual: Quick add" would read as the form's button. */
+  it("never offers a nameless Quick add entry as the usual", () => {
+    const quick = threeMornings().map((meal) => ({
+      ...meal,
+      foodName: "Quick add",
+      items: [{ ...meal.items[0], name: "Quick add" }],
+    }));
+    expect(usualMeal(quick, "breakfast", "2026-09-06")).toBeNull();
+    expect(usualMeal(threeMornings(), "breakfast", "2026-09-06")?.name).toBe(
+      "Oats"
+    );
+  });
 });

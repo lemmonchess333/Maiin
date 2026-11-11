@@ -42,7 +42,7 @@ const ANALYTICS_PAGES: Record<
     title: "Food",
     detail: "Calories, macros, balance",
     icon: Apple,
-    tint: "text-nutrition",
+    tint: "text-nutrition-strong",
   },
 };
 
@@ -85,7 +85,7 @@ export default function AnalyticsGoDeeper({
               <span className="text-base font-bold text-foreground">
                 {title}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground text-pretty">
                 {lines[page] ?? detail}
               </span>
             </button>

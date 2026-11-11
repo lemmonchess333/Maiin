@@ -17,6 +17,9 @@ import { T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { binAxis } from "@/components/analytics/binAxis";
+import ChartReading, {
+  type ChartReadingLine,
+} from "@/components/analytics/ChartReading";
 
 /** Drawing units; the SVG scales to the card's width. */
 const CHART_W = 300;
@@ -82,6 +85,7 @@ export default function TrainingWeeksCard({
   averageText,
   footer,
   onPick,
+  verdict = null,
 }: {
   title: string;
   subtitle: string;
@@ -98,6 +102,10 @@ export default function TrainingWeeksCard({
   footer?: ReactNode;
   /** Told when a bar is picked, for the page's chart-tap event. */
   onPick?: (bin: SummaryBin) => void;
+  /** The range against the range before, under the title
+   *  (`rangeChangeReading`): "You lifted 3.5k kg less than the 30 days
+   *  before." */
+  verdict?: ChartReadingLine | null;
 }) {
   const [picked, setPicked] = useState<string | null>(null);
   const targetsRef = useRef<HTMLDivElement>(null);
@@ -215,8 +223,9 @@ export default function TrainingWeeksCard({
   return (
     <Card as="section" aria-label={title} className="space-y-4">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">{title}</h2>
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <ChartReading line={verdict} className="mt-1" />
       </div>
 
       {/* Three across while 17em of card allows, one per row below that,
@@ -226,7 +235,7 @@ export default function TrainingWeeksCard({
         <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
           {figures.map((f) => (
             <div key={f.label} className="min-w-0">
-              <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+              <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                 {f.value}
               </span>
               <span className="block text-sm text-muted-foreground truncate">
@@ -238,7 +247,9 @@ export default function TrainingWeeksCard({
       </div>
 
       {!hasChart && (
-        <p className="text-sm text-muted-foreground">{reading.chartCaveat}</p>
+        <p className="text-sm text-muted-foreground">
+          {reading.chartCaveat(sessions)}
+        </p>
       )}
 
       {hasChart && selected && (

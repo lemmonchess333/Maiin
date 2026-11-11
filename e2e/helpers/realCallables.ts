@@ -18,17 +18,19 @@
 import type { Page, Route } from "@playwright/test";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import {
+  getFirestore,
+  Timestamp,
+  type Firestore,
+} from "firebase-admin/firestore";
 import { createRequire } from "node:module";
-import { onRealClock } from "./nodeClock";
+import { onRealClock, realNow } from "./nodeClock";
 
 const require = createRequire(import.meta.url);
 
 /** The callables the plan's screens send. */
 export type PlanCallable =
-  | "completeOnboarding"
-  | "configurePlan"
-  | "applyProgramCommand";
+  "completeOnboarding" | "configurePlan" | "applyProgramCommand";
 
 export const PLAN_CALLABLES: readonly PlanCallable[] = [
   "completeOnboarding",
@@ -46,7 +48,39 @@ interface CallableHandler {
 /** The Admin SDK on the emulator, one app for the whole process. */
 export function emulatorAdmin() {
   const app = getApps()[0] ?? initializeApp({ projectId: "demo-tropos" });
-  return { auth: getAuth(app), db: getFirestore(app), Timestamp };
+  return {
+    auth: getAuth(app),
+    db: deletesOnItsOwnClock(getFirestore(app)),
+    Timestamp,
+  };
+}
+
+const ownClockDeletes = new WeakSet<Firestore>();
+
+/**
+ * `recursiveDelete` on this one process-wide Firestore gives each call a
+ * BulkWriter of its own. Left to itself it reuses one, whose rate limiter
+ * remembers the time of its last request and throws ("Request time should
+ * not be before the last token refill time") at an earlier one. A spec that
+ * moves this process's clock (`openJourney`) then deletes leaves that time
+ * days ahead or hours behind the next spec's, so the next spec's cleanup
+ * threw, outside any try, by test order and the time of day. A writer of
+ * its own reads one clock for the whole delete.
+ */
+function deletesOnItsOwnClock(db: Firestore): Firestore {
+  if (ownClockDeletes.has(db)) return db;
+  ownClockDeletes.add(db);
+  const recursiveDelete = db.recursiveDelete.bind(db);
+  db.recursiveDelete = async (ref, writer) => {
+    if (writer) return recursiveDelete(ref, writer);
+    const own = db.bulkWriter();
+    try {
+      await recursiveDelete(ref, own);
+    } finally {
+      await own.close();
+    }
+  };
+  return db;
 }
 
 const CORS = {
@@ -107,6 +141,35 @@ async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
   }
 }
 
+function profileOf(uid: string) {
+  return emulatorAdmin().db.doc(`users/${uid}`).get();
+}
+
+/**
+ * A new account's first setup, dated on the journey's clock. The handler
+ * stamps `onboardingCompletedAt` (and the sign-up stamped `createdAt`) with
+ * a server timestamp, which the emulator resolves on the real clock, not
+ * this process's moved one. A journey starting on the next Monday is 7
+ * days ahead when it runs on a Monday, so the account would open on its
+ * eighth day, its first week already over. Both stamps move by the gap
+ * between the two clocks, as if the emulator's clock had moved with the
+ * journey's: what happened at a real time happened then on the journey's,
+ * and a spec that spaced them (setup days after sign-up) keeps its space.
+ * Written before the reply, so the profile the app reads next has it.
+ */
+async function startOnTheJourneysClock(uid: string): Promise<void> {
+  const gap = Date.now() - realNow();
+  const ref = emulatorAdmin().db.doc(`users/${uid}`);
+  const profile = (await ref.get()).data() ?? {};
+  const moved: Record<string, Timestamp> = {};
+  for (const field of ["createdAt", "onboardingCompletedAt"]) {
+    const at = profile[field];
+    if (at instanceof Timestamp)
+      moved[field] = Timestamp.fromMillis(at.toMillis() + gap);
+  }
+  if (Object.keys(moved).length > 0) await ref.update(moved);
+}
+
 async function answer(route: Route, name: string, handler: CallableHandler) {
   if (route.request().method() === "OPTIONS") {
     await route.fulfill({ status: 204, headers: CORS });
@@ -118,9 +181,13 @@ async function answer(route: Route, name: string, handler: CallableHandler) {
   );
   const token = await verifiedCaller(bearer);
   try {
+    const firstSetup =
+      name === "completeOnboarding" &&
+      !(await profileOf(token.uid)).get("onboardingCompletedAt");
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
     });
+    if (firstSetup) await startOnTheJourneysClock(token.uid);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -151,6 +218,14 @@ export async function routeRealCallables(
   page: Page,
   names: readonly PlanCallable[] = PLAN_CALLABLES
 ): Promise<void> {
+  /* completeOnboarding puts a share of new accounts on the legacy
+     journey by a hash of the uid, and the emulator's uids are random:
+     0 keeps every account on the journey the specs walk. The one that
+     walks the legacy journey gets there as an older app does, by sending
+     no journey marker. */
+  await emulatorAdmin()
+    .db.doc("system/config")
+    .set({ activationComparisonPercent: 0 }, { merge: true });
   const exported = require("../../functions/index.js") as Record<
     string,
     CallableHandler

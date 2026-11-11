@@ -41,7 +41,7 @@ it("reports a rejected default change, preserves the choice, and lets the user r
   fireEvent.click(screen.getAllByTitle("Set as default")[1]);
   await waitFor(() =>
     expect(toast.error).toHaveBeenCalledWith(
-      "Couldn't change your default shoe. Try again."
+      "Couldn’t change your default shoe. Try again."
     )
   );
   expect(unfiredFailures()).toEqual([]);
@@ -84,7 +84,7 @@ it("says so when adding a shoe fails, and keeps the form", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() =>
     expect(toast.error).toHaveBeenCalledWith(
-      "Couldn't add the shoe. Try again."
+      "Couldn’t add the shoe. Try again."
     )
   );
   expect(unfiredFailures()).toEqual([]);

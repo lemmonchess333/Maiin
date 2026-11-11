@@ -7,6 +7,11 @@ describe("native notification destinations", () => {
       "/social?tab=together"
     );
   });
+  it("opens the weekly review from Monday's recap", () => {
+    expect(nativePushRoute({ ownerUid: "me", route: "/review" }, "me")).toBe(
+      "/review"
+    );
+  });
   it("requires the authenticated recipient, including for old delivered notifications", () => {
     expect(
       nativePushRoute({ ownerUid: "account-a", route: "/social" }, "account-b")

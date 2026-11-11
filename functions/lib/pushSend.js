@@ -134,12 +134,14 @@ function buildBadgeNudgeMessage() {
  * @returns {{ data: { type: string, route: string, title: string, body: string } }}
  */
 function buildWeeklyRecapMessage() {
+  // Opens the review it announces, in the words of the local Monday
+  // notification that stands in for it without push (XB1 call 7).
   return {
     data: {
       type: "recap",
-      route: "/",
-      title: "Your week in review",
-      body: "Open Tropos to see how last week went.",
+      route: "/review",
+      title: "Your week, reviewed",
+      body: "Last week in a few cards, and the week ahead.",
     },
   };
 }

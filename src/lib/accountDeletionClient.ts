@@ -39,14 +39,13 @@ export async function deleteAccount(
     const result = await request({});
     assertIdentity();
     const response = result.data as
-      | { ok?: boolean; status?: string }
-      | undefined;
+      { ok?: boolean; status?: string } | undefined;
     if (response?.status === "pending") return "pending";
     if (
       response?.ok !== true ||
       (response.status && response.status !== "completed")
     ) {
-      throw new Error("Deletion wasn't confirmed. Try again.");
+      throw new Error("Deletion wasn’t confirmed. Try again.");
     }
   } catch (error) {
     assertIdentity();

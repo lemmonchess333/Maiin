@@ -11,7 +11,9 @@ interface SectionHeadingProps {
    *             cards, "Running" above the run charts). Default.
    *   "compact" — a section inside a sheet, a modal, a card or a dense
    *               settings form, one step down so it sits under that
-   *               surface's own title.
+   *               surface's own title. It is also the card-title step:
+   *               a card's own title is 16px bold, under the 20px heading
+   *               of the section the card sits in (DESIGN_GUIDE §4).
    */
   size?: SectionHeadingSize;
   /** Heading level. `h2` under a page's `h1`; `h3` for a section nested

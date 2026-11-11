@@ -64,7 +64,7 @@ const { isRaceTemplateId } = require("./raceTemplateIds");
 // pinned to the client copy by a cross-test.
 const { resolveRecoveryExit } = require("./runModeResolution");
 // One-off run move (RUN-RESCHEDULE-01), pinned by a parity cross-test.
-const { computeRunMove } = require("./runReschedule");
+const { computeRunMove, dateForDay, runMoveSourceSignature } = require("./runReschedule");
 // Goal-prescription engine (pinned by a parity cross-test). The transform a
 // training block applies at start and un-applies at release.
 const {
@@ -814,7 +814,7 @@ const KIND_VALIDATORS = {
       command,
       "moveRunDay",
       ["kind", "commandId", "runDayId", "targetDayIndex"],
-      []
+      ["expected", "timeZone"]
     );
     out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
     out.targetDayIndex = assertBoundedInt(
@@ -823,6 +823,26 @@ const KIND_VALIDATORS = {
       0,
       6
     );
+    // The device's IANA zone when the move was asked for. The profile's is
+    // saved once a session, so it is stale for anyone who has travelled.
+    if (command.timeZone !== undefined) {
+      out.timeZone = assertString(command.timeZone, "timeZone", 64);
+      if (!isTimeZone(out.timeZone)) {
+        invalidCommand("timeZone must be an IANA time zone.");
+      }
+    }
+    if (command.expected !== undefined) {
+      assertKeys(command.expected, "expected", ["sourceSignature", "todayKey", "completionEvidence"], []);
+      const todayKey = assertString(command.expected.todayKey, "expected.todayKey", 10, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(todayKey) || !Number.isFinite(Date.parse(todayKey)) || new Date(todayKey).toISOString().slice(0, 10) !== todayKey) {
+        invalidCommand("expected.todayKey must be a calendar date.");
+      }
+      out.expected = {
+        sourceSignature: assertString(command.expected.sourceSignature, "expected.sourceSignature", MAX_SIGNATURE_LEN),
+        todayKey,
+        completionEvidence: assertString(command.expected.completionEvidence, "expected.completionEvidence", 64000),
+      };
+    }
   },
 
   overrideRunDay(command, out) {
@@ -1582,7 +1602,7 @@ function releaseTrainingBlock(state, profile, command) {
   };
 }
 
-function moveRunDay(state, profile, command) {
+function moveRunDay(state, profile, command, now) {
   const idx = findRunDayIndex(state, command.runDayId);
   if (idx === -1) {
     failedPrecondition("That scheduled run is no longer available.");
@@ -1594,9 +1614,13 @@ function moveRunDay(state, profile, command) {
   if (isRaceRunDay(target)) {
     failedPrecondition("A race can't be moved — its date is the event.");
   }
-  if (!isScheduledRunEditable(getScheduledRunStatus(target))) {
+  if (!isScheduledRunEditable(getScheduledRunStatus(target)) || target.completed === true || state.manualCompletions?.[command.runDayId]) {
     failedPrecondition("That run can no longer be moved.");
   }
+  if (command.expected && command.expected.sourceSignature !== runMoveSourceSignature(target)) {
+    failedPrecondition("Your plan changed. Review the latest week.");
+  }
+  const today = runMoveToday(command, profile, now);
   if (target.dayIndex === command.targetDayIndex) {
     return state; // no-op: already there
   }
@@ -1607,6 +1631,15 @@ function moveRunDay(state, profile, command) {
   );
   if (!patch) {
     failedPrecondition("That day isn't part of this run's week.");
+  }
+  if (patch.date < today) {
+    failedPrecondition("That date has passed. Review the latest week.");
+  }
+  const weekDates = new Set(Array.from({ length: 7 }, (_, day) => dateForDay(target.weekKey, day)));
+  const raceDate = state.runDays.filter(rd => rd && isRaceRunDay(rd) && weekDates.has(rd.date))
+    .map(rd => rd.date).sort()[0];
+  if (raceDate && patch.date > raceDate) {
+    failedPrecondition("A run can't be moved after this week's race.");
   }
   // Occupancy is a date claim. Carried rows from another week can share a
   // weekday without occupying the requested destination.
@@ -2143,6 +2176,44 @@ function replaceExercise(state, command, profile) {
   };
 }
 
+function isTimeZone(value) {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: value });
+    return true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+/**
+ * The day a run move is judged against: the person's today.
+ *
+ * Read in the zone the command carries, which is the device's. A command
+ * from an older app carries none: a review it sent may be a day either side
+ * of the saved zone's date, since that zone is saved once a session; and a
+ * plain move is judged in the saved zone, or, with none saved, against the
+ * earliest date anywhere, so a move onto the person's today is never
+ * refused for a zone this server lacks.
+ */
+function runMoveToday(command, profile, now) {
+  const savedZone =
+    profile && isTimeZone(profile.timezone) && profile.timezone
+      ? profile.timezone
+      : null;
+  if (command.expected) {
+    const reference = localDateInZone(now, command.timeZone || savedZone || "UTC");
+    const drift = Math.abs(
+      Date.parse(command.expected.todayKey) - Date.parse(reference)
+    ) / 86_400_000;
+    if (command.timeZone ? drift !== 0 : drift > 1) {
+      failedPrecondition("The day changed while this was open. Review the latest week.");
+    }
+    return command.expected.todayKey;
+  }
+  const zone = command.timeZone || savedZone;
+  return zone ? localDateInZone(now, zone) : localDateInZone(now, "Etc/GMT+12");
+}
+
 // Local calendar date for the saved workout, in the user's timezone. The
 // client uses localDateString() (device-local); the server has no device tz, so
 // it formats `now` in profile.timezone (IANA), falling back to UTC when the
@@ -2396,7 +2467,7 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = overrideRunDay(current, validated);
       break;
     case "moveRunDay":
-      next = moveRunDay(current, profile || {}, validated);
+      next = moveRunDay(current, profile || {}, validated, now);
       break;
     case "startTrainingBlock":
       next = startTrainingBlock(current, profile || {}, validated, now);
@@ -2435,6 +2506,7 @@ module.exports = {
   transitionStatus,
   getScheduledRunStatus,
   isScheduledRunEditable,
+  localDateInZone,
   isProgramCommandError,
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,

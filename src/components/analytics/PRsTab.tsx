@@ -13,7 +13,7 @@ import ExerciseThumb from "@/components/program/ExerciseThumb";
 import PRCard, { NewRecordChip } from "@/components/analytics/PRCard";
 import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
 
-/* PR 7b follow-up — collapse the lifetime Lift PRs list to the
+/* PR 7b follow-up — collapse the lifetime Lifting bests list to the
    most-recently-set N entries by default. A serious lifter logs
    30-60+ distinct exercises over time; rendering all of them
    produces a wall of rows that's not glanceable. Default N shows
@@ -187,9 +187,7 @@ function LiftPRList({
     <div className="rounded-2xl bg-card overflow-hidden card-shadow">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-achievement" />
-        <h3 className="text-sm font-semibold text-foreground flex-1">
-          {title}
-        </h3>
+        <h3 className="text-base font-bold text-foreground flex-1">{title}</h3>
         <span className="text-xs text-muted-foreground">{subtitle}</span>
       </div>
       {prs.length > 0 ? (
@@ -261,7 +259,7 @@ export default function PRsTab({
      user comes BACK to this tab to celebrate their first PR. */
   if (hasNoPRs) {
     return (
-      <section aria-label="Personal records" className="space-y-3 mt-4">
+      <section aria-label="Bests" className="space-y-3 mt-4">
         <div className="p-6 rounded-2xl bg-card text-center space-y-3">
           <div
             className="size-12 rounded-xl flex items-center justify-center mx-auto"
@@ -271,11 +269,10 @@ export default function PRsTab({
           </div>
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
-              Your PRs will appear here
+              Your bests appear here
             </p>
             <p className="text-xs text-muted-foreground">
-              Log your first run or workout to set your starting personal
-              records.
+              Log your first run or workout to set your first bests.
             </p>
           </div>
           <div className="flex gap-2 justify-center pt-1">
@@ -302,16 +299,16 @@ export default function PRsTab({
   }
 
   return (
-    <section aria-label="Personal records" className="space-y-5 mt-4">
-      {/* Running PRs — three subsections per Hist5b pin 4 + 5:
+    <section aria-label="Bests" className="space-y-5 mt-4">
+      {/* Running bests — three subsections per Hist5b pin 4 + 5:
           Lifetime (outdoor GPS, always shown when user has run),
           Last 30 days (only when user has recent activity),
           Indoor (only when user has treadmill / manual runs). */}
       {hasAnyLifetimeRun && (
-        <section aria-label="Running personal records" className="space-y-3">
+        <section aria-label="Running bests" className="space-y-3">
           <SectionLabel className="text-running-strong">Running</SectionLabel>
           <PRCard
-            title="Running PRs"
+            title="Running bests"
             subtitle={
               runningRecentIsDuplicate
                 ? "All-time and last 30 days · outdoor GPS only"
@@ -330,7 +327,7 @@ export default function PRsTab({
           )}
           {runningPRs.hasAnyIndoor && (
             <PRCard
-              title="Indoor PRs"
+              title="Indoor bests"
               subtitle="All-time · treadmill / manual"
               prs={runningPRs.indoor}
               accentColor={THEME.running}
@@ -339,21 +336,21 @@ export default function PRsTab({
         </section>
       )}
 
-      {/* Lift PRs — two subsections: Lifetime + Last 30 days.
+      {/* Lifting bests — two subsections: Lifetime + Last 30 days.
           Lifting has no "indoor" analogue — every workout counts.
           Recent bests subsection suppresses when no lifts in the
           last 30 days (returning users see lifetime only without
           a confusing empty recent-window). */}
       {hasAnyLifetimeWorkout && (
-        <section aria-label="Lifting personal records" className="space-y-3">
+        <section aria-label="Lifting bests" className="space-y-3">
           <SectionLabel className="text-lifting-strong">Lifting</SectionLabel>
           <LiftPRList
             prs={lifetimePRs}
-            title="Lift PRs"
+            title="Lifting bests"
             subtitle={
               liftRecentIsDuplicate ? "All-time and last 30 days" : "All-time"
             }
-            emptyText="Log your first workout to set your starting PRs."
+            emptyText="Log your first workout to set your first bests."
             collapseAfter={LIFT_PR_DEFAULT_LIMIT}
           />
           {recentLiftPRs.length > 0 && !liftRecentIsDuplicate && (

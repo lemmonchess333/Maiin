@@ -44,7 +44,7 @@ const BY_MESSAGE: [needle: string, copy: string][] = [
   ],
   ["circle inactive", "That circle has been closed."],
   ["no such circle", "That circle no longer exists."],
-  ["bad invite", "That invite code isn't right. Check it and try again."],
+  ["bad invite", "That invite code isn’t right. Check it and try again."],
   /* An expired code, or one its owner has replaced. Checking it again
      cannot help; only a new code can. */
   [
@@ -53,9 +53,9 @@ const BY_MESSAGE: [needle: string, copy: string][] = [
   ],
   [
     "invite code required",
-    "That doesn't look like an invite code. Paste the whole code you were sent.",
+    "That doesn’t look like an invite code. Paste the whole code you were sent.",
   ],
-  ["blocked-pair", "You can't join this circle."],
+  ["blocked-pair", "You can’t join this circle."],
 ];
 
 /** Refusals that never reach a message worth reading, keyed by code. */
@@ -65,7 +65,7 @@ const BY_CODE: [suffix: string, copy: string][] = [
 ];
 
 /** The fallback. Says a join did not happen and nothing it cannot support. */
-export const JOIN_FAILED_FALLBACK = "Couldn't join. Try again in a moment.";
+export const JOIN_FAILED_FALLBACK = "Couldn’t join. Try again in a moment.";
 
 export function describeJoinRejection(err: unknown): string {
   // A restricted account (S4e) gets the app's one sentence for it.

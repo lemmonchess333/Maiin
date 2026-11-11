@@ -18,6 +18,7 @@ import {
   totalDistance,
   estimateRunCalories,
   detectBestEfforts,
+  isImpossibleStep,
   KalmanFilter,
   toGPX,
   climbBySegment,
@@ -1168,17 +1169,18 @@ describe("detectBestEfforts", () => {
   });
 
   it("picks the FASTEST 1K window, not the average (the whole point of a best effort)", () => {
-    // ~1.2km slow (20s/seg) followed by a continuous ~1.2km fast block (4s/seg).
-    // The best 1K must be drawn from the fast block, far below any slow window.
-    const slow = meridianPath(12, 0.001, 20); // i=0..11, lat 0..0.011, t 0..220s
-    const t0 = 11 * 20 * 1000;
+    // ~1.2km slow (60s/seg, 9:00 /km) followed by a continuous ~1.2km fast
+    // block (25s/seg, 3:45 /km). The best 1K must be drawn from the fast
+    // block, far below any slow window — a genuine fast km still counts.
+    const slow = meridianPath(12, 0.001, 60); // i=0..11, lat 0..0.011, t 0..660s
+    const t0 = 11 * 60 * 1000;
     const fast: GPSPoint[] = [];
     for (let i = 1; i <= 12; i++) {
       fast.push(
         makePoint({
           lat: (11 + i) * 0.001,
           lon: 0,
-          timestamp: t0 + i * 4 * 1000,
+          timestamp: t0 + i * 25 * 1000,
         })
       );
     }
@@ -1188,8 +1190,115 @@ describe("detectBestEfforts", () => {
       (e) => e.label === "1K"
     );
     expect(oneK).toBeDefined();
-    // Fast block ≈ 111m/4s → 1000m ≈ 36s; the slow-window 1K would be ~180s.
-    expect(oneK!.time).toBeLessThan(60);
+    // Fast block ≈ 111m/25s → 1000m ≈ 225s; the slow-window 1K would be ~540s.
+    expect(oneK!.time).toBeGreaterThan(220);
+    expect(oneK!.time).toBeLessThan(240);
+  });
+});
+
+/* Owner, 1 Nov 2026: a 2.85 km run at 8:51 /km, kilometres of 9:33 and
+   11:20, listed "Best efforts: 1K 4:29". No runner covers a step of the
+   trace faster than MAX_PLAUSIBLE_SPEED_MPS, so no best effort spans one. */
+describe("detectBestEfforts — a step faster than any runner", () => {
+  it("a single jump no longer makes a 1K faster than the run", () => {
+    // 2.4 km at 8:20 /km (100 m every 50 s), with one 500 m jump in 2 s
+    // at 1.4 km.
+    const pts = trace(25, 100, 50, {}, { 14: 400 }, { 14: 2 });
+    const dist = totalDistance(pts);
+    const oneK = detectBestEfforts(pts, dist).find((e) => e.label === "1K");
+    expect(oneK).toBeDefined();
+    // The run's own pace: 500 s a kilometre. Across the jump it was 252 s.
+    expect(oneK!.time).toBeGreaterThanOrEqual(500 - 1e-6);
+    // The distance is the trace's still: only best efforts refuse the step.
+    expect(dist).toBeCloseTo(2800, 6);
+  });
+
+  it("finds no 1K when every stretch long enough spans the jump", () => {
+    // 1.1 km with a 400 m jump in 1 s in the middle: 300 m before it,
+    // 400 m after it, so no 1 km stretch is left.
+    const pts = trace(9, 100, 50, {}, { 4: 300 }, { 4: 1 });
+    expect(totalDistance(pts)).toBeCloseTo(1100, 6);
+    expect(detectBestEfforts(pts, totalDistance(pts))).toEqual([]);
+  });
+
+  it("keeps a step at the limit, so a fast finish still counts", () => {
+    expect(isImpossibleStep(MAX_PLAUSIBLE_SPEED_MPS, 1)).toBe(false);
+    expect(isImpossibleStep(MAX_PLAUSIBLE_SPEED_MPS + 0.01, 1)).toBe(true);
+    expect(isImpossibleStep(5, 0)).toBe(true);
+    expect(isImpossibleStep(0, 0)).toBe(false);
+  });
+});
+
+/* The jump the owner saw comes from the smoothing. A gap in the fixes
+   (signal lost, a phone in a pocket) leaves the smoothed position where
+   the runner was; weighed per fix, the first fix after the gap moved it a
+   sixth of the way and the next dozen dragged it the rest, at up to
+   90 m/s, carrying the gap's distance with none of its time. */
+describe("KalmanFilter — a gap in the fixes", () => {
+  /** 1.6 m/s (10:25 /km), a fix a second at ±10 m, with `gapSec` without
+   *  one after 1,100 s, through the filter as useGPS feeds it. */
+  function gapRun(gapSec: number, perSecond: boolean): GPSPoint[] {
+    const kf = new KalmanFilter();
+    const pts: GPSPoint[] = [];
+    let last: number | null = null;
+    const fix = (t: number) => {
+      const lat = (1.6 * t) / M_PER_DEG;
+      const c = kf.process(
+        lat,
+        0,
+        10,
+        perSecond && last !== null ? t - last : undefined
+      );
+      last = t;
+      pts.push(
+        makePoint({
+          lat: c.lat,
+          lon: 0,
+          rawLat: lat,
+          rawLon: 0,
+          accuracy: 10,
+          timestamp: 1_700_000_000_000 + t * 1000,
+        })
+      );
+    };
+    for (let t = 0; t <= 1100; t++) fix(t);
+    for (let t = 1100 + gapSec; t <= 1100 + gapSec + 1200; t++) fix(t);
+    return pts;
+  }
+  const REAL_KM_S = 1000 / 1.6;
+
+  it("puts a 7-minute gap's distance in the gap, so the kilometres stay true", () => {
+    const pts = gapRun(420, true);
+    for (const split of calculateSplits(pts)) {
+      expect(split.time).toBeGreaterThan(REAL_KM_S * 0.97);
+      expect(split.time).toBeLessThan(REAL_KM_S * 1.03);
+    }
+    const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
+      (e) => e.label === "1K"
+    );
+    expect(oneK!.time).toBeGreaterThan(REAL_KM_S * 0.97);
+  });
+
+  it("weighed per fix, the same run read a 1K in half its time", () => {
+    // What the old weighting did, kept here so the numbers above mean
+    // something: kilometres of 14:51 and 5:59, from a steady 10:25 /km.
+    const splits = calculateSplits(gapRun(420, false));
+    expect(Math.min(...splits.map((s) => s.time))).toBeLessThan(
+      REAL_KM_S * 0.6
+    );
+  });
+
+  it("smooths a fix a second, or faster, exactly as before", () => {
+    const before = new KalmanFilter();
+    const aSecond = new KalmanFilter();
+    const faster = new KalmanFilter();
+    for (let i = 0; i < 30; i++) {
+      const lat = 51.5 + i * 0.00003 + (i % 3) * 0.00001;
+      const smoothed = before.process(lat, -0.1, 8);
+      expect(aSecond.process(lat, -0.1, 8, 1)).toEqual(smoothed);
+      // Faster than a fix a second is never counted as less than a second.
+      expect(faster.process(lat, -0.1, 8, 0.2)).toEqual(smoothed);
+    }
   });
 });
 

@@ -3,8 +3,12 @@
 /**
  * Screening a photo other people will see (Ship1).
  *
- * Two kinds of upload reach other people: a Space post's photo
- * (`space-photos/{uid}/…`) and a profile photo (`profile-photos/{uid}/…`).
+ * Four kinds of upload reach other people: a Space post's photo
+ * (`space-photos/{uid}/…`), a profile photo (`profile-photos/{uid}/…`),
+ * a run post's map image (`route-maps/{uid}/…`, Soc15 call 5) and a
+ * shared session's photos (`post-photos/{uid}/…`, Soc15 call 2). The
+ * app draws a map, but any client may put any JPEG at its own path, so a
+ * map is screened as a photo is.
  * Each is checked with Google Cloud Vision's SafeSearch before anyone
  * else can see it. The owner's call: refuse nudity and nothing else, so a
  * photo SafeSearch rates LIKELY or VERY_LIKELY "adult" is refused and its
@@ -24,6 +28,8 @@
 const SCREENED_PATHS = [
   /^space-photos\/([^/]+)(?:\/[\s\S]*)?$/,
   /^profile-photos\/([^/]+)(?:\/[\s\S]*)?$/,
+  /^route-maps\/([^/]+)(?:\/[\s\S]*)?$/,
+  /^post-photos\/([^/]+)(?:\/[\s\S]*)?$/,
 ];
 
 /** SafeSearch's likelihoods at which a photo is refused as nudity. */
@@ -85,12 +91,32 @@ async function safeSearch(bytes, accessToken, fetchImpl = fetch) {
  * Screens a stored photo, deleting it when refused.
  * @returns {Promise<{refused: boolean, adult: string}>}
  */
-async function screenStoredPhoto({ bucket, path, accessToken, fetchImpl }) {
-  const file = bucket.file(path);
+async function screenStoredPhoto({
+  bucket, path, generation, accessToken, fetchImpl,
+}) {
+  // Pin the bytes and any deletion to the SAME immutable object generation.
+  // A replacement can arrive while Vision is checking the old image, or a
+  // finalize event can arrive late. Never screen or delete the newer upload.
+  if (generation === undefined) {
+    const [metadata] = await bucket.file(path).getMetadata();
+    generation = metadata.generation;
+  }
+  // The Storage SDK converts the generation selector to a number. Refuse
+  // values it cannot represent exactly instead of selecting other bytes.
+  if (typeof generation !== "string" || !/^[0-9]+$/.test(generation)
+      || !Number.isSafeInteger(Number(generation)) || Number(generation) <= 0) {
+    throw new Error("Photo generation unavailable");
+  }
+  const file = bucket.file(path, {
+    generation,
+    preconditionOpts: { ifGenerationMatch: generation },
+  });
   const [bytes] = await file.download();
   const annotation = await safeSearch(bytes, accessToken, fetchImpl);
   const refused = refusesPhoto(annotation);
-  if (refused) await file.delete({ ignoreNotFound: true });
+  if (refused) {
+    await file.delete({ ignoreNotFound: true });
+  }
   return { refused, adult: annotation.adult };
 }
 

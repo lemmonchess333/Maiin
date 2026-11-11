@@ -215,7 +215,7 @@ describe("NotificationsSection — monthly challenge push", () => {
     );
     await waitFor(() =>
       expect(state.error).toHaveBeenCalledWith(
-        expect.stringContaining("Couldn't save")
+        expect.stringContaining("Couldn’t save")
       )
     );
     expect(state.register).not.toHaveBeenCalled();

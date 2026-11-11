@@ -18,6 +18,10 @@ import {
   routineDraftIdentity,
   type RoutineLayout,
 } from "@/features/program/routineSession";
+import {
+  EMPTY_WORKOUT_DAY_INDEX,
+  emptyWorkoutDraftIdentity,
+} from "@/features/program/emptyWorkout";
 
 /**
  * Today's session on Home, decided without the page. Every date here is a
@@ -264,6 +268,23 @@ describe("todaySession — a run day", () => {
     expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
     expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
     expect(session.rest).toBeNull();
+    expect(session.runFirst).toBeUndefined();
+  });
+
+  it("puts the run first on a day with both when running is the aim", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "both" }, { primaryGoal: "running" }),
+        programState: programStateWith({
+          workouts: [PUSH],
+          runDays: [runDay(WEDNESDAY)],
+        }),
+      })
+    );
+    expect(session.type).toBe("both");
+    expect(session.lift?.workout).toBeTruthy();
+    expect(session.run?.runDay).toBeTruthy();
+    expect(session.runFirst).toBe(true);
   });
 });
 
@@ -452,6 +473,18 @@ describe("todaySession — what a rest day offers", () => {
       kind: "first-workout",
       index: 0,
       name: "Push",
+      // Where its card and the first-week card both go.
+      dayTarget: "/program?day=0",
+      startTarget: "/program?day=0&start=1",
+    });
+  });
+
+  it("names its muscles, as a lifting day's workout does", () => {
+    // The hero says them as words ("Back and biceps", homeHero.ts).
+    const session = todaySession(newAccount(firstWorkoutReady));
+    expect(session.rest).toMatchObject({
+      kind: "first-workout",
+      muscleGroups: expect.stringMatching(/\S/),
     });
   });
 
@@ -477,6 +510,7 @@ describe("todaySession — what a rest day offers", () => {
   it("a run to someone who runs freely", () => {
     expect(todaySession(input({ profile: freeRunner })).rest).toEqual({
       kind: "free-run",
+      startTarget: "/run?start=1",
     });
     // A free-running lifter is not offered one: they have no run day.
     expect(
@@ -494,6 +528,7 @@ describe("todaySession — what a rest day offers", () => {
   it("a free run before a new person's first meal", () => {
     expect(todaySession(newAccount({ profile: freeRunner })).rest).toEqual({
       kind: "free-run",
+      startTarget: "/run?start=1",
     });
   });
 
@@ -503,6 +538,57 @@ describe("todaySession — what a rest day offers", () => {
     expect(todaySession(newAccount({ lifetimeMeals: 1 })).rest?.kind).toBe(
       "rest"
     );
+  });
+
+  it("keeps a version 2 race-plan rest day and names the next run without starting one", () => {
+    const raceProfile = profileWith(
+      { 5: "run" },
+      {
+        athleteType: "Runner",
+        runMode: "race_prep",
+        activationJourneyVersion: 2,
+      }
+    );
+    const plan = programStateWith({ runDays: [runDay(FRIDAY)] });
+    const session = todaySession(
+      newAccount({ profile: raceProfile, programState: plan })
+    );
+    expect(session.rest).toEqual({
+      kind: "rest",
+      tomorrow: {
+        label: "Easy 30",
+        target: `/program?tab=run&rday=${FRIDAY}`,
+        dateKey: FRIDAY,
+      },
+    });
+    expect(session.run).toBeNull();
+    expect(
+      todaySession(
+        newAccount({
+          profile: { ...raceProfile, activationJourneyVersion: undefined },
+          programState: plan,
+        })
+      ).rest
+    ).toEqual({ kind: "first-meal" });
+  });
+
+  it("keeps a version 2 starter goal's rest day, as a race plan's (Run9)", () => {
+    const starterProfile = profileWith(
+      { 5: "run" },
+      {
+        athleteType: "Runner",
+        runMode: "starter",
+        activationJourneyVersion: 2,
+      }
+    );
+    const plan = programStateWith({
+      runDays: [{ ...runDay(FRIDAY), templateId: "run_walk_1" }],
+    });
+    const session = todaySession(
+      newAccount({ profile: starterProfile, programState: plan })
+    );
+    expect(session.rest?.kind).toBe("rest");
+    expect(session.run).toBeNull();
   });
 
   it("otherwise a rest day, with nothing tomorrow when tomorrow rests too", () => {
@@ -1205,5 +1291,136 @@ describe("todaySession — a routine's workout under way", () => {
       resumeTarget: "/program?day=0&resume=1",
     });
     expect(newerDay.inProgressElsewhere).toEqual([]);
+  });
+});
+
+/* An empty workout under way (Mob1 call 1): one at a time, its draft named
+   by its page (`emptyWorkout.ts`), offered back on a strip of its own. */
+describe("todaySession — an empty workout under way", () => {
+  const liftDay = profileWith({ 3: "lift" });
+  const plan = programStateWith({ workouts: [PUSH, PULL, LEGS] });
+  const emptyDraft = (extra: Partial<WorkoutDraft> = {}): WorkoutDraft => ({
+    dayIndex: EMPTY_WORKOUT_DAY_INDEX,
+    dayName: "Workout",
+    // An exercise added since it began: the draft holds it, not its name.
+    setLogs: [
+      [
+        { reps: 12, weight: 8, completed: true, type: "working" },
+        { reps: 12, weight: 8, completed: false, type: "working" },
+      ],
+    ],
+    exerciseNotes: {},
+    elapsedSeconds: 300,
+    currentExIndex: 0,
+    savedAt: 2_000,
+    identity: emptyWorkoutDraftIdentity("s1"),
+    completionId: "c3",
+    completionCommandId: "c3",
+    ...extra,
+  });
+  const offered = (
+    drafts: WorkoutDraft[],
+    extra: Partial<TodaySessionInput> = {}
+  ) =>
+    todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts, run: null, routines: new Map() },
+        ...extra,
+      })
+    );
+
+  it("gives it a strip of its own whose Resume opens its page", () => {
+    const session = offered([emptyDraft()]);
+    expect(session.inProgressElsewhere).toEqual([
+      {
+        sport: "lift",
+        name: "Workout",
+        sets: 1,
+        elapsedSeconds: 300,
+        resumeTarget: "/empty-workout?session=s1&resume=1",
+      },
+    ]);
+    // Today's planned day is untouched: its card still offers Start.
+    expect(session.lift).toMatchObject({ index: 0, name: "Push" });
+    expect(session.lift?.inProgress).toBeUndefined();
+  });
+
+  it("is offered to someone with no programme, and not once it is saved", () => {
+    expect(
+      offered([emptyDraft()], { profile: profileWith({}), programState: null })
+        .inProgressElsewhere
+    ).toEqual([expect.objectContaining({ name: "Workout" })]);
+    expect(
+      offered([emptyDraft({ completionPending: true })]).inProgressElsewhere
+    ).toEqual([]);
+  });
+});
+
+/* The next session, for the week's line under Home's hero ("Long run
+   tomorrow"): looked for in the six days after today, whatever today is,
+   and named as the rest day's card names tomorrow's. */
+describe("the next session after today", () => {
+  it("names tomorrow's run on a lifting day", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 4: "run" }),
+        programState: programStateWith({
+          workouts: [PUSH, PULL],
+          runDays: [runDay(THURSDAY)],
+        }),
+      })
+    );
+    expect(session.lift?.workout).toBeTruthy();
+    expect(session.next).toEqual({
+      label: "Easy 30",
+      target: `/program?tab=run&rday=${THURSDAY}`,
+      dateKey: THURSDAY,
+      daysAhead: 1,
+    });
+  });
+
+  it("names the lift after today's, as Train's order will have it", () => {
+    // Wednesday lifts and Friday lifts: Friday's is the one after today's.
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 5: "lift" }),
+        programState: programStateWith({ workouts: [PUSH, PULL, LEGS] }),
+      })
+    );
+    expect(session.next?.daysAhead).toBe(2);
+    expect(session.next?.dateKey).toBe(FRIDAY);
+    expect(session.next?.label).toBeTruthy();
+    expect(session.next?.label).not.toBe(session.lift?.name);
+  });
+
+  it("looks up to six days ahead, so it never names today's weekday", () => {
+    const programState = programStateWith({ workouts: [PUSH] });
+    // Tuesday is six days after a Wednesday: named.
+    const tuesday = todaySession(
+      input({ profile: profileWith({ 2: "lift" }), programState })
+    );
+    expect(tuesday.next?.daysAhead).toBe(6);
+    expect(tuesday.next?.dateKey).toBe("2026-10-06");
+    // Next Wednesday is seven: not looked for.
+    const wednesday = todaySession(
+      input({ profile: profileWith({ 3: "lift" }), programState })
+    );
+    expect(wednesday.next).toBeNull();
+  });
+
+  it("is the same answer on a rest day as the rest card's tomorrow", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 4: "lift" }),
+        programState: programStateWith({ workouts: [PUSH] }),
+      })
+    );
+    expect(session.next?.daysAhead).toBe(1);
+    expect(session.rest).toEqual({
+      kind: "rest",
+      tomorrow: { label: session.next!.label, target: session.next!.target },
+    });
   });
 });

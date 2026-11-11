@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useInFlightGuard } from "@/hooks/useInFlightGuard";
+import { CopyPlus, RotateCcw, Trash2, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,19 @@ import {
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { withSign } from "@/utils/formatters";
 import { FOOD_NAME_MAX } from "@/lib/mealEntry";
+import PortionAmountField from "@/components/nutrition/PortionAmountField";
+import {
+  describePortion,
+  itemPortion,
+  parseAmount,
+  rescaleItem,
+  tidyAmount,
+  type EntryPortion,
+} from "@/lib/mealPortion";
+import type { MealItem } from "@/hooks/useMeals";
+import IconButton from "@/components/ui/IconButton";
+import PortionLeftLine from "@/components/nutrition/PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -42,6 +56,25 @@ interface ServingSource {
    *  and the picker renders un-selected. Editing snaps the whole
    *  group to whichever pill the user taps. */
   currentMeal: MealKey | null;
+  /** The portion of a row that is one logged entry (`entryPortion`).
+   *  Its amount is then typed, in grams when the entry is measured by
+   *  weight, and saved as a multiplier on the entry. Absent for a row of
+   *  repeated entries, which keeps the whole-serving stepper: each step
+   *  there repeats or removes one of them. */
+  currentPortion?: EntryPortion | null;
+  /** The foods of a row that is one entry of several (`items` of two or
+   *  more). The sheet then edits each one's amount, or removes it, and
+   *  the entry's totals become their sum. */
+  currentItems?: MealItem[] | null;
+}
+
+/** An item's amount as its field opens: grams for a weight, servings of
+ *  what was logged otherwise. */
+function startItemAmount(item: MealItem): string {
+  const { multiplier, baseGrams } = itemPortion(item);
+  return tidyAmount(
+    baseGrams ? Math.round(multiplier * baseGrams * 10) / 10 : multiplier
+  );
 }
 
 /** F5a: per-serving macro overrides. All fields optional — only the
@@ -71,6 +104,15 @@ export interface EditServingsChanges {
    *  Each value is per-serving, so the parent applies it to each doc
    *  in the group via editMeal. */
   targetMacros: MacroOverrides | null;
+  /** The entry's new multiplier (servings of what it was first logged
+   *  at), or null when the typed amount is unchanged. Only a sheet with a
+   *  `currentPortion` sets it. The parent rescales the entry from it;
+   *  `targetMacros`, when present, are the figures at the new amount. */
+  targetPortion: number | null;
+  /** The entry's foods as edited, without any removed, or null when
+   *  none changed. Only a sheet with `currentItems` sets it; the parent
+   *  writes them and their sum as the entry's totals. */
+  targetItems: MealItem[] | null;
 }
 
 interface EditServingsSheetProps {
@@ -88,6 +130,12 @@ interface EditServingsSheetProps {
    *  hide + Undo toast) and closes the sheet; no confirm dialog here
    *  because that Undo window is the safety net. */
   onDelete?: () => void;
+  /** Opens the copy sheet for this row. When given, the sheet offers
+   *  "Copy to another day" above Delete. */
+  onCopy?: () => void;
+  /** The entry's day WITHOUT this row's figures, for the line that says
+   *  what the day comes to at the edited amount. */
+  day?: DayBudget | null;
 }
 
 /* One id: the input points `aria-describedby` at the line the sheet
@@ -100,6 +148,12 @@ const MACRO_ERROR_ID = "edit-meal-macro-error";
  * 1-8 button grid — scales to any count, shows live calorie
  * preview + delta chip as the user steps, and requires an explicit
  * Save tap so steps don't fire writes on every tick.
+ *
+ * A row of ONE entry has no stepper. It takes a typed amount instead
+ * (PortionAmountField, the search and barcode sheets' control), in
+ * grams when the entry was logged by weight, and every figure follows
+ * it from the entry's own: the stepper could only repeat the entry, so
+ * 150 g of a 200 g log meant retyping four numbers.
  *
  * Extracted from `Food.tsx` where it was ~80 lines of inline JSX.
  * Self-contained: owns the `target` state so the parent only needs
@@ -115,6 +169,8 @@ function EditServingsSheet({
   onCancel,
   onSave,
   onDelete,
+  onCopy,
+  day = null,
 }: EditServingsSheetProps) {
   // The parent mounts this sheet conditionally and keys it on the
   // group id, so each open is a fresh instance — useState's initial
@@ -123,6 +179,33 @@ function EditServingsSheet({
   // new `source` object identity (which happens often via Firestore
   // listeners) and stomp the user's stepper input mid-edit.
   const [target, setTarget] = useState<number>(source?.currentCount ?? 1);
+  /* The typed amount of a one-entry row, as text so a half-typed "1."
+     stays put. In grams, it is the multiplier times the grams the entry
+     was first logged at: 0.75x 200g opens as 150. */
+  /* An entry of several foods (the home-cooked dish, a multi-item scan)
+     is corrected food by food: each item takes its own amount and can be
+     removed, and the entry's figures are their sum. It has no amount of
+     its own then, so the entry-level field goes. */
+  const items =
+    source?.currentItems && source.currentItems.length > 1
+      ? source.currentItems
+      : null;
+  const [itemAmounts, setItemAmounts] = useState<string[]>(() =>
+    (items ?? []).map(startItemAmount)
+  );
+  const [itemRemoved, setItemRemoved] = useState<boolean[]>(() =>
+    (items ?? []).map(() => false)
+  );
+  const portion = items ? null : (source?.currentPortion ?? null);
+  const amountUnit = portion?.baseGrams ? "grams" : "servings";
+  const startAmount = portion
+    ? tidyAmount(
+        portion.baseGrams
+          ? Math.round(portion.multiplier * portion.baseGrams * 10) / 10
+          : portion.multiplier
+      )
+    : "";
+  const [amountText, setAmountText] = useState<string>(startAmount);
   // F5a: meal-slot edit. Null tracks "user hasn't picked a different
   // slot yet"; the Save button only flags the change when the picked
   // slot differs from the source's currentMeal. Lets the parent
@@ -148,39 +231,84 @@ function EditServingsSheet({
     pro: number;
     car: number;
     fat: number;
+    exactCal: number;
+    exactPro: number;
+    exactCar: number;
+    exactFat: number;
   } => {
-    if (!source) return { cal: 0, pro: 0, car: 0, fat: 0 };
+    if (!source)
+      return {
+        cal: 0,
+        pro: 0,
+        car: 0,
+        fat: 0,
+        exactCal: 0,
+        exactPro: 0,
+        exactCar: 0,
+        exactFat: 0,
+      };
     const div = Math.max(1, source.currentCount);
+    const exact = {
+      exactCal: source.currentTotalCalories / div,
+      exactPro: source.currentTotalProtein / div,
+      exactCar: source.currentTotalCarbs / div,
+      exactFat: source.currentTotalFat / div,
+    };
     return {
-      cal: Math.round(source.currentTotalCalories / div),
-      pro: Math.round(source.currentTotalProtein / div),
-      car: Math.round(source.currentTotalCarbs / div),
-      fat: Math.round(source.currentTotalFat / div),
+      cal: Math.round(exact.exactCal),
+      pro: Math.round(exact.exactPro),
+      car: Math.round(exact.exactCar),
+      fat: Math.round(exact.exactFat),
+      ...exact,
     };
   })();
   /* A zero starts as an empty field. A field that holds the digit puts
      the caret on one side of it or the other, so typing 300 into it gives
      3000 or 0300. Blank is "unchanged" to parseMacro below, so each
      field's placeholder is its starting value: a cleared field shows the
-     number Save keeps, and an untouched zero still saves nothing. */
+     number Save keeps, and an untouched zero still saves nothing.
+     Null is a field nobody has typed in: it shows the entry's figure at
+     the typed amount, so changing the amount moves it. */
   const fieldText = (n: number) => (n === 0 ? "" : String(n));
-  const [pickedCal, setPickedCal] = useState<string>(
-    fieldText(initialPerServing.cal)
-  );
-  const [pickedPro, setPickedPro] = useState<string>(
-    fieldText(initialPerServing.pro)
-  );
-  const [pickedCar, setPickedCar] = useState<string>(
-    fieldText(initialPerServing.car)
-  );
-  const [pickedFat, setPickedFat] = useState<string>(
-    fieldText(initialPerServing.fat)
-  );
+  const [pickedCal, setPickedCal] = useState<string | null>(null);
+  const [pickedPro, setPickedPro] = useState<string | null>(null);
+  const [pickedCar, setPickedCar] = useState<string | null>(null);
+  const [pickedFat, setPickedFat] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const saveGuard = useInFlightGuard();
 
   if (!source) return null;
 
   const { foodName, currentCount, currentTotalCalories, currentMeal } = source;
+
+  /* The typed amount as a multiplier, and how far it moves the entry's
+     figures. Null while the field is blank or unreadable, which holds
+     Save; the figures then stay at the logged amount. */
+  const typedAmount = portion ? parseAmount(amountText) : null;
+  const nextMultiplier =
+    portion && typedAmount !== null
+      ? portion.baseGrams
+        ? typedAmount / portion.baseGrams
+        : typedAmount
+      : null;
+  const amountInvalid = portion !== null && nextMultiplier === null;
+  const portionChanged =
+    portion !== null &&
+    nextMultiplier !== null &&
+    typedAmount !== parseAmount(startAmount);
+  const ratio =
+    portionChanged && nextMultiplier !== null && portion
+      ? nextMultiplier / portion.multiplier
+      : 1;
+  /* Each field's figure before anyone types in it. */
+  const startPerServing = {
+    cal: Math.round(initialPerServing.exactCal * ratio),
+    pro: Math.round(initialPerServing.exactPro * ratio),
+    car: Math.round(initialPerServing.exactCar * ratio),
+    fat: Math.round(initialPerServing.exactFat * ratio),
+  };
+  const shownText = (picked: string | null, start: number) =>
+    picked ?? fieldText(start);
   const countDelta = target - currentCount;
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
   const trimmedName = pickedName.trim();
@@ -194,9 +322,7 @@ function EditServingsSheet({
      dimension", so Save stayed enabled on the serving change and wrote
      that while dropping the number the user had typed. */
   type MacroInput =
-    | { kind: "blank" }
-    | { kind: "invalid" }
-    | { kind: "value"; value: number };
+    { kind: "blank" } | { kind: "invalid" } | { kind: "value"; value: number };
   const parseMacro = (raw: string): MacroInput => {
     const trimmed = raw.trim();
     if (trimmed === "") return { kind: "blank" };
@@ -205,10 +331,10 @@ function EditServingsSheet({
     return { kind: "value", value: Math.round(n) };
   };
   const parsedMacros = {
-    cal: parseMacro(pickedCal),
-    pro: parseMacro(pickedPro),
-    car: parseMacro(pickedCar),
-    fat: parseMacro(pickedFat),
+    cal: parseMacro(pickedCal ?? ""),
+    pro: parseMacro(pickedPro ?? ""),
+    car: parseMacro(pickedCar ?? ""),
+    fat: parseMacro(pickedFat ?? ""),
   };
   const invalidMacroIds = new Set(
     (
@@ -239,7 +365,7 @@ function EditServingsSheet({
      SAVED total by the saved count, so typing 300 over a saved 200 left it
      showing 200 x servings while Save wrote 300. */
   const editedCal =
-    picked.cal !== null && picked.cal !== initialPerServing.cal
+    picked.cal !== null && picked.cal !== startPerServing.cal
       ? picked.cal
       : null;
 
@@ -249,28 +375,81 @@ function EditServingsSheet({
      servings, not 3 x 79 = 237 — so reusing the rounded figure here would
      shift the preview of a sheet nobody has touched. */
   const perServingCal =
-    editedCal ?? (currentCount > 0 ? currentTotalCalories / currentCount : 0);
-  const previewCal = Math.round(perServingCal * target);
+    editedCal ??
+    (currentCount > 0 ? (currentTotalCalories / currentCount) * ratio : 0);
+  /* Protein the same way, for the line that says what is left. */
+  const perServingPro =
+    picked.pro !== null && picked.pro !== startPerServing.pro
+      ? picked.pro
+      : currentCount > 0
+        ? (source.currentTotalProtein / currentCount) * ratio
+        : 0;
+
+  /* Each item at its typed amount. A blank or unreadable amount holds
+     Save, as the entry's own field does, and the item keeps its logged
+     figures meanwhile. */
+  const editedItems = items?.map((item, i) => {
+    const { baseGrams } = itemPortion(item);
+    const removed = itemRemoved[i] ?? false;
+    const typed = parseAmount(itemAmounts[i] ?? "");
+    const next = typed === null ? null : baseGrams ? typed / baseGrams : typed;
+    const same = typed !== null && typed === parseAmount(startItemAmount(item));
+    return {
+      item,
+      removed,
+      unit: (baseGrams ? "grams" : "servings") as "grams" | "servings",
+      invalid: !removed && next === null,
+      changed: removed || (next !== null && !same),
+      edited: next === null || same ? item : rescaleItem(item, next),
+    };
+  });
+  const keptItems = (editedItems ?? [])
+    .filter((e) => !e.removed)
+    .map((e) => e.edited);
+  const itemsInvalid = !!editedItems?.some((e) => e.invalid);
+  const allItemsRemoved = !!editedItems && keptItems.length === 0;
+  const itemsChanged = !!editedItems?.some((e) => e.changed);
+  const itemSum = (pick: (item: MealItem) => number) =>
+    keptItems.reduce((s, item) => s + (Number(pick(item)) || 0), 0);
+
+  const previewCal = editedItems
+    ? Math.round(itemSum((item) => item.calories))
+    : Math.round(perServingCal * target);
+  const previewPro = editedItems
+    ? itemSum((item) => item.protein)
+    : perServingPro * target;
   const macroOverrides: MacroOverrides = {};
   if (editedCal !== null) {
     macroOverrides.totalCalories = editedCal;
   }
-  if (picked.pro !== null && picked.pro !== initialPerServing.pro) {
+  if (picked.pro !== null && picked.pro !== startPerServing.pro) {
     macroOverrides.totalProtein = picked.pro;
   }
-  if (picked.car !== null && picked.car !== initialPerServing.car) {
+  if (picked.car !== null && picked.car !== startPerServing.car) {
     macroOverrides.totalCarbs = picked.car;
   }
-  if (picked.fat !== null && picked.fat !== initialPerServing.fat) {
+  if (picked.fat !== null && picked.fat !== startPerServing.fat) {
     macroOverrides.totalFat = picked.fat;
   }
   const macrosChanged = Object.keys(macroOverrides).length > 0;
 
   const unchanged =
-    countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
+    countDelta === 0 &&
+    !mealChanged &&
+    !nameChanged &&
+    !macrosChanged &&
+    !portionChanged &&
+    !itemsChanged;
+  const cannotSave =
+    unchanged ||
+    hasInvalidMacro ||
+    amountInvalid ||
+    itemsInvalid ||
+    allItemsRemoved ||
+    saving;
 
   const handleSave = async () => {
-    if (unchanged || hasInvalidMacro || saving) return;
+    if (cannotSave || !saveGuard.begin()) return;
     setSaving(true);
     try {
       await onSave({
@@ -278,8 +457,11 @@ function EditServingsSheet({
         targetMeal: mealChanged ? pickedMeal : null,
         targetName: nameChanged ? trimmedName : null,
         targetMacros: macrosChanged ? macroOverrides : null,
+        targetPortion: portionChanged ? nextMultiplier : null,
+        targetItems: itemsChanged ? keptItems : null,
       });
     } finally {
+      saveGuard.end();
       setSaving(false);
     }
   };
@@ -297,7 +479,7 @@ function EditServingsSheet({
     id: "edit-meal-cal" | "edit-meal-pro" | "edit-meal-car" | "edit-meal-fat";
     value: string;
     start: number;
-    setter: (v: string) => void;
+    setter: (v: string | null) => void;
     ariaLabel: string;
     sizeClass: string;
   }) => {
@@ -378,9 +560,13 @@ function EditServingsSheet({
               "disabled:opacity-60"
             )}
           />
-          <p className="text-xs text-muted-foreground">
-            {currentCount} {currentCount === 1 ? "serving" : "servings"} logged
-          </p>
+          {/* A one-entry row says its amount in the field below. */}
+          {!portion && (
+            <p className="text-xs text-muted-foreground">
+              {currentCount} {currentCount === 1 ? "serving" : "servings"}{" "}
+              logged
+            </p>
+          )}
         </div>
 
         {/* F5a meal-slot picker — the same solid SegmentedControl as the
@@ -424,119 +610,229 @@ function EditServingsSheet({
             is easy to miss. Protein, carbs and fat follow in grams.
             Every field has a border at rest, so it reads as something
             to type in. */}
-        <div className="space-y-2">
-          <SectionLabel className="text-center">Per serving</SectionLabel>
-          <div className="relative">
-            {numberField({
-              id: "edit-meal-cal",
-              value: pickedCal,
-              start: initialPerServing.cal,
-              setter: setPickedCal,
-              ariaLabel: "Per-serving calories",
-              sizeClass: "px-14 py-2 text-2xl font-bold",
-            })}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
-            >
-              {CALORIE_UNIT}
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {(
-              [
-                {
-                  id: "edit-meal-pro",
-                  label: "Protein",
-                  value: pickedPro,
-                  start: initialPerServing.pro,
-                  setter: setPickedPro,
-                },
-                {
-                  id: "edit-meal-car",
-                  label: "Carbs",
-                  value: pickedCar,
-                  start: initialPerServing.car,
-                  setter: setPickedCar,
-                },
-                {
-                  id: "edit-meal-fat",
-                  label: "Fat",
-                  value: pickedFat,
-                  start: initialPerServing.fat,
-                  setter: setPickedFat,
-                },
-              ] as const
-            ).map(({ id, label, value, start, setter }) => (
-              <div key={id} className="flex flex-col items-center gap-1">
-                <label htmlFor={id}>
-                  {/* SectionLabel can't render a <label>, so the primitive
-                      rides inside as a span — treatment stays canonical. */}
-                  <SectionLabel as="span">{label}</SectionLabel>
-                </label>
-                <div className="relative w-full">
-                  {numberField({
-                    id,
-                    value,
-                    start,
-                    setter,
-                    ariaLabel: `Per-serving ${label.toLowerCase()}`,
-                    sizeClass: "px-6 py-2.5 text-base font-semibold",
-                  })}
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+        {editedItems ? (
+          /* The entry's foods, each with its amount and a way to take it
+             out. The figures are theirs: there are no entry-wide fields
+             to type over them. */
+          <div className="space-y-2">
+            <SectionLabel className="text-center">Items</SectionLabel>
+            {editedItems.map((e, i) =>
+              e.removed ? (
+                <div
+                  key={`${e.item.name}-${i}`}
+                  className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-muted/40 px-3"
+                >
+                  <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground line-through">
+                    {e.item.name}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    leftIcon={<RotateCcw className="size-3.5" />}
+                    aria-label={`Restore ${e.item.name}`}
+                    disabled={saving}
+                    onClick={() => {
+                      haptic("light");
+                      setItemRemoved((r) =>
+                        r.map((v, j) => (j === i ? false : v))
+                      );
+                    }}
                   >
-                    g
-                  </span>
+                    Restore
+                  </Button>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={`${e.item.name}-${i}`}
+                  className="space-y-2 rounded-xl bg-muted/40 p-3"
+                  data-testid="edit-meal-item"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium text-foreground">
+                        {e.item.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {describePortion(e.edited.portionSize) ??
+                          e.edited.portionSize}
+                        {" · "}
+                        <span className="font-mono tabular-nums">
+                          {Math.round(Number(e.edited.calories) || 0)}
+                        </span>{" "}
+                        {CALORIE_UNIT}
+                      </p>
+                    </div>
+                    <IconButton
+                      variant="ghost"
+                      aria-label={`Remove ${e.item.name}`}
+                      icon={<X className="size-4" />}
+                      disabled={saving}
+                      onClick={() => {
+                        haptic("light");
+                        setItemRemoved((r) =>
+                          r.map((v, j) => (j === i ? true : v))
+                        );
+                      }}
+                    />
+                  </div>
+                  <PortionAmountField
+                    unit={e.unit}
+                    value={itemAmounts[i] ?? ""}
+                    onChange={(next) =>
+                      setItemAmounts((a) =>
+                        a.map((v, j) => (j === i ? next : v))
+                      )
+                    }
+                    disabled={saving}
+                    itemName={e.item.name}
+                  />
+                </div>
+              )
+            )}
+            {allItemsRemoved ? (
+              <p className="text-center text-xs text-muted-foreground">
+                Restore an item, or delete the entry.
+              </p>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground font-mono tabular-nums">
+                {Math.round(previewPro)}g protein ·{" "}
+                {Math.round(itemSum((item) => item.carbs))}g carbs ·{" "}
+                {Math.round(itemSum((item) => item.fat))}g fat
+              </p>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            {/* A one-entry row's figures are the entry's at the typed
+              amount, not one serving's. */}
+            <SectionLabel className="text-center">
+              {portion ? "At this amount" : "Per serving"}
+            </SectionLabel>
+            <div className="relative">
+              {numberField({
+                id: "edit-meal-cal",
+                value: shownText(pickedCal, startPerServing.cal),
+                start: startPerServing.cal,
+                setter: setPickedCal,
+                ariaLabel: portion ? "Calories" : "Per-serving calories",
+                sizeClass: "px-14 py-2 text-2xl font-bold",
+              })}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+              >
+                {CALORIE_UNIT}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  {
+                    id: "edit-meal-pro",
+                    label: "Protein",
+                    value: shownText(pickedPro, startPerServing.pro),
+                    start: startPerServing.pro,
+                    setter: setPickedPro,
+                  },
+                  {
+                    id: "edit-meal-car",
+                    label: "Carbs",
+                    value: shownText(pickedCar, startPerServing.car),
+                    start: startPerServing.car,
+                    setter: setPickedCar,
+                  },
+                  {
+                    id: "edit-meal-fat",
+                    label: "Fat",
+                    value: shownText(pickedFat, startPerServing.fat),
+                    start: startPerServing.fat,
+                    setter: setPickedFat,
+                  },
+                ] as const
+              ).map(({ id, label, value, start, setter }) => (
+                <div key={id} className="flex flex-col items-center gap-1">
+                  <label htmlFor={id}>
+                    {/* SectionLabel can't render a <label>, so the primitive
+                      rides inside as a span — treatment stays canonical. */}
+                    <SectionLabel as="span">{label}</SectionLabel>
+                  </label>
+                  <div className="relative w-full">
+                    {numberField({
+                      id,
+                      value,
+                      start,
+                      setter,
+                      ariaLabel: portion
+                        ? label
+                        : `Per-serving ${label.toLowerCase()}`,
+                      sizeClass: "px-6 py-2.5 text-base font-semibold",
+                    })}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                    >
+                      g
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stepper. The round buttons and the gaps are px, as iOS keeps
             a stepper's controls one size whatever the text size: in rem,
             at larger text the row outgrew the sheet, the buttons squeezed
             to ovals and the count's "serving" ran out of its box. The
             count itself still grows, and never shrinks below its words. */}
-        <div className="flex items-center justify-center gap-[16px]">
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTarget((n) => Math.max(1, n - 1));
-            }}
-            disabled={target <= 1 || saving}
-            aria-label="Decrease servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
-          >
-            −
-          </button>
-          <div className="text-center min-w-[80px] shrink-0" aria-live="polite">
-            <p
-              className="text-4xl font-mono tabular-nums font-extrabold text-foreground"
-              aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
-            >
-              {target}
-            </p>
-            <SectionLabel className="mt-0.5">
-              {target === 1 ? "serving" : "servings"}
-            </SectionLabel>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTarget((n) => n + 1);
-            }}
+        {editedItems ? null : portion ? (
+          <PortionAmountField
+            unit={amountUnit}
+            value={amountText}
+            onChange={setAmountText}
             disabled={saving}
-            aria-label="Increase servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
-          >
-            +
-          </button>
-        </div>
+          />
+        ) : (
+          <div className="flex items-center justify-center gap-[16px]">
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTarget((n) => Math.max(1, n - 1));
+              }}
+              disabled={target <= 1 || saving}
+              aria-label="Decrease servings"
+              className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
+            >
+              −
+            </button>
+            <div
+              className="text-center min-w-[80px] shrink-0"
+              aria-live="polite"
+            >
+              <p
+                className="text-4xl font-figure tabular-nums font-extrabold text-foreground"
+                aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
+              >
+                {target}
+              </p>
+              <SectionLabel className="mt-0.5">
+                {target === 1 ? "serving" : "servings"}
+              </SectionLabel>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTarget((n) => n + 1);
+              }}
+              disabled={saving}
+              aria-label="Increase servings"
+              className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
+            >
+              +
+            </button>
+          </div>
+        )}
 
         {/* Calorie preview + delta chip */}
         <div className="text-center text-xs text-muted-foreground">
@@ -576,9 +872,37 @@ function EditServingsSheet({
               {macrosChanged && (
                 <span className="ml-2 text-lifting-strong">macros updated</span>
               )}
+              {itemsChanged && (
+                <span className="ml-2 text-lifting-strong">items updated</span>
+              )}
             </span>
           )}
+          {!hasInvalidMacro && (
+            <PortionLeftLine
+              className="mt-1"
+              day={day}
+              portion={{ calories: previewCal, protein: previewPro }}
+            />
+          )}
         </div>
+
+        {/* Log this row again on another day, from whichever day it is
+            on. The parent closes this sheet and opens the copy sheet; it
+            copies what is logged, not what is being edited here. */}
+        {onCopy && (
+          <Button
+            variant="nutrition-tinted"
+            fullWidth
+            leftIcon={<CopyPlus className="size-4" aria-hidden="true" />}
+            onClick={() => {
+              haptic("light");
+              onCopy();
+            }}
+            disabled={saving}
+          >
+            Copy to another day
+          </Button>
+        )}
 
         {/* Discoverable delete path — the tap-to-edit counterpart to the
             row's swipe-to-delete (kept). Low-emphasis destructive text at
@@ -615,10 +939,11 @@ function EditServingsSheet({
             Cancel
           </Button>
           <Button
+            variant="neutral"
             size="lg"
             className="flex-1"
             onClick={handleSave}
-            disabled={unchanged || hasInvalidMacro || saving}
+            disabled={cannotSave}
           >
             {saving ? "Saving…" : "Save"}
           </Button>

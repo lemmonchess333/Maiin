@@ -1,0 +1,122 @@
+{
+  "canvasPx": [
+    1024,
+    1024
+  ],
+  "definition": {
+    "fanHubCenter": "Center of the fixed fan hub axle object",
+    "nearRearFloorFootVisibleTopCorner": "Top, camera-near, fan-facing corner of the fixed rear-side floor foot box",
+    "nearFanCageOuterVerticalDiameter": "Projected distance between top and bottom of the fixed near ring (0.43m major + 0.016m tube radius)",
+    "nearFloorFootCenterSpan": "Projected distance between the fixed near-side front and rear floor foot centers"
+  },
+  "summary": {
+    "maxFixedAnchorDriftPx": 0.0,
+    "maxInvariantDimensionDriftFraction": 0.0,
+    "anchorLimitPx": 1.0,
+    "dimensionLimitFraction": 0.01
+  },
+  "frames": [
+    {
+      "frame": 1,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    },
+    {
+      "frame": 2,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    },
+    {
+      "frame": 3,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    },
+    {
+      "frame": 4,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    },
+    {
+      "frame": 5,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    },
+    {
+      "frame": 6,
+      "fixedAnchorsPx": {
+        "fanHubCenter": [
+          272.338,
+          627.086
+        ],
+        "nearRearFloorFootVisibleTopCorner": [
+          860.199,
+          901.836
+        ]
+      },
+      "invariantDimensionsPx": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      }
+    }
+  ]
+}

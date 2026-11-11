@@ -31,6 +31,11 @@ const cache = new Map<string, Set<string>>();
  * mark ready (fail-open) so a transient block-list error doesn't wedge
  * the feed forever — the server visibility rules remain the hard gate. */
 const readyCache = new Set<string>();
+/* The accounts whose block list is being read now. A page of rows mounts
+ * many consumers in one render (a league table, a Space's posts), and each
+ * finds the list not ready yet: without this, each started its own read of
+ * the whole list. */
+const fetching = new Set<string>();
 /* Who blocked each account, its readiness (first snapshot delivered, or
  * the listener failed, fail-open as above), and the one live listener per
  * uid, torn down when its last consumer unmounts. */
@@ -142,7 +147,8 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
        ledger (not `cache`) so a pre-fetch addBlocked seed can't be
        mistaken for a completed load — readiness must reflect the server
        fetch settling. Already-settled uid requires no work. */
-    if (!readyCache.has(uid)) {
+    if (!readyCache.has(uid) && !fetching.has(uid)) {
+      fetching.add(uid);
       getBlockedUsers(uid)
         .then((ids) => {
           cache.set(uid, new Set(ids));
@@ -157,7 +163,8 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
           readyCache.add(uid);
           notify(uid);
           reportFailure(e);
-        });
+        })
+        .finally(() => fetching.delete(uid));
     }
 
     ensureBlockedBySubscribed(uid);

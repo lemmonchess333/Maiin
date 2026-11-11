@@ -30,6 +30,7 @@ import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { movementCategoryLabel } from "../../lib/exerciseMovementCategory";
 import CommentSheet from "./CommentSheet";
 import SaveRoutineSheet from "./SaveRoutineSheet";
+import SupersetTag from "@/components/workout/SupersetTag";
 import ExerciseCompareSheet from "./ExerciseCompareSheet";
 import ReportModal from "./ReportModal";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
@@ -37,6 +38,11 @@ import type { FeedItem } from "../../hooks/useSocialFeed";
 import { THEME } from "../../lib/theme";
 import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
+import {
+  propsLine,
+  readPropsGivers,
+  shownPropsGivers,
+} from "@/lib/propsGivers";
 import { haptic } from "../../lib/haptic";
 import {
   MessageCircle,
@@ -52,11 +58,16 @@ import {
   Flag,
   Ban,
   BookmarkPlus,
+  Medal,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 
 import MiniMuscleFigure, { hasMuscleFigure } from "./MiniMuscleFigure";
 import RouteScene from "./RouteScene";
+import RouteMapHero from "./RouteMapHero";
+import { hasRouteMap } from "./routeMapSrc";
+import PostPhotoGrid from "./PostPhotoGrid";
+import { postPhotosOf } from "@/lib/postPhotos";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
@@ -68,19 +79,27 @@ import {
 } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
+import { commentQuickChips } from "@/lib/commentChips";
+import { postMomentsOf } from "@/lib/postMoments";
+import { postMomentLines, type PostMomentLines } from "./postMomentLines";
 
 const formatDur = formatClock;
-
-const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
 
 /* Written out whole, so Tailwind sees every class it has to build. */
 const RUN_STAT_COLUMNS =
   "grid-cols-[repeat(3,minmax(max-content,1fr))] @max-[17.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)]";
-const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 /** The exercise rows a card in a list draws; the post's own page draws
  *  them all. */
 const FEED_EXERCISE_ROWS = 3;
+
+/** A moment's icon (Soc15). */
+const MOMENT_ICONS: Record<PostMomentLines["icon"], typeof Trophy> = {
+  trophy: Trophy,
+  medal: Medal,
+  flame: Flame,
+  flag: Flag,
+};
 
 interface ActivityCardProps {
   feedItem: FeedItem;
@@ -94,6 +113,16 @@ interface ActivityCardProps {
   /** Draw every exercise on the post, as its own page does. A card in a
    *  list draws the first three and links the rest to that page. */
   allExercises?: boolean;
+  /** Open the post from the card's title, numbers and hero. Off on the
+   *  post's own page, where they would lead back to it. */
+  linkToPost?: boolean;
+  /** The comment button's own action, where the comments are on the page
+   *  rather than in the card's sheet (the post's own page). The card then
+   *  has no sheet. */
+  onComment?: () => void;
+  /** Comments added or deleted outside the card, which its count adds,
+   *  as it adds those from its own sheet. */
+  commentDelta?: number;
 }
 
 function ActivityCard({
@@ -102,6 +131,9 @@ function ActivityCard({
   followAuthor,
   openComments = false,
   allExercises = false,
+  linkToPost = true,
+  onComment,
+  commentDelta: outsideDelta = 0,
 }: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
@@ -150,7 +182,7 @@ function ActivityCard({
   const activity = feedItem.activity;
   const commentTotal = Math.max(
     0,
-    (activity?.commentCount ?? 0) + commentDelta
+    (activity?.commentCount ?? 0) + commentDelta + outsideDelta
   );
   const showFollow =
     !!followAuthor && !!feedItem.authorId && feedItem.authorId !== user?.uid;
@@ -228,11 +260,18 @@ function ActivityCard({
       if (isRestrictedRefusal(err)) showRestrictedToast();
       // The haptic alone says nothing on the web, where the count just
       // drops back.
-      else toast.error("Couldn't give props. Try again.");
+      else toast.error("Couldn’t give props. Try again.");
     }
   };
 
   const [kudosLoading, setKudosLoading] = useState(false);
+  const givers = shownPropsGivers(readPropsGivers(activity?.recentPropsBy), {
+    viewerUid: user?.uid ?? null,
+    viewerGave: liked,
+    blocked,
+    viewerPhotoURL: profile?.photoURL,
+  });
+  const givenBy = propsLine(givers, kudosCount);
 
   const handleShowKudosList = async () => {
     if (showKudosList) {
@@ -255,15 +294,9 @@ function ActivityCard({
   };
 
   const createdAtObj = feedItem.createdAt as
-    | { toDate?: () => Date }
-    | undefined;
+    { toDate?: () => Date } | undefined;
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
-  // DS1b: these stay inline — they're passed as `fallbackBg`/`fallbackColor`
-  // string PROPS to <Avatar/>, not applied as classes here, so there's no
-  // className form to migrate to.
-  const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
-  const avatarColor = isRun ? THEME.running : THEME.lifting;
-  const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
+  const chips = commentQuickChips(feedItem.type);
 
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
@@ -276,6 +309,10 @@ function ActivityCard({
   /* The exercises done, as the post's page lists them: a stored count can
      include one with no set done. */
   const exerciseCount = activity ? liftPostExerciseCount(activity) : 0;
+  /* The count says something only where the rows don't: when the card
+     lists every exercise, "3 exercises" under three rows repeats them. */
+  const showExerciseCount =
+    exerciseCount > 0 && (shownExercises.length === 0 || moreExercises > 0);
   /* The movement labels, less one that only repeats the title (or the
      summary drawn in its place): a Push day's post is titled "Push"
      already. */
@@ -288,6 +325,19 @@ function ActivityCard({
     )
   ).filter((label) => label.trim().toLowerCase() !== titleKey);
   const prCount = activity?.prCount as number | undefined;
+  /* What happened to the author in the session (Soc15): read whole, so a
+     malformed or older post draws none. */
+  const moments = postMomentsOf(activity?.moments);
+  /* The author's photos of the session (Soc15 call 2), at most four. */
+  const photos = postPhotosOf(activity?.photos);
+  /* A PR moment's exercise, by the id its row on the post carries: a
+     kettlebell reads in whole bells in lb. */
+  const momentExerciseId = (name: string) => {
+    const row = (Array.isArray(rawExercises) ? rawExercises : []).find(
+      (item) => (item as { name?: unknown } | null)?.name === name
+    ) as { exerciseId?: unknown } | undefined;
+    return typeof row?.exerciseId === "string" ? row.exerciseId : undefined;
+  };
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
      Runs: the GPS trace becomes a glowing scene with the distance
@@ -315,32 +365,82 @@ function ActivityCard({
   const showVolumeOverlay = showLiftHero && (activity?.totalVolume ?? 0) > 0;
   const showPrChip = showLiftHero && (prCount ?? 0) > 0;
 
-  const renderRouteHero = (heightClass: string) => (
-    <div
-      className={`relative ${heightClass} border-b border-border/50`}
-      style={{
-        background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
-      }}
-    >
-      <RouteScene preview={routePreview!} />
-      {showDistanceOverlay && (
-        <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running">
-            {distanceValue(activity?.distance || 0, unit, 2)}
-          </p>
-          <SectionLabel className="mt-0.5">
-            {distanceUnitLabel(unit)}
-          </SectionLabel>
-        </div>
-      )}
+  /* The card opens its post from its title, its numbers and its hero, as
+     a card does in Strava and Hevy. Each is its own link, so the props,
+     comment and menu buttons, the author and a compare row stay targets
+     of their own with nothing interactive inside a link. One of them
+     takes a stop in the tab order, the one that names the post; the
+     others are there for a finger. */
+  const postHref = `/activity/${encodeURIComponent(feedItem.activityId)}`;
+  /* What the lift's numbers link holds: a link with nothing in it would
+     be an empty stop for a screen reader. */
+  const hasLiftStats =
+    muscleLabels.length > 0 ||
+    (!showVolumeOverlay && (activity?.totalVolume ?? 0) > 0) ||
+    showExerciseCount ||
+    (!showPrChip && (prCount ?? 0) > 0) ||
+    (!isHybrid && (activity?.duration ?? 0) > 0);
+  const hasCaption =
+    typeof activity?.caption === "string" && activity.caption.trim().length > 0;
+  const hasPostText = !!activityTitle || !!feedItem.summary || hasCaption;
+  const toPost = (
+    content: ReactNode,
+    {
+      focusable,
+      className = "block",
+    }: { focusable: boolean; className?: string }
+  ) =>
+    linkToPost ? (
+      <Link
+        to={postHref}
+        className={className}
+        tabIndex={focusable ? undefined : -1}
+      >
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+
+  const routeHeroBackground = {
+    background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
+  };
+  /* The numeral sits under the route, not over it: laid over the
+     drawing, a route starting bottom-left put its start ring on it. */
+  const routeFooter = showDistanceOverlay && (
+    <div className="shrink-0 px-4 pb-3">
+      <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
+        {distanceValue(activity?.distance || 0, unit, 2)}
+      </p>
+      <SectionLabel className="mt-0.5">{distanceUnitLabel(unit)}</SectionLabel>
     </div>
   );
+  /* A post with a map image (Soc15 call 5) shows it in a box of the
+     image's own ratio, its numbers in a row under it with a little more
+     room above; one without keeps the drawn route at the hero's height. */
+  const renderRouteHero = (heightClass: string) =>
+    hasRouteMap(activity?.routeMap) ? (
+      <div
+        className="relative border-b border-border/50"
+        style={routeHeroBackground}
+      >
+        <RouteMapHero preview={routePreview!} routeMap={activity?.routeMap} />
+        {routeFooter && <div className="pt-3">{routeFooter}</div>}
+      </div>
+    ) : (
+      <div
+        className={`relative ${heightClass} border-b border-border/50`}
+        style={routeHeroBackground}
+      >
+        <RouteScene preview={routePreview!} footer={routeFooter} />
+      </div>
+    );
 
   /* The volume numeral and the PR chip a lift's hero carries, whichever
      hero it is. */
   const renderVolumeFigure = (className: string) => (
     <div className={className}>
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
+      <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting">
         {volumeFigure(activity?.totalVolume ?? 0)}
       </p>
       <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
@@ -351,7 +451,7 @@ function ActivityCard({
       className={`${className} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
     >
       <Star className="size-3.5 fill-achievement" />
-      {prCount} PR{prCount === 1 ? "" : "s"}
+      {prCount} {prCount === 1 ? "best" : "bests"}
     </span>
   );
 
@@ -458,7 +558,7 @@ function ActivityCard({
       {activityTitle && (
         <p
           dir="auto"
-          className="text-sm font-bold text-foreground mb-2 break-words"
+          className="text-base font-bold text-foreground mb-2 break-words"
         >
           {activityTitle}
         </p>
@@ -478,15 +578,14 @@ function ActivityCard({
           via ShareComposerSheet. Sits between the title and the
           stats so it reads as the author's voice on the activity,
           separate from the auto-generated stat blocks below. */}
-      {typeof activity?.caption === "string" &&
-        activity.caption.trim().length > 0 && (
-          <p
-            dir="auto"
-            className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
-          >
-            {activity.caption}
-          </p>
-        )}
+      {hasCaption && (
+        <p
+          dir="auto"
+          className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
+        >
+          {activity?.caption as string}
+        </p>
+      )}
     </>
   );
 
@@ -517,7 +616,7 @@ function ActivityCard({
                of the no-route card quietly demoting distance to a peer
                of pace and time. */
           <div className="min-w-0">
-            <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
+            <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running whitespace-nowrap">
               {distanceValue(activity.distance || 0, unit, 2)}
             </p>
             <SectionLabel className="mt-0.5">
@@ -526,7 +625,7 @@ function ActivityCard({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+          <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
             {typeof activity.avgPace === "number"
               ? paceMinSec(activity.avgPace, unit)
               : activity.avgPace || "--:--"}
@@ -539,7 +638,7 @@ function ActivityCard({
         </div>
         {(activity.duration ?? 0) > 0 && (
           <div className="min-w-0">
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+            <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
               {formatDur(activity.duration ?? 0)}
             </p>
             <SectionLabel className="mt-0.5">Time</SectionLabel>
@@ -562,9 +661,9 @@ function ActivityCard({
                   peer cell sat flush against it. It now rides in the
                   caption, so the figures line up and the icon still
                   marks the cell. */}
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+            <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
               {elevationLabel(activity.elevationGain ?? 0, unit, false)}{" "}
-              <span className="text-caption font-semibold text-muted-foreground">
+              <span className="font-sans text-sm font-medium text-muted-foreground">
                 {elevationUnitLabel(unit)}
               </span>
             </p>
@@ -626,6 +725,9 @@ function ActivityCard({
                     <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                       {ex.name}
                     </span>
+                    {ex.superset !== undefined && (
+                      <SupersetTag group={ex.superset} />
+                    )}
                     <span className={summaryClass}>{displaySummary}</span>
                   </div>
                 );
@@ -648,6 +750,9 @@ function ActivityCard({
                   <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
                   </span>
+                  {ex.superset !== undefined && (
+                    <SupersetTag group={ex.superset} />
+                  )}
                   <span className={summaryClass}>{displaySummary}</span>
                 </button>
               );
@@ -657,7 +762,7 @@ function ActivityCard({
                 reach over the compare row above it. */}
             {moreExercises > 0 && (
               <Link
-                to={`/activity/${encodeURIComponent(feedItem.activityId)}`}
+                to={postHref}
                 className="flex min-h-[44px] w-full items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span>
@@ -681,7 +786,20 @@ function ActivityCard({
             one the title already says is left out (`muscleLabels`).
             Static facts, so one quiet line rather than chips — pills on
             this surface mean a state (the PR badge), not a fact. */}
-        <MetaLine size="xs" items={muscleLabels} />
+        {hasLiftStats &&
+          toPost(
+            <div className="space-y-2">
+              <MetaLine size="xs" items={muscleLabels} />
+              {renderLiftStats()}
+            </div>,
+            { focusable: isHybrid ? false : !hasPostText }
+          )}
+      </div>
+    );
+
+  const renderLiftStats = () =>
+    activity && (
+      <>
         {/* Workout volume/duration/PR count. Cells already printed on
             the lift's hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
@@ -697,15 +815,15 @@ function ActivityCard({
                text-2xl/800 in the muscle-hero overlay already — this
                matches it so the two paths agree. */
             <div className="min-w-0">
-              <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting whitespace-nowrap">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting whitespace-nowrap">
                 {volumeFigure(activity.totalVolume ?? 0)}
               </p>
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
-          {exerciseCount > 0 && (
+          {showExerciseCount && (
             <div className="min-w-0">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
@@ -717,26 +835,26 @@ function ActivityCard({
             <div className="min-w-0">
               <div className="flex items-center gap-1">
                 <Star className="size-4 text-achievement fill-achievement shrink-0" />
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-achievement whitespace-nowrap">
+                <p className="text-xl font-bold font-figure tabular-nums leading-none text-achievement whitespace-nowrap">
                   {prCount}
                 </p>
               </div>
               <SectionLabel className="mt-0.5">
-                {prCount === 1 ? "PR" : "PRs"}
+                {prCount === 1 ? "Best" : "Bests"}
               </SectionLabel>
             </div>
           )}
           {/* A hybrid card's run stats above already carry the time. */}
           {!isHybrid && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
               </p>
               <SectionLabel className="mt-0.5">min</SectionLabel>
             </div>
           )}
         </div>
-      </div>
+      </>
     );
 
   return (
@@ -745,20 +863,27 @@ function ActivityCard({
        screen. At double text a 393px phone's card is 11em wide, and rows
        sized for 22em squeezed the author's name to nothing. */
     <div className="@container bg-card rounded-2xl overflow-hidden card-shadow">
-      {/* Hybrid card: map on top (shorter), then divider, then workout content */}
+      {/* Hybrid card: map on top (shorter), then divider, then workout
+          content. Its height in rem, as the run card's: the numeral under
+          the route grows with the text, and a fixed 120px left the route
+          almost no room at double text. */}
       {isHybrid ? (
         <>
-          {routePreview && renderRouteHero("h-[120px]")}
+          {routePreview &&
+            toPost(renderRouteHero("h-30"), { focusable: false })}
           <div className="p-4 pb-0">
             {renderAuthorRow(
-              `${THEME.brand}20`,
-              THEME.brand,
               <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
                 {timeAgo}
               </p>
             )}
-            {renderPostText()}
-            {renderRunStats()}
+            {toPost(
+              <>
+                {renderPostText()}
+                {renderRunStats()}
+              </>,
+              { focusable: true }
+            )}
             <div className="border-b border-border/30 mb-3" />
             <div className="mb-3">{renderWorkoutContent()}</div>
           </div>
@@ -768,14 +893,14 @@ function ActivityCard({
           {/* Standard run card: route scene on top; standard lift
               card: the lead lift's drawing on top, or the muscle figure
               where no lift on the post has one. */}
-          {isRun && routePreview && renderRouteHero("h-36")}
-          {leadArt && renderDrawingHero(leadArt)}
-          {showMuscleHero && renderMuscleHero()}
+          {isRun &&
+            routePreview &&
+            toPost(renderRouteHero("h-36"), { focusable: false })}
+          {leadArt && toPost(renderDrawingHero(leadArt), { focusable: false })}
+          {showMuscleHero && toPost(renderMuscleHero(), { focusable: false })}
 
           <div className="p-4">
             {renderAuthorRow(
-              avatarBg,
-              avatarColor,
               <div className="flex items-center gap-1 text-muted-foreground">
                 {isRun ? (
                   <Footprints className="size-3.5 text-running" />
@@ -788,11 +913,25 @@ function ActivityCard({
               </div>
             )}
 
-            {renderPostText()}
-
-            {/* Run stats — km lives on the hero overlay when the route
-                scene rendered */}
-            {isRun && renderRunStats()}
+            {/* A run's title and numbers are one link; a lift's title is
+                one, its numbers another below the exercise rows, which
+                can be buttons of their own. A title alone still clears
+                the 44px floor. Run stats: km lives on the hero overlay
+                when the route scene rendered. */}
+            {isRun
+              ? (hasPostText || !!activity) &&
+                toPost(
+                  <>
+                    {renderPostText()}
+                    {renderRunStats()}
+                  </>,
+                  { focusable: true }
+                )
+              : hasPostText &&
+                toPost(renderPostText(), {
+                  focusable: true,
+                  className: "flex min-h-11 flex-col justify-center",
+                })}
 
             {/* Workout content */}
             {!isRun && activity && (
@@ -807,6 +946,77 @@ function ActivityCard({
       )}
 
       <div className="px-4 pb-4">
+        {/* The author's photos (Soc15 call 2), under the session's own
+            numbers and route, before what happened in it: the same place on
+            the run, lift and hybrid cards, as Strava and Hevy put a post's
+            photos after its stats. A tap opens them full screen. */}
+        {photos.length > 0 && (
+          <PostPhotoGrid
+            photos={photos}
+            authorName={feedItem.authorName}
+            kind={isRun ? "run" : "workout"}
+            className="mb-3"
+          />
+        )}
+
+        {/* Moments (Soc15), Strava's way: a tile, a bold line and the
+            figures under it, each from the post's own numbers in the
+            reader's units. Gold for a best, the brand purple for the rest,
+            and a first session in its sport's colour, coral on a run
+            (`postMomentLines`). At large text the tile stands above the
+            words, as the PR line's icon does below. */}
+        {moments.length > 0 && (
+          <ul className="mb-3 space-y-2.5">
+            {moments.map((moment, i) => {
+              const lines = postMomentLines(moment, {
+                distanceUnit: unit,
+                liftUnit,
+                exerciseIdOf: momentExerciseId,
+              });
+              const Icon = MOMENT_ICONS[lines.icon];
+              return (
+                <li
+                  key={`${moment.kind}-${i}`}
+                  className="flex items-center gap-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1.5"
+                >
+                  <span
+                    aria-hidden="true"
+                    data-moment-tone={lines.tone}
+                    className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+                      lines.tone === "best"
+                        ? "bg-achievement/15 text-achievement"
+                        : lines.tone === "sport" && isRun
+                          ? "bg-running/15 text-running-strong"
+                          : "bg-primary/15 text-primary"
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="min-w-0 max-w-full flex-1 @max-[16em]:flex-none">
+                    <p className="text-sm font-bold font-mono tabular-nums text-foreground break-words">
+                      {lines.headline}
+                    </p>
+                    {lines.detail && (
+                      <p
+                        dir="auto"
+                        className="text-sm text-muted-foreground break-words"
+                      >
+                        {lines.detail.text}
+                        {lines.detail.text && lines.detail.figure ? " " : ""}
+                        {lines.detail.figure && (
+                          <span className="font-mono tabular-nums">
+                            {lines.detail.figure}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
         {/* The PR and challenge lines: an icon, then the words. Beside the
             icon, a large-text line can be narrower than one word, which
             then splits ("Comple/ted"). So on a card under 16em the icon
@@ -818,8 +1028,7 @@ function ActivityCard({
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1">
             <Trophy className="size-4 text-achievement shrink-0" />
             <p className="min-w-0 max-w-full break-words text-xs font-medium text-achievement-strong">
-              New PR:{" "}
-              {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
+              New best: {feedItem.prExercise || activity?.prExercise || "lift"}{" "}
               {feedItem.prWeight || activity?.prWeight
                 ? formatLoad(
                     (feedItem.prWeight || activity?.prWeight) as number,
@@ -879,7 +1088,7 @@ function ActivityCard({
               }`}
             >
               <Flame
-                className={`size-5 ${liked ? "fill-current opacity-100" : "opacity-50"}`}
+                className={`size-5 ${liked ? "fill-current" : ""}`}
                 style={{
                   color: liked
                     ? THEME.amberLight
@@ -903,8 +1112,10 @@ function ActivityCard({
           </div>
           <button
             type="button"
-            onClick={() => setShowCommentSheet(true)}
-            aria-label="View comments"
+            onClick={() =>
+              onComment ? onComment() : setShowCommentSheet(true)
+            }
+            aria-label={onComment ? "Add a comment" : "View comments"}
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
             <MessageCircle className="size-5" />
@@ -918,10 +1129,12 @@ function ActivityCard({
             <button
               type="button"
               onClick={() => setShowSaveRoutine(true)}
-              aria-label="Save as routine"
-              className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
+              className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
-              <BookmarkPlus className="size-5" />
+              <BookmarkPlus className="size-5" aria-hidden="true" />
+              {/* The bookmark alone read as "save the post": the word says
+                  it copies the session into your routines. */}
+              <span className="text-xs font-medium">Save as routine</span>
             </button>
           )}
           {onShare && (
@@ -936,6 +1149,46 @@ function ActivityCard({
           )}
         </div>
 
+        {/* Who gave props (Mob2): their faces and names under the row,
+            nobody either side of a block with the reader, the reader as
+            "You" once they have. Opens the full list, as the count does. */}
+        {givenBy && (
+          <button
+            type="button"
+            onClick={handleShowKudosList}
+            aria-expanded={showKudosList}
+            className="mt-1 flex min-h-[44px] w-full items-center gap-2 text-left text-xs text-muted-foreground hover:text-foreground"
+          >
+            <span aria-hidden="true" className="flex shrink-0 -space-x-1.5">
+              {givers.map((g) => (
+                <BlockAwareAvatar
+                  key={g.uid}
+                  uid={g.uid}
+                  photoURL={g.photoURL}
+                  displayName={g.name === "You" ? profile?.displayName : g.name}
+                  size="xs"
+                  className="ring-2 ring-card"
+                />
+              ))}
+            </span>
+            <span dir="auto" className="min-w-0 break-words">
+              {givenBy}
+            </span>
+          </button>
+        )}
+
+        {/* Nobody's given props yet, on someone else's session: one quiet
+            line, as the running apps say "Be the first to like this", so
+            a new post doesn't read as ignored. */}
+        {!givenBy &&
+          kudosCount === 0 &&
+          !liked &&
+          feedItem.authorId !== user?.uid && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Be the first to give props
+            </p>
+          )}
+
         {/* Kudos list popup */}
         {showKudosList && (
           <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
@@ -946,7 +1199,7 @@ function ActivityCard({
               </div>
             ) : kudosUsers.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">
-                Couldn&apos;t load props right now. Try again.
+                Couldn’t load props right now. Try again.
               </p>
             ) : (
               /* Nobody either side of a block with you, as in the
@@ -974,16 +1227,18 @@ function ActivityCard({
         )}
       </div>
 
-      {/* Comment bottom sheet */}
-      <CommentSheet
-        activityId={feedItem.activityId}
-        activityAuthorId={activity?.authorId as string | undefined}
-        open={showCommentSheet}
-        onOpenChange={setShowCommentSheet}
-        commentCount={commentTotal}
-        quickChips={chips}
-        onCountChange={(delta) => setCommentDelta((d) => d + delta)}
-      />
+      {/* Comment bottom sheet, unless the comments are on the page. */}
+      {!onComment && (
+        <CommentSheet
+          activityId={feedItem.activityId}
+          activityAuthorId={activity?.authorId as string | undefined}
+          open={showCommentSheet}
+          onOpenChange={setShowCommentSheet}
+          commentCount={commentTotal}
+          quickChips={chips}
+          onCountChange={(delta) => setCommentDelta((d) => d + delta)}
+        />
+      )}
 
       {/* Save-as-routine sheet — only mounts when the gate above
           said the activity is eligible AND the user has tapped the
@@ -1055,7 +1310,7 @@ function ActivityCard({
             addBlocked(activity.authorId as string);
             toast.success(`Blocked ${feedItem.authorName}`);
           } catch {
-            toast.error(`Couldn't block ${feedItem.authorName}. Try again.`);
+            toast.error(`Couldn’t block ${feedItem.authorName}. Try again.`);
           }
         }}
         onCancel={() => setShowBlockConfirm(false)}
@@ -1070,11 +1325,7 @@ function ActivityCard({
      a name too long to sit beside the avatar goes under it, with the
      row's whole width: beside it, the name would be cut to its first
      letters ("Ale…"). One row for the standard and the hybrid card. */
-  function renderAuthorRow(
-    fallbackBg: string,
-    fallbackColor: string,
-    time: ReactNode
-  ) {
+  function renderAuthorRow(time: ReactNode) {
     return (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 @max-[18em]:items-start">
         <Link
@@ -1085,8 +1336,6 @@ function ActivityCard({
             photoURL={feedItem.authorPhotoURL}
             displayName={feedItem.authorName}
             size="lg"
-            fallbackBg={fallbackBg}
-            fallbackColor={fallbackColor}
           />
           <div className="flex-1 min-w-0 @max-[18em]:flex-auto @max-[18em]:max-w-full">
             <p

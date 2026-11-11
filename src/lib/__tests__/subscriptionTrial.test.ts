@@ -82,13 +82,13 @@ describe("trialPhoneReminder", () => {
     expect(trialPhoneReminder(trial(), before)).toEqual({
       fireAt: REMIND,
       title: "Your free trial ends on Saturday 10 October",
-      body: "Cancel by 14:30 on Friday 9 October if you don't want to pay £3.99 a month. Already cancelled? There's nothing to do.",
+      body: "Cancel by 14:30 on Friday 9 October if you don’t want to pay £3.99 a month. Already cancelled? There’s nothing to do.",
     });
   });
 
   it("names no amount it was not given", () => {
     expect(trialPhoneReminder(trial({ price: null }), before)?.body).toBe(
-      "Cancel by 14:30 on Friday 9 October if you don't want your subscription to start. Already cancelled? There's nothing to do."
+      "Cancel by 14:30 on Friday 9 October if you don’t want your subscription to start. Already cancelled? There’s nothing to do."
     );
   });
 

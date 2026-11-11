@@ -37,11 +37,7 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  useSubscription,
-  isCheckoutTrialEligible,
-  DAILY_AI_LIMITS,
-} from "@/lib/subscription";
+import { useSubscription, isCheckoutTrialEligible } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -85,11 +81,14 @@ import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import StepDetails from "@/components/StepDetails";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
 import ProDemoVideo from "@/components/paywall/ProDemoVideo";
+import ProIncludes from "@/components/paywall/ProIncludes";
+import { FREE_KEEPS } from "@/components/paywall/proIncludesCopy";
 import { framesForFeature } from "@/components/paywall/previewFrames";
 
 type Beat = "offer" | "plans";
@@ -189,7 +188,7 @@ export default function Upgrade() {
     selectedPlan
   );
 
-  const { loading, error, startCheckout } = useProCheckout();
+  const { loading, error, notice, startCheckout } = useProCheckout();
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
 
@@ -405,12 +404,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member via the App Store
+              You’re a Pro member via the App Store
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription in your Apple Account. Apple doesn&apos;t
-            let us cancel or refund App Store subscriptions on your behalf.
+            Manage your subscription in your Apple Account. Apple doesn’t let us
+            cancel or refund App Store subscriptions on your behalf.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
           <a
@@ -437,12 +436,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member on the web
+              You’re a Pro member on the web
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple&apos;s App Store
-            isn&apos;t the billing platform for this account.
+            Manage your subscription at troposfit.com — Apple’s App Store isn’t
+            the billing platform for this account.
           </p>
         </div>
       )}
@@ -453,30 +452,14 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re on Pro
+              You’re on Pro
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
             Full access to all features.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
-          <ul className="space-y-1.5 text-sm text-foreground">
-            {[
-              // The server caps Pro scans (DAILY_AI_LIMITS), so not
-              // "unlimited": the number is the cap itself.
-              `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,
-              "A calorie target that adapts to you",
-              "Macros that shift with your training",
-            ].map((f) => (
-              <li key={f} className="flex items-start gap-1.5">
-                <Check
-                  className="size-3.5 text-primary mt-0.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
+          <ProIncludes />
           <button
             type="button"
             onClick={handleManageSubscription}
@@ -527,7 +510,7 @@ export default function Upgrade() {
           <div className="text-center space-y-2 pt-2">
             <h1
               id="pro-offer-heading"
-              className="text-h1 font-extrabold text-foreground leading-tight text-balance"
+              className="text-h1 font-extrabold tracking-tight text-foreground leading-tight text-balance"
             >
               {/* Straight after Start my plan the page answers what the
                   person just did before it offers anything: a runner who
@@ -559,6 +542,14 @@ export default function Upgrade() {
               />
             }
           />
+
+          {/* What Pro adds, and what Free keeps, before any price: a
+              runner who has just finished setup would otherwise read an
+              offer about meal photos and nothing else. */}
+          <div className="space-y-2 max-w-[340px] mx-auto">
+            <ProIncludes />
+            <p className="text-xs text-muted-foreground">{FREE_KEEPS}</p>
+          </div>
 
           {/* What it costs leads. With the trial, the trial and the price
               are one bold sentence, so the amount billed is as prominent as
@@ -593,7 +584,12 @@ export default function Upgrade() {
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
             {onSale && (
-              <Button size="lg" fullWidth onClick={handleContinue}>
+              <Button
+                variant="neutral"
+                size="lg"
+                fullWidth
+                onClick={handleContinue}
+              >
                 Continue
               </Button>
             )}
@@ -624,7 +620,7 @@ export default function Upgrade() {
           <div className="space-y-1">
             <h1
               id="pro-plans-heading"
-              className="text-h1 font-extrabold text-foreground"
+              className="text-h1 font-extrabold leading-tight tracking-tight text-foreground"
             >
               Choose your plan
             </h1>
@@ -653,12 +649,22 @@ export default function Upgrade() {
               {error}
             </p>
           ) : null}
+          {notice ? (
+            <p
+              role="status"
+              className="text-xs text-foreground bg-muted rounded-lg px-3 py-2"
+            >
+              {notice}
+            </p>
+          ) : null}
 
           {/* Sub1a trial transparency — what actually happens, before the ask. */}
           {withTrial ? <TrialTimeline plan={selected} /> : null}
 
-          {/* Direct purchase CTA — never opens another modal. */}
+          {/* Direct purchase CTA — never opens another modal. The screen's
+              one full-width filled button, so neutral (DS4 call 1a). */}
           <Button
+            variant="neutral"
             size="lg"
             fullWidth
             onClick={handleCheckout}
@@ -668,7 +674,7 @@ export default function Upgrade() {
               <>
                 <Spinner
                   size="sm"
-                  variant="inverse"
+                  variant="current"
                   label="Starting checkout"
                 />
                 <span>Starting checkout…</span>
@@ -685,6 +691,7 @@ export default function Upgrade() {
             platform={platform}
             withTrial={withTrial}
           />
+          <StepDetails failed={!!error} waiting={loading} />
 
           {footer}
 

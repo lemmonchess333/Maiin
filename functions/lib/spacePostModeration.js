@@ -23,6 +23,12 @@
  * original. Writes that leave the text alone (the server-owned like and
  * comment counters) are skipped without a read.
  *
+ * A new post past SPACE_POST_MAX_BYTES is removed the same way. The rules
+ * bound the post's own fields but not the points inside its attached
+ * route, so a post near Firestore's 1 MiB limit can still be written, and
+ * everyone who opens the Space downloads it. The largest post the composer
+ * writes is a few kilobytes.
+ *
  * At-least-once safe: the decision is re-made inside a transaction against
  * the post as it is NOW, so a retried event, or an author who already
  * reworded the post, deletes nothing. The likes and comments under a
@@ -31,9 +37,24 @@
  */
 
 const profanityFilter = require("../profanityFilter");
+const { storedSize } = require("./storedSize");
 
 /** The public text on a space post, in the order a reviewer reads it. */
 const SPACE_POST_TEXT_FIELDS = Object.freeze(["title", "body", "authorName"]);
+
+/** The most a post may weigh and stay in its Space: a 4,000-character
+ *  body, a title, a photo URL and a hundred route points come to well
+ *  under a third of it. */
+const SPACE_POST_MAX_BYTES = 64 * 1024;
+
+/** What a removal names for a post past that size. */
+const OVERSIZED = "size";
+
+/** Why a post comes out: "size", the field the filter refuses, or null. */
+function removalField(data) {
+  if (storedSize(data) > SPACE_POST_MAX_BYTES) return OVERSIZED;
+  return profanityFilter.findProfaneField(data, SPACE_POST_TEXT_FIELDS);
+}
 
 function textChanged(before, after) {
   if (!before) return true;
@@ -42,8 +63,9 @@ function textChanged(before, after) {
 
 /**
  * Remove the post at `ref` if this write gave it text that trips the
- * filter. `before` / `after` are the event's document data (null when the
- * document did not exist on that side of the write).
+ * filter, or if it is a new post past SPACE_POST_MAX_BYTES. `before` /
+ * `after` are the event's document data (null when the document did not
+ * exist on that side of the write).
  *
  * @returns {Promise<{removed: boolean, field?: string}>}
  */
@@ -56,17 +78,12 @@ async function removeObjectionableSpacePost({
 }) {
   if (!after) return { removed: false }; // a delete
   if (!textChanged(before, after)) return { removed: false };
-  if (!profanityFilter.findProfaneField(after, SPACE_POST_TEXT_FIELDS)) {
-    return { removed: false };
-  }
+  if (!removalField(after)) return { removed: false };
 
   const field = await firestore.runTransaction(async (tx) => {
     const current = await tx.get(ref);
     if (!current.exists) return null;
-    const found = profanityFilter.findProfaneField(
-      current.data() || {},
-      SPACE_POST_TEXT_FIELDS
-    );
+    const found = removalField(current.data() || {});
     if (found) tx.delete(ref);
     return found;
   });
@@ -90,4 +107,8 @@ async function removeObjectionableSpacePost({
   return { removed: true, field };
 }
 
-module.exports = { SPACE_POST_TEXT_FIELDS, removeObjectionableSpacePost };
+module.exports = {
+  SPACE_POST_MAX_BYTES,
+  SPACE_POST_TEXT_FIELDS,
+  removeObjectionableSpacePost,
+};

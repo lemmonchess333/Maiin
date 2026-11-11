@@ -53,8 +53,8 @@ export const AI_ANALYSIS_OFF_MESSAGE =
 export const AI_CONSENT_COPY = {
   title: "Send food to Google for analysis?",
   body:
-    "To work out what's in a meal and its macros, Tropos sends the photo " +
-    "you take, or the meal you type, to Google's Gemini AI. Google doesn't " +
+    "To work out what’s in a meal and its macros, Tropos sends the photo " +
+    "you take, or the meal you type, to Google’s Gemini AI. Google doesn’t " +
     "use it to train its models, and Tropos keeps photos only on this " +
     "phone. You can change this in Settings › Social & privacy.",
   allow: "Allow",
@@ -64,5 +64,5 @@ export const AI_CONSENT_COPY = {
 /** The Settings switch's line. Turning the switch on is the same yes the
  *  sheet asks for, so it says what is sent and to whom. */
 export const AI_SWITCH_DESCRIPTION =
-  "Sends your meal photos and typed meals to Google's Gemini AI to work " +
+  "Sends your meal photos and typed meals to Google’s Gemini AI to work " +
   "out their macros.";

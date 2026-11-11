@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { onAppResume } from "@/lib/appResume";
 
 /* The account this session has seen needing verification, shared by every
    gate: whichever one then confirms the address reports `email_verified`,
@@ -100,10 +101,9 @@ export function useEmailVerificationGate(
 
   useEffect(() => {
     if (!checkOnResume || !needsVerification) return;
-    let active = true;
     let checking = false;
     const check = () => {
-      if (!active || checking || document.visibilityState === "hidden") return;
+      if (checking) return;
       checking = true;
       void recheck()
         .catch(() => {})
@@ -111,33 +111,9 @@ export function useEmailVerificationGate(
           checking = false;
         });
     };
-    document.addEventListener("visibilitychange", check);
-    window.addEventListener("focus", check);
-    let removeNative: (() => void) | undefined;
-    void import("@capacitor/core")
-      .then(async ({ Capacitor }) => {
-        if (!Capacitor.isNativePlatform()) return;
-        const { App } = await import("@capacitor/app");
-        const listener = await App.addListener(
-          "appStateChange",
-          ({ isActive }) => {
-            if (isActive) check();
-          }
-        );
-        if (!active) void listener.remove();
-        else
-          removeNative = () => {
-            void listener.remove();
-          };
-      })
-      .catch(() => {});
-    check();
-    return () => {
-      active = false;
-      document.removeEventListener("visibilitychange", check);
-      window.removeEventListener("focus", check);
-      removeNative?.();
-    };
+    const stop = onAppResume(check);
+    if (document.visibilityState !== "hidden") check();
+    return stop;
   }, [checkOnResume, needsVerification, recheck]);
 
   return { needsVerification, emailVerified, recheck };

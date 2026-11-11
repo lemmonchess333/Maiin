@@ -1,8 +1,8 @@
 # Editorial imagery
 
-Athlete and city photography for **editorial surfaces** — challenge
-cards and Community Space cards today; plan/curated surfaces may join
-later. Licensed stock, plus (since 2026-09-14) generated frames where
+City and community photography for **editorial surfaces**: the race and
+Community Space cards, the race and Space headers, and Together's race
+hero. Challenges carry their own medal art instead (Soc16). Licensed stock, plus (since 2026-09-14) generated frames where
 the subject is generic — see "Licensing and provenance" below for which
 route a given file may take.
 
@@ -10,6 +10,88 @@ The peer activity feed never uses these: feed cards render user-data
 imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
+
+### Provenance found for the unrecorded covers — 2026-11-10
+
+Twelve covers shipped with no source record (first committed in #1631 and
+#1690, July 2026). Ten are now traced to exact free Unsplash photographs,
+each confirmed by aligning the 2400 px download to the shipped file and by
+eye: `space-trail-running` (Lucas Canino), `space-travel-racecations`
+(Andrea Leopardi), `space-london-marathon` (Charles Postiaux),
+`space-great-north-run` (Jack Foster), `space-brighton-marathon` (Rhys
+Kentish), `space-edinburgh-marathon` (Mike Newbry), `space-cardiff-half`
+(Nick Fewings), `space-great-birmingham-run` (Sarah Doffman),
+`space-leeds-10k` (Paul Rigel) and `space-royal-parks-half` (V2F). Records,
+with location evidence, are in
+[`sources-2026-11-10-provenance.json`](./sources-2026-11-10-provenance.json).
+
+`space-the-big-half` and `space-london-10000` were not found by text,
+photographer or image searches. The owner supplied them through ChatGPT
+(owner, 2026-11-10) and keeps them. Still open: nothing in
+`space-royal-parks-half` or its caption shows that it is Hyde Park.
+
+### Cover audit — 2026-11-10
+
+The owner, on Social: the weekly challenge's photo is poor quality, so find a
+better one and check whether any other cover falls below the marathon and
+space covers. All 85 covers were drawn in every band they are used in and
+their darkest flat area checked at 3× brightness. Six were weak. Four race
+and space covers among them are replaced, each with a sharper photograph of
+the same subject. `space-runners` keeps its photograph: the owner kept a
+replacement only where it was clearly better (2026-11-10), and the group
+running towards the camera is sharp enough at card size. `challenge-weekly`
+is not replaced, because challenges move to their own medal art (Soc16) and
+carry no photograph:
+
+| Asset                        | Photographer    | Was                                         | Now                                                    |
+| ---------------------------- | --------------- | ------------------------------------------- | ------------------------------------------------------ |
+| `space-lifters`              | Sven Mieke      | Three people chatting, nobody lifting       | A squat class, three lifters (black and white)         |
+| `space-seville-marathon`     | Taisia Karaseva | Fisheye, bent verticals, empty paving       | Plaza de España, straight and sharp                    |
+| `space-bournemouth-half`     | Jordy Muñoz     | A sun in an orange sky, nothing of the town | Bournemouth Pier with the beach in front               |
+| `space-los-angeles-marathon` | Jeffrey Clayton | Downtown a thin strip on a hazy horizon     | The downtown skyline, palms in front, mountains behind |
+
+Each is a 2400 px Unsplash source, its download registered through the
+Unsplash API, encoded as 1200 × 600 WebP under 120 KB. The race covers' records
+carry their location evidence; none of their captions names the place, so each
+is identified from its landmarks. The rooftop names on the Los Angeles towers
+(2–3 px at card size) are treated as city signage, as the 2026-10-17
+covers below treat theirs. Sources, crops and
+hashes are in
+[`sources-2026-11-10-cover-audit.json`](./sources-2026-11-10-cover-audit.json).
+
+Seven covers are over 120 KB and are kept as they are: `space-royal-parks-half`
+(250 KB), `space-trail-running`, `space-great-north-run`, `space-the-big-half`,
+`space-london-marathon`, `space-london-10000` and `space-edinburgh-marathon`.
+They are dense crowd and city scenes: at 1200 px they reach 120 KB only at
+WebP quality 55 or lower (`space-royal-parks-half` is still 212 KB there),
+which brings back the blotches this audit replaced covers for, and a cover
+loads only with its card. The covers that had no source record are traced in
+the section above.
+
+### Real Social covers — 2026-10-31
+
+Eight generic challenge and Space covers now use distinct, real Pexels
+photographs. The challenge images show a timed workout, a deadlift, a track
+run, a trail run and a group run. The Space images show gym friends, two women
+running together and a mixed running group. These are editorial examples,
+not Tropos members, endorsements or named events. All ship locally as
+1200 × 600 WebP files below 120 KB, with no retouching or recolouring.
+The source pages, photographers, licence, exact crops and hashes are in
+[`sources-2026-10-31-real-social-covers.json`](./sources-2026-10-31-real-social-covers.json).
+The generated-image record below remains for provenance of the replaced files.
+
+### Earlier Social editorial refresh — 2026-10-31
+
+Eight generic challenge and Space covers used generated, brand-free
+photography. Training Minutes and Strength Builder replaced photos with visible
+Nike marks. Lifters, Runners and Women's Running showed people training together;
+Fastest 5K, Mileage and Together kept the athlete readable at mobile card size.
+These were editorial scenes, not Tropos members or real events. All eight were
+1200 × 600 WebP files below 120 KB, checked in the challenge/Space crops and
+at 3× brightness for marks. Full prompts, source and output hashes, and encode
+settings are in
+[`sources-2026-10-31-social-refresh.json`](./sources-2026-10-31-social-refresh.json).
+The older source records below remain as history of the covers they replaced.
 
 ### Marathon and seasonal refresh — 2026-10-17
 
@@ -21,9 +103,10 @@ The four seasonal covers now use generated generic editorial athletes, with
 clear spring greenery, summer coast, autumn foliage and winter gym light.
 These depict neither real Tropos members nor a named race. The built-in image
 generation tool produced each seasonal asset separately. Monthly Strength
-Builder now uses a real licensed barbell photograph by Ambitious Studio\* | Rick
-Barrett, replacing the generated plate-loading scene after its equipment geometry
-failed visual review. Full prompts for generated assets, source/output hashes,
+Builder used a real licensed barbell photograph by Ambitious Studio\* | Rick
+Barrett in that refresh, replacing the generated plate-loading scene after its
+equipment geometry failed visual review. The 2026-10-31 refresh replaced that
+cover again. Full prompts for generated assets, source/output hashes,
 crops and encoding settings are recorded in
 [`sources-marathons-challenges-2026-10-17.json`](./sources-marathons-challenges-2026-10-17.json).
 The superseded generated strength record is retained in `supersededImages`.
@@ -36,39 +119,25 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 ## Drop-in contract
 
-The featured monthly goal alternates between Active Days (January, March, May,
-July, September and November) and Training Minutes (February, April, June,
-August, October and December). Each category has a distinct real licensed
-photograph. Active Days shows a running group photographed by Yuval Zukerman;
-Training Minutes shows a gym athlete checking his watch, photographed by Mina
-Rad. Source pages, licences, exact crops and hashes are recorded in
-[`sources-rotating-challenges-2026-10-18.json`](./sources-rotating-challenges-2026-10-18.json).
+Photographs here are for places and communities only (Soc16): a race shows
+its real place, a Space its cover. A challenge carries no photograph; its
+picture is its own medal (`MedalArt`), as Strava's, Nike Run Club's and
+Garmin's challenges are badge art. The `challenge-*` covers were retired on
+2026-11-10, and `editorialImages.test.ts` fails on any file here that is
+not a `space-` stem. Their manifests below stay as history.
 
-Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
-prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
+Add files with this stem (any of `.webp .avif .jpg .jpeg .png`; prefer WebP
+≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                              | Used for                                       |
-| --------------------------------- | ---------------------------------------------- |
-| `challenge-weekly.webp`           | Weekly Warrior; lifting metrics from elsewhere |
-| `challenge-mileage.webp`          | `<Month>` Mileage; km from elsewhere           |
-| `challenge-hybrid-hero.webp`      | `<Month>` Hybrid Hero; any other metric        |
-| `challenge-strength.webp`         | `<Month>` Strength Builder                     |
-| `challenge-active-days.webp`      | Featured Active Days editions                  |
-| `challenge-training-minutes.webp` | Featured Training Minutes editions             |
-| `challenge-season-<season>.webp`  | Spring Reset, Summer Shred, Autumn Push,       |
-|                                   | Winter Bulk                                    |
-| `challenge-fastest-5k.webp`       | Fastest 5K                                     |
-| `challenge-together.webp`         | Together: 1,000 km                             |
-| `space-<spaceId>.webp`            | Community Space cards (directory + header) —   |
-|                                   | one per id in `spaceDefs.ts` SPACE_DEFS,       |
-|                                   | e.g. `space-trail-running.webp`                |
+| File                   | Used for                                     |
+| ---------------------- | -------------------------------------------- |
+| `space-<spaceId>.webp` | Community Space and race cards (directory,   |
+|                        | header, Together's race hero): one per id in |
+|                        | `spaceDefs.ts` SPACE_DEFS, e.g.              |
+|                        | `space-trail-running.webp`                   |
 
-Each challenge the server defines (`functions/lib/challengeDefs.js`) has
-its own photo, by the id prefix its definition stamps
-(`challengeEditorialStem`). **No two files may be the same photo**:
-`editorialImages.test.ts` fails on a byte-identical pair, and on a
-challenge definition with no photo or another's. Until 2026-10 three
-photos were shared by metric and several race cards shared a city view;
+**No two files may be the same photo**: `editorialImages.test.ts` fails on
+a byte-identical pair. Until 2026-10 several race cards shared a city view;
 the owner's word for it was "recycled".
 
 They're picked up at **build time** (`import.meta.glob`) — no code
@@ -101,13 +170,15 @@ would ship as dead weight in every build.
 ## Licensing and provenance
 
 Only add images you have rights to distribute in a shipped app. Two
-routes, and every file records which one it took in its commit message:
+routes, and every file records which one it took in a source manifest or its
+commit message:
 
 - **Licensed stock** — Unsplash/Pexels licences qualify; note the source
   URL. No watermarked, editorial-only, or scraped imagery.
-- **Generated** — via `scripts/art/gemini-image.py` (`GEMINI_API_KEY`
-  from the environment only). Note the model and keep the prompt in the
-  commit message. Use this where the subject is generic; do NOT use it
+- **Generated** — via the built-in image generation tool or
+  `scripts/art/gemini-image.py` (`GEMINI_API_KEY` from the environment only).
+  Note the model and keep the prompt in a source manifest or commit message.
+  Use this where the subject is generic; do NOT use it
   for a named real place — the race spaces are photographs of London,
   Newcastle, Edinburgh and the rest, and a generated stand-in would be
   a claim about a real city that isn't true.

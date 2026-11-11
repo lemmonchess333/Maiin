@@ -87,6 +87,17 @@ export default function SortableExerciseRow({
     setOffsetX(next);
   }, []);
 
+  // A touch the system takes (a call, a system gesture) never ends; the
+  // row goes home rather than staying half open over the red panel.
+  const handleTouchCancel = useCallback(() => {
+    startRef.current = null;
+    directionLocked.current = null;
+    setSwiping(false);
+    if (offsetRef.current === 0) setPanelShown(false);
+    offsetRef.current = 0;
+    setOffsetX(0);
+  }, []);
+
   const handleCardClick = useCallback(() => {
     if (offsetX < 0) {
       offsetRef.current = 0;
@@ -138,6 +149,7 @@ export default function SortableExerciseRow({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
         onClick={handleCardClick}
         onTransitionEnd={(e) => {
           if (e.target === e.currentTarget && offsetX === 0 && !swiping)

@@ -21,6 +21,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -43,7 +44,16 @@ GRANT_COMMAND = (
 
 # Failures a later run can clear: the request did not complete, or Google
 # was busy or failing. No role or setting change fixes them.
-TRANSIENT = re.compile(r"network-unavailable|http-(408|429|5\d\d)")
+TRANSIENT = re.compile(r"network-unavailable|token-timeout|http-(408|429|5\d\d)")
+
+# `gcloud auth print-access-token` that does not answer is the runner's
+# network or Google's token endpoint being slow, not a bad key: run 675 of
+# Deploy production lost its release to one 30 s wait, with the Firestore
+# job of the same run authenticated a minute earlier. A timed-out request
+# is tried again; one that fails outright is not, since a bad key stays bad.
+TOKEN_ATTEMPTS = 3
+TOKEN_TIMEOUT_S = 45
+TOKEN_PAUSES_S = (5, 15)
 # gcloud gave no token, or Google refused the one it gave.
 CREDENTIALS = ("credentials-unavailable", "missing-credentials", "http-401")
 
@@ -64,7 +74,17 @@ def _body(error):
         return b""
 
 
-def make_client(token):
+# A read Google did not answer, or answered 408, 429 or 5xx, is tried again,
+# as verify_deployed_rules.py's are: one such read otherwise fails the release.
+# Both calls only read (getIamPolicy is a POST that changes nothing), so a
+# second try is safe. A refusal fails at once; no wait changes it.
+READ_PAUSES_S = (5, 15)
+TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
+
+
+def make_client(token, sleep=None):
+    # Looked up when called, so a test that patches time.sleep reaches it.
+    sleep = sleep or (lambda seconds: time.sleep(seconds))
     opener = urllib.request.build_opener(NoRedirect())
 
     def call(resource, body=None):
@@ -80,22 +100,27 @@ def make_client(token):
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             method="GET" if body is None else "POST",
         )
-        try:
-            with opener.open(request, timeout=30) as response:
-                data = json.load(response)
-        except urllib.error.HTTPError as error:
-            # A disabled API and a missing permission are both 403s and need
-            # different fixes. Google marks the first with this fixed reason
-            # code; only the code is looked for, and the body is never printed.
-            if error.code == 403 and b"SERVICE_DISABLED" in _body(error):
-                raise VerificationError("api-disabled") from None
-            raise VerificationError(f"http-{error.code}") from None
-        except (OSError, http.client.HTTPException):
-            # No connection, a timeout, or the connection lost while the body
-            # was being read (a reset, or a body cut short).
-            raise VerificationError("network-unavailable") from None
-        except (ValueError, UnicodeError):
-            raise VerificationError("invalid-json") from None
+        for pause in (*READ_PAUSES_S, None):
+            try:
+                with opener.open(request, timeout=30) as response:
+                    data = json.load(response)
+                break
+            except urllib.error.HTTPError as error:
+                # A disabled API and a missing permission are both 403s and need
+                # different fixes. Google marks the first with this fixed reason
+                # code; only the code is looked for, and the body is never printed.
+                if error.code == 403 and b"SERVICE_DISABLED" in _body(error):
+                    raise VerificationError("api-disabled") from None
+                if error.code not in TRANSIENT_STATUS or pause is None:
+                    raise VerificationError(f"http-{error.code}") from None
+            except (OSError, http.client.HTTPException):
+                # No connection, a timeout, or the connection lost while the body
+                # was being read (a reset, or a body cut short).
+                if pause is None:
+                    raise VerificationError("network-unavailable") from None
+            except (ValueError, UnicodeError):
+                raise VerificationError("invalid-json") from None
+            sleep(pause)
         if not isinstance(data, dict):
             raise VerificationError("invalid-response")
         return data
@@ -211,6 +236,26 @@ def report(result, project):
             summary.write("\n".join(lines) + "\n")
 
 
+def access_token():
+    """gcloud's access token, trying again when a request times out.
+
+    Raises VerificationError("token-timeout") once every attempt has timed
+    out. A gcloud that exits with an error, or is missing, raises as it does
+    (CalledProcessError, OSError): that is the credentials, not the network.
+    """
+    for attempt in range(TOKEN_ATTEMPTS):
+        try:
+            return subprocess.check_output(
+                ["gcloud", "auth", "print-access-token"], text=True,
+                stderr=subprocess.PIPE, timeout=TOKEN_TIMEOUT_S,
+            ).strip()
+        except subprocess.TimeoutExpired:
+            if attempt + 1 == TOKEN_ATTEMPTS:
+                raise VerificationError("token-timeout") from None
+            time.sleep(TOKEN_PAUSES_S[attempt])
+    raise VerificationError("token-timeout")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default="adaptive-fitness-af8bb")
@@ -227,10 +272,7 @@ def main(argv=None):
         result = {"status": "not-needed"}
     else:
         try:
-            token = subprocess.check_output(
-                ["gcloud", "auth", "print-access-token"], text=True,
-                stderr=subprocess.PIPE, timeout=30,
-            ).strip()
+            token = access_token()
             if not token:
                 raise VerificationError("missing-credentials")
             result = check_cross_service_iam(make_client(token), args.project, source)

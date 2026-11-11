@@ -77,14 +77,14 @@ export default function CopyMealsSheet({ sources, onClose, onSave }: Props) {
         setError(
           result.created.length > 0
             ? "Some meals were saved. Your remaining choices are still here; try again."
-            : "Couldn't save these meals. Your choices are still here; try again."
+            : "Couldn’t save these meals. Your choices are still here; try again."
         );
       } else {
         onClose();
       }
     } catch {
       setError(
-        "Couldn't save these meals. Your choices are still here; try again."
+        "Couldn’t save these meals. Your choices are still here; try again."
       );
     } finally {
       pending.current = false;
@@ -95,7 +95,7 @@ export default function CopyMealsSheet({ sources, onClose, onSave }: Props) {
   return (
     <BottomSheet
       open
-      title="Copy yesterday's meals"
+      title="Copy yesterday’s meals"
       description="Choose the meals to log. Each stays in its original meal slot."
       dismissible={!saving}
       onOpenChange={(open) => {

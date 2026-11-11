@@ -17,7 +17,7 @@ export default function RunAbout({
   const lines: [string, string][] = [];
   if (about) lines.push(["What it is", about.what]);
   if (about) lines.push(["How it should feel", about.feel]);
-  if (why) lines.push(["Why it's in your week", why]);
+  if (why) lines.push(["Why it’s in your week", why]);
   if (about) lines.push(["If it feels wrong", about.ifWrong]);
   // Run21 (2): the one place a physiology name appears.
   if (about?.alsoCalled)

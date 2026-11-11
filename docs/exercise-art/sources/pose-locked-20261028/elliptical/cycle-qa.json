@@ -1,0 +1,10 @@
+{
+  "sixUniquePedalPhases": true,
+  "phase0To1MaxMetres": 5.551115123125783e-17,
+  "oppositeSideHalfCycleMaxMetres": 2.220446049250313e-16,
+  "rearDriveLinkMinMetres": 0.5999999999999999,
+  "rearDriveLinkMaxMetres": 0.6000000000000001,
+  "soleToPadTopMinMetres": 0.0010000000000000009,
+  "soleToPadTopMaxMetres": 0.0010000000000000009,
+  "velocitySeamMaxMetresPerCycle": 9.150247226585861e-05
+}

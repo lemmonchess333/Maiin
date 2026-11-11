@@ -40,8 +40,10 @@ const selectors: Record<string, Partial<DateSource>> = {
     pattern: "^Date: [A-Za-z]+, \\d{1,2} [A-Za-z]+ 20\\d{2}",
   },
   "frankfurt-marathon": {
+    // The page header's h3 reads "31.10.2027 Mainova Frankfurt Marathon".
     selector: "h3",
-    pattern: "^\\d{1,2}(?:st|nd|rd|th)? [A-Za-z]+ 20\\d{2}$",
+    pattern: "^\\d{1,2}\\.\\d{1,2}\\.20\\d{2}(?= Mainova Frankfurt Marathon$)",
+    dateFormat: "dmy",
   },
   "honolulu-marathon": { selector: "header .header__date" },
   "los-angeles-marathon": { selector: ".hero-panel.single-event h4" },
@@ -179,8 +181,18 @@ const selectors: Record<string, Partial<DateSource>> = {
   "boston-marathon": { selector: ".header-primary-custom-title span" },
   "copenhagen-marathon": { selector: ".block-block-countdown .label" },
   "dublin-marathon": {
-    selector: "h3[data-kb-block='kb-adv-heading2_58317f-8e']",
-    dateFormat: "dmy",
+    // The home page's menu links each year's "Event Dates & Entry
+    // Information" page, whose marathon section opens with "Race Date:".
+    // The Race Series' own "Race Date:" items sit in lists laid out
+    // differently, so they never match; if they ever do, the dates
+    // disagree and the check fails closed.
+    eventPageLink: {
+      selector: "a.kb-nav-link-content",
+      hrefPattern: "^/20\\d{2}-event-dates-entry-information/?$",
+      identity: "Dublin Marathon",
+    },
+    selector: "h2 + p + ul > li",
+    pattern: "^Race Date: [A-Za-z]+ \\d{1,2} [A-Za-z]+ 20\\d{2}$",
   },
   "valencia-marathon": {
     selector: "header .datetorun",

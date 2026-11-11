@@ -87,14 +87,14 @@ describe("shrunkFormFrame", () => {
 });
 
 describe("the box a frame is fitted to", () => {
-  it("is the one the form guide draws a frame in, at 3x", () => {
+  it("is the maximum square stage the form guide draws a frame in, at 3x", () => {
     const component = readFileSync(
       fileURLToPath(
         new URL("../../src/components/ExerciseFormFrames.tsx", import.meta.url)
       ),
       "utf8"
     );
-    const box = `h-[${FORM_FRAME_BOX_POINTS}px] max-w-[${FORM_FRAME_BOX_POINTS}px]`;
+    const box = `aspect-square w-full max-w-[${FORM_FRAME_BOX_POINTS}px]`;
     expect(component).toContain(box);
     expect(FORM_FRAME_MAX_SIDE).toBe(FORM_FRAME_BOX_POINTS * 3);
   });
@@ -135,5 +135,17 @@ describe("shrinkFormFrames", () => {
       bytesBefore: 0,
       bytesAfter: 0,
     });
+  });
+
+  it("re-saves frames inside a dated release folder", async () => {
+    const root = mkdtempSync(join(tmpdir(), "form-frames-dated-"));
+    const out = join(root, "form-frames");
+    const dated = join(out, "man-maker", "2026-10-27");
+    mkdirSync(dated, { recursive: true });
+    const original = await frame(true);
+    writeFileSync(join(dated, "4.webp"), original);
+    const result = await shrinkFormFrames(out);
+    expect(result).toMatchObject({ files: 1, shrunk: 1 });
+    expect(isLosslessWebp(readFileSync(join(dated, "4.webp")))).toBe(false);
   });
 });

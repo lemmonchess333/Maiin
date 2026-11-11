@@ -20,13 +20,20 @@ function week(overrides: Partial<Parameters<typeof firstWeek>[0]> = {}) {
   return w;
 }
 
+/** The line under the heading, as it reads. */
+const dayLine = () =>
+  screen.getByText(
+    (_, el) => el?.tagName === "P" && /^Day /.test(el.textContent ?? "")
+  ).textContent;
+
 describe("FirstWeekCard", () => {
   it("shows the day, each item, and which are done", () => {
     render(<FirstWeekCard week={week()} onDismiss={vi.fn()} />);
     expect(
       screen.getByRole("heading", { name: "Your first week" })
     ).toBeInTheDocument();
-    expect(screen.getByText(/Day/).textContent).toBe("Day 1 of 7");
+    // The day, and how many of the week's things are done (Mob2 call 1).
+    expect(dayLine()).toBe("Day 1 of 7 · 2 of 4 done");
     expect(screen.getByText("Finish your first workout").textContent).toMatch(
       /, done$/
     );
@@ -34,6 +41,20 @@ describe("FirstWeekCard", () => {
       /done/
     );
     expect(screen.getByText("1 of 3")).toBeInTheDocument();
+  });
+
+  it("counts what is done as it is done", () => {
+    render(
+      <FirstWeekCard
+        week={week({
+          todayKey: "2026-10-04",
+          runCount: 1,
+          mealCount: 3,
+        })}
+        onDismiss={vi.fn()}
+      />
+    );
+    expect(dayLine()).toBe("Day 3 of 7 · 3 of 4 done");
   });
 
   it("names the day the first recap comes, in en-GB", () => {

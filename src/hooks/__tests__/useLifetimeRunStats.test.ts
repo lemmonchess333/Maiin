@@ -168,6 +168,19 @@ describe("useLifetimeRunStats", () => {
     expect(result.current).toMatchObject({ runCount: 0, totalDistanceM: 0 });
   });
 
+  it("refreshes the first-week run count when Home regains focus", async () => {
+    const { result } = renderHook(() =>
+      useLifetimeRunStats({ refreshOnFocus: true })
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.runCount).toBe(0);
+
+    // A run saved on another device is absent from the first read.
+    seedFirestore({ "users/u1/runs/new": run(5000) });
+    window.dispatchEvent(new Event("focus"));
+    await waitFor(() => expect(result.current.runCount).toBe(1));
+  });
+
   it("`enabled: false` performs NO read at all", async () => {
     // The whole reason the flag exists. Arming a failure on the read and
     // finding it UNFIRED proves the query never ran — asserting on the

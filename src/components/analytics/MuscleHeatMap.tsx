@@ -6,6 +6,8 @@ import BodyMapGlow from "@/components/BodyMapGlow";
 import { getShareTier, getFrequencyForShare } from "./muscleShare";
 import { CATEGORY_DISPLAY, MUSCLE_MAP } from "./muscleGroupTaxonomy";
 import type { GroupRecovery } from "@/lib/muscleRecovery";
+import { muscleShareReading } from "@/lib/historyReadings";
+import ChartReading from "./ChartReading";
 
 interface MuscleData {
   [group: string]: number;
@@ -109,6 +111,11 @@ export default function MuscleHeatMap({
       .sort((a, b) => b[1] - a[1]);
   }, [normalizedData]);
 
+  /* Where the range's sets went, as a share of all of them, in the
+     legend's own group names: "Most sets went to legs: 64 of 180." */
+  const shareText = muscleShareReading(normalizedData);
+  const reading = shareText ? { text: shareText, waiting: false } : null;
+
   /* Phase-2 glow (visual audit W1/W2): the flat tier fills read static —
      especially on OLED dark where they sit dead on the card. Volume becomes
      light: high-share muscles emit a brighter halo that settles first,
@@ -171,35 +178,41 @@ export default function MuscleHeatMap({
       /* The figures are a fixed 124px; the list beside them keeps at
          least 9em and moves under them when it cannot, rather than
          cutting "Chest" to "C" at large text. */
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex shrink-0 gap-1">
-          {renderView("anterior", 60)}
-          {renderView("posterior", 60)}
+      <div className="space-y-3">
+        <ChartReading line={reading} />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex shrink-0 gap-1">
+            {renderView("anterior", 60)}
+            {renderView("posterior", 60)}
+          </div>
+          <ul className="min-w-[min(100%,9em)] flex-1 space-y-2">
+            {trainedGroups.slice(0, 4).map(([group, sets]) => (
+              <li
+                key={group}
+                className="flex items-baseline justify-between gap-2 text-sm"
+              >
+                <span className="truncate text-foreground">{group}</span>
+                {/* One element, for the reason the legend below gives. */}
+                <span className="shrink-0 text-muted-foreground">
+                  <span className="font-mono tabular-nums">{sets}</span>{" "}
+                  {sets === 1 ? "set" : "sets"}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="min-w-[min(100%,9em)] flex-1 space-y-2">
-          {trainedGroups.slice(0, 4).map(([group, sets]) => (
-            <li
-              key={group}
-              className="flex items-baseline justify-between gap-2 text-sm"
-            >
-              <span className="truncate text-foreground">{group}</span>
-              {/* One element, for the reason the legend below gives. */}
-              <span className="shrink-0 text-muted-foreground">
-                <span className="font-mono tabular-nums">{sets}</span>{" "}
-                {sets === 1 ? "set" : "sets"}
-              </span>
-            </li>
-          ))}
-        </ul>
       </div>
     );
   }
 
   return (
     <div className="p-4 rounded-2xl border border-border/50 bg-card">
-      <h3 className="text-sm font-semibold mb-3 text-foreground">
-        Muscle groups trained
-      </h3>
+      <div className="mb-3">
+        <h3 className="text-base font-bold text-foreground">
+          Muscle groups trained
+        </h3>
+        <ChartReading line={reading} className="mt-1" />
+      </div>
       <div className="flex flex-col items-center">
         <div
           style={{

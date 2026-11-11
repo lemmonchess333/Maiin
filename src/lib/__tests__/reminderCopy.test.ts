@@ -12,7 +12,7 @@ it.each([
     .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "")
     .replace(/&apos;|&#39;/g, "'");
   expect(source).not.toMatch(
-    /\blose\b|at risk|don't break|keep your streak alive/i
+    /\blose\b|at risk|don['’]t break|keep your streak alive/i
   );
 });
 
@@ -57,7 +57,8 @@ function serverPushes(): { name: string; title: string; body: string }[] {
 /** Files that write a notification's words inline, as `title:` / `body:`. */
 const INLINE = [
   "src/hooks/useStreakReminder.ts",
-  "src/hooks/useWorkoutReminders.ts",
+  // The workout reminder's words, which its hook schedules.
+  "src/lib/workoutReminderCopy.ts",
   "src/hooks/useMealReminders.ts",
   "src/lib/notifications.ts",
   // The test push Settings sends to check a device.
@@ -97,7 +98,7 @@ describe("reminder and push copy keeps the house voice", () => {
       "Yesterday was a good start 💪",
       "Nice work!",
       "Let's realign this week",
-      "Last week didn't go to plan — tap to adjust your runs.",
+      "Last week didn’t go to plan — tap to adjust your runs.",
       "Please open Tropos",
       "You missed two runs",
     ];

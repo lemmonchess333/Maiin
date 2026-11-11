@@ -56,8 +56,11 @@ export function TrendWeight() {
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
-          <p className="text-lg font-bold text-foreground font-mono tabular-nums">
-            {convert(entry.weight)} {unit}
+          <p className="text-lg font-bold text-foreground font-figure tabular-nums">
+            {convert(entry.weight)}{" "}
+            <span className="font-sans text-sm font-medium text-muted-foreground">
+              {unit}
+            </span>
           </p>
         )}
         <p className="text-xs text-muted-foreground">
@@ -343,6 +346,7 @@ export function TrendWeight() {
               fill="hsl(var(--muted-foreground))"
               opacity={0.7}
               r={3}
+              isAnimationActive={false}
             />
             <Line
               dataKey="trend"
@@ -350,6 +354,7 @@ export function TrendWeight() {
               strokeWidth={2}
               dot={false}
               type="monotone"
+              isAnimationActive={false}
             />
           </ComposedChart>
         </ResponsiveContainer>

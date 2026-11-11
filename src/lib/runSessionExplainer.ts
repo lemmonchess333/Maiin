@@ -12,6 +12,7 @@
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -33,7 +34,38 @@ export interface SessionExplainerInput {
    *  that finishes at it rehearses race day, and a tempo at it practises
    *  the pace, in place of the reasons for a tempo at fitness pace. */
   racePace?: "finish" | "tempo" | null;
+  /** The run is one of the recovery's, after race day (`isRecoveryRunDay`).
+   *  The plan's week counter still points at race week then, so without
+   *  this its runs read as race week's. */
+  inRecovery?: boolean;
 }
+
+/**
+ * Whether a run on `dateKey` belongs to the recovery after race day: the
+ * plan is recovering on that day (`isInRecoveryOn`) and the day comes
+ * after the race. A day of race week before the race is race week's still,
+ * however the plan stands now.
+ */
+export function isRecoveryRunDay(
+  runPlan:
+    | {
+        phase?: string | null;
+        recoveryEndDate?: string | null;
+        raceGoal?: { targetDate?: string } | null;
+      }
+    | null
+    | undefined,
+  dateKey: string | null | undefined
+): boolean {
+  if (!dateKey || !isInRecoveryOn(runPlan, dateKey)) return false;
+  const raceDay = runPlan?.raceGoal?.targetDate;
+  return !raceDay || dateKey > raceDay;
+}
+
+/** Why a recovery run is in the week, in the recovery banner's words
+ *  ("Easy runs only until then, while your legs recover from the race."). */
+export const RECOVERY_RUN_WHY =
+  "Easy runs only for now, while your legs recover from the race.";
 
 /**
  * Whether the week `weekKey` starts holds a tempo or intervals session, the
@@ -65,6 +97,8 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   weekLabel: string | null;
 } {
   const purpose = runSessionExplainer(input);
+  // The recovery has no week of the race plan to name.
+  if (input.inRecovery) return { purpose, weekLabel: null };
   if (
     !purpose ||
     input.currentWeek == null ||
@@ -97,6 +131,9 @@ export function runSessionExplainer(
     distance,
     weekHasQuality,
   } = input;
+  // A recovery week holds easy runs only. Any other run in it is the
+  // person's own choice, with no reason of the plan's to give.
+  if (input.inRecovery) return type === "easy" ? RECOVERY_RUN_WHY : null;
   if (
     currentWeek == null ||
     totalWeeks == null ||
@@ -131,9 +168,9 @@ export function runSessionExplainer(
 
   if (phase === "race") {
     if (type === "race") {
-      return "The whole plan has led to race day. Trust the training you've done.";
+      return "The whole plan has led to race day. Trust the training you’ve done.";
     }
-    return "A short, conversational shakeout for race week. There's nothing left to gain from more.";
+    return "A short, conversational shakeout for race week. There’s nothing left to gain from more.";
   }
 
   if (phase === "taper") {
@@ -148,7 +185,7 @@ export function runSessionExplainer(
       return "A taper sharpener, fast but small, keeps the legs quick while the volume drops.";
     }
     if (type === "long") {
-      return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
+      return "Taper long run — shorter on purpose, so the training you’ve banked shows up fresh.";
     }
     // Run22: the first taper weeks keep a shorter medium-long.
     if (isMediumLong) {
@@ -165,8 +202,8 @@ export function runSessionExplainer(
     return input.racePace === "finish"
       ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
       : weekHasQuality
-        ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
-        : "The week's anchor run — it builds the endurance the race needs.";
+        ? "The week’s anchor run — the long run keeps ramping while quality sharpens around it."
+        : "The week’s anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo" && input.racePace === "tempo") {
     return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
@@ -179,7 +216,7 @@ export function runSessionExplainer(
   }
   // Easy family.
   if (isMediumLong) {
-    return "The week's medium-long run — extra easy volume midweek, so the long run isn't carrying the whole week.";
+    return "The week’s medium-long run — extra easy volume midweek, so the long run isn’t carrying the whole week.";
   }
   if (isStrides) {
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
@@ -188,6 +225,6 @@ export function runSessionExplainer(
     return "Easy running in the base phase is the foundation everything later stands on.";
   }
   return weekHasQuality
-    ? "Easy day — it makes the quality sessions work. If it feels too easy, it's right."
-    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it's right.";
+    ? "Easy day — it makes the quality sessions work. If it feels too easy, it’s right."
+    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it’s right.";
 }

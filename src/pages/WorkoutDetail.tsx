@@ -26,9 +26,19 @@
  * 50 and would 404 on an older session or on a cold deep-link before the
  * snapshot resolves.
  */
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Bookmark,
+  Share2,
+  Users,
+  Check,
+  Dumbbell,
+} from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -48,13 +58,17 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import SetTypeChip from "@/components/workout/SetTypeChip";
+import SupersetTag from "@/components/workout/SupersetTag";
+
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
-import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
+import SaveRoutineSheet from "@/components/social/SaveRoutineSheet";
+import { workoutExercisesToRoutine } from "@/lib/savedRoutines";
+
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { formatKitLoad } from "@/features/program/loadSteps";
@@ -63,6 +77,12 @@ import {
   workoutTitle,
   type Workout,
 } from "@/hooks/useWorkouts";
+
+/* Correcting a workout, with its rules for what a correction may change,
+   loads when it is opened: most visits to this page only read it. */
+const CorrectWorkoutSheet = lazyRetry(
+  () => import("@/components/workout/CorrectWorkoutSheet")
+);
 
 /** Working sets only. Warm-ups are logged on the same list but are not the
  *  session's work, and counting them inflates every set total on the page —
@@ -101,24 +121,35 @@ function setResult(
  *  as it did there (setLabels). */
 function ExerciseRecord({
   exercise,
+  bests,
 }: {
   exercise: Workout["exercises"][number];
+  /** Its sets that were new bests, by their place in the list below. */
+  bests?: ReadonlySet<number>;
 }) {
   const sets = workingSets(exercise);
   const timed = exercise.repUnit === "seconds";
   const liftUnit = useLiftUnit();
   return (
-    <Card padded={false} className="@container">
-      {/* The drawing gives way under 10em of card (double size): beside it
-          the name had a column narrower than "Squat". A long one-word name
-          breaks rather than running out of the card. Wide-first. */}
-      <div className="flex items-center gap-3 p-3">
+    <Card padded={false} className="@container overflow-hidden">
+      {/* At larger text sizes the drawing gives way to the exercise name.
+          A long one-word name
+          breaks rather than running out of the card. Wide-first. The row
+          opens the exercise's own history, as an exercise name does
+          wherever else it is listed. */}
+      <Link
+        to={`/history/exercise/${encodeURIComponent(exercise.exerciseName)}`}
+        className="flex items-center gap-3 p-3 transition-colors active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         <ExerciseThumb
           exerciseId={exercise.exerciseId}
           size="sm"
-          className="@max-[10em]:hidden"
+          className="@max-[12rem]:hidden"
         />
         <div className="min-w-0 flex-1">
+          {exercise.superset !== undefined && (
+            <SupersetTag group={exercise.superset} className="mb-0.5" />
+          )}
           <h3 className="text-base font-semibold text-foreground text-balance break-words hyphens-auto">
             {exercise.exerciseName}
           </h3>
@@ -126,7 +157,11 @@ function ExerciseRecord({
             {sets.length} {sets.length === 1 ? "set" : "sets"}
           </p>
         </div>
-      </div>
+        <ChevronRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+      </Link>
       {sets.length > 0 && (
         <ol className="border-t border-border/40">
           {sets.map((set, i) => {
@@ -152,8 +187,18 @@ function ExerciseRecord({
                   {result.shown}
                 </span>
                 <span className="sr-only">
-                  {`${setName(sets, i)}${kind}: ${result.spoken}`}
+                  {`${setName(sets, i)}${kind}: ${result.spoken}${bests?.has(i) ? ", a new best" : ""}`}
                 </span>
+                {/* Gold means a new best and nothing else (DS3), marked
+                    as the workout screen's tick marks it. */}
+                {bests?.has(i) && (
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto text-caption font-semibold text-achievement-strong"
+                  >
+                    Best
+                  </span>
+                )}
               </li>
             );
           })}
@@ -185,6 +230,7 @@ export default function WorkoutDetail() {
 function WorkoutDetailContent() {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const { user, profile } = useAuth();
   const liftUnit = useLiftUnit();
 
@@ -197,11 +243,34 @@ function WorkoutDetailContent() {
   const [circleOpen, setCircleOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [routineOpen, setRoutineOpen] = useState(false);
   /** Set optimistically once a feed post lands so the button flips to its
    *  "shared" state without a refetch. It belongs to the loaded doc it was
    *  set against: a fresh read (a retry, a correction) supersedes it and the
    *  doc's own `sharedActivityId` shows again, so no effect has to re-seed
    *  it. */
+  /* The sets that were new bests, worked out from the history before
+     this workout (`workoutBests`), loaded on their own after the page.
+     Kept against the doc they were worked out for. */
+  const [bests, setBests] = useState<{
+    doc: Workout & { id: string };
+    sets: Map<number, Set<number>>;
+  } | null>(null);
+  const uid = user?.uid;
+  useEffect(() => {
+    if (!uid || !workout) return;
+    let live = true;
+    import("@/lib/workoutBests")
+      .then(({ loadWorkoutBests }) => loadWorkoutBests(uid, workout))
+      .then((sets) => {
+        if (live) setBests({ doc: workout, sets });
+      })
+      // Unread, no set is marked: the sets themselves are all still there.
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [uid, workout]);
   const [sharedOverride, setSharedOverride] = useState<{
     doc: Workout & { id: string };
     id: string;
@@ -224,10 +293,10 @@ function WorkoutDetailContent() {
         loadingLabel="Loading workout"
         missingHeadline="Workout not found"
         missingSub="It may have been deleted, or the link belongs to another account."
-        failedHeadline="Couldn't load this workout"
+        failedHeadline="Couldn’t load this workout"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retry}
-        backHref="/history"
+        backHref={historyReturnTo ?? "/history"}
         backLabel="History"
       />
     );
@@ -253,8 +322,13 @@ function WorkoutDetailContent() {
   ];
 
   const title = workoutTitle(workout);
+  const routineExercises = workoutExercisesToRoutine(exercises);
 
-  const dateObj = workout.createdAt?.toDate?.() ?? parseLocalDate(workout.date);
+  /* The day it started (Lift3), the day every count holds it on. The
+     save's own time is no date for it: a session that ran past midnight,
+     one saved later offline, or one whose start was said to be earlier on
+     the finish screen (Mob2 call 12) is saved on a later day. */
+  const dateObj = parseLocalDate(workout.date);
   const dateStr = dateObj.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -285,7 +359,7 @@ function WorkoutDetailContent() {
               nothing to make it grow, the title column shrank to a letter
               a line beside the button. */}
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-            <div className="min-w-[min(100%,8em)] flex-1">
+            <div className="min-w-[min(100%,8rem)] flex-1">
               <p className="text-sm font-bold text-lifting-strong">Lift</p>
               <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words hyphens-auto">
                 {title}
@@ -303,11 +377,10 @@ function WorkoutDetailContent() {
           <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
 
-        {/* One figure per row under 15em of page (larger text, from 1.35x
-            on a 393px phone): a third of it no longer held "minutes", or a
-            heavy session's "12,480". Wide-first. */}
+        {/* As on the finish screen, stack the figures when a row cannot
+            hold their values and units at the current text size. */}
         <div className="@container">
-          <div className="grid grid-cols-3 divide-x divide-border @max-[15em]:grid-cols-1 @max-[15em]:gap-y-3 @max-[15em]:divide-x-0">
+          <div className="grid grid-cols-3 divide-x divide-border @max-[20rem]:grid-cols-1 @max-[20rem]:gap-y-3 @max-[20rem]:divide-x-0">
             {figures.map((figure) => (
               <StatFigure
                 key={figure.unit}
@@ -330,7 +403,11 @@ function WorkoutDetailContent() {
             />
           ) : (
             exercises.map((ex, i) => (
-              <ExerciseRecord key={`${ex.exerciseId}-${i}`} exercise={ex} />
+              <ExerciseRecord
+                key={`${ex.exerciseId}-${i}`}
+                exercise={ex}
+                bests={bests?.doc === workout ? bests.sets.get(i) : undefined}
+              />
             ))
           )}
         </section>
@@ -347,6 +424,19 @@ function WorkoutDetailContent() {
               onClick={() => setEditOpen(true)}
             >
               Correct workout
+            </Button>
+          )}
+          {/* Keep this session to run again. A person who never posts had
+              no way to save their own workout as a routine: the only one
+              was a post's menu. */}
+          {user && routineExercises.length > 0 && (
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => setRoutineOpen(true)}
+              leftIcon={<Bookmark className="size-4 shrink-0" />}
+            >
+              Save as routine
             </Button>
           )}
           {sharedActivityId ? (
@@ -395,15 +485,29 @@ function WorkoutDetailContent() {
       </div>
 
       {user && editOpen && (
-        <CorrectWorkoutSheet
-          uid={user.uid}
-          workout={workout}
-          unit={liftUnit}
-          onClose={() => setEditOpen(false)}
-          onSaved={() => {
-            setEditOpen(false);
-            retry();
-          }}
+        <Suspense fallback={null}>
+          <CorrectWorkoutSheet
+            uid={user.uid}
+            workout={workout}
+            unit={liftUnit}
+            onClose={() => setEditOpen(false)}
+            onSaved={() => {
+              setEditOpen(false);
+              retry();
+            }}
+          />
+        </Suspense>
+      )}
+      {user && routineOpen && (
+        <SaveRoutineSheet
+          open
+          onClose={() => setRoutineOpen(false)}
+          defaultName={title}
+          {...(sharedActivityId ? { sourceActivityId: sharedActivityId } : {})}
+          sourceAuthorId={user.uid}
+          sourceAuthorName={profile?.displayName || "Athlete"}
+          sourceWorkoutName={title}
+          exercises={routineExercises}
         />
       )}
       <ShareCardSheet
@@ -414,6 +518,7 @@ function WorkoutDetailContent() {
           handle: profile?.displayName || "Athlete",
           date: shortDate,
           totalVolumeKg: tonnage,
+          totalReps,
           exerciseCount: exercises.length,
           durationSec: (workout.durationMinutes ?? 0) * 60,
         }}

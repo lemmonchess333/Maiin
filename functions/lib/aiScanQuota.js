@@ -11,11 +11,15 @@
  *
  * The free plan has no AI: Apple's 7-day trial is how someone tries it.
  *
- * Window: 24 h, anchored to the user's LOCAL midnight when a
- * `timezone` field is set on the user doc (IANA name, e.g.
- * "Europe/London"), else UTC fallback. The window-key is the date
- * portion (`YYYY-MM-DD`) in the resolved zone; the counter resets
- * when the resolved date string changes.
+ * Window: the UTC day. The key is the UTC date (`YYYY-MM-DD`), and the
+ * counter resets when it changes, at 00:00 UTC for everyone. Not the
+ * person's own midnight: the only zone the server has is `timezone` on
+ * the user doc, which the client writes, so a quota keyed on it would
+ * start a fresh day whenever the client changed zone (Pacific/Kiritimati
+ * and Pacific/Pago_Pago never share a date). The cost is that the count
+ * starts again at a local time that is not midnight for most people, so
+ * the app names that time where it shows the count
+ * (src/lib/scanQuotaDay.ts).
  *
  * Trial bypass: `computeEffectiveTier` returns "pro" while the
  * trial is active (Sub1a P1 maps Stripe `trialing` → `subscriptionTier: "pro"`),
@@ -23,11 +27,11 @@
  *
  * Storage: `scanUsage/{uid}` doc, shape
  *   {
- *     text_ai:  { day: "YYYY-MM-DD", count: number },
+ *     text_ai:  { day: "YYYY-MM-DD", count: number },  // UTC day
  *     image_ai: { day: "YYYY-MM-DD", count: number },
- *     timezone: "Europe/London" | null,
  *     updatedAt: serverTimestamp,
  *   }
+ * (Older documents also carry a `timezone`, which nothing reads.)
  *
  * Old shape `{ count, month }` (pre-F1b monthly counter) is read as
  * count=0 — equivalent to no usage today. Legacy users get a
@@ -38,7 +42,9 @@
  * src/lib/subscription.ts `DAILY_AI_LIMITS`, and this is the copy that
  * ACTUALLY allows or denies a scan — the client copy only decides whether
  * to render the Scan-Meal CTA or an upgrade prompt. Pinned byte-identical
- * by src/lib/__tests__/aiScanQuota.parity.cross.test.ts.
+ * by src/lib/__tests__/aiScanQuota.parity.cross.test.ts. `quotaDayKey`
+ * mirrors src/lib/scanQuotaDay.ts `scanQuotaDayKey`, which the client
+ * reads the count by; the same cross-test pins the two to one day.
  *
  * That cross-test existed for months before this paragraph did, and the
  * mirror gate could not see it: the declaration lived only on the CLIENT
@@ -51,6 +57,7 @@
 
 const admin = require("firebase-admin");
 const { computeEffectiveTier } = require("./../helpers");
+const { utcDateString } = require("./dateUtils");
 
 const ACTION_TEXT_AI = "text_ai";
 const ACTION_IMAGE_AI = "image_ai";
@@ -62,35 +69,9 @@ const DAILY_LIMITS = Object.freeze({
   pro: { text_ai: 100, image_ai: 100 },
 });
 
-/**
- * Resolve the "today" key in the user's local timezone. The string
- * is just a stable bucket identifier — no time arithmetic depends
- * on it being parseable.
- *
- * - Valid IANA timezone: format `YYYY-MM-DD` in that zone via
- *   Intl.DateTimeFormat with `timeZone` option.
- * - Missing / invalid timezone: fall back to UTC. UTC is the
- *   defence-in-depth choice — a misconfigured profile shouldn't
- *   gift the user a free window-rollover by accident.
- */
-function resolveDayKey(timezone, now = new Date()) {
-  try {
-    if (timezone && typeof timezone === "string") {
-      const fmt = new Intl.DateTimeFormat("en-CA", {
-        timeZone: timezone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
-      // en-CA produces YYYY-MM-DD natively.
-      return fmt.format(now);
-    }
-  } catch (_) {
-    // Fall through to UTC. Intl.DateTimeFormat throws RangeError
-    // on unknown IANA names — that's the only case we need to
-    // handle; everything else surfaces as "Invalid Date".
-  }
-  return now.toISOString().slice(0, 10);
+/** The day a scan counts against: the UTC date at `now`. See the header. */
+function quotaDayKey(now = new Date()) {
+  return utcDateString(now);
 }
 
 /**
@@ -127,7 +108,7 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
         return { allowed: false, remaining: 0, limit, tier };
       }
 
-      const dayKey = resolveDayKey(userData?.timezone, now);
+      const dayKey = quotaDayKey(now);
       const usageSnap = await tx.get(usageRef);
       const usageData = usageSnap.exists ? usageSnap.data() : {};
       const actionState = usageData[action];
@@ -150,7 +131,6 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
         usageRef,
         {
           [action]: nextActionState,
-          timezone: userData?.timezone ?? null,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -185,9 +165,21 @@ async function checkDailyAiQuota(db, { uid, action, now = new Date() } = {}) {
  * the day's scan all the same, and a free account has one. A 4xx the
  * request caused keeps the charge, so a bad request cannot be retried for
  * free. Never throws: the refund is not the response.
+ *
+ * 401, 403 and 404 are ours too: the server's own credentials refused, or
+ * a model or region that is not served. Nothing in a photo or a typed meal
+ * causes them, and the first TestFlight scans each cost a scan for a 4xx
+ * of that kind.
  */
+const OUR_OWN_MODEL_REFUSALS = [401, 403, 404];
+
 function isServiceFailure(modelStatus) {
-  return modelStatus === undefined || modelStatus === 429 || modelStatus >= 500;
+  return (
+    modelStatus === undefined ||
+    modelStatus === 429 ||
+    modelStatus >= 500 ||
+    OUR_OWN_MODEL_REFUSALS.includes(modelStatus)
+  );
 }
 
 async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
@@ -220,8 +212,14 @@ async function refundDailyAiQuota(db, { uid, action, dayKey } = {}) {
   }
 }
 
-/** What the person is told when the scan failed after it was counted. */
+/**
+ * What the person is told when the scan failed after it was counted. The
+ * model's own status rides along as `modelStatus` when there is one, so the
+ * app's step list can show it: a status code, nothing from the request or
+ * the answer. Without it, a refused scan reads only "server answered 500".
+ */
 function failedScanResponse(modelStatus) {
+  const status = typeof modelStatus === "number" ? { modelStatus } : {};
   if (modelStatus === 429) {
     return {
       status: 503,
@@ -229,6 +227,7 @@ function failedScanResponse(modelStatus) {
         error: "ai-busy",
         message:
           "Food analysis is busy right now. Try again in a minute. This one didn't use a scan.",
+        ...status,
       },
     };
   }
@@ -239,8 +238,13 @@ function failedScanResponse(modelStatus) {
           error: "ai-failed",
           message:
             "Couldn't analyse this. Try again. This one didn't use a scan.",
+          ...status,
         }
-      : { error: "ai-failed", message: "Couldn't analyse this. Try again." },
+      : {
+          error: "ai-failed",
+          message: "Couldn't analyse this. Try again.",
+          ...status,
+        },
   };
 }
 
@@ -252,6 +256,6 @@ module.exports = {
   ACTION_IMAGE_AI,
   VALID_ACTIONS,
   DAILY_LIMITS,
-  resolveDayKey,
+  quotaDayKey,
   checkDailyAiQuota,
 };

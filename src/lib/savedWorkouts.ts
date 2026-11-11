@@ -68,6 +68,11 @@ export interface WorkoutExercise {
   sets: WorkoutSet[];
   /** Immutable number of working sets prescribed at session start. */
   plannedSetCount?: number;
+  /** The superset it was done in (Mob1 call 2): 1 for the session's first
+   *  group, 2 for its second. Absent for an exercise done on its own, and
+   *  on every workout before supersets. */
+  superset?: number;
+
   caloriesBurned: number;
   // Cardio-specific (optional)
   durationMinutes?: number;

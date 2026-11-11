@@ -77,6 +77,8 @@ export interface ProfileFieldEntry {
 }
 
 export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
+  { field: "activationBillingFirsts", sanitized: false, serverOnly: true },
+  { field: "activationJourneyVersion", sanitized: false, serverOnly: true },
   { field: "activityLevel", sanitized: true },
   { field: "adaptiveCapState", sanitized: true },
   { field: "adjustCaloriesForTraining", sanitized: true },
@@ -98,7 +100,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     field: "appleProductId",
     sanitized: false,
     serverGuarded: true,
-    undeclared: "Apple IAP product id, written by verifyApplePurchase",
+    undeclared:
+      "Apple IAP product id; nothing writes it now, an older account may carry it",
   },
   // Polish2 call 4: Settings → Privacy → Approve followers. Value-gated in
   // firestore.rules (`approveFollowersValid`), which also reads it to
@@ -146,12 +149,25 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "hideSharedRouteEnds", sanitized: true },
   { field: "hideWeightNumber", sanitized: true },
   { field: "injuries", sanitized: true },
+  // Soc15 invites: the person's own code, written only by getInviteCode,
+  // and when they joined from someone's, written only by redeemInvite. A
+  // client that could write the first could claim any code, and one that
+  // could clear the second could join from a second invite.
+  { field: "inviteCode", sanitized: false, serverOnly: true },
+  { field: "invitedAt", sanitized: false, serverOnly: true },
+  // Whose invite it was: a block of this account by them renews their code.
+  // A client that could write it could renew someone else's by blocking.
+  { field: "invitedBy", sanitized: false, serverOnly: true },
   {
     field: "lastActiveAt",
     sanitized: false,
     undeclared: "activity timestamp written by the Firestore triggers",
   },
   { field: "lastLogDate", sanitized: true },
+  // Soc15 call 3: in the weekly leagues or not. Written only by the
+  // setLeagueSharing callable, which keeps the membership
+  // (leagueMembers/{uid}) in step with the answer.
+  { field: "leagueOptIn", sanitized: false, serverOnly: true },
   { field: "liftTimeBudgetMinutes", sanitized: true },
   // Lift18: the unit lifting loads are shown in; loads stay stored in kg.
   { field: "liftingWeightUnit", sanitized: true },
@@ -170,6 +186,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // Stamped by `completeOnboarding` alone: the day setup finished, which a
   // new runner's first weeks count from.
   { field: "onboardingCompletedAt", sanitized: false, serverOnly: true },
+  { field: "onboardingPlatform", sanitized: false, serverOnly: true },
+  { field: "onboardingSport", sanitized: false, serverOnly: true },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },
@@ -198,6 +216,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // setBoardSharing callable, which keeps the tally (friendsBoard/{uid})
   // in step with the answer.
   { field: "showWeekOnBoard", sanitized: false, serverOnly: true },
+  // Run9's starter goal (30 minutes without stopping). Value-gated in
+  // firestore.rules (`starterGoalValid`); the programme's transaction writes
+  // it when the goal is finished.
+  { field: "starterGoal", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },

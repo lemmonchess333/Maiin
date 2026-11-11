@@ -26,7 +26,7 @@
  *   - neutral   translucent white surface (lock, pause, stop)
  *   - primary   THEME.running filled (resume — go-action)
  *
- * The optional visible label below the button (e.g. "LOCK", "PAUSE")
+ * The optional visible label below the button (e.g. "Lock", "Pause")
  * is rendered when `label` is provided. The button's aria-label is
  * still required separately so screen readers get a clear action
  * name independent of visible decoration.
@@ -46,7 +46,8 @@ type RunControlButtonProps = Omit<
   "aria-label": string;
   variant?: RunControlVariant;
   size?: RunControlSize;
-  /** Visible label below the button (e.g. "PAUSE"). Decorative —
+  /** Visible label below the button (e.g. "Pause"), sentence case like
+   *  every caption on the run screen. Decorative —
    *  the aria-label remains the screen-reader source of truth. */
   label?: string;
   /** The icon / glyph rendered inside the circle. Sized by the
@@ -118,10 +119,7 @@ function variantStyle(
   }
 }
 
-const LABEL_CLASSES = [
-  "uppercase tracking-widest leading-none",
-  "select-none",
-].join(" ");
+const LABEL_CLASSES = "leading-none select-none";
 
 function RunControlButton({
   variant = "neutral",
@@ -155,14 +153,13 @@ function RunControlButton({
           aria-hidden="true"
           className={LABEL_CLASSES}
           style={{
-            /* D18. These are the LOCK / PAUSE / HOLD captions, and they
+            /* D18. These are the Lock / Pause / Finish captions, and they
                measured 2.22:1 at 9px on `run-hud-active.png` — the same
                defect as the sheet's own captions, missed on the first pass
                because this component lives in `ui/` rather than `run/`,
                which is where both the transform and the guard were looking.
                Same role, same treatment. */
             ...HUD_CAPTION,
-            letterSpacing: "0.08em",
           }}
         >
           {label}

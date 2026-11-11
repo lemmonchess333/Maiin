@@ -1,0 +1,194 @@
+{
+  "exerciseId": "assault-bike",
+  "version": "anatomy-v4-2026-10-28-posed-air-bike-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native, biomechanics, and 393×852 player review",
+  "reviewedAt": "2026-10-28T00:32:03.841Z",
+  "reference": {
+    "path": "form-frames/assault-bike/2026-10-28/1.webp",
+    "sha256": "c5bec20b1ade77eadb5b08620edc524d82f2d0eba00f08ab31d8b84a194d9ce0"
+  },
+  "cueSha256": "0c36c50977c4f8387508f166eb7a4ac902fbe7ecb746e8797612116eb1ad4167",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All six 1024px frames retain the same faceless white anatomical rider, white trainers, graphite air bike, and violet quadriceps/glute and shoulder regions. No body part or machine component changes identity across poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One fixed orthographic camera and 1024×1024 canvas. The fixed fan hub center is (272.338,627.086) and the rear floor-foot corner is (860.199,901.836) in all six Blender projections; both drift 0px."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Rider stays seated with stable hips, upright trunk, bent elbows and alternating knee extension. Shorts and sneakers remain fitted; no detached wrist, foot, or muscle meshes in native or 360px review."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One fan cage and six blades, one seat and console, two moving handle levers and two opposed cranks/pedals. The fixed cage's 351.991px vertical diameter and floor-foot 791.031px span vary 0% across frames."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands visibly wrap their respective moving rubber grips, both shoes remain on separate pedals, and hips stay on the saddle. Seven-key rig audit finds finger-hook surface gap ≤12.05mm (~1.7 phone px), shoe/pedal vertical difference ≤6.62mm (~0.9 phone px), and seated hip drift 0."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Opposed pedals, cranks, and handles advance through six distinct phases while the fan rotor turns; cage, base, seat, and console stay fixed. Fan apparent angle advances 0°,10°,20°,30°,40°,50°, then 0° under six-blade symmetry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "The bilateral quadriceps and glute regions remain violet as the primary drive; smaller shoulder fields remain secondary. Highlights stay attached to the rider rather than transferring onto the fan or frame."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The six authored captions progress from forward drive through bottom turn, back sweep, side switch, top turn, and return. Each describes the visible continuing pedal and opposing handle cycle, with the rider seated and feet on pedals."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six unique 1024px poses and the 6→1 return were reviewed at 360px. A seventh keyed phase exactly repeats frame 1; the closing pedal travel matches neighboring phase steps and the rotor's visible 10° step continues through the wrap."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "The six candidate WebPs decoded and returned from frame 6 to frame 1 in the actual 393×852 light-theme ExerciseFormFrames player. Artwork and captions remained visible, with no horizontal overflow or browser page/console error."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "The six candidate WebPs decoded and returned from frame 6 to frame 1 in the actual 393×852 dark-theme ExerciseFormFrames player. Artwork and captions remained visible, with no horizontal overflow or browser page/console error."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/assault-bike/2026-10-28/1.webp",
+      "sha256": "c5bec20b1ade77eadb5b08620edc524d82f2d0eba00f08ab31d8b84a194d9ce0",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/1.png",
+        "sha256": "7b316149b69a0c3582be570fc804fe14ef327883c553742869ec84e19e095dcc"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2026-10-28/2.webp",
+      "sha256": "828ed336e60263ee70169eb80f6bf717bf594fa95766a1176a75333b205974ac",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/2.png",
+        "sha256": "5f3155410cb702f0bbaa87fdfec5db700e8872d1c4989999c2ae7c343dea249d"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2026-10-28/3.webp",
+      "sha256": "41e43c562d5e94a0094ba49967d37f1d5c0ac2a426906ca902bb55469d759ee6",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/3.png",
+        "sha256": "2a4b058daffa497591f617638682c9ab5231d6f4145d3f64a8f110316f02d72e"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2026-10-28/4.webp",
+      "sha256": "19db4fff51a287a9af0c6541a053d98fdab86728450413d86a3384f192bbe3f0",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/4.png",
+        "sha256": "60bebc89f45e1f45c38df22375c20dae52a7a2984bc672f2d2f63bd3d5b207e1"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2026-10-28/5.webp",
+      "sha256": "c3c100c5df552f81b8eb2f56e81a547e0ec9a3ccd64a296160e82f9b25ea3cc6",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/5.png",
+        "sha256": "3b4e777a643732151528e3c9ca7f44ed679d4e84369fa0cde4a5287583359ce1"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2026-10-28/6.webp",
+      "sha256": "43e5e6633fc8ba79a48cbc8fcf35ad611c2b32c3aa857a61ecac0c5959746ddd",
+      "anchors": {
+        "fanHubCenter": {
+          "x": 272.338,
+          "y": 627.086
+        },
+        "nearRearFloorFootVisibleTopCorner": {
+          "x": 860.199,
+          "y": 901.836
+        }
+      },
+      "invariantDimensions": {
+        "nearFanCageOuterVerticalDiameter": 351.991,
+        "nearFloorFootCenterSpan": 791.031
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/redraw-20261028/assault-bike/6.png",
+        "sha256": "6e2eb57fec1c3a25192b6179effde90a755eaeaaeb71d534351d0b5a52988fca"
+      }
+    }
+  ]
+}

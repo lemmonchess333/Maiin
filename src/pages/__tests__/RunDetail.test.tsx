@@ -19,6 +19,7 @@ import {
 import { restoreRealTimers } from "@/test/fakeTimers";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { totalDistance, type GPSPoint } from "@/lib/gps";
+import { runTitle } from "@/lib/runLabels";
 
 const h = vi.hoisted(() => ({
   run: null as Record<string, unknown> | null,
@@ -63,6 +64,11 @@ vi.mock("@/components/share/ShareCardSheet", () => ({
 }));
 vi.mock("@/components/session/DeleteSessionAction", () => ({
   default: () => null,
+}));
+const renameRun = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/runRename", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/runRename")>()),
+  renameRun,
 }));
 
 import RunDetail from "../RunDetail";
@@ -127,6 +133,15 @@ beforeEach(() => {
 });
 afterEach(() => cleanup());
 
+describe("RunDetail — recorded day", () => {
+  it("shows the original run day when saving happened later", () => {
+    h.run = savedRun({ date: "2026-09-20" });
+    renderDetail();
+    expect(screen.getByText(/20 September 2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/3 October 2026/)).toBeNull();
+  });
+});
+
 describe("RunDetail — best efforts", () => {
   it("lists the efforts found in the kept track", () => {
     h.run = savedRun();
@@ -179,6 +194,22 @@ describe("RunDetail — best efforts", () => {
     // POSITIVE anchor: the page says why the run is set apart.
     expect(screen.getByText("Saved despite invalid metrics")).toBeVisible();
     expect(screen.queryByText("Best efforts")).toBeNull();
+  });
+});
+
+describe("RunDetail — grade-adjusted pace", () => {
+  /* Owner, 1 Nov 2026: "Grade-adjusted pace 8:44 /km — flat-equivalent
+     for this climb". A statement and its explanation joined by a dash is
+     the rhythm the house voice retires (DESIGN_GUIDE §3g); the dash was
+     never a genuine aside here. */
+  it("says what the pace is in one sentence, with no dash", () => {
+    h.run = savedRun({ elevationGain: 60 });
+    renderDetail();
+    const line = screen.getByText(/^Grade-adjusted pace/);
+    expect(line.textContent).toMatch(
+      /^Grade-adjusted pace \d+:\d{2} \/km: the flat-ground equivalent of this climb$/
+    );
+    expect(line.textContent).not.toContain("\u2014");
   });
 });
 
@@ -352,5 +383,60 @@ describe("RunDetail — the map follows the theme on screen", () => {
       await Promise.resolve();
     });
     expect(h.mapProps.at(-1)?.darkMode).toBe(true);
+  });
+});
+
+/* Mob2 call 1: a saved run can be renamed on its page. The page heads
+   with the name the run was saved and posted under. */
+describe("RunDetail — the run's name", () => {
+  beforeEach(() => {
+    renameRun.mockReset();
+  });
+
+  it("heads the page with the run's name", () => {
+    h.run = savedRun({ name: "Parkrun with Sam" });
+    renderDetail();
+    expect(screen.getByText("Parkrun with Sam")).toBeVisible();
+  });
+
+  it("reads a run saved before runs were named as its type", () => {
+    h.run = savedRun({ activityType: "tempo" });
+    renderDetail();
+    expect(screen.getByText(runTitle({ activityType: "tempo" }))).toBeVisible();
+  });
+
+  it("says a named treadmill run was on the treadmill", () => {
+    h.run = savedRun({ name: "Morning run", place: "treadmill" });
+    renderDetail();
+    expect(screen.getByText(/· Treadmill$/)).toBeVisible();
+  });
+
+  it("renames the run from a sheet, and heads the page with the new name", async () => {
+    renameRun.mockImplementation(
+      async (_uid: string, _id: string, typed: string) => typed.trim()
+    );
+    h.run = savedRun({ name: "Morning run" });
+    renderDetail();
+    fireEvent.click(screen.getByRole("button", { name: "Rename run" }));
+    const field = await screen.findByRole("textbox", { name: "Run name" });
+    expect(field).toHaveValue("Morning run");
+    // Save waits for a name that differs from the run's.
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.change(field, { target: { value: " Hill reps " } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    });
+    expect(renameRun).toHaveBeenCalledTimes(1);
+    expect(renameRun).toHaveBeenCalledWith("runner", "run-1", " Hill reps ");
+    expect(await screen.findByText("Hill reps")).toBeVisible();
+  });
+
+  it("says a shared run's post takes the new name", async () => {
+    h.run = savedRun({ name: "Morning run", sharedActivityId: "post-1" });
+    renderDetail();
+    fireEvent.click(screen.getByRole("button", { name: "Rename run" }));
+    expect(
+      await screen.findByText("Your post takes the new name too.")
+    ).toBeVisible();
   });
 });

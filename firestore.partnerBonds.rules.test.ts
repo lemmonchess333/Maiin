@@ -16,6 +16,10 @@
  * what stays: `update` is server-only (the engine's state is written by
  * the Admin SDK), and either member may still end a bond.
  *
+ * Reads: a member reads the bond, and either of a pair reads the pair's id
+ * before there is a bond and gets nothing back, which is how the app
+ * learns to offer one. Nobody else may ask about two other people.
+ *
  * Run: `npm run test:rules`. Skipped when FIRESTORE_EMULATOR_HOST is unset
  * so a plain `npm test` still passes, and a hard failure when CI sets
  * REQUIRE_FIRESTORE_EMULATOR=1 — the same guard its sibling suites use, so
@@ -149,6 +153,47 @@ suite("partnerBonds rules", () => {
     const c = env.authenticatedContext("user-c").firestore();
     await assertFails(getDoc(doc(c, "partnerBonds", BOND)));
     await assertFails(deleteDoc(doc(c, "partnerBonds", BOND)));
+  });
+
+  it("lets either of the pair read a bond that does not exist yet, as nothing", async () => {
+    /* getBond reads the pair's id to learn whether to offer a streak.
+       Refused here (the members check errors on a missing document), the
+       app settled every pair as not eligible and never offered one. */
+    for (const uid of [A, B]) {
+      const db = env.authenticatedContext(uid).firestore();
+      const snap = await assertSucceeds(getDoc(doc(db, "partnerBonds", BOND)));
+      expect(snap.exists()).toBe(false);
+    }
+  });
+
+  it("refuses anyone else asking whether two other people have a bond", async () => {
+    // No existence oracle: user-c learns nothing about A and B's pair,
+    // nor about an id that names nobody, or names user-c with no pair.
+    const c = env.authenticatedContext("user-c").firestore();
+    await assertFails(getDoc(doc(c, "partnerBonds", BOND)));
+    await assertFails(getDoc(doc(c, "partnerBonds", "bond-2")));
+    await assertFails(getDoc(doc(c, "partnerBonds", "user-c")));
+    await assertFails(getDoc(doc(c, "partnerBonds", `${A}__user-c__${B}`)));
+    await assertFails(
+      getDoc(
+        doc(env.unauthenticatedContext().firestore(), "partnerBonds", BOND)
+      )
+    );
+  });
+
+  it("still decides an existing bond by its members, whatever its id says", async () => {
+    /* A stored bond is read by the members it holds, as before: a caller
+       the id names but the document does not is refused. */
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "partnerBonds", `${A}__user-c`),
+        bondDoc()
+      );
+    });
+    const c = env.authenticatedContext("user-c").firestore();
+    await assertFails(getDoc(doc(c, "partnerBonds", `${A}__user-c`)));
+    const a = env.authenticatedContext(A).firestore();
+    await assertSucceeds(getDoc(doc(a, "partnerBonds", `${A}__user-c`)));
   });
 });
 

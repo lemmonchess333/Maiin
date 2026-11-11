@@ -56,7 +56,7 @@ describe("profileBarbell", () => {
 });
 
 describe("frontalBarbell", () => {
-  it("spans both grips — grip width IS bar width", () => {
+  it("spans both grips at the default sleeve length", () => {
     const left: Pt = [14, 20];
     const right: Pt = [86, 20];
     const [shaft] = lines(frontalBarbell(left, right, 9));
@@ -75,6 +75,19 @@ describe("frontalBarbell", () => {
   it("hangs a plate off each sleeve", () => {
     const svg = frontalBarbell([14, 20], [86, 20], 9);
     expect((svg.match(/<ellipse/g) ?? []).length).toBe(4); // 2 per plate
+  });
+
+  it("keeps plates outboard of a close grip on a declared full-length bar", () => {
+    const left: Pt = [41, 66];
+    const right: Pt = [59, 66];
+    const svg = frontalBarbell(left, right, 10, 45);
+    const [shaft] = lines(svg);
+    expect(shaft).toEqual([5, 66, 95, 66]);
+    const plateXs = [
+      ...svg.matchAll(/<ellipse cx="(-?[\d.]+)"/g),
+    ].map((match) => Number(match[1]));
+    expect(Math.max(...plateXs.filter((x) => x < 50))).toBeLessThan(left[0] - 20);
+    expect(Math.min(...plateXs.filter((x) => x > 50))).toBeGreaterThan(right[0] + 20);
   });
 });
 

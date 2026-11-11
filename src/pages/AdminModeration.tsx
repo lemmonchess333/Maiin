@@ -11,7 +11,9 @@
  *   - List of pending reports, newest first, capped at 50
  *   - Per-report card showing reason, reporter, target preview
  *     (joined server-side so the page doesn't need read access
- *     to /reports/ or to other users' activities)
+ *     to /reports/ or to other users' activities), with a reported
+ *     post's photos as thumbnails (Soc15 call 2), so the moderator sees
+ *     the post as its readers did
  *   - "Dismiss" — mark resolved, leave target alone
  *   - "Hide content" — mark resolved AND take the reported content out
  *     of the app: an activity is flagged and made private; a comment
@@ -56,6 +58,9 @@ interface ReportTarget {
   body?: string | null;
   spaceId?: string;
   postId?: string;
+  /** A reported post's photos (Soc15 call 2): the download URLs of its own
+   *  uploads only, resolved by the server (functions/lib/postPhotos.js). */
+  photos?: string[];
 }
 
 interface Report {
@@ -133,6 +138,19 @@ async function readPendingReports(): Promise<Report[]> {
   );
   const result = await callable({});
   return result.data.reports;
+}
+
+/** The reported post's photos the page shows: strings from the server's
+ *  own list, which takes only the post's own uploads, at most four. */
+function targetPhotos(report: Report): string[] {
+  const photos = report.target?.photos;
+  if (!Array.isArray(photos)) return [];
+  return photos
+    .filter(
+      (url): url is string =>
+        typeof url === "string" && url.startsWith("https://")
+    )
+    .slice(0, 4);
 }
 
 function targetPreview(report: Report): string {
@@ -347,7 +365,7 @@ export default function AdminModeration() {
               >
                 <header className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-xs text-muted-foreground font-semibold">
                       {report.targetType
                         ? TARGET_LABEL[report.targetType]
                         : (report.reportedTargetType ?? "unknown")}{" "}
@@ -366,6 +384,31 @@ export default function AdminModeration() {
                   <p className="text-sm text-foreground break-words">
                     {targetPreview(report)}
                   </p>
+                  {targetPhotos(report).length > 0 && (
+                    <ul
+                      aria-label="Photos on the reported post"
+                      className="mt-2 grid grid-cols-4 gap-2"
+                    >
+                      {targetPhotos(report).map((url, i, all) => (
+                        <li key={url}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block aspect-square overflow-hidden rounded-lg bg-muted"
+                          >
+                            <img
+                              src={url}
+                              alt={`Reported post, ${i + 1} of ${all.length}`}
+                              loading="lazy"
+                              decoding="async"
+                              className="size-full object-cover"
+                            />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {report.target?.flagged === true && (
                     <p className="text-caption text-warning-strong mt-1.5 font-medium">
                       Already flagged by auto-filter
@@ -420,7 +463,7 @@ export default function AdminModeration() {
                       onClick={() =>
                         void resolveReport(report.reportId, false, true)
                       }
-                      aria-label="Restrict user — they can't post, comment or follow anyone until the restriction is lifted."
+                      aria-label="Restrict user — they can’t post, comment or follow anyone until the restriction is lifted."
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <UserX className="size-3.5" aria-hidden="true" />

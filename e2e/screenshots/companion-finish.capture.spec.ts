@@ -111,11 +111,24 @@ for (const budget of [null, 30] as const) {
         });
       }
       await page.getByRole("radio", { name: /Training for a race/ }).click();
-      await page
-        .getByRole("button", { name: "Add starting point", exact: true })
-        .click();
-      await page.getByLabel("Recent minutes per week").fill("90");
-      await page.getByLabel("Longest recent run, min").fill("30");
+      // A race with no starting point asks for one: the questions open on
+      // their own, or behind Add starting point. The button also shows
+      // while the recorded runs are being read, and gives way to the
+      // questions once they are in (RunPlanSettings' fillsStart), so a
+      // click on it can wait for a button that has gone for good. Click it
+      // only while it stays, until the questions are there.
+      const addStart = page.getByRole("button", {
+        name: "Add starting point",
+        exact: true,
+      });
+      const minutes = page.getByLabel("Minutes a week", { exact: true });
+      await expect(async () => {
+        if (await addStart.isVisible())
+          await addStart.click({ timeout: 1_000 });
+        await expect(minutes).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 30_000 });
+      await minutes.fill("90");
+      await page.getByLabel("Longest run, min", { exact: true }).fill("30");
       const baseline = page.getByRole("region", {
         name: "Running starting point",
       });
@@ -131,12 +144,10 @@ for (const budget of [null, 30] as const) {
       }
       await page.goto("program");
       await page.goto("settings/run-plan");
-      await expect(page.getByLabel("Recent minutes per week")).toHaveValue(
-        "90"
-      );
-      await expect(page.getByLabel("Longest recent run, min")).toHaveValue(
-        "30"
-      );
+      // A saved start reads back as its summary.
+      await expect(
+        page.getByRole("region", { name: "Running starting point" })
+      ).toContainText("about 90 min a week, longest run 30 min");
     }
     await page.goto("program");
     // The SDK emulator banner stays visible but must not consume app taps.
@@ -248,7 +259,9 @@ for (const budget of [null, 30] as const) {
       page.getByRole("button", { name: "Done", exact: true })
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByRole("heading", { name: "Workout saved", exact: true })
+      // DS4: the saved session heads the screen ("Upper A done"), never
+      // the save.
+      page.getByRole("heading", { name: / done$/ })
     ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("dialog")).toHaveCount(0);
     // A first finish asks once, inline, with three equal answers. Nothing
@@ -262,7 +275,7 @@ for (const budget of [null, 30] as const) {
     for (const name of [
       "Share with followers",
       "Share publicly",
-      "Don't share",
+      "Don’t share",
     ]) {
       await expect(
         page.getByRole("button", { name, exact: true })

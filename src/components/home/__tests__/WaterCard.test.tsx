@@ -490,6 +490,22 @@ describe("WaterCard — an empty day's tile", () => {
     expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
   });
 
+  it("keeps each size's figure and unit one word apart, not a gap apart", () => {
+    /* The owner saw "250   ml" on the chips: the Button lays out its
+       children as flex items with a gap, so a figure span and a bare
+       unit were two items with the gap between them. One child span
+       holds both, and a single space separates them. */
+    render(<WaterCard compact ml={0} targetMl={2500} onLog={vi.fn()} />);
+    for (const name of ["Log 250 ml", "Log 500 ml"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.childNodes).toHaveLength(1);
+      const only = button.firstChild as HTMLElement;
+      expect(only.tagName).toBe("SPAN");
+      expect(only.textContent).toBe(name.replace("Log ", ""));
+      expect(only.querySelector(".font-mono")).not.toBeNull();
+    }
+  });
+
   it("is not on the full-width card, which has its own − and +", () => {
     render(<WaterCard ml={0} targetMl={2500} onLog={vi.fn()} />);
     expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();

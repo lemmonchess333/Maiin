@@ -1,7 +1,7 @@
 import Card from "@/components/ui/Card";
 import SectionHeading from "@/components/ui/SectionHeading";
 import type { WeightTrendPoint } from "@/hooks/useBodyweightTrend";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { kgToLb } from "@/lib/weightUnits";
 import {
   currentWeightRate,
@@ -9,7 +9,7 @@ import {
   STEADY_RATE_KG,
   weeklyWeightAverages,
 } from "@/utils/weightTrend";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 
 type WeightUnit = "kg" | "lbs";
 
@@ -88,12 +88,23 @@ export default function WeightRateCard({
   /* The rate starts at the latest weigh-in four or more weeks back, which
      after a gap in weighing can be months ago. It is "the last 4 weeks"
      only when it spans about that; otherwise its start is named. */
+  const endsToday = rate?.toDate === localDateString(today);
   const lastWindow =
-    rate !== null && spanWeeks === Math.round(RATE_WINDOW_DAYS / 7);
+    rate !== null &&
+    endsToday &&
+    spanWeeks === Math.round(RATE_WINDOW_DAYS / 7);
+  const rateDay = (key: string) => {
+    const date = parseLocalDate(key);
+    return date.getFullYear() === today.getFullYear()
+      ? formatDayMonth(date)
+      : formatDayMonthYear(date);
+  };
   const rateSpan = lastWindow
     ? `last ${Math.round(RATE_WINDOW_DAYS / 7)} weeks`
     : rate
-      ? `since ${formatDayMonth(parseLocalDate(rate.fromDate))}`
+      ? endsToday
+        ? `since ${rateDay(rate.fromDate)}`
+        : `${rateDay(rate.fromDate)} to ${rateDay(rate.toDate)}`
       : "";
   const verdict = rate
     ? comparison(rate.kgPerWeek, targetKgPerWeek, lastWindow)
@@ -102,7 +113,7 @@ export default function WeightRateCard({
   return (
     <Card as="section" aria-label="Your rate" className="space-y-4">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">Your rate</h2>
+        <h2 className="text-base font-bold text-foreground">Your rate</h2>
         <p className="text-sm text-muted-foreground">
           From your trend weight, which smooths out day-to-day swings.
         </p>
@@ -112,7 +123,7 @@ export default function WeightRateCard({
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <div className="min-w-0">
-              <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+              <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                 {signed(rate.kgPerWeek, unit, 2)}
               </span>
               <span className="block text-sm text-muted-foreground">
@@ -121,7 +132,7 @@ export default function WeightRateCard({
             </div>
             {targetKgPerWeek !== null && (
               <div className="min-w-0">
-                <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+                <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                   {signed(targetKgPerWeek, unit, 2)}
                 </span>
                 <span className="block text-sm text-muted-foreground">

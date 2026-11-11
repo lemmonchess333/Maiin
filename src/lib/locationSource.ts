@@ -15,9 +15,10 @@
  *
  * Run tracking only. The one-shot reads elsewhere (the weather, the route
  * planner, placing a privacy zone) call `navigator.geolocation` themselves,
- * on purpose: the native source's `getCurrent` takes no timeout, never asks
- * for permission and may hand back a cached fix, which suits a run already
- * under way and not a first-time ask or a zone that needs a fresh position.
+ * on purpose: the native source's `getCurrent` never asks for permission and
+ * may hand back a cached fix, which suits a run already under way and not a
+ * first-time ask or a zone that needs a fresh position. (It does keep to its
+ * `timeout`, as the Web's does.)
  */
 import { isNativePlatform } from "./platform";
 import { nativeLocationSource } from "./nativeLocationSource";

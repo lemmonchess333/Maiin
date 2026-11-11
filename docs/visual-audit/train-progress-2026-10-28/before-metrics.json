@@ -1,0 +1,631 @@
+{
+  "errors": [],
+  "train": {
+    "phone-dark": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 361,
+        "height": 84,
+        "right": 377,
+        "bottom": 319.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 21.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 73.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 81.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 133.25,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 140.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 192.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 200.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 252.25,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 259.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 311.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 319.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 371.25,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [
+        -7.5,
+        -7.5,
+        -7.5,
+        -7.5,
+        -7.5
+      ]
+    },
+    "phone-light": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 361,
+        "height": 84,
+        "right": 377,
+        "bottom": 319.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 21.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 73.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 81.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 133.25,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 140.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 192.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 200.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 252.25,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 259.75,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 311.75,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 319.25,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 371.25,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [
+        -7.5,
+        -7.5,
+        -7.5,
+        -7.5,
+        -7.5
+      ]
+    },
+    "small-dark": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 288,
+        "height": 84,
+        "right": 304,
+        "bottom": 319.0625
+      },
+      "clientWidth": 288,
+      "scrollWidth": 291,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 13.171875,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 65.171875,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 61.5,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 113.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 109.84375,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 161.84375,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 158.171875,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 210.171875,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 206.515625,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 258.515625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 254.84375,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 306.84375,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [
+        3.671875,
+        3.65625,
+        3.671875,
+        3.65625,
+        3.671875
+      ]
+    },
+    "small-light": {
+      "row": {
+        "x": 16,
+        "y": 235.0625,
+        "width": 288,
+        "height": 84,
+        "right": 304,
+        "bottom": 319.0625
+      },
+      "clientWidth": 288,
+      "scrollWidth": 291,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 13.171875,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 65.171875,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 61.5,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 113.5,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 109.84375,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 161.84375,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 158.171875,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 210.171875,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 206.515625,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 258.515625,
+          "bottom": 291.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 254.84375,
+          "y": 239.0625,
+          "width": 52,
+          "height": 52,
+          "right": 306.84375,
+          "bottom": 291.0625
+        }
+      ],
+      "overlaps": [
+        3.671875,
+        3.65625,
+        3.671875,
+        3.65625,
+        3.671875
+      ]
+    },
+    "large-text-dark": {
+      "row": {
+        "x": 16,
+        "y": 448.0625,
+        "width": 361,
+        "height": 116,
+        "right": 377,
+        "bottom": 564.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 18.40625,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 70.40625,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 79.25,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 131.25,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 140.078125,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 192.078125,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 200.921875,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 252.921875,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 261.75,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 313.75,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 322.578125,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 374.578125,
+          "bottom": 508.0625
+        }
+      ],
+      "overlaps": [
+        -8.84375,
+        -8.828125,
+        -8.84375,
+        -8.828125,
+        -8.828125
+      ]
+    },
+    "large-text-light": {
+      "row": {
+        "x": 16,
+        "y": 448.0625,
+        "width": 361,
+        "height": 116,
+        "right": 377,
+        "bottom": 564.0625
+      },
+      "clientWidth": 361,
+      "scrollWidth": 361,
+      "pageOverflow": false,
+      "tabs": [
+        {
+          "name": "Push A, today",
+          "selected": "true",
+          "tabIndex": 0,
+          "x": 18.40625,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 70.40625,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Pull A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 79.25,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 131.25,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Legs A",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 140.078125,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 192.078125,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Pull B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 200.921875,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 252.921875,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Push B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 261.75,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 313.75,
+          "bottom": 508.0625
+        },
+        {
+          "name": "Legs B",
+          "selected": "false",
+          "tabIndex": 0,
+          "x": 322.578125,
+          "y": 456.0625,
+          "width": 52,
+          "height": 52,
+          "right": 374.578125,
+          "bottom": 508.0625
+        }
+      ],
+      "overlaps": [
+        -8.84375,
+        -8.828125,
+        -8.84375,
+        -8.828125,
+        -8.828125
+      ]
+    }
+  },
+  "trainText": "Train\n\nPush / Pull / Legs ×2 · 6 days/week\n\nLift\nRun\nWeek 1 · General fitness\n1\nPush A\n2\nPull A\n3\nLegs A\n4\nPull B\n5\nPush B\n6\nLegs B\n\nUp next\n\nPush A\n\nStarts with Bench Press\n\n~30 min\n\nStart workout\nWhy this session\n\nBench Press\n\n3 sets × 8 reps · 32.5 kg\n\nLast: 62.5 kg × 8\n\nOverhead Press\n\n3 sets × 8 reps · 20 kg\n\nLateral Raise\n\n2 sets × 10–15 reps · 5 kg\n\nAdd exercise\nShort on time?\nSkip session\n\nStart a training block\n\nPick what the next few weeks are for. Your programme follows.\n\nEmpty workout\nAdd exercises as you go. Your plan stays as it is.",
+  "progress": {
+    "phone-dark": {
+      "card": {
+        "x": 16,
+        "y": 483.375,
+        "width": 361,
+        "height": 248.96875
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1200 kg volume\n\n60 kg × 10\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1100 kg volume\n\n62.5 kg × 8\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n2 sets · 1080 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "phone-light": {
+      "card": {
+        "x": 16,
+        "y": 483.375,
+        "width": 361,
+        "height": 248.96875
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1200 kg volume\n\n60 kg × 10\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1100 kg volume\n\n62.5 kg × 8\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n2 sets · 1080 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "large-text-dark": {
+      "card": {
+        "x": 16,
+        "y": -8.046875,
+        "width": 361,
+        "height": 717.34375
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1200 kg volume\n\n60 kg × 10\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1100 kg volume\n\n62.5 kg × 8\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n2 sets · 1080 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    },
+    "large-text-light": {
+      "card": {
+        "x": 16,
+        "y": -8.046875,
+        "width": 361,
+        "height": 717.34375
+      },
+      "rows": [
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1200 kg volume\n\n60 kg × 10\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/b-evening"
+        },
+        {
+          "text": "28 Oct\n\nPR\n\n2 sets · 1100 kg volume\n\n62.5 kg × 8\n\n−2.5 kg from last",
+          "to": "/Maiin/workout/z-morning"
+        },
+        {
+          "text": "27 Oct\n\nPR\n\n2 sets · 1080 kg volume\n\n60 kg × 8",
+          "to": "/Maiin/workout/a-previous"
+        }
+      ],
+      "pageOverflow": false
+    }
+  },
+  "resume": {
+    "offered": false
+  }
+}

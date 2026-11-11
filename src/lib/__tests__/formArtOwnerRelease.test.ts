@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
+import { isFormArtQuarantined } from "../formArtQuarantine";
 import { getAuthoredBeats, getFormBeats } from "../bodyRig";
 import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
 import {
@@ -38,12 +39,23 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships no guides under owner-only approval after the final two strict reviews", () => {
+  it("ships one guide under owner-only approval: the 2026-11-07 straight-arm pulldown redraw", () => {
     expect(
-      Object.values(FORM_ARTWORK).filter(
-        (art) => art.status === "owner-released-with-findings"
+      Object.keys(FORM_ARTWORK).filter(
+        (id) => FORM_ARTWORK[id].status === "owner-released-with-findings"
       )
-    ).toEqual([]);
+    ).toEqual(["straight-arm-pulldown"]);
+    const redraw = evidence("straight-arm-pulldown");
+    expect(validateOwnerArtworkRelease(redraw.review, redraw.expected)).toEqual(
+      []
+    );
+    expect(redraw.review.supersedesApprovedRelease).toBe(
+      "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json"
+    );
+    for (const frame of redraw.review.frames)
+      expect(sha(readFileSync(frame.source.path)), frame.source.path).toBe(
+        frame.source.sha256
+      );
     for (const id of ["swimming", "turkish-get-up"]) {
       expect(FORM_ARTWORK[id].status, id).toBe("approved");
       expect(
@@ -62,14 +74,18 @@ describe("owner-authorized artwork activation", () => {
      release had to extend covered 26 of the 54. The budget is the one
      above, for the same reason: the whole library is hashed here, and
      under the full parallel suite the worker can wait for its turn. */
-  it("releases every approved set as its review recorded it, with its cues live", () => {
+  it("keeps every approved release recorded, with cues withheld for quarantined sets", () => {
     const approved = Object.keys(FORM_ARTWORK).filter(
       (id) => FORM_ARTWORK[id].status === "approved"
     );
-    expect(approved).toHaveLength(152);
+    expect(approved).toHaveLength(151);
     for (const id of approved) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
-      expect(getFormBeats(id), id).toHaveLength(6);
+      if (isFormArtQuarantined(id)) {
+        expect(getFormBeats(id), id).toBeNull();
+      } else {
+        expect(getFormBeats(id), id).toHaveLength(6);
+      }
       const { review, expected } = evidence(id);
       expect(validateArtworkReview(review, expected), id).toEqual([]);
     }

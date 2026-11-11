@@ -144,7 +144,7 @@ describe("the sheet, as the feed's", () => {
     H.getSpacePostComments.mockRejectedValueOnce(new Error("offline"));
     await openSheet();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load comments"
+      "Couldn’t load comments"
     );
     expect(screen.queryByText("No comments yet")).toBeNull();
 
@@ -160,7 +160,7 @@ describe("someone else's comment", () => {
   it("is reported as a space_post_comment, space:post:comment", async () => {
     await openSheet();
     fireEvent.click(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Report comment" }));
     expect(
@@ -184,7 +184,7 @@ describe("someone else's comment", () => {
   it("can have its author blocked, and their comments go", async () => {
     await openSheet();
     fireEvent.click(
-      screen.getByRole("button", { name: "More options for Priya's comment" })
+      screen.getByRole("button", { name: "More options for Priya’s comment" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Block user" }));
     await act(async () => {
@@ -209,7 +209,7 @@ describe("your own comment", () => {
   it("has Delete, not Report, and deletes after one confirmation", async () => {
     const { onCountChange } = await openSheet();
     expect(
-      screen.queryByRole("button", { name: "More options for Me's comment" })
+      screen.queryByRole("button", { name: "More options for Me’s comment" })
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Delete comment" }));
     expect(
@@ -238,7 +238,7 @@ describe("your own comment", () => {
 describe("a comment's row at large text", () => {
   it("keeps each row's control at 44 px and lets a long word wrap", async () => {
     await openSheet();
-    for (const name of ["Delete comment", "More options for Priya's comment"]) {
+    for (const name of ["Delete comment", "More options for Priya’s comment"]) {
       expect(screen.getByRole("button", { name })).toHaveClass("size-[44px]");
     }
     expect(screen.getByText("Strong finish")).toHaveClass("break-words");
@@ -275,7 +275,7 @@ describe("the word filter", () => {
     });
     expect(H.addSpacePostComment).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
-      `Couldn't post the comment. ${refusal}`
+      `Couldn’t post the comment. ${refusal}`
     );
   });
 });

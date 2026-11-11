@@ -65,12 +65,12 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 function friendlyRestructureError(error: unknown): string {
   const code = (error as { code?: string })?.code;
   if (code === "permission-denied")
-    return "You don't have permission to change this schedule.";
+    return "You don’t have permission to change this schedule.";
   if (code === "unauthenticated") return "Sign in again to save changes.";
   if (code === "unavailable")
-    return "Couldn't save changes. Reconnect and try again.";
+    return "Couldn’t save changes. Reconnect and try again.";
   if (code === "deadline-exceeded") return "Saving took too long. Try again.";
-  return "Couldn't rebuild your programme. Try again.";
+  return "Couldn’t rebuild your programme. Try again.";
 }
 
 export interface UseProgrammeScheduleEditorArgs {
@@ -253,7 +253,7 @@ export function useProgrammeScheduleEditor(
       return "saved";
     } catch (error) {
       logger.error("Schedule save failed:", error);
-      toast.error("Couldn't finish saving your layout. Try again.");
+      toast.error("Couldn’t finish saving your layout. Try again.");
       return "failed";
     } finally {
       pendingRef.current = false;

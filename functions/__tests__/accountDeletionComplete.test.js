@@ -9,6 +9,8 @@ const {
   resumeDeletions,
 } = require("../lib/accountDeletionRetry");
 const now = Date.UTC(2026, 8, 15);
+/** The live pulse's day for `now` (Soc15). */
+const pulseDay = new Date(now).toISOString().slice(0, 10);
 const logger = { warn: vi.fn(), info: vi.fn(), error: vi.fn() };
 
 function setup(extra = {}) {
@@ -58,7 +60,48 @@ function setup(extra = {}) {
     "followRequests/carol/users/bob": { requestedAt: now },
     // Polish2: the week on followers' boards, Alice's and Bob's.
     "friendsBoard/alice": { sessions: 3 },
+    "followCounts/alice": { followers: 1, following: 2 },
+    // Soc15 call 3: Alice and Bob in this week's league group, her
+    // membership, her result from last week, and Bob's own.
+    "leagueMembers/alice": { uid: "alice", tier: "silver", groupId: "wk-001" },
+    "leagueMembers/bob": { uid: "bob", tier: "gold", groupId: "wk-001" },
+    "leagueGroups/wk-001": {
+      weekKey: "2026-09-14",
+      tier: "silver",
+      memberUids: ["alice", "bob"],
+      size: 2,
+    },
+    "leagueGroups/wk-001/standings/alice": {
+      uid: "alice",
+      name: "Alice",
+      points: 50,
+    },
+    "leagueGroups/wk-001/standings/bob": {
+      uid: "bob",
+      name: "Bob",
+      points: 75,
+    },
+    "users/alice/leagueResults/2026-09-07": { outcome: "up", tier: "bronze" },
+    "users/bob/leagueResults/2026-09-07": { outcome: "stay", tier: "gold" },
+    // Soc15: the live pulse. A day's count, with one session of Alice's and
+    // one of Bob's in it, and each one's credit under its owner.
+    [`pulse/${pulseDay}`]: { sessions: 2 },
+    "users/alice/pulseCredits/workout_w1": {
+      kind: "workout",
+      sessionId: "w1",
+      dateKey: pulseDay,
+    },
+    "users/bob/pulseCredits/run_r1": {
+      kind: "run",
+      sessionId: "r1",
+      dateKey: pulseDay,
+    },
     "friendsBoard/bob": { sessions: 1 },
+    "followCounts/bob": { followers: 4, following: 1 },
+    // Soc15: Alice's invite code, an old one of hers, and Bob's.
+    "inviteCodes/K7P49M2H": { uid: "alice", createdAt: now },
+    "inviteCodes/A2B3C4D5": { uid: "alice", createdAt: now },
+    "inviteCodes/Z9Y8X7W6": { uid: "bob", createdAt: now },
     "spaces/running/posts/bobs-post": { authorId: "bob", likeCount: 2 },
     "spaces/running/posts/bobs-post/likes/alice": { createdAt: now },
     "spaces/running/posts/bobs-post/likes/carol": { createdAt: now },
@@ -159,6 +202,7 @@ function setup(extra = {}) {
       getUser: vi.fn().mockResolvedValue({
         uid: "alice",
         email: "alice@example.com",
+        emailVerified: true,
         providerData: [{ providerId: "google.com", uid: "alice-google" }],
       }),
       deleteUser: vi.fn().mockResolvedValue(undefined),
@@ -188,8 +232,15 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::followRequests
 // smoke::followRequests::sent
 // smoke::topLevelOwn::friendsBoard
+// smoke::topLevelOwn::followCounts
 // smoke::topLevelOwn::blockedBy
 // smoke::blockedByReverse
+// smoke::topLevelQuery::inviteCodes
+// smoke::topLevelOwn::leagueMembers
+// smoke::topLevelQuery::leagueGroups
+// smoke::leagueStandings
+// smoke::userSubcollections::leagueResults
+// smoke::userSubcollections::pulseCredits
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -224,6 +275,13 @@ describe("complete account erasure", () => {
       "followRequests/alice/users/bob",
       "followRequests/carol/users/alice",
       "friendsBoard/alice",
+      "followCounts/alice",
+      "inviteCodes/K7P49M2H",
+      "inviteCodes/A2B3C4D5",
+      "leagueMembers/alice",
+      "leagueGroups/wk-001/standings/alice",
+      "users/alice/leagueResults/2026-09-07",
+      "users/alice/pulseCredits/workout_w1",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -253,9 +311,22 @@ describe("complete account erasure", () => {
       "followRequests/carol/users/bob",
       "blockedBy/bob/users/carol",
       "friendsBoard/bob",
+      "followCounts/bob",
+      "inviteCodes/Z9Y8X7W6",
+      "leagueMembers/bob",
+      "leagueGroups/wk-001/standings/bob",
+      "users/bob/leagueResults/2026-09-07",
+      "users/bob/pulseCredits/run_r1",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);
+    // The day's count names no one and stands, as the community goal's.
+    expect(data.get(`pulse/${pulseDay}`)).toEqual({ sessions: 2 });
+    // The group stays for Bob, without Alice in it.
+    expect(data.get("leagueGroups/wk-001")).toMatchObject({
+      memberUids: ["bob"],
+      size: 1,
+    });
     // The removal is still counted; who wrote it, and what, is not.
     expect(data.get("commentModeration/alice-comment")).toEqual({
       action: "auto_delete",
@@ -409,6 +480,27 @@ describe("complete account erasure", () => {
     expect(ctx.firestore.data.get("accountDeletionRequests/alice").status).toBe(
       "completed"
     );
+  });
+
+  it("takes a deleted account's name off the givers a post names, and its props off the count", async () => {
+    const ctx = setup({
+      "activities/other": {
+        authorId: "bob",
+        kudosCount: 2,
+        commentCount: 1,
+        recentPropsBy: [
+          { uid: "alice", name: "Alice", photoURL: "photo" },
+          { uid: "carol", name: "Carol" },
+        ],
+        recentPropsByUids: ["alice", "carol"],
+      },
+    });
+    await cleanupSocial({ ...ctx, checkpoint: async () => {} });
+    const post = ctx.firestore.data.get("activities/other");
+    expect(post.recentPropsBy).toEqual([{ uid: "carol", name: "Carol" }]);
+    expect(post.recentPropsByUids).toEqual(["carol"]);
+    expect(post.kudosCount).toBe(1);
+    expect(JSON.stringify(post)).not.toContain("Alice");
   });
 
   it("resumes paged legacy edges after an interruption without decrementing twice", async () => {

@@ -377,7 +377,7 @@ describe("food text logging", () => {
       fireEvent.click(screen.getByLabelText("Log meal"));
       await waitFor(() =>
         expect(warning).toHaveBeenCalledWith(
-          expect.stringMatching(/couldn't find macros for/i),
+          expect.stringMatching(/couldn’t find macros for/i),
           expect.objectContaining({
             id: "food-nl-warning",
             action: expect.objectContaining({ label: "Edit description" }),
@@ -589,7 +589,7 @@ describe("a typed meal, kept and recovered", () => {
       submitLocalText("xylophone");
       await waitFor(() =>
         expect(warning).toHaveBeenCalledWith(
-          expect.stringMatching(/couldn't find macros for/i),
+          expect.stringMatching(/couldn’t find macros for/i),
           expect.objectContaining({
             cancel: expect.objectContaining({ label: "Log manually" }),
           })
@@ -645,7 +645,7 @@ describe("food diary read recovery", () => {
       </MemoryRouter>
     );
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn't load your food diary."
+      "Couldn’t load your food diary."
     );
     expect(screen.queryByLabelText("What did you eat")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));

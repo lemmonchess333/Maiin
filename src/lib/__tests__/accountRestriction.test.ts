@@ -21,7 +21,7 @@ describe("the words", () => {
   it("are Soc5a pin 2's line, and a toast that says what happened", () => {
     expect(RESTRICTED_LINE).toBe("Your account is restricted");
     expect(RESTRICTED_TOAST).toBe(
-      "Your account is restricted, so you can't do this for now."
+      "Your account is restricted, so you can’t do this for now."
     );
   });
 

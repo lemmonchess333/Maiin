@@ -27,6 +27,7 @@ import { paceMinSec, distanceValue } from "@/lib/runLabels";
 import {
   type DistanceUnit,
   distanceUnitLabel,
+  elevationUnitLabel,
   paceUnitLabel,
   lapMetresFor,
   METRES_PER_MILE,
@@ -51,6 +52,8 @@ const ZONE_COLOR: Record<ZoneNumber, string> = {
 };
 
 interface RunBottomSheetProps {
+  /** Bumped by a tap on the map: the panel rises to full. */
+  expandRequest?: number;
   elapsed: number;
   distance: number;
   points: GPSPoint[];
@@ -58,6 +61,11 @@ interface RunBottomSheetProps {
   onPause: () => void;
   onLock: () => void;
   isPaused: boolean;
+  /** The run's clock is held (paused, or auto-paused while standing
+   *  still). There is no live pace then: the last half-minute of moving
+   *  time ends where the person stopped, and a GPS step in it read as a
+   *  pace no one runs. */
+  paceHeld?: boolean;
   onResume: () => void;
   onStop: () => void;
   onDiscard?: () => void;
@@ -93,6 +101,8 @@ interface RunBottomSheetProps {
 // also what makes the state filmable on the capture rig's 150m walk.
 const SNAPS: [number, number, number] = [0.13, 0.42, 0.91];
 const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
+/** A release this long after the last move carries no speed. */
+const STALE_VELOCITY_MS = 60;
 
 /* haptic moved to the shared @/lib/haptic implementation in
    W1f, which routes through the Capacitor Haptics plugin in the
@@ -187,11 +197,8 @@ export function SplitsList({
     return (
       <div className="px-6 pt-1 pb-4 flex-shrink-0">
         {distance > 0 && <KmProgress distance={distance} unit={unit} />}
-        <p
-          className="text-center"
-          style={{ ...HUD_CAPTION, letterSpacing: "0.1em", marginTop: 10 }}
-        >
-          SPLITS APPEAR AFTER EACH {u === "mi" ? "MILE" : "KM"}
+        <p className="text-center" style={{ ...HUD_CAPTION, marginTop: 10 }}>
+          Splits appear after each {u === "mi" ? "mile" : "km"}
         </p>
       </div>
     );
@@ -202,14 +209,12 @@ export function SplitsList({
     <div className="px-6 pt-1 pb-4 flex-shrink-0">
       {distance > 0 && <KmProgress distance={distance} unit={unit} />}
       <div className="flex items-baseline justify-between mt-3 mb-1 px-1">
-        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
+        <p style={{ ...HUD_CAPTION }}>
           {splits.length > SPLITS_LIST_MAX
-            ? `SPLITS · LAST ${SPLITS_LIST_MAX} OF ${splits.length}`
-            : "SPLITS"}
+            ? `Splits · last ${SPLITS_LIST_MAX} of ${splits.length}`
+            : "Splits"}
         </p>
-        <p style={{ ...HUD_CAPTION, letterSpacing: "0.1em" }}>
-          BEST {paceMinSec(bestPace, unit)}
-        </p>
+        <p style={{ ...HUD_CAPTION }}>Best {paceMinSec(bestPace, unit)}</p>
       </div>
       {recent.map((s) => {
         const prev = splits[s.km - 2];
@@ -304,10 +309,12 @@ function KmProgress({
         className="flex-1 h-1 rounded-full overflow-hidden"
         style={{ background: "rgba(255,255,255,0.08)" }}
       >
+        {/* Full width, slid into place: a transform, not a layout
+            change, on a bar that moves with every GPS fix. */}
         <div
-          className="h-full rounded-full transition-all duration-300"
+          className="h-full w-full rounded-full transition-transform duration-300"
           style={{
-            width: `${progress * 100}%`,
+            transform: `translateX(${(progress - 1) * 100}%)`,
             background: THEME.running,
           }}
         />
@@ -327,6 +334,7 @@ function KmProgress({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RunBottomSheet({
+  expandRequest = 0,
   elapsed,
   distance,
   points,
@@ -334,6 +342,7 @@ export default function RunBottomSheet({
   onPause,
   onLock,
   isPaused,
+  paceHeld = false,
   onResume,
   onStop,
   onDiscard,
@@ -350,6 +359,14 @@ export default function RunBottomSheet({
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
   const isExpanded = snapIdx === 2;
+  // A tap on the map raises a lowered panel (the map itself takes pans and
+  // pinches, so nothing covers it any more). Adjusted while rendering, as
+  // React advises for state that follows a prop.
+  const [seenExpandRequest, setSeenExpandRequest] = useState(expandRequest);
+  if (expandRequest !== seenExpandRequest) {
+    setSeenExpandRequest(expandRequest);
+    if (snapIdx !== 2) setSnapIdx(2);
+  }
   const isSplitsView = snapIdx === 1;
 
   // ── Draggable bottom sheet ────────────────────────────────────────────
@@ -420,13 +437,16 @@ export default function RunBottomSheet({
     lastY.current = e.clientY;
     lastT.current = e.timeStamp;
   };
-  const onSheetPointerUp = () => {
+  const onSheetPointerUp = (e: React.PointerEvent) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
-    const target = projectAndSnap(top.get(), velRef.current, snapTops) as
-      | 0
-      | 1
-      | 2;
+    // The speed is the last move's, and pointermove stops when the finger
+    // does: drag, hold still, then lift, and that old speed flung the
+    // panel on to the next stop. A finger still for 60 ms has no speed
+    // (the weight dial's rule).
+    const velocity =
+      e.timeStamp - lastT.current > STALE_VELOCITY_MS ? 0 : velRef.current;
+    const target = projectAndSnap(top.get(), velocity, snapTops) as 0 | 1 | 2;
     if (target !== snapIdx) {
       setSnapIdx(target);
       haptic("light");
@@ -444,7 +464,8 @@ export default function RunBottomSheet({
      "AVG" caption beneath the live pace. The post-run summary still
      records the all-time average — that's the right number for the
      historical entry. */
-  const livePaceS = rollingPaceSeconds(points, 30);
+  const livePaceS =
+    isPaused || paceHeld ? null : rollingPaceSeconds(points, 30);
   const livePace = livePaceS === null ? "--:--" : paceMinSec(livePaceS, unit);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
@@ -458,27 +479,11 @@ export default function RunBottomSheet({
 
   return (
     <>
-      {/* Tap map to re-expand */}
-      {!isExpanded && (
-        <div
-          className="fixed inset-0 z-30"
-          style={{ bottom: `${SNAPS[snapIdx] * 100}vh` }}
-          role="button"
-          tabIndex={0}
-          aria-label="Expand bottom sheet"
-          onClick={() => {
-            setSnapIdx(2);
-            haptic("light");
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              setSnapIdx(2);
-              haptic("light");
-            }
-          }}
-        />
-      )}
-
+      {/* No layer over the map when the panel is lowered: the map takes
+          pans and pinches, as Strava's and Nike Run Club's do mid-run
+          (its Recenter brings the runner back), and a tap on it raises
+          the panel through `expandRequest` (DESIGN_GUIDE
+          §14h). The grip still raises it by keyboard. */}
       <motion.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
@@ -537,7 +542,7 @@ export default function RunBottomSheet({
                     fontSize: 68,
                     fontWeight: 800,
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                     color: isPaused ? HUD_SECONDARY.color : THEME.running,
                     lineHeight: 1,
                     letterSpacing: "-2px",
@@ -548,11 +553,10 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.12em",
                     marginTop: 4,
                   }}
                 >
-                  {isPaused ? "PAUSED" : "TIME"}
+                  {isPaused ? "Paused" : "Time"}
                 </p>
               </div>
 
@@ -568,7 +572,7 @@ export default function RunBottomSheet({
                       fontWeight: 700,
                       color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
-                      fontFamily: "var(--font-mono)",
+                      fontFamily: "var(--font-figure)",
                       lineHeight: 1,
                     }}
                   >
@@ -577,11 +581,10 @@ export default function RunBottomSheet({
                   <p
                     style={{
                       ...HUD_CAPTION,
-                      letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
                   >
-                    {distanceUnitLabel(unit).toUpperCase()}
+                    {distanceUnitLabel(unit)}
                   </p>
                 </div>
                 <div className="text-center">
@@ -592,7 +595,7 @@ export default function RunBottomSheet({
                       fontWeight: 700,
                       color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
-                      fontFamily: "var(--font-mono)",
+                      fontFamily: "var(--font-figure)",
                       lineHeight: 1,
                     }}
                   >
@@ -601,11 +604,10 @@ export default function RunBottomSheet({
                   <p
                     style={{
                       ...HUD_CAPTION,
-                      letterSpacing: "0.12em",
                       marginTop: 3,
                     }}
                   >
-                    {paceUnitLabel(unit).toUpperCase()} · LIVE
+                    {paceUnitLabel(unit)} · live
                   </p>
                   {pace !== "--:--" && pace !== livePace && (
                     <p
@@ -616,7 +618,7 @@ export default function RunBottomSheet({
                         marginTop: 4,
                       }}
                     >
-                      AVG {pace}
+                      Avg {pace}
                     </p>
                   )}
                 </div>
@@ -644,7 +646,7 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
                   {calories}
@@ -652,12 +654,11 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
                   {/* The unit the run summary and run pages print. */}
-                  {CALORIE_UNIT.toUpperCase()}
+                  {CALORIE_UNIT}
                 </p>
               </div>
               <div
@@ -674,19 +675,27 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
-                  {elevationLabel(elevation, unit)}
+                  {elevationLabel(elevation, unit, false)}{" "}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {elevationUnitLabel(unit)}
+                  </span>
                 </p>
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
-                  ELEV
+                  Elev
                 </p>
               </div>
               <div
@@ -703,7 +712,7 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
                   {splits.length}
@@ -711,11 +720,10 @@ export default function RunBottomSheet({
                 <p
                   style={{
                     ...HUD_CAPTION,
-                    letterSpacing: "0.1em",
                     marginTop: 2,
                   }}
                 >
-                  SPLITS
+                  Splits
                 </p>
               </div>
 
@@ -737,7 +745,7 @@ export default function RunBottomSheet({
                         fontWeight: 600,
                         color: hrColor,
                         fontVariantNumeric: "tabular-nums",
-                        fontFamily: "var(--font-mono)",
+                        fontFamily: "var(--font-figure)",
                       }}
                     >
                       {bpm}
@@ -745,7 +753,6 @@ export default function RunBottomSheet({
                     <p
                       style={{
                         ...HUD_CAPTION,
-                        letterSpacing: "0.1em",
                         marginTop: 2,
                       }}
                     >
@@ -774,7 +781,7 @@ export default function RunBottomSheet({
                 {/* Lock */}
                 <RunControlButton
                   aria-label="Lock screen"
-                  label="LOCK"
+                  label="Lock"
                   size="sm"
                   variant="neutral"
                   onClick={() => {
@@ -801,7 +808,7 @@ export default function RunBottomSheet({
                 {/* Pause — big centre */}
                 <RunControlButton
                   aria-label="Pause run"
-                  label="PAUSE"
+                  label="Pause"
                   size="lg"
                   variant="neutral"
                   onClick={() => {
@@ -843,13 +850,16 @@ export default function RunBottomSheet({
                 {/* Stop is a grey ring like Pause and Lock, so Resume is the
                     paused screen's one filled colour. Stopping keeps the run
                     (its confirm offers End run), so it is not red; red
-                    belongs to Discard, which deletes it. */}
-                <RunControlButton
-                  aria-label="Stop run"
-                  label="STOP"
+                    belongs to Discard, which deletes it. It is a hold, as
+                    Finish is while running: a hold ends the run, and a tap,
+                    a key or a screen reader opens End run?, which keeps
+                    Discard and Keep going. */}
+                <HoldToFinishButton
+                  ariaLabel="Hold to stop run"
+                  label="Stop"
                   size="lg"
-                  variant="neutral"
-                  onClick={() => setShowStopConfirm(true)}
+                  onFinish={onStop}
+                  onRequestConfirm={() => setShowStopConfirm(true)}
                   icon={
                     <div
                       style={{
@@ -865,7 +875,7 @@ export default function RunBottomSheet({
                 {/* Resume */}
                 <RunControlButton
                   aria-label="Resume run"
-                  label="RESUME"
+                  label="Resume"
                   size="lg"
                   variant="primary"
                   glow
@@ -900,7 +910,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: isPaused ? HUD_SECONDARY.color : "white",
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {formatTime(elapsed)}
@@ -908,10 +918,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {isPaused ? "PAUSED" : "TIME"}
+                {isPaused ? "Paused" : "Time"}
               </p>
             </div>
             <div className="text-center">
@@ -921,7 +930,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: THEME.running,
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {distanceValue(distance, unit, 2)}
@@ -929,10 +938,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {distanceUnitLabel(unit).toUpperCase()}
+                {distanceUnitLabel(unit)}
               </p>
             </div>
             <div className="text-center">
@@ -942,7 +950,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: "white",
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {livePace}
@@ -950,10 +958,9 @@ export default function RunBottomSheet({
               <p
                 style={{
                   ...HUD_CAPTION,
-                  letterSpacing: "0.1em",
                 }}
               >
-                {paceUnitLabel(unit).toUpperCase()}
+                {paceUnitLabel(unit)}
               </p>
             </div>
             {/* Collapsed-bar toggle stays bespoke at 48px (the primitive's
@@ -1049,36 +1056,32 @@ export default function RunBottomSheet({
           <div className="flex justify-around mb-6">
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {distanceValue(distance, unit, 2)}
               </p>
-              <p style={{ ...HUD_CAPTION }}>
-                {distanceUnitLabel(unit).toUpperCase()}
-              </p>
+              <p style={{ ...HUD_CAPTION }}>{distanceUnitLabel(unit)}</p>
             </div>
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {formatTime(elapsed)}
               </p>
-              <p style={{ ...HUD_CAPTION }}>TIME</p>
+              <p style={{ ...HUD_CAPTION }}>Time</p>
             </div>
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {pace}
               </p>
               {/* The reader's unit, as the bar behind this dialog says it:
                   the pace above is converted, so its label must be too. */}
-              <p style={{ ...HUD_CAPTION }}>
-                {paceUnitLabel(unit).toUpperCase()}
-              </p>
+              <p style={{ ...HUD_CAPTION }}>{paceUnitLabel(unit)}</p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest

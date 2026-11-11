@@ -47,7 +47,7 @@ export default function FastestKilometresCard({
   return (
     <Card as="section" aria-label="Fastest kilometres" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">
+        <h2 className="text-base font-bold text-foreground">
           Fastest kilometres
         </h2>
         <p className="text-sm text-muted-foreground">

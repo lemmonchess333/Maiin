@@ -42,7 +42,7 @@ const RACE_OPTIONS: { value: RaceDistanceKey; label: string }[] = [
 
 const RACE_TIME_ERRORS: Record<RaceTimeError, string> = {
   format: "Enter a time like 22:30 (or 1:45:00 for longer races).",
-  implausible: "That time doesn't look right. Check it and try again.",
+  implausible: "That time doesn’t look right. Check it and try again.",
 };
 
 export default function RunFitnessSection({
@@ -82,7 +82,7 @@ export default function RunFitnessSection({
       );
       haptic("success");
     } catch {
-      setError("Couldn't save. Check your connection and try again.");
+      setError("Couldn’t save. Check your connection and try again.");
     } finally {
       setConfirming(false);
     }
@@ -95,7 +95,7 @@ export default function RunFitnessSection({
     try {
       await updateProfile({ runFitness: null }, { throwOnError: true });
     } catch {
-      setError("Couldn't remove. Check your connection and try again.");
+      setError("Couldn’t remove. Check your connection and try again.");
     }
   }
 
@@ -116,7 +116,7 @@ export default function RunFitnessSection({
       setEditing(false);
       setTimeStr("");
     } catch {
-      setError("Couldn't save. Check your connection and try again.");
+      setError("Couldn’t save. Check your connection and try again.");
     } finally {
       setSaving(false);
     }

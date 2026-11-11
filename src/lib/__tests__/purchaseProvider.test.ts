@@ -170,6 +170,41 @@ describe("on an iPad in the iOS app", () => {
     expect(syncEntitlement).toHaveBeenCalledWith({});
   });
 
+  it("a purchase the store took without Pro yet is pending, and the server is asked", async () => {
+    rcPurchase.mockResolvedValue({
+      success: false,
+      isProActive: false,
+      pending: "entitlement",
+      price: { priceString: "£34.99", price: 34.99, currencyCode: "GBP" },
+    });
+
+    const result = await purchase("yearly", "uid-1", "a@example.com");
+
+    // Not an error and not a cancel: the paywall says what is awaited.
+    expect(result).toEqual({ success: false, pending: "entitlement" });
+    expect(syncEntitlement).toHaveBeenCalledWith({
+      price: {
+        productId: APPLE_PRODUCT_IDS.yearly,
+        amount: 34.99,
+        currencyCode: "GBP",
+        display: "£34.99",
+      },
+    });
+  });
+
+  it("a payment held for approval is pending, with nothing to ask the server yet", async () => {
+    rcPurchase.mockResolvedValue({
+      success: false,
+      isProActive: false,
+      pending: "approval",
+    });
+
+    const result = await purchase("yearly", "uid-1", "a@example.com");
+
+    expect(result).toEqual({ success: false, pending: "approval" });
+    expect(syncEntitlement).not.toHaveBeenCalled();
+  });
+
   it("fills in a trial's missing price from the store's own prices", async () => {
     rcGetLocalizedPrices.mockResolvedValue({
       [APPLE_PRODUCT_IDS.monthly]: {
@@ -237,7 +272,7 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "Couldn't start checkout. Try again.",
+      error: "Couldn’t start checkout. Try again.",
       detail: "Failed to fetch",
     });
   });
@@ -249,7 +284,7 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     const result = await manageSubscription("uid-1");
 
-    expect(result.error).toBe("Couldn't open billing portal. Try again.");
+    expect(result.error).toBe("Couldn’t open billing portal. Try again.");
     expect(result.detail).toBe("internal");
   });
 

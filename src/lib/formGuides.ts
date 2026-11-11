@@ -1,5 +1,6 @@
 import { RELEASED_FORM_PLACARDS } from "./releasedFormPlacards";
 import { getReleasedFormArtwork } from "./formArtwork";
+import { isFormArtQuarantined } from "./formArtQuarantine";
 
 /* ── Form beats: the placard sequence ────────────────────────────────
  *
@@ -130,6 +131,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
  * nothing about it changes.
  */
 export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
+  if (isFormArtQuarantined(exerciseId)) return null;
   const placard = FORM_BEATS[exerciseId];
   const artwork = getReleasedFormArtwork(exerciseId);
   if (!placard || placard.beats.length !== 6 || !artwork) return null;
@@ -175,5 +177,6 @@ export const FORM_BEAT_IDS = Object.keys(FORM_BEATS);
  *  groups describe the picture perfectly well (every rig-drawn demo:
  *  it tints the muscles the catalogue names). */
 export function getDemoMuscleKey(exerciseId: string): DemoMuscleKey | null {
+  if (isFormArtQuarantined(exerciseId)) return null;
   return FORM_BEATS[exerciseId]?.key ?? null;
 }

@@ -1,6 +1,21 @@
 # Exercise artwork migration
 
-## Current checkpoint — 20 October 2026
+Home's hero animations (flipbooks of a lead lift's rep and the runner) are
+made from these frames: see [motion/README.md](motion/README.md).
+
+## Current checkpoint — 7 November 2026
+
+The owner had Straight-Arm Pulldown redrawn ("looks bad", "needs redoing").
+Its [owner release](releases/2026-11-07/straight-arm-pulldown.json) supersedes
+the 2026-10-20 strict approval, so the library is 151 strict sets and one
+owner release with findings, listed by hand in `src/lib/formArtwork.ts`. The
+new frames are a rear three-quarter view with the station at the right, in
+three positions (start, mid-sweep, thighs), drawn with Gemini and assembled by
+[build.py](sources/straight-arm-pulldown/2026-11-07/build.py), which moves the
+selected plates to the [scene's cable ladder](scenes/straight-arm-pulldown.json).
+The older frames stay at their paths and hashes.
+
+## Previous checkpoint — 20 October 2026
 
 All **152 exercise sets** now have strict release records under the unchanged
 project review contract, with zero owner-only releases. The

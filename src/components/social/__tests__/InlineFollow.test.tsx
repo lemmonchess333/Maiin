@@ -124,7 +124,7 @@ describe("InlineFollow", () => {
     expect(
       screen.getByRole("button", { name: "Follow Maya" })
     ).toBeInTheDocument();
-    expect(H.toastError).toHaveBeenCalledWith("Couldn't follow. Try again.");
+    expect(H.toastError).toHaveBeenCalledWith("Couldn’t follow. Try again.");
     expect(H.track).not.toHaveBeenCalled();
   });
 });

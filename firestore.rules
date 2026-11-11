@@ -142,6 +142,65 @@ service cloud.firestore {
         );
     }
 
+    /* One moment on a feed post (Soc15, src/lib/postMoments.ts): a map
+       whose keys are exactly its kind's, each number in the range
+       `isPostMoment` holds it to. A moment is a kind and numbers the app
+       works out, never typed text, so the one string is a PR's exercise
+       name, capped as the app caps it. activityPostFields.cross.test.ts
+       holds the kinds, keys and lists here to the module's. */
+    function validPostMoment(m) {
+      return m is map
+        && 'kind' in m
+        && m.kind is string
+        && (
+          (m.kind == 'pr'
+            && m.keys().hasOnly(['kind', 'exercise', 'weightKg', 'reps'])
+            && m.keys().hasAll(['kind', 'exercise', 'weightKg', 'reps'])
+            && m.exercise is string
+            && m.exercise.size() > 0
+            && m.exercise.size() <= 60
+            && m.weightKg is number
+            && m.weightKg > 0
+            && m.weightKg <= 1000
+            && m.reps is int
+            && m.reps >= 1
+            && m.reps <= 1000)
+          || (m.kind == 'longestRun'
+            && m.keys().hasOnly(['kind', 'meters'])
+            && m.keys().hasAll(['kind', 'meters'])
+            && m.meters is number
+            && m.meters > 0
+            && m.meters <= 500000)
+          || (m.kind == 'firstDistance'
+            && m.keys().hasOnly(['kind', 'meters'])
+            && m.keys().hasAll(['kind', 'meters'])
+            && m.meters in [5000, 10000, 21097, 42195])
+          || (m.kind == 'fastestEffort'
+            && m.keys().hasOnly(['kind', 'meters', 'seconds'])
+            && m.keys().hasAll(['kind', 'meters', 'seconds'])
+            && m.meters in [1000, 5000, 10000]
+            && m.seconds is number
+            && m.seconds > 0
+            && m.seconds <= 86400)
+          || (m.kind == 'streak'
+            && m.keys().hasOnly(['kind', 'days'])
+            && m.keys().hasAll(['kind', 'days'])
+            && m.days in [7, 14, 30, 50, 100, 200, 365])
+          || (m.kind == 'planWeek'
+            && m.keys().hasOnly(['kind', 'week', 'weeks'])
+            && m.keys().hasAll(['kind', 'week', 'weeks'])
+            && m.week is int
+            && m.weeks is int
+            && m.week >= 1
+            && m.week <= m.weeks
+            && m.weeks <= 104)
+          || (m.kind == 'planComplete'
+            && m.keys().hasOnly(['kind']))
+          || (m.kind == 'firstSession'
+            && m.keys().hasOnly(['kind']))
+        );
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -187,7 +246,10 @@ service cloud.firestore {
        request, that it was one (onFollowerCreated reads `fromRequest` to
        tell the follower). Nothing else. Both edges are readable by anyone
        signed in, and an open shape let a follower park up to a megabyte
-       on someone else's followers list, paid for by every reader of it. */
+       on someone else's followers list, paid for by every reader of it.
+       An edge from an invite carries `fromInvite` instead, written only by
+       the redeemInvite callable with the Admin SDK; neither shape below
+       allows it, so no client can say it joined from someone's invite. */
     function isDirectFollowEdge() {
       return request.resource.data.keys().hasOnly(['followedAt'])
         && request.resource.data.followedAt is timestamp;
@@ -215,34 +277,144 @@ service cloud.firestore {
 
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
-       profile avatar, activity and space-post author avatars, a space
-       post's attached photo, and the challenge-participant / space-member
-       identity rows. A URL a stranger's browser fetches is a tracking
-       pixel with a per-viewer IP unless its origin is one Tropos already
-       trusts to serve avatars:
-         - THIS project's Firebase Storage bucket (custom uploads, space
-           photos). The host alone was not enough: every Firebase project
-           serves from firebasestorage.googleapis.com, so a URL into an
-           attacker's own bucket passed, and its access logs carry every
-           viewer's IP. Both default bucket names a project can have are
-           listed; each is reserved to this project.
-         - Google OAuth CDN (lh3.googleusercontent.com)
-         - Apple OAuth CDN (appleid.cdn-apple.com)
+       profile avatar, activity and space-post author avatars, and the
+       challenge-participant / space-member identity rows. A URL a
+       stranger's browser fetches is a tracking pixel with a per-viewer
+       IP unless its origin is one Tropos already trusts, and an image
+       nobody screened unless it is one of the uploads Tropos screens:
+         - THIS project's Firebase Storage bucket, and only its two
+           screened folders, profile photos and Space photos
+           (lib/photoScreen.js checks every upload there; progress
+           photos are never screened). The host alone is not enough:
+           every Firebase project serves from firebasestorage.googleapis
+           .com, so a URL into an attacker's own bucket would pass, and
+           its access logs carry every viewer's IP. Both default bucket names
+           a project can have are listed; each is reserved to this
+           project. After /o/ the object name must be one path segment,
+           with no '/', '\\', '?' or '#' before the query: a browser
+           resolves '../' before it fetches, so '/o/../../other-bucket/'
+           would load from another project. A real download URL encodes
+           every slash in the object name as %2F.
+         - Google's account photos (lh3.googleusercontent.com/a/ and
+           /a-/), the avatar a Google sign-in gives. The same host serves
+           shared Google Photos and Drive files, so only the account
+           photo path is taken, as one segment with no '%' that could
+           encode a slash.
+         - Apple's CDN (appleid.cdn-apple.com), which serves only Apple's
+           own files.
        `https` only and anchored with `^`, so a downgrade or a
        suffix-phishing host (lh3.googleusercontent.com.evil.com) fails;
        capped at 2048 chars so the field cannot carry a payload.
        Null-safe: the type check runs first and `&&` short-circuits, so
        a null never reaches `.matches()` (which would be an evaluation
        error, not false). Whether absent / null / '' are legal is each
-       caller's decision — this speaks only to a present value. */
+       caller's decision — this speaks only to a present value.
+       functions/lib/publicPhotoUrl.js gives the server the same answer,
+       and its test reads these patterns. */
     function isAllowedPhotoUrl(v) {
       return v is string
         && v.size() <= 2048
         && (
-          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/.*')
-          || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/(profile-photos|space-photos)%2F[^/\\\\?#]+([?#].*)?$')
+          || v.matches('^https://lh3\\.googleusercontent\\.com/a-?/[^/\\\\?#%]+$')
           || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
         );
+    }
+
+    /* A photo field a write leaves as it is passes unchecked: a stored
+       URL the gate above refuses must not block a merge that touches
+       only other fields (the streak mirror, a name, the race toggle).
+       A new or changed value is always checked. */
+    function photoUnchanged(field) {
+      return resource != null
+        && field in resource.data
+        && request.resource.data[field] == resource.data[field];
+    }
+
+    /* A Space post's attached photo: the author's own upload under
+       space-photos/{uid}/ in this project's bucket, which is the only
+       place the composer puts one (src/lib/spacePhotoUpload.ts) and
+       which the photo screen checks. No avatar host qualifies. */
+    function isOwnSpacePhotoUrl(v) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/space-photos%2F' + request.auth.uid + '%2F[^/\\\\?#]+([?#].*)?$');
+    }
+
+    /* A run post's map image (Soc15 call 5): the download URL of its
+       author's own upload of THIS post's map in one theme,
+       route-maps/{authorId}/{postId}/{light|dark}.jpg in this project's
+       bucket, the one place src/lib/routeMapUpload.ts puts it and the
+       path the photo screen checks. Nothing else, no avatar host, no
+       other post's map. */
+    function isRouteMapUrl(v, authorId, postId, theme) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/route-maps%2F' + authorId + '%2F' + postId + '%2F' + theme + '\\.jpg([?#].*)?$');
+    }
+
+    /* A post's `routeMap`: exactly its light and dark images. */
+    function isRouteMap(m, authorId, postId) {
+      return m is map
+        && m.keys().hasAll(['light', 'dark'])
+        && m.keys().hasOnly(['light', 'dark'])
+        && isRouteMapUrl(m.light, authorId, postId, 'light')
+        && isRouteMapUrl(m.dark, authorId, postId, 'dark');
+    }
+
+    /* A map is made only of a route a post shares: none while the route
+       is withheld, as runPostRoute's preview is empty then. */
+    function sharesRoute(data) {
+      return 'routePreview' in data
+        && data.routePreview is list
+        && data.routePreview.size() > 1;
+    }
+
+    /* A shared session's photo (Soc15 call 2): the download URL of its
+       author's own upload of THIS post's photo `id`,
+       post-photos/{authorId}/{postId}/{id}.jpg in this project's bucket,
+       the one place src/lib/postPhotoUpload.ts puts one and the path the
+       photo screen checks. Nothing else, no avatar host, no other post's
+       photo. The id is held to its own pattern first (`isPostPhoto`), so
+       only letters, digits, '-' and '_' are spliced into this one.
+       functions/lib/postPhotos.js gives the moderation queue the same
+       answer. */
+    function isPostPhotoUrl(v, authorId, postId, id) {
+      return v is string
+        && v.size() <= 2048
+        && v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/post-photos%2F' + authorId + '%2F' + postId + '%2F' + id + '\\.jpg([?#].*)?$');
+    }
+
+    /* One entry of a post's `photos`: exactly its id, url, w and h; the
+       url this post's own upload of that id; each side a whole number of
+       pixels the app could have made (it encodes to a 1600 px edge). */
+    function isPostPhoto(p, authorId, postId) {
+      return p is map
+        && p.keys().hasAll(['id', 'url', 'w', 'h'])
+        && p.keys().hasOnly(['id', 'url', 'w', 'h'])
+        && p.id is string
+        && p.id.matches('^[A-Za-z0-9_-]{8,64}$')
+        && isPostPhotoUrl(p.url, authorId, postId, p.id)
+        && p.w is int && p.w >= 1 && p.w <= 4096
+        && p.h is int && p.h >= 1 && p.h <= 4096;
+    }
+
+    /* A post's `photos`: at most four, each checked at its index, as far
+       as the list goes, since rules cannot loop. */
+    function isPostPhotoList(photos, authorId, postId) {
+      return photos is list
+        && photos.size() <= 4
+        && (photos.size() < 1 || isPostPhoto(photos[0], authorId, postId))
+        && (photos.size() < 2 || isPostPhoto(photos[1], authorId, postId))
+        && (photos.size() < 3 || isPostPhoto(photos[2], authorId, postId))
+        && (photos.size() < 4 || isPostPhoto(photos[3], authorId, postId));
+    }
+
+    /* An update that only takes photos off a post (or puts them in another
+       order): every photo left on it was on it already. */
+    function onlyRemovesPostPhotos() {
+      return !('photos' in request.resource.data)
+        || request.resource.data.photos.hasOnly(resource.data.get('photos', []));
     }
 
     /* raceGoal value gate — the shape the app actually consumes.
@@ -280,7 +452,7 @@ service cloud.firestore {
         || (
           g is map
           && g.keys().hasAll(['distance', 'targetDate'])
-          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId'])
+          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId', 'targetTimeS', 'entry'])
           && g.distance in ['5k', '10k', 'half', 'marathon']
           // Local "YYYY-MM-DD". Pinned by pattern, not just length: the whole
           // race plan is derived from parsing this, and a 10-character
@@ -295,6 +467,14 @@ service cloud.firestore {
             !('eventSpaceId' in g)
             || (g.eventSpaceId is string && isKnownSpaceId(g.eventSpaceId))
           )
+          // A2's goal time, which the sanitizer kept and this gate refused.
+          && (
+            !('targetTimeS' in g)
+            || (g.targetTimeS is number
+              && g.targetTimeS >= 600 && g.targetTimeS <= 43200)
+          )
+          // Run9 STATUS 2026-11-01: a race entered, or run on your own.
+          && (!('entry' in g) || g.entry in ['race', 'own'])
         );
     }
 
@@ -309,6 +489,41 @@ service cloud.firestore {
       return !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['raceGoal'])
         || raceGoalValid();
+    }
+
+    /* starterGoal value gate — Run9's starter goal, 30 minutes without
+       stopping. The client writes it in the programme's own transaction
+       when the goal's last week is done (`finishStarterGoalPatch`), and
+       setup and the run plan's settings send it through completeOnboarding
+       and configurePlan. A local "YYYY-MM-DD" for the day it began, and
+       optionally the day it finished, or the day a race goal took its place
+       with the stage it reached (1 to 9). `null` clears it. Same shape as
+       profileSanitizer.js's `starterGoal` and `StarterGoal` in
+       src/features/program/runModeResolution.ts. Gated only when the field
+       changes, like raceGoal above. */
+    function isLocalDateKey(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function starterGoalValid() {
+      let g = request.resource.data.starterGoal;
+      return !('starterGoal' in request.resource.data)
+        || g == null
+        || (
+          g is map
+          && g.keys().hasAll(['startedOn'])
+          && g.keys().hasOnly(['startedOn', 'finishedOn', 'endedOn', 'stage'])
+          && isLocalDateKey(g.startedOn)
+          && (!('finishedOn' in g) || isLocalDateKey(g.finishedOn))
+          && (!('endedOn' in g) || isLocalDateKey(g.endedOn))
+          && (!('stage' in g) || (g.stage is int && g.stage >= 1 && g.stage <= 9))
+        );
+    }
+
+    function starterGoalUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['starterGoal'])
+        || starterGoalValid();
     }
 
     /* shareDefaults value gate — who sees a finished session, per type:
@@ -361,13 +576,15 @@ service cloud.firestore {
         || p == null
         || (
           p is map
-          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces'])
+          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces', 'invites', 'leagues'])
           && (!('kudos' in p) || p.kudos is bool)
           && (!('comments' in p) || p.comments is bool)
           && (!('follows' in p) || p.follows is bool)
           && (!('followRequests' in p) || p.followRequests is bool)
           && (!('circles' in p) || p.circles is bool)
           && (!('spaces' in p) || p.spaces is bool)
+          && (!('invites' in p) || p.invites is bool)
+          && (!('leagues' in p) || p.leagues is bool)
         );
     }
 
@@ -440,6 +657,9 @@ service cloud.firestore {
         // `timezone: null`), which `create` gates with hasOnly().
         'timezone',
         'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
+        // Run9's starter goal: value-gated by starterGoalValid() above. Also
+        // in profileSanitizer.js.
+        'starterGoal',
         'weekScheduleVersion',
         // Pgm6 run-plan tuning knobs (volume preset + difficulty). Written by
         // the configurePlan CF today, but allow-listed here so a future direct
@@ -507,6 +727,7 @@ service cloud.firestore {
         && request.resource.data.subscriptionTier == 'free'
         && billingFieldsUnsetOnCreate()
         && raceGoalValid()
+        && starterGoalValid()
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid();
@@ -515,13 +736,17 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged()
         && raceGoalUnchangedOrValid()
+        && starterGoalUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid();
-      // Freeze delete too: the deletion executor uses the Admin SDK (which
-      // bypasses rules), so a client-side self-delete during the freeze /
-      // tombstone window is never the executor and should be blocked.
-      allow delete: if isOwnerAndNotDeleting(uid);
+      // No client delete. Account deletion runs on the server with the
+      // Admin SDK (deleteMyAccount), and nothing in the app deletes this
+      // document. A delete followed by a fresh create would wipe the
+      // fields only the server writes (hasUsedTrial, subscriptionTrial,
+      // stripeCustomerId, activationJourneyVersion, showWeekOnBoard), and
+      // a trial is decided from hasUsedTrial.
+      allow delete: if false;
     }
 
     // User subcollections — meals, workouts, runs, weights, water, bodyweight
@@ -546,6 +771,29 @@ service cloud.firestore {
     match /users/{uid}/runs/{doc} {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
+    }
+    // A receipt is reserved before touching HealthKit. The delete trigger
+    // marks it pending so the exporting iPhone can clean up a run removed on
+    // another device. The account-deletion sweep removes this collection.
+    match /users/{uid}/healthWorkoutExports/{doc} {
+      allow read: if isOwner(uid);
+      allow create: if isOwnerAndNotDeleting(uid)
+        && exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc))
+        && request.resource.data.runId == doc
+        && request.resource.data.state == 'attempted';
+      allow update: if isOwnerAndNotDeleting(uid)
+        && request.resource.data.runId == doc
+        && resource.data.runId == doc
+        && (
+          (resource.data.state in ['attempted', 'exported']
+            && request.resource.data.state == 'exported'
+            && exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc)))
+          || (request.resource.data.state == 'pending-delete'
+            && !exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc)))
+        );
+      allow delete: if isOwnerAndNotDeleting(uid)
+        && resource.data.state == 'pending-delete'
+        && !exists(/databases/$(database)/documents/users/$(uid)/runs/$(doc));
     }
     match /users/{uid}/weights/{doc} {
       allow read: if isOwner(uid);
@@ -609,6 +857,17 @@ service cloud.firestore {
     match /fcmTokenClaims/{tokenHash} {
       allow read, write: if false;
     }
+    /* Invite codes (Soc15): `inviteCodes/{code}` = { uid, createdAt,
+       redemptions }, one per person, written only by the getInviteCode and
+       redeemInvite callables (functions/lib/inviteCodes.js). Already
+       default-deny by absence; the explicit block records the decision. A
+       readable code would let anyone list codes and follow their owners
+       both ways, and a writable one would let a client claim any code. The
+       owner sees their own on their user document (`inviteCode`, which no
+       client may write). */
+    match /inviteCodes/{code} {
+      allow read, write: if false;
+    }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes
        to users/{uid}/performance/{weekKey}). Path was previously named
@@ -618,6 +877,25 @@ service cloud.firestore {
        by the catch-all and fell silently to empty state. Renamed to
        match the real collection name. */
     match /users/{uid}/performance/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    /* A medal per challenge edition (Soc15, functions/lib/medals.js).
+       Written only by onChallengeParticipantWritten and the medal
+       backfill, from the participant document; a client that could write
+       one could award itself gold. The owner reads their own for the
+       reveal; everyone else reads the public summary. */
+    match /users/{uid}/medals/{challengeId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    /* How each league week went (Soc15 call 3, functions/lib/leagues.js):
+       tier, new tier, place and points, written by weeklyLeagueTurn when it
+       settles the week. The owner reads theirs for the result reveal; a
+       client that could write one could promote itself. */
+    match /users/{uid}/leagueResults/{weekKey} {
       allow read: if isOwner(uid);
       allow write: if false;
     }
@@ -676,6 +954,10 @@ service cloud.firestore {
           'longestStreak',
           'createdAt',
           'badgeSummary',
+          // Soc15 — the trophy case. SERVER-ONLY: listed so a merge
+          // write of the owner's other fields passes over it, and held
+          // below to absent or unchanged, so no client can set it.
+          'medalSummary',
           // SOC-P2f — self-declared "Training for {race}" identity.
           // Value-gated below to null or a KNOWN space id; the client
           // renders it only for race-kind spaces with an upcoming date,
@@ -752,8 +1034,9 @@ service cloud.firestore {
              states; null is what createDefaultProfile writes for
              email signups before any upload, '' is what removeProfilePhoto
              writes when the user clears their custom upload)
-           - an origin isAllowedPhotoUrl trusts (own Storage bucket,
-             Google / Apple OAuth CDNs)
+           - an origin isAllowedPhotoUrl trusts (own Storage bucket's
+             screened folders, Google account photos, Apple's CDN)
+           - the value already stored, left as it is (photoUnchanged)
            The null and '' checks come BEFORE the helper so those two
            real states are accepted rather than type-checked. */
         && (
@@ -761,6 +1044,7 @@ service cloud.firestore {
           || request.resource.data.photoURL == null
           || request.resource.data.photoURL == ''
           || isAllowedPhotoUrl(request.resource.data.photoURL)
+          || photoUnchanged('photoURL')
         )
         /* photoStoragePath gate — must point to the owner's own
            profile-photos folder. Prevents writing a value that would
@@ -803,6 +1087,20 @@ service cloud.firestore {
         )
         && publicProfileDaysValid('currentStreak')
         && publicProfileDaysValid('longestStreak')
+        /* The medals other people read (Soc15). Written only by the
+           server, from each challenge's participant document
+           (functions/lib/medals.js), so the owner's device may leave it
+           as it is and nothing else: a client that could write it could
+           show any medal it liked on its profile. A write without the
+           field (a first profile, a full overwrite) passes, which only
+           ever takes the person's own trophy case down; a later medal
+           write puts its own line back, and the backfill the rest. */
+        && (
+          !('medalSummary' in request.resource.data)
+          || (resource != null
+              && request.resource.data.medalSummary
+                   == resource.data.get('medalSummary', null))
+        )
         && (
           !('badgeSummary' in request.resource.data)
           || (resource != null
@@ -929,7 +1227,7 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview', 'caption'
+          'routePreview', 'routeMap', 'caption', 'moments'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -953,84 +1251,147 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.kudosCount == 0
         && request.resource.data.commentCount == 0
-        // Payload size caps — pathological payload prevention
+        // Payload size caps — pathological payload prevention. Every
+        // reader of a feed or Explore downloads the whole post, so each
+        // field is held to its type and to a size with room over what the
+        // app writes. The rules cannot look inside the maps in a list (a
+        // route's points, a lift's exercise rows); onActivityCreated
+        // holds a post past 64 KB from everyone but its author.
+        //   - routePreview: a run's post carries at most 20 points
+        //     (runPostRoute samples to 20).
+        //   - exercises: one row per exercise done (liftPost).
+        //   - muscleGroups: the session's movement categories, each a
+        //     short key ("horizontal_push").
         && (
           !('routePreview' in request.resource.data.keys())
-          || request.resource.data.routePreview.size() <= 5000
+          || (request.resource.data.routePreview is list
+              && request.resource.data.routePreview.size() <= 100)
+        )
+        // The map image (Soc15 call 5) is named by the author's app once
+        // the post exists (the update below); a create may carry only the
+        // same thing: this post's own two images, of a route it shares.
+        && (
+          !('routeMap' in request.resource.data.keys())
+          || (sharesRoute(request.resource.data)
+              && isRouteMap(request.resource.data.routeMap,
+                            request.auth.uid, activityId))
         )
         && (
           !('exercises' in request.resource.data.keys())
-          || request.resource.data.exercises.size() <= 100
+          || (request.resource.data.exercises is list
+              && request.resource.data.exercises.size() <= 50)
         )
         && (
           !('muscleGroups' in request.resource.data.keys())
-          || request.resource.data.muscleGroups.size() <= 20
+          || (request.resource.data.muscleGroups is list
+              && request.resource.data.muscleGroups.size() <= 20
+              && request.resource.data.muscleGroups.join('').size() <= 600)
         )
-        // Numeric bounds — when present, must be in plausible range
+        // Moments (Soc15): at most three, each checked by index as far as
+        // the list goes (`validPostMoment`).
+        && (
+          !('moments' in request.resource.data.keys())
+          || (request.resource.data.moments is list
+              && request.resource.data.moments.size() <= 3
+              && (request.resource.data.moments.size() < 1
+                  || validPostMoment(request.resource.data.moments[0]))
+              && (request.resource.data.moments.size() < 2
+                  || validPostMoment(request.resource.data.moments[1]))
+              && (request.resource.data.moments.size() < 3
+                  || validPostMoment(request.resource.data.moments[2])))
+        )
+        && (
+          !('prHit' in request.resource.data.keys())
+          || request.resource.data.prHit is bool
+        )
+        // Numeric bounds — when present, a number in a plausible range
         && (
           !('distance' in request.resource.data.keys())
-          || (request.resource.data.distance >= 0
+          || (request.resource.data.distance is number
+              && request.resource.data.distance >= 0
               && request.resource.data.distance <= 500000)  // 500 km — covers ultras
         )
         && (
           !('duration' in request.resource.data.keys())
-          || (request.resource.data.duration >= 0
+          || (request.resource.data.duration is number
+              && request.resource.data.duration >= 0
               && request.resource.data.duration <= 86400)  // 24 h
         )
         && (
           !('elevationGain' in request.resource.data.keys())
-          || (request.resource.data.elevationGain >= 0
+          || (request.resource.data.elevationGain is number
+              && request.resource.data.elevationGain >= 0
               && request.resource.data.elevationGain <= 20000)  // 20 km vertical
         )
         && (
           !('calories' in request.resource.data.keys())
-          || (request.resource.data.calories >= 0
+          || (request.resource.data.calories is number
+              && request.resource.data.calories >= 0
               && request.resource.data.calories <= 50000)  // ultra-endurance ceiling
         )
         && (
           !('totalVolume' in request.resource.data.keys())
-          || (request.resource.data.totalVolume >= 0
+          || (request.resource.data.totalVolume is number
+              && request.resource.data.totalVolume >= 0
               && request.resource.data.totalVolume <= 1000000)  // 1M kg per session is plenty
         )
         && (
           !('exerciseCount' in request.resource.data.keys())
-          || (request.resource.data.exerciseCount >= 0
+          || (request.resource.data.exerciseCount is number
+              && request.resource.data.exerciseCount >= 0
               && request.resource.data.exerciseCount <= 200)
         )
         && (
           !('prWeight' in request.resource.data.keys())
-          || (request.resource.data.prWeight >= 0
+          || (request.resource.data.prWeight is number
+              && request.resource.data.prWeight >= 0
               && request.resource.data.prWeight <= 1000)
         )
         && (
           !('prCount' in request.resource.data.keys())
-          || (request.resource.data.prCount >= 0
+          || (request.resource.data.prCount is number
+              && request.resource.data.prCount >= 0
               && request.resource.data.prCount <= 1000)
+        )
+        // A pace is seconds a kilometre (runCompletion), or on an older
+        // post the text "5:34": the card prints a string as it is, so one
+        // is held to a pace's length.
+        && (
+          !('avgPace' in request.resource.data.keys())
+          || request.resource.data.avgPace is number
+          || (request.resource.data.avgPace is string
+              && request.resource.data.avgPace.size() <= 16)
         )
         // String length caps
         && (
           !('workoutName' in request.resource.data.keys())
-          || request.resource.data.workoutName.size() <= 200
+          || (request.resource.data.workoutName is string
+              && request.resource.data.workoutName.size() <= 200)
         )
         && (
           !('runName' in request.resource.data.keys())
-          || request.resource.data.runName.size() <= 200
+          || (request.resource.data.runName is string
+              && request.resource.data.runName.size() <= 200)
         )
         && (
           !('activityTitle' in request.resource.data.keys())
-          || request.resource.data.activityTitle.size() <= 200
+          || (request.resource.data.activityTitle is string
+              && request.resource.data.activityTitle.size() <= 200)
         )
         && (
           !('prExercise' in request.resource.data.keys())
-          || request.resource.data.prExercise.size() <= 200
+          || (request.resource.data.prExercise is string
+              && request.resource.data.prExercise.size() <= 200)
         )
         && (
           !('challengeMilestone' in request.resource.data.keys())
-          || request.resource.data.challengeMilestone.size() <= 200
+          || (request.resource.data.challengeMilestone is string
+              && request.resource.data.challengeMilestone.size() <= 200)
         )
         && (
           !('badgeEarned' in request.resource.data.keys())
-          || request.resource.data.badgeEarned.size() <= 200
+          || (request.resource.data.badgeEarned is string
+              && request.resource.data.badgeEarned.size() <= 200)
         )
         // The share sheets' optional note, cut at CAPTION_MAX
         // (src/lib/activityPost.ts). size() counts UTF-16 code units,
@@ -1047,27 +1408,61 @@ service cloud.firestore {
       // addCommentCallable + deleteCommentCallable in functions/index.js
       // which flip the counter and underlying kudos/comment doc in
       // one Firestore transaction.
+      // The author may change three things: who sees the post, (Soc15
+      // call 5) its map image, once their app has made it, and (Soc15
+      // call 2) its photos. One of them per write; every other field
+      // stays as it was posted. `photos` is never on a create: a photo
+      // is uploaded beside a post that exists and named once screened.
       allow update: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visibility'])
-        // The same three values a create may hold.
-        && request.resource.data.visibility in ['public', 'followers', 'private']
-        // A flagged activity stays private. The word filter
-        // (onActivityCreated) and a moderator's Hide content both flag
-        // it and make it private; without this its author could make
-        // it public again with one write, undoing both.
         && (
-          resource.data.get('flagged', false) != true
-          || request.resource.data.visibility == 'private'
-        )
-        // A restricted account may narrow who sees a post, never widen it.
-        && (
-          request.resource.data.visibility == 'private'
-          || (request.resource.data.visibility == 'followers'
-              && resource.data.visibility == 'public')
-          || !isRestricted()
+          (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['visibility'])
+            // The same three values a create may hold.
+            && request.resource.data.visibility in ['public', 'followers', 'private']
+            // A flagged activity stays private. The word filter
+            // (onActivityCreated) and a moderator's Hide content both flag
+            // it and make it private; without this its author could make
+            // it public again with one write, undoing both.
+            && (
+              resource.data.get('flagged', false) != true
+              || request.resource.data.visibility == 'private'
+            )
+            // A restricted account may narrow who sees a post, never widen it.
+            && (
+              request.resource.data.visibility == 'private'
+              || (request.resource.data.visibility == 'followers'
+                  && resource.data.visibility == 'public')
+              || !isRestricted()
+            ))
+          || (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['routeMap'])
+            // This post's own two images, of a route it shares
+            // (src/lib/routeMapUpload.ts). Never taken off once named.
+            && sharesRoute(resource.data)
+            && isRouteMap(request.resource.data.routeMap,
+                          resource.data.authorId, activityId)
+            // A restricted account adds nothing others see (S4e), as a
+            // create holds it: its private post may still have its map.
+            && (resource.data.visibility == 'private' || !isRestricted()))
+          || (request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['photos'])
+            // The post's whole list, one to four of its own screened
+            // uploads (src/lib/postPhotoUpload.ts), or none at all.
+            && (!('photos' in request.resource.data)
+                || isPostPhotoList(request.resource.data.photos,
+                                   resource.data.authorId, activityId))
+            && (
+              // Taking photos off is always open: they are the author's
+              // own things, which a restriction never holds back (S4e).
+              onlyRemovesPostPhotos()
+              // Adding one is public content: a verified email, as a post
+              // needs, and a restricted account adds to its private post
+              // only, as for a map.
+              || (isEmailVerified()
+                  && (resource.data.visibility == 'private' || !isRestricted()))
+            ))
         );
       allow delete: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
@@ -1211,10 +1606,9 @@ service cloud.firestore {
       //     (displayName, photoURL, uid) are allowed. The optional `uid`
       //     body field, if present, must equal the path's {uid}
       //     (impersonation guard, same idiom as the public profile).
-      //   - UPDATE: only the cosmetic identity fields may change. Any
-      //     diff that touches currentValue or tierAchieved is denied —
-      //     those are written ONLY by the Admin SDK triggers, which
-      //     bypass these rules.
+      //   - UPDATE: none from a client. currentValue and tierAchieved
+      //     are written ONLY by the Admin SDK triggers, and the name and
+      //     photo by identityResync, all of which bypass these rules.
       //   - DELETE (leave): the participant themselves.
       // ========================================
       match /participants/{uid} {
@@ -1247,34 +1641,30 @@ service cloud.firestore {
             !('uid' in request.resource.data)
             || request.resource.data.uid == uid
           )
-          // Identity field type/length caps.
+          // The name on the leaderboard is the one the person's public
+          // profile shows: the profile's name is screened by the word
+          // filter (onPublicProfileWritten), and the private user
+          // document's is not. Absent is allowed; the board then says
+          // "Athlete".
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
+                && request.resource.data.displayName.size() <= 50
+                && request.resource.data.displayName
+                     == get(/databases/$(database)/documents/users/$(uid)/public/profile)
+                          .data.get('displayName', null))
           )
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
-        // Updates may ONLY touch cosmetic identity fields. Any diff
-        // that affects currentValue or tierAchieved is rejected —
-        // server-only via the Admin SDK triggers.
-        allow update: if request.auth != null
-          && request.auth.uid == uid
-          && !isWriteFrozen(uid)
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['displayName', 'photoURL'])
-          && (
-            !('displayName' in request.resource.data)
-            || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 50)
-          )
-          && (
-            !('photoURL' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoURL)
-          );
+        // No client update. A row's progress is written by the Admin SDK
+        // triggers (syncChallengeProgress), and its name and photo by
+        // identityResync when the public profile changes, which carries
+        // neither a name the word filter refuses nor a restricted
+        // account's new one. A client update was a way round both.
+        allow update: if false;
 
         allow delete: if request.auth != null
           && request.auth.uid == uid
@@ -1367,6 +1757,14 @@ service cloud.firestore {
           .data.officialUids;
     }
 
+    /* One figure on a Space post's attached session: absent, or a number
+       from 0 to `max`. */
+    function spaceSnapshotNumber(field, max) {
+      let a = request.resource.data.activity;
+      return !(field in a)
+        || (a[field] is number && a[field] >= 0 && a[field] <= max);
+    }
+
     match /spaces/{spaceId} {
       // No parent doc in v1 (member counts are client aggregate
       // queries over /members — no forgeable counter, no trigger).
@@ -1415,6 +1813,7 @@ service cloud.firestore {
           && (
             !('photoURL' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoURL)
+            || photoUnchanged('photoURL')
           );
 
         allow delete: if request.auth != null
@@ -1463,7 +1862,7 @@ service cloud.firestore {
           )
           && (
             !('photoUrl' in request.resource.data)
-            || isAllowedPhotoUrl(request.resource.data.photoUrl)
+            || isOwnSpacePhotoUrl(request.resource.data.photoUrl)
           )
           // The attached session is the composer's snapshot
           // (src/features/spaces/spacePostSnapshot.ts, whose key list
@@ -1480,7 +1879,9 @@ service cloud.firestore {
                    ])
                 && request.resource.data.activity.get('type', null)
                      in ['run', 'workout']
-                // The composer downsamples a route to 40 points.
+                // The composer downsamples a route to 40 points. The
+                // points are maps the rules cannot look inside, so
+                // onSpacePostWritten removes a post past 64 KB.
                 && (
                   !('routePreview' in request.resource.data.activity)
                   || (request.resource.data.activity.routePreview is list
@@ -1489,7 +1890,22 @@ service cloud.firestore {
                 && (
                   !('muscleGroups' in request.resource.data.activity)
                   || (request.resource.data.activity.muscleGroups is list
-                      && request.resource.data.activity.muscleGroups.size() <= 20)
+                      && request.resource.data.activity.muscleGroups.size() <= 20
+                      && request.resource.data.activity.muscleGroups.join('').size() <= 600)
+                )
+                // The session's figures, each a number in the range a
+                // feed post holds it to (the activities rule above).
+                && spaceSnapshotNumber('distance', 500000)
+                && spaceSnapshotNumber('duration', 86400)
+                && spaceSnapshotNumber('elevationGain', 20000)
+                && spaceSnapshotNumber('totalVolume', 1000000)
+                && spaceSnapshotNumber('exerciseCount', 200)
+                // Seconds a kilometre, or a pace's text.
+                && (
+                  !('avgPace' in request.resource.data.activity)
+                  || request.resource.data.activity.avgPace is number
+                  || (request.resource.data.activity.avgPace is string
+                      && request.resource.data.activity.avgPace.size() <= 16)
                 )
                 && (
                   !('leadExerciseId' in request.resource.data.activity)
@@ -1792,12 +2208,97 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* How many people follow an account and how many it follows, counted
+       by the server from the two lists (functions/lib/followCounts.js), so
+       a profile shows the numbers without reading who. Read one at a time
+       by anyone signed in, except someone its owner has blocked, as the
+       public profile is; never listed, and never written by a client. */
+    match /followCounts/{uid} {
+      allow get: if request.auth != null
+        && (request.auth.uid == uid
+            || !exists(/databases/$(database)/documents/blocks/$(uid)/users/$(request.auth.uid)));
+      allow list: if false;
+      allow write: if false;
+    }
+
+    /* Weekly leagues (Soc15 call 3, functions/lib/leagues.js). Opt-in
+       (users/{uid}.leagueOptIn, set only by the setLeagueSharing callable)
+       and server-written throughout: the turn, the session triggers and
+       the callable write with the Admin SDK, and no client writes any of
+       these, its own included, since a standing is a count of sessions,
+       not a claim.
+
+       A person's membership (tier, this week's group) is theirs to read. */
+    match /leagueMembers/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    /* A week's group, read by its members only: a league shows a first
+       name, a photo and a week's points to about twenty people who chose
+       to be shown, and to nobody else. A block between two members is
+       filtered in the app (useBlockedUsers), as on every social surface:
+       the group was drawn without blocked pairs, and a block made during
+       the week leaves both in the group they joined. */
+    match /leagueGroups/{groupId} {
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.memberUids;
+      allow write: if false;
+
+      match /standings/{memberUid} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(/databases/$(database)/documents/leagueGroups/$(groupId)).data.memberUids;
+        allow write: if false;
+      }
+    }
+
+    /* The turn's own step markers for a week: counts only, server only. */
+    match /leagueWeeks/{weekKey} {
+      allow read, write: if false;
+    }
+
+    /* The figure the locked league card shows ("3 so far"): a count the
+       server keeps, so no client ever counts users. Any signed-in person
+       reads it; nobody writes it. */
+    match /leagueStatus/{doc} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    /* A race's plan group (Soc15): how many people on Tropos are training
+       for it, `{ count, updatedAt }`, recounted by the server from the race
+       goals bound to the race's space (functions/lib/raceCohorts.js). A
+       number about a race that names no one: any signed-in person reads
+       it, and no client writes it, since a count a client could set would
+       be a claim. */
+    match /raceCohorts/{spaceId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    /* The live pulse (Soc15, functions/lib/pulse.js): how many sessions
+       were saved for one day across Tropos, which Social's Feed shows as
+       "Today: 14 sessions on Tropos". A count that names no one, so any
+       signed-in person reads it; only the session triggers write it, and
+       no client may, since every client could move it. Each person's
+       credits (users/{uid}/pulseCredits) have no rule: no client reads or
+       writes them, the owner included. */
+    match /pulse/{dateKey} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // ========================================
     // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
     // tracks a shared streak (days both logged a session). Only the two
     // members may read or write their bond.
     //
-    //   - READ: either member.
+    //   - READ: either member. And a pair with no bond yet reads as no
+    //     document for either of the two its id names: the app reads the
+    //     pair's id to learn whether to offer one (getBond), and a
+    //     refused read there settled every pair as not eligible, so a
+    //     streak was never offered. Nobody else learns whether two other
+    //     people have a bond.
     //   - CREATE: SERVER-ONLY (`if false`). Each person holds at most five
     //     bonds, and rules cannot count documents, so the
     //     startPartnerStreak callable makes every bond in a transaction
@@ -1825,7 +2326,23 @@ service cloud.firestore {
         return request.auth != null
           && request.auth.uid in resource.data.members;
       }
-      allow read: if bondMember();
+      /* The caller is one of the two people the id names. A pair's id is
+         its two uids, sorted and joined with "__" (bondId in
+         partnerStreakApi.ts, bondIdFor in functions/lib/partnerBonds.js),
+         and a uid Firebase Auth makes is letters and digits only. */
+      function namedInBondId() {
+        let ids = bondId.split('__');
+        return request.auth != null
+          && ids.size() == 2
+          && request.auth.uid in ids;
+      }
+      /* `resource` is null for a document that does not exist, and
+         `resource.data` on it is an error that refuses the read: so a
+         missing bond is asked about by name, and an existing one by its
+         members, the stored list a server wrote. */
+      allow get: if (resource == null && namedInBondId())
+        || (resource != null && bondMember());
+      allow list: if bondMember();
       // Server-only: a create here could not count the bonds either person
       // already holds (see the header). The startPartnerStreak callable is
       // the one writer.

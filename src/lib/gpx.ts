@@ -1,12 +1,42 @@
 import type { GPSPoint } from "./gps";
 
+const GPX_NAMESPACES = new Set([
+  null,
+  "http://www.topografix.com/GPX/1/0",
+  "http://www.topografix.com/GPX/1/1",
+]);
+
+/** Older Tropos exports had no namespace; keep those readable too. */
+function gpxRoot(xml: string): Element | null {
+  if (typeof DOMParser === "undefined" || !xml) return null;
+  try {
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    if (doc.getElementsByTagName("parsererror").length > 0) return null;
+    const root = doc.documentElement;
+    return root.localName === "gpx" && GPX_NAMESPACES.has(root.namespaceURI)
+      ? root
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Prefixes are arbitrary. Stay in the parent's GPX namespace and hierarchy
+ *  so extension elements cannot become route points, names or measurements. */
+function gpxChildren(parent: Element, name: string): Element[] {
+  return Array.from(parent.children).filter(
+    (child) =>
+      child.localName === name && child.namespaceURI === parent.namespaceURI
+  );
+}
+
 /**
  * Parse a GPX document into the app's GPSPoint polyline — the inverse of
  * `toGPX` in gps.ts, used to import a route to follow.
  *
  * Reads `<trkpt>` track points (preferred) and falls back to `<rtept>` route
- * points. Uses getElementsByTagName (not querySelector) so it matches GPX's
- * default-namespaced elements reliably across DOM implementations.
+ * points. Matches namespace/local name regardless of the document's prefix,
+ * and reads only the GPX track/segment/point or route/point hierarchy.
  *
  * Imported points are a PLAN, not measured fixes: accuracy is 0, speed null,
  * and timestamp comes from `<time>` when present (else 0). Only lat/lon (and
@@ -15,20 +45,20 @@ import type { GPSPoint } from "./gps";
  * "couldn't read that file" message rather than starting an empty route.
  */
 export function parseGpx(xml: string): GPSPoint[] {
-  if (typeof DOMParser === "undefined" || !xml) return [];
+  const root = gpxRoot(xml);
+  if (!root) return [];
 
-  let doc: Document;
-  try {
-    doc = new DOMParser().parseFromString(xml, "application/xml");
-  } catch {
-    return [];
-  }
-  // A parse error yields a <parsererror> node rather than throwing.
-  if (doc.getElementsByTagName("parsererror").length > 0) return [];
-
-  const trkpts = Array.from(doc.getElementsByTagName("trkpt"));
+  const trkpts = gpxChildren(root, "trk").flatMap((track) =>
+    gpxChildren(track, "trkseg").flatMap((segment) =>
+      gpxChildren(segment, "trkpt")
+    )
+  );
   const nodes =
-    trkpts.length > 0 ? trkpts : Array.from(doc.getElementsByTagName("rtept"));
+    trkpts.length > 0
+      ? trkpts
+      : gpxChildren(root, "rte").flatMap((route) =>
+          gpxChildren(route, "rtept")
+        );
 
   const points: GPSPoint[] = [];
   let previousSegment: Element | null = null;
@@ -38,9 +68,9 @@ export function parseGpx(xml: string): GPSPoint[] {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
     if (lat < -90 || lat > 90 || lon < -180 || lon > 180) continue;
 
-    const eleText = node.getElementsByTagName("ele")[0]?.textContent ?? "";
+    const eleText = gpxChildren(node, "ele")[0]?.textContent ?? "";
     const altitude = parseFloat(eleText);
-    const timeText = node.getElementsByTagName("time")[0]?.textContent ?? "";
+    const timeText = gpxChildren(node, "time")[0]?.textContent ?? "";
     const t = timeText ? Date.parse(timeText) : NaN;
 
     const segment = node.parentElement;
@@ -68,17 +98,11 @@ export function parseGpx(xml: string): GPSPoint[] {
  * pre-fill the import preview / saved-route name.
  */
 export function parseGpxName(xml: string): string | null {
-  if (typeof DOMParser === "undefined" || !xml) return null;
-  let doc: Document;
-  try {
-    doc = new DOMParser().parseFromString(xml, "application/xml");
-  } catch {
-    return null;
-  }
-  if (doc.getElementsByTagName("parsererror").length > 0) return null;
+  const root = gpxRoot(xml);
+  if (!root) return null;
   for (const tag of ["trk", "rte", "metadata"]) {
-    const parent = doc.getElementsByTagName(tag)[0];
-    const txt = parent?.getElementsByTagName("name")[0]?.textContent?.trim();
+    const parent = gpxChildren(root, tag)[0];
+    const txt = parent && gpxChildren(parent, "name")[0]?.textContent?.trim();
     if (txt) return txt;
   }
   return null;

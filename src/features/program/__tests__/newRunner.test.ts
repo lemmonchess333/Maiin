@@ -17,6 +17,7 @@ import { plannedRunMinutes } from "../runTimeLimits";
 import type { ScheduledRunDay } from "../programTypes";
 import type { RunningBaseline } from "../runningBaseline";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { starterRunSlots } from "../starterPlan";
 import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import {
   isRunWalkTemplateId,
@@ -137,15 +138,14 @@ describe("the race plan in a new runner's first weeks", () => {
   /* The second half of Run20 (5): the first weeks run as run-walk, building
      to continuous running (NHS Couch to 5K). The simulator's new runner was
      asked for more than 20 minutes non-stop in week one. */
-  it("run each week as that week's run-walk session, on the same days", () => {
-    const regular = plan("10k", 10, null);
+  it("run each week as that week's run-walk session, on spaced available days", () => {
     const fresh = plan("10k", 10, until);
     fresh.weeks.forEach((week, i) => {
       if (i >= NEW_RUNNER_WEEKS) return;
       expect(
         week.map((run) => run.dayIndex),
         `week ${i}`
-      ).toEqual(regular.weeks[i].map((run) => run.dayIndex));
+      ).toEqual([1, 3, 5]);
       for (const run of week) {
         expect(run, `week ${i}`).toMatchObject({
           templateId: RUN_WALK_TEMPLATE_IDS[i],
@@ -309,11 +309,28 @@ describe("a new runner's runs after the run-walk weeks", () => {
   it("are the plan's own wherever the plan's run fits, and the race is the race", () => {
     for (const [distance, weeks] of races) {
       const regular = plan(distance, weeks, null);
-      plan(distance, weeks, until).weeks.forEach((week, i) => {
+      const fresh = plan(distance, weeks, until);
+      const firstTaper = weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance];
+      const buildHeldQuality = fresh.weeks
+        .slice(0, firstTaper)
+        .flat()
+        .some((run) => run.type === "tempo" || run.type === "intervals");
+      fresh.weeks.forEach((week, i) => {
         if (i < NEW_RUNNER_WEEKS) return;
         const most = 20 + 5 * (i - NEW_RUNNER_WEEKS + 1);
-        week.forEach((run, j) => {
-          const own = regular.weeks[i][j];
+        week.forEach((run) => {
+          const own = regular.weeks[i].find(day => day.date === run.date)!;
+          // A new runner whose build never reached quality keeps the
+          // taper easy, even when the sharpener now fits their minutes.
+          if (
+            !buildHeldQuality &&
+            (own.type === "tempo" || own.type === "intervals") &&
+            i >= firstTaper &&
+            i < weeks - 1
+          ) {
+            expect(run.type).toBe("easy");
+            return;
+          }
           // Run22: a taper week's long run and easy runs are its shares of
           // what the build held, and a new runner's build held shorter runs
           // than the plan's own (`taperInSteps.test.ts`).
@@ -337,9 +354,29 @@ describe("a new runner's runs after the run-walk weeks", () => {
     }
     // A 5K fourteen weeks out is the plan's own from week 11.
     const regular = plan("5k", 14, null);
-    expect(plan("5k", 14, until).weeks.slice(10)).toEqual(
-      regular.weeks.slice(10)
-    );
+    plan("5k", 14, until).weeks.slice(10).forEach((week, offset) => {
+      for (const run of week) {
+        expect(run).toEqual(regular.weeks[offset + 10].find(day => day.date === run.date));
+      }
+    });
+  });
+
+  it("does not make taper the first quality week after run-walk", () => {
+    // Six run-walk weeks, then a 25-minute ceiling that fits no quality.
+    // The next week's 30-minute ceiling used to unlock the taper's 8×400.
+    const fresh = plan("5k", 9, until);
+    expect(
+      fresh.weeks
+        .slice(0, 7)
+        .flat()
+        .every((run) => run.type === "easy")
+    ).toBe(true);
+    expect(fresh.weeks[7].map((run) => run.templateId)).toEqual([
+      "easy_30",
+      "easy_30",
+      "easy_20",
+    ]);
+    expect(fresh.weeks.at(-1)!.some((run) => run.type === "race")).toBe(true);
   });
 
   /* A tempo or intervals session that doesn't fit shortens to a smaller
@@ -357,8 +394,11 @@ describe("a new runner's runs after the run-walk weeks", () => {
         const plan2 = (newRunner: string | null) =>
           generateRacePlanV2({
             recentLayoff: "none",
-            weekSchedule: generateSchedule(0, days),
-            weeklyRunDays: days,
+            weekSchedule: generateSchedule(0, days).map(day => ({
+              ...day,
+              type: starterRunSlots(generateSchedule(0, days)).includes(day.day) ? "run" : "rest",
+            })),
+            weeklyRunDays: Math.min(days, 3),
             raceGoal: {
               distance,
               targetDate: localDateString(
@@ -371,10 +411,10 @@ describe("a new runner's runs after the run-walk weeks", () => {
           });
         const regular = plan2(null);
         plan2(fromThursday).weeks.forEach((week, i) =>
-          week.forEach((run, j) => {
+          week.forEach((run) => {
             if (run.type !== "tempo" && run.type !== "intervals") return;
             expect(
-              family(regular.weeks[i][j].templateId),
+              family(regular.weeks[i].find(day => day.date === run.date)!.templateId),
               `${distance} in ${weeks} weeks, ${days} days, week ${i + 1}`
             ).toContain(run.templateId);
           })

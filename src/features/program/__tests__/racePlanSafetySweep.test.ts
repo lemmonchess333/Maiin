@@ -289,7 +289,16 @@ describe("race plans — the block is the calendar weeks from this week through 
         expect(out.weeks.length, label).toBe(
           Math.max(expectedWeeks, expectedWeeks > 1 ? 2 : 1)
         );
-        expect(out.totalWeeks, label).toBe(out.weeks.length);
+        // Made from a Thursday with the race in a later week, this week is
+        // a lead-in and the race's weeks start on the Monday after.
+        const leadIn = startOffsetDays >= 3 && out.weeks.length > 1;
+        expect(out.leadInWeek !== null, label).toBe(leadIn);
+        expect(out.totalWeeks, label).toBe(out.weeks.length - (leadIn ? 1 : 0));
+        if (leadIn)
+          expect(
+            out.weeks[0].every((r) => r.type === "easy"),
+            label
+          ).toBe(true);
         const last = out.weeks[out.weeks.length - 1];
         const races = last.filter((r) => r.type === "race");
         expect(
@@ -368,15 +377,12 @@ describe("race plans — the block is the calendar weeks from this week through 
     expect(types(monday5k)).toEqual(new Set(["easy", "long", "race"]));
   });
 
-  it("declared on the week's last day, the week already behind the runner counts — and unlocks nothing", () => {
+  it("declared on the week's last day, the week is a lead-in and the race's weeks start the Monday after", () => {
     /* A Sunday declaration is a calendar week with no training day left in
-       it. The block counts it (the rail shows it; the race's week index is
-       what it is), so a marathon declared three Sundays before a Sunday race
-       is a 4-week block — at the floor, not below it — where the from-today
-       count said 3. What matters for the runner is that the extra week is
-       made of days already gone: every runDay from today to the race is
-       easy, exactly as the Monday declaration's below-floor plan is. The
-       verdict label differs; the training does not. */
+       it but the Sunday. It is a lead-in, not one of the race's weeks, so a
+       marathon declared three Sundays before a Sunday race is the 3-week
+       block a Monday declaration makes, below the floor, with the same
+       runs from that Monday on. */
     const sunday = plan({
       distance: "marathon",
       startOffsetDays: 6, // Sun 11 Jan
@@ -388,8 +394,9 @@ describe("race plans — the block is the calendar weeks from this week through 
       daysOut: 20, // Sun 1 Feb
     });
     expect(sunday.raceDate).toBe(monday.raceDate);
-    expect(sunday.out.totalWeeks).toBe(4);
-    expect(sunday.out.belowFloor).toBe(false);
+    expect(sunday.out.leadInWeek).toBe("2026-01-05");
+    expect(sunday.out.totalWeeks).toBe(3);
+    expect(sunday.out.belowFloor).toBe(true);
     expect(monday.out.totalWeeks).toBe(3);
     expect(monday.out.belowFloor).toBe(true);
     const ahead = (p: typeof sunday) =>

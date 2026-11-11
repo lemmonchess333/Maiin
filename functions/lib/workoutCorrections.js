@@ -9,6 +9,26 @@ const {
 } = require("./challengeActivityWindow");
 const { FieldValue } = require("firebase-admin/firestore");
 
+/**
+ * What a correction leaves of a post's moments (Soc15, src/lib/postMoments.ts).
+ * A PR was judged against the lifter's records as the session finished,
+ * and those live with the app, so a corrected session's post stops
+ * claiming PRs rather than keep a claim the new sets may not hold. The
+ * moments a correction cannot change stay: the streak a session reached,
+ * a plan's week, a first session. The fields to update, empty for a post
+ * that claims no PR.
+ */
+function correctedPostMoments(post) {
+  const update = {};
+  if (Array.isArray(post?.moments)) {
+    const kept = post.moments.filter((moment) => moment?.kind !== "pr");
+    if (kept.length !== post.moments.length)
+      update.moments = kept.length > 0 ? kept : FieldValue.delete();
+  }
+  if (post && "prCount" in post) update.prCount = FieldValue.delete();
+  return update;
+}
+
 /** Reconcile credited amounts against the current source. Marker deltas
  * make duplicate/out-of-order updates harmless. Missing markers can arise from zero-volume originals or a delayed create;
  * current source reads and the same eligibility predicates guard initial credit. */
@@ -80,7 +100,10 @@ async function reconcileWorkoutMetrics(db, uid, workoutId) {
             ? `${ex.sets.length}×${ex.sets[0].reps} s`
             : `${ex.sets.length}×${ex.sets[0].reps}×${ex.sets[0].weightKg} kg`,
         ...(ex.exerciseId ? { exerciseId: ex.exerciseId } : {}),
+        // The superset it was done in, as the app's post rows carry it.
+        ...(typeof ex.superset === "number" ? { superset: ex.superset } : {}),
       })),
+      ...correctedPostMoments(activity.data()),
     });
   });
   const challenges = await db.collection("challenges").get();
@@ -132,4 +155,4 @@ async function reconcileWorkoutMetrics(db, uid, workoutId) {
     });
   }
 }
-module.exports = { reconcileWorkoutMetrics };
+module.exports = { reconcileWorkoutMetrics, correctedPostMoments };

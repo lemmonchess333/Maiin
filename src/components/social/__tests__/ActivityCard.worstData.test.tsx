@@ -117,7 +117,7 @@ describe("ActivityCard with worst-case data", () => {
     item.prWeight = 142.8816;
     const { container } = renderCard(item);
     // `formatLoad`'s kg, two decimals at most, as the workout screen prints it.
-    expect(container.textContent).toContain("New PR: Deadlift 142.88 kg");
+    expect(container.textContent).toContain("New best: Deadlift 142.88 kg");
     expect(container.textContent).not.toContain("142.8816");
   });
 

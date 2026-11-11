@@ -15,7 +15,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
 import { FORM_ART_CUTOUTS } from "../formArtCutouts.data";
-import { getFormArtCutout, sessionLeadArt } from "../formArtCutouts";
+import {
+  getFormArtCutout,
+  sessionLeadArt,
+  sessionLeadIndex,
+} from "../formArtCutouts";
 import { CARD_FRAMES, cardFrameOf } from "../formArtCardFrames";
 
 const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -112,16 +116,43 @@ describe("card frames", () => {
     expect(art!.frames[frame - 1]).not.toBe(art!.reference);
   });
 
-  it("leaves a set with a reviewed hand-made cut-out on its reference", () => {
-    /* docs/exercise-art/cutout-sources holds cut-outs reviewed against
-       their reference frame; a card frame would orphan the review. */
+  it.each(["dead-bug", "bicycle-crunch"])(
+    "%s shows its distinctive opposite-limb movement on cards",
+    (id) => {
+      const art = getReleasedFormArtwork(id)!;
+      expect(CARD_FRAMES[id]).toBe(2);
+      expect(cardFrameOf(id, art)).toBe(`form-frames/${id}/2.webp`);
+      expect(getFormArtCutout(id)?.source).toBe(`form-frames/${id}/2.webp`);
+    }
+  );
+
+  it("binds each reviewed hand-made cut-out to its current card frame", () => {
+    /* A prepared transparent source records the exact released frame shown
+       on the card, whether that frame is the review reference or a listed
+       pose. Changing the card frame must invalidate the prepared review. */
     const prepared = readdirSync(
       resolve(process.cwd(), "docs/exercise-art/cutout-sources")
     )
       .filter((f) => f.endsWith(".json"))
       .map((f) => f.replace(/\.json$/, ""));
     expect(prepared).toContain("ab-wheel");
-    for (const id of prepared) expect(CARD_FRAMES[id]).toBeUndefined();
+    for (const id of prepared) {
+      const art = getReleasedFormArtwork(id);
+      expect(art, `${id} has no released art`).not.toBeNull();
+      const record = JSON.parse(
+        readFileSync(
+          resolve(
+            process.cwd(),
+            "docs/exercise-art/cutout-sources",
+            `${id}.json`
+          ),
+          "utf8"
+        )
+      );
+      const source = cardFrameOf(id, art!);
+      expect(record.reference).toBe(source);
+      expect(record.referenceSha256).toBe(sha(publicFile(source)));
+    }
   });
 });
 
@@ -138,7 +169,50 @@ describe("sessionLeadArt", () => {
     expect(art?.cutout.source).toBe("form-frames/squat/4.webp");
   });
 
+  it("pictures the day's main lift, not whatever is drawn first", () => {
+    // A beginner's pull day: the floor gate puts the straight-arm pulldown
+    // in the pull-up's place, first; the barbell row is the main lift.
+    const pullA = [
+      { exerciseId: "straight-arm-pulldown", name: "Straight-Arm Pulldown" },
+      { exerciseId: "barbell-row", name: "Barbell Row" },
+      { exerciseId: "lat-pulldown", name: "Lat Pulldown" },
+    ];
+    expect(getFormArtCutout("straight-arm-pulldown")).not.toBeNull();
+    expect(sessionLeadIndex(pullA)).toBe(1);
+    expect(sessionLeadArt(pullA)?.exerciseName).toBe("Barbell Row");
+    // An arm or core primary never stands for the day.
+    expect(
+      sessionLeadArt([
+        { exerciseId: "incline-db-press", name: "Incline DB Press" },
+        { exerciseId: "barbell-curl", name: "Barbell Curl" },
+      ])?.exerciseName
+    ).toBe("Incline DB Press");
+  });
+
+  // A beginner's home pull day has no compound primary: the floor gate's
+  // straight-arm pulldown came first and took the picture, an isolation
+  // the hero could not animate, over the row beside it (owner, 2026-11-10).
+  it("pictures a primary mover before an isolation, with no compound primary", () => {
+    const homePull = [
+      { exerciseId: "straight-arm-pulldown", name: "Straight-Arm Pulldown" },
+      { exerciseId: "chest-supported-db-row", name: "Chest-Supported DB Row" },
+      { exerciseId: "db-curl", name: "Dumbbell Curl" },
+    ];
+    expect(sessionLeadIndex(homePull)).toBe(1);
+    expect(sessionLeadArt(homePull)?.exerciseName).toBe(
+      "Chest-Supported DB Row"
+    );
+    // A day of isolations alone still has its first drawn one.
+    expect(
+      sessionLeadIndex([
+        { exerciseId: "straight-arm-pulldown" },
+        { exerciseId: "barbell-curl" },
+      ])
+    ).toBe(0);
+  });
+
   it("is null for a day with no drawn exercise", () => {
+    expect(sessionLeadIndex([{ exerciseId: "not-in-the-library" }])).toBe(-1);
     expect(sessionLeadArt([{ name: "Custom finisher" }])).toBeNull();
     expect(sessionLeadArt([])).toBeNull();
   });

@@ -87,7 +87,7 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   if (isHeic(file)) {
     throw new ProfilePhotoProcessingError(
       "heic_unsupported",
-      "iPhone HEIC photos aren't supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG — or take a new one."
+      "iPhone HEIC photos aren’t supported yet. Open the photo in Photos, tap Share, then choose Save as JPEG — or take a new one."
     );
   }
 
@@ -109,7 +109,7 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   if (img.naturalWidth === 0 || img.naturalHeight === 0) {
     throw new ProfilePhotoProcessingError(
       "decode_failed",
-      "Couldn't read the image."
+      "Couldn’t read the image."
     );
   }
 
@@ -127,7 +127,7 @@ export async function processProfilePhoto(file: File): Promise<Blob> {
   if (!blob.type.startsWith("image/")) {
     throw new ProfilePhotoProcessingError(
       "encode_failed",
-      "Couldn't encode the image."
+      "Couldn’t encode the image."
     );
   }
 
@@ -147,7 +147,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
       reject(
         new ProfilePhotoProcessingError(
           "decode_failed",
-          "Couldn't read the image."
+          "Couldn’t read the image."
         )
       );
     };
@@ -175,7 +175,7 @@ function encodeSquareJpeg(img: HTMLImageElement): Promise<Blob> {
       reject(
         new ProfilePhotoProcessingError(
           "encode_failed",
-          "Couldn't create a canvas."
+          "Couldn’t create a canvas."
         )
       );
       return;
@@ -189,7 +189,7 @@ function encodeSquareJpeg(img: HTMLImageElement): Promise<Blob> {
           reject(
             new ProfilePhotoProcessingError(
               "encode_failed",
-              "Couldn't encode the image."
+              "Couldn’t encode the image."
             )
           );
           return;

@@ -73,10 +73,10 @@ describe("motion buttons opt out of the global button transition", () => {
         }
       }
     }
-    // The scan has to be finding them, or the guard proves nothing. Seven
-    // since the run plan page's two mode cards, one motion button drawn
-    // twice, became a segmented control.
-    expect(seen).toBeGreaterThanOrEqual(7);
+    // The scan has to be finding them, or the guard proves nothing. Six
+    // remain after the exercise picker's Cancel became a Button inside an
+    // animated wrapper, giving it the standard 44px touch target.
+    expect(seen).toBeGreaterThanOrEqual(6);
     expect(
       offenders,
       "A motion element that is a button needs data-motion-driven, or " +

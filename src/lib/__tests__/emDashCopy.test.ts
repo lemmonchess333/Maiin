@@ -58,9 +58,12 @@ import { globSync } from "tinyglobby";
  * this number where it was). 121 once Food's empty diary and its weekly
  * logging focus each said their line in one sentence. 120 once the run
  * plan page's helpers each took one short line, and 119 once the race
- * card's Phase tile, with its "—" for no phase, went.
+ * card's Phase tile, with its "—" for no phase, went. 114 once the
+ * Circles section's invite, its goal chooser and its sheet's empty line
+ * each took a full stop. 113 once the training-load card's first-use line
+ * became two sentences.
  */
-const EM_DASH_COPY_BASELINE = 119;
+const EM_DASH_COPY_BASELINE = 113;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;
@@ -78,9 +81,11 @@ const WORST_FILE_BASELINE = 8;
  * performance verdict's five supporting lines took a full stop ("Quiet
  * week. Log when you're back"): they follow the verb's own full stop, so
  * a dash was a second rhythm inside one line. 319 once the effort cues
- * and the finish screen's all-done line took a full stop too.
+ * and the finish screen's all-done line took a full stop too. 315 once the
+ * Start a circle options' two descriptions did (the count stood at 317
+ * when they were found).
  */
-const EM_DASH_TS_COPY_BASELINE = 319;
+const EM_DASH_TS_COPY_BASELINE = 315;
 
 const SRC = join(process.cwd(), "src");
 

@@ -45,7 +45,7 @@ function buildModerationMailto(): string {
   const version =
     typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const body = [
-    "Describe the content you're reporting and where you saw it:",
+    "Describe the content you’re reporting and where you saw it:",
     "",
     "",
     "---",

@@ -25,8 +25,13 @@
  * distance-only line, not the prompt, is the fallback when they are missing.
  */
 import { raceDistanceLabel } from "@/lib/runProgrammeViewModel";
+import { racePlanWeek, racePlanWeekLabel } from "@/lib/racePlanWeek";
+import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import type { RaceGoal } from "@/features/program/runModeResolution";
 import type { UserProfile } from "@/lib/auth";
+import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
+import { STARTER_STAGES } from "@/features/program/starterPlan";
 
 export interface RunHeaderLineArgs {
   /**
@@ -50,8 +55,17 @@ export interface RunHeaderLineArgs {
   currentWeek?: number | null;
   /** Plan-scoped: total weeks in the built plan. */
   totalWeeks?: number | null;
+  /** Plan-scoped: the post-race recovery, when one is running. */
+  phase?: string | null;
+  recoveryEndDate?: string | null;
+  /** Local "YYYY-MM-DD": the week count depends on race day being past. */
+  todayKey: string;
+  /** Plan-scoped: the plan's lead-in week (`RunPlan.leadInWeek`). */
+  leadInWeek?: string | null;
   /** Weekly run target, for the structured line. */
   runsTarget: number;
+  /** Plan-scoped: a starter plan's stage (Run9's starter goal). */
+  starterStage?: number | null;
 }
 
 export function runHeaderLine({
@@ -59,8 +73,19 @@ export function runHeaderLine({
   raceGoal,
   currentWeek,
   totalWeeks,
+  phase,
+  recoveryEndDate,
+  todayKey,
+  leadInWeek,
   runsTarget,
+  starterStage,
 }: RunHeaderLineArgs): string {
+  if (runMode === "starter") {
+    // In weeks of the nine, as the goal's card says; the end moves.
+    return starterStage
+      ? `${STARTER_GOAL_NAME} · Stage ${starterStage} of ${STARTER_STAGES}`
+      : STARTER_GOAL_NAME;
+  }
   if (runMode === "race_prep") {
     // Reachable only when the user genuinely has no goal — mode is race_prep
     // but nothing is set anywhere. With the reconciled goal this is a real
@@ -70,10 +95,22 @@ export function runHeaderLine({
     // Week counts come from the PLAN, so they are absent in exactly the
     // window the bug used to mangle. Falling back to the distance-only line
     // is the honest reading: the race is known, the plan is not built yet.
-    if (currentWeek != null && totalWeeks) {
-      return `Race prep · ${dist} · Week ${currentWeek + 1}/${totalWeeks}`;
-    }
-    return `Race prep · ${dist}`;
+    // A plan made partway through a week counts its weeks from the Monday
+    // after; until then the line says when its first week starts.
+    if (leadInWeek)
+      return `Race prep · ${dist} · Starts ${formatShortWeekdayDayMonth(
+        addLocalDays(parseLocalDate(leadInWeek), 7)
+      )}`;
+    // Past race day the count is the recovery's, or none (`racePlanWeek`),
+    // as on the run summary.
+    const week = racePlanWeek({
+      raceGoal,
+      runPlan: { currentWeek, totalWeeks, phase, recoveryEndDate },
+      todayKey,
+    });
+    return week
+      ? `Race prep · ${dist} · ${racePlanWeekLabel(week, "short")}`
+      : `Race prep · ${dist}`;
   }
   if (runMode === "structured") {
     return `Structured · ${runsTarget} ${runsTarget === 1 ? "run" : "runs"}/week`;

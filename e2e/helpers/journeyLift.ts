@@ -76,11 +76,18 @@ export async function savedWorkout(
  */
 export async function finishLiftViaUi(
   page: Page,
-  account: JourneyAccount
+  account: JourneyAccount,
+  {
+    startFromHome = false,
+    interruptOnce = false,
+  }: {
+    startFromHome?: boolean;
+    interruptOnce?: boolean;
+  } = {}
 ): Promise<number> {
   const dayIndex = nextUpIndex(await programme(account.uid));
   expect(dayIndex, "no session left to do this week").toBeGreaterThanOrEqual(0);
-  await openTab(page, TABS.train);
+  await openTab(page, startFromHome ? TABS.home : TABS.train);
   await page
     .getByRole("button", { name: WORKOUT.start, exact: true })
     .first()
@@ -91,6 +98,34 @@ export async function finishLiftViaUi(
   await expect(close.or(full).first()).toBeVisible({ timeout: 20_000 });
   if (await full.isVisible()) await full.click();
   await expect(close).toBeVisible();
+
+  if (interruptOnce) {
+    // Closing after a performed set keeps a local draft. Home must offer
+    // Resume, and finishing this draft must save one workout, not start a
+    // second session.
+    await page
+      .getByRole("button", { name: WORKOUT.markSet, exact: true })
+      .first()
+      .click();
+    await close.click();
+    await openTab(page, TABS.home);
+    await expect(
+      page.getByRole("button", { name: /Finish your first workout/ }),
+      "a draft has not completed the first-week task"
+    ).toBeVisible();
+    expect(
+      (
+        await emulatorAdmin()
+          .db.collection(`users/${account.uid}/workouts`)
+          .get()
+      ).size,
+      "a draft has not persisted a workout"
+    ).toBe(0);
+    const resume = page.getByRole("button", { name: /^Resume / }).first();
+    await expect(resume).toBeVisible({ timeout: 20_000 });
+    await resume.click();
+    await expect(close).toBeVisible({ timeout: 20_000 });
+  }
 
   const mark = page.getByRole("button", {
     name: WORKOUT.markSet,

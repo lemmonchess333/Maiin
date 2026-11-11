@@ -32,16 +32,16 @@ function boundaryDay(value: Timestamp | Date | undefined): Date | null {
 export function joinedMessage(challenge: Edition): string {
   const start = boundaryDay(challenge.startDate);
   const next = boundaryDay(challenge.endDate);
-  if (!start || !next) return "You're in.";
+  if (!start || !next) return "You’re in.";
   switch (challenge.type) {
     case "monthly":
-      return `You're in for ${formatMonth(start)}. ${formatMonth(next)}'s opens on ${formatDayMonth(next)}.`;
+      return `You’re in for ${formatMonth(start)}. ${formatMonth(next)}’s opens on ${formatDayMonth(next)}.`;
     case "weekly":
-      return `You're in for this week. Next week's opens on ${formatWeekday(next)}.`;
+      return `You’re in for this week. Next week’s opens on ${formatWeekday(next)}.`;
     case "seasonal":
-      return `You're in for this season. The next one opens on ${formatDayMonth(next)}.`;
+      return `You’re in for this season. The next one opens on ${formatDayMonth(next)}.`;
     default:
-      return "You're in.";
+      return "You’re in.";
   }
 }
 
@@ -77,13 +77,23 @@ export function finalDayLine(endDate: Timestamp | Date | undefined): string {
 export function cardsShowingTimeLeft(
   ordered: readonly ({ id: string } & Edition)[]
 ): Set<string> {
-  const anchor =
-    ordered.find(isFeaturedChallenge) ??
-    ordered.find((c) => c.type === "monthly");
+  const anchor = timeLeftAnchor(ordered);
   const monthEnd = anchor ? boundaryDayKey(anchor.endDate) : null;
   const shown = new Set<string>();
   for (const c of ordered) {
     if (c === anchor || boundaryDayKey(c.endDate) !== monthEnd) shown.add(c.id);
   }
   return shown;
+}
+
+/** The card that says the month's time left for the rest: the featured
+ *  challenge, else the first monthly one. A list that says it once, above
+ *  its rows, reads it from here. */
+export function timeLeftAnchor<T extends { id: string } & Edition>(
+  ordered: readonly T[]
+): T | undefined {
+  return (
+    ordered.find(isFeaturedChallenge) ??
+    ordered.find((c) => c.type === "monthly")
+  );
 }

@@ -12,9 +12,10 @@ interface MetaLineProps {
 /**
  * One quiet line of static facts — "5 exercises · ~43 min" — never a row
  * of pills. A pill is the shape of a selection or a state; a fact the user
- * cannot tap should not borrow it. Numerals take the numeral font (Archivo,
- * tabular) and words stay in the text font, so a mixed token like "~43 min"
- * keeps both fonts where they belong. Wraps as text between items, each
+ * cannot tap should not borrow it. Numerals take the inline number tier
+ * (`font-mono`: the text face with tabular digits, at the line's own
+ * weight), never the figure face, so "~43 min" reads as one run of text
+ * whose digits hold still. Wraps as text between items, each
  * item stays whole, and the separators are decorative and hidden from
  * readers.
  *

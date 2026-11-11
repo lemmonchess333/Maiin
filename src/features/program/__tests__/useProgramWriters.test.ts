@@ -38,6 +38,10 @@ import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import { sameStoredValue } from "../stateTransition";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 import type { RealignOutcome } from "../programOutcome";
+import {
+  runMoveSourceSignature,
+  runMoveCompletionEvidence,
+} from "@/lib/runReschedule";
 
 // ─── Firebase mocks ──────────────────────────────────────────────────
 
@@ -150,7 +154,14 @@ import {
   pendingReads,
   resumeReads,
   releaseAllReads,
+  readsAt,
 } from "@/test/firestoreHarness";
+import {
+  clearStoredRun,
+  RUN_RESUME_SCHEMA_VERSION,
+  writeStoredRun,
+  type StoredRun,
+} from "@/lib/runResumeStorage";
 import { toast } from "sonner";
 
 // ─── useAuth + adjacent mocks ────────────────────────────────────────
@@ -656,6 +667,79 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Override (hybrid 6+2) won → runs generated. Stale profile.weekSchedule
     // (all rest) would have produced 0.
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+  });
+
+  /* A plan a newer build wrote: this build
+     cannot build it, and a refresh or regenerate here read it as free
+     running and cleared it. Installed builds have to keep it before any
+     build writes one. */
+  describe("a plan a newer build wrote", () => {
+    const newerRunDay = (): ScheduledRunDay =>
+      ({
+        id: "newer_build_run",
+        dayIndex: 3,
+        date: localDateString(),
+        weekKey: localWeekKey(),
+        templateId: "run_walk_2",
+        type: "easy",
+        status: "planned",
+      }) as ScheduledRunDay;
+    const seedNewer = () => {
+      mockProfile = structuredProfile({
+        runMode: "next_kind" as MockProfile["runMode"],
+      });
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 2,
+        splitType: "ppl",
+        workouts: [],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, smallPlates: false },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        liftWeekKey: localWeekKey(),
+        runDays: [newerRunDay()],
+        runPlan: { mode: "next_kind", step: 2 },
+      } as unknown as ProgramState);
+    };
+
+    it("survives a refresh of the run schedule", async () => {
+      seedNewer();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.refreshRunSchedule();
+      });
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
+      expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
+        "newer_build_run",
+      ]);
+    });
+
+    it("survives a regenerate", async () => {
+      seedNewer();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.regenerateProgram();
+      });
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan).toEqual({ mode: "next_kind", step: 2 });
+      expect(lastWrite.runDays?.map((rd) => rd.id)).toEqual([
+        "newer_build_run",
+      ]);
+    });
   });
 
   it("regenerateProgram writes programSchemaVersion + V2-shape runDays", async () => {
@@ -1537,6 +1621,69 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
   });
 });
 
+describe("current-week running prescription compatibility on open", () => {
+  const rows = () =>
+    Array.from({ length: 7 }, (_, i) => ({
+      id: `legacy-run-${i}`,
+      date: localDateString(addLocalDays(parseLocalDate("2026-11-09"), i)),
+      weekKey: "2026-11-09",
+      dayIndex: (i + 1) % 7,
+      templateId: "easy_30",
+      type: "easy",
+      status: "planned",
+    }));
+  const stored = (runPlan: object) => ({
+    goal: "recomp",
+    currentPhase: "base",
+    weekNumber: 1,
+    splitType: "ppl",
+    workouts: [],
+    fatigueScore: 0,
+    updatedAt: Date.now(),
+    settings: { autoProgression: true, smallPlates: false },
+    weekHistory: [],
+    programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    liftWeekKey: "2026-11-09",
+    runDays: rows(),
+    runPlan,
+  });
+  it("prunes an already-current seven-day beginner plan without waiting for rollover", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T12:00:00"));
+    try {
+      mockProfile = raceProfile("2027-01-31", {
+        runFrequency: "new",
+        onboardingCompletedAt: {
+          toMillis: () => new Date("2026-11-09T12:00:00").getTime(),
+        },
+        weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+          day,
+          type: "run" as const,
+        })),
+      } as Partial<MockProfile>);
+      seedProgram(
+        stored({
+          mode: "race_prep",
+          raceGoal: mockProfile.raceGoal,
+          currentWeek: 0,
+          totalWeeks: 12,
+        })
+      );
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.readiness).toBe("ready"));
+      expect(
+        result.current.programState?.runDays?.map((row) => row.dayIndex)
+      ).toEqual([1, 3, 5]);
+      expect(
+        (readDoc(PROGRAM) as unknown as ProgramState).runDays
+      ).toHaveLength(3);
+      expect(result.current.programState?.runPlan?.totalWeeks).toBe(12);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 // ─── PR-E — recovery phase generation + exit ────────────────────────
 
 describe("PR-E — recovery phase emits all easy_30 templates", () => {
@@ -2149,8 +2296,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     await waitFor(
       () => {
         const lastWrite = setDocCalls()[setDocCalls().length - 1]?.data as
-          | ProgramState
-          | undefined;
+          ProgramState | undefined;
         // After rollover, runDays[0].weekKey should match current week
         expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
         // The run week is what this test is about. It deliberately does NOT
@@ -2227,8 +2373,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     await waitFor(
       () => {
         const lastWrite = setDocCalls()[setDocCalls().length - 1]?.data as
-          | ProgramState
-          | undefined;
+          ProgramState | undefined;
         expect(lastWrite?.runPlan?.currentWeek).toBe(6);
         expect(lastWrite?.raceWeek).toBe("build");
         expect(lastWrite?.workouts[0].exercises[0].sets).toBe(2);
@@ -2287,8 +2432,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       await waitFor(
         () => {
           write = setDocCalls()[setDocCalls().length - 1]?.data as
-            | ProgramState
-            | undefined;
+            ProgramState | undefined;
           expect(write?.runDays?.[0]?.weekKey).toBe(localWeekKey());
         },
         { timeout: 2000 }
@@ -2968,7 +3112,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       reason: "A race is complete once you log it as a run.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't mark that complete. A race is complete once you log it as a run.",
+      "Couldn’t mark that complete. A race is complete once you log it as a run.",
     ]);
     // As above: the command channel is what carries the write now.
     expect(
@@ -3027,7 +3171,7 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
       reason: "Your race date has passed.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't realign your plan. Your race date has passed.",
+      "Couldn’t realign your plan. Your race date has passed.",
     ]);
     expect(setDocCalls().length).toBe(0);
   });
@@ -3038,10 +3182,10 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
 
     expect(await realign()).toEqual({
       status: "declined",
-      reason: "There's no race on your plan.",
+      reason: "There’s no race on your plan.",
     });
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't realign your plan. There's no race on your plan.",
+      "Couldn’t realign your plan. There’s no race on your plan.",
     ]);
     expect(setDocCalls().length).toBe(0);
   });
@@ -3312,9 +3456,14 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       "kind",
       "runDayId",
       "targetDayIndex",
+      "timeZone",
     ]);
     expect(cmd?.runDayId).toBe("runday_move_1");
     expect(cmd?.targetDayIndex).toBe(target);
+    // The server reads "today" in the device's zone, not the profile's.
+    expect(cmd?.timeZone).toBe(
+      Intl.DateTimeFormat().resolvedOptions().timeZone
+    );
   });
 
   /* The three refusals now assert NO COMMAND as well as no write. Checking
@@ -3358,6 +3507,69 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     );
     expect(setDocCalls().length).toBe(0);
     expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+  });
+
+  it("sends the reviewed precondition without a client-authored run patch", async () => {
+    await run(
+      [plannedToday({ dayIndex: 1, date: localWeekKey() })],
+      async (api) => {
+        const days = api.programState.runDays;
+        const expected = {
+          sourceSignature: runMoveSourceSignature(days[0]),
+          todayKey: localDateString(new Date()),
+          completionEvidence: runMoveCompletionEvidence(days, []),
+        };
+        await api.moveRunDay("runday_move_1", 0, expected);
+        expect(sentCommands.find((c) => c.kind === "moveRunDay")).toMatchObject(
+          { runDayId: "runday_move_1", targetDayIndex: 0, expected }
+        );
+      }
+    );
+    expect(setDocCalls().length).toBe(0);
+  });
+
+  it("says the day changed when a review outlives the day it was opened on", async () => {
+    let outcome: unknown;
+    await run([plannedToday()], async (api) => {
+      const days = api.programState.runDays;
+      outcome = await api.moveRunDay("runday_move_1", target, {
+        sourceSignature: runMoveSourceSignature(days[0]),
+        todayKey: "2000-01-01",
+        completionEvidence: "[]",
+      });
+    });
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+    expect(outcome).toEqual({
+      status: "declined",
+      reason: "The day changed while this was open. Review the latest week.",
+    });
+  });
+
+  it("rejects a stale reviewed source before sending any command", async () => {
+    await run([plannedToday()], (api) =>
+      api.moveRunDay("runday_move_1", target, {
+        sourceSignature: "old prescription",
+        todayKey: localDateString(new Date()),
+        completionEvidence: "[]",
+      })
+    );
+    expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+  });
+
+  it("reads active-run storage at invocation, not a stale sheet snapshot", async () => {
+    const storage = await import("@/lib/runResumeStorage");
+    const active = vi.spyOn(storage, "readStoredRunSummary").mockReturnValue({
+      config: { planMetadata: { scheduledRunId: "runday_move_1" } },
+    } as never);
+    try {
+      await run([plannedToday()], (api) =>
+        api.moveRunDay("runday_move_1", target)
+      );
+      expect(active).toHaveBeenCalledWith("test-user-1");
+      expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);
+    } finally {
+      active.mockRestore();
+    }
   });
 });
 
@@ -3759,6 +3971,170 @@ describe("the week rollover waits for a finish (Lift4)", () => {
     } finally {
       close();
     }
+  });
+
+  /** A run started late last Sunday and still on this phone, unsaved: it
+   *  ran past midnight, or waits on its summary. */
+  function storeLastSundaysRun(): void {
+    const sunday = addLocalDays(parseLocalDate(localWeekKey()), -1);
+    sunday.setHours(23, 30, 0, 0);
+    writeStoredRun("test-user-1", {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: { activityType: "easy" } as StoredRun["config"],
+      startedAt: sunday.getTime(),
+      accumulatedSeconds: 1800,
+      isRunning: true,
+      points: [],
+      lastWriteAt: Date.now(),
+      phase: "active",
+    });
+  }
+
+  it("rolls only once last week's run on this phone is saved", async () => {
+    // Saved, the run counts for the week it started in. Rolled first, that
+    // week was weighed without it.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    storeLastSundaysRun();
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(rolled()).toBe(false);
+
+    act(() => clearStoredRun("test-user-1"));
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
+  it("rolls only once a lift from last week, still on this phone, is finished", async () => {
+    // The app was closed partway through Lower on Sunday night. Its draft is
+    // kept for the plan's week, so rolled first, Lower was not offered
+    // again and its sets were lost.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    const plan = lastWeeksPlan();
+    seedProgram(plan);
+    const { programmeDraftIdentity, sessionDayContext } =
+      await import("../sessionDay");
+    const { listWorkoutDrafts } = await import("@/hooks/useWorkoutDraft");
+    const { resumableLift } = await import("@/lib/sessionsInFlight");
+    const context = sessionDayContext(plan, mockProfile as never);
+    const identity = programmeDraftIdentity(
+      plan.workouts[1],
+      1,
+      plan.weekNumber,
+      "full",
+      context
+    );
+    localStorage.setItem(
+      `tropos_workout_draft:v2:test-user-1:${encodeURIComponent(identity)}`,
+      JSON.stringify({
+        dayIndex: 1,
+        dayName: "Lower",
+        setLogs: [
+          [
+            { reps: 5, weight: 100, completed: true, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+            { reps: 5, weight: 100, completed: false, type: "working" },
+          ],
+        ],
+        exerciseNotes: {},
+        elapsedSeconds: 900,
+        currentExIndex: 0,
+        savedAt: Date.now() - 60 * 60 * 1000,
+        identity,
+        completionId: "lower-draft",
+        completionCommandId: "lower-draft",
+      })
+    );
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(rolled()).toBe(false);
+    // Home still offers Lower to resume.
+    expect(
+      resumableLift(
+        listWorkoutDrafts("test-user-1"),
+        result.current.programState,
+        context
+      )
+    ).toMatchObject({ dayIndex: 1, sets: 1 });
+
+    // Resumed and finished (or ended with nothing kept): the draft goes
+    // with the session, and the week rolls.
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith("tropos_workout_draft:")) localStorage.removeItem(key);
+    act(() => close());
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
+  it("weighs a race plan's week on the runs read after last week's run is saved", async () => {
+    // The recent runs are read once a day. The one taken while the run was
+    // still on the phone does not have it, so the rollover reads them again.
+    const stale = lastWeek();
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
+    resetFirestore();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "stale_runday",
+          dayIndex: 1,
+          date: stale,
+          weekKey: stale,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: raceDate },
+      },
+    } as ProgramState);
+    storeLastSundaysRun();
+    const runWeekRolled = () =>
+      setDocCalls().some(
+        (w) =>
+          (w.data as ProgramState)?.runDays?.[0]?.weekKey === localWeekKey()
+      );
+    const runReads = () => readsAt("users/test-user-1/runs").length;
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(() => expect(runReads()).toBeGreaterThan(0), {
+      timeout: 2000,
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(runWeekRolled()).toBe(false);
+    const readsWhileOnPhone = runReads();
+
+    act(() => clearStoredRun("test-user-1"));
+    await waitFor(() => expect(runWeekRolled()).toBe(true), {
+      timeout: 2000,
+    });
+    expect(runReads()).toBeGreaterThan(readsWhileOnPhone);
   });
 });
 

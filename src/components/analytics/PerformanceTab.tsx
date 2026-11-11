@@ -1,3 +1,4 @@
+import PerformanceReadError from "./PerformanceReadError";
 import { useState } from "react";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
@@ -220,7 +221,7 @@ function PIGauge({
       {/* Score */}
       <div className="text-center -mt-2">
         <p
-          className="text-4xl font-extrabold font-mono tabular-nums"
+          className="text-4xl font-extrabold font-figure tabular-nums"
           style={{ color }}
         >
           {Math.round(clamped)}
@@ -275,7 +276,7 @@ function ScoreBar({
           {Math.round(value)}
         </p>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
+      <div className="h-1.5 rounded-full overflow-hidden track-cut">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.min(value, 100)}%`, background: color }}
@@ -323,8 +324,15 @@ export default function PerformanceTab({
   /** The reader's unit, for the running figures in the breakdown. */
   distanceUnit?: DistanceUnit;
 } = {}) {
-  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
-    usePerformanceWeeks(12);
+  const {
+    weeks,
+    currentWeek,
+    previousWeek,
+    docsAvailable,
+    loading,
+    failed,
+    refresh,
+  } = usePerformanceWeeks(12);
   const liftUnit = useLiftUnit();
   const [showTechnical, setShowTechnical] = useState(false);
 
@@ -336,13 +344,14 @@ export default function PerformanceTab({
     );
   }
 
+  if (failed) return <PerformanceReadError onRetry={refresh} />;
+
   if (!weeks.length || !currentWeek) {
     return (
       <div className="p-4 rounded-2xl bg-card">
-        <h3 className="text-sm font-semibold text-foreground">Performance</h3>
+        <h3 className="text-base font-bold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          No performance weeks yet. Log workouts/runs and your weekly index will
-          appear here.
+          Log a workout or a run and your first weekly score appears here.
         </p>
       </div>
     );
@@ -511,7 +520,7 @@ export default function PerformanceTab({
             <div className="space-y-4">
               {/* Breakdown bars */}
               <div className="p-4 rounded-2xl bg-card space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-base font-bold text-foreground">
                   Breakdown
                 </h3>
                 <ScoreBar
@@ -587,7 +596,7 @@ export default function PerformanceTab({
                 <div className="p-4 rounded-2xl bg-running/8">
                   <div className="flex items-center gap-2 mb-2">
                     <Footprints className="size-4 text-running" />
-                    <h3 className="text-sm font-semibold text-running-strong">
+                    <h3 className="text-base font-bold text-running-strong">
                       Running suggestions
                     </h3>
                   </div>

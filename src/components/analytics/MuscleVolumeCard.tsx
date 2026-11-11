@@ -1,5 +1,6 @@
 import Card from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { muscleRangeReading } from "@/lib/historyReadings";
 import {
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
@@ -49,7 +50,7 @@ export default function MuscleVolumeCard({
   if (weeks === 0) {
     return (
       <Card as="section" aria-label="Sets per muscle" className="space-y-1">
-        <h2 className="text-h3 font-bold text-foreground">Sets per muscle</h2>
+        <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
         <p className="text-sm text-muted-foreground">
           After your first full week
         </p>
@@ -66,7 +67,7 @@ export default function MuscleVolumeCard({
   return (
     <Card as="section" aria-label="Sets per muscle" className="space-y-3">
       <div>
-        <h2 className="text-h3 font-bold text-foreground">Sets per muscle</h2>
+        <h2 className="text-base font-bold text-foreground">Sets per muscle</h2>
         <p className="text-sm text-muted-foreground">
           {weeks === 1
             ? "Your last full week"
@@ -81,13 +82,14 @@ export default function MuscleVolumeCard({
           below.length > 0 ? "text-warning-strong" : "text-foreground"
         )}
       >
-        {below.length === 0
-          ? "Every muscle is in its range"
-          : below.length > NAMED_BELOW
-            ? `${below.length} muscles below their range`
-            : `Below range: ${below
-                .map((r) => JUDGEMENT_MUSCLE_LABEL[r.muscle].toLowerCase())
-                .join(", ")}`}
+        {/* With the count out of all of them: "Every muscle is in its
+            range" and "Below range: abs" carried no number, and the
+            words rules ask a verdict for one and what it is out of. */}
+        {muscleRangeReading({
+          total: rows.length,
+          below: below.map((r) => JUDGEMENT_MUSCLE_LABEL[r.muscle]),
+          namedMax: NAMED_BELOW,
+        })}
       </p>
 
       {/* Under 15em of card (larger text) a row's fixed widths alone were
@@ -119,7 +121,7 @@ export default function MuscleVolumeCard({
                 {label}
               </span>
               <div
-                className="relative h-2 flex-1 rounded-full bg-muted @max-[15em]:col-start-1 @max-[15em]:row-start-2"
+                className="relative h-2 flex-1 rounded-full track-cut @max-[15em]:col-start-1 @max-[15em]:row-start-2"
                 aria-hidden="true"
               >
                 <div

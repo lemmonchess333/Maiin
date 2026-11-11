@@ -19,6 +19,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("firebase/firestore");
+const queueHealthWorkoutDeletion = vi.hoisted(() => vi.fn(() => true));
+const reconcilePendingHealthExports = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve())
+);
+vi.mock("@/lib/healthWorkoutExport", () => ({
+  queueHealthWorkoutDeletion,
+  reconcilePendingHealthExports,
+}));
 
 import {
   resetFirestore,
@@ -39,6 +47,9 @@ function deletions(): string[] {
 }
 
 beforeEach(() => {
+  queueHealthWorkoutDeletion.mockReset();
+  queueHealthWorkoutDeletion.mockReturnValue(true);
+  reconcilePendingHealthExports.mockClear();
   resetFirestore();
   seedFirestore({
     "users/u1/workouts/w-1": { date: "2026-08-05", totalVolume: 6000 },
@@ -63,6 +74,16 @@ describe("deleteLoggedSession", () => {
     await deleteLoggedSession({ uid: "u1", kind: "run", id: "r-1" });
     expect(allPaths()).not.toContain("users/u1/runs/r-1");
     expect(allPaths()).toContain("users/u1/workouts/w-1");
+    expect(queueHealthWorkoutDeletion).toHaveBeenCalledWith("u1", "r-1");
+  });
+
+  it("retains a run when its Health cleanup intent cannot be stored", async () => {
+    queueHealthWorkoutDeletion.mockReturnValue(false);
+    await expect(
+      deleteLoggedSession({ uid: "u1", kind: "run", id: "r-1" })
+    ).rejects.toThrow("Apple Health cleanup");
+    expect(allPaths()).toContain("users/u1/runs/r-1");
+    expect(deletions()).toEqual([]);
   });
 
   it("deletes a linked feed post BEFORE the session", async () => {

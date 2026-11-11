@@ -44,9 +44,7 @@
  */
 
 export type ProFeatureKey =
-  | "ai_food_logging"
-  | "adaptive_tdee"
-  | "adaptive_macros";
+  "ai_food_logging" | "adaptive_tdee" | "adaptive_macros";
 
 export interface ProFeatureConfig {
   key: ProFeatureKey;

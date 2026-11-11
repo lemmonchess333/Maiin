@@ -74,7 +74,8 @@ export function aggregateRunBins(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([week, d]) => ({
       week,
-      totalDistance: Math.round(d.distance * 10) / 10,
+      // Preserve precision for totals across bins; round only for display.
+      totalDistance: d.distance,
       runCount: d.count,
       avgPace: d.paceKm > 0 ? Math.round(d.paceKmSum / d.paceKm) : 0,
     }));
@@ -104,6 +105,7 @@ export function useRunningStats(days: number = 30) {
   const window = useMemo<RunWindow>(
     () => ({
       since: localDateString(rollingWindowStart(days, parseLocalDate(today))),
+      until: today,
     }),
     [days, today]
   );

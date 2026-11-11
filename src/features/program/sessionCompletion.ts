@@ -15,6 +15,8 @@ import {
 } from "./programEngine";
 import { readSessionSets, recordedReps } from "./sessionSets";
 import { keptSwap, type SessionSwap } from "./sessionSwap";
+import type { SessionSuperset } from "./superset";
+
 import { loadsTheLegs } from "./easierToday";
 import { WELCOME_BACK_DAYS } from "./liftLayoff";
 import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
@@ -28,6 +30,10 @@ export interface SessionPrescription {
   /** Lift4 (11): exercises swapped in for today, and whether Finish kept
    *  each in the plan (`sessionSwap.ts`). */
   swaps?: SessionSwap[];
+  /** Mob1 call 2: the session's supersets, by their exercises' slots
+   *  (`superset.ts`). Absent on sessions with none, and on every session
+   *  before supersets. */
+  supersets?: SessionSuperset[];
 }
 
 export interface SessionProgression {

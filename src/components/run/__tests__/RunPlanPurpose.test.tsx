@@ -65,7 +65,7 @@ describe("current run planning explanation", () => {
     expect(terms).toEqual([
       "What it is",
       "How it should feel",
-      "Why it's in your week",
+      "Why it’s in your week",
       "If it feels wrong",
       "Coaches also call this",
     ]);
@@ -82,6 +82,30 @@ describe("current run planning explanation", () => {
       "If it feels wrong",
       "Coaches also call this",
     ]);
+  });
+
+  /* R5, R6: a run the starting point holds shorter says the plan builds
+     from it, not that it was cut to fit. */
+  it("says a run held short by the starting point builds from it", () => {
+    const run: ScheduledRunDay = {
+      id: "r",
+      dayIndex: 0,
+      date: "2026-11-08",
+      templateId: "easy_20",
+      type: "easy",
+      trainingBasis: {
+        originalTemplateId: "long_12k",
+        confirmedAt: "2026-11-01",
+        reason: "longest",
+      },
+    };
+    render(<RunPlanPurpose run={run} runDays={[run]} />);
+    fireEvent.click(screen.getByText("Why this run"));
+    expect(
+      screen.getByText(
+        /^Shorter for now: the plan builds a step a week from the running you gave\./
+      )
+    ).toBeVisible();
   });
 
   it("does not render an empty disclosure", () => {

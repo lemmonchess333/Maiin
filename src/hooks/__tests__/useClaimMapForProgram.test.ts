@@ -45,6 +45,8 @@ import {
   resetFirestore,
   readLog,
   flushSnapshots,
+  failNextFirestore,
+  setSnapshotMetadata,
 } from "@/test/firestoreHarness";
 
 const mockUser: { uid: string } | null = { uid: "u1" };
@@ -88,9 +90,76 @@ function seedRuns(docs: Array<{ id: string; data: Record<string, unknown> }>) {
   seedFirestore(tree);
 }
 
-/** How many times the hook subscribed to the runs collection. */
+/** Modern event-day and legacy completion-time subscriptions. */
 const runSubscriptions = () =>
   readLog().filter((r) => r.op === "onSnapshot" && r.path === RUNS).length;
+
+describe("completion evidence for plan editing", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = null;
+  });
+
+  it("does not treat an empty cached claim map as complete evidence", async () => {
+    setSnapshotMetadata(RUNS, { fromCache: true });
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    expect(result.current.evidenceReady).toBe(false);
+    await flushSnapshots();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.claimMap.size).toBe(0);
+    expect(result.current.evidenceReady).toBe(false);
+    setSnapshotMetadata(RUNS, { fromCache: false });
+    await flushSnapshots();
+    expect(result.current.evidenceReady).toBe(true);
+  });
+
+  it("exposes a failed completion read and recovers through refresh", async () => {
+    failNextFirestore("onSnapshot", { path: RUNS, code: "unavailable" });
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    await flushSnapshots();
+    expect(result.current.failed).toBe(true);
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => result.current.refresh());
+    await flushSnapshots();
+    expect(result.current.failed).toBe(false);
+    expect(result.current.evidenceReady).toBe(true);
+  });
+
+  it("rechecks completion when a saved distance is corrected without changing its id or time", async () => {
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-corrected",
+          templateId: "long_15k",
+          type: "long",
+          date: "2026-10-28",
+          dayIndex: 3,
+        },
+      ],
+      manualCompletions: {},
+    };
+    const record = {
+      date: "2026-10-28",
+      distance: 5000,
+      avgPace: 360,
+      completedAt: Timestamp.fromDate(new Date("2026-10-28T12:00:00Z")),
+    };
+    seedRuns([{ id: "corrected", data: record }]);
+    const { result } = renderHook(() => useClaimMap("2026-10-28"));
+    await flushSnapshots();
+    expect(
+      result.current.claimMap.get("rd-corrected")?.claimedSavedRunId
+    ).toBeUndefined();
+    act(() =>
+      seedRuns([{ id: "corrected", data: { ...record, distance: 12000 } }])
+    );
+    await flushSnapshots();
+    expect(result.current.claimMap.get("rd-corrected")?.claimedSavedRunId).toBe(
+      "corrected"
+    );
+  });
+});
 
 describe("useClaimMap", () => {
   beforeEach(() => {
@@ -260,7 +329,7 @@ describe("useClaimMap", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("subscribes once and derives the claim map from snapshot + programState", async () => {
+  it("subscribes to both run windows and derives the claim map from snapshot + programState", async () => {
     mockProgramState = {
       runDays: [
         {
@@ -276,7 +345,7 @@ describe("useClaimMap", () => {
     };
 
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    expect(runSubscriptions()).toBe(1);
+    expect(runSubscriptions()).toBe(2);
 
     await act(async () => {
       seedRuns([
@@ -549,6 +618,61 @@ describe("claimWindowStart", () => {
       await flushSnapshots();
     });
     expect(result.current.runs.map((r) => r.id)).toEqual(["this-plan"]);
+  });
+
+  // A starter stage is weighed by run days since it began, up to two weeks
+  // back: Home read only this week and missed a goal reached over two.
+  it("reads a starter stage's runs from its first week", async () => {
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "starter",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-10-12",
+      })
+    ).toBe("2026-10-11");
+    // At most two weeks back, however long the stage has run.
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "starter",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-09-07",
+      })
+    ).toBe("2026-10-04");
+    // Another plan reads this week, as before.
+    expect(
+      claimWindowStart("2026-10-21", [], {
+        mode: "race_prep",
+        stageWeekKey: "2026-10-19",
+        stageStartedWeek: "2026-10-12",
+      })
+    ).toBe("2026-10-18");
+
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = {
+      runDays: [],
+      manualCompletions: {},
+      runPlan: {
+        mode: "starter",
+        stageWeekKey: "2026-05-25",
+        stageStartedWeek: "2026-05-18",
+      },
+    } as unknown as typeof mockProgramState;
+    seedRuns([
+      {
+        id: "last-week",
+        data: {
+          date: "2026-05-20",
+          distance: 3000,
+          completedAt: Timestamp.fromMillis(1779270000_000),
+        },
+      },
+    ]);
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      await flushSnapshots();
+    });
+    expect(result.current.runs.map((r) => r.id)).toEqual(["last-week"]);
   });
 });
 

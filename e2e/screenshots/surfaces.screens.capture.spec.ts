@@ -169,7 +169,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     await page.goto("/Maiin/");
     await page.waitForLoadState("domcontentloaded");
     await expect(
-      page.getByRole("region", { name: "Today's food" })
+      page.getByRole("region", { name: "Today’s food" })
     ).toBeVisible({ timeout: 30_000 });
     /* Then anchor on the DATA, not the heading. The heading renders
        immediately; the card's target arrives from the profile, and until

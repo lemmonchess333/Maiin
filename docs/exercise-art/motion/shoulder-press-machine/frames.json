@@ -1,0 +1,16 @@
+{
+  "src": "form-art/motion/shoulder-press-machine.webp",
+  "still": "form-art/shoulder-press-machine.webp",
+  "frames": 34,
+  "fps": 12,
+  "frameWidth": 274,
+  "frameHeight": 480,
+  "cols": 6,
+  "clipFrames": [
+    0,
+    -1
+  ],
+  "clipSha256": "94f7ef492b00c615a863d50b567085e5e31aa3d41caae99d217df9a79c3e2334",
+  "thenSha256": "3bb4bd4f9fa87621f22fa0f2b90e72d9e8a970c1be3bbacd2a10accf7e5cfc01",
+  "sha256": "d70b43914aa5eaec115e3a6ef8e15f039fd6662850465129e54ead1ed2fd9780"
+}

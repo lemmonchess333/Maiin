@@ -1,0 +1,112 @@
+{
+  "frames": [
+    {
+      "frame": 1,
+      "phase": 0.0,
+      "near": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1305,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2309,
+        "padTopZ": 0.229
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1081,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2309,
+        "padTopZ": 0.229
+      }
+    },
+    {
+      "frame": 2,
+      "phase": 0.16666666666666666,
+      "near": {
+        "handToGripSurfaceMetres": 0.0001,
+        "skinVerticesInsideGrip": 1316,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2863,
+        "padTopZ": 0.2844
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1225,
+        "shoeToPadMetres": 0.0064,
+        "shoeBottomZ": 0.18,
+        "padTopZ": 0.1736
+      }
+    },
+    {
+      "frame": 3,
+      "phase": 0.3333333333333333,
+      "near": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1254,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2863,
+        "padTopZ": 0.2844
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1292,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.1755,
+        "padTopZ": 0.1736
+      }
+    },
+    {
+      "frame": 4,
+      "phase": 0.5,
+      "near": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1088,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2309,
+        "padTopZ": 0.229
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1310,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2309,
+        "padTopZ": 0.229
+      }
+    },
+    {
+      "frame": 5,
+      "phase": 0.6666666666666666,
+      "near": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1222,
+        "shoeToPadMetres": 0.0064,
+        "shoeBottomZ": 0.18,
+        "padTopZ": 0.1736
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0001,
+        "skinVerticesInsideGrip": 1316,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2863,
+        "padTopZ": 0.2844
+      }
+    },
+    {
+      "frame": 6,
+      "phase": 0.8333333333333334,
+      "near": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1287,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.1755,
+        "padTopZ": 0.1736
+      },
+      "far": {
+        "handToGripSurfaceMetres": 0.0,
+        "skinVerticesInsideGrip": 1257,
+        "shoeToPadMetres": 0.0019,
+        "shoeBottomZ": 0.2863,
+        "padTopZ": 0.2844
+      }
+    }
+  ]
+}

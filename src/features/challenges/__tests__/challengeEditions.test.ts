@@ -26,14 +26,14 @@ describe("joinedMessage", () => {
         startDate: utc(2026, 9, 1),
         endDate: utc(2026, 10, 1),
       })
-    ).toBe("You're in for October. November's opens on 1 Nov.");
+    ).toBe("You’re in for October. November’s opens on 1 Nov.");
     expect(
       joinedMessage({
         type: "monthly",
         startDate: utc(2026, 11, 1),
         endDate: utc(2027, 0, 1),
       })
-    ).toBe("You're in for December. January's opens on 1 Jan.");
+    ).toBe("You’re in for December. January’s opens on 1 Jan.");
   });
 
   it("says a week's next edition opens on its weekday", () => {
@@ -43,7 +43,7 @@ describe("joinedMessage", () => {
         startDate: utc(2026, 9, 19),
         endDate: utc(2026, 9, 26),
       })
-    ).toBe("You're in for this week. Next week's opens on Monday.");
+    ).toBe("You’re in for this week. Next week’s opens on Monday.");
   });
 
   it("dates a season's next edition", () => {
@@ -53,14 +53,14 @@ describe("joinedMessage", () => {
         startDate: utc(2026, 8, 1),
         endDate: utc(2026, 11, 1),
       })
-    ).toBe("You're in for this season. The next one opens on 1 Dec.");
+    ).toBe("You’re in for this season. The next one opens on 1 Dec.");
   });
 
   it("says no more than it knows", () => {
-    expect(joinedMessage({ type: "monthly" })).toBe("You're in.");
+    expect(joinedMessage({ type: "monthly" })).toBe("You’re in.");
     expect(
       joinedMessage({ startDate: utc(2026, 9, 1), endDate: utc(2026, 10, 1) })
-    ).toBe("You're in.");
+    ).toBe("You’re in.");
   });
 });
 

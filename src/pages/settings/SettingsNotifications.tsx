@@ -3,6 +3,7 @@ import {
   useMealReminders,
   useWorkoutReminders,
   useStreakReminder,
+  useReviewReminder,
 } from "@/hooks/RemindersProvider";
 import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
@@ -10,14 +11,18 @@ import ActivityNotificationsGroup from "@/components/settings/ActivityNotificati
 import { isRemotePushOffered } from "@/lib/pushNotifications";
 
 export default function SettingsNotifications() {
+  const meal = useMealReminders();
   const { reminders: mealReminders, updateReminders: updateMealReminders } =
-    useMealReminders();
+    meal;
+  const workout = useWorkoutReminders();
   const {
     reminders: workoutReminders,
     updateReminders: updateWorkoutReminders,
-  } = useWorkoutReminders();
+  } = workout;
   const { prefs: streakReminder, updatePrefs: updateStreakReminder } =
     useStreakReminder();
+  const { prefs: reviewReminder, updatePrefs: updateReviewReminder } =
+    useReviewReminder();
 
   return (
     <SettingsSection
@@ -32,12 +37,16 @@ export default function SettingsNotifications() {
     >
       <NotificationsSection
         inline
+        mealStatus={meal}
+        workoutStatus={workout}
         mealReminders={mealReminders}
         updateMealReminders={updateMealReminders}
         workoutReminders={workoutReminders}
         updateWorkoutReminders={updateWorkoutReminders}
         streakReminder={streakReminder}
         updateStreakReminder={updateStreakReminder}
+        reviewReminder={reviewReminder}
+        updateReviewReminder={updateReviewReminder}
       />
       <ActivityNotificationsGroup />
     </SettingsSection>

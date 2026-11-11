@@ -41,14 +41,21 @@ export default function PaceZoneBar({
         <span>Slow</span>
       </div>
       <div className="h-2 bg-white/10 rounded-full relative overflow-hidden">
+        {/* A full-width layer slid by the marker's place, the marker at its
+            left edge: a translate is a percentage of the layer, so of the
+            track, where animating `left` laid out every frame. */}
         <div
-          className="absolute top-0 h-full w-3 rounded-full transition-all duration-500"
-          style={{ left: `${Math.min(95, Math.max(2, 50 + pct * 48))}%` }}
+          className="absolute inset-0 transition-transform duration-500"
+          style={{
+            transform: `translateX(${Math.min(95, Math.max(2, 50 + pct * 48))}%)`,
+          }}
         >
-          <div
-            className="size-full rounded-full"
-            style={{ background: color }}
-          />
+          <div className="absolute top-0 left-0 h-full w-3 rounded-full">
+            <div
+              className="size-full rounded-full"
+              style={{ background: color }}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const purchases = vi.hoisted(() => ({
   configure: vi.fn(),
@@ -8,9 +9,9 @@ const purchases = vi.hoisted(() => ({
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true },
 }));
-vi.mock("@revenuecat/purchases-capacitor", () => ({
-  Purchases: purchases,
-}));
+vi.mock("@revenuecat/purchases-capacitor", () => {
+  return { Purchases: capacitorPlugin(purchases) };
+});
 vi.mock("../logger", () => ({
   logger: { log: vi.fn(), error: vi.fn() },
 }));

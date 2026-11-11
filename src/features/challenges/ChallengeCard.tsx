@@ -27,17 +27,21 @@ import {
   getTimeRemaining,
   isTierAchieved,
 } from "./useChallenges";
-import { THEME } from "@/lib/theme";
 import { challengeGoal, formatChallengeValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Button } from "@/components/ui/Button";
+import { SECONDARY_ON_CARD_EDGE } from "@/components/ui/buttonClasses";
+import PhotoCaption from "@/components/ui/PhotoCaption";
 import SectionLabel from "@/components/ui/SectionLabel";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
+import ChallengeSportTag from "./ChallengeSportTag";
+import ChallengeMedalBand from "./ChallengeMedalBand";
+import { challengeHasMedal } from "./rowMedal";
+import { collectiveTotal as goalTotal } from "./collectiveGoal";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -223,7 +227,7 @@ export function ChallengeCard({
       ? challenge.participantCount
       : null;
   /* The card wears its sport (`challengeSport`): the hero band, the icon,
-     Join and the bar's fill. The tier metal never fills the bar. */
+     the sport tag and the bar's fill. The tier metal never fills the bar. */
   const sport = challengeSport(challenge.metric);
   const accent = SPORT_ACCENT[sport];
   const barFill = SPORT_BAR_FILL[sport];
@@ -242,68 +246,45 @@ export function ChallengeCard({
      unmapped icon name degrades gracefully instead of leaking the
      string. */
   const HeroIcon = CHALLENGE_ICON_MAP[challenge.icon] ?? Trophy;
-  const heroPhoto = challengeEditorialImage(challenge);
+  const medal = challengeHasMedal(challenge);
 
   return (
-    <motion.div
-      initial={motionSafe({ opacity: 0, y: 8 })}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl bg-card border border-border/50 overflow-hidden"
-    >
-      {/* Hero band (Social uplift v2/v3) — same visual grammar as the
-          ActivityCard hero panels; static everything (WKWebView rule);
-          accent is the sport-coded metric colour so a km challenge
-          reads coral and a volume challenge purple at a glance.
-          v3: when a licensed editorial photo exists for the metric
-          (src/assets/editorial — Runna/Strava-style photography on
-          editorial surfaces), it becomes the band: photo + sport tint
-          wash + bottom scrim + white text. Without assets the v2
-          ghosted-icon band renders — the designed fallback, not a
-          degraded state. */}
-      <div
-        className={`relative overflow-hidden border-b border-border/50 ${heroPhoto ? "h-40" : "h-24"}`}
-        style={
-          heroPhoto
-            ? undefined
-            : {
-                background: `linear-gradient(150deg, ${accent}24 0%, ${accent}0A 55%, ${accent}12 100%)`,
-              }
-        }
-      >
-        {heroPhoto ? (
-          <>
-            <img
-              src={heroPhoto}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 size-full object-cover"
-              style={
-                challenge.type === "seasonal" ||
-                challenge.id.startsWith("strength-monthly-")
-                  ? { objectPosition: "center 20%" }
-                  : undefined
-              }
-              loading="lazy"
-              decoding="async"
-            />
-            {/* Sport duotone wash — ties mismatched stock into the
-                closed palette so the photo reads owned, not pasted. */}
+    /* No entrance of its own: the card is shown only inside a bottom
+       sheet (ChallengeList), whose slide is the entrance; a rise inside
+       it was a second one. */
+    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+      {/* The header (Soc16): the medal the challenge is working toward,
+          at poster size, beside its name and time left. A challenge
+          carries no photograph; its picture is its own medal. The
+          community goal awards none, so it keeps the tinted band and its
+          ghosted icon. */}
+      {medal ? (
+        <ChallengeMedalBand
+          challenge={challenge}
+          progress={myProgress}
+          timeLeft={timeLeft}
+          medalSize={88}
+        >
+          {/* The tier badge: the trophy in the text colour on the card,
+              ringed in the tier's metal. White on gold was 1.4:1. */}
+          {currentTier && (
             <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
-              }}
-            />
-            {/* Text scrim — theme-independent (the photo is the
-                surface, so overlay text is white in both themes). */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
-              }}
-            />
-          </>
-        ) : (
+              className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center bg-card text-foreground"
+              style={metalRing(currentTier)}
+              aria-label={`${TIER_LABELS[currentTier]} achieved`}
+              role="img"
+            >
+              <Trophy className="size-3.5" />
+            </div>
+          )}
+        </ChallengeMedalBand>
+      ) : (
+        <div
+          className="relative overflow-hidden border-b border-border/50 h-24"
+          style={{
+            background: `linear-gradient(150deg, ${accent}24 0%, ${accent}0A 55%, ${accent}12 100%)`,
+          }}
+        >
           <HeroIcon
             size={104}
             className="absolute -right-2 -bottom-5"
@@ -314,43 +295,39 @@ export function ChallengeCard({
             }}
             aria-hidden
           />
-        )}
-        {/* Insets in px: in rem the reserve for the ghosted icon grew with
-            the text and left "Distance" 64px at 320 px and 2× text. A
-            photo band draws no icon, so it keeps no reserve. */}
-        <div
-          className={`absolute bottom-3 left-[16px] min-w-0 ${heroPhoto ? "right-[16px]" : "right-[80px]"}`}
-        >
-          {timeLeft && (
-            <SectionLabel
-              className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
+          {/* Insets in px: in rem the reserve for the ghosted icon grew
+              with the text and left "Distance" 64px at 320 px and 2× text. */}
+          <PhotoCaption onPhoto={false} className="pl-[16px] pr-[80px]">
+            {timeLeft && (
+              <SectionLabel className="flex items-center gap-1">
+                <Clock className="size-3" aria-hidden />
+                {timeLeft}
+              </SectionLabel>
+            )}
+            {/* Two lines before it gives way: at 320 px and 135% text one
+                line cut "July Distance Club" to "July Distan…". */}
+            <p className="text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 text-foreground">
+              {challenge.name}
+            </p>
+          </PhotoCaption>
+          {/* The tier badge: the trophy in the text colour on the card,
+              ringed in the tier's metal. White on gold was 1.4:1. */}
+          {currentTier && (
+            <div
+              className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center bg-card text-foreground"
+              style={metalRing(currentTier)}
+              aria-label={`${TIER_LABELS[currentTier]} achieved`}
+              role="img"
             >
-              <Clock className="size-3" aria-hidden />
-              {timeLeft}
-            </SectionLabel>
+              <Trophy className="size-3.5" />
+            </div>
           )}
-          {/* Two lines before it gives way: at 320 px and 135% text one
-              line cut "July Distance Club" to "July Distan…". */}
-          <p
-            className={`text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
-          >
-            {challenge.name}
-          </p>
         </div>
-        {/* The tier badge: the trophy in the text colour on the card,
-            ringed in the tier's metal. White on gold was 1.4:1. */}
-        {currentTier && (
-          <div
-            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center bg-card text-foreground"
-            style={metalRing(currentTier)}
-            aria-label={`${TIER_LABELS[currentTier]} achieved`}
-            role="img"
-          >
-            <Trophy className="size-3.5" />
-          </div>
-        )}
-      </div>
+      )}
       <div className="p-4 space-y-3">
+        {/* Which sport it counts, said in words; the button no longer
+            says it in colour. */}
+        <ChallengeSportTag metric={challenge.metric} />
         {/* The goal, from the challenge's own target in the reader's
             units; the stored description only for a metric it cannot
             phrase. */}
@@ -448,12 +425,13 @@ export function ChallengeCard({
 
         {/* Join button or progress */}
         {!joined ? (
-          /* Canonical CTA mapping: running challenges take the sport
-             (coral) variant, everything else the primary. The primitive
-             also supplies the 44px floor the old py-2.5 button missed. */
+          /* A quiet Join, the width of its words: the Together page keeps
+             one filled button (the weekly challenge's), and the sport is
+             the tag's to say, not the button's. The edge gives the muted
+             fill its 3:1 against the white card. */
           <Button
-            variant={sport === "running" ? "sport" : "primary"}
-            fullWidth
+            variant="secondary"
+            className={SECONDARY_ON_CARD_EDGE}
             onClick={handleJoin}
             loading={busy === "joining"}
           >
@@ -462,22 +440,19 @@ export function ChallengeCard({
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.
              Renders a single collective progress bar instead of the
-             per-user tier ladder. Total = sum of every participant's
-             currentValue (we have it in `leaderboard`); target lives
-             on `challenge.collectiveTarget`. The user's individual
-             contribution is surfaced underneath as a "you contributed"
-             line so the personal stake is still legible. */
+             per-user tier ladder. The total is the server's, every
+             saved run in the window, joined or not (`goalTotal`); the
+             target lives on `challenge.collectiveTarget`. The user's
+             individual contribution is surfaced underneath as a "you
+             contributed" line so the personal stake is still legible. */
           (() => {
-            const collectiveTotal = leaderboard.reduce(
-              (s, p) => s + (p.currentValue || 0),
-              0
-            );
+            const collectiveTotal = goalTotal(challenge);
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
             return (
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-2 rounded-full track-cut overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
@@ -553,7 +528,7 @@ export function ChallengeCard({
                 the "You're at …" line beneath while a gap opened above the
                 bar. */}
             <div className="relative pt-1 pb-7">
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-2 rounded-full track-cut overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{
@@ -644,7 +619,7 @@ export function ChallengeCard({
                 </span>
               ) : nextTier && nextValue ? (
                 <span>
-                  You&apos;re at{" "}
+                  You’re at{" "}
                   <span className="font-semibold text-foreground">
                     {formatChallengeValue(
                       challenge.metric,
@@ -765,6 +740,6 @@ export function ChallengeCard({
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

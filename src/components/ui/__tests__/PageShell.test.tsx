@@ -45,6 +45,35 @@ describe("PageShell header", () => {
     ).toBeTruthy();
   });
 
+  it("puts a lead control in a hidden title's place, one row with the actions", () => {
+    // Social's: its hero names the screen, so the title is for readers
+    // and the Together/Feed switch sits beside search and notifications.
+    render(
+      <PageShell
+        title="Social"
+        titleHidden
+        lead={
+          <div role="radiogroup" aria-label="Social section">
+            <button type="button" role="radio" aria-checked>
+              Together
+            </button>
+          </div>
+        }
+        actions={<button type="button">Search</button>}
+      >
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Social" });
+    expect(h1.className).toMatch(/\bsr-only\b/);
+    const lead = screen.getByRole("radiogroup", { name: "Social section" });
+    const search = screen.getByRole("button", { name: "Search" });
+    // The same row: the lead's column and the actions share one parent.
+    const row = lead.parentElement!.parentElement!.parentElement!;
+    expect(row.contains(search)).toBe(true);
+    expect(row.parentElement!.tagName).toBe("HEADER");
+  });
+
   it("renders subtitle and actions in their slots", () => {
     render(
       <PageShell
@@ -101,6 +130,20 @@ describe("PageShell header", () => {
     expect(held.className).toMatch(/\binvisible\b/);
     expect(held).toHaveAttribute("aria-hidden", "true");
     expect(shown.parentElement!.className).not.toMatch(/line-clamp|truncate/);
+  });
+
+  it("keeps a hidden title as the page's h1 for screen readers", () => {
+    // DS4: a screen whose hero names it draws no large title above it
+    // (Home), and a reader landing on the page still meets its name.
+    render(
+      <PageShell title="Today" titleHidden eyebrow="Sat 7 Nov">
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Today" });
+    expect(h1.className).toBe("sr-only");
+    expect(h1.className).not.toMatch(/text-h1/);
+    expect(screen.getByText("Sat 7 Nov")).toBeInTheDocument();
   });
 
   it("draws every header the same plain way", () => {
@@ -175,5 +218,29 @@ describe("PageShell motion", () => {
       expect(el.style.opacity).toBe("1");
       expect(el.style.transform).toBe("none");
     }
+  });
+});
+
+describe("PageShell subtitle below the title row", () => {
+  it("lays the subtitle after the title and actions, the header's full width", () => {
+    render(
+      <PageShell
+        title="Train"
+        subtitle="Week 1 · General fitness · 6 days/week"
+        subtitleBelow
+        actions={<button type="button">Your plan</button>}
+      >
+        x
+      </PageShell>
+    );
+    const h1 = screen.getByRole("heading", { level: 1, name: "Train" });
+    const line = screen.getByText("Week 1 · General fitness · 6 days/week");
+    const action = screen.getByRole("button", { name: "Your plan" });
+    // Not in the title's column, which sits beside the actions.
+    expect(h1.parentElement!.contains(line)).toBe(false);
+    // After the actions in reading order.
+    expect(
+      action.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });

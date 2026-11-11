@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import MetaLine from "@/components/ui/MetaLine";
 import { haptic } from "@/lib/haptic";
@@ -31,6 +31,7 @@ export default function InProgressStrip({
   className?: string;
 }) {
   const isRun = session.sport === "run";
+  const reviewPending = isRun && session.reviewPending === true;
   const items = [
     ...(onCard ? [] : [session.name]),
     ...(session.sets
@@ -41,7 +42,11 @@ export default function InProgressStrip({
   return (
     <div
       role="group"
-      aria-label={`${session.name} in progress`}
+      aria-label={
+        reviewPending
+          ? `${session.name} ready to review`
+          : `${session.name} in progress`
+      }
       className={cn(
         "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-card p-3",
         !onCard && "card-shadow",
@@ -58,24 +63,30 @@ export default function InProgressStrip({
             isRun ? "text-running-strong" : "text-lifting-strong"
           )}
         >
-          In progress
+          {reviewPending ? "Ready to review" : "In progress"}
         </p>
         <MetaLine items={items} />
       </div>
       <Button
         variant={isRun ? "sport" : "primary"}
-        aria-label={`Resume ${session.name}`}
-        leftIcon={<Play className="size-4 fill-current" />}
+        aria-label={`${reviewPending ? "Review" : "Resume"} ${session.name}`}
+        leftIcon={
+          reviewPending ? (
+            <ArrowRight className="size-4" />
+          ) : (
+            <Play className="size-4 fill-current" />
+          )
+        }
         className="pointer-events-auto shrink-0"
         onClick={() => {
           // A run carries on as its page opens, so its voice cues are
           // unlocked inside this tap, as Start's are.
-          if (isRun) unlockSpeech();
+          if (isRun && !reviewPending) unlockSpeech();
           haptic();
           onResume();
         }}
       >
-        Resume
+        {reviewPending ? "Review run" : "Resume"}
       </Button>
     </div>
   );

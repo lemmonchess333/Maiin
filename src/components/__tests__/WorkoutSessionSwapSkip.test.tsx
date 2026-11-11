@@ -3,7 +3,11 @@
  * Finish asks about a swap (Lift4 (11)), through the real session screen.
  * What the plan does with the answer is `sessionSwapCompletion.test.ts`'s.
  */
-import { resetFirestore } from "@/test/firestoreHarness";
+import {
+  readsAt,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 vi.mock("@/components/workout/SessionShareRow", () => ({
   default: () => null,
@@ -15,12 +19,13 @@ import type { ComponentProps } from "react";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 
 const h = vi.hoisted(() => ({
+  user: null as { uid: string } | null,
   load: vi.fn(() => null),
   save: vi.fn(),
   clear: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: null, profile: null }),
+  useAuth: () => ({ user: h.user, profile: null }),
   useUidForStorageKey: () => "test",
 }));
 vi.mock("@/lib/firebase", () => ({
@@ -131,6 +136,10 @@ function openSession() {
           }),
         ],
       }}
+      planLifts={[
+        { exerciseId: "bench-press", instanceId: "bench-1" },
+        { exerciseId: "bench-press", instanceId: "bench-light" },
+      ]}
       dayIndex={0}
       onCompleteDay={complete}
       onClose={vi.fn()}
@@ -140,8 +149,11 @@ function openSession() {
 }
 
 const heading = () => screen.getByRole("heading", { level: 2 }).textContent;
-const menu = (name: string) =>
+/** Opens an exercise's menu, which loads on its first opening. */
+const menu = async (name: string) => {
   fireEvent.click(screen.getByRole("button", { name: `More for ${name}` }));
+  await screen.findByRole("dialog");
+};
 /** Picks a choice in the open sheet and waits for the sheet to close. */
 const choose = async (label: RegExp) => {
   fireEvent.click(screen.getByRole("button", { name: label }));
@@ -167,6 +179,7 @@ function completeCurrent() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  h.user = null;
   h.save.mockReturnValue(true);
   resetFirestore();
   vi.stubGlobal(
@@ -187,7 +200,7 @@ afterEach(() => {
 describe("Skip", () => {
   it("leaves an exercise out of today's session and moves on", async () => {
     const complete = openSession();
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose(/^Skip/);
     expect(heading()).toBe("Cable Fly");
     expect(
@@ -205,16 +218,16 @@ describe("Skip", () => {
     expect(data.prescription?.swaps ?? []).toEqual([]);
   });
 
-  it("brings the sets back with Don't skip", async () => {
+  it("brings the sets back with Don’t skip", async () => {
     openSession();
-    menu("Bench Press");
+    await menu("Bench Press");
     await choose(/^Skip/);
     fireEvent.click(
       screen.getByRole("button", { name: "Bench Press, skipped" })
     );
     expect(screen.getByText("Skipped today")).toBeInTheDocument();
-    menu("Bench Press");
-    await choose(/^Don't skip/);
+    await menu("Bench Press");
+    await choose(/^Don’t skip/);
     expect(screen.queryByText("Skipped today")).toBeNull();
     expect(
       screen.getAllByRole("button", { name: "Mark set complete" })
@@ -224,7 +237,7 @@ describe("Skip", () => {
 
 describe("Swap for today", () => {
   async function swapBench() {
-    menu("Bench Press");
+    await menu("Bench Press");
     fireEvent.click(screen.getByRole("button", { name: /^Swap for today/ }));
     const pick = await screen.findByRole("button", {
       name: "Pick Dumbbell Bench Press",
@@ -289,17 +302,111 @@ describe("Swap for today", () => {
   it("goes back to the planned exercise from the same menu", async () => {
     openSession();
     await swapBench();
-    menu("Dumbbell Bench Press");
+    await menu("Dumbbell Bench Press");
     await choose(/^Back to Bench Press/);
     expect(heading()).toBe("Bench Press");
   });
 
-  it("is offered only before a set of the exercise is done", () => {
+  it.each([
+    { own: 50, other: 30 },
+    { own: 30, other: 50 },
+  ])(
+    "restores its $own kg slot after swapping back, not the $other kg day",
+    async ({ own, other }) => {
+      h.user = { uid: "slot-user" };
+      const session = (
+        slot: string,
+        date: string,
+        weight: number,
+        reps: number
+      ) => ({
+        date,
+        exercises: [
+          {
+            exerciseId: "bench-press",
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: weight, reps },
+              { weightKg: weight - 5, reps },
+            ],
+          },
+        ],
+        programmeCompletion: {
+          context: {
+            progression: {
+              prescription: {
+                exercises: [{ exerciseId: "bench-press", instanceId: slot }],
+              },
+            },
+          },
+        },
+      });
+      seedFirestore({
+        "users/slot-user/workouts/light": session(
+          "bench-light",
+          "2026-09-03",
+          other,
+          12
+        ),
+        "users/slot-user/workouts/heavy": session(
+          "bench-1",
+          "2026-09-01",
+          own,
+          8
+        ),
+      });
+      openSession();
+      await vi.waitFor(() =>
+        expect(screen.getByLabelText("Set 2 weight")).toHaveValue(own - 5)
+      );
+      await swapBench();
+      await menu("Dumbbell Bench Press");
+      await choose(/^Back to Bench Press/);
+      expect(screen.getByLabelText("Set 2 weight")).toHaveValue(own - 5);
+      expect(screen.getByLabelText("Set 2 reps")).toHaveValue(8);
+    }
+  );
+
+  it("reads last time's sessions once, and not again for the swap", async () => {
+    h.user = { uid: "read-once" };
+    seedFirestore({
+      "users/read-once/workouts/last": {
+        completionId: "last",
+        date: "2026-09-01",
+        createdAt: { seconds: 1, nanoseconds: 0 },
+        exercises: [
+          {
+            exerciseId: "bench-press",
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: 40, reps: 8 },
+              { weightKg: 35, reps: 8 },
+            ],
+          },
+        ],
+      },
+    });
+    openSession();
+    await vi.waitFor(() =>
+      expect(screen.getByLabelText("Set 2 weight")).toHaveValue(35)
+    );
+    const before = readsAt("users/read-once/workouts").length;
+    expect(before).toBeGreaterThan(0);
+
+    await swapBench();
+    await menu("Dumbbell Bench Press");
+    await choose(/^Back to Bench Press/);
+    // Back on the planned lift, its rows still start from last time.
+    expect(screen.getByLabelText("Set 2 weight")).toHaveValue(35);
+    expect(readsAt("users/read-once/workouts")).toHaveLength(before);
+  });
+
+  it("is offered only before a set of the exercise is done", async () => {
     openSession();
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-    menu("Bench Press");
+    await menu("Bench Press");
     expect(
       screen.queryByRole("button", { name: /^Swap for today/ })
     ).toBeNull();

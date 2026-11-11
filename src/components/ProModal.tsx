@@ -54,6 +54,7 @@ import { X, Sparkles, Utensils } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import StepDetails from "@/components/StepDetails";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
@@ -146,7 +147,8 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
     setSyncedInitialPlan(initialPlan);
     if (initialPlan) setSelectedPlan(initialPlan);
   }
-  const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
+  const { loading, error, notice, startCheckout, requiresSignIn } =
+    useProCheckout();
   const { profile } = useAuth();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
   // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
@@ -337,6 +339,14 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             {error}
           </p>
         ) : null}
+        {notice ? (
+          <p
+            role="status"
+            className="text-xs text-foreground bg-muted rounded-lg px-3 py-2"
+          >
+            {notice}
+          </p>
+        ) : null}
 
         {onSale ? (
           <>
@@ -372,6 +382,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
               platform={platform}
               withTrial={withTrial}
             />
+            <StepDetails failed={!!error} waiting={loading} />
           </>
         ) : (
           <Button size="lg" variant="secondary" fullWidth onClick={onClose}>

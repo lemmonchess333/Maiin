@@ -268,13 +268,11 @@ function commonProps() {
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
     skipRecoveryEarly: vi.fn(async () => APPLIED),
-    realignRacePlan: vi.fn(
-      async (): Promise<RealignOutcome> => ({
-        status: "applied",
-        timing: "compressible",
-        totalWeeks: 4,
-      })
-    ),
+    realignRacePlan: vi.fn(async (): Promise<RealignOutcome> => ({
+      status: "applied",
+      timing: "compressible",
+      totalWeeks: 4,
+    })),
     dismissFellBehindPrompt: vi.fn(async () => APPLIED),
     // R23: the race plan's weeks ahead are built with today's layoff
     // reading, as the rollover builds next week.
@@ -430,14 +428,16 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
       makeProgramState([])
     );
     const title = screen.getByRole("heading", { name: "Lift day" });
-    expect(title.className).toContain("text-h2");
+    // Home's hero size for a session's name (DS4).
+    expect(title.className).toContain("text-hero");
     expect(
       screen.getByText("Head out for a free run if you like.")
     ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Rest day" })).toBeNull();
     expect(screen.queryByText("No run scheduled")).toBeNull();
     const start = screen.getByRole("button", { name: "Start free run" });
-    expect(start.className).toContain("min-h-[52px]");
+    // Home's Start height, 44 (§14m rule 21: about 45 pt).
+    expect(start.className).toContain("min-h-[44px]");
   });
 
   it("still says rest day on a day with nothing on it", () => {
@@ -770,7 +770,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
     // Run9 R2-1: a descriptive cadence headline leads (1 run in the window).
     expect(
-      screen.getByText(/You've run 1× in the last 4 weeks/i)
+      screen.getByText(/You’ve run 1× in the last 4 weeks/i)
     ).toBeInTheDocument();
   });
 
@@ -1048,7 +1048,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(why).toHaveTextContent(
       /What it is.*finishing at your goal race pace/
     );
-    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    expect(why).toHaveTextContent(/Why it’s in your week.*rehearses race day/);
     withTime.unmount();
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
@@ -1095,7 +1095,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(document.body.textContent).toContain("5:00 /km");
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /Why it's in your week.*what race pace feels like/
+      /Why it’s in your week.*what race pace feels like/
     );
     expect(why).not.toHaveTextContent(/comes from your fitness/);
     withTime.unmount();
@@ -1159,7 +1159,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /What it is.*How it should feel.*Comfortably hard.*Why it's in your week.*If it feels wrong/
+      /What it is.*How it should feel.*Comfortably hard.*Why it’s in your week.*If it feels wrong/
     );
   });
 
@@ -1397,10 +1397,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     const dismissBtn = screen.getByRole("button", {
       name: /Dismiss race elapsed banner/i,
     });
-    expect(screen.getByText(/Race day has passed/i)).toBeInTheDocument();
+    expect(screen.getByText("Your race has passed")).toBeInTheDocument();
     fireEvent.click(dismissBtn);
     // Hidden after dismiss.
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
     // Remount → still hidden (localStorage persisted).
     unmount();
     renderWith(
@@ -1410,7 +1410,53 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
         programState={programState}
       />
     );
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
+  });
+
+  /* Owner, 1 Nov 2026: the banner read "MARATHON on 2026-10-17. Set a new
+     race goal or switch modes in Manage Run Plan.": the stored distance,
+     the stored date key, and a screen that doesn't exist. */
+  it("race-elapsed banner names the race in words and opens Edit run plan", () => {
+    navigateMock.mockClear();
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: "2020-10-17" },
+    } as Partial<UserProfile>);
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "marathon", targetDate: "2020-10-17" },
+        totalWeeks: 15,
+        currentWeek: 14,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    const banner = screen
+      .getByText("Your race has passed")
+      .closest("[role]") as HTMLElement;
+    expect(banner).toHaveTextContent(
+      "Your marathon was on 17 Oct 2020. Set your next race, or change how you run."
+    );
+    expect(banner).not.toHaveTextContent(/MARATHON|2020-10-17|Manage/);
+    // The banner's button is the one way into the editor while it shows.
+    const edits = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(edits).toHaveLength(1);
+    expect(banner).toContainElement(edits[0]);
+    fireEvent.click(edits[0]);
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
+    // Dismissed, the footer link takes its place.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Dismiss race elapsed banner/i })
+    );
+    const footer = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(footer).toHaveLength(1);
+    expect(banner).not.toContainElement(footer[0]);
   });
 
   it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
@@ -1463,6 +1509,9 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       />
     );
     expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+    // The race in words, not its stored distance and date key.
+    expect(screen.getByText("10K · 18 Apr 2099")).toBeInTheDocument();
+    expect(screen.queryByText(/2099-04-18/)).not.toBeInTheDocument();
   });
 
   /* The banner said "Templates auto-set to easy_30 until recovery ends.":
@@ -1498,6 +1547,50 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       "Easy runs only until then, while your legs recover from the race."
     );
     expect(banner).not.toHaveTextContent(/easy_30|Templates/);
+  });
+
+  /* Owner, 1 Nov 2026: the plan's counter waits on race week through the
+     recovery, so a recovery run's "Why this run" read "A short,
+     conversational shakeout for race week." */
+  it("explains a recovery run as the recovery's", () => {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_recovery",
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          date: TODAY_KEY,
+          dayIndex: TODAY_DOW,
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: {
+            distance: "marathon",
+            targetDate: localDateString(addLocalDays(new Date(), -3)),
+          },
+          phase: "recovery",
+          recoveryEndDate: localDateString(addLocalDays(new Date(), 25)),
+          totalWeeks: 17,
+          currentWeek: 16,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
   });
 
   it("recovery-complete prompt renders when the recovery window has elapsed", () => {
@@ -1646,10 +1739,14 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
 
   // race 2 days ago, race-day slot still "planned" (not yet logged, server
   // hasn't flipped no-show). raceGoal is read from programState.runPlan.
-  function raceRecentState() {
+  function raceRecentState(entry?: "race" | "own") {
     const profile = makeProfile({
       runMode: "race_prep",
-      raceGoal: { distance: "10k", targetDate: "2026-05-27" },
+      raceGoal: {
+        distance: "10k",
+        targetDate: "2026-05-27",
+        ...(entry ? { entry } : {}),
+      },
     } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
@@ -1687,12 +1784,32 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
       screen.getByRole("button", { name: /^Log it$/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /I didn't race/i })
+      screen.getByRole("button", { name: /I didn’t race/i })
     ).toBeInTheDocument();
     // The elapsed race slot must NOT surface as a "Next · Pending" nag, and
-    // the legacy "Race day has passed" banner is suppressed for this state.
+    // the race-elapsed banner is suppressed for this state.
     expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Your race has passed")).not.toBeInTheDocument();
+    // The race in words, and two calendar days after it, at midday, is
+    // two days ago (24-hour periods from race day's midnight rounded it
+    // to three).
+    expect(screen.getByText("10K · 2 days ago")).toBeInTheDocument();
+  });
+
+  it("asks after a goal run on your own without calling it a race", () => {
+    const { profile, programState } = raceRecentState("own");
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText("Ran your 10K?")).toBeInTheDocument();
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "I didn’t run it" })
+    ).toBeInTheDocument();
   });
 
   it("Log it navigates to /run with the race-day scheduledRunId", () => {
@@ -1710,7 +1827,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     );
   });
 
-  it("I didn't race dismisses the prompt + persists via localStorage (no status write)", () => {
+  it("I didn’t race dismisses the prompt + persists via localStorage (no status write)", () => {
     const { profile, programState } = raceRecentState();
     const props = commonProps();
     const { unmount } = renderWith(
@@ -1720,7 +1837,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
         programState={programState}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /I didn't race/i }));
+    fireEvent.click(screen.getByRole("button", { name: /I didn’t race/i }));
     // Hidden after dismiss; a calm toast confirms; NO skip/complete writer fired
     // (PR-L — the client never writes race_no_show; the server owns the flip).
     expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
@@ -1741,10 +1858,14 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
 
   // ── race-today (T+0) hero body ──────────────────────────────────
   // System time is 2026-05-29 (this describe's beforeEach). Race ON today.
-  function raceTodayState() {
+  function raceTodayState(entry?: "race" | "own") {
     const profile = makeProfile({
       runMode: "race_prep",
-      raceGoal: { distance: "half", targetDate: "2026-05-29" },
+      raceGoal: {
+        distance: "half",
+        targetDate: "2026-05-29",
+        ...(entry ? { entry } : {}),
+      },
     } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
@@ -1778,12 +1899,29 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
       />
     );
     expect(screen.getByText(/Race day/i)).toBeInTheDocument();
-    expect(screen.getByText(/HALF · Today/i)).toBeInTheDocument();
+    expect(screen.getByText("Half Marathon · Today")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Start race/i })
     ).toBeInTheDocument();
     // The race is NOT framed as a generic "Next ·" run.
     expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+  });
+
+  it("names the day for the distance when the goal is run on your own", () => {
+    // Run9 STATUS 2026-11-01: no race was entered, so no "Race day".
+    const { profile, programState } = raceTodayState("own");
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText("Your half marathon")).toBeInTheDocument();
+    expect(screen.queryByText("Race day")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start your half marathon" })
+    ).toBeInTheDocument();
   });
 
   it("Start race navigates to /run with the race-day scheduledRunId", () => {
@@ -2343,5 +2481,172 @@ describe("ProgrammeRunSection — one run is up next", () => {
     expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();
     open("Long 15K");
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
+  });
+});
+
+/* Run9's starter goal on Train: its own card where a race plan has one,
+   the week in weeks of nine, and the Done with the next goal offered once.
+   The week is the clock's, as the rollover keeps it. */
+describe("ProgrammeRunSection — the starter goal (Run9)", () => {
+  const thisWeek = localWeekKey(new Date());
+  const dayOfThisWeek = (n: number) =>
+    localDateString(addLocalDays(parseLocalDate(thisWeek), n));
+  const starterProfile = (overrides: Partial<UserProfile> = {}) =>
+    makeProfile({
+      runMode: "starter",
+      raceGoal: null,
+      starterGoal: { startedOn: "2026-01-05" },
+      ...overrides,
+    } as Partial<UserProfile>);
+  const starterState = (stage: number) =>
+    makeProgramState(
+      [
+        makeRunDay({
+          id: `runday_${thisWeek}_2_run_walk_${stage}`,
+          templateId: `run_walk_${Math.min(stage, 6)}`,
+          date: dayOfThisWeek(1),
+          weekKey: thisWeek,
+        }),
+      ],
+      { runPlan: { mode: "starter", stage, stageWeekKey: thisWeek } }
+    );
+  const runOn = (day: string) => ({
+    id: `run-${day}`,
+    distance: 3000,
+    duration: 1800,
+    avgPace: 600,
+    elevationGain: 0,
+    calories: 200,
+    activityType: "easy",
+    completedAt: new Date(parseLocalDate(day).getTime() + 12 * 3600 * 1000),
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("shows the goal's week, with none of a race plan's card", () => {
+    renderSection(
+      { ...commonProps(), profile: starterProfile() },
+      starterState(2)
+    );
+    expect(
+      screen.getByText("Stage 2 of 9 · 8 stages to go")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Adjust this week/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race day/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+  });
+
+  it("says Done, with a 5K offered, once the last week's runs are saved", () => {
+    mockRecentRuns = [runOn(dayOfThisWeek(0)), runOn(dayOfThisWeek(2))];
+    renderSection(
+      { ...commonProps(), profile: starterProfile() },
+      starterState(9)
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Train for a 5K" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("You’ve done it.")).toBeInTheDocument();
+  });
+
+  it("still says Done once the rollover has finished the goal", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: starterProfile({
+          runMode: "freeform",
+          starterGoal: { startedOn: "2026-01-05", finishedOn: "2026-03-12" },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.queryByText("Done")).not.toBeInTheDocument();
+  });
+
+  it("holds back the race prompt while Done offers the next goal", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: starterProfile({
+          runMode: "freeform",
+          starterGoal: { startedOn: "2026-01-05", finishedOn: "2026-03-12" },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+    // Answered, the race prompt is back, the free runner's way to a race.
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.getByText(/Set a race goal/i)).toBeInTheDocument();
+  });
+});
+
+/* Run9: Train offers the 30-minute goal to a free runner who said they are
+   new to running and has not had it; dismissed once. */
+describe("ProgrammeRunSection — the 30-minute goal offered", () => {
+  const freeNewRunner = (overrides: Partial<UserProfile> = {}) =>
+    makeProfile({
+      runMode: "freeform",
+      raceGoal: null,
+      runFrequency: "new",
+      ...overrides,
+    } as Partial<UserProfile>);
+  const offer = () =>
+    screen.queryByRole("button", { name: /Run 30 minutes without stopping/ });
+
+  beforeEach(() => {
+    localStorage.clear();
+    navigateMock.mockClear();
+  });
+
+  it("opens Run plan on the goal", () => {
+    renderSection(
+      { ...commonProps(), profile: freeNewRunner() },
+      makeProgramState([], { runPlan: undefined })
+    );
+    fireEvent.click(offer()!);
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/settings/run-plan?goal=starter"
+    );
+  });
+
+  it("goes once dismissed, and is not made to someone who has had the goal", () => {
+    const { unmount } = renderSection(
+      { ...commonProps(), profile: freeNewRunner() },
+      makeProgramState([], { runPlan: undefined })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss the 30-minute goal" })
+    );
+    expect(offer()).not.toBeInTheDocument();
+    unmount();
+    localStorage.clear();
+    renderSection(
+      {
+        ...commonProps(),
+        profile: freeNewRunner({
+          starterGoal: {
+            startedOn: "2026-01-05",
+            endedOn: "2026-02-02",
+            stage: 3,
+          },
+        }),
+      },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(offer()).not.toBeInTheDocument();
+  });
+
+  it("is not made to someone who already runs", () => {
+    renderSection(
+      { ...commonProps(), profile: freeNewRunner({ runFrequency: "regular" }) },
+      makeProgramState([], { runPlan: undefined })
+    );
+    expect(offer()).not.toBeInTheDocument();
   });
 });

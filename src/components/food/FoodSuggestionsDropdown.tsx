@@ -1,12 +1,12 @@
 import {
+  useEffect,
   useRef,
   type Ref,
   type PointerEvent as ReactPointerEvent,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
-import { ChevronRight, Star, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, PenLine, Star, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -29,7 +29,9 @@ const TOUCH_MOVE_CANCEL_PX = 10;
  *  finger-lift is swallowed. iOS Safari synthesises a click on
  *  touchend even when the long-press fired its own action, which
  *  without this guard would double-trigger (log meal AND open
- *  remove sheet). */
+ *  remove sheet). It counts from the lift, not from when the press
+ *  fired: a finger held on past 500 ms would otherwise lift after the
+ *  window closed and log the food it had just removed. */
 const GHOST_CLICK_SUPPRESS_MS = 400;
 
 /**
@@ -122,6 +124,10 @@ export interface QuickAddSection {
   adding: string | null;
   onAdd: (item: QuickAddItem) => void;
   onEditPortion?: (item: QuickAddItem) => void;
+  /** Opens the rest of the ranked list (up to fifteen). Present only
+   *  while there is more to show; the rows already shown keep their
+   *  places. */
+  onShowMore?: () => void;
   /** Long-press remove for favourite-backed rows — preserved from the
    *  chip strip. Only rows with a `favouriteId` arm the gesture. */
   onRemove?: (favouriteId: string, name: string) => void;
@@ -192,6 +198,22 @@ function FoodSuggestionsDropdown({
   const suppressNextClickRef = useRef<boolean>(false);
   const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  /** Stops listening for the lift of a press that has fired. The row it
+   *  started on is hidden the moment it fires, so its own pointerup never
+   *  comes; the lift is heard on the window instead. */
+  const stopWaitingForLiftRef = useRef<(() => void) | null>(null);
+
+  // Nothing fires, and nothing listens, once the dropdown has closed.
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current !== null)
+        clearTimeout(longPressTimerRef.current);
+      if (ghostClickTimerRef.current !== null)
+        clearTimeout(ghostClickTimerRef.current);
+      stopWaitingForLiftRef.current?.();
+    },
+    []
+  );
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current !== null) {
@@ -211,6 +233,24 @@ function FoodSuggestionsDropdown({
     }, GHOST_CLICK_SUPPRESS_MS);
   };
 
+  /** Swallow the click now, and again for a while from the lift. */
+  const suppressUntilAfterLift = () => {
+    armGhostClickSuppress();
+    stopWaitingForLiftRef.current?.();
+    const onLift = () => {
+      stop();
+      armGhostClickSuppress();
+    };
+    const stop = () => {
+      window.removeEventListener("pointerup", onLift, true);
+      window.removeEventListener("pointercancel", onLift, true);
+      stopWaitingForLiftRef.current = null;
+    };
+    window.addEventListener("pointerup", onLift, true);
+    window.addEventListener("pointercancel", onLift, true);
+    stopWaitingForLiftRef.current = stop;
+  };
+
   const beginPress = (
     e: ReactPointerEvent<HTMLButtonElement>,
     item: QuickAddItem
@@ -221,7 +261,7 @@ function FoodSuggestionsDropdown({
     clearLongPressTimer();
     longPressTimerRef.current = setTimeout(() => {
       longPressTimerRef.current = null;
-      armGhostClickSuppress();
+      suppressUntilAfterLift();
       haptic("medium");
       quickAdd.onRemove!(item.favouriteId!, item.name);
     }, LONG_PRESS_MS);
@@ -332,6 +372,53 @@ function FoodSuggestionsDropdown({
               )}
             </div>
           ))}
+          {/* More foods you eat, ranked as the five above are. Typing a
+              few letters still reaches the whole pantry; this is for the
+              sixth to fifteenth, which had no way in without typing. */}
+          {quickAdd.onShowMore && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                haptic();
+                quickAdd.onShowMore?.();
+              }}
+              disabled={quickAdd.adding !== null}
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center gap-1 border-b border-border/30 text-sm font-medium text-foreground disabled:opacity-60"
+            >
+              More
+              <ChevronDown
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
+            </button>
+          )}
+          {/* Quick add by number: calories and macros, no name needed. It
+              is named here because the composer's pencil, the only other
+              way to the same form outside a search with no matches, read
+              as decoration (Mob2). MacroFactor, MyFitnessPal, Lifesum and
+              Life Reset all label it. */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              haptic();
+              onLogManually();
+            }}
+            disabled={quickAdd.adding !== null}
+            className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center gap-3 disabled:opacity-60"
+          >
+            <PenLine
+              aria-hidden="true"
+              className="size-4 shrink-0 text-nutrition-strong"
+            />
+            <span className="min-w-0 flex-1 break-words text-sm font-medium text-foreground">
+              Quick add{" "}
+              <span className="block text-micro font-normal text-muted-foreground">
+                Calories and macros, no name needed
+              </span>
+            </span>
+          </button>
         </div>
       )}
       {pantryResults.length > 0 && (
@@ -398,11 +485,7 @@ function FoodSuggestionsDropdown({
         </div>
       )}
       {offResults.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div>
           {offResults.map((food, i) => (
             <button
               type="button"
@@ -468,7 +551,7 @@ function FoodSuggestionsDropdown({
           <p className="px-4 py-2 text-micro text-muted-foreground">
             {OFF_CREDIT}
           </p>
-        </motion.div>
+        </div>
       )}
       {suggestions.length === 0 &&
         offResults.length === 0 &&

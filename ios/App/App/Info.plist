@@ -4,6 +4,8 @@
 <dict>
     <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
+	<key>TroposConnectedTrainingEnabled</key>
+	<string>$(WATCH_RUN_RELEASE_ENABLED)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -39,7 +41,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Tropos uses the camera to scan meals, nutrition labels and barcodes, and to take progress photos, your profile photo and photos for Space posts.</string>
+	<string>Tropos uses the camera to scan meals, nutrition labels and barcodes, and to take progress photos, your profile photo, and photos for your posts and Space posts.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tropos uses your location to record your runs and their distance, to show the weather before a run, to start a route you plan, and to place a privacy zone you add.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -48,14 +50,16 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Tropos opens your photo library when you choose a photo: a meal, nutrition label or barcode to log food, a progress photo, your profile photo, or a photo for a Space post or a share card.</string>
+	<string>Tropos opens your photo library when you choose a photo: a meal, nutrition label or barcode to log food, a progress photo, your profile photo, or a photo for your posts, a Space post or a share card.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Tropos saves an image to your photo library only when you choose to save one, such as a share card, a progress photo comparison or a meal photo.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Tropos reads your step count from Health to show today's steps on Home.</string>
+	<string>$(TROPOS_HEALTH_SHARE_USAGE)</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Tropos only reads step counts and never writes to Health.</string>
+	<string>$(TROPOS_HEALTH_UPDATE_USAGE)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
     <key>FirebaseMessagingAutoInitEnabled</key>

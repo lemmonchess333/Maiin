@@ -14,6 +14,7 @@ import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { IconButton } from "@/components/ui/IconButton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import SectionHeading from "@/components/ui/SectionHeading";
 
 /**
  * "Saved routines" surface on the Program page (PR 4 save half).
@@ -82,7 +83,7 @@ export default function SavedRoutinesSection() {
       haptic("light");
     } catch (err) {
       logger.error("[SavedRoutines] restore failed", err);
-      toast.error("Couldn't restore the routine. Try again.");
+      toast.error("Couldn’t restore the routine. Try again.");
     }
   };
 
@@ -104,7 +105,7 @@ export default function SavedRoutinesSection() {
         },
       });
     } catch {
-      toast.error("Couldn't delete. Try again.");
+      toast.error("Couldn’t delete. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -114,18 +115,16 @@ export default function SavedRoutinesSection() {
     <section className="pt-6 space-y-2" aria-label="Saved routines">
       <div className="flex items-center gap-2">
         <Bookmark
-          className="size-4"
+          className="size-5 shrink-0"
           style={{ color: THEME.brand }}
           aria-hidden="true"
         />
-        <h2 className="text-sm font-semibold text-foreground">
-          Saved routines
-        </h2>
+        <SectionHeading>Saved routines</SectionHeading>
       </div>
 
       {loadFailed && routines.length === 0 ? (
         <ErrorState
-          title="Couldn't load your saved routines"
+          title="Couldn’t load your saved routines"
           description="Check your connection and try again."
           retry={{
             onClick: () => {

@@ -105,7 +105,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
     }
     if (outcome === "saved") toast.success("Image saved");
     if (outcome === "failed")
-      toast.error("Couldn't share the image. Try again.");
+      toast.error("Couldn’t share the image. Try again.");
   };
 
   const sharePhoto = async (photo: ProgressPhoto) => {
@@ -117,7 +117,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       );
     } catch (err) {
       logger.error("[ProgressPhotos] photo share failed:", err);
-      toast.error("Couldn't make the image. Try again.");
+      toast.error("Couldn’t make the image. Try again.");
     }
   };
 
@@ -140,7 +140,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
       );
     } catch (err) {
       logger.error("[ProgressPhotos] comparison share failed:", err);
-      toast.error("Couldn't make the image. Try again.");
+      toast.error("Couldn’t make the image. Try again.");
     }
   };
 
@@ -181,12 +181,12 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
         {loading ? (
           <div
             aria-hidden
-            className="h-24 rounded-xl bg-muted motion-safe:animate-pulse"
+            className="h-24 rounded-lg bg-muted motion-safe:animate-pulse"
           />
         ) : days.length === 0 ? (
           loadFailed ? (
             <p className="text-sm text-muted-foreground" role="alert">
-              Couldn't load your photos. Check your connection and reopen this
+              Couldn’t load your photos. Check your connection and reopen this
               page.
             </p>
           ) : (
@@ -199,6 +199,8 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
               action={{
                 label: "Add photos",
                 onClick: () => openDay(localDateString()),
+                // The screen's one filled button: neutral (§14m rule 12).
+                variant: "neutral",
               }}
             />
           )
@@ -215,7 +217,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
                         .map((p) => POSE_LABELS[p.pose].toLowerCase())
                         .join(", ")}`}
                       onClick={() => openDay(day.date)}
-                      className="w-full space-y-2 rounded-xl bg-muted p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="w-full space-y-2 rounded-lg bg-muted p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       <span className="block font-mono text-sm font-semibold tabular-nums text-foreground">
                         {dayLabel(day.date)}

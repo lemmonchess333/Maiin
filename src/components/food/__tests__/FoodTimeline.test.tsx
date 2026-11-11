@@ -67,8 +67,11 @@ describe("FoodTimeline — an empty day", () => {
     /* The composer sits directly above this card, so "Log a meal above"
        pointed at something already in view. */
     render(diary([]));
-    expect(screen.getByText("Nothing logged yet")).toBeInTheDocument();
-    expect(screen.getByText("Meals you log show here.")).toBeInTheDocument();
+    // DS4: a row with the plate, not the hexagon "nothing yet" block.
+    expect(screen.queryByText("Nothing logged yet")).toBeNull();
+    expect(
+      screen.getByText("Meals you log today show here.")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/above/)).toBeNull();
   });
 });
@@ -114,15 +117,15 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
           meal("other", "Oats", { meal: "breakfast" }),
         ])
       );
-      expect(container.querySelectorAll("img")).toHaveLength(1);
-      expect(container.querySelector("img")).toHaveAttribute(
+      expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(
+        1
+      );
+      expect(container.querySelector("img[data-food-photo]")).toHaveAttribute(
         "src",
         photos.urls.scanned
       );
       expect(rowFor("Soup")).not.toBeNull();
-      expect(
-        container.querySelector('[data-slot-tile="breakfast"]')
-      ).not.toBeNull();
+      expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
     }
   );
 
@@ -138,14 +141,14 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
         meal("later", "Soup"),
       ])
     );
-    expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(container.querySelector("img")).toHaveAttribute(
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector("img[data-food-photo]")).toHaveAttribute(
       "src",
       photos.urls.scanned
     );
   });
 
-  it("lines every name up on a day with a photo", () => {
+  it("gives every row a picture, its photo or our drawing", () => {
     const { container } = render(
       diary([
         meal("m1", "Salmon", {
@@ -159,18 +162,16 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
         }),
       ])
     );
-    expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(
-      container.querySelector('[data-slot-tile="breakfast"]')
-    ).not.toBeNull();
+    expect(container.querySelectorAll("img[data-food-photo]")).toHaveLength(1);
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 
-  it("keeps the compact rows on a day without photos", () => {
+  it("draws a day without photos too", () => {
     const { container } = render(
       diary([meal("m1", "Oats", { meal: "breakfast" })])
     );
     expect(rowFor("Oats")).not.toBeNull();
-    expect(container.querySelector("[data-slot-tile]")).toBeNull();
+    expect(container.querySelector('[data-food-art="bowl"]')).not.toBeNull();
   });
 });
 
@@ -285,5 +286,63 @@ describe("FoodTimeline — portion identity", () => {
     expect(onEdit).toHaveBeenCalledWith(
       expect.objectContaining({ meals: [first, second] })
     );
+  });
+});
+
+describe("FoodTimeline — the portion on each row", () => {
+  const caption = (name: string) =>
+    rowFor(name)?.querySelector("p.text-caption")?.textContent ?? null;
+  const one = (portionSize: string) => [
+    {
+      name: "Food",
+      portionSize,
+      calories: 400,
+      protein: 20,
+      carbs: 40,
+      fat: 10,
+    },
+  ];
+  /* A logged time, as Firestore hands one back. */
+  const at = (hour: number, minute: number) => ({
+    toDate: () => new Date(2026, 9, 11, hour, minute),
+  });
+
+  it("leads the caption with a scaled serving, then the slot and time", () => {
+    // A wrong serving can be spotted only if the row says what it was.
+    render(
+      diary([
+        meal("m1", "Granola", {
+          items: one("1.5x 1 serving"),
+          createdAt: at(12, 30),
+        }),
+      ])
+    );
+    expect(caption("Granola")).toBe("1.5 servings · Lunch · 12:30");
+  });
+
+  it("says grams unspaced, as the food surface does", () => {
+    render(
+      diary([
+        meal("m1", "Rice", {
+          items: one("1.5x 100g"),
+          createdAt: at(12, 30),
+        }),
+      ])
+    );
+    expect(caption("Rice")).toBe("150g · Lunch · 12:30");
+  });
+
+  it("keeps the slot and time alone for an entry with no portion", () => {
+    render(
+      diary([
+        meal("m1", "Soup", { items: one(""), createdAt: at(12, 30) }),
+        meal("m2", "Stew", {
+          items: [...one("200g"), ...one("1 cup")],
+          createdAt: at(13, 0),
+        }),
+      ])
+    );
+    expect(caption("Soup")).toBe("Lunch · 12:30");
+    expect(caption("Stew")).toBe("Lunch · 13:00");
   });
 });

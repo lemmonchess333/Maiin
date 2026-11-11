@@ -1,0 +1,130 @@
+{
+  "dark": {
+    "media": {
+      "x": 16,
+      "y": 145.40625,
+      "width": 288,
+      "height": 297,
+      "viewportPct": {
+        "x": 5,
+        "y": 25.6,
+        "width": 90,
+        "height": 52.3
+      }
+    },
+    "footer": {
+      "x": 0,
+      "y": 443,
+      "width": 320,
+      "height": 125,
+      "viewportPct": {
+        "x": 0,
+        "y": 78,
+        "width": 100,
+        "height": 22
+      }
+    },
+    "disclosure": {
+      "x": 16,
+      "y": 585.1875,
+      "width": 116.125,
+      "height": 44,
+      "viewportPct": {
+        "x": 5,
+        "y": 103,
+        "width": 36.3,
+        "height": 7.7
+      }
+    },
+    "primaryCta": {
+      "x": 16,
+      "y": 456,
+      "width": 288,
+      "height": 44,
+      "viewportPct": {
+        "x": 5,
+        "y": 80.3,
+        "width": 90,
+        "height": 7.7
+      }
+    },
+    "currentCue": {
+      "x": 28,
+      "y": 384.90625,
+      "width": 264,
+      "height": 45.5,
+      "viewportPct": {
+        "x": 8.8,
+        "y": 67.8,
+        "width": 82.5,
+        "height": 8
+      }
+    },
+    "currentCueText": "Hold light dumbbells beside your thighs.",
+    "firstInstructionCue": null
+  },
+  "light": {
+    "media": {
+      "x": 16,
+      "y": 145.40625,
+      "width": 288,
+      "height": 297,
+      "viewportPct": {
+        "x": 5,
+        "y": 25.6,
+        "width": 90,
+        "height": 52.3
+      }
+    },
+    "footer": {
+      "x": 0,
+      "y": 443,
+      "width": 320,
+      "height": 125,
+      "viewportPct": {
+        "x": 0,
+        "y": 78,
+        "width": 100,
+        "height": 22
+      }
+    },
+    "disclosure": {
+      "x": 16,
+      "y": 585.1875,
+      "width": 116.125,
+      "height": 44,
+      "viewportPct": {
+        "x": 5,
+        "y": 103,
+        "width": 36.3,
+        "height": 7.7
+      }
+    },
+    "primaryCta": {
+      "x": 16,
+      "y": 456,
+      "width": 288,
+      "height": 44,
+      "viewportPct": {
+        "x": 5,
+        "y": 80.3,
+        "width": 90,
+        "height": 7.7
+      }
+    },
+    "currentCue": {
+      "x": 28,
+      "y": 384.90625,
+      "width": 264,
+      "height": 45.5,
+      "viewportPct": {
+        "x": 8.8,
+        "y": 67.8,
+        "width": 82.5,
+        "height": 8
+      }
+    },
+    "currentCueText": "Hold light dumbbells beside your thighs.",
+    "firstInstructionCue": null
+  }
+}

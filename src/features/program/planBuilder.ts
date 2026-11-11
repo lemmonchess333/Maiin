@@ -64,12 +64,8 @@ import {
   DEFAULT_PROGRAM_SETTINGS,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import {
-  addLocalDays,
-  localWeekKey,
-  parseLocalDate,
-  weekPosition,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import { firstFullWeekKey } from "./runPlanTiming";
 import {
   applyDeload,
   balanceWeekVolume,
@@ -87,6 +83,7 @@ import {
   raceBlockWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
+import { starterWeekFrom } from "./starterWeek";
 import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
@@ -111,7 +108,7 @@ import {
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
-export type RunMode = "freeform" | "structured" | "race_prep";
+export type RunMode = "freeform" | "structured" | "race_prep" | "starter";
 
 export interface PlanBuilderInput {
   /** Training-focus enum (hypertrophy / strength / etc.). Drives
@@ -183,6 +180,9 @@ export interface PlanBuilderInput {
   runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   recentLayoff?: import("./layoffDetection").LayoffClass;
+  /** The person's recent saved runs, which a running starting point
+   *  climbs from (`RacePlanV2Input.recentRuns`). Omitted: none known. */
+  recentRuns?: readonly import("./layoffDetection").DatedRun[] | null;
   /** Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`),
    *  from setup's answer or the profile (`profileNewRunnerUntil`). Omitted →
    *  no new runner's weeks. */
@@ -259,10 +259,17 @@ export interface PlanBuilderOutput {
     /** Explicit null = clear the goal (freeform save via configurePlan —
      *  RUN-EV-02; the CF sanitizer preserves a literal null). The optional
      *  eventSpaceId is the catalogue binding a caller may re-attach —
-     *  buildPlan itself never sets it. */
+     *  buildPlan itself never sets it — and so is `entry`, a race entered
+     *  or run on your own (Run9). */
     raceGoal?:
-      | (PlanBuilderInput["raceGoal"] & { eventSpaceId?: string })
+      | (PlanBuilderInput["raceGoal"] & {
+          eventSpaceId?: string;
+          entry?: "race" | "own";
+        })
       | null;
+    /** Run9's starter goal, when a caller begins, finishes or ends it
+     *  beside the plan (buildPlan itself never sets it). */
+    starterGoal?: import("./runModeResolution").StarterGoal | null;
     primaryGoal: PrimaryGoal;
     // Pgm4: persist the plan-shaping inputs so the stored profile matches
     // the generated plan. Pre-Pgm4 these were only writable via the
@@ -734,6 +741,24 @@ function buildRunPlan(
     return { runDays: [], runPlan: undefined };
   }
 
+  // Run9's starter goal: a change of layout or lifts keeps its stage, and
+  // its week is laid again on the new run days from today. A plan with no
+  // starter stage yet begins at the first.
+  if (input.runMode === "starter") {
+    const existing = input.existingState?.runPlan;
+    return starterWeekFrom({
+      weekSchedule,
+      stage: existing?.mode === "starter" ? (existing.stage ?? 1) : 1,
+      stageStartedWeek:
+        existing?.mode === "starter"
+          ? (existing.stageStartedWeek ?? existing.stageWeekKey)
+          : undefined,
+      today: input.currentDate,
+      prior:
+        existing?.mode === "starter" ? input.existingState?.runDays : undefined,
+    });
+  }
+
   if (input.runMode === "race_prep") {
     if (!input.raceGoal) {
       // race_prep without raceGoal is an invalid input; the
@@ -769,6 +794,8 @@ function buildRunPlan(
           runTimeLimits: input.runTimeLimits,
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
+          leadInWeek: continued?.leadInWeek,
+          recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
       input.currentDate,
@@ -780,14 +807,18 @@ function buildRunPlan(
         : undefined
     );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
+    const { leadInWeek: _keptLeadIn, ...kept } = continued ?? {};
     return {
       runDays,
       runPlan: {
-        ...continued,
+        ...kept,
         mode: "race_prep",
         raceGoal: input.raceGoal,
         totalWeeks,
         currentWeek: totalWeeks - racePlan.totalWeeks,
+        // A plan made partway through a week starts on the Monday after:
+        // the days left before it are its lead-in (`startsPartway`).
+        ...(racePlan.leadInWeek ? { leadInWeek: racePlan.leadInWeek } : {}),
         // P2-1: thread the compressed flag through so the Programme
         // run section can surface a "your plan is compressed" banner.
         compressed: racePlan.compressed,
@@ -934,6 +965,15 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
     }
   }
 
+  // Parity with the server gate: a starter's run mode goes with a starter
+  // plan, as the race's does with its goal.
+  if (
+    profileUpdates.runMode === "starter" &&
+    programState.runPlan?.mode !== "starter"
+  ) {
+    throw new Error("planBuilder: starter mode requires a starter runPlan");
+  }
+
   if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION) {
     throw new Error(
       `planBuilder: programState.programSchemaVersion must be ${CURRENT_PROGRAM_SCHEMA_VERSION} (got ${programState.programSchemaVersion})`
@@ -1074,8 +1114,5 @@ export function firstLiftWeekKey(input: {
     const kept = input.existingState.liftWeekKey;
     return kept && kept > thisWeek ? kept : thisWeek;
   }
-  // weekPosition: 0 Monday … 6 Sunday; Thursday is 3.
-  return weekPosition(today.getDay()) >= 3
-    ? localWeekKey(addLocalDays(today, 7))
-    : thisWeek;
+  return firstFullWeekKey(input.currentDate);
 }

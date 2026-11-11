@@ -67,7 +67,7 @@ export default function PartnerStreakCard({
     } catch (err) {
       logger.error("[PartnerStreakCard] end failed", err);
       haptic("error");
-      toast.error("Couldn't end the streak. Try again.");
+      toast.error("Couldn’t end the streak. Try again.");
     }
   };
 

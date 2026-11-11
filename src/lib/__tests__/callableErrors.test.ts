@@ -131,7 +131,7 @@ describe("describeRejection — a rejection that names an account", () => {
 });
 
 describe("appErrorMessage", () => {
-  const FALLBACK = "Couldn't save. Try again.";
+  const FALLBACK = "Couldn’t save. Try again.";
 
   it("passes the app's own sentence through", () => {
     expect(

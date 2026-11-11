@@ -5,9 +5,10 @@ import { createRoot } from "react-dom/client";
 // same-origin) so the service worker's stale-while-revalidate caches
 // them for offline, and no third-party request leaks the user's IP to
 // Google on every load. @font-face families: "Plus Jakarta Sans Variable"
-// (text) / "Archivo Variable" (numbers — the brand-bake-off numeral face
-// that replaced JetBrains Mono; see docs/visual-audit/bakeoff/DECISION.md).
-// Both referenced via the --font-display / --font-mono tokens in index.css.
+// (text, and numbers inside a line of text) / "Archivo Variable" (figures
+// that stand on their own — the brand-bake-off numeral face; see
+// docs/visual-audit/bakeoff/DECISION.md). Referenced via the
+// --font-display / --font-mono / --font-figure tokens in index.css.
 import "@fontsource-variable/plus-jakarta-sans/index.css";
 import "@fontsource-variable/archivo/wght.css";
 import "./index.css";
@@ -16,7 +17,19 @@ import { registerServiceWorker } from "./lib/register-sw";
 import { initErrorMonitoring } from "./lib/errorReporting";
 import { startSystemChromeSync } from "./lib/systemChrome";
 import { startSystemTextSizeSync } from "./lib/systemTextSize";
+import { captureInviteFromUrl } from "./lib/pendingInvite";
+import { traceBoot, watchBootErrors } from "./lib/bootTrace";
 
+// Name each step of starting up, and keep any error beside them, for the
+// notice under a startup spinner that never clears (bootTrace.ts).
+watchBootErrors();
+traceBoot("App code started");
+
+// An invite link's code (Soc15), kept for setup and taken out of the
+// address before the router reads it.
+captureInviteFromUrl();
+
+traceBoot("Drawing the app");
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />

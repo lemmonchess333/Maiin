@@ -75,7 +75,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "swaps-bench-keeps": ["acsm-heavy:bench-press"],
   "swaps-squat-today": ["acsm-size:quads", "stall:leg-press"],
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
-  "hybrid-lighter-week": ["back-to-back", "spike", "volume-jump"],
+  "hybrid-lighter-week": ["spike", "volume-jump"],
   "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
   "dumbbell-easier-days": ["stall:db-curl"],
 };

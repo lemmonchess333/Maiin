@@ -87,11 +87,11 @@ export function getPlainLanguageSummary(
   switch (loadBand) {
     case "overreach":
       body =
-        "You're pushing hard — recovery matters. Consider a lighter session.";
+        "You’re pushing hard — recovery matters. Consider a lighter session.";
       break;
     case "deload":
       body =
-        "Very light week. If that was planned recovery you're on track — otherwise an easy session is the way back in.";
+        "Very light week. If that was planned recovery you’re on track — otherwise an easy session is the way back in.";
       break;
     case "high":
     case "moderate":

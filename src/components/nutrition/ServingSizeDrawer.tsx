@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Plus, Minus, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { OFF_CREDIT } from "@/lib/offNutrition";
+import { parseAmount } from "@/lib/mealPortion";
+import PortionAmountField from "./PortionAmountField";
+import PortionLeftLine from "./PortionLeftLine";
+import type { DayBudget } from "@/lib/portionLeft";
 
 interface Props {
   food: {
@@ -24,6 +28,9 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: (servings: number) => void;
+  /** The day the food would be logged to, for the line that says what is
+   *  left after it. */
+  day?: DayBudget | null;
 }
 
 // Sprint 3 follow-up sweep: vaul boilerplate replaced with shared
@@ -34,23 +41,17 @@ interface Props {
 // keeps the drag handle but skips the visible title row; the
 // food.name is still emitted as an sr-only Drawer.Title for the
 // aria-labelledby contract.
-/* Per-100g foods are measured in GRAMS, everything else in servings.
-   The old control stepped servings by 0.5 with no way to type, which on a
-   per-100g product meant 50 g jumps: 100 g and 150 g were reachable, 30 g
-   and 125 g were not, and those are ordinary portions. Grams also step by
-   10 rather than 50 here, but the step is a convenience — the input is
-   what makes any amount reachable. */
-const GRAM_STEP = 10;
-const SERVING_STEP = 0.5;
+/* Per-100g foods are measured in GRAMS, everything else in servings, with
+   the typed field PortionAmountField draws (see AMOUNT_STEP for why). */
 
-/** Trim a float to at most 2dp without trailing zeros ("1.5", not "1.50"). */
-function tidy(n: number): string {
-  return String(Math.round(n * 100) / 100);
-}
-
-export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
+export function ServingSizeDrawer({
+  food,
+  open,
+  onClose,
+  onConfirm,
+  day = null,
+}: Props) {
   const perHundred = food?.unitConfidence === "low";
-  const step = perHundred ? GRAM_STEP : SERVING_STEP;
   /* ONE piece of state, held as the string the user types. Deriving the
      servings from it (rather than mirroring two values) is what stops the
      input and the macro grid from disagreeing mid-edit. */
@@ -62,16 +63,14 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
     setQty(food?.unitConfidence === "low" ? "100" : "1");
   }
 
-  const parsed = Number(qty.replace(",", "."));
-  const valid = Number.isFinite(parsed) && parsed > 0;
-  const servings = valid ? (perHundred ? parsed / 100 : parsed) : 0;
+  const parsed = parseAmount(qty);
+  const valid = parsed !== null;
+  const servings = parsed === null ? 0 : perHundred ? parsed / 100 : parsed;
   /* Mid-edit the field is briefly empty. The grid then shows ONE serving
      of the food rather than zeros — a row of 0s reads as "this food has no
      calories", which is a claim about the food rather than about the
      half-typed number. Log food is refused until the field parses. */
   const previewServings = valid ? servings : 1;
-  const bump = (delta: number) =>
-    setQty(tidy(Math.max(step, (valid ? parsed : step) + delta)));
 
   if (!food) return null;
 
@@ -132,7 +131,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.nutrition}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.nutrition }}
             >
               {Math.round(food.calories * previewServings)}
@@ -146,7 +145,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.protein}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.protein }}
             >
               {Math.round(food.protein * previewServings)}g
@@ -160,7 +159,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.carbs}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.carbs }}
             >
               {Math.round(food.carbs * previewServings)}g
@@ -174,7 +173,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.fat}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.fat }}
             >
               {Math.round(food.fat * previewServings)}g
@@ -184,41 +183,22 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             </p>
           </div>
         </div>
+        <PortionLeftLine
+          className="mt-2 text-center"
+          day={day}
+          portion={{
+            calories: food.calories * previewServings,
+            protein: food.protein * previewServings,
+          }}
+        />
 
         {/* Quantity — typeable, with the unit named beside it. */}
-        <div className="flex items-center justify-center gap-4 pt-4">
-          <button
-            type="button"
-            onClick={() => bump(-step)}
-            aria-label={perHundred ? "Decrease grams" : "Decrease servings"}
-            className="size-11 rounded-full bg-muted flex items-center justify-center"
-          >
-            <Minus className="size-4" aria-hidden="true" />
-          </button>
-          <div className="text-center">
-            <label htmlFor="serving-qty" className="sr-only">
-              {perHundred ? "Grams" : "Servings"}
-            </label>
-            <input
-              id="serving-qty"
-              type="text"
-              inputMode="decimal"
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-              className="w-20 min-h-11 rounded-lg bg-muted text-center text-2xl font-bold font-mono tabular-nums text-foreground"
-            />
-            <p className="text-xs text-muted-foreground">
-              {perHundred ? "grams" : "servings"}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => bump(step)}
-            aria-label={perHundred ? "Increase grams" : "Increase servings"}
-            className="size-11 rounded-full bg-muted flex items-center justify-center"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-          </button>
+        <div className="pt-4">
+          <PortionAmountField
+            unit={perHundred ? "grams" : "servings"}
+            value={qty}
+            onChange={setQty}
+          />
         </div>
 
         {/* Logging food is the food orange wherever it happens

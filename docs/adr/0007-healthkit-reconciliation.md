@@ -8,7 +8,7 @@ Status: accepted
 
 Tropos is an iOS-first Capacitor app that will read from Apple HealthKit
 (and, on Android, Health Connect). `POST_LAUNCH.md` and
-`docs/heart-rate-healthkit.md` describe the *mechanics* (add the plugin, query
+`docs/heart-rate-healthkit.md` describe the _mechanics_ (add the plugin, query
 steps/HR, wire the Home tile). They deliberately deferred the hard part:
 `docs/adaptive-paces-design.md:119,159` locks "no entanglement v1 (avoid
 double-count)" for paces, and the same unanswered question applies to the whole
@@ -42,7 +42,7 @@ Verified in three places (`src/utils/dailyBurn.ts:10-13`,
 
 So "which HealthKit data enters the calorie math" has a clean answer available:
 **none of it, as an additive energy term** — because the app's model is already a
-closed, no-eat-back loop, and the learned engine already *contains* whatever a
+closed, no-eat-back loop, and the learned engine already _contains_ whatever a
 Watch would measure (see §Decision Q2). This is the spine of the whole ADR.
 
 ### The platform-seam precedent
@@ -68,17 +68,17 @@ through the locked chain **formula (`tdee.ts`) → learned override
 (`adaptiveTdee.ts`, when `source==='learned'`) → taper override
 (`taperNutrition.ts`)**. HealthKit contributes **zero** terms to that chain and
 to every downstream burn/balance figure. The app stops computing **nothing** —
-it keeps all its own numbers exactly as-is and *refuses* HealthKit energy as an
+it keeps all its own numbers exactly as-is and _refuses_ HealthKit energy as an
 input.
 
-| Data type | Source of truth | Enters calorie math? | Conflict / echo rule |
-| --- | --- | --- | --- |
-| **Steps** | HealthKit-wins (sole source; no app pedometer) | **NO — a display COUNT only.** `estimateStepCalories` (`dailyBurn.ts:50-53`) stays dead code; `Home.tsx:280` `stepCals` stays hardcoded `0`. Steps **never emit a kcal figure anywhere** (absolute rule — see blocker fix). | Read-only via `HKStatisticsQuery` day-aligned to **local** date; never sum raw samples (auto-dedupes iPhone+Watch only as a statistics query). No echo path. |
-| **Active Energy** | app-wins (**refused as input**) | **NO — never read into `finalTarget`, `actualBurn`, `calcDayBalance`, or the adaptive regression.** | Not ingested at all. If a passive "Apple's estimate" cross-check card is ever shown (product call), it lives **outside** the summed `TodayEnergy` breakdown and uses a Tropos-source-excluding read predicate (see echo blocker). |
-| **Body mass** | **merge** | **Indirectly + intentionally** — real weigh-ins feed the adaptive-TDEE slope + weight-trend, which is *correct* (better signal). No new additive term. | Canonical store stays `users/{uid}/bodyweightLogs`; **one row per local date, keyed by doc-id = date** (blocker fix). Row tagged `source:'manual'\|'healthkit'`. Manual entry is authoritative for its date; HealthKit fills only empty dates. |
-| **Workouts** | app-wins | **NO new term.** `actualLiftBurn`/`actualRunBurn` stay derived from app-logged docs via app-owned formulas. | `HKWorkout` samples are **never** auto-ingested into `computeActiveDateSet`, `syncChallengeProgress`, or the performance engine. Import = display-only or an explicit per-item "log this" tap. |
-| **Heart rate** | HealthKit-wins (sole source; no app sensor) | **NO.** Run burn is distance-based, lift burn MET/duration-based; neither uses HR. | Live samples for zones/effort display only; extends the existing `heartRateSource.ts` seam. Multiple HR sources (Watch + strap) need explicit source selection — no auto-dedupe. |
-| **Sleep** | HealthKit-wins *if surfaced* | **NO — and v1 does not ingest it** (zero existing consumer). | Deferred behind the seam; display-only if a later arc needs it. |
+| Data type         | Source of truth                                | Enters calorie math?                                                                                                                                                                                                        | Conflict / echo rule                                                                                                                                                                                                                           |
+| ----------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Steps**         | HealthKit-wins (sole source; no app pedometer) | **NO — a display COUNT only.** `estimateStepCalories` (`dailyBurn.ts:50-53`) stays dead code; `Home.tsx:280` `stepCals` stays hardcoded `0`. Steps **never emit a kcal figure anywhere** (absolute rule — see blocker fix). | Read-only via `HKStatisticsQuery` day-aligned to **local** date; never sum raw samples (auto-dedupes iPhone+Watch only as a statistics query). No echo path.                                                                                   |
+| **Active Energy** | app-wins (**refused as input**)                | **NO — never read into `finalTarget`, `actualBurn`, `calcDayBalance`, or the adaptive regression.**                                                                                                                         | Not ingested at all. If a passive "Apple's estimate" cross-check card is ever shown (product call), it lives **outside** the summed `TodayEnergy` breakdown and uses a Tropos-source-excluding read predicate (see echo blocker).              |
+| **Body mass**     | **merge**                                      | **Indirectly + intentionally** — real weigh-ins feed the adaptive-TDEE slope + weight-trend, which is _correct_ (better signal). No new additive term.                                                                      | Canonical store stays `users/{uid}/bodyweightLogs`; **one row per local date, keyed by doc-id = date** (blocker fix). Row tagged `source:'manual'\|'healthkit'`. Manual entry is authoritative for its date; HealthKit fills only empty dates. |
+| **Workouts**      | app-wins                                       | **NO new term.** `actualLiftBurn`/`actualRunBurn` stay derived from app-logged docs via app-owned formulas.                                                                                                                 | `HKWorkout` samples are **never** auto-ingested into `computeActiveDateSet`, `syncChallengeProgress`, or the performance engine. Import = display-only or an explicit per-item "log this" tap.                                                 |
+| **Heart rate**    | HealthKit-wins (sole source; no app sensor)    | **NO.** Run burn is distance-based, lift burn MET/duration-based; neither uses HR.                                                                                                                                          | Live samples for zones/effort display only; extends the existing `heartRateSource.ts` seam. Multiple HR sources (Watch + strap) need explicit source selection — no auto-dedupe.                                                               |
+| **Sleep**         | HealthKit-wins _if surfaced_                   | **NO — and v1 does not ingest it** (zero existing consumer).                                                                                                                                                                | Deferred behind the seam; display-only if a later arc needs it.                                                                                                                                                                                |
 
 **Why refusing Active Energy is right, not lazy (the argue-against, answered).**
 The strongest case for eat-back: Active Energy from an accelerometer + HR is the
@@ -91,7 +91,7 @@ that **structurally already contains** whatever the Watch would measure, without
 MFP's notorious open-loop eat-back overestimation spiral. Feeding Active Energy on
 top would double-count against **both** the `activityLevel` multiplier **and** the
 mass-derived learned TDEE, degrading a self-correcting estimator into a
-self-referential loop. The sensor is not wasted — it is *superseded*. Its correct
+self-referential loop. The sensor is not wasted — it is _superseded_. Its correct
 role is exactly the things the app cannot infer (steps, HR, weigh-in
 convenience), and that weigh-in stream is what feeds the regression that makes
 Active Energy redundant.
@@ -113,7 +113,7 @@ Active Energy redundant.
   `com.tropos.dev` vs prod `com.tropos.app` write under different `HKSource`s, so
   a hardcoded predicate re-ingests prior-variant samples); (2) doc-id = date +
   manual precedence drops any leaked echo. **Known residual:** a third-party
-  Health app that re-publishes Tropos's weigh-in under *its own* bundle launders
+  Health app that re-publishes Tropos's weigh-in under _its own_ bundle launders
   past the source predicate — caught only if a manual row already occupies that
   date. Accept and document; do not pretend it's closed.
 - **Trend safety:** only `TrendWeight.tsx` dedups by date; `calcWeightTrend`
@@ -141,7 +141,7 @@ Active Energy redundant.
 ### Q5 — partial grants, availability, and the web-visible seam
 
 - **Per-type grants degrade independently** — no all-or-nothing gate. Steps
-  granted / energy denied is the *normal* case and costs nothing (Active Energy is
+  granted / energy denied is the _normal_ case and costs nothing (Active Energy is
   never used regardless). Each consumer checks availability and falls back: steps
   tile → count or "Connect Health" placeholder; HR → live or age-estimate max
   (`useHeartRate` already does this); weight sync optional, manual weigh-in always
@@ -176,9 +176,9 @@ Active Energy redundant.
   1. **Engine-flip discontinuity.** Adaptive readiness needs `minWeighIns=8`,
      `minSpanDays=14`; a first-connect backfill can satisfy all gates in **one
      sync**, flipping `resolveTargetSource` formula→learned instantly.
-     `applyWeeklyCap` bounds the *jump* (±150 kcal/7d) but **not** the engine
+     `applyWeeklyCap` bounds the _jump_ (±150 kcal/7d) but **not** the engine
      switch or the sustained drift a steep imported slope causes. Decision: gate
-     the formula→learned flip on a *settling window* after connect (e.g. require
+     the formula→learned flip on a _settling window_ after connect (e.g. require
      N days of post-connect logging before `learned` engages), not on backfilled
      rows alone. **Product/engineering call flagged.**
   2. **Window nuance.** The adaptive slope reads only the trailing 21-day window,
@@ -189,7 +189,7 @@ Active Energy redundant.
 - **Historical daily budgets ARE recomputed today — this must be fixed or
   scoped.** The claim "past budgets are point-in-time" is **false**:
   `CalorieBalanceChart.tsx:48-58` derives `maintenance` from **current**
-  `profile.weightKg` and applies it to all 14 past days. So *any* weight change
+  `profile.weightKg` and applies it to all 14 past days. So _any_ weight change
   (backfill or a normal weigh-in) already retroactively rewrites every historical
   balance bar. HealthKit doesn't create this bug but amplifies it. Decision:
   either persist per-day expenditure point-in-time, or explicitly accept that the
@@ -211,7 +211,7 @@ Active Energy redundant.
 - **One energy number is preserved** across the target, burn breakdown, balance
   chart, and adaptive TDEE — HealthKit adds display signals (steps, HR) and
   weigh-in convenience, never an energy term. The app diverges from MFP-style
-  eat-back *on purpose* and must be visibly better on outcomes, not by copying it.
+  eat-back _on purpose_ and must be visibly better on outcomes, not by copying it.
 - **Three writes must be transactional/keyed to be safe:** the weigh-in write
   (doc-id=date), the background sync writer (uid-scoped + debounced per the
   `onAuthStateChanged`-multifire + PR#820 queue-scoping precedent), and local-date
@@ -239,16 +239,16 @@ Active Energy redundant.
 
 Per data type, the reconciliation is locked as:
 
-| Data type | Locked decision |
-| --- | --- |
-| **Steps** | HealthKit-wins; **display count only, never a kcal figure anywhere**; read-only; backfill free *but contingent on steps staying consumer-free*. |
-| **Active Energy** | **Refused as a calorie input** — zero terms into target/burn/balance/adaptive. Superseded by the learned TDEE. Optional passive cross-check card only, outside the summed breakdown, source-predicate read. |
-| **Body mass** | Merge; canonical `bodyweightLogs` **keyed doc-id=date** (migrate off auto-ID); manual-wins per date; HealthKit fills empty dates; source-tagged; two-layer echo prevention; feeds adaptive TDEE intentionally. |
-| **Workouts** | App-owned; **never auto-ingested** into energy/streaks/challenges/PI; write `HKWorkout` opt-in; import is display-only or explicit per-item logging. |
-| **Heart rate** | HealthKit-wins; zones/effort display only; **out of the calorie math**; extends `heartRateSource.ts`; explicit multi-source selection. |
-| **Sleep** | Not ingested in v1 (no consumer); seam leaves room for a later display-only surface. |
-| **Write-back** | Body weight + `HKWorkout` opt-in, per-type, revocable, never-throws; **deletes/edits must mirror**; no standalone Active-Energy write. |
-| **Backfill** | Steps free; weight only into empty dates + settling-window before engine-flip; workouts never silently; scale-capped. |
+| Data type         | Locked decision                                                                                                                                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Steps**         | HealthKit-wins; **display count only, never a kcal figure anywhere**; read-only; backfill free _but contingent on steps staying consumer-free_.                                                                |
+| **Active Energy** | **Refused as a calorie input** — zero terms into target/burn/balance/adaptive. Superseded by the learned TDEE. Optional passive cross-check card only, outside the summed breakdown, source-predicate read.    |
+| **Body mass**     | Merge; canonical `bodyweightLogs` **keyed doc-id=date** (migrate off auto-ID); manual-wins per date; HealthKit fills empty dates; source-tagged; two-layer echo prevention; feeds adaptive TDEE intentionally. |
+| **Workouts**      | App-owned; **never auto-ingested** into energy/streaks/challenges/PI; write `HKWorkout` opt-in; import is display-only or explicit per-item logging.                                                           |
+| **Heart rate**    | HealthKit-wins; zones/effort display only; **out of the calorie math**; extends `heartRateSource.ts`; explicit multi-source selection.                                                                         |
+| **Sleep**         | Not ingested in v1 (no consumer); seam leaves room for a later display-only surface.                                                                                                                           |
+| **Write-back**    | Body weight + `HKWorkout` opt-in, per-type, revocable, never-throws; **deletes/edits must mirror**; no standalone Active-Energy write.                                                                         |
+| **Backfill**      | Steps free; weight only into empty dates + settling-window before engine-flip; workouts never silently; scale-capped.                                                                                          |
 
 **Four blockers that must be closed before implementation (all verified in code):**
 
@@ -264,18 +264,18 @@ Per data type, the reconciliation is locked as:
 
 ## Decisions that need a product call (not an engineer)
 
-- Write `HKWorkout` at all (ring-closing value vs native scope)? *(recommend
-  yes, opt-in)*
+- Write `HKWorkout` at all (ring-closing value vs native scope)? _(recommend
+  yes, opt-in)_
 - Surface HealthKit Active Energy as a passive cross-check card, or hide it
-  entirely? *(surfacing invites "why doesn't it add to my budget?" confusion)*
+  entirely? _(surfacing invites "why doesn't it add to my budget?" confusion)_
 - Same-date weight tie-break when a manual entry and a smart-scale HealthKit
-  sample both exist *(recommend manual-wins; some users trust the scale more)*.
+  sample both exist _(recommend manual-wins; some users trust the scale more)_.
 - Offer HealthKit historical-workout import as explicit per-item logging, and if
-  so do imported sessions count toward challenges/PRs? *(recommend
-  import-as-suggestion, does-not-count)*.
-- Sleep in v1 at all? *(recommend no)*.
+  so do imported sessions count toward challenges/PRs? _(recommend
+  import-as-suggestion, does-not-count)_.
+- Sleep in v1 at all? _(recommend no)_.
 - Android/Health Connect parity required at launch, or an iOS-first fast-follow?
-- On grant revoke: purge synced rows or retain? *(recommend retain + flag denied)*.
+- On grant revoke: purge synced rows or retain? _(recommend retain + flag denied)_.
 
 ## What a normal session implements from this
 
@@ -321,3 +321,47 @@ the four blockers and the edge cases (build-variant bundle ids, third-party
 re-publish, multi-source dedup, revoke residue, Health Connect divergence,
 timezone travel, unbounded backfill read) came from the critique and are recorded
 here rather than discovered in production.
+
+## Status addendum — 2026-10-31: HealthKit also reads run heart rate and writes the run as a workout (XB1 call 6)
+
+The phone-led Apple Watch run (lemmonchess333/Maiin#3002 to #3004, stage one
+of the W rows in the plan file) takes HealthKit past steps, behind one
+consent. Nothing above is reversed: these are the Heart rate and Workouts
+rows of the locked table, built.
+
+- **It reads heart rate during a run.** While a run the iPhone started is
+  recording, the Watch app reads heart rate from HealthKit and sends the
+  samples to the phone over WatchConnectivity, where `heartRateSource.ts`
+  (the Q5 seam) passes them on. They are shown and kept on the device, and
+  they stay out of the calorie math. iOS does not say whether a heart rate
+  read was denied, so the app can only report that none arrived.
+- **It writes the run as a workout.** With Save workouts to Apple Health
+  on, a synced run is written as an `HKWorkout` by the iPhone app's own
+  writer (`HealthWorkoutStore.swift`, through the `WatchRun` plugin).
+  `capacitor-health` still asks for steps alone. A receipt reserved on the
+  server before each write (`users/{uid}/healthWorkoutExports/{runId}`)
+  stops a duplicate, and deleting the run in Tropos deletes the workout,
+  as Q4 requires.
+- **The consent is the account's, in `users/{uid}/settings/connectedTraining`**:
+  `useWatchForRuns` for Watch runs and their heart rate, and
+  `saveWorkoutsToHealth` (with `workoutExportEnabledAt` and
+  `workoutExportConsentId`) for the workout write. Both start off, and each
+  is separate from the steps connection. A workout write needs the server's
+  copy of that consent, read in the transaction that reserves the receipt,
+  and a phone's own off switch vetoes it locally. Both sit behind the
+  connected training release gate: a standard build offers neither (XB1
+  call 4).
+
+**How this relates to `profile.healthkitSyncState`.** Q5 proposed
+`healthkitSyncState` on the profile for each type's grant and last sync. It
+was never built: the steps connection keeps its one flag in
+`users/{uid}/settings/healthKit` (`useSteps.ts`), and connected training
+adds no profile field. The two kinds of state are kept apart on purpose.
+`settings/connectedTraining` holds what the person chose, which Tropos must
+be able to prove before it writes to Health; what iOS granted is read from
+HealthKit when it is used (the workout write checks its authorisation
+status; a heart rate read cannot be checked). If `healthkitSyncState` is
+built for weight sync (Q3), it records grants and sync progress per type
+and must not stand in for the workout-write consent, and the
+connected-training consent stays off the profile, out of
+`profileSanitizer.js` and `allowedUserFields()`.

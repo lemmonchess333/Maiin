@@ -64,6 +64,10 @@ vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => null }));
+// The streak a run's post measures against (Soc15); none here.
+vi.mock("@/features/streaks/useStreaks", () => ({
+  useStreaks: () => ({ streakWithDay: () => null }),
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({
@@ -172,7 +176,7 @@ describe("RunSummary — Export GPX", () => {
     renderSummary();
     await exportGpx();
     await waitFor(() =>
-      expect(h.toast.error).toHaveBeenCalledWith("Couldn't share route")
+      expect(h.toast.error).toHaveBeenCalledWith("Couldn’t share route")
     );
     expect(h.toast.success).not.toHaveBeenCalled();
   });

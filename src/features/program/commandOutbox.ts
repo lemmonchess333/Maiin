@@ -59,20 +59,56 @@
  * share queues: on a shared device, one account's queued work flushing under
  * another's auth. Flushing is likewise per-uid rather than indiscriminate.
  *
- * The queue is bounded and sheds the OLDEST entry on quota, logging each drop —
- * the offline queue's CORE-01 lesson, where the original code cleared the queue
- * entirely and lost everything silently.
+ * The queue is bounded. A failed storage write leaves the existing queue
+ * intact and is reported to the caller, never retried by deleting older work.
  */
 
 import { logger } from "@/lib/logger";
 import { readJson, remove, writeJson } from "@/lib/localStore";
 
 const OUTBOX_KEY = "tropos.program.commandOutbox";
+const outboxListeners = new Set<() => void>();
+let outboxVersion = 0;
+
+function notifyOutbox(): void {
+  outboxVersion += 1;
+  for (const listener of outboxListeners) listener();
+}
+
+function onStorage(event: StorageEvent): void {
+  if (event.key === OUTBOX_KEY || event.key === null) notifyOutbox();
+}
+
+/** Live queue updates, including changes from another browser tab. */
+export function subscribeCommandOutbox(listener: () => void): () => void {
+  if (outboxListeners.size === 0 && typeof window !== "undefined")
+    window.addEventListener("storage", onStorage);
+  outboxListeners.add(listener);
+  return () => {
+    outboxListeners.delete(listener);
+    if (outboxListeners.size === 0 && typeof window !== "undefined")
+      window.removeEventListener("storage", onStorage);
+  };
+}
+
+export const commandOutboxVersion = () => outboxVersion;
+
+export interface CommandSettlement {
+  commandId: string;
+  kind: string;
+  result: "applied" | "declined";
+}
+const latestSettlements = new Map<string, CommandSettlement>();
+
+/** The latest replay result belongs only to the account that sent it. */
+export function lastCommandSettlement(uid: string): CommandSettlement | null {
+  return latestSettlements.get(uid) ?? null;
+}
 
 /**
  * Most commands to hold. A user offline for a long session generates a handful;
- * anything approaching this is a bug or an attack, and shedding is preferable
- * to a localStorage value that cannot be written at all.
+ * refuse new work at the limit rather than evict unsynced commands that
+ * the caller has already told the person were saved.
  */
 export const MAX_OUTBOX_ENTRIES = 50;
 
@@ -80,12 +116,10 @@ export const MAX_OUTBOX_ENTRIES = 50;
  * Firebase callable error codes that mean "the network did not deliver this",
  * as opposed to "the server considered it and said no".
  *
- * Deliberately narrow. `internal` is NOT here: it usually means the handler
- * threw, which will happen again on every replay. An error with no code at all
- * (a raw fetch failure) IS treated as transport — that is the airplane-mode
- * case this module exists for.
+ * `internal` is not on the list: it means both. See `isTransportFailure`.
  */
 const TRANSPORT_CODES = new Set([
+  "auth/network-request-failed",
   "functions/unavailable",
   "functions/deadline-exceeded",
   "functions/cancelled",
@@ -102,13 +136,34 @@ export interface OutboxEntry {
   queuedAt: number;
 }
 
-/** True when the failure was the network rather than the server's judgement. */
+/**
+ * The messages an `internal` error carries when no answer came back: the
+ * SDK's own for a fetch that failed or a gateway's reply it could not read
+ * (@firebase/functions: postJSON, callAtURL), and the platform's for a
+ * function that crashed before it could answer. The server's own
+ * `internal` says what it failed to do ("Failed to apply programme
+ * command.") and fails the same way on every replay.
+ */
+const NO_ANSWER_INTERNAL = new Set([
+  "internal",
+  "INTERNAL",
+  "Response is not valid JSON object.",
+  "Response is missing data field.",
+]);
+
+/** True when this could be a transient failure rather than a definitive refusal. */
 export function isTransportFailure(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const code = (err as { code?: unknown }).code;
   if (typeof code !== "string") {
     // No code at all — a raw network/fetch rejection. This is the offline case.
     return err instanceof Error;
+  }
+  if (code === "functions/internal" || code === "internal") {
+    // Replaying the server's own refusal would hold it, and every command
+    // queued after it, at the head of the queue for good.
+    const message = (err as { message?: unknown }).message;
+    return typeof message === "string" && NO_ANSWER_INTERNAL.has(message);
   }
   return TRANSPORT_CODES.has(code);
 }
@@ -132,22 +187,19 @@ function read(): OutboxEntry[] {
   });
 }
 
-function write(entries: OutboxEntry[]): void {
-  let working = entries;
-  for (;;) {
-    if (writeJson(OUTBOX_KEY, working)) return;
-    if (working.length === 0) {
-      // Nothing fits even when empty — drop the key so a corrupt giant value
-      // cannot wedge every future write.
-      remove(OUTBOX_KEY);
-      return;
-    }
-    logger.error(
-      "[commandOutbox] storage full — shedding the oldest queued command",
-      working[0]?.command.kind
-    );
-    working = working.slice(1);
+function write(
+  entries: OutboxEntry[],
+  settlement?: { uid: string; result: CommandSettlement }
+): boolean {
+  // localStorage.setItem is atomic on failure. Never shrink or delete the
+  // previous queue to make a new write fit: that would lose unsynced work.
+  if (!writeJson(OUTBOX_KEY, entries)) {
+    logger.error("[commandOutbox] could not persist queued commands");
+    return false;
   }
+  if (settlement) latestSettlements.set(settlement.uid, settlement.result);
+  notifyOutbox();
+  return true;
 }
 
 /** Queue a command for replay. Caller must have established that the failure
@@ -155,30 +207,25 @@ function write(entries: OutboxEntry[]): void {
 export function enqueueCommand(
   uid: string,
   command: OutboxEntry["command"]
-): void {
+): boolean {
   const queue = read();
-  // Same commandId already waiting: the send was retried locally. Replacing
-  // rather than appending keeps the queue from growing on a retry loop, and
-  // the server would dedupe them anyway.
-  const deduped = queue.filter(
-    (e) => e.command.commandId !== command.commandId
+  // A retry may replace its own entry without growing or reordering the
+  // queue. Matching ids from another account are distinct operations.
+  const index = queue.findIndex(
+    (e) => e.uid === uid && e.command.commandId === command.commandId
   );
-  deduped.push({ uid, command, queuedAt: Date.now() });
-  if (deduped.length > MAX_OUTBOX_ENTRIES) {
-    // The cap sheds the OLDEST entries. Shedding is necessary; shedding
-    // silently is how the offline queue's CORE-01 bug lost everything —
-    // and this path did exactly that (only the quota path logged). A dropped command is a user action that vanished.
-    const shed = deduped.slice(0, deduped.length - MAX_OUTBOX_ENTRIES);
-    logger.error(
-      `[commandOutbox] queue full — shedding the oldest ${shed.length} queued command(s)`,
-      shed.map((e) => e.command.kind)
-    );
+  if (index !== -1) {
+    queue[index] = { ...queue[index], command };
+    return write(queue);
   }
-  write(
-    deduped.length > MAX_OUTBOX_ENTRIES
-      ? deduped.slice(deduped.length - MAX_OUTBOX_ENTRIES)
-      : deduped
-  );
+  if (queue.length >= MAX_OUTBOX_ENTRIES) {
+    logger.error(
+      "[commandOutbox] queue full — could not queue command",
+      command.kind
+    );
+    return false;
+  }
+  return write([...queue, { uid, command, queuedAt: Date.now() }]);
 }
 
 /** How many commands are waiting, for this uid or across all of them. */
@@ -211,10 +258,16 @@ export async function flushCommandOutbox(
   // ids rather than as a rebuilt array: see the write-back below.
   const done = new Set<string>();
   let cleared = 0;
+  let settlement: CommandSettlement | undefined;
 
   for (const entry of mine) {
     try {
       await send(entry.command);
+      settlement = {
+        commandId: entry.command.commandId,
+        kind: entry.command.kind,
+        result: "applied",
+      };
       cleared += 1;
       done.add(entry.command.commandId);
     } catch (err) {
@@ -230,6 +283,11 @@ export async function flushCommandOutbox(
         `[commandOutbox] dropping ${entry.command.kind} — server rejected it`,
         err
       );
+      settlement = {
+        commandId: entry.command.commandId,
+        kind: entry.command.kind,
+        result: "declined",
+      };
       cleared += 1;
       done.add(entry.command.commandId);
     }
@@ -242,11 +300,23 @@ export async function flushCommandOutbox(
   // the pre-flush snapshot back erased it. Removing what this pass finished
   // from the LIVE queue keeps everything else, any uid, in storage order.
   const live = read();
-  write(live.filter((e) => !done.has(e.command.commandId)));
+  if (done.size === 0) return 0;
+  if (
+    !write(
+      live.filter((e) => e.uid !== uid || !done.has(e.command.commandId)),
+      settlement ? { uid, result: settlement } : undefined
+    )
+  ) {
+    // The server may have applied these, but they remain queued. A later
+    // replay uses the same ids and cannot apply the change twice.
+    return 0;
+  }
   return cleared;
 }
 
 /** Test seam — clears every uid's entries. */
 export function __resetCommandOutboxForTests(): void {
   remove(OUTBOX_KEY);
+  latestSettlements.clear();
+  notifyOutbox();
 }

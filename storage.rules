@@ -98,6 +98,56 @@ service firebase.storage {
       allow delete: if isOwnerAndWritable(uid);
     }
 
+    // Run post maps (Soc15 call 5) — the image of a run post's shared
+    // route on the basemap, light and dark, made by the author's app once
+    // the post exists (src/lib/routeMapUpload.ts). Owner write of exactly
+    // those two names, as a small JPEG, and only beside a post of theirs
+    // that exists, so a file here is always some post's map. Signed-in
+    // `get`, never `list`, as for space photos: a map is reached from its
+    // post's URL. Screened like every photo others see
+    // (functions/lib/photoScreen.js); the files go with their post
+    // (onActivityDeleted, functions/lib/routeMapFiles.js) and the
+    // account-deletion executor sweeps the whole prefix (routeMapsStorage).
+    match /route-maps/{uid}/{activityId}/{name} {
+      allow get: if request.auth != null;
+      allow create, update: if isOwnerAndWritable(uid)
+        && name in ['light.jpg', 'dark.jpg']
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size < 512 * 1024
+        && firestore.exists(
+          /databases/(default)/documents/activities/$(activityId))
+        && firestore.get(
+          /databases/(default)/documents/activities/$(activityId))
+            .data.authorId == uid;
+      allow delete: if isOwnerAndWritable(uid);
+    }
+
+    // A shared session's photos (Soc15 call 2) — one to four on a feed
+    // post, added by the author's app once the post exists
+    // (src/lib/postPhotoUpload.ts). Owner write of one JPEG under 2 MB per
+    // name, the name a random id (never an index: a URL is cached
+    // immutable, so a photo added again must never reuse one), and only
+    // beside a post of theirs that exists, so a file here is always some
+    // post's photo. Signed-in `get`, never `list`, as for space photos: a
+    // photo is reached from its post's URL. Screened like every photo
+    // others see (functions/lib/photoScreen.js); the folder goes with its
+    // post (onActivityDeleted, functions/lib/postPhotos.js), the app
+    // deletes a photo it takes off, and the account-deletion executor
+    // sweeps the whole prefix (postPhotosStorage).
+    match /post-photos/{uid}/{activityId}/{name} {
+      allow get: if request.auth != null;
+      allow create, update: if isOwnerAndWritable(uid)
+        && name.matches('^[A-Za-z0-9_-]{8,64}[.]jpg$')
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size < 2 * 1024 * 1024
+        && firestore.exists(
+          /databases/(default)/documents/activities/$(activityId))
+        && firestore.get(
+          /databases/(default)/documents/activities/$(activityId))
+            .data.authorId == uid;
+      allow delete: if isOwnerAndWritable(uid);
+    }
+
     // Profile photos — owner-only write, authenticated get. `get` and
     // never `list`, as for space photos: an avatar is reached from the
     // public profile's URL, not by listing someone's folder.

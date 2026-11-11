@@ -29,15 +29,24 @@
  * A restricted account shares nothing (S4e): the row waits for that answer
  * too, so an automatic share never goes out ahead of it, and then says so
  * in the row's place. A post that already went out keeps its Undo.
+ *
+ * A post that went out online offers Add photos under it (Soc15 call 2):
+ * sharing is mostly automatic, so this row is where most posts get their
+ * photos (PostPhotosSheet). A post waiting in the offline queue offers
+ * nothing until it is posted, and offline the button is off and says why.
  */
-import { useEffect, useId, useState } from "react";
-import { Check, Clock, EyeOff, Globe, Users } from "lucide-react";
+import { Suspense, useEffect, useId, useState } from "react";
+import { Camera, Check, Clock, EyeOff, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/lib/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
+import { POST_PHOTOS_COPY } from "@/components/social/postPhotosCopy";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { knownPostPhotos, type PostPhoto } from "@/lib/postPhotos";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -74,10 +83,15 @@ const AUDIENCE: Record<ShareVisibility, string> = {
 
 const NOTE: Record<Note, string> = {
   verify: "Verify your email to share sessions.",
-  failed: "Couldn't share this session.",
+  failed: "Couldn’t share this session.",
   removed: "Removed from the feed.",
-  cancelled: "It won't be shared.",
+  cancelled: "It won’t be shared.",
 };
+
+/* Loaded the first time a person opens it: most finish screens never do. */
+const PostPhotosSheet = lazyRetry(
+  () => import("@/components/social/PostPhotosSheet")
+);
 
 const NOUN: Record<ShareType, string> = {
   run: "run",
@@ -111,7 +125,7 @@ function statusText(state: RowState): string {
     case "live":
       return state.outcome.status === "posted"
         ? `Shared ${AUDIENCE[state.outcome.visibility]}`
-        : `Will share ${AUDIENCE[state.outcome.visibility]} when you're back online`;
+        : `Will share ${AUDIENCE[state.outcome.visibility]} when you’re back online`;
     case "held":
       return state.note ? NOTE[state.note] : "";
     default:
@@ -125,8 +139,11 @@ function isOffline(): boolean {
 
 export default function SessionShareRow({
   action,
+  onAskingChange,
 }: {
   action: SessionShareAction;
+  /** Told whether the row is asking its question, once it knows. */
+  onAskingChange?: (asking: boolean) => void;
 }) {
   const { user, refreshProfile } = useAuth();
   const restriction = useRestrictedStatus(user?.uid);
@@ -148,14 +165,26 @@ export default function SessionShareRow({
       current = false;
     };
   }, [checked, refreshProfile]);
+  const restricted =
+    checked &&
+    !restriction.loading &&
+    restriction.isRestricted &&
+    !liveSessionPost(action);
+  useEffect(() => {
+    if (restricted) onAskingChange?.(false);
+  }, [restricted, onAskingChange]);
   if (!checked || restriction.loading) return null;
-  if (restriction.isRestricted && !liveSessionPost(action)) {
-    return <RestrictedNotice />;
-  }
-  return <ShareRow action={action} />;
+  if (restricted) return <RestrictedNotice />;
+  return <ShareRow action={action} onAskingChange={onAskingChange} />;
 }
 
-function ShareRow({ action }: { action: SessionShareAction }) {
+function ShareRow({
+  action,
+  onAskingChange,
+}: {
+  action: SessionShareAction;
+  onAskingChange?: (asking: boolean) => void;
+}) {
   const { user, profile, updateShareDefaults } = useAuth();
   const gate = useEmailVerificationGate(user);
   const headingId = useId();
@@ -168,6 +197,11 @@ function ShareRow({ action }: { action: SessionShareAction }) {
       ? initialState(action, saved, gate.needsVerification)
       : { kind: "held" }
   );
+
+  const asking = state.kind === "ask";
+  useEffect(() => {
+    onAskingChange?.(asking);
+  }, [asking, onAskingChange]);
 
   const postingVisibility = state.kind === "posting" ? state.visibility : null;
   useEffect(() => {
@@ -216,7 +250,7 @@ function ShareRow({ action }: { action: SessionShareAction }) {
       setState({ kind: "held", note });
     } catch (err) {
       logger.warn("[SessionShareRow] undo failed:", err);
-      toast.error("Couldn't remove the post. Try again.");
+      toast.error("Couldn’t remove the post. Try again.");
       setState({ kind: "live", outcome });
     }
   };
@@ -300,6 +334,14 @@ function ShareRow({ action }: { action: SessionShareAction }) {
         )}
       </div>
 
+      {live && live.outcome.status === "posted" && !live.undoing && (
+        <FinishPostPhotos
+          key={live.outcome.activityId}
+          activityId={live.outcome.activityId}
+          visibility={live.outcome.visibility}
+        />
+      )}
+
       {state.kind === "ask" && (
         // The standard card: the answers are secondary buttons, whose fill
         // is the muted tone, so a muted card would hide them.
@@ -339,7 +381,7 @@ function ShareRow({ action }: { action: SessionShareAction }) {
               onClick={() => answer("never")}
               leftIcon={<EyeOff className="size-4 shrink-0" aria-hidden />}
             >
-              Don&apos;t share
+              Don’t share
             </Button>
           </div>
         </Card>
@@ -354,6 +396,68 @@ function ShareRow({ action }: { action: SessionShareAction }) {
         >
           Share this session
         </Button>
+      )}
+    </div>
+  );
+}
+
+/** Add photos, under a session's post once it is posted (Soc15 call 2),
+ *  and the sheet it opens. The photos this app session has already put
+ *  on the post come back with a finish screen that mounts again, so the
+ *  sheet never writes a list without them. */
+function FinishPostPhotos({
+  activityId,
+  visibility,
+}: {
+  activityId: string;
+  visibility: ShareVisibility;
+}) {
+  const { isOnline } = useOnlineStatus();
+  const [open, setOpen] = useState(false);
+  /* Mounted from the first open on, so it can animate closed. */
+  const [opened, setOpened] = useState(false);
+  const [photos, setPhotos] = useState<PostPhoto[]>(
+    () => knownPostPhotos(activityId) ?? []
+  );
+  const count = photos.length;
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="secondary"
+        fullWidth
+        leftIcon={<Camera className="size-4 shrink-0" aria-hidden />}
+        disabled={!isOnline}
+        onClick={() => {
+          haptic("light");
+          setOpened(true);
+          setOpen(true);
+        }}
+      >
+        {count > 0 ? POST_PHOTOS_COPY.edit : POST_PHOTOS_COPY.add}
+      </Button>
+      {!isOnline ? (
+        <p className="text-xs text-muted-foreground">
+          {POST_PHOTOS_COPY.offline}
+        </p>
+      ) : (
+        count > 0 && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-mono tabular-nums">{count}</span>{" "}
+            {count === 1 ? "photo" : "photos"} on the post
+          </p>
+        )
+      )}
+      {opened && (
+        <Suspense fallback={null}>
+          <PostPhotosSheet
+            open={open}
+            onOpenChange={setOpen}
+            activityId={activityId}
+            photos={photos}
+            onPhotosChange={setPhotos}
+            visibility={visibility}
+          />
+        </Suspense>
       )}
     </div>
   );

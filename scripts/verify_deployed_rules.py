@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -29,7 +30,17 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise VerificationError("unexpected-redirect")
 
 
-def make_reader(token):
+# A read Google did not answer, or answered 408, 429 or 5xx, is tried again:
+# one such read otherwise fails the release with the rules already live, as a
+# single timed-out Scheduler list did to the release of 2ecb0152 (#3171). A
+# refusal fails at once; no wait changes it.
+READ_PAUSES_S = (5, 15)
+TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
+
+
+def make_reader(token, sleep=None):
+    # Looked up when called, so a test that patches time.sleep reaches it.
+    sleep = sleep or (lambda seconds: time.sleep(seconds))
     opener = urllib.request.build_opener(NoRedirect())
 
     def read(resource):
@@ -39,15 +50,20 @@ def make_reader(token):
         request = urllib.request.Request(
             API + resource, headers={"Authorization": f"Bearer {token}"}, method="GET"
         )
-        try:
-            with opener.open(request, timeout=30) as response:
-                data = json.load(response)
-        except urllib.error.HTTPError as error:
-            raise VerificationError(f"http-{error.code}") from None
-        except (urllib.error.URLError, TimeoutError):
-            raise VerificationError("network-unavailable") from None
-        except (ValueError, UnicodeError):
-            raise VerificationError("invalid-json") from None
+        for pause in (*READ_PAUSES_S, None):
+            try:
+                with opener.open(request, timeout=30) as response:
+                    data = json.load(response)
+                break
+            except urllib.error.HTTPError as error:
+                if error.code not in TRANSIENT_STATUS or pause is None:
+                    raise VerificationError(f"http-{error.code}") from None
+            except (urllib.error.URLError, TimeoutError, ConnectionError):
+                if pause is None:
+                    raise VerificationError("network-unavailable") from None
+            except (ValueError, UnicodeError):
+                raise VerificationError("invalid-json") from None
+            sleep(pause)
         if not isinstance(data, dict):
             raise VerificationError("invalid-response")
         return data
@@ -118,6 +134,31 @@ def check_services(read, project, service, bucket, root=ROOT):
     return results
 
 
+# A token request that does not answer is the runner's network or Google's
+# token endpoint being slow, not a bad key (Deploy production run 675 lost a
+# release to one 30 s wait in verify_storage_rules_iam.py, which shares this
+# shape): a timed-out request is tried again, one that fails outright is not.
+TOKEN_ATTEMPTS = 3
+TOKEN_TIMEOUT_S = 45
+TOKEN_PAUSES_S = (5, 15)
+
+
+def access_token():
+    """gcloud's access token, trying again when a request times out. The
+    last timeout, a gcloud error and a missing gcloud raise as they do."""
+    for attempt in range(TOKEN_ATTEMPTS):
+        try:
+            return subprocess.check_output(
+                ["gcloud", "auth", "print-access-token"], text=True,
+                stderr=subprocess.PIPE, timeout=TOKEN_TIMEOUT_S,
+            ).strip()
+        except subprocess.TimeoutExpired:
+            if attempt + 1 == TOKEN_ATTEMPTS:
+                raise
+            time.sleep(TOKEN_PAUSES_S[attempt])
+    raise subprocess.TimeoutExpired("gcloud", TOKEN_TIMEOUT_S)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", default="adaptive-fitness-af8bb")
@@ -128,10 +169,7 @@ def main(argv=None):
         print("Rules verification failed: invalid-project", file=sys.stderr)
         return 1
     try:
-        token = subprocess.check_output(
-            ["gcloud", "auth", "print-access-token"], text=True,
-            stderr=subprocess.PIPE, timeout=30,
-        ).strip()
+        token = access_token()
         if not token:
             raise VerificationError("missing-credentials")
         results = check_services(make_reader(token), args.project, args.service, args.bucket)

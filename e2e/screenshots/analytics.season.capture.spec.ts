@@ -75,11 +75,14 @@ const PAGES: {
     path: "/Maiin/history?view=lifting",
     // Each lift's progress needs a lift trained twice in the range, and
     // sets per muscle a whole week: neither renders for a thin account.
-    // The summary line's three forms (MuscleVolumeCard).
+    // The summary line's forms (MuscleVolumeCard, `muscleRangeReading`):
+    // "2 of 14 muscles below their range: abs", "All 14 muscles in their
+    // range", "Both muscles in their range", "Your 1 muscle is in its
+    // range".
     anchor: (page) =>
       page
         .getByText(
-          /^Below range: |muscles below their range$|^Every muscle is in its range$/
+          /^\d+ of \d+ muscles? below their range|muscles in their range$|^Your 1 muscle is in its range$/
         )
         .first(),
   },
@@ -139,7 +142,9 @@ test.describe("analytics — a season of training", () => {
        scoped pool left as "--" for anything older than the range. The
        race is weeks old, so its row only fills from the lifetime read. */
     await page.goto("/Maiin/history?tab=prs");
-    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Lifting bests")).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByText("Longest run").first()).toBeVisible();
     await settleImages(page);
     await settleFullPageHeight(page);

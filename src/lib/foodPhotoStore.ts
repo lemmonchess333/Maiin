@@ -194,17 +194,19 @@ export async function saveFoodPhoto(
   let img: HTMLImageElement;
   try {
     img = await decodeJpeg(base64Jpeg);
+    const scale = downscaleFactor(
+      img.naturalWidth,
+      img.naturalHeight,
+      MAX_EDGE_PX,
+      "long"
+    );
+    /* A photo already within MAX_EDGE_PX is kept as it came. The scan
+       sends every photo at that size (FoodCameraModal draws a frame and a
+       picked photo down to it), so encoding it again here would be a
+       second JPEG generation for no byte saved. */
     await Filesystem.writeFile({
       path: pathFor(uid, mealId),
-      data: encodeJpeg(
-        img,
-        downscaleFactor(
-          img.naturalWidth,
-          img.naturalHeight,
-          MAX_EDGE_PX,
-          "long"
-        )
-      ),
+      data: scale < 1 ? encodeJpeg(img, scale) : base64Jpeg,
       directory: Directory.LibraryNoCloud,
       recursive: true,
     });
@@ -332,8 +334,8 @@ export async function deleteFoodPhoto(
   }
 }
 
-/** Remove every photo for one uid. Used on account deletion and from the
- *  Settings "delete meal photos on this device" action. */
+/** Remove every photo for one uid on account deletion. An absent directory
+ *  is already clean; other failures must reach the device-cleanup warning. */
 export async function purgeFoodPhotos(uid: string): Promise<void> {
   try {
     await Filesystem.rmdir({
@@ -342,7 +344,17 @@ export async function purgeFoodPhotos(uid: string): Promise<void> {
       recursive: true,
     });
   } catch (err) {
+    const code = (err as { code?: unknown } | null)?.code;
+    const message = (err as { message?: unknown } | null)?.message;
+    // Installed native plugin's file-not-found code and web rmdir's exact
+    // missing-directory error. Permission/IndexedDB errors are not success.
+    if (
+      code === "OS-PLUG-FILE-0008" ||
+      (code == null && message === "Folder does not exist.")
+    )
+      return;
     logger.warn("[foodPhoto] purge skipped:", err);
+    throw err;
   }
 }
 

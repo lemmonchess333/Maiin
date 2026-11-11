@@ -532,6 +532,150 @@ html.guiding [data-brand-mark] {
   filter: none;
 }
 
+/* Home's hero glow (SessionHero): the session's own colour behind its
+   picture, one hue fading into the page (DS4 §14m rule 13). The themes
+   carry the same measured colour (rule 15, C9: no glow that only dark
+   has): on a pale page a tint reads as colour (S > 0.35) only from about
+   0.7 alpha, so light's stops sit higher than dark's for the same weight.
+   With dark's stops in both, light Home's leading hue fell to 43% purple
+   (rule 11) and dark carried twice light's colour. A lift and a rest day
+   glow purple, as their drawings' lit muscles are. A run glows coral at
+   the same weight: the runner's lit muscles are coral too since the run
+   poses were recoloured (owner, 7 November 2026), so the hero has one hue
+   and a coral glow that counts no longer splits it. */
+.hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--lifting) / 0.9),
+    hsl(var(--lifting) / 0.6) 45%,
+    hsl(var(--lifting) / 0.2) 75%,
+    transparent
+  );
+}
+.dark .hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--lifting) / 0.3),
+    hsl(var(--lifting) / 0.14) 45%,
+    hsl(var(--lifting) / 0.04) 75%,
+    transparent
+  );
+}
+.hero-glow-run {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--running) / 0.9),
+    hsl(var(--running) / 0.6) 45%,
+    hsl(var(--running) / 0.2) 75%,
+    transparent
+  );
+}
+.dark .hero-glow-run {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--running) / 0.3),
+    hsl(var(--running) / 0.14) 45%,
+    hsl(var(--running) / 0.04) 75%,
+    transparent
+  );
+}
+
+/* The display register (DS4, DESIGN_GUIDE §4, §14m rule 6): one figure on
+   a finish, new-best, streak or live screen, in Archivo's wide heavy
+   italic cut (the installed package's wdth-italic.css, imported by the one
+   component that sets it, FinishHero). 64-96 px, sized by the screen's
+   width rather than the text size, so a six-figure number still fits a
+   320 px screen at double text; a longer figure steps down
+   (`--display-scale`). Never above the 120 px the register allows. */
+.ds-display-figure {
+  font-family: var(--font-figure);
+  font-style: italic;
+  font-stretch: 125%;
+  font-weight: 900;
+  font-size: calc(clamp(56px, 24vw, 96px) * var(--display-scale, 1));
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The live workout's rest countdown (DS4 rule 6: a live screen's one
+   display element). 64-72 px by the screen's width: "1:14" is about 200
+   px of the wide cut at 72, so it keeps a 320 px phone's rest band to its
+   two rows. */
+.ds-display-figure.ds-display-rest {
+  font-size: clamp(64px, 18vw, 72px);
+}
+
+/* The finish screen's reward light (DS4 §14m rules 13, 14, 31): one hue,
+   the achievement's (`--glow`, by its `data-finish-glow`), from the object out
+   into the plain page. A light page needs more of it to read as colour at
+   all, so dark is never the louder of the two (rule 15): measured at about
+   7% of a 393 x 852 screen in both themes. */
+.ds-finish-glow {
+  --glow-a: 0.75;
+  --glow-b: 0.5;
+  --glow-c: 0.15;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--glow) / var(--glow-a)),
+    hsl(var(--glow) / var(--glow-b)) 50%,
+    hsl(var(--glow) / var(--glow-c)) 80%,
+    hsl(var(--glow) / 0)
+  );
+}
+.ds-finish-glow[data-finish-glow="achievement"] {
+  --glow: var(--achievement-glow);
+}
+.ds-finish-glow[data-finish-glow="lifting"] {
+  --glow: var(--lifting-glow);
+}
+.ds-finish-glow[data-finish-glow="running"] {
+  --glow: var(--running-glow);
+}
+.dark .ds-finish-glow {
+  --glow-a: 0.42;
+  --glow-b: 0.25;
+  --glow-c: 0.07;
+}
+/* A sport's colour is darker than the gold, so on dark the same light
+   reads as a heavier stain; it is kept softer there. */
+.dark .ds-finish-glow[data-finish-glow="lifting"],
+.dark .ds-finish-glow[data-finish-glow="running"] {
+  --glow-a: 0.36;
+  --glow-b: 0.21;
+  --glow-c: 0.05;
+}
+/* The purple is the lightest of the three on dark: at the coral's stops a
+   first workout measured 5.9% colour on dark against 4.5% on light; at
+   these, 4.1% (7 November 2026). */
+.dark .ds-finish-glow[data-finish-glow="lifting"] {
+  --glow-a: 0.31;
+  --glow-b: 0.18;
+  --glow-c: 0.045;
+}
+
+/* Food's calorie card (owner, 7 November 2026): a faint glow of the food
+   orange behind the ring, fading into the card (DS4, §14m rule 13). It
+   replaced a wash from orange into the brand purple, the only two-hue
+   gradient on an everyday screen in 178 measured, which made dark 2.5x
+   louder than light. Weak enough to count as colour in neither theme. */
+.food-hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--nutrition) / 0.2),
+    hsl(var(--nutrition) / 0.09) 50%,
+    transparent
+  );
+}
+.dark .food-hero-glow {
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--nutrition) / 0.13),
+    hsl(var(--nutrition) / 0.05) 50%,
+    transparent
+  );
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

@@ -1,0 +1,106 @@
+{
+  "frames": [
+    {
+      "frame": 1,
+      "sha256": "68ef429fced5b79fe2fbff6d672761681a11a025e34a7873a57f5c4a20531f2c",
+      "bytes": 1347520,
+      "webpBytes": 53782,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    },
+    {
+      "frame": 2,
+      "sha256": "4cea531d644d4dcc5dd39f25035ba8361a314705161f7d3b0209040bbf4237c1",
+      "bytes": 1347100,
+      "webpBytes": 54258,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    },
+    {
+      "frame": 3,
+      "sha256": "b7d86a4bc38d0adc9ef684d9c90b16ed6021a18324e387ef2cdc79f005f25ae5",
+      "bytes": 1364572,
+      "webpBytes": 60192,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    },
+    {
+      "frame": 4,
+      "sha256": "80bde29e7332f931367cb5e63aa9fe2c088730e3778b2bb8fac734958684163b",
+      "bytes": 1360455,
+      "webpBytes": 59100,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    },
+    {
+      "frame": 5,
+      "sha256": "457153cb7ce70ab933998c1aa0d5d4d9475f5264edb323aff06f40a24f8534a0",
+      "bytes": 1359758,
+      "webpBytes": 56942,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    },
+    {
+      "frame": 6,
+      "sha256": "15b88c698ab4fbb3b282e709b06567f3ee03b4e7c4db560a2cff31fdca281e2d",
+      "bytes": 1352912,
+      "webpBytes": 54312,
+      "boundsAboveLuma28": [
+        22,
+        133,
+        1034,
+        971
+      ]
+    }
+  ],
+  "adjacentRmsRgb": [
+    24.699,
+    39.266,
+    33.512,
+    32.13,
+    39.896,
+    27.932
+  ],
+  "seamRmsRgb": 27.932,
+  "fixedScreenAnchors": {
+    "console": [
+      825.08,
+      394.31
+    ],
+    "flywheel": [
+      246.46,
+      769.27
+    ],
+    "rearBase": [
+      67.55,
+      880.24
+    ],
+    "frontBase": [
+      847.85,
+      954.44
+    ]
+  },
+  "cardCornerAlpha": 0,
+  "cardCenterAlpha": 255,
+  "sixUniqueImageHashes": true
+}

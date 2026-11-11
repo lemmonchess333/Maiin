@@ -61,3 +61,53 @@ describe("ProgressRing", () => {
     expect(container.querySelectorAll("circle")).toHaveLength(1);
   });
 });
+
+describe("ProgressRing, cut into its card", () => {
+  function ring(props: { cut?: boolean; trackColor?: string }) {
+    const { container } = render(
+      <ProgressRing
+        value={0}
+        size={SIZE}
+        stroke={STROKE}
+        color="currentColor"
+        {...props}
+      />
+    );
+    return {
+      svg: container.querySelector("svg") as SVGSVGElement,
+      lip: container.querySelector("circle[data-ring-lip]"),
+      track: container.querySelector(
+        "circle:not([data-ring-lip])"
+      ) as SVGCircleElement,
+    };
+  }
+
+  it("draws the plain groove unless asked", () => {
+    const { lip, track, svg } = ring({});
+    expect(lip).toBeNull();
+    expect(track.getAttribute("stroke")).toBe(
+      "hsl(var(--muted-foreground) / 0.22)"
+    );
+    expect(svg.getAttribute("class")).not.toContain("overflow-visible");
+  });
+
+  it("takes the groove and its lit lip from the theme's tokens", () => {
+    const { lip, track, svg } = ring({ cut: true });
+    expect(track.getAttribute("stroke")).toBe("var(--ds-ring-track)");
+    expect(lip?.getAttribute("stroke")).toBe("var(--ds-ring-lip)");
+    // Under the track, so only the pixel the track does not cover shows.
+    expect(lip?.nextElementSibling).toBe(track);
+    // The svg is turned a quarter: its -x is the screen's down. That
+    // pixel is outside the viewBox, so the svg must not clip it.
+    expect(lip?.getAttribute("transform")).toBe("translate(-1 0)");
+    expect(svg.getAttribute("class")).toContain("overflow-visible");
+  });
+
+  it("leaves a ring with its own track colour alone", () => {
+    // The lip is drawn under an opaque groove. Under a see-through track
+    // it would tint the whole ring.
+    const { lip, track } = ring({ cut: true, trackColor: "transparent" });
+    expect(lip).toBeNull();
+    expect(track.getAttribute("stroke")).toBe("transparent");
+  });
+});

@@ -28,9 +28,52 @@ const {
   assertCanInteractWithActivity,
 } = require("./activityAccess");
 const { refusedAddError } = require("./restriction");
-const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { publicPhotoUrl, profilePhotoUrl } = require("./publicPhotoUrl");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { MAX_COMMENT_LENGTH } = require("./commentLimit");
+
+/** The givers a post names under its props (Mob2: "Ann and 4 others"),
+ *  newest first. Pinned to the app's `RECENT_PROPS_MAX` by
+ *  src/lib/__tests__/propsGivers.cross.test.ts. */
+const RECENT_PROPS_MAX = 3;
+
+/**
+ * One giver as a post names them: their public name and photo, copied as
+ * every social write copies its author's (identityResync carries a new
+ * one to these, as it does to comments). Read inside the toggle's
+ * transaction.
+ */
+async function propsGiver(txn, firestore, uid) {
+  const profile = await txn.get(
+    firestore.collection("users").doc(uid).collection("public").doc("profile")
+  );
+  const data = (profile.exists && profile.data()) || {};
+  const name =
+    typeof data.displayName === "string" && data.displayName.trim()
+      ? data.displayName.trim().slice(0, MAX_DISPLAY_NAME_LENGTH)
+      : "Athlete";
+  const photo = publicPhotoUrl(data.photoURL);
+  return { uid, name, ...(photo ? { photoURL: photo } : {}) };
+}
+
+/** The givers a post already names, as stored; nothing malformed. */
+function storedGivers(activity) {
+  const list = Array.isArray(activity && activity.recentPropsBy)
+    ? activity.recentPropsBy
+    : [];
+  return list.filter(
+    (g) => g && typeof g.uid === "string" && typeof g.name === "string"
+  );
+}
+
+/** The fields that name a post's givers: the list the card draws and its
+ *  uids, which identityResync finds a giver's copies by. */
+function giversFields(givers) {
+  return {
+    recentPropsBy: givers,
+    recentPropsByUids: givers.map((g) => g.uid),
+  };
+}
 
 /**
  * Toggle kudos: if the kudos sub-doc exists for {uid} on
@@ -82,14 +125,50 @@ async function toggleKudos({
     });
 
     const kudosSnap = await txn.get(kudosRef);
+    const givers = storedGivers(activity);
     if (kudosSnap.exists) {
+      let kept = givers.filter((g) => g.uid !== uid);
+      /* Taking props back from a post that named you: the next newest
+         giver takes the place, so the names still match the count. */
+      const remaining = Math.max(0, (Number(activity.kudosCount) || 0) - 1);
+      if (kept.length < givers.length && kept.length < Math.min(remaining, RECENT_PROPS_MAX)) {
+        const newest = await txn.get(
+          firestore
+            .collection("kudos")
+            .doc(activityId)
+            .collection("users")
+            .orderBy("createdAt", "desc")
+            .limit(RECENT_PROPS_MAX + 1)
+        );
+        const named = new Set(kept.map((g) => g.uid));
+        for (const doc of newest.docs) {
+          if (kept.length >= RECENT_PROPS_MAX) break;
+          if (doc.id === uid || named.has(doc.id)) continue;
+          kept = [...kept, await propsGiver(txn, firestore, doc.id)];
+          named.add(doc.id);
+        }
+      }
       txn.delete(kudosRef);
-      txn.update(activityRef, { kudosCount: increment(-1) });
+      txn.update(activityRef, {
+        kudosCount: increment(-1),
+        ...(kept.map((g) => g.uid).join() !== givers.map((g) => g.uid).join()
+          ? giversFields(kept)
+          : {}),
+      });
       return { kudosed: false, activityAuthorId: activity.authorId };
     }
     if (refuseAdd) throw refusedAddError();
+    const giver = await propsGiver(txn, firestore, uid);
     txn.set(kudosRef, { createdAt: serverTimestamp() });
-    txn.update(activityRef, { kudosCount: increment(1) });
+    txn.update(activityRef, {
+      kudosCount: increment(1),
+      ...giversFields(
+        [giver, ...givers.filter((g) => g.uid !== uid)].slice(
+          0,
+          RECENT_PROPS_MAX
+        )
+      ),
+    });
     return { kudosed: true, activityAuthorId: activity.authorId };
   });
 }
@@ -102,8 +181,11 @@ async function toggleKudos({
  *   - firestore, uid, activityId — as above
  *   - text:        comment body (1 to MAX_COMMENT_LENGTH chars, validated)
  *   - authorName:  denormalised display name on the comment doc
- *   - authorPhotoURL: optional avatar
  *   - increment, serverTimestamp — sentinel factories
+ *
+ * The avatar on the comment is the commenter's public profile photo, read
+ * in the transaction (profilePhotoUrl), never a URL the request names: the
+ * profile's photo is one the photo screen checked.
  *
  * Returns: { commentId } — the generated comment doc id.
  *
@@ -119,7 +201,6 @@ async function addComment({
   activityId,
   text,
   authorName,
-  authorPhotoURL,
   increment,
   serverTimestamp,
 }) {
@@ -162,7 +243,7 @@ async function addComment({
       text: trimmed,
       createdAt: serverTimestamp(),
     };
-    const photo = publicPhotoUrl(authorPhotoURL);
+    const photo = await profilePhotoUrl(txn, firestore, uid);
     if (photo) data.authorPhotoURL = photo;
     txn.set(commentRef, data);
     txn.update(activityRef, { commentCount: increment(1) });
@@ -204,6 +285,8 @@ async function deleteComment({
       firestore,
       activityRef,
       uid,
+      // Taking down your own comment remains possible after blocking.
+      allowBlockedRemoval: true,
     });
 
     const commentSnap = await txn.get(commentRef);
@@ -220,6 +303,7 @@ async function deleteComment({
 }
 
 module.exports = {
+  RECENT_PROPS_MAX,
   toggleKudos,
   addComment,
   deleteComment,

@@ -1,13 +1,20 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Trophy,
+  Search,
+  Dumbbell,
+} from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth, withSign } from "@/utils/formatters";
+import { formatDayMonth } from "@/utils/formatters";
+import { createdAtMs } from "@/lib/activityFeedItem";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
@@ -23,6 +30,9 @@ import {
 } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 import { bestSetsByReps } from "@/lib/repBuckets";
+import { ONE_CARD_RADIUS } from "@/components/ui/cardClasses";
+import { exerciseProgressReading } from "@/lib/historyReadings";
+import ChartReading from "@/components/analytics/ChartReading";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -49,7 +59,10 @@ const RANGE_ORDER = ["1M", "3M", "6M", "1Y", "All"] as const;
 type Metric = "1RM" | "Max Weight" | "Volume";
 
 interface SessionSummary {
+  /** The saved workout this session is part of: its row opens it. */
+  workoutId: string;
   date: string;
+  loggedAtMs: number;
   sets: { reps: number; weightKg: number }[];
   // Derived metrics per session.
   topSet: { reps: number; weightKg: number } | null;
@@ -130,8 +143,10 @@ export default function ExerciseHistory() {
   const allSessions: SessionSummary[] = useMemo(() => {
     const out: SessionSummary[] = [];
     for (const w of workouts) {
-      const ex = w.exercises?.find((e) => e.exerciseName === decodedName);
-      if (!ex || !ex.sets || ex.sets.length === 0) continue;
+      const entries = w.exercises?.filter(
+        (e) => e.exerciseName === decodedName
+      );
+      if (!entries?.length) continue;
       // Coerce at the boundary, not at each of the four uses below. A
       // legacy set with a missing `weightKg` or `reps` otherwise poisons
       // ALL of them at once: `volume` becomes NaN, and because NaN wins
@@ -139,10 +154,14 @@ export default function ExerciseHistory() {
       // running max stay NaN for the rest of the session too. Same
       // failure History fixed by routing tonnage through
       // `workoutTonnageKg`'s guarded multiply.
-      const sets = ex.sets.map((s) => ({
-        reps: s.reps || 0,
-        weightKg: s.weightKg || 0,
-      }));
+      const sets = entries
+        .flatMap((entry) => entry.sets ?? [])
+        .filter((s) => s.type !== "warmup")
+        .map((s) => ({
+          reps: s.reps || 0,
+          weightKg: s.weightKg || 0,
+        }));
+      if (sets.length === 0) continue;
       const top = isTimed
         ? sets.reduce((best, set) => (set.reps > best.reps ? set : best))
         : topSetOf(sets);
@@ -157,7 +176,9 @@ export default function ExerciseHistory() {
         totalReps += s.reps;
       }
       out.push({
+        workoutId: w.id,
         date: w.date,
+        loggedAtMs: createdAtMs(w.createdAt),
         sets,
         topSet: top,
         e1rm,
@@ -167,49 +188,81 @@ export default function ExerciseHistory() {
       });
     }
     // Ascending by date so chart + "previous session" lookups run forward.
-    out.sort((a, b) => a.date.localeCompare(b.date));
+    out.sort(
+      (a, b) => a.date.localeCompare(b.date) || a.loggedAtMs - b.loggedAtMs
+    );
     return out;
   }, [workouts, decodedName, isTimed]);
 
-  // Personal bests by reps — heaviest weight ever lifted at exactly that rep
+  // Bests by reps — heaviest weight ever lifted at exactly that rep
   // count. For bodyweight exercises this is the heaviest ADDED weight
   // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
   // pure BW sessions store `weightKg = 0` and just show "BW" with the
   // most recent date that achieved exactly that rep count.
   const repRangePRs = useMemo(() => bestSetsByReps(allSessions), [allSessions]);
 
-  // Walk sessions chronologically tracking running best. Flag each session
-  // whose top-set e1rm beats the previous running best — these get a
-  // filled-star marker on the chart. Without this, the line is just a
-  // trend with no "you made history here" signal.
-  const prDates = useMemo(() => {
+  // Bodyweight charts use Reps / Volume; timed charts always use Seconds.
+  // Keep a valid selection when navigating between exercise types.
+  const metricOptions: Metric[] = isTimed
+    ? ["1RM"]
+    : isBodyweight
+      ? ["1RM", "Volume"]
+      : ["1RM", "Max Weight", "Volume"];
+  const displayMetric = isTimed
+    ? "1RM"
+    : isBodyweight && metric === "Max Weight"
+      ? "1RM"
+      : metric;
+  const metricLabel = isTimed
+    ? "Longest hold"
+    : isBodyweight && displayMetric === "1RM"
+      ? "Total reps"
+      : displayMetric === "1RM"
+        ? "Estimated one-rep max"
+        : displayMetric === "Max Weight"
+          ? "Max weight"
+          : "Volume";
+  const chartUnit = isTimed
+    ? "s"
+    : isBodyweight && displayMetric !== "Volume"
+      ? "reps"
+      : unitLabel;
+
+  // Compare the selected metric against every earlier session, including
+  // sessions outside the visible range. Compare stored values before unit
+  // conversion or display rounding; a tie is not a new record.
+  const prSessions = useMemo(() => {
     const prs = new Set<string>();
     let runningBest = 0;
     for (const s of allSessions) {
-      const score = isTimed ? (s.topSet?.reps ?? 0) : s.e1rm;
+      const score = isTimed
+        ? (s.topSet?.reps ?? 0)
+        : displayMetric === "Volume"
+          ? s.volume
+          : isBodyweight
+            ? s.totalReps
+            : displayMetric === "Max Weight"
+              ? s.maxWeight
+              : s.e1rm;
       if (score > runningBest) {
         runningBest = score;
-        prs.add(s.date);
+        prs.add(s.workoutId);
       }
     }
     return prs;
-  }, [allSessions, isTimed]);
+  }, [allSessions, displayMetric, isBodyweight, isTimed]);
 
-  // Previous-session delta: each session gets "+5 kg from last" etc.
-  // Keyed by date → delta kg (top-set weight). Null when no previous
-  // session exists.
-  const prevDeltas = useMemo(() => {
-    const map = new Map<string, number | null>();
-    let prevWeight: number | null = null;
+  // A whole top set keeps weight and reps together. Session IDs keep two
+  // workouts on one day from sharing a comparison or a PR marker.
+  const previousSets = useMemo(() => {
+    const map = new Map<string, SessionSummary["topSet"]>();
+    let previous: SessionSummary["topSet"] = null;
     for (const s of allSessions) {
-      const topValue = isTimed
-        ? (s.topSet?.reps ?? 0)
-        : (s.topSet?.weightKg ?? 0);
-      map.set(s.date, prevWeight == null ? null : topValue - prevWeight);
-      prevWeight = topValue;
+      map.set(s.workoutId, previous);
+      previous = s.topSet;
     }
     return map;
-  }, [allSessions, isTimed]);
+  }, [allSessions]);
 
   // Filter by time range. "All" passes everything through.
   const filteredSessions = useMemo(() => {
@@ -265,29 +318,29 @@ export default function ExerciseHistory() {
       } else {
         value = liftVolumeIn(s.volume, liftUnit);
       }
-      return { date: s.date, value, isPR: prDates.has(s.date) };
+      return { date: s.date, value, isPR: prSessions.has(s.workoutId) };
     });
   }, [
     filteredSessions,
     metric,
     isBodyweight,
     isTimed,
-    prDates,
+    prSessions,
     liftUnit,
     exercise?.id,
   ]);
 
-  // For BW exercises the toggle simplifies to Reps / Volume — no
-  // weight-based option makes sense when the weight is implicit. The
-  // "1RM" member is the internal key for that first slot; what a reader
-  // sees is resolved at the pill, beside the value it labels.
-  const metricOptions: Metric[] = isTimed
-    ? ["1RM"]
-    : isBodyweight
-      ? ["1RM", "Volume"]
-      : ["1RM", "Max Weight", "Volume"];
-  const displayMetric =
-    (isBodyweight || isTimed) && metric === "Max Weight" ? "1RM" : metric;
+  /* The chart's first point in the range against its latest, under the
+     chart's label and metric switch, which name what is measured: "Up
+     15 kg since 19 Aug." */
+  const progressText = exerciseProgressReading(
+    chartData,
+    chartUnit,
+    new Date()
+  );
+  const progressReading = progressText
+    ? { text: progressText, waiting: false }
+    : null;
 
   const goBack = useCallback(() => {
     haptic("light");
@@ -296,7 +349,7 @@ export default function ExerciseHistory() {
 
   if (loading && (tab !== "form" || !exercise)) {
     return (
-      <div className="space-y-4 pt-2">
+      <div className={`space-y-4 pt-2 ${ONE_CARD_RADIUS}`}>
         <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
         <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
         <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
@@ -310,7 +363,7 @@ export default function ExerciseHistory() {
     return (
       <div className="pt-2">
         <ErrorState
-          title="Couldn't load your sessions"
+          title="Couldn’t load your sessions"
           retry={{ onClick: retryWorkouts }}
         />
       </div>
@@ -327,7 +380,7 @@ export default function ExerciseHistory() {
         icon={Search}
         accent={THEME.lifting}
         headline="Exercise not found"
-        sub={`"${decodedName}" isn't in your logs or the exercise database.`}
+        sub={`"${decodedName}" isn’t in your logs or the exercise database.`}
         action={{ label: "Browse exercises", onClick: goBack }}
       />
     );
@@ -338,7 +391,7 @@ export default function ExerciseHistory() {
 
   return (
     <motion.div
-      className="space-y-4 pt-2 pb-8"
+      className={`space-y-4 pt-2 pb-8 ${ONE_CARD_RADIUS}`}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -378,6 +431,8 @@ export default function ExerciseHistory() {
             and the same switch treatment as the Programme tabs). */}
       <SegmentedControl
         ariaLabel="Exercise view"
+        /* The 36pt track History's control rows take, 44pt to tap. */
+        size="sm"
         value={tab}
         onChange={(value) => {
           haptic("light");
@@ -402,9 +457,9 @@ export default function ExerciseHistory() {
                   ? "Longest hold"
                   : isBodyweight
                     ? "Max reps"
-                    : "Best 1RM"}
+                    : "Best est. 1RM"}
               </SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {isTimed
                   ? headerStats.longestHold
                     ? `${headerStats.longestHold}s`
@@ -417,7 +472,7 @@ export default function ExerciseHistory() {
                 {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
                   <>
                     {" "}
-                    <span className="text-xs font-normal text-muted-foreground">
+                    <span className="font-sans text-sm font-medium text-muted-foreground">
                       {unitLabel}
                     </span>
                   </>
@@ -426,13 +481,13 @@ export default function ExerciseHistory() {
             </div>
             <div className="p-3 rounded-xl bg-card card-shadow">
               <SectionLabel>Sessions</SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {headerStats.totalSessions}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-card card-shadow">
               <SectionLabel>Total sets</SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {headerStats.totalSets}
               </p>
             </div>
@@ -460,7 +515,7 @@ export default function ExerciseHistory() {
         />
       ) : (
         <>
-          {/* ── Personal bests by reps ───────────────────────────────── */}
+          {/* ── Bests by reps ───────────────────────────────── */}
           {!isTimed && (
             <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
@@ -471,8 +526,8 @@ export default function ExerciseHistory() {
                     only when its reps EQUAL the bucket. The honest
                     wording already existed three characters away, on the
                     bodyweight side of this same ternary. */}
-                <h3 className="text-sm font-semibold text-foreground">
-                  Personal bests by reps
+                <h3 className="text-base font-bold text-foreground">
+                  Bests by reps
                 </h3>
               </div>
               {/* The columns are the rep counts THIS lifter trains, so
@@ -535,45 +590,28 @@ export default function ExerciseHistory() {
                   10.5em of card (double size) its options stack full width:
                   in a row they were wider than the screen. Wide-first. */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionLabel>Progression</SectionLabel>
-                <div className="flex gap-1 bg-muted rounded-full p-0.5 @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl">
-                  {metricOptions.map((m) => (
-                    <button
-                      type="button"
-                      key={m}
-                      onClick={() => {
-                        haptic("light");
-                        setMetric(m);
-                      }}
-                      className={`px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
-                        displayMetric === m
-                          ? "bg-card text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                      style={
-                        displayMetric === m
-                          ? { boxShadow: "var(--ds-shadow-card)" }
-                          : undefined
-                      }
-                    >
-                      {/* The label names what the chart plots. For a
-                          bodyweight exercise the "1RM" option charts
-                          `s.totalReps` — a one-rep max is meaningless
-                          when there is no external load — so the pill
-                          said 1RM above a line of rep counts, with the
-                          header stat beside it already reading "Max
-                          reps". The comment on `metricOptions` says
-                          "Reps" too; only the pill did not. Same shape
-                          as the `isTimed` branch that is already here. */}
-                      {isTimed
-                        ? "Seconds"
-                        : isBodyweight && m === "1RM"
-                          ? "Reps"
-                          : m}
-                    </button>
-                  ))}
-                </div>
+                <SectionLabel>Progression ({chartUnit})</SectionLabel>
+                <SegmentedControl
+                  ariaLabel="Progression metric"
+                  value={displayMetric}
+                  onChange={(value) => {
+                    haptic("light");
+                    setMetric(value);
+                  }}
+                  options={metricOptions.map((m) => ({
+                    value: m,
+                    label: isTimed
+                      ? "Seconds"
+                      : isBodyweight && m === "1RM"
+                        ? "Reps"
+                        : m === "1RM"
+                          ? "Est. 1RM"
+                          : m,
+                  }))}
+                  className="p-0.5 rounded-full [&_button]:flex-none [&_button]:min-w-[44px] [&_button]:rounded-full [&_button]:px-2 [&_button]:text-micro @max-[12em]:w-full @max-[12em]:flex-col @max-[12em]:rounded-2xl"
+                />
               </div>
+              <ChartReading line={progressReading} />
               <Suspense
                 fallback={
                   <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
@@ -582,6 +620,8 @@ export default function ExerciseHistory() {
                 <ExerciseProgressChart
                   data={chartData}
                   accent={THEME.lifting}
+                  metricLabel={metricLabel}
+                  unit={chartUnit}
                 />
               </Suspense>
             </div>
@@ -590,7 +630,7 @@ export default function ExerciseHistory() {
           {/* ── Recent sessions list ────────────────────────────────── */}
           <div className="rounded-2xl bg-card overflow-hidden card-shadow">
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Recent sessions
               </h3>
             </div>
@@ -599,14 +639,18 @@ export default function ExerciseHistory() {
                 .reverse()
                 .slice(0, 20)
                 .map((s) => {
-                  const delta = prevDeltas.get(s.date);
-                  const isPR = prDates.has(s.date);
+                  const previous = previousSets.get(s.workoutId);
+                  const isPR = prSessions.has(s.workoutId);
                   return (
-                    /* At larger text the top set drops under the
-                       session's text rather than squeezing it. */
-                    <div
-                      key={s.date}
-                      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
+                    /* Each row opens the workout it was part of, so the
+                       history leads back to the whole session. At larger
+                       text the top set drops under the session's text
+                       rather than squeezing it. */
+                    <Link
+                      key={s.workoutId}
+                      to={`/workout/${encodeURIComponent(s.workoutId)}`}
+                      onClick={() => haptic("light")}
+                      className="flex min-h-[44px] flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     >
                       <div className="min-w-[min(100%,8em)] flex-1">
                         <div className="flex items-center gap-1.5">
@@ -616,8 +660,8 @@ export default function ExerciseHistory() {
                           {/* The PR chip every other best wears. White on
                               the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
-                              PR
+                            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
+                              Best
                             </span>
                           )}
                         </div>
@@ -631,7 +675,7 @@ export default function ExerciseHistory() {
                               : `${Math.round(liftVolumeIn(s.volume, liftUnit))} ${unitLabel} volume`}
                         </p>
                       </div>
-                      <div className="ml-auto text-right flex-shrink-0">
+                      <div className="ml-auto max-w-full text-right flex-shrink-0">
                         <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                           {s.topSet
                             ? isTimed
@@ -639,31 +683,20 @@ export default function ExerciseHistory() {
                               : `${s.topSet.weightKg === 0 ? "BW" : formatKitLoad(s.topSet.weightKg, liftUnit, exercise?.id)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
-                        {delta != null && delta !== 0 && (
-                          <p
-                            className="text-micro font-medium mt-0.5"
-                            style={{
-                              color:
-                                delta > 0
-                                  ? "hsl(var(--success-strong))"
-                                  : "hsl(var(--muted-foreground))",
-                            }}
-                          >
-                            {withSign(
-                              delta,
-                              String(
-                                Math.abs(
-                                  isTimed
-                                    ? delta
-                                    : kitLoadIn(delta, liftUnit, exercise?.id)
-                                )
-                              )
-                            )}{" "}
-                            {isTimed ? "s" : unitLabel} from last
+                        {previous && (
+                          <p className="text-xs font-medium font-mono tabular-nums text-muted-foreground mt-0.5">
+                            Last:{" "}
+                            {isTimed
+                              ? `${previous.reps}s`
+                              : `${previous.weightKg === 0 ? "BW" : formatKitLoad(previous.weightKg, liftUnit, exercise?.id)} × ${previous.reps}`}
                           </p>
                         )}
                       </div>
-                    </div>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-muted-foreground"
+                      />
+                    </Link>
                   );
                 })}
             </div>

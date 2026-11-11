@@ -19,11 +19,11 @@
  */
 import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
+import { traceBoot } from "./bootTrace";
 import type { StorePrice } from "./proPlans";
 
 const RC_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as
-  | string
-  | undefined;
+  string | undefined;
 
 /** RevenueCat only runs on the native iOS shell, and only once the public key
  *  is provisioned. Everything below short-circuits to a no-op otherwise. */
@@ -33,10 +33,38 @@ export function isRevenueCatEnabled(): boolean {
 
 let configured = false;
 
+/**
+ * One RevenueCat call, timed into the step list a stalled or failed
+ * purchase shows on the iPhone (bootTrace.ts). The first TestFlight
+ * purchase sat on "Starting checkout…" with no Apple sheet
+ * and nothing to say which call never answered.
+ */
+async function step<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  traceBoot(`RevenueCat: ${name}`);
+  try {
+    const result = await work();
+    traceBoot(`RevenueCat: ${name} done in ${Date.now() - started} ms`);
+    return result;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    traceBoot(
+      `RevenueCat: ${name} failed after ${Date.now() - started} ms (${reason})`
+    );
+    throw error;
+  }
+}
+
 // Dynamic import keeps the native plugin out of the web bundle entirely.
+// Resolves to a holder, never the plugin itself: a Capacitor plugin is a
+// Proxy that answers every property, `then` included, so a promise resolved
+// with it calls `Purchases.then()` on the native side ("not implemented on
+// ios") and never settles. RevenueCat was never set up on the first
+// TestFlight builds for exactly this; haptic.ts and
+// systemChrome.ts hold their plugins the same way.
 async function loadPurchases() {
   const mod = await import("@revenuecat/purchases-capacitor");
-  return mod.Purchases;
+  return { Purchases: mod.Purchases };
 }
 
 /**
@@ -47,8 +75,10 @@ async function loadPurchases() {
 export async function configureRevenueCat(appUserID: string): Promise<void> {
   if (!isRevenueCatEnabled() || configured) return;
   try {
-    const Purchases = await loadPurchases();
-    await Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID });
+    const { Purchases } = await loadPurchases();
+    await step("set up", () =>
+      Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
+    );
     configured = true;
     logger.log("[RevenueCat] configured");
   } catch (err) {
@@ -69,8 +99,8 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
       // actual result so the identity hook can retry this same account.
       return configured;
     }
-    const Purchases = await loadPurchases();
-    await Purchases.logIn({ appUserID });
+    const { Purchases } = await loadPurchases();
+    await step("switch account", () => Purchases.logIn({ appUserID }));
     return true;
   } catch (err) {
     logger.error("[RevenueCat] logIn failed", err);
@@ -82,7 +112,7 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
 export async function rcLogOut(): Promise<void> {
   if (!isRevenueCatEnabled() || !configured) return;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     await Purchases.logOut();
   } catch (err) {
     logger.error("[RevenueCat] logOut failed", err);
@@ -97,6 +127,16 @@ export async function rcLogOut(): Promise<void> {
  *  docs/iap/revenuecat-setup.md Part B3 (lowercase `pro`). */
 const PRO_ENTITLEMENT_ID = "pro";
 
+/** Why a purchase the store has not refused is not Pro yet. Neither is a
+ *  failure, and neither is helped by buying again. */
+export type PurchasePending =
+  /** The store is holding the payment for someone's yes: Ask to Buy, a
+   *  bank's check. Nothing has been bought until it is given. */
+  | "approval"
+  /** The store took the purchase, and RevenueCat's answer carried no Pro:
+   *  its servers are behind, or the product is not on the entitlement. */
+  | "entitlement";
+
 export interface RcPurchaseOutcome {
   success: boolean;
   /** True when the `pro` entitlement is active on the returned CustomerInfo —
@@ -104,6 +144,9 @@ export interface RcPurchaseOutcome {
   isProActive: boolean;
   /** True when the user dismissed Apple's purchase sheet — not an error. */
   userCancelled?: boolean;
+  /** Set when the store has the purchase and Pro is not active: `success`
+   *  is false and `error` is unset. */
+  pending?: PurchasePending;
   /** The price of the product bought, as Apple's sheet showed it. The
    *  server keeps it for the trial reminder's email, since RevenueCat holds
    *  no renewal price for a trial. */
@@ -126,6 +169,19 @@ function isUserCancelled(err: unknown): boolean {
     if (typeof e.message === "string" && /cancel/i.test(e.message)) return true;
   }
   return false;
+}
+
+/** The SDK's PAYMENT_PENDING_ERROR, which the plugin hands over as the
+ *  rejection's `code` (`revenuecatPurchase.test.ts` holds it to the SDK's
+ *  own list). */
+const PAYMENT_PENDING_CODE = "20";
+
+function isPaymentPending(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === PAYMENT_PENDING_CODE
+  );
 }
 
 function hasProEntitlement(customerInfo: {
@@ -155,10 +211,16 @@ export async function rcPurchase(
     };
   }
   try {
-    const Purchases = await loadPurchases();
-    const offerings = await Purchases.getOfferings();
+    traceBoot(`RevenueCat: buying ${productId} (set up: ${configured})`);
+    const { Purchases } = await loadPurchases();
+    const offerings = await step("plans for the purchase", () =>
+      Purchases.getOfferings()
+    );
     const pkg = offerings.current?.availablePackages.find(
       (p) => p.product.identifier === productId
+    );
+    traceBoot(
+      `RevenueCat: ${offerings.current?.availablePackages.length ?? 0} plans in the current offering; ${pkg ? "found" : "not found"} ${productId}`
     );
     if (!pkg) {
       // Almost always an operator mismatch: ASC product id vs RC product vs
@@ -168,30 +230,39 @@ export async function rcPurchase(
       return {
         success: false,
         isProActive: false,
-        error: "This plan isn't available right now. Try again later.",
+        error: "This plan isn’t available right now. Try again later.",
       };
     }
-    const result = await Purchases.purchasePackage({ aPackage: pkg });
+    const result = await step("Apple purchase sheet", () =>
+      Purchases.purchasePackage({ aPackage: pkg })
+    );
     const isProActive = hasProEntitlement(result.customerInfo);
-    if (!isProActive) {
-      logger.error("[RevenueCat] purchase completed without pro entitlement");
-    }
-    if (!isProActive) return { success: false, isProActive };
     const { priceString, price, currencyCode } = pkg.product;
-    return {
-      success: true,
-      isProActive,
-      price: { priceString, price, currencyCode },
-    };
+    const shown = { priceString, price, currencyCode };
+    if (!isProActive) {
+      // The sheet finished, so the store has the purchase. Calling it a
+      // failure asks the person to pay for something they already bought.
+      logger.error("[RevenueCat] purchase completed without pro entitlement");
+      return {
+        success: false,
+        isProActive,
+        pending: "entitlement",
+        price: shown,
+      };
+    }
+    return { success: true, isProActive, price: shown };
   } catch (err) {
     if (isUserCancelled(err)) {
       return { success: false, isProActive: false, userCancelled: true };
+    }
+    if (isPaymentPending(err)) {
+      return { success: false, isProActive: false, pending: "approval" };
     }
     logger.error("[RevenueCat] purchase failed", err);
     return {
       success: false,
       isProActive: false,
-      error: "Purchase failed. Try again.",
+      error: "Couldn’t complete the purchase. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -208,7 +279,7 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     };
   }
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const { customerInfo } = await Purchases.restorePurchases();
     const isProActive = hasProEntitlement(customerInfo);
     return isProActive
@@ -223,7 +294,7 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     return {
       success: false,
       isProActive: false,
-      error: "Failed to restore purchases.",
+      error: "Couldn’t restore your purchases.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -245,8 +316,10 @@ export async function rcGetLocalizedPrices(): Promise<Record<
 > | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
-    const Purchases = await loadPurchases();
-    const offerings = await Purchases.getOfferings();
+    const { Purchases } = await loadPurchases();
+    const offerings = await step("plans for the prices", () =>
+      Purchases.getOfferings()
+    );
     const packages = offerings.current?.availablePackages;
     if (!packages || packages.length === 0) return null;
     const prices: Record<string, StorePrice> = {};
@@ -287,7 +360,7 @@ export async function rcTrialEligibility(
 ): Promise<Record<string, StoreTrialEligibility> | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
-    const Purchases = await loadPurchases();
+    const { Purchases } = await loadPurchases();
     const statuses = await Purchases.checkTrialOrIntroductoryPriceEligibility({
       productIdentifiers: [...productIds],
     });

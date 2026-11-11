@@ -339,7 +339,7 @@ describe("DayActionSheet — planned run", () => {
     expect(why).toHaveTextContent(
       /What it is.*finishing at your goal race pace/
     );
-    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    expect(why).toHaveTextContent(/Why it’s in your week.*rehearses race day/);
     withTime.unmount();
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
@@ -399,7 +399,7 @@ describe("DayActionSheet — planned run", () => {
       /What it is.*20 minutes at your goal race pace/
     );
     expect(why).toHaveTextContent(
-      /Why it's in your week.*what race pace feels like/
+      /Why it’s in your week.*what race pace feels like/
     );
     expect(why).not.toHaveTextContent(/comes from your fitness/);
     withTime.unmount();
@@ -465,7 +465,58 @@ describe("DayActionSheet — planned run", () => {
     );
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(/What it is.*Relaxed running/);
-    expect(why).not.toHaveTextContent(/Why it's in your week/);
+    expect(why).not.toHaveTextContent(/Why it’s in your week/);
+  });
+
+  it("explains a recovery run as the recovery's, not race week's", () => {
+    // The plan's counter still points at race week while it recovers.
+    const daysFromToday = (days: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    const programState = {
+      ...makeProgramState([
+        makeRunDay({
+          id: "runday_recovery",
+          dayIndex: todayDow(),
+          date: todayKey(),
+          weekKey: todayWeekKey(),
+          templateId: "easy_30",
+          type: "easy",
+        }),
+      ]),
+      runPlan: {
+        mode: "race_prep",
+        currentWeek: 15,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: daysFromToday(-3) },
+        phase: "recovery",
+        recoveryEndDate: daysFromToday(25),
+      },
+    } as ProgramState;
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={
+          {
+            ...makeProfile([{ day: todayDow(), type: "run" }]),
+            runMode: "race_prep",
+          } as UserProfile
+        }
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...commonCallbacks()}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      "Easy runs only for now, while your legs recover from the race."
+    );
+    expect(why).not.toHaveTextContent(/race week/);
   });
 
   it("Run21 (2): gives the run one feel line, outside 'Why this run'", () => {
@@ -1212,9 +1263,9 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
     // the two race-aware variants do.
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/DNF — Started but didn't finish/i)
+      screen.getByText(/DNF — Started but didn’t finish/i)
     ).toBeInTheDocument();
-    expect(screen.getByText(/DNS — Didn't start/i)).toBeInTheDocument();
+    expect(screen.getByText(/DNS — Didn’t start/i)).toBeInTheDocument();
   });
 
   it("race-day DNF + DNS buttons both call skipRunDay with the runDay id", () => {
@@ -1234,7 +1285,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/DNF — Started but didn't finish/i));
+    fireEvent.click(screen.getByText(/DNF — Started but didn’t finish/i));
     expect(callbacks.skipRunDay).toHaveBeenCalledWith(runDay.id);
 
     cleanup();
@@ -1250,7 +1301,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/DNS — Didn't start/i));
+    fireEvent.click(screen.getByText(/DNS — Didn’t start/i));
     expect(callbacks.skipRunDay).toHaveBeenCalledTimes(2);
     expect(callbacks.skipRunDay).toHaveBeenLastCalledWith(runDay.id);
   });

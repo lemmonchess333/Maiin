@@ -1,11 +1,9 @@
 /**
  * Heart-rate zones — the pure math (no React/DOM/Firebase, mirror-ready).
  *
- * Groundwork for HR support (the #1 running table-stakes gap in the competitive
- * analysis). The LIVE HR stream is native/operator-gated (see
- * `heartRateSource.ts` + docs/heart-rate-healthkit.md); this module is the
- * reusable maths that powers the zone display, the Settings preview, and
- * (later) the run HUD + post-run zone distribution.
+ * Live Watch HR and the Settings zone preview share this pure maths. The
+ * connected training release flag gates native streaming; see
+ * `heartRateSource.ts` and docs/heart-rate-healthkit.md.
  *
  * Five-zone %HRmax model (the common coaching split):
  *   Z1 Recovery 50–60 · Z2 Easy 60–70 · Z3 Steady 70–80 ·
@@ -95,12 +93,7 @@ export function zoneForHr(hr: number, maxHr: number): 0 | ZoneNumber {
  *   (running-evidence §5.0b; Daniels). A race of no known distance keeps Z4.
  */
 export type RunIntensity =
-  | "easy"
-  | "tempo"
-  | "intervals"
-  | "long"
-  | "race"
-  | "recovery";
+  "easy" | "tempo" | "intervals" | "long" | "race" | "recovery";
 
 const ZONE_FOR_INTENSITY: Record<RunIntensity, ZoneNumber> = {
   recovery: 1,
@@ -185,4 +178,145 @@ export function zoneDistribution(
     samples: counts[z],
     pct: total > 0 ? counts[z] / total : 0,
   }));
+}
+
+/** A reading from the paired Watch. `at` is a Unix epoch in milliseconds. */
+export interface HeartRateSample {
+  bpm: number;
+  at: number;
+  source: "apple-watch";
+  /** Stable native sample identity; retransmissions must not count twice. */
+  id?: string;
+}
+
+/** Half-open interval during which the phone's run timer was moving. */
+export interface ActiveRunInterval {
+  startMs: number;
+  endMs: number;
+}
+
+export interface HeartRateSummary {
+  averageBpm: number;
+  maxBpm: number;
+  /** Seconds with a recent reading, including time below Zone 1. */
+  coveredSeconds: number;
+  movingSeconds: number;
+  /** Covered / moving seconds, 0..1. Hide the zone chart below 0.5. */
+  coverage: number;
+  /** Actual covered seconds in Zones 1–5, indexed by zone minus one. */
+  zoneSeconds: [number, number, number, number, number];
+  belowZoneSeconds: number;
+  maxHr: number;
+  source: "apple-watch";
+}
+
+/** A sample cannot stand in for a long gap or a disconnected Watch. */
+export const MAX_HEART_RATE_SAMPLE_AGE_MS = 15_000;
+
+/**
+ * Summarize Watch readings over the phone's actual moving intervals. Samples
+ * are held only until the next reading or 15 seconds, whichever comes first.
+ * This excludes pauses, missing readings and retransmitted sample IDs. The
+ * older `zoneDistribution` is deliberately left sample-weighted for legacy
+ * callers and must not be labelled as elapsed time.
+ */
+export function summarizeHeartRate(
+  samples: readonly HeartRateSample[],
+  activeIntervals: readonly ActiveRunInterval[],
+  maxHr: number,
+  /** Phone timer's moving seconds, if it survived a gap the HR tracker did not. */
+  movingSecondsOverride?: number
+): HeartRateSummary | null {
+  const intervals = activeIntervals
+    .filter(
+      ({ startMs, endMs }) =>
+        Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs
+    )
+    .sort((a, b) => a.startMs - b.startMs);
+  const merged: ActiveRunInterval[] = [];
+  for (const interval of intervals) {
+    const last = merged.at(-1);
+    if (last && interval.startMs <= last.endMs) {
+      last.endMs = Math.max(last.endMs, interval.endMs);
+    } else {
+      merged.push({ ...interval });
+    }
+  }
+  const intervalMovingMs = merged.reduce(
+    (sum, { startMs, endMs }) => sum + endMs - startMs,
+    0
+  );
+  const movingMs = Math.max(
+    intervalMovingMs,
+    Number.isFinite(movingSecondsOverride) && (movingSecondsOverride ?? 0) > 0
+      ? movingSecondsOverride! * 1000
+      : 0
+  );
+  if (!movingMs) return null;
+  const zonesAvailable = Number.isFinite(maxHr) && maxHr > 0;
+
+  const seen = new Set<string>();
+  const ordered = samples
+    .filter((sample) => {
+      if (
+        sample.source !== "apple-watch" ||
+        !Number.isFinite(sample.bpm) ||
+        sample.bpm < 30 ||
+        sample.bpm > 250 ||
+        !Number.isFinite(sample.at)
+      )
+        return false;
+      if (sample.id) {
+        if (seen.has(sample.id)) return false;
+        seen.add(sample.id);
+      }
+      return true;
+    })
+    .sort((a, b) => a.at - b.at);
+  if (!ordered.length) return null;
+
+  let coveredMs = 0;
+  let weightedBpm = 0;
+  let maxBpm = 0;
+  let belowZoneMs = 0;
+  const zoneMs = [0, 0, 0, 0, 0] as [number, number, number, number, number];
+
+  for (const interval of merged) {
+    for (let i = 0; i < ordered.length; i += 1) {
+      const sample = ordered[i];
+      // A beat taken while paused cannot seed coverage after Resume.
+      if (sample.at < interval.startMs || sample.at >= interval.endMs) continue;
+      const nextAt = ordered[i + 1]?.at ?? Number.POSITIVE_INFINITY;
+      const from = Math.max(sample.at, interval.startMs);
+      const to = Math.min(
+        nextAt,
+        sample.at + MAX_HEART_RATE_SAMPLE_AGE_MS,
+        interval.endMs
+      );
+      if (to <= from) continue;
+      const span = to - from;
+      coveredMs += span;
+      weightedBpm += sample.bpm * span;
+      maxBpm = Math.max(maxBpm, sample.bpm);
+      if (zonesAvailable) {
+        const zone = zoneForHr(sample.bpm, maxHr);
+        if (zone === 0) belowZoneMs += span;
+        else zoneMs[zone - 1] += span;
+      }
+    }
+  }
+  if (!coveredMs) return null;
+  return {
+    averageBpm: Math.round(weightedBpm / coveredMs),
+    maxBpm,
+    coveredSeconds: coveredMs / 1000,
+    movingSeconds: movingMs / 1000,
+    coverage: Math.min(1, coveredMs / movingMs),
+    zoneSeconds: zoneMs.map(
+      (duration) => duration / 1000
+    ) as HeartRateSummary["zoneSeconds"],
+    belowZoneSeconds: belowZoneMs / 1000,
+    maxHr: zonesAvailable ? maxHr : 0,
+    source: "apple-watch",
+  };
 }

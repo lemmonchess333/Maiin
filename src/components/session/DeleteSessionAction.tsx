@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { trainingHistoryReturnTo } from "@/lib/trainingHistory";
+import { cameFromInApp } from "@/lib/backNavigation";
 import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -37,6 +39,7 @@ export default function DeleteSessionAction({
   sharedActivityId?: string | null;
 }) {
   const navigate = useNavigate();
+  const historyReturnTo = trainingHistoryReturnTo(useLocation().state);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -68,11 +71,11 @@ export default function DeleteSessionAction({
         open={confirming}
         title={`Delete this ${noun}?`}
         description={[
-          `This can't be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
-          "Streaks and badges you've already earned stay.",
+          `This can’t be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
+          "Streaks and badges you’ve already earned stay.",
           sharedActivityId
             ? "Its post is removed from your feed too."
-            : `Any post you've already shared about this ${noun} stays on your feed.`,
+            : `Any post you’ve already shared about this ${noun} stays on your feed.`,
         ].join(" ")}
         confirmLabel="Delete"
         destructive
@@ -87,10 +90,14 @@ export default function DeleteSessionAction({
             // Back to wherever they came from — History, Home's day card,
             // a deep link. Replacing the entry means the browser Back
             // button can't return to a detail page whose document is gone.
-            navigate("/history", { replace: true });
+            // Opened from Training History, the list is still the entry
+            // below: going back to it keeps its own Back, where a new copy
+            // on top would take two Backs to leave.
+            if (historyReturnTo && cameFromInApp()) navigate(-1);
+            else navigate(historyReturnTo ?? "/history", { replace: true });
           } catch {
             setBusy(false);
-            toast.error(`Couldn't delete this ${noun}. Try again.`);
+            toast.error(`Couldn’t delete this ${noun}. Try again.`);
           }
         }}
       />

@@ -50,7 +50,8 @@ export function useFollowRequests(enabled: boolean) {
   const respond = useCallback(
     async (requesterUid: string, accept: boolean): Promise<boolean> => {
       if (!uid) return false;
-      const before = requests;
+      const place = requests.findIndex((r) => r.uid === requesterUid);
+      const answered = requests[place];
       setRequests((list) => list.filter((r) => r.uid !== requesterUid));
       try {
         if (accept) await acceptFollowRequest(uid, requesterUid);
@@ -58,11 +59,19 @@ export function useFollowRequests(enabled: boolean) {
         return true;
       } catch (err) {
         logger.error("[followRequests] answer failed", err);
-        setRequests(before);
+        // Back in its place, only this one: another request answered
+        // meanwhile stays answered, where putting back the list as it
+        // was before this answer brought that one back to answer again.
+        if (answered)
+          setRequests((list) =>
+            list.some((r) => r.uid === requesterUid)
+              ? list
+              : [...list.slice(0, place), answered, ...list.slice(place)]
+          );
         toast.error(
           accept
-            ? "Couldn't accept the request. Try again."
-            : "Couldn't decline the request. Try again."
+            ? "Couldn’t accept the request. Try again."
+            : "Couldn’t decline the request. Try again."
         );
         return false;
       }
@@ -120,8 +129,8 @@ export function useFollowRequestFrom(requesterUid: string | undefined) {
         logger.error("[followRequests] answer failed", err);
         toast.error(
           accept
-            ? "Couldn't accept the request. Try again."
-            : "Couldn't decline the request. Try again."
+            ? "Couldn’t accept the request. Try again."
+            : "Couldn’t decline the request. Try again."
         );
         return false;
       } finally {

@@ -154,6 +154,9 @@ export function projectGoalDate(args: {
   if (trendSeries.length < 2) return null;
 
   const last = trendSeries[trendSeries.length - 1];
+  const today = parseLocalDate(localDateString(now));
+  const measuredOn = parseLocalDate(last.date);
+  if (measuredOn > today) return null;
   // The CURRENT rate, the one the Body page states beside this date: a
   // year that held a bulk and then a cut is not moving at its average.
   const rate = recentWeeklyRate(trendSeries);
@@ -167,14 +170,17 @@ export function projectGoalDate(args: {
   if (!Number.isFinite(daysToGoal) || daysToGoal <= 0) return null;
   if (daysToGoal > 730) return null;
 
-  const eta = new Date(now);
-  eta.setDate(eta.getDate() + Math.round(daysToGoal));
+  // Remaining weight was measured on this date, not on the day the chart
+  // happens to be opened. Reopening without a weigh-in must not move the ETA.
+  const eta = addLocalDays(measuredOn, Math.round(daysToGoal));
+  if (eta < today) return null;
+  const remainingDays = Math.round((eta.getTime() - today.getTime()) / DAY_MS);
   const dateLabel = eta.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: eta.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
   });
-  return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
+  return { date: dateLabel, weeks: Math.round(remainingDays / 7) };
 }
 
 /** The span a "current" rate is read over: four weeks, long enough that a

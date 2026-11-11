@@ -8,6 +8,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
+import { waterFillBackground } from "@/components/home/waterFill";
 import WaterBubbles from "@/components/home/WaterBubbles";
 import {
   GLASS_ML,
@@ -75,15 +76,25 @@ function WaterPresetRow({
           className={cn("min-w-fit flex-1 basis-0 px-2", className)}
           onClick={() => onPick(preset.ml)}
         >
-          <span className="font-mono tabular-nums">
-            {splitWaterVolume(preset.ml).value}
-          </span>{" "}
-          {splitWaterVolume(preset.ml).unit}
+          {/* One span: the Button lays its children out with a gap, which
+              split "250 ml" into "250   ml" when the figure and the unit
+              were two of them. */}
+          <span>
+            <span className="font-mono tabular-nums">
+              {splitWaterVolume(preset.ml).value}
+            </span>{" "}
+            {splitWaterVolume(preset.ml).unit}
+          </span>
         </Button>
       ))}
     </div>
   );
 }
+
+/* The water is the tile's full height, moved up into view: a transform,
+   so the rise on arrival and on each drink lays nothing out, where a
+   spring on `height` laid the tile out on every frame of its second. */
+const FILL_RISE = { type: "spring", stiffness: 120, damping: 14 } as const;
 
 export default function WaterCard({
   ml,
@@ -287,9 +298,7 @@ export default function WaterCard({
   const iconBoxShadow = hasWater
     ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
     : "var(--ds-shadow-card)";
-  const fillBg = hasWater
-    ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
-    : "transparent";
+  const fillBg = hasWater ? waterFillBackground(fillPercent) : "transparent";
 
   /* The tile's heading, so Home's cards can be stepped through by heading.
      Unseen: the visible "Water" sits inside the tile's button, and a
@@ -305,11 +314,11 @@ export default function WaterCard({
       >
         {heading}
         <motion.div
-          className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
+          className="absolute inset-0 pointer-events-none rounded-xl"
           style={{ background: fillBg }}
-          initial={{ height: 0 }}
-          animate={{ height: fillPercent + "%" }}
-          transition={{ type: "spring", stiffness: 120, damping: 14 }}
+          initial={{ y: "100%" }}
+          animate={{ y: `${100 - fillPercent}%` }}
+          transition={FILL_RISE}
         >
           {hasWater && (
             <WaterWave fillPercent={fillPercent} splash={rippleKey} />
@@ -402,10 +411,10 @@ export default function WaterCard({
                 same visual tier". The non-compact variant below already
                 uses this treatment, so the compact one was the outlier
                 inside its own component too. */}
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+            <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal ml-1"
+                className="ml-1 font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 {splitWaterVolume(ml).unit}
@@ -523,16 +532,16 @@ export default function WaterCard({
 
   return (
     <div
-      className="relative overflow-hidden p-4 rounded-2xl bg-card"
+      className="relative overflow-hidden p-4 rounded-xl bg-card"
       style={{ boxShadow: iconBoxShadow }}
     >
       {heading}
       <motion.div
-        className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
+        className="absolute inset-0 pointer-events-none rounded-xl"
         style={{ background: fillBg }}
-        initial={{ height: 0 }}
-        animate={{ height: fillPercent + "%" }}
-        transition={{ type: "spring", stiffness: 120, damping: 14 }}
+        initial={{ y: "100%" }}
+        animate={{ y: `${100 - fillPercent}%` }}
+        transition={FILL_RISE}
       >
         {hasWater && <WaterWave fillPercent={fillPercent} splash={rippleKey} />}
       </motion.div>
@@ -546,7 +555,7 @@ export default function WaterCard({
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
-            className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
+            className="size-12 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
           >
             <Droplets
@@ -556,10 +565,10 @@ export default function WaterCard({
           </div>
           <div className="flex-1 min-w-0">
             <SectionLabel>Water</SectionLabel>
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+            <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal ml-1"
+                className="ml-1 font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 {splitWaterVolume(ml).unit}

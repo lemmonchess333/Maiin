@@ -1,0 +1,97 @@
+{
+  "generator": "scripts/art/gemini-image.py",
+  "model": "gemini-3-pro-image",
+  "drawn": "2026-11-07, for the Food diary's rows (DS4, DESIGN_GUIDE §14m rules 25 and 26)",
+  "output": "Original 1024x1024 API JPEGs retained unchanged; `npm run art:food` keys them out of black (scripts/art/keying.ts) onto a 192 px square in public/food-art.",
+  "review": "Visual review on dark and light tiles at row size, not yet released by the owner. Bowl, salad, protein and grains came from the first prompt; eggs and fruit were drawn again with the black background stated more firmly; bread, drink, sweet and plate came back on white twice and were drawn a third time with bowl.jpg as the reference.",
+  "art": {
+    "bowl": {
+      "file": "docs/food-art/bowl.jpg",
+      "sha256": "5b5be0db01f42902cb0a489bae314fda7041b35f7dddf7f3ff638d2df2c55275",
+      "covers": "oats, porridge, cereal, granola, muesli, yoghurt, soup",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. Pure solid black background. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: a round bowl of porridge oats topped with a few berries and sliced banana; the oats are pale, the toppings carry the orange accent."
+    },
+    "eggs": {
+      "file": "docs/food-art/eggs.jpg",
+      "sha256": "3bd95aa0c52baa494a529a25036194db36fec6d0b18032f8d0f2aa44f8f53ded",
+      "covers": "eggs, omelettes",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: two fried eggs, sunny side up, side by side; the whites off-white, the yolks in the orange accent."
+    },
+    "bread": {
+      "file": "docs/food-art/bread.jpg",
+      "sha256": "c37d6de5c3306d0bb64687d9b67f03b582906aff9dc4fc756eb2872c20335db8",
+      "covers": "bread, toast, sandwiches, wraps, burgers, pizza",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Match the attached image exactly for rendering style, line weight, palette, scale and its pure black background. Subject: a sandwich cut in half on the diagonal, the two halves leaning together to show their layers; the bread pale, the filling in the orange accent.",
+      "references": [
+        {
+          "path": "docs/food-art/bowl.jpg",
+          "sha256": "5b5be0db01f42902cb0a489bae314fda7041b35f7dddf7f3ff638d2df2c55275",
+          "note": "sent as PNG, re-encoded from the JPEG, for style and background"
+        }
+      ]
+    },
+    "salad": {
+      "file": "docs/food-art/salad.jpg",
+      "sha256": "e0160e9f93478a40aede47a4dc88b9de55d12b334e6c44dc9cf13e543fce8446",
+      "covers": "salads and vegetables",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. Pure solid black background. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: a round bowl of salad: lettuce leaves, cherry tomatoes and carrot ribbons; the bowl and leaves light grey and off-white, the tomatoes and carrot in the orange accent."
+    },
+    "fruit": {
+      "file": "docs/food-art/fruit.jpg",
+      "sha256": "b5b0298db8ed36bfa09eae4cae9bd50699a7be26eac72d76f5c6db0eef85df18",
+      "covers": "fruit",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: an apple and a banana side by side; their skins off-white with soft orange highlights, the stalk light grey."
+    },
+    "protein": {
+      "file": "docs/food-art/protein.jpg",
+      "sha256": "b63dc8811ac8163a4d852379dbbdb83eada06439c2a69a8b9c623da4d09be0ab",
+      "covers": "meat, fish, tofu",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. Pure solid black background. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: a grilled chicken breast fillet with diagonal grill marks; the fillet pale, the browned grill marks and edges in the orange accent."
+    },
+    "grains": {
+      "file": "docs/food-art/grains.jpg",
+      "sha256": "5e8542c464de1f0b9bca56f8d5ea89045c4f26cc3a7c207ecea3a377db684bce",
+      "covers": "pasta, rice, noodles, potatoes, curry",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. Pure solid black background. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Subject: a round bowl of penne pasta with a little tomato sauce; the bowl off-white, the pasta pale, the sauce in the orange accent."
+    },
+    "drink": {
+      "file": "docs/food-art/drink.jpg",
+      "sha256": "435dd49543454b57fe4962871a1247f302fc874a57705968231a456ea5cd148e",
+      "covers": "coffee, tea, shakes, smoothies, juice, milk",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Match the attached image exactly for rendering style, line weight, palette, scale and its pure black background. Subject: a cup of latte seen from slightly above with a little foam on top; the cup off-white, the coffee a light caramel in the orange accent.",
+      "references": [
+        {
+          "path": "docs/food-art/bowl.jpg",
+          "sha256": "5b5be0db01f42902cb0a489bae314fda7041b35f7dddf7f3ff638d2df2c55275",
+          "note": "sent as PNG, re-encoded from the JPEG, for style and background"
+        }
+      ]
+    },
+    "sweet": {
+      "file": "docs/food-art/sweet.jpg",
+      "sha256": "e25e6ec48d9357637ae8490a5a42f3170416be2666eb84b1b8a4f2e0f7c7c38d",
+      "covers": "biscuits, chocolate, cake, bars, crisps, nuts",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Match the attached image exactly for rendering style, line weight, palette, scale and its pure black background. Subject: a round cookie, off-white and light grey, studded with a few chocolate chips in the orange accent, a second cookie behind it.",
+      "references": [
+        {
+          "path": "docs/food-art/bowl.jpg",
+          "sha256": "5b5be0db01f42902cb0a489bae314fda7041b35f7dddf7f3ff638d2df2c55275",
+          "note": "sent as PNG, re-encoded from the JPEG, for style and background"
+        }
+      ]
+    },
+    "plate": {
+      "file": "docs/food-art/plate.jpg",
+      "sha256": "9bb8239ba1317076a758e3155fa70846b90f3f9276bcb2a7fdd21ef8ceaeb44b",
+      "covers": "any meal its name does not place",
+      "prompt": "Food icon illustration for a fitness app, one single object, centred. Rendering style: a clean educational illustration with off-white and light-grey forms, soft even shading and fine dark-grey contour lines, like an anatomy textbook drawing. One accent colour only, a warm food orange (#D9884E), used on the food itself in soft highlights; everything else off-white and light grey. Three-quarter view from slightly above. The background is pure solid black (#000000) from edge to edge: never white, never a frame, border or inset panel. Square canvas, the object filling about 78% of the width with even margins, fully inside the frame. No table, cloth, cutlery unless named, shadow, steam, scenery, text, labels, logos or garnish leaves unless named. Match the attached image exactly for rendering style, line weight, palette, scale and its pure black background. Subject: a round dinner plate with a small portion of food in the middle, a fork on the left and a knife on the right; the plate and cutlery off-white and light grey, the food in the orange accent.",
+      "references": [
+        {
+          "path": "docs/food-art/bowl.jpg",
+          "sha256": "5b5be0db01f42902cb0a489bae314fda7041b35f7dddf7f3ff638d2df2c55275",
+          "note": "sent as PNG, re-encoded from the JPEG, for style and background"
+        }
+      ]
+    }
+  }
+}

@@ -36,11 +36,12 @@ The rule:
 
 - **runDay** — a prescribed running slot for a specific date. Carries `id` (stable across regenerates within a week), `date` (YYYY-MM-DD, local timezone), `weekKey` (the Monday that starts its week, local: `localWeekKey`), `templateId` (e.g. `easy_30`, `tempo_20`, `long_10k`, `10k_race`), `status`. Persisted in `programState.runDays[]`.
 - **programState** — Firestore doc at `users/{uid}/programState/current`. Holds the user's running + lifting prescriptions: `runDays`, `runPlan`, `workouts`, `weekHistory`, `weekNumber`, `splitType`.
-- **runMode** — `freeform | race_prep` (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
+- **runMode** — `freeform | race_prep | starter` (`starter` while the starter goal runs, Run9) (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
 - **runPlan** — sub-object on programState. Holds mode-specific config: `mode`, `raceGoal` (race_prep only), `currentWeek`, `totalWeeks`, `compressed` flag (when race date forces a sub-minimum plan), `phase` (currently only `"recovery"`), `recoveryEndDate`.
 - **recovery phase** — post-race state where all run slots emit `easy_30` templates (in a new runner's first weeks, that week's run-walk, and the build's runs after them). Triggered by completing the race-day runDay. Distance-scaled: 5K=1w, 10K=2w, half=3w, marathon=4w. Cleared by the recovery-exit effect 7d after `recoveryEndDate`, or by `skipRecoveryEarly` writer.
 - **New runner's first weeks** — Run20 (5): the six weeks after someone who answered "New to running" at setup began, counted from the day setup finished (`onboardingCompletedAt`, stamped by the server; `createdAt` on a profile without it) (`newRunnerUntil`, `src/features/program/newRunner.ts`). A race plan's weeks that start before then hold no tempo or intervals, and every run in them but the race is that week's run-walk. Six is a Tropos heuristic inside the evidence's four to six. After them, each run is held to the minutes the running has built to: run-walk's last 20, and five more each week (`newRunnerBuildMinutes`), taking the longest run of its kind that fits (for a tempo or intervals session, a smaller dose of itself, the deload's rungs), else an easy run, until the plan's own runs fit. A recovery week in or after them is the same. Free running plans no runs, so the first weeks reach a new runner only through a race plan.
 - **Run-walk** — a session of easy runs with walks between them, after a warm-up walk and before a walk to finish (NHS Couch to 5K; Galloway). Spelled run-walk, not run/walk or walk-run. Templates `run_walk_1` to `run_walk_6` ("Run-walk 1" to "Run-walk 6"), one for each of a new runner's first weeks (`RUN_WALK_TEMPLATE_IDS`), from Couch to 5K's week 1 to 20 minutes non-stop. Type `easy`, timed and never paced: no pace target, alert, pill, verdict, split or time announcement, or trend, and it never sets a benchmark, since its pace averages the runs and the walks. A method, not a fallback, so anyone can pick one from the day sheet.
+- **Starter goal** — Run9: "30 minutes without stopping", for running-only accounts and anyone new to running (`profile.starterGoal`, `runPlan.mode: "starter"`). Nine stages a week each, Run20's six run-walk weeks then 20, 25 and 30 minutes non-stop (`starterPlan.ts`); two saved runs make a week done and move the stage on, fewer repeat it, and a three-week gap steps it back one. It ends in Done (`finishedOn`), or when a race goal takes its place (`endedOn`, with the stage reached). Copy says "30 minutes without stopping", or "30 minutes" on setup's option.
 - **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
 - **expired** _(proposed, not shipped — Q6)_ — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
 - **softlink** _(proposed, not shipped — Q7 revision)_ — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
@@ -124,12 +125,33 @@ Two axes, from the food-logging reference set:
 - **Follower** — someone with an accepted follow: the two edges `following/{them}/users/{you}` and `followers/{you}/users/{them}`. A follower reads your followers-only posts (the default share, S2c) and gets them in their feed. Every reader of the follow graph checks only that the edge exists.
 - **Follow request** — a follow waiting for your yes: `followRequests/{you}/users/{them}`, seen only by the two of you. Answered under People or on the asker's profile; accepting writes both edges (with `fromRequest`), declining or a cancel deletes it.
 - **Approve followers** — `users/{uid}.approveFollowers`, Settings → Social & privacy. On unless turned off (absent or null is on, as the rules read it): a follow to such an account is refused and becomes a request. Off, a follow is immediate. Existing follows were left as they were.
+- **Invite code** — a person's one code for bringing a friend (Soc15): eight characters from `23456789ABCDEFGHJKMNPQRSTVWXYZ`, shown as `K7P4-9M2H`, kept at `inviteCodes/{code}` and on the owner's user document as `inviteCode`, both written only by the server (`functions/lib/inviteCodes.js`). An **invite link** is `https://troposfit.com/?invite=<code>`. **Joining from an invite** (`redeemInvite`, once per account, in its first 14 days, `invitedAt` stamped) makes the inviter follow the new person at once, each edge marked `fromInvite`: using the link counts as the new person accepting them. STATUS 2026-11-05: the new person follows the inviter at once only when the inviter has Approve followers off; otherwise their follow request is written, marked `fromInvite`, for the inviter to accept in one tap. Not a Circle's invite code, which joins a Circle and expires after seven days.
 
 ### Friends board (Polish2, 2026-10-20)
 
 - **Friends board** — this week for you and the people you follow who share theirs: `LeaderboardCard` on the feed (two or more follows, Soc12's placement) ranks sessions; `FullLeaderboard` has Sessions, Distance and Volume tabs behind Soc8's cohort gate. It reads each person's board tally, never their sessions, which only they can read. Sessions is the card's measure because it is the one a lifter and a runner share; the points it replaced (km × 100 + kg × 0.1) made 1 km worth 1,000 kg. The hybrid challenge keeps its own scoring. The trajectory card, the same slot's solo form for fewer than two follows, counts sessions too: this week against last week at the same point, as a count, with distance and volume beneath.
 - **Board tally** — `friendsBoard/{uid}`: one person's current week (`sessions`, `lifts`, `runs`, `distanceM`, `volumeKg`), kept by the server only for someone who shares. A session counts as the challenges count it: every saved workout, and every run the challenges would credit. Recomputed from the sessions by the session triggers, keyed by the person's own Monday (`weekKey`), and `weekEndsAt` is midnight where they are, so a reader shows a week already over as empty. Their followers read it; a blocked pair cannot.
 - **Show my week** — `users/{uid}.showWeekOnBoard`, written only by the `setBoardSharing` callable, which stores the answer and the tally together. Not asked (absent): the person's own row on the board asks. Yes: the tally is kept. No: the tally is deleted. Settings → Social & privacy has the switch.
+
+### Medals and the trophy case (Soc15, 2026-11-03)
+
+- **Medal** — a person's highest tier (bronze, silver, gold) in one challenge edition: this month's Mileage, this week's Weekly Warrior, this season's goal. `users/{uid}/medals/{challengeId}`, written only by `onChallengeParticipantWritten` from the participant row (`functions/lib/medals.js`). It follows the row until the challenge settles, 48 hours after its end, then is frozen: an old run deleted later never takes it away. A community goal awards none. Not a **badge**: a badge is a lifetime milestone (`streaks/data`), a medal belongs to one edition and carries its dates.
+- **Trophy case** — the Medals section of a profile, read from the public profile's `medalSummary` (the newest 40, server-written), the same for the owner and everyone else.
+- **Medal reveal** — the full-screen moment a new medal or tier gets once, on the next visit to Social (`medal-reveal`, ADR-0004), never over Home. Reference apps: Strava, Garmin Connect and Nike Run Club each give a challenge a dated medal that lands in a trophy case; Tropos's three tiers make each tier its own moment.
+
+### Weekly leagues (Soc15 call 3, 2026-11-05)
+
+- **League** — a group of about 20 people (10 to 30) in the same tier, for one week, Monday to Sunday in each member's own timezone. Opt-in: `users/{uid}.leagueOptIn`, written only by the `setLeagueSharing` callable, and a restricted account cannot join. The group (`leagueGroups/{groupId}`, its `memberUids` and `standings`) is drawn by `weeklyLeagueTurn` each Monday at 12:15 UTC from the people who opted in and trained in the last 14 days, never with a blocked pair, a restricted account or one on the discovery-hidden list in it, and read by its members only. Until 10 such people exist across the project there are no groups, and the card says how many have joined. Not the **friends board**, which ranks the people you follow and has no consequence, and not a **challenge**, which everyone can join and which awards a medal. Reference app: Duolingo's leagues (a group of strangers, a week, a promotion zone and a result); the deviation is the score (below).
+- **Tier** — a member's league rank: Bronze, Silver, Gold, Platinum, Diamond. A new member starts in Bronze. Each Monday the top ceil(25%) of a group with points above zero move up a tier (not from Diamond), the bottom floor(25%) and anyone on zero move down (not from Bronze), and everyone else stays (`functions/lib/leagueRules.js`). Each member's week ends in `users/{uid}/leagueResults/{weekKey}` and one notification, under the Leagues switch. Leaving forgets the tier: joining again starts in Bronze. Not a **badge tier** or a **medal tier**, which are lifetime and per-challenge metals; the league's first four share their colours.
+- **Points (league)** — `round(100 × min(done, planned) / planned)`: the share of the member's own plan done that week. `done` counts sessions as the friends board does (every saved workout, every run the challenges would credit); `planned` is the plan's lifts and runs for the week as `trainingWeek.ts` counts them, from the day the account began (`functions/lib/leaguePlanned.js`), a free runner's weekly run target for the runs, and 3 when the week plans nothing. Sessions beyond the plan add nothing, so a three-day lifter who does three beats a marathoner who does five of six. Ties go to whoever reached their points first (`reachedAt`). **Tropos position (deliberate deviation from Duolingo):** Duolingo's leagues rank raw activity (XP), which a league of hybrid athletes would hand to whoever trains most; scoring against each person's plan is the Tropos-specific reason, and it is the owner's call (Soc15 call 3).
+
+### Plan groups (Soc15, 2026-11-05)
+
+- **Plan group** (also **race group**) — the people on Tropos training for the same race: everyone whose race goal is bound to that race's space (`users/{uid}.raceGoal.eventSpaceId`) and whose race day is still ahead. They share the race's date, so they are all the same number of weeks out ("9 weeks to go"). Its size is the only thing stored about it: `raceCohorts/{spaceId}` (`count`, `updatedAt`), recounted by the server from the goals whenever one is set, moved or cleared, for the old race and the new (`onRaceGoalWritten`, which also sees an account deleted), and each night for every race still ahead (`dailyRaceCohortRecount`), never incremented (`functions/lib/raceCohorts.js`). It names no one, so it leaves no one out, a restricted account included. Only a member sees it, and only until their race day: Together's card ("You and 11 others are training for Manchester Marathon · 9 weeks to go") and a line in the race space's hero ("12 people on Tropos are training for this race"); under three people, the viewer included, neither shows a number. Not **Space membership** (joining a race's space never sets a race, and setting a race never joins its space) and not the **"Training for" identity** (`trainingForSpaceId` on the public profile, which a person chooses to show). Reference apps: Runna's race spaces and Strava's clubs show who is running a race; Tropos counts the plans, which only it knows. Called a "plan group" in the Soc15 lock ("12 people training for Manchester, all in week 9").
+
+### Live pulse (Soc15, 2026-11-05)
+
+- **Pulse** — the line on Social's Feed that says other people are training today: "Today: 14 sessions on Tropos", by a dot that pulses (still under Reduce Motion). The count is every saved session the challenges would credit (every workout; a run that is eligible and inside the shared-credit bounds), on the local day it started, across all of Tropos; a restricted account and one being deleted add nothing. Kept at `pulse/{YYYY-MM-DD}`, written only by the session create and delete triggers (`functions/lib/pulse.js`), each session once through its **pulse credit** (`users/{uid}/pulseCredits/{kind}_{sessionId}`, the day it was added to, swept with the account); both expire eight days after the day starts. The app reads the viewer's own local today, live, and draws nothing below 10 sessions or when the read fails: "Today: 1 session" reads as an empty room. Social only, never Home. Not the **community goal**, which totals a month's kilometres toward a target, and not the **friends board**, which is per person and only the people you follow.
 
 ### Performance Index (PI)
 
@@ -233,6 +255,10 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Tropos position (locked in the Social uplift arc, PRs #1575/#1576/v3):** conform on both halves. Editorial surfaces (challenge cards first; plan/curated surfaces may follow) render licensed photography with a sport-coded tint wash + scrim (`src/lib/editorialImages.ts`, assets in `src/assets/editorial/` — build-time glob, designed no-photo fallback until assets land). Feed cards stay user-data imagery: GPS route scenes and the brand muscle figure. Stock people never appear inside the peer feed; private user photos (progress/food) never leak to social. An earlier blanket "no stock imagery anywhere" stance was overturned by the operator citing Runna/Strava — the refined line above is the durable decision.
 
+STATUS 2026-11-05 (Soc15 call 2): the feed's user imagery now includes the person's own photos. A **post photo** is one of the one to four photos the author adds to a shared session after it is posted (`photos: [{ id, url, w, h }]` on `activities/{id}`, files at `post-photos/{uid}/{activityId}/{photoId}.jpg`, screened before the post names them, deleted with the post). Not a **meal photo**, which stays on the device (Food9), nor a progress photo, which only its owner reads; neither ever reaches social. Strava, Hevy and Nike Run Club all let a post carry its author's photos.
+
+STATUS 2026-11-10 (Soc16, owner: "Yes agree", after the reference apps were checked again on Mobbin): **challenges leave photography; races and Spaces keep it.** On the challenge surfaces themselves the dominant apps draw their own art, not photographs: every Strava challenge is a badge with its number in it (photos only on sponsored partner banners), Nike Run Club's list and challenge page are the medal on a block of colour, and Garmin draws even its real-place Expeditions (Everest, the Camino) as badges. Races are the opposite: Runna puts the real race location behind a race's plan. So a challenge's picture is now its own medal (`MedalArt`, at poster size in `ChallengeMedalBand`, on every row through `rowMedal.ts`), the twelve `challenge-*` covers are retired, and photography stays for places and communities: a race's real place, a Space's cover, Together's race hero. DESIGN_GUIDE §14m rule 26 says the same. The 2026-07-11 position above stands for races, Spaces and the feed.
+
 ### Follow approval (Polish2, 2026-10-20)
 
 **Reference apps** (checked against their own pages, 2026-10-20):
@@ -284,6 +310,9 @@ surface specifically.
   Theirs is the better shape: the description resolves exactly what a photo
   cannot — cut of meat, cooking fat, plate diameter — and it is the natural
   content of a "Type it instead" recovery that keeps the photo.
+  STATUS 2026-10-28 (Mob2 call 3): a photo's result now has "Add a detail",
+  up to 200 characters sent with the same photo to `analyzeFood` for a
+  second read. One photo, not three; the photo still stays on the phone.
 - **The wait shows real work.** Skeleton rows stream per-ingredient status
   ("Searching for 'Pastry Dough'", then Sugar, then Salt) as each database
   lookup lands. Tropos narrates four invented stages on a 1300ms timer over a
@@ -295,6 +324,10 @@ surface specifically.
   ingredient is independently editable with its own quantity + unit.
 - **Plate/Day toggle** on the result: this meal alone vs its contribution to the
   day. Tropos shows only the meal.
+  STATUS 2026-10-28 (Mob2 call 1): every portion sheet, the scan result's
+  included, carries one line under the meal's figures saying what the day
+  comes to with it ("1,240 kcal and 62g protein left after this"). Text,
+  not a toggle.
 - **Capture guidance names the privacy risk**: "Avoid including photos of other
   people" / "Only upload content you have permission to use", alongside the
   framing/steadiness tips, in a first-use modal.
@@ -379,26 +412,49 @@ decisions deliberately deviate from the consumer-app convention; the
 reasons are recorded here per the reference-app rule (a deviation needs an
 explicit, written justification).
 
-### Running is the flexible side; the lift programme is the structured anchor
+### Running is the flexible side: a goal with an end is the only plan
 
 Garmin (Daily Suggested Workouts), Strava (Instant Workouts, 2026), and NRC
 all offer a **no-race adaptive "today's run" layer** — structure without a
-race. Tropos deliberately does **not**: a race goal is the only running
-"plan," and between/without races the run side is freeform logging. The tab is
-kept from feeling barren with a DESCRIPTIVE cadence line ("you've run 3× in the
-last 4 weeks", "last run 2 days ago") — descriptive only, computed client-side,
-NEVER a weekly target or progress bar. A target would be structure, which the
-run side deliberately does not add (a round-2 stress test caught that an earlier
-"weekly target + progress" idea both rendered "0 of 0" — weeklyRunDaysTarget is
-hard-zeroed for freeform — and contradicted this very position).
+goal. Tropos deliberately does **not**: **free running is the substrate**,
+and a **goal is the only running "plan"**. Between and without goals the run
+side is free logging. The tab is kept from feeling barren with a DESCRIPTIVE
+cadence line ("you've run 3× in the last 4 weeks", "last run 2 days ago") —
+descriptive only, computed client-side, NEVER a weekly target or progress
+bar. A target would be structure, which free running deliberately does not
+add (a round-2 stress test caught that an earlier "weekly target + progress"
+idea both rendered "0 of 0" — weeklyRunDaysTarget is hard-zeroed for
+freeform — and contradicted this very position).
 
-Tropos-specific reason: Tropos is a **hybrid** app. The **lift programme is
-the structured anchor** that's always present and periodized; running is
-deliberately the flexible complement. A single-sport runner would need a
-no-race structured layer, but a Tropos user always has the lift programme
-providing structure, so duplicating that on the run side adds a concept
-without a Tropos payoff. (Do NOT re-derive this as a gap to "fix" — it's a
-chosen position. Revisit only if Tropos adds a run-only user segment.)
+**A goal has an end.** Run9's reopening (STATUS 2026-11-01) settled what a
+goal is, now that setup offers Running only and the lift programme is no
+longer always there to give structure:
+
+- **A distance by a date** (race prep), **at a race or on your own**
+  (`raceGoal.entry`). Without an event the last day is named for the
+  distance ("Your 10K"), not "Race day".
+- **The starter goal: 30 minutes without stopping**, for running-only
+  accounts and anyone new to running, and pre-selected for New to running in
+  setup. Nine stages, a week each: Run20's six run-walk weeks, then 20, 25
+  and 30 minutes non-stop. A week is done with two saved runs; otherwise it
+  repeats, so the end has no date and Train counts weeks ("Week 3 of 9 ·
+  about 7 weeks to go"). It ends in a plain Done and the next goal offered
+  once ("Train for a 5K: at a race or on your own"), never a plan made by
+  itself.
+
+There is still **no open-ended weekly structure and no mode toggle**: a
+runner who finishes or leaves a goal is back on free running. Reference
+apps (checked 2026-11-01): five of six have a beginner plan that ends (NRC
+Get Started, Runna, Garmin Coach's run/walk 5K, TrainingPeaks' Couch to 5K
+plans, NHS Couch to 5K); none rolls straight into a next plan, and only NHS
+documents a next step.
+
+Tropos-specific reason for no layer beyond goals: Tropos is a **hybrid**
+app, and for a hybrid the **lift programme is the structured anchor**;
+running is its flexible complement. For a runner without lifts, a goal with
+an end gives structure without a permanent plan to keep up. (Do NOT
+re-derive an open-ended running plan as a gap to "fix" — it's a chosen
+position, revisited once already, for the run-only segment.)
 Note: the original Run9 migration note wrongly cited "matches NRC/Strava" —
 Strava removed static plans in 2025-07; that rationale is retired.
 
@@ -433,7 +489,7 @@ signal to push back / grill first.
   "Reminders fire while this tab is open"); pinned by `ReminderDiagnostics.test`._
 - **P2 — Web subscription billing stays first-class.** Strava sells on web via
   Stripe to dodge Apple's 30%. Tropos already mirrors this (`useStripeCheckout`
-  - the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
+  - the Stripe webhook); Apple IAP (through RevenueCat) is the **native-only**
     path, not the only path. `useSubscription().isPro` already handles both — keep
     that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
     no "install to subscribe" funnel break for desktop upgraders).

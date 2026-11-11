@@ -7,7 +7,15 @@ import {
   within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
+import {
+  beforeAll,
+  beforeEach,
+  afterEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from "vitest";
 import Onboarding from "../Onboarding";
 import {
   saveOnboardingDraft,
@@ -17,7 +25,9 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
-import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
+import { track } from "@/lib/lifecycleAnalytics";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { SETUP, SETUP_OPTIONS, STARTER } from "@/test/journeyScreens";
 import {
   addLocalDays,
   localDateString,
@@ -43,6 +53,11 @@ vi.mock("@/lib/firestoreWrite", () => ({
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+/* A race date about seven months ahead, from the clock: a literal here
+   went into the past as the calendar moved, and every step that needs a
+   race in the future stopped letting Continue through. */
+const RACE_DATE = localDateString(addLocalDays(new Date(), 200));
+
 const draft: OnboardingDraft = {
   step: 7,
   primaryGoal: "strength",
@@ -72,7 +87,7 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
-      {/* The offer page is handed where "Continue with Free" goes. */}
+      {/* The legacy offer is handed where "Continue with Free" goes. */}
       {(location.state as { next?: string } | null)?.next
         ? ` → ${(location.state as { next: string }).next}`
         : ""}
@@ -81,15 +96,27 @@ function LocationProbe() {
 }
 const open = () =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={["/onboarding"]}>
       <Onboarding />
       <LocationProbe />
     </MemoryRouter>
   );
+/* The word filter as a session that has reached the review holds it:
+   setup starts loading it on the first step, and the review's button
+   waits for it. Loaded once here, so no test depends on an earlier one
+   having loaded it (unit-shuffle seed 5 ran "preserves the goal through
+   kg, lb, stone, and kg" first, and its Start my plan never committed). */
+beforeAll(async () => {
+  await loadWordFilter();
+});
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
-  complete.mockResolvedValue({ data: {} });
+  // jsdom draws no layout: Start my plan scrolls to a name it still needs.
+  Element.prototype.scrollIntoView = vi.fn();
+  complete.mockResolvedValue({
+    data: { success: true, activationJourneyVersion: 2 },
+  });
 });
 // A spy left on `buildOnboardingPlan` would be the real builder the next
 // test's own spy calls through, so that spy would call itself.
@@ -133,6 +160,11 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", draft);
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     open();
+    expect(
+      screen.getByText(
+        "Today shows your plan and what to do next. Start when you’re ready."
+      )
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit lift sessions" }));
     fireEvent.click(screen.getByRole("radio", { name: "5" }));
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
@@ -150,6 +182,9 @@ describe("onboarding chapters and commit", () => {
     fireEvent.click(commit);
     expect(complete).toHaveBeenCalledTimes(1);
     const payload = complete.mock.calls[0][0];
+    expect(payload.activationJourneyVersion).toBe(2);
+    expect(payload.onboardingPlatform).toBe("web");
+    expect(payload.profileData).not.toHaveProperty("activationJourneyVersion");
     expect(payload.programState).toBe(preview.programState);
     expect(payload.weekSchedule).toBe(preview.weekSchedule);
     expect(payload.profileData.weeklyRunDaysTarget).toBe(0);
@@ -164,7 +199,7 @@ describe("onboarding chapters and commit", () => {
       startWeight: 81.5,
       currentPhase: "base",
     });
-    resolve({ data: {} });
+    resolve({ data: { success: true, activationJourneyVersion: 2 } });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     // The public profile seed leaves the photo alone: sign-up wrote the
     // Google or Apple photo there, and a null erased it.
@@ -178,11 +213,23 @@ describe("onboarding chapters and commit", () => {
     expect(options).toEqual({ merge: true });
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+    );
+    builder.mockRestore();
+  });
+  it("keeps the established offer when the server did not accept version 2", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockResolvedValue({
+      data: { success: true, activationJourneyVersion: null },
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
         /^\/upgrade\?from=onboarding → \/$/
       )
     );
-    builder.mockRestore();
+    expect(complete.mock.calls[0][0].activationJourneyVersion).toBe(2);
   });
   it("shows a recoverable error and retains the intended answers after a failed commit", async () => {
     saveOnboardingDraft("setup-test", draft);
@@ -190,7 +237,7 @@ describe("onboarding chapters and commit", () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn’t save your plan"
+      "Couldn’t save your plan"
     );
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(loadOnboardingDraft("setup-test", 7)?.weightKg).toBe(81.5);
@@ -210,10 +257,9 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", { ...draft, displayName: "shit head" });
     open();
     expect(screen.getByText(OBJECTIONABLE_NAME_MESSAGE)).toBeInTheDocument();
-    const start = screen.getByRole("button", { name: "Start my plan" });
-    expect(start).toBeDisabled();
-    fireEvent.click(start);
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     expect(complete).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(SETUP.name)).toHaveFocus();
   });
   it("shows the server's own sentence when it refuses the display name", async () => {
     saveOnboardingDraft("setup-test", draft);
@@ -316,7 +362,7 @@ describe("the legs while the runs build (Lift4 (10))", () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
       runMode: "race_prep",
-      raceTargetDate: "2027-06-01",
+      raceTargetDate: RACE_DATE,
       ...over,
     });
 
@@ -399,6 +445,11 @@ describe("activity-relevant setup", () => {
     expect(
       screen.queryByRole("region", { name: "First lift preview" })
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Today shows your plan and what to do next. Start when you’re ready."
+      )
+    ).toBeInTheDocument();
     const openWeek = screen.getByRole("region", { name: "Your week shape" });
     expect(openWeek).toHaveTextContent("Free running");
     expect(openWeek).not.toHaveTextContent("0 lifts");
@@ -412,6 +463,9 @@ describe("activity-relevant setup", () => {
       within(openWeek).getByRole("button", { name: "Mon: open day" })
     );
     expect(openWeek).toHaveTextContent("Mon · Run when it suits you.");
+    fireEvent.change(screen.getByLabelText(SETUP.name), {
+      target: { value: "Test runner" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = complete.mock.calls[0][0];
@@ -427,9 +481,7 @@ describe("activity-relevant setup", () => {
       athleteType: "Runner",
     });
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
     );
   });
   it("restores the selected lift rhythm when changing activity from review, including reload", () => {
@@ -465,9 +517,7 @@ describe("activity-relevant setup", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
     );
   });
 });
@@ -640,13 +690,117 @@ describe("a race needs a date", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });
 
-  it("releases it once a date is given", () => {
+  it("releases it once a date, the race or on your own, and the running it starts from are given", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
+    });
+    // Run9 STATUS 2026-11-01: neither is chosen until the person answers.
+    for (const name of ["A race I’ve entered", "On my own"])
+      expect(screen.getByRole("radio", { name })).toHaveAttribute(
+        "aria-checked",
+        "false"
+      );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    // R5: someone who runs already says how much, and the plan starts there.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Minutes a week"), {
+      target: { value: "60" },
+    });
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
+      target: { value: "90" },
+    });
+    // The longest run is part of the week.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(
+      screen.getByText(/The longest run is part of the week/)
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Longest run, min"), {
+      target: { value: "30" },
     });
     expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("doesn't ask someone new to running, whose plan starts with run-walk", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: RACE_DATE },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    expect(screen.queryByLabelText("Minutes a week")).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("saves the answer on the goal", async () => {
+    // The review's button waits for the word filter (the name check);
+    // loaded here so this test does not depend on one run before it.
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 70));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceDistance: "10k",
+      raceTargetDate: raceDay,
+      raceEntry: "own",
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.raceGoal).toEqual({
+      distance: "10k",
+      targetDate: raceDay,
+      entry: "own",
+    });
+  });
+
+  it("begins the 30-minute goal today, with no race goal (Run9)", async () => {
+    await loadWordFilter();
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runFrequency: "new",
+      runMode: "starter",
+      weeklyRunDays: 3,
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.runMode).toBe("starter");
+    expect(profileData.starterGoal).toEqual({
+      startedOn: localDateString(new Date()),
+    });
+    expect(profileData).not.toHaveProperty("raceGoal");
+    expect(programState.runPlan).toMatchObject({ mode: "starter", stage: 1 });
+  });
+
+  it("holds a setup saved before the question at the review", async () => {
+    await loadWordFilter();
+    const raceDraft = {
+      ...draft,
+      runMode: "race_prep" as const,
+      raceTargetDate: localDateString(addLocalDays(new Date(), 70)),
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
+    };
+    saveOnboardingDraft("setup-test", raceDraft);
+    open();
+    expect(
+      screen.getByRole("button", { name: "Start my plan" })
+    ).toBeDisabled();
+    // The same setup with the answer goes on: the answer was all it lacked.
+    cleanup();
+    saveOnboardingDraft("setup-test", { ...raceDraft, raceEntry: "race" });
+    open();
+    expect(screen.getByRole("button", { name: "Start my plan" })).toBeEnabled();
   });
 
   it("releases it by going back to free running", () => {
@@ -793,7 +947,7 @@ describe("new runners", () => {
     // without a date resolves to the freeform substrate under Run9a.
     fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
     fireEvent.change(screen.getByLabelText("Race target date"), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
     });
     const target =
       builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget;
@@ -811,10 +965,67 @@ describe("new runners", () => {
     const builder = vi.spyOn(planning, "buildOnboardingPlan");
     reachRunStep();
     fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    // New to running starts on the 30-minute goal (Run9); free running is
+    // a tap away and plans none.
+    fireEvent.click(screen.getByRole("radio", { name: "Free running" }));
     expect(
       builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget
     ).toBe(0);
     builder.mockRestore();
+  });
+
+  /* Run9's reopening (call 5): New to running starts on the 30-minute
+     goal, three runs a week, with free running and race prep a tap away. */
+  it("starts someone new to running on the 30-minute goal, three runs a week", () => {
+    cleanup();
+    localStorage.clear();
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    // The name the journeys find (src/test/journeyScreens.ts).
+    expect(
+      screen.getByRole("radio", { name: STARTER.setupOption })
+    ).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Free running" })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: "Race prep" })).toBeEnabled();
+    expect(
+      screen.getByText(/Run 30 minutes without stopping in about nine weeks/)
+    ).toBeInTheDocument();
+    const plan = builder.mock.results.at(-1)!.value;
+    expect(plan.profileUpdates.runMode).toBe("starter");
+    expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(3);
+    fireEvent.click(screen.getByRole("radio", { name: "2" }));
+    expect(
+      builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget
+    ).toBe(2);
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    builder.mockRestore();
+  });
+
+  it("offers the 30-minute goal to someone who runs only, not chosen for them", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    expect(screen.getByRole("radio", { name: "30 minutes" })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: "Free running" })).toBeChecked();
+  });
+
+  it("does not offer it to someone who lifts and already runs", () => {
+    cleanup();
+    localStorage.clear();
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Both" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    expect(
+      screen.queryByRole("radio", { name: "30 minutes" })
+    ).not.toBeInTheDocument();
+    // Someone who lifts and is new to running is offered it.
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    expect(screen.getByRole("radio", { name: "30 minutes" })).toBeChecked();
   });
 
   it("starts them at two runs a week, a race plan's least (Pgm7 A7)", () => {
@@ -864,6 +1075,7 @@ describe("new runners", () => {
     fireEvent.change(screen.getByLabelText("Race target date"), {
       target: { value: localDateString(addLocalDays(new Date(), daysOut)) },
     });
+    fireEvent.click(screen.getByRole("radio", { name: "A race I’ve entered" }));
   };
 
   it("says so when the plan can't build to the race, and still goes on (R14c)", () => {
@@ -944,7 +1156,7 @@ describe("a recent race at setup", () => {
     // Nobody has run a 5K in nine minutes.
     type("Minutes", "9");
     expect(within(recentRace()!).getByRole("alert")).toHaveTextContent(
-      "That time doesn't look right."
+      "That time doesn’t look right."
     );
     expect(back()).toBeDisabled();
     type("Minutes", "");
@@ -1015,7 +1227,9 @@ describe("choices with drawings", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(artOf(/Full gym/).img).toMatch(/chest-press-machine\.webp$/);
-    expect(artOf(/Home gym/).img).toMatch(/db-bench\.webp$/);
+    // The approved incline press still pictures dumbbells and a bench
+    // while the flat bench illustration is withheld.
+    expect(artOf(/Home gym/).img).toMatch(/incline-db-press\.webp$/);
     expect(artOf(/Minimal/).img).toMatch(/bodyweight-squat\.webp$/);
     for (const [name, solid] of [
       [/New to lifting/, 1],
@@ -1043,7 +1257,7 @@ describe("setup, by the names the journeys use", () => {
   const next = () =>
     fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
 
-  it("reaches Start my plan, with every answer the journeys give on its screen", () => {
+  it("reaches Start my plan, with every answer the journeys give on its screen", async () => {
     open();
     for (const aim of SETUP_OPTIONS.aims)
       expect(button(aim)).toBeInTheDocument();
@@ -1091,7 +1305,18 @@ describe("setup, by the names the journeys use", () => {
         })
       ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(SETUP.raceDate), {
-      target: { value: "2027-06-01" },
+      target: { value: RACE_DATE },
+    });
+    fireEvent.click(
+      within(group(SETUP.raceEntry)).getByRole("radio", {
+        name: SETUP.raceEntered,
+      })
+    );
+    fireEvent.change(screen.getByLabelText(SETUP.weekMinutes), {
+      target: { value: "150" },
+    });
+    fireEvent.change(screen.getByLabelText(SETUP.longestRun), {
+      target: { value: "60" },
     });
     expect(
       screen.getByRole("switch", { name: SETUP.legTrim })
@@ -1130,7 +1355,68 @@ describe("setup, by the names the journeys use", () => {
     );
     next();
 
-    expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled();
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.name }), {
+      target: { value: "Journey tester" },
+    });
+    // The name waits for the word filter, which loads from the first step.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled()
+    );
+    // R5: the race plan starts from the running given.
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.runningBaseline).toMatchObject(
+      {
+        experience: "regular",
+        weeklyMinutes: 150,
+        longestRunMinutes: 60,
+        source: "self_reported",
+      }
+    );
+  });
+});
+
+/* The public name is shown on the profile and found by search, so it is
+   one the person gives: an email account's field starts empty, never from
+   the address, and Start my plan asks for it. */
+describe("the public name, at the review", () => {
+  const nameField = () => screen.getByLabelText(SETUP.name);
+
+  it("starts empty for an email account, with nothing wrong said yet", () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: undefined });
+    open();
+    expect(nameField()).toHaveValue("");
+    expect(nameField()).toHaveAttribute("aria-invalid", "false");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("drops the address-made name a draft saved before", () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: "test" });
+    open();
+    expect(nameField()).toHaveValue("");
+  });
+
+  it("asks for it at Start my plan, and goes on once it is given", async () => {
+    saveOnboardingDraft("setup-test", { ...draft, displayName: undefined });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    expect(complete).not.toHaveBeenCalled();
+    expect(nameField()).toHaveFocus();
+    expect(nameField()).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter a name first.");
+    const confirmed = () =>
+      expect(track).toHaveBeenCalledWith(
+        "onboarding_step_completed",
+        expect.objectContaining({ step: "confirm" })
+      );
+    expect(confirmed).toThrow();
+
+    fireEvent.change(nameField(), { target: { value: "  Sam  " } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.start }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.displayName).toBe("Sam");
+    confirmed();
   });
 });
 
@@ -1344,4 +1630,119 @@ describe("what each answer changes (FV3)", () => {
     expect(target()).toHaveTextContent(/To lose about 0\.5 kg a week/);
     expect(target().textContent).not.toBe(holding);
   });
+});
+
+/* Lose fat asks for the weight it is aiming at, below the weight now (A5
+   STATUS 2026-11-01): left empty, the plan started at maintenance. */
+describe("Lose fat and the goal weight", () => {
+  const goalWeight = () => screen.getByLabelText(/Goal weight/);
+  const backToReview = () =>
+    screen.getByRole("button", { name: "Back to review" });
+  const aimLower = "To lose fat, aim more than 1 kg below your weight now.";
+
+  it("holds the plan until the goal is more than 1 kg below the weight now", async () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "fat_loss",
+      bodyAnswered: true,
+    });
+    open();
+    expect(
+      screen.getByRole("button", { name: "Start my plan" })
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Check the answers above before creating your plan.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    expect(screen.queryByText("(optional)")).not.toBeInTheDocument();
+    expect(goalWeight()).toHaveAttribute("aria-required", "true");
+    expect(
+      screen.getByText("To lose fat, enter the weight you’re aiming for.")
+    ).toBeInTheDocument();
+    expect(backToReview()).toBeDisabled();
+
+    // 81.5 kg now: 81 is within the 1 kg that holds the weight, 90 is a gain.
+    for (const value of ["81", "90"]) {
+      fireEvent.change(goalWeight(), { target: { value } });
+      expect(screen.getByRole("alert")).toHaveTextContent(aimLower);
+      expect(goalWeight()).toHaveAttribute("aria-invalid", "true");
+      expect(backToReview()).toBeDisabled();
+    }
+
+    fireEvent.change(goalWeight(), { target: { value: "75" } });
+    expect(screen.queryByText(aimLower)).not.toBeInTheDocument();
+    expect(goalWeight()).toHaveAttribute("aria-invalid", "false");
+    fireEvent.click(backToReview());
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const payload = complete.mock.calls[0][0].profileData;
+    expect(payload.goalWeightKg).toBe(75);
+    expect(payload.weeklyRateKg).toBeLessThan(0);
+  });
+
+  it("says the margin in pounds for a pounds user", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "fat_loss",
+      bodyAnswered: true,
+      weightUnit: "lbs",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    fireEvent.change(goalWeight(), { target: { value: "180" } });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "To lose fat, aim more than 2.2 lb below your weight now."
+    );
+  });
+
+  it("stays optional for every other goal", async () => {
+    saveOnboardingDraft("setup-test", { ...draft, bodyAnswered: true });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    expect(screen.getByText("(optional)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Leave it empty to hold your current weight.")
+    ).toBeInTheDocument();
+    fireEvent.click(backToReview());
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.weeklyRateKg).toBe(0);
+  });
+});
+
+describe("body answers through interruptions", () => {
+  it.each(["Back", "restart"])(
+    "does not turn an invalid weight into a confirmed draft after %s",
+    (way) => {
+      saveOnboardingDraft("setup-test", {
+        ...draft,
+        step: 5,
+        weightKg: 75,
+        bodyAnswered: false,
+        ageConfirmed: true,
+      });
+      open();
+      fireEvent.change(screen.getByRole("textbox", { name: "Weight (kg)" }), {
+        target: { value: "999" },
+      });
+      fireEvent.change(screen.getByRole("textbox", { name: "Height (cm)" }), {
+        target: { value: "180" },
+      });
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      expect(loadOnboardingDraft("setup-test", 7)?.bodyAnswered).toBe(false);
+      if (way === "restart") {
+        cleanup();
+        open();
+      } else {
+        fireEvent.click(screen.getByRole("button", { name: "Back" }));
+        fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+      }
+      expect(screen.getByRole("textbox", { name: "Weight (kg)" })).toHaveValue(
+        ""
+      );
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      expect(complete).not.toHaveBeenCalled();
+    }
+  );
 });

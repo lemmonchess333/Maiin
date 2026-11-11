@@ -3,10 +3,11 @@ import type { CalorieRingMode } from "./CalorieRing";
 import { barFillPct, barLabelPct } from "@/lib/calorieRingFill";
 import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Lock } from "lucide-react";
+import { CalendarDays, Lock } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
+import { SettingsRow } from "@/components/settings/SettingsList";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -52,6 +53,10 @@ interface HeroDrillDownSheetProps {
   isToday: boolean;
   dailyTotals: DailyTotals;
   dailyTargets: EffectiveTargets;
+  /** Opens the week on Analytics' Food page. The page owns the
+   *  navigation and closes the sheet before it goes. Without it the row
+   *  is not drawn. */
+  onOpenWeek?: () => void;
 }
 
 interface MacroRowProps {
@@ -209,6 +214,7 @@ export default function HeroDrillDownSheet({
   isToday,
   dailyTotals,
   dailyTargets,
+  onOpenWeek,
 }: HeroDrillDownSheetProps) {
   /* The same mode the hero tile is showing. Read from the shared store
      rather than passed as a prop: this sheet renders from Food.tsx, a
@@ -260,7 +266,7 @@ export default function HeroDrillDownSheet({
               <div className="flex items-baseline gap-1.5">
                 {/* Counted the way the bar and the percentage are, as
                     each macro row is (Food10 (1)). */}
-                <span className="font-mono tabular-nums text-2xl font-extrabold text-foreground">
+                <span className="font-figure tabular-nums text-2xl font-extrabold text-foreground">
                   {formatCalories(
                     mode === "left" ? Math.abs(remaining) : dailyTotals.calories
                   )}
@@ -309,7 +315,7 @@ export default function HeroDrillDownSheet({
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">
-                  Fuel for today's training
+                  Fuel for today’s training
                 </p>
                 {!isPro && (
                   <span className="inline-flex items-center gap-1 text-caption font-semibold text-lifting-strong">
@@ -359,11 +365,11 @@ export default function HeroDrillDownSheet({
                     <span className="font-mono tabular-nums">
                       +{fuel.proteinDeltaG}g protein
                     </span>
-                    ; there isn't room for extra carbs.
+                    ; there isn’t room for extra carbs.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Protein and essential fat are already protected, so today's
+                    Protein and essential fat are already protected, so today’s
                     split stays steady.
                   </p>
                 )
@@ -472,6 +478,21 @@ export default function HeroDrillDownSheet({
                 </p>
               </div>
             </section>
+          )}
+
+          {/* The way from one day to its week. The strip above the hero
+              shows calories only; days on target, the days protein was
+              met and the weekend against the weekdays are on Analytics'
+              Food page, and nothing on the Food page led there. */}
+          {onOpenWeek && (
+            <ul className="@container rounded-xl bg-muted/50 overflow-hidden">
+              <SettingsRow
+                icon={CalendarDays}
+                label="This week"
+                description="Days on target and protein, on Analytics"
+                onClick={onOpenWeek}
+              />
+            </ul>
           )}
         </div>
       </BottomSheet>

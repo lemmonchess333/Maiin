@@ -44,6 +44,8 @@ function subscriber({
   requestMs = NOW,
   entitlement = true,
   sandbox = false,
+  periodType,
+  purchaseAtMs,
 } = {}) {
   return {
     request_date_ms: requestMs,
@@ -62,6 +64,8 @@ function subscriber({
           expires_date: iso(expires),
           store: "app_store",
           is_sandbox: sandbox,
+          ...(periodType && { period_type: periodType }),
+          ...(purchaseAtMs && { purchase_date: iso(purchaseAtMs) }),
           store_transaction_id: STORE_TRANSACTION_ID,
         },
       },
@@ -228,6 +232,54 @@ describe("revenueCatWebhook — the gate", () => {
 });
 
 describe("revenueCatWebhook — syncing", () => {
+  it("records verified trial and paid starts without keeping a provider id on the profile", async () => {
+    const db = memoryFirestore({
+      "users/uid-1": { subscriptionTier: "free" },
+    });
+    const trialStart = NOW - DAY;
+    const trial = fakeRevenueCat({
+      "uid-1": subscriber({ periodType: "trial", purchaseAtMs: trialStart }),
+    });
+    expect((await deliver(db, trial, purchase())).statusCode).toBe(200);
+    expect(db.data.get("users/uid-1").activationBillingFirsts).toEqual({
+      trial: { atMs: trialStart, source: "ios_iap" },
+    });
+
+    const paid = fakeRevenueCat({
+      "uid-1": subscriber({
+        requestMs: NOW + 7 * DAY,
+        expires: NOW + 30 * DAY,
+        periodType: "normal",
+        purchaseAtMs: NOW + 6 * DAY,
+      }),
+    });
+    expect(
+      (await deliver(db, paid, purchase({ type: "RENEWAL", id: "evt-paid" })))
+        .statusCode
+    ).toBe(200);
+    expect(db.data.get("users/uid-1").activationBillingFirsts).toEqual({
+      trial: { atMs: trialStart, source: "ios_iap" },
+      paid: { atMs: NOW + 6 * DAY, source: "ios_iap" },
+    });
+    expect(JSON.stringify(db.data.get("users/uid-1").activationBillingFirsts))
+      .not.toContain("200000");
+  });
+
+  it("does not count a sandbox RevenueCat purchase as a billing start", async () => {
+    const db = memoryFirestore({
+      "users/uid-1": { subscriptionTier: "free" },
+    });
+    const rc = fakeRevenueCat({
+      "uid-1": subscriber({
+        sandbox: true,
+        periodType: "normal",
+        purchaseAtMs: NOW - DAY,
+      }),
+    });
+    expect((await deliver(db, rc, purchase())).statusCode).toBe(200);
+    expect(db.data.get("users/uid-1").activationBillingFirsts).toBeUndefined();
+  });
+
   it("makes a buyer Pro from RevenueCat's answer, not from the event", async () => {
     const db = memoryFirestore({
       "users/uid-1": { subscriptionTier: "free", displayName: "Sam" },

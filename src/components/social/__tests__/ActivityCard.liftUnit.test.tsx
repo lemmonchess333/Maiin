@@ -75,7 +75,7 @@ describe("a lift post in the reader's unit", () => {
     const text = renderIn("kg");
     expect(text).toContain(`${group(4500)}kg volume`);
     expect(text).toContain("3×8×60 kg");
-    expect(text).toContain("New PR: Bench Press 100 kg");
+    expect(text).toContain("New best: Bench Press 100 kg");
   });
 
   it("reads lb for an lb reader, from the same stored kg", () => {
@@ -83,7 +83,7 @@ describe("a lift post in the reader's unit", () => {
     // 4,500 kg is 9,921 lb; 60 kg is 132.3 lb; 100 kg is 220.5 lb.
     expect(text).toContain(`${group(9921)}lb volume`);
     expect(text).toContain("3×8×132.3 lb");
-    expect(text).toContain("New PR: Bench Press 220.5 lb");
+    expect(text).toContain("New best: Bench Press 220.5 lb");
     expect(text).not.toMatch(/\bkg\b/);
   });
 });

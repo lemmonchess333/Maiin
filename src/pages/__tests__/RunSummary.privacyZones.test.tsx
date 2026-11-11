@@ -62,6 +62,10 @@ vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: h.weekPulse }));
+// The streak a run's post measures against (Soc15); none here.
+vi.mock("@/features/streaks/useStreaks", () => ({
+  useStreaks: () => ({ streakWithDay: () => null }),
+}));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({
@@ -273,7 +277,7 @@ describe("RunSummary — privacy zones are cut before a run is written", () => {
 
     expect(
       await screen.findByText(
-        /Privacy zones are cut from the route before it's saved, and they couldn't be checked/
+        /Privacy zones are cut from the route before it’s saved, and they couldn’t be checked/
       )
     ).toBeTruthy();
     expect(queued()).toHaveLength(0);

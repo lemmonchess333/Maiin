@@ -14,8 +14,8 @@
  *      and it cost a ~25-call-site migration to fix.
  *   2. **Crossing accounts.** PR #820 fixed one account's queued work flushing
  *      under another's auth on a shared device.
- *   3. **Losing work silently.** Shedding on quota is necessary; doing it
- *      quietly is how the offline queue's CORE-01 bug lost everything.
+ *   3. **Losing work silently.** Storage failure must preserve the old
+ *      queue and report failure, not silently shed unsynced commands.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -27,6 +27,9 @@ import {
   flushCommandOutbox,
   isTransportFailure,
   outboxLength,
+  subscribeCommandOutbox,
+  commandOutboxVersion,
+  lastCommandSettlement,
 } from "../commandOutbox";
 
 const cmd = (commandId: string, kind = "applyDeloadWeek") => ({
@@ -36,16 +39,70 @@ const cmd = (commandId: string, kind = "applyDeloadWeek") => ({
 });
 
 /** A Firebase callable error, which carries a `code`. */
-const callableError = (code: string) =>
-  Object.assign(new Error(code), { code });
+const callableError = (code: string, message = code) =>
+  Object.assign(new Error(message), { code });
+/** The SDK's error for a request that got no answer: code and message
+ *  both "internal" (@firebase/functions postJSON → codeForHTTPStatus(0)). */
+const noAnswer = () => callableError("functions/internal", "internal");
 
 beforeEach(() => {
   __resetCommandOutboxForTests();
 });
 
+describe("live replay feedback", () => {
+  it("notifies after rejection is settled and the queue is drained, scoped to its account", async () => {
+    const seen: Array<{ count: number; result: string | undefined }> = [];
+    const stop = subscribeCommandOutbox(() =>
+      seen.push({
+        count: outboxLength("alice"),
+        result: lastCommandSettlement("alice")?.result,
+      })
+    );
+    enqueueCommand("alice", cmd("move-1", "moveRunDay"));
+    await flushCommandOutbox("alice", async () => {
+      throw callableError("functions/failed-precondition");
+    });
+    expect(seen.at(-1)).toEqual({ count: 0, result: "declined" });
+    expect(lastCommandSettlement("alice")).toEqual({
+      commandId: "move-1",
+      kind: "moveRunDay",
+      result: "declined",
+    });
+    expect(lastCommandSettlement("bob")).toBeNull();
+    stop();
+    const calls = seen.length;
+    enqueueCommand("alice", cmd("move-2", "moveRunDay"));
+    expect(seen.length).toBe(calls);
+  });
+
+  it("notifies another tab's storage change and records an applied replay", async () => {
+    const listener = vi.fn();
+    const stop = subscribeCommandOutbox(listener);
+    const before = commandOutboxVersion();
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "tropos.program.commandOutbox" })
+    );
+    expect(commandOutboxVersion()).toBeGreaterThan(before);
+    expect(listener).toHaveBeenCalledOnce();
+    enqueueCommand("alice", cmd("move-3", "moveRunDay"));
+    await flushCommandOutbox("alice", async () => {});
+    expect(lastCommandSettlement("alice")?.result).toBe("applied");
+    stop();
+  });
+});
+
 describe("isTransportFailure — what may be retried", () => {
   it("treats the network codes as retryable", () => {
+    expect(isTransportFailure(noAnswer())).toBe(true);
+    expect(isTransportFailure(callableError("internal", "internal"))).toBe(
+      true
+    );
+    // A function that crashed before it answered.
+    expect(
+      isTransportFailure(callableError("functions/internal", "INTERNAL"))
+    ).toBe(true);
     for (const code of [
+      "auth/network-request-failed",
       "functions/unavailable",
       "functions/deadline-exceeded",
       "functions/cancelled",
@@ -65,11 +122,19 @@ describe("isTransportFailure — what may be retried", () => {
       "functions/failed-precondition",
       "functions/permission-denied",
       "functions/unauthenticated",
-      // `internal` usually means the handler threw — it will throw again.
-      "functions/internal",
     ]) {
       expect(isTransportFailure(callableError(code)), code).toBe(false);
     }
+    // The server's own internal error names what failed, and fails the
+    // same way on every replay.
+    expect(
+      isTransportFailure(
+        callableError(
+          "functions/internal",
+          "Failed to apply programme command."
+        )
+      )
+    ).toBe(false);
   });
 });
 
@@ -90,9 +155,11 @@ describe("enqueueCommand", () => {
     expect(outboxLength("alice")).toBe(1);
   });
 
-  it("is bounded, shedding the oldest", () => {
+  it("is bounded, refusing new commands at capacity", () => {
     for (let i = 0; i < MAX_OUTBOX_ENTRIES + 5; i++) {
-      enqueueCommand("alice", cmd(`c${i}`));
+      expect(enqueueCommand("alice", cmd(`c${i}`))).toBe(
+        i < MAX_OUTBOX_ENTRIES
+      );
     }
     expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
   });
@@ -253,19 +320,113 @@ describe("flushCommandOutbox — a command enqueued DURING a flush survives it",
   });
 });
 
-describe("enqueueCommand — shedding on the cap is loud", () => {
-  it("logs what it drops when the queue is full", () => {
+describe("enqueueCommand — full queue preservation", () => {
+  it.each([
+    ["alice", "overflow"],
+    ["bob", "overflow"],
+    ["bob", "c0"],
+  ])("refuses %s/%s without changing any stored bytes", (uid, id) => {
     const spy = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
+      expect(enqueueCommand("alice", cmd(`c${i}`))).toBe(true);
+    }
+    const before = localStorage.getItem("tropos.program.commandOutbox");
+    const version = commandOutboxVersion();
+    expect(enqueueCommand(uid, cmd(id))).toBe(false);
+    expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
+    expect(commandOutboxVersion()).toBe(version);
+    expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
+    expect(outboxLength("bob")).toBe(0);
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringMatching(/queue full — could not queue command/),
+      "applyDeloadWeek"
+    );
+    spy.mockRestore();
+  });
+
+  it("permits an existing owner's replacement at capacity without growth or reordering", async () => {
     for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
       enqueueCommand("alice", cmd(`c${i}`));
     }
-    expect(spy).not.toHaveBeenCalled();
-    enqueueCommand("alice", cmd("overflow"));
+    expect(
+      enqueueCommand("alice", { ...cmd("c0"), expectedWeekNumber: 4 })
+    ).toBe(true);
     expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringMatching(/shedding the oldest 1 queued command/),
-      ["applyDeloadWeek"]
+    const sent: Array<{ commandId: string; expectedWeekNumber?: unknown }> = [];
+    await flushCommandOutbox("alice", async (command) => {
+      sent.push(command);
+    });
+    expect(sent.map((command) => command.commandId)).toEqual(
+      Array.from({ length: MAX_OUTBOX_ENTRIES }, (_, i) => `c${i}`)
     );
-    spy.mockRestore();
+    expect(sent[0].expectedWeekNumber).toBe(4);
+  });
+});
+
+describe("durable storage failures", () => {
+  it("leaves the previous queue unchanged and reports a failed enqueue", () => {
+    enqueueCommand("alice", cmd("old"));
+    const before = localStorage.getItem("tropos.program.commandOutbox");
+    const spy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Full", "QuotaExceededError");
+      });
+    try {
+      expect(enqueueCommand("alice", cmd("new"))).toBe(false);
+      expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("does not report a drained queue when persisting the settlement fails", async () => {
+    enqueueCommand("alice", cmd("old"));
+    const spy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Full", "QuotaExceededError");
+      });
+    try {
+      expect(await flushCommandOutbox("alice", async () => {})).toBe(0);
+      expect(outboxLength("alice")).toBe(1);
+      expect(lastCommandSettlement("alice")).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("never overwrites or consumes another account's matching command id", async () => {
+    enqueueCommand("alice", cmd("same"));
+    enqueueCommand("bob", cmd("same"));
+    expect(outboxLength("alice")).toBe(1);
+    await flushCommandOutbox("alice", async () => {});
+    expect(outboxLength("bob")).toBe(1);
+  });
+
+  it("retains the SDK's internal network failure and commands after it", async () => {
+    enqueueCommand("alice", cmd("first"));
+    enqueueCommand("alice", cmd("second"));
+    const send = vi.fn().mockRejectedValue(noAnswer());
+    expect(await flushCommandOutbox("alice", send)).toBe(0);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(outboxLength("alice")).toBe(2);
+  });
+
+  it("settles the server's own internal refusal, so the commands after it go", async () => {
+    enqueueCommand("alice", cmd("first"));
+    enqueueCommand("alice", cmd("second"));
+    const send = vi
+      .fn()
+      .mockRejectedValueOnce(
+        callableError(
+          "functions/internal",
+          "Failed to apply programme command."
+        )
+      )
+      .mockResolvedValueOnce(undefined);
+    expect(await flushCommandOutbox("alice", send)).toBe(2);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(outboxLength("alice")).toBe(0);
   });
 });

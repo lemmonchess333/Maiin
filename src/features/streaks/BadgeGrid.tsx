@@ -11,6 +11,7 @@ import {
   type BadgeDef,
 } from "./badges";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { BadgeHex } from "./BadgeHex";
 import { ProgressRing } from "./BadgeProgressRing";
 import { badgeProgress, nearestBadge } from "./badgeProgress";
@@ -78,6 +79,7 @@ function ProgressBar({
 }
 
 export function BadgeGrid() {
+  const reduce = useReducedMotion();
   const {
     currentStreak,
     longestStreak,
@@ -95,7 +97,7 @@ export function BadgeGrid() {
   if (loadFailed) {
     return (
       <ErrorState
-        title="Couldn't load your badges"
+        title="Couldn’t load your badges"
         description="Check your connection and try again."
         retry={{ onClick: retryLoad }}
       />
@@ -163,19 +165,19 @@ export function BadgeGrid() {
               so) — as light-mode text it measured 2.15:1, under even the
               3:1 large-text floor. The achievement token is the same
               celebration register, theme-aware, AA both sides. */}
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-achievement-strong">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-achievement-strong">
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-primary">
             {Number.isFinite(longestStreak) ? longestStreak : 0}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Longest streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">
+          <p className="text-3xl font-extrabold font-figure tabular-nums text-foreground">
             {earnedBadges.length}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Badges earned</p>
@@ -208,9 +210,14 @@ export function BadgeGrid() {
                 return (
                   <motion.div
                     key={badge.id}
-                    initial={{ opacity: 0, y: 10 }}
+                    /* The grid arrives together: a 40 ms step per badge,
+                       restarting in each category, trickled thirty tiles
+                       in over ~0.7 s on every visit, and the fades still
+                       played under Reduce Motion. The first three lead
+                       by a step; the rest land with them. */
+                    initial={reduce ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
+                    transition={{ delay: Math.min(i, 2) * 0.03 }}
                     whileHover={
                       earned
                         ? { rotateY: 6, rotateX: -4, scale: 1.04, y: -2 }

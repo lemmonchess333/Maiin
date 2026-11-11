@@ -23,7 +23,7 @@ export function useShareRoute() {
         toast.error(
           loading
             ? "Privacy settings are still loading"
-            : "Couldn't check your privacy settings. Try again"
+            : "Couldn’t check your privacy settings. Try again"
         );
         return;
       }

@@ -50,6 +50,10 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/savedRoutes/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/workouts/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/runs/{doc}", sides: ["owner"] },
+  {
+    pathPattern: "match /users/{uid}/healthWorkoutExports/{doc}",
+    sides: ["owner"],
+  },
   { pathPattern: "match /users/{uid}/weights/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/settings/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/foodFavourites/{doc}", sides: ["owner"] },
@@ -312,7 +316,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (30 paths — push lock removed /users/{uid}/devices)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (31 paths)", () => {
     // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
     // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
@@ -328,6 +332,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // curated freeze-verification SUBSET; the
     // full drift inventory (with its own count) lives in
     // accountDeletionWriteRulesSnapshot.test.ts.
-    expect(PROTECTED_PATHS.length).toBe(30);
+    // Connected training adds one owner-writable Health receipt collection.
+    expect(PROTECTED_PATHS.length).toBe(31);
   });
 });

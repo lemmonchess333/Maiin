@@ -61,7 +61,7 @@ import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
 
 /** What the scanner said about this photo. Where the photo came from and
  *  where these numbers must come from: src/assets/pro-demo/README.md. */
-export const SCAN_DEMO_RESULT = {
+const SCAN_DEMO_RESULT = {
   title: "Rigatoni with prawns",
   calories: 720,
   protein: 32,
@@ -673,7 +673,7 @@ function ResultSheet({ live }: { live: boolean }) {
           <div className="space-y-2 rounded-xl bg-muted/30 p-3">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <p className="text-foreground">
-                <span className="text-xl font-extrabold font-mono tabular-nums">
+                <span className="text-xl font-extrabold font-figure tabular-nums">
                   {r.calories}
                 </span>
                 <span className="ml-1 text-sm font-normal text-muted-foreground">
@@ -1153,7 +1153,7 @@ function FoodScreen({ live }: { live: boolean }) {
       <div className="absolute inset-x-0 top-0 h-[54px] bg-background" />
       <div className="absolute inset-x-3 bottom-[34px]">
         <div
-          className="flex items-stretch rounded-full border border-border/60 p-1 card-shadow"
+          className="flex items-stretch rounded-full border border-border/60 dark:border-0 p-1 card-shadow"
           style={{ background: "var(--surface-solid)" }}
         >
           {TABS.map(({ label, Icon }) => {

@@ -2,16 +2,18 @@
 /**
  * Makes one TestFlight run's App Store signing from the App Store Connect
  * API key alone: an Apple Distribution certificate for a certificate
- * request made on the runner, and an App Store profile for the app that
- * names it. deploy-ios.yml runs this when the IOS_DIST_CERT_* secrets are
- * not set, so the owner, who has no Mac, provides an API key instead of
- * making a certificate and a profile by hand (docs/ios-release.md).
+ * request made on the runner, and an App Store profile naming it for each
+ * app and extension the project signs. deploy-ios.yml runs this when the
+ * IOS_DIST_CERT_* secrets are not set, so the owner, who has no Mac,
+ * provides an API key instead of making a certificate and profiles by hand
+ * (docs/ios-release.md).
  *
  * The certificate's private key never leaves the runner, so each run needs
  * a new certificate and the previous one is no use to anyone. Each run
- * names its profile after its certificate ("Tropos CI <serial>") and, before
- * making anything, deletes the profiles of earlier runs by that name and
- * revokes the certificates they name. So the account holds one certificate
+ * names its profiles after its certificate ("Tropos CI <serial>" for the
+ * first bundle ID, "Tropos CI <serial> <last part of the ID>" for the rest)
+ * and, before making anything, deletes the profiles of earlier runs by that
+ * name and revokes the certificates they name. So the account holds one certificate
  * from these runs at a time, and a certificate this did not make is never
  * touched. Revoking a distribution certificate does not affect builds
  * already uploaded: Apple signs what the App Store and TestFlight install.
@@ -19,11 +21,13 @@
  *   node scripts/ios/asc-signing.mjs <request.csr> <out-dir>
  *
  * with ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH (the .p8) and
- * BUNDLE_ID in the environment. Writes <out-dir>/dist.cer (DER) and
- * <out-dir>/profile.mobileprovision.
+ * SIGNED_BUNDLE_IDS, the space-separated bundle IDs the project signs
+ * (scripts/ios_signed_targets.py lists them), in the environment. Writes
+ * <out-dir>/dist.cer (DER) and <out-dir>/profiles/<bundle ID>.mobileprovision
+ * for each.
  */
 import { sign } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -96,25 +100,48 @@ async function listAll(request, path) {
   return items;
 }
 
+/** Each profile's name: the run's serial, then the last part of the
+ *  bundle ID for every ID after the first, kept unique. */
+export function profileNames(serial, identifiers) {
+  const names = [];
+  for (const [index, identifier] of identifiers.entries()) {
+    let name = `${PROFILE_PREFIX}${serial}`;
+    if (index > 0) name += ` ${identifier.split(".").pop()}`;
+    if (names.includes(name)) name += ` ${index}`;
+    names.push(name);
+  }
+  return names;
+}
+
 /**
  * Clears earlier runs' signing, then makes this run's. Returns the
- * certificate (DER) and the profile, both as Buffers.
+ * certificate (DER) and a profile per bundle ID, all as Buffers.
  */
-export async function prepareSigning({ request, bundleIdentifier, csr, log = () => {} }) {
-  const bundles = await listAll(
-    request,
-    `/v1/bundleIds?filter[identifier]=${encodeURIComponent(bundleIdentifier)}&limit=200`
-  );
-  const bundle = bundles.find((b) => b.attributes?.identifier === bundleIdentifier);
-  if (!bundle) {
-    throw new Error(
-      `Apple has no App ID for ${bundleIdentifier}. Register it under Apple Developer → Identifiers, with its capabilities, then run this again.`
+export async function prepareSigning({ request, bundleIdentifier, bundleIdentifiers, csr, log = () => {} }) {
+  const identifiers = bundleIdentifiers ?? [bundleIdentifier];
+  if (!identifiers.length || identifiers.some((identifier) => !identifier)) {
+    throw new Error("At least one App ID is required for signing.");
+  }
+  const bundles = [];
+  for (const identifier of identifiers) {
+    const matches = await listAll(
+      request,
+      `/v1/bundleIds?filter[identifier]=${encodeURIComponent(identifier)}&limit=200`
     );
+    const bundle = matches.find((b) => b.attributes?.identifier === identifier);
+    if (!bundle) {
+      throw new Error(
+        `Apple has no App ID for ${identifier}. Register it under Apple Developer → Identifiers, with its capabilities, then run this again.`
+      );
+    }
+    bundles.push(bundle);
   }
 
-  const profiles = await listAll(request, "/v1/profiles?filter[profileType]=IOS_APP_STORE&limit=200");
-  const earlier = profiles.filter((p) => p.attributes?.name?.startsWith(PROFILE_PREFIX));
-  const serials = new Set(earlier.map((p) => p.attributes.name.slice(PROFILE_PREFIX.length).trim()));
+  const existingProfiles = await listAll(request, "/v1/profiles?filter[profileType]=IOS_APP_STORE&limit=200");
+  const earlier = existingProfiles.filter((p) => p.attributes?.name?.startsWith(PROFILE_PREFIX));
+  const serials = new Set(
+    earlier.map((p) => p.attributes.name.slice(PROFILE_PREFIX.length).trim().split(" ")[0])
+  );
   for (const profile of earlier) {
     await request("DELETE", `/v1/profiles/${profile.id}`);
     log(`Deleted the profile an earlier run made: ${profile.attributes.name}`);
@@ -142,32 +169,49 @@ export async function prepareSigning({ request, bundleIdentifier, csr, log = () 
   const serial = certificate.attributes.serialNumber;
   log(`Made an Apple Distribution certificate: ${serial}`);
 
-  let profile;
+  const profiles = {};
+  const createdProfileIds = [];
+  const names = profileNames(serial, identifiers);
   try {
-    profile = (
-      await request("POST", "/v1/profiles", {
-        data: {
-          type: "profiles",
-          attributes: { name: `${PROFILE_PREFIX}${serial}`, profileType: "IOS_APP_STORE" },
-          relationships: {
-            bundleId: { data: { type: "bundleIds", id: bundle.id } },
-            certificates: { data: [{ type: "certificates", id: certificate.id }] },
+    for (const [index, bundle] of bundles.entries()) {
+      const identifier = identifiers[index];
+      const profile = (
+        await request("POST", "/v1/profiles", {
+          data: {
+            type: "profiles",
+            attributes: {
+              name: names[index],
+              profileType: "IOS_APP_STORE",
+            },
+            relationships: {
+              bundleId: { data: { type: "bundleIds", id: bundle.id } },
+              certificates: { data: [{ type: "certificates", id: certificate.id }] },
+            },
           },
-        },
-      })
-    ).data;
+        })
+      ).data;
+      createdProfileIds.push(profile.id);
+      profiles[identifier] = {
+        profile: Buffer.from(profile.attributes.profileContent, "base64"),
+        profileName: profile.attributes.name,
+      };
+      log(`Made the App Store profile ${profile.attributes.name} for ${identifier}`);
+    }
   } catch (error) {
-    // No profile names this certificate, so no later run would find it to
-    // revoke. Revoke it now; the failure that got here is the one to report.
+    // A partial set of profiles must not leave signing that a later run
+    // cannot reconcile. Clean up the ones made before the certificate.
+    for (const id of createdProfileIds) {
+      await request("DELETE", `/v1/profiles/${id}`).catch(() => {});
+    }
     await request("DELETE", `/v1/certificates/${certificate.id}`).catch(() => {});
     throw error;
   }
-  log(`Made the App Store profile ${profile.attributes.name} for ${bundleIdentifier}`);
 
   return {
     certificate: Buffer.from(certificate.attributes.certificateContent, "base64"),
-    profile: Buffer.from(profile.attributes.profileContent, "base64"),
-    profileName: profile.attributes.name,
+    profile: profiles[identifiers[0]].profile,
+    profileName: profiles[identifiers[0]].profileName,
+    profiles,
     serial,
   };
 }
@@ -196,14 +240,24 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       issuerId: env.ASC_API_ISSUER_ID.trim(),
       privateKey: readFileSync(env.ASC_API_KEY_PATH, "utf8"),
     });
+    const bundleIdentifiers = (env.SIGNED_BUNDLE_IDS ?? "").split(/\s+/).filter(Boolean);
+    if (!bundleIdentifiers.length) {
+      throw new Error("SIGNED_BUNDLE_IDS is empty: the workflow's \"List the targets to sign\" step sets it.");
+    }
     const result = await prepareSigning({
       request: connect({ token }),
-      bundleIdentifier: env.BUNDLE_ID,
+      bundleIdentifiers,
       csr: readFileSync(csrPath, "utf8"),
       log: (line) => console.log(line),
     });
     writeFileSync(join(outDir, "dist.cer"), result.certificate);
-    writeFileSync(join(outDir, "profile.mobileprovision"), result.profile);
+    mkdirSync(join(outDir, "profiles"), { recursive: true });
+    for (const identifier of bundleIdentifiers) {
+      writeFileSync(
+        join(outDir, "profiles", `${identifier}.mobileprovision`),
+        result.profiles[identifier].profile
+      );
+    }
   } catch (error) {
     console.log(`::error::${explain(error)}`);
     process.exit(1);

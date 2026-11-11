@@ -36,9 +36,10 @@ describe("CLAUDE.md — the Home composition sentence", () => {
      gone, and a set-equality check would have passed through the second
      one. It does not notice a section missing from the sentence. */
   const ORDER = [
+    "StackedCTACards",
+    "WeekSessions",
     "WeekStrip",
     "DayPeekCard",
-    "StackedCTACards",
     "TodayEnergy",
     "WaterCard",
     "WeightStepsTiles",

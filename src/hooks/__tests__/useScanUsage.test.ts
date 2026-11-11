@@ -12,7 +12,8 @@
  *   4. Pro user + text_ai → limit=100.
  *   5. Trial user (isInTrial=true) → treated as Pro for limits.
  *   6. Stale day in the doc → used=0 (server-side reset model;
- *      client-side display matches).
+ *      client-side display matches). The day is the UTC day on both
+ *      sides, so a device in any zone reads the count the server keeps.
  *   7. Legacy {count, month} doc shape → used=0 (no migration
  *      required; matches server-side helper).
  *
@@ -25,7 +26,7 @@
  * collection now fails instead of silently reading the same synthetic
  * snapshot.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 
 // Module-level mock refs so individual tests can override the
@@ -57,17 +58,19 @@ vi.mock("firebase/firestore");
 
 import { useScanUsage } from "../useScanUsage";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 /** The hook reads `scanUsage/{uid}` — seeding by path pins that. */
 function seedUsage(data: Record<string, unknown> | null) {
   if (data) seedFirestore({ "scanUsage/uid_test": data });
 }
 
+/** The UTC date: the day the server counts scans against. */
 function todayKey(): string {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
@@ -78,6 +81,8 @@ beforeEach(() => {
   authMock.mockReturnValue({ user: { uid: "uid_test" } });
   subscriptionMock.mockReturnValue({ isPro: false, isInTrial: false });
 });
+
+afterEach(restoreRealTimers);
 
 describe("useScanUsage", () => {
   it("Cycle 1: free user + default action (image_ai) reports limit=0 (Pro-only gate)", async () => {
@@ -152,5 +157,21 @@ describe("useScanUsage", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
     expect(result.current.remaining).toBe(100);
+  });
+
+  it("Cycle 8: reads the count by the UTC day, and resets at 00:00 UTC, in any zone", async () => {
+    // 23:30 UTC on the 25th: already the 26th in Auckland or Kiritimati,
+    // still the 25th in Midway. The server's count is the 25th's whatever
+    // the device says, and it starts again half an hour later.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-05-25T23:30:00Z"));
+    subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
+    seedUsage({ image_ai: { day: "2026-05-25", count: 40 } });
+    const { result } = renderHook(() => useScanUsage("image_ai"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.used).toBe(40);
+    expect(result.current.resetDate.toISOString()).toBe(
+      "2026-05-26T00:00:00.000Z"
+    );
   });
 });

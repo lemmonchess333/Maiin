@@ -186,7 +186,7 @@ describe("getLine — recovering state", () => {
   it("daysSinceLastTraining > 7: 'Quiet week. Log when you're back'", () => {
     expect(
       getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 10 })
-    ).toBe("Quiet week. Log when you're back");
+    ).toBe("Quiet week. Log when you’re back");
   });
 
   it("daysSinceLastTraining <= 7: 'Light week. Take it easy'", () => {

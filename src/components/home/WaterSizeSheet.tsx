@@ -48,7 +48,7 @@ export default function WaterSizeSheet({
 
   function log(ml: number) {
     if (onLog(ml) === false) {
-      setError("Couldn't save this amount. Try again.");
+      setError("Couldn’t save this amount. Try again.");
       return;
     }
     haptic();
@@ -59,7 +59,7 @@ export default function WaterSizeSheet({
      first tap would make fixing two mis-taps two trips. */
   function removeDrink(id: string) {
     if (onRemoveDrink?.(id) === false) {
-      setError("Couldn't remove that drink. Try again.");
+      setError("Couldn’t remove that drink. Try again.");
       return;
     }
     setError("");
@@ -78,7 +78,7 @@ export default function WaterSizeSheet({
             tile the moment it opens — without it you are adding to a
             number you can no longer see. */}
         {totalMl !== undefined && (
-          <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+          <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
             {formatWaterVolume(totalMl)}
             <span className="ml-2 text-xs font-medium font-sans text-muted-foreground">
               today

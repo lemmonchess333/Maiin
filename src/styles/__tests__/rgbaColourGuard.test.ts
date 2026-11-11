@@ -69,6 +69,9 @@ const EXEMPT: Record<string, string> = {
   // frames from the capture channel rather than a green unit suite.
   "components/home/WaterCard.tsx": "hydration fill ramp (deferred, #2220)",
   "components/home/WaterWave.tsx": "hydration fill ramp (deferred, #2220)",
+  // The same ramp's fill stops, moved out of WaterCard so the fill can
+  // be sized to the water's depth (the compositor fix of #3121).
+  "components/home/waterFill.ts": "hydration fill ramp (deferred, #2220)",
 };
 
 /** `rgb(…)` / `rgba(…)` opening with three decimal channels. */

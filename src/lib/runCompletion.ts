@@ -13,26 +13,52 @@ import { collection, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
-import { KEPT_ROUTE_POINTS, sampleRoute } from "@/lib/routeSegments";
+import {
+  KEPT_ROUTE_POINTS,
+  sampleRoute,
+  type RouteCoordinate,
+} from "@/lib/routeSegments";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
+import { ROUTE_WITHHELD_NOTE } from "@/lib/privacyZones";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost } from "@/lib/activityPost";
+import {
+  runHistoryOf,
+  runPostMoments,
+  type RunHistory,
+  type RunMomentContext,
+} from "@/lib/postMoments";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import type { SavedRun } from "@/lib/savedRuns";
 import type { GPSPoint, Split } from "@/lib/gps";
 import type { RouteQuality } from "@/lib/routeQuality";
 import type { RunConfig } from "@/components/run/RunSetupModal";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel2 } from "@/lib/runLabels";
+import { runNameOf } from "@/lib/runName";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
+import type { HeartRateSummary } from "@/lib/hrZones";
 
 /** A finished run, as the finish screen holds it. */
 export interface FinishedRun {
+  /** Stable phone-owned identity, allocated before recording. */
+  identity?: RunSessionIdentity;
   /** The trace, after privacy zones are cut out of it. */
   points: GPSPoint[];
   /** Original first-fix epoch, before privacy zones remove any points.
    *  Absent for older callers and runs with no recorded trace. */
   startedAt?: number;
+  /** Actual first timer start, after GPS acquisition/countdown. Apple Health
+   *  uses this with the active `elapsed` duration; the run's original day
+   *  remains pinned to `identity.startedAt`. */
+  recordingStartedAt?: number;
+  /** Actual recording end, independent of when Save is tapped. */
+  finishedAt?: number;
+  /** Watch-derived summary; raw samples never enter the run document. */
+  heartRate?: HeartRateSummary | null;
   /** Metres: the distance edited on the finish screen, else as tracked. */
   distance: number;
   /** Seconds. */
@@ -60,6 +86,13 @@ export interface FinishedRun {
   /** The quickest 1K, 5K and 10K in the full trace, as the finish screen
    *  lists them (`detectBestEfforts`). */
   bestEfforts: { distance: number; time: number; label: string }[];
+  /** The name the runner gave it on the finish screen. Empty or absent,
+   *  the run takes `runPostName`'s (`runName.ts`). */
+  name?: string;
+  /** What the finish screen knew beyond the run (Soc15): the earlier runs
+   *  it is compared with, the streak, whether it is the first session.
+   *  Read for the post's moments, never saved on the run. */
+  moments?: RunMomentContext;
 }
 
 /** Privacy cuts change the route, not when the run started. Older callers
@@ -69,14 +102,52 @@ function startOf(run: FinishedRun, now: Date): Date {
   return first ? new Date(first) : now;
 }
 
+/** When the run started: its identity's start, else its first point. */
+function runStart(run: FinishedRun, now: Date): Date {
+  return run.identity ? new Date(run.identity.startedAt) : startOf(run, now);
+}
+
+/**
+ * The local day a run belongs to (Lift3): the day it started, not the day
+ * Save was tapped, so a run begun before midnight counts on the day it
+ * began. The saved run's `date`, and the day its streak counts.
+ */
+export function runDay(run: FinishedRun, now: Date = new Date()): string {
+  return run.identity?.startLocalDate ?? localDateString(runStart(run, now));
+}
+
+/**
+ * The earlier runs a run's moments compare it with: every saved run that
+ * counts (`isVolumeEligible`: not invalid, not saved anyway), less the run
+ * itself, once saved. Read from the history the finish screen already
+ * holds.
+ */
+export function earlierRunHistory(
+  runs: readonly SavedRun[],
+  runId: string | null | undefined
+): RunHistory {
+  return runHistoryOf(
+    runs.filter((run) => run.id !== runId && isVolumeEligible(run))
+  );
+}
+
 /** The saved run, as `users/{uid}/runs/{id}` holds it. */
 export function runDocument(run: FinishedRun, now: Date = new Date()) {
   // Legacy paths and fixtures that bypass Run.tsx can arrive without
   // plan metadata: they are saved as freeform, so the block is always
   // well formed.
   const plan = run.runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
-  const startedAt = startOf(run, now);
+  const startedAt = runStart(run, now);
+  const recordingStartedAt =
+    typeof run.recordingStartedAt === "number" &&
+    Number.isFinite(run.recordingStartedAt) &&
+    run.recordingStartedAt > 0 &&
+    (run.finishedAt === undefined || run.recordingStartedAt <= run.finishedAt)
+      ? run.recordingStartedAt
+      : null;
   return {
+    // The name it is posted under, kept with the run.
+    name: runNameOf(run, now),
     distance: run.distance,
     duration: run.elapsed,
     avgPace: run.avgPaceSeconds,
@@ -88,11 +159,23 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     // its finish screen named none.
     bestEfforts: run.isInvalid ? [] : run.bestEfforts,
     startedAt: Timestamp.fromDate(startedAt),
+    ...(recordingStartedAt !== null
+      ? { recordingStartedAt: Timestamp.fromMillis(recordingStartedAt) }
+      : {}),
     completedAt: Timestamp.fromDate(now),
-    // Lift3: a run belongs to the local day it started, not the day Save
-    // was tapped, so a run begun before midnight counts on the day it
-    // began. The server's sweeps and the recovery path query by it.
-    date: localDateString(startedAt),
+    ...(run.finishedAt !== undefined
+      ? { recordingEndedAt: Timestamp.fromMillis(run.finishedAt) }
+      : {}),
+    ...(run.identity
+      ? {
+          sessionId: run.identity.sessionId,
+          originTimeZone: run.identity.originTimeZone,
+        }
+      : {}),
+    ...(run.heartRate ? { heartRate: run.heartRate } : {}),
+    // Lift3: a run belongs to the local day it started (`runDay`). The
+    // server's sweeps and the recovery path query by it.
+    date: runDay(run, now),
     notes: run.notes.trim(),
     // RUN-03 and A6: null, not absent, when skipped or not judged, so
     // the field's shape does not split.
@@ -141,45 +224,66 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
 /** The route a run's post carries, and the line the share sheet shows
  *  under it. */
 export interface RunPostRoute {
-  routePreview: { lat: number; lon: number; breakBefore?: boolean }[];
+  /** The post's own copy of the route: 20 points, drawn by the card. */
+  routePreview: RouteCoordinate[];
+  /** The same shared route at the map's resolution (`ROUTE_MAP_POINTS`),
+   *  for the map image made after the post exists (`routeMapUpload.ts`).
+   *  Never written to the post: the image is what carries it. */
+  mapLine: RouteCoordinate[];
   note: string;
 }
 
+/** How many points of the shared route the map image draws: enough for a
+ *  smooth line on a street map, where 20 cut every corner. */
+export const ROUTE_MAP_POINTS = 400;
+
 /**
- * The route a post may carry: none while the privacy settings are loading
- * or unread, and otherwise the trace with its ends clipped unless the user
- * chose to show them. Worked out once, before any choice, so the route
- * previewed is the route posted.
+ * The part of a run's trace a post may show, the one rule for every
+ * picture of it: nothing while the privacy settings are loading or
+ * unread, and otherwise the trace (privacy zones already cut out by the
+ * caller) with its ends clipped unless the user chose to show them. The
+ * post's 20-point preview and the map image are both samples of what
+ * this returns, so neither can show a point the other may not.
+ */
+export function sharedRouteTrace<T extends RouteCoordinate>(
+  points: T[],
+  options: { withheld: boolean; showEnds: boolean }
+): T[] {
+  if (options.withheld) return [];
+  return options.showEnds
+    ? points.slice()
+    : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+}
+
+/** A sample of the shared trace, as the post stores points. */
+function routeSample(
+  shared: RouteCoordinate[],
+  limit: number
+): RouteCoordinate[] {
+  return sampleRoute(shared, limit).map((p) => ({
+    lat: p.lat,
+    lon: p.lon,
+    ...(p.breakBefore ? { breakBefore: true } : {}),
+  }));
+}
+
+/**
+ * The route a post may carry (`sharedRouteTrace`), at the preview's 20
+ * points and at the map's resolution. Worked out once, before any choice,
+ * so the route previewed is the route posted and the route on the map.
  */
 export function runPostRoute(
   points: GPSPoint[],
   options: { withheld: boolean; showEnds: boolean }
 ): RunPostRoute {
-  const shared = options.withheld
-    ? []
-    : options.showEnds
-      ? points
-      : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+  const shared = sharedRouteTrace(points, options);
   return {
-    routePreview: sampleRoute(shared, 20).map((p) => ({
-      lat: p.lat,
-      lon: p.lon,
-      ...(p.breakBefore ? { breakBefore: true } : {}),
-    })),
+    routePreview: routeSample(shared, 20),
+    mapLine: routeSample(shared, ROUTE_MAP_POINTS),
     note: options.withheld
-      ? "Route withheld because privacy settings are unavailable."
+      ? ROUTE_WITHHELD_NOTE
       : "This is the route included in your post.",
   };
-}
-
-/** The run's name on its post. */
-export function runPostName(run: Pick<FinishedRun, "runConfig">): string {
-  const type = run.runConfig?.activityType;
-  return type === "intervals"
-    ? "Interval Run"
-    : type === "guided"
-      ? "Guided Run"
-      : "Run";
 }
 
 /** What the share sheet shows before a run is posted, in the runner's
@@ -193,7 +297,7 @@ export function runPostPreview(
   const secs = Math.round(run.elapsed % 60);
   return {
     type: "run",
-    title: runPostName(run),
+    title: runNameOf(run),
     routePreview: route.routePreview,
     routePrivacyNote: route.note,
     meta: [
@@ -215,8 +319,11 @@ export function runPost(
   route: RunPostRoute,
   decision: Pick<ShareDecision, "visibility"> & { caption?: string }
 ): ActivityPost {
-  const name = runPostName(run);
+  const name = runNameOf(run);
   const caption = decision.caption?.trim();
+  // A run saved despite invalid figures is never offered for sharing, and
+  // its efforts are not kept; it names no moment either way.
+  const moments = run.isInvalid ? [] : runPostMoments(run, run.moments);
   return {
     authorId: author.uid,
     authorName: author.displayName || "Athlete",
@@ -233,6 +340,7 @@ export function runPost(
     elevationGain: run.elevationGain,
     calories: run.calories,
     routePreview: route.routePreview,
+    ...(moments.length > 0 ? { moments } : {}),
   };
 }
 
@@ -244,6 +352,11 @@ export interface RunCompletion {
   resumed: boolean;
   /** Posts the run. None for a run saved anyway: it is never offered. */
   share?: SessionShareAction;
+}
+
+/** Mint a canonical run ID at Start, before recording or review. */
+export function allocateRunId(uid: string): string {
+  return doc(collection(db, "users", uid, "runs")).id;
 }
 
 /**
@@ -277,7 +390,13 @@ export function completeRun({
   unit: DistanceUnit;
   now?: Date;
 }): RunCompletion {
-  const id = runId ?? doc(collection(db, "users", uid, "runs")).id;
+  if (
+    run.identity &&
+    (run.identity.uid !== uid ||
+      (runId !== null && runId !== run.identity.runId))
+  )
+    throw new Error("Run identity does not match the signed-in account.");
+  const id = run.identity?.runId ?? runId ?? allocateRunId(uid);
   if (!alreadySaved)
     queueDurableWrite(uid, `users/${uid}/runs`, id, runDocument(run, now));
   if (navigator.onLine) void flushQueue(db, uid).catch(() => {});
@@ -294,6 +413,16 @@ export function completeRun({
             preview: () => runPostPreview(run, route, unit),
             payload: (decision) =>
               runPost({ uid, ...author }, run, route, decision),
+            // The post's map image, made in the background once the post
+            // exists, its code loaded only then. A post queued offline
+            // keeps the drawn route: the queue's drain is where a later
+            // map would hook in.
+            afterPost: (activityId) =>
+              void import("@/lib/routeMapUpload")
+                .then(({ attachRouteMap }) =>
+                  attachRouteMap({ uid, activityId, route })
+                )
+                .catch(() => {}),
           }),
         }),
   };

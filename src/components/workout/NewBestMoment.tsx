@@ -107,7 +107,7 @@ export default function NewBestMoment({
               <p className="mt-1 truncate text-sm font-semibold text-foreground">
                 {moment.exerciseName}
               </p>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
                 {formatLoad(moment.result.weight, liftUnit)} ×{" "}
                 {moment.result.reps}
               </p>

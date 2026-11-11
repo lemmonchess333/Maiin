@@ -56,7 +56,7 @@ export function isRateLimitedRejection(err: unknown): boolean {
 /** What a plan save refused for coming too often says, in place of
  *  "Try again", which would be refused as well. */
 export const PLAN_SAVES_TOO_OFTEN =
-  "You've changed your plan a lot in the last few minutes. Wait a few minutes, then save again.";
+  "You’ve changed your plan a lot in the last few minutes. Wait a few minutes, then save again.";
 
 /**
  * The sentence the app threw for the person ("Sign in again to log

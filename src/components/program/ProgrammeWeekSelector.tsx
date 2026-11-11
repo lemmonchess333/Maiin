@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -64,7 +65,33 @@ export default function ProgrammeWeekSelector({
   onSelect: (key: string) => void;
   ariaLabel?: string;
 }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const revealSelection = () => {
+      const selected = row.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!selected) return;
+      const bounds = row.getBoundingClientRect();
+      const tab = selected.getBoundingClientRect();
+      if (tab.left < bounds.left || tab.right > bounds.right)
+        row.scrollLeft +=
+          tab.left - bounds.left - (row.clientWidth - tab.width) / 2;
+    };
+    revealSelection();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(revealSelection);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [selectedKey, cells.length]);
+
   if (cells.length === 0) return null;
+  /* A run's name reserves two lines only in a week where one needs them:
+     a week of rest days and one-word runs kept an empty 14px line. The
+     height holds across the row, as before; it can differ week to week. */
+  const runTwoLines =
+    sport === "run" &&
+    cells.some((cell) => runStripLines(cell.bottomLabel).length > 1);
   // Sport colour drives the today/selected circle — purple for lifting,
   // coral for running — so the selector reads as belonging to its tab.
   const SPORT = sport === "run" ? THEME.running : THEME.brand;
@@ -79,6 +106,12 @@ export default function ProgrammeWeekSelector({
      one control, and green is kept for status that is not a sport. The
      check takes the foreground, which reads on the tint in both themes. */
   const DONE_FILL = `hsl(var(--${sport === "run" ? "running" : "lifting"}) / 0.3)`;
+  /* The selected day's fill sits under a white number, so it takes the
+     sport's `-fill` step, as the filled buttons do: white on the bare
+     identity is 3.87:1 for purple and 3.58:1 for coral, under the 4.5:1
+     a 14px number needs. The ring and the halo keep the identity. */
+  const SELECTED_FILL =
+    sport === "run" ? "hsl(var(--running-fill))" : "hsl(var(--lifting-fill))";
 
   /* Under 21em of row (a 320px phone) the row gives up its side inset and
      half of each gap, and a run's name sets tighter, so "Easy 30"
@@ -86,9 +119,13 @@ export default function ProgrammeWeekSelector({
   return (
     <div className="@container">
       <div
+        ref={rowRef}
         role="tablist"
         aria-label={ariaLabel ?? `${sport === "run" ? "Run" : "Lift"} week`}
-        className="flex px-1 pt-1 pb-2 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
+        /* One compact row, Food's week strip's size (DS4, §14m rules
+           17-18): the 2px above and below is the today halo's room past
+           the 44pt button, which the row's scroll would clip. */
+        className="flex overflow-x-auto px-1 py-0.5 gap-1 @max-[21em]:px-0 @max-[21em]:gap-0.5"
       >
         {cells.map((cell) => {
           const isSelected = cell.key === selectedKey;
@@ -141,12 +178,12 @@ export default function ProgrammeWeekSelector({
             );
             labelColor = "hsl(var(--muted-foreground))";
           } else if (isToday && isSelected) {
-            fill = SPORT;
+            fill = SELECTED_FILL;
             bWidth = 0;
             bColor = "transparent";
             glow = `0 0 0 4px ${SPORT}1A`;
             content = (
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-semibold font-mono tabular-nums text-white">
                 {cell.center}
               </span>
             );
@@ -157,32 +194,35 @@ export default function ProgrammeWeekSelector({
             bColor = SPORT;
             glow = `0 0 0 4px ${SPORT}1A`;
             content = (
-              <span className="text-sm font-bold" style={{ color: SPORT_TEXT }}>
+              <span
+                className="text-sm font-semibold font-mono tabular-nums"
+                style={{ color: SPORT_TEXT }}
+              >
                 {cell.center}
               </span>
             );
             labelColor = SPORT_TEXT;
           } else if (isSelected) {
-            fill = SPORT;
+            fill = SELECTED_FILL;
             bWidth = 0;
             bColor = "transparent";
             content = (
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-semibold font-mono tabular-nums text-white">
                 {cell.center}
               </span>
             );
             labelColor = SPORT_TEXT;
           } else {
-            // Upcoming + rest share the calm outline; rest fades a touch more
-            // so a run-scope empty day reads as "nothing here" not "to do".
+            // An upcoming day has the calm outline; a run-scope rest day has
+            // none, so it reads as "nothing here" rather than "to do", as a
+            // day with nothing planned does on Home's week strip. Its number
+            // keeps the full muted grey: faded to 55% it measured 2.1:1 on
+            // the light page and 3.0:1 on the dark one.
             fill = "transparent";
-            bWidth = 2;
-            bColor = "hsl(var(--border))";
+            bWidth = isRest ? 0 : 2;
+            bColor = isRest ? "transparent" : "hsl(var(--border))";
             content = (
-              <span
-                className="text-sm font-bold text-muted-foreground"
-                style={isRest ? { opacity: 0.55 } : undefined}
-              >
+              <span className="text-sm font-semibold font-mono tabular-nums text-muted-foreground">
                 {cell.center}
               </span>
             );
@@ -192,7 +232,7 @@ export default function ProgrammeWeekSelector({
           return (
             <div
               key={cell.key}
-              className="flex flex-col items-center flex-1 min-w-0"
+              className="flex flex-col items-center flex-1 min-w-11"
             >
               {cell.topLabel !== undefined && (
                 <span className="text-caption text-muted-foreground mb-0.5">
@@ -203,6 +243,7 @@ export default function ProgrammeWeekSelector({
                 type="button"
                 role="tab"
                 aria-selected={isSelected}
+                tabIndex={isSelected ? 0 : -1}
                 aria-label={
                   `${cell.bottomLabel || cell.center}` +
                   (isCompleted
@@ -217,8 +258,27 @@ export default function ProgrammeWeekSelector({
                   haptic("light");
                   onSelect(cell.key);
                 }}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-                style={{ width: 52, height: 52 }}
+                onKeyDown={(event) => {
+                  const index = cells.indexOf(cell);
+                  const next =
+                    event.key === "ArrowRight"
+                      ? (index + 1) % cells.length
+                      : event.key === "ArrowLeft"
+                        ? (index - 1 + cells.length) % cells.length
+                        : event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? cells.length - 1
+                            : null;
+                  if (next === null) return;
+                  event.preventDefault();
+                  rowRef.current
+                    ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                    .item(next)
+                    ?.focus({ preventScroll: true });
+                  onSelect(cells[next].key);
+                }}
+                className="flex h-11 w-full items-center justify-center min-w-[44px]"
               >
                 {/* Colour/border props live in `style`, not `animate`
                   (audit batch 4): Motion cannot tween "transparent" ↔
@@ -265,10 +325,13 @@ export default function ProgrammeWeekSelector({
               <span
                 data-cell-label
                 className={cn(
-                  "text-caption font-semibold text-center leading-tight mt-1 block",
+                  "text-caption font-semibold text-center leading-tight block",
                   sport === "run"
-                    ? "max-w-[calc(100%_+_0.25rem)] min-h-7 @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter"
-                    : "max-w-full truncate min-h-4"
+                    ? cn(
+                        "max-w-[calc(100%_+_0.25rem)] @max-[21em]:max-w-[calc(100%_+_0.125rem)] @max-[21em]:tracking-tighter",
+                        runTwoLines ? "min-h-7" : "min-h-3.5"
+                      )
+                    : "max-w-full truncate min-h-3.5"
                 )}
                 style={{ color: labelColor }}
               >

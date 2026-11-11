@@ -340,3 +340,35 @@ describe("runningPageInsight", () => {
     expect(insight.longest?.runId).toBe(longRun.id);
   });
 });
+
+it("does not let a future-dated run displace an achieved fastest kilometre", () => {
+  const completed = run(1, 1, 300, "easy", { kmSplitSeconds: [300] });
+  const future = run(-1, 1, 240, "easy", { kmSplitSeconds: [240] });
+  expect(bestEfforts([completed, future], WINDOW)).toEqual(
+    bestEfforts([completed], WINDOW)
+  );
+  expect(bestEfforts([future], WINDOW)).toEqual([]);
+});
+
+it("does not resurrect a deleted window run from the older all-time read", () => {
+  const oldRun = run(40, 5, 320, "easy", {
+    kmSplitSeconds: Array(5).fill(320),
+  });
+  const deleted = run(2, 10, 240, "easy", {
+    kmSplitSeconds: Array(10).fill(240),
+  });
+  const insight = runningPageInsight({
+    windowRuns: [],
+    allRuns: [oldRun, deleted],
+    allRunsKnown: true,
+    ...WITH_PREVIOUS,
+    bins: [],
+  });
+  expect(insight.seconds).toBe(0);
+  expect(insight.longest).toBeNull();
+  expect(insight.pace.rows).toEqual([]);
+  expect(insight.efforts.every((row) => row.inRange === null)).toBe(true);
+  expect(insight.efforts.every((row) => row.allTime.runId === oldRun.id)).toBe(
+    true
+  );
+});

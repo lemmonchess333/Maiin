@@ -11,6 +11,7 @@ import {
   getHeartRateSource,
   type HeartRateSubscription,
 } from "@/lib/heartRateSource";
+import { appendHeartRateSample } from "@/lib/heartRateSession";
 
 export interface HeartRateState {
   /** Effective max HR: user-measured if set, else the age estimate, else 0. */
@@ -38,13 +39,18 @@ export interface HeartRateState {
  * (Tanaka via hrZones.maxHrFromAge). With neither, `maxHr` is 0 and zones are
  * empty — consumers should prompt for age/max rather than render bogus bands.
  *
- * Live streaming is gated on `getHeartRateSource().available`, which is
- * `false` on web today (no browser HR API) and on native until the HealthKit
- * plugin lands. Passing `live: false` (the default) skips the subscription
- * entirely — the static zone preview (Settings) needs no stream.
+ * Live streaming starts only for a named, opted-in run. Passing `live: false`
+ * (the default) keeps the Settings zone preview independent of the Watch.
  */
-export function useHeartRate(opts: { live?: boolean } = {}): HeartRateState {
-  const { live = false } = opts;
+export function useHeartRate(
+  opts: {
+    live?: boolean;
+    enabled?: boolean;
+    sessionId?: string | null;
+    uid?: string | null;
+  } = {}
+): HeartRateState {
+  const { live = false, enabled = false, sessionId = null, uid = null } = opts;
   const { profile } = useAuth();
 
   const measured = profile?.maxHeartRate ?? null;
@@ -68,16 +74,35 @@ export function useHeartRate(opts: { live?: boolean } = {}): HeartRateState {
   const subRef = useRef<HeartRateSubscription | null>(null);
 
   useEffect(() => {
-    // No synchronous setState here — bpm starts null and the cleanup below
-    // resets it when `live`/availability flips off (avoids a cascading render).
-    if (!live || !liveAvailable) return;
-    subRef.current = source.subscribe((next) => setBpm(next));
+    if (!live || !enabled || !sessionId || !uid || !liveAvailable) return;
+    let lastSampleAt = 0;
+    subRef.current = source.subscribe(
+      (next, at, id) => {
+        appendHeartRateSample(uid, sessionId, {
+          bpm: next,
+          at,
+          id,
+          source: "apple-watch",
+        });
+        // A beat retransmitted after reconnect belongs in the summary, but
+        // is not a live reading on the run HUD.
+        if (Date.now() - at > 20_000 || at > Date.now() + 5_000) return;
+        lastSampleAt = Date.now();
+        setBpm(next);
+      },
+      undefined,
+      sessionId
+    );
+    const staleTimer = window.setInterval(() => {
+      if (lastSampleAt && Date.now() - lastSampleAt > 20_000) setBpm(null);
+    }, 5_000);
     return () => {
+      window.clearInterval(staleTimer);
       subRef.current?.stop();
       subRef.current = null;
       setBpm(null);
     };
-  }, [live, liveAvailable, source]);
+  }, [live, enabled, sessionId, uid, liveAvailable, source]);
 
   const zone = useMemo<0 | ZoneNumber | null>(() => {
     if (bpm == null || maxHr <= 0) return null;

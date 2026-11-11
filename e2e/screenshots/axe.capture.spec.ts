@@ -7,7 +7,7 @@
  * people use and inside the sheets they open.
  *
  * The screens: Home, Food, Train, History and its Lifting page, Social
- * (Together, again with its other challenges opened, and the Explore
+ * (Together, again with a challenge's sheet open, and the Explore
  * feed), Settings and six of its sections, a
  * profile, a Space, an exercise, a run, a workout and the Weekly review.
  * The sheets: Food's manual entry and a meal's edit sheet, the weight
@@ -263,20 +263,30 @@ test.describe("axe", () => {
     await open(page, "history?view=lifting", nav);
     await check(page, "history-lifting", found);
 
-    /* The Community section, then (in `settle`) its skeletons gone: which
-       Circles card it shows depends on what other specs on the shared
-       account have done, so the marker names none of them. */
-    await open(page, "social", page.getByRole("region", { name: "Community" }));
+    /* Together, asked for by name: Social opens on the Feed for anyone
+       who follows someone, as the seeded account does. The Community
+       section, then (in `settle`) its skeletons gone: which Circles card
+       it shows depends on what other specs on the shared account have
+       done, so the marker names none of them. */
+    await open(
+      page,
+      "social?tab=together",
+      page.getByRole("region", { name: "Community" })
+    );
     await check(page, "social", found);
 
-    // The challenges behind "See N more", opened into their compact rows.
+    // A challenge row, opened into its sheet: its card, board and Join
+    // or Leave.
     await page
-      .getByRole("button", { name: /^See \d+ more challenges?$/ })
+      .getByRole("region", { name: "Community" })
+      .locator('li > button[aria-haspopup="dialog"]')
+      .first()
       .click();
     await page
-      .getByRole("heading", { name: "Available" })
+      .getByRole("dialog")
       .waitFor({ state: "visible", timeout: 10_000 });
-    await check(page, "social-more-challenges", found);
+    await check(page, "social-challenge-sheet", found);
+    await page.keyboard.press("Escape");
 
     await open(
       page,
@@ -438,13 +448,13 @@ test.describe("axe", () => {
     await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
     await check(page, "activity-post", found);
 
-    await page.goto("activity/rich-feed-push?comments=1");
-    await sheetReady(
+    // The session's comments are on its page, not in a sheet.
+    await open(
       page,
-      dialog.getByText("Strong session.", { exact: false })
+      "activity/rich-feed-push?comments=1",
+      page.getByText("Strong session.", { exact: false })
     );
-    await check(page, "sheet-activity-comments", found, sheet);
-    await close(page);
+    await check(page, "activity-post-comments", found);
 
     await open(
       page,
@@ -461,7 +471,7 @@ test.describe("axe", () => {
     await open(
       page,
       "space/womens-running/post/no-such-post",
-      page.getByText("This post isn't available")
+      page.getByText("This post isn’t available")
     );
     await check(page, "space-post-unavailable", found);
 

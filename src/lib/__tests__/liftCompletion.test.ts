@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Firestore } from "firebase/firestore";
 import {
   allPaths,
+  deferReads,
+  pendingReads,
+  releaseAllReads,
+  resumeReads,
   failNextFirestore,
   readDoc,
   resetFirestore,
@@ -40,6 +44,12 @@ import {
   type FinishedLift,
 } from "../liftCompletion";
 import { estimateLiftBurn } from "../workoutBurn";
+import {
+  flushQueue,
+  getFailedWorkoutCompletionCount,
+  getQueueLength,
+  hasQueuedWorkoutCompletion,
+} from "../offlineQueue";
 
 const exercise = (extra: Partial<ProgramExercise>): ProgramExercise =>
   ({
@@ -137,6 +147,50 @@ describe("liftWorkoutExercises", () => {
     // A blank note is no note.
     expect(curl).not.toHaveProperty("notes");
     expect(curl).toMatchObject({ sets: [], plannedSetCount: 2 });
+  });
+
+  it("records the superset each grouped exercise was done in, by its slot", () => {
+    const rows = liftWorkoutExercises(
+      [
+        { ...BENCH, instanceId: "bench-1" },
+        { ...CURL, instanceId: "curl-1" },
+        { ...PLANK, instanceId: "plank-1" },
+      ],
+      [[done(8, 60)], [done(12, 15)], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1"] }]
+    );
+    expect(rows.map((row) => row.superset)).toEqual([1, 1, undefined]);
+    // An exercise done on its own carries no field at all.
+    expect(rows[2]).not.toHaveProperty("superset");
+  });
+
+  it("tags no superset an exercise was skipped from, nor a partner left alone", () => {
+    const slotted = [
+      { ...BENCH, instanceId: "bench-1" },
+      { ...CURL, instanceId: "curl-1" },
+      { ...PLANK, instanceId: "plank-1" },
+    ];
+    // Three in a superset, the curl skipped: the other two still are one.
+    const skipped = liftWorkoutExercises(
+      slotted,
+      [[done(8, 60)], [], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1", "plank-1"] }]
+    );
+    expect(skipped.map((row) => row.superset)).toEqual([1, undefined, 1]);
+    // A pair whose partner was never started: no superset at all.
+    const alone = liftWorkoutExercises(
+      slotted,
+      [[done(8, 60)], [{ ...done(12, 15), completed: false }], [done(60, 20)]],
+      undefined,
+      [{ ids: ["bench-1", "curl-1"] }]
+    );
+    expect(alone.map((row) => row.superset)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 
   it("carries a timed hold's unit", () => {
@@ -243,6 +297,36 @@ describe("completeLift", () => {
     });
   });
 
+  it("posts the session's moments and its PR count, never saved on the workout (Soc15)", async () => {
+    h.compose.mockResolvedValue({ visibility: "public", caption: "" });
+    // A session of its own: a post is remembered per session for the life
+    // of the module (sessionPost.ts), so sharing c1 here would answer the
+    // other tests' c1 posts with this one whenever it runs first.
+    const receipt = await completeLift(
+      routineLift({
+        completionId: "c-moments",
+        moments: {
+          prs: [{ exercise: "Bench Press", weightKg: 60, reps: 8 }],
+          streak: { before: 29, after: 30 },
+          firstSession: false,
+        },
+      })
+    );
+    await receipt.share.post();
+    const posted = allPaths().filter((p) => p.startsWith("activities/"));
+    expect(posted).toHaveLength(1);
+    expect(readDoc(posted[0])).toMatchObject({
+      prCount: 1,
+      moments: [
+        { kind: "streak", days: 30 },
+        { kind: "pr", exercise: "Bench Press", weightKg: 60, reps: 8 },
+      ],
+    });
+    const saved = readDoc("users/lifter/workouts/routine-c-moments");
+    expect(saved).not.toHaveProperty("moments");
+    expect(saved).not.toHaveProperty("prCount");
+  });
+
   it("waits in the offline queue, then saves", async () => {
     online.mockReturnValue(false);
     const receipt = await completeLift(routineLift());
@@ -258,10 +342,64 @@ describe("completeLift", () => {
     });
   });
 
-  it("throws when the save fails, and leaves nothing behind", async () => {
-    failNextFirestore("commit");
+  it("retains a failed online save for the global retry after its screen closes", async () => {
+    failNextFirestore("commit", { code: "unavailable" });
     await expect(completeLift(routineLift())).rejects.toThrow();
     expect(allPaths()).toEqual([]);
+    expect(getQueueLength("lifter")).toBe(1);
+    expect(getFailedWorkoutCompletionCount("lifter")).toBe(1);
+    await flushQueue({} as Firestore, "lifter");
+    expect(readDoc("users/lifter/workouts/routine-c1")).toMatchObject({
+      date: localDateString(STARTED),
+      durationMinutes: 41,
+      notes: "Routine: Bench day (saved from Sam)",
+    });
+    expect(getQueueLength("lifter")).toBe(0);
+    await flushQueue({} as Firestore, "lifter");
+    expect(
+      allPaths().filter((path) => path.includes("/workouts/"))
+    ).toHaveLength(1);
+  });
+
+  it("retains the exact payload before an online transaction can finish", async () => {
+    deferReads();
+    const saving = completeLift(routineLift());
+    await vi.waitFor(() => expect(pendingReads().length).toBeGreaterThan(0));
+    expect(hasQueuedWorkoutCompletion("lifter", "routine-c1")).toBe(true);
+    expect(readDoc("users/lifter/workouts/routine-c1")).toBeUndefined();
+    resumeReads();
+    releaseAllReads();
+    await expect(saving).resolves.toMatchObject({ syncStatus: "synced" });
+    expect(getQueueLength("lifter")).toBe(0);
+  });
+
+  it("still saves online when the browser refuses recovery storage", async () => {
+    const storage = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Storage is full", "QuotaExceededError");
+      });
+    try {
+      await expect(completeLift(routineLift())).resolves.toMatchObject({
+        syncStatus: "synced",
+      });
+      expect(readDoc("users/lifter/workouts/routine-c1")).toBeDefined();
+    } finally {
+      storage.mockRestore();
+    }
+  });
+
+  it("keeps a failed online completion scoped to its original account", async () => {
+    failNextFirestore("commit", { code: "unavailable" });
+    await expect(completeLift(routineLift())).rejects.toThrow();
+    h.user = { uid: "other-account" };
+    await flushQueue({} as Firestore, "other-account");
+    expect(allPaths()).toEqual([]);
+    expect(getFailedWorkoutCompletionCount("other-account")).toBe(0);
+    expect(getFailedWorkoutCompletionCount("lifter")).toBe(1);
+    h.user = { uid: "lifter" };
+    await flushQueue({} as Firestore, "lifter");
+    expect(readDoc("users/lifter/workouts/routine-c1")).toBeDefined();
   });
 
   it("queues nothing for an account no longer signed in, offline too", async () => {

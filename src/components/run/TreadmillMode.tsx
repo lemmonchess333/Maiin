@@ -90,13 +90,11 @@ export default function TreadmillMode({
   return (
     <div className="w-full max-w-lg mx-auto space-y-6 px-4 py-6 pb-[calc(1.5rem+var(--safe-bottom))]">
       <div className="text-center">
-        <p className="text-xs text-white/50 uppercase tracking-widest">
-          {title}
-        </p>
+        <p className="text-xs text-white/50">{title}</p>
         <p
           role="timer"
           aria-label="Elapsed time"
-          className="text-6xl font-mono tabular-nums font-bold mt-2"
+          className="text-6xl font-figure tabular-nums font-bold mt-2"
         >
           {formatTime(elapsed)}
         </p>
@@ -141,7 +139,7 @@ export default function TreadmillMode({
             /* min-w-0: a flex item defaults to min-width:auto, so flex-1 alone
                can't shrink a number input below its intrinsic width — it
                overflowed the row at 393px. min-w-0 lets it actually flex. */
-            className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl font-mono"
+            className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl font-figure"
           />
           <span id="treadmill-distance-unit" className="text-white/60 text-sm">
             {unitLabel}
@@ -199,7 +197,7 @@ export default function TreadmillMode({
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

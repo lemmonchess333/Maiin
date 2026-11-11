@@ -181,7 +181,7 @@ describe("FellBehindSheet — detrained register", () => {
     expect(screen.queryByText(/1 of 4 runs/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\(25%\)/)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/It's been a while between runs/i)
+      screen.getByText(/It’s been a while between runs/i)
     ).toBeInTheDocument();
     // The body promises exactly what the detrained regen branch produces.
     expect(
@@ -257,7 +257,7 @@ describe("FellBehindSheet — opened by the run return", () => {
   it("speaks in the welcome-back register and offers the rebuild", async () => {
     const { realignRacePlan, onClose } = setupReturn();
     expect(
-      screen.getByText(/It's been a while between runs/i)
+      screen.getByText(/It’s been a while between runs/i)
     ).toBeInTheDocument();
     expect(screen.queryByText(/ of .* runs \(/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Rebuild my plan/i }));
@@ -270,7 +270,7 @@ describe("FellBehindSheet — opened by the run return", () => {
     // the sheet still greets rather than drawing an empty scoreboard.
     setupReturn("none");
     expect(
-      screen.getByText(/It's been a while between runs/i)
+      screen.getByText(/It’s been a while between runs/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Rebuild my plan/i })

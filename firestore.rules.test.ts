@@ -34,6 +34,7 @@ import {
   collection,
   setDoc,
   deleteDoc,
+  deleteField,
   serverTimestamp,
   Timestamp,
   writeBatch,
@@ -70,18 +71,20 @@ const VERIFIED = { email_verified: true };
 
 /**
  * Every value a client can legitimately put in a photo field: the Storage
- * download URL (profilePhotoUpload appends `&v=`), the Google OAuth CDN
- * and the Apple OAuth CDN. Anything else loads as an <img src> on a
- * stranger's device, so it is a tracking pixel.
+ * download URL of a screened upload (profilePhotoUpload appends `&v=`), a
+ * Google sign-in avatar and the Apple CDN. Anything else loads as an
+ * <img src> on a stranger's device, so it is a tracking pixel or a photo
+ * nobody screened.
  */
 const ALLOWED_PHOTO_URLS = [
   "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
-/** This project's bucket: the host alone admits any Firebase project's. */
+/** This project's bucket, in a screened folder: the host alone admits any
+ *  Firebase project's bucket. */
 const PHOTO_URL_ORIGIN =
-  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F";
 /** Arbitrary host, suffix-phishing host, http downgrade, two non-http
  *  schemes, and a 2049-char value on an allowed origin (the size cap). */
 const REJECTED_PHOTO_URLS = [
@@ -94,6 +97,13 @@ const REJECTED_PHOTO_URLS = [
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
+  // A browser resolves the dot segments before it fetches: this loads
+  // from another project's bucket.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/../../attacker-proj.appspot.com/o/pixel.png?alt=media",
+  // This project's bucket, a folder the photo screen never checks.
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Fowner-uid%2Fx.jpg?alt=media",
+  // Google's host, a shared Google Photos image rather than an avatar.
+  "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
 ];
 
 suite("firestore.rules — users/{uid}/public/{doc}", () => {
@@ -426,6 +436,53 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 
+  it("a stored photo the gate refuses blocks no other write; a new one is checked", async () => {
+    // Every write here is a merge, so the stored photo is in each request.
+    // One written before the gate took its present shape must not refuse
+    // the streak mirror or a rename, and must not be a way back in.
+    const stored =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.appspot.com/o/old-avatar.jpg?alt=media";
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+        {
+          uid: OWNER_UID,
+          displayName: "Owner",
+          photoURL: stored,
+        }
+      );
+    });
+    const ref = doc(
+      env.authenticatedContext(OWNER_UID).firestore(),
+      "users",
+      OWNER_UID,
+      "public",
+      "profile"
+    );
+    await assertSucceeds(
+      setDoc(ref, { currentStreak: 5, longestStreak: 9 }, { merge: true })
+    );
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "Owner Two", photoURL: stored },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(
+        ref,
+        {
+          photoURL: "https://lh3.googleusercontent.com/pw/AP1GczSynthetic=w600",
+        },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(
+      setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[0] }, { merge: true })
+    );
+  });
+
   it("partial update without photoURL passes (field-absent branch)", async () => {
     // The rule short-circuits when photoURL isn't in the write — a
     // streak-only bump shouldn't fail just because no photoURL was
@@ -541,6 +598,89 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         { merge: true }
       )
     );
+  });
+});
+
+suite("firestore.rules — Apple Health workout receipts", () => {
+  let env: RulesTestEnvironment;
+  const runPath = ["users", OWNER_UID, "runs", "run-1"] as const;
+  const receiptPath = [
+    "users",
+    OWNER_UID,
+    "healthWorkoutExports",
+    "run-1",
+  ] as const;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+  afterAll(async () => env?.cleanup());
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  it("allows a receipt for an existing run, then a deletion marker and acknowledgement", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...runPath), { duration: 60 });
+    });
+    const owner = env.authenticatedContext(OWNER_UID).firestore();
+    const receipt = doc(owner, ...receiptPath);
+    await assertSucceeds(
+      setDoc(receipt, {
+        runId: "run-1",
+        state: "attempted",
+        revision: "v1",
+        workoutId: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertSucceeds(
+      setDoc(receipt, { state: "exported", workoutId: "hk-1" }, { merge: true })
+    );
+    await assertFails(
+      setDoc(receipt, { state: "pending-delete" }, { merge: true })
+    );
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), ...runPath));
+    });
+    await assertSucceeds(
+      setDoc(receipt, { state: "pending-delete" }, { merge: true })
+    );
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(owner, "users", OWNER_UID, "healthWorkoutExports"),
+          where("state", "==", "pending-delete"),
+          limit(50)
+        )
+      )
+    );
+    await assertFails(setDoc(receipt, { state: "exported" }, { merge: true }));
+    await assertSucceeds(deleteDoc(receipt));
+    await assertFails(setDoc(receipt, { runId: "run-1", state: "attempted" }));
+  });
+
+  it("keeps another account and anonymous clients out of the receipt", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...receiptPath), {
+        runId: "run-1",
+        state: "pending-delete",
+      });
+    });
+    const other = env.authenticatedContext(OTHER_UID).firestore();
+    const anonymous = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(other, ...receiptPath)));
+    await assertFails(deleteDoc(doc(other, ...receiptPath)));
+    await assertFails(getDoc(doc(anonymous, ...receiptPath)));
   });
 });
 
@@ -669,6 +809,48 @@ suite("firestore.rules — /challenges", () => {
     await assertFails(deleteDoc(doc(db, "challenges", "weekly-2026-01-01")));
   });
 
+  // The community goal's total and runner count are the server's
+  // (functions/lib/communityGoal.js): every signed-in reader sees them,
+  // and no client moves them, its own runs included.
+  it("authed user reads a group goal's total — succeeds", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "group-goal-2026-01-01"),
+        {
+          ...validChallengeData,
+          collectiveTarget: 1000,
+          collectiveMeters: 412000,
+          collectiveRunners: 7,
+        }
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      getDoc(doc(db, "challenges", "group-goal-2026-01-01"))
+    );
+  });
+
+  it("authed user moves a group goal's total or runners — fails (server-owned)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "group-goal-2026-01-01"),
+        {
+          ...validChallengeData,
+          collectiveTarget: 1000,
+          collectiveMeters: 412000,
+          collectiveRunners: 7,
+        }
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    const ref = doc(db, "challenges", "group-goal-2026-01-01");
+    await assertFails(
+      setDoc(ref, { collectiveMeters: 1000000 }, { merge: true })
+    );
+    await assertFails(setDoc(ref, { collectiveRunners: 8 }, { merge: true }));
+    await assertFails(setDoc(ref, { collectiveMeters: 0 }, { merge: true }));
+  });
+
   it("unauthed user creates a challenge — fails", async () => {
     const db = env.unauthenticatedContext().firestore();
     await assertFails(
@@ -789,8 +971,8 @@ suite("firestore.rules — /challenges", () => {
 
   // ── participant photoURL value gate ─────────────────────────────────
   // The participant row renders on the world-readable leaderboard, so its
-  // photoURL is loaded by every viewer. joinChallenge copies
-  // users/{uid}.photoURL and omits the field when there is none.
+  // photoURL is loaded by every viewer. joinChallenge copies the public
+  // profile's photoURL and omits the field when there is none.
   describe("participant photoURL value gate", () => {
     const CHALLENGE = "weekly-2026-01-01";
     const seedChallenge = () =>
@@ -825,9 +1007,11 @@ suite("firestore.rules — /challenges", () => {
       for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
         await assertFails(setDoc(ref, join(photoURL)));
       }
-    });
+    }, 30_000);
 
-    it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
+    it("no client update, not even the photo or name a join may carry", async () => {
+      // identityResync carries a new public name and photo to the row
+      // with the Admin SDK; a client rename skipped the word filter.
       await seedChallenge();
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(
@@ -838,17 +1022,82 @@ suite("firestore.rules — /challenges", () => {
             "participants",
             OWNER_UID
           ),
-          join(ALLOWED_PHOTO_URLS[1])
+          { ...join(ALLOWED_PHOTO_URLS[1]), displayName: "Owner" }
+        );
+        await setDoc(
+          doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+          { displayName: "Owner Two" }
         );
       });
       const db = env.authenticatedContext(OWNER_UID).firestore();
       const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
       await assertFails(
-        setDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }, { merge: true })
-      );
-      await assertSucceeds(
         setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[2] }, { merge: true })
       );
+      await assertFails(
+        setDoc(ref, { displayName: "Owner Two" }, { merge: true })
+      );
+      await assertFails(
+        setDoc(ref, { displayName: "anything-unscreened" }, { merge: true })
+      );
+      // The row is still there to leave.
+      await assertSucceeds(deleteDoc(ref));
+    });
+  });
+
+  // ── the leaderboard name is the public profile's ───────────────────
+  // The board renders displayName to every signed-in viewer. The public
+  // profile's name is the one the word filter screens; the private user
+  // document's is not.
+  describe("participant displayName is the public profile's", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const joinAs = (displayName?: unknown) => ({
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+      ...(displayName === undefined ? {} : { displayName }),
+    });
+    const seed = (profile: Record<string, unknown> | null) =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "challenges", CHALLENGE),
+          validChallengeData
+        );
+        await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+          displayName: "Private unscreened",
+        });
+        if (profile) {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
+            profile
+          );
+        }
+      });
+    const ref = () =>
+      doc(
+        env.authenticatedContext(OWNER_UID).firestore(),
+        "challenges",
+        CHALLENGE,
+        "participants",
+        OWNER_UID
+      );
+
+    it("a join with the public name succeeds; any other name fails", async () => {
+      await seed({ displayName: "Owner" });
+      await assertFails(setDoc(ref(), joinAs("Private unscreened")));
+      await assertFails(setDoc(ref(), joinAs("anything-unscreened")));
+      await assertFails(setDoc(ref(), joinAs(null)));
+      await assertSucceeds(setDoc(ref(), joinAs("Owner")));
+    });
+
+    it("with no public profile or name, only a join without a name succeeds", async () => {
+      await seed(null);
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
+      await assertSucceeds(deleteDoc(ref()));
+      await seed({ displayName: null });
+      await assertFails(setDoc(ref(), joinAs("Owner")));
+      await assertSucceeds(setDoc(ref(), joinAs()));
     });
   });
 
@@ -1998,7 +2247,7 @@ suite(
             type: "workout",
             visibility: "followers",
             authorPhotoURL:
-              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/foo.jpg",
+              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Ffoo.jpg",
             workoutName: "Push day",
             exerciseCount: 6,
             totalVolume: 5400,
@@ -2162,10 +2411,10 @@ suite(
       );
     });
 
-    it("oversized routePreview (>5000 points) — rejected (audit #11)", async () => {
+    it("oversized routePreview (>100 points) — rejected (audit #11)", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      // 5001 entries — one over the cap.
-      const bigRoute = Array.from({ length: 5001 }, (_, i) => ({
+      // 101 entries — one over the cap. A run's post carries 20.
+      const bigRoute = Array.from({ length: 101 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
       }));
@@ -2177,11 +2426,12 @@ suite(
       );
     });
 
-    it("routePreview at the cap (5000 points) — accepted", async () => {
+    it("routePreview at the cap (100 points) — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const cappedRoute = Array.from({ length: 5000 }, (_, i) => ({
+      const cappedRoute = Array.from({ length: 100 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
+        breakBefore: i === 50,
       }));
       await assertSucceeds(
         setDoc(
@@ -2191,16 +2441,224 @@ suite(
       );
     });
 
-    it("oversized exercises array (>100) — rejected", async () => {
+    it("oversized exercises array (>50) — rejected; 50 rows as liftPost builds them — accepted", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
-      const bigExercises = Array.from({ length: 101 }, (_, i) => ({
-        name: `Ex ${i}`,
-        summary: "5x10",
-      }));
+      const row = (i: number) => ({
+        name: `Exercise ${i}`,
+        exerciseId: `exercise-${i}`,
+        summary: "3×10×60 kg",
+        setCount: 3,
+        targetReps: 10,
+        targetWeightKg: 60,
+      });
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-ex"),
-          makeValidActivity({ exercises: bigExercises })
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 51 }, (_, i) => row(i)),
+          })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "ok-ex"),
+          makeValidActivity({
+            type: "workout",
+            exercises: Array.from({ length: 50 }, (_, i) => row(i)),
+          })
+        )
+      );
+    });
+
+    /* Moments (Soc15): a kind and its numbers, never typed text. Each
+       refusal below has a twin that creates, so the rule refuses the one
+       thing wrong with it and not the field. activityPostFields.cross
+       .test.ts holds the rule's lists to src/lib/postMoments.ts. */
+    describe("moments (Soc15)", () => {
+      const EVERY_KIND = [
+        { kind: "pr", exercise: "Bench Press", weightKg: 92.5, reps: 5 },
+        { kind: "longestRun", meters: 21345.6 },
+        { kind: "firstDistance", meters: 21097 },
+        { kind: "fastestEffort", meters: 5000, seconds: 1361.4 },
+        { kind: "streak", days: 30 },
+        { kind: "planWeek", week: 4, weeks: 12 },
+        { kind: "planComplete" },
+        { kind: "firstSession" },
+      ];
+      const post = (id: string, moments: unknown) =>
+        setDoc(
+          doc(
+            env.authenticatedContext(OWNER_UID, VERIFIED).firestore(),
+            "activities",
+            id
+          ),
+          makeValidActivity({ moments })
+        );
+
+      it("a post carries up to three moments of every kind", async () => {
+        for (let i = 0; i < EVERY_KIND.length; i += 3) {
+          await assertSucceeds(
+            post(`moments-${i}`, EVERY_KIND.slice(i, i + 3))
+          );
+        }
+        await assertSucceeds(post("moments-none", []));
+      });
+
+      it("a fourth moment is refused; three create", async () => {
+        const four = EVERY_KIND.slice(0, 4);
+        await assertFails(post("moments-four", four));
+        await assertSucceeds(post("moments-three", four.slice(0, 3)));
+      });
+
+      it("refuses a moment that is not a list of maps", async () => {
+        await assertFails(post("moments-map", { kind: "firstSession" }));
+        await assertFails(post("moments-text", ["New PR"]));
+        await assertFails(post("moments-null", [null]));
+      });
+
+      it("refuses a kind it does not know, a key too many and a key missing", async () => {
+        await assertFails(post("moment-kind", [{ kind: "localLegend" }]));
+        await assertFails(post("moment-nokind", [{ days: 30 }]));
+        await assertFails(
+          post("moment-extra", [{ kind: "streak", days: 30, note: "nice" }])
+        );
+        await assertFails(
+          post("moment-missing", [{ kind: "pr", exercise: "Squat", reps: 5 }])
+        );
+        await assertFails(
+          post("moment-extra-bare", [{ kind: "firstSession", text: "hi" }])
+        );
+        await assertSucceeds(post("moment-ok", [{ kind: "streak", days: 30 }]));
+      });
+
+      it("checks every index, not only the first", async () => {
+        const bad = { kind: "streak", days: 8 };
+        const good = { kind: "firstSession" };
+        await assertFails(post("moment-bad-2nd", [good, bad]));
+        await assertFails(post("moment-bad-3rd", [good, good, bad]));
+        await assertSucceeds(post("moment-good-3", [good, good, good]));
+      });
+
+      it("holds a PR's exercise to 1–60 characters and its numbers to a set", async () => {
+        const pr = (over: Record<string, unknown>) => [
+          { kind: "pr", exercise: "Squat", weightKg: 100, reps: 5, ...over },
+        ];
+        await assertSucceeds(post("pr-60", pr({ exercise: "e".repeat(60) })));
+        await assertFails(post("pr-61", pr({ exercise: "e".repeat(61) })));
+        await assertFails(post("pr-empty", pr({ exercise: "" })));
+        await assertFails(post("pr-number-name", pr({ exercise: 7 })));
+        await assertFails(post("pr-zero-kg", pr({ weightKg: 0 })));
+        await assertFails(post("pr-heavy", pr({ weightKg: 1000.5 })));
+        await assertFails(post("pr-zero-reps", pr({ reps: 0 })));
+        await assertFails(post("pr-half-rep", pr({ reps: 5.5 })));
+        await assertFails(post("pr-text-reps", pr({ reps: "5" })));
+      });
+
+      it("holds the run moments to their distances and times", async () => {
+        await assertFails(
+          post("first-7k", [{ kind: "firstDistance", meters: 7000 }])
+        );
+        await assertSucceeds(
+          post("first-marathon", [{ kind: "firstDistance", meters: 42195 }])
+        );
+        await assertFails(
+          post("fast-half", [
+            { kind: "fastestEffort", meters: 21097, seconds: 5400 },
+          ])
+        );
+        await assertFails(
+          post("fast-zero", [
+            { kind: "fastestEffort", meters: 1000, seconds: 0 },
+          ])
+        );
+        await assertFails(
+          post("longest-zero", [{ kind: "longestRun", meters: 0 }])
+        );
+        await assertFails(
+          post("longest-far", [{ kind: "longestRun", meters: 500001 }])
+        );
+      });
+
+      it("holds a streak to its milestones and a plan's week inside the plan", async () => {
+        await assertFails(post("streak-8", [{ kind: "streak", days: 8 }]));
+        await assertSucceeds(
+          post("streak-365", [{ kind: "streak", days: 365 }])
+        );
+        await assertFails(
+          post("week-past", [{ kind: "planWeek", week: 13, weeks: 12 }])
+        );
+        await assertFails(
+          post("week-zero", [{ kind: "planWeek", week: 0, weeks: 12 }])
+        );
+        await assertFails(
+          post("week-long", [{ kind: "planWeek", week: 1, weeks: 105 }])
+        );
+        await assertSucceeds(
+          post("week-last", [{ kind: "planWeek", week: 12, weeks: 12 }])
+        );
+      });
+    });
+
+    it("each field holds its own type; a list cannot stand in for a name", async () => {
+      // A list of strings passed the old size() caps, since a list has a
+      // size too: 200 items of anything as a "name".
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const bigList = Array.from({ length: 10 }, () => "x".repeat(1000));
+      for (const [i, overrides] of [
+        { workoutName: bigList },
+        { runName: bigList },
+        { activityTitle: bigList },
+        { prExercise: bigList },
+        { challengeMilestone: bigList },
+        { badgeEarned: bigList },
+        { prHit: "x".repeat(1000) },
+        { distance: "5000" },
+        { duration: "1800" },
+        { elevationGain: "40" },
+        { calories: "300" },
+        { totalVolume: "5000" },
+        { exerciseCount: "5" },
+        { prWeight: "90" },
+        { prCount: "1" },
+        { routePreview: { a: 1 } },
+        { exercises: "Bench press" },
+        { muscleGroups: "chest" },
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `bad-type-${i}`),
+            makeValidActivity(overrides)
+          )
+        );
+      }
+    }, 30_000);
+
+    it("muscle groups are short strings: 600 characters in all", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "mg-at-cap"),
+          makeValidActivity({
+            muscleGroups: Array.from({ length: 20 }, () => "x".repeat(30)),
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-past-cap"),
+          makeValidActivity({
+            muscleGroups: [
+              ...Array.from({ length: 19 }, () => "x".repeat(30)),
+              "x".repeat(31),
+            ],
+          })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "mg-not-strings"),
+          makeValidActivity({ muscleGroups: [{ name: "x".repeat(9000) }] })
         )
       );
     });
@@ -2246,6 +2704,38 @@ suite(
         )
       );
     });
+
+    it("avgPace is seconds a kilometre, or an older post's short text", async () => {
+      // The card prints a string pace as it is, so a string is a pace's
+      // length at most: it was the one unbounded field on a post.
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-number"),
+          makeValidActivity({ avgPace: 334.5 })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "pace-text"),
+          makeValidActivity({ avgPace: "5:34 /km" })
+        )
+      );
+      for (const [i, avgPace] of [
+        "x".repeat(17),
+        "x".repeat(1_000_000),
+        ["5:34"],
+        { pace: 334 },
+        true,
+      ].entries()) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", `pace-bad-${i}`),
+            makeValidActivity({ avgPace })
+          )
+        );
+      }
+    }, 30_000);
 
     it("duration > 24h — rejected", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
@@ -2327,7 +2817,7 @@ suite(
             makeValidActivity({ authorPhotoURL: 42 })
           )
         );
-      });
+      }, 30_000);
 
       it("accepts exactly 2048 chars on an allowed origin", async () => {
         // The 2049 rejection is in REJECTED_PHOTO_URLS; this is the other
@@ -2608,6 +3098,509 @@ suite(
           { merge: true }
         )
       );
+    });
+
+    // Soc15 call 5: a run post's map image, named by the author's app once
+    // the post exists (src/lib/routeMapUpload.ts). Only this post's own two
+    // images in this project's bucket, only on a post that shares a route.
+    describe("a run post's map image (routeMap)", () => {
+      const BUCKET =
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+      const mapUrl = (
+        author: string,
+        post: string,
+        theme: string,
+        bucket = BUCKET
+      ) =>
+        `${bucket}route-maps%2F${author}%2F${post}%2F${theme}.jpg?alt=media&token=t0k`;
+      const ownMap = (post = "R1") => ({
+        light: mapUrl(OWNER_UID, post, "light"),
+        dark: mapUrl(OWNER_UID, post, "dark"),
+      });
+      const ROUTE = [
+        { lat: 51.5, lon: -0.12 },
+        { lat: 51.51, lon: -0.12 },
+      ];
+
+      async function seedRun(id: string, extra: Record<string, unknown> = {}) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", id), {
+            ...makeValidActivity({ routePreview: ROUTE }),
+            createdAt: new Date(),
+            ...extra,
+          });
+        });
+      }
+      const nameMap = (db: Firestore, id: string, routeMap: unknown) =>
+        setDoc(doc(db, "activities", id), { routeMap }, { merge: true });
+
+      it("the author can name their post's own two images", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // And name them again (a retry), still only its own.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // Either bucket name the project's storage answers to.
+        await assertSucceeds(
+          nameMap(ownerDb, "R1", {
+            light: mapUrl(
+              OWNER_UID,
+              "R1",
+              "light",
+              BUCKET.replace("firebasestorage.app", "appspot.com")
+            ),
+            dark: mapUrl(OWNER_UID, "R1", "dark"),
+          })
+        );
+      });
+
+      it("nobody else can name a map on it, a follower or a stranger", async () => {
+        await seedRun("R1");
+        const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+        await assertFails(nameMap(strangerDb, "R1", ownMap()));
+        await assertFails(
+          nameMap(strangerDb, "R1", {
+            light: mapUrl(STRANGER_UID, "R1", "light"),
+            dark: mapUrl(STRANGER_UID, "R1", "dark"),
+          })
+        );
+      });
+
+      it("takes no URL but this post's own image for each theme", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        const bad: [string, unknown][] = [
+          // Someone else's map, or another of the author's posts' maps.
+          [
+            "another person's",
+            {
+              light: mapUrl(STRANGER_UID, "R1", "light"),
+              dark: mapUrl(STRANGER_UID, "R1", "dark"),
+            },
+          ],
+          ["another post's", ownMap("R2")],
+          // The themes swapped, or one missing, or one more.
+          ["swapped themes", { light: ownMap().dark, dark: ownMap().light }],
+          ["one theme", { light: ownMap().light }],
+          ["an extra key", { ...ownMap(), extra: ownMap().light }],
+          // Another bucket, another host, another folder, plain http.
+          [
+            "another bucket",
+            {
+              light: mapUrl(
+                OWNER_UID,
+                "R1",
+                "light",
+                BUCKET.replace("adaptive-fitness-af8bb", "evil-project")
+              ),
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "a tracking pixel",
+            { light: "https://evil.example/p.gif", dark: ownMap().dark },
+          ],
+          [
+            "a space photo",
+            {
+              light: `${BUCKET}space-photos%2F${OWNER_UID}%2F1.jpg?alt=media`,
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "http",
+            {
+              light: ownMap().light.replace("https://", "http://"),
+              dark: ownMap().dark,
+            },
+          ],
+          // A file other than the theme's JPEG in the right folder.
+          [
+            "a nested file",
+            {
+              light: `${BUCKET}route-maps%2F${OWNER_UID}%2FR1%2Fx%2Flight.jpg?alt=media`,
+              dark: ownMap().dark,
+            },
+          ],
+          [
+            "too long",
+            { light: ownMap().light + "x".repeat(2048), dark: ownMap().dark },
+          ],
+          ["not a map", "https://example.com"],
+          ["null", null],
+        ];
+        for (const [, routeMap] of bad) {
+          await assertFails(nameMap(ownerDb, "R1", routeMap));
+        }
+        // Anchor: the same write with its own map lands.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+      });
+
+      it("names no map on a post that shares no route", async () => {
+        await seedRun("W1", { type: "workout", routePreview: [] });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", "W2"), {
+            ...makeValidActivity({ type: "workout" }),
+            createdAt: new Date(),
+          });
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(nameMap(ownerDb, "W1", ownMap("W1")));
+        await assertFails(nameMap(ownerDb, "W2", ownMap("W2")));
+      });
+
+      it("changes nothing else in the same write, and is never taken off", async () => {
+        await seedRun("R1");
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        // A map named together with any other change is refused whole.
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), visibility: "private" },
+            { merge: true }
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), distance: 99999 },
+            { merge: true }
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: ownMap(), kudosCount: 5 },
+            { merge: true }
+          )
+        );
+        // Anchor: the map alone lands.
+        await assertSucceeds(nameMap(ownerDb, "R1", ownMap()));
+        // Once named, it cannot be taken off.
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { routeMap: deleteField() },
+            { merge: true }
+          )
+        );
+        // Visibility alone still changes with a map on the post.
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "R1"),
+            { visibility: "followers" },
+            { merge: true }
+          )
+        );
+      });
+
+      it("a restricted account names a map on its private post only", async () => {
+        await seedRun("PUB");
+        await seedRun("PRIV", { visibility: "private" });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "globalRestrictedUids", OWNER_UID),
+            {
+              restrictedAt: new Date(),
+            }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(nameMap(ownerDb, "PUB", ownMap("PUB")));
+        await assertSucceeds(nameMap(ownerDb, "PRIV", ownMap("PRIV")));
+      });
+
+      it("a create may carry only the post's own map, of a route it shares", async () => {
+        const ownerDb = env
+          .authenticatedContext(OWNER_UID, VERIFIED)
+          .firestore();
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "C1"),
+            makeValidActivity({ routePreview: ROUTE, routeMap: ownMap("C1") })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "C2"),
+            makeValidActivity({ routePreview: ROUTE, routeMap: ownMap("C1") })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "C3"),
+            makeValidActivity({ routeMap: ownMap("C3") })
+          )
+        );
+      });
+    });
+
+    // Soc15 call 2: one to four photos on a shared session, named by the
+    // author's app once each is uploaded beside the post and screened
+    // (src/lib/postPhotoUpload.ts). Only this post's own uploads in this
+    // project's bucket, never on a create, and never with another change.
+    describe("a post's photos", () => {
+      const BUCKET =
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
+      const photoUrl = (
+        author: string,
+        post: string,
+        id: string,
+        bucket = BUCKET
+      ) =>
+        `${bucket}post-photos%2F${author}%2F${post}%2F${id}.jpg?alt=media&token=t0k`;
+      const IDS = [
+        "Aaaaaaaa1",
+        "Bbbbbbbb2",
+        "Cccccccc3",
+        "Dddddddd4",
+        "Eeeee5",
+      ];
+      const photo = (i: number, post = "P1", author = OWNER_UID) => ({
+        id: IDS[i],
+        url: photoUrl(author, post, IDS[i]),
+        w: 1600,
+        h: 1200,
+      });
+      const photos = (n: number, post = "P1") =>
+        Array.from({ length: n }, (_, i) => photo(i, post));
+
+      async function seedPost(id: string, extra: Record<string, unknown> = {}) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "activities", id), {
+            ...makeValidActivity(),
+            createdAt: new Date(),
+            ...extra,
+          });
+        });
+      }
+      const verifiedOwner = () =>
+        env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const setPhotos = (db: Firestore, id: string, value: unknown) =>
+        setDoc(doc(db, "activities", id), { photos: value }, { merge: true });
+
+      it("the author can name one to four of their post's own photos, on a lift's post or a run's", async () => {
+        await seedPost("P1");
+        await seedPost("W1", { type: "workout" });
+        const db = verifiedOwner();
+        for (const n of [1, 2, 3, 4]) {
+          await assertSucceeds(setPhotos(db, "P1", photos(n)));
+        }
+        await assertSucceeds(setPhotos(db, "W1", photos(2, "W1")));
+        // Either bucket name the project's storage answers to.
+        await assertSucceeds(
+          setPhotos(db, "P1", [
+            {
+              ...photo(0),
+              url: photoUrl(
+                OWNER_UID,
+                "P1",
+                IDS[0],
+                BUCKET.replace("firebasestorage.app", "appspot.com")
+              ),
+            },
+          ])
+        );
+      });
+
+      it("the author can take photos off, down to none, or the field away", async () => {
+        await seedPost("P1", { photos: photos(4) });
+        const db = verifiedOwner();
+        await assertSucceeds(setPhotos(db, "P1", [photo(0), photo(2)]));
+        await assertSucceeds(setPhotos(db, "P1", []));
+        await seedPost("P2", { photos: photos(2, "P2") });
+        await assertSucceeds(
+          setDoc(
+            doc(db, "activities", "P2"),
+            { photos: deleteField() },
+            { merge: true }
+          )
+        );
+      });
+
+      it("refuses a fifth photo", async () => {
+        await seedPost("P1");
+        const db = verifiedOwner();
+        await assertFails(setPhotos(db, "P1", [...photos(4), photo(4)]));
+        // Anchor: the same four alone land.
+        await assertSucceeds(setPhotos(db, "P1", photos(4)));
+      });
+
+      it("takes no URL but this post's own upload of that photo, and no other shape", async () => {
+        await seedPost("P1");
+        const db = verifiedOwner();
+        const one = photo(0);
+        const bad: [string, unknown][] = [
+          [
+            "another person's",
+            { ...one, url: photoUrl(STRANGER_UID, "P1", one.id) },
+          ],
+          [
+            "another post's",
+            { ...one, url: photoUrl(OWNER_UID, "P2", one.id) },
+          ],
+          ["another photo's", { ...one, url: photo(1).url }],
+          [
+            "another bucket",
+            {
+              ...one,
+              url: photoUrl(
+                OWNER_UID,
+                "P1",
+                one.id,
+                BUCKET.replace("adaptive-fitness-af8bb", "evil-project")
+              ),
+            },
+          ],
+          ["a tracking pixel", { ...one, url: "https://evil.example/p.gif" }],
+          [
+            "a route map",
+            {
+              ...one,
+              url: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Flight.jpg`,
+            },
+          ],
+          [
+            "a nested file",
+            {
+              ...one,
+              url: `${BUCKET}post-photos%2F${OWNER_UID}%2FP1%2Fx%2F${one.id}.jpg`,
+            },
+          ],
+          ["http", { ...one, url: one.url.replace("https://", "http://") }],
+          ["too long", { ...one, url: one.url + "x".repeat(2048) }],
+          ["an extra key", { ...one, caption: "hi" }],
+          ["no size", { id: one.id, url: one.url }],
+          ["a fractional width", { ...one, w: 1600.5 }],
+          ["a zero height", { ...one, h: 0 }],
+          ["a width past 4096", { ...one, w: 4097 }],
+          ["a text width", { ...one, w: "1600" }],
+          [
+            "an id with a slash",
+            {
+              ...one,
+              id: "Aaaa/aaa1",
+              url: photoUrl(OWNER_UID, "P1", "Aaaa/aaa1"),
+            },
+          ],
+          [
+            "a short id",
+            { ...one, id: "Aa1", url: photoUrl(OWNER_UID, "P1", "Aa1") },
+          ],
+          ["not a map", one.url],
+          ["null", null],
+        ];
+        for (const [, entry] of bad) {
+          await assertFails(setPhotos(db, "P1", [entry]));
+          // A bad photo after a good one is refused too: every index is
+          // checked.
+          await assertFails(setPhotos(db, "P1", [photo(1), entry]));
+        }
+        await assertFails(setPhotos(db, "P1", "not a list"));
+        await assertFails(setPhotos(db, "P1", { 0: one }));
+        // Anchor: the same write with its own photo lands.
+        await assertSucceeds(setPhotos(db, "P1", [one]));
+      });
+
+      it("nobody else can name photos on it, a follower or a stranger", async () => {
+        await seedPost("P1");
+        const strangerDb = env
+          .authenticatedContext(STRANGER_UID, VERIFIED)
+          .firestore();
+        await assertFails(setPhotos(strangerDb, "P1", photos(1)));
+        await assertFails(
+          setPhotos(strangerDb, "P1", [
+            { ...photo(0), url: photoUrl(STRANGER_UID, "P1", IDS[0]) },
+          ])
+        );
+        await seedPost("P2", { photos: photos(2, "P2") });
+        await assertFails(setPhotos(strangerDb, "P2", []));
+      });
+
+      it("changes nothing else in the same write", async () => {
+        await seedPost("P1", {
+          routePreview: [
+            { lat: 51.5, lon: -0.12 },
+            { lat: 51.51, lon: -0.12 },
+          ],
+        });
+        const db = verifiedOwner();
+        for (const other of [
+          { visibility: "private" },
+          { caption: "edited" },
+          { distance: 99999 },
+          { kudosCount: 5 },
+          {
+            routeMap: {
+              light: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Flight.jpg?alt=media`,
+              dark: `${BUCKET}route-maps%2F${OWNER_UID}%2FP1%2Fdark.jpg?alt=media`,
+            },
+          },
+        ]) {
+          await assertFails(
+            setDoc(
+              doc(db, "activities", "P1"),
+              { photos: photos(1), ...other },
+              { merge: true }
+            )
+          );
+        }
+        // Anchor: the photos alone land.
+        await assertSucceeds(setPhotos(db, "P1", photos(1)));
+        // Visibility alone still changes on a post with photos.
+        await assertSucceeds(
+          setDoc(
+            doc(db, "activities", "P1"),
+            { visibility: "followers" },
+            { merge: true }
+          )
+        );
+      });
+
+      it("a create carries no photos", async () => {
+        const db = verifiedOwner();
+        await assertFails(
+          setDoc(
+            doc(db, "activities", "C1"),
+            makeValidActivity({ photos: photos(1, "C1") })
+          )
+        );
+        await assertFails(
+          setDoc(doc(db, "activities", "C2"), makeValidActivity({ photos: [] }))
+        );
+        // Anchor: the same post without them lands.
+        await assertSucceeds(
+          setDoc(doc(db, "activities", "C3"), makeValidActivity())
+        );
+      });
+
+      it("an unverified account adds none, and may still take its photos off", async () => {
+        await seedPost("P1", { photos: photos(2) });
+        const unverifiedDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(setPhotos(unverifiedDb, "P1", photos(3)));
+        await assertFails(setPhotos(unverifiedDb, "P1", [photo(0), photo(2)]));
+        await assertSucceeds(setPhotos(unverifiedDb, "P1", [photo(1)]));
+        // Anchor: verified, the same addition lands.
+        await assertSucceeds(setPhotos(verifiedOwner(), "P1", photos(3)));
+      });
+
+      it("a restricted account adds photos to its private post only, and may take them off any", async () => {
+        await seedPost("PUB", { photos: [photo(0, "PUB")] });
+        await seedPost("FOL", { visibility: "followers" });
+        await seedPost("PRIV", { visibility: "private" });
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "globalRestrictedUids", OWNER_UID),
+            { restrictedAt: new Date() }
+          );
+        });
+        const db = verifiedOwner();
+        await assertFails(setPhotos(db, "PUB", photos(2, "PUB")));
+        await assertFails(setPhotos(db, "FOL", photos(1, "FOL")));
+        await assertSucceeds(setPhotos(db, "PRIV", photos(2, "PRIV")));
+        // Taking its own photos off stays open (S4e).
+        await assertSucceeds(setPhotos(db, "PUB", []));
+      });
     });
 
     it("client cannot directly write comment doc (server-only)", async () => {
@@ -3056,6 +4049,39 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
         trialExpiresAt: null,
       })
     );
+  });
+
+  it("an owner cannot delete their own users doc, so cannot recreate it bare", async () => {
+    // Delete-then-create was the one client path that wiped the fields only
+    // the server writes, a used trial among them.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+        hasUsedTrial: true,
+        activationJourneyVersion: 2,
+        showWeekOnBoard: true,
+      });
+    });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(deleteDoc(doc(ownerDb, "users", OWNER_UID)));
+    // Replacing the document wholesale drops the same fields, and is
+    // refused as an update.
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        uid: OWNER_UID,
+        subscriptionTier: "free",
+      })
+    );
+    let after: Record<string, unknown> | undefined;
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      after = (await getDoc(doc(ctx.firestore(), "users", OWNER_UID))).data();
+    });
+    expect(after).toMatchObject({
+      hasUsedTrial: true,
+      activationJourneyVersion: 2,
+      showWeekOnBoard: true,
+    });
   });
 
   it("free user CANNOT self-grant via a future trialExpiresAt on create", async () => {

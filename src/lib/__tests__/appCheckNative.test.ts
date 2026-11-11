@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const mock = vi.hoisted(() => ({
   native: true,
@@ -8,9 +9,14 @@ const mock = vi.hoisted(() => ({
 }));
 vi.mock("../platform", () => ({ isNativePlatform: () => mock.native }));
 vi.mock("../appCheck", () => ({ setNativeAppCheckProvider: mock.register }));
-vi.mock("@capacitor-firebase/app-check", () => ({
-  FirebaseAppCheck: { initialize: mock.initialize, getToken: mock.getToken },
-}));
+vi.mock("@capacitor-firebase/app-check", () => {
+  return {
+    FirebaseAppCheck: capacitorPlugin({
+      initialize: mock.initialize,
+      getToken: mock.getToken,
+    }),
+  };
+});
 vi.mock("firebase/app-check", () => ({
   CustomProvider: class {
     options: { getToken: () => Promise<unknown> };
@@ -19,12 +25,18 @@ vi.mock("firebase/app-check", () => ({
     }
   },
 }));
-import { registerNativeAppCheck } from "../appCheckNative";
+import {
+  NATIVE_APP_CHECK_TIMEOUT_MS,
+  registerNativeAppCheck,
+} from "../appCheckNative";
 
 function provider() {
   registerNativeAppCheck();
   return mock.register.mock.calls[0][0]().options;
 }
+afterEach(() => {
+  vi.useRealTimers();
+});
 beforeEach(() => {
   vi.clearAllMocks();
   mock.native = true;
@@ -97,6 +109,36 @@ describe("native App Check token bridge", () => {
     mock.initialize.mockRejectedValueOnce(new Error("Bridge unavailable"));
     const p = provider();
     await expect(p.getToken()).rejects.toThrow("Bridge unavailable");
+    await expect(p.getToken()).resolves.toMatchObject({
+      token: "verified-token",
+    });
+    expect(mock.initialize).toHaveBeenCalledTimes(2);
+  });
+  /* Auth, Firestore and Functions wait for a token before every request,
+     and Auth gives up at 30 s calling it a network failure: Google sign-in
+     on the first TestFlight builds did exactly that. A token request that
+     never answers fails at the limit instead, and the request goes on. */
+  it("gives up on a token request that never answers", async () => {
+    vi.useFakeTimers();
+    mock.getToken.mockReturnValue(new Promise(() => {}));
+    const pending = provider().getToken();
+    const outcome = expect(pending).rejects.toThrow(
+      "carrying on without App Check"
+    );
+    await vi.advanceTimersByTimeAsync(NATIVE_APP_CHECK_TIMEOUT_MS);
+    await outcome;
+    expect(NATIVE_APP_CHECK_TIMEOUT_MS).toBeLessThan(30_000);
+  });
+  it("gives up on a plugin set-up that never answers, and tries it again next time", async () => {
+    vi.useFakeTimers();
+    mock.initialize.mockReturnValueOnce(new Promise(() => {}));
+    const p = provider();
+    const first = expect(p.getToken()).rejects.toThrow(
+      "App Check set-up took over"
+    );
+    await vi.advanceTimersByTimeAsync(NATIVE_APP_CHECK_TIMEOUT_MS);
+    await first;
+    expect(mock.getToken).not.toHaveBeenCalled();
     await expect(p.getToken()).resolves.toMatchObject({
       token: "verified-token",
     });

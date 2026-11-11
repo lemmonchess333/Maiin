@@ -126,17 +126,17 @@ describe("FollowButton — a write that fails", () => {
     [
       "a follow",
       { following: false, requested: false },
-      "Couldn't follow. Try again.",
+      "Couldn’t follow. Try again.",
     ],
     [
       "an unfollow",
       { following: true, requested: false },
-      "Couldn't unfollow. Try again.",
+      "Couldn’t unfollow. Try again.",
     ],
     [
       "a cancelled request",
       { following: false, requested: true },
-      "Couldn't cancel the request. Try again.",
+      "Couldn’t cancel the request. Try again.",
     ],
   ])("says so for %s", async (_label, state, message) => {
     H.state = { ...H.state, ...state };

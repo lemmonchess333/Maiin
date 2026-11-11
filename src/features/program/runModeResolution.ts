@@ -25,7 +25,7 @@
  * compare for that format.
  */
 
-export type RunMode = "race_prep" | "freeform";
+export type RunMode = "race_prep" | "starter" | "freeform";
 
 export interface RaceGoal {
   distance: string;
@@ -38,17 +38,54 @@ export interface RaceGoal {
    *  manually-entered goals simply lack it. Cross-links and the
    *  future training counter key off this exact id. */
   eventSpaceId?: string;
+  /** A2: optional goal finish time, seconds. */
+  targetTimeS?: number;
+  /** Run9: a race the person has entered, or the
+   *  distance run on their own. Absent on a goal set before the question
+   *  was asked, which reads as a race (`raceGoalEntry`). */
+  entry?: "race" | "own";
 }
 
 /**
- * Run9a + materialization rule. `runMode` follows `raceGoal` presence and
- * nothing else. Recovery deliberately does NOT flip it: `raceGoal` stays
- * present through the recovery window (cleared only at recovery-END), so a
- * user mid-recovery is still "race_prep" — which is correct, because the
- * recovery hero and scheduler gate on `runPlan.phase`, not on freeform-ness.
+ * Run9's reopening: the starter goal, 30 minutes without stopping. The
+ * record stays once the goal is over: `finishedOn` when its last week was
+ * done, or `endedOn` and the stage it reached when a race goal took its
+ * place. Only a goal with neither is running (`starterGoalIsActive`). Its
+ * stage lives on the plan (`programState.runPlan`), week to week.
  */
-export function deriveRunMode(raceGoal: RaceGoal | null | undefined): RunMode {
-  return raceGoal ? "race_prep" : "freeform";
+export interface StarterGoal {
+  /** Local "YYYY-MM-DD": the day the goal began. */
+  startedOn: string;
+  /** Local "YYYY-MM-DD": the day the last week was done. */
+  finishedOn?: string;
+  /** Local "YYYY-MM-DD": the day a race goal took its place. */
+  endedOn?: string;
+  /** The stage reached when it ended, which a race plan builds from. */
+  stage?: number;
+}
+
+/** Whether a starter goal is running: begun, and neither finished nor ended. */
+export function starterGoalIsActive(
+  goal: StarterGoal | null | undefined
+): boolean {
+  return !!goal && !goal.finishedOn && !goal.endedOn;
+}
+
+/**
+ * Run9a + materialization rule. `runMode` follows the goals and nothing
+ * else: a race goal makes it race prep, and without one a running starter
+ * goal makes it "starter". Recovery deliberately does NOT flip it:
+ * `raceGoal` stays present through the recovery window (cleared only at
+ * recovery-END), so a user mid-recovery is still "race_prep" — which is
+ * correct, because the recovery hero and scheduler gate on
+ * `runPlan.phase`, not on freeform-ness.
+ */
+export function deriveRunMode(
+  raceGoal: RaceGoal | null | undefined,
+  starterGoal?: StarterGoal | null
+): RunMode {
+  if (raceGoal) return "race_prep";
+  return starterGoalIsActive(starterGoal) ? "starter" : "freeform";
 }
 
 /** Two race goals refer to the same race (same distance + target date). */
@@ -133,6 +170,74 @@ export function setRaceGoalPatch(next: RaceGoal | null): RaceGoalWritePatch {
     targetDate: next.targetDate,
     ...(next.eventName ? { eventName: next.eventName } : {}),
     ...(next.eventSpaceId ? { eventSpaceId: next.eventSpaceId } : {}),
+    // Both were dropped here while the server copy kept them, so a goal
+    // time and the race-or-own answer did not survive this patch.
+    ...(next.targetTimeS ? { targetTimeS: next.targetTimeS } : {}),
+    ...(next.entry ? { entry: next.entry } : {}),
   };
   return { raceGoal, runMode: deriveRunMode(raceGoal) };
+}
+
+/** A profile patch that sets, finishes or ends the starter goal. Like the
+ *  race goal's, it always carries the materialized `runMode`. */
+export interface StarterGoalWritePatch {
+  starterGoal: StarterGoal;
+  raceGoal?: null;
+  runMode: RunMode;
+}
+
+/**
+ * The patch for beginning the starter goal on `startedOn`. One goal at a
+ * time: it clears a race goal. A race plan's recovery is the race
+ * lifecycle's, so a caller doesn't begin a starter during one.
+ */
+export function setStarterGoalPatch(startedOn: string): StarterGoalWritePatch {
+  return { starterGoal: { startedOn }, raceGoal: null, runMode: "starter" };
+}
+
+/** The patch for the starter goal's last week done: the record kept with
+ *  the day, and back to free running. */
+export function finishStarterGoalPatch(
+  goal: StarterGoal,
+  finishedOn: string
+): StarterGoalWritePatch {
+  return {
+    starterGoal: { startedOn: goal.startedOn, finishedOn },
+    runMode: "freeform",
+  };
+}
+
+/**
+ * The patch for a starter goal a race goal takes the place of: the record
+ * kept with the day and the stage reached, so the race plan builds from
+ * there. Spread the race goal's patch after it, which sets `runMode`:
+ * `{ ...endStarterGoalPatch(goal, day, stage), ...setRaceGoalPatch(race) }`.
+ */
+export function endStarterGoalPatch(
+  goal: StarterGoal,
+  endedOn: string,
+  stage: number
+): StarterGoalWritePatch {
+  return {
+    starterGoal: { startedOn: goal.startedOn, endedOn, stage },
+    runMode: "freeform",
+  };
+}
+
+/**
+ * The starter goal as a Run plan save leaves it: a running goal left for a
+ * race or free running ends with the stage reached (`endStarterGoalPatch`),
+ * and any other is as it was. The plan the save builds reads its new-runner
+ * limits from this (`profileNewRunnerUntil`), so a race begun from stage 3
+ * starts from stage 3 the week it is made, not from the sign-up date, which
+ * is all a goal still running says.
+ */
+export function starterGoalAfterSave(
+  goal: StarterGoal | null | undefined,
+  runMode: RunMode,
+  stage: number,
+  todayKey: string
+): StarterGoal | null | undefined {
+  if (runMode === "starter" || !goal || !starterGoalIsActive(goal)) return goal;
+  return endStarterGoalPatch(goal, todayKey, stage).starterGoal;
 }

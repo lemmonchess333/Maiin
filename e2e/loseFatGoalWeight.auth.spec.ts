@@ -92,22 +92,24 @@ test.describe("lose fat with a goal weight", () => {
       );
       expect(reviewTarget).toBeGreaterThan(1000);
       await page
+        .getByRole("textbox", { name: "Your public display name" })
+        .fill("Goal weight tester");
+      await page
         .getByRole("button", { name: "Start my plan", exact: true })
         .click();
       await expect(
-        page.getByRole("heading", { name: /your plan is ready/i })
+        page.getByRole("heading", { name: "Today", level: 1 })
       ).toBeVisible({ timeout: 30_000 });
+      await expect(page).toHaveURL(/\/Maiin\/$/);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
 
       // What completeOnboarding wrote.
       const { uid } = await auth.getUserByEmail(email);
       const saved = (await db.doc(`users/${uid}`).get()).data();
       expect(saved?.onboardingComplete).toBe(true);
+      expect(saved?.activationJourneyVersion).toBe(2);
       expect(saved?.goalWeightKg).toBe(70);
       expect(saved?.weeklyRateKg).toBe(-0.25);
-
-      await page
-        .getByRole("button", { name: "Continue with Free", exact: true })
-        .click();
       await expect(
         page.getByRole("navigation", { name: "Main navigation", exact: true })
       ).toBeVisible({ timeout: 20_000 });

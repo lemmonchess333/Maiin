@@ -30,6 +30,7 @@
  */
 
 const { GoalSpaceError, assertNoBlockedPair } = require("./goalSpaceMembership");
+const { isDocumentId } = require("./documentId");
 
 /** The COMPLETE weekly-focus allowlist — mirror of the client enum in
  *  src/features/goalSpace/goalSpaceTypes.ts. Adding a value is a
@@ -121,7 +122,7 @@ function normalizeWeeklyFocus(value) {
  *      no second event exists to notify anyone about)
  */
 async function weeklyCheckIn({ firestore, uid, spaceId, weekKey, weeklyFocus, now }) {
-  if (typeof spaceId !== "string" || spaceId.length === 0) {
+  if (!isDocumentId(spaceId)) {
     throw new GoalSpaceError("invalid-argument", "spaceId required");
   }
   assertValidWeekKey(weekKey, now);
@@ -170,10 +171,10 @@ async function weeklyCheckIn({ firestore, uid, spaceId, weekKey, weeklyFocus, no
  * alreadyBacked is false.
  */
 async function backWeeklyCheckIn({ firestore, uid, spaceId, eventId }) {
-  if (typeof spaceId !== "string" || spaceId.length === 0) {
+  if (!isDocumentId(spaceId)) {
     throw new GoalSpaceError("invalid-argument", "spaceId required");
   }
-  if (typeof eventId !== "string" || eventId.length === 0) {
+  if (!isDocumentId(eventId)) {
     throw new GoalSpaceError("invalid-argument", "eventId required");
   }
 

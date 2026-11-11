@@ -30,6 +30,7 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -62,8 +63,18 @@ function plistKeys(xml: string): string[] {
 
 /** Paths the App target's Resources phase copies into the bundle. */
 function bundledResourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const resourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Resources \\*/`)
+  )?.[1];
+  if (!resourcesId) throw new Error("App target has no Resources phase");
   const phase = pbxproj.match(
-    /isa = PBXResourcesBuildPhase;[\s\S]*?files = \(([\s\S]*?)\);/
+    new RegExp(
+      `${resourcesId} /\\* Resources \\*/ = \\{\\s*isa = PBXResourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
   );
   if (!phase) throw new Error("no PBXResourcesBuildPhase in project.pbxproj");
   const buildFileIds = [
@@ -184,18 +195,157 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // .requestAuthorization, reached from Settings → Health and from the
     // Home steps priming sheet, which auto-opens. Without
     // NSHealthShareUsageDescription the OS terminates the app on that tap.
+    // The strings come from build settings (see the pilot test below), so
+    // both kinds of build are read as they resolve, not as typed.
     const usesHealthKit = "capacitor-health" in pkg.dependencies;
-    const share =
-      /<key>NSHealthShareUsageDescription<\/key>\s*<string>[^<]+<\/string>/.test(
-        infoPlist
-      );
-    const update =
-      /<key>NSHealthUpdateUsageDescription<\/key>\s*<string>[^<]+<\/string>/.test(
-        infoPlist
-      );
     expect(usesHealthKit).toBe(true);
-    expect(share).toBe(usesHealthKit);
-    expect(update).toBe(usesHealthKit);
+    for (const gate of ["NO", "YES"]) {
+      for (const key of [
+        "NSHealthShareUsageDescription",
+        "NSHealthUpdateUsageDescription",
+      ]) {
+        expect(
+          appInfoPlistString(key, gate).length,
+          `${key} with the gate ${gate}`
+        ).toBeGreaterThan(40);
+      }
+    }
+  });
+
+  it("asks Health for steps alone in a standard build, and for heart rate and workout export only in the pilot", () => {
+    // A standard build reads steps and nothing else, so its Health prompt
+    // says that. The pilot's expanded text names the Watch's heart rate and
+    // the workout export it adds. One switch, WATCH_RUN_RELEASE_ENABLED,
+    // picks the text, the Watch app and the native gate together.
+    for (const configuration of ["Debug", "Release"]) {
+      const standardShare = appInfoPlistString(
+        "NSHealthShareUsageDescription",
+        "NO",
+        configuration
+      );
+      const standardUpdate = appInfoPlistString(
+        "NSHealthUpdateUsageDescription",
+        "NO",
+        configuration
+      );
+      expect(standardShare).toBe(
+        "Tropos reads your step count from Health to show today's steps on Home."
+      );
+      expect(standardUpdate).toBe(
+        "Tropos does not add workouts or any other data to Health."
+      );
+      expect(
+        appInfoPlistString(
+          "NSHealthShareUsageDescription",
+          "YES",
+          configuration
+        )
+      ).toMatch(/heart rate during Apple Watch runs if enabled/);
+      expect(
+        appInfoPlistString(
+          "NSHealthUpdateUsageDescription",
+          "YES",
+          configuration
+        )
+      ).toMatch(/workouts when you turn on export/);
+    }
+    // The committed Release configuration is a standard build.
+    expect(appInfoPlistString("NSHealthShareUsageDescription", "NO")).toBe(
+      resolvedSetting("App", "Release", "TROPOS_HEALTH_SHARE_USAGE")
+    );
+    expect(infoPlist).toMatch(
+      /<key>NSHealthShareUsageDescription<\/key>\s*<string>\$\(TROPOS_HEALTH_SHARE_USAGE\)<\/string>/
+    );
+  });
+
+  it("embeds the Watch app in a pilot build and in no other", () => {
+    // The App target always builds TroposWatch (so a pull request compiles
+    // it) and copies it into App.app/Watch through one phase. Which builds
+    // the copy runs in is decided by the gate: the file is excluded unless
+    // WATCH_RUN_RELEASE_ENABLED is exactly YES, so a missing or misspelt
+    // value fails closed, to a build with no Watch app.
+    const embed = pbxproj.match(
+      new RegExp(
+        `(${OBJECT_ID.source}) /\\* Embed Watch Content \\*/ = \\{\\s*isa = PBXCopyFilesBuildPhase;[\\s\\S]*?dstPath = "([^"]+)";[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    expect(embed).not.toBeNull();
+    expect(embed![2]).toBe("$(CONTENTS_FOLDER_PATH)/Watch");
+    expect(
+      [...embed![3].matchAll(/\/\* (.+?) in Embed Watch Content \*\//g)].map(
+        (m) => m[1]
+      )
+    ).toEqual(["TroposWatch.app"]);
+    const appTarget = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
+    )![0];
+    expect(appTarget).toContain(`${embed![1]} /* Embed Watch Content */`);
+    // Two dependencies: the Watch app and the Live Activity widget.
+    expect(appTarget).toMatch(
+      /dependencies = \(\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*[0-9A-F]{24} \/\* PBXTargetDependency \*\/,\s*\);/
+    );
+
+    const glob = (pattern: string) =>
+      new RegExp(
+        "^" +
+          pattern
+            .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+            .replace(/\*/g, "[^/]*")
+            .replace(/\?/g, "[^/]") +
+          "$"
+      );
+    const listed = (configuration: string, name: string, gate?: string) =>
+      resolvedSetting(
+        "App",
+        configuration,
+        name,
+        gate === undefined ? {} : { WATCH_RUN_RELEASE_ENABLED: gate }
+      )
+        .split(/\s+/)
+        .filter(Boolean)
+        .some((pattern) => glob(pattern).test("TroposWatch.app"));
+    // Xcode skips a file in any phase when a pattern in
+    // EXCLUDED_SOURCE_FILE_NAMES matches it and none in
+    // INCLUDED_SOURCE_FILE_NAMES does.
+    const embeds = (configuration: string, gate?: string) =>
+      !(
+        listed(configuration, "EXCLUDED_SOURCE_FILE_NAMES", gate) &&
+        !listed(configuration, "INCLUDED_SOURCE_FILE_NAMES", gate)
+      );
+    for (const configuration of ["Debug", "Release"]) {
+      expect(embeds(configuration, "YES"), `${configuration} pilot`).toBe(true);
+      expect(embeds(configuration, "NO"), `${configuration} standard`).toBe(
+        false
+      );
+      for (const odd of ["", "yes", "1", "TRUE"])
+        expect(embeds(configuration, odd), `gate "${odd}"`).toBe(false);
+    }
+    // As committed: Release is a standard build, Debug keeps the Watch for
+    // local work in Xcode.
+    expect(embeds("Release")).toBe(false);
+    expect(embeds("Debug")).toBe(true);
+  });
+
+  it("installs the Watch app only inside the iPhone app, never beside it in an archive", () => {
+    // Without SKIP_INSTALL an archive installs TroposWatch.app next to
+    // App.app in Products/Applications, and the export no longer sees one
+    // iOS app. Xcode's own Watch app template sets it.
+    const list = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "TroposWatch" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const ids = [
+      ...list![1].matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g")),
+    ].map((m) => m[1]);
+    expect(ids).toHaveLength(2);
+    for (const id of ids) {
+      const config = pbxproj.match(
+        new RegExp(`^\\s*${id} /\\*[^\\n]*\\*/ = \\{([\\s\\S]*?)^\\s*\\};`, "m")
+      );
+      expect(config?.[1]).toContain("SKIP_INSTALL = YES;");
+    }
+    expect(workflowStep("Verify archived iPhone and Watch signing")).toContain(
+      'if [ "$ARCHIVED_APPS" != "App.app" ]; then'
+    );
   });
 
   it("builds an iPhone-only app", () => {
@@ -267,17 +417,37 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
   });
 
-  it("signs the App target with the imported profile, never from the xcodebuild command line", () => {
+  it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
     // The committed project signs automatically. On a runner with no Apple
     // account that looks for a development profile that never exists, so
-    // the workflow switches the App target to manual signing first, and its
-    // step expects exactly these two settings to switch.
-    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(2);
-    const sign = workflow.indexOf(
-      "name: Sign the App target with the App Store profile"
+    // the workflow switches every app target, in every configuration, to
+    // manual signing first; package targets stay untouched. Which targets
+    // is read from the project (scripts/ios_signed_targets.py, tested in
+    // scripts/test_verify_ios_signed_targets.py), so a widget extension
+    // added later is signed without editing the workflow.
+    // Two configurations each for the app, the Watch app and the widget.
+    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(6);
+    const list = workflowStep("List the targets to sign");
+    expect(list).toContain("python3 scripts/ios_signed_targets.py list");
+    expect(list).toContain(
+      'echo "SIGNED_BUNDLE_IDS=$SIGNED_BUNDLE_IDS" >> "$GITHUB_ENV"'
     );
-    expect(sign).toBeGreaterThan(-1);
-    expect(workflow.indexOf("name: Archive")).toBeGreaterThan(sign);
+    expect(
+      workflowStep("Sign every app target with its App Store profile")
+    ).toContain("python3 scripts/ios_signed_targets.py sign");
+    const at = (name: string) => workflow.indexOf(`- name: ${name}`);
+    expect(at("List the targets to sign")).toBeGreaterThan(-1);
+    expect(at("List the targets to sign")).toBeLessThan(
+      at("Make the signing certificate and profiles from the API key")
+    );
+    expect(
+      at("Sign every app target with its App Store profile")
+    ).toBeGreaterThan(at("Import signing certificate + provisioning profiles"));
+    expect(at("Archive")).toBeGreaterThan(
+      at("Sign every app target with its App Store profile")
+    );
+    // No step names a fixed pair of targets or a count of configurations.
+    expect(workflow).not.toMatch(/WATCH_PROFILE_UUID|count != 2/);
     // Passed to xcodebuild, a profile setting reaches every Swift package
     // target too, and xcodebuild refuses a profile on a package target.
     expect(workflowStep("Archive")).not.toMatch(
@@ -285,19 +455,96 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
-  it("tells the manual export which profile signs the app", () => {
-    // Without the mapping a manual export stops at "no profiles for
-    // com.tropos.app", after the archive has already taken its 20 minutes.
-    const exportStep = workflowStep("Export .ipa");
-    expect(exportStep).toMatch(
-      /<key>signingStyle<\/key><string>manual<\/string>/
+  it("keeps the committed release gate off and ties both pilot gates to one manual choice", () => {
+    expect(infoPlist).toMatch(
+      /<key>TroposConnectedTrainingEnabled<\/key>\s*<string>\$\(WATCH_RUN_RELEASE_ENABLED\)<\/string>/
     );
-    expect(exportStep).toMatch(
-      /<key>provisioningProfiles<\/key>\s*<dict>\s*<key>\$\{BUNDLE_ID\}<\/key><string>\$\{PROFILE_UUID\}<\/string>/
+    const appConfigList = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "App" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const releaseId = appConfigList?.[1].match(
+      new RegExp(`(${OBJECT_ID.source}) /\\* Release \\*/`)
+    )?.[1];
+    expect(releaseId).toBeDefined();
+    const appRelease = pbxproj.match(
+      new RegExp(
+        `^\\s*${releaseId} /\\* Release \\*/ = \\{([\\s\\S]*?)^\\s*\\};`,
+        "m"
+      )
+    );
+    expect(appRelease?.[1]).toContain(
+      "PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app;"
+    );
+    expect(appRelease?.[1]).toContain("WATCH_RUN_RELEASE_ENABLED = NO;");
+    expect(workflow).toMatch(
+      /connected_training_pilot:\s*description:[^\n]*\n\s*type: boolean\s*required: false\s*default: false/
+    );
+    const mode = workflowStep("Select connected training build mode");
+    expect(mode).toMatch(
+      /true\)\s*if \[ "\$EVENT_NAME" != workflow_dispatch \][\s\S]*?fi\s*echo "web=true"[\s\S]*?echo "native=YES"/
+    );
+    expect(mode).toMatch(
+      /false\|""\)\s*echo "web=false"[\s\S]*?echo "native=NO"/
     );
     expect(
-      workflowStep("Import signing certificate + provisioning profile")
-    ).toMatch(/echo "PROFILE_UUID=\$PROFILE_UUID" >> "\$GITHUB_ENV"/);
+      workflowStep("Build web bundle and sync into the iOS project")
+    ).toContain(
+      "VITE_CONNECTED_TRAINING_ENABLED: ${{ steps.training-mode.outputs.web }}"
+    );
+    expect(workflowStep("Archive")).toContain(
+      "WATCH_RUN_RELEASE_ENABLED: ${{ steps.training-mode.outputs.native }}"
+    );
+    expect(workflowStep("Archive")).toContain(
+      'WATCH_RUN_RELEASE_ENABLED="$WATCH_RUN_RELEASE_ENABLED"'
+    );
+    for (const name of [
+      "Verify archived iPhone and Watch signing",
+      "Verify exported iPhone and Watch signing",
+    ]) {
+      expect(workflowStep(name)).toContain(
+        '--expected-connected-training "${{ steps.training-mode.outputs.native }}"'
+      );
+    }
+  });
+
+  it("tells the manual export which profile signs each bundle in the archive", () => {
+    // Without the mapping a manual export stops at "no profiles for
+    // com.tropos.app", after the archive has already taken its 20 minutes.
+    // The map is made from the archive itself, so it covers whatever the
+    // build embeds and nothing it does not.
+    const exportStep = workflowStep("Export .ipa");
+    expect(exportStep).toContain(
+      "python3 scripts/ios_signed_targets.py export-options"
+    );
+    expect(exportStep).toContain(
+      '"$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"'
+    );
+    expect(exportStep).toContain('"$RUNNER_TEMP/profile-uuids.json"');
+    const importStep = workflowStep(
+      "Import signing certificate + provisioning profiles"
+    );
+    // Every signed target's profile is decoded, checked and installed.
+    expect(importStep).toMatch(/for bundle in \$SIGNED_BUNDLE_IDS; do/);
+    expect(importStep).toContain('"signed-targets.json"');
+    expect(importStep).toContain('"profile-uuids.json"');
+  });
+
+  it("lets the Live Activity widget link LiveActivitiesKit through Swift Package Manager", () => {
+    // The project has no CocoaPods: plugins arrive through CapApp-SPM. The
+    // plugin ships LiveActivitiesKit as a pod only, so the patch makes it a
+    // library product the widget extension can add, and the runbook says
+    // to add it that way rather than through a Podfile.
+    const manifest = read(
+      "node_modules/capacitor-live-activities/Package.swift"
+    );
+    expect(manifest).toMatch(
+      /\.library\(\s*name: "LiveActivitiesKit",\s*targets: \["LiveActivitiesKit"\]\)/
+    );
+    expect(existsSync(resolve(repoRoot, "ios/App/Podfile"))).toBe(false);
+    const runbook = read("docs/run-live-activity.md");
+    expect(runbook).toMatch(/\*\*LiveActivitiesKit\*\* product/);
+    expect(runbook).not.toMatch(/^\s*(target '|pod ')/m);
+    expect(runbook).not.toMatch(/`pod install`(?! step)/);
   });
 
   it("declares the entitlement each native plugin needs, and only while it is used", () => {
@@ -321,6 +568,100 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(
       keys.includes("com.apple.developer.devicecheck.appattest-environment")
     ).toBe("@capacitor-firebase/app-check" in pkg.dependencies);
+    // The Live Activity plugin and its widget share an App Group.
+    expect(keys.includes("com.apple.security.application-groups")).toBe(
+      "capacitor-live-activities" in pkg.dependencies
+    );
+  });
+
+  it("embeds the Live Activity widget in every build, inside the app", () => {
+    // The run and a lift's rest show on the Lock Screen and in the Dynamic
+    // Island only once this extension ships (docs/run-live-activity.md);
+    // without it the plugin's startActivity rejects and nothing shows.
+    const embed = pbxproj.match(
+      new RegExp(
+        `(${OBJECT_ID.source}) /\\* Embed Foundation Extensions \\*/ = \\{\\s*isa = PBXCopyFilesBuildPhase;[\\s\\S]*?dstSubfolderSpec = (\\d+);[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+      )
+    );
+    expect(embed).not.toBeNull();
+    // 13 is the app's PlugIns folder.
+    expect(embed![2]).toBe("13");
+    expect(
+      [
+        ...embed![3].matchAll(
+          /\/\* (.+?) in Embed Foundation Extensions \*\//g
+        ),
+      ].map((m) => m[1])
+    ).toEqual(["LiveActivitiesExtension.appex"]);
+    const appTarget = pbxproj.match(
+      /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType/
+    )![0];
+    expect(appTarget).toContain(
+      `${embed![1]} /* Embed Foundation Extensions */`
+    );
+    // Not behind the Watch's gate: every build carries it.
+    expect(pbxproj).not.toMatch(
+      /(EXCLUDED|INCLUDED)_SOURCE_FILE_NAMES = [^;]*appex/
+    );
+
+    const target = pbxproj.match(
+      /\/\* LiveActivitiesExtension \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?productType = "([^"]+)";/
+    );
+    expect(target?.[1]).toBe("com.apple.product-type.app-extension");
+    expect(target![0]).toMatch(/LiveActivitiesKit \*\//);
+    const list = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "LiveActivitiesExtension" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    const ids = [
+      ...list![1].matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g")),
+    ].map((m) => m[1]);
+    expect(ids).toHaveLength(2);
+    for (const id of ids) {
+      const config = pbxproj.match(
+        new RegExp(`^\\s*${id} /\\*[^\\n]*\\*/ = \\{([\\s\\S]*?)^\\s*\\};`, "m")
+      )![1];
+      // Inside the app only: an archive refuses an extension beside it.
+      expect(config).toContain("SKIP_INSTALL = YES;");
+      expect(config).toContain("TARGETED_DEVICE_FAMILY = 1;");
+      // The plugin's widget needs iOS 16.2; the app still opens on 15.4,
+      // where the extension is never loaded.
+      expect(config).toContain("IPHONEOS_DEPLOYMENT_TARGET = 16.2;");
+      expect(config).toContain(
+        "PRODUCT_BUNDLE_IDENTIFIER = com.tropos.app.LiveActivities;"
+      );
+      expect(config).toContain(
+        "CODE_SIGN_ENTITLEMENTS = LiveActivities/LiveActivities.entitlements;"
+      );
+    }
+    // LiveActivitiesKit comes from the plugin's own package, the patched one.
+    expect(pbxproj).toMatch(
+      /relativePath = "\.\.\/\.\.\/node_modules\/capacitor-live-activities";/
+    );
+    expect(pbxproj).toMatch(/productName = LiveActivitiesKit;/);
+
+    // The app says it shows Live Activities; the extension is a widget.
+    expect(infoPlist).toMatch(
+      /<key>NSSupportsLiveActivities<\/key>\s*<true\/>/
+    );
+    const widgetPlist = read("ios/App/LiveActivities/Info.plist");
+    expect(widgetPlist).toMatch(
+      /<key>NSExtensionPointIdentifier<\/key>\s*<string>com\.apple\.widgetkit-extension<\/string>/
+    );
+    expect(read("ios/App/LiveActivities/LiveActivitiesBundle.swift")).toMatch(
+      /DynamicActivityWidget\(\)/
+    );
+
+    // Both carry the group the plugin names from the app's bundle ID.
+    expect(
+      read(
+        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
+      )
+    ).toContain('"group.\\(bundleId).liveactivities"');
+    const group = "<string>group.com.tropos.app.liveactivities</string>";
+    expect(entitlements).toContain(group);
+    expect(
+      read("ios/App/LiveActivities/LiveActivities.entitlements")
+    ).toContain(group);
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
@@ -328,7 +669,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     const checked = [
       ...preflight.matchAll(/^\s+([A-Z0-9_]+): \$\{\{ secrets\.\1 \}\}/gm),
     ].map((m) => m[1]);
-    expect(checked.length).toBe(8);
+    expect(checked.length).toBe(9);
     // The VITE_* client config has its own check (scripts/check-web-env.mjs).
     const read_ = new Set(
       [...workflow.matchAll(/secrets\.([A-Z0-9_]+)/g)]

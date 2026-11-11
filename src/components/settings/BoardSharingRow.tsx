@@ -42,7 +42,7 @@ export default function BoardSharingRow({
       <Toggle
         checked={checked}
         disabled={pending !== null}
-        label="Toggle showing my week on friends' boards"
+        label="Toggle showing my week on friends’ boards"
         onChange={async () => {
           if (pending !== null) return;
           const next = shared !== true;
@@ -60,7 +60,7 @@ export default function BoardSharingRow({
               showRestrictedToast();
             } else {
               logger.error("[friendsBoard] sharing change failed", err);
-              toast.error("Couldn't change who sees your week. Try again.");
+              toast.error("Couldn’t change who sees your week. Try again.");
             }
           } finally {
             setPending(null);

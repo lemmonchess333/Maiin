@@ -39,8 +39,10 @@ describe("nextActionForFeel / nextActionForFocus", () => {
     }
   });
 
-  it("'a bit much' steers to programme options, never a volume cut", () => {
-    expect(nextActionForFeel("a_bit_much").to).toBe("/program");
+  it("'a bit much' opens a guided choice, never an automatic volume cut", () => {
+    expect(nextActionForFeel("a_bit_much").to).toBe("/program/plan?reset=1");
+    expect(nextActionForFeel("too_light").to).toBe("/program/plan?reset=1");
+    expect(nextActionForFeel("good_fit").to).toBe("/program/plan");
   });
 });
 
@@ -64,7 +66,9 @@ describe("resolveReviewNextAction (REVIEW-ROUTE-01 focus-first)", () => {
     expect(resolveReviewNextAction("good_fit", "runs")).toEqual(
       nextActionForFeel("good_fit")
     );
-    expect(resolveReviewNextAction("too_light", "lifts").to).toBe("/program");
+    expect(resolveReviewNextAction("too_light", "lifts").to).toBe(
+      "/program/plan?reset=1"
+    );
   });
 
   it("no focus falls back to the feel-based action", () => {

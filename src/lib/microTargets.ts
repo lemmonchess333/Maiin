@@ -50,7 +50,7 @@ export function resolveMicroTargets(
   return [
     {
       key: "fiber",
-      label: "Fiber",
+      label: "Fibre",
       target: fiberGoal,
       unit: "g",
       kind: "goal",

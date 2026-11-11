@@ -72,7 +72,7 @@ describe("RunLaunchCard", () => {
       /What it is.*Relaxed running at a chatty pace/
     );
     expect(why).toHaveTextContent(
-      /Why it's in your week.*it makes the hard days work/
+      /Why it’s in your week.*it makes the hard days work/
     );
     expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
   });
@@ -264,4 +264,14 @@ describe("RunLaunchCard", () => {
       ).toHaveLength(1);
     });
   });
+});
+
+it("opens run help without starting or customizing the planned run", () => {
+  const onHelp = vi.fn();
+  const { onStart, onCustomize, onBack } = setup({ onHelp });
+  fireEvent.click(screen.getByRole("button", { name: "How runs work" }));
+  expect(onHelp).toHaveBeenCalledTimes(1);
+  expect(onStart).not.toHaveBeenCalled();
+  expect(onCustomize).not.toHaveBeenCalled();
+  expect(onBack).not.toHaveBeenCalled();
 });

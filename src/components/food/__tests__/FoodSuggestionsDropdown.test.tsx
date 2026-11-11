@@ -257,7 +257,10 @@ function renderQuickAdd(quickAdd: Partial<QuickAddSection> = {}) {
 describe("FoodSuggestionsDropdown — empty-focus Quick Add (wave2 D)", () => {
   it("renders the user's items under a 'Quick Add' header, with the calorie unit", () => {
     renderQuickAdd({ items: [makeItem({ name: "Protein Shake", cal: 250 })] });
-    expect(screen.getByText(/quick add/i)).toBeInTheDocument();
+    // The heading; the list's last row is also named Quick add.
+    expect(
+      screen.getByText(/^quick add$/i, { ignore: "script, style, button *" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Protein Shake")).toBeInTheDocument();
     expect(
       screen.getByText(new RegExp(`250 ${CALORIE_UNIT}`))
@@ -267,7 +270,40 @@ describe("FoodSuggestionsDropdown — empty-focus Quick Add (wave2 D)", () => {
   it("frames seeded items as 'Examples' for cold-start accounts", () => {
     renderQuickAdd({ asExamples: true });
     expect(screen.getByText(/examples/i)).toBeInTheDocument();
-    expect(screen.queryByText(/quick add/i)).toBeNull();
+    expect(
+      screen.queryByText(/^quick add$/i, { ignore: "script, style, button *" })
+    ).toBeNull();
+  });
+
+  /* Mob2 (call 4): the way to calories without a name is named in the
+     list, beside the no-results row's Log manually. */
+  it("ends with a Quick add row that opens the form, for examples too", () => {
+    const onLogManually = vi.fn();
+    render(
+      <FoodSuggestionsDropdown
+        suggestions={[]}
+        offResults={[]}
+        pantryResults={[]}
+        quickAdd={{
+          items: [makeItem({ name: "Oats" })],
+          asExamples: true,
+          adding: null,
+          onAdd: vi.fn(),
+        }}
+        offEmpty={false}
+        offSearchQuery={null}
+        onSelectSuggestion={vi.fn()}
+        onSelectOff={vi.fn()}
+        onSelectPantry={vi.fn()}
+        onLogManually={onLogManually}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Quick add Calories and macros, no name needed",
+      })
+    );
+    expect(onLogManually).toHaveBeenCalledTimes(1);
   });
 
   it("tap fires onAdd with the item (instant-log semantics)", () => {
@@ -375,6 +411,29 @@ describe("FoodSuggestionsDropdown quick-add — long-press → remove (ported fr
     fireEvent.click(row);
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("swallows the click after a long hold held on past the window, counted from the lift", () => {
+    const onRemove = vi.fn();
+    const onAdd = vi.fn();
+    renderQuickAdd({
+      items: [makeItem({ favouriteId: "oats" })],
+      onRemove,
+      onAdd,
+    });
+    const row = screen.getByRole("button", { name: /oats/i });
+    fireEvent.pointerDown(row, { clientX: 100, clientY: 100 });
+    vi.advanceTimersByTime(500);
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    // The finger stays down well past the window, then lifts.
+    vi.advanceTimersByTime(800);
+    fireEvent.pointerUp(window);
+    fireEvent.click(row);
+    expect(onAdd).not.toHaveBeenCalled();
+    // A tap once the window has passed still logs.
+    vi.advanceTimersByTime(400);
+    fireEvent.click(row);
+    expect(onAdd).toHaveBeenCalledTimes(1);
   });
 
   it("calls onAdd on a normal tap (no long-press)", () => {

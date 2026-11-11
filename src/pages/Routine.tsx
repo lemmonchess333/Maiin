@@ -1,5 +1,6 @@
 import type { SessionPrescription } from "@/features/program/sessionCompletion";
 import { completeLift } from "@/lib/liftCompletion";
+import type { LiftMomentFacts } from "@/lib/postMoments";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -16,6 +17,7 @@ import { RESUME_PARAM } from "../lib/resumeParam";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
+import { keepTitleWhole } from "@/lib/workoutLabels";
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -116,6 +118,8 @@ export default function Routine() {
             rpe?: number;
           }>
         >;
+        /** The session's new bests and streak, for its post (Soc15). */
+        moments?: LiftMomentFacts;
       }
     ) => {
       // Fail CLOSED — returning silently would let WorkoutSession clear the
@@ -149,12 +153,18 @@ export default function Routine() {
         ran: sessionData.prescription?.exercises ?? synthDay.exercises,
         setLogs: sessionData.setLogs,
         exerciseNotes: sessionData.exerciseNotes,
+        supersets: sessionData.prescription?.supersets,
         durationMinutes: sessionData.durationMinutes,
         bodyweightKg: profile?.weightKg ?? 0,
         // The post names the workout the way the user thinks of it.
         title: routine.name,
-        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
+        // Kept whole: the title is read up to the first " — " (`workoutTitle`),
+        // and a routine's name or its author's can hold one.
+        notes: keepTitleWhole(
+          `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`
+        ),
         extra: { routineId: routine.id, routineName: routine.name },
+        moments: sessionData.moments,
       });
       return receipt;
     },
@@ -175,7 +185,7 @@ export default function Routine() {
     return (
       <div className="p-6 space-y-3 text-center">
         <ErrorState
-          title="Couldn't load this routine"
+          title="Couldn’t load this routine"
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -190,7 +200,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );
@@ -207,7 +217,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );
@@ -221,6 +231,9 @@ export default function Routine() {
       draftEpoch={ROUTINE_DRAFT_EPOCH}
       onCompleteDay={handleCompleteRoutine}
       onClose={() => navigate("/program")}
+      onViewWorkout={(id) =>
+        navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
+      }
       resumeDraft={resumeOnOpen}
     />
   );

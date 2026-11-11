@@ -48,6 +48,7 @@ const h = vi.hoisted(() => ({
     permissionState: "granted" as PermissionState,
   },
   gpsCalls: [] as string[],
+  preWarms: 0,
   pauseSince: [] as (number | undefined)[],
   timer: { isRunning: false, elapsed: 600 },
   unit: "mi" as "km" | "mi",
@@ -62,7 +63,9 @@ const h = vi.hoisted(() => ({
 /* Stable across renders, as the real hook's useCallbacks are: the page's
    hold effect lists them as dependencies. */
 const gpsControls = {
-  preWarm: () => {},
+  preWarm: () => {
+    h.preWarms += 1;
+  },
   start: () => h.gpsCalls.push("start"),
   stop: () => h.gpsCalls.push("stop"),
   pause: (since?: number) => {
@@ -144,11 +147,14 @@ vi.mock("@/components/run/RunTilePicker", () => ({
   default: ({
     onPickType,
     onMoreOptions,
+    gpsSignal,
   }: {
     onPickType: (type: string) => void;
     onMoreOptions: () => void;
+    gpsSignal?: import("react").ReactNode;
   }) => (
     <>
+      {gpsSignal}
       <button onClick={() => onPickType("easy")}>Easy run</button>
       <button onClick={onMoreOptions}>More options</button>
     </>
@@ -184,6 +190,11 @@ vi.mock("@/components/run/RunBottomSheet", () => ({
 }));
 
 const T0 = Date.parse("2026-10-04T08:00:00Z");
+
+/** A figure and its unit are two faces in one line (the unit is the text
+ *  face), so a line like "2.50 mi" is matched whole, not as one text node. */
+const figureLine = (text: string) => (_: string, el: Element | null) =>
+  el?.tagName === "P" && el.textContent === text;
 
 function point(metresNorth: number, timestamp: number): GPSPoint {
   const lat = 51.5 + metresNorth / 111_195;
@@ -308,6 +319,7 @@ beforeEach(() => {
   h.gps.error = null;
   h.gps.permissionState = "granted";
   h.gpsCalls.length = 0;
+  h.preWarms = 0;
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
   h.timer.elapsed = 600;
@@ -500,7 +512,7 @@ describe("recovering coaching and checkpoint durability", () => {
       h.gps.points = seed.points;
       render(tree());
       expect(
-        screen.getByText(/Session guidance couldn't be restored/)
+        screen.getByText(/Session guidance couldn’t be restored/)
       ).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Resume run" })).toBeNull();
       await act(async () =>
@@ -600,7 +612,7 @@ describe("recovering coaching and checkpoint durability", () => {
         h.timer.elapsed = 900;
         view.rerender(tree());
         const notice = screen.getByText(
-          /Latest progress couldn't be saved for recovery/
+          /Latest progress couldn’t be saved for recovery/
         );
         expect(notice.closest('[role="status"]')).not.toBeNull();
         if (locked)
@@ -616,7 +628,7 @@ describe("recovering coaching and checkpoint durability", () => {
         h.timer.elapsed = 901;
         view.rerender(tree());
         expect(
-          screen.queryByText(/Latest progress couldn't be saved for recovery/)
+          screen.queryByText(/Latest progress couldn’t be saved for recovery/)
         ).toBeNull();
         expect(readStoredRun("recording-test")?.accumulatedSeconds).toBe(901);
         if (locked) {
@@ -670,6 +682,41 @@ describe("a structured run's real player", () => {
   });
 });
 
+/* Mob2 finding 7: the setup screen warms the GPS and shows the signal
+   before Start, once location is allowed, and never asks for it. */
+describe("the setup screen warms the GPS", () => {
+  it("shows the signal and warms while location is allowed", () => {
+    render(tree());
+    expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
+    expect(h.preWarms).toBe(1);
+    act(() => vi.advanceTimersByTime(15_000));
+    expect(h.preWarms).toBe(2);
+    // Warming is not the run: nothing is recording.
+    expect(h.gpsCalls).toEqual([]);
+  });
+
+  it("shows nothing and asks nothing while location is undecided", () => {
+    h.gps.permissionState = "prompt";
+    render(tree());
+    // POSITIVE anchor: the setup screen is the one showing.
+    expect(screen.getByRole("button", { name: "Easy run" })).toBeVisible();
+    expect(screen.queryByText("GPS ready")).toBeNull();
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(h.preWarms).toBe(0);
+  });
+
+  it("stops warming once the run starts", async () => {
+    render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
+    });
+    const warmedBefore = h.preWarms;
+    act(() => vi.advanceTimersByTime(45_000));
+    // The start's own preWarm is the run's; the setup screen's stops.
+    expect(h.preWarms - warmedBefore).toBe(0);
+  });
+});
+
 describe("GPS acquisition recovery", () => {
   it.each([
     ["Permission denied", "denied"],
@@ -719,17 +766,29 @@ describe("GPS acquisition recovery", () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
     expect(h.timerStart).not.toHaveBeenCalled();
+    expect(
+      readStoredRun("recording-test", Date.now())?.recordingStartedAt
+    ).toBeUndefined();
+    act(() => vi.advanceTimersByTime(10_000));
     h.gps.error = null;
-    h.gps.points = [point(0, T0)];
+    h.gps.points = [point(0, Date.now())];
     view.rerender(tree());
     for (let tick = 0; tick < 3; tick++) {
       act(() => vi.advanceTimersByTime(1000));
     }
     expect(h.timerStart).toHaveBeenCalledOnce();
+    expect(
+      readStoredRun("recording-test", Date.now())?.recordingStartedAt
+    ).toBe(T0 + 13_000);
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
     expect(
       screen.queryByRole("textbox", { name: "Distance covered" })
     ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = JSON.parse(
+      screen.getByTestId("finish-payload").textContent ?? "null"
+    );
+    expect(finish.recordingStartedAt).toBe(T0 + 13_000);
   });
 });
 
@@ -780,6 +839,25 @@ describe("a run-walk's announcements", () => {
 });
 
 describe("the trace's clock follows the run's", () => {
+  it("requires fresh motion evidence when the auto-pause timer fires", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+    view.rerender(tree());
+    act(() => vi.advanceTimersByTime(5000));
+    expect(h.timer.isRunning).toBe(true);
+    expect(h.timerPause).not.toHaveBeenCalled();
+  });
+
+  it("requires accurate motion evidence before auto-pausing", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    for (let s = 0; s < 6; s++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0, accuracy: 150 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timer.isRunning).toBe(true);
+    expect(h.timerPause).not.toHaveBeenCalled();
+  });
   it("holds a restored moving run's trace from its last write, then releases it", async () => {
     /* Nothing was recorded while the app was gone, and the timer leaves
        that time out. The trace must too, from the same moment — or the
@@ -799,9 +877,11 @@ describe("the trace's clock follows the run's", () => {
 
   it("restores an actual auto-paused snapshot as paused until an explicit Resume", async () => {
     const { view } = await resumeFromSnapshot("active");
-    h.gps.currentPoint = { ...point(3, T0), speed: 0 };
-    view.rerender(tree());
-    act(() => vi.advanceTimersByTime(5000));
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
     expect(
       screen.getByText(/Auto-paused · start moving to resume/)
     ).toBeInTheDocument();
@@ -879,11 +959,11 @@ describe("the trace's clock follows the run's", () => {
     h.gpsCalls.length = 0;
 
     // Standing at a crossing: auto-pause stops the timer after 5 s.
-    h.gps.currentPoint = { ...point(3, T0), speed: 0 };
-    view.rerender(tree());
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
     expect(h.timerPause).toHaveBeenCalledTimes(1);
     expect(h.gpsCalls).toEqual(["pause"]);
 
@@ -915,7 +995,7 @@ describe("the figures a pause must not move", () => {
     });
     render(tree());
     // 2 s of running either side of the hold, at most 12 m/s: 24 m, 0.01 mi.
-    expect(screen.getByText("0.01 mi")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("0.01 mi"))).toBeInTheDocument();
   });
 
   it("does not read the stops on a run as gaps in its GPS", async () => {
@@ -966,7 +1046,7 @@ describe("the lock screen", () => {
     h.gps.distance = 1609.344 * 2.5;
     await resumeFromSnapshot("active");
     fireEvent.click(screen.getByRole("button", { name: "Lock" }));
-    expect(screen.getByText("2.50 mi")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("2.50 mi"))).toBeInTheDocument();
     expect(screen.queryByText(/km/)).toBeNull();
   });
 });
@@ -1102,7 +1182,7 @@ describe("interrupted manual distance entry", () => {
         "1.25"
       );
       expect(
-        screen.getByText(/Latest progress couldn't be saved for recovery/)
+        screen.getByText(/Latest progress couldn’t be saved for recovery/)
       ).toBeInTheDocument();
       expect(refused.mock.calls.length).toBeLessThan(10);
       refused.mockRestore();
@@ -1111,7 +1191,7 @@ describe("interrupted manual distance entry", () => {
         "2.51"
       );
       expect(
-        screen.queryByText(/Latest progress couldn't be saved for recovery/)
+        screen.queryByText(/Latest progress couldn’t be saved for recovery/)
       ).toBeNull();
       h.unit = "km";
       view.rerender(tree());
@@ -1299,7 +1379,7 @@ describe("manual structured coaching through the real player", () => {
     h.unit = "km";
     const view = await startIntervals(true);
     expect(screen.getByText("HARD · REP 1/5")).toBeInTheDocument();
-    expect(screen.getByText("1.00 km target")).toBeInTheDocument();
+    expect(screen.getByText(figureLine("1.00 km target"))).toBeInTheDocument();
     expect(h.gpsCalls).not.toContain("start");
     // Time passing cannot invent metres on the machine.
     h.timer.elapsed = 240;
@@ -1377,8 +1457,8 @@ describe("manual structured coaching through the real player", () => {
   });
 });
 
-/* Home's and Train's In progress strip offer a run left unsaved, and the
-   finish screen holds a run only in memory until it is saved. */
+/* Home's and Train's strip offers a run left unsaved. Finish persists the
+   review with the same run identity, so a restart does not resume recording. */
 describe("a run picked up from the In progress strip", () => {
   function openAt(url: string) {
     return render(
@@ -1414,15 +1494,21 @@ describe("a run picked up from the In progress strip", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps a finished run stopped, so recovering it never runs on", async () => {
+  it("keeps a finished run stopped with a recoverable review and run ID", async () => {
     await resumeFromSnapshot("active");
     expect(h.timer.isRunning).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     expect(screen.getByTestId("finish-payload")).toBeInTheDocument();
     expect(readStoredRun("recording-test")).toMatchObject({
-      phase: "paused",
+      phase: "finished",
       isRunning: false,
       accumulatedSeconds: 600,
+      finish: { elapsed: 600, finishedAt: expect.any(Number) },
+      identity: {
+        uid: "recording-test",
+        runId: expect.any(String),
+        sessionId: expect.any(String),
+      },
     });
   });
 });

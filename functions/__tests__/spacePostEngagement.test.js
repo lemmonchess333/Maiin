@@ -196,6 +196,49 @@ describe("addSpacePostComment", () => {
     });
   });
 
+  it("takes the avatar from the commenter's public profile, never the request", async () => {
+    const PROFILE_PHOTO =
+      "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Falice%2F1.jpg?alt=media";
+    const firestore = makeFirestoreStub({
+      initial: {
+        [POST]: { authorId: "bob", commentCount: 0 },
+        "users/alice/public/profile": { photoURL: PROFILE_PHOTO },
+      },
+    });
+    await addSpacePostComment({
+      firestore,
+      uid: "alice",
+      spaceId: "runners",
+      postId: "coach-2026-07-20",
+      text: "Loving this block",
+      authorName: "Alice",
+      authorPhotoURL:
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/progress-photos%2Falice%2Fx.jpg",
+      increment,
+      serverTimestamp,
+    });
+    expect(firestore._writes[0].data.authorPhotoURL).toBe(PROFILE_PHOTO);
+  });
+
+  it("writes no avatar for a profile with none, whatever the request sends", async () => {
+    const firestore = makeFirestoreStub({
+      initial: { [POST]: { authorId: "bob", commentCount: 0 } },
+    });
+    await addSpacePostComment({
+      firestore,
+      uid: "alice",
+      spaceId: "runners",
+      postId: "coach-2026-07-20",
+      text: "Loving this block",
+      authorName: "Alice",
+      authorPhotoURL:
+        "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+      increment,
+      serverTimestamp,
+    });
+    expect("authorPhotoURL" in firestore._writes[0].data).toBe(false);
+  });
+
   it("caps the stored name at the display-name limit", async () => {
     const firestore = makeFirestoreStub({
       initial: { [POST]: { authorId: "bob", commentCount: 0 } },

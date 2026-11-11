@@ -1,3 +1,4 @@
+import PerformanceReadError from "@/components/analytics/PerformanceReadError";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
@@ -35,6 +36,8 @@ interface PerformanceHeroCardProps {
   weeksAvailable: number;
   /** True until the perf snapshot's initial delivery. */
   loading: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
   /** Whether the user has any logged session at all. Distinguishes the
    *  cold-start empty state from the short window after a first session is
    *  saved but before the server has written its performance doc — see
@@ -48,7 +51,7 @@ const STROKE = 6;
 // the phone): the words and the chevron go under the ring, rather than
 // "Performance" running past the card.
 const ROW =
-  "flex flex-wrap items-center gap-4 rounded-xl -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "flex flex-wrap items-center gap-4 rounded-lg -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 function trackTap() {
   haptic();
@@ -70,12 +73,16 @@ export default function PerformanceHeroCard({
   previousWeek,
   weeksAvailable,
   loading,
+  failed = false,
+  onRetry,
   hasLoggedSession = false,
 }: PerformanceHeroCardProps) {
   const pi = currentWeek ? Math.round(currentWeek.performanceIndex ?? 0) : 0;
   /* Called unconditionally for the Rules of Hooks; the loading and empty
      branches do not render it. */
   const piDisplay = useCountUp(pi, { sessionKey: "perf", duration: 1 });
+
+  if (failed && !loading) return <PerformanceReadError onRetry={onRetry} />;
 
   if (!currentWeek) {
     /* Loading has its own row so the copy never says "your Performance
@@ -94,8 +101,14 @@ export default function PerformanceHeroCard({
           copy ? `${copy.headline}. ${copy.sub}` : "Performance — loading"
         }
       >
-        <ProgressRing value={0} size={RING} stroke={STROKE} color="transparent">
-          <span className="text-base font-extrabold font-mono tabular-nums text-muted-foreground">
+        <ProgressRing
+          value={0}
+          size={RING}
+          stroke={STROKE}
+          color="transparent"
+          cut
+        >
+          <span className="text-base font-extrabold font-figure tabular-nums text-muted-foreground">
             —
           </span>
         </ProgressRing>
@@ -151,9 +164,10 @@ export default function PerformanceHeroCard({
         size={RING}
         stroke={STROKE}
         color={hue}
+        cut
       >
         <motion.span
-          className="text-base font-extrabold font-mono tabular-nums leading-none"
+          className="text-base font-extrabold font-figure tabular-nums leading-none"
           style={{ color: textHue }}
         >
           {piDisplay}

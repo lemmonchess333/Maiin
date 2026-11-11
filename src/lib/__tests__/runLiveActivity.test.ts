@@ -9,18 +9,23 @@
  * plugin / a rejecting bridge can never throw into the run.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { capacitorPlugin } from "@/test/capacitorPlugin";
 
 const startActivity = vi.fn();
 const updateActivity = vi.fn();
 const endActivity = vi.fn();
+const getAllActivities = vi.fn();
 
-vi.mock("capacitor-live-activities", () => ({
-  LiveActivities: {
-    startActivity: (...a: unknown[]) => startActivity(...a),
-    updateActivity: (...a: unknown[]) => updateActivity(...a),
-    endActivity: (...a: unknown[]) => endActivity(...a),
-  },
-}));
+vi.mock("capacitor-live-activities", () => {
+  return {
+    LiveActivities: capacitorPlugin({
+      startActivity: (...a: unknown[]) => startActivity(...a),
+      updateActivity: (...a: unknown[]) => updateActivity(...a),
+      endActivity: (...a: unknown[]) => endActivity(...a),
+      getAllActivities: (...a: unknown[]) => getAllActivities(...a),
+    }),
+  };
+});
 
 vi.mock("@/lib/platform", () => ({
   isNativePlatform: vi.fn(() => true),
@@ -31,6 +36,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import { isNativePlatform } from "@/lib/platform";
+import { __resetLiveActivitiesForTests } from "@/lib/liveActivities";
 import {
   startRunActivity,
   updateRunActivity,
@@ -52,10 +58,12 @@ const DATA: RunActivityData = {
 beforeEach(() => {
   vi.clearAllMocks();
   __resetRunActivityForTests();
+  __resetLiveActivitiesForTests();
   setNative(true);
   startActivity.mockResolvedValue({ activityId: "act-1" });
   updateActivity.mockResolvedValue(undefined);
   endActivity.mockResolvedValue(undefined);
+  getAllActivities.mockResolvedValue({ activities: [] });
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-08-15T10:00:00Z"));
 });
@@ -154,6 +162,7 @@ describe("end", () => {
     expect(endActivity).toHaveBeenCalledWith({
       activityId: "act-1",
       data: final,
+      behavior: { dismissalPolicy: "immediate" },
     });
     // After end: updates are no-ops and a second end doesn't call again.
     vi.advanceTimersByTime(5000);
@@ -161,6 +170,22 @@ describe("end", () => {
     await endRunActivity();
     expect(updateActivity).not.toHaveBeenCalled();
     expect(endActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it("an end while the card is still starting takes it down once it shows", async () => {
+    let shown!: (result: { activityId: string }) => void;
+    startActivity.mockReturnValue(new Promise((resolve) => (shown = resolve)));
+    const start = startRunActivity(DATA);
+    // Discarded before iOS has answered: the card must not stay on
+    // "Recording" with no one left to end it.
+    const end = endRunActivity();
+    shown({ activityId: "act-1" });
+    await Promise.all([start, end]);
+    expect(endActivity).toHaveBeenCalledWith({
+      activityId: "act-1",
+      data: {},
+      behavior: { dismissalPolicy: "immediate" },
+    });
   });
 
   it("is a no-op when nothing is live (unmount cleanup path)", async () => {

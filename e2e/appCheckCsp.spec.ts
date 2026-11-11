@@ -20,6 +20,10 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
   const secondaryFrame = "https://recaptcha.google.com/recaptcha/api2/anchor";
   const connect = "https://www.google.com/recaptcha/api2/reload";
   const unrelated = "https://www.google.com/unrelated.js";
+  const release =
+    "https://www.gstatic.com/recaptcha/releases/synthetic/recaptcha__en.js";
+  const unrelatedStatic =
+    "https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js";
   const fixture = "http://localhost:4173/Maiin/security-csp-fixture";
 
   await page.route("**/*", async (route) => {
@@ -30,7 +34,12 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
         contentType: "text/html",
         body: `<!doctype html><html><head>${meta}</head><body></body></html>`,
       });
-    } else if (url === api || url === unrelated) {
+    } else if (
+      url === api ||
+      url === unrelated ||
+      url === release ||
+      url === unrelatedStatic
+    ) {
       await route.fulfill({
         contentType: "application/javascript",
         body: "document.documentElement.dataset.recaptchaProbe = 'loaded';",
@@ -53,7 +62,15 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
 
   await page.goto(fixture);
   const outcome = await page.evaluate(
-    async ({ api, frame, secondaryFrame, connect, unrelated }) => {
+    async ({
+      api,
+      frame,
+      secondaryFrame,
+      connect,
+      unrelated,
+      release,
+      unrelatedStatic,
+    }) => {
       const loadScript = (url: string) =>
         new Promise<string>((resolve) => {
           const script = document.createElement("script");
@@ -64,6 +81,8 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
         });
       const allowed = await loadScript(api);
       const blocked = await loadScript(unrelated);
+      const releaseAllowed = await loadScript(release);
+      const staticBlocked = await loadScript(unrelatedStatic);
       for (const src of [frame, secondaryFrame]) {
         const iframe = document.createElement("iframe");
         iframe.src = src;
@@ -73,16 +92,28 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
       return {
         allowed,
         blocked,
+        releaseAllowed,
+        staticBlocked,
         response,
         marker: document.documentElement.dataset.recaptchaProbe,
       };
     },
-    { api, frame, secondaryFrame, connect, unrelated }
+    {
+      api,
+      frame,
+      secondaryFrame,
+      connect,
+      unrelated,
+      release,
+      unrelatedStatic,
+    }
   );
 
   expect(outcome).toEqual({
     allowed: "loaded",
     blocked: "blocked",
+    releaseAllowed: "loaded",
+    staticBlocked: "blocked",
     response: "synthetic-response",
     marker: "loaded",
   });
@@ -90,7 +121,8 @@ test("App Check resources load while unrelated Google scripts remain blocked", a
     .poll(() => page.frames().map((f) => f.url()))
     .toEqual(expect.arrayContaining([frame, secondaryFrame]));
   expect(requested).toEqual(
-    expect.arrayContaining([api, frame, secondaryFrame, connect])
+    expect.arrayContaining([api, frame, secondaryFrame, connect, release])
   );
   expect(requested).not.toContain(unrelated);
+  expect(requested).not.toContain(unrelatedStatic);
 });

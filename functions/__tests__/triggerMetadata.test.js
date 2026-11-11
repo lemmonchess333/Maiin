@@ -85,14 +85,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
-  // Run11 (Mapbox supersession 2026-07-17) — Pro-gated Directions proxy.
-  // The token binding is the deploy gate: provision MAPBOX_DIRECTIONS_TOKEN
-  // before merging or every functions deploy fails (the #1636 class).
-  planRunningRoute: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: ["MAPBOX_DIRECTIONS_TOKEN"],
-  },
   // The pre-run weather strip, from MET Norway (currentWeather.js). MET needs no
   // key, so nothing to provision: its terms ask for a User-Agent instead.
   getCurrentWeather: {
@@ -104,28 +96,6 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
-  },
-  verifyApplePurchase: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
-  },
-  appleIAPWebhook: {
-    kind: "http",
-    maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
-  },
-  restoreApplePurchases: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [
-      "APPLE_ISSUER_ID",
-      "APPLE_KEY_ID",
-      "APPLE_PRIVATE_KEY",
-      "BILLING_HMAC_SECRET",
-      "BILLING_PREVIOUS_HMAC_SECRET",
-      "STRIPE_SECRET_KEY",
-    ],
   },
   revenueCatWebhook: {
     kind: "http",
@@ -199,6 +169,13 @@ const EXPECTED = {
     schedule: "10 2 * * *",
     timeoutSeconds: 540,
   },
+  discoveryHiddenSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "40 3 * * *",
+    timeoutSeconds: 540,
+  },
   rolloverChallenges: {
     kind: "schedule",
     maxInstances: 1,
@@ -232,6 +209,23 @@ const EXPECTED = {
     schedule: "0 4 * * *",
     timeoutSeconds: 540,
   },
+  // Soc15 plan groups: a race goal set, moved or cleared recounts its race
+  // (the old one and the new one), and every race still ahead is recounted
+  // at 04:30 UTC, after the reconciliation sweep has cleared finished goals.
+  onRaceGoalWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource: "projects/{project}/databases/(default)/documents/users/{uid}",
+  },
+  dailyRaceCohortRecount: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "30 4 * * *",
+    timeoutSeconds: 540,
+  },
   onChallengeParticipantCreated: {
     kind: "event",
     maxInstances: 50,
@@ -245,6 +239,16 @@ const EXPECTED = {
     maxInstances: 50,
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.delete",
+    resource:
+      "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
+  },
+  // Soc15: the one writer of medals and the public trophy case
+  // (lib/medals.js). onWrite, so a rise, a reversal and a leave all reach it.
+  onChallengeParticipantWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
     resource:
       "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
   },
@@ -540,6 +544,27 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Soc15 call 3: weekly leagues. Joining or leaving, and the week's turn,
+  // Monday 12:15 UTC, after every timezone's Sunday has ended.
+  setLeagueSharing: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  weeklyLeagueTurn: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    // 12:15 UTC, then each hour until the turn has finished.
+    schedule: "15 12-23 * * 1",
+    timeoutSeconds: 540,
+  },
+  // Mob2 call 7: Remove follower, both edges of one follow of the caller.
+  removeFollower: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onFollowRequestCreated: {
     kind: "event",
     maxInstances: 50,
@@ -547,6 +572,47 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/followRequests/{uid}/users/{requesterUid}",
+  },
+  // Soc15 invites: a person's code, whose a code is (signed out), and a
+  // new account using one, which follows both ways.
+  getInviteCode: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  lookupInvite: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // Soc15 STATUS 2026-11-10: the owner's New code.
+  renewInviteCode: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  redeemInvite: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // Follow counts: an edge made or removed recounts its list for the
+  // account that owns it (lib/followCounts.js).
+  onFollowerEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
+  },
+  onFollowingEdgeWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/following/{uid}/users/{targetUid}",
   },
   // Polish3 call 1: the person blocked's copy of a block, on every write.
   onBlockWritten: {
@@ -635,6 +701,26 @@ describe("functions trigger metadata snapshot", () => {
     }
   });
 
+  /* App Store purchases and restores go through RevenueCat (ADR-0006),
+     which knows which account bought what. A function that takes a
+     transaction id from any signed-in caller and grants Pro for it lets
+     one account claim another's subscription, so none is exported, and no
+     function holds an App Store Server API key. */
+  it("exports no Apple purchase function and binds no App Store API key", () => {
+    const apple = [
+      "verifyApplePurchase",
+      "restoreApplePurchases",
+      "appleIAPWebhook",
+    ];
+    expect(Object.keys(fns).filter((name) => apple.includes(name))).toEqual([]);
+    const appleSecrets = Object.entries(actual).flatMap(([name, meta]) =>
+      meta.secrets
+        .filter((s) => s.startsWith("APPLE_"))
+        .map((s) => `${name}: ${s}`)
+    );
+    expect(appleSecrets).toEqual([]);
+  });
+
   it("no trigger is missing a maxInstances cap (CLAUDE.md cost guard)", () => {
     for (const [name, meta] of Object.entries(actual)) {
       expect({ [name]: meta.maxInstances }).not.toEqual({ [name]: null });
@@ -714,5 +800,16 @@ describe("functions trigger metadata snapshot", () => {
     expect(
       fns.hourlyChallengeAnnouncements.__endpoint.scheduleTrigger.timeZone
     ).toBe("Etc/UTC");
+  });
+
+  /* The league turn's 12:15 is a UTC time: it is the first quarter hour
+     after the last timezone's Sunday ends (UTC-12, at 12:00 UTC). In a
+     local zone it would move with that zone's clock changes, and in
+     British summer time land at 11:15 UTC, before Sunday had ended
+     everywhere. */
+  it("the league turn keeps a UTC schedule", () => {
+    expect(fns.weeklyLeagueTurn.__endpoint.scheduleTrigger.timeZone).toBe(
+      "Etc/UTC"
+    );
   });
 });

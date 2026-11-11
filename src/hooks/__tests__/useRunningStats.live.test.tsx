@@ -107,3 +107,21 @@ it("keeps queued corrections visible without deriving advice from partial sync",
   expect(result.current.runs).toHaveLength(1);
   expect(result.current.runs[0].relativeEffort).toBe("matched");
 });
+
+it("keeps tomorrow's runs outside an ending-today analytics window", async () => {
+  seedFirestore({
+    "users/runner/runs/future": {
+      date: "2026-09-14",
+      completedAt: Timestamp.fromDate(new Date(2026, 8, 14, 12)),
+      distance: 10000,
+      duration: 3000,
+      activityType: "easy",
+    },
+  });
+  const { result } = renderHook(() => useRunningStats(30));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.runs.map((r) => r.id)).not.toContain("future");
+  expect(
+    result.current.weeklyData.reduce((sum, week) => sum + week.totalDistance, 0)
+  ).toBe(5);
+});

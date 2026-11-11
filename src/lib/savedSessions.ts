@@ -24,6 +24,9 @@ export interface SavedSessionSource<T, W> {
   windowKey(window: W): string;
   /** The query for a window. It may be wider than the window. */
   query(uid: string, window: W): Query;
+  /** Optional companion queries for records whose event day and write time
+   *  differ. All answers are combined by document ID before parsing. */
+  queries?(uid: string, window: W): readonly Query[];
   /** The documents a query returned, as sessions, dropping any that cannot
    *  be read. */
   parseDocs(docs: readonly { id: string; data: () => DocumentData }[]): T[];
@@ -36,6 +39,25 @@ export interface SavedSessionSource<T, W> {
     loaded: readonly T[],
     window: W
   ): T[];
+}
+
+export function sessionQueries<T, W>(
+  source: SavedSessionSource<T, W>,
+  uid: string,
+  window: W
+): readonly Query[] {
+  const queries = source.queries?.(uid, window);
+  return queries?.length ? queries : [source.query(uid, window)];
+}
+
+export function uniqueSessionDocs(
+  groups: readonly (readonly { id: string; data: () => DocumentData }[])[]
+): { id: string; data: () => DocumentData }[] {
+  const byId = new Map<string, { id: string; data: () => DocumentData }>();
+  for (const docs of groups) {
+    for (const doc of docs) if (!byId.has(doc.id)) byId.set(doc.id, doc);
+  }
+  return [...byId.values()];
 }
 
 function pending(uid: string, collection: SessionCollection) {
@@ -68,9 +90,11 @@ export async function fetchSaved<T, W>(
   uid: string,
   window: W
 ): Promise<T[]> {
-  const snap = await getDocs(source.query(uid, window));
+  const snapshots = await Promise.all(
+    sessionQueries(source, uid, window).map((q) => getDocs(q))
+  );
   const loaded = source
-    .parseDocs(snap.docs)
+    .parseDocs(uniqueSessionDocs(snapshots.map((snap) => snap.docs)))
     .filter((item) => source.inWindow(item, window));
   return source.withQueued(uid, loaded, window);
 }

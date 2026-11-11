@@ -17,6 +17,9 @@
  * all reads before the transaction's writes).
  */
 
+const { isDocumentId } = require("./documentId");
+const { postPhotoUrls } = require("./postPhotos");
+
 /* Ids on the wire:
  *   activity            → "<activityId>"
  *   comment             → "<activityId>:<commentId>"
@@ -84,17 +87,7 @@ function isPlainObject(value) {
 }
 
 function assertDocumentId(value) {
-  if (
-    typeof value !== "string" ||
-    value.length === 0 ||
-    value !== value.trim() ||
-    value === "." ||
-    value === ".." ||
-    value.includes("/") ||
-    Buffer.byteLength(value, "utf8") > 1500
-  ) {
-    fail("invalid-report-target");
-  }
+  if (!isDocumentId(value)) fail("invalid-report-target");
   return value;
 }
 
@@ -272,6 +265,10 @@ async function resolveReportTarget({
         runName: previewString(data.runName),
         visibility: previewString(data.visibility),
         flagged: data.flagged === true,
+        // A post's photos are part of what was reported (Soc15 call 2):
+        // the queue shows them, so a moderator sees the post as its
+        // readers did. Only this post's own uploads, at most four.
+        photos: postPhotoUrls(data.photos, uid, target.activityId),
       },
     };
   }

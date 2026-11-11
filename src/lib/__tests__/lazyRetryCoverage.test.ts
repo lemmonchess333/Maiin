@@ -4,7 +4,7 @@
  * `lazyRetry` exists because a deploy changes chunk hashes, and a client
  * holding a cached `index.html` then asks for a chunk that no longer
  * exists. The import rejects, the enclosing `<Suspense>` never resolves,
- * and the user sits on the fallback forever — "Loading analytics..." with
+ * and the user sits on the fallback forever — "Loading analytics…" with
  * no way out but a manual hard-reload they have no reason to know about.
  *
  * The wrapper was extracted from App.tsx for exactly this reason and its

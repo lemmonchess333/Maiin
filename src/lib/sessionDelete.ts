@@ -11,9 +11,14 @@ import type { ProgramState } from "@/features/program/programTypes";
 import {
   pendingDocumentWrites,
   flushQueue,
+  hasQueuedWorkoutCompletion,
   queueDurableWrite,
 } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
+import {
+  queueHealthWorkoutDeletion,
+  reconcilePendingHealthExports,
+} from "@/lib/healthWorkoutExport";
 
 /**
  * Deleting one logged session — the client half of ADR-0012.
@@ -100,6 +105,23 @@ export async function deleteLoggedSession({
     )
       throw new Error("Sync this run before deleting it.");
   }
+  // A finished workout whose save is still queued, or failed and kept to
+  // retry, shows in History from the queue but is not on the server yet:
+  // the delete would find nothing, and the next flush would save it and
+  // tick its plan day. Send it first, so the delete takes it and its
+  // progression back off.
+  if (kind === "workout" && hasQueuedWorkoutCompletion(uid, id)) {
+    if (!navigator.onLine) throw new Error("Connect to delete this workout.");
+    await flushQueue(db, uid);
+    if (hasQueuedWorkoutCompletion(uid, id))
+      throw new Error("Sync this workout before deleting it.");
+  }
+  // Persist the native HealthKit cleanup intent BEFORE deleting a run. If the
+  // app dies just after Firestore accepts the delete, the next foreground can
+  // still remove its app-owned workout. Reconciliation waits until the server
+  // confirms the run is absent, so a failed delete never removes Health data.
+  if (kind === "run" && !queueHealthWorkoutDeletion(uid, id))
+    throw new Error("Could not prepare Apple Health cleanup. Try again.");
   // Post FIRST, session second. The reverse order strands the post if the
   // second delete fails — and the post is the half the user cannot clear
   // by retrying, because the session it was reachable from is already
@@ -111,6 +133,11 @@ export async function deleteLoggedSession({
   const session = doc(db, "users", uid, COLLECTION[kind], id);
   if (kind === "run") {
     await deleteDocGuarded(session);
+    // The pre-delete attempt may have seen the still-existing server run.
+    // Retry once it settles, then keep the durable intent for future retries.
+    void reconcilePendingHealthExports(uid)
+      .then(() => reconcilePendingHealthExports(uid))
+      .catch(() => {});
     return;
   }
   const programRef = doc(db, "users", uid, "programState", "current");

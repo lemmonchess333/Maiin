@@ -61,7 +61,7 @@ export default function TrajectoryCard({
       <div className="flex items-center gap-2 mb-3">
         <Zap className="size-5" style={{ color: THEME.brand }} />
         <div className="flex-1">
-          <h3 className="text-sm font-bold">Your trajectory</h3>
+          <h3 className="text-base font-bold">Your trajectory</h3>
         </div>
         <span className="text-xs text-muted-foreground">This week</span>
       </div>
@@ -79,10 +79,11 @@ export default function TrajectoryCard({
               sessions — showing "-2" before the user has logged anything
               for the new week reads as a failure-state in red. The
               "Start your week" zero-state nudge below is the calmer
-              prompt to action. */}
-          <div className="flex items-baseline gap-3 mb-3">
+              prompt to action. The row wraps, so at large text the chip
+              goes under the count rather than past the card. */}
+          <div className="flex flex-wrap items-baseline gap-3 mb-3">
             <span
-              className="text-3xl font-mono tabular-nums font-extrabold"
+              className="text-3xl font-figure tabular-nums font-extrabold"
               style={{ color: THEME.brand }}
             >
               {thisWeek.sessions}

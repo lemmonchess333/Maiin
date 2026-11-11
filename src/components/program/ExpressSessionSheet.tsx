@@ -165,7 +165,7 @@ export default function ExpressSessionSheet({
     choices.push({
       id: "lighter_day",
       label: `Do ${liftDayNameIn(weekDayNames, swapIndex, lighterDay.day.dayName)} instead · ~${lighterDay.minutes} min`,
-      sublabel: "The lighter session in your week — today's stays planned.",
+      sublabel: "The lighter session in your week — today’s stays planned.",
       variant: "secondary",
       onSelect: async () => onSwapToDay(swapIndex),
     });
@@ -181,7 +181,7 @@ export default function ExpressSessionSheet({
           ? "Your usual session is first. You can choose the full plan or another version today."
           : promote
             ? "Your block is running lighter sessions, so the short one is first. The full plan is still here whenever you want it."
-            : "Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn't change."
+            : "Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn’t change."
       }
       choices={choices}
       logTag="sessionChooser"

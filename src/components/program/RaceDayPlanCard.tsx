@@ -47,7 +47,7 @@ export default function RaceDayPlanCard({
   return (
     <section
       aria-label="Race-day pacing plan"
-      className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
+      className="rounded-xl bg-card border border-border dark:border-0 p-4 space-y-4 card-shadow"
     >
       <div className="space-y-1">
         <SectionLabel

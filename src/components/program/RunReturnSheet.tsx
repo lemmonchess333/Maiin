@@ -106,7 +106,7 @@ export default function RunReturnSheet({
           <SectionLabel>Welcome back</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5 text-pretty">
             <InlineNumerals>
-              {`It's been ${returnGap(daysAway)} since your last run`}
+              {`It’s been ${returnGap(daysAway)} since your last run`}
             </InlineNumerals>
           </p>
         </div>

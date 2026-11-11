@@ -50,15 +50,18 @@ describe("macro donut centre", () => {
   });
 
   it("keeps the figure in the numeral face and the unit out of it", () => {
-    /* The house rule both ways: digits get Archivo (which forces tabular
-       figures), letters do not — the repo has a sweep that fails a bare
-       word carrying `font-mono`, so the unit line must stay plain. */
+    /* The house rule both ways: the donut's centre figure is a figure
+       (Archivo, `font-figure`, which forces tabular figures), letters are
+       not — the repo has a sweep that fails a bare word carrying
+       `font-mono`, so the unit line must stay plain. */
     const { container } = render(
       <MacroDistribution protein={48} carbs={72} fat={14} avgCalories={620} />
     );
     const figure = screen.getByText("620");
-    expect(figure.className).toContain("font-mono");
-    expect(screen.getByText("kcal/day").className).not.toContain("font-mono");
-    expect(container.querySelector(".font-mono")).toBe(figure);
+    expect(figure.className).toContain("font-figure");
+    expect(screen.getByText("kcal/day").className).not.toMatch(
+      /font-(?:mono|figure)/
+    );
+    expect(container.querySelector(".font-figure")).toBe(figure);
   });
 });

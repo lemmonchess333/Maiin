@@ -66,4 +66,37 @@ describe("shouldShowHomeProStrip", () => {
   it("waits for createdAt to resolve before counting days", () => {
     expect(shouldShowHomeProStrip({ ...base, createdAtMs: null })).toBe(false);
   });
+
+  it("keeps a version 2 first Home visit clear, even when the plan is days old", () => {
+    const v2 = {
+      ...base,
+      activationJourneyV2: true,
+      onboardingCompletedAtMs: days(10),
+      hadPriorHomeVisit: false,
+      hadFreeWeek: true,
+    };
+    expect(shouldShowHomeProStrip(v2)).toBe(false);
+    expect(shouldShowHomeProStrip({ ...v2, hadPriorHomeVisit: true })).toBe(
+      true
+    );
+  });
+
+  it("starts the version 2 offer delay at plan completion", () => {
+    const v2 = {
+      ...base,
+      activationJourneyV2: true,
+      hadPriorHomeVisit: true,
+      onboardingCompletedAtMs: days(2),
+    };
+    expect(shouldShowHomeProStrip(v2)).toBe(false);
+    expect(
+      shouldShowHomeProStrip({
+        ...v2,
+        onboardingCompletedAtMs: days(HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS),
+      })
+    ).toBe(true);
+    expect(
+      shouldShowHomeProStrip({ ...v2, onboardingCompletedAtMs: null })
+    ).toBe(false);
+  });
 });

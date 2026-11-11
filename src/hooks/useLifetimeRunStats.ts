@@ -74,8 +74,13 @@ function datedRuns(runs: readonly SavedRun[]): DatedRun[] {
  * with hundreds of runs never pays for a full-collection read on a surface
  * that no longer consumes it.
  */
-export function useLifetimeRunStats(options?: { enabled?: boolean }) {
+export function useLifetimeRunStats(options?: {
+  enabled?: boolean;
+  /** Home's first-week task picks up sessions saved on another device. */
+  refreshOnFocus?: boolean;
+}) {
   const enabled = options?.enabled ?? true;
+  const refreshOnFocus = options?.refreshOnFocus ?? false;
   const uid = useUid();
   const [stats, setStats] = useState<LifetimeRunStats>(EMPTY);
   const [loadedUid, setLoadedUid] = useState<string | null>(null);
@@ -89,6 +94,26 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
    * console the app doesn't show them.
    */
   const [failed, setFailed] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || !refreshOnFocus) return;
+    let lastRefreshAt = 0;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      const now = Date.now();
+      // Focus and visibilitychange commonly arrive together on iOS.
+      if (now - lastRefreshAt < 1000) return;
+      lastRefreshAt = now;
+      setRefreshVersion((version) => version + 1);
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [enabled, refreshOnFocus]);
 
   useEffect(() => {
     if (!uid || !enabled) {
@@ -122,7 +147,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [uid, enabled]);
+  }, [uid, enabled, refreshVersion]);
 
   // Account changes must hide the old account's race/session identifiers
   // synchronously, before the next effect or read can run.
