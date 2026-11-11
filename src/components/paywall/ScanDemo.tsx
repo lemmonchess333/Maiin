@@ -4,7 +4,6 @@ import {
   Beef,
   Camera,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ImageIcon,
@@ -1056,7 +1055,7 @@ function Flight() {
 /** The Food page the scanner closes onto, as the app draws it since
  *  Food11: no title, the day in the header row, the calorie wheel on the
  *  page with its target, the week as bars, the macros as one row, and
- *  one field holding the meal, the text and the camera. The food flies
+ *  one field holding the text and the camera. The food flies
  *  to the wheel, the wheel, the week and the macros take the meal, then
  *  the page scrolls to the new row in the food log. */
 function FoodScreen({ live }: { live: boolean }) {
@@ -1138,17 +1137,10 @@ function FoodScreen({ live }: { live: boolean }) {
             after={<Macros totals={AFTER} />}
           />
         </div>
-        {/* The composer's field at rest (FoodComposerCard): the meal as
-            a chip, the pencil, the prompt, and the camera at its end. */}
+        {/* The composer's field at rest (FoodComposerCard): the pencil,
+            the prompt, and the camera at its end. It asks for no meal. */}
         <div className="relative flex items-stretch">
           <div className="ds-input-box absolute inset-0" />
-          <span className="relative ml-[4px] flex shrink-0 self-center">
-            <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[11px] bg-foreground/[0.07] px-[10px] text-sm font-semibold chip-edge">
-              <span className="size-[6px] shrink-0 rounded-full bg-nutrition-strong" />
-              {r.meal}
-              <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
-            </span>
-          </span>
           <span className="relative flex size-[44px] shrink-0 items-center justify-center self-center text-muted-foreground">
             <PenLine className="size-4" />
           </span>

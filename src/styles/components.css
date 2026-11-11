@@ -210,8 +210,8 @@ select.ds-input {
 
 /* The field primitive's box on its own: its edge, fill, radius and
    shadow, for a layer under a field that holds controls inside its edge
-   (Food's composer: the meal chip, the pencil and the text box, which
-   draws no box itself). The values are `.ds-input`'s, so the two cannot
+   (Food's composer: the pencil, the text box and the camera; the text
+   box draws no box itself). The values are `.ds-input`'s, so the two cannot
    drift apart by hand: change them together. */
 .ds-input-box {
   border-radius: 0.875rem;

@@ -500,9 +500,9 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   mark that says it can be tapped (Home's wheel has none) and Details
   under it; the week as seven short bars, edge to edge, the deeper orange
   in light; the three macros as one row with no boxes (`FoodMacroRow`);
-  then one 48 pt field holding the meal chip (`FoodMealChip`, a menu of
-  the four meals), the pencil while the field is at rest, the text and,
-  at its end, the camera for Scan: an icon in the food orange, 24 pt in
+  then one 48 pt field that asks for no meal (the owner, 11 Nov 2026;
+  §14 has it), holding the pencil while the field is at rest, the text
+  and, at its end, the camera for Scan: an icon in the food orange, 24 pt in
   a 48 pt tap area, with no fill (the owner, 11 Nov 2026: as the food
   apps do it; it replaces the filled square beside the field of 23 Sep
   2026, and §14 has the count);
@@ -1319,6 +1319,18 @@ record of what each button was for:
   in, for one neutral chip in the field whose dot is the food orange;
   the edit sheet's meal picker is on the neutral track. The usual row's
   Log and Copy yesterday's Log are unchanged. Scan has the next entry.
+- **2026-11-11, later — the field asks for no meal.** The owner: "Take
+  out the side bar that selects breakfast lunch dinner snacks and just
+  have the food log?" The chip above is gone, a day after it went in.
+  The clock files a log under a meal (breakfast before 10:00, lunch
+  before 15:00, snacks before 17:00, then dinner, kept current while
+  Food stays open), and the sheet a diary row opens moves it. Of ten
+  food apps' logging flows, none has a row of meals; the four whose
+  diary is a time-ordered log, as Food's is, ask for no meal. The field
+  is one row at every width: the two-row layout below 19.5em existed to
+  fit the chip. What it costs: a snack between 10:00 and 15:00 is filed
+  as lunch until it is moved on its row, and that cancels the day's
+  lunch reminder. This replaces Food11 call 3's chip.
 - **2026-11-11 — Food11: Scan is an icon inside the field.** The owner
   asked for scanning to be placed as the food apps place it. Of ten apps
   surveyed, none draws a filled, coloured camera button on its day
