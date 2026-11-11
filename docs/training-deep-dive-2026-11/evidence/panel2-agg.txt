@@ -1,0 +1,2 @@
+today: non-beginner days 216, lifts at 2 sets or fewer 57%, days under 70% of their time 25, sets in a 60-minute day mean 12.7 (min 7, max 17)
+next: non-beginner days 216, lifts at 2 sets or fewer 9%, days under 70% of their time 0, sets in a 60-minute day mean 16.1 (min 13, max 19)

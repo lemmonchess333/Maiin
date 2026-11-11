@@ -1,0 +1,22 @@
+// Scratch: weekly sets per muscle, counted the engine's way (a secondary muscle counts a full set)
+// and directly (only the lift's own muscle), against the engine's landmarks.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { JUDGEMENT_MUSCLE_ORDER, judgementLandmark, primaryJudgementForExercise, weeklyVolumeByJudgementMuscle } from "../volumeModel";
+
+it("volume", () => {
+  const out: unknown[] = [];
+  for (const experience of ["beginner", "intermediate"])
+    for (const primaryGoal of ["hypertrophy", "strength"])
+      for (const sessionMinutes of [45, 60, 75])
+        for (const liftDays of [3, 4, 5, 6]) {
+          const p = buildPlan({ primaryGoal, nutritionPhase: "recomp", experience, sessionMinutes, bodyweightKg: 80, sex: "male", liftDays, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09" } as unknown as PlanBuilderInput) as unknown as { programState: { workouts: Array<{ exercises: Array<{ exerciseId: string; movementCategory: string; sets: number; name: string }> }> } };
+          const w = p.programState.workouts;
+          const credited = new Map(weeklyVolumeByJudgementMuscle(w as never).map((x) => [x.muscle, x.sets]));
+          const direct = new Map<string, number>(); const days = new Map<string, Set<number>>();
+          w.forEach((d, i) => d.exercises.forEach((e) => { const m = primaryJudgementForExercise(e as never); if (!m) return; direct.set(m, (direct.get(m) ?? 0) + e.sets); if (!days.has(m)) days.set(m, new Set()); days.get(m)!.add(i); }));
+          out.push({ experience, primaryGoal, sessionMinutes, liftDays, muscles: JUDGEMENT_MUSCLE_ORDER.map((m) => { const lm = judgementLandmark(primaryGoal, m, experience); return { m, direct: direct.get(m) ?? 0, days: days.get(m)?.size ?? 0, credited: credited.get(m) ?? 0, low: lm.low, high: lm.high, mv: lm.mv }; }) });
+        }
+  writeFileSync("/tmp/work/train/volume.json", JSON.stringify(out));
+});

@@ -1,0 +1,297 @@
+{
+ "marathon-18w-nominal": {
+  "totalWeeks": 18,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_50 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_30_strides · Sun:long_20k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:tempo_30 · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_40_strides · Wed:5x1k · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_20k",
+   "Mon:easy_30_strides · Wed:4x1k · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_25k",
+   "Mon:easy_50_strides · Wed:6x1k · Fri:easy_90 · Sun:long_25k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_50 · Wed:8x400 · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-18w-easy-415": {
+  "totalWeeks": 18,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_50 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_30_strides · Sun:long_15k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_12k",
+   "Mon:easy_40_strides · Wed:tempo_30 · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:5x1k · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_20k",
+   "Mon:easy_30_strides · Wed:4x1k · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_20k",
+   "Mon:easy_50_strides · Wed:6x1k · Fri:easy_90 · Sun:long_20k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_50 · Wed:8x400 · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-18w-easy-300": {
+  "totalWeeks": 18,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_50 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_20k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_30_strides · Sun:long_20k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:tempo_30 · Fri:easy_60 · Sun:long_25k",
+   "Mon:easy_40_strides · Wed:5x1k · Fri:easy_60 · Sun:long_25k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_25k",
+   "Mon:easy_30_strides · Wed:4x1k · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_40_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_30k",
+   "Mon:easy_50_strides · Wed:6x1k · Fri:easy_90 · Sun:long_30k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_50 · Wed:8x400 · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-12w-nominal": {
+  "totalWeeks": 12,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_40_strides · Wed:tempo_20 · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_40_strides · Wed:4x1k · Fri:easy_60 · Sun:long_20k",
+   "Mon:easy_40_strides · Wed:tempo_30 · Fri:easy_75 · Sun:long_25k",
+   "Mon:easy_50_strides · Wed:5x1k · Fri:easy_90 · Sun:long_25k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_50 · Wed:8x400 · Fri:easy_30 · Sun:long_15k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-6w-easy-415": {
+  "totalWeeks": 6,
+  "compressed": true,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_50_strides · Wed:easy_90 · Fri:easy_50 · Sun:long_15k",
+   "Mon:easy_30 · Wed:easy_60 · Fri:easy_30 · Sun:long_10k",
+   "Mon:easy_50 · Wed:easy_30 · Fri:easy_30 · Sun:long_8k",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-4w-nominal": {
+  "totalWeeks": 4,
+  "compressed": true,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-3w-nominal": {
+  "totalWeeks": 3,
+  "compressed": true,
+  "belowFloor": true,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "half-14w-nominal": {
+  "totalWeeks": 14,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_10k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_10k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_10k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_50 · Wed:4x1k · Fri:easy_40_strides · Sun:long_15k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_40_strides · Sun:long_15k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_12k",
+   "Mon:easy_40_strides · Wed:tempo_30 · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_40_strides · Wed:5x1k · Fri:easy_60 · Sun:long_15k",
+   "Mon:easy_50_strides · Wed:tempo_40 · Fri:easy_75 · Sun:long_20k",
+   "Mon:easy_40 · Wed:8x400 · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:half_race"
+  ]
+ },
+ "half-8w-nominal": {
+  "totalWeeks": 8,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_10k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_40_strides · Sun:long_15k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_12k",
+   "Mon:easy_50_strides · Wed:tempo_30 · Fri:easy_75 · Sun:long_20k",
+   "Mon:easy_40 · Wed:8x400 · Fri:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:half_race"
+  ]
+ },
+ "10k-12w-nominal": {
+  "totalWeeks": 12,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_6k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_6k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_6k",
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_6k",
+   "Mon:easy_40 · Wed:tempo_20 · Fri:easy_30_strides · Sun:long_8k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_40_strides · Sun:long_8k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_40_strides · Sun:long_10k",
+   "Mon:easy_40 · Wed:4x1k · Fri:easy_30_strides · Sun:long_8k",
+   "Mon:easy_50 · Wed:tempo_30 · Fri:easy_40_strides · Sun:long_10k",
+   "Mon:easy_50_strides · Wed:5x1k · Fri:easy_60 · Sun:long_12k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:10k_race"
+  ]
+ },
+ "10k-6w-nominal": {
+  "totalWeeks": 6,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_6k",
+   "Mon:easy_40 · Wed:easy_30_strides · Fri:easy_30 · Sun:long_8k",
+   "Mon:easy_50 · Wed:tempo_20 · Fri:easy_40_strides · Sun:long_10k",
+   "Mon:easy_50_strides · Wed:4x1k · Fri:easy_60 · Sun:long_12k",
+   "Mon:easy_30 · Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:10k_race"
+  ]
+ },
+ "5k-10w-nominal": {
+  "totalWeeks": 10,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:tempo_20 · Fri:easy_40 · Sun:long_6k",
+   "Wed:4x1k · Fri:easy_40 · Sun:long_6k",
+   "Wed:tempo_20 · Fri:easy_40 · Sun:long_6k",
+   "Wed:5x1k · Fri:easy_50 · Sun:long_8k",
+   "Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Wed:easy_30 · Fri:easy_30 · Sun:5k_race"
+  ]
+ },
+ "5k-6w-nominal": {
+  "totalWeeks": 6,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k",
+   "Wed:tempo_20 · Fri:easy_40 · Sun:long_6k",
+   "Wed:4x1k · Fri:easy_50 · Sun:long_8k",
+   "Wed:8x400 · Fri:easy_30 · Sun:easy_30",
+   "Wed:easy_30 · Fri:easy_30 · Sun:5k_race"
+  ]
+ },
+ "marathon-18w-harder-6days-easy-323": {
+  "totalWeeks": 18,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_12k",
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_15k",
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_15k",
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_12k",
+   "Mon:easy_40 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_15k",
+   "Mon:easy_50 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_15k",
+   "Mon:tempo_20 · Tue:easy_50 · Wed:4x1k · Thu:easy_30_strides · Fri:easy_30 · Sat:long_20k",
+   "Mon:4x1k · Tue:easy_40 · Wed:tempo_20 · Thu:easy_30_strides · Fri:easy_30 · Sat:long_15k",
+   "Mon:tempo_30 · Tue:easy_60 · Wed:5x1k · Thu:easy_40_strides · Fri:easy_40 · Sat:long_20k",
+   "Mon:5x1k · Tue:easy_60 · Wed:tempo_30 · Thu:easy_40_strides · Fri:easy_40 · Sat:long_20k",
+   "Mon:tempo_40 · Tue:easy_75 · Wed:6x1k · Thu:easy_40_strides · Fri:easy_40 · Sat:long_20k",
+   "Mon:4x1k · Tue:easy_60 · Wed:tempo_30 · Thu:easy_30_strides · Fri:easy_30 · Sat:long_15k",
+   "Mon:tempo_40 · Tue:easy_75 · Wed:6x1k · Thu:easy_40_strides · Fri:easy_40 · Sat:long_25k",
+   "Mon:6x1k · Tue:easy_90 · Wed:tempo_40 · Thu:easy_50_strides · Fri:easy_50 · Sat:long_25k",
+   "Mon:easy_30 · Tue:8x400 · Wed:easy_30 · Thu:easy_60 · Fri:easy_30 · Sat:long_15k",
+   "Mon:easy_50 · Tue:8x400 · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:long_15k",
+   "Mon:easy_30 · Tue:8x400 · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30",
+   "Mon:easy_30 · Tue:easy_30 · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "marathon-18w-2days": {
+  "totalWeeks": 18,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Wed:easy_30 · Sun:long_12k",
+   "Wed:easy_30 · Sun:long_15k",
+   "Wed:easy_30 · Sun:long_15k",
+   "Wed:easy_30 · Sun:long_12k",
+   "Wed:easy_40 · Sun:long_15k",
+   "Wed:easy_50 · Sun:long_15k",
+   "Wed:tempo_20 · Sun:long_20k",
+   "Wed:4x1k · Sun:long_15k",
+   "Wed:tempo_30 · Sun:long_20k",
+   "Wed:5x1k · Sun:long_20k",
+   "Wed:tempo_40 · Sun:long_20k",
+   "Wed:4x1k · Sun:long_15k",
+   "Wed:tempo_40 · Sun:long_25k",
+   "Wed:6x1k · Sun:long_25k",
+   "Wed:8x400 · Sun:long_15k",
+   "Wed:8x400 · Sun:long_15k",
+   "Wed:8x400 · Sun:easy_30",
+   "Wed:easy_30 · Sun:marathon_race"
+  ]
+ },
+ "half-12w-7days": {
+  "totalWeeks": 12,
+  "compressed": false,
+  "belowFloor": false,
+  "weeks": [
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_10k",
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_10k",
+   "Mon:easy_40 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Tue:easy_30_strides · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_10k",
+   "Mon:easy_50 · Tue:easy_40_strides · Wed:tempo_20 · Thu:easy_40 · Fri:easy_40 · Sat:easy_40 · Sun:long_15k",
+   "Mon:easy_50 · Tue:easy_40_strides · Wed:4x1k · Thu:easy_40 · Fri:easy_40 · Sat:easy_40 · Sun:long_15k",
+   "Mon:easy_40_strides · Tue:easy_40 · Wed:tempo_30 · Thu:easy_40 · Fri:easy_60 · Sat:easy_40 · Sun:long_15k",
+   "Mon:easy_50 · Tue:easy_30_strides · Wed:4x1k · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_12k",
+   "Mon:easy_50_strides · Tue:easy_50 · Wed:tempo_40 · Thu:easy_50 · Fri:easy_75 · Sat:easy_50 · Sun:long_20k",
+   "Mon:easy_40 · Tue:easy_30 · Wed:8x400 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:long_12k",
+   "Mon:easy_30 · Tue:easy_30 · Wed:8x400 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:easy_30",
+   "Mon:easy_30 · Tue:easy_30 · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sat:easy_30 · Sun:half_race"
+  ]
+ }
+}

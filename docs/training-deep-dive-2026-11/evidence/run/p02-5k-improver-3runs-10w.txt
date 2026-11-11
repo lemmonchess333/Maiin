@@ -1,0 +1,66 @@
+p02-5k-improver-3runs-10w · seed 1 · base model · 12 weeks from 2026-03-09 · race: 5k on 2026-05-17
+runner: VDOT 34.2 · 100 min a week · 60 weeks running · entered 5000 m in 27:30
+
+w1 2026-03-09  base, plan week 1 of 10  counted 3/3  plan 103 min, long 6.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k
+  ran     Wed easy_30 4.2 km/30 min 7:12 [on target] · Fri easy_30_strides 4.4 km/30 min 6:50 [on target] · Sun long_6k 6.0 km/43 min 7:10 [on target]
+  week    103 min · 14.6 km · easy 99% · longest ×1.00 the month's
+  runner  VDOT 34.24 · fitness 101 min · easy own 6:47–7:37, prescribed 6:46–7:36
+w2 2026-03-16  base, plan week 2 of 10  counted 3/3  plan 103 min, long 6.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k
+  ran     Wed easy_30 4.2 km/30 min 7:10 [on target] · Fri easy_30_strides 4.3 km/30 min 6:57 [on target] · Sun long_6k 6.0 km/43 min 7:06 [on target]
+  week    103 min · 14.5 km · easy 99% · longest ×1.00 the month's
+  runner  VDOT 34.27 · fitness 102 min · easy own 6:47–7:37, prescribed 6:46–7:36
+w3 2026-03-23  base, plan week 3 of 10  counted 3/3  plan 103 min, long 6.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k
+  ran     Wed easy_30 4.2 km/30 min 7:07 [on target] · Fri easy_30_strides 4.3 km/30 min 6:58 [on target] · Sun long_6k 6.0 km/43 min 7:08 [on target]
+  week    103 min · 14.5 km · easy 99% · longest ×1.00 the month's
+  runner  VDOT 34.29 · fitness 102 min · easy own 6:47–7:37, prescribed 6:46–7:36
+w4 2026-03-30  base, plan week 4 of 10  counted 3/3  plan 103 min, long 6.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30_strides · Sun:long_6k
+  ran     Wed easy_30 4.2 km/30 min 7:07 [on target] · Fri easy_30_strides 4.2 km/30 min 7:05 [on target] · Sun long_6k 6.0 km/42 min 7:04 [on target]
+  week    102 min · 14.5 km · easy 99% · longest ×1.00 the month's
+  runner  VDOT 34.31 · fitness 103 min · easy own 6:46–7:36, prescribed 6:46–7:36
+w5 2026-04-06  build, plan week 5 of 10  counted 3/3  plan 113 min, long 6.0 km, quality 1
+  planned Wed:tempo_20 · Fri:easy_40 · Sun:long_6k
+  ran     Wed tempo_20 4.8 km/30 min 6:13 [on target] · Fri easy_40 5.5 km/40 min 7:13 [on target] · Sun long_6k 6.0 km/43 min 7:12 [on target]
+  week    113 min · 16.4 km · easy 82% · longest ×1.00 the month's
+  runner  VDOT 34.43 · fitness 106 min · easy own 6:45–7:35, prescribed 6:46–7:36
+w6 2026-04-13  build, plan week 6 of 10  counted 3/3  plan 112 min, long 6.0 km, quality 1
+  planned Wed:4x1k · Fri:easy_40 · Sun:long_6k
+  ran     Wed 4x1k 6.0 km/36 min 5:56 · Fri easy_40 5.6 km/40 min 7:06 [on target] · Sun long_6k 6.0 km/44 min 7:22 [on target]
+  week    120 min · 17.6 km · easy 82% · longest ×1.00 the month's
+  runner  VDOT 34.56 · fitness 110 min · easy own 6:44–7:34, prescribed 6:46–7:36
+w7 2026-04-20  build, plan week 7 of 10  counted 3/3  plan 113 min, long 6.0 km, quality 1
+  planned Wed:tempo_20 · Fri:easy_40 · Sun:long_6k
+  ran     Wed tempo_20 4.8 km/30 min 6:14 [on target] · Fri easy_40 5.6 km/40 min 7:11 [on target] · Sun long_6k 6.0 km/43 min 7:10 [on target]
+  week    113 min · 16.4 km · easy 82% · longest ×1.00 the month's
+  runner  VDOT 34.63 · fitness 111 min · easy own 6:43–7:33, prescribed 6:46–7:36
+w8 2026-04-27  build, plan week 8 of 10  counted 3/3  plan 141 min, long 8.0 km, quality 1
+  planned Wed:5x1k · Fri:easy_50 · Sun:long_8k
+  ran     Wed 5x1k 7.2 km/42 min 5:52 · Fri easy_50 7.0 km/50 min 7:07 [on target] · Sun long_8k 8.0 km/57 min 7:07 [on target]
+  week    149 min · 22.3 km · easy 82% · longest ×1.20 the month's
+  runner  VDOT 34.91 · fitness 119 min · easy own 6:41–7:31, prescribed 6:46–7:36
+w9 2026-05-04  taper, plan week 9 of 10  counted 3/3  plan 85 min, long 0.0 km, quality 1
+  planned Wed:8x400 · Fri:easy_30 · Sun:easy_30
+  ran     Wed 8x400 5.6 km/34 min 6:03 · Fri easy_30 4.2 km/30 min 7:06 [on target] · Sun easy_30 4.2 km/30 min 7:05 [on target]
+  week    94 min · 14.1 km · easy 82% · longest ×0.70 the month's
+  runner  VDOT 34.81 · fitness 116 min · easy own 6:41–7:30, prescribed 6:46–7:36
+w10 2026-05-11  recovery, plan week 10 of 10  counted 3/3  plan 95 min, long 0.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30 · Sun:5k_race
+  ran     Wed easy_30 4.2 km/30 min 7:05 [on target] · Fri easy_30 4.2 km/30 min 7:04 [on target] · Sun 5k_race 5.0 km/28 min 5:32 [on target] finish 27:40
+  week    88 min · 13.5 km · easy 68% · longest ×0.63 the month's
+  runner  VDOT 34.71 · fitness 114 min · easy own 6:42–7:32, prescribed 6:46–7:36
+  · 2026-05-17: server entered recovery until 2026-05-24
+w11 2026-05-18  recovery, plan week 10 of 10  counted 3/3  plan 90 min, long 0.0 km, quality 0
+  planned Wed:easy_30 · Fri:easy_30 · Sun:easy_30
+  ran     Wed easy_30 4.2 km/30 min 7:08 [on target] · Fri easy_30 4.2 km/30 min 7:09 [on target] · Sun easy_30 4.2 km/30 min 7:05 [on target]
+  week    90 min · 12.6 km · easy 100% · longest ×0.53 the month's
+  runner  VDOT 34.59 · fitness 110 min · easy own 6:43–7:33, prescribed 6:46–7:36
+w12 2026-05-25  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 33.94 · fitness 93 min
+  · 2026-05-31: server ended recovery
+
+runs 33 · counted 33 of the 33 planned · injuries 0 · VDOT 34.2 → 33.94
+race 2026-05-17 5k_race 27:40 at VDOT 34.59

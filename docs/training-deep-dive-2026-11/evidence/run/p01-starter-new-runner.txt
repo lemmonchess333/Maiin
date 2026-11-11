@@ -1,0 +1,65 @@
+p01-starter-new-runner · seed 1 · base model · 14 weeks from 2026-03-09 · no race
+runner: VDOT 24.0 · 20 min a week · 0 weeks running · no benchmark
+
+w1 2026-03-09  no plan  counted 3/3  plan 87 min, long 0.0 km, quality 0
+  planned Wed:run_walk_1 · Fri:run_walk_1 · Sun:run_walk_1
+  ran     Wed run_walk_1 3.1 km/29 min 9:25 · Fri run_walk_1 3.1 km/29 min 9:18 · Sun run_walk_1 3.1 km/29 min 9:29
+  week    87 min · 9.3 km · easy 100% · longest ×4.33 the month's
+  runner  VDOT 24.55 · fitness 31 min · easy own 8:46–9:48, prescribed none
+w2 2026-03-16  no plan  counted 3/3  plan 87 min, long 0.0 km, quality 0
+  planned Wed:run_walk_2 · Fri:run_walk_2 · Sun:run_walk_2
+  ran     Wed run_walk_2 3.1 km/29 min 9:26 · Fri run_walk_2 3.1 km/29 min 9:18 · Sun run_walk_2 3.1 km/29 min 9:15
+  week    87 min · 9.3 km · easy 100% · longest ×1.01 the month's
+  runner  VDOT 25.00 · fitness 40 min · easy own 8:39–9:40, prescribed none
+w3 2026-03-23  no plan  counted 3/3  plan 75 min, long 0.0 km, quality 0
+  planned Wed:run_walk_3 · Fri:run_walk_3 · Sun:run_walk_3
+  ran     Wed run_walk_3 2.7 km/25 min 9:14 · Fri run_walk_3 2.7 km/25 min 9:13 · Sun run_walk_3 2.7 km/25 min 9:11
+  week    75 min · 8.1 km · easy 100% · longest ×0.87 the month's
+  runner  VDOT 25.28 · fitness 45 min · easy own 8:34–9:34, prescribed none
+w4 2026-03-30  no plan  counted 3/3  plan 90 min, long 0.0 km, quality 0
+  planned Wed:run_walk_4 · Fri:run_walk_4 · Sun:run_walk_4
+  ran     Wed run_walk_4 3.3 km/30 min 9:10 · Fri run_walk_4 3.2 km/30 min 9:16 · Sun run_walk_4 3.3 km/30 min 9:01
+  week    90 min · 9.8 km · easy 100% · longest ×1.04 the month's
+  runner  VDOT 25.62 · fitness 52 min · easy own 8:29–9:29, prescribed none
+w5 2026-04-06  no plan  counted 3/3  plan 90 min, long 0.0 km, quality 0
+  planned Wed:run_walk_5 · Fri:run_walk_5 · Sun:run_walk_5
+  ran     Wed run_walk_5 3.3 km/30 min 9:09 · Fri run_walk_5 3.3 km/30 min 9:10 · Sun run_walk_5 3.3 km/30 min 9:05
+  week    90 min · 9.9 km · easy 100% · longest ×0.99 the month's
+  runner  VDOT 25.91 · fitness 59 min · easy own 8:25–9:24, prescribed none
+w6 2026-04-13  no plan  counted 3/3  plan 90 min, long 0.0 km, quality 0
+  planned Wed:run_walk_6 · Fri:run_walk_6 · Sun:run_walk_6
+  ran     Wed run_walk_6 3.3 km/30 min 9:07 · Fri run_walk_6 3.4 km/30 min 8:57 · Sun run_walk_6 3.3 km/30 min 9:14
+  week    90 min · 9.9 km · easy 100% · longest ×1.01 the month's
+  runner  VDOT 26.14 · fitness 64 min · easy own 8:21–9:20, prescribed none
+w7 2026-04-20  no plan  counted 3/3  plan 90 min, long 0.0 km, quality 0
+  planned Wed:run_nonstop_20 · Fri:run_nonstop_20 · Sun:run_nonstop_20
+  ran     Wed run_nonstop_20 3.3 km/30 min 9:08 · Fri run_nonstop_20 3.3 km/30 min 9:01 · Sun run_nonstop_20 3.3 km/30 min 8:58
+  week    90 min · 10.0 km · easy 100% · longest ×1.00 the month's
+  runner  VDOT 26.33 · fitness 68 min · easy own 8:18–9:17, prescribed none
+w8 2026-04-27  no plan  counted 3/3  plan 105 min, long 0.0 km, quality 0
+  planned Wed:run_nonstop_25 · Fri:run_nonstop_25 · Sun:run_nonstop_25
+  ran     Wed run_nonstop_25 3.9 km/35 min 8:58 · Fri run_nonstop_25 4.0 km/35 min 8:51 · Sun run_nonstop_25 4.0 km/35 min 8:51
+  week    105 min · 11.8 km · easy 100% · longest ×1.16 the month's
+  runner  VDOT 26.60 · fitness 74 min · easy own 8:15–9:13, prescribed none
+w9 2026-05-04  no plan  counted 3/3  plan 120 min, long 0.0 km, quality 0
+  planned Wed:run_nonstop_30 · Fri:run_nonstop_30 · Sun:run_nonstop_30
+  ran     Wed run_nonstop_30 4.6 km/40 min 8:46 · Fri run_nonstop_30 4.5 km/40 min 8:49 · Sun run_nonstop_30 4.5 km/40 min 8:48
+  week    120 min · 13.7 km · easy 100% · longest ×1.15 the month's
+  runner  VDOT 26.91 · fitness 82 min · easy own 8:11–9:09, prescribed none
+w10 2026-05-11  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 26.38 · fitness 69 min
+w11 2026-05-18  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 25.90 · fitness 58 min
+w12 2026-05-25  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 25.48 · fitness 49 min
+w13 2026-06-01  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 25.12 · fitness 42 min
+w14 2026-06-08  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 24.80 · fitness 35 min
+
+runs 27 · counted 27 of the 27 planned · injuries 0 · VDOT 24.0 → 24.80

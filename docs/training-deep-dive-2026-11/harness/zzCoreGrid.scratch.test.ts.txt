@@ -1,0 +1,35 @@
+// Scratch, not committed: print the lift week the builder makes for a grid of answers.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { freshLiftWeek, type FreshLiftAnswers } from "../planBuilder";
+
+const GOALS = ["hypertrophy", "strength", "general", "fat_loss", "running"] as const;
+const LEVELS = ["beginner", "intermediate", "advanced"] as const;
+const MINUTES = [30, 45, 60, 75];
+const DAYS = [2, 3, 4, 5, 6];
+
+it("dumps the grid", () => {
+  const rows: unknown[] = [];
+  for (const primaryGoal of GOALS)
+    for (const experience of LEVELS)
+      for (const sessionMinutes of MINUTES)
+        for (const liftDays of DAYS)
+          for (const weeklyRunDays of [0, 3]) {
+            if (weeklyRunDays) continue;
+            const input = {
+              primaryGoal, experience, sessionMinutes, bodyweightKg: 80, sex: "male",
+              liftDays, equipment: "full_gym", injuries: [],
+            } as unknown as FreshLiftAnswers;
+            try {
+              const days = freshLiftWeek(input) as unknown as Array<Record<string, unknown> & { exercises: Array<Record<string, unknown> & { name: string; sets: number }> }>;
+              rows.push({
+                primaryGoal, experience, sessionMinutes, liftDays,
+                days: days.map((d) => ({ name: d.dayName, type: d.dayType, n: d.exercises.length, sets: d.exercises.reduce((t, e) => t + e.sets, 0), ex: d.exercises.map((e) => `${e.name} ${e.sets}x${e.reps}${e.isAccessory ? "" : " (main)"}`) })),
+                keys: Object.keys(days[0] ?? {}), exKeys: Object.keys(days[0]?.exercises[0] ?? {}),
+              });
+            } catch (err) {
+              rows.push({ primaryGoal, experience, sessionMinutes, liftDays, weeklyRunDays, error: String(err).slice(0, 200) });
+            }
+          }
+  writeFileSync("/tmp/work/train/grid.json", JSON.stringify(rows));
+});

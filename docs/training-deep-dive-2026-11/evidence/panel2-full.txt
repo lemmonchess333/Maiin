@@ -1,0 +1,1248 @@
+
+== 3 days, 30 min, beginner, hypertrophy
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 23 min | Barbell Squat 2x8*, Bench Press 2x8*, Seated Leg Curl 2x10-15
+  Full Body — Deadlift Focus | 4 lifts | 8 sets | 27 min | Deadlift 2x8*, Overhead Press 2x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 4 lifts | 8 sets | 29 min | Deadlift 2x8*, Lat Pulldown 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Full Body A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12
+  Full Body B | 3 lifts | 9 sets | 29 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12
+  Full Body C | 3 lifts | 9 sets | 30 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12
+
+== 3 days, 30 min, beginner, general
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 23 min | Barbell Squat 2x8*, Bench Press 2x8*, Seated Leg Curl 2x10-15
+  Full Body — Deadlift Focus | 4 lifts | 8 sets | 27 min | Deadlift 2x8*, Overhead Press 2x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body — Posterior Focus | 4 lifts | 8 sets | 29 min | Deadlift 2x8*, Lat Pulldown 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Full Body A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12
+  Full Body B | 3 lifts | 9 sets | 29 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12
+  Full Body C | 3 lifts | 9 sets | 30 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12
+
+== 3 days, 30 min, beginner, strength
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 27 min | Barbell Squat 2x5*, Bench Press 2x5*, Seated Leg Curl 2x8-12
+  Full Body — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x5*, Overhead Press 2x5*, Dumbbell Curl 2x8-12
+  Full Body — Posterior Focus | 3 lifts | 8 sets | 29 min | Deadlift 2x5*, Lat Pulldown 4x6-10, Cable Crunch 2x8-12
+new:
+  Full Body A | 3 lifts | 7 sets | 30 min | Barbell Squat 3x5*, Bench Press 2x6-10, Barbell Row 2x6-10
+  Full Body B | 3 lifts | 8 sets | 29 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 2x6-10
+  Full Body C | 3 lifts | 7 sets | 30 min | Bench Press 3x5*, Leg Press 2x6-10, Seated Cable Row 2x6-10
+
+== 3 days, 30 min, intermediate, hypertrophy
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x4-8*, Bench Press 2x4-8*, Pull-Ups 2x6-10
+  Full Body — Deadlift Focus | 3 lifts | 6 sets | 27 min | Deadlift 2x6-10*, Overhead Press 2x6-10*, Dumbbell Curl 2x10-15
+  Full Body — Posterior Focus | 3 lifts | 6 sets | 25 min | Romanian Deadlift 2x6-10*, Cable Crunch 2x14-20, Seated Calf Raise 2x14-20
+new:
+  Full Body A | 2 lifts | 6 sets | 25 min | Barbell Squat 3x6-10*, Bench Press 3x8-12
+  Full Body B | 3 lifts | 8 sets | 29 min | Deadlift 3x5-8*, Overhead Press 3x8-12, Lat Pulldown 2x8-12
+  Full Body C | 3 lifts | 7 sets | 30 min | Bench Press 3x6-10*, Leg Press 2x8-12, Seated Cable Row 2x8-12
+
+== 3 days, 30 min, intermediate, general
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x6-10*, Bench Press 2x6-10*, Pull-Ups 2x6-10
+  Full Body — Deadlift Focus | 4 lifts | 8 sets | 27 min | Deadlift 2x8-12*, Overhead Press 2x8-12*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body — Posterior Focus | 4 lifts | 8 sets | 29 min | Romanian Deadlift 2x8-12*, Pull-Ups 2x10-14, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Full Body A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x8-12*, Bench Press 2x8-12, Barbell Row 2x8-12
+  Full Body B | 3 lifts | 8 sets | 29 min | Deadlift 3x5-8*, Overhead Press 3x8-12, Lat Pulldown 2x8-12
+  Full Body C | 3 lifts | 8 sets | 30 min | Bench Press 3x8-12*, Leg Press 3x8-12, Seated Cable Row 2x8-12
+
+== 3 days, 30 min, intermediate, strength
+today:
+  Full Body — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x3*, Bench Press 2x3*, Pull-Ups 2x6-10
+  Full Body — Deadlift Focus | 3 lifts | 6 sets | 27 min | Deadlift 2x5*, Overhead Press 2x5*, Dumbbell Curl 2x8-12
+  Full Body — Posterior Focus | 3 lifts | 6 sets | 25 min | Romanian Deadlift 2x5*, Cable Crunch 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Full Body A | 2 lifts | 6 sets | 26 min | Barbell Squat 3x5*, Bench Press 3x6-10
+  Full Body B | 3 lifts | 8 sets | 30 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 2x6-10
+  Full Body C | 2 lifts | 6 sets | 25 min | Bench Press 3x5*, Leg Press 3x6-10
+
+== 3 days, 45 min, beginner, hypertrophy
+today:
+  Full Body — Squat Focus | 4 lifts | 10 sets | 42 min | Barbell Squat 2x8*, Bench Press 2x8*, Lat Pulldown 4x8-12, Seated Leg Curl 2x10-15
+  Full Body — Deadlift Focus | 5 lifts | 12 sets | 45 min | Deadlift 2x8*, Overhead Press 2x8*, Barbell Row 4x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 43 min | Deadlift 2x8*, Bench Press 2x8-12, Leg Press 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Full Body A | 5 lifts | 11 sets | 44 min | Barbell Squat 3x8*, Bench Press 2x8-12, Barbell Row 2x8-12, Seated Leg Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Overhead Press 2x8-12, Lat Pulldown 2x8-12, Leg Press 2x8-12, Rope Tricep Pushdown 2x10-15
+  Full Body C | 5 lifts | 11 sets | 47 min | Bench Press 3x8*, Leg Press 2x8-12, Seated Cable Row 2x8-12, Romanian Deadlift 2x8-12, Face Pulls 2x10-15
+
+== 3 days, 45 min, beginner, general
+today:
+  Full Body — Squat Focus | 4 lifts | 10 sets | 42 min | Barbell Squat 2x8*, Bench Press 2x8*, Lat Pulldown 4x8-12, Seated Leg Curl 2x10-15
+  Full Body — Deadlift Focus | 5 lifts | 11 sets | 42 min | Deadlift 2x8*, Overhead Press 2x8*, Barbell Row 3x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 43 min | Deadlift 2x8*, Bench Press 2x8-12, Leg Press 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Full Body A | 5 lifts | 11 sets | 44 min | Barbell Squat 3x8*, Bench Press 2x8-12, Barbell Row 2x8-12, Seated Leg Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Overhead Press 2x8-12, Lat Pulldown 2x8-12, Leg Press 2x8-12, Rope Tricep Pushdown 2x10-15
+  Full Body C | 5 lifts | 11 sets | 47 min | Bench Press 3x8*, Leg Press 2x8-12, Seated Cable Row 2x8-12, Romanian Deadlift 2x8-12, Face Pulls 2x10-15
+
+== 3 days, 45 min, beginner, strength
+today:
+  Full Body — Squat Focus | 4 lifts | 8 sets | 42 min | Barbell Squat 2x5*, Bench Press 2x5*, Lat Pulldown 2x6-10, Seated Leg Curl 2x8-12
+  Full Body — Deadlift Focus | 5 lifts | 10 sets | 42 min | Deadlift 2x5*, Overhead Press 2x5*, Barbell Row 2x6-10, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 45 min | Deadlift 2x5*, Lat Pulldown 2x6-10, Leg Press 2x6-10, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Full Body A | 4 lifts | 10 sets | 45 min | Barbell Squat 3x5*, Bench Press 3x6-10, Barbell Row 2x6-10, Seated Leg Curl 2x8-12
+  Full Body B | 4 lifts | 10 sets | 45 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 2x6-10, Leg Press 2x6-10
+  Full Body C | 4 lifts | 9 sets | 45 min | Bench Press 3x5*, Leg Press 2x6-10, Seated Cable Row 2x6-10, Romanian Deadlift 2x6-10
+
+== 3 days, 45 min, intermediate, hypertrophy
+today:
+  Full Body — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x4-8*, Bench Press 2x4-8*, Pull-Ups 2x6-10, Seated Leg Curl 2x8-13
+  Full Body — Deadlift Focus | 5 lifts | 10 sets | 44 min | Deadlift 2x6-10*, Overhead Press 2x6-10*, Barbell Row 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 45 min | Romanian Deadlift 2x6-10*, Pull-Ups 2x10-14, Front Squat 2x10-14, Cable Crunch 2x14-20, Seated Calf Raise 2x14-20
+new:
+  Full Body A | 3 lifts | 10 sets | 45 min | Barbell Squat 3x6-10*, Bench Press 4x8-12, Barbell Row 3x8-12
+  Full Body B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Overhead Press 4x8-12, Lat Pulldown 4x8-12
+  Full Body C | 3 lifts | 10 sets | 44 min | Bench Press 4x6-10*, Leg Press 3x8-12, Seated Cable Row 3x8-12
+
+== 3 days, 45 min, intermediate, general
+today:
+  Full Body — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x6-10*, Bench Press 2x6-10*, Pull-Ups 2x6-10, Seated Leg Curl 2x8-13
+  Full Body — Deadlift Focus | 5 lifts | 10 sets | 39 min | Deadlift 2x8-12*, Overhead Press 2x8-12*, Barbell Row 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 43 min | Romanian Deadlift 2x8-12*, Pull-Ups 2x10-14, Front Squat 2x10-14, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Full Body A | 3 lifts | 10 sets | 43 min | Barbell Squat 4x8-12*, Bench Press 3x8-12, Barbell Row 3x8-12
+  Full Body B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Overhead Press 4x8-12, Lat Pulldown 4x8-12
+  Full Body C | 3 lifts | 11 sets | 44 min | Bench Press 4x8-12*, Leg Press 4x8-12, Seated Cable Row 3x8-12
+
+== 3 days, 45 min, intermediate, strength
+today:
+  Full Body — Squat Focus | 4 lifts | 8 sets | 42 min | Barbell Squat 2x3*, Bench Press 2x3*, Pull-Ups 2x6-10, Seated Leg Curl 2x6-10
+  Full Body — Deadlift Focus | 5 lifts | 10 sets | 44 min | Deadlift 2x5*, Overhead Press 2x5*, Barbell Row 2x6-10, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Full Body — Posterior Focus | 5 lifts | 10 sets | 45 min | Romanian Deadlift 2x5*, Pull-Ups 2x8-12, Front Squat 2x8-12, Cable Crunch 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Full Body A | 3 lifts | 9 sets | 44 min | Barbell Squat 3x5*, Bench Press 3x6-10, Barbell Row 3x6-10
+  Full Body B | 3 lifts | 11 sets | 44 min | Deadlift 3x5*, Overhead Press 4x6-10, Lat Pulldown 4x6-10
+  Full Body C | 3 lifts | 10 sets | 45 min | Bench Press 3x5*, Leg Press 4x6-10, Seated Cable Row 3x6-10
+
+== 3 days, 60 min, beginner, hypertrophy
+today:
+  Full Body — Squat Focus | 6 lifts | 14 sets | 58 min | Barbell Squat 3x8*, Bench Press 3x8*, Lat Pulldown 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20, Lateral Raise 2x12-20
+  Full Body — Deadlift Focus | 6 lifts | 14 sets | 56 min | Deadlift 3x8*, Overhead Press 3x8*, Barbell Row 2x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 6 lifts | 14 sets | 56 min | Deadlift 3x8*, Bench Press 2x8-12, Lat Pulldown 3x8-12, Leg Press 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Full Body A | 6 lifts | 16 sets | 59 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 2x12-20, Dumbbell Curl 2x10-15
+  Full Body B | 6 lifts | 15 sets | 59 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 2x8-12, Rope Tricep Pushdown 2x10-15, Cable Crunch 2x12-20
+  Full Body C | 6 lifts | 15 sets | 60 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 2x8-12, Face Pulls 2x10-15, Standing Calf Raise 2x12-20
+
+== 3 days, 60 min, beginner, general
+today:
+  Full Body — Squat Focus | 6 lifts | 14 sets | 58 min | Barbell Squat 3x8*, Bench Press 3x8*, Lat Pulldown 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15, Lateral Raise 2x10-15
+  Full Body — Deadlift Focus | 5 lifts | 12 sets | 50 min | Deadlift 3x8*, Overhead Press 3x8*, Barbell Row 2x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15
+  Full Body — Posterior Focus | 6 lifts | 14 sets | 56 min | Deadlift 3x8*, Bench Press 2x8-12, Lat Pulldown 3x8-12, Leg Press 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Full Body A | 6 lifts | 16 sets | 59 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 2x10-15, Dumbbell Curl 2x10-15
+  Full Body B | 6 lifts | 15 sets | 59 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 2x8-12, Rope Tricep Pushdown 2x10-15, Cable Crunch 2x10-15
+  Full Body C | 6 lifts | 15 sets | 60 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 2x8-12, Face Pulls 2x10-15, Standing Calf Raise 2x10-15
+
+== 3 days, 60 min, beginner, strength
+today:
+  Full Body — Squat Focus | 6 lifts | 12 sets | 56 min | Barbell Squat 2x5*, Bench Press 2x5*, Lat Pulldown 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12, Lateral Raise 2x8-12
+  Full Body — Deadlift Focus | 5 lifts | 11 sets | 51 min | Deadlift 3x5*, Overhead Press 2x5*, Barbell Row 2x6-10, Barbell Squat 2x6-10, Dumbbell Curl 2x8-12
+  Full Body — Posterior Focus | 6 lifts | 13 sets | 58 min | Deadlift 3x5*, Bench Press 2x6-10, Lat Pulldown 2x6-10, Leg Press 2x6-10, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Full Body A | 6 lifts | 14 sets | 59 min | Barbell Squat 3x5*, Bench Press 3x6-10, Barbell Row 2x6-10, Seated Leg Curl 2x8-12, Lateral Raise 2x8-12, Dumbbell Curl 2x8-12
+  Full Body B | 6 lifts | 14 sets | 60 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 2x6-10, Leg Press 2x6-10, Rope Tricep Pushdown 2x8-12, Cable Crunch 2x8-12
+  Full Body C | 6 lifts | 13 sets | 60 min | Bench Press 3x5*, Leg Press 2x6-10, Seated Cable Row 2x6-10, Romanian Deadlift 2x6-10, Face Pulls 2x8-12, Standing Calf Raise 2x8-12
+
+== 3 days, 60 min, intermediate, hypertrophy
+today:
+  Full Body — Squat Focus | 6 lifts | 13 sets | 59 min | Barbell Squat 3x4-8*, Bench Press 2x4-8*, Pull-Ups 2x6-10, Seated Leg Curl 2x8-13, Cable Crunch 2x10-18, Lateral Raise 2x10-18
+  Full Body — Deadlift Focus | 6 lifts | 13 sets | 58 min | Deadlift 3x6-10*, Overhead Press 2x6-10*, Barbell Row 2x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 6 lifts | 13 sets | 59 min | Romanian Deadlift 3x6-10*, Bench Press 2x10-14, Pull-Ups 2x10-14, Front Squat 2x10-14, Cable Crunch 2x14-20, Seated Calf Raise 2x14-20
+new:
+  Full Body A | 4 lifts | 14 sets | 58 min | Barbell Squat 4x6-10*, Bench Press 4x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15
+  Full Body B | 5 lifts | 15 sets | 59 min | Deadlift 3x5-8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15
+  Full Body C | 4 lifts | 14 sets | 60 min | Bench Press 4x6-10*, Leg Press 4x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 3x8-12
+
+== 3 days, 60 min, intermediate, general
+today:
+  Full Body — Squat Focus | 6 lifts | 13 sets | 59 min | Barbell Squat 3x6-10*, Bench Press 2x6-10*, Pull-Ups 2x6-10, Seated Leg Curl 2x8-13, Cable Crunch 2x8-13, Lateral Raise 2x8-13
+  Full Body — Deadlift Focus | 6 lifts | 15 sets | 58 min | Deadlift 3x8-12*, Overhead Press 3x8-12*, Barbell Row 3x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Full Body — Posterior Focus | 6 lifts | 14 sets | 59 min | Romanian Deadlift 3x8-12*, Bench Press 3x10-14, Pull-Ups 2x10-14, Front Squat 2x10-14, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Full Body A | 5 lifts | 16 sets | 62 min | Barbell Squat 4x8-12*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 3x10-15
+  Full Body B | 5 lifts | 15 sets | 59 min | Deadlift 3x5-8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15
+  Full Body C | 4 lifts | 15 sets | 59 min | Bench Press 4x8-12*, Leg Press 4x8-12, Seated Cable Row 4x8-12, Romanian Deadlift 3x8-12
+
+== 3 days, 60 min, intermediate, strength
+today:
+  Full Body — Squat Focus | 6 lifts | 12 sets | 58 min | Barbell Squat 2x3*, Bench Press 2x3*, Pull-Ups 2x6-10, Seated Leg Curl 2x6-10, Cable Crunch 2x6-10, Lateral Raise 2x6-10
+  Full Body — Deadlift Focus | 6 lifts | 13 sets | 59 min | Deadlift 3x5*, Overhead Press 2x5*, Barbell Row 2x6-10, Barbell Squat 2x6-10, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Full Body — Posterior Focus | 6 lifts | 13 sets | 59 min | Romanian Deadlift 3x5*, Bench Press 2x8-12, Pull-Ups 2x8-12, Front Squat 2x8-12, Cable Crunch 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Full Body A | 4 lifts | 14 sets | 60 min | Barbell Squat 4x5*, Bench Press 3x6-10, Barbell Row 3x6-10, Seated Leg Curl 4x8-12
+  Full Body B | 5 lifts | 15 sets | 61 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 3x6-10, Leg Press 3x6-10, Rope Tricep Pushdown 3x8-12
+  Full Body C | 4 lifts | 13 sets | 60 min | Bench Press 4x5*, Leg Press 3x6-10, Seated Cable Row 3x6-10, Romanian Deadlift 3x6-10
+
+== 3 days, 75 min, beginner, hypertrophy
+today:
+  Full Body — Squat Focus | 6 lifts | 17 sets | 66 min | Barbell Squat 3x8*, Bench Press 3x8*, Lat Pulldown 5x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20, Lateral Raise 2x12-20
+  Full Body — Deadlift Focus | 6 lifts | 14 sets | 56 min | Deadlift 3x8*, Overhead Press 3x8*, Barbell Row 2x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Full Body — Posterior Focus | 6 lifts | 15 sets | 59 min | Deadlift 3x8*, Bench Press 2x8-12, Lat Pulldown 4x8-12, Leg Press 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Full Body A | 6 lifts | 18 sets | 63 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 3x12-20, Dumbbell Curl 3x10-15
+  Full Body B | 6 lifts | 18 sets | 66 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15, Cable Crunch 3x12-20
+  Full Body C | 6 lifts | 18 sets | 67 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 3x8-12, Face Pulls 3x10-15, Standing Calf Raise 3x12-20
+
+== 3 days, 75 min, beginner, general
+today:
+  Full Body — Squat Focus | 6 lifts | 16 sets | 64 min | Barbell Squat 3x8*, Bench Press 3x8*, Lat Pulldown 4x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15, Lateral Raise 2x10-15
+  Full Body — Deadlift Focus | 5 lifts | 12 sets | 50 min | Deadlift 3x8*, Overhead Press 3x8*, Barbell Row 2x8-12, Barbell Squat 2x8-12, Dumbbell Curl 2x10-15
+  Full Body — Posterior Focus | 6 lifts | 14 sets | 56 min | Deadlift 3x8*, Bench Press 2x8-12, Lat Pulldown 3x8-12, Leg Press 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Full Body A | 6 lifts | 18 sets | 63 min | Barbell Squat 3x8*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 3x10-15, Dumbbell Curl 3x10-15
+  Full Body B | 6 lifts | 18 sets | 66 min | Deadlift 3x8*, Overhead Press 3x8-12, Lat Pulldown 3x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15, Cable Crunch 3x10-15
+  Full Body C | 6 lifts | 18 sets | 67 min | Bench Press 3x8*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 3x8-12, Face Pulls 3x10-15, Standing Calf Raise 3x10-15
+
+== 3 days, 75 min, beginner, strength
+today:
+  Full Body — Squat Focus | 6 lifts | 15 sets | 66 min | Barbell Squat 3x5*, Bench Press 3x5*, Lat Pulldown 3x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12, Lateral Raise 2x8-12
+  Full Body — Deadlift Focus | 5 lifts | 12 sets | 55 min | Deadlift 3x5*, Overhead Press 3x5*, Barbell Row 2x6-10, Barbell Squat 2x6-10, Dumbbell Curl 2x8-12
+  Full Body — Posterior Focus | 6 lifts | 13 sets | 58 min | Deadlift 3x5*, Bench Press 2x6-10, Lat Pulldown 2x6-10, Leg Press 2x6-10, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Full Body A | 6 lifts | 18 sets | 68 min | Barbell Squat 3x5*, Bench Press 3x6-10, Barbell Row 3x6-10, Seated Leg Curl 3x8-12, Lateral Raise 3x8-12, Dumbbell Curl 3x8-12
+  Full Body B | 6 lifts | 18 sets | 69 min | Deadlift 3x5*, Overhead Press 3x6-10, Lat Pulldown 3x6-10, Leg Press 3x6-10, Rope Tricep Pushdown 3x8-12, Cable Crunch 3x8-12
+  Full Body C | 6 lifts | 18 sets | 72 min | Bench Press 3x5*, Leg Press 3x6-10, Seated Cable Row 3x6-10, Romanian Deadlift 3x6-10, Face Pulls 3x8-12, Standing Calf Raise 3x8-12
+
+== 3 days, 75 min, intermediate, hypertrophy
+today:
+  Full Body — Squat Focus | 7 lifts | 17 sets | 73 min | Barbell Squat 3x4-8*, Bench Press 3x4-8*, Pull-Ups 3x6-10, Seated Leg Curl 2x8-13, Cable Crunch 2x10-18, Standing Calf Raise 2x10-18, Lateral Raise 2x10-18
+  Full Body — Deadlift Focus | 6 lifts | 18 sets | 71 min | Deadlift 3x6-10*, Overhead Press 3x6-10*, Barbell Row 3x8-12, Barbell Squat 3x8-12, Dumbbell Curl 3x10-15, Lateral Raise 3x12-20
+  Full Body — Posterior Focus | 6 lifts | 18 sets | 71 min | Romanian Deadlift 3x6-10*, Bench Press 3x10-14, Pull-Ups 3x10-14, Front Squat 3x10-14, Cable Crunch 3x14-20, Seated Calf Raise 3x14-20
+new:
+  Full Body A | 6 lifts | 19 sets | 75 min | Barbell Squat 4x6-10*, Bench Press 3x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 3x12-20, Dumbbell Curl 3x10-15
+  Full Body B | 6 lifts | 20 sets | 74 min | Deadlift 3x5-8*, Overhead Press 4x8-12, Lat Pulldown 4x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15, Cable Crunch 3x12-20
+  Full Body C | 6 lifts | 19 sets | 76 min | Bench Press 4x6-10*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 3x8-12, Face Pulls 3x10-15, Standing Calf Raise 3x12-20
+
+== 3 days, 75 min, intermediate, general
+today:
+  Full Body — Squat Focus | 7 lifts | 17 sets | 73 min | Barbell Squat 3x6-10*, Bench Press 3x6-10*, Pull-Ups 3x6-10, Seated Leg Curl 2x8-13, Cable Crunch 2x8-13, Standing Calf Raise 2x8-13, Lateral Raise 2x8-13
+  Full Body — Deadlift Focus | 6 lifts | 18 sets | 65 min | Deadlift 3x8-12*, Overhead Press 3x8-12*, Barbell Row 3x8-12, Barbell Squat 3x8-12, Dumbbell Curl 3x10-15, Lateral Raise 3x10-15
+  Full Body — Posterior Focus | 6 lifts | 18 sets | 69 min | Romanian Deadlift 3x8-12*, Bench Press 3x10-14, Pull-Ups 3x10-14, Front Squat 3x10-14, Cable Crunch 3x12-17, Seated Calf Raise 3x12-17
+new:
+  Full Body A | 6 lifts | 20 sets | 74 min | Barbell Squat 4x8-12*, Bench Press 4x8-12, Barbell Row 3x8-12, Seated Leg Curl 3x10-15, Lateral Raise 3x10-15, Dumbbell Curl 3x10-15
+  Full Body B | 6 lifts | 20 sets | 74 min | Deadlift 3x5-8*, Overhead Press 4x8-12, Lat Pulldown 4x8-12, Leg Press 3x8-12, Rope Tricep Pushdown 3x10-15, Cable Crunch 3x10-15
+  Full Body C | 6 lifts | 20 sets | 75 min | Bench Press 4x8-12*, Leg Press 3x8-12, Seated Cable Row 3x8-12, Romanian Deadlift 3x8-12, Face Pulls 4x10-15, Standing Calf Raise 3x10-15
+
+== 3 days, 75 min, intermediate, strength
+today:
+  Full Body — Squat Focus | 6 lifts | 16 sets | 73 min | Barbell Squat 4x3*, Bench Press 4x3*, Pull-Ups 2x6-10, Cable Crunch 2x6-10, Standing Calf Raise 2x6-10, Lateral Raise 2x6-10
+  Full Body — Deadlift Focus | 5 lifts | 15 sets | 66 min | Deadlift 3x5*, Overhead Press 4x5*, Barbell Row 4x6-10, Barbell Squat 2x6-10, Dumbbell Curl 2x8-12
+  Full Body — Posterior Focus | 6 lifts | 18 sets | 73 min | Romanian Deadlift 4x5*, Bench Press 3x8-12, Pull-Ups 3x8-12, Front Squat 3x8-12, Cable Crunch 3x10-14, Seated Calf Raise 2x10-14
+new:
+  Full Body A | 6 lifts | 19 sets | 77 min | Barbell Squat 4x5*, Bench Press 3x6-10, Barbell Row 3x6-10, Seated Leg Curl 3x8-12, Lateral Raise 3x8-12, Dumbbell Curl 3x8-12
+  Full Body B | 6 lifts | 20 sets | 75 min | Deadlift 3x5*, Overhead Press 4x6-10, Lat Pulldown 3x6-10, Leg Press 3x6-10, Rope Tricep Pushdown 4x8-12, Cable Crunch 3x8-12
+  Full Body C | 6 lifts | 19 sets | 79 min | Bench Press 4x5*, Leg Press 3x6-10, Seated Cable Row 3x6-10, Romanian Deadlift 3x6-10, Face Pulls 3x8-12, Standing Calf Raise 3x8-12
+
+== 4 days, 30 min, beginner, hypertrophy
+today:
+  Upper — Chest & Back | 4 lifts | 8 sets | 26 min | Bench Press 2x8*, Barbell Row 2x8*, Overhead Press 2x8*, Lateral Raise 2x12-20
+  Lower — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 28 min | Overhead Press 2x8*, Lat Pulldown 2x8*, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15
+  Lower — Deadlift Focus | 4 lifts | 8 sets | 30 min | Deadlift 2x8*, Seated Leg Curl 2x10-15, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Upper A | 4 lifts | 9 sets | 30 min | Bench Press 3x8*, Barbell Row 2x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12
+  Lower A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 4 days, 30 min, beginner, general
+today:
+  Upper — Chest & Back | 4 lifts | 8 sets | 26 min | Bench Press 2x8*, Barbell Row 2x8*, Overhead Press 2x8*, Lateral Raise 2x10-15
+  Lower — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 28 min | Overhead Press 2x8*, Lat Pulldown 2x8*, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15
+  Lower — Deadlift Focus | 4 lifts | 8 sets | 30 min | Deadlift 2x8*, Seated Leg Curl 2x10-15, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Upper A | 4 lifts | 9 sets | 30 min | Bench Press 3x8*, Barbell Row 2x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12
+  Lower A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 4 days, 30 min, beginner, strength
+today:
+  Upper — Chest & Back | 3 lifts | 6 sets | 26 min | Bench Press 2x5*, Barbell Row 2x5*, Overhead Press 2x5*
+  Lower — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 29 min | Overhead Press 2x5*, Lat Pulldown 2x5*, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Lower — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x5*, Seated Leg Curl 2x8-12, Cable Crunch 2x8-12
+new:
+  Upper A | 3 lifts | 8 sets | 30 min | Bench Press 3x5*, Barbell Row 3x6-10, Dumbbell Shoulder Press 2x6-10
+  Lower A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Upper B | 3 lifts | 8 sets | 30 min | Overhead Press 3x5*, Lat Pulldown 3x6-10, Incline Dumbbell Press 2x6-10
+  Lower B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 4 days, 30 min, intermediate, hypertrophy
+today:
+  Upper — Chest & Back | 3 lifts | 6 sets | 31 min | Bench Press 2x4-8*, Barbell Row 2x4-8*, Overhead Press 2x4-8*
+  Lower — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x4-8*, Deadlift 2x4-8*, Hack Squat 2x6-10
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 27 min | Overhead Press 2x8-12*, Pull-Ups 2x8-12*, Dumbbell Curl 2x12-17, Rope Tricep Pushdown 2x12-17
+  Lower — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x6-10*, Seated Leg Curl 2x12-17, Cable Crunch 2x14-20
+new:
+  Upper A | 3 lifts | 7 sets | 31 min | Bench Press 3x6-10*, Barbell Row 2x8-12, Dumbbell Shoulder Press 2x8-12
+  Lower A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x6-10*, Romanian Deadlift 2x8-12, Leg Press 2x8-12
+  Upper B | 3 lifts | 8 sets | 28 min | Overhead Press 3x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 2x8-12
+  Lower B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 4 days, 30 min, intermediate, general
+today:
+  Upper — Chest & Back | 3 lifts | 6 sets | 31 min | Bench Press 2x6-10*, Barbell Row 2x6-10*, Overhead Press 2x6-10*
+  Lower — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x6-10
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 26 min | Overhead Press 2x10-14*, Pull-Ups 2x10-14*, Dumbbell Curl 2x12-17, Rope Tricep Pushdown 2x12-17
+  Lower — Deadlift Focus | 4 lifts | 8 sets | 30 min | Deadlift 2x8-12*, Seated Leg Curl 2x12-17, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Upper A | 3 lifts | 7 sets | 28 min | Bench Press 3x8-12*, Barbell Row 2x8-12, Dumbbell Shoulder Press 2x8-12
+  Lower A | 3 lifts | 8 sets | 29 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 2x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8-12*, Pull-Ups 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 4 days, 30 min, intermediate, strength
+today:
+  Upper — Chest & Back | 3 lifts | 6 sets | 31 min | Bench Press 2x3*, Barbell Row 2x3*, Overhead Press 2x3*
+  Lower — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x3*, Deadlift 2x3*, Hack Squat 2x6-10
+  Upper — Shoulders & Arms | 4 lifts | 8 sets | 27 min | Overhead Press 2x7*, Pull-Ups 2x7*, Dumbbell Curl 2x10-14, Rope Tricep Pushdown 2x10-14
+  Lower — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x5*, Seated Leg Curl 2x10-14, Cable Crunch 2x10-14
+new:
+  Upper A | 2 lifts | 6 sets | 26 min | Bench Press 3x5*, Barbell Row 3x6-10
+  Lower A | 3 lifts | 7 sets | 30 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Upper B | 3 lifts | 8 sets | 29 min | Overhead Press 3x5*, Pull-Ups 3x6-10, Incline Dumbbell Press 2x6-10
+  Lower B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 4 days, 45 min, beginner, hypertrophy
+today:
+  Upper — Chest & Back | 4 lifts | 10 sets | 39 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 2x8*, Lateral Raise 2x12-20
+  Lower — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 39 min | Overhead Press 2x8*, Lat Pulldown 2x8*, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15, Lateral Raise 2x12-20
+  Lower — Deadlift Focus | 4 lifts | 9 sets | 38 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x12-20
+new:
+  Upper A | 5 lifts | 12 sets | 45 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12, Lateral Raise 2x12-20
+  Lower A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x12-20
+  Upper B | 5 lifts | 12 sets | 45 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x12-20, Cable Crunch 2x12-20
+
+== 4 days, 45 min, beginner, general
+today:
+  Upper — Chest & Back | 4 lifts | 10 sets | 39 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 2x8*, Lateral Raise 2x10-15
+  Lower — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 39 min | Overhead Press 2x8*, Lat Pulldown 2x8*, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15, Lateral Raise 2x10-15
+  Lower — Deadlift Focus | 4 lifts | 9 sets | 38 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x10-15
+new:
+  Upper A | 5 lifts | 12 sets | 45 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12, Lateral Raise 2x10-15
+  Lower A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x10-15
+  Upper B | 5 lifts | 12 sets | 45 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x10-15, Cable Crunch 2x10-15
+
+== 4 days, 45 min, beginner, strength
+today:
+  Upper — Chest & Back | 3 lifts | 6 sets | 32 min | Bench Press 2x5*, Barbell Row 2x5*, Overhead Press 2x5*
+  Lower — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 42 min | Overhead Press 2x5*, Lat Pulldown 2x5*, Dumbbell Curl 2x8-12, Rope Tricep Pushdown 2x8-12, Lateral Raise 2x8-12
+  Lower — Deadlift Focus | 4 lifts | 8 sets | 38 min | Deadlift 2x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Upper A | 5 lifts | 11 sets | 45 min | Bench Press 3x5*, Barbell Row 2x6-10, Dumbbell Shoulder Press 2x6-10, Lat Pulldown 2x6-10, Lateral Raise 2x8-12
+  Lower A | 5 lifts | 11 sets | 47 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12
+  Upper B | 5 lifts | 11 sets | 45 min | Overhead Press 3x5*, Lat Pulldown 2x6-10, Incline Dumbbell Press 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12
+  Lower B | 4 lifts | 10 sets | 45 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 2x8-12, Cable Crunch 2x8-12
+
+== 4 days, 45 min, intermediate, hypertrophy
+today:
+  Upper — Chest & Back | 4 lifts | 8 sets | 43 min | Bench Press 2x4-8*, Barbell Row 2x4-8*, Overhead Press 2x4-8*, Lateral Raise 2x10-18
+  Lower — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x4-8*, Deadlift 2x4-8*, Hack Squat 2x6-10, Cable Crunch 2x10-18
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 38 min | Overhead Press 2x8-12*, Pull-Ups 2x8-12*, Dumbbell Curl 2x12-17, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x14-20
+  Lower — Deadlift Focus | 5 lifts | 10 sets | 45 min | Deadlift 2x6-10*, Hack Squat 2x10-14, Seated Leg Curl 2x12-17, Cable Crunch 2x14-20, Seated Calf Raise 2x14-20
+new:
+  Upper A | 3 lifts | 10 sets | 45 min | Bench Press 4x6-10*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12
+  Lower A | 3 lifts | 10 sets | 43 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 3 lifts | 11 sets | 43 min | Overhead Press 4x6-10*, Pull-Ups 4x8-12, Incline Dumbbell Press 3x8-12
+  Lower B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 4 days, 45 min, intermediate, general
+today:
+  Upper — Chest & Back | 4 lifts | 8 sets | 43 min | Bench Press 2x6-10*, Barbell Row 2x6-10*, Overhead Press 2x6-10*, Lateral Raise 2x8-13
+  Lower — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x6-10, Cable Crunch 2x8-13
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 37 min | Overhead Press 2x10-14*, Pull-Ups 2x10-14*, Dumbbell Curl 2x12-17, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x12-17
+  Lower — Deadlift Focus | 5 lifts | 10 sets | 43 min | Deadlift 2x8-12*, Hack Squat 2x10-14, Seated Leg Curl 2x12-17, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Upper A | 3 lifts | 11 sets | 45 min | Bench Press 4x8-12*, Barbell Row 4x8-12, Dumbbell Shoulder Press 3x8-12
+  Lower A | 4 lifts | 12 sets | 46 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Standing Calf Raise 3x10-15
+  Upper B | 4 lifts | 12 sets | 46 min | Overhead Press 3x8-12*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12
+  Lower B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 4 days, 45 min, intermediate, strength
+today:
+  Upper — Chest & Back | 4 lifts | 8 sets | 43 min | Bench Press 2x3*, Barbell Row 2x3*, Overhead Press 2x3*, Lateral Raise 2x6-10
+  Lower — Squat Focus | 4 lifts | 8 sets | 42 min | Barbell Squat 2x3*, Deadlift 2x3*, Hack Squat 2x6-10, Cable Crunch 2x6-10
+  Upper — Shoulders & Arms | 5 lifts | 10 sets | 38 min | Overhead Press 2x7*, Pull-Ups 2x7*, Dumbbell Curl 2x10-14, Rope Tricep Pushdown 2x10-14, Lateral Raise 2x10-14
+  Lower — Deadlift Focus | 5 lifts | 10 sets | 45 min | Deadlift 2x5*, Hack Squat 2x8-12, Seated Leg Curl 2x10-14, Cable Crunch 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Upper A | 3 lifts | 9 sets | 43 min | Bench Press 3x5*, Barbell Row 3x6-10, Dumbbell Shoulder Press 3x6-10
+  Lower A | 3 lifts | 10 sets | 44 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10
+  Upper B | 3 lifts | 11 sets | 44 min | Overhead Press 4x5*, Pull-Ups 4x6-10, Incline Dumbbell Press 3x6-10
+  Lower B | 3 lifts | 11 sets | 44 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12
+
+== 4 days, 60 min, beginner, hypertrophy
+today:
+  Upper — Chest & Back | 4 lifts | 11 sets | 43 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*, Dumbbell Curl 2x10-15
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Shoulders & Arms | 6 lifts | 14 sets | 54 min | Overhead Press 3x8*, Lat Pulldown 3x8*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15, Lateral Raise 2x12-20
+  Lower — Deadlift Focus | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Upper A | 7 lifts | 16 sets | 60 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12, Lateral Raise 2x12-20, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15
+  Lower A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x12-20, Cable Crunch 2x12-20
+  Upper B | 7 lifts | 16 sets | 59 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Overhead Tricep Extension 2x10-15, Hammer Curl 2x10-15
+  Lower B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 2x10-15
+
+== 4 days, 60 min, beginner, general
+today:
+  Upper — Chest & Back | 5 lifts | 13 sets | 49 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Shoulders & Arms | 6 lifts | 14 sets | 54 min | Overhead Press 3x8*, Lat Pulldown 3x8*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15, Lateral Raise 2x10-15
+  Lower — Deadlift Focus | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Upper A | 7 lifts | 16 sets | 60 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 2x8-12, Lat Pulldown 2x8-12, Lateral Raise 2x10-15, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15
+  Lower A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x10-15, Cable Crunch 2x10-15
+  Upper B | 7 lifts | 16 sets | 59 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Overhead Tricep Extension 2x10-15, Hammer Curl 2x10-15
+  Lower B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 2x10-15
+
+== 4 days, 60 min, beginner, strength
+today:
+  Upper — Chest & Back | 4 lifts | 11 sets | 49 min | Bench Press 3x5*, Barbell Row 3x5*, Overhead Press 3x5*, Lateral Raise 2x8-12
+  Lower — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Upper — Shoulders & Arms | 4 lifts | 10 sets | 42 min | Overhead Press 3x5*, Lat Pulldown 3x5*, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Lower — Deadlift Focus | 4 lifts | 9 sets | 42 min | Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Upper A | 7 lifts | 15 sets | 60 min | Bench Press 3x5*, Barbell Row 2x6-10, Dumbbell Shoulder Press 2x6-10, Lat Pulldown 2x6-10, Lateral Raise 2x8-12, Dumbbell Curl 2x8-12, Rope Tricep Pushdown 2x8-12
+  Lower A | 6 lifts | 15 sets | 60 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12, Cable Crunch 2x8-12
+  Upper B | 7 lifts | 15 sets | 58 min | Overhead Press 3x5*, Lat Pulldown 2x6-10, Incline Dumbbell Press 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12, Overhead Tricep Extension 2x8-12, Hammer Curl 2x8-12
+  Lower B | 6 lifts | 15 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 2x8-12, Cable Crunch 2x8-12, Leg Extension 2x8-12
+
+== 4 days, 60 min, intermediate, hypertrophy
+today:
+  Upper — Chest & Back | 4 lifts | 11 sets | 54 min | Bench Press 3x4-8*, Barbell Row 3x4-8*, Overhead Press 3x4-8*, Lateral Raise 2x10-18
+  Lower — Squat Focus | 5 lifts | 13 sets | 58 min | Barbell Squat 3x4-8*, Deadlift 3x4-8*, Hack Squat 3x6-10, Cable Crunch 2x10-18, Standing Calf Raise 2x10-18
+  Upper — Shoulders & Arms | 6 lifts | 17 sets | 60 min | Overhead Press 3x8-12*, Pull-Ups 3x8-12*, Dumbbell Bench Press 3x10-14, Dumbbell Curl 3x12-17, Rope Tricep Pushdown 3x12-17, Lateral Raise 2x14-20
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 57 min | Deadlift 3x6-10*, Hack Squat 3x10-14, Seated Leg Curl 3x12-17, Cable Crunch 3x14-20, Seated Calf Raise 3x14-20
+new:
+  Upper A | 5 lifts | 16 sets | 62 min | Bench Press 4x6-10*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x12-20
+  Lower A | 5 lifts | 16 sets | 60 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20
+  Upper B | 5 lifts | 16 sets | 59 min | Overhead Press 4x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20
+
+== 4 days, 60 min, intermediate, general
+today:
+  Upper — Chest & Back | 4 lifts | 11 sets | 54 min | Bench Press 3x6-10*, Barbell Row 3x6-10*, Overhead Press 3x6-10*, Lateral Raise 2x8-13
+  Lower — Squat Focus | 5 lifts | 13 sets | 58 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x6-10, Cable Crunch 2x8-13, Standing Calf Raise 2x8-13
+  Upper — Shoulders & Arms | 6 lifts | 17 sets | 59 min | Overhead Press 3x10-14*, Pull-Ups 3x10-14*, Dumbbell Bench Press 3x10-14, Dumbbell Curl 3x12-17, Rope Tricep Pushdown 3x12-17, Lateral Raise 2x12-17
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 55 min | Deadlift 3x8-12*, Hack Squat 3x10-14, Seated Leg Curl 3x12-17, Cable Crunch 3x12-17, Seated Calf Raise 3x12-17
+new:
+  Upper A | 5 lifts | 16 sets | 59 min | Bench Press 4x8-12*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x10-15
+  Lower A | 5 lifts | 17 sets | 60 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15
+  Upper B | 5 lifts | 17 sets | 59 min | Overhead Press 4x8-12*, Pull-Ups 4x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15
+
+== 4 days, 60 min, intermediate, strength
+today:
+  Upper — Chest & Back | 3 lifts | 10 sets | 52 min | Bench Press 4x3*, Barbell Row 4x3*, Overhead Press 2x3*
+  Lower — Squat Focus | 5 lifts | 12 sets | 58 min | Barbell Squat 4x3*, Deadlift 2x3*, Hack Squat 2x6-10, Cable Crunch 2x6-10, Standing Calf Raise 2x6-10
+  Upper — Shoulders & Arms | 6 lifts | 16 sets | 60 min | Overhead Press 4x7*, Pull-Ups 4x7*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 2x10-14, Rope Tricep Pushdown 2x10-14, Lateral Raise 2x10-14
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 59 min | Deadlift 4x5*, Hack Squat 3x8-12, Seated Leg Curl 3x10-14, Cable Crunch 3x10-14, Seated Calf Raise 2x10-14
+new:
+  Upper A | 4 lifts | 14 sets | 60 min | Bench Press 4x5*, Barbell Row 4x6-10, Dumbbell Shoulder Press 3x6-10, Lat Pulldown 3x6-10
+  Lower A | 5 lifts | 16 sets | 61 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12
+  Upper B | 5 lifts | 16 sets | 61 min | Overhead Press 4x5*, Pull-Ups 3x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12
+
+== 4 days, 75 min, beginner, hypertrophy
+today:
+  Upper — Chest & Back | 5 lifts | 13 sets | 51 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*, Dumbbell Curl 2x10-15, Rope Tricep Pushdown 2x10-15
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Shoulders & Arms | 5 lifts | 12 sets | 47 min | Overhead Press 3x8*, Lat Pulldown 3x8*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Lower — Deadlift Focus | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Upper A | 7 lifts | 21 sets | 71 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x12-20, Dumbbell Curl 3x10-15, Rope Tricep Pushdown 3x10-15
+  Lower A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Upper B | 7 lifts | 21 sets | 70 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 4 days, 75 min, beginner, general
+today:
+  Upper — Chest & Back | 5 lifts | 13 sets | 49 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Shoulders & Arms | 5 lifts | 12 sets | 47 min | Overhead Press 3x8*, Lat Pulldown 3x8*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Lower — Deadlift Focus | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Upper A | 7 lifts | 21 sets | 71 min | Bench Press 3x8*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x10-15, Dumbbell Curl 3x10-15, Rope Tricep Pushdown 3x10-15
+  Lower A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Upper B | 7 lifts | 21 sets | 70 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 4 days, 75 min, beginner, strength
+today:
+  Upper — Chest & Back | 5 lifts | 13 sets | 55 min | Bench Press 3x5*, Barbell Row 3x5*, Overhead Press 3x5*, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Lower — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Upper — Shoulders & Arms | 3 lifts | 8 sets | 35 min | Overhead Press 3x5*, Lat Pulldown 3x5*, Lateral Raise 2x8-12
+  Lower — Deadlift Focus | 4 lifts | 9 sets | 42 min | Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Upper A | 7 lifts | 21 sets | 75 min | Bench Press 3x5*, Barbell Row 3x6-10, Dumbbell Shoulder Press 3x6-10, Lat Pulldown 3x6-10, Lateral Raise 3x8-12, Dumbbell Curl 3x8-12, Rope Tricep Pushdown 3x8-12
+  Lower A | 6 lifts | 18 sets | 66 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Upper B | 7 lifts | 21 sets | 73 min | Overhead Press 3x5*, Lat Pulldown 3x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Overhead Tricep Extension 3x8-12, Hammer Curl 3x8-12
+  Lower B | 6 lifts | 18 sets | 66 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
+
+== 4 days, 75 min, intermediate, hypertrophy
+today:
+  Upper — Chest & Back | 6 lifts | 18 sets | 75 min | Bench Press 3x4-8*, Barbell Row 3x4-8*, Overhead Press 3x4-8*, Dumbbell Curl 3x8-13, Rope Tricep Pushdown 3x8-13, Lateral Raise 3x10-18
+  Lower — Squat Focus | 5 lifts | 15 sets | 62 min | Barbell Squat 3x4-8*, Deadlift 3x4-8*, Hack Squat 3x6-10, Cable Crunch 3x10-18, Standing Calf Raise 3x10-18
+  Upper — Shoulders & Arms | 6 lifts | 18 sets | 62 min | Overhead Press 3x8-12*, Pull-Ups 3x8-12*, Dumbbell Bench Press 3x10-14, Dumbbell Curl 3x12-17, Rope Tricep Pushdown 3x12-17, Lateral Raise 3x14-20
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 57 min | Deadlift 3x6-10*, Hack Squat 3x10-14, Seated Leg Curl 3x12-17, Cable Crunch 3x14-20, Seated Calf Raise 3x14-20
+new:
+  Upper A | 6 lifts | 20 sets | 75 min | Bench Press 4x6-10*, Barbell Row 4x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x12-20, Dumbbell Curl 3x10-15
+  Lower A | 6 lifts | 21 sets | 75 min | Barbell Squat 4x6-10*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Upper B | 7 lifts | 22 sets | 78 min | Overhead Press 4x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 4 days, 75 min, intermediate, general
+today:
+  Upper — Chest & Back | 5 lifts | 14 sets | 64 min | Bench Press 3x6-10*, Barbell Row 3x6-10*, Overhead Press 3x6-10*, Dumbbell Curl 3x8-13, Rope Tricep Pushdown 2x8-13
+  Lower — Squat Focus | 5 lifts | 15 sets | 62 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x6-10, Cable Crunch 3x8-13, Standing Calf Raise 3x8-13
+  Upper — Shoulders & Arms | 6 lifts | 17 sets | 59 min | Overhead Press 3x10-14*, Pull-Ups 3x10-14*, Dumbbell Bench Press 3x10-14, Dumbbell Curl 3x12-17, Rope Tricep Pushdown 2x12-17, Lateral Raise 3x12-17
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 55 min | Deadlift 3x8-12*, Hack Squat 3x10-14, Seated Leg Curl 3x12-17, Cable Crunch 3x12-17, Seated Calf Raise 3x12-17
+new:
+  Upper A | 7 lifts | 22 sets | 78 min | Bench Press 4x8-12*, Barbell Row 3x8-12, Dumbbell Shoulder Press 3x8-12, Lat Pulldown 3x8-12, Lateral Raise 3x10-15, Dumbbell Curl 3x10-15, Rope Tricep Pushdown 3x10-15
+  Lower A | 6 lifts | 21 sets | 72 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Upper B | 7 lifts | 22 sets | 75 min | Overhead Press 4x8-12*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 4 days, 75 min, intermediate, strength
+today:
+  Upper — Chest & Back | 4 lifts | 14 sets | 67 min | Bench Press 4x3*, Barbell Row 4x3*, Overhead Press 4x3*, Dumbbell Curl 2x6-10
+  Lower — Squat Focus | 5 lifts | 16 sets | 68 min | Barbell Squat 4x3*, Deadlift 3x3*, Hack Squat 3x6-10, Cable Crunch 3x6-10, Standing Calf Raise 3x6-10
+  Upper — Shoulders & Arms | 6 lifts | 17 sets | 62 min | Overhead Press 4x7*, Pull-Ups 4x7*, Dumbbell Bench Press 2x8-12, Dumbbell Curl 3x10-14, Rope Tricep Pushdown 2x10-14, Lateral Raise 2x10-14
+  Lower — Deadlift Focus | 5 lifts | 15 sets | 59 min | Deadlift 4x5*, Hack Squat 3x8-12, Seated Leg Curl 2x10-14, Cable Crunch 3x10-14, Seated Calf Raise 3x10-14
+new:
+  Upper A | 6 lifts | 19 sets | 74 min | Bench Press 4x5*, Barbell Row 3x6-10, Dumbbell Shoulder Press 3x6-10, Lat Pulldown 3x6-10, Lateral Raise 3x8-12, Dumbbell Curl 3x8-12
+  Lower A | 6 lifts | 20 sets | 73 min | Barbell Squat 4x5*, Romanian Deadlift 4x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Upper B | 6 lifts | 20 sets | 74 min | Overhead Press 4x5*, Pull-Ups 4x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Overhead Tricep Extension 3x8-12
+  Lower B | 6 lifts | 21 sets | 72 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 4x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
+
+== 5 days, 30 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 28 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12, Lateral Raise 2x12-20
+  Push — Chest Focus | 4 lifts | 9 sets | 27 min | Bench Press 3x8*, Overhead Press 2x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Upper — Chest & Back | 3 lifts | 6 sets | 21 min | Bench Press 2x8*, Barbell Row 2x8*, Overhead Press 2x8*
+  Lower — Squat Focus | 3 lifts | 6 sets | 25 min | Barbell Squat 2x8*, Deadlift 2x8*, Cable Crunch 2x12-20
+new:
+  Push A | 4 lifts | 9 sets | 29 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 30 min | Lat Pulldown 3x8*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 5 days, 30 min, beginner, general
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 28 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12, Lateral Raise 2x10-15
+  Push — Chest Focus | 4 lifts | 9 sets | 27 min | Bench Press 3x8*, Overhead Press 2x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Upper — Chest & Back | 3 lifts | 6 sets | 21 min | Bench Press 2x8*, Barbell Row 2x8*, Overhead Press 2x8*
+  Lower — Squat Focus | 3 lifts | 6 sets | 25 min | Barbell Squat 2x8*, Deadlift 2x8*, Cable Crunch 2x10-15
+new:
+  Push A | 4 lifts | 9 sets | 29 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 30 min | Lat Pulldown 3x8*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 5 days, 30 min, beginner, strength
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 29 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lat Pulldown 2x6-10, Lateral Raise 2x8-12
+  Push — Chest Focus | 3 lifts | 6 sets | 22 min | Bench Press 2x5*, Overhead Press 2x5*, Lateral Raise 2x8-12
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10
+  Upper — Chest & Back | 3 lifts | 6 sets | 26 min | Bench Press 2x5*, Barbell Row 2x5*, Overhead Press 2x5*
+  Lower — Squat Focus | 3 lifts | 6 sets | 29 min | Barbell Squat 2x5*, Deadlift 2x5*, Cable Crunch 2x8-12
+new:
+  Push A | 3 lifts | 9 sets | 29 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 3x8-12
+  Pull A | 3 lifts | 9 sets | 30 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Dumbbell Curl 3x8-12
+  Legs A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Upper B | 3 lifts | 8 sets | 30 min | Overhead Press 3x5*, Lat Pulldown 3x6-10, Incline Dumbbell Press 2x6-10
+  Lower B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 5 days, 30 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 30 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 6 sets | 25 min | Bench Press 2x4-8*, Overhead Press 2x4-8*, Lateral Raise 2x10-18
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x8-12
+  Upper — Chest & Back | 3 lifts | 6 sets | 25 min | Bench Press 2x8-12*, Barbell Row 2x8-12*, Overhead Press 2x8-12*
+  Lower — Squat Focus | 3 lifts | 6 sets | 27 min | Barbell Squat 2x8-12*, Deadlift 2x6-10*, Cable Crunch 2x14-20
+new:
+  Push A | 3 lifts | 8 sets | 29 min | Bench Press 3x6-10*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 2x12-20
+  Pull A | 3 lifts | 9 sets | 30 min | Pull-Ups 3x6-10*, Barbell Row 3x8-12, Dumbbell Curl 3x10-15
+  Legs A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x6-10*, Romanian Deadlift 2x8-12, Leg Press 2x8-12
+  Upper B | 3 lifts | 8 sets | 28 min | Overhead Press 3x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 2x8-12
+  Lower B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 5 days, 30 min, intermediate, general
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 30 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 6 sets | 25 min | Bench Press 2x6-10*, Overhead Press 2x6-10*, Lateral Raise 2x8-13
+  Legs — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8-12*, Deadlift 2x8-12*, Hack Squat 2x8-12
+  Upper — Chest & Back | 3 lifts | 6 sets | 25 min | Bench Press 2x10-14*, Barbell Row 2x10-14*, Overhead Press 2x10-14*
+  Lower — Squat Focus | 3 lifts | 6 sets | 25 min | Barbell Squat 2x10-14*, Deadlift 2x8-12*, Cable Crunch 2x12-17
+new:
+  Push A | 4 lifts | 9 sets | 31 min | Bench Press 3x8-12*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 31 min | Pull-Ups 3x8-12*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 8 sets | 29 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 2x8-12
+  Upper B | 4 lifts | 9 sets | 31 min | Overhead Press 3x8-12*, Pull-Ups 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12
+  Lower B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 5 days, 30 min, intermediate, strength
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 30 min | Pull-Ups 4x3*, Barbell Row 2x3*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 6 sets | 25 min | Bench Press 2x3*, Overhead Press 2x3*, Lateral Raise 2x6-10
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10
+  Upper — Chest & Back | 3 lifts | 6 sets | 25 min | Bench Press 2x7*, Barbell Row 2x7*, Overhead Press 2x7*
+  Lower — Squat Focus | 3 lifts | 6 sets | 27 min | Barbell Squat 2x7*, Deadlift 2x5*, Cable Crunch 2x10-14
+new:
+  Push A | 3 lifts | 8 sets | 30 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 2x8-12
+  Pull A | 3 lifts | 8 sets | 29 min | Pull-Ups 3x5*, Barbell Row 3x6-10, Dumbbell Curl 2x8-12
+  Legs A | 3 lifts | 7 sets | 30 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Upper B | 3 lifts | 8 sets | 29 min | Overhead Press 3x5*, Pull-Ups 3x6-10, Incline Dumbbell Press 2x6-10
+  Lower B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 5 days, 45 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 5 lifts | 12 sets | 43 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 3x8-12, Dumbbell Curl 2x10-15, Lateral Raise 2x12-20
+  Push — Chest Focus | 4 lifts | 10 sets | 37 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Chest & Back | 4 lifts | 10 sets | 41 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 2x8*, Rope Tricep Pushdown 2x10-15
+  Lower — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+new:
+  Push A | 6 lifts | 13 sets | 47 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Incline Dumbbell Press 2x8-12, Lateral Raise 2x12-20, Rope Tricep Pushdown 2x10-15, Overhead Tricep Extension 2x10-15
+  Pull A | 5 lifts | 12 sets | 45 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x12-20
+  Upper B | 5 lifts | 12 sets | 45 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x12-20, Cable Crunch 2x12-20
+
+== 5 days, 45 min, beginner, general
+today:
+  Pull — Lat Focus | 5 lifts | 11 sets | 38 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15, Cable Curl 2x10-15, Lateral Raise 2x10-15
+  Push — Chest Focus | 4 lifts | 10 sets | 37 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Chest & Back | 4 lifts | 10 sets | 41 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 2x8*, Rope Tricep Pushdown 2x10-15
+  Lower — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+new:
+  Push A | 6 lifts | 13 sets | 47 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Incline Dumbbell Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15, Overhead Tricep Extension 2x10-15
+  Pull A | 5 lifts | 12 sets | 45 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x10-15
+  Upper B | 5 lifts | 12 sets | 45 min | Overhead Press 3x8*, Lat Pulldown 2x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x10-15, Cable Crunch 2x10-15
+
+== 5 days, 45 min, beginner, strength
+today:
+  Pull — Lat Focus | 5 lifts | 11 sets | 40 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-12, Lateral Raise 2x8-12
+  Push — Chest Focus | 4 lifts | 10 sets | 41 min | Bench Press 3x5*, Overhead Press 3x5*, Dumbbell Bench Press 2x6-10, Lateral Raise 2x8-12
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12
+  Upper — Chest & Back | 4 lifts | 8 sets | 40 min | Bench Press 2x5*, Barbell Row 2x5*, Overhead Press 2x5*, Rope Tricep Pushdown 2x8-12
+  Lower — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10, Standing Calf Raise 2x8-12
+new:
+  Push A | 5 lifts | 11 sets | 44 min | Bench Press 3x5*, Dumbbell Shoulder Press 2x6-10, Incline Dumbbell Press 2x6-10, Lateral Raise 2x8-12, Rope Tricep Pushdown 2x8-12
+  Pull A | 5 lifts | 11 sets | 45 min | Lat Pulldown 3x5*, Barbell Row 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12, Dumbbell Curl 2x8-12
+  Legs A | 5 lifts | 11 sets | 47 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12
+  Upper B | 5 lifts | 11 sets | 45 min | Overhead Press 3x5*, Lat Pulldown 2x6-10, Incline Dumbbell Press 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12
+  Lower B | 4 lifts | 10 sets | 45 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 2x8-12, Cable Crunch 2x8-12
+
+== 5 days, 45 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 10 sets | 44 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 2x6-10, Lateral Raise 2x10-18
+  Push — Chest Focus | 4 lifts | 10 sets | 44 min | Bench Press 3x4-8*, Overhead Press 3x4-8*, Dumbbell Bench Press 2x6-10, Lateral Raise 2x10-18
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x8-12, Cable Crunch 2x12-20
+  Upper — Chest & Back | 4 lifts | 8 sets | 39 min | Bench Press 2x8-12*, Barbell Row 2x8-12*, Overhead Press 2x8-12*, Dumbbell Curl 2x12-17
+  Lower — Squat Focus | 4 lifts | 8 sets | 39 min | Barbell Squat 2x8-12*, Deadlift 2x6-10*, Hack Squat 2x10-14, Standing Calf Raise 2x14-20
+new:
+  Push A | 4 lifts | 12 sets | 46 min | Bench Press 3x6-10*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15
+  Pull A | 4 lifts | 12 sets | 45 min | Pull-Ups 3x6-10*, Barbell Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15
+  Legs A | 3 lifts | 10 sets | 43 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Upper B | 3 lifts | 11 sets | 43 min | Overhead Press 4x6-10*, Pull-Ups 4x8-12, Incline Dumbbell Press 3x8-12
+  Lower B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 5 days, 45 min, intermediate, general
+today:
+  Pull — Lat Focus | 4 lifts | 10 sets | 44 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 2x6-10, Lateral Raise 2x8-13
+  Push — Chest Focus | 4 lifts | 10 sets | 44 min | Bench Press 3x6-10*, Overhead Press 3x6-10*, Dumbbell Bench Press 2x6-10, Lateral Raise 2x8-13
+  Legs — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8-12*, Deadlift 2x8-12*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Chest & Back | 5 lifts | 10 sets | 45 min | Bench Press 2x10-14*, Barbell Row 2x10-14*, Overhead Press 2x10-14*, Dumbbell Curl 2x12-17, Rope Tricep Pushdown 2x12-17
+  Lower — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x10-14*, Deadlift 2x8-12*, Hack Squat 2x10-14, Cable Crunch 2x12-17, Standing Calf Raise 2x12-17
+new:
+  Push A | 4 lifts | 13 sets | 45 min | Bench Press 3x8-12*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 4x10-15, Rope Tricep Pushdown 3x10-15
+  Pull A | 4 lifts | 13 sets | 45 min | Pull-Ups 3x8-12*, Barbell Row 3x8-12, Face Pulls 4x10-15, Dumbbell Curl 3x10-15
+  Legs A | 4 lifts | 12 sets | 46 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Standing Calf Raise 3x10-15
+  Upper B | 4 lifts | 12 sets | 46 min | Overhead Press 3x8-12*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12
+  Lower B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 5 days, 45 min, intermediate, strength
+today:
+  Pull — Lat Focus | 4 lifts | 10 sets | 44 min | Pull-Ups 4x3*, Barbell Row 2x3*, Lat Pulldown 2x6-10, Lateral Raise 2x6-10
+  Push — Chest Focus | 4 lifts | 10 sets | 44 min | Bench Press 4x3*, Overhead Press 2x3*, Dumbbell Bench Press 2x6-10, Lateral Raise 2x6-10
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12
+  Upper — Chest & Back | 4 lifts | 8 sets | 39 min | Bench Press 2x7*, Barbell Row 2x7*, Overhead Press 2x7*, Dumbbell Curl 2x10-14
+  Lower — Squat Focus | 4 lifts | 8 sets | 39 min | Barbell Squat 2x7*, Deadlift 2x5*, Hack Squat 2x8-12, Standing Calf Raise 2x10-14
+new:
+  Push A | 4 lifts | 12 sets | 47 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull A | 4 lifts | 12 sets | 46 min | Pull-Ups 3x5*, Barbell Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12
+  Legs A | 3 lifts | 10 sets | 44 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10
+  Upper B | 3 lifts | 11 sets | 44 min | Overhead Press 4x5*, Pull-Ups 4x6-10, Incline Dumbbell Press 3x6-10
+  Lower B | 3 lifts | 11 sets | 44 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12
+
+== 5 days, 60 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 6 lifts | 14 sets | 48 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 3x8-12, Dumbbell Curl 2x10-15, Cable Curl 2x10-15, Lateral Raise 2x12-20
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x12-20
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Chest & Back | 3 lifts | 9 sets | 37 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x12-20, Cable Crunch 2x12-20
+  Upper B | 7 lifts | 16 sets | 59 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Overhead Tricep Extension 2x10-15, Hammer Curl 2x10-15
+  Lower B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 2x10-15
+
+== 5 days, 60 min, beginner, general
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 33 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x10-15
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Chest & Back | 3 lifts | 9 sets | 37 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x10-15, Cable Crunch 2x10-15
+  Upper B | 7 lifts | 16 sets | 59 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 2x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Overhead Tricep Extension 2x10-15, Hammer Curl 2x10-15
+  Lower B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 2x10-15
+
+== 5 days, 60 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lateral Raise 2x8-12
+  Push — Chest Focus | 3 lifts | 8 sets | 34 min | Bench Press 3x5*, Overhead Press 3x5*, Lateral Raise 2x8-12
+  Legs — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Upper — Chest & Back | 5 lifts | 12 sets | 54 min | Bench Press 3x5*, Barbell Row 3x5*, Overhead Press 2x5*, Dumbbell Curl 2x8-12, Rope Tricep Pushdown 2x8-12
+  Lower — Squat Focus | 4 lifts | 10 sets | 49 min | Barbell Squat 3x5*, Deadlift 3x5*, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+new:
+  Push A | 6 lifts | 17 sets | 59 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 2x8-12
+  Pull A | 6 lifts | 17 sets | 60 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 2x8-12
+  Legs A | 6 lifts | 15 sets | 60 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12, Cable Crunch 2x8-12
+  Upper B | 7 lifts | 15 sets | 58 min | Overhead Press 3x5*, Lat Pulldown 2x6-10, Incline Dumbbell Press 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12, Overhead Tricep Extension 2x8-12, Hammer Curl 2x8-12
+  Lower B | 6 lifts | 15 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 2x8-12, Cable Crunch 2x8-12, Leg Extension 2x8-12
+
+== 5 days, 60 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 6 lifts | 15 sets | 60 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 3x6-10, Dumbbell Curl 2x8-13, Cable Curl 2x8-13, Lateral Raise 2x10-18
+  Push — Chest Focus | 6 lifts | 15 sets | 60 min | Bench Press 3x4-8*, Overhead Press 3x4-8*, Dumbbell Bench Press 3x6-10, Rope Tricep Pushdown 2x8-13, Overhead Tricep Extension 2x8-13, Lateral Raise 2x10-18
+  Legs — Squat Focus | 5 lifts | 13 sets | 58 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Chest & Back | 4 lifts | 12 sets | 50 min | Bench Press 3x8-12*, Barbell Row 3x8-12*, Overhead Press 3x8-12*, Dumbbell Curl 3x12-17
+  Lower — Squat Focus | 5 lifts | 15 sets | 60 min | Barbell Squat 3x8-12*, Deadlift 3x6-10*, Hack Squat 3x10-14, Cable Crunch 3x14-20, Standing Calf Raise 3x14-20
+new:
+  Push A | 5 lifts | 16 sets | 59 min | Bench Press 4x6-10*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15
+  Pull A | 5 lifts | 17 sets | 60 min | Pull-Ups 4x6-10*, Barbell Row 3x8-12, Lat Pulldown 3x8-12, Face Pulls 4x10-15, Dumbbell Curl 3x10-15
+  Legs A | 5 lifts | 16 sets | 60 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20
+  Upper B | 5 lifts | 16 sets | 59 min | Overhead Press 4x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20
+
+== 5 days, 60 min, intermediate, general
+today:
+  Pull — Lat Focus | 5 lifts | 13 sets | 51 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 3x6-10, Dumbbell Curl 2x8-13, Cable Curl 2x8-13
+  Push — Chest Focus | 6 lifts | 15 sets | 60 min | Bench Press 3x6-10*, Overhead Press 3x6-10*, Dumbbell Bench Press 3x6-10, Rope Tricep Pushdown 2x8-13, Overhead Tricep Extension 2x8-13, Lateral Raise 2x8-13
+  Legs — Squat Focus | 5 lifts | 15 sets | 57 min | Barbell Squat 3x8-12*, Deadlift 3x8-12*, Hack Squat 3x8-12, Cable Crunch 3x10-15, Standing Calf Raise 3x10-15
+  Upper — Chest & Back | 3 lifts | 9 sets | 41 min | Bench Press 3x10-14*, Barbell Row 3x10-14*, Overhead Press 3x10-14*
+  Lower — Squat Focus | 5 lifts | 15 sets | 57 min | Barbell Squat 3x10-14*, Deadlift 3x8-12*, Hack Squat 3x10-14, Cable Crunch 3x12-17, Standing Calf Raise 3x12-17
+new:
+  Push A | 5 lifts | 17 sets | 59 min | Bench Press 4x8-12*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull A | 5 lifts | 17 sets | 59 min | Pull-Ups 4x8-12*, Barbell Row 4x8-12, Lat Pulldown 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15
+  Legs A | 5 lifts | 17 sets | 60 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15
+  Upper B | 5 lifts | 17 sets | 59 min | Overhead Press 4x8-12*, Pull-Ups 4x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15
+
+== 5 days, 60 min, intermediate, strength
+today:
+  Pull — Lat Focus | 5 lifts | 13 sets | 55 min | Pull-Ups 3x3*, Barbell Row 4x3*, Lat Pulldown 2x6-10, Dumbbell Curl 2x6-10, Lateral Raise 2x6-10
+  Push — Chest Focus | 5 lifts | 12 sets | 53 min | Bench Press 3x3*, Overhead Press 3x3*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x6-10, Lateral Raise 2x6-10
+  Legs — Squat Focus | 5 lifts | 13 sets | 59 min | Barbell Squat 4x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Upper — Chest & Back | 4 lifts | 13 sets | 55 min | Bench Press 3x7*, Barbell Row 4x7*, Overhead Press 4x7*, Dumbbell Curl 2x10-14
+  Lower — Squat Focus | 5 lifts | 14 sets | 60 min | Barbell Squat 4x7*, Deadlift 4x5*, Hack Squat 2x8-12, Cable Crunch 2x10-14, Standing Calf Raise 2x10-14
+new:
+  Push A | 5 lifts | 16 sets | 60 min | Bench Press 4x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull A | 5 lifts | 16 sets | 59 min | Pull-Ups 4x5*, Barbell Row 3x6-10, Lat Pulldown 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12
+  Legs A | 5 lifts | 16 sets | 61 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12
+  Upper B | 5 lifts | 16 sets | 61 min | Overhead Press 4x5*, Pull-Ups 3x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12
+  Lower B | 5 lifts | 16 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12
+
+== 5 days, 75 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 6 lifts | 14 sets | 48 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 3x8-12, Dumbbell Curl 2x10-15, Cable Curl 2x10-15, Lateral Raise 2x12-20
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x12-20
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Upper — Chest & Back | 3 lifts | 9 sets | 37 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Upper B | 7 lifts | 21 sets | 70 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 5 days, 75 min, beginner, general
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 33 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15, Lateral Raise 2x10-15
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x10-15
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Upper — Chest & Back | 3 lifts | 9 sets | 37 min | Bench Press 3x8*, Barbell Row 3x8*, Overhead Press 3x8*
+  Lower — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Upper B | 7 lifts | 21 sets | 70 min | Overhead Press 3x8*, Lat Pulldown 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 5 days, 75 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lateral Raise 2x8-12
+  Push — Chest Focus | 3 lifts | 8 sets | 34 min | Bench Press 3x5*, Overhead Press 3x5*, Lateral Raise 2x8-12
+  Legs — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Upper — Chest & Back | 3 lifts | 9 sets | 43 min | Bench Press 3x5*, Barbell Row 3x5*, Overhead Press 3x5*
+  Lower — Squat Focus | 4 lifts | 10 sets | 49 min | Barbell Squat 3x5*, Deadlift 3x5*, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+new:
+  Push A | 6 lifts | 18 sets | 61 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 3x8-12
+  Pull A | 6 lifts | 18 sets | 62 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 3x8-12
+  Legs A | 6 lifts | 18 sets | 66 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Upper B | 7 lifts | 21 sets | 73 min | Overhead Press 3x5*, Lat Pulldown 3x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Overhead Tricep Extension 3x8-12, Hammer Curl 3x8-12
+  Lower B | 6 lifts | 18 sets | 66 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
+
+== 5 days, 75 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 6 lifts | 17 sets | 64 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 3x6-10, Dumbbell Curl 2x8-13, Cable Curl 3x8-13, Lateral Raise 3x10-18
+  Push — Chest Focus | 6 lifts | 17 sets | 64 min | Bench Press 3x4-8*, Overhead Press 3x4-8*, Dumbbell Bench Press 3x6-10, Rope Tricep Pushdown 2x8-13, Overhead Tricep Extension 3x8-13, Lateral Raise 3x10-18
+  Legs — Squat Focus | 5 lifts | 15 sets | 62 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x8-12, Cable Crunch 3x12-20, Standing Calf Raise 3x12-20
+  Upper — Chest & Back | 4 lifts | 12 sets | 50 min | Bench Press 3x8-12*, Barbell Row 3x8-12*, Overhead Press 3x8-12*, Dumbbell Curl 3x12-17
+  Lower — Squat Focus | 5 lifts | 15 sets | 60 min | Barbell Squat 3x8-12*, Deadlift 3x6-10*, Hack Squat 3x10-14, Cable Crunch 3x14-20, Standing Calf Raise 3x14-20
+new:
+  Push A | 6 lifts | 21 sets | 72 min | Bench Press 4x6-10*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 4x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 21 sets | 71 min | Pull-Ups 4x6-10*, Barbell Row 4x8-12, Lat Pulldown 4x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 21 sets | 75 min | Barbell Squat 4x6-10*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Upper B | 7 lifts | 22 sets | 78 min | Overhead Press 4x6-10*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 5 days, 75 min, intermediate, general
+today:
+  Pull — Lat Focus | 6 lifts | 16 sets | 61 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 3x6-10, Dumbbell Curl 2x8-13, Cable Curl 2x8-13, Lateral Raise 3x8-13
+  Push — Chest Focus | 4 lifts | 12 sets | 49 min | Bench Press 3x6-10*, Overhead Press 3x6-10*, Dumbbell Bench Press 3x6-10, Lateral Raise 3x8-13
+  Legs — Squat Focus | 5 lifts | 15 sets | 57 min | Barbell Squat 3x8-12*, Deadlift 3x8-12*, Hack Squat 3x8-12, Cable Crunch 3x10-15, Standing Calf Raise 3x10-15
+  Upper — Chest & Back | 3 lifts | 9 sets | 41 min | Bench Press 3x10-14*, Barbell Row 3x10-14*, Overhead Press 3x10-14*
+  Lower — Squat Focus | 5 lifts | 15 sets | 57 min | Barbell Squat 3x10-14*, Deadlift 3x8-12*, Hack Squat 3x10-14, Cable Crunch 3x12-17, Standing Calf Raise 3x12-17
+new:
+  Push A | 6 lifts | 21 sets | 69 min | Bench Press 4x8-12*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 4x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 21 sets | 69 min | Pull-Ups 4x8-12*, Barbell Row 4x8-12, Lat Pulldown 4x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 21 sets | 72 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Upper B | 7 lifts | 22 sets | 75 min | Overhead Press 4x8-12*, Pull-Ups 3x8-12, Incline Dumbbell Press 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Overhead Tricep Extension 3x10-15, Hammer Curl 3x10-15
+  Lower B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 5 days, 75 min, intermediate, strength
+today:
+  Pull — Lat Focus | 6 lifts | 15 sets | 61 min | Pull-Ups 3x3*, Barbell Row 4x3*, Lat Pulldown 2x6-10, Dumbbell Curl 2x6-10, Cable Curl 2x6-10, Lateral Raise 2x6-10
+  Push — Chest Focus | 6 lifts | 14 sets | 58 min | Bench Press 3x3*, Overhead Press 3x3*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x6-10, Overhead Tricep Extension 2x6-10, Lateral Raise 2x6-10
+  Legs — Squat Focus | 5 lifts | 16 sets | 66 min | Barbell Squat 4x5*, Deadlift 3x5*, Hack Squat 3x6-10, Cable Crunch 3x8-12, Standing Calf Raise 3x8-12
+  Upper — Chest & Back | 3 lifts | 11 sets | 47 min | Bench Press 3x7*, Barbell Row 4x7*, Overhead Press 4x7*
+  Lower — Squat Focus | 5 lifts | 17 sets | 67 min | Barbell Squat 4x7*, Deadlift 4x5*, Hack Squat 3x8-12, Cable Crunch 3x10-14, Standing Calf Raise 3x10-14
+new:
+  Push A | 6 lifts | 21 sets | 73 min | Bench Press 4x5*, Dumbbell Shoulder Press 4x6-10, Incline Dumbbell Press 4x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 3x8-12
+  Pull A | 6 lifts | 21 sets | 72 min | Pull-Ups 4x5*, Barbell Row 4x6-10, Lat Pulldown 4x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 3x8-12
+  Legs A | 6 lifts | 20 sets | 73 min | Barbell Squat 4x5*, Romanian Deadlift 4x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Upper B | 6 lifts | 20 sets | 74 min | Overhead Press 4x5*, Pull-Ups 4x6-10, Incline Dumbbell Press 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Overhead Tricep Extension 3x8-12
+  Lower B | 6 lifts | 21 sets | 72 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 4x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
+
+== 6 days, 30 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 27 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Chest Focus | 4 lifts | 8 sets | 26 min | Bench Press 2x8*, Overhead Press 2x8*, Dumbbell Bench Press 2x8-12, Overhead Tricep Extension 2x10-15
+  Legs — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Pull — Row Focus | 3 lifts | 7 sets | 21 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 4 lifts | 9 sets | 28 min | Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x8*, Barbell Squat 2x8*, Seated Leg Curl 2x10-15
+new:
+  Push A | 4 lifts | 9 sets | 29 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 30 min | Lat Pulldown 3x8*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Push B | 4 lifts | 10 sets | 30 min | Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 2x10-15
+  Pull B | 4 lifts | 10 sets | 30 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Reverse Flyes 2x10-15, Hammer Curl 2x10-15
+  Legs B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 6 days, 30 min, beginner, general
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 21 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15
+  Push — Chest Focus | 4 lifts | 8 sets | 26 min | Bench Press 2x8*, Overhead Press 2x8*, Dumbbell Bench Press 2x8-12, Overhead Tricep Extension 2x10-15
+  Legs — Squat Focus | 3 lifts | 6 sets | 24 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12
+  Pull — Row Focus | 3 lifts | 7 sets | 21 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 3 lifts | 7 sets | 20 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x8*, Barbell Squat 2x8*, Seated Leg Curl 2x10-15
+new:
+  Push A | 4 lifts | 9 sets | 29 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 30 min | Lat Pulldown 3x8*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 9 sets | 30 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Push B | 4 lifts | 10 sets | 30 min | Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 2x10-15
+  Pull B | 4 lifts | 10 sets | 30 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Reverse Flyes 2x10-15, Hammer Curl 2x10-15
+  Legs B | 3 lifts | 8 sets | 29 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 2x10-15
+
+== 6 days, 30 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 23 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Dumbbell Curl 2x8-12
+  Push — Chest Focus | 3 lifts | 6 sets | 23 min | Bench Press 2x5*, Overhead Press 2x5*, Dumbbell Bench Press 2x6-10
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10
+  Pull — Row Focus | 3 lifts | 7 sets | 24 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-12
+  Push — Shoulder Focus | 4 lifts | 8 sets | 28 min | Overhead Press 2x5*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x8-12, Lateral Raise 2x8-12
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 29 min | Deadlift 2x5*, Barbell Squat 2x5*, Seated Leg Curl 2x8-12
+new:
+  Push A | 3 lifts | 9 sets | 29 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 3x8-12
+  Pull A | 3 lifts | 9 sets | 30 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Dumbbell Curl 3x8-12
+  Legs A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Push B | 4 lifts | 9 sets | 30 min | Overhead Press 3x5*, Dumbbell Bench Press 2x6-10, Cable Lateral Raise 2x8-12, Overhead Tricep Extension 2x8-12
+  Pull B | 4 lifts | 9 sets | 30 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Reverse Flyes 2x8-12, Hammer Curl 2x8-12
+  Legs B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 6 days, 30 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 30 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 6 sets | 26 min | Bench Press 2x4-8*, Overhead Press 2x4-8*, Dumbbell Bench Press 2x6-10
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x4-8*, Deadlift 2x4-8*, Hack Squat 2x6-10
+  Pull — Row Focus | 4 lifts | 8 sets | 28 min | Barbell Row 2x8-12*, Lat Pulldown 2x10-14, Seated Cable Row 2x10-14, Dumbbell Curl 2x12-17
+  Push — Shoulder Focus | 4 lifts | 8 sets | 27 min | Overhead Press 2x8-12*, Dumbbell Bench Press 2x10-14, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x14-20
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 27 min | Deadlift 2x6-10*, Barbell Squat 2x8-12*, Seated Leg Curl 2x12-17
+new:
+  Push A | 3 lifts | 8 sets | 29 min | Bench Press 3x6-10*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 2x12-20
+  Pull A | 3 lifts | 9 sets | 30 min | Pull-Ups 3x6-10*, Barbell Row 3x8-12, Dumbbell Curl 3x10-15
+  Legs A | 3 lifts | 7 sets | 29 min | Barbell Squat 3x6-10*, Romanian Deadlift 2x8-12, Leg Press 2x8-12
+  Push B | 3 lifts | 9 sets | 29 min | Overhead Press 3x6-10*, Dumbbell Bench Press 3x8-12, Cable Lateral Raise 3x12-20
+  Pull B | 3 lifts | 8 sets | 29 min | Barbell Row 3x6-10*, Lat Pulldown 3x8-12, Hammer Curl 2x10-15
+  Legs B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 6 days, 30 min, intermediate, general
+today:
+  Pull — Lat Focus | 4 lifts | 8 sets | 30 min | Pull-Ups 2x6-10*, Barbell Row 2x6-10*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-13
+  Push — Chest Focus | 3 lifts | 6 sets | 26 min | Bench Press 2x6-10*, Overhead Press 2x6-10*, Dumbbell Bench Press 2x6-10
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x6-10
+  Pull — Row Focus | 3 lifts | 8 sets | 26 min | Barbell Row 3x10-14*, Lat Pulldown 2x10-14, Seated Cable Row 3x10-14
+  Push — Shoulder Focus | 4 lifts | 8 sets | 27 min | Overhead Press 2x10-14*, Dumbbell Bench Press 2x10-14, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x12-17
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 25 min | Deadlift 2x8-12*, Barbell Squat 2x10-14*, Seated Leg Curl 2x12-17
+new:
+  Push A | 4 lifts | 9 sets | 31 min | Bench Press 3x8-12*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull A | 4 lifts | 9 sets | 31 min | Pull-Ups 3x8-12*, Barbell Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 3 lifts | 8 sets | 29 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 2x8-12
+  Push B | 4 lifts | 9 sets | 29 min | Overhead Press 3x8-12*, Dumbbell Bench Press 2x8-12, Cable Lateral Raise 2x10-15, Overhead Tricep Extension 2x10-15
+  Pull B | 4 lifts | 9 sets | 30 min | Barbell Row 3x8-12*, Lat Pulldown 2x8-12, Reverse Flyes 2x10-15, Hammer Curl 2x10-15
+  Legs B | 3 lifts | 7 sets | 29 min | Deadlift 3x5-8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15
+
+== 6 days, 30 min, intermediate, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Pull-Ups 3x3*, Barbell Row 2x3*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 6 sets | 26 min | Bench Press 2x3*, Overhead Press 2x3*, Dumbbell Bench Press 2x6-10
+  Legs — Squat Focus | 3 lifts | 6 sets | 28 min | Barbell Squat 2x3*, Deadlift 2x3*, Hack Squat 2x6-10
+  Pull — Row Focus | 4 lifts | 8 sets | 28 min | Barbell Row 2x7*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12, Dumbbell Curl 2x10-14
+  Push — Shoulder Focus | 4 lifts | 8 sets | 27 min | Overhead Press 2x7*, Dumbbell Bench Press 2x8-12, Rope Tricep Pushdown 2x10-14, Lateral Raise 2x10-14
+  Legs — Deadlift Focus | 3 lifts | 6 sets | 27 min | Deadlift 2x5*, Barbell Squat 2x7*, Seated Leg Curl 2x10-14
+new:
+  Push A | 3 lifts | 8 sets | 30 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 2x8-12
+  Pull A | 3 lifts | 8 sets | 29 min | Pull-Ups 3x5*, Barbell Row 3x6-10, Dumbbell Curl 2x8-12
+  Legs A | 3 lifts | 7 sets | 30 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10
+  Push B | 3 lifts | 9 sets | 30 min | Overhead Press 3x5*, Dumbbell Bench Press 3x6-10, Cable Lateral Raise 3x8-12
+  Pull B | 3 lifts | 8 sets | 29 min | Barbell Row 3x5*, Lat Pulldown 3x6-10, Hammer Curl 2x8-12
+  Legs B | 3 lifts | 7 sets | 30 min | Deadlift 3x5*, Hack Squat 2x6-10, Seated Leg Curl 2x8-12
+
+== 6 days, 45 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 25 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15
+  Push — Chest Focus | 4 lifts | 10 sets | 38 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Overhead Tricep Extension 2x10-15
+  Legs — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Deadlift Focus | 5 lifts | 10 sets | 44 min | Deadlift 2x8*, Barbell Squat 2x8*, Seated Leg Curl 2x10-15, Hack Squat 2x8-12, Cable Crunch 2x12-20
+new:
+  Push A | 6 lifts | 13 sets | 47 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Incline Dumbbell Press 2x8-12, Lateral Raise 2x12-20, Rope Tricep Pushdown 2x10-15, Overhead Tricep Extension 2x10-15
+  Pull A | 5 lifts | 12 sets | 45 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x12-20
+  Push B | 6 lifts | 13 sets | 46 min | Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Chest Press Machine 2x8-12, Cable Lateral Raise 2x12-20, Overhead Tricep Extension 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull B | 6 lifts | 13 sets | 45 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12, Reverse Flyes 2x10-15, Hammer Curl 2x10-15, Dumbbell Curl 2x10-15
+  Legs B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x12-20, Cable Crunch 2x12-20
+
+== 6 days, 45 min, beginner, general
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 25 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Dumbbell Curl 2x10-15
+  Push — Chest Focus | 4 lifts | 10 sets | 38 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Overhead Tricep Extension 2x10-15
+  Legs — Squat Focus | 5 lifts | 10 sets | 44 min | Barbell Squat 2x8*, Deadlift 2x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Deadlift Focus | 5 lifts | 10 sets | 44 min | Deadlift 2x8*, Barbell Squat 2x8*, Seated Leg Curl 2x10-15, Hack Squat 2x8-12, Cable Crunch 2x10-15
+new:
+  Push A | 6 lifts | 13 sets | 47 min | Bench Press 3x8*, Dumbbell Shoulder Press 2x8-12, Incline Dumbbell Press 2x8-12, Lateral Raise 2x10-15, Rope Tricep Pushdown 2x10-15, Overhead Tricep Extension 2x10-15
+  Pull A | 5 lifts | 12 sets | 45 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 2x8-12, Face Pulls 2x10-15, Dumbbell Curl 2x10-15
+  Legs A | 5 lifts | 11 sets | 43 min | Barbell Squat 3x8*, Romanian Deadlift 2x8-12, Leg Press 2x8-12, Seated Leg Curl 2x10-15, Standing Calf Raise 2x10-15
+  Push B | 6 lifts | 13 sets | 46 min | Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Chest Press Machine 2x8-12, Cable Lateral Raise 2x10-15, Overhead Tricep Extension 2x10-15, Rope Tricep Pushdown 2x10-15
+  Pull B | 6 lifts | 13 sets | 45 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12, Reverse Flyes 2x10-15, Hammer Curl 2x10-15, Dumbbell Curl 2x10-15
+  Legs B | 5 lifts | 11 sets | 46 min | Deadlift 3x8*, Hack Squat 2x8-12, Seated Leg Curl 2x10-15, Seated Calf Raise 2x10-15, Cable Crunch 2x10-15
+
+== 6 days, 45 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 4 lifts | 9 sets | 39 min | Bench Press 3x5*, Overhead Press 2x5*, Dumbbell Bench Press 2x6-10, Overhead Tricep Extension 2x8-12
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x5*, Deadlift 2x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12
+  Pull — Row Focus | 3 lifts | 7 sets | 29 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Seated Cable Row 2x6-10
+  Push — Shoulder Focus | 3 lifts | 7 sets | 26 min | Overhead Press 3x5*, Dumbbell Shoulder Press 2x6-10, Lateral Raise 2x8-12
+  Legs — Deadlift Focus | 4 lifts | 8 sets | 41 min | Deadlift 2x5*, Barbell Squat 2x5*, Hack Squat 2x6-10, Seated Calf Raise 2x8-12
+new:
+  Push A | 5 lifts | 11 sets | 44 min | Bench Press 3x5*, Dumbbell Shoulder Press 2x6-10, Incline Dumbbell Press 2x6-10, Lateral Raise 2x8-12, Rope Tricep Pushdown 2x8-12
+  Pull A | 5 lifts | 11 sets | 45 min | Lat Pulldown 3x5*, Barbell Row 2x6-10, Seated Cable Row 2x6-10, Face Pulls 2x8-12, Dumbbell Curl 2x8-12
+  Legs A | 5 lifts | 11 sets | 47 min | Barbell Squat 3x5*, Romanian Deadlift 2x6-10, Leg Press 2x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12
+  Push B | 6 lifts | 13 sets | 47 min | Overhead Press 3x5*, Dumbbell Bench Press 2x6-10, Chest Press Machine 2x6-10, Cable Lateral Raise 2x8-12, Overhead Tricep Extension 2x8-12, Rope Tricep Pushdown 2x8-12
+  Pull B | 6 lifts | 13 sets | 47 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Seated Cable Row 2x6-10, Reverse Flyes 2x8-12, Hammer Curl 2x8-12, Dumbbell Curl 2x8-12
+  Legs B | 4 lifts | 10 sets | 45 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 2x8-12, Cable Crunch 2x8-12
+
+== 6 days, 45 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 10 sets | 44 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-13
+  Push — Chest Focus | 4 lifts | 9 sets | 42 min | Bench Press 3x4-8*, Overhead Press 2x4-8*, Dumbbell Bench Press 2x6-10, Overhead Tricep Extension 2x8-13
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x4-8*, Deadlift 2x4-8*, Hack Squat 2x6-10, Cable Crunch 2x10-18
+  Pull — Row Focus | 3 lifts | 9 sets | 34 min | Barbell Row 3x8-12*, Lat Pulldown 3x10-14, Seated Cable Row 3x10-14
+  Push — Shoulder Focus | 5 lifts | 12 sets | 44 min | Overhead Press 3x8-12*, Dumbbell Bench Press 3x10-14, Dumbbell Shoulder Press 2x10-14, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x14-20
+  Legs — Deadlift Focus | 4 lifts | 8 sets | 39 min | Deadlift 2x6-10*, Barbell Squat 2x8-12*, Seated Leg Curl 2x12-17, Seated Calf Raise 2x14-20
+new:
+  Push A | 4 lifts | 12 sets | 46 min | Bench Press 3x6-10*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15
+  Pull A | 4 lifts | 12 sets | 45 min | Pull-Ups 3x6-10*, Barbell Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15
+  Legs A | 3 lifts | 10 sets | 43 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12
+  Push B | 4 lifts | 12 sets | 44 min | Overhead Press 3x6-10*, Dumbbell Bench Press 3x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 3x10-15
+  Pull B | 4 lifts | 12 sets | 45 min | Barbell Row 3x6-10*, Lat Pulldown 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15
+  Legs B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 6 days, 45 min, intermediate, general
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 36 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Dumbbell Curl 2x8-13
+  Push — Chest Focus | 4 lifts | 9 sets | 42 min | Bench Press 3x6-10*, Overhead Press 2x6-10*, Dumbbell Bench Press 2x6-10, Overhead Tricep Extension 2x8-13
+  Legs — Squat Focus | 4 lifts | 8 sets | 41 min | Barbell Squat 2x6-10*, Deadlift 2x6-10*, Hack Squat 2x6-10, Cable Crunch 2x8-13
+  Pull — Row Focus | 3 lifts | 8 sets | 31 min | Barbell Row 3x10-14*, Lat Pulldown 3x10-14, Seated Cable Row 2x10-14
+  Push — Shoulder Focus | 5 lifts | 12 sets | 44 min | Overhead Press 3x10-14*, Dumbbell Bench Press 3x10-14, Dumbbell Shoulder Press 2x10-14, Rope Tricep Pushdown 2x12-17, Lateral Raise 2x12-17
+  Legs — Deadlift Focus | 5 lifts | 10 sets | 44 min | Deadlift 2x8-12*, Barbell Squat 2x10-14*, Seated Leg Curl 2x12-17, Hack Squat 2x10-14, Seated Calf Raise 2x12-17
+new:
+  Push A | 4 lifts | 13 sets | 45 min | Bench Press 3x8-12*, Dumbbell Shoulder Press 3x8-12, Lateral Raise 4x10-15, Rope Tricep Pushdown 3x10-15
+  Pull A | 4 lifts | 13 sets | 45 min | Pull-Ups 3x8-12*, Barbell Row 3x8-12, Face Pulls 4x10-15, Dumbbell Curl 3x10-15
+  Legs A | 4 lifts | 12 sets | 46 min | Barbell Squat 3x8-12*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Standing Calf Raise 3x10-15
+  Push B | 4 lifts | 13 sets | 44 min | Overhead Press 4x8-12*, Dumbbell Bench Press 3x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull B | 4 lifts | 13 sets | 45 min | Barbell Row 3x8-12*, Lat Pulldown 4x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15
+  Legs B | 3 lifts | 11 sets | 43 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15
+
+== 6 days, 45 min, intermediate, strength
+today:
+  Pull — Lat Focus | 4 lifts | 9 sets | 40 min | Pull-Ups 3x3*, Barbell Row 2x3*, Lat Pulldown 2x6-10, Dumbbell Curl 2x6-10
+  Push — Chest Focus | 4 lifts | 9 sets | 40 min | Bench Press 3x3*, Overhead Press 2x3*, Dumbbell Bench Press 2x6-10, Lateral Raise 2x6-10
+  Legs — Squat Focus | 4 lifts | 8 sets | 42 min | Barbell Squat 2x3*, Deadlift 2x3*, Hack Squat 2x6-10, Cable Crunch 2x6-10
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x7*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12
+  Push — Shoulder Focus | 5 lifts | 12 sets | 45 min | Overhead Press 4x7*, Dumbbell Bench Press 2x8-12, Dumbbell Shoulder Press 2x8-12, Rope Tricep Pushdown 2x10-14, Lateral Raise 2x10-14
+  Legs — Deadlift Focus | 4 lifts | 8 sets | 39 min | Deadlift 2x5*, Barbell Squat 2x7*, Seated Leg Curl 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Push A | 4 lifts | 12 sets | 47 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull A | 4 lifts | 12 sets | 46 min | Pull-Ups 3x5*, Barbell Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12
+  Legs A | 3 lifts | 10 sets | 44 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10
+  Push B | 4 lifts | 12 sets | 45 min | Overhead Press 3x5*, Dumbbell Bench Press 3x6-10, Cable Lateral Raise 3x8-12, Overhead Tricep Extension 3x8-12
+  Pull B | 4 lifts | 12 sets | 45 min | Barbell Row 3x5*, Lat Pulldown 3x6-10, Reverse Flyes 3x8-12, Hammer Curl 3x8-12
+  Legs B | 3 lifts | 11 sets | 44 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12
+
+== 6 days, 60 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 26 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12
+  Push — Chest Focus | 4 lifts | 10 sets | 37 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Deadlift Focus | 5 lifts | 12 sets | 51 min | Deadlift 3x8*, Barbell Squat 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x12-20, Cable Crunch 2x12-20
+  Push B | 6 lifts | 18 sets | 57 min | Overhead Press 3x8*, Dumbbell Bench Press 3x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 18 sets | 56 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 2x10-15
+
+== 6 days, 60 min, beginner, general
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 26 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x10-15
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Deadlift Focus | 5 lifts | 12 sets | 51 min | Deadlift 3x8*, Barbell Squat 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 16 sets | 58 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 2x10-15, Cable Crunch 2x10-15
+  Push B | 6 lifts | 18 sets | 57 min | Overhead Press 3x8*, Dumbbell Bench Press 3x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 18 sets | 56 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 17 sets | 60 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 2x10-15
+
+== 6 days, 60 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 8 sets | 34 min | Bench Press 3x5*, Overhead Press 3x5*, Lateral Raise 2x8-12
+  Legs — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-12
+  Push — Shoulder Focus | 3 lifts | 7 sets | 26 min | Overhead Press 3x5*, Dumbbell Shoulder Press 2x6-10, Lateral Raise 2x8-12
+  Legs — Deadlift Focus | 4 lifts | 10 sets | 49 min | Deadlift 3x5*, Barbell Squat 3x5*, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Push A | 6 lifts | 17 sets | 59 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 2x8-12
+  Pull A | 6 lifts | 17 sets | 60 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 2x8-12
+  Legs A | 6 lifts | 15 sets | 60 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 2x8-12, Standing Calf Raise 2x8-12, Cable Crunch 2x8-12
+  Push B | 6 lifts | 18 sets | 59 min | Overhead Press 3x5*, Dumbbell Bench Press 3x6-10, Chest Press Machine 3x6-10, Cable Lateral Raise 3x8-12, Overhead Tricep Extension 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull B | 6 lifts | 18 sets | 59 min | Barbell Row 3x5*, Lat Pulldown 3x6-10, Seated Cable Row 3x6-10, Reverse Flyes 3x8-12, Hammer Curl 3x8-12, Dumbbell Curl 3x8-12
+  Legs B | 6 lifts | 15 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 2x8-12, Cable Crunch 2x8-12, Leg Extension 2x8-12
+
+== 6 days, 60 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 12 sets | 49 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 3x6-10, Dumbbell Curl 3x8-13
+  Push — Chest Focus | 6 lifts | 15 sets | 60 min | Bench Press 3x4-8*, Overhead Press 3x4-8*, Dumbbell Bench Press 3x6-10, Rope Tricep Pushdown 2x8-13, Overhead Tricep Extension 2x8-13, Lateral Raise 2x10-18
+  Legs — Squat Focus | 5 lifts | 13 sets | 58 min | Barbell Squat 3x4-8*, Deadlift 3x4-8*, Hack Squat 3x6-10, Cable Crunch 2x10-18, Standing Calf Raise 2x10-18
+  Pull — Row Focus | 3 lifts | 8 sets | 31 min | Barbell Row 3x8-12*, Lat Pulldown 3x10-14, Seated Cable Row 2x10-14
+  Push — Shoulder Focus | 4 lifts | 12 sets | 41 min | Overhead Press 3x8-12*, Dumbbell Bench Press 3x10-14, Dumbbell Shoulder Press 3x10-14, Lateral Raise 3x14-20
+  Legs — Deadlift Focus | 5 lifts | 12 sets | 53 min | Deadlift 3x6-10*, Barbell Squat 3x8-12*, Seated Leg Curl 2x12-17, Hack Squat 2x10-14, Cable Crunch 2x14-20
+new:
+  Push A | 5 lifts | 16 sets | 59 min | Bench Press 4x6-10*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15
+  Pull A | 5 lifts | 17 sets | 60 min | Pull-Ups 4x6-10*, Barbell Row 3x8-12, Lat Pulldown 3x8-12, Face Pulls 4x10-15, Dumbbell Curl 3x10-15
+  Legs A | 5 lifts | 16 sets | 60 min | Barbell Squat 4x6-10*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20
+  Push B | 5 lifts | 17 sets | 60 min | Overhead Press 4x6-10*, Dumbbell Bench Press 4x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 3x10-15
+  Pull B | 5 lifts | 17 sets | 60 min | Barbell Row 4x6-10*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 4x10-15, Hammer Curl 3x10-15
+  Legs B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20
+
+== 6 days, 60 min, intermediate, general
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 37 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 6 lifts | 14 sets | 57 min | Bench Press 3x6-10*, Overhead Press 3x6-10*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x8-13, Overhead Tricep Extension 2x8-13, Lateral Raise 2x8-13
+  Legs — Squat Focus | 5 lifts | 13 sets | 58 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x6-10, Cable Crunch 2x8-13, Standing Calf Raise 2x8-13
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x10-14*, Lat Pulldown 2x10-14, Seated Cable Row 2x10-14
+  Push — Shoulder Focus | 4 lifts | 11 sets | 39 min | Overhead Press 3x10-14*, Dumbbell Bench Press 2x10-14, Dumbbell Shoulder Press 3x10-14, Lateral Raise 3x12-17
+  Legs — Deadlift Focus | 6 lifts | 14 sets | 58 min | Deadlift 3x8-12*, Barbell Squat 3x10-14*, Seated Leg Curl 2x12-17, Hack Squat 2x10-14, Cable Crunch 2x12-17, Seated Calf Raise 2x12-17
+new:
+  Push A | 5 lifts | 17 sets | 59 min | Bench Press 4x8-12*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull A | 5 lifts | 17 sets | 59 min | Pull-Ups 4x8-12*, Barbell Row 4x8-12, Lat Pulldown 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15
+  Legs A | 5 lifts | 17 sets | 60 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15
+  Push B | 6 lifts | 19 sets | 62 min | Overhead Press 4x8-12*, Dumbbell Bench Press 3x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 19 sets | 63 min | Barbell Row 4x8-12*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 5 lifts | 16 sets | 60 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15
+
+== 6 days, 60 min, intermediate, strength
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 37 min | Pull-Ups 3x3*, Barbell Row 3x3*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 5 lifts | 12 sets | 53 min | Bench Press 3x3*, Overhead Press 3x3*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x6-10, Overhead Tricep Extension 2x6-10
+  Legs — Squat Focus | 5 lifts | 12 sets | 58 min | Barbell Squat 4x3*, Deadlift 2x3*, Hack Squat 2x6-10, Cable Crunch 2x6-10, Standing Calf Raise 2x6-10
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x7*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12
+  Push — Shoulder Focus | 4 lifts | 10 sets | 36 min | Overhead Press 3x7*, Dumbbell Bench Press 2x8-12, Dumbbell Shoulder Press 2x8-12, Lateral Raise 3x10-14
+  Legs — Deadlift Focus | 5 lifts | 14 sets | 60 min | Deadlift 4x5*, Barbell Squat 4x7*, Hack Squat 2x8-12, Cable Crunch 2x10-14, Seated Calf Raise 2x10-14
+new:
+  Push A | 5 lifts | 16 sets | 60 min | Bench Press 4x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull A | 5 lifts | 16 sets | 59 min | Pull-Ups 4x5*, Barbell Row 3x6-10, Lat Pulldown 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12
+  Legs A | 5 lifts | 16 sets | 61 min | Barbell Squat 4x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12
+  Push B | 5 lifts | 17 sets | 60 min | Overhead Press 4x5*, Dumbbell Bench Press 3x6-10, Chest Press Machine 3x6-10, Cable Lateral Raise 4x8-12, Overhead Tricep Extension 3x8-12
+  Pull B | 5 lifts | 17 sets | 60 min | Barbell Row 4x5*, Lat Pulldown 3x6-10, Seated Cable Row 3x6-10, Reverse Flyes 4x8-12, Hammer Curl 3x8-12
+  Legs B | 5 lifts | 16 sets | 60 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12
+
+== 6 days, 75 min, beginner, hypertrophy
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 26 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12
+  Push — Chest Focus | 4 lifts | 10 sets | 37 min | Bench Press 3x8*, Overhead Press 3x8*, Dumbbell Bench Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Standing Calf Raise 2x12-20
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x12-20
+  Legs — Deadlift Focus | 5 lifts | 12 sets | 51 min | Deadlift 3x8*, Barbell Squat 3x8*, Hack Squat 2x8-12, Cable Crunch 2x12-20, Seated Calf Raise 2x12-20
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Push B | 6 lifts | 18 sets | 57 min | Overhead Press 3x8*, Dumbbell Bench Press 3x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 18 sets | 56 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 6 days, 75 min, beginner, general
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 26 min | Straight-Arm Pulldown 2x10-15*, Barbell Row 3x8*, Lat Pulldown 2x8-12
+  Push — Chest Focus | 3 lifts | 8 sets | 30 min | Bench Press 3x8*, Overhead Press 3x8*, Lateral Raise 2x10-15
+  Legs — Squat Focus | 5 lifts | 12 sets | 51 min | Barbell Squat 3x8*, Deadlift 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Standing Calf Raise 2x10-15
+  Pull — Row Focus | 3 lifts | 7 sets | 26 min | Barbell Row 3x8*, Lat Pulldown 2x8-12, Dumbbell Curl 2x10-15
+  Push — Shoulder Focus | 3 lifts | 7 sets | 25 min | Overhead Press 3x8*, Dumbbell Shoulder Press 2x8-12, Lateral Raise 2x10-15
+  Legs — Deadlift Focus | 5 lifts | 12 sets | 51 min | Deadlift 3x8*, Barbell Squat 3x8*, Hack Squat 2x8-12, Cable Crunch 2x10-15, Seated Calf Raise 2x10-15
+new:
+  Push A | 6 lifts | 18 sets | 58 min | Bench Press 3x8*, Dumbbell Shoulder Press 3x8-12, Incline Dumbbell Press 3x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 18 sets | 59 min | Lat Pulldown 3x8*, Barbell Row 3x8-12, Seated Cable Row 3x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 18 sets | 62 min | Barbell Squat 3x8*, Romanian Deadlift 3x8-12, Leg Press 3x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Push B | 6 lifts | 18 sets | 57 min | Overhead Press 3x8*, Dumbbell Bench Press 3x8-12, Chest Press Machine 3x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 18 sets | 56 min | Barbell Row 3x8*, Lat Pulldown 3x8-12, Seated Cable Row 3x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 18 sets | 62 min | Deadlift 3x8*, Hack Squat 3x8-12, Seated Leg Curl 3x10-15, Seated Calf Raise 3x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 6 days, 75 min, beginner, strength
+today:
+  Pull — Lat Focus | 3 lifts | 7 sets | 27 min | Straight-Arm Pulldown 2x8-12*, Barbell Row 3x5*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 3 lifts | 8 sets | 34 min | Bench Press 3x5*, Overhead Press 3x5*, Lateral Raise 2x8-12
+  Legs — Squat Focus | 5 lifts | 12 sets | 56 min | Barbell Squat 3x5*, Deadlift 3x5*, Hack Squat 2x6-10, Cable Crunch 2x8-12, Standing Calf Raise 2x8-12
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x5*, Lat Pulldown 2x6-10, Dumbbell Curl 2x8-12
+  Push — Shoulder Focus | 3 lifts | 7 sets | 26 min | Overhead Press 3x5*, Dumbbell Shoulder Press 2x6-10, Lateral Raise 2x8-12
+  Legs — Deadlift Focus | 4 lifts | 10 sets | 49 min | Deadlift 3x5*, Barbell Squat 3x5*, Cable Crunch 2x8-12, Seated Calf Raise 2x8-12
+new:
+  Push A | 6 lifts | 18 sets | 61 min | Bench Press 3x5*, Dumbbell Shoulder Press 3x6-10, Incline Dumbbell Press 3x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 3x8-12
+  Pull A | 6 lifts | 18 sets | 62 min | Lat Pulldown 3x5*, Barbell Row 3x6-10, Seated Cable Row 3x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 3x8-12
+  Legs A | 6 lifts | 18 sets | 66 min | Barbell Squat 3x5*, Romanian Deadlift 3x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Push B | 6 lifts | 18 sets | 59 min | Overhead Press 3x5*, Dumbbell Bench Press 3x6-10, Chest Press Machine 3x6-10, Cable Lateral Raise 3x8-12, Overhead Tricep Extension 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull B | 6 lifts | 18 sets | 59 min | Barbell Row 3x5*, Lat Pulldown 3x6-10, Seated Cable Row 3x6-10, Reverse Flyes 3x8-12, Hammer Curl 3x8-12, Dumbbell Curl 3x8-12
+  Legs B | 6 lifts | 18 sets | 66 min | Deadlift 3x5*, Hack Squat 3x6-10, Seated Leg Curl 3x8-12, Seated Calf Raise 3x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
+
+== 6 days, 75 min, intermediate, hypertrophy
+today:
+  Pull — Lat Focus | 4 lifts | 12 sets | 49 min | Pull-Ups 3x4-8*, Barbell Row 3x4-8*, Lat Pulldown 3x6-10, Dumbbell Curl 3x8-13
+  Push — Chest Focus | 5 lifts | 14 sets | 56 min | Bench Press 3x4-8*, Overhead Press 3x4-8*, Dumbbell Bench Press 3x6-10, Rope Tricep Pushdown 2x8-13, Lateral Raise 3x10-18
+  Legs — Squat Focus | 5 lifts | 15 sets | 62 min | Barbell Squat 3x4-8*, Deadlift 3x4-8*, Hack Squat 3x6-10, Cable Crunch 3x10-18, Standing Calf Raise 3x10-18
+  Pull — Row Focus | 3 lifts | 8 sets | 31 min | Barbell Row 3x8-12*, Lat Pulldown 3x10-14, Seated Cable Row 2x10-14
+  Push — Shoulder Focus | 4 lifts | 12 sets | 41 min | Overhead Press 3x8-12*, Dumbbell Bench Press 3x10-14, Dumbbell Shoulder Press 3x10-14, Lateral Raise 3x14-20
+  Legs — Deadlift Focus | 6 lifts | 18 sets | 69 min | Deadlift 3x6-10*, Barbell Squat 3x8-12*, Seated Leg Curl 3x12-17, Hack Squat 3x10-14, Cable Crunch 3x14-20, Seated Calf Raise 3x14-20
+new:
+  Push A | 6 lifts | 21 sets | 72 min | Bench Press 4x6-10*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 4x8-12, Lateral Raise 3x12-20, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 21 sets | 71 min | Pull-Ups 4x6-10*, Barbell Row 4x8-12, Lat Pulldown 4x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 21 sets | 75 min | Barbell Squat 4x6-10*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x12-20, Cable Crunch 3x12-20
+  Push B | 6 lifts | 21 sets | 70 min | Overhead Press 4x6-10*, Dumbbell Bench Press 4x8-12, Chest Press Machine 4x8-12, Cable Lateral Raise 3x12-20, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 21 sets | 71 min | Barbell Row 4x6-10*, Lat Pulldown 4x8-12, Seated Cable Row 4x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x12-20, Cable Crunch 3x12-20, Leg Extension 3x10-15
+
+== 6 days, 75 min, intermediate, general
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 37 min | Pull-Ups 3x6-10*, Barbell Row 3x6-10*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 4 lifts | 11 sets | 46 min | Bench Press 3x6-10*, Overhead Press 3x6-10*, Dumbbell Bench Press 2x6-10, Lateral Raise 3x8-13
+  Legs — Squat Focus | 5 lifts | 15 sets | 62 min | Barbell Squat 3x6-10*, Deadlift 3x6-10*, Hack Squat 3x6-10, Cable Crunch 3x8-13, Standing Calf Raise 3x8-13
+  Pull — Row Focus | 3 lifts | 8 sets | 31 min | Barbell Row 3x10-14*, Lat Pulldown 3x10-14, Dumbbell Curl 2x12-17
+  Push — Shoulder Focus | 4 lifts | 11 sets | 39 min | Overhead Press 3x10-14*, Dumbbell Bench Press 2x10-14, Dumbbell Shoulder Press 3x10-14, Lateral Raise 3x12-17
+  Legs — Deadlift Focus | 6 lifts | 18 sets | 67 min | Deadlift 3x8-12*, Barbell Squat 3x10-14*, Seated Leg Curl 3x12-17, Hack Squat 3x10-14, Cable Crunch 3x12-17, Seated Calf Raise 3x12-17
+new:
+  Push A | 6 lifts | 21 sets | 69 min | Bench Press 4x8-12*, Dumbbell Shoulder Press 4x8-12, Incline Dumbbell Press 4x8-12, Lateral Raise 3x10-15, Rope Tricep Pushdown 3x10-15, Overhead Tricep Extension 3x10-15
+  Pull A | 6 lifts | 21 sets | 69 min | Pull-Ups 4x8-12*, Barbell Row 4x8-12, Lat Pulldown 4x8-12, Face Pulls 3x10-15, Dumbbell Curl 3x10-15, Hammer Curl 3x10-15
+  Legs A | 6 lifts | 21 sets | 72 min | Barbell Squat 4x8-12*, Romanian Deadlift 4x8-12, Leg Press 4x8-12, Seated Leg Curl 3x10-15, Standing Calf Raise 3x10-15, Cable Crunch 3x10-15
+  Push B | 6 lifts | 21 sets | 67 min | Overhead Press 4x8-12*, Dumbbell Bench Press 4x8-12, Chest Press Machine 4x8-12, Cable Lateral Raise 3x10-15, Overhead Tricep Extension 3x10-15, Rope Tricep Pushdown 3x10-15
+  Pull B | 6 lifts | 21 sets | 68 min | Barbell Row 4x8-12*, Lat Pulldown 4x8-12, Seated Cable Row 4x8-12, Reverse Flyes 3x10-15, Hammer Curl 3x10-15, Dumbbell Curl 3x10-15
+  Legs B | 6 lifts | 21 sets | 71 min | Deadlift 3x5-8*, Hack Squat 4x8-12, Seated Leg Curl 4x10-15, Seated Calf Raise 4x10-15, Cable Crunch 3x10-15, Leg Extension 3x10-15
+
+== 6 days, 75 min, intermediate, strength
+today:
+  Pull — Lat Focus | 3 lifts | 8 sets | 37 min | Pull-Ups 3x3*, Barbell Row 3x3*, Lat Pulldown 2x6-10
+  Push — Chest Focus | 6 lifts | 14 sets | 58 min | Bench Press 3x3*, Overhead Press 3x3*, Dumbbell Bench Press 2x6-10, Rope Tricep Pushdown 2x6-10, Overhead Tricep Extension 2x6-10, Lateral Raise 2x6-10
+  Legs — Squat Focus | 5 lifts | 16 sets | 68 min | Barbell Squat 4x3*, Deadlift 3x3*, Hack Squat 3x6-10, Cable Crunch 3x6-10, Standing Calf Raise 3x6-10
+  Pull — Row Focus | 3 lifts | 7 sets | 28 min | Barbell Row 3x7*, Lat Pulldown 2x8-12, Seated Cable Row 2x8-12
+  Push — Shoulder Focus | 4 lifts | 10 sets | 36 min | Overhead Press 3x7*, Dumbbell Bench Press 2x8-12, Dumbbell Shoulder Press 2x8-12, Lateral Raise 3x10-14
+  Legs — Deadlift Focus | 5 lifts | 17 sets | 67 min | Deadlift 4x5*, Barbell Squat 4x7*, Hack Squat 3x8-12, Cable Crunch 3x10-14, Seated Calf Raise 3x10-14
+new:
+  Push A | 6 lifts | 21 sets | 73 min | Bench Press 4x5*, Dumbbell Shoulder Press 4x6-10, Incline Dumbbell Press 4x6-10, Lateral Raise 3x8-12, Rope Tricep Pushdown 3x8-12, Overhead Tricep Extension 3x8-12
+  Pull A | 6 lifts | 21 sets | 72 min | Pull-Ups 4x5*, Barbell Row 4x6-10, Lat Pulldown 4x6-10, Face Pulls 3x8-12, Dumbbell Curl 3x8-12, Hammer Curl 3x8-12
+  Legs A | 6 lifts | 20 sets | 73 min | Barbell Squat 4x5*, Romanian Deadlift 4x6-10, Leg Press 3x6-10, Seated Leg Curl 3x8-12, Standing Calf Raise 3x8-12, Cable Crunch 3x8-12
+  Push B | 6 lifts | 21 sets | 71 min | Overhead Press 4x5*, Dumbbell Bench Press 4x6-10, Chest Press Machine 4x6-10, Cable Lateral Raise 3x8-12, Overhead Tricep Extension 3x8-12, Rope Tricep Pushdown 3x8-12
+  Pull B | 6 lifts | 21 sets | 71 min | Barbell Row 4x5*, Lat Pulldown 4x6-10, Seated Cable Row 4x6-10, Reverse Flyes 3x8-12, Hammer Curl 3x8-12, Dumbbell Curl 3x8-12
+  Legs B | 6 lifts | 21 sets | 72 min | Deadlift 3x5*, Hack Squat 4x6-10, Seated Leg Curl 4x8-12, Seated Calf Raise 4x8-12, Cable Crunch 3x8-12, Leg Extension 3x8-12
