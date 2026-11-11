@@ -721,9 +721,9 @@ D_HERO = (
 )
 
 D_EXTRA = r"""
-// The wheel as it is today: in "left" mode it empties as you log, in "logged" mode it fills.
-// The ring switch tries the other choice: it always fills with what is logged.
-const ringMode = this.props.ring ?? "as now";
+// Decided 11 November: the wheel fills with what is logged in both modes, and nothing logged is grey.
+// The ring switch shows today's behaviour beside it: in "left" mode it empties as you log.
+const ringMode = this.props.ring ?? "fills";
 const C = 464.96;
 const prog = (i) => Math.min(1, sum("kcal", i) / TARGET);
 const fillAt = (i) => (ringMode === "fills" || mode !== "left" ? prog(i) : 1 - prog(i));
@@ -751,7 +751,7 @@ out["f" + (i + 1)] = { x: X.toFixed(0) + "px", y: Y.toFixed(0) + "px", fx: (fiel
 }
 """
 
-D_PROPS = '"ring":{"editor":"enum","options":["as now","fills"],"default":"as now","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
+D_PROPS = '"ring":{"editor":"enum","options":["fills","as now"],"default":"fills","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
 
 D_BODY = part(HEADER) + part(D_HERO) + part(WEEK, 6) + part(MACROS, 8) + part(TRACK, 14) + part(FIELD, 8) + part(LOG, 14)
 

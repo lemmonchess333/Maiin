@@ -389,17 +389,16 @@ empty-day boards.
 
 **What it is.** Everything section 4 lists as shared: no title, the date as
 the header row, the neutral 48 px meal picker, the 48 px field with scan
-inside, the macros as one row, the week as bars. The hero is today's wheel,
-unchanged: one plain orange arc on a grey groove, the number in the text
-colour, the grey label, a deeper orange lap when over, a tap to switch left
-and logged, and Details under it. It sits on the page at 264 px. Today it is
-176 px in a card.
+inside, the macros as one row, the week as bars. The hero is today's wheel:
+one plain orange arc on a grey groove, the number in the text colour, the
+grey label, a deeper orange lap when over, a tap to switch left and logged,
+and Details under it. It sits on the page at 264 px. Today it is 176 px in a
+card.
 
 **What moves on a log.** The food rises from the field to the end of the arc
-and fades into it (560 ms). Then the wheel redraws and the number counts
-(600 ms, starting at 300 ms). About 0.9 s; today the wheel alone takes 1.5 s.
-The board has a switch that turns the food off. With reduced motion there is
-no flight, no count and no draw.
+and fades into it (560 ms). Then the arc grows and the number counts (600 ms,
+starting at 300 ms). About 0.9 s; today the wheel alone takes 1.5 s. With
+reduced motion there is no flight, no count and no draw.
 
 ![The pick, a log, frame by frame](d-wheel-log-sequence.webp)
 
@@ -411,48 +410,79 @@ no flight, no count and no draw.
 | Text sizes                            | 7          | 5          |
 | Words in the first screen (limit 60)  | 62         | 64         |
 | Words at 12 px or smaller             | 42 (68%)   | 21 (33%)   |
-| Colour, dark (limit 8%)               | 2.91%      | 1.45%      |
-| Colour, light (limit 15%)             | 2.78%      | 1.41%      |
+| Colour, dark (limit 8%)               | 2.91%      | 4.59%      |
+| Colour, light (limit 15%)             | 2.78%      | 4.50%      |
 | Colour held by filled buttons         | 60%        | 0%         |
-| Colour, nothing logged                | 4.70%      | 5.23%      |
-| Colour, heavy day                     | 3.69%      | 2.21%      |
+| Colour, nothing logged                | 4.70%      | 0.24%      |
+| Colour, heavy day                     | 3.69%      | 5.49%      |
 | Boxed things above the tab bar        | 12         | 3          |
 | Lowest text contrast, dark and light  | not read   | 4.86, 4.54 |
 | Controls under 44 x 44                | not read   | none       |
 
-Checked in 13 cases (the 11 of section 5 and the two ring settings below): no
-text under 4.5 to 1, no control under 44 px, nothing cut off, colour at most
-6.31% (nothing logged, 320 px). It shows 64 words, 4 over the limit, because
-two diary rows fit where today shows one.
+Checked in 13 cases (the 11 of section 5, and two with the wheel emptying as
+it does today): no text under 4.5 to 1, no control under 44 px, nothing cut
+off, colour at most 6.62% (a heavy day at 320 px). It shows 64 words, 4 over
+the limit, because two diary rows fit where today shows one.
 
-**What stays as it is, because the wheel does.** Two of the ten findings in
-section 1 are about the wheel itself, and this pick keeps them. Each has a
-switch on the board so both can be seen.
+### Two calls the owner handed over
 
-1. The wheel and the macro bars empty as you log. With 410 left the wheel is
-   19% full and today's bar in the week row is 81% full. With nothing logged
-   the wheel is fully orange (`d-wheel-empty-393-dark`). The switch "ring"
-   set to "fills" shows them filling with what is logged, grey at nothing
-   (`d-wheel-fills-typical-393-dark`, `d-wheel-fills-empty-393-dark`).
-2. Whether the food flies to the wheel at all. The switch "flight" turns it
-   off, leaving the wheel's own redraw.
+The pick left two questions open. Asked which way each should go, the owner
+replied "You figure it out best". Decided as below. Each is still a switch on
+the board, so the other way can be seen.
 
-**What it changes in earlier decisions.** Nothing about the wheel: the quiet
-ring stands, Food10 stands, and Home keeps the same wheel. It replaces the
-orange meal picker with the neutral one, turns the week strip's rings into
-bars, and takes the wheel out of its card.
+**The wheel fills with what is logged, in both modes.** The number still
+follows the left and logged switch ("410 kcal left"). The arc always shows how
+much of the target is logged, and nothing logged is a grey track.
 
-**The build plan, shorter.** From section 8, steps 1 (header), 2 (composer),
-3 (macros) and 5 (week strip) stand as written. Step 4 (one truth for the
-ring) only if the owner sets "ring" to "fills". Steps 6 to 9 (more drawings,
-the plate, Home) fall away. In their place:
+- Today the wheel empties in "left" mode. With 410 left it is 19% full while
+  the same day's mark in the week strip, 100 px above it, is 81% full
+  (finding 8).
+- Today a day with nothing logged is a fully orange wheel: 4.70% colour, the
+  page's loudest state on the day nothing was done, and every new account's
+  first day. Rule 33 draws a metric at zero as zero. Filled this way it is
+  0.24%.
+- Logging now adds colour where it took it away, and reaching the target is a
+  full wheel where it was an empty one.
+- The macro bars, the Details sheet's bars and Home's wheel run the same way.
+  So Food10's rule stands (the card and the sheet never run in opposite
+  directions) and the direction it described for "left" mode is reversed.
+- Rejected: keeping it as today, for the reasons above. Turning the week
+  strip round to match, because a past day can only be read as what was
+  logged.
+
+`d-wheel-as-now-typical-393-dark` and `d-wheel-as-now-empty-393-dark` show
+today's behaviour on the same page.
+
+**The food flies to the wheel on a log.** It ties the thing just logged to
+the wheel changing, which finding 10 said was missing.
+
+- Limits: one flight a log, however many items it holds. None when the wheel
+  is off the screen, on an edit, on a delete, or on a day that is not today.
+  Nothing under reduced motion. Transform and opacity only. It never blocks
+  typing.
+- It is the last pull request and its own, so it can be dropped without
+  touching the rest.
+- Rejected: leaving it out, because it is the one part of the owner's first
+  idea ("animate food going in") this pick still carries. A full-screen
+  moment, because 0 of 7 logging screens on Mobbin use one.
+
+**What it changes in earlier decisions.** The quiet ring's look stands, and
+Home keeps the same wheel. It reverses the wheel and bars emptying in "left"
+mode. It replaces the orange meal picker with the neutral one, turns the week
+strip's rings into bars, and takes the wheel out of its card.
+
+**The build plan.** From section 8, steps 1 (header), 2 (composer),
+3 (macros), 4 (one truth for the wheel, with the macro bars, the Details
+sheet and Home in the same change) and 5 (week strip) stand as written.
+Steps 6 to 9 (more drawings, the plate, Home's own question) fall away. In
+their place:
 
 - **The wheel on the page.** Take `CalorieRing` out of `FoodHeroCard`'s card,
   draw it at 264 px with Details under it, and move the targets gear to the
   header row. One pull request.
-- **The flight.** The food rising to the arc and fading, with the
-  reduced-motion path. Transform and opacity through `Element.animate`. One
-  pull request, and only if the owner keeps "flight" on.
+- **The flight.** The food rising to the arc and fading, with its limits and
+  the reduced-motion path. Transform and opacity through `Element.animate`.
+  One pull request, last.
 - **Checks**, as step 10.
 
 Captures: `d-wheel-*`.
