@@ -101,7 +101,7 @@ interface FoodComposerCardProps {
  *
  * The pencil alone turned out to be too quiet a way in: in the renders it
  * read as decoration. Mob2 (call 4) names it again, as a "Quick add" row
- * at the foot of the focused box's Quick add list, where the form takes
+ * at the foot of the focused box's Log again list, where the form takes
  * calories with no name. The pencil stays as the shortcut beside the
  * text.
  *

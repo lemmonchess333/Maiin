@@ -95,9 +95,6 @@ vi.mock("@/components/food/FoodHeroCard", () => ({ default: () => null }));
 vi.mock("@/components/food/HeroDrillDownSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/components/food/FoodConsistencyCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/food/FoodTimeline", () => ({ default: () => null }));
 vi.mock("@/components/ManualFoodLogger", () => ({
   ManualFoodLogger: () => null,

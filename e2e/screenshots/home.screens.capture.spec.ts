@@ -382,12 +382,12 @@ test.describe("app screenshots", () => {
     await shoot(page, "sheet-dayaction-light");
   });
 
-  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus).
+  // GsPb1-slate surfaces (Circles / Training Blocks).
   // ONE TEST PER SURFACE — do not merge these into a multi-goto test.
   // Diagnosed 2026-07-11: rapid same-context hard navigations leave the
   // previous page's Firestore webchannel connections draining, and the
   // NEXT page's one-shot reads (getDoc/getDocs — exactly what gates
-  // TrainingBlockCard and FoodConsistencyCard) can starve for 15s+
+  // TrainingBlockCard) can starve for 15s+
   // while that page's own listeners stream fine. A fresh context per
   // test (Playwright default) sidesteps it entirely; the explicit
   // row-waits below also absorb slow-CI read latency. Product surfaces
@@ -450,34 +450,5 @@ test.describe("app screenshots", () => {
       .catch(() => {});
     await page.waitForTimeout(900);
     await shootLightDarkOn(page, "sheet-trainingblock");
-  });
-
-  test("food weekly logging focus picker", async ({ page }) => {
-    test.setTimeout(90_000);
-    // The card renders nothing until its commitment+meals reads settle.
-    await page.goto("food");
-    await page
-      .getByRole("navigation", { name: /main navigation/i })
-      .waitFor({ state: "visible", timeout: 20000 });
-    const foodRowStart = Date.now();
-    await page
-      .getByRole("button", { name: /set a weekly logging focus/i })
-      .waitFor({ state: "visible", timeout: 15000 })
-      .then(() =>
-        console.log(
-          `[capture] logging-focus row visible after ${Date.now() - foodRowStart}ms`
-        )
-      )
-      .catch(() =>
-        console.log(
-          "[capture] logging-focus row NEVER appeared within 15s — capturing the card-less state"
-        )
-      );
-    await page
-      .getByRole("button", { name: /set a weekly logging focus/i })
-      .click({ timeout: 2000 })
-      .catch(() => {});
-    await page.waitForTimeout(700);
-    await shootLightDarkOn(page, "food-focus-picker");
   });
 });

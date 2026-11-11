@@ -117,7 +117,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
 | `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
-| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Quick add offers (F2d)             |
+| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Food offers again (F2d)            |
 | `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |

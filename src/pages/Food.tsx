@@ -29,7 +29,6 @@ import {
   deleteAfterUndoWindow,
   MEAL_UNDO_WINDOW_MS,
 } from "@/lib/mealDeleteCommit";
-import { joinHumanList } from "@/lib/listFormat";
 
 const ManualFoodLogger = lazyRetry(() =>
   import("@/components/ManualFoodLogger").then((m) => ({
@@ -47,14 +46,13 @@ import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
-import { Pencil, RotateCcw, X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 /* The sheets a tap opens load with the tap, not with the page: Food's
    chunk is the page's first paint. They are fetched once the page has
    drawn (below), so the first tap does not wait on the network. */
 const loadCopyEntrySheet = () => import("@/components/food/CopyEntrySheet");
-const loadCopyMealsSheet = () => import("@/components/food/CopyMealsSheet");
 const loadQuickMealPortionSheet = () =>
   import("@/components/food/QuickMealPortionSheet");
 const loadHeroDrillDownSheet = () =>
@@ -64,7 +62,6 @@ const loadServingSizeDrawer = () =>
     default: m.ServingSizeDrawer,
   }));
 const CopyEntrySheet = lazyRetry(loadCopyEntrySheet);
-const CopyMealsSheet = lazyRetry(loadCopyMealsSheet);
 const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
 const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
 const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
@@ -125,14 +122,12 @@ import FoodComposerCard from "@/components/food/FoodComposerCard";
 import ScanGrow from "@/components/food/ScanGrow";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import FoodProHint from "@/components/food/FoodProHint";
-import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type {
   PantrySuggestion,
   QuickAddSection,
 } from "@/components/food/FoodSuggestionsDropdown";
 import {
-  MEAL_ORDER,
   MEAL_LABELS,
   inferMostLikelyMealSlot,
   typicalHourForMeal,
@@ -314,7 +309,6 @@ export default function Food() {
         loadHeroDrillDownSheet,
         loadServingSizeDrawer,
         loadQuickMealPortionSheet,
-        loadCopyMealsSheet,
         loadCopyEntrySheet,
       ])
         void load().catch(() => {});
@@ -357,9 +351,6 @@ export default function Food() {
     () => new Set()
   );
 
-  // Copy-from-yesterday: the trigger stays disabled while the selected
-  // entries are accepted by the durable local queue.
-  const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const {
     addFavourite,
@@ -610,17 +601,6 @@ export default function Food() {
     if (nlInput) setNlInput("");
   }
 
-  /* joinHumanList moved to `@/lib/listFormat` so the Tropos
-     enumeration style (`a & b` / `a, b & c`) can be reused on
-     other toast / caption surfaces without copy-pasting the
-     three-branch ladder. */
-
-  /* Slot derivation (explicit meal field first, else local log hour)
-     lives in `@/lib/mealSlots` since the timeline migration — the
-     timeline derives each row's slot chip from the same function, so
-     the diary display and the copy-from-yesterday segmentation below
-     can't drift. */
-
   // Visible meals = all of today's meals minus any that are pending delete.
   // Used for meal sections, hero card totals, and the food row list so the
   // user sees an instant disappearance while the 3s undo window is active.
@@ -690,83 +670,6 @@ export default function Food() {
       dailyTargets.finalTarget,
     ]
   );
-
-  const mealSegmentedMeals = useMemo(() => {
-    const segments: Record<string, typeof visibleTodaysMeals> = {
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-    };
-    for (const meal of visibleTodaysMeals) {
-      const cat = mealSlotFor(meal);
-      segments[cat].push(meal);
-    }
-    return segments;
-  }, [visibleTodaysMeals]);
-
-  // Yesterday's meals for "Copy from yesterday" feature
-  const yesterdayDate = useMemo(
-    () =>
-      format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"),
-    [selectedDate]
-  );
-  const yesterdayMeals = getMealsForDate(yesterdayDate);
-  const yesterdaySegmented = useMemo(() => {
-    const segments: Record<string, typeof yesterdayMeals> = {
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-    };
-    for (const meal of yesterdayMeals) {
-      const cat = mealSlotFor(meal);
-      segments[cat].push(meal);
-    }
-    return segments;
-  }, [yesterdayMeals]);
-
-  /**
-   * Slots that yesterday has and today doesn't. Drives both the bottom
-   * "Copy yesterday's …" button visibility + label and the copy handler
-   * so the two can't drift on what's about to happen vs what happens.
-   */
-  const slotsToCopyFromYesterday = useMemo(() => {
-    return MEAL_ORDER.filter((mealKey) => {
-      const yHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
-      const tHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
-      return yHas && !tHas;
-    });
-  }, [yesterdaySegmented, mealSegmentedMeals]);
-
-  const handleCopySelectedFromYesterday = async (
-    selections: readonly MealCopySelection[]
-  ) => {
-    if (copyingMealKey || !uid)
-      return { created: [], error: new Error("Sign in again to log food.") };
-    setCopyingMealKey("__all__");
-    try {
-      const result = await copySelectedMeals(uid, selectedDate, selections);
-      if (result.created.length > 0) {
-        const slots = MEAL_ORDER.filter((slot) =>
-          result.created.some((entry) => entry.slot === slot)
-        );
-        const count = result.created.length;
-        haptic(15);
-        notifyMealsLogged(
-          uid,
-          result.created.map((entry) => entry.id),
-          `Copied ${count} item${count === 1 ? "" : "s"} into ${joinHumanList(slots.map((slot) => MEAL_LABELS[slot]))}`,
-          { path: "copy" }
-        );
-      }
-      if (result.error !== null)
-        logger.error("[copy-selected] Failed:", result.error);
-      return result;
-    } finally {
-      setCopyingMealKey(null);
-    }
-  };
 
   useEffect(() => {
     const mealCount = todaysMeals.length;
@@ -1840,7 +1743,7 @@ export default function Food() {
   }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
-  /* The day the Quick add list's More row was opened on. Another day
+  /* The day the Log again list's More row was opened on. Another day
      opens on five again. */
   const [moreRecentsDate, setMoreRecentsDate] = useState<string | null>(null);
   const moreRecentsOpen = moreRecentsDate === selectedDate;
@@ -1916,7 +1819,6 @@ export default function Food() {
   );
   const usualHeadingId = useId();
   const usualPortion = usual && usualMealPortion(usual);
-  const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
   const handleQuickMealAdd = async (
     meal: QuickAddItem,
@@ -2140,7 +2042,7 @@ export default function Food() {
       banner={<FoodOfflineBanner />}
       /* Bottom padding hooks into the canonical --page-bottom-pad token
          (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
-         meal section / Copy yesterday button clears the home indicator on
+         meal section clears the home indicator on
          notched iPhones. A hardcoded pb ignores the inset. */
       style={{ paddingBottom: "var(--page-bottom-pad)" }}
     >
@@ -2439,18 +2341,6 @@ export default function Food() {
           </div>
         </Card>
       )}
-      {copyPreviewOpen && (
-        <Suspense fallback={null}>
-          <CopyMealsSheet
-            key={`${uid}:${selectedDate}`}
-            sources={slotsToCopyFromYesterday.flatMap(
-              (slot) => yesterdaySegmented[slot] ?? []
-            )}
-            onClose={() => setCopyPreviewOpen(false)}
-            onSave={handleCopySelectedFromYesterday}
-          />
-        </Suspense>
-      )}
       {copyingEntries && (
         <Suspense fallback={null}>
           <CopyEntrySheet
@@ -2581,44 +2471,6 @@ export default function Food() {
             <FoodWaterRow date={selectedDate} />
           </Suspense>
         </SectionErrorBoundary>
-
-        {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
-            commitment + derived progress; the only social affordance
-            is the opt-in constant status line once MET. It follows the
-            diary: a prompt to set one, or a progress row, is about the
-            week, and it sat between the composer and the day's
-            meals — three cards of not-food on an empty day before the
-            empty state (owner call, Food options page, 6). */}
-        {uid && <FoodConsistencyCard uid={uid} />}
-
-        {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
-            has slots today is missing. Label is intentionally short:
-            a single missing slot names it (`Copy yesterday's lunch`),
-            two or more collapses to the generic `Copy yesterday's meals`
-            — listing every slot was verbose and the user can read the
-            toast after tapping to see what was copied where. */}
-        {slotsToCopyFromYesterday.length > 0 &&
-          (() => {
-            const inFlight = copyingMealKey === "__all__";
-            const label =
-              slotsToCopyFromYesterday.length === 1
-                ? `Copy yesterday’s ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-                : "Copy yesterday’s meals";
-            return (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setCopyPreviewOpen(true)}
-                  disabled={inFlight}
-                  aria-label={label}
-                  leftIcon={<RotateCcw className="size-3.5" />}
-                  className="text-muted-foreground"
-                >
-                  {label}
-                </Button>
-              </div>
-            );
-          })()}
       </motion.div>
 
       <Suspense fallback={null}>

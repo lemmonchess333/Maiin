@@ -8,7 +8,7 @@ import {
 
 /**
  * One muted line under a portion's figures: what the day comes to with
- * it. The search result's, the barcode and photo result's, the Quick add
+ * it. The search result's, the barcode and photo result's, the Log again
  * portion's and the edit sheet's share it, and it reads the hero's
  * left/logged view from the same store the hero writes. Nothing renders
  * without a day to count against.

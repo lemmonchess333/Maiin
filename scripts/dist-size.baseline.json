@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6906582,
+  "total": 6900996,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -112,7 +112,6 @@
     "connectedTrainingPrefs": 2144,
     "copy": 236,
     "CopyEntrySheet": 3305,
-    "CopyMealsSheet": 5586,
     "CorrectWorkoutSheet": 9124,
     "createLucideIcon": 1424,
     "crown": 362,

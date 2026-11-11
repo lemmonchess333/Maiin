@@ -1,6 +1,6 @@
 /**
- * Meal-slot derivation — pure, shared by the Food diary timeline and the
- * copy-from-yesterday segmentation.
+ * Meal-slot derivation — pure, shared by the Food diary timeline, the
+ * usual row and the Quick add ranking.
  *
  * Extracted verbatim from Food.tsx's inline `getMealCategory` when the
  * diary moved from four fixed slot sections to the chronological
