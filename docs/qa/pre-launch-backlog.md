@@ -4260,3 +4260,28 @@ of thing a phone's screen and WebKit decide.
 - [ ] **Focus is not lost.** With a keyboard attached (or on the web
       build), Tab to a "Swap" style pill in dark mode. Passing: the purple
       focus ring shows, with the pill's edge still under it.
+
+## Motion 14 under every animation (2026-11-11)
+
+Affects: every screen. `framer-motion` went from 12.40 to 14.6, two major
+versions (#2965). Its upgrade guide lists nothing breaking for this app:
+13.0 drops an optional dependency the app never installed, and 14.0 has
+no breaking change. The unit suite passes on it. What no test here sees
+is how a spring, a sheet or a layout change feels on a phone, so these
+are checked on the first TestFlight build that carries it.
+
+- [ ] **Sheets and drawers.** Open and drag shut a bottom sheet (the
+      day's sheet from Home's week, the weight sheet, the share sheet).
+      Passing: each follows the finger, settles without a jump, and
+      closes on a flick as it did.
+- [ ] **A workout's moving parts.** Start a lift, tick a set, let the
+      rest timer run out, reorder two exercises by dragging, finish.
+      Passing: the set's tick, the docked rest card, the reorder and the
+      finish screen's entrance all play once and end where they should.
+- [ ] **Home and the tab bar.** Switch tabs quickly, pull Home to
+      refresh, tap a day on the week strip. Passing: no card flashes in
+      from the wrong place, the day's card opens in place, and the tab
+      bar's selection moves without a flicker.
+- [ ] **Reduce Motion.** With Reduce Motion on in iOS Settings, repeat
+      the first check. Passing: sheets and screens still appear and
+      close, with a fade in place of the slide.
