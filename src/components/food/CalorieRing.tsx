@@ -4,6 +4,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
+import { loggedFill } from "@/lib/calorieRingFill";
 import { THEME } from "@/lib/theme";
 
 export type CalorieRingMode = "left" | "eaten";
@@ -80,7 +81,6 @@ export default function CalorieRing({
   const remaining = hasTarget ? target - consumed : 0;
 
   const isLeftMode = mode === "left";
-  const progress = hasTarget ? Math.min(consumed / target, 1) : 0;
 
   /* Centre value + label derivation lives in a pure helper so the
      label/value pairing is unit-testable without mounting the
@@ -93,10 +93,11 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  // Ring fill direction:
-  // LEFT mode = drains from full as consumed grows (1 - progress)
-  // LOGGED mode = fills from empty as consumed grows (progress)
-  const fillRatio = isLeftMode ? 1 - progress : progress;
+  /* The arc is what is logged, in both modes (Food11 call 5): it grows
+     as food is logged, and nothing logged is the bare grey track. Only
+     the number and its label follow the left and logged switch
+     (`loggedFill` has the reasons). */
+  const fillRatio = loggedFill(consumed, target);
   const strokeDashoffset = CIRCUMFERENCE * (1 - fillRatio);
 
   // Overshoot lap, in both modes, capped at one extra lap.

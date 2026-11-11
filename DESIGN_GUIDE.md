@@ -487,9 +487,17 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   stands for a session, a person or an award carries its own picture
   (36-80 pt); rows are 56-64 pt unless they hold a thumbnail or a big
   number.
-- **Food:** the owner kept the original screen (title, week strip, macro cards with
-  their icons and colours, draining ring, filled meal pill) and took three
-  fixes (7 Nov 2026): a faint one-hue orange glow in place of the
+- **Food:** on 11 Nov 2026 the owner picked a new Food page (Food11 in the
+  plan file, which names its evidence), built a step at a time. Built so far: no large "Food" title, with the
+  date switcher as the header row and the targets gear at its end; the
+  three macros as one row with no boxes; and the calorie wheel, the macro
+  bars and the Details sheet's bars drawn as what is logged in both the
+  left and the logged view, on Home's food card too (`loggedFill`), so a
+  day with nothing logged is a grey track. Read Food11 before changing
+  any of it. What follows is the screen as it stood before, and stays
+  true of the parts not yet rebuilt. The owner kept the original screen
+  (title, week strip, macro cards with their icons and colours, draining
+  ring, filled meal pill) and took three fixes (7 Nov 2026): a faint one-hue orange glow in place of the
   orange-into-purple wash behind the ring; a bigger ring (176 pt) and
   figure, the screen's largest text at about 1.4x the "Food" title; and a
   picture on every diary row, the meal's own photo from the device or one

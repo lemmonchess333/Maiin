@@ -28,6 +28,7 @@ function renderRing({
   consumed = 1000,
   target = 2000,
   mode = "left" as CalorieRingMode,
+  drawIn = true,
 } = {}) {
   return render(
     <CalorieRing
@@ -36,9 +37,69 @@ function renderRing({
       mode={mode}
       onToggleMode={() => {}}
       trajectoryLabel={null}
+      drawIn={drawIn}
     />
   );
 }
+
+/**
+ * Which way the arc runs (Food11 call 5): it is what is logged, in both
+ * modes, and only the number follows the left and logged switch. In
+ * "left" the arc used to start full and empty as food was logged, so a
+ * day with nothing logged was a fully orange wheel, and 410 kcal left of
+ * 2,200 was a wheel 19% full under a week mark 81% full.
+ */
+describe("CalorieRing — the arc is what is logged, in both modes", () => {
+  /** The share of the circle the orange arc covers, 0 to 1. */
+  function arcShare(container: HTMLElement) {
+    const arc = container.querySelector(
+      `circle[stroke="${THEME.semantic.nutrition}"]`
+    )!;
+    const around = Number(arc.getAttribute("stroke-dasharray"));
+    const hidden = Number(arc.getAttribute("stroke-dashoffset"));
+    return 1 - hidden / around;
+  }
+
+  it.each(["left", "eaten"] as const)(
+    "%s: nothing logged is the bare grey track",
+    (mode) => {
+      const { container } = renderRing({ consumed: 0, mode, drawIn: false });
+      expect(arcShare(container)).toBe(0);
+    }
+  );
+
+  it.each(["left", "eaten"] as const)(
+    "%s: 1,790 of 2,200 is a wheel 81% full",
+    (mode) => {
+      const { container } = renderRing({
+        consumed: 1790,
+        target: 2200,
+        mode,
+        drawIn: false,
+      });
+      expect(arcShare(container)).toBeCloseTo(0.8136, 3);
+    }
+  );
+
+  it.each(["left", "eaten"] as const)(
+    "%s: the target reached is a full wheel",
+    (mode) => {
+      const { container } = renderRing({
+        consumed: 2000,
+        mode,
+        drawIn: false,
+      });
+      expect(arcShare(container)).toBe(1);
+    }
+  );
+
+  it("LEFT mode still counts the number down while the arc fills", () => {
+    renderRing({ consumed: 1790, target: 2200, drawIn: false });
+    expect(
+      screen.getByText("kcal left").previousElementSibling
+    ).toHaveTextContent(/^410$/);
+  });
+});
 
 describe("CalorieRing — the label is plain text", () => {
   it("reads 'kcal left' as grey text, with no tag behind it", () => {

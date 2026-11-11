@@ -204,31 +204,26 @@ describe("HeroDrillDownSheet — training-aware fuel", () => {
 });
 
 /**
- * The macro bars must move the same direction as the tile that opened this
- * sheet.
+ * The macro bars must be drawn the way the macro that opened this sheet
+ * is: with what is logged, whichever way the numbers count (Food11 call
+ * 5; `loggedFill` in `calorieRingFill.ts` has the rule and its reasons).
  *
- * `MacroColumn` documents the property — the bar is "mode-locked to the big
- * number's direction so both signals move in lockstep" — and this sheet was
- * the one surface that never received the mode. It drew consumed%
- * unconditionally, so the SAME protein data rendered as a 9.2%-full bar on
- * the tile and an 88.7%-full bar here, one tap apart, measured off the Food
- * capture frames.
+ * This sheet was once the surface that broke it. The tile's bar emptied
+ * in "left" and the sheet drew what was logged, so the SAME protein was a
+ * 9.2%-full bar on the tile and an 88.7%-full bar here, one tap apart,
+ * measured off the Food capture frames. Food10 fixed that by making the
+ * sheet empty too; Food11 turned the wheel, the bars and this sheet round
+ * together, so they still agree and none of them depends on the mode.
  *
- * Rendered rather than unit-tested on the helper, because the helper's own
- * suite already passes when this component ignores it: reverting the sheet
- * to raw `pct` leaves `calorieRingFill.test.ts` green and typechecks
- * cleanly. The wiring is the thing that broke, so the wiring is what this
- * asserts.
+ * Rendered, because the wiring is what broke: a helper's own suite stays
+ * green when a component stops calling it.
  */
-describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
+describe("HeroDrillDownSheet — bars are what is logged, in both modes", () => {
   /** Inline widths of the three MACRO bars.
    *
    *  Scoped to the "Macros" section deliberately. The micronutrient rows
-   *  below it use the same `h-1.5` bar, and they must NOT follow this
-   *  mode: fiber is a goal and sugar/sodium are limits, so "remaining"
-   *  does not mean the same thing there. An unscoped query caught a
-   *  fourth bar sitting at 32% in both modes — correct behaviour that a
-   *  sloppier assertion would have called a bug.
+   *  below it use the same `h-1.5` bar and are their own rule: fiber is
+   *  a goal and sugar and sodium are limits.
    *
    *  Read from `document`, not render's `container`: `BottomSheet` portals
    *  its content to the body, which is why every other test here uses
@@ -249,9 +244,9 @@ describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
   }
 
   /* Rendered directly rather than through `Harness`, which hardcodes
-     all-zero totals — at 0% consumed the two directions are 100 and 0,
-     which sums correctly even if one of them is a constant. Partial
-     consumption is what makes the assertion mean something. */
+     all-zero totals: at nothing logged a bar that follows the rule and
+     one stuck at zero look the same. Partial amounts are what make the
+     assertion mean something. */
   function renderAt(mode: "left" | "eaten") {
     window.localStorage.setItem("tropos.food.calorieRingMode", mode);
     return render(
@@ -278,26 +273,39 @@ describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
     );
   }
 
-  it("drains in LEFT mode and fills in EATEN mode — opposite, not offset", () => {
+  it("draws the logged share in LEFT mode, the same bars as in LOGGED mode", () => {
     const { unmount } = renderAt("left");
     const left = barWidths();
-    expect(left.length, "no macro bars rendered").toBeGreaterThanOrEqual(3);
+    // 56 of 140g, 110 of 273g, 30 of 61g.
+    expect(left).toEqual(["40%", "40%", "49%"]);
     unmount();
 
     renderAt("eaten");
-    const eaten = barWidths();
+    expect(barWidths()).toEqual(left);
+  });
 
-    expect(eaten).toHaveLength(left.length);
-    left.forEach((w, i) => {
-      const l = Number.parseFloat(w);
-      const e = Number.parseFloat(eaten[i]);
-      expect(
-        l + e,
-        `macro bar ${i}: LEFT ${w} + EATEN ${eaten[i]} should be one full ` +
-          `bar. If they are EQUAL the sheet is ignoring the mode, which is ` +
-          `the defect that put a 9% bar on the tile and an 89% bar here.`
-      ).toBeCloseTo(100, 4);
-    });
+  it("prints the logged share beside the grams logged in LEFT mode", () => {
+    renderAt("left");
+    // The headline counts what is left; the line under the bar says what
+    // is logged, and the percentage is the bar's.
+    expect(screen.getByText("56g logged · 40%")).toBeInTheDocument();
+    expect(screen.getByText("30g logged · 49%")).toBeInTheDocument();
+  });
+
+  it("draws the calorie bar the same way", () => {
+    renderAt("left");
+    const heading = Array.from(document.querySelectorAll("p")).find(
+      (el) => el.textContent?.trim() === "Calories"
+    );
+    const section = heading!.closest("section")!;
+    const fill = section.querySelector<HTMLElement>(".h-2 > div")!;
+    const pct = Number.parseFloat(fill.style.width);
+    expect(pct).toBeGreaterThan(0);
+    expect(pct).toBeLessThan(100);
+    expect(section).toHaveTextContent(`${pct}%`);
+    expect(section).toHaveTextContent(
+      new RegExp(`${groupRe(1000)} kcal logged`)
+    );
   });
 });
 
