@@ -487,6 +487,145 @@ their place:
 
 Captures: `d-wheel-*`.
 
+## 11. Research before building (11 November 2026)
+
+Before any building, the owner asked for one more look: every calorie wheel
+and every food input on Mobbin, and a search online for rules. Three passes
+ran, and their full notes sit beside this file:
+
+- `research-wheels.md`: 12 food apps with a calorie day view and 12 apps
+  with a ring outside food. 114 screenshots read; each arc measured against
+  the numbers printed on its own screen.
+- `research-input-flows.md`: the logging flow in 10 apps.
+- `research-web.md`: Apple's and WCAG's rules, perception and behaviour
+  research, food-logging studies and harm-avoidance studies, each with its
+  source and how strong it is.
+
+Checked by hand afterwards: the screenshots for Cal AI, MacroFactor, Yazio,
+Life Reset, BitePal, MyFitnessPal and Lifesum, and two quotes at their source
+(the animation-duration article and the WCAG note on charts). Mobbin sent the
+same usage notice as in section 3 with every search. Lose It! and Cronometer
+are still not on Mobbin, and neither are ten others that were searched by
+name.
+
+### What it backs as it is
+
+| Our choice                             | What was found                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The wheel fills with what is logged    | 9 of 12 food apps and 8 of 12 ring apps. None only empties; MacroFactor can, on a [switch](https://mobbin.com/screens/05bca7bd-ff17-45dc-bca0-3b4c6d51a745). Cal AI and BitePal fill even while the number says "left" ([Cal AI](https://mobbin.com/screens/d2cc8836-9246-4ecd-90eb-00a6b6e7fc40), [BitePal](https://mobbin.com/screens/51e4e1aa-21b7-48c2-bef1-ac3e3c642845)) |
+| Grey when nothing is logged            | A neutral track 6 of 12 ([Cal AI](https://mobbin.com/screens/5ce7bd86-59f1-40a3-bd9f-ef85e36f3e54), [Life Reset](https://mobbin.com/screens/a3f8a33f-4033-4f63-8649-6193f6eaa45c)). A full ring at zero: 0                                                                                                                                                                     |
+| No red when over                       | Cordeiro and others, CHI 2015: 13% of 257 surveyed and 45% of 27 in a field study skipped logging food that put them over budget; none did in a journal that showed no judgment. Eikey 2021: red over-budget numbers distressed women with eating disorders                                                                                                                    |
+| Macros as bars, a colour each          | Bars 8 of 12; a hue each 10 of 12. Skau and Kosara 2016: a ring reads as well as a pie and worse than a bar                                                                                                                                                                                                                                                                    |
+| The wheel on the page, not in a card   | 3 of the 6 food rings and arcs ([MacroFactor](https://mobbin.com/screens/f52ef179-c91a-4c7d-952b-9741275c966b), [Lifesum](https://mobbin.com/screens/1e3923de-00c8-4278-b8f0-4d22ecf1a24b), [Life Reset](https://mobbin.com/screens/b477d36e-2a2a-462d-b2c9-83def5f9789f)); 8 of 12 rings outside food                                                                         |
+| A ring with the number in it           | Blascheck and others 2023: goal progress read at a glance in 0.32 s from a bar, 0.40 s from a ring and 0.50 s from the number alone; the ring was rated best-looking (a small lab study on watch faces)                                                                                                                                                                        |
+| A scan is checked before it is saved   | 5 of 7 apps with AI photo logging. Ours already says "AI estimate". A review of 52 studies puts photo calorie error at 0.1% to 38.3%                                                                                                                                                                                                                                           |
+| The same scan button for every account | A lock on an input method's button: 0 of 10                                                                                                                                                                                                                                                                                                                                    |
+| Usual foods offered before typing      | 7 of 10 show a list of foods before anything is typed ([MyFitnessPal](https://mobbin.com/screens/78c2c303-3a11-4cba-b8fb-c8be1fd68f3f)). Ours shows the saved foods when the field is focused and empty                                                                                                                                                                        |
+| A toast with Undo after a log          | A toast 5 of 10; Cal AI's carries Undo. Ours does already                                                                                                                                                                                                                                                                                                                      |
+
+### Seven changes it supports
+
+All seven are on the canvas as its third row. Three have a switch on the
+first board of that row (goal, meal, pace).
+
+1. **The target stays on the wheel: "kcal left of 2,200".** 5 of the 6 food
+   apps with a ring or arc print the goal beside the number
+   ([Cal AI](https://mobbin.com/screens/cb3f4e20-2375-4264-ad81-f750ceca8829),
+   [MacroFactor](https://mobbin.com/screens/f52ef179-c91a-4c7d-952b-9741275c966b),
+   [Lifesum](https://mobbin.com/screens/1e3923de-00c8-4278-b8f0-4d22ecf1a24b),
+   [Life Reset](https://mobbin.com/screens/b477d36e-2a2a-462d-b2c9-83def5f9789f),
+   [BitePal](https://mobbin.com/screens/4dc5d036-c33d-438e-967a-5dbec587e0cd)). Apple's rule for a
+   gauge: "Write succinct labels that describe the current value and both
+   endpoints of the range." Two more words.
+2. **A small mark shows the wheel can be tapped.** The two apps that switch
+   the number on a tap both put a chevron on the label
+   ([Cal AI](https://mobbin.com/screens/d2cc8836-9246-4ecd-90eb-00a6b6e7fc40),
+   [BitePal](https://mobbin.com/screens/51e4e1aa-21b7-48c2-bef1-ac3e3c642845)); MacroFactor uses a
+   visible switch. A bare ring that changes on a tap: 0.
+3. **One meal chip in the field, in place of the four segments.** The meal
+   is still picked by the time of day (`inferMostLikelyMealSlot`), and a tap
+   on the chip opens the four meals. A row of meal segments or chips: 0 of
+   10 logging flows, and 0 of the 5 day screens in section 3. Where a meal
+   can be changed it is through a menu, 4 of 10
+   ([MyFitnessPal](https://mobbin.com/screens/f8f0bf20-4b31-4e4e-8d24-04a97d0e901c)); the nearest
+   to ours are [MacroFactor's hour chip](https://mobbin.com/screens/91d37b5b-39a5-4add-a11a-e31dc1fb8a3f)
+   and [BitePal's meal chip](https://mobbin.com/screens/b4972476-48ad-491e-b136-83bd6eeb57b7). It
+   frees 62 px for the diary and removes the control the owner first
+   complained about. The cost: changing the meal takes two taps where it
+   took one. **This changes call 3 of Food11.**
+4. **A quicker log: about 0.6 s, not 0.9 s.** The flight in 400 ms, then the
+   arc and the count in 350 ms starting at 250 ms. Nielsen Norman Group:
+   "the duration of most animations should be in the range of 100–500 ms",
+   with 400 ms "a very slow animation, to be used only for big movements
+   across large screens", and "the more frequent the animation, the more
+   subtle and shorter". Apple gives no number: brief, and never make people
+   wait. **This changes the times in call 6.**
+5. **The lap past the target gets an outlined head**, so it reads against
+   the first lap. The only second lap in the same hue found is
+   [Google Health's](https://mobbin.com/screens/59bc2882-bb6b-4964-aaa7-00defb0b42a4), and it
+   outlines the head. Apple's chart rule: "Aid comprehension by adding
+   visual separation between contiguous areas of color."
+6. **In light, the week bars use the deeper orange.** They measured 2.35 to
+   1 against the page; the deeper orange is 4.99 to 1. WCAG 1.4.11 asks 3 to
+   1 of a drawing, unless a number beside it says the same thing. The wheel
+   and the macro bars have that number; the week bars do not.
+7. **The usual foods are ranked for the chosen meal** (not visible in a
+   picture). Pai and Sabharwal 2022, 1,581 food diaries: 93% of people
+   repeated breakfast foods and 58% dinner foods.
+   [Lifesum](https://mobbin.com/screens/0d1bb0df-9447-4e70-ab80-d69ebdde6365) heads its suggestions
+   "Often tracked for breakfast". Ours rank by how often a food is logged,
+   whatever the meal (`src/lib/quickAddOrder.ts`).
+
+### Seen, and not proposed
+
+- **Eaten and left both on screen with no tap:** 7 of 12. It costs four more
+  words on a page already over its limit; the target line and the tap cover
+  it.
+- **Exercise beside the wheel:** 7 of 12. The owner took the day-type line
+  off the wheel on purpose (a comment in `FoodHeroCard.tsx`); it is in
+  Details.
+- **Macros against their target ("125 / 140g"):** 5 of 8 apps with macro
+  bars. More words; it is in Details.
+- **Voice logging:** 4 of 10. The keyboard's microphone does this.
+- **A space before the unit ("15 g"):** the SI rule. The house style keeps
+  grams unspaced on Food, a named exception.
+- **A smaller wheel.** No food wheel is wider than half the screen; ours is
+  two thirds, like Apple Fitness (68%). Our own rule wants the hero at 30%
+  of the screen, and a wheel at half the width drops to about 26%.
+- **A margin before "over".** BitePal still says "Goal reached" at 72 over.
+  One app.
+
+### What could not be found
+
+- Any study of "left" against "logged" for a calorie limit, or of a ring
+  that fills against one that empties. The nearest, Koo and Fishbach 2012,
+  tested loyalty cards, which are goals to reach and not limits.
+- Any study of a number counting up, or of a picture flying to its target.
+- Where an arc should start, or what a second lap should look like, beyond
+  design-system pages.
+- Animation in any of the Mobbin flows: they are stills.
+- Twelve apps were not on Mobbin, so "of 10" and "of 12" are what could be
+  seen, not the market.
+
+### The pick with the seven changes, measured
+
+| Measure (393 x 852, dark, four meals) | The pick | With the changes |
+| ------------------------------------- | -------- | ---------------- |
+| Hero share                            | 33.2%    | 33.2%            |
+| Words in the first screen (limit 60)  | 64       | 63               |
+| Colour, dark (limit 8%)               | 4.59%    | 4.61%            |
+| Colour, light (limit 15%)             | 4.50%    | 4.52%            |
+| Boxed things above the tab bar        | 3        | 2                |
+| Diary rows clear of the tab bar       | 1        | 2                |
+
+Checked in 8 more cases (typical, empty and heavy days, light, 320 px, text
+scaled 1.35): no text under 4.5 to 1, no control under 44 px, nothing cut
+off, colour at most 6.65%. At 320 px the field holds the chip, the pencil,
+the camera and a short placeholder; the app's own placeholder is a short
+example such as "Eggs".
+
+Captures: `e-improved-*`.
+
 ## The prototype's source
 
 `prototype/build.py` writes the three artboards from one shared shell. It is

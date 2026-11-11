@@ -32,8 +32,8 @@ ADDS = [("Flat white", 120, "drink"), ("Banana", 105, "fruit"), ("Toast and hone
 
 TOKENS = """
 body{margin:0}
-.phone{--page:#0E0E11;--card:#17171B;--raise:#212127;--raise2:#2C2C34;--fg:#F4F4F6;--mut:#A1A1AA;--or:#D9884E;--or-deep:#B45308;--groove:rgba(161,161,170,.2);--edge:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.06),0 1px 3px rgba(0,0,0,.3),0 8px 24px -6px rgba(0,0,0,.45);--chip:inset 0 1px 0 rgba(255,255,255,.09),inset 0 0 0 1px rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);--sel:inset 0 0 0 1.5px rgba(255,255,255,.34),0 8px 24px -6px rgba(0,0,0,.45);--plate-a:#2A2A31;--plate-b:#1A1A1F;--well-a:#232329;--well-b:#15151A;--plate-line:rgba(255,255,255,.08);--glow:rgba(217,136,78,.22);--glow2:rgba(217,136,78,.07);--band:linear-gradient(180deg,#2B1A10 0%,#1F1611 58%,#0E0E11 100%);--pro:#EC4899;--carb:#EAB308;--fat:#7CB46C;--brand:#8F87F1;--brand-bg:rgba(123,114,233,.18);--nav:rgba(21,21,25,.9);--well-ink:#A1A1AA;--or-ink:#D9884E;--art-shadow:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
-.phone.t-light{--page:#ECECEE;--card:#FFFFFF;--raise:#F8F8F9;--raise2:#FFFFFF;--fg:#09090B;--mut:#6A6A72;--or:#D9884E;--or-deep:#A34B08;--groove:rgba(106,106,114,.2);--edge:0 1px 2px rgba(16,16,24,.05),0 4px 10px -2px rgba(16,16,24,.05),0 16px 32px -12px rgba(16,16,24,.1);--chip:0 1px 2px rgba(16,16,24,.08),0 0 0 1px rgba(16,16,24,.05);--sel:inset 0 0 0 1.5px rgba(16,16,24,.55),0 16px 32px -12px rgba(16,16,24,.1);--plate-a:#FFFFFF;--plate-b:#F3F3F6;--well-a:#EDEDF1;--well-b:#E4E4EA;--plate-line:rgba(16,16,24,.1);--glow:rgba(217,136,78,.2);--glow2:rgba(217,136,78,.08);--band:linear-gradient(180deg,#F8E3D2 0%,#F3E7DD 58%,#ECECEE 100%);--pro:#DB2777;--carb:#CA8A04;--fat:#5E9A4E;--brand:#5B50D6;--brand-bg:rgba(123,114,233,.14);--nav:rgba(255,255,255,.88);--well-ink:#55555D;--or-ink:#A34B08;--art-shadow:drop-shadow(0 5px 7px rgba(16,16,24,.22))}
+.phone{--page:#0E0E11;--card:#17171B;--raise:#212127;--raise2:#2C2C34;--fg:#F4F4F6;--mut:#A1A1AA;--or:#D9884E;--or-deep:#B45308;--groove:rgba(161,161,170,.2);--edge:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.06),0 1px 3px rgba(0,0,0,.3),0 8px 24px -6px rgba(0,0,0,.45);--chip:inset 0 1px 0 rgba(255,255,255,.09),inset 0 0 0 1px rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);--sel:inset 0 0 0 1.5px rgba(255,255,255,.34),0 8px 24px -6px rgba(0,0,0,.45);--plate-a:#2A2A31;--plate-b:#1A1A1F;--well-a:#232329;--well-b:#15151A;--plate-line:rgba(255,255,255,.08);--glow:rgba(217,136,78,.22);--glow2:rgba(217,136,78,.07);--band:linear-gradient(180deg,#2B1A10 0%,#1F1611 58%,#0E0E11 100%);--pro:#EC4899;--carb:#EAB308;--fat:#7CB46C;--brand:#8F87F1;--brand-bg:rgba(123,114,233,.18);--nav:rgba(21,21,25,.9);--well-ink:#A1A1AA;--or-ink:#D9884E;--or-bar:#D9884E;--art-shadow:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+.phone.t-light{--page:#ECECEE;--card:#FFFFFF;--raise:#F8F8F9;--raise2:#FFFFFF;--fg:#09090B;--mut:#6A6A72;--or:#D9884E;--or-deep:#A34B08;--groove:rgba(106,106,114,.2);--edge:0 1px 2px rgba(16,16,24,.05),0 4px 10px -2px rgba(16,16,24,.05),0 16px 32px -12px rgba(16,16,24,.1);--chip:0 1px 2px rgba(16,16,24,.08),0 0 0 1px rgba(16,16,24,.05);--sel:inset 0 0 0 1.5px rgba(16,16,24,.55),0 16px 32px -12px rgba(16,16,24,.1);--plate-a:#FFFFFF;--plate-b:#F3F3F6;--well-a:#EDEDF1;--well-b:#E4E4EA;--plate-line:rgba(16,16,24,.1);--glow:rgba(217,136,78,.2);--glow2:rgba(217,136,78,.08);--band:linear-gradient(180deg,#F8E3D2 0%,#F3E7DD 58%,#ECECEE 100%);--pro:#DB2777;--carb:#CA8A04;--fat:#5E9A4E;--brand:#5B50D6;--brand-bg:rgba(123,114,233,.14);--nav:rgba(255,255,255,.88);--well-ink:#55555D;--or-ink:#A34B08;--or-bar:#A34B08;--art-shadow:drop-shadow(0 5px 7px rgba(16,16,24,.22))}
 .phone *{box-sizing:border-box}
 .phone button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
 .fig{font-family:'Archivo',system-ui,sans-serif;font-weight:800;font-variant-numeric:tabular-nums}
@@ -43,6 +43,12 @@ body{margin:0}
 @keyframes rowin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .slide{transition:transform .5s cubic-bezier(.32,.72,0,1)}
 .seg{flex:1 1 calc((24.4em * var(--ts, 1) - 100%) * 999);max-width:calc(50% - 1px)}
+.mealchip,.mealmenu{display:none}
+.meal-chip .mealtrack{display:none !important}
+.meal-chip .mealchip{display:flex}
+.meal-chip .pen{order:3}
+.meal-chip .scan{order:4}
+.meal-chip.mopen .mealmenu{display:block;animation:fade .12s linear both}
 .row{display:flex}
 .row.add{display:none}
 .row.add.on{display:flex;animation:rowin .25s ease-out .3s both}
@@ -82,7 +88,7 @@ WEEK = """
 <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
 <button aria-label="{{d.aria}}" style="height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px">
 <span style="font-size: 12px; font-weight: 600; color: {{d.ink}}">{{d.letter}}</span>
-<span style="position: relative; display: block; width: 30px; height: 8px; border-radius: 4px; background: var(--groove); opacity: {{d.fade}}; box-shadow: {{d.ring}}; overflow: hidden"><span class="slide" style="position: absolute; inset: 0; border-radius: 4px; background: var(--or); transform: translateX({{d.shift}})"></span></span>
+<span style="position: relative; display: block; width: 30px; height: 8px; border-radius: 4px; background: var(--groove); opacity: {{d.fade}}; box-shadow: {{d.ring}}; overflow: hidden"><span class="slide" style="position: absolute; inset: 0; border-radius: 4px; background: var(--or-bar); transform: translateX({{d.shift}})"></span></span>
 </button>
 </sc-for>
 </div>
@@ -110,7 +116,7 @@ MACROS = (
 )
 
 TRACK = """
-<div role="radiogroup" aria-label="Add to meal" style="position: relative; display: flex; flex-wrap: wrap; gap: 2px; min-height: 48px; margin-top: @@MT@@px; padding: 2px; border-radius: 14px; background: var(--raise); box-shadow: var(--chip)">
+<div class="mealtrack" role="radiogroup" aria-label="Add to meal" style="position: relative; display: flex; flex-wrap: wrap; gap: 2px; min-height: 48px; margin-top: @@MT@@px; padding: 2px; border-radius: 14px; background: var(--raise); box-shadow: var(--chip)">
 <sc-for list="{{meals}}" as="s" hint-placeholder-count="4">
 <button class="seg" role="radio" aria-checked="{{s.checked}}" onClick="{{s.pick}}" style="display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; border-radius: 12px; font-size: 14px; font-weight: 600; color: {{s.ink}}; background: {{s.bg}}; box-shadow: {{s.edge}}"><span aria-hidden="true" style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--or-ink); display: {{s.dot}}"></span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.label}}</span></button>
 </sc-for>
@@ -131,9 +137,15 @@ FIELD = (
     """
 <div style="position: relative; margin-top: @@MT@@px">
 <div style="display: flex; align-items: center; min-height: 48px; border-radius: 14px; background: var(--raise); box-shadow: var(--chip)">
-<button aria-label="Enter manually" style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--mut)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" @@ICON@@><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg></button>
-<button onClick="{{openSheet}}" aria-label="What did you eat" style="flex: 1; min-width: 0; min-height: 48px; text-align: left; font-size: 16px; color: var(--mut)">What did you eat?</button>
-<button aria-label="Scan a meal" style="flex: none; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--or-ink)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" @@ICON@@><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg></button>
+<button class="mealchip" onClick="{{toggleMealMenu}}" aria-label="Add to {{mealLabel}}. Change meal" style="order: 1; flex: none; align-items: center; gap: 6px; min-height: 44px; margin-left: 4px; padding: 0 10px; border-radius: 11px; background: var(--raise2); box-shadow: var(--chip); font-size: 14px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--or-ink)"></span>{{mealLabel}}<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" @@ICON@@><path d="m6 9 6 6 6-6"></path></svg></button>
+<button class="pen" aria-label="Enter manually" style="order: 1; flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--mut)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" @@ICON@@><path d="M13 21h8"></path><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg></button>
+<button onClick="{{openSheet}}" aria-label="What did you eat" style="order: 2; padding-left: 4px; flex: 1; min-width: 0; min-height: 48px; text-align: left; font-size: 16px; color: var(--mut)">{{placeholder}}</button>
+<button class="scan" aria-label="Scan a meal" style="order: 3; flex: none; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: var(--or-ink)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" @@ICON@@><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg></button>
+</div>
+<div class="mealmenu" role="radiogroup" aria-label="Add to meal" style="position: absolute; left: 0; top: 54px; z-index: 6; width: 190px; border-radius: 16px; background: var(--card); box-shadow: var(--edge); padding: 4px 0">
+<sc-for list="{{meals}}" as="s" hint-placeholder-count="4">
+<button role="radio" aria-checked="{{s.checked}}" onClick="{{s.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 14px; text-align: left; font-size: 16px; font-weight: 600; color: {{s.ink}}"><span aria-hidden="true" style="flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--or-ink); visibility: {{s.vis}}"></span>{{s.label}}</button>
+</sc-for>
 </div>
 <div class="sheet" style="position: absolute; left: 0; right: 0; top: 54px; z-index: 5; border-radius: 16px; background: var(--card); box-shadow: var(--edge); padding: 4px 0">
 <div style="padding: 8px 14px 2px; font-size: 14px; font-weight: 600; color: var(--mut)">Your usual</div>
@@ -288,8 +300,10 @@ ink: meal === id ? "var(--fg)" : "var(--mut)",
 bg: meal === id ? "var(--raise2)" : "transparent",
 edge: meal === id ? "var(--chip)" : "none",
 dot: meal === id ? "block" : "none",
-pick: () => this.setState({ meal: id }),
+vis: meal === id ? "visible" : "hidden",
+pick: () => this.setState({ meal: id, mealOpen: false }),
 }));
+const FAST = (this.props.pace ?? "0.9 s") === "0.6 s";
 const add = (i) => () => {
 if (n !== i || heavy) return;
 this.setState({ n: i + 1, prev: i, k: reduced ? null : 0, open: false, where: where.slice(0, i).concat([meal]) });
@@ -299,6 +313,10 @@ const items = BASE.items + n;
 const out = {
 day, theme, motion, w, n,
 openClass: st.open ? "open" : "",
+extraCls: "",
+placeholder: "What did you eat?",
+mealLabel: mealName(meal),
+toggleMealMenu: () => this.setState({ mealOpen: !st.mealOpen, open: false }),
 a1: n > 0 ? "on" : "", a2: n > 1 ? "on" : "", a3: n > 2 ? "on" : "",
 meal1: mealName(where[0]), meal2: mealName(where[1]), meal3: mealName(where[2]),
 add1: add(0), add2: add(1), add3: add(2),
@@ -339,7 +357,7 @@ PAGE = """<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Plus+Jakarta+Sans:wght@400..800&display=swap">
 <style>@@CSS@@</style>
 </helmet>
-<div class="phone t-{{theme}} m-{{motion}} d-{{day}} n{{n}} {{openClass}}" style="position: relative; width: {{w}}px; height: 852px; overflow: hidden; background: var(--page); color: var(--fg); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.3">
+<div class="phone t-{{theme}} m-{{motion}} d-{{day}} n{{n}} {{openClass}} {{extraCls}}" style="position: relative; width: {{w}}px; height: 852px; overflow: hidden; background: var(--page); color: var(--fg); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.3">
 @@BEHIND@@
 <div style="position: absolute; inset: 0; overflow: hidden; padding: 28px 16px 0">
 @@BODY@@
@@ -688,6 +706,11 @@ D_CSS = """
 .fl img{display:block;width:100%;height:100%;filter:var(--art-shadow)}
 .fl.on{display:block;animation:rise .56s cubic-bezier(.4,0,.2,1) both}
 .noflight .fl.on{display:none}
+.swap{display:none}
+.goal-on .swap{display:block}
+.pace-fast .fl.on{animation-duration:.4s}
+.pace-fast .ring{transition-duration:.35s;transition-delay:.25s}
+.pace-fast .row.add.on{animation-delay:.2s}
 @keyframes rise{from{transform:translate(var(--fx),var(--fy));opacity:0}14%{opacity:1}76%{opacity:1}to{transform:translate(0,0) scale(.45);opacity:0}}
 .m-reduced .ring{transition:none;animation:none}
 .m-reduced .fl.on{display:none}
@@ -705,11 +728,12 @@ D_HERO = (
 <svg aria-hidden="true" viewBox="0 0 160 160" width="264" height="264" style="display: block">
 <circle cx="80" cy="80" r="74" fill="none" style="stroke: var(--groove)" stroke-width="12"></circle>
 <circle class="ring" cx="80" cy="80" r="74" fill="none" style="stroke: var(--or); stroke-dashoffset: {{ringOff}}; opacity: {{ringOn}}" stroke-width="12" stroke-linecap="round" transform="rotate(-90 80 80)"></circle>
+<circle class="ring" cx="80" cy="80" r="74" fill="none" style="stroke: var(--page); stroke-dashoffset: {{lapOff}}; opacity: {{lapOn}}" stroke-width="14.5" stroke-linecap="round" transform="rotate(-90 80 80)"></circle>
 <circle class="ring" cx="80" cy="80" r="74" fill="none" style="stroke: var(--or-deep); stroke-dashoffset: {{lapOff}}; opacity: {{lapOn}}" stroke-width="12" stroke-linecap="round" transform="rotate(-90 80 80)"></circle>
 </svg>
 <span style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none">
 <span class="fig" style="font-size: 48px; line-height: 1">{{figure}}</span>
-<span style="margin-top: 8px; font-size: 14px; color: var(--mut)">{{figureLabel}}</span>
+<span style="margin-top: 8px; display: flex; align-items: center; gap: 4px; font-size: 14px; color: var(--mut)"><span class="num">{{wheelLabel}}</span><svg class="swap" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" @@ICON@@><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg></span>
 </span>
 """
     + "\n".join(flyer(i + 1, a[2]) for i, a in enumerate(ADDS))
@@ -732,6 +756,13 @@ out.ringOn = fillAt(n) > 0 ? 1 : 0;
 out.lapOff = (C * (1 - Math.max(0, Math.min(1, (logged - TARGET) / TARGET)))).toFixed(1);
 out.lapOn = over ? 1 : 0;
 out.flyCls = (this.props.flight ?? true) ? "" : "noflight";
+// After the research: the target stays on the wheel, one meal chip, a quicker log.
+const goalOn = (this.props.goal ?? "off") === "on";
+const chip = (this.props.meal ?? "track") === "chip";
+out.wheelLabel = goalOn ? (over && mode === "left" ? "kcal over " : out.figureLabel + " of ") + fmt(TARGET) : out.figureLabel;
+// The app's own placeholder is a short rotating example ("Eggs"); with the chip in a 320 px field only that fits on one line.
+if (chip && w < 360) out.placeholder = "Eggs";
+out.extraCls = (goalOn ? "goal-on " : "") + (chip ? "meal-chip " : "") + (chip && st.mealOpen ? "mopen " : "") + (FAST ? "pace-fast" : "");
 // As today, the macro bars run the same way as the wheel: in "left" mode they show what is left.
 if (ringMode !== "fills" && mode === "left") {
 [["m1", "p", 140], ["m2", "c", 273], ["m3", "f", 61]].forEach(([key, k2, goal]) => {
@@ -751,8 +782,8 @@ out["f" + (i + 1)] = { x: X.toFixed(0) + "px", y: Y.toFixed(0) + "px", fx: (fiel
 }
 """
 
-D_PROPS = '"ring":{"editor":"enum","options":["fills","as now"],"default":"fills","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
+D_PROPS = '"goal":{"editor":"enum","options":["off","on"],"default":"off","section":"After the research"},"meal":{"editor":"enum","options":["track","chip"],"default":"track","section":"After the research"},"pace":{"editor":"enum","options":["0.9 s","0.6 s"],"default":"0.9 s","section":"After the research"},"ring":{"editor":"enum","options":["fills","as now"],"default":"fills","section":"The wheel"},"flight":{"editor":"boolean","default":true,"section":"The wheel"},'
 
 D_BODY = part(HEADER) + part(D_HERO) + part(WEEK, 6) + part(MACROS, 8) + part(TRACK, 14) + part(FIELD, 8) + part(LOG, 14)
 
-page("D-Wheel.dc.html", "Food, the pick: A's page with the calorie wheel", D_CSS, D_BODY, D_EXTRA, delay=300, ms=600, more_props=D_PROPS)
+page("D-Wheel.dc.html", "Food, the pick: A's page with the calorie wheel", D_CSS, D_BODY, D_EXTRA, delay="(FAST ? 250 : 300)", ms="(FAST ? 350 : 600)", more_props=D_PROPS)
