@@ -64,7 +64,7 @@ async function purgeLegacyResetLimiterDocs({ firestore, apply = false }) {
 module.exports = { isLegacyResetLimiter, purgeLegacyResetLimiterDocs };
 
 if (require.main === module) {
-  const admin = require("firebase-admin");
+  const admin = require("../lib/adminSdk");
   admin.initializeApp();
   const dryRun = process.env.DRY_RUN === "true";
   purgeLegacyResetLimiterDocs({ firestore: admin.firestore(), apply: !dryRun })

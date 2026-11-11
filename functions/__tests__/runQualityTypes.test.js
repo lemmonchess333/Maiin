@@ -28,7 +28,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 // performanceEngine.js calls admin.firestore() at module load; initialise
 // the shared test app first (same pattern as performanceEngine.test.js).
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 if (!admin.apps.length) {
   admin.initializeApp({
     projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test",

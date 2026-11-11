@@ -54,7 +54,7 @@ const PATHS = {
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ onPublicProfileIdentityChanged } = require("../../index"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function seed() {

@@ -6,7 +6,7 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const deletion = require("../lib/accountDeletionLocks");
 const { onPublicProfileWritten } = require("../index");
-const db = require("firebase-admin").firestore();
+const db = require("../lib/adminSdk").firestore();
 const UID = "profile-moderation-author";
 const PATH = `users/${UID}/public/profile`;
 const BAD_NAME = "shit head";
@@ -31,11 +31,17 @@ function deliver(name = BAD_NAME) {
         exists: true,
         ref: {
           ...ref,
-          update: (values) => firestore.data.has(PATH)
-            ? ref.update(values)
-            : Promise.reject(Object.assign(new Error("Document not found"), { code: 5 })),
+          update: (values) =>
+            firestore.data.has(PATH)
+              ? ref.update(values)
+              : Promise.reject(
+                  Object.assign(new Error("Document not found"), { code: 5 })
+                ),
         },
-        data: () => ({ displayName: name, displayNameLower: name.toLowerCase() }),
+        data: () => ({
+          displayName: name,
+          displayNameLower: name.toLowerCase(),
+        }),
       },
     },
     { params: { uid: UID, docId: "profile" } }
@@ -81,7 +87,10 @@ describe("public-profile name moderation", () => {
 
     await deliver();
 
-    expect(firestore.data.get(PATH)).toEqual({ displayName: null, displayNameLower: null });
+    expect(firestore.data.get(PATH)).toEqual({
+      displayName: null,
+      displayNameLower: null,
+    });
   });
 
   it("does not recreate a profile deleted before the trigger runs", async () => {
@@ -96,20 +105,29 @@ describe("public-profile name moderation", () => {
 
     await deliver();
 
-    expect(firestore.data.get(PATH)).toEqual({ displayName: null, displayNameLower: null });
+    expect(firestore.data.get(PATH)).toEqual({
+      displayName: null,
+      displayNameLower: null,
+    });
     expect(firestore.operations).toEqual([]);
   });
 
   it("propagates transaction failures for the retry-enabled trigger and recovers on redelivery", async () => {
     const current = { displayName: BAD_NAME, displayNameLower: BAD_NAME };
     firestore.data.set(PATH, current);
-    const unavailable = Object.assign(new Error("Firestore temporarily unavailable"), { code: 14 });
+    const unavailable = Object.assign(
+      new Error("Firestore temporarily unavailable"),
+      { code: 14 }
+    );
     vi.mocked(db.runTransaction).mockRejectedValueOnce(unavailable);
 
     await expect(deliver()).rejects.toBe(unavailable);
     expect(firestore.data.get(PATH)).toEqual(current);
     await deliver();
-    expect(firestore.data.get(PATH)).toEqual({ displayName: null, displayNameLower: null });
+    expect(firestore.data.get(PATH)).toEqual({
+      displayName: null,
+      displayNameLower: null,
+    });
   });
 
   it("keeps the existing deletion guard before any transaction", async () => {

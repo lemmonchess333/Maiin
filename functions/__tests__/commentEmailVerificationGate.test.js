@@ -25,7 +25,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { addCommentCallable, addSpacePostCommentCallable } = require("../index");
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const socialFanout = require("../lib/socialFanout");
 const socialCounters = require("../lib/socialCounters");
 const spacePostEngagement = require("../lib/spacePostEngagement");

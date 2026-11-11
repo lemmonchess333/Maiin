@@ -27,7 +27,7 @@ const require = createRequire(import.meta.url);
 // project. Prefer the emulator's GCLOUD_PROJECT (set to demo-tropos
 // by the workflow) and fall back to a unit-test project name only
 // for isolated local runs without the emulator.
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 if (!admin.apps.length) {
   admin.initializeApp({
     projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test",

@@ -28,7 +28,7 @@ const auth = { auth: { uid: UID, token: { email_verified: true } } };
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   idx = require("../../index");
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

@@ -36,15 +36,16 @@
  *     npx tsx scripts/backfill-streak-mirror.ts
  */
 
-import * as admin from "firebase-admin";
+import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+if (!getApps().length) {
+  initializeApp({
+    credential: applicationDefault(),
   });
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const USER_PAGE_SIZE = 500;
 
@@ -155,8 +156,7 @@ async function backfillOne(
         typeof userData.athleteType === "string"
           ? userData.athleteType
           : "Lifter";
-      const createdAt =
-        userData.createdAt ?? admin.firestore.FieldValue.serverTimestamp();
+      const createdAt = userData.createdAt ?? FieldValue.serverTimestamp();
 
       const publicData = publicSnap.exists ? (publicSnap.data() ?? {}) : {};
       const publicCurrent = Number.isFinite(publicData.currentStreak)
@@ -214,7 +214,7 @@ async function backfillOne(
             ...(computedBadgeSummary
               ? { badgeSummary: computedBadgeSummary }
               : publicBadgeSummary
-                ? { badgeSummary: admin.firestore.FieldValue.delete() }
+                ? { badgeSummary: FieldValue.delete() }
                 : {}),
             ...(publicSnap.exists ? {} : { createdAt }),
           },

@@ -52,7 +52,7 @@ beforeAll(() => {
   configurePlan = idx.configurePlan;
   onRaceGoalWritten = idx.onRaceGoalWritten;
   ({ deleteAccount } = require("../../accountDeletion"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 }, 30_000);
 
 const weekSchedule = () => [

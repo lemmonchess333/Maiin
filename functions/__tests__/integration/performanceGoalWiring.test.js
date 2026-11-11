@@ -67,7 +67,7 @@ beforeAll(() => {
   require("../../index");
   engine = require("../../performanceEngine");
   dateKeyMinusN = engine._internal.dateKeyMinusN;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

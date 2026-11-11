@@ -38,7 +38,7 @@ import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const admin = require("firebase-admin");
+const admin = require("../../lib/adminSdk");
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const suite = EMULATOR_HOST ? describe : describe.skip;

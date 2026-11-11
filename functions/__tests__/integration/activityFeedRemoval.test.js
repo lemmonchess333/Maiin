@@ -40,7 +40,7 @@ beforeAll(() => {
   const idx = require("../../index");
   onActivityCreated = idx.onActivityCreated;
   onActivityDeleted = idx.onActivityDeleted;
-  const admin = require("firebase-admin");
+  const admin = require("../../lib/adminSdk");
   db = admin.firestore();
   // Every deleted post's photo folder is emptied (lib/postPhotos.js, Soc15
   // call 2), and this job runs no Storage emulator: the real client found

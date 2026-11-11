@@ -18,7 +18,7 @@ describe.skipIf(!enabled)(
       created = index.onWorkoutCreated;
       updated = index.onWorkoutUpdated;
       deleted = index.onWorkoutDeleted;
-      admin = require("firebase-admin");
+      admin = require("../../lib/adminSdk");
       db = admin.firestore();
     });
     beforeEach(async () => {

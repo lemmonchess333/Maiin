@@ -70,7 +70,7 @@ beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ onChallengeParticipantWritten } = require("../../index"));
   ({ backfillMedals } = require("../../lib/medals"));
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

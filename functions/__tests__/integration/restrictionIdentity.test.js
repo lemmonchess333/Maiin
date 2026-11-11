@@ -30,7 +30,7 @@ beforeAll(() => {
   priorSecret = process.env.BILLING_HMAC_SECRET;
   process.env.BILLING_HMAC_SECRET = SECRET;
   idx = require("../../index");
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 afterAll(() => {
   if (priorSecret === undefined) delete process.env.BILLING_HMAC_SECRET;
@@ -81,9 +81,15 @@ suite("a public name the filter refuses", () => {
     const ref = db.doc(`users/${UID}/public/profile`);
     await ref.set({ displayName: "Sam", currentStreak: 4 });
     const before = await ref.get();
-    await ref.update({ displayName: "shit head", displayNameLower: "shit head" });
+    await ref.update({
+      displayName: "shit head",
+      displayNameLower: "shit head",
+    });
     const after = await ref.get();
-    await ref.update({ displayName: "Maya Chen", displayNameLower: "maya chen" });
+    await ref.update({
+      displayName: "Maya Chen",
+      displayNameLower: "maya chen",
+    });
 
     await idx.onPublicProfileWritten.run(
       { before, after },

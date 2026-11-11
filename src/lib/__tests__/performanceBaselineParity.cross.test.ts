@@ -42,6 +42,8 @@ const require = createRequire(import.meta.url);
 /* `functions/performanceEngine.js` calls `admin.firestore()` at module load
    and is not admin-free the way `lib/perfScoring.js` is, so requiring it
    needs the same specifier stub `adminAuthMirror.cross.test.ts` uses. The
+   specifier is the one the functions require the Admin SDK by,
+   `./lib/adminSdk` (firebase-admin 14 has no object to require). The
    stub covers module-load side effects only; `computeBaselineFromAgg` is a
    pure function of its argument and touches neither Firestore nor logging,
    so nothing under test is faked out. */
@@ -49,7 +51,7 @@ type Loader = (this: unknown, request: string, ...rest: unknown[]) => unknown;
 const loaderHost = Module as unknown as { _load: Loader };
 const realLoad = loaderHost._load;
 loaderHost._load = function (request, ...rest) {
-  if (request === "firebase-admin") {
+  if (request === "./lib/adminSdk") {
     const firestore = () => ({});
     firestore.Timestamp = { fromDate: (d: Date) => d };
     firestore.FieldValue = { serverTimestamp: () => null };

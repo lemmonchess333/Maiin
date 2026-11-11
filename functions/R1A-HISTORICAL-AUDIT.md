@@ -15,6 +15,7 @@ volume warrant a larger backfill project?
 ### Step 1: Inventory the historical-deletion code surface
 
 Pre-R1A deletion paths the codebase has supported:
+
 1. **The current `deleteMyAccount` Cloud Function** (functions/index.js:35).
    This is what's in production today. It deletes a CORRECT subset of
    user data but misses many subcollections per the Phase 0 inventory
@@ -38,7 +39,7 @@ read-only audit script):**
 
 ```js
 // functions/scripts/auditHistoricalDeletions.js (NOT IN THIS COMMIT)
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 admin.initializeApp();
 const db = admin.firestore();
 const auth = admin.auth();
@@ -78,6 +79,7 @@ followers, blocks, scanUsage, rateLimits) and check whether
 
 For each of the 33 inventory paths from accountDeletionInventory.json,
 the audit produces:
+
 - count of docs in that subcollection
 - count of unique uids those docs key off
 - intersection with the orphan uid list from the forward discovery
@@ -85,6 +87,7 @@ the audit produces:
 ### Step 3: Categorise
 
 Three buckets:
+
 1. **Auth-deleted, root-deleted, residue exists.** Historical
    pre-W1f deletion. Cleanup script run is straightforward — every
    inventory path is swept for these uids.
@@ -175,6 +178,7 @@ may need to rescope historical cleanup as a larger project rather
 than treating it as a small follow-up script."
 
 Running the audit before Chunk 3 starts means the founder can:
+
 1. Confirm Option A is sufficient before the executor lands.
 2. Plan the cleanup runbook in parallel with Chunk 3/4 work.
 3. Set realistic expectations for App Store submission (if 500+
@@ -199,6 +203,7 @@ deciding whether to defer.
 
 The audit script is READ-ONLY by design — it produces a list of
 uids and counts, nothing more. It does NOT:
+
 - Delete any data.
 - Modify any Firestore docs.
 - Modify any Auth users.

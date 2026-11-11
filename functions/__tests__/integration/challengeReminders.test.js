@@ -31,7 +31,7 @@ describe.skipIf(!enabled)(
 
     beforeAll(() => {
       require("../../index");
-      admin = require("firebase-admin");
+      admin = require("../../lib/adminSdk");
       db = admin.firestore();
     });
     async function wipe() {

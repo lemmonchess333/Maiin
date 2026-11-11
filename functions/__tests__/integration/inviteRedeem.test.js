@@ -37,7 +37,7 @@ const anonymous = (ip = "198.51.100.1") => ({ rawRequest: { ip } });
 beforeAll(async () => {
   if (!EMULATORS) return;
   fns = require("../../index");
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
   for (const uid of PEOPLE) {
     try {

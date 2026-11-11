@@ -59,7 +59,7 @@ beforeAll(() => {
   onRunCreated = idx.onRunCreated;
   onWorkoutCreated = idx.onWorkoutCreated;
   awardMilestoneBadges = idx._awardMilestoneBadges;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

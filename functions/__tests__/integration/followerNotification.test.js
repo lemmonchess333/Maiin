@@ -32,7 +32,7 @@ const FOLLOWER = "follownotif-bob";
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ onFollowerCreated, onFollowRequestCreated } = require("../../index"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

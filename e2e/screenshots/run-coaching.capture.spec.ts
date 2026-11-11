@@ -19,12 +19,14 @@ test("running feedback follows edits and opens a reversible easier-week preview"
 }) => {
   test.skip(!emulatorActive, "isolated emulator account only");
   test.setTimeout(120_000);
-  const admin = require("firebase-admin");
-  if (!admin.apps.length) admin.initializeApp({ projectId: "demo-tropos" });
-  const db = admin.firestore();
-  const source = await admin
-    .auth()
-    .getUserByEmail("fellbehind-capture@tropos.test");
+  const { getApps, initializeApp } = require("firebase-admin/app");
+  const { getAuth } = require("firebase-admin/auth");
+  const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+  if (!getApps().length) initializeApp({ projectId: "demo-tropos" });
+  const db = getFirestore();
+  const source = await getAuth().getUserByEmail(
+    "fellbehind-capture@tropos.test"
+  );
   const sourceProfile = (await db.doc(`users/${source.uid}`).get()).data();
   const sourcePlan = (
     await db.doc(`users/${source.uid}/programState/current`).get()
@@ -33,9 +35,11 @@ test("running feedback follows edits and opens a reversible easier-week preview"
   expect(sourcePlan).toBeTruthy();
   const email = `run-coaching-${Date.now()}@tropos.test`;
   const password = "test-password-123";
-  const { uid } = await admin
-    .auth()
-    .createUser({ email, password, emailVerified: true });
+  const { uid } = await getAuth().createUser({
+    email,
+    password,
+    emailVerified: true,
+  });
   const now = new Date();
   const today = localDateString(now);
   const profile = { ...sourceProfile, uid, email, darkMode: false };
@@ -82,7 +86,7 @@ test("running feedback follows edits and opens a reversible easier-week preview"
     });
     await db.doc(`users/${uid}/runs/${paths[index]}`).set({
       date: localDateString(date),
-      completedAt: admin.firestore.Timestamp.fromDate(date),
+      completedAt: Timestamp.fromDate(date),
       distance: 1500,
       duration: 600,
       avgPace: 400,
@@ -112,7 +116,7 @@ test("running feedback follows edits and opens a reversible easier-week preview"
         });
         return;
       }
-      const token = await admin.auth().verifyIdToken(
+      const token = await getAuth().verifyIdToken(
         route
           .request()
           .headers()
