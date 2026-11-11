@@ -43,12 +43,17 @@ const admin = require("./lib/adminSdk");
  * on transaction errors so a retried trigger preserves the source rather
  * than treating an unavailable count as a reason to delete it.
  *
+ * `now` is the clock the window is measured on, in epoch milliseconds. A
+ * test that needs a set time passes it here and leaves the global clock
+ * alone: the Firestore client times each call on `Date.now()`, so a pinned
+ * one puts every deadline in the past and no call ends.
+ *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} uid
  * @param {string} action
  * @param {number} maxCalls
  * @param {number} windowMs
- * @param {{ failOpen?: boolean, receiptRef?: FirebaseFirestore.DocumentReference }} [options]
+ * @param {{ failOpen?: boolean, receiptRef?: FirebaseFirestore.DocumentReference, now?: number }} [options]
  * @returns {Promise<boolean>} true if rate-limited (should block)
  */
 async function isRateLimited(
@@ -57,10 +62,9 @@ async function isRateLimited(
   action,
   maxCalls,
   windowMs,
-  { failOpen = false, receiptRef } = {}
+  { failOpen = false, receiptRef, now = Date.now() } = {}
 ) {
   const rl = db.collection("rateLimits").doc(`${uid}_${action}`);
-  const now = Date.now();
   try {
     return await db.runTransaction(async (tx) => {
       if (receiptRef) {
