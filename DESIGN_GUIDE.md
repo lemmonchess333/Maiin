@@ -520,7 +520,9 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   account that has a usual, is the page's one). The §14m checks the
   scorer runs all pass;
   the first screen has 62 words against the ceiling of 60. The paywall's
-  scan demo still draws the page as it stood before.
+  scan demo draws this page with the page's own wheel, week strip and
+  macros (`ScanDemo.tsx`), so a change to the first screen is a change to
+  make there too.
 - **Badges:** the owner kept the current hexagon set (8 Nov 2026), after
   samples with three silhouettes and the number in the art, and with the
   emblem plus a ribbon. §14m rule 27 carries the note.
