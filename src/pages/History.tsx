@@ -1172,7 +1172,7 @@ export default function History() {
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics...
+            Loading analytics…
           </div>
         }
       >

@@ -975,7 +975,7 @@ export default function FoodAnalyzer({
           ? "Couldn't reach the barcode database. Check your connection."
           : e instanceof Error
             ? e.message
-            : "Barcode lookup failed.";
+            : "Couldn't look up that barcode.";
       setBarcodeError(msg);
       /* One id, because the scanner tries an unreachable code again while
          it stays in view, and each try would otherwise add a toast. */
@@ -1058,9 +1058,9 @@ export default function FoodAnalyzer({
           <Spinner
             size="sm"
             variant="muted"
-            label={barcodeLoading ? "Fetching nutrition" : "Analyzing food"}
+            label={barcodeLoading ? "Fetching nutrition" : "Analysing food"}
           />
-          {barcodeLoading ? "Fetching nutrition..." : "Analyzing..."}
+          {barcodeLoading ? "Fetching nutrition…" : "Analysing…"}
         </div>
       )}
 

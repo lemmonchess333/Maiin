@@ -200,7 +200,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );
@@ -217,7 +217,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );

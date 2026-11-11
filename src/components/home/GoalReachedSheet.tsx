@@ -86,7 +86,7 @@ export default function GoalReachedSheet({
       logger.error("[GoalReachedSheet] programState goal mirror failed", error);
     }
     onResolved();
-    toast.success("Maintenance calories set. Nice work.");
+    toast.success("Maintenance calories set.");
   };
 
   const keepPlan = async () => {

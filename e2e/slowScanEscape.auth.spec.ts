@@ -140,7 +140,7 @@ test.describe("slow-scan escape", () => {
       await sent;
       await expect(page.getByTestId("scan-laser")).toBeVisible();
       await expect(page.getByTestId("scan-live-status")).toHaveText(
-        "Analyzing food"
+        "Analysing food"
       );
 
       // The X takes the tap (a covered button would fail this click) and

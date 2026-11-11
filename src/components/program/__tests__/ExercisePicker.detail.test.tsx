@@ -313,7 +313,7 @@ describe("ExercisePicker row: see it vs add it", () => {
     );
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Could not add exercises. Try again."
+        "Couldn't add the exercises. Try again."
       )
     );
     expect(onClose).not.toHaveBeenCalled();

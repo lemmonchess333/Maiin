@@ -197,7 +197,7 @@ export default function PrivacySection({
                 Privacy zones
               </p>
               <p className="text-xs text-muted-foreground">
-                Hide route start/end near saved locations
+                Hide where a route starts and ends near saved locations
               </p>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default function PrivacySection({
                 setNewZoneName("");
                 toast.success("Privacy zone added");
               } catch {
-                toast.error("Could not get your location");
+                toast.error("Couldn't get your location");
               }
             }}
           >

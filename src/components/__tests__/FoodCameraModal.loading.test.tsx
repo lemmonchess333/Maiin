@@ -122,7 +122,7 @@ describe("FoodCameraModal — analysis in flight", () => {
     // SR/browser pairs — so the region is always mounted and its
     // content change is the announcement).
     expect(screen.getByTestId("scan-live-status").textContent).toBe(
-      "Analyzing food"
+      "Analysing food"
     );
     expect(screen.getByText(/fetching nutrition/i)).toBeTruthy();
     expect(screen.queryByTestId("scan-frame")).toBeNull();

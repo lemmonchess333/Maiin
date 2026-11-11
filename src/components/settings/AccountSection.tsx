@@ -262,7 +262,7 @@ function AccountSectionContent({
               ? "Your session has expired. Sign out and back in, then retry account deletion."
               : fe?.code === "functions/deadline-exceeded" ||
                   fe?.code === "functions/unavailable"
-                ? "We couldn't confirm deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
+                ? "Couldn't confirm the deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
                 : "Account cleanup couldn't finish. Try deleting your account again. Your sign-in is kept until cleanup succeeds.";
         setDeleteError(message);
         dispatchModal({ type: "CANCEL_REAUTH" });

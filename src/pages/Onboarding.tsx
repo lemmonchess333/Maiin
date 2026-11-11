@@ -1028,7 +1028,7 @@ export default function Onboarding() {
           "Onboarding: local profile update failed; reloading to pick up server state",
           localUpdateErr
         );
-        toast.success("Setting up your program…");
+        toast.success("Setting up your programme…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
         // Re-read the completed profile on Home. The server-stamped journey
@@ -1136,8 +1136,8 @@ export default function Onboarding() {
               : code === "invalid-argument"
                 ? // The server refused an answer, so a retry on a better
                   // connection would fail the same way.
-                  "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
-                : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
+                  "Couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
+                : "Couldn’t save your plan. Check your connection and try again. Your answers are saved."
       );
     } finally {
       pending.current = false;

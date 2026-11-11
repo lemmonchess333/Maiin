@@ -138,7 +138,7 @@ export const ENTER_CODE_LATER =
 /** Every reason the server refuses with, in words. */
 export const INVITE_REFUSAL_WORDS: Record<string, string> = {
   "code-not-found":
-    "We couldn't find that invite code. Check it with your friend.",
+    "Couldn't find that invite code. Check it with your friend.",
   "own-code": "That's your own invite code. Send it to a friend instead.",
   "already-invited": "You've already joined from an invite.",
   "account-not-new": `Invite codes work in an account's first ${INVITE_WINDOW_DAYS} days. Search for your friend instead.`,

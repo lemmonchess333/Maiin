@@ -325,7 +325,7 @@ export default function TrainingPlan() {
       )}
       {refreshFailed && (
         <ErrorState
-          title="Could not refresh the latest plan"
+          title="Couldn't refresh the latest plan"
           retry={{
             onClick: () => {
               void refreshProgram()
@@ -337,7 +337,7 @@ export default function TrainingPlan() {
       )}
       {readiness === "failed" && (
         <ErrorState
-          title="Could not load the latest plan"
+          title="Couldn't load the latest plan"
           description="Any cached week is shown below. Reload before making changes."
           retry={{ onClick: () => navigate(0) }}
         />

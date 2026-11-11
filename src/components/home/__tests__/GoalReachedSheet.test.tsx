@@ -145,7 +145,7 @@ describe("GoalReachedSheet", () => {
     );
     expect(onResolved).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalledWith(
-      "Maintenance calories set. Nice work.",
+      "Maintenance calories set.",
       expect.anything()
     );
     expect(

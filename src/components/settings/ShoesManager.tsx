@@ -128,14 +128,16 @@ export default function ShoesManager() {
     return (
       <div className="flex items-center gap-2 py-4">
         <Spinner size="sm" variant="primary" label="Loading shoes" />
-        <p className="text-xs text-muted-foreground">Loading shoes...</p>
+        <p className="text-xs text-muted-foreground">Loading shoes…</p>
       </div>
     );
 
   if (error)
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-destructive-strong">Failed to load shoes</p>
+        <p className="text-xs text-destructive-strong">
+          Couldn't load your shoes
+        </p>
         <p className="text-xs text-muted-foreground mt-1">Try again later</p>
       </div>
     );
@@ -235,7 +237,7 @@ export default function ShoesManager() {
                 // click handler can run).
                 window.setTimeout(() => setShowSuggestions(false), 150);
               }}
-              placeholder="Shoe name (e.g., Pegasus 41)"
+              placeholder="Shoe name (e.g. Pegasus 41)"
               aria-label="Shoe name"
               className="ds-input text-sm"
             />
@@ -269,7 +271,7 @@ export default function ShoesManager() {
             type="text"
             value={newBrand}
             onChange={(e) => setNewBrand(e.target.value)}
-            placeholder="Brand (e.g., Nike)"
+            placeholder="Brand (e.g. Nike)"
             aria-label="Brand"
             className="ds-input text-sm"
           />

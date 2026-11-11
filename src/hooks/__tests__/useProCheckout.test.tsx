@@ -75,17 +75,27 @@ describe("useProCheckout", () => {
     await act(() => result.current.startCheckout("yearly"));
     expect(result.current.notice).not.toBeNull();
 
-    H.result = { success: false, error: "Purchase failed. Try again." };
+    H.result = {
+      success: false,
+      error: "Couldn't complete the purchase. Try again.",
+    };
     await act(() => result.current.startCheckout("yearly"));
     expect(result.current.notice).toBeNull();
-    expect(result.current.error).toBe("Purchase failed. Try again.");
+    expect(result.current.error).toBe(
+      "Couldn't complete the purchase. Try again."
+    );
   });
 
   it("still shows and tracks a real failure", async () => {
-    H.result = { success: false, error: "Purchase failed. Try again." };
+    H.result = {
+      success: false,
+      error: "Couldn't complete the purchase. Try again.",
+    };
     const { result } = renderHook(() => useProCheckout(), { wrapper });
     await act(() => result.current.startCheckout("yearly"));
-    expect(H.toastError).toHaveBeenCalledWith("Purchase failed. Try again.");
+    expect(H.toastError).toHaveBeenCalledWith(
+      "Couldn't complete the purchase. Try again."
+    );
     expect(events()).toEqual(["checkout_started", "checkout_failed"]);
   });
 });

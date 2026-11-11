@@ -351,8 +351,7 @@ export default function PerformanceTab({
       <div className="p-4 rounded-2xl bg-card">
         <h3 className="text-base font-bold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          No performance weeks yet. Log workouts/runs and your weekly index will
-          appear here.
+          Log a workout or a run and your first weekly score appears here.
         </p>
       </div>
     );

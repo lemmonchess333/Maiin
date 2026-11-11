@@ -33,26 +33,26 @@ function wrap(code: string): string {
 }
 
 describe("friendlyAuthError — invalid-credentials bucket", () => {
-  it("user-not-found → 'Invalid email or password'", () => {
+  it("user-not-found → 'Wrong email or password'", () => {
     expect(friendlyAuthError(wrap("user-not-found"))).toBe(
-      "Invalid email or password"
+      "Wrong email or password"
     );
   });
 
-  it("wrong-password → 'Invalid email or password'", () => {
+  it("wrong-password → 'Wrong email or password'", () => {
     expect(friendlyAuthError(wrap("wrong-password"))).toBe(
-      "Invalid email or password"
+      "Wrong email or password"
     );
   });
 
-  it("invalid-credential → 'Invalid email or password' (Firebase Auth's modern consolidated code)", () => {
+  it("invalid-credential → 'Wrong email or password' (Firebase Auth's modern consolidated code)", () => {
     /* As of Firebase Auth 9.7+, the legacy user-not-found and
        wrong-password codes were consolidated into a single
        invalid-credential code for privacy (don't leak account
        existence). The helper covers all three for backwards-
        compatibility with both old and new Firebase versions. */
     expect(friendlyAuthError(wrap("invalid-credential"))).toBe(
-      "Invalid email or password"
+      "Wrong email or password"
     );
   });
 });
@@ -171,9 +171,7 @@ describe("friendlyAuthError — fallthrough behaviour", () => {
 
 describe("friendlyAuthError — substring matching robustness", () => {
   it("matches the bare code without wrapper", () => {
-    expect(friendlyAuthError("user-not-found")).toBe(
-      "Invalid email or password"
-    );
+    expect(friendlyAuthError("user-not-found")).toBe("Wrong email or password");
   });
 
   it("matches when code is embedded in a longer message", () => {
@@ -181,7 +179,7 @@ describe("friendlyAuthError — substring matching robustness", () => {
       friendlyAuthError(
         "Some prefix Firebase Error (auth/wrong-password) some suffix"
       )
-    ).toBe("Invalid email or password");
+    ).toBe("Wrong email or password");
   });
 
   it("matches the first branch even if multiple codes appear in the string", () => {
@@ -193,7 +191,7 @@ describe("friendlyAuthError — substring matching robustness", () => {
       friendlyAuthError(
         "auth/wrong-password followed by auth/network-request-failed"
       )
-    ).toBe("Invalid email or password");
+    ).toBe("Wrong email or password");
   });
 });
 

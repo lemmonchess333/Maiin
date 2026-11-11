@@ -212,7 +212,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
     // test would otherwise assert a clean load and still pass the
     // "runs still computed" half below.
     expect(unfiredFailures()).toEqual([]);
-    expect(result.current.error).toContain("Failed to load runs");
+    expect(result.current.error).toContain("Couldn't load your runs");
     // The weight half still resolved; without a positive here the test
     // would pass on a hook that resolved nothing at all.
     expect(result.current.lastWeightInfo).not.toBeNull();
