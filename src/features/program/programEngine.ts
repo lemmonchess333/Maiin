@@ -1583,10 +1583,13 @@ export function dayRoleOf(
 
 /**
  * Gives each session of a built week its role, which the session keeps
- * (`WorkoutDay.dayRole`). A role shifts reps two either side of the role
- * table's (backlog #3, N9), and since Lift21 that is for a lift held as the
- * main lift on two days of the week. The builders give each day a main lift
- * of its own, so every built session is moderate: its reps are the role
+ * (`WorkoutDay.dayRole`). A role shifts a whole day's reps two either side
+ * of the role table's (backlog #3, N9), which gave a pump day's curls 12 to
+ * 17 and its squats 10 to 14. Since Lift21 a shift is only for a lift held
+ * as the main lift on two days of the week, and the builders give each day
+ * a main lift of its own (the bench press leads two days of a five-day
+ * week, at the same reps: shifting one lift is the re-prescriber's to
+ * learn). So every built session is moderate: its reps are the role
  * table's, and a block's start or end (`represcribeWorkouts`) leaves them
  * there. A plan built before this keeps the roles it has, and an older one
  * that keeps none reads them from its days' positions (`dayRoleOf`).
@@ -1964,24 +1967,37 @@ export function generateProgram(
    */
   const alignSlots = (saved: WorkoutDay, reference: WorkoutDay): WorkoutDay => {
     const pool = [...saved.exercises];
-    const take = (match: (e: ProgramExercise) => boolean) => {
-      const i = pool.findIndex(match);
-      return i >= 0 ? pool.splice(i, 1)[0] : undefined;
-    };
-    // Two passes so an exact same-lift match is never stolen by a
-    // same-category slot that happens to come first.
-    const byId = reference.exercises.map((ref) =>
-      take((e) => e.exerciseId === ref.exerciseId)
+    const slots: (ProgramExercise | undefined)[] = reference.exercises.map(
+      () => undefined
     );
-    const exercises = reference.exercises.map(
-      (ref, i) =>
-        byId[i] ?? take((e) => e.movementCategory === ref.movementCategory)
+    const fill = (
+      match: (e: ProgramExercise, ref: ProgramExercise) => boolean
+    ) =>
+      reference.exercises.forEach((ref, i) => {
+        if (slots[i]) return;
+        const at = pool.findIndex((e) => match(e, ref));
+        if (at >= 0) slots[i] = pool.splice(at, 1)[0];
+      });
+    const sameRole = (e: ProgramExercise, ref: ProgramExercise) =>
+      (e.isAccessory === true) === (ref.isAccessory === true);
+    // In passes, so an exact same-lift match is never stolen by a
+    // same-category slot that happens to come first; and a slot of the
+    // same role before one of the other, so a day's main lift stays its
+    // main lift when a supporting slot's default happens to be the same
+    // lift (a beginner's lat pulldown, which leads the day and is also what
+    // the builder draws for the third pull).
+    fill((e, ref) => e.exerciseId === ref.exerciseId && sameRole(e, ref));
+    fill(
+      (e, ref) =>
+        e.movementCategory === ref.movementCategory && sameRole(e, ref)
     );
+    fill((e, ref) => e.exerciseId === ref.exerciseId);
+    fill((e, ref) => e.movementCategory === ref.movementCategory);
     // Leftovers keep their identity at the tail; unmatched slots take a
     // placeholder the category guard in `makeExercise` will reject.
     return {
       ...saved,
-      exercises: exercises.map((e, i) => e ?? pool[i] ?? saved.exercises[i]),
+      exercises: slots.map((e, i) => e ?? pool[i] ?? saved.exercises[i]),
     };
   };
 

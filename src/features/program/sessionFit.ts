@@ -279,11 +279,15 @@ export function sizeSessionsToTime(
 
   return workouts.map((day) => {
     const mainIndex = day.exercises.findIndex((ex) => ex.isAccessory !== true);
-    const placed = day.exercises.map((ex) => {
+    const placed = day.exercises.map((ex, i) => {
       if (timed(ex)) return { ...ex };
-      const sets = ex.isAccessory !== true ? mainSets : otherSets;
+      // The day's first main lift takes the main lift's sets; a second
+      // one (a full-body day's press, a beginner's second deadlift) three.
+      const sets =
+        i === mainIndex ? mainSets : ex.isAccessory !== true ? 3 : otherSets;
       return { ...ex, sets: Math.min(sets, capFor(ex)) };
     });
+    if (!Number.isFinite(minutes)) return { ...day, exercises: placed };
     // The order lifts are given up in: the highest rank first, and among
     // lifts with none (added after the builders) the last first.
     const rank = (ex: ProgramExercise, i: number) =>
@@ -311,15 +315,13 @@ export function sizeSessionsToTime(
       if (!sessionFits(kept(), minutes)) gone.add(i);
     }
     const exercises = kept();
-    if (Number.isFinite(minutes)) {
-      const total = () => exercises.reduce((n, e) => n + e.sets, 0);
-      for (let pass = 0; pass < 2; pass++) {
-        for (const ex of exercises) {
-          if (timed(ex) || ex.sets >= capFor(ex)) continue;
-          if (total() >= maxSessionSets(minutes)) break;
-          ex.sets += 1;
-          if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
-        }
+    const total = () => exercises.reduce((n, e) => n + e.sets, 0);
+    for (let pass = 0; pass < 2; pass++) {
+      for (const ex of exercises) {
+        if (timed(ex) || ex.sets >= capFor(ex)) continue;
+        if (total() >= maxSessionSets(minutes)) break;
+        ex.sets += 1;
+        if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
       }
     }
     return { ...day, exercises };
