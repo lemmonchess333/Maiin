@@ -123,23 +123,49 @@ function requestOperation(url) {
   return "Function metadata";
 }
 
-async function jsonRequest(url, token, options = {}) {
+/** Waits between tries of a read. A read is tried three times at most. */
+const READ_RETRY_WAITS_MS = [2_000, 5_000];
+/** Answers Google gives for a passing fault, worth asking again. */
+const PASSING_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * One API request. A read (GET) that does not complete, or that Google
+ * answers with 429 or a 5xx, is tried again: once a release had deployed
+ * every function, a single timed-out jobs list failed it and skipped its
+ * Hosting and Pages jobs (#3171). The `:run` dispatch is sent once, so a
+ * retry can never ask Scheduler for a second rollover.
+ */
+export async function jsonRequest(
+  url,
+  token,
+  options = {},
+  { sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}
+) {
   const operation = requestOperation(url);
+  const read = (options.method ?? "GET") === "GET";
+  const waits = read ? READ_RETRY_WAITS_MS : [];
   let response;
-  try {
-    response = await fetch(url, {
-      ...options,
-      headers: { Authorization: `Bearer ${token}` },
-      redirect: "error",
-      signal: AbortSignal.timeout(30_000),
-    });
-  } catch {
-    throw new ChallengeReleaseError(`${operation} request did not complete`);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: { Authorization: `Bearer ${token}` },
+        redirect: "error",
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      response = null;
+    }
+    if (response?.ok) break;
+    const lasting = response && !PASSING_STATUSES.has(response.status);
+    if (lasting || attempt >= waits.length)
+      throw new ChallengeReleaseError(
+        response
+          ? `${operation} request refused (HTTP ${response.status})`
+          : `${operation} request did not complete`
+      );
+    await sleep(waits[attempt]);
   }
-  if (!response.ok)
-    throw new ChallengeReleaseError(
-      `${operation} request refused (HTTP ${response.status})`
-    );
   try {
     return await response.json();
   } catch {

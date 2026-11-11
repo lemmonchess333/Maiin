@@ -82,5 +82,51 @@ class ReadinessTests(unittest.TestCase):
             self.assertEqual(query, {"filter": ["ttlConfig:*"], "pageToken": ["next/page"]})
 
 
+class PollTests(unittest.TestCase):
+    """The wait for index builds polls for up to an hour; one poll Google
+    does not answer must not fail the release."""
+
+    def run_verify(self, answers):
+        lists = iter(answers)
+
+        def list_resources(kind, token, **params):
+            answer = next(lists)
+            if isinstance(answer, BaseException):
+                raise answer
+            return answer
+
+        clock = iter(range(0, 100_000, 30))
+        with patch.object(readiness, "list_resources", side_effect=list_resources), \
+                patch.object(readiness, "pending_resources", return_value=[]), \
+                patch.object(readiness.subprocess, "check_output", return_value="test-token\n"), \
+                patch.object(readiness.time, "monotonic", side_effect=lambda: next(clock)), \
+                patch.object(readiness.time, "sleep") as sleep, \
+                patch("builtins.print"):
+            readiness.verify()
+        return sleep
+
+    def test_a_poll_google_does_not_answer_is_tried_again(self):
+        for failure in [readiness.urllib.error.URLError("timed out"), TimeoutError(), ConnectionResetError()]:
+            sleep = self.run_verify([failure, [], []])
+            sleep.assert_called_once_with(30)
+
+    def test_a_poll_answered_with_429_or_a_5xx_is_tried_again(self):
+        for code in [408, 429, 500, 503]:
+            error = readiness.urllib.error.HTTPError("https://example.invalid", code, "busy", {}, None)
+            sleep = self.run_verify([[], error, [], []])
+            sleep.assert_called_once_with(30)
+
+    def test_a_refusal_fails_at_once(self):
+        for code in [401, 403, 404]:
+            error = readiness.urllib.error.HTTPError("https://example.invalid", code, "no", {}, None)
+            with self.assertRaises(readiness.urllib.error.HTTPError):
+                self.run_verify([error, [], []])
+
+    def test_google_not_answering_until_the_deadline_still_fails(self):
+        error = readiness.urllib.error.URLError("timed out")
+        with self.assertRaisesRegex(RuntimeError, "timed out: Google gave no answer"):
+            self.run_verify([error] * 1000)
+
+
 if __name__ == "__main__":
     unittest.main()
