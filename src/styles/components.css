@@ -11,7 +11,7 @@
      .ds-auth-logo         Auth-only brand mark container.
      .launch-splash        The launch overlay (index.html's #boot-splash
                            and LaunchSplash): the iOS launch image's
-                           hexagon, at its size and place.
+                           bar, at its size and place.
      .ds-safe-top-occluder Fixed iOS safe-area cover for app shell only.
 
    These exist to keep app-shell, auth, and feature cards on a
@@ -491,17 +491,16 @@ html.booting #boot-splash {
 .launch-splash-mark {
   position: relative;
   display: block;
-  height: calc(max(100vw, 100vh) * 0.134);
+  height: calc(max(100vw, 100vh) * 0.111);
   width: auto;
   color: hsl(var(--lifting));
 }
 /* The mark's moving parts (LaunchSplash), each a layer of its own that
    only transform and opacity move, so the browser can run the motion off
    the main thread while the app starts underneath: the flight (and the
-   lift) on the outer layer, the breath inside it, and the rising chevron
-   over the hexagon. The chevron starts transparent, so the first frame is
-   the hexagon alone, and is painted in the launch colour, which on the
-   launch ground reads as the hole it becomes. */
+   lift) on the outer layer, the breath inside it, and the rising stem
+   under the bar. The stem starts transparent, so the first frame is the
+   bar alone. */
 .launch-splash-flight {
   position: relative;
   will-change: transform;
@@ -509,18 +508,14 @@ html.booting #boot-splash {
 .launch-splash-body {
   position: relative;
 }
-.launch-splash-cut {
-  position: absolute;
-  inset: 0;
-}
-.launch-splash-chevron {
+.launch-splash-stem {
   position: absolute;
   inset: 0;
   opacity: 0;
-  color: hsl(var(--launch));
+  color: hsl(var(--lifting));
   will-change: transform, opacity;
 }
-.launch-splash-chevron > svg {
+.launch-splash-stem > svg {
   display: block;
   width: 100%;
   height: 100%;

@@ -167,11 +167,12 @@ describe("cold-start chrome agrees with the dark canvas", () => {
         )
       )
     );
-    // The hexagon's widest row runs through the vertical centre. The
-    // launch image draws the hexagon alone (the launch animation adds the
-    // chevron), but scanning inwards from both edges would still find the
-    // shape's true extents if a cut split the row.
-    const row = png.height >> 1;
+    // The launch image draws the mark's bar alone (the launch animation
+    // adds the stem). The bar sits above the centre of the mark's 1024
+    // box, which is 22% of the square: this row runs through it at 290 of
+    // those 1024, above its notch, where it is whole from end to end.
+    const box = png.width * 0.22;
+    const row = Math.round((png.height - box) / 2 + (290 / 1024) * box);
     const at = (x: number) => {
       const i = (png.width * row + x) << 2;
       return [png.data[i], png.data[i + 1], png.data[i + 2]];
@@ -192,11 +193,11 @@ describe("cold-start chrome agrees with the dark canvas", () => {
     expect(b).toBeGreaterThan(r);
     expect(r).toBeGreaterThan(g);
 
-    // The mark has to sit in a size band, not at an exact width. The
-    // hexagon is 550.8/1024 of its box, so the 22% box paints ~11.8% of
-    // the square; the band below spans roughly a 0.19-0.23 box. Too small
-    // and the phone crop leaves a speck; too large and it loses its
-    // padding (the first draft of this asset was 0.26, which fails this).
+    // The mark has to sit in a size band, not at an exact width. The bar
+    // is 524/1024 of its box, so the 22% box paints ~11.3% of the square;
+    // the band below spans roughly a 0.2-0.24 box. Too small and the
+    // phone crop leaves a speck; too large and it loses its padding (the
+    // first draft of this asset was 0.26, which fails this).
     const share = (right - left) / png.width;
     expect(share).toBeGreaterThan(0.1);
     expect(share).toBeLessThan(0.125);

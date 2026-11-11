@@ -11,15 +11,14 @@ import { resolve } from "node:path";
 import {
   flightBetween,
   flightFrames,
-  hexagonClipPath,
   isAutomated,
   settled,
   springOut,
 } from "../launchSplash";
 import {
   LAUNCH_MARK_SHARE,
-  MARK_CORNER,
-  MARK_HEXAGON,
+  MARK_BAR,
+  MARK_STEM,
   MARK_VIEWBOX,
 } from "../brandMark";
 
@@ -91,31 +90,13 @@ describe("flightFrames", () => {
   });
 
   it("leaves upward and bows away from the straight line", () => {
-    // The first step is mostly a climb, as the chevron's was.
+    // The first step is mostly a climb, as the stem's was.
     expect(Math.abs(points[1].y)).toBeGreaterThan(Math.abs(points[1].x) * 2);
     // Halfway, the centre is above the straight line from start to target
     // (y on the line at that x, in screen terms, is larger).
     const mid = points[Math.floor(points.length / 2)];
     const lineY = (mid.x / flight.x) * flight.y;
     expect(mid.y).toBeLessThan(lineY);
-  });
-});
-
-describe("hexagonClipPath", () => {
-  it("is brandMark.ts's inset hexagon, in the mark's box", () => {
-    const [vx, vy, vw, vh] = MARK_VIEWBOX.split(" ").map(Number);
-    const points = /^polygon\((.*)\)$/
-      .exec(hexagonClipPath())![1]
-      .split(", ")
-      .map((pair) => pair.split(" ").map((v) => parseFloat(v) / 100));
-    const hexagon = MARK_HEXAGON.split(" ").map((pair) =>
-      pair.split(",").map(Number)
-    );
-    expect(points).toHaveLength(hexagon.length);
-    points.forEach(([px, py], i) => {
-      expect(vx + px * vw).toBeCloseTo(hexagon[i][0], 1);
-      expect(vy + py * vh).toBeCloseTo(hexagon[i][1], 1);
-    });
   });
 });
 
@@ -142,17 +123,24 @@ describe("isAutomated", () => {
 });
 
 describe("the launch frame is drawn the same everywhere", () => {
-  it("index.html's static frame is brandMark.ts's hexagon", () => {
+  it("index.html's static frame is brandMark.ts's bar", () => {
     const html = read("index.html");
     const frame = /<div id="boot-splash"[\s\S]*?<\/div>\s*<div id="root">/.exec(
       html
     )?.[0];
     expect(frame).toBeTruthy();
     expect(frame).toContain(`viewBox="${MARK_VIEWBOX}"`);
-    expect(frame).toContain(`points="${MARK_HEXAGON}"`);
-    expect(frame).toContain(`stroke-width="${MARK_CORNER}"`);
-    // The hexagon alone: the chevron is what the animation adds.
-    expect(frame).not.toContain("<polyline");
+    expect(frame).toContain(`d="${MARK_BAR}"`);
+    // The bar alone: the stem is what the animation adds.
+    expect(frame).not.toContain(MARK_STEM);
+    expect(frame!.match(/<path/g)).toHaveLength(1);
+  });
+
+  it("the native launch image is drawn from the bar alone", () => {
+    const gen = read("scripts/art/gen-splash.mjs");
+    expect(gen).toContain("const { bar } = readMark(root);");
+    expect(gen.match(/<path /g)).toHaveLength(1);
+    expect(gen).toContain('<path d="${bar}"');
   });
 
   it("the web size is the native launch image's size", () => {

@@ -545,7 +545,7 @@ export default function GuideWalk({
             opacity: { duration: FADE_S },
           }}
         >
-          <GuideMark className="size-full" cutClass="stroke-background" />
+          <GuideMark className="size-full" />
         </motion.div>
       )}
     </div>,

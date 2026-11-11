@@ -15,6 +15,7 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 import { workFigure } from "@/lib/liftFigures";
 import { THEME } from "@/lib/theme";
+import { MARK_BAR, MARK_STEM, MARK_VIEWBOX } from "@/lib/brandMark";
 import type { FinishTone } from "@/lib/finishMoment";
 
 /** `12.3km` — the compact no-space form this card's small stats use. */
@@ -36,7 +37,7 @@ function elevationLabelCompact(metres: number, unit: DistanceUnit) {
  *
  * Design constraints (DESIGN_GUIDE §branding is binding):
  *  - Archivo numerals are the typographic HERO (the big stat number).
- *  - Branding is a SMALL hexagon mark in a corner + the user's handle —
+ *  - Branding is the SMALL brand mark in a corner + the user's handle —
  *    NEVER an oversized wordmark (this replaces the old ShareCard's giant
  *    "TROPOS" header, which violated that rule).
  *  - Closed palette: RUN = coral (#D4637A), LIFT = purple (#7B72E9),
@@ -91,7 +92,7 @@ export interface ShareCardRenderData {
   template: ShareTemplate;
   format: ShareFormat;
   background: ShareBackground;
-  /** User handle (displayName) shown next to the hexagon mark. */
+  /** User handle (displayName) shown next to the brand mark. */
   handle: string;
   /** Pre-formatted date string. */
   date: string;
@@ -220,32 +221,18 @@ function fmtVolume(kg?: number, liftUnit: LiftUnit = "kg"): string {
   return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
 }
 
-/** Small brand hexagon + upward-chevron, drawn inline (capture-safe). */
-function HexMark({ size, color }: { size: number; color: string }) {
+/** The brand mark, small, drawn inline (capture-safe). */
+function ShareMark({ size, color }: { size: number; color: string }) {
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox={MARK_VIEWBOX}
       width={size}
       height={size}
-      fill="none"
       aria-hidden
+      data-share-mark=""
     >
-      <polygon
-        points="50,6 89,28 89,72 50,94 11,72 11,28"
-        stroke={color}
-        strokeOpacity={0.9}
-        strokeWidth={6}
-        strokeLinejoin="round"
-      />
-      <polyline
-        points="35,57 50,41 65,57"
-        stroke={color}
-        strokeOpacity={0.9}
-        strokeWidth={6}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        fill="none"
-      />
+      <path d={MARK_BAR} fill={color} fillOpacity={0.9} />
+      <path d={MARK_STEM} fill={color} fillOpacity={0.9} />
     </svg>
   );
 }
@@ -507,7 +494,7 @@ function ShareCardRenderer({
           <RecapTemplate data={data} scale={scale} show={show} />
         )}
 
-        {/* Footer: small hexagon mark + handle + date (the ONLY branding) */}
+        {/* Footer: small brand mark + handle + date (the ONLY branding) */}
         <div
           style={{
             marginTop: "auto",
@@ -516,7 +503,7 @@ function ShareCardRenderer({
             gap: 16 * scale,
           }}
         >
-          <HexMark size={44 * scale} color={accent} />
+          <ShareMark size={44 * scale} color={accent} />
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span style={{ fontWeight: 700, fontSize: 30 * scale }}>
               {data.handle}

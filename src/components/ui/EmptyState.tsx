@@ -10,17 +10,14 @@ import { THEME } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
- * Design-system empty-state primitive built around the brand hexagon
+ * Design-system empty-state primitive built around the hexagon
  * (DESIGN_GUIDE §7). One headline, an optional sub, and at most ONE action.
  *
- * The hexagon is the brand signature's first in-app appearance outside the
- * streak badges. It is drawn fresh as stroke vector here — NOT the raster app
- * icon (which is the legacy "ADAPT" barbell mark, pre-Tropos rebrand; the
- * documented purple-hexagon-with-upward-chevron brand mark has no committed
- * vector asset, so geometry is derived from the pointy-top hexagon already
- * used by `features/streaks/BadgeHex` + the chevron from CLAUDE.md's logo
- * description). Hexagon usage rule: empty-states and badges ONLY — never
- * decoration on a populated surface.
+ * The hexagon is the shape empty states share with the badges
+ * (`features/streaks/BadgeHex`), drawn as stroke vector with an upward
+ * chevron inside when no icon is given. It is not the logo: the mark is a
+ * T (DS7, `BrandMark`). Hexagon usage rule: empty-states and badges ONLY,
+ * never decoration on a populated surface.
  *
  * Distinct from the older `src/components/EmptyState.tsx` (a square-icon
  * variant still used by ExerciseHistory); this is the canonical
@@ -30,7 +27,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 // Pointy-top hexagon, inset from the 100×100 viewBox so the ~2px stroke
 // isn't clipped. Same family as BadgeHex's geometry for a consistent mark.
 const HEX_POINTS = "50,6 89,28 89,72 50,94 11,72 11,28";
-// Upward chevron (the brand cutout) — shown when no context icon is supplied.
+// Upward chevron, shown when no context icon is supplied.
 const CHEVRON = "35,57 50,41 65,57";
 
 interface EmptyStateProps {
@@ -40,7 +37,7 @@ interface EmptyStateProps {
   sub?: string;
   /** Optional lucide icon centred inside the hexagon for context
    *  (e.g. Activity for performance, Users for social). When omitted the
-   *  hexagon shows its upward-chevron brand cutout. */
+   *  hexagon shows an upward chevron. */
   icon?: LucideIcon;
   /** At most one action. `href` routes via <Link>; `onClick` is a button.
    *  `variant` picks the canonical Button look (defaults to `primary`);

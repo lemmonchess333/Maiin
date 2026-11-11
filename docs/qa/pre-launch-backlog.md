@@ -4348,3 +4348,31 @@ WKWebView.
       and lunch foods, focus the field with the chip on Breakfast, then
       on Lunch. Passing: each list leads with that meal's foods, and
       logging one does not reshuffle the list on screen.
+
+## The mark is a T whose stem rises (DS7, 2026-11-11)
+
+Affects: the app icon in its three modes, the launch image and the launch
+animation (`LaunchSplash`), Home's header mark (`BrandMark`), the guide's
+face (`GuideMark`), the sign-in screens' logo and the mark on share cards.
+The icons and the launch image were regenerated and looked at as files;
+the launch animation never shows under automation, so only a phone shows
+the handover.
+
+- [ ] **The icon.** Install a TestFlight build made after the merge.
+      Passing: the home screen shows the white T on purple; with the home
+      screen set to Dark it is the purple T on a dark tile, and set to
+      Tinted it takes the tint. Spotlight, Settings and a notification
+      show the same T, and the gap under the bar is still open at the
+      smallest of them.
+- [ ] **The launch.** Force-quit and open the app three times. Passing:
+      the launch image is the purple bar alone, a little above the middle
+      of the screen; the stem rises into it without the bar moving or
+      changing size as the image hands over; the whole mark then flies
+      into Home's header and lands on the header's mark with no jump.
+- [ ] **A slow start.** Open the app on a poor connection. Passing: once
+      the stem is in, the mark breathes until the app is ready.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the app. Passing:
+      the stem fades in where it stays, nothing breathes or flies, and
+      the overlay fades.
+- [ ] **A share card.** Share a run and a medal. Passing: the small mark
+      in the card's corner is the T, in the card's colour.
