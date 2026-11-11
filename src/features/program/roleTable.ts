@@ -21,6 +21,10 @@ import type { PrimaryGoal } from "./programTypes";
  * two; four on a strength main lift from intermediate up. "Lose fat" builds
  * as Build muscle, with the cut in the nutrition targets. Timed holds keep
  * their seconds and are not read here.
+ *
+ * A deadlift from the floor is its own row (Lift21): the main lift's in any
+ * slot, and past beginner three sets at most, 5–8 wherever the goal gives a
+ * range. Sets of 8 to 12 on it end on a tired back.
  */
 export interface RoleReps {
   sets: number;
@@ -107,18 +111,49 @@ export function isHighRepIsolation(exerciseId: string): boolean {
   return muscle !== undefined && HIGH_REP_MUSCLE_GROUPS.has(muscle);
 }
 
-/** The table's row for one exercise. */
+/** The deadlifts pulled from the floor, which take a row of their own. The
+ *  server keeps the same list (`functions/lib/roleTable.js`). */
+export const FLOOR_DEADLIFT_IDS: readonly string[] = [
+  "deadlift",
+  "sumo-deadlift",
+  "trap-bar-deadlift",
+];
+
+/** Whether a lift is a deadlift pulled from the floor. */
+export function isFloorDeadlift(exerciseId: string): boolean {
+  return FLOOR_DEADLIFT_IDS.includes(exerciseId);
+}
+
+/** Whether a lift is a floor deadlift held as a main lift. */
+export function isMainFloorDeadlift(exercise: {
+  exerciseId: string;
+  isAccessory?: boolean;
+}): boolean {
+  return exercise.isAccessory !== true && isFloorDeadlift(exercise.exerciseId);
+}
+
+/**
+ * The table's row for one exercise. A floor deadlift takes the main-lift
+ * row in any slot, and past beginner 3 sets of 5 to 8 at most (Lift21): it
+ * is never a supporting lift's 8 to 12, and a fourth set of it costs more
+ * than it gives.
+ */
 export function roleRepsFor(
   goal: PrimaryGoal | undefined,
   exercise: { exerciseId: string; isAccessory?: boolean },
   experience: Experience | undefined
 ): RoleReps {
-  return roleReps(
+  const floor = isFloorDeadlift(exercise.exerciseId);
+  const row = roleReps(
     goal,
-    exerciseRole(exercise),
+    floor ? "main" : exerciseRole(exercise),
     experience,
     isHighRepIsolation(exercise.exerciseId)
   );
+  if (!floor || toExperience(experience) === "beginner") return row;
+  return row.top === undefined
+    ? { ...row, sets: Math.min(row.sets, 3) }
+    : { sets: Math.min(row.sets, 3), bottom: 5, top: 8 };
 }
 
 /** The reps a whole plan's starting loads are estimated for: its main

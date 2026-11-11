@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { estimateSessionMinutes } from "../expressSession";
 import {
-  fitSessionsToTime,
+  FIT_TOLERANCE,
   refitSessionsToTime,
   sessionFits,
   sessionMinutesFor,
+  sizeSessionsToTime,
 } from "../sessionFit";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -77,214 +78,215 @@ describe("sessionMinutesFor", () => {
   });
 });
 
-describe("fitSessionsToTime — a new plan, built to fit (Lift4 (5))", () => {
-  it("leaves a day that fits alone", () => {
-    const day = fullBody();
-    expect(minutesOf(day, 120)).toBeLessThanOrEqual(120);
-    expect(shape(fitSessionsToTime([day], 120)[0])).toBe(shape(day));
-  });
-
-  it("cuts isolations' sets first, the largest and then the latest", () => {
-    const [day] = fitSessionsToTime([fullBody()], 70);
-    expect(minutesOf(day, 70)).toBeLessThanOrEqual(70);
-    expect(shape(day)).toBe(
-      "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 2"
-    );
-  });
-
-  // Two of the same day: every muscle gets direct work on the other, so
-  // the first day's lifts may go.
-  const twice = () => [fullBody(), { ...fullBody(), dayName: "Again" }];
-
-  it("then takes a main lift to two sets before a muscle loses its second day (Lift11)", () => {
-    // Every isolation here is its muscle's second day: the squat gives its
-    // third set and the calf raise stays.
-    const [day] = fitSessionsToTime(twice(), 60);
-    expect(shape(day)).toBe(
-      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
-    );
-    expect(minutesOf(day, 60)).toBeLessThanOrEqual(60);
-  });
-
-  it("then takes the main lifts to two sets, then drops other compounds", () => {
-    const [day] = fitSessionsToTime(twice(), 40);
-    expect(shape(day)).toBe("bench-press 2, squat 2, lat-pulldown 2");
-    expect(minutesOf(day, 40)).toBeLessThanOrEqual(40);
-  });
-
-  it("keeps a muscle's last direct lift while something else can give way", () => {
-    // One day a week: every accessory is its muscle's only direct work, so
-    // the main lifts give a set before any of them goes…
-    const [hour] = fitSessionsToTime([fullBody()], 60);
-    expect(shape(hour)).toBe(
-      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
-    );
-    // …and then time wins: the session fits as promised.
-    const [short] = fitSessionsToTime([fullBody()], 35);
-    expect(minutesOf(short, 35)).toBeLessThanOrEqual(35);
-    expect(short.exercises.length).toBeLessThan(6);
-  });
-
-  it("never drops a main lift, nor takes one below two sets", () => {
-    const [day] = fitSessionsToTime([fullBody()], 10);
-    expect(shape(day)).toBe("bench-press 2, squat 2");
-    // …and runs over rather than gut the session; the card says so.
-    expect(minutesOf(day, 10)).toBeGreaterThan(10);
-  });
-
-  it("rests less in a 30-minute plan, which holds about six working sets", () => {
-    const [day] = fitSessionsToTime([fullBody()], 30);
-    const sets = day.exercises.reduce((n, e) => n + e.sets, 0);
-    expect(sets).toBeGreaterThanOrEqual(6);
-    expect(minutesOf(day, 30)).toBeLessThanOrEqual(30);
-    // At full rests the same lifts would not fit the half hour.
-    expect(minutesOf(day, 60)).toBeGreaterThan(30);
-  });
-
-  it("drops a lift whose muscle is worked elsewhere before its last", () => {
-    // The calf raise is the week's only calf work, the crunch is not: once
-    // the main lifts are at two sets, the crunch goes and the calf raise
-    // stays.
-    const other: WorkoutDay = {
-      ...fullBody(),
-      dayName: "Other",
-      exercises: fullBody().exercises.filter(
-        (e) => e.exerciseId !== "standing-calf-raise"
-      ),
-    };
-    const [fitted] = fitSessionsToTime([fullBody(), other], 54);
-    const ids = fitted.exercises.map((e) => e.exerciseId);
-    expect(ids).toContain("standing-calf-raise");
-    expect(ids).not.toContain("cable-crunch");
-  });
-
-  it("keeps the 18-set ceiling whatever the time", () => {
-    const big: WorkoutDay = {
-      ...fullBody(),
-      exercises: fullBody().exercises.map((e) => ({ ...e, sets: 5 })),
-    };
-    expect(sessionFits(big.exercises, 600)).toBe(false);
-    const [day] = fitSessionsToTime([big], 600);
-    expect(day.exercises.reduce((n, e) => n + e.sets, 0)).toBeLessThanOrEqual(
-      18
-    );
-  });
-});
-
-describe("fitSessionsToTime — every muscle on two days, and the lifts added for it", () => {
-  const withoutCalves = (): WorkoutDay => ({
+describe("sizeSessionsToTime — a new plan, sized to its time (Lift21)", () => {
+  /** The full-body day as a builder hands it over: one main lift, ranked
+   *  in its own order. */
+  const ranked = (): WorkoutDay => ({
     ...fullBody(),
-    dayName: "No calves",
-    exercises: fullBody().exercises.filter(
-      (e) => e.exerciseId !== "standing-calf-raise"
-    ),
+    exercises: fullBody().exercises.map((e, i) => ({
+      ...e,
+      isAccessory: i > 0,
+      keepRank: i + 1,
+    })),
   });
+  const sized = (
+    day: WorkoutDay,
+    minutes: number,
+    experience: "beginner" | "intermediate" = "intermediate"
+  ) => sizeSessionsToTime([day], minutes, experience)[0];
+  const total = (day: WorkoutDay) =>
+    day.exercises.reduce((n, e) => n + e.sets, 0);
 
-  it("drops a lift whose muscles keep two days before a muscle's second day", () => {
-    // Abs on three days, calves on two: the crunch can go and the calves
-    // still have two days; the calf raise can't.
-    const [day] = fitSessionsToTime(
-      [fullBody(), fullBody(), withoutCalves()],
-      60
+  it("with no length to fit, gives the main lift four sets and every other lift three", () => {
+    expect(shape(sized(ranked(), Number.POSITIVE_INFINITY))).toBe(
+      "bench-press 4, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
     );
-    const ids = day.exercises.map((e) => e.exerciseId);
-    expect(ids).toContain("standing-calf-raise");
-    expect(ids).not.toContain("cable-crunch");
   });
 
-  /** A lateral raise, the side delts' one lift. */
-  const raise = (instanceId: string) =>
-    ex("lateral-raise", 3, {
-      instanceId,
+  it("takes lifts off the end of the day's order, and no set off a lift it keeps", () => {
+    const hour = sized(ranked(), 60);
+    const short = sized(ranked(), 45);
+    expect(short.exercises.length).toBeLessThan(hour.exercises.length);
+    // What is left is the start of the day's order.
+    expect(short.exercises.map((e) => e.exerciseId)).toEqual(
+      ranked()
+        .exercises.slice(0, short.exercises.length)
+        .map((e) => e.exerciseId)
+    );
+    for (const day of [hour, short])
+      for (const e of day.exercises) expect(e.sets).toBeGreaterThanOrEqual(3);
+  });
+
+  it("gives the main lift three sets under an hour", () => {
+    // Time left over can still take it to four; with none, it is three.
+    const day = sized(ranked(), 45);
+    expect(day.exercises[0].sets).toBeGreaterThanOrEqual(3);
+    const tight: WorkoutDay = {
+      ...ranked(),
+      exercises: ranked().exercises.slice(0, 3),
+    };
+    expect(shape(sized(tight, 36))).toBe(
+      "bench-press 3, squat 3, lat-pulldown 3"
+    );
+  });
+
+  it("fits the day within the tolerance, and inside its length once time is given back", () => {
+    for (const minutes of [45, 60, 75]) {
+      const day = sized(ranked(), minutes);
+      expect(sessionFits(day.exercises, minutes)).toBe(true);
+      expect(minutesOf(day, minutes)).toBeLessThanOrEqual(
+        Math.ceil(minutes * (1 + FIT_TOLERANCE))
+      );
+    }
+  });
+
+  it("gives time left over back as sets, to four a lift", () => {
+    // Three lifts in 75 minutes: every one goes to four.
+    const three: WorkoutDay = {
+      ...ranked(),
+      exercises: ranked().exercises.slice(0, 3),
+    };
+    expect(shape(sized(three, 75))).toBe(
+      "bench-press 4, squat 4, lat-pulldown 4"
+    );
+  });
+
+  it("lets a lift a later pass added go before any the builders ranked", () => {
+    const added = ex("lateral-raise", 3, {
+      instanceId: "added",
       movementCategory: "vertical_push",
       isAccessory: true,
       weight: 10,
     });
-  /** The full-body day with the plan's own lateral raise. */
-  const withRaise = (): WorkoutDay => ({
-    ...fullBody(),
-    dayName: "With a raise",
-    exercises: [...fullBody().exercises, raise("own-raise")],
+    const four = ranked().exercises.slice(0, 4);
+    const day: WorkoutDay = { ...ranked(), exercises: [...four, added] };
+    expect(sized(day, 600).exercises).toHaveLength(5);
+    // The longest day that has to give one lift up gives up the added one.
+    const fewer = [70, 65, 60, 55, 50]
+      .map((minutes) => sized(day, minutes))
+      .find((d) => d.exercises.length === 4);
+    expect(fewer?.exercises.map((e) => e.exerciseId)).toEqual(
+      four.map((e) => e.exerciseId)
+    );
   });
 
-  it("lets an added lift that costs no muscle a day go first, and gives back the sets it took", () => {
-    // The leg press was added, and the squats work the quads on both days:
-    // it goes before anything else gives. The added raise is the side
-    // delts' second day (the other day has the plan's own), so it stays
-    // while a main lift gives its third set (Lift11).
-    const extras = new Set(["leg", "raise"]);
+  it("brings back one of the day's first four when it fits once a dearer lift has gone", () => {
+    // The squat is dear and the curl after it cheap. In 25 minutes the
+    // curl goes, then the squat, and the curl, the day's fourth piece, fits
+    // again; the pushdown, its fifth, stays out.
     const day: WorkoutDay = {
-      ...fullBody(),
+      ...ranked(),
       exercises: [
-        ...fullBody().exercises,
-        ex("leg-press", 3, {
-          instanceId: "leg",
-          movementCategory: "knee_dominant",
+        ex("bench-press", 3, { keepRank: 1 }),
+        ex("lat-pulldown", 3, {
+          movementCategory: "vertical_pull",
           isAccessory: true,
-          weight: 120,
+          keepRank: 2,
         }),
-        raise("raise"),
+        ex("squat", 3, {
+          movementCategory: "knee_dominant",
+          weight: 90,
+          isAccessory: true,
+          keepRank: 3,
+        }),
+        ex("db-curl", 3, {
+          movementCategory: "arms_biceps",
+          isAccessory: true,
+          weight: 10,
+          keepRank: 4,
+        }),
+        ex("rope-tricep-pushdown", 3, {
+          movementCategory: "arms_triceps",
+          isAccessory: true,
+          weight: 20,
+          keepRank: 5,
+        }),
       ],
     };
-    const [fitted] = fitSessionsToTime([day, withRaise()], 68, extras);
-    expect(shape(fitted)).toBe(
-      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2, lateral-raise 2"
-    );
-    // Without the leg press from the start, the day comes out the same: no
-    // set stays cut for a lift that went.
-    const withoutLeg: WorkoutDay = {
-      ...day,
-      exercises: day.exercises.filter((e) => e.instanceId !== "leg"),
-    };
-    expect(shape(fitted)).toBe(
-      shape(fitSessionsToTime([withoutLeg, withRaise()], 68, extras)[0])
-    );
+    expect(sized(day, 25).exercises.map((e) => e.exerciseId)).toEqual([
+      "bench-press",
+      "lat-pulldown",
+      "db-curl",
+    ]);
   });
 
-  it("keeps an added lift that is a muscle's only direct work while something else can give way", () => {
-    // Nothing else in the week works the side delts: the added raise is
-    // their only lift, so it stays, and the day's other lifts give sets.
+  it("keeps three lifts however short the time, and two in half an hour", () => {
+    expect(sized(ranked(), 40).exercises).toHaveLength(3);
+    // …running over rather than gutting the session; the card says so.
+    expect(sized(ranked(), 5).exercises).toHaveLength(2);
+  });
+
+  it("gives a beginner three sets on the main lift and two elsewhere, and three at most", () => {
+    const day = sized(ranked(), Number.POSITIVE_INFINITY, "beginner");
+    expect(shape(day)).toBe(
+      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
+    );
+    for (const e of sized(ranked(), 600, "beginner").exercises)
+      expect(e.sets).toBe(3);
+  });
+
+  it("gives a half-hour day three and two, which holds about six working sets", () => {
+    const day = sized(ranked(), 30);
+    expect(total(day)).toBeGreaterThanOrEqual(6);
+    for (const e of day.exercises) expect(e.sets).toBeLessThanOrEqual(3);
+    expect(sessionFits(day.exercises, 30)).toBe(true);
+    // At full rests the same lifts would not fit the half hour.
+    expect(minutesOf(day, 60)).toBeGreaterThan(30);
+  });
+
+  it("keeps a deadlift from the floor to three sets", () => {
     const day: WorkoutDay = {
-      ...fullBody(),
-      exercises: [...fullBody().exercises, raise("raise")],
-    };
-    const [fitted] = fitSessionsToTime(
-      [day, fullBody()],
-      68,
-      new Set(["raise"])
-    );
-    expect(fitted.exercises.map((e) => e.exerciseId)).toContain(
-      "lateral-raise"
-    );
-    expect(minutesOf(fitted, 68)).toBeLessThanOrEqual(68);
-    // …and in half an hour time wins.
-    const [short] = fitSessionsToTime(
-      [day, fullBody()],
-      30,
-      new Set(["raise"])
-    );
-    expect(minutesOf(short, 30)).toBeLessThanOrEqual(30);
-  });
-
-  it("never counts an added lift as a muscle's direct work", () => {
-    // Day B's crunch was added; day A's is the plan's own, and its last in
-    // the day. Squeezed, day A keeps its crunch: B's could go later.
-    const ownLast: WorkoutDay = {
-      ...fullBody(),
+      ...ranked(),
       exercises: [
-        ...fullBody().exercises.filter((e) => e.exerciseId !== "cable-crunch"),
-        fullBody().exercises.find((e) => e.exerciseId === "cable-crunch")!,
+        ex("deadlift", 3, {
+          movementCategory: "hip_dominant",
+          weight: 100,
+          keepRank: 1,
+        }),
+        ...ranked().exercises.slice(2, 4),
       ],
     };
-    const b: WorkoutDay = {
-      ...withoutCalves(),
-      dayName: "B",
-      exercises: withoutCalves().exercises.map((e) =>
-        e.exerciseId === "cable-crunch" ? { ...e, instanceId: "added" } : e
-      ),
+    expect(sized(day, 600).exercises[0].sets).toBe(3);
+  });
+
+  it("keeps the day's set ceiling: 18, and 21 from 75 minutes", () => {
+    const eight: WorkoutDay = {
+      ...ranked(),
+      exercises: [
+        ...ranked().exercises,
+        ex("db-curl", 3, {
+          movementCategory: "arms_biceps",
+          isAccessory: true,
+          weight: 10,
+          keepRank: 7,
+        }),
+        ex("rope-tricep-pushdown", 3, {
+          movementCategory: "arms_triceps",
+          isAccessory: true,
+          weight: 20,
+          keepRank: 8,
+        }),
+      ],
     };
-    const [a] = fitSessionsToTime([ownLast, b], 60, new Set(["added"]));
-    expect(a.exercises.map((e) => e.exerciseId)).toContain("cable-crunch");
+    expect(total(sized(eight, 70))).toBeLessThanOrEqual(18);
+    expect(total(sized(eight, 600))).toBeLessThanOrEqual(21);
+    expect(total(sized(eight, 600))).toBeGreaterThan(18);
+  });
+
+  it("leaves a timed hold's sets alone", () => {
+    const plank = ex("plank", 2, {
+      movementCategory: "core",
+      isAccessory: true,
+      repUnit: "seconds",
+      reps: 45,
+      weight: 0,
+      keepRank: 2,
+    });
+    const day: WorkoutDay = {
+      ...ranked(),
+      exercises: [ranked().exercises[0], plank],
+    };
+    expect(sized(day, 600).exercises[1].sets).toBe(2);
   });
 });
 

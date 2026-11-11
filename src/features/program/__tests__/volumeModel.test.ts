@@ -9,13 +9,10 @@ import {
   SECONDARY_SET_WEIGHT,
   balancePushPull,
   reconcileToLandmarks,
-  hingeAccessoryPastCeiling,
-  accessoriesPastCeiling,
   primaryJudgementForExercise,
   toCanonical,
   type JudgementMuscle,
 } from "../volumeModel";
-import { generateProgram } from "../programEngine";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
 function ex(overrides: Partial<ProgramExercise>): ProgramExercise {
@@ -594,77 +591,6 @@ describe("the hinge work keeps the hamstrings' ceiling (L7)", () => {
       "leg-press 3",
     ]);
   });
-
-  it("names nothing while the hamstrings are within their ceiling", () => {
-    const week = [day([deadlift(3), hipThrust(2), legPress(3)])];
-    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBeUndefined();
-  });
-
-  it("names the hinge accessory once they are over, the biggest first and then the earliest", () => {
-    const week = [
-      day([deadlift(3), hipThrust(2), legPress(3)]),
-      day([
-        ex({
-          exerciseId: "seated-leg-curl",
-          movementCategory: "hip_dominant",
-          isAccessory: true,
-          sets: 3,
-          instanceId: "leg-curl",
-        }),
-        hipThrust(3, { instanceId: "second-hip-thrust" }),
-      ]),
-    ];
-    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBe("leg-curl");
-    expect(
-      hingeAccessoryPastCeiling(
-        [day([deadlift(3), hipThrust(2), hipThrust(2, { instanceId: "b" })])],
-        hamstringsAt(4)
-      )
-    ).toBe("hip-thrust");
-  });
-
-  it("never names a lift the week has as a main lift, nor anything but a hinge accessory", () => {
-    // A deadlift in a supporting slot is the deadlift on one of its days.
-    const week = [
-      day([deadlift(3)]),
-      day([deadlift(2, { isAccessory: true, instanceId: "support" })]),
-      day([legPress(3)]),
-    ];
-    expect(hingeAccessoryPastCeiling(week, hamstringsAt(4))).toBeUndefined();
-    // Without the main lift it is just a hinge accessory.
-    expect(hingeAccessoryPastCeiling(week.slice(1), hamstringsAt(4))).toBe(
-      "support"
-    );
-  });
-});
-
-describe("generateProgram honours the ceilings (reconciler wiring)", () => {
-  it("any JUDGEMENT group still over its ceiling has every primary slot at floor", () => {
-    // The reconciler's contract, in the unit it actually enforces: overage
-    // may remain ONLY where the builders cannot reach it (all primary slots
-    // floor-bound). A single over-ceiling group with a cuttable primary slot
-    // means the pass isn't wired in.
-    for (const goal of ["hypertrophy", "strength"] as const) {
-      for (const days of [4, 5, 6]) {
-        const { workouts } = generateProgram(days, undefined, goal);
-        for (const mv of weeklyVolumeByJudgementMuscle(workouts)) {
-          const lm2 = judgementLandmark(goal, mv.muscle);
-          if (mv.sets <= lm2.high) continue;
-          const cuttable = workouts
-            .flatMap((d) => d.exercises)
-            .filter(
-              (e) =>
-                primaryJudgementForExercise(e) === mv.muscle &&
-                (e.sets ?? 0) > (e.isAccessory === true ? 2 : 3)
-            );
-          expect(
-            cuttable.map((c) => `${c.exerciseId}×${c.sets}`),
-            `${goal}/${days}d ${mv.muscle}=${mv.sets} over ${lm2.high} with cuttable slots`
-          ).toEqual([]);
-        }
-      }
-    }
-  });
 });
 
 // ── Judgement layer (taxonomy split — ADR-0010 second addendum) ─────────
@@ -779,65 +705,5 @@ describe("judgement layer — per-head classification", () => {
       weeklyVolumeByJudgementMuscle(week).find((v) => v.muscle === "FrontDelts")
         ?.sets
     ).toBe(3);
-  });
-});
-
-describe("accessoriesPastCeiling — every muscle's ceiling (Lift12)", () => {
-  const bench = (sets: number) =>
-    ex({
-      exerciseId: "bench-press",
-      movementCategory: "horizontal_push",
-      sets,
-    });
-  const pushdown = (sets: number, instanceId: string) =>
-    ex({
-      exerciseId: "rope-tricep-pushdown",
-      movementCategory: "arms_triceps",
-      isAccessory: true,
-      sets,
-      instanceId,
-    });
-  const curl = (sets: number, instanceId: string) =>
-    ex({
-      exerciseId: "db-curl",
-      movementCategory: "arms_biceps",
-      isAccessory: true,
-      sets,
-      instanceId,
-    });
-  const week = () => [
-    day([bench(3), pushdown(2, "first-pushdown"), curl(2, "curl")]),
-    day([bench(3), pushdown(3, "second-pushdown")]),
-  ];
-
-  it("names nothing while every muscle is within its ceiling", () => {
-    expect(accessoriesPastCeiling(week(), () => 100)).toEqual([]);
-  });
-
-  it("names a muscle's own supporting lifts, the biggest and then the latest first", () => {
-    // The triceps read the bench's sets and the pushdowns': past a ceiling
-    // of 6, the pushdowns may go, never the bench, and never the curl.
-    const ceiling = (m: JudgementMuscle) => (m === "Triceps" ? 6 : 100);
-    expect(accessoriesPastCeiling(week(), ceiling)).toEqual([
-      { instanceId: "second-pushdown", muscle: "Triceps" },
-      { instanceId: "first-pushdown", muscle: "Triceps" },
-    ]);
-  });
-
-  it("puts the most-over muscle first", () => {
-    const ceiling = (m: JudgementMuscle) =>
-      m === "Triceps" ? 10 : m === "Biceps" ? 0 : 100;
-    expect(
-      accessoriesPastCeiling(week(), ceiling).map((c) => c.muscle)
-    ).toEqual(["Biceps", "Triceps", "Triceps"]);
-  });
-
-  it("never names a lift the week also has as a main lift", () => {
-    const asMain = [
-      day([bench(3), { ...pushdown(2, "kept"), isAccessory: undefined }]),
-      day([pushdown(2, "same-lift")]),
-    ];
-    const ceiling = (m: JudgementMuscle) => (m === "Triceps" ? 1 : 100);
-    expect(accessoriesPastCeiling(asMain, ceiling)).toEqual([]);
   });
 });

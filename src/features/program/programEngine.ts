@@ -30,17 +30,13 @@ import {
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
   balancePushPull,
-  accessoriesPastCeiling,
-  hingeAccessoryPastCeiling,
   judgementLandmark,
   reconcileToLandmarks,
-  weeklyVolumeByJudgementMuscle,
-  type JudgementMuscle,
 } from "./volumeModel";
 import {
-  fitSessionsToTime,
   refitSessionsToTime,
   sessionFits,
+  sizeSessionsToTime,
   sessionMinutesFor,
   warmupsOutgrewFit,
 } from "./sessionFit";
@@ -50,11 +46,7 @@ import {
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
-import {
-  extraPastCeiling,
-  keepsWeeklyFrequency,
-  twiceWeeklyAdditions,
-} from "./weeklyFrequency";
+import { twiceWeeklyAdditions } from "./weeklyFrequency";
 import {
   seedStartingLoads,
   weightAfterExerciseSwap,
@@ -79,9 +71,8 @@ import {
   applyComplexityGate,
   offerableTo,
   toExperience,
-  usesUndulation,
 } from "./experienceModel";
-import { mainRepAnchor, roleRepsFor } from "./roleTable";
+import { isMainFloorDeadlift, mainRepAnchor, roleRepsFor } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import {
   hardestEffort,
@@ -222,9 +213,10 @@ const MAX_BODYWEIGHT_REPS = 20;
 /**
  * Ceilings the GENERATOR will not prescribe past (2026-07-28 audit).
  *
- * `applyDayRoles` shifts a pump day +2 reps with a floor and no ceiling, and
- * the final pass then stamps `repRangeMax = reps + span`. On the higher-rep
- * goal profiles the two compounded into prescriptions nobody would write:
+ * A pump day's role shifts its reps +2 with a floor and no ceiling
+ * (`represcribeWorkouts`, on a plan that keeps day roles), and the range's
+ * top is then stamped `reps + span`. On the higher-rep goal profiles the two
+ * compounded into prescriptions nobody would write:
  * `Pull-Ups 3×17-22`, `Barbell Squat 4×17-20`, `Deadlift 3×15-20`.
  *
  * 20 is not a new number — `MAX_BODYWEIGHT_REPS` above is already the point
@@ -662,6 +654,133 @@ function makeNamedAccessory(
   };
 }
 
+/** A variation a new slot starts on in place of the primary, when the
+ *  lifter's level may be offered it (the complexity gate's own rule). */
+function startingVariation(
+  experience: Experience | undefined,
+  category: MovementCategory,
+  id: string
+): string | undefined {
+  const option = (exerciseBank[category] ?? []).find((o) => o.id === id);
+  return option && offerableTo(experience, option) ? id : undefined;
+}
+
+/**
+ * The order each generated day gives its lifts up when it is sized to its
+ * time (Lift21): one rank per authored slot, in the day's own order, and
+ * the lower the rank the longer the lift is kept. The order is what a day
+ * of its kind must hold first: a push day its two presses, then side delts
+ * and triceps; a pull day a pull and a row, then a curl and rear delts; a
+ * leg day a squat pattern and a hinge, then one more leg lift and calves.
+ * A second lift for a muscle the day already trains goes before any of
+ * those. A full-body day keeps a leg lift, a press and a pull; the third
+ * day's squat pattern outranks both, since the week's other two days lead
+ * with a squat and a deadlift and three-lift days would otherwise train the
+ * quads once a week. `liftDayLabel.test.ts` covers the same day names, and
+ * `sessionSizing.test.ts` fails when a builder's slots and its row here
+ * stop lining up.
+ */
+export const KEEP_RANKS: Readonly<Record<string, readonly number[]>> = {
+  "Full Body — Squat Focus": [1, 2, 3, 4, 5, 6],
+  "Full Body — Deadlift Focus": [1, 2, 3, 4, 5, 6],
+  "Full Body — Posterior Focus": [1, 3, 4, 2, 6, 5],
+  "Upper — Chest & Back": [1, 2, 3, 4, 5],
+  "Lower — Squat Focus": [1, 2, 3, 6, 4, 5],
+  "Upper — Shoulders & Arms": [1, 2, 3, 5, 6, 4],
+  "Lower — Deadlift Focus": [1, 2, 3, 4, 5, 6],
+  "Push — Chest Focus": [1, 2, 5, 4, 6, 3],
+  "Pull — Lat Focus": [1, 2, 5, 3, 6, 4],
+  "Legs — Squat Focus": [1, 2, 3, 6, 4, 5],
+  "Push — Shoulder Focus": [1, 2, 5, 4, 3, 6],
+  "Pull — Row Focus": [1, 2, 5, 3, 4, 6],
+  "Legs — Deadlift Focus": [1, 2, 3, 5, 4, 6],
+};
+
+/** Give each authored slot its day's rank (`KEEP_RANKS`). Run on the
+ *  builders' own output, before any pass moves a slot. */
+function withKeepRanks(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => {
+    const ranks = KEEP_RANKS[day.dayName];
+    if (!ranks) return day;
+    return {
+      ...day,
+      exercises: day.exercises.map((ex, i) =>
+        ranks[i] === undefined ? ex : { ...ex, keepRank: ranks[i] }
+      ),
+    };
+  });
+}
+
+/** The movement patterns of the lower body; every other pattern is the
+ *  upper body's. */
+const LOWER_PATTERNS: ReadonlySet<MovementCategory> = new Set([
+  "knee_dominant",
+  "hip_dominant",
+]);
+
+/**
+ * One heavy main lift for each half of the body a day trains (Lift21). The
+ * first main slot of the upper body, and of the lower, stays a main lift;
+ * a later one in the same half becomes a supporting compound, with that
+ * role's reps and rests. So an upper day's row follows its bench as
+ * supporting work and a leg day's hinge its squat, while a full-body day
+ * keeps a squat and a press both heavy: demoted, a Get stronger week on
+ * three days never pressed at five reps. A floor deadlift keeps its own row
+ * wherever it sits, which is a beginner's second deadlift day (L7).
+ */
+function oneMainLiftADay(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => {
+    const led = new Set<boolean>();
+    return {
+      ...day,
+      exercises: day.exercises.map((ex) => {
+        if (ex.isAccessory === true) return ex;
+        const lower = LOWER_PATTERNS.has(ex.movementCategory);
+        if (!led.has(lower)) {
+          led.add(lower);
+          return ex;
+        }
+        return isMainFloorDeadlift(ex) ? ex : { ...ex, isAccessory: true };
+      }),
+    };
+  });
+}
+
+/**
+ * The hinge on a day that leads with a squat (Lift21): a Romanian deadlift
+ * where the lifter's level may be offered one, since the deadlift is the
+ * week's main hinge once, on its own day. This slot used to start on the
+ * deadlift, so one a saved plan holds here gives way on a rebuild, its load
+ * carried across (`swapExerciseIdentity`); any other lift held here stays.
+ * A beginner isn't offered the Romanian deadlift and keeps the deadlift on
+ * both days (L7).
+ */
+function hingeAfterSquat(
+  profile: GoalProfile,
+  sets: number,
+  existingAtSlot: ProgramExercise | undefined,
+  experience: Experience | undefined
+): ProgramExercise {
+  const rdl = startingVariation(
+    experience,
+    "hip_dominant",
+    "romanian-deadlift"
+  );
+  const built = makeExercise(
+    "hip_dominant",
+    sets,
+    profile.mainReps,
+    80,
+    profile.mainProgression,
+    existingAtSlot,
+    false,
+    rdl
+  );
+  return rdl !== undefined && isMainFloorDeadlift(built)
+    ? swapExerciseIdentity(built, { id: rdl })
+    : built;
+}
+
 /* ================================
    SPLIT TEMPLATES
 ================================ */
@@ -676,12 +795,8 @@ function buildFullBody(
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
     existing?.[dayIdx]?.exercises[exIdx];
-  // A variation a new slot starts on in place of the primary, when the
-  // lifter's level may be offered it (the complexity gate's own rule).
-  const startsOnIfOfferable = (category: MovementCategory, id: string) => {
-    const option = (exerciseBank[category] ?? []).find((o) => o.id === id);
-    return option && offerableTo(experience, option) ? id : undefined;
-  };
+  const startsOnIfOfferable = (category: MovementCategory, id: string) =>
+    startingVariation(experience, category, id);
   const main = profile.mainReps;
   const acc = profile.accessoryReps;
 
@@ -715,6 +830,8 @@ function buildFullBody(
         findExisting(0, 2),
         true
       ),
+      // A new slot starts on the Romanian deadlift where the level takes
+      // it (Lift21): the deadlift is day B's main lift, once a week.
       makeExercise(
         "hip_dominant",
         round(3 * vm),
@@ -722,7 +839,8 @@ function buildFullBody(
         60,
         "linear",
         findExisting(0, 3),
-        true
+        true,
+        startsOnIfOfferable("hip_dominant", "romanian-deadlift")
       ),
       makeExercise(
         "core",
@@ -878,7 +996,8 @@ function buildFullBody(
 
 function buildUpperLower(
   profile: GoalProfile,
-  existing?: WorkoutDay[]
+  existing?: ReadonlyArray<WorkoutDay | undefined>,
+  experience?: Experience
 ): WorkoutDay[] {
   const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
@@ -950,14 +1069,7 @@ function buildUpperLower(
           profile.mainProgression,
           findExisting(1, 0)
         ),
-        makeExercise(
-          "hip_dominant",
-          round(4 * vm),
-          main,
-          80,
-          profile.mainProgression,
-          findExisting(1, 1)
-        ),
+        hingeAfterSquat(profile, round(4 * vm), findExisting(1, 1), experience),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
         makeExercise(
           "core",
@@ -971,6 +1083,9 @@ function buildUpperLower(
         // Direct calf work (named slot — see makeNamedAccessory). Appended
         // last so the findExisting positions above stay valid.
         makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
+        // Knee flexion (Lift21): the hinge above trains the hamstrings at
+        // the hip only.
+        makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30),
       ],
     },
     {
@@ -1054,12 +1169,18 @@ function buildUpperLower(
         // Seated (soleus-biased) on the deadlift day, standing on the squat
         // day — the same standing/seated split the templates author.
         makeNamedAccessory("seated-calf-raise", round(3 * vm), 15, 30),
+        // The day's sixth lift (Lift21), which only a long session reaches.
+        makeNamedAccessory("leg-extension", round(3 * vm), 15, 30),
       ],
     },
   ];
 }
 
-function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
+function buildPPL(
+  profile: GoalProfile,
+  existing?: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
   const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
@@ -1144,6 +1265,10 @@ function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
           true
         ),
         makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
+        // Direct rear-delt work (Lift21): a pull day's rows credit the rear
+        // delts and nothing trained them on their own. A named slot at the
+        // end, like the side-delt one, so the positions above stay valid.
+        makeNamedAccessory("face-pulls", round(3 * vm), 15, 15),
       ],
     },
     {
@@ -1159,14 +1284,7 @@ function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
           profile.mainProgression,
           findExisting(2, 0)
         ),
-        makeExercise(
-          "hip_dominant",
-          round(4 * vm),
-          main,
-          80,
-          profile.mainProgression,
-          findExisting(2, 1)
-        ),
+        hingeAfterSquat(profile, round(4 * vm), findExisting(2, 1), experience),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
         makeExercise(
           "core",
@@ -1185,6 +1303,9 @@ function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
         // Direct calf work (named slot — see makeNamedAccessory). Appended
         // last so the findExisting positions above stay valid.
         makeNamedAccessory("standing-calf-raise", round(3 * vm), 12, 40),
+        // Knee flexion (Lift21): the hinge above trains the hamstrings at
+        // the hip only.
+        makeNamedAccessory("seated-leg-curl", round(3 * vm), 12, 30),
       ],
     },
     {
@@ -1213,6 +1334,14 @@ function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
         ),
         // Direct side-delt slot (see the Upper — Shoulders & Arms note).
         makeNamedAccessory("lateral-raise", round(3 * vm), 12, 8),
+        // The day's sixth lift (Lift21), which only a long session reaches.
+        makeAccessory(
+          "arms_triceps",
+          round(3 * vm),
+          15,
+          10,
+          "rope-tricep-pushdown"
+        ),
       ],
     },
     {
@@ -1239,6 +1368,10 @@ function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
           findExisting(4, 3),
           true
         ),
+        // Direct rear-delt slot (see the Pull — Lat Focus note).
+        makeNamedAccessory("reverse-flyes", round(3 * vm), 15, 5),
+        // The day's sixth lift (Lift21), which only a long session reaches.
+        makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
       ],
     },
   ];
@@ -1449,53 +1582,17 @@ export function dayRoleOf(
 }
 
 /**
- * Gives each session its role by its place in the week the builders made,
- * and the session keeps it (`WorkoutDay.dayRole`): the week's order carries
- * over by moving whole days (Lift4 (11)), so the position stops saying
- * which session was the heavier one. Every level gets one. A beginner's
- * reps don't shift by role (`usesUndulation`), but a level change can bring
- * the shifts in, and they should land on the same sessions.
+ * Gives each session of a built week its role, which the session keeps
+ * (`WorkoutDay.dayRole`). A role shifts reps two either side of the role
+ * table's (backlog #3, N9), and since Lift21 that is for a lift held as the
+ * main lift on two days of the week. The builders give each day a main lift
+ * of its own, so every built session is moderate: its reps are the role
+ * table's, and a block's start or end (`represcribeWorkouts`) leaves them
+ * there. A plan built before this keeps the roles it has, and an older one
+ * that keeps none reads them from its days' positions (`dayRoleOf`).
  */
 export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
-  const roles = assignDayRoles(workouts.length);
-  return workouts.map((day, i) => ({ ...day, dayRole: roles[i] }));
-}
-
-/**
- * Backlog #3 (training-book backlog; N9): put the first rep variation
- * into a Tropos week. Every source converged on varying what the week
- * asks for; daily undulation is the stateless version — heavy days sit
- * ±2 reps around the goal profile's base, structures/sets/progression
- * mechanics untouched. baseReps moves with reps so progression resets
- * stay role-consistent. Presentation policy: INVISIBLE — the
- * prescription simply differs; no labels, no new UI.
- */
-function applyDayRoles(
-  workouts: WorkoutDay[],
-  experience?: Experience
-): WorkoutDay[] {
-  // Not for a novice (2026-07-28). Undulation exists because an intermediate
-  // can no longer add load every session, so the stimulus has to be varied
-  // instead; a novice CAN, and a heavy day plus a pump day muddies the one
-  // signal their programme runs on — did today beat last time? See
-  // `usesUndulation`.
-  if (!usesUndulation(experience)) return workouts;
-  const roles = assignDayRoles(workouts.length);
-  return workouts.map((day, i) => {
-    const role = dayRoleOf(day, roles[i]);
-    if (role === "moderate") return day;
-    return {
-      ...day,
-      exercises: day.exercises.map((ex) => {
-        const delta = undulationDeltaFor(ex, role);
-        const reps = Math.min(
-          prescribedRepCeiling(ex),
-          Math.max(repFloorFor(ex), ex.reps + delta)
-        );
-        return { ...ex, reps, baseReps: reps };
-      }),
-    };
-  });
+  return workouts.map((day) => ({ ...day, dayRole: "moderate" }));
 }
 
 /**
@@ -1628,10 +1725,9 @@ function carriedState(prev: ProgramExercise): Partial<ProgramExercise> {
 function addTwiceWeeklyLifts(
   workouts: WorkoutDay[],
   existing?: WorkoutDay[]
-): { workouts: WorkoutDay[]; extras: Set<string> } {
-  const extras = new Set<string>();
+): WorkoutDay[] {
   const additions = twiceWeeklyAdditions(workouts);
-  if (additions.length === 0) return { workouts, extras };
+  if (additions.length === 0) return workouts;
   const held = new Set(
     workouts.flatMap((d) => d.exercises.map((e) => e.instanceId))
   );
@@ -1652,10 +1748,9 @@ function addTwiceWeeklyLifts(
     const fresh = makeNamedAccessory(exerciseId, 3, 12, 0);
     const lift = prev ? { ...fresh, ...carriedState(prev) } : fresh;
     if (prev) carried.add(prev);
-    if (lift.instanceId) extras.add(lift.instanceId);
     days[day].exercises.push(lift);
   }
-  return { workouts: days, extras };
+  return days;
 }
 
 /**
@@ -1700,86 +1795,6 @@ function applyOverlapCaps(
     day.exercises[exIndex] = swapExerciseIdentity(old, swap, loadCtx);
   }
   return out;
-}
-
-/** The week without one lift (by `instanceId`). */
-function withoutLift(workouts: WorkoutDay[], instanceId: string): WorkoutDay[] {
-  return workouts.map((d) => ({
-    ...d,
-    exercises: d.exercises.filter((ex) => ex.instanceId !== instanceId),
-  }));
-}
-
-/**
- * Whether a week that has let a hinge accessory go (L7), fitted and
- * balanced again, is the one to keep: its hamstrings come down, no muscle
- * ends further over its ceiling (the time the lift held can bring back sets
- * that take another one over), and every muscle keeps its two days a week.
- */
-function hingeDropHolds(
-  before: WorkoutDay[],
-  after: WorkoutDay[],
-  ceiling: (muscle: JudgementMuscle) => number
-): boolean {
-  return dropHolds(before, after, ceiling, "Hamstrings");
-}
-
-/**
- * The fewest lifts a session is left with when a lift goes for a ceiling
- * (Lift17). The trims judge the week, so on six days, where each muscle's
- * ceiling is shared by more sessions, they took one day's supporting lifts
- * one after another: a beginner's Pull — Row Focus kept one lift, three
- * sets, at 60 minutes. A session the person set an hour aside for is
- * three lifts or more; a muscle can sit a few sets over its ceiling.
- */
-const SESSION_LIFT_FLOOR = 3;
-
-/** Whether every session of `after` keeps `SESSION_LIFT_FLOOR` lifts, or as
- *  many as it had in `before` when it had fewer. */
-function keepsSessionsWhole(
-  before: WorkoutDay[],
-  after: WorkoutDay[]
-): boolean {
-  return after.every(
-    (day, i) =>
-      day.exercises.length >=
-      Math.min(SESSION_LIFT_FLOOR, before[i]?.exercises.length ?? 0)
-  );
-}
-
-/**
- * Whether a week that has let a lift go for `muscle`'s ceiling, fitted and
- * balanced again, is the one to keep: that muscle comes down, no muscle ends
- * further over its ceiling, every muscle keeps its two days a week, every
- * session keeps three lifts (Lift17), and, when a floor is given, the
- * muscle stays at it or above (Lift12).
- */
-function dropHolds(
-  before: WorkoutDay[],
-  after: WorkoutDay[],
-  ceiling: (muscle: JudgementMuscle) => number,
-  muscle: JudgementMuscle,
-  floor?: (muscle: JudgementMuscle) => number
-): boolean {
-  const overBy = (week: WorkoutDay[]) =>
-    new Map(
-      weeklyVolumeByJudgementMuscle(week).map((v) => [
-        v.muscle,
-        Math.max(0, v.sets - ceiling(v.muscle)),
-      ])
-    );
-  const was = overBy(before);
-  const now = overBy(after);
-  const sets =
-    weeklyVolumeByJudgementMuscle(after).find((v) => v.muscle === muscle)
-      ?.sets ?? 0;
-  return (
-    (now.get(muscle) ?? 0) < (was.get(muscle) ?? 0) &&
-    [...now].every(([m, by]) => by <= (was.get(m) ?? 0)) &&
-    keepsWeeklyFrequency(before, after) &&
-    keepsSessionsWhole(before, after) &&
-    (floor === undefined || sets >= floor(muscle))
-  );
 }
 
 export function generateProgram(
@@ -1857,28 +1872,43 @@ export function generateProgram(
         break;
       }
       case "ppl":
-        workouts = buildPPL(profile, existingWorkouts).slice(0, 3);
+        workouts = buildPPL(profile, existingWorkouts, experience).slice(0, 3);
         break;
       case "upper_lower": {
-        const ul = buildUpperLower(profile, existingWorkouts);
+        const ul = buildUpperLower(profile, existingWorkouts, experience);
         // 2-day uses first upper + first lower only
         workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
         break;
       }
-      case "ppl_ul":
-        // The second builder starts at week position 3, so it must be handed
-        // the saved plan FROM position 3 — its `findExisting(0, …)` means
-        // "my first day", not "the week's first day". Without the slice the
-        // Upper/Lower half of a 5-day plan carried its loads from the
-        // Push/Pull days; found 2026-07-28 once the carry test used
-        // distinct per-lift weights instead of stamping 61 everywhere.
+      case "ppl_ul": {
+        // The second builder holds the week's positions 3 and 4, so it is
+        // handed the saved plan's days from there, each at the builder's
+        // own index for it: its `findExisting(0, …)` means "my first day",
+        // not "the week's first day". Without that the Upper/Lower half of
+        // a 5-day plan carried its loads from the Push/Pull days; found
+        // 2026-07-28 once the carry test used distinct per-lift weights
+        // instead of stamping 61 everywhere. The lower day is the
+        // deadlift's (Lift21): the week's other leg day leads with the
+        // squat, and two of those left a five-day week no deadlift.
+        const ul = buildUpperLower(
+          profile,
+          existingWorkouts && [
+            existingWorkouts[3],
+            undefined,
+            undefined,
+            existingWorkouts[4],
+          ],
+          experience
+        );
         workouts = [
-          ...buildPPL(profile, existingWorkouts).slice(0, 3),
-          ...buildUpperLower(profile, existingWorkouts?.slice(3)).slice(0, 2),
+          ...buildPPL(profile, existingWorkouts, experience).slice(0, 3),
+          ul[0],
+          ul[3],
         ];
         break;
+      }
       case "ppl_x2": {
-        const ppl = buildPPL(profile, existingWorkouts);
+        const ppl = buildPPL(profile, existingWorkouts, experience);
         workouts = [...ppl, buildLegsB(profile, existingWorkouts)];
         break;
       }
@@ -1886,7 +1916,7 @@ export function generateProgram(
         // Retained for backward-compat — `chooseSplit` no longer returns
         // this (capped at 6 days) but existing programState rows on disk
         // may still pass through here on regeneration.
-        const ppl7 = buildPPL(profile, existingWorkouts);
+        const ppl7 = buildPPL(profile, existingWorkouts, experience);
         // Same offset rule as `ppl_ul` — this day sits at week position 6.
         const fb = buildFullBody(profile, 1, existingWorkouts?.slice(6));
         workouts = [
@@ -1902,7 +1932,7 @@ export function generateProgram(
         break;
       }
       default:
-        workouts = buildUpperLower(profile, existingWorkouts);
+        workouts = buildUpperLower(profile, existingWorkouts, experience);
     }
     return workouts;
   };
@@ -1990,7 +2020,7 @@ export function generateProgram(
     existingWorkouts,
     buildSplit(undefined)
   );
-  let workouts = buildSplit(existingForBuild);
+  let workouts = withKeepRanks(buildSplit(existingForBuild));
 
   // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main
   // carried on a variation an accessory then matched). Re-picks the duplicate
@@ -2038,8 +2068,7 @@ export function generateProgram(
   // passes, so it counts the lifts the person gets, and before the role
   // table, the seeding and the time fit, which treat what it adds like any
   // other lift.
-  const twiceWeekly = addTwiceWeeklyLifts(workouts, existingWorkouts);
-  workouts = twiceWeekly.workouts;
+  workouts = addTwiceWeeklyLifts(workouts, existingWorkouts);
   // Lift4 (11): injuries first (safety), then equipment, whose picker is
   // injury-aware; both keep a slot's place, so what the passes above
   // settled, the added lifts included, stays where it is. Both keep the
@@ -2077,11 +2106,12 @@ export function generateProgram(
       limits.barbellAtHome
     );
   }
-  // Lift4 (5): each lift's sets, reps and progression come from its role
-  // (`roleTable.ts`), once the identity passes have settled who is where;
-  // then backlog #3's day roles shift the reps, see applyDayRoles above.
-  workouts = applyRoleTable(workouts, primaryGoal, experience);
-  workouts = applyDayRoles(withDayRoles(workouts), experience);
+  // Lift4 (5): each lift's reps and progression come from its role
+  // (`roleTable.ts`), once the identity passes have settled who is where
+  // and each day has its one main lift (Lift21).
+  workouts = withDayRoles(
+    applyRoleTable(oneMainLiftADay(workouts), primaryGoal, experience)
+  );
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it
@@ -2095,83 +2125,29 @@ export function generateProgram(
     mainRepAnchor(primaryGoal, experience),
     { building: { kept: existingWorkouts, injuries: limits?.injuries } }
   );
-  // Lift4 (5): time decides the volume. Each session is cut to the minutes
-  // the person has (`sessionFit.ts`), then the week is balanced inside them.
-  const minutes = sessionMinutes ?? Number.POSITIVE_INFINITY;
-  const ceiling = (m: JudgementMuscle) =>
-    judgementLandmark(primaryGoal, m, toExperience(experience)).high;
-  const settle = (week: WorkoutDay[]): WorkoutDay[] => {
-    let fitted = fitSessionsToTime(week, minutes, twiceWeekly.extras);
-    // A lift added for the two days a week that leaves a muscle over its
-    // ceiling once the week is balanced goes, and the week is balanced
-    // again without it, so nothing is trimmed to make room for a lift that
-    // isn't there.
-    for (;;) {
-      const balanced = balanceWeekVolume(
-        fitted,
-        primaryGoal,
-        experience,
-        minutes
-      );
-      const past = extraPastCeiling(balanced, twiceWeekly.extras, ceiling);
-      if (past === undefined) return balanced;
-      fitted = withoutLift(fitted, past);
-    }
-  };
-  // L7: the hinge work keeps the hamstrings within their ceiling, never the
-  // deadlift off a day. While they sit over it once the week is balanced, a
-  // hinge accessory comes out (`hingeAccessoryPastCeiling`) and the week is
-  // fitted and balanced again without it, so the time it held goes back to
-  // its day. It stays out only when that week is the better one
-  // (`hingeDropHolds`); otherwise the week stays as it was.
-  let settled = settle(workouts);
-  for (;;) {
-    const hinge = hingeAccessoryPastCeiling(settled, ceiling);
-    if (hinge === undefined) break;
-    const without = withoutLift(workouts, hinge);
-    const next = settle(without);
-    if (!hingeDropHolds(settled, next, ceiling)) break;
-    workouts = without;
-    settled = next;
-  }
-  // Lift12: every muscle's ceiling is kept the same way. While a muscle sits
-  // over it once the week is balanced, a supporting lift of its own comes
-  // out (`accessoriesPastCeiling`), and the week is fitted and balanced
-  // again; it stays out only when that week is the better one and the
-  // muscle keeps its floor (`dropHolds`), and the next lift is tried when it
-  // isn't.
-  const floor = (m: JudgementMuscle) =>
-    judgementLandmark(primaryGoal, m, toExperience(experience)).low;
-  for (;;) {
-    let dropped = false;
-    for (const { instanceId, muscle } of accessoriesPastCeiling(
-      settled,
-      ceiling
-    )) {
-      const without = withoutLift(workouts, instanceId);
-      const next = settle(without);
-      if (!dropHolds(settled, next, ceiling, muscle, floor)) continue;
-      workouts = without;
-      settled = next;
-      dropped = true;
-      break;
-    }
-    if (!dropped) break;
-  }
-  workouts = settled;
+  // Lift21: time sets how many lifts a day has, not how many sets each
+  // gets. Each day is sized to the minutes the person has
+  // (`sizeSessionsToTime`): every lift at its place's sets, lifts off the
+  // end of the day's order (`KEEP_RANKS`) while it runs over, and sets back
+  // on the lifts it keeps while there is time left. No weekly ceiling takes
+  // a set or a lift from a built plan; the Weekly volume card reports them.
+  workouts = sizeSessionsToTime(
+    workouts,
+    sessionMinutes ?? Number.POSITIVE_INFINITY,
+    experience
+  );
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
-  // Backlog #7: stamp the rep-range ceiling in the same pass, and for the
-  // same reason — it must be derived from the FINAL `reps`, after day roles
-  // have shifted them. Carrying a fixed ceiling through applyDayRoles would
-  // hand a heavy day (reps 8 → 6) the untouched 12-rep ceiling, turning a
-  // 4-rep climb into a 6-rep one. Deriving from the span keeps the range
-  // width constant across every role. A fixed target has none.
+  // Backlog #7: stamp the rep-range ceiling in the same pass, from the
+  // FINAL `reps` and the role's span, so the range keeps its width wherever
+  // its bottom sits (`represcribeWorkouts` stamps a shifted day's the same
+  // way). A fixed target has none. The build-time rank goes here too.
   workouts = workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
-      const out: ProgramExercise = { ...ex, baseSets: ex.sets };
+      const { keepRank: _rank, ...built } = ex;
+      const out: ProgramExercise = { ...built, baseSets: ex.sets };
       if (ex.repUnit === "seconds") return out;
       const row = roleRepsFor(primaryGoal, ex, experience);
       const span = row.top === undefined ? 0 : row.top - row.bottom;

@@ -225,11 +225,32 @@ export function applyComplexityGate<
   if (allowsComplexity(experience, "advanced")) return workouts; // nothing gated
   let changed = false;
   const out = workouts.map((day) => {
-    const idsInDay = new Set(day.exercises.map((e) => e.exerciseId));
-    const exercises = day.exercises.map((ex) => {
+    const exercises = [...day.exercises];
+    const idsInDay = new Set(exercises.map((e) => e.exerciseId));
+    const repoint = (at: number, toId: string) => {
+      const ex = exercises[at];
+      changed = true;
+      idsInDay.delete(ex.exerciseId);
+      idsInDay.add(toId);
+      // The load belongs to the movement, not the slot — a Bulgarian split
+      // squat does not inherit a barbell squat's working weight. `rescale`
+      // is injected rather than imported so this module stays free of the
+      // bank (it already takes the bank as an argument for the same reason).
+      const weight = rescale
+        ? rescale(ex, toId)
+        : (ex as { weight?: number }).weight;
+      exercises[at] = {
+        ...ex,
+        exerciseId: toId,
+        name: resolveName?.(toId) ?? ex.name,
+        ...(weight === undefined ? {} : { weight }),
+      };
+    };
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i];
       const options = bank[ex.movementCategory] ?? [];
       const self = options.find((o) => o.id === ex.exerciseId);
-      if (!self) return ex; // unknowns stand
+      if (!self) continue; // unknowns stand
       // A primary's COMPLEXITY never gates it (a beginner's squat is a
       // barbell squat) — only the bodyweight-floor rule can re-point a
       // primary, and only for beginners (see the header). Variations get
@@ -237,41 +258,38 @@ export function applyComplexityGate<
       const selfStands = self.primary
         ? !(toExperience(experience) === "beginner" && self.bodyweightFloor)
         : offerableTo(experience, self);
-      if (selfStands) return ex;
-      const swap = options.find(
+      if (selfStands) continue;
+      const allowed = options.filter(
         (o) =>
-          !o.primary &&
-          o.id !== ex.exerciseId &&
-          !idsInDay.has(o.id) &&
-          offerableTo(experience, o)
+          !o.primary && o.id !== ex.exerciseId && offerableTo(experience, o)
       );
+      const free = allowed.find((o) => !idsInDay.has(o.id));
       // Nothing simple enough left in the category that isn't already in the
       // day — keep what is there. A slot the lifter can at least attempt
       // beats a hole or a duplicate.
-      if (!swap) return ex;
-      changed = true;
-      idsInDay.delete(ex.exerciseId);
-      idsInDay.add(swap.id);
-      // The load belongs to the movement, not the slot — a Bulgarian split
-      // squat does not inherit a barbell squat's working weight. `rescale`
-      // is injected rather than imported so this module stays free of the
-      // bank (it already takes the bank as an argument for the same reason).
-      const weight = rescale
-        ? rescale(ex, swap.id)
-        : (ex as { weight?: number }).weight;
-      return weight === undefined
-        ? {
-            ...ex,
-            exerciseId: swap.id,
-            name: resolveName?.(swap.id) ?? ex.name,
-          }
-        : {
-            ...ex,
-            exerciseId: swap.id,
-            name: resolveName?.(swap.id) ?? ex.name,
-            weight,
-          };
-    });
+      if (!free) continue;
+      // The simplest allowed option goes to the earliest slot that needs
+      // one. When a later slot of the same movement holds it, that slot
+      // takes the free option and this one its lift: a beginner's pull day
+      // then leads with the lat pulldown, not with the straight-arm
+      // pulldown that was the one left.
+      const simplest = allowed[0];
+      const holder =
+        simplest.id === free.id
+          ? -1
+          : exercises.findIndex(
+              (e, at) =>
+                at > i &&
+                e.exerciseId === simplest.id &&
+                e.movementCategory === ex.movementCategory
+            );
+      if (holder >= 0) {
+        repoint(holder, free.id);
+        repoint(i, simplest.id);
+      } else {
+        repoint(i, free.id);
+      }
+    }
     return { ...day, exercises };
   });
   return changed ? out : workouts;

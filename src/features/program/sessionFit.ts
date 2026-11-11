@@ -1,63 +1,40 @@
 /**
- * Fitting a plan's sessions to the time the person has (Lift4 (5)).
+ * A plan's sessions and the time the person has (Lift4 (5), Lift21).
  *
  * Session length is asked on the days step (30, 45, 60 or 75+ minutes) and
- * each session is built to fit it, priced with the app's own estimator
- * (`estimateSessionMinutes`) at the rests the plan suggests, and with each
+ * each session is priced with the app's own estimator
+ * (`estimateSessionMinutes`) at the rests the plan suggests, with each
  * loaded lift's warm-up as it will be once the lift is established. With
  * proper rests 30 minutes holds about six working sets, so a plan built for
- * 30 minutes rests less (`suggestedRestSeconds`). Time decides the volume: the
- * role table's sets (`roleTable.ts`) are where a session starts, and what
- * doesn't fit is cut, one set or one exercise at a time, re-priced after
- * each cut, in this order:
+ * 30 minutes rests less (`suggestedRestSeconds`).
  *
- *   1. isolations' sets, down to two each, the largest first and then from
- *      the end of the day;
- *   2. other compounds' sets, down to two, the same way;
- *   3. isolations dropped, one at a time, whose muscles are still worked on
- *      two days a week (`weeklyFrequency.ts`), then any lift added for the
- *      two days that costs no muscle a day;
- *   4. main lifts' sets, down to two, the day's first main lift last;
- *   5. isolations dropped: the lifts added for the two days, then those
- *      whose muscles still get some direct work (their primary muscle's) in
- *      the week;
- *   6. other compounds dropped, on 3's condition and then on 5's last;
- *   7. isolations, then other compounds, dropped, a muscle's last included.
+ * A new plan is SIZED to its time (`sizeSessionsToTime`, Lift21): time sets
+ * how many lifts a day holds, and every lift it holds keeps its sets. A day
+ * that does not fit gives lifts up from the end of its order, and time left
+ * over goes back to the lifts it keeps.
  *
- * Time wins in the end, as the plan promised; a muscle's last direct lift is
- * only kept while something else can give way, so a plan keeps its one calf
- * slot while it can. A main lift's third set gives way before a muscle's
- * second day (Lift11): every muscle on two days a week is Lift4 (5)'s first
- * rule and two sets its floor for a main lift, so a 45-minute session keeps
- * the calves' and abs' second day while a main lift can go to two sets; a
- * lift whose muscles are worked on two other days goes before either. Credit from other lifts
- * counts toward the two days, as the volume model counts it, but not as
- * direct work, or a leg curl's credit to the calves would let every calf
- * raise go. A drop takes the latest lift in the day whose going makes the
- * session fit, or, when none would on its own, the one that frees the most
- * time, so a short session never loses a cheap lift and then the dear one
- * as well.
+ * A plan the person already has is RE-FITTED (`refitSessionsToTime`), when
+ * they change the length or a day outgrows it: its lifts and their history
+ * stay, and only sets move, each lift from its role's sets (`roleTable.ts`)
+ * down to two, in this order, re-priced after each cut:
  *
- * A main lift is never dropped and keeps at least two sets. A day that still
- * runs over keeps what is left; the estimate on its card says so. Sets are
- * cut before exercises so a short session keeps its calf, side-delt and ab
- * work while it can: a big muscle gets sets from several lifts, a small one
- * from its one. A main lift's third set goes before the day's other
- * compounds do, since those are often its only pull or hinge.
+ *   1. isolations' sets, the largest first and then from the end of the day;
+ *   2. other compounds' sets, the same way;
+ *   3. main lifts' sets, the day's first main lift last.
+ *
+ * A day that still runs over keeps what is left; the estimate on its card
+ * says so.
  */
 import { estimateSessionSeconds } from "./expressSession";
 import { exerciseRole } from "./exerciseRole";
+import { toExperience } from "./experienceModel";
 import { isLiftTimeBudget } from "./liftTimeBudget";
-import { roleRepsFor } from "./roleTable";
+import { isFloorDeadlift, roleRepsFor } from "./roleTable";
 import {
   startingWeightForExercise,
   type StartingLoadContext,
 } from "./startingLoads";
-import {
-  MAX_SETS_PER_SESSION,
-  primaryJudgementForExercise,
-} from "./volumeModel";
-import { daysPerMuscle, WEEKLY_FREQUENCY } from "./weeklyFrequency";
+import { MAX_SETS_PER_SESSION } from "./volumeModel";
 import type {
   Experience,
   PrimaryGoal,
@@ -162,7 +139,21 @@ function plannedSeconds(
   );
 }
 
-/** Whether a session fits its time so priced, and the 18-set ceiling. */
+/**
+ * How far past its length a session may price and still fit (Lift21). The
+ * estimator's constants have not been checked against saved sessions, and
+ * held to the second a 45-minute day could not take a fourth lift.
+ */
+export const FIT_TOLERANCE = 0.05;
+
+/** The most sets a session holds: 18, past which the last lifts are done
+ *  tired rather than well, and 21 from 75 minutes. */
+export function maxSessionSets(minutes: number): number {
+  return minutes >= 75 ? MAX_SETS_PER_SESSION + 3 : MAX_SETS_PER_SESSION;
+}
+
+/** Whether a session fits its time so priced, within the tolerance, and
+ *  the set ceiling. */
 function fitsPriced(
   exercises: readonly ProgramExercise[],
   minutes: number,
@@ -170,8 +161,9 @@ function fitsPriced(
 ): boolean {
   const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
   return (
-    sets <= MAX_SETS_PER_SESSION &&
-    plannedSeconds(exercises, minutes, warmupLoad) <= minutes * 60
+    sets <= maxSessionSets(minutes) &&
+    plannedSeconds(exercises, minutes, warmupLoad) <=
+      minutes * 60 * (1 + FIT_TOLERANCE)
   );
 }
 
@@ -205,37 +197,18 @@ export function warmupsOutgrewFit(
 type Kind = "main" | "compound" | "isolation";
 
 /** A slot's place in the cut order. A main slot holding an isolation (a
- *  beginner's swap) is still the day's main lift, and is kept. */
+ *  beginner's swap) is still the day's main lift, and is cut last. */
 function kindOf(ex: ProgramExercise): Kind {
   if (ex.isAccessory !== true) return "main";
   return exerciseRole(ex) === "isolation" ? "isolation" : "compound";
 }
 
-/** What a drop must leave the week: each muscle's days (`weeklyFrequency`),
- *  its direct work, or nothing; or, for "extra", the lift must be one added
- *  for the two days, and for "spare", one added that costs no muscle a day. */
-type Keeps = "frequency" | "spare" | "extra" | "coverage" | "nothing";
-
-/** Whether a drop leaves the week what `rule` asks: `dropped` is the lift,
- *  `without` the day after it. */
-type WeekGuard = (
-  dropped: ProgramExercise,
-  without: ProgramExercise[],
-  rule: Keeps
-) => boolean;
-
 /**
- * Cut one day to its time. `guard` says whether the day, without a lift,
- * still keeps what a drop at that step must; a re-fit of a plan the person
- * already has passes none, so their lifts and history stay and only sets
- * move.
+ * Cut one day's sets to its time, in the header's order. No lift goes: the
+ * plan is the person's, and their lifts and history stay.
  */
-function fitDay(
-  day: WorkoutDay,
-  minutes: number,
-  guard?: WeekGuard
-): WorkoutDay {
-  let exercises = day.exercises.map((e) => ({ ...e }));
+function fitDay(day: WorkoutDay, minutes: number): WorkoutDay {
+  const exercises = day.exercises.map((e) => ({ ...e }));
   const fits = () => sessionFits(exercises, minutes);
 
   const cutSet = (kind: Kind): boolean => {
@@ -249,148 +222,108 @@ function fitDay(
     pick.ex.sets -= 1;
     return true;
   };
-  const dropOne = (kind: Kind, keeps: Keeps): boolean => {
-    const without = (i: number) => [
-      ...exercises.slice(0, i),
-      ...exercises.slice(i + 1),
-    ];
-    const seconds = (list: ProgramExercise[]) => plannedSeconds(list, minutes);
-    const candidates = exercises
-      .map((_, i) => i)
-      .filter(
-        (i) =>
-          (keeps === "extra" ||
-            keeps === "spare" ||
-            kindOf(exercises[i]) === kind) &&
-          guard!(exercises[i], without(i), keeps)
-      );
-    if (candidates.length === 0) return false;
-    const fitting = candidates.filter((i) => sessionFits(without(i), minutes));
-    const pick =
-      fitting.length > 0
-        ? fitting[fitting.length - 1]
-        : candidates.reduce((best, i) =>
-            seconds(without(i)) <= seconds(without(best)) ? i : best
-          );
-    exercises = without(pick);
-    return true;
-  };
 
-  const steps: Array<() => boolean> = [
-    () => cutSet("isolation"),
-    () => cutSet("compound"),
-    ...(guard
-      ? [
-          () => dropOne("isolation", "frequency"),
-          () => dropOne("isolation", "spare"),
-        ]
-      : []),
-    () => cutSet("main"),
-    ...(guard
-      ? [
-          () => dropOne("isolation", "extra"),
-          () => dropOne("isolation", "coverage"),
-          () => dropOne("compound", "frequency"),
-          () => dropOne("compound", "coverage"),
-          () => dropOne("isolation", "nothing"),
-          () => dropOne("compound", "nothing"),
-        ]
-      : []),
-  ];
-  for (const step of steps) {
-    while (!fits() && step()) {
-      /* cut until it fits or this step has nothing left */
+  for (const kind of ["isolation", "compound", "main"] as const) {
+    while (!fits() && cutSet(kind)) {
+      /* cut until it fits or this kind has nothing left */
     }
     if (fits()) break;
   }
   return { ...day, exercises };
 }
 
-/** The muscles a week works directly: each lift's primary muscle, the
- *  lifts added for the two days a week (`extras`) aside. */
-function trainedMuscles(
-  days: readonly WorkoutDay[],
-  extras: ReadonlySet<string>
-): Set<string> {
-  return new Set(
-    days
-      .flatMap((d) => d.exercises)
-      .filter((ex) => !ex.instanceId || !extras.has(ex.instanceId))
-      .map((ex) => primaryJudgementForExercise(ex))
-      .filter((m): m is NonNullable<typeof m> => m !== null)
-  );
-}
+/** The fewest lifts a sized day keeps, and a 30-minute day's. */
+const MIN_SIZED_LIFTS = 3;
+const MIN_SHORT_LIFTS = 2;
+
+/** A 30-minute day: its supporting lifts take two sets, and it may hold two
+ *  lifts. */
+const SHORT_SESSION_MINUTES = 30;
+
+/** The ranks of the pieces a day must hold (`KEEP_RANKS`): its main lift
+ *  and the three after it. */
+const MUST_HOLD_RANKS = 4;
 
 /**
- * Fit a new plan's sessions to `minutes`, dropping lifts where sets alone
- * can't make the time: first those whose muscles keep their two days a
- * week, then the lifts added for the two days (`extras`, from
- * `weeklyFrequency.ts`), then those whose muscles keep some direct work,
- * then any. An added lift is never what keeps a muscle's direct work, so a
- * day can't drop its own ab work for one added to a day that has yet to fit.
+ * Size a new plan's sessions to `minutes` (Lift21). Time sets the number of
+ * lifts, not the sets on each:
+ *
+ *   - the day's main lift takes 4 sets from 60 minutes and 3 under; every
+ *     other lift 3. A beginner keeps 3 and 2, and so does a 30-minute day,
+ *     the one place a lift past beginner sits under 3;
+ *   - while the day does not fit, the lift with the highest `keepRank` goes
+ *     (the builders rank each day's lifts; one a later pass added goes
+ *     before any of theirs), down to three lifts, two in a 30-minute day.
+ *     One of the day's first four that then fits comes back;
+ *   - time the next lift would not fit goes to the lifts the day has, first
+ *     to last, a set at a time, to 4 (3 for a beginner and in a 30-minute
+ *     day), inside the day's length and its set ceiling.
+ *
+ * A floor deadlift keeps its row's 3 sets at most. Timed holds keep their
+ * sets. With no length to fit, every lift stays at its
+ * place's sets.
  */
-export function fitSessionsToTime(
+export function sizeSessionsToTime(
   workouts: WorkoutDay[],
   minutes: number,
-  extras: ReadonlySet<string> = new Set()
+  experience: Experience | undefined
 ): WorkoutDay[] {
-  const days = [...workouts];
-  const isExtra = (ex: ProgramExercise) =>
-    ex.instanceId !== undefined && extras.has(ex.instanceId);
-  /* A muscle whose only direct work is added lifts (side delts in a full
-     body week: its lateral raises are both added for the two days) is
-     worked by them, so its last one is kept while something else can give
-     way, as any muscle's last direct lift is. Counted as added only, each
-     would go before a main lift lost a set, and the muscle would have none. */
-  const addedOnly = new Set(
-    [...trainedMuscles(days, new Set())].filter(
-      (m) => !trainedMuscles(days, extras).has(m)
-    )
-  );
-  const worked = (week: readonly WorkoutDay[]) => {
-    const all = trainedMuscles(week, new Set());
-    const base = trainedMuscles(week, extras);
-    return new Set([...all].filter((m) => base.has(m) || addedOnly.has(m)));
-  };
-  const fitOne = (i: number): WorkoutDay => {
-    const trained = worked(days);
-    const frequency = daysPerMuscle(days);
-    return fitDay(days[i], minutes, (dropped, without, keeps) => {
-      if (keeps === "nothing") return true;
-      const week = days.map((d, j) =>
-        j === i ? { ...d, exercises: without } : d
-      );
-      const after = worked(week);
-      if (![...trained].every((m) => after.has(m))) return false;
-      if (keeps === "extra") return isExtra(dropped);
-      if (keeps === "coverage") return true;
-      if (keeps === "spare" && !isExtra(dropped)) return false;
-      const afterDays = daysPerMuscle(week);
-      return [...frequency].every(
-        ([m, n]) => (afterDays.get(m) ?? 0) >= Math.min(n, WEEKLY_FREQUENCY)
-      );
+  const beginner = toExperience(experience) === "beginner";
+  const short = minutes <= SHORT_SESSION_MINUTES;
+  const mainSets = beginner || short ? 3 : minutes >= 60 ? 4 : 3;
+  const otherSets = beginner || short ? 2 : 3;
+  const deepest = beginner || short ? 3 : 4;
+  const timed = (ex: ProgramExercise) => ex.repUnit === "seconds";
+  const capFor = (ex: ProgramExercise) =>
+    isFloorDeadlift(ex.exerciseId) ? Math.min(3, deepest) : deepest;
+
+  return workouts.map((day) => {
+    const mainIndex = day.exercises.findIndex((ex) => ex.isAccessory !== true);
+    const placed = day.exercises.map((ex) => {
+      if (timed(ex)) return { ...ex };
+      const sets = ex.isAccessory !== true ? mainSets : otherSets;
+      return { ...ex, sets: Math.min(sets, capFor(ex)) };
     });
-  };
-  days.forEach((_, i) => {
-    // A day that loses an added lift is fitted again without it, so no set
-    // stays cut to make room for a lift that went anyway.
-    for (;;) {
-      const fitted = fitOne(i);
-      const left = new Set(fitted.exercises.map((ex) => ex.instanceId));
-      const gone = days[i].exercises.filter(
-        (ex) => isExtra(ex) && !left.has(ex.instanceId)
-      );
-      if (gone.length === 0) {
-        days[i] = fitted;
-        break;
-      }
-      days[i] = {
-        ...days[i],
-        exercises: days[i].exercises.filter((ex) => !gone.includes(ex)),
-      };
+    // The order lifts are given up in: the highest rank first, and among
+    // lifts with none (added after the builders) the last first.
+    const rank = (ex: ProgramExercise, i: number) =>
+      i === mainIndex ? -1 : (ex.keepRank ?? 1000 + i);
+    const order = placed
+      .map((ex, i) => ({ i, rank: rank(ex, i) }))
+      .sort((a, b) => b.rank - a.rank)
+      .map(({ i }) => i);
+    const fewest = Math.min(
+      placed.length,
+      short ? MIN_SHORT_LIFTS : MIN_SIZED_LIFTS
+    );
+    const gone = new Set<number>();
+    const kept = () => placed.filter((_, i) => !gone.has(i));
+    for (const i of order) {
+      if (sessionFits(kept(), minutes)) break;
+      if (placed.length - gone.size <= fewest) break;
+      gone.add(i);
     }
+    // One of the pieces the day must hold comes back when it fits now that
+    // a dearer lift after it has gone, the lowest rank first.
+    for (const i of [...order].reverse()) {
+      if (!gone.has(i) || rank(placed[i], i) > MUST_HOLD_RANKS) continue;
+      gone.delete(i);
+      if (!sessionFits(kept(), minutes)) gone.add(i);
+    }
+    const exercises = kept();
+    if (Number.isFinite(minutes)) {
+      const total = () => exercises.reduce((n, e) => n + e.sets, 0);
+      for (let pass = 0; pass < 2; pass++) {
+        for (const ex of exercises) {
+          if (timed(ex) || ex.sets >= capFor(ex)) continue;
+          if (total() >= maxSessionSets(minutes)) break;
+          ex.sets += 1;
+          if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
+        }
+      }
+    }
+    return { ...day, exercises };
   });
-  return days;
 }
 
 /**
