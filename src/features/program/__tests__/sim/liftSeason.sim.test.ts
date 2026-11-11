@@ -63,12 +63,19 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   climb on: a light curl or pushdown at 17 reps, not 20. The dumbbell
  *   curls and presses Pgm8 L15 builds wait the same way (5 kg to 6 kg is
  *   20%), as the barbell ones under the bar did (F2), and so does the
- *   lateral raise a week keeps as the side delts' only lift (Lift9).
+ *   lateral raise a week keeps as the side delts' only lift (Lift9). The
+ *   seated leg curl a squat day holds since Lift21 is one more: a
+ *   beginner's starts light enough to wait.
  * - F4 `misses`: the plan's steps outrun a lifter who gains slowly or
  *   trains half the planned sessions. The over-55's press is no longer
  *   one: a 15 kg barbell press at her 15 kg 1RM, it is a 5 kg dumbbell
- *   press now (L15).
- * - F12 `acsm-size:quads`: size plans give the quads 9 sets a week.
+ *   press now (L15). The powerbuilder's squat on Get stronger is one since
+ *   Lift21: its four sets of five are all built now, where the time fit
+ *   left three, and the fourth is the set that goes. Their 26-week 1RMs
+ *   are the same to the half kilo either way.
+ *
+ * F12 `acsm-size:quads` went with Lift21: a size plan's quads get ten sets
+ * a week or more, where the fitted week gave nine.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "novice-man": ["stall:db-curl"],
@@ -76,32 +83,29 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "stall:db-shoulder-press",
     "stall:lateral-raise",
     "stall:seated-calf-raise",
+    "stall:seated-leg-curl",
     "stall:standing-calf-raise",
   ],
-  "intermediate-woman": ["acsm-size:quads"],
-  "powerbuilder-size": ["acsm-size:quads"],
+  "powerbuilder-strength": ["misses:squat"],
   "light-trainer": [
-    "misses:overhead-press",
-    "misses:squat",
     "stall:db-bench",
     "stall:db-curl",
     "stall:rope-tricep-pushdown",
   ],
   "dumbbell-beginner": [
-    "stall:db-curl",
     "stall:db-rdl",
     "stall:db-row",
     "stall:db-shoulder-press",
     "stall:goblet-squat",
   ],
   "off-sick": ["misses:overhead-press", "stall:db-curl"],
-  holidays: ["acsm-size:quads"],
   "over-55": [
     "misses:bench-press",
     "misses:deadlift",
     "stall:db-shoulder-press",
     "stall:lateral-raise",
     "stall:seated-calf-raise",
+    "stall:seated-leg-curl",
     "stall:standing-calf-raise",
   ],
 };

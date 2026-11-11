@@ -2340,7 +2340,8 @@ describe("coach-read audit pins (2026-08-03)", () => {
 // as the time allows (`weeklyFrequency.ts`). Since Lift21 time takes lifts
 // off the end of a day, and the lifts added for the two days go first: the
 // big muscles keep their two days from 45 minutes, and the three small
-// ones nothing else reaches (side delts, calves, abs) get theirs from 75.
+// ones nothing else reaches (side delts, calves, abs) get theirs at 75 on
+// six days.
 describe("every muscle on two days a week (Lift4 (5))", () => {
   const plan = (
     days: number,
@@ -2358,11 +2359,13 @@ describe("every muscle on two days a week (Lift4 (5))", () => {
       minutes
     ).workouts;
 
-  it("works every muscle twice in a week of four days or more at 75 minutes", async () => {
+  it("works every muscle twice in a six-day week at 75 minutes", async () => {
+    // Four and five days leave the side delts their one raise: the first
+    // upper day's six lifts are two presses, two pulls and the arms.
     const { daysPerMuscle } = await import("../weeklyFrequency");
     const { JUDGEMENT_MUSCLE_ORDER } = await import("../volumeModel");
     for (const experience of ["intermediate", "advanced"] as const) {
-      for (const days of [4, 5, 6]) {
+      for (const days of [6]) {
         const counts = daysPerMuscle(plan(days, 75, experience));
         for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
           expect(

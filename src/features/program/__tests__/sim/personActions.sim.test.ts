@@ -64,20 +64,36 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  * press is a 5 kg dumbbell press now, and an easier session takes it to
  * 4 kg, so its plan numbers never sit still for the check's eight
  * sessions, although it still waits at 15 reps.
+ *
+ * Since Lift21 (one main lift a day, sets by place):
+ *
+ * - `misses:bench-press` after misses: four sets of five across on the
+ *   bench, all built now, and the fourth is the set that goes (F4).
+ * - the half marathoner's `lift:stall` on the squat, the deadlift and the
+ *   Romanian deadlift: a race build holds its leg lifts' numbers, and the
+ *   deadlift's own range (5 to 8) reaches its top sooner than 8 to 12 did,
+ *   so the wait is long enough for the check to see.
+ * - gone: the light trainer's missed press, the swapped squat's
+ *   `acsm-size:quads` (F12) and the dumbbell lifter's waiting curl.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
-    "misses:overhead-press",
     "stall:db-bench",
     "stall:db-curl",
     "stall:rope-tricep-pushdown",
   ],
   "swaps-bench-keeps": ["acsm-heavy:bench-press"],
-  "swaps-squat-today": ["acsm-size:quads", "stall:leg-press"],
+  "swaps-squat-today": ["stall:leg-press"],
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
-  "hybrid-lighter-week": ["spike", "volume-jump"],
+  "lighter-after-misses": ["misses:bench-press"],
+  "hybrid-lighter-week": [
+    "lift:stall:deadlift",
+    "lift:stall:romanian-deadlift",
+    "lift:stall:squat",
+    "spike",
+    "volume-jump",
+  ],
   "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
-  "dumbbell-easier-days": ["stall:db-curl"],
 };
 
 const seasons = new Map<string, Season>();

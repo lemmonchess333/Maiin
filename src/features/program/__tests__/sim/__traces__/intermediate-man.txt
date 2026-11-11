@@ -1,15 +1,15 @@
 intermediate-man · seed 1 · base model · 26 weeks from 2026-03-09 · sessions fitted to 60 minutes
 
-w1 2026-03-09  plan week 1 progression  3/4 sessions  58–61 min
+w1 2026-03-09  plan week 1 progression  3/4 sessions  59–61 min
   squat           plan 125 × 5 × 4  1RM 141.0 logged 145.8  125×[5,5,5,3] own
   bench-press     plan 87.5 × 5 × 4  1RM 100.8 logged 102.1  87.5×[5,5,4,2] own
   deadlift        plan 117.5 × 5 × 3  1RM - logged -
   overhead-press  plan 52.5 × 6 × 3  1RM 60.5 logged 63.0  52.5×[6,6,4] own | 55×[3,0] 45×[5,5] own
-  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 13/2 · Lats 7/2 · UpperBack 10/3 · LowerBack 3/1 · Biceps 14/2 · Quads 7/1 · Hamstrings 10/1 · Glutes 10/1 · Calves 6/1
+  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 13/2 · Lats 13/2 · UpperBack 13/3 · LowerBack 3/1 · Biceps 13/2 · Quads 7/1 · Hamstrings 10/1 · Glutes 10/1 · Calves 6/1
   · 2026-03-10: loaded bench-press at 87.5 kg (plan 65)
   · 2026-03-10: loaded barbell-row at 67.5 kg (plan 60)
   · 2026-03-10: loaded overhead-press at 52.5 kg (plan 40)
-  · 2026-03-10: loaded db-curl at 8 kg (plan 7)
+  · 2026-03-10: loaded lat-pulldown at 60 kg (plan 52.5)
   · 2026-03-11: loaded squat at 125 kg (plan 97.5)
   · 2026-03-11: loaded romanian-deadlift at 85 kg (plan 75)
   · 2026-03-11: loaded hack-squat at 100 kg (plan 87.5)
@@ -18,17 +18,17 @@ w1 2026-03-09  plan week 1 progression  3/4 sessions  58–61 min
   · 2026-03-13: loaded overhead-press at 55 kg (plan 40)
   · 2026-03-13: took overhead-press down to 45 kg (plan 40 × 5)
   · 2026-03-13: loaded db-bench at 25 kg (plan 22.5)
-  · 2026-03-13: loaded db-curl at 8 kg (plan 7)
-  · 2026-03-13: took db-curl down to 6 kg (plan 7 × 8)
+  · 2026-03-13: loaded seated-row at 60 kg (plan 52.5)
+  · 2026-03-13: took seated-row down to 50 kg (plan 52.5 × 6)
   · 2026-03-13: loaded lateral-raise at 15 kg (plan 12.5)
   · 2026-03-13: took lateral-raise down to 10 kg (plan 12.5 × 8)
 
-w2 2026-03-16  plan week 2 progression  4/4 sessions  59–61 min
+w2 2026-03-16  plan week 2 progression  4/4 sessions  60–62 min
   squat           plan 127.5 × 5 × 4  1RM 142.3 logged 145.8  125×[5,5,5,5] step
   bench-press     plan 87.5 × 5 × 4  1RM 101.6 logged 102.1  87.5×[5,5,4,2] miss
   deadlift        plan 155 × 5 × 3  1RM 172.7 logged 170.5  155×[3,0] 132.5×[5] own
   overhead-press  plan 52.5 × 6 × 3  1RM 60.9 logged 63.0  52.5×[6,6,4] miss | 55×[3] 47.5×[5,5,5] step
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 12/4 · LowerBack 5/2 · Biceps 14/2 · Quads 9/2 · Hamstrings 16/2 · Glutes 14/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 15/4 · LowerBack 5/2 · Biceps 13/2 · Quads 9/2 · Hamstrings 16/2 · Glutes 14/2 · Calves 13/2 · Abs 3/1
   · 2026-03-16: loaded deadlift at 155 kg (plan 117.5)
   · 2026-03-16: took deadlift down to 132.5 kg (plan 117.5 × 5)
   · 2026-03-16: loaded hack-squat at 100 kg (plan 87.5)
@@ -37,40 +37,40 @@ w2 2026-03-16  plan week 2 progression  4/4 sessions  59–61 min
   · 2026-03-16: loaded cable-crunch at 45 kg (plan 40)
   · 2026-03-16: loaded seated-calf-raise at 35 kg (plan 30)
 
-w3 2026-03-23  plan week 3 progression  3/4 sessions  59–60 min
+w3 2026-03-23  plan week 3 progression  3/4 sessions  60–61 min
   squat           plan 127.5 × 5 × 4  1RM 143.6 logged 148.8  127.5×[5,5,3,0] miss
   bench-press     plan 77.5 × 5 × 4  1RM 102.1 logged 102.1  87.5×[5,5,5,4] LOWERED
   deadlift        plan 155 × 5 × 3  1RM 174.2 logged 180.8  155×[5] 132.5×[5] 155×[3] miss
   overhead-press  plan 50 × 5 × 4  1RM 61.2 logged 63.0  52.5×[6,6,5] LOWERED
-  sets/days: Chest 7/1 · FrontDelts 7/1 · RearDelts 4/1 · Triceps 7/1 · Lats 4/1 · UpperBack 10/3 · LowerBack 6/2 · Biceps 7/1 · Quads 9/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 7/1 · FrontDelts 7/1 · RearDelts 7/1 · Triceps 7/1 · Lats 7/1 · UpperBack 10/3 · LowerBack 6/2 · Biceps 7/1 · Quads 9/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
 
-w4 2026-03-30  plan week 4 deload  4/4 sessions  42–46 min
+w4 2026-03-30  plan week 4 deload  4/4 sessions  40–46 min
   squat           plan 127.5 × 5 × 2  1RM 144.6 logged 148.8  127.5×[5,5] hold
   bench-press     plan 77.5 × 5 × 2  1RM 102.6 logged 90.4  77.5×[5,5] hold
   deadlift        plan 155 × 5 × 2  1RM 175.4 logged 180.8  155×[5] 132.5×[5] hold
   overhead-press  plan 55 × 5 × 2  1RM 61.6 logged 60.5  55×[3] 50×[5] own | 47.5×[6,6] hold
-  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 8/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
+  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 8/2 · Triceps 8/2 · Lats 8/2 · UpperBack 10/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
 
-w5 2026-04-06  plan week 5 progression  3/4 sessions  59–61 min
+w5 2026-04-06  plan week 5 progression  3/4 sessions  59–62 min
   squat           plan 127.5 × 5 × 4  1RM 145.3 logged -
   bench-press     plan 80 × 5 × 4  1RM 103.1 logged 90.4  77.5×[5,5,5,5] step
   deadlift        plan 157.5 × 5 × 3  1RM 176.2 logged 180.8  155×[5] 132.5×[5] 155×[5] step
   overhead-press  plan 57.5 × 5 × 4  1RM 61.9 logged 64.2  55×[5] 50×[5] 55×[5,5] step | 47.5×[6,6,6] step
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 10/3 · LowerBack 3/1 · Biceps 14/2 · Quads 3/1 · Hamstrings 7/1 · Glutes 6/1 · Calves 7/1 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 13/3 · LowerBack 3/1 · Biceps 13/2 · Quads 3/1 · Hamstrings 7/1 · Glutes 6/1 · Calves 7/1 · Abs 3/1
 
-w6 2026-04-13  plan week 6 progression  4/4 sessions  59–60 min
+w6 2026-04-13  plan week 6 progression  4/4 sessions  59–61 min
   squat           plan 130 × 5 × 4  1RM 146.2 logged 148.8  127.5×[5,5,5,5] step
   bench-press     plan 82.5 × 5 × 4  1RM 103.6 logged 93.3  80×[5,5,5,5] step
   deadlift        plan 160 × 5 × 3  1RM 177.3 logged 183.8  157.5×[5] 132.5×[5] 157.5×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 62.2 logged 67.1  57.5×[5] 50×[5] 57.5×[5,5] step | 50×[6,6,6] step
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
-w7 2026-04-20  plan week 7 progression  4/4 sessions  59–60 min
+w7 2026-04-20  plan week 7 progression  4/4 sessions  59–61 min
   squat           plan 132.5 × 5 × 4  1RM 147.0 logged 151.7  130×[5,5,5,5] step
   bench-press     plan 85 × 5 × 4  1RM 104.1 logged 96.3  82.5×[5,5,5,5] step
   deadlift        plan 160 × 5 × 3  1RM 178.3 logged 176.0  160×[3] 132.5×[5] 160×[0] miss
   overhead-press  plan 52.5 × 5 × 4  1RM 62.5 logged 66.0  60×[3] 50×[5] 60×[0] 50×[5] own | 52.5×[6,6,4] miss
-  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 13/2 · Lats 7/2 · UpperBack 12/4 · LowerBack 5/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 13/2 · Lats 13/2 · UpperBack 15/4 · LowerBack 5/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
   · 2026-04-21: took overhead-press down to 50 kg (plan 60 × 5)
   · 2026-04-22: took seated-leg-curl down to 27.5 kg (plan 35 × 9)
 
@@ -79,89 +79,89 @@ w8 2026-04-27  plan week 8 deload  4/4 sessions  41–45 min
   bench-press     plan 85 × 5 × 2  1RM 104.5 logged 99.2  85×[5,5] hold
   deadlift        plan 160 × 5 × 2  1RM 179.2 logged 186.7  160×[5] 132.5×[5] hold
   overhead-press  plan 60 × 5 × 2  1RM 62.8 logged 66.0  60×[3] 52.5×[5] own | 52.5×[6,6] hold
-  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 8/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
+  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 8/2 · Triceps 8/2 · Lats 8/2 · UpperBack 10/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
 
-w9 2026-05-04  plan week 9 progression  4/4 sessions  59–60 min
+w9 2026-05-04  plan week 9 progression  4/4 sessions  59–61 min
   squat           plan 135 × 5 × 4  1RM 148.5 logged 154.6  132.5×[5,5,5,5] step
   bench-press     plan 87.5 × 5 × 4  1RM 104.9 logged 99.2  85×[5,5,5,5] step
   deadlift        plan 160 × 5 × 3  1RM 180.0 logged 176.0  160×[3] 132.5×[5] 160×[0] miss
   overhead-press  plan 55 × 5 × 4  1RM 63.1 logged 64.0  60×[2] 52.5×[5,5,5] own | 52.5×[6,6,6] reps
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 12/4 · LowerBack 5/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 15/4 · LowerBack 5/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 16/2 · Glutes 15/2 · Calves 13/2 · Abs 3/1
   · 2026-05-05: took overhead-press down to 52.5 kg (plan 60 × 5)
   · 2026-05-06: took seated-leg-curl down to 27.5 kg (plan 35 × 9)
 
-w10 2026-05-11  plan week 10 progression  4/4 sessions  57–60 min
+w10 2026-05-11  plan week 10 progression  4/4 sessions  59–61 min
   squat           plan 135 × 5 × 4  1RM 149.2 logged 157.5  135×[5,5,2] 117.5×[5] miss
   bench-press     plan 90 × 5 × 4  1RM 105.3 logged 102.1  87.5×[5,5,5,5] step
   deadlift        plan 162.5 × 5 × 3  1RM 180.8 logged 186.7  160×[5] 132.5×[5] 160×[5] step
   overhead-press  plan 57.5 × 5 × 4  1RM 63.3 logged 64.8  60×[2] 55×[5,5,5] step | 52.5×[7,7,7] reps
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-05-11: took squat down to 117.5 kg (plan 135 × 5)
 
-w11 2026-05-18  plan week 11 progression  4/4 sessions  57–60 min
+w11 2026-05-18  plan week 11 progression  4/4 sessions  59–61 min
   squat           plan 122.5 × 5 × 4  1RM 149.8 logged 157.5  135×[5,5,2] 120×[5] LOWERED
   bench-press     plan 90 × 5 × 4  1RM 105.7 logged 105.0  90×[5,5,4,2] miss
   deadlift        plan 162.5 × 5 × 3  1RM 181.6 logged 189.6  162.5×[5] 132.5×[5] 162.5×[1] miss
   overhead-press  plan 60 × 5 × 4  1RM 63.5 logged 67.1  60×[2] 57.5×[5,5,5] step | 52.5×[8,7,5] hold
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
 w12 2026-05-25  plan week 12 deload  4/4 sessions  40–45 min
   squat           plan 122.5 × 5 × 2  1RM 150.3 logged 142.9  122.5×[5,5] hold
   bench-press     plan 90 × 5 × 2  1RM 106.0 logged 105.0  90×[5,5] hold
   deadlift        plan 162.5 × 5 × 2  1RM 182.2 logged 189.6  162.5×[5] 132.5×[5] hold
   overhead-press  plan 60 × 5 × 2  1RM 63.7 logged 66.5  60×[1,0] hold | 52.5×[8,8] hold
-  sets/days: Chest 7/2 · FrontDelts 7/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 7/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
+  sets/days: Chest 7/2 · FrontDelts 7/2 · SideDelts 2/1 · RearDelts 8/2 · Triceps 7/2 · Lats 8/2 · UpperBack 10/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
 
-w13 2026-06-01  plan week 13 progression  4/4 sessions  57–60 min
+w13 2026-06-01  plan week 13 progression  4/4 sessions  59–61 min
   squat           plan 125 × 5 × 4  1RM 150.8 logged 142.9  122.5×[5,5,5,5] step
   bench-press     plan 90 × 5 × 4  1RM 106.3 logged 105.0  90×[5,5,4,1] miss
   deadlift        plan 165 × 5 × 3  1RM 182.8 logged 189.6  162.5×[5] 132.5×[5] 162.5×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 63.9 logged 70.0  60×[5,1] 52.5×[5,5] miss | 52.5×[8,6,5] hold
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-06-02: took overhead-press down to 52.5 kg (plan 60 × 5)
 
-w14 2026-06-08  plan week 14 progression  4/4 sessions  57–61 min
+w14 2026-06-08  plan week 14 progression  4/4 sessions  59–61 min
   squat           plan 127.5 × 5 × 4  1RM 151.3 logged 145.8  125×[5,5,5,5] step
   bench-press     plan 80 × 5 × 4  1RM 106.6 logged 105.0  90×[5,5,3,1] LOWERED
   deadlift        plan 165 × 5 × 3  1RM 183.4 logged 192.5  165×[5] 132.5×[5] 165×[1] miss
-  overhead-press  plan 55 × 5 × 4  1RM 64.1 logged 70.0  60×[5,2] 52.5×[5,5] LOWERED | 52.5×[7,6,4] miss
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  overhead-press  plan 55 × 5 × 4  1RM 64.1 logged 70.0  60×[5,2] 52.5×[5,5] LOWERED | 52.5×[8,6,4] hold
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
-w15 2026-06-15  plan week 15 progression  4/4 sessions  58–60 min
+w15 2026-06-15  plan week 15 progression  4/4 sessions  59–61 min
   squat           plan 130 × 5 × 4  1RM 151.7 logged 148.8  127.5×[5,5,5,5] step
   bench-press     plan 82.5 × 5 × 4  1RM 106.9 logged 93.3  80×[5,5,5,5] step
   deadlift        plan 147.5 × 5 × 3  1RM 184.0 logged 192.5  165×[5] 132.5×[5] 165×[3] LOWERED
   overhead-press  plan 57.5 × 5 × 4  1RM 64.2 logged 66.5  55×[5,5] 52.5×[5,5] step | 52.5×[8,8,8] reps
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
 w16 2026-06-22  plan week 16 deload  4/4 sessions  40–45 min
   squat           plan 130 × 5 × 2  1RM 152.1 logged 151.7  130×[5,5] hold
   bench-press     plan 82.5 × 5 × 2  1RM 107.1 logged 96.3  82.5×[5,5] hold
   deadlift        plan 147.5 × 5 × 2  1RM 184.4 logged 172.1  147.5×[5] 132.5×[5] hold
-  overhead-press  plan 57.5 × 5 × 2  1RM 64.4 logged 68.3  57.5×[5,5] hold | 52.5×[9,9] hold
-  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 8/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
+  overhead-press  plan 57.5 × 5 × 2  1RM 64.4 logged 68.3  57.5×[5,3] hold | 52.5×[9,9] hold
+  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 8/2 · Triceps 8/2 · Lats 8/2 · UpperBack 10/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
 
-w17 2026-06-29  plan week 17 progression  4/4 sessions  57–60 min
+w17 2026-06-29  plan week 17 progression  4/4 sessions  59–61 min
   squat           plan 130 × 5 × 4  1RM 152.5 logged 151.7  130×[5,5,2] 112.5×[5] miss
   bench-press     plan 85 × 5 × 4  1RM 107.3 logged 96.3  82.5×[5,5,5,5] step
   deadlift        plan 150 × 5 × 3  1RM 184.9 logged 172.1  147.5×[5] 132.5×[5] 147.5×[5] step
   overhead-press  plan 57.5 × 5 × 4  1RM 64.5 logged 68.3  57.5×[5,5,5,2] miss | 52.5×[9,9,9] reps
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-06-29: took squat down to 112.5 kg (plan 130 × 5)
 
-w18 2026-07-06  plan week 18 progression  4/4 sessions  57–60 min
+w18 2026-07-06  plan week 18 progression  4/4 sessions  59–61 min
   squat           plan 132.5 × 5 × 4  1RM 152.8 logged 151.7  130×[5,5,5] 112.5×[5] step
   bench-press     plan 87.5 × 5 × 4  1RM 107.5 logged 99.2  85×[5,5,5,5] step
   deadlift        plan 152.5 × 5 × 3  1RM 185.3 logged 175.0  150×[5] 132.5×[5] 150×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 64.6 logged 70.0  57.5×[5,5,5,5] step | 52.5×[10,10,10] step
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
-w19 2026-07-13  plan week 19 progression  4/4 sessions  58–60 min
+w19 2026-07-13  plan week 19 progression  4/4 sessions  59–61 min
   squat           plan 135 × 5 × 4  1RM 153.2 logged 154.6  132.5×[5,5,5] 112.5×[5] step
   bench-press     plan 90 × 5 × 4  1RM 107.7 logged 102.1  87.5×[5,5,5,5] step
   deadlift        plan 155 × 5 × 3  1RM 185.7 logged 177.9  152.5×[5] 132.5×[5] 152.5×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 64.8 logged 70.0  60×[5,5,2] 52.5×[5] miss | 55×[6,6,6] reps
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-07-14: took overhead-press down to 52.5 kg (plan 60 × 5)
 
 w20 2026-07-20  plan week 20 deload  4/4 sessions  40–45 min
@@ -169,30 +169,30 @@ w20 2026-07-20  plan week 20 deload  4/4 sessions  40–45 min
   bench-press     plan 90 × 5 × 2  1RM 107.9 logged 105.0  90×[5,5] hold
   deadlift        plan 155 × 5 × 2  1RM 186.1 logged 180.8  155×[5] 132.5×[5] hold
   overhead-press  plan 60 × 5 × 2  1RM 64.9 logged 70.0  60×[5,5] hold | 55×[7,7] hold
-  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 8/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
+  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 8/2 · Triceps 8/2 · Lats 8/2 · UpperBack 10/4 · LowerBack 4/2 · Biceps 8/2 · Quads 6/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 8/2 · Abs 2/1
 
-w21 2026-07-27  plan week 21 progression  4/4 sessions  57–60 min
+w21 2026-07-27  plan week 21 progression  4/4 sessions  59–61 min
   squat           plan 135 × 5 × 4  1RM 153.8 logged 157.5  135×[5,5,5,2] miss
   bench-press     plan 90 × 5 × 4  1RM 108.1 logged 105.0  90×[5,5,3,1] miss
   deadlift        plan 157.5 × 5 × 3  1RM 186.5 logged 180.8  155×[5] 132.5×[5] 155×[5] step
   overhead-press  plan 55 × 7 × 3  1RM 65.0 logged 68.0  60×[4,0] 50×[5,5] own | 55×[6,4,0] miss
-  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 12/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 3/1 · RearDelts 13/2 · Triceps 12/2 · Lats 13/2 · UpperBack 16/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-07-28: took overhead-press down to 50 kg (plan 60 × 5)
-  · 2026-07-31: took barbell-row down to 55 kg (plan 67.5 × 9)
+  · 2026-07-31: took barbell-row down to 57.5 kg (plan 70 × 7)
 
-w22 2026-08-03  plan week 22 progression  3/4 sessions  59–60 min
+w22 2026-08-03  plan week 22 progression  3/4 sessions  59–61 min
   squat           plan 137.5 × 5 × 4  1RM 154.0 logged 157.5  135×[5,5,5,5] step
   bench-press     plan 90 × 5 × 4  1RM 108.2 logged -
   deadlift        plan 160 × 5 × 3  1RM 186.8 logged 183.8  157.5×[5] 132.5×[5] 157.5×[5] step
   overhead-press  plan 55 × 5 × 4  1RM 65.0 logged 68.0  60×[4] 52.5×[5,5,5] step
-  sets/days: Chest 7/1 · FrontDelts 7/1 · SideDelts 3/1 · RearDelts 3/1 · Triceps 7/1 · Lats 3/1 · UpperBack 9/3 · LowerBack 6/2 · Biceps 7/1 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 7/1 · FrontDelts 7/1 · SideDelts 3/1 · RearDelts 6/1 · Triceps 7/1 · Lats 6/1 · UpperBack 12/3 · LowerBack 6/2 · Biceps 6/1 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
-w23 2026-08-10  plan week 23 progression  4/4 sessions  57–61 min
+w23 2026-08-10  plan week 23 progression  4/4 sessions  59–61 min
   squat           plan 137.5 × 5 × 4  1RM 154.3 logged 160.4  137.5×[5,5,1] 120×[5] miss
   bench-press     plan 92.5 × 5 × 4  1RM 108.3 logged 105.0  90×[5,5,5,5] step
   deadlift        plan 162.5 × 5 × 3  1RM 187.1 logged 186.7  160×[5] 132.5×[5] 160×[5] step
   overhead-press  plan 57.5 × 5 × 4  1RM 65.1 logged 68.0  55×[7,7,7] reps | 60×[4] 55×[5,5,5] step
-  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 14/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 14/2 · FrontDelts 14/2 · SideDelts 2/1 · RearDelts 13/2 · Triceps 14/2 · Lats 13/2 · UpperBack 15/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-08-11: took squat down to 120 kg (plan 137.5 × 5)
 
 w24 2026-08-17  plan week 24 deload  3/4 sessions  40–43 min
@@ -200,21 +200,21 @@ w24 2026-08-17  plan week 24 deload  3/4 sessions  40–43 min
   bench-press     plan 92.5 × 5 × 2  1RM 108.5 logged 107.9  92.5×[5,5] hold
   deadlift        plan 162.5 × 5 × 2  1RM 187.3 logged -
   overhead-press  plan 60 × 5 × 2  1RM 65.2 logged 69.7  55×[8,8] hold | 60×[4] 57.5×[5] own
-  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/1 · RearDelts 4/2 · Triceps 8/2 · Lats 4/2 · UpperBack 6/3 · LowerBack 2/1 · Biceps 8/2 · Quads 4/1 · Hamstrings 6/1 · Glutes 6/1 · Calves 4/1
+  sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 1/1 · RearDelts 8/2 · Triceps 8/2 · Lats 8/2 · UpperBack 7/3 · LowerBack 2/1 · Biceps 8/2 · Quads 4/1 · Hamstrings 6/1 · Glutes 6/1 · Calves 4/1
 
-w25 2026-08-24  plan week 25 progression  3/4 sessions  57–60 min
+w25 2026-08-24  plan week 25 progression  3/4 sessions  59–60 min
   squat           plan 140 × 5 × 4  1RM 154.7 logged 160.4  137.5×[5,5,5,5] step
   bench-press     plan 95 × 5 × 4  1RM 108.6 logged 107.9  92.5×[5,5,5,5] step
   deadlift        plan 165 × 5 × 3  1RM 187.5 logged 189.6  162.5×[5] 132.5×[5] 162.5×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 65.3 logged 69.7  55×[8,8,6] hold
-  sets/days: Chest 7/1 · FrontDelts 7/1 · RearDelts 4/1 · Triceps 7/1 · Lats 4/1 · UpperBack 10/3 · LowerBack 6/2 · Biceps 7/1 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 7/1 · FrontDelts 7/1 · RearDelts 7/1 · Triceps 7/1 · Lats 7/1 · UpperBack 10/3 · LowerBack 6/2 · Biceps 7/1 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
 
-w26 2026-08-31  plan week 26 progression  4/4 sessions  57–61 min
+w26 2026-08-31  plan week 26 progression  4/4 sessions  59–61 min
   squat           plan 140 × 5 × 4  1RM 154.9 logged 163.3  140×[5,5,5,3] miss
   bench-press     plan 95 × 5 × 4  1RM 108.7 logged 110.8  95×[5,5,3,1] miss
   deadlift        plan 167.5 × 5 × 3  1RM 187.8 logged 192.5  165×[5] 132.5×[5] 165×[5] step
   overhead-press  plan 60 × 5 × 4  1RM 65.4 logged 70.0  60×[5] 57.5×[5] 60×[0] 50×[5] hold | 55×[8,6,5] hold
-  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 3/1 · RearDelts 7/2 · Triceps 13/2 · Lats 7/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 14/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
+  sets/days: Chest 13/2 · FrontDelts 13/2 · SideDelts 2/1 · RearDelts 13/2 · Triceps 13/2 · Lats 13/2 · UpperBack 15/4 · LowerBack 6/2 · Biceps 13/2 · Quads 10/2 · Hamstrings 17/2 · Glutes 16/2 · Calves 13/2 · Abs 3/1
   · 2026-08-31: took overhead-press down to 50 kg (plan 60 × 5)
 
 summary
@@ -222,4 +222,4 @@ summary
   squat           1RM 140.0 → 154.9 (10.6%) · plan 125 → 140 kg · 25 sessions: 11 steps, 0 rep climbs, 6 holds, 6 misses, 1 lowered, 1 own weight
   bench-press     1RM 100.0 → 108.7 (8.7%) · plan 87.5 → 95 kg · 25 sessions: 11 steps, 0 rep climbs, 6 holds, 5 misses, 2 lowered, 1 own weight
   deadlift        1RM 171.2 → 187.8 (9.7%) · plan 117.5 → 167.5 kg · 24 sessions: 12 steps, 0 rep climbs, 5 holds, 5 misses, 1 lowered, 1 own weight
-  overhead-press  1RM 60.0 → 65.4 (8.9%) · plan 52.5 → 60 kg · 49 sessions: 12 steps, 6 rep climbs, 14 holds, 7 misses, 2 lowered, 8 own weight
+  overhead-press  1RM 60.0 → 65.4 (8.9%) · plan 52.5 → 60 kg · 49 sessions: 12 steps, 6 rep climbs, 15 holds, 6 misses, 2 lowered, 8 own weight

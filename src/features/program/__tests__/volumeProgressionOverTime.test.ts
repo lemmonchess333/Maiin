@@ -128,7 +128,9 @@ describe("weekly set volume over six mesocycles", () => {
        lighter week. Every cycle after the first starts from the anchor. */
     const cycle = (start: number) =>
       [0, 1, 2, 3].map((i) => at(start + i).total);
-    expect(cycle(5)).toEqual([66, 66, 66, 44]);
+    // Four days with no length to fit: each day's whole list, at four sets
+    // on its main lift (the deadlift's three) and three on every other.
+    expect(cycle(5)).toEqual([81, 81, 81, 52]);
     for (const start of [9, 13, 17, 21]) {
       expect(cycle(start), `mesocycle starting at week ${start}`).toEqual(
         cycle(5)
@@ -138,11 +140,12 @@ describe("weekly set volume over six mesocycles", () => {
 
   it("mains hold their set count in every trained week", () => {
     const nonDeload = ROWS.filter((r) => r.phase !== "deload");
-    expect(new Set(nonDeload.map((r) => r.main))).toEqual(new Set([24]));
+    // One main lift a day (Lift21): 4 + 4 + 4 and the deadlift's 3.
+    expect(new Set(nonDeload.map((r) => r.main))).toEqual(new Set([15]));
     // The deload is the only thing that moves them, and it moves them back.
     expect(
       new Set(ROWS.filter((r) => r.phase === "deload").map((r) => r.main))
-    ).toEqual(new Set([16]));
+    ).toEqual(new Set([8]));
   });
 
   it("leaves no residue in the anchor — week 24 equals week 4", () => {
