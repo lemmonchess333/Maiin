@@ -12,7 +12,7 @@ it.each([
     .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "")
     .replace(/&apos;|&#39;/g, "'");
   expect(source).not.toMatch(
-    /\blose\b|at risk|don't break|keep your streak alive/i
+    /\blose\b|at risk|don['’]t break|keep your streak alive/i
   );
 });
 

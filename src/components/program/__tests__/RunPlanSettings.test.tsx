@@ -440,7 +440,7 @@ describe("RunPlanSettings", () => {
       expect(screen.getByLabelText("Longest run, min")).toHaveValue(null);
       // A new runner starts from setup's "New to running", not from here.
       expect(
-        screen.queryByRole("button", { name: "I'm new to running" })
+        screen.queryByRole("button", { name: /^I['’]m new to running$/ })
       ).toBeNull();
       fireEvent.change(screen.getByLabelText("Minutes a week"), {
         target: { value: "60" },
