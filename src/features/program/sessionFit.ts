@@ -239,6 +239,19 @@ const SHORT_SESSION_MINUTES = 30;
  *  and the three after it. */
 const MUST_HOLD_RANKS = 4;
 
+/** The share of its length under which a day counts as short, and takes
+ *  back any lift that fits. */
+const FILLED_SHARE = 0.85;
+
+const PUSH_PATTERNS: ReadonlySet<string> = new Set([
+  "horizontal_push",
+  "vertical_push",
+]);
+const PULL_PATTERNS: ReadonlySet<string> = new Set([
+  "horizontal_pull",
+  "vertical_pull",
+]);
+
 /**
  * The sets a day's lifts take by their place in it, for a session length
  * and a level (Lift21), and the sets time left over gives back:
@@ -248,9 +261,12 @@ const MUST_HOLD_RANKS = 4;
  *     deadlift) 3; every other lift 3. A beginner's other lifts take 2, and
  *     so do a 30-minute day's, the one place a lift past beginner sits
  *     under 3;
+ *   - a day's first pull takes its first press's sets, so a day that
+ *     presses and pulls does as much of one as the other;
  *   - time left goes to the lifts the day has, first to last, a set at a
- *     time, to 4 (3 for a beginner and in a 30-minute day), inside the
- *     day's length and its set ceiling.
+ *     time, to 4 (3 for a beginner and in a 30-minute day) and no deeper
+ *     than the day's main lift, inside the day's length and its set
+ *     ceiling.
  *
  * A floor deadlift keeps its row's 3 sets at most. Timed holds keep their
  * sets.
@@ -268,25 +284,42 @@ function setsByPlace(minutes: number, experience: Experience | undefined) {
     /** The day's lifts, each a copy at its place's sets. */
     place(exercises: readonly ProgramExercise[]): ProgramExercise[] {
       const mainIndex = exercises.findIndex((ex) => ex.isAccessory !== true);
-      return exercises.map((ex, i) => {
+      const placed = exercises.map((ex, i) => {
         if (timed(ex)) return { ...ex };
         const sets =
           i === mainIndex ? mainSets : ex.isAccessory !== true ? 3 : otherSets;
         return { ...ex, sets: Math.min(sets, capFor(ex)) };
       });
+      // A day's first pull takes its first press's sets (D-LIFT-3: pulling
+      // keeps up with pressing, for the shoulders). Nothing adds a pulling
+      // set to a week afterwards.
+      const press = placed.find((ex) => PUSH_PATTERNS.has(ex.movementCategory));
+      const pull = placed.find((ex) => PULL_PATTERNS.has(ex.movementCategory));
+      if (press && pull && !timed(pull))
+        pull.sets = Math.min(Math.max(pull.sets, press.sets), capFor(pull));
+      return placed;
     },
     /** Gives time left back as sets, in place. */
     deepen(exercises: ProgramExercise[]): void {
       if (!Number.isFinite(minutes)) return;
       const total = () => exercises.reduce((n, e) => n + e.sets, 0);
-      for (let pass = 0; pass < 2; pass++) {
-        for (const ex of exercises) {
-          if (timed(ex) || ex.sets >= capFor(ex)) continue;
-          if (total() >= maxSessionSets(minutes)) break;
-          ex.sets += 1;
-          if (plannedSeconds(exercises, minutes) > minutes * 60) ex.sets -= 1;
-        }
-      }
+      // No lift goes deeper than the day's main lift, so a day never reads
+      // three sets of its bench and four of the press after it. A deadlift
+      // from the floor stops at three and holds nothing else back.
+      const main = exercises.find((ex) => ex.isAccessory !== true);
+      const most = (ex: ProgramExercise) =>
+        ex === main || !main || isFloorDeadlift(main.exerciseId)
+          ? capFor(ex)
+          : Math.min(capFor(ex), Math.max(main.sets, ex.sets));
+      const add = (ex: ProgramExercise): boolean => {
+        if (timed(ex) || ex.sets >= most(ex)) return false;
+        if (total() >= maxSessionSets(minutes)) return false;
+        ex.sets += 1;
+        if (plannedSeconds(exercises, minutes) <= minutes * 60) return true;
+        ex.sets -= 1;
+        return false;
+      };
+      for (let pass = 0; pass < 2; pass++) for (const ex of exercises) add(ex);
     },
   };
 }
@@ -299,7 +332,8 @@ function setsByPlace(minutes: number, experience: Experience | undefined) {
  *   - while the day does not fit, the lift with the highest `keepRank` goes
  *     (the builders rank each day's lifts; one a later pass added goes
  *     before any of theirs), down to three lifts, two in a 30-minute day.
- *     One of the day's first four that then fits comes back;
+ *     One of the day's first four that then fits comes back, and any lift
+ *     that fits while the day is under 85% of its length;
  *   - time the next lift would not fit goes back to the lifts the day has.
  *
  * With no length to fit, every lift stays, at its place's sets.
@@ -335,10 +369,14 @@ export function sizeSessionsToTime(
       if (placed.length - gone.size <= fewest) break;
       gone.add(i);
     }
-    // One of the pieces the day must hold comes back when it fits now that
-    // a dearer lift after it has gone, the lowest rank first.
+    // A lift comes back when it fits now that a dearer one after it has
+    // gone, the lowest rank first: one of the pieces the day must hold
+    // always, any other while the day is short of its length.
     for (const i of [...order].reverse()) {
-      if (!gone.has(i) || rank(placed[i], i) > MUST_HOLD_RANKS) continue;
+      if (!gone.has(i)) continue;
+      const short =
+        plannedSeconds(kept(), minutes) < minutes * 60 * FILLED_SHARE;
+      if (rank(placed[i], i) > MUST_HOLD_RANKS && !short) continue;
       gone.delete(i);
       if (!sessionFits(kept(), minutes)) gone.add(i);
     }

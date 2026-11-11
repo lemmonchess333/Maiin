@@ -667,15 +667,21 @@ function startingVariation(
  * those. A full-body day keeps a leg lift, a press and a pull; the third
  * day's squat pattern outranks both, since the week's other two days lead
  * with a squat and a deadlift and three-lift days would otherwise train the
- * quads once a week. `liftDayLabel.test.ts` covers the same day names, and
- * `sessionSizing.test.ts` fails when a builder's slots and its row here
- * stop lining up.
+ * quads once a week.
+ *
+ * No pass adds pulling sets to a built week any more, so the order also
+ * keeps a short week pulling about as much as it presses (D-LIFT-3): where
+ * one day's press outranks its pull, the next day's pull outranks its
+ * press (the two upper days; the squat and deadlift full-body days), and
+ * the third full-body day keeps its pull before its press.
+ * `liftDayLabel.test.ts` covers the same day names, and
+ * `sessionSizing.test.ts` holds the rows and the balance.
  */
 export const KEEP_RANKS: Readonly<Record<string, readonly number[]>> = {
   "Full Body — Squat Focus": [1, 2, 3, 4, 5, 6],
-  "Full Body — Deadlift Focus": [1, 2, 3, 4, 5, 6],
-  "Full Body — Posterior Focus": [1, 3, 4, 2, 6, 5],
-  "Upper — Chest & Back": [1, 2, 3, 4, 5, 6],
+  "Full Body — Deadlift Focus": [1, 3, 2, 4, 5, 6],
+  "Full Body — Posterior Focus": [1, 4, 3, 2, 6, 5],
+  "Upper — Chest & Back": [1, 2, 4, 3, 5, 6],
   "Lower — Squat Focus": [1, 2, 3, 6, 4, 5],
   "Upper — Shoulders & Arms": [1, 2, 3, 4, 6, 7, 5],
   "Lower — Deadlift Focus": [1, 2, 3, 4, 5, 6],
