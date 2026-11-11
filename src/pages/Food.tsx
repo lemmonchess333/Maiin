@@ -15,7 +15,7 @@ import { useGuideHint } from "@/hooks/useGuideHint";
 import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth, useUid } from "@/lib/auth";
-import { startDayKey } from "@/lib/startDay";
+import { beforeStart, startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -79,6 +79,7 @@ import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
+  compareQuickAddTallies,
   orderQuickAddItems,
   pickRepresentativeMeal,
   type QuickAddItem,
@@ -92,6 +93,10 @@ import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
+import FoodMacroRow from "@/components/food/FoodMacroRow";
+import FoodLogFlight from "@/components/food/FoodLogFlight";
+import { useFoodLogFlight } from "@/hooks/useFoodLogFlight";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodTargetsLink from "@/components/food/FoodTargetsLink";
@@ -129,6 +134,7 @@ import {
   MEAL_ORDER,
   MEAL_LABELS,
   inferMostLikelyMealSlot,
+  typicalHourForMeal,
   type MealKey,
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
@@ -158,14 +164,16 @@ const DEFAULT_QUICK_MEALS = [
 // parse as natural language. The first prompt makes both modes
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
-// Each must fit the composer's field on one line at 375px, where the
-// Scan button beside it leaves the field about 180px for text.
+// The first two name the two modes between them. Each must fit the
+// composer's field on one line at 375px beside the widest meal chip
+// ("Breakfast"), the pencil and the camera, which leave the text
+// 123px (Food11 call 3; it had about 180px before the chip).
 const NL_EXAMPLE_PROMPTS = [
-  "Search or describe a meal",
+  "Search a food",
+  "Describe a meal",
   "Eggs",
-  "200g chicken & rice",
-  "Large coffee, no sugar",
-  "Greek yoghurt & berries",
+  "200g chicken",
+  "2 eggs on toast",
 ];
 
 // Meal slot ordering + labels live in components/food/mealConstants
@@ -283,9 +291,9 @@ export default function Food() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
   // Default the logging destination to the meal a user is most likely
-  // trying to log right now. They can still tap the selected pill to
-  // clear it, but the common case stops requiring a breakfast/lunch/
-  // snacks/dinner decision before every save.
+  // trying to log right now, so the common case does not require a
+  // breakfast/lunch/snacks/dinner decision before every save. The
+  // composer's meal chip changes it.
   const [targetMeal, setTargetMeal] = useState<MealKey | null>(() =>
     inferMostLikelyMealSlot(new Date().getHours())
   );
@@ -323,7 +331,7 @@ export default function Food() {
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused). Stops the moment the user engages so the placeholder
   // doesn't shift mid-typing. A targeted meal no longer pauses it: the
-  // pills above the field say where a log goes, so the field is free
+  // meal chip in the field says where a log goes, so the field is free
   // to show what a log can look like.
   useEffect(() => {
     if (nlInput.trim() || inputFocused) return;
@@ -375,13 +383,13 @@ export default function Food() {
   const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(
     () => new Set()
   );
-  /* Stable per-date order cache. The frequency map underneath
-     would otherwise reshuffle chips on every log (each new entry
-     bumps a count and shifts ties). Snapshot the order ONCE per
-     selectedDate and apply it on every render until the date
-     changes — vanished items drop, new items append at the end
-     via `orderQuickAddItems` rather than rebuilding the whole
-     cache and reintroducing the reshuffle bug. */
+  /* Stable order cache, one entry a day and a meal (`quickOrderKey`).
+     The frequency map underneath would otherwise reshuffle chips on
+     every log (each new entry bumps a count and shifts ties).
+     Snapshot the order ONCE per day and chosen meal and apply it on
+     every render until either changes — vanished items drop, new
+     items append at the end via `orderQuickAddItems` rather than
+     rebuilding the whole cache and reintroducing the reshuffle bug. */
   const [quickAddOrderCache, setQuickAddOrderCache] = useState<
     Map<string, string[]>
   >(() => new Map());
@@ -428,6 +436,11 @@ export default function Food() {
     void selectedDate;
     return new Date().getHours();
   }, [selectedDate]);
+  /* The pantry's time of day follows the meal being added to (Food11
+     call 7): breakfast offers the morning's foods at any hour it is
+     logged. Snacks, and no meal chosen, have no hour of their own and
+     keep the clock's, pinned as above. */
+  const favouritesHour = typicalHourForMeal(targetMeal) ?? timeRelevantHour;
 
   /* Suspicious-value confirm state for the NL parse path. The
      pending save closure is captured at validation time and
@@ -798,6 +811,40 @@ export default function Food() {
   };
 
   const isToday = selectedDate === todayStr;
+
+  /* A food logged today flies to the calorie wheel (Food11 call 6):
+     `nextFlight` has when, `FoodLogFlight` draws it, and the hero holds
+     the wheel's old calories until it lands. The picture is our drawing
+     of the food, as its diary row has until a photo of its own has been
+     read from the device. */
+  const visibleMealIds = useMemo(
+    () => visibleTodaysMeals.map((meal) => meal.id),
+    [visibleTodaysMeals]
+  );
+  const logFlight = useFoodLogFlight({
+    day: selectedDate,
+    isToday,
+    ready: !mealsLoading,
+    ids: visibleMealIds,
+    calories: dailyTotals.calories,
+    reducedMotion,
+  });
+  const flyingMeal = logFlight.flight
+    ? visibleTodaysMeals.find((meal) => meal.id === logFlight.flight?.mealId)
+    : undefined;
+  const foodFlight = logFlight.flight
+    ? {
+        key: logFlight.flight.mealId,
+        src: foodArtUrl(
+          foodArtKindFor([
+            flyingMeal?.foodName ?? "",
+            ...(flyingMeal?.items ?? []).map((item) => item.name ?? ""),
+          ])
+        ),
+        fromCalories: logFlight.flight.fromCalories,
+        target: dailyTargets.finalTarget,
+      }
+    : null;
   const canGoBack = selectedDate > minDateStr;
   const canGoForward = selectedDate < todayStr;
 
@@ -1541,13 +1588,11 @@ export default function Food() {
     });
   };
 
+  /* From the composer's meal chip, which hands over a meal other than
+     the one chosen. Nothing un-chooses a meal by hand; a change of day
+     does (above). */
   const handleTargetMeal = (mealKey: MealKey) => {
     haptic();
-    // Toggle off if same meal tapped again
-    if (targetMeal === mealKey) {
-      setTargetMeal(null);
-      return;
-    }
     setTargetMeal(mealKey);
     trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
     // Scroll input into view then focus
@@ -1561,19 +1606,20 @@ export default function Food() {
     }, 50);
   };
 
-  // Merged Quick Add source.
+  // Merged Quick Add source, for the meal being added to (Food11 call 7).
   //
   // Three layers, in priority order:
   //   1. Time-relevant favourites — foods the user has explicitly
   //      starred, filtered by time-of-day. Favourites are the
-  //      strongest user signal (explicit), so they go first.
-  //   2. Frequency-ranked history (last 30 days) — the foods the user
-  //      actually relies on day-to-day. Was previously sorted by
-  //      simple recency (chronological), which let a one-off meal
-  //      (e.g. takeaway pizza last night) bubble above habitual
-  //      foods like daily Greek yoghurt. Frequency over a rolling
-  //      window better matches the "Quick Add" promise: surface the
-  //      foods I quick-add the most. Tie-broken by last-logged so
+  //      strongest user signal (explicit), so they go first. The time
+  //      of day is the chosen meal's (breakfast is morning, whenever
+  //      it is logged); snacks, and no meal chosen, keep the clock's.
+  //   2. History over the last 30 days, ranked for the chosen meal
+  //      (`compareQuickAddTallies`): the foods logged at that meal
+  //      first, most often first, then the rest by how often they
+  //      are logged at all. Frequency rather than recency, so a
+  //      one-off (takeaway pizza last night) does not rise above a
+  //      habit like daily Greek yoghurt. Tie-broken by last-logged so
   //      ties favour the more recent of two equally-frequent items
   //      (handles "I switched from oats to yoghurt" gracefully).
   //   3. Seeded defaults — first-time users with no history still
@@ -1611,7 +1657,7 @@ export default function Food() {
     //    selectedDate) — see that block's comment for why a fresh
     //    `new Date().getHours()` here would re-introduce the F2 escape
     //    hatch the F4 audit identified.
-    for (const f of getTimeRelevant(timeRelevantHour, 10)) {
+    for (const f of getTimeRelevant(favouritesHour, 10)) {
       // Optimistic hide for in-flight long-press removals — skip
       // chips whose favourite is pending delete so the row updates
       // immediately on user action without waiting for the snapshot.
@@ -1631,7 +1677,7 @@ export default function Food() {
       });
     }
 
-    // 2. Frequency-ranked history over the last 30 days.
+    // 2. History over the last 30 days, ranked for the chosen meal.
     //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
@@ -1640,20 +1686,33 @@ export default function Food() {
     // portion (below) instead of whichever version was logged last.
     const byFood = new Map<
       string,
-      { count: number; lastLogged: string; logs: (typeof meals)[number][] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        logs: (typeof meals)[number][];
+      }
     >();
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
       // A nameless Quick add entry is a number, not a food to repeat.
       if (!key || isQuickAddName(key)) continue;
+      const atMeal =
+        targetMeal !== null && mealSlotFor(meal) === targetMeal ? 1 : 0;
       const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;
+        existing.atMeal += atMeal;
         existing.logs.push(meal);
         if (meal.date > existing.lastLogged) existing.lastLogged = meal.date;
       } else {
-        byFood.set(key, { count: 1, lastLogged: meal.date, logs: [meal] });
+        byFood.set(key, {
+          count: 1,
+          atMeal,
+          lastLogged: meal.date,
+          logs: [meal],
+        });
       }
     }
     // FOOD-03: the chip's macros come from the user's MOST FREQUENT
@@ -1663,20 +1722,22 @@ export default function Food() {
     // represents the food changed.
     const freq = new Map<
       string,
-      { count: number; lastLogged: string; meal: (typeof meals)[number] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        meal: (typeof meals)[number];
+      }
     >();
     for (const [key, group] of byFood) {
       freq.set(key, {
         count: group.count,
+        atMeal: group.atMeal,
         lastLogged: group.lastLogged,
         meal: pickRepresentativeMeal(group.logs, (m) => m.date),
       });
     }
-    const ranked = Array.from(freq.values()).sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      // tie → most recent wins
-      return b.lastLogged.localeCompare(a.lastLogged);
-    });
+    const ranked = Array.from(freq.values()).sort(compareQuickAddTallies);
     for (const entry of ranked) {
       /* Smart display label for multi-item meals.
          AI-detected meals from photo scans return verbose foodNames
@@ -1732,16 +1793,30 @@ export default function Food() {
     }
 
     return current;
-    /* The day reaches this list through `timeRelevantHour`, which is
-       keyed on selectedDate: the body never reads the date itself, so
-       listing it too only recomputed an identical list. */
-  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds, todayStr]);
+    /* The day reaches this list through `timeRelevantHour` (inside
+       `favouritesHour`), which is keyed on selectedDate: the body never
+       reads the date itself, so listing it too only recomputed an
+       identical list. */
+  }, [
+    meals,
+    getTimeRelevant,
+    favouritesHour,
+    targetMeal,
+    pendingRemovalIds,
+    todayStr,
+  ]);
 
-  const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
+  /* One stable order a day AND a meal. Choosing another meal is asking
+     for another list, so it ranks afresh; a log, which only moves the
+     counts under the list on screen, still reshuffles nothing. Each
+     day's meals keep their own order, so going back to one restores
+     it. */
+  const quickOrderKey = `${selectedDate}|${targetMeal ?? ""}`;
+  const cachedQuickOrder = quickAddOrderCache.get(quickOrderKey);
   if (!cachedQuickOrder) {
     setQuickAddOrderCache(
       new Map(quickAddOrderCache).set(
-        selectedDate,
+        quickOrderKey,
         Array.from(quickMealCandidates.keys())
       )
     );
@@ -2093,17 +2168,14 @@ export default function Food() {
       />
       {readError}
 
-      <motion.div variants={pageItemVariant}>
-        {/* Isolated as Home's strip is: a bad day's data costs the strip,
-            not the diary under it. */}
-        <SectionErrorBoundary sectionName="food-week-strip">
-          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
-        </SectionErrorBoundary>
-      </motion.div>
-      <motion.div variants={pageItemVariant}>
+      {/* The wheel, then the week it belongs to, then the macros (Food11
+          call 4), 8px apart as one group. The week strip sat above the
+          calorie card until then, a section of its own. */}
+      <motion.div variants={pageItemVariant} className="space-y-2">
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
+          holdWheel={logFlight.holdWheel}
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -2118,7 +2190,36 @@ export default function Food() {
             setHeroSheetOpen(true);
           }}
         />
+        {/* Isolated as Home's strip is: a bad day's data costs the strip,
+            not the diary under it. Not inside the hero: that is remounted
+            on every day change, which would drop the focus from the day
+            just tapped. */}
+        <SectionErrorBoundary sectionName="food-week-strip">
+          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+        </SectionErrorBoundary>
+        {/* No macros on a day before the account began with nothing
+            logged on it (Food10 (3)), as the hero draws no wheel for it. */}
+        {!(
+          beforeStart(selectedDate, accountStartKey) &&
+          dailyTotals.calories === 0
+        ) && (
+          <FoodMacroRow
+            key={selectedDate}
+            drawIn={heroDrawIn}
+            dailyTargets={dailyTargets}
+            dailyTotals={{
+              protein: dailyTotals.protein,
+              carbs: dailyTotals.carbs,
+              fat: dailyTotals.fat,
+            }}
+          />
+        )}
       </motion.div>
+      <FoodLogFlight
+        flight={foodFlight}
+        onArrive={logFlight.arrive}
+        onDone={logFlight.finish}
+      />
       {/* Mounted from the first open on, so it closes with its animation
           and its queued Pro sheet opens after it has gone. */}
       {heroSheetUsed && (
@@ -2299,10 +2400,11 @@ export default function Food() {
            truncated first. Edit is the pencil the Quick Add rows already
            use for the same sheet. Both controls stay 44px.
 
-           Log is the food orange, not brand purple (owner call): every
-           other food control on the page is orange, the meal pills and
-           the Scan button included. Purple stays for Pro ("Try Pro
-           free"). CLAUDE.md's Button mapping records the exception;
+           Log is the food orange, not brand purple (owner call): it
+           is in Food's colour, as the camera and the send arrow in the
+           composer's field are, and since Food11 it is the page's one
+           filled control. Purple stays for Pro ("Try Pro free").
+           CLAUDE.md's Button mapping records the exception;
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two

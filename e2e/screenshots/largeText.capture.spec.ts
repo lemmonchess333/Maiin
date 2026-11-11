@@ -7,7 +7,8 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food and its manual entry and edit sheets, Social's
+ * on a Monday), Food, its meal menu and its manual entry and edit
+ * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
@@ -255,6 +256,20 @@ test.describe("large text", () => {
       await page.goto("food");
       await ready(page, page.getByRole("button", { name: "Enter manually" }));
       await measure(page, "food", width, found);
+      // The composer's meal chip and its menu of four meals (Food11).
+      await page.getByRole("button", { name: /change meal$/i }).click();
+      await page
+        .getByRole("menu", { name: "Add to meal" })
+        .waitFor({ state: "visible", timeout: 20_000 });
+      // A meal can be picked. In the narrow layout the menu opens over
+      // the text's row, and the text box lay over it and took the tap
+      // meant for the first meals. A trial click checks the tap would
+      // land on the row, and leaves the meal as it was.
+      await page
+        .getByRole("menuitemradio", { name: "Breakfast" })
+        .click({ trial: true, timeout: 20_000 });
+      await measure(page, "food-meal-menu", width, found);
+      await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Enter manually" }).click();
       await page.waitForTimeout(800);
       await measure(page, "food-manual-entry", width, found);

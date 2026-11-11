@@ -399,7 +399,11 @@ describe("DS ratchets — surface-level drift", () => {
   // pressable cards, rows, chips and day-cells are legitimately bare.
   // 291 → 292: the "Ended circles" fold under the Circles list (Soc16), a
   // full-width row that opens the list's ended rows.
-  const RAW_BUTTON_BASELINE = 292;
+  // 292 → 294: Food's meal chip and the rows of its menu (Food11 call 3).
+  // A chip in the field and four menu rows, neither of which is a CTA:
+  // the chip is 44px tall and as wide as its meal's name, the rows are
+  // full-width `menuitemradio`s.
+  const RAW_BUTTON_BASELINE = 294;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -885,9 +889,11 @@ describe("type tiers", () => {
    (src/styles/components.css) is that box: radius, its resting edge and
    fill (tokens.css), the inset and a floor above 44px. Selects render through the
    `Select` primitive, which puts a native <select> on that field (so iOS
-   keeps its picker) and owns the tapped-select focus fix. Floors are 0
-   for selects and textareas; typed inputs off the field are a named list,
-   each with its reason, and the list only shrinks. */
+   keeps its picker) and owns the tapped-select focus fix. The floor is 0
+   for selects. A textarea is on the field, or is the text inside a field
+   that holds other controls too and draws the primitive's box as a layer
+   (a named list); typed inputs off the field are a named list as well.
+   Each entry has its reason, and the lists only shrink. */
 describe("form controls share the field primitive", () => {
   const SELECT_PRIMITIVE = "src/components/ui/Select.tsx";
 
@@ -951,14 +957,33 @@ describe("form controls share the field primitive", () => {
     ).toEqual([]);
   });
 
-  it("every <textarea> is on .ds-input", () => {
+  /* The text boxes that share the field with other controls. Such a box
+     draws no edge or fill of its own: the field is `.ds-input-box`, the
+     primitive's box as a layer under everything the field holds
+     (src/styles/components.css keeps its values with `.ds-input`'s). The
+     counts are exact and each has its reason, as for the typed inputs
+     below, and a file is only excused while it draws that layer. */
+  const TEXTAREAS_IN_A_FIELD_BOX: Record<
+    string,
+    { count: number; why: string }
+  > = {
+    "src/components/food/FoodComposerCard.tsx": {
+      count: 1,
+      why: "Food's composer: one field holding the meal chip, the pencil, the text and the camera (Food11 call 3)",
+    },
+  };
+
+  it("every <textarea> is on .ds-input, or inside the field's box where a field holds more than text", () => {
     const offenders: string[] = [];
+    const inABox = new Map<string, number>();
     scan((src, rel) => {
       const body = code(src);
       for (const m of body.matchAll(/<textarea\b/g)) {
         const tag = openingTag(body, m.index!);
-        if (!onField(tag, body))
-          offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+        if (onField(tag, body)) continue;
+        if (rel in TEXTAREAS_IN_A_FIELD_BOX && /\bds-input-box\b/.test(body))
+          inABox.set(rel, (inABox.get(rel) ?? 0) + 1);
+        else offenders.push(`${rel}:${lineOf(body, m.index!)}`);
       }
       return 0;
     });
@@ -968,6 +993,44 @@ describe("form controls share the field primitive", () => {
         `keep only its own type size, rows and resize.\n  ` +
         offenders.join("\n  ")
     ).toEqual([]);
+    expect(
+      Object.fromEntries(inABox),
+      `Text boxes inside a \`.ds-input-box\` field, by file. When one ` +
+        `moves onto \`ds-input\`, take it off TEXTAREAS_IN_A_FIELD_BOX.`
+    ).toEqual(
+      Object.fromEntries(
+        Object.entries(TEXTAREAS_IN_A_FIELD_BOX).map(([f, e]) => [f, e.count])
+      )
+    );
+  });
+
+  it("the field's box is the field primitive's (positive pin)", () => {
+    // The exception above is only safe while `.ds-input-box` is the same
+    // box as `.ds-input`: its radius, edge, fill and shadow.
+    const css = readFileSync(
+      resolve(repoRoot, "src/styles/components.css"),
+      "utf8"
+    );
+    const rule = (selector: RegExp) => {
+      const at = css.search(selector);
+      expect(at, `no rule for ${selector}`).toBeGreaterThan(-1);
+      return css.slice(at, css.indexOf("}", at));
+    };
+    const field = rule(
+      /^input\.ds-input,\ntextarea\.ds-input,\nselect\.ds-input \{/m
+    );
+    const box = rule(/^\.ds-input-box \{/m);
+    for (const property of [
+      "border-radius",
+      "border",
+      "background",
+      "box-shadow",
+    ]) {
+      const value = (block: string) =>
+        new RegExp(`^\\s*${property}:\\s*([^;]+);`, "m").exec(block)?.[1];
+      expect(value(box), `.ds-input-box has no ${property}`).toBeDefined();
+      expect(value(box), property).toBe(value(field));
+    }
   });
 
   /* The typed inputs that are deliberately their own control. The counts

@@ -21,9 +21,12 @@ interface Props {
 }
 
 /**
- * The scanner opening: the orange camera button grows until it fills the
- * screen, turning to the scanner's black on the way, then fades to show
- * the scanner underneath.
+ * The scanner opening: an orange square the size of the camera's tap
+ * area grows out of it until it fills the screen, turning to the
+ * scanner's black on the way, then fades to show the scanner underneath.
+ * The camera is an icon in the composer's field, so the square is the
+ * tap's own answer: it starts in the icon's colour, with the icon in
+ * white.
  *
  * It starts at the tap, before the scanner's code has loaded and before
  * its opening delay has passed. The layer holds full-screen black until

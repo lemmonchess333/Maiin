@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   inferMostLikelyMealSlot,
+  typicalHourForMeal,
   MEAL_ORDER,
   MEAL_LABELS,
 } from "../mealConstants";
@@ -30,5 +31,20 @@ describe("inferMostLikelyMealSlot", () => {
       expect(MEAL_ORDER).toContain(slot);
       expect(MEAL_LABELS[slot]).toBeTruthy();
     }
+  });
+});
+
+describe("typicalHourForMeal", () => {
+  it("gives each meal that has a time an hour that is that meal's", () => {
+    for (const meal of ["breakfast", "lunch", "dinner"] as const) {
+      const hour = typicalHourForMeal(meal);
+      expect(hour).not.toBeNull();
+      expect(inferMostLikelyMealSlot(hour!)).toBe(meal);
+    }
+  });
+
+  it("gives snacks, and no meal, no hour: the caller keeps the clock's", () => {
+    expect(typicalHourForMeal("snacks")).toBeNull();
+    expect(typicalHourForMeal(null)).toBeNull();
   });
 });

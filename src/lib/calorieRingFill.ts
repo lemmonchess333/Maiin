@@ -1,47 +1,34 @@
-import type { CalorieRingMode } from "@/components/food/CalorieRing";
+/* The wheel's drawing, in the units of its own box: `CalorieRing` draws
+   from these, and the flight of a logged food lands on the arc they
+   place (`foodFlight.ts`). */
+/** The side of the wheel's box. */
+export const WHEEL_SIZE = 160;
+/** The width of its arc. */
+export const WHEEL_STROKE = 12;
 
 /**
- * Which way a progress bar fills, given the hero's display mode.
+ * How full the calorie wheel and the bars beside it are drawn.
  *
- * `MacroColumn` documents this as a lockstep property: the bar moves the
- * same direction as the big number beside it, so both signals say the same
- * thing.
+ * They fill with what is logged, whichever way the number counts (Food11
+ * call 5). The number follows the left and logged switch; the drawing
+ * does not. Nothing logged is an empty grey track, the target reached is
+ * a full one, and anything past it is the second lap the wheel and the
+ * bars each draw for themselves.
  *
- *   LEFT mode  → fill = remaining %  (drains as you log; the number counts down)
- *   EATEN mode → fill = consumed %   (grows as you log; the number counts up)
+ * It takes no mode on purpose. A drawing that follows "left" starts full
+ * and empties: with 410 kcal left of 2,200 the wheel is 19% full while
+ * that day's mark in the week strip is 81% full, and a day with nothing
+ * logged is a fully orange wheel, the page's loudest state on the day
+ * nothing has been done, which is every new account's first day. Food11's
+ * row in the plan file has the counts from other apps.
  *
- * Over target in LEFT mode pins to 100%: a full bar reads as "maxed out,
- * and over by N" alongside the big number, whereas an empty bar would
- * falsely read as "nothing left to eat".
- *
- * It lives here because the property was claimed and not kept. The tile and
- * the calorie ring implemented it; `HeroDrillDownSheet` — the surface you
- * open to disambiguate the tile — never received the mode at all and drew
- * consumed% unconditionally. Measured off the Food frames: the same protein
- * data rendered as a 9%-full bar on the tile and an 89%-full bar in the
- * sheet, one tap apart. A third hand-written copy of the expression is how
- * that happens again, so there is one.
+ * It is one function because the wheel, the macros and the Details sheet
+ * have to agree: when one of them drew what was left and another what was
+ * logged, the same protein was a 9% bar on the page and an 89% bar in
+ * the sheet, one tap apart. The wheel and the macros call this; the
+ * sheet's whole-number percentage is `clampPct`, the same share rounded.
  */
-export function barFillPct(
-  consumedPct: number,
-  mode: CalorieRingMode,
-  isOver: boolean
-): number {
-  if (mode !== "left") return consumedPct;
-  return isOver ? 100 : 100 - consumedPct;
-}
-
-/**
- * The percentage to PRINT beside such a bar.
- *
- * Separate from the fill only because a caption can be wrong in a way a bar
- * cannot: a draining bar next to "89%" is worse than either alone, and that
- * is what threading the mode into the sheet would have produced if the
- * number had been left as-is.
- */
-export function barLabelPct(
-  consumedPct: number,
-  mode: CalorieRingMode
-): number {
-  return mode === "left" ? Math.max(0, 100 - consumedPct) : consumedPct;
+export function loggedFill(consumed: number, target: number): number {
+  if (!(target > 0) || !(consumed > 0)) return 0;
+  return Math.min(consumed / target, 1);
 }

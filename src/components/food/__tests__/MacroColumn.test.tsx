@@ -323,14 +323,12 @@ describe("MacroColumn — the goal-reached state stays in the accessible name", 
 });
 
 /**
- * The bar fades when it is EMPTY — not when nothing has been eaten.
+ * The bar fades when it is EMPTY, which since Food11 call 5 is a macro
+ * with nothing logged, in both modes: the bar is what is logged.
  *
- * Those are the same state only in EATEN mode. LEFT mode (the default)
- * draws what is left, so a day with nothing eaten is a FULL bar. The fade
- * keyed on `consumed === 0`, which dimmed three full bars to 40% every
- * morning — on the dark card, the maroon, olive and dark-green bars under
- * the macro tiles — and made the first log of the day BRIGHTEN the bars as
- * they drained.
+ * Before Food11, LEFT mode (the default) drew what was left, so a day
+ * with nothing logged was a FULL bar and a target used up was an empty
+ * one. The two LEFT cases below pinned that; they now pin the reverse.
  *
  * Each case anchors on the accessible name first, so the opacity is read
  * from the state the test claims to be in.
@@ -353,14 +351,16 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     return bar!;
   }
 
-  it("LEFT mode with nothing eaten draws the full bar at full strength", () => {
+  it("LEFT mode with nothing logged fades the empty track", () => {
+    // Food11 call 5: the bar is what is logged in both modes, so nothing
+    // logged is an empty bar here too. It was a full bar in this mode.
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
         name: "Show protein logged. 0g logged of 150g",
       })
     ).toBeInTheDocument();
-    expect(bar.style.opacity).toBe("1");
+    expect(bar.style.opacity).toBe("0.4");
   });
 
   it("EATEN mode with nothing eaten fades the empty track", () => {
@@ -373,13 +373,39 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     expect(bar.style.opacity).toBe("0.4");
   });
 
-  it("LEFT mode with the target used up fades the now-empty bar", () => {
+  it("LEFT mode with the target reached draws the full bar at full strength", () => {
     const bar = renderAt("left", 150);
     expect(
       screen.getByRole("button", { name: /150g logged of 150g$/ })
     ).toBeInTheDocument();
-    expect(bar.style.opacity).toBe("0.4");
+    expect(bar.style.opacity).toBe("1");
   });
+
+  it.each(["row", "compact"] as const)(
+    "the %s form keeps its empty groove at full strength, as the wheel's track is",
+    (size) => {
+      // Beside the wheel the bars share its grey groove. Faded, an empty
+      // bar was 8% grey under a wheel track at 20%.
+      for (const mode of ["left", "eaten"] as const) {
+        const { container } = render(
+          <MacroColumn
+            macroKey="protein"
+            Icon={Beef}
+            consumed={0}
+            target={150}
+            label="Protein"
+            color="#EC4899"
+            mode={mode}
+            size={size}
+          />
+        );
+        const bar = container.querySelector<HTMLElement>("[data-macro-bar]")!;
+        expect(bar.style.background).toContain("var(--muted-foreground)");
+        expect(bar.style.opacity).toBe("1");
+        cleanup();
+      }
+    }
+  );
 
   it("a part-eaten bar is at full strength in both modes", () => {
     for (const mode of ["left", "eaten"] as const) {
@@ -390,6 +416,69 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
       expect(bar.style.opacity).toBe("1");
       cleanup();
     }
+  });
+});
+
+/**
+ * Which way the bar runs (Food11 call 5): it is what is logged, in both
+ * modes. The figure beside it follows the left and logged switch; the bar
+ * does not. In "left" it used to start full and empty as food was logged.
+ */
+describe("MacroColumn — the bar is what is logged, in both modes", () => {
+  function fillWidth(mode: "left" | "eaten", consumed: number) {
+    const { container } = render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={consumed}
+        target={150}
+        label="Protein"
+        color="#EC4899"
+        mode={mode}
+        drawIn={false}
+      />
+    );
+    const fill = container.querySelector<HTMLElement>(
+      "[data-macro-bar] > div"
+    )!;
+    const width = fill.style.width;
+    cleanup();
+    return width;
+  }
+
+  it.each(["left", "eaten"] as const)(
+    "%s: empty with nothing logged",
+    (mode) => {
+      expect(fillWidth(mode, 0)).toBe("0%");
+    }
+  );
+
+  it.each(["left", "eaten"] as const)("%s: 60 of 150g is a 40% bar", (mode) => {
+    expect(fillWidth(mode, 60)).toBe("40%");
+  });
+
+  it.each(["left", "eaten"] as const)(
+    "%s: full at the target and past it",
+    (mode) => {
+      expect(fillWidth(mode, 150)).toBe("100%");
+      expect(fillWidth(mode, 190)).toBe("100%");
+    }
+  );
+
+  it("LEFT mode still counts the figure down while the bar fills", () => {
+    render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={60}
+        target={150}
+        label="Protein"
+        color="#EC4899"
+        mode="left"
+        drawIn={false}
+      />
+    );
+    expect(screen.getByRole("button")).toHaveTextContent(/90g\s*left/);
   });
 });
 
@@ -424,7 +513,7 @@ describe("MacroColumn — compact size", () => {
     return out;
   }
 
-  it("keeps the Food page's tile as the default", () => {
+  it("keeps the centred tile as the default", () => {
     const tile = draw();
     expect(tile.icon).toContain("size-6");
     expect(tile.number).toContain("text-2xl");
@@ -436,5 +525,83 @@ describe("MacroColumn — compact size", () => {
     expect(compact.icon).toContain("size-5");
     expect(compact.number).toContain("text-xl");
     expect(compact.track).toContain("var(--muted-foreground)");
+  });
+});
+
+/**
+ * The row is Food's (Food11 call 4): no box, read from the left. The
+ * name leads at the page's 14px, the figure has its word beside it, and
+ * the bar is a 4px line on the wheel's grey groove.
+ */
+describe("MacroColumn — the row form", () => {
+  function drawRow(mode: "left" | "eaten" = "left") {
+    return render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={172}
+        target={273}
+        label="Carbs"
+        color="#EAB308"
+        mode={mode}
+        size="row"
+        drawIn={false}
+      />
+    );
+  }
+
+  it("reads name, then figure and word, then bar, from the left", () => {
+    const { container } = drawRow();
+    const button = container.querySelector("[data-macro]")!;
+    expect(button).toHaveClass("text-left", "items-stretch");
+    expect(button).not.toHaveClass("text-center", "items-center");
+
+    const [nameLine, figureLine, bar] = Array.from(button.children);
+    expect(nameLine).toHaveTextContent(/^Carbs$/);
+    expect(nameLine).toHaveClass("text-sm", "font-semibold", "text-foreground");
+    expect(nameLine.querySelector("svg")).toHaveClass("size-4");
+    expect(figureLine).toHaveTextContent(/^101g\s*left$/);
+    expect(bar).toHaveAttribute("data-macro-bar");
+  });
+
+  it("sets the figure at 20px with its g and its word at 14px", () => {
+    const { container } = drawRow();
+    const unit = container.querySelector("[data-macro-unit]")!;
+    expect(unit).toHaveClass("text-sm", "font-sans", "font-medium");
+    const figure = unit.parentElement!;
+    expect(figure).toHaveClass("text-xl", "font-figure", "whitespace-nowrap");
+    expect(figure).not.toHaveClass("text-2xl");
+    const word = figure.nextElementSibling!;
+    expect(word).toHaveTextContent(/^left$/);
+    expect(word).toHaveClass("text-sm", "text-muted-foreground");
+    // The word may drop under the figure in a narrow column, never clip.
+    expect(figure.parentElement).toHaveClass("flex-wrap");
+  });
+
+  it("draws a 4px bar on the wheel's groove, with no inner shadow", () => {
+    const { container } = drawRow();
+    const track = container.querySelector<HTMLElement>("[data-macro-bar]")!;
+    expect(track).toHaveClass("h-1");
+    expect(track).not.toHaveClass("h-1.5");
+    expect(track.style.background).toContain("var(--muted-foreground)");
+    expect(track.style.boxShadow).toBe("");
+  });
+
+  it("is at least 44px tall and fills its column", () => {
+    const { container } = drawRow();
+    expect(container.querySelector("[data-macro]")).toHaveClass(
+      "min-h-[44px]",
+      "w-full",
+      "min-w-0"
+    );
+  });
+
+  it("keeps the tile's name for screen readers", () => {
+    drawRow("eaten");
+    expect(
+      screen.getByRole("button", {
+        name: "Show carbs remaining. 172g logged of 273g",
+      })
+    ).toBeInTheDocument();
   });
 });

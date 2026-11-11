@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
+  compareQuickAddTallies,
   orderQuickAddItems,
   pickRepresentativeMeal,
   type QuickAddItem,
+  type QuickAddTally,
 } from "../quickAddOrder";
 
 /* The stable per-date cache contract for quick-add chips. The
@@ -263,5 +265,79 @@ describe("pickRepresentativeMeal (FOOD-03)", () => {
       },
     ];
     expect(pickRepresentativeMeal(logs, (m) => m.date).totalProtein).toBe(50);
+  });
+});
+
+/**
+ * Food11 call 7: the usual foods are ranked for the meal being added to.
+ * Ranked by the count at any meal alone, the list led with the day's
+ * most logged food whatever was being added: the lunch bowl first at
+ * breakfast.
+ */
+describe("compareQuickAddTallies", () => {
+  const tally = (
+    count: number,
+    atMeal: number,
+    lastLogged = "2026-11-01"
+  ): QuickAddTally => ({ count, atMeal, lastLogged });
+  const order = (foods: Record<string, QuickAddTally>) =>
+    Object.entries(foods)
+      .sort(([, a], [, b]) => compareQuickAddTallies(a, b))
+      .map(([name]) => name);
+
+  it("puts a food logged at this meal ahead of one logged more often elsewhere", () => {
+    expect(
+      order({
+        "chicken bowl": tally(12, 0),
+        porridge: tally(5, 5),
+      })
+    ).toEqual(["porridge", "chicken bowl"]);
+  });
+
+  it("ranks the foods of this meal by how often they are logged at it", () => {
+    expect(
+      order({
+        toast: tally(9, 2),
+        porridge: tally(5, 5),
+        eggs: tally(4, 3),
+      })
+    ).toEqual(["porridge", "eggs", "toast"]);
+  });
+
+  it("still offers the rest, after them, by how often they are logged at all", () => {
+    expect(
+      order({
+        pasta: tally(3, 0),
+        "chicken bowl": tally(12, 0),
+        porridge: tally(2, 2),
+        salmon: tally(7, 0),
+      })
+    ).toEqual(["porridge", "chicken bowl", "salmon", "pasta"]);
+  });
+
+  it("breaks a tie at this meal by the count at any meal, then by the later log", () => {
+    expect(
+      order({
+        yoghurt: tally(4, 2),
+        granola: tally(6, 2),
+      })
+    ).toEqual(["granola", "yoghurt"]);
+    expect(
+      order({
+        oats: tally(4, 2, "2026-11-02"),
+        yoghurt: tally(4, 2, "2026-11-09"),
+      })
+    ).toEqual(["yoghurt", "oats"]);
+  });
+
+  it("is the count's order when no meal is chosen", () => {
+    // Every atMeal is 0 then: most logged first, the later log on a tie.
+    expect(
+      order({
+        pasta: tally(3, 0, "2026-11-09"),
+        "chicken bowl": tally(12, 0),
+        salmon: tally(3, 0, "2026-11-02"),
+      })
+    ).toEqual(["chicken bowl", "pasta", "salmon"]);
   });
 });

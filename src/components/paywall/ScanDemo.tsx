@@ -893,6 +893,7 @@ function CalorieCard({ calories }: { calories: number }) {
           <SettingsIcon className="size-4" />
         </span>
         <CalorieRing
+          size="card"
           consumed={calories}
           target={DAY.target}
           mode="left"

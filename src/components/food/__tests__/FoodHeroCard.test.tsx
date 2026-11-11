@@ -9,6 +9,12 @@
  * tapping the ring OR any tile flips all four together, and the choice
  * persists under the calorie-ring storage key.
  *
+ * Since Food11 the macros are `FoodMacroRow`, a sibling the page sets
+ * under the week strip, and the two meet only through the mode store. So
+ * `renderHero` draws the pair, as the page does: the invariant is about
+ * the two together, and a suite that rendered one would pass with the
+ * other reading a mode of its own.
+ *
  * isToday={false} keeps the test on the mode wiring only — it skips the
  * glance line, warmup bar, and celebration sequence, none of which are
  * relevant to the shared-mode contract.
@@ -16,8 +22,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import FoodHeroCard from "../FoodHeroCard";
+import FoodMacroRow from "../FoodMacroRow";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
@@ -53,6 +62,7 @@ function renderHero() {
         dailyTargets={dailyTargets}
         dailyTotals={dailyTotals}
       />
+      <FoodMacroRow dailyTargets={dailyTargets} dailyTotals={dailyTotals} />
     </MemoryRouter>
   );
 }
@@ -178,7 +188,106 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
-describe("FoodHeroCard — the glow behind the ring", () => {
+describe("FoodHeroCard — the wheel is on the page", () => {
+  function renderToday() {
+    return render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+          onTapDrillDown={() => {}}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("draws the wheel at its page size, in no card", () => {
+    // Food11 call 2. It stood in a card, 176px, a quarter of the first
+    // screen.
+    renderToday();
+    const wheel = ringButton();
+    expect(wheel).toHaveClass("w-[264px]");
+    expect(wheel.closest(".bg-card")).toBeNull();
+    expect(wheel.closest(".card-shadow")).toBeNull();
+  });
+
+  it("marks the wheel and its Details as the screen's hero", () => {
+    renderToday();
+    const hero = ringButton().closest("[data-hero]")!;
+    expect(hero).toBeTruthy();
+    expect(
+      within(hero as HTMLElement).getByRole("button", {
+        name: /view nutrition breakdown/i,
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("sets Details under the wheel, 44px tall, at the page's 14px", () => {
+    // It sat in the card's bottom right corner at 12px.
+    renderToday();
+    const details = screen.getByRole("button", {
+      name: /view nutrition breakdown/i,
+    });
+    expect(details).toHaveClass("min-h-[44px]", "text-sm");
+    expect(details.className).not.toMatch(/\babsolute\b/);
+    expect(
+      ringButton().compareDocumentPosition(details) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+});
+
+/**
+ * Food11 call 6: while a logged food is on its way to the wheel, the
+ * wheel keeps the calories it had, so the arc grows as the food arrives
+ * and not before it has left the field.
+ */
+describe("FoodHeroCard — the wheel waits for a logged food's flight", () => {
+  function hero(calories: number, holdWheel: boolean) {
+    return (
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={{ ...dailyTotals, calories }}
+          drawIn={false}
+          holdWheel={holdWheel}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("keeps the old calories while held, then takes the new ones", () => {
+    const { rerender } = render(hero(900, false));
+    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    // The log and the hold arrive in one commit.
+    rerender(hero(1440, true));
+    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    rerender(hero(1440, false));
+    expect(ringButton()).toHaveAccessibleName(/^1440 of 2000 calories logged/);
+  });
+
+  it("follows the day's calories at once when nothing is in the air", () => {
+    const { rerender } = render(hero(900, false));
+    rerender(hero(700, false));
+    expect(ringButton()).toHaveAccessibleName(/^700 of 2000 calories logged/);
+  });
+
+  it("grows in 350 ms with no wait of its own", () => {
+    // The page's 250 ms hold and this make the 600 ms the macros take.
+    const source = readFileSync(
+      join(process.cwd(), "src/components/food/FoodHeroCard.tsx"),
+      "utf8"
+    );
+    expect(source).toContain("ringDurationMs={WHEEL_GROW_MS}");
+    expect(source).toContain("ringDelayMs={0}");
+  });
+});
+
+describe("FoodHeroCard — the light behind the wheel", () => {
   it("is the food orange alone, with no purple (owner, 7 November 2026)", () => {
     /* It was a wash from orange into the brand purple, the only two-hue
        gradient on an everyday screen in 178 measured (DS4 §14m rule 13),
@@ -196,9 +305,29 @@ describe("FoodHeroCard — the glow behind the ring", () => {
     );
     const glow = container.querySelector(".food-hero-glow") as HTMLElement;
     expect(glow, "the glow layer").toBeTruthy();
-    expect(glow).toHaveAttribute("aria-hidden", "true");
-    expect(glow).toHaveClass("absolute", "inset-0");
     expect(container.innerHTML).not.toContain("--primary");
+    expect(glow).toHaveAttribute("aria-hidden", "true");
+    expect(glow).toHaveClass("pointer-events-none", "absolute");
+  });
+
+  it("is a box no wider than the screen, with nothing wider inside it", () => {
+    // The light is a 340px circle. As an element of its own it reached
+    // 10px past a 320px screen, which the large-text spec counts as a
+    // spill; it is this box's background, drawn at its centre.
+    const { container } = render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+        />
+      </MemoryRouter>
+    );
+    const glow = container.querySelector(".food-hero-glow")!;
+    expect(glow).toHaveClass("inset-x-[-16px]", "h-[340px]");
+    expect(glow.children).toHaveLength(0);
+    expect(glow.className).not.toMatch(/\bw-\[|\bsize-\[/);
   });
 });
 
@@ -280,6 +409,19 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
           }
           dailyTotals={{ calories: 900, protein: 80, carbs: 56, fat: 38 }}
         />
+        <FoodMacroRow
+          dailyTargets={
+            {
+              ...dailyTargets,
+              protein: 0,
+              carbs: 0,
+              fat: 42,
+              targetInfeasible: true,
+              minFeasibleKcal: 378,
+            } as unknown as EffectiveTargets
+          }
+          dailyTotals={{ protein: 80, carbs: 56, fat: 38 }}
+        />
       </MemoryRouter>
     );
     const tiles = Array.from(document.querySelectorAll("[data-macro]"));
@@ -299,9 +441,10 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
 });
 
 describe("FoodHeroCard — drawIn", () => {
-  /* Food remounts the hero per day so a day switch fires no log haptic
-     or celebration. drawIn={false} makes that remount arrive at the
-     day's figures rather than counting every number up from zero.
+  /* Food remounts the hero and the macros per day so a day switch fires
+     no log haptic or celebration. drawIn={false} makes that remount
+     arrive at the day's figures rather than counting every number up
+     from zero.
      Protein in the left view: 150 − 50 = 100g left.
 
      The mode store keeps its last value in memory, and an earlier test
@@ -317,6 +460,11 @@ describe("FoodHeroCard — drawIn", () => {
         <FoodHeroCard
           selectedDate="2026-06-09"
           isToday={false}
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+          drawIn={drawIn}
+        />
+        <FoodMacroRow
           dailyTargets={dailyTargets}
           dailyTotals={dailyTotals}
           drawIn={drawIn}
