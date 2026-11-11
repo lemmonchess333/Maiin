@@ -501,7 +501,16 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
   with Details under it, the target in its label ("kcal left of 2,200"),
   a small mark after the label that says it can be tapped (DS3's quiet
   ring had no mark; Home's still has none) and a sliver of the page's
-  colour ahead of the second lap's head. Read Food11 before changing
+  colour ahead of the second lap's head; the usual foods ranked for the
+  meal being added to; and the meal as one chip inside a 48 pt field
+  (`FoodMealChip`, a menu of the four meals), where a row of four meal
+  pills with a filled orange one headed a 56 pt field. The edit sheet
+  keeps four meals, on the neutral track, and the segmented control has
+  no filled-pill look any more. Scan is a camera at the end of that
+  field, in the food orange, 24 pt in a 48 pt tap area, with no fill
+  (the owner, 11 Nov 2026: as the food apps do it; it replaces the
+  filled square beside the field of 23 Sep 2026, and §14 has the
+  count). Read Food11 before changing
   any of it. What follows is the screen as it stood before, and stays
   true of the parts not yet rebuilt. The owner kept the original screen
   (title, week strip, macro cards with their icons and colours, draining
@@ -1302,6 +1311,21 @@ record of what each button was for:
   filled orange meal pill, Scan and the usual row's Log, so Food has more
   than DS4's one filled button (§14m rule 21). The fixes and the rules it
   still misses are in §6.
+- **2026-11-11 — Food11: Scan is an icon inside the field.** The owner
+  asked for scanning to be placed as the food apps place it. Of ten apps
+  surveyed, none draws a filled, coloured camera button on its day
+  screen and five keep the camera one tap away in a plus menu. Of five
+  text fields with a scan control seen in four of them, three hold it
+  inside the field as an icon (MacroFactor, Yazio, Lifesum's AI box),
+  two set a plain icon beside the field (Lifesum's search, Fitbit) and
+  none has a filled button. So the camera is at the end of the
+  composer's field: 24 pt, the food orange (the deeper orange on the
+  light field), a 48 pt tap area, and it stays there while there is
+  text, with send before it. This replaces the 23 September filled
+  square. That square had replaced a 20 pt icon that read as decoration;
+  this one is larger and keeps its colour, where the three apps draw
+  theirs grey or black. The usual row's Log is now Food's one filled
+  control.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

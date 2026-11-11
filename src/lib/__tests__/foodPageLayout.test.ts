@@ -1,6 +1,7 @@
 /**
  * The Food page's order, as the owner set it from the Food options page
- * (2026-09-20): the composer's meal pills head its field; the Pro gate
+ * (2026-09-20): the meal leads the composer's field (a chip inside it
+ * since Food11 call 3, a row of pills above it before); the Pro gate
  * is one line under the field, not a card above the composer; and the
  * weekly-focus card follows the diary instead of interrupting it.
  *
@@ -80,11 +81,14 @@ describe("Food page order", () => {
     expect(food).not.toContain("FoodProStrip");
   });
 
-  it("the meal pills come before the field, and nothing says Adding to", () => {
-    const pills = composer.indexOf("<SegmentedControl");
+  it("the meal chip comes before the text in the field, and nothing says Adding to", () => {
+    // Food11 call 3: one chip in the field, where a row of four meals
+    // headed it.
+    const chip = composer.indexOf("<FoodMealChip");
     const field = composer.indexOf("<textarea");
-    expect(pills).toBeGreaterThan(-1);
-    expect(pills).toBeLessThan(field);
+    expect(chip).toBeGreaterThan(-1);
+    expect(chip).toBeLessThan(field);
+    expect(composer).not.toContain("<SegmentedControl");
     expect(composer).not.toContain("Adding to ${");
     expect(composer).not.toContain("Cancel adding to");
   });

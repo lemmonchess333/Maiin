@@ -224,6 +224,12 @@ function eightRecentFoods(): Meal[] {
   return out;
 }
 
+/** Pick a meal from the composer's chip and its menu. */
+function chooseMeal(name: string) {
+  fireEvent.click(screen.getByRole("button", { name: /change meal$/i }));
+  fireEvent.click(screen.getByRole("menuitemradio", { name }));
+}
+
 function quickAddNames(): string[] {
   return screen
     .getAllByRole("button", { name: /^Food \d/ })
@@ -336,9 +342,11 @@ describe("Food — the Quick add list follows the chosen meal", () => {
     renderFood();
     fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
-    fireEvent.click(screen.getByRole("radio", { name: "Lunch" }));
+    chooseMeal("Lunch");
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 1", "Food 2"]);
-    fireEvent.click(screen.getByRole("radio", { name: "Breakfast" }));
+    chooseMeal("Breakfast");
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
   });
 
@@ -347,7 +355,7 @@ describe("Food — the Quick add list follows the chosen meal", () => {
     renderFood();
     expect(new Set(api.pantryHours)).toEqual(new Set([8]));
     api.pantryHours = [];
-    fireEvent.click(screen.getByRole("radio", { name: "Dinner" }));
+    chooseMeal("Dinner");
     expect(api.pantryHours.at(-1)).toBe(19);
   });
 });

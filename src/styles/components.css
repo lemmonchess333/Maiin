@@ -207,6 +207,22 @@ select.ds-input {
     background var(--ds-transition-fast);
 }
 
+/* The field primitive's box on its own: its edge, fill, radius and
+   shadow, for a layer under a field that holds controls inside its edge
+   (Food's composer: the meal chip, the pencil and the text box, which
+   draws no box itself). The values are `.ds-input`'s, so the two cannot
+   drift apart by hand: change them together. */
+.ds-input-box {
+  border-radius: 0.875rem;
+  border: 1px solid var(--ds-color-input-border-rest);
+  background: var(--ds-color-input-fill-rest);
+  box-shadow: var(--ds-shadow-input-rest);
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast),
+    background var(--ds-transition-fast);
+}
+
 /* The field's width and inset are defaults, in the components layer:
    under the utilities, so a field that sets its own (`w-auto` beside a
    label in a settings row, `px-1` on the weight readout, `pl-10` beside

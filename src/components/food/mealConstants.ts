@@ -41,14 +41,10 @@ export const MEAL_SLOT_ICONS: Record<MealKey, LucideIcon> = {
 };
 
 /**
- * Layout for both meal-slot pickers, the composer's row and the edit
- * sheet's: the four slots on one row while the picker is 20em wide (on
- * the Food page, a phone of about 360px at the designed text size; at
- * 320px it is 18em), two by two below that. Left to
- * the solid SegmentedControl's own wrapping, the sheet's pills fit three
- * to a line and leave "Dinner" on a line of its own.
+ * Layout for the edit sheet's meal-slot picker: the four slots on one row
+ * while the picker is 20em wide, two by two below that.
  *
- * Measured in em on the picker's wrapper (both call sites wrap it in an
+ * Measured in em on the picker's wrapper (the call site wraps it in an
  * `@container`), so larger text moves it to two by two as a narrower
  * phone does: at 1.35x on a 393px phone, "Breakfast" overflowed a
  * quarter. Under 9em (double text on a 320px phone) it is one per row:

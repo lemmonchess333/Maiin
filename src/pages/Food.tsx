@@ -161,14 +161,16 @@ const DEFAULT_QUICK_MEALS = [
 // parse as natural language. The first prompt makes both modes
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
-// Each must fit the composer's field on one line at 375px, where the
-// Scan button beside it leaves the field about 180px for text.
+// The first two name the two modes between them. Each must fit the
+// composer's field on one line at 375px beside the widest meal chip
+// ("Breakfast"), the pencil and the camera, which leave the text
+// 123px (Food11 call 3; it had about 180px before the chip).
 const NL_EXAMPLE_PROMPTS = [
-  "Search or describe a meal",
+  "Search a food",
+  "Describe a meal",
   "Eggs",
-  "200g chicken & rice",
-  "Large coffee, no sugar",
-  "Greek yoghurt & berries",
+  "200g chicken",
+  "2 eggs on toast",
 ];
 
 // Meal slot ordering + labels live in components/food/mealConstants
@@ -286,9 +288,9 @@ export default function Food() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
   // Default the logging destination to the meal a user is most likely
-  // trying to log right now. They can still tap the selected pill to
-  // clear it, but the common case stops requiring a breakfast/lunch/
-  // snacks/dinner decision before every save.
+  // trying to log right now, so the common case does not require a
+  // breakfast/lunch/snacks/dinner decision before every save. The
+  // composer's meal chip changes it.
   const [targetMeal, setTargetMeal] = useState<MealKey | null>(() =>
     inferMostLikelyMealSlot(new Date().getHours())
   );
@@ -326,7 +328,7 @@ export default function Food() {
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused). Stops the moment the user engages so the placeholder
   // doesn't shift mid-typing. A targeted meal no longer pauses it: the
-  // pills above the field say where a log goes, so the field is free
+  // meal chip in the field says where a log goes, so the field is free
   // to show what a log can look like.
   useEffect(() => {
     if (nlInput.trim() || inputFocused) return;
@@ -1549,13 +1551,11 @@ export default function Food() {
     });
   };
 
+  /* From the composer's meal chip, which hands over a meal other than
+     the one chosen. Nothing un-chooses a meal by hand; a change of day
+     does (above). */
   const handleTargetMeal = (mealKey: MealKey) => {
     haptic();
-    // Toggle off if same meal tapped again
-    if (targetMeal === mealKey) {
-      setTargetMeal(null);
-      return;
-    }
     setTargetMeal(mealKey);
     trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
     // Scroll input into view then focus
@@ -2357,10 +2357,11 @@ export default function Food() {
            truncated first. Edit is the pencil the Quick Add rows already
            use for the same sheet. Both controls stay 44px.
 
-           Log is the food orange, not brand purple (owner call): every
-           other food control on the page is orange, the meal pills and
-           the Scan button included. Purple stays for Pro ("Try Pro
-           free"). CLAUDE.md's Button mapping records the exception;
+           Log is the food orange, not brand purple (owner call): it
+           is in Food's colour, as the camera and the send arrow in the
+           composer's field are, and since Food11 it is the page's one
+           filled control. Purple stays for Pro ("Try Pro free").
+           CLAUDE.md's Button mapping records the exception;
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two
