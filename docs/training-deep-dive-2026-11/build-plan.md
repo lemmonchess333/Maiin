@@ -16,6 +16,9 @@ its printed panel.
 
 ### 1. Prove the rules on every split, in prints
 
+STATUS 2026-11-11: done. `panel-2-every-split.md` holds the result: all 96
+setups pass, and six refinements to the rules came out of reading the prints.
+
 A pure module that sizes a day from an ordered list (`Lift21` calls 1 to 5),
 with no production caller, and a harness that prints the panel: 3, 4, 5 and 6
 days; 30, 45, 60 and 75 minutes; beginner and intermediate; Build muscle,

@@ -25,6 +25,7 @@ evidence, with file and line for every code claim.
 | `why-it-did-not-land.md`      | The repo's record: what was researched, decided and measured      |
 | `panel-1-six-days-general.md` | The first printed week under Pgm9: today beside a target          |
 | `build-plan.md`               | The slices that follow Lift21, and what the owner sees after each |
+| `panel-2-every-split.md`      | Slice 1: the sizing rules run on 96 setups, today beside new      |
 | `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything       |
 
 ## 1. The answers

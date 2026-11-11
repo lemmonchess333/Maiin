@@ -10,6 +10,12 @@ no sends the target back.
 engine's own clock (`harness/zzPanel1.scratch.test.ts.txt`,
 `evidence/panel1-target.txt`). Full gym, 80 kg. `*` marks the day's main lift.
 
+STATUS 2026-11-11: accepted under the owner's delegation and locked as Lift21
+(#3190). `panel-2-every-split.md` regenerates this week from the rules, with
+three differences: General fitness main lifts at 8 to 12 (the role table's
+band, which Lift21 keeps), a fourth set on a lift where the day has time and
+the next lift does not fit, and Leg Curl before Leg Extension on Legs B.
+
 ## 45 minutes
 
 | Day    | Today's new plan                                                                                                                                     | Target                                                                                                                                   |

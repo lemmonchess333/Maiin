@@ -1,0 +1,157 @@
+// Scratch (Lift21, slice 1): size each day to its minutes from an ordered
+// list, and print the panel beside what the builder gives today. No
+// production caller: this proves the rules before the builder changes.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionSeconds } from "../expressSession";
+import { roleReps, isHighRepIsolation } from "../roleTable";
+import { EXERCISES } from "@/lib/exercises";
+
+type Goal = "hypertrophy" | "general" | "strength";
+type Level = "beginner" | "intermediate";
+type Ex = { name: string; exerciseId: string; sets: number; reps: number; repRangeMax?: number; weight?: number; isAccessory?: boolean };
+/** [lift, rank]: rank 1 is kept longest; the list is in the order performed. */
+type Slot = [name: string, rank: number, beginnerName?: string];
+type DayKind = "push" | "pull" | "legs" | "upper" | "lower" | "full";
+type Day = { name: string; kind: DayKind; slots: Slot[] };
+
+const PUSH_A: Day = { name: "Push A", kind: "push", slots: [["Bench Press", 1], ["Dumbbell Shoulder Press", 2], ["Incline Dumbbell Press", 5], ["Lateral Raise", 3], ["Rope Tricep Pushdown", 4], ["Overhead Tricep Extension", 6]] };
+const PULL_A: Day = { name: "Pull A", kind: "pull", slots: [["Pull-Ups", 1, "Lat Pulldown"], ["Barbell Row", 2], ["Lat Pulldown", 5, "Seated Cable Row"], ["Face Pulls", 4], ["Dumbbell Curl", 3], ["Hammer Curl", 6]] };
+const LEGS_A: Day = { name: "Legs A", kind: "legs", slots: [["Barbell Squat", 1], ["Romanian Deadlift", 2], ["Leg Press", 3], ["Seated Leg Curl", 5], ["Standing Calf Raise", 4], ["Cable Crunch", 6]] };
+const PUSH_B: Day = { name: "Push B", kind: "push", slots: [["Overhead Press", 1], ["Dumbbell Bench Press", 2], ["Chest Press Machine", 5], ["Cable Lateral Raise", 3], ["Overhead Tricep Extension", 4], ["Rope Tricep Pushdown", 6]] };
+const PULL_B: Day = { name: "Pull B", kind: "pull", slots: [["Barbell Row", 1], ["Lat Pulldown", 2], ["Seated Cable Row", 5], ["Reverse Flyes", 4], ["Hammer Curl", 3], ["Dumbbell Curl", 6]] };
+const LEGS_B: Day = { name: "Legs B", kind: "legs", slots: [["Deadlift", 1], ["Hack Squat", 2], ["Seated Leg Curl", 3], ["Seated Calf Raise", 5], ["Cable Crunch", 4], ["Leg Extension", 6]] };
+const UPPER_A: Day = { name: "Upper A", kind: "upper", slots: [["Bench Press", 1], ["Barbell Row", 2], ["Dumbbell Shoulder Press", 3], ["Lat Pulldown", 4], ["Lateral Raise", 5], ["Dumbbell Curl", 6], ["Rope Tricep Pushdown", 7]] };
+const UPPER_B: Day = { name: "Upper B", kind: "upper", slots: [["Overhead Press", 1], ["Pull-Ups", 2, "Lat Pulldown"], ["Incline Dumbbell Press", 3], ["Seated Cable Row", 4], ["Face Pulls", 5], ["Overhead Tricep Extension", 6], ["Hammer Curl", 7]] };
+const LOWER_A: Day = { ...LEGS_A, name: "Lower A", kind: "lower" };
+const LOWER_B: Day = { ...LEGS_B, name: "Lower B", kind: "lower" };
+const FULL_A: Day = { name: "Full Body A", kind: "full", slots: [["Barbell Squat", 1], ["Bench Press", 2], ["Barbell Row", 3], ["Seated Leg Curl", 4], ["Lateral Raise", 5], ["Dumbbell Curl", 6]] };
+const FULL_B: Day = { name: "Full Body B", kind: "full", slots: [["Deadlift", 1], ["Overhead Press", 2], ["Lat Pulldown", 3], ["Leg Press", 4], ["Rope Tricep Pushdown", 5], ["Cable Crunch", 6]] };
+const FULL_C: Day = { name: "Full Body C", kind: "full", slots: [["Bench Press", 1], ["Leg Press", 2], ["Seated Cable Row", 3], ["Romanian Deadlift", 4], ["Face Pulls", 5], ["Standing Calf Raise", 6]] };
+
+const WEEK: Record<number, Day[]> = {
+  3: [FULL_A, FULL_B, FULL_C],
+  4: [UPPER_A, LOWER_A, UPPER_B, LOWER_B],
+  5: [PUSH_A, PULL_A, LEGS_A, UPPER_B, LOWER_B],
+  6: [PUSH_A, PULL_A, LEGS_A, PUSH_B, PULL_B, LEGS_B],
+};
+
+const GUESS: Record<string, [number, number]> = {
+  // [intermediate kg, beginner kg] for lifts no built plan holds.
+  "Incline Dumbbell Press": [20, 12.5], "Chest Press Machine": [50, 30], "Reverse Flyes": [7.5, 5], "Hammer Curl": [10, 7.5],
+  "Leg Press": [120, 80], "Leg Extension": [40, 25], "Seated Leg Curl": [35, 25], "Seated Calf Raise": [40, 25],
+  "Cable Lateral Raise": [7.5, 5], "Face Pulls": [20, 12.5], "Romanian Deadlift": [70, 45], "Standing Calf Raise": [40, 25],
+  "Cable Crunch": [35, 20], "Seated Cable Row": [45, 30], "Lat Pulldown": [45, 30], "Rope Tricep Pushdown": [15, 10],
+  "Overhead Tricep Extension": [10, 7.5], "Lateral Raise": [10, 5], "Dumbbell Curl": [10, 6], "Dumbbell Shoulder Press": [15, 10],
+  "Dumbbell Bench Press": [20, 12.5], "Hack Squat": [77.5, 50], "Barbell Row": [52.5, 35], "Overhead Press": [37.5, 22.5],
+  "Bench Press": [57.5, 35], "Barbell Squat": [90, 55], "Deadlift": [105, 67.5], "Pull-Ups": [0, 0],
+};
+
+const cat = new Map((EXERCISES as Array<{ id: string; name: string; mechanic?: string }>).map((e) => [e.name, e]));
+
+/** Minutes a day may run past its length on the engine's clock, which no
+ *  saved session has checked yet: 5%. */
+const tolerance = (minutes: number) => minutes * 60 * 0.05;
+
+function sized(day: Day, goal: Goal, level: Level, minutes: number): { ex: Ex[]; seconds: number; left: number; room: boolean } {
+  const beginner = level === "beginner";
+  const short = minutes <= 30;
+  const names = day.slots.map(([n, rank, b]) => ({ name: beginner && b ? b : n, rank }));
+  const mainSets = beginner || short ? 3 : minutes >= 60 ? 4 : 3;
+  const otherSets = beginner || short ? 2 : 3;
+  const build = (count: number): Ex[] =>
+    names.filter((s) => s.rank <= count).map((s, i) => {
+      const c = cat.get(s.name);
+      if (!c) throw new Error("no exercise " + s.name);
+      const main = i === 0;
+      const role = c.mechanic === "isolation" ? "isolation" : main ? "main" : "compound";
+      const row = roleReps(goal, role, level, isHighRepIsolation(c.id));
+      const kg = GUESS[s.name]?.[beginner ? 1 : 0] ?? 20;
+      const lift = { name: s.name, exerciseId: c.id, sets: main ? mainSets : otherSets, reps: row.bottom, repRangeMax: row.top, weight: kg, isAccessory: !main };
+      // The deadlift: 3 sets at most, and never sets of 8 to 12.
+      if (c.id === "deadlift") {
+        lift.sets = Math.min(lift.sets, 3);
+        if (row.top !== undefined) { lift.reps = Math.min(row.bottom, 5); lift.repRangeMax = 8; }
+      }
+      return lift;
+    });
+  const price = (ex: Ex[]) => estimateSessionSeconds(ex as never, { sessionMinutes: minutes });
+  const limit = minutes * 60 + tolerance(minutes);
+  let count = names.length;
+  // Three lifts is the fewest, except a 30-minute day whose three do not fit.
+  while (count > (short ? 2 : 3) && price(build(count)) > limit) count--;
+  const ex = build(count);
+  // Time left that the next lift does not fit: the lifts the day has go
+  // deeper, first to last, a set at a time, to 4 (a beginner's supporting
+  // lifts to 3).
+  // Time left that the next lift does not fit: the lifts the day has go
+  // deeper, first to last, a set at a time, to 4 (3 for a beginner and in a
+  // 30-minute day), while the day stays inside its length and its set cap.
+  const cap = (e: Ex) => (e.exerciseId === "deadlift" ? 3 : beginner || short ? 3 : 4);
+  const dayCap = minutes >= 75 ? 21 : 18;
+  const total = () => ex.reduce((t, e) => t + e.sets, 0);
+  for (let pass = 0; pass < 2; pass++)
+    for (const e of ex) {
+      if (e.sets >= cap(e) || total() >= dayCap) continue;
+      e.sets += 1;
+      if (price(ex) > minutes * 60) e.sets -= 1;
+    }
+  const room = false;
+  return { ex, seconds: price(ex), left: names.length - count, room };
+}
+
+const fmt = (e: Ex, i: number) => `${e.name} ${e.sets}x${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""}${i === 0 || !e.isAccessory ? "*" : ""}`;
+
+it("panel", () => {
+  const full: string[] = [];
+  const summary: string[] = ["| Days | Min | Level | Goal | Today: sets a week | New: sets a week | Today: lifts a day, min | New: lifts a day, min | Today: lifts at 2 sets | New: checks |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"];
+  const problems: string[] = [];
+  const notes: string[] = [];
+  const agg = { today: { lifts: 0, two: 0, days: 0, under70: 0, sets60: [] as number[] }, next: { lifts: 0, two: 0, days: 0, under70: 0, sets60: [] as number[] } };
+  for (const liftDays of [3, 4, 5, 6])
+    for (const minutes of [30, 45, 60, 75])
+      for (const level of ["beginner", "intermediate"] as Level[])
+        for (const goal of ["hypertrophy", "general", "strength"] as Goal[]) {
+          const plan = buildPlan({
+            primaryGoal: goal, nutritionPhase: "recomp", experience: level, sessionMinutes: minutes, bodyweightKg: 80, sex: "male",
+            liftDays, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09",
+          } as unknown as PlanBuilderInput) as unknown as { programState: { workouts: Array<{ dayName: string; exercises: Ex[] }> } };
+          const today = plan.programState.workouts.map((d) => ({
+            name: d.dayName, ex: d.exercises, min: Math.round(estimateSessionSeconds(d.exercises as never, { sessionMinutes: minutes }) / 60),
+          }));
+          const next = WEEK[liftDays].map((d) => ({ day: d, ...sized(d, goal, level, minutes) }));
+          const tag = `${liftDays} days, ${minutes} min, ${level}, ${goal}`;
+          const checks: string[] = [];
+          for (const n of next) {
+            const min = n.seconds / 60;
+            if (n.seconds > minutes * 60 + tolerance(minutes) + 0.5) checks.push(`${n.day.name} over by ${(min - minutes).toFixed(1)}`);
+            if (min < minutes * 0.8) notes.push(`${tag}: ${n.day.name} ends at ${Math.round(min)} of ${minutes} min, its list and its sets used up`);
+            if (level !== "beginner" && minutes > 30 && n.ex.some((e) => e.sets < 3)) checks.push(`${n.day.name} has a lift under 3 sets`);
+          }
+          const counts = next.map((n) => n.ex.length);
+          const byKind = new Map<string, number[]>();
+          for (const n of next) byKind.set(n.day.kind, [...(byKind.get(n.day.kind) ?? []), n.ex.length]);
+          for (const [kind, xs] of byKind) if (Math.max(...xs) - Math.min(...xs) > 1) checks.push(`${kind} days differ by ${Math.max(...xs) - Math.min(...xs)} lifts`);
+          if (checks.length) problems.push(`${tag}: ${checks.join("; ")}`);
+          if (level !== "beginner") {
+            for (const d of today) { agg.today.days++; agg.today.lifts += d.ex.length; agg.today.two += d.ex.filter((e) => e.sets <= 2).length; if (d.min < minutes * 0.7) agg.today.under70++; if (minutes === 60) agg.today.sets60.push(d.ex.reduce((s, e) => s + e.sets, 0)); }
+            for (const n of next) { agg.next.days++; agg.next.lifts += n.ex.length; agg.next.two += n.ex.filter((e) => e.sets <= 2).length; if (n.seconds / 60 < minutes * 0.7) agg.next.under70++; if (minutes === 60) agg.next.sets60.push(n.ex.reduce((s, e) => s + e.sets, 0)); }
+          }
+          const tSets = today.reduce((t, d) => t + d.ex.reduce((s, e) => s + e.sets, 0), 0);
+          const nSets = next.reduce((t, d) => t + d.ex.reduce((s, e) => s + e.sets, 0), 0);
+          const tLifts = today.flatMap((d) => d.ex);
+          const range = (xs: number[]) => (Math.min(...xs) === Math.max(...xs) ? `${xs[0]}` : `${Math.min(...xs)}-${Math.max(...xs)}`);
+          summary.push(`| ${liftDays} | ${minutes} | ${level} | ${goal} | ${tSets} | ${nSets} | ${range(today.map((d) => d.ex.length))}, ${range(today.map((d) => d.min))} | ${range(counts)}, ${range(next.map((n) => Math.round(n.seconds / 60)))} | ${Math.round((100 * tLifts.filter((e) => e.sets <= 2).length) / tLifts.length)}% | ${checks.length ? checks.join("; ") : "pass"} |`);
+          full.push(`\n== ${tag}`, "today:");
+          for (const d of today) full.push(`  ${d.name} | ${d.ex.length} lifts | ${d.ex.reduce((s, e) => s + e.sets, 0)} sets | ${d.min} min | ${d.ex.map((e, i) => fmt(e, e.isAccessory ? 1 : 0)).join(", ")}`);
+          full.push("new:");
+          for (const n of next) full.push(`  ${n.day.name} | ${n.ex.length} lifts | ${n.ex.reduce((s, e) => s + e.sets, 0)} sets | ${Math.round(n.seconds / 60)} min | ${n.ex.map(fmt).join(", ")}`);
+        }
+  writeFileSync("/tmp/work/train/panel2-full.txt", full.join("\n"));
+  writeFileSync("/tmp/work/train/panel2-summary.md", summary.join("\n"));
+  writeFileSync("/tmp/work/train/panel2-problems.txt", problems.join("\n"));
+  writeFileSync("/tmp/work/train/panel2-notes.txt", notes.join("\n"));
+  const mean = (xs: number[]) => (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1);
+  writeFileSync("/tmp/work/train/panel2-agg.txt", (["today", "next"] as const).map((k) => `${k}: non-beginner days ${agg[k].days}, lifts at 2 sets or fewer ${Math.round((100 * agg[k].two) / agg[k].lifts)}%, days under 70% of their time ${agg[k].under70}, sets in a 60-minute day mean ${mean(agg[k].sets60)} (min ${Math.min(...agg[k].sets60)}, max ${Math.max(...agg[k].sets60)})`).join("\n"));
+});
