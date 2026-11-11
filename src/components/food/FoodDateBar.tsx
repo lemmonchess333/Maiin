@@ -1,5 +1,5 @@
 import { memo, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { haptic } from "@/lib/haptic";
 
@@ -18,9 +18,14 @@ interface FoodDateBarProps {
 }
 
 /**
- * The Food page's date switcher: one compact cluster — previous, the
- * day, next — that sits in the page header's action slot beside the
- * title.
+ * The Food page's date switcher: previous, the day, next. Since Food11
+ * (call 1) it IS the page's header row: Food draws no large title above
+ * its wheel (DESIGN_GUIDE §14m rule 2), so this takes the title's place
+ * and the targets gear closes the row. No pill behind it, which was one
+ * more box on a page that had twelve, and the date sits beside "Today"
+ * now that there is room for it.
+ *
+ * Before that it shared the row with the "Food" title, as a pill.
  *
  * It was a pinned full-width bar on its own row beneath the
  * title, chevrons at the far edges with a 12px label between them:
@@ -45,9 +50,18 @@ function FoodDateBar({
   maxDate,
 }: FoodDateBarProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
+  /* The short weekday form, day before month: the app's one date
+     treatment. */
+  const shortDate = formatShortWeekdayDayMonth(
+    new Date(selectedDate + "T12:00:00")
+  );
 
   return (
-    <div className="inline-flex items-center rounded-full bg-card card-shadow">
+    /* The negative margin sets the chevron's glyph on the page gutter:
+       its 44px hit area would otherwise indent the row. In px, like the
+       gutter it answers: a rem margin doubled at 2x text and put the
+       chevron past the screen's edge. */
+    <div className="-ml-[12px] inline-flex items-center">
       <button
         type="button"
         onClick={() => {
@@ -60,27 +74,38 @@ function FoodDateBar({
            one pill rather than three buttons. */
         className="size-[44px] flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
-        <ChevronLeft aria-hidden="true" className="size-4 text-foreground" />
+        <ChevronLeft
+          aria-hidden="true"
+          className="size-5 text-muted-foreground"
+        />
       </button>
       <button
         type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
-        aria-label="Select date"
-        className="flex items-center justify-center gap-1.5 min-h-[44px] px-1 active:scale-[0.97] transition-transform"
+        /* The name carries what the button shows, then what it does. */
+        aria-label={`${isToday ? "Today, " : ""}${shortDate}. Select date`}
+        className="flex min-h-[44px] items-center px-0.5 active:scale-[0.97] transition-transform"
       >
-        <CalendarDays
-          aria-hidden="true"
-          className="size-3.5 text-muted-foreground"
-        />
-        {/* Semibold at text-sm: it is a control's label now, not a
-            caption. The short weekday form, day before month, the app's
-            one date treatment, short enough to share the row with the
-            title. */}
-        <p className="text-sm font-semibold text-foreground whitespace-nowrap">
-          {isToday
-            ? "Today"
-            : formatShortWeekdayDayMonth(new Date(selectedDate + "T12:00:00"))}
-        </p>
+        {/* The row's own line of text: "Today" at the body size and bold,
+            the date beside it and quieter. On another day the date is the
+            line. They wrap as two lines before either is cut, at large
+            text. */}
+        <span className="flex flex-wrap items-baseline gap-x-1.5 text-left">
+          {isToday && (
+            <span className="text-base font-bold text-foreground whitespace-nowrap">
+              Today
+            </span>
+          )}
+          <span
+            className={
+              isToday
+                ? "text-sm font-medium text-muted-foreground whitespace-nowrap"
+                : "text-base font-bold text-foreground whitespace-nowrap"
+            }
+          >
+            {shortDate}
+          </span>
+        </span>
       </button>
       <input
         ref={dateInputRef}
@@ -102,7 +127,10 @@ function FoodDateBar({
         aria-label="Next day"
         className="size-[44px] flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
-        <ChevronRight aria-hidden="true" className="size-4 text-foreground" />
+        <ChevronRight
+          aria-hidden="true"
+          className="size-5 text-muted-foreground"
+        />
       </button>
     </div>
   );

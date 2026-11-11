@@ -94,6 +94,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
+import FoodTargetsLink from "@/components/food/FoodTargetsLink";
 import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
@@ -2056,7 +2057,9 @@ export default function Food() {
       <PageShell
         {...pullBindProps}
         title="Food"
-        actions={dateBar}
+        titleHidden
+        lead={dateBar}
+        actions={<FoodTargetsLink />}
         banner={<FoodOfflineBanner />}
         style={{ paddingBottom: "var(--page-bottom-pad)" }}
       >
@@ -2069,10 +2072,13 @@ export default function Food() {
     <PageShell
       {...pullBindProps}
       title="Food"
-      /* The date switcher shares the title row (the shell's action
-         slot) instead of taking a sticky row of its own beneath it —
-         two header rows were 90px spent before the day's number. */
-      actions={dateBar}
+      /* No large title (Food11 call 1; DESIGN_GUIDE §14m rule 2): the
+         wheel names the screen, so the title is for screen readers and
+         the date switcher takes its place. One header row: the day, and
+         the targets gear at its other end. */
+      titleHidden
+      lead={dateBar}
+      actions={<FoodTargetsLink />}
       banner={<FoodOfflineBanner />}
       /* Bottom padding hooks into the canonical --page-bottom-pad token
          (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
