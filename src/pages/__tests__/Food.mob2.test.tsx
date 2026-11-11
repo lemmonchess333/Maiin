@@ -16,6 +16,10 @@ import type { Meal } from "@/hooks/useMeals";
 
 const api = vi.hoisted(() => ({
   meals: [] as Meal[],
+  /** The meal the page opens on. Null leaves it to the clock. */
+  openingMeal: null as "breakfast" | "lunch" | "snacks" | "dinner" | null,
+  /** The hours the pantry was asked for, in order. */
+  pantryHours: [] as number[],
   favourites: [] as Array<Record<string, unknown>>,
   waterDates: [] as Array<string | undefined>,
   createMealEntry: vi.fn(),
@@ -59,10 +63,25 @@ vi.mock("@/hooks/useMeals", () => ({
     editMeal: api.editMeal,
   }),
 }));
+/* The meal the page opens on is the clock's guess. A test of what
+   follows from the meal sets it, so it does not depend on the hour the
+   suite runs at, or on how the composer lets the meal be changed. */
+vi.mock("@/components/food/mealConstants", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/components/food/mealConstants")>();
+  return {
+    ...actual,
+    inferMostLikelyMealSlot: (hour: number) =>
+      api.openingMeal ?? actual.inferMostLikelyMealSlot(hour),
+  };
+});
 vi.mock("@/hooks/useFoodFavourites", () => ({
   useFoodFavourites: () => ({
     favourites: api.favourites,
-    getTimeRelevant: () => api.favourites,
+    getTimeRelevant: (hour: number) => {
+      api.pantryHours.push(hour);
+      return api.favourites;
+    },
     addFavourite: vi.fn(),
     removeFavourite: vi.fn(),
     restoreFavourite: vi.fn(),
@@ -167,6 +186,8 @@ function meal(id: string, foodName: string, calories: number): Meal {
 beforeEach(() => {
   vi.clearAllMocks();
   api.meals = [];
+  api.openingMeal = null;
+  api.pantryHours = [];
   api.favourites = [];
   api.createMealEntry.mockResolvedValue({ id: "added" });
   api.saveLog.mockResolvedValue(undefined);
@@ -264,6 +285,70 @@ describe("Food — the Quick add list's More row", () => {
     fireEvent.focus(screen.getByLabelText("What did you eat"));
     expect(quickAddNames()).toHaveLength(5);
     expect(screen.queryByRole("button", { name: "More" })).toBeNull();
+  });
+});
+
+/**
+ * Food11 call 7: the Quick add list is ranked for the meal being added
+ * to. Food 1 is the most logged food, always at lunch; Food 2 is logged
+ * a third as often, always at breakfast.
+ */
+describe("Food — the Quick add list follows the chosen meal", () => {
+  function lunchAndBreakfastFoods(): Meal[] {
+    const out: Meal[] = [];
+    for (let n = 1; n <= 9; n++) {
+      out.push({
+        ...meal(`lunch-${n}`, "Food 1", 600),
+        date: format(addDays(new Date(), -n), "yyyy-MM-dd"),
+        meal: "lunch",
+      });
+    }
+    for (let n = 1; n <= 3; n++) {
+      out.push({
+        ...meal(`breakfast-${n}`, "Food 2", 300),
+        date: format(addDays(new Date(), -n), "yyyy-MM-dd"),
+        meal: "breakfast",
+      });
+    }
+    return out;
+  }
+
+  it("leads with what is logged at breakfast when adding to breakfast", () => {
+    api.meals = lunchAndBreakfastFoods();
+    api.openingMeal = "breakfast";
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    // The lunch food is logged three times as often, and still offered.
+    expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
+  });
+
+  it("leads with what is logged at lunch when adding to lunch", () => {
+    api.meals = lunchAndBreakfastFoods();
+    api.openingMeal = "lunch";
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(quickAddNames()).toEqual(["Food 1", "Food 2"]);
+  });
+
+  it("ranks afresh when the meal is changed, and back again", () => {
+    api.meals = lunchAndBreakfastFoods();
+    api.openingMeal = "breakfast";
+    renderFood();
+    fireEvent.focus(screen.getByLabelText("What did you eat"));
+    expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
+    fireEvent.click(screen.getByRole("radio", { name: "Lunch" }));
+    expect(quickAddNames()).toEqual(["Food 1", "Food 2"]);
+    fireEvent.click(screen.getByRole("radio", { name: "Breakfast" }));
+    expect(quickAddNames()).toEqual(["Food 2", "Food 1"]);
+  });
+
+  it("asks the pantry for the meal's time of day, not the clock's", () => {
+    api.openingMeal = "breakfast";
+    renderFood();
+    expect(new Set(api.pantryHours)).toEqual(new Set([8]));
+    api.pantryHours = [];
+    fireEvent.click(screen.getByRole("radio", { name: "Dinner" }));
+    expect(api.pantryHours.at(-1)).toBe(19);
   });
 });
 

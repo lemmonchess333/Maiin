@@ -79,6 +79,7 @@ import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
+  compareQuickAddTallies,
   orderQuickAddItems,
   pickRepresentativeMeal,
   type QuickAddItem,
@@ -130,6 +131,7 @@ import {
   MEAL_ORDER,
   MEAL_LABELS,
   inferMostLikelyMealSlot,
+  typicalHourForMeal,
   type MealKey,
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
@@ -376,13 +378,13 @@ export default function Food() {
   const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(
     () => new Set()
   );
-  /* Stable per-date order cache. The frequency map underneath
-     would otherwise reshuffle chips on every log (each new entry
-     bumps a count and shifts ties). Snapshot the order ONCE per
-     selectedDate and apply it on every render until the date
-     changes — vanished items drop, new items append at the end
-     via `orderQuickAddItems` rather than rebuilding the whole
-     cache and reintroducing the reshuffle bug. */
+  /* Stable order cache, one entry a day and a meal (`quickOrderKey`).
+     The frequency map underneath would otherwise reshuffle chips on
+     every log (each new entry bumps a count and shifts ties).
+     Snapshot the order ONCE per day and chosen meal and apply it on
+     every render until either changes — vanished items drop, new
+     items append at the end via `orderQuickAddItems` rather than
+     rebuilding the whole cache and reintroducing the reshuffle bug. */
   const [quickAddOrderCache, setQuickAddOrderCache] = useState<
     Map<string, string[]>
   >(() => new Map());
@@ -429,6 +431,11 @@ export default function Food() {
     void selectedDate;
     return new Date().getHours();
   }, [selectedDate]);
+  /* The pantry's time of day follows the meal being added to (Food11
+     call 7): breakfast offers the morning's foods at any hour it is
+     logged. Snacks, and no meal chosen, have no hour of their own and
+     keep the clock's, pinned as above. */
+  const favouritesHour = typicalHourForMeal(targetMeal) ?? timeRelevantHour;
 
   /* Suspicious-value confirm state for the NL parse path. The
      pending save closure is captured at validation time and
@@ -1562,19 +1569,20 @@ export default function Food() {
     }, 50);
   };
 
-  // Merged Quick Add source.
+  // Merged Quick Add source, for the meal being added to (Food11 call 7).
   //
   // Three layers, in priority order:
   //   1. Time-relevant favourites — foods the user has explicitly
   //      starred, filtered by time-of-day. Favourites are the
-  //      strongest user signal (explicit), so they go first.
-  //   2. Frequency-ranked history (last 30 days) — the foods the user
-  //      actually relies on day-to-day. Was previously sorted by
-  //      simple recency (chronological), which let a one-off meal
-  //      (e.g. takeaway pizza last night) bubble above habitual
-  //      foods like daily Greek yoghurt. Frequency over a rolling
-  //      window better matches the "Quick Add" promise: surface the
-  //      foods I quick-add the most. Tie-broken by last-logged so
+  //      strongest user signal (explicit), so they go first. The time
+  //      of day is the chosen meal's (breakfast is morning, whenever
+  //      it is logged); snacks, and no meal chosen, keep the clock's.
+  //   2. History over the last 30 days, ranked for the chosen meal
+  //      (`compareQuickAddTallies`): the foods logged at that meal
+  //      first, most often first, then the rest by how often they
+  //      are logged at all. Frequency rather than recency, so a
+  //      one-off (takeaway pizza last night) does not rise above a
+  //      habit like daily Greek yoghurt. Tie-broken by last-logged so
   //      ties favour the more recent of two equally-frequent items
   //      (handles "I switched from oats to yoghurt" gracefully).
   //   3. Seeded defaults — first-time users with no history still
@@ -1612,7 +1620,7 @@ export default function Food() {
     //    selectedDate) — see that block's comment for why a fresh
     //    `new Date().getHours()` here would re-introduce the F2 escape
     //    hatch the F4 audit identified.
-    for (const f of getTimeRelevant(timeRelevantHour, 10)) {
+    for (const f of getTimeRelevant(favouritesHour, 10)) {
       // Optimistic hide for in-flight long-press removals — skip
       // chips whose favourite is pending delete so the row updates
       // immediately on user action without waiting for the snapshot.
@@ -1632,7 +1640,7 @@ export default function Food() {
       });
     }
 
-    // 2. Frequency-ranked history over the last 30 days.
+    // 2. History over the last 30 days, ranked for the chosen meal.
     //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
@@ -1641,20 +1649,33 @@ export default function Food() {
     // portion (below) instead of whichever version was logged last.
     const byFood = new Map<
       string,
-      { count: number; lastLogged: string; logs: (typeof meals)[number][] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        logs: (typeof meals)[number][];
+      }
     >();
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
       // A nameless Quick add entry is a number, not a food to repeat.
       if (!key || isQuickAddName(key)) continue;
+      const atMeal =
+        targetMeal !== null && mealSlotFor(meal) === targetMeal ? 1 : 0;
       const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;
+        existing.atMeal += atMeal;
         existing.logs.push(meal);
         if (meal.date > existing.lastLogged) existing.lastLogged = meal.date;
       } else {
-        byFood.set(key, { count: 1, lastLogged: meal.date, logs: [meal] });
+        byFood.set(key, {
+          count: 1,
+          atMeal,
+          lastLogged: meal.date,
+          logs: [meal],
+        });
       }
     }
     // FOOD-03: the chip's macros come from the user's MOST FREQUENT
@@ -1664,20 +1685,22 @@ export default function Food() {
     // represents the food changed.
     const freq = new Map<
       string,
-      { count: number; lastLogged: string; meal: (typeof meals)[number] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        meal: (typeof meals)[number];
+      }
     >();
     for (const [key, group] of byFood) {
       freq.set(key, {
         count: group.count,
+        atMeal: group.atMeal,
         lastLogged: group.lastLogged,
         meal: pickRepresentativeMeal(group.logs, (m) => m.date),
       });
     }
-    const ranked = Array.from(freq.values()).sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      // tie → most recent wins
-      return b.lastLogged.localeCompare(a.lastLogged);
-    });
+    const ranked = Array.from(freq.values()).sort(compareQuickAddTallies);
     for (const entry of ranked) {
       /* Smart display label for multi-item meals.
          AI-detected meals from photo scans return verbose foodNames
@@ -1733,16 +1756,30 @@ export default function Food() {
     }
 
     return current;
-    /* The day reaches this list through `timeRelevantHour`, which is
-       keyed on selectedDate: the body never reads the date itself, so
-       listing it too only recomputed an identical list. */
-  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds, todayStr]);
+    /* The day reaches this list through `timeRelevantHour` (inside
+       `favouritesHour`), which is keyed on selectedDate: the body never
+       reads the date itself, so listing it too only recomputed an
+       identical list. */
+  }, [
+    meals,
+    getTimeRelevant,
+    favouritesHour,
+    targetMeal,
+    pendingRemovalIds,
+    todayStr,
+  ]);
 
-  const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
+  /* One stable order a day AND a meal. Choosing another meal is asking
+     for another list, so it ranks afresh; a log, which only moves the
+     counts under the list on screen, still reshuffles nothing. Each
+     day's meals keep their own order, so going back to one restores
+     it. */
+  const quickOrderKey = `${selectedDate}|${targetMeal ?? ""}`;
+  const cachedQuickOrder = quickAddOrderCache.get(quickOrderKey);
   if (!cachedQuickOrder) {
     setQuickAddOrderCache(
       new Map(quickAddOrderCache).set(
-        selectedDate,
+        quickOrderKey,
         Array.from(quickMealCandidates.keys())
       )
     );

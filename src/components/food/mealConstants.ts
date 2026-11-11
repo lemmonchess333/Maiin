@@ -70,3 +70,23 @@ export function inferMostLikelyMealSlot(hour: number): MealKey {
   if (hour < 17) return "snacks";
   return "dinner";
 }
+
+/**
+ * An hour that stands for a meal, for anything keyed on the time of day
+ * (the pantry sorts its foods into morning, midday and evening). It is
+ * the inverse of `inferMostLikelyMealSlot` for the three meals that have
+ * a time. Snacks have none, and no meal chosen has none: null, and the
+ * caller keeps the clock's hour.
+ */
+export function typicalHourForMeal(meal: MealKey | null): number | null {
+  switch (meal) {
+    case "breakfast":
+      return 8;
+    case "lunch":
+      return 13;
+    case "dinner":
+      return 19;
+    default:
+      return null;
+  }
+}
