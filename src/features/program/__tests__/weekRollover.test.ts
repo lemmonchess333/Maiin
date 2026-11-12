@@ -611,7 +611,7 @@ describe("after race day, the race plan waits for the race's own ending", () => 
     // moves a race plan on from its runs' week, so the empty week keeps its
     // key on the plan, and the weeks after it are planned as they come.
     const { state, profile } = inRaceWeek();
-    const marathon = { distance: "marathon", targetDate: raceDay };
+    const marathon = { distance: "marathon" as const, targetDate: raceDay };
     const recovering: ProgramState = {
       ...state,
       runPlan: {
