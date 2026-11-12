@@ -251,6 +251,8 @@ Builds on PR-D's writers. Adds the actual phase semantics.
 - Phase exit: setting `today` past `recoveryEndDate` triggers the card variant change. At `+7d`, auto-promote (phase cleared).
 - Distance scaling: assert 5K=7d, 10K=14d, half=21d, marathon=28d.
 
+STATUS 2026-11-12 — scope item 3 superseded by the training deep dive's D10 (`docs/training-deep-dive-2026-11/running-engine.md`): an easy 30 on every run day from the day after put a marathoner on six runs the week after the race, the same every week for four. A recovery week is now graded from the race by distance (`RECOVERY_STEPS` in `runScheduler.ts`): days off after it (a 5K one, a 10K two, a half four, a marathon seven), then at most three 20-minute runs a week on days apart, then 30 minutes and, for a half or marathon, 40 minutes on every run day. A plan with no race date or distance keeps the easy 30s. A week with no runs keeps its key on the plan (`emptyRunWeekKey`), so the rollover moves on. Duration table, `runMode`, entry and exit unchanged. The owner left the call to the session; implementation in the PR that carries `raceRecovery.test.ts`.
+
 ---
 
 ## PR-C — Post-race card UX
