@@ -581,18 +581,19 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   by SessionHero: the session's name, its focus and minutes, its picture,
   one line against last time, one neutral Start; a day's second session
   is a compact card under it; the words are `homeHero.ts`'s) → the week
-  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  card: WeekSessions over WeekStrip's seven segments, then WeekSummary
+  (what the count is made of, and the days with food logged) beside
+  WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
-  WeeklyReviewEntry (a link on its heading while a review waits) →
-  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
-  Performance sits LAST by owner decision: the first thing on the scroll
-  should be something to do today, not a verdict on the week just gone.
+  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  carries no performance score (Trim1 call 1, 2026-11-11): the "This
+  week" card that closed the page, with its Performance row, is gone,
+  and the score is on Analytics.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.

@@ -251,9 +251,6 @@ vi.mock("@/components/home/TodayEnergy", () => ({
 }));
 vi.mock("@/components/home/VerifyEmailBanner", () => ({ default: () => null }));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
-vi.mock("@/components/home/PerformanceHeroCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/home/ContextualTipBanner", () => ({
   default: ({ title, visible }: { title: string; visible: boolean }) =>
     visible ? <p>{title}</p> : null,

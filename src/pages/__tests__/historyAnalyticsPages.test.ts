@@ -98,10 +98,11 @@ describe("Analytics — links into the pages", () => {
     expect(map).toContain('performance: "performance"');
   });
 
-  it("opens the Performance page from Home's #performance link", () => {
-    /* Home's row links to `/history#performance`. The render reads the
-       anchor so the page opens first time, and the mount effect moves it
-       into `?view=`. */
+  it("opens the Performance page from a #performance link", () => {
+    /* Home's row linked to `/history#performance` until Trim1 call 1 took
+       the score off Home; links already saved and sent still do. The
+       render reads the anchor so the page opens first time, and the mount
+       effect moves it into `?view=`. */
     expect(history).toContain('hashOpensPerformance ? "performance"');
     const anchors = history.slice(
       history.indexOf("const PERFORMANCE_ANCHORS"),
@@ -109,11 +110,6 @@ describe("Analytics — links into the pages", () => {
     );
     expect(anchors).toContain('"performance"');
     expect(anchors).toContain('"performance-expanded"');
-    const home = readFileSync(
-      resolve(repoRoot, "src/components/home/PerformanceHeroCard.tsx"),
-      "utf8"
-    );
-    expect(home).toContain('"/history#performance"');
   });
 
   it("pushes a page, so the back gesture returns to the overview", () => {

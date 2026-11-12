@@ -1,7 +1,8 @@
 /**
- * The overview's Performance card. Its words come from the same helpers
- * as Home's row, so the two name one week the same way; its Details open
- * the Performance page, where the gauge, chart and insights now live.
+ * The overview's Performance card. Its words come from the helpers
+ * Home's row used until Trim1 call 1 took the score off Home, and
+ * `performanceVerbParity.test.tsx` holds it to the Performance page; its
+ * Details open that page, where the gauge, chart and insights live.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -32,7 +33,6 @@ vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import PerformanceOverviewCard from "../PerformanceOverviewCard";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import { VERB_LABEL } from "@/lib/performanceLine";
 
 function week(
@@ -109,26 +109,10 @@ describe("PerformanceOverviewCard", () => {
     ["a low week", 30, "low", false],
     ["a steady week", 65, "moderate", false],
     ["a high week under a deload flag", 82, "high", true],
-  ])("names %s as Home does", (_name, pi, band, deload) => {
-    const weeks = history(pi, band, deload);
-    serve(weeks);
+  ])("names %s with one locked verb", (_name, pi, band, deload) => {
+    serve(history(pi, band, deload));
     const overview = renderCard();
-    const overviewVerbs = verbsIn(overview.container);
-    cleanup();
-    const home = render(
-      <MemoryRouter>
-        <PerformanceHeroCard
-          currentWeek={weeks[weeks.length - 1] as never}
-          previousWeek={weeks[weeks.length - 2] as never}
-          weeksAvailable={weeks.length}
-          loading={false}
-        />
-      </MemoryRouter>
-    );
-    const homeVerbs = verbsIn(home.container);
-    // Anchored: both must be showing a verb, or they agree vacuously.
-    expect(homeVerbs.length).toBeGreaterThan(0);
-    expect(overviewVerbs).toEqual(homeVerbs);
+    expect(verbsIn(overview.container)).toHaveLength(1);
   });
 
   it("keeps the heading and its Details while the week loads, over a card-shaped placeholder (Pol1)", () => {

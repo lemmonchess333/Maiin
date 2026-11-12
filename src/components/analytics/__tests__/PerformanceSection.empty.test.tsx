@@ -100,11 +100,6 @@ describe("the signal reaches both surfaces", () => {
   const read = (rel: string) =>
     readFileSync(resolve(__dirname, "../../..", rel), "utf8");
 
-  it("Home passes it to the hero card", () => {
-    const src = read("pages/Home.tsx");
-    expect(src).toMatch(/<PerformanceHeroCard[\s\S]*?hasLoggedSession=/);
-  });
-
   it("Analytics passes it to the section", () => {
     const src = read("pages/History.tsx");
     expect(src).toMatch(/<PerformanceSection[\s\S]*?hasLoggedSession=/);
