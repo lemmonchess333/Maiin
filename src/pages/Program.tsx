@@ -82,6 +82,9 @@ import {
 } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import OutgrownDayNotice from "@/components/program/OutgrownDayNotice";
+import { hasOutgrown, outgrownDayKey } from "@/features/program/outgrownDay";
+import { isLongDayKept, keepLongDay } from "@/lib/keptLongDays";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -150,6 +153,7 @@ import {
 } from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import { useRunFitnessAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 
@@ -243,8 +247,9 @@ function ProgramInner() {
     adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
+    readiness,
   } = useProgram();
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { awardEventBadge } = useStreaks();
   // Today, from the shared day key: it moves at midnight and when the app
   // comes back, so a screen left open overnight names the new day.
@@ -416,6 +421,10 @@ function ProgramInner() {
   );
   const [sessionBudgetMinutes, setSessionBudgetMinutes] = useState<number>(60);
   const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
+  // A long day kept on this visit ("Keep this day"), so the notice goes at
+  // once; the device keeps it after (`keptLongDays`).
+  const [keptDay, setKeptDay] = useState<string | null>(null);
+  const [rebuildingDays, setRebuildingDays] = useState(false);
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -993,6 +1002,69 @@ function ProgramInner() {
   const estimatedMinutes =
     usualPlan?.estimatedMinutes ??
     estimateSessionMinutes(selectedWorkout?.exercises ?? [], restContext);
+  // A day still to train that runs well past the length its plan is fitted
+  // to (slice 4): said under the day's card, with the rebuild one tap away,
+  // unless the person chose to keep this day as it is. A plan from before
+  // plans were fitted to a length trims at Start instead (`usualPlan`).
+  const fittedLength = programState?.sessionMinutes;
+  const outgrownKey =
+    selectedWorkout && fittedLength !== undefined
+      ? outgrownDayKey(selectedWorkout, fittedLength)
+      : null;
+  const showOutgrown =
+    outgrownKey !== null &&
+    fittedLength !== undefined &&
+    (status === "today" || status === "upcoming") &&
+    hasOutgrown(estimatedMinutes, fittedLength) &&
+    !isLongDayKept(user?.uid, outgrownKey) &&
+    keptDay !== outgrownKey;
+
+  /** "Rebuild for N min": the lift days built again for the length, saved
+   *  through configurePlan as the lift plan editor saves, then the profile
+   *  read back so Train shows the new days. Not before the programme has
+   *  loaded, as the editor waits. The builder loads with the tap. */
+  async function rebuildForLength(length: number) {
+    if (rebuildingDays || readiness !== "ready") return;
+    if (!profile || !programState) return;
+    setRebuildingDays(true);
+    try {
+      const { rebuildLiftDaysFor } =
+        await import("@/features/program/liftPlanRebuild");
+      await rebuildLiftDaysFor(length, {
+        profile,
+        programState,
+        recentLayoff,
+        recentRuns,
+      });
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved on the server already: say so and reload, as the editor
+        // does, rather than invite a second rebuild.
+        logger.warn("[Program] rebuilt but profile refresh failed", refreshErr);
+        toast.success(`Lift days rebuilt for ${String(length)} min`);
+        window.location.reload();
+        return;
+      }
+      toast.success(`Lift days rebuilt for ${String(length)} min`);
+    } catch (err) {
+      logger.error("[Program] rebuild for length failed:", err);
+      const { planSaveRejection } =
+        await import("@/features/program/liftPlanRebuild");
+      const rejection = planSaveRejection(
+        err,
+        "Your plan changed. Check it and try again."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setRebuildingDays(false);
+    }
+  }
 
   /* The session card's words and picture (DS3). A generated day is titled
      with its name in the week ("Pull B", Lift19) under the day's status. A
@@ -1640,6 +1712,31 @@ function ProgramInner() {
                       {/* The reason sits behind a tap, as "Why this run"
                           does on the Run tab, and on the same days: one
                           still to train this week. */}
+                      {/* Gives way to the week-level notice, as the level
+                          suggestion does (`programNotices`): one notice
+                          under the day at a time. */}
+                      {showOutgrown &&
+                        fittedLength !== undefined &&
+                        liftAdvice !== "deload" && (
+                          <div className="px-3">
+                            <OutgrownDayNotice
+                              dayName={
+                                weekDayNames[idx] ?? selectedWorkout.dayName
+                              }
+                              minutes={estimatedMinutes}
+                              length={fittedLength}
+                              rebuilding={rebuildingDays}
+                              onRebuild={() =>
+                                void rebuildForLength(fittedLength)
+                              }
+                              onKeep={() => {
+                                haptic("light");
+                                keepLongDay(user?.uid, outgrownKey);
+                                setKeptDay(outgrownKey);
+                              }}
+                            />
+                          </div>
+                        )}
                       {(status === "today" || status === "upcoming") && (
                         <LiftPurpose
                           programme={programState}

@@ -241,6 +241,13 @@ export interface PlanBuilderInput {
    *  `updatedAt` semantics from `existingState`. Onboarding passes
    *  false; Configure Plan passes true. */
   preserveHistory?: boolean;
+
+  /** Builds the lift days again from the setup when their number has not
+   *  changed, as a change in their number does: Train's "Rebuild for N
+   *  min", for a plan whose days have outgrown their time (slice 4). Each
+   *  lift keeps its weight where a new day holds it. Without it, a plan
+   *  that keeps its number of days keeps its days (Pgm5 Q3). */
+  rebuildLiftDays?: boolean;
 }
 
 export interface PlanBuilderOutput {
@@ -376,6 +383,7 @@ type LiftProgramInput = Pick<
   | "injuries"
   | "existingState"
   | "preserveHistory"
+  | "rebuildLiftDays"
   | "loadUnit"
 >;
 
@@ -403,7 +411,8 @@ function buildLiftProgram(input: LiftProgramInput): {
   // It sets how the main lifts progress (below); the rest of the level
   // reaches the plan through what reads it — whether lighter weeks come and
   // the RPE row now, the exercises a plan built later picks.
-  const preserve = sameDayCount && !!input.existingState;
+  const preserve =
+    sameDayCount && !!input.existingState && input.rebuildLiftDays !== true;
 
   const base =
     preserve && input.existingState
@@ -607,14 +616,76 @@ function buildLiftProgram(input: LiftProgramInput): {
           sessionMinutesFor(sessionMinutes)
         )
       : workouts;
+  const weekBuilt =
+    !preserve || refit ? keepWeekLighter(input, workouts) : keptLength;
   return {
     splitType: base.splitType,
     // New days or a new session length build the week's sets afresh, so a
-    // week made lighter goes lighter again (`keepWeekLighter`).
+    // week made lighter goes lighter again (`keepWeekLighter`). Days built
+    // again in place keep what this week already holds (slice 4).
     workouts:
-      !preserve || refit ? keepWeekLighter(input, workouts) : keptLength,
+      input.rebuildLiftDays === true && sameDayCount && existing
+        ? keepWeekProgress(existing, weekBuilt)
+        : weekBuilt,
     ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
   };
+}
+
+/**
+ * A week's lift days built again in place keep what the week holds: a day
+ * done or skipped stays done or skipped, with the session it was saved as,
+ * so Train's next day and the week's count stand after a rebuild (slice
+ * 4). Each old day's state goes to the new day of its name, else to the
+ * day in its place, else to the first day left, so none is lost when a
+ * day was renamed or moved.
+ */
+export function keepWeekProgress(
+  before: readonly WorkoutDay[],
+  after: readonly WorkoutDay[]
+): WorkoutDay[] {
+  const days = after.map((day) => ({
+    ...day,
+    completed: false,
+    skipped: undefined as boolean | undefined,
+    completedWorkoutId: undefined as string | undefined,
+  }));
+  const taken = new Set<number>();
+  const marked = before
+    .map((day, index) => ({ day, index }))
+    .filter(({ day }) => day.completed || day.skipped === true);
+  const claim = (i: number) => {
+    taken.add(i);
+    return i;
+  };
+  // Names first, over every marked day, so a day matched by place never
+  // takes the one another day is named for.
+  const target = new Map<number, number>();
+  for (const { day, index } of marked) {
+    const named = days.findIndex(
+      (d, i) => !taken.has(i) && d.dayName === day.dayName
+    );
+    if (named >= 0) target.set(index, claim(named));
+  }
+  for (const { index } of marked) {
+    if (target.has(index)) continue;
+    const placed =
+      index < days.length && !taken.has(index)
+        ? index
+        : days.findIndex((_, i) => !taken.has(i));
+    if (placed >= 0) target.set(index, claim(placed));
+  }
+  for (const { day, index } of marked) {
+    const i = target.get(index);
+    if (i === undefined) continue;
+    days[i].completed = day.completed;
+    days[i].skipped = day.skipped;
+    days[i].completedWorkoutId = day.completedWorkoutId;
+  }
+  return days.map(({ skipped, completedWorkoutId, ...day }) => ({
+    ...day,
+    ...(skipped !== undefined ? { skipped } : {}),
+    ...(completedWorkoutId !== undefined ? { completedWorkoutId } : {}),
+  }));
 }
 
 /** The answers a first plan's lift week is built from (`freshLiftWeek`). */
