@@ -3311,6 +3311,25 @@ export function raceLegSets(sets: number): number {
 }
 
 /**
+ * How many leg sets a week the race build's leg trim takes off a plan's
+ * week: what a yes at race setup does, said in the switch's own line. A
+ * plan whose leg lifts have two sets each loses none, since a lift keeps
+ * two (decisions L12), and then the switch is not offered (training deep
+ * dive, hybrid week 7: a third of plans showed a switch that changed
+ * nothing).
+ */
+export function raceLegTrimCut(workouts: readonly WorkoutDay[]): number {
+  let cut = 0;
+  for (const day of workouts)
+    for (const ex of day.exercises) {
+      if (!loadsTheLegs(ex)) continue;
+      const base = ex.baseSets ?? ex.sets;
+      cut += base - raceLegSets(base);
+    }
+  return cut;
+}
+
+/**
  * The race build's leg trim on the sessions not yet done (Lift4 (10)): on,
  * each leg lift (`loadsTheLegs`) has `raceLegSets` of its plan's sets, at
  * the same weights; off, the plan's sets again. Nothing else changes.

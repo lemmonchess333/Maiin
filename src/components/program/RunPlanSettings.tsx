@@ -86,7 +86,7 @@ import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { buildPlan } from "@/features/program/planBuilder";
+import { buildPlan, freshLiftWeek } from "@/features/program/planBuilder";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
@@ -108,10 +108,14 @@ import {
 } from "@/features/spaces/raceEventOverrides";
 import type { UserProfile } from "@/lib/auth";
 import type {
+  PrimaryGoal,
   ProgramState,
   RaceDistance,
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import { raceLegTrimCut } from "@/features/program/programEngine";
+import { sessionLengthOption } from "@/features/program/sessionFit";
+import { legTrimEffect } from "@/lib/legTrimEffect";
 import {
   runTuningFromProfile,
   type RunVolumePreset,
@@ -370,6 +374,32 @@ export default function RunPlanSettings({
   );
   /* The leg trim is a lifting question: asked only of someone who lifts. */
   const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
+  // The switch is offered only where a yes changes something: a plan whose
+  // leg lifts have two sets each loses none (training deep dive). With no
+  // programme yet, the save builds the first one, so it is that week.
+  const legTrimCut = useMemo(
+    () =>
+      raceLegTrimCut(
+        programState?.workouts?.length
+          ? programState.workouts
+          : lifts
+            ? freshLiftWeek({
+                primaryGoal: (profile.primaryGoal ?? "general") as PrimaryGoal,
+                experience: profile.experience ?? "beginner",
+                sessionMinutes: sessionLengthOption(
+                  profile.liftTimeBudgetMinutes
+                ),
+                bodyweightKg: profile.weightKg,
+                sex: profile.sex,
+                liftDays: profile.weeklyWorkoutsTarget ?? 0,
+                equipment: profile.equipment ?? "full_gym",
+                barbellAtHome: profile.barbellAtHome === true,
+                injuries: profile.injuries ?? [],
+              })
+            : []
+      ),
+    [programState, lifts, profile]
+  );
   const today = useLocalDateKey();
 
   /* R5: a race plan set up or changed with no starting point starts from
@@ -1098,14 +1128,14 @@ export default function RunPlanSettings({
           </div>
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable
               here for as long as the race runs. */}
-          {lifts && (
+          {lifts && legTrimCut > 0 && (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionHeading size="compact">
                   Lighten leg sessions while your runs build
                 </SectionHeading>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  A third fewer leg sets, at the same weights.
+                  {`${legTrimEffect(legTrimCut)}.`}
                 </p>
               </div>
               <Toggle

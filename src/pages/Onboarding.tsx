@@ -98,6 +98,8 @@ import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
+import { raceLegTrimCut } from "@/features/program/programEngine";
+import { legTrimEffect } from "@/lib/legTrimEffect";
 import {
   clearPendingInvite,
   pendingInviteUnchanged,
@@ -683,6 +685,10 @@ export default function Onboarding() {
         ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
         : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`,
   };
+  const legTrimCut = useMemo(
+    () => raceLegTrimCut(plan.programState.workouts),
+    [plan.programState.workouts]
+  );
   const limitationChanges = useMemo(
     () => injuryChanges(plan.programState.workouts, injuries),
     [plan.programState.workouts, injuries]
@@ -1612,16 +1618,16 @@ export default function Onboarding() {
                           Some days include a lift and a run.
                         </p>
                       )}
-                      {hasLifting && (
+                      {/* Only where a yes changes something: a plan whose
+                          leg lifts have two sets each loses none. */}
+                      {hasLifting && legTrimCut > 0 && (
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-foreground">
                               Lighten leg sessions while your runs build
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              A third fewer sets on leg lifts, at the same
-                              weights, from your plan’s build weeks until the
-                              two lighter weeks before your race.
+                              {`${legTrimEffect(legTrimCut)}, from your plan’s build weeks until the two lighter weeks before your race.`}
                             </p>
                           </div>
                           <Toggle

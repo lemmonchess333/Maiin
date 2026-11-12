@@ -127,7 +127,7 @@ export const legsBefore = (run: string) =>
 
 /* Lift4 (10): a build week's leg trim, on a yes at race setup. */
 export const RACE_BUILD_LEGS =
-  "Your leg lifts have a third fewer sets at the same weights in the build-up to your race, as you chose.";
+  "Your leg lifts have fewer sets at the same weights in the build-up to your race, as you chose.";
 
 /** The run the day after a session, when it is a long run or a key
  *  session (`isDemandingScheduledRun`), named as the note below names it.

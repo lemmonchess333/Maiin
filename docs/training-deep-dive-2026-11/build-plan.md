@@ -93,6 +93,12 @@ follows the weight lifted from the first session. Building pull-ups as a lat
 pulldown above a bodyweight line is left for the level and kit work it belongs
 with.
 
+STATUS 2026-11-12, #13 ("Lighten leg sessions" where it changes nothing): setup
+and Run plan offer the switch only where a yes takes a set, and say how many: "4
+fewer leg sets a week, at the same weights" (`raceLegTrimCut`), where they said
+"a third fewer" of plans whose two-set leg lifts lose none. Why this session
+says "fewer sets", not "a third fewer". The stored answer is kept either way.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one
