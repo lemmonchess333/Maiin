@@ -53,6 +53,7 @@ import type {
   PrimaryGoal,
   ProgramExercise,
   ProgramState,
+  ProgramSettings,
   ScheduledRunDay,
   RunPlan,
   SplitType,
@@ -64,7 +65,13 @@ import {
   DEFAULT_PROGRAM_SETTINGS,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+  wholeWeeksBetween,
+} from "@/lib/dateHelpers";
 import { firstFullWeekKey } from "./runPlanTiming";
 import {
   applyDeload,
@@ -80,6 +87,7 @@ import {
   firstWeekBack,
   isRaceBuildWeek,
   raceBlockWeek,
+  raceLiftWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
 import { starterWeekFrom } from "./starterWeek";
@@ -771,6 +779,56 @@ function raceLegTrimNow(
   return { workouts, raceWeek };
 }
 
+/**
+ * The race's final weeks on the week a plan is made or a race is added
+ * (Lift4 (10)). Only the rollover applied them, so a race 6 to 20 days out
+ * left the week's lifting whole: squats 4 × 3 three days before a 10K, and
+ * a full week after it (training deep dive, hybrid-week defect 4). Now the
+ * days still to do take the taper's lighter sets, race week's one short
+ * session is the first of them, and the week is the race's, so the week
+ * after it is lighter too.
+ *
+ * The race's week is read for the lift week (`firstLiftWeekKey`), which is
+ * not always the run plan's current week: a plan made from a Thursday on
+ * starts its runs on the Monday after (`leadInWeek`, or a week with no run
+ * day left), and an existing plan's lifts can be in this week then.
+ */
+function raceFinalWeekNow(
+  input: PlanBuilderInput,
+  workouts: WorkoutDay[],
+  run: { runPlan: RunPlan | undefined; runDays: readonly ScheduledRunDay[] },
+  settings: Pick<ProgramSettings, "smallPlates" | "loadUnit">
+): { workouts: WorkoutDay[]; raceWeek?: "taper" | "race" } {
+  const current = raceBlockWeek(run.runPlan);
+  if (current === null) return { workouts };
+  const thisWeek = localWeekKey(parseLocalDate(input.currentDate));
+  const leadIn = run.runPlan?.leadInWeek;
+  const currentKey = leadIn
+    ? localDateString(addLocalDays(parseLocalDate(leadIn), 7))
+    : (run.runDays.find((day) => day.weekKey)?.weekKey ?? thisWeek);
+  const weekIndex =
+    current.weekIndex + wholeWeeksBetween(currentKey, firstLiftWeekKey(input));
+  // A lift week past the race is the week after it, which the rollover
+  // gives from the race week it leaves.
+  if (weekIndex >= current.totalWeeks) return { workouts };
+  const raceWeek = raceLiftWeek({ ...current, weekIndex }, undefined);
+  if (raceWeek === null || raceWeek === "after") return { workouts };
+  const lighter = workouts.map((day) =>
+    day.completed || day.skipped === true ? day : applyDeload([day])[0]
+  );
+  return {
+    workouts:
+      raceWeek === "race"
+        ? raceWeekSession(
+            lighter,
+            settings.smallPlates === true,
+            settings.loadUnit ?? "kg"
+          )
+        : lighter,
+    raceWeek,
+  };
+}
+
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
  *  injected currentDate, not wall clock). Uses the V2 scheduler API
  *  (P0-3) — both `scheduleStructuredWeekV2` and `generateRacePlanV2`
@@ -1034,11 +1092,28 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
   const weekSchedule = buildWeekSchedule(input);
   const { splitType, workouts, sessionMinutes } = buildLiftProgram(input);
   const { runDays, runPlan } = buildRunPlan(input, weekSchedule);
-  const { workouts: weekWorkouts, raceWeek } = raceLegTrimNow(
+  const { workouts: trimmedWorkouts, raceWeek: trimWeek } = raceLegTrimNow(
     input,
     workouts,
     runPlan
   );
+  // A plan the person has keeps its settings; a new one takes "I have small
+  // plates" from the "what do you have?" list (Lift4 (11)).
+  const settings: ProgramSettings = input.existingState?.settings ?? {
+    ...DEFAULT_PROGRAM_SETTINGS,
+    ...(input.smallPlates !== undefined
+      ? { smallPlates: input.smallPlates }
+      : {}),
+    ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
+  };
+  const raceFinal = raceFinalWeekNow(
+    input,
+    trimmedWorkouts,
+    { runPlan, runDays },
+    settings
+  );
+  const weekWorkouts = raceFinal.workouts;
+  const raceWeek = raceFinal.raceWeek ?? trimWeek;
   const profileUpdates = buildProfileUpdates(input, weekSchedule);
 
   // Blk2. This literal spreads nothing from `existingState`, so every
@@ -1063,8 +1138,9 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
        from primaryGoal at the display layer (Home) and from
        trainingSignals for nutrition; currentPhase encodes lifecycle
        only. */
-    currentPhase:
-      input.preserveHistory && input.existingState
+    currentPhase: raceFinal.raceWeek
+      ? "deload"
+      : input.preserveHistory && input.existingState
         ? input.existingState.currentPhase
         : "progression",
     weekNumber:
@@ -1078,15 +1154,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         ? input.existingState.fatigueScore
         : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
-    // A new plan takes "I have small plates" from the "what do you have?"
-    // list (Lift4 (11)); a plan the person has keeps its settings.
-    settings: input.existingState?.settings ?? {
-      ...DEFAULT_PROGRAM_SETTINGS,
-      ...(input.smallPlates !== undefined
-        ? { smallPlates: input.smallPlates }
-        : {}),
-      ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
-    },
+    settings,
     weekHistory:
       input.preserveHistory && input.existingState
         ? (input.existingState.weekHistory ?? [])

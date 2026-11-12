@@ -117,6 +117,18 @@ trades its deadlift and RDL stalls for a leg curl stall. It changes what is
 built, so it goes to the owner as a printed panel, perhaps with the order
 limited to rotations of the builders' week.
 
+STATUS 2026-11-12, #6 (no lifting taper in the week a plan is made): a plan
+made, or a race added, inside the race's final weeks now gets them at once,
+not from the next rollover (`raceFinalWeekNow` in `planBuilder.ts`). The days
+still to do take the lighter week's half sets, race week is one short session
+on the first of them with the leg lifts at half weight, a lift already done
+stays as it was, and the week is stamped as the race's, so the week after is
+lighter too. The race's week is read for the week the lifts are in: a plan
+made from a Thursday on has its runs, and its lifts' long first week, from the
+Monday after. On the deep dive's probe, a 10K added 5, 12 and 19 days out now
+gives race, lighter and lighter weeks (`raceWeekAtBuild.test.ts`), where all
+three kept full sets.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one
