@@ -4051,7 +4051,7 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
         subscriptionTier: "free",
         hasUsedTrial: true,
         activationJourneyVersion: 2,
-        showWeekOnBoard: true,
+        leagueOptIn: true,
       });
     });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
@@ -4071,7 +4071,7 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
     expect(after).toMatchObject({
       hasUsedTrial: true,
       activationJourneyVersion: 2,
-      showWeekOnBoard: true,
+      leagueOptIn: true,
     });
   });
 

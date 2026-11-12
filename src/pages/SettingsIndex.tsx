@@ -17,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
-  Target,
   Apple,
   Dumbbell,
   Palette,
@@ -25,10 +24,9 @@ import {
   Footprints,
   Bell,
   HeartPulse,
-  Crown,
   HelpCircle,
   Settings as Cog,
-  Database,
+  Route,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -74,11 +72,19 @@ const GROUPS: SectionGroup[] = [
     title: "Your plan",
     rows: [
       {
-        slug: "training",
-        label: "Programme",
-        description: "Lift plan, run plan, reset",
-        icon: Target,
+        slug: "lift-plan",
+        label: "Lift plan",
+        description: "Focus, lift days, rest timer",
+        icon: Dumbbell,
         tint: "text-lifting",
+        migrated: true,
+      },
+      {
+        slug: "run-plan",
+        label: "Run plan",
+        description: "Goal, run days, voice cues",
+        icon: Route,
+        tint: "text-running",
         migrated: true,
       },
       {
@@ -87,13 +93,6 @@ const GROUPS: SectionGroup[] = [
         description: "Calorie target, goal weight",
         icon: Apple,
         tint: "text-nutrition-strong",
-        migrated: true,
-      },
-      {
-        slug: "workout-prefs",
-        label: "Workouts",
-        description: "Rest timer, audio cues",
-        icon: Dumbbell,
         migrated: true,
       },
       {
@@ -145,24 +144,10 @@ const GROUPS: SectionGroup[] = [
     title: "Account",
     rows: [
       {
-        slug: "subscription",
-        label: "Subscription",
-        description: "Plan, billing, restore",
-        icon: Crown,
-        migrated: true,
-      },
-      {
         slug: "account",
         label: "Account",
-        description: "Email, password, sign out",
+        description: "Plan, sign-in, your data",
         icon: Cog,
-        migrated: true,
-      },
-      {
-        slug: "data",
-        label: "Your data",
-        description: "Export, recently deleted",
-        icon: Database,
         migrated: true,
       },
       {
@@ -244,7 +229,7 @@ export default function SettingsIndex() {
                 }
                 icon={row.icon}
                 iconClassName={row.tint}
-                value={row.slug === "subscription" ? plan : undefined}
+                value={row.slug === "account" ? plan : undefined}
                 onClick={() => navigate(`/settings/${row.slug}`)}
               />
             ))}

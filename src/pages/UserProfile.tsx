@@ -1,6 +1,11 @@
 import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
-import { useMemo, useState, type ReactNode } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useParams,
+  useNavigate,
+  useSearchParams,
+  Link,
+} from "react-router-dom";
 import { blockUser, unblockUser } from "../lib/socialApi";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { useUid } from "../lib/auth";
@@ -18,8 +23,8 @@ import SectionLabel from "../components/ui/SectionLabel";
 import StatFigure from "../components/ui/StatFigure";
 import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
-import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
-import { BadgeHex } from "../features/streaks/BadgeHex";
+import BadgeShelf from "../features/streaks/BadgeShelf";
+import { BADGES_ALL, BADGES_PARAM } from "@/lib/badgeShelfLink";
 import TrophyCase from "@/features/challenges/TrophyCase";
 import {
   Flame,
@@ -27,7 +32,6 @@ import {
   Ban,
   Flag,
   ChevronLeft,
-  Trophy,
   UserX,
   Users,
   WifiOff,
@@ -159,6 +163,7 @@ function ProfileContent({
     countsFailed,
     badges,
     badgesFailed,
+    badgesReady,
     medals,
     posts,
     postsLoading,
@@ -168,6 +173,27 @@ function ProfileContent({
     adjustFollowing,
   } = useUserProfileData(uid, viewerUid);
   const week = useMemo(() => profileWeek(posts), [posts]);
+  /* `?badges=all`: your own profile with the whole badge collection
+     open. In the address so the streak sheet's "See your badges" and a
+     saved link to the old Analytics tab land on it, and a refresh keeps
+     it. A replace: opening a fold is not a place to go back to. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const badgesOpen =
+    isOwnProfile && searchParams.get(BADGES_PARAM) === BADGES_ALL;
+  const setBadgesOpen = useCallback(
+    (open: boolean) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (open) updated.set(BADGES_PARAM, BADGES_ALL);
+          else updated.delete(BADGES_PARAM);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const {
     open: menuOpen,
     close: closeMenu,
@@ -471,29 +497,19 @@ function ProfileContent({
             )}
           </Card>
 
-          {badgesFailed && (
-            <p className="text-small text-muted-foreground">
-              Couldn’t load badges.
-            </p>
-          )}
-          {badges.length > 0 && (
-            <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
-              {badges.map((badge) => (
-                <li key={badge.id} className="flex flex-col items-center gap-1">
-                  <BadgeHex
-                    Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
-                    tier={badge.tier}
-                    earned
-                    size={56}
-                    imageSrc={BADGE_ART[badge.id]}
-                  />
-                  <span className="text-xs text-muted-foreground text-center leading-tight">
-                    {badge.name}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* The shelf (Trim1 call 3(c)): badges, then medals. On your
+              own profile "See all" opens the whole badge collection in
+              place; it was a tab under Analytics. */}
+          <BadgeShelf
+            badges={badges}
+            failed={badgesFailed}
+            ready={badgesReady}
+            isOwn={isOwnProfile}
+            open={badgesOpen}
+            onToggle={setBadgesOpen}
+            // The week card above changes height when the sessions arrive.
+            settled={!postsLoading}
+          />
 
           {/* The trophy case (Soc15): a medal for every challenge
               edition they reached a tier in. Drawn once the public

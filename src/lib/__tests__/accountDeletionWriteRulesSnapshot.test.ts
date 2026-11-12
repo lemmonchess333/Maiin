@@ -186,10 +186,6 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /users/{uid}/medals/{challengeId}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
-  // Polish2: the week on followers' boards. Read-only for clients; the
-  // setBoardSharing callable (actor-locked) and the session triggers
-  // (system-writer guard) write it, and the executor deletes it.
-  "match /friendsBoard/{uid}",
   // How many follow an account and how many it follows. Read-only for
   // clients; the two follow-edge triggers write it, reading the deletion
   // state in their transaction, and the executor deletes it.

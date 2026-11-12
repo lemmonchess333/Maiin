@@ -93,20 +93,16 @@ const ACCEPTED: {
 const SETTINGS_PAGES = [
   "profile",
   "account",
-  "training",
   "lift-plan",
   "run-plan",
-  "workout-prefs",
   "nutrition",
   "pantry",
-  "data",
   "recently-deleted-meals",
   "health",
   "shoes",
   "notifications",
   "privacy",
   "units-appearance",
-  "subscription",
   "support-legal",
 ] as const;
 

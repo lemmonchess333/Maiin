@@ -186,13 +186,13 @@ function LineBar({
 }
 
 /**
- * The Performance card's shape while its week loads (Pol1): the score,
- * the change on last week, two lines of words, the six-week line and its
- * dates, each in the box it holds the place of. A shorter placeholder,
- * or one without the Details beside its heading, drops the range pills
- * and everything under them when the score lands. The steady state is
- * what it copies: a new account's empty card is shorter, and a week
- * without a change has no chip.
+ * The Performance card's shape while its week loads (Pol1): the ring the
+ * score sits in, the change on last week, two lines of words, the
+ * six-week line and its dates, each in the box it holds the place of. A
+ * shorter placeholder drops the range pills and everything under them
+ * when the score lands. The steady state is what it copies: a new
+ * account's empty card is shorter, and a week without a change has no
+ * chip.
  */
 export function PerformanceCardSkeleton() {
   return (
@@ -202,12 +202,11 @@ export function PerformanceCardSkeleton() {
       data-skeleton="performance-card"
       className="bg-card card-shadow rounded-2xl p-4 space-y-3"
     >
-      <div className="flex flex-wrap items-start gap-3">
-        <LineBar
-          text="text-display font-extrabold font-figure tabular-nums leading-none"
-          className="w-[2ch]"
-        />
-        <div className="min-w-[min(100%,9em)] flex-1 space-y-1 pt-0.5">
+      <div className="flex flex-wrap items-center gap-4">
+        {/* The ring is 6rem across: it grows with the text, as the
+            card's does. */}
+        <Bar className="size-24 shrink-0 rounded-full" />
+        <div className="min-w-[min(100%,9em)] flex-1 space-y-1">
           {/* The change chip is inline in the real card, on a line of its
               own above the words, so it is inline here too. */}
           <span
@@ -345,8 +344,8 @@ function PillRowSkeleton({ count }: { count: number }) {
 
 /**
  * Analytics while its page loads, block for block in the overview's own
- * order and rhythm (Pol1): PageShell's title, the Analytics / PRs /
- * Badges switch, Performance under its heading, the range, and the range
+ * order and rhythm (Pol1): PageShell's title, the Analytics / Bests
+ * switch, Performance under its heading, the range, and the range
  * card. In any other order the whole page reshuffles as it arrives. `historySkeleton
  * .test.tsx` holds the order to History's.
  */
@@ -363,14 +362,13 @@ export function HistorySkeleton() {
         <TrackBar />
       </div>
       <div data-skeleton-for="performance" className="space-y-2">
-        {/* SectionHeading with its Details action: one 44 px row. */}
-        <div className="flex min-h-11 items-center">
-          <LineBar
-            text="text-h3 font-bold tracking-tight leading-tight"
-            className="w-36"
-          />
-        </div>
+        <LineBar
+          text="text-h3 font-bold tracking-tight leading-tight"
+          className="w-36"
+        />
         <PerformanceCardSkeleton />
+        {/* The "Score details" row under the card: 44 px. */}
+        <div className="min-h-11" />
       </div>
       <div data-skeleton-for="range">
         <TrackBar />

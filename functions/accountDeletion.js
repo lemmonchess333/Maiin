@@ -592,8 +592,9 @@ async function deleteAccount({
     // .js) and was orphaning on every deletion. `rateLimits` is already
     // covered by its own range sweep.
     await firestore.doc(`scanUsage/${uid}`).delete();
-    // Polish2: the week shown on followers' boards. The session triggers
-    // that recompute it write nothing for an account being deleted.
+    // A week stored for the friends board before it went (Trim1 call
+    // 3(a), 12 November 2026). Nothing writes one now. This stays until
+    // scripts/purgeFriendsBoardDocs.js has cleared the ones still stored.
     await firestore.doc(`friendsBoard/${uid}`).delete();
     // How many follow this account and how many it follows
     // (lib/followCounts.js). Its triggers read the deletion state in the

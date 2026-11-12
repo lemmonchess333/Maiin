@@ -70,6 +70,10 @@ vi.mock("@/components/social/FollowButton", () => ({
 }));
 // The chip's own display gate (a race space, its day not passed) is
 // pinned in TrainingForChip.test.tsx; here it says which race it was given.
+/* The whole collection has its own tests; here it is a marker. */
+vi.mock("@/features/streaks/BadgeGrid", () => ({
+  BadgeGrid: () => <div data-testid="badge-collection" />,
+}));
 vi.mock("@/features/spaces/TrainingForChip", () => ({
   default: ({ spaceId }: { spaceId: string }) => (
     <span data-testid="training-for">{spaceId}</span>
@@ -86,7 +90,10 @@ vi.mock("@/components/social/ActivityCard", () => ({
 }));
 
 import UserProfile from "../UserProfile";
-import { profilePostVisibilities } from "@/hooks/useUserProfileData";
+import {
+  ownEarnedMap,
+  profilePostVisibilities,
+} from "@/hooks/useUserProfileData";
 import {
   deferReads,
   failNextFirestore,
@@ -592,5 +599,118 @@ describe("your own profile", () => {
 
   it("asks for both kinds at once, which the owner may, and never private", () => {
     expect(profilePostVisibilities(true)).toEqual([["public", "followers"]]);
+  });
+
+  it("reads your badge record in the shape the app stores it", () => {
+    // A list, as `useStreaks` writes: earned ones with their dates.
+    expect(
+      ownEarnedMap([
+        { id: "first_step", earnedAt: "2026-01-01" },
+        { id: "three_day", earnedAt: null },
+        null,
+        "junk",
+        { earnedAt: "2026-02-01" },
+      ])
+    ).toEqual({ first_step: "2026-01-01" });
+    // A map, in case an older record holds one; and nothing at all.
+    expect(ownEarnedMap({ first_pr: "2026-03-01" })).toEqual({
+      first_pr: "2026-03-01",
+    });
+    expect(ownEarnedMap(undefined)).toEqual({});
+  });
+
+  /* Trim1 call 3(c): the badge collection is on your own profile, behind
+     the shelf's "See all". It was a tab under Analytics, and the streak
+     sheet and saved links to that tab arrive on `?badges=all`. */
+  it("opens your whole badge collection from a link to it", async () => {
+    H.viewer = "alice";
+    seedFirestore({
+      "users/alice": { displayName: "Alice" },
+      "users/alice/public/profile": { displayName: "Alice" },
+      // As the streaks provider stores it: a list, unearned ones too.
+      "users/alice/streaks/data": {
+        badges: [
+          { id: "first_step", name: "First Step", earnedAt: "2026-01-01" },
+          { id: "three_day", name: "Getting Started", earnedAt: null },
+        ],
+      },
+    });
+    renderAt("/user/alice?badges=all");
+    expect(await screen.findByTestId("badge-collection")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show fewer" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+  });
+
+  it("opens and closes it from See all, above your medals", async () => {
+    H.viewer = "alice";
+    seedFirestore({
+      "users/alice": { displayName: "Alice" },
+      "users/alice/public/profile": { displayName: "Alice" },
+      // As the streaks provider stores it: a list, unearned ones too.
+      "users/alice/streaks/data": {
+        badges: [
+          { id: "first_step", name: "First Step", earnedAt: "2026-01-01" },
+          { id: "three_day", name: "Getting Started", earnedAt: null },
+        ],
+      },
+    });
+    renderAt("/user/alice");
+    const list = await screen.findByRole("list", { name: "Recent badges" });
+    /* Your own badges are read from your record, which holds a LIST. The
+       reader took it for the public summary's map and matched nothing, so
+       your own profile showed none of your badges. */
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent)
+    ).toEqual(["First Step"]);
+    // One shelf: badges, then medals.
+    const badges = screen.getByRole("heading", { name: "Badges" });
+    const medals = await screen.findByRole("heading", { name: "Medals" });
+    expect(
+      badges.compareDocumentPosition(medals) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByTestId("badge-collection")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "See all" }));
+    expect(await screen.findByTestId("badge-collection")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer" }));
+    expect(screen.queryByTestId("badge-collection")).toBeNull();
+    expect(
+      screen.getByRole("list", { name: "Recent badges" })
+    ).toBeInTheDocument();
+  });
+
+  it("never opens the collection on someone else's profile", async () => {
+    // It reads the viewer's own streaks and progress.
+    seedFirestore({
+      "users/bob/public/profile": {
+        displayName: "Bob",
+        badgeSummary: { earnedMap: { first_step: "2026-01-01" } },
+      },
+    });
+    renderAt("/user/bob?badges=all");
+    expect(
+      await screen.findByRole("list", { name: "Recent badges" })
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("badge-collection")).toBeNull();
+    expect(screen.queryByRole("button", { name: "See all" })).toBeNull();
+  });
+
+  it("says how the first badge comes once it has read that there are none", async () => {
+    // The shelf holds this line back until the read has answered
+    // (BadgeShelf.test.tsx); this is the page telling it that it has.
+    H.viewer = "alice";
+    seedFirestore({
+      "users/alice": { displayName: "Alice" },
+      "users/alice/public/profile": { displayName: "Alice" },
+    });
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("Log a meal or a workout to earn your first.")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "See all" })).toBeInTheDocument();
   });
 });

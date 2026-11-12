@@ -166,12 +166,25 @@ describe("App Store listing: claims the code can contradict", () => {
     for (const id of ids) expect(LISTING).toContain(`\`${id}\``);
   });
 
+  it("does not offer a leaderboard with the people you follow, which went", () => {
+    // Trim1 call 3(a) (November 2026) removed the friends board. The
+    // description had "a weekly leaderboard with the people you follow".
+    expect(everything).not.toMatch(/leaderboard with the people you follow/i);
+  });
+
   it("rates the app at the minimum age setup enforces", () => {
     const minimum = read("../../pages/Onboarding.tsx").match(
       /You need to be at least (\d+) to use Tropos/
     );
     expect(minimum).not.toBeNull();
     expect(LISTING).toContain(`raise the rating to **${minimum![1]}+**`);
+  });
+
+  it("does not offer Copy yesterday, which the Food page no longer has", () => {
+    // Trim1 call 4 (November 2026) took Copy yesterday off the Food page:
+    // a usual meal is one tap. The description had "or copy yesterday's
+    // meals" and would have gone on promising it.
+    expect(everything).not.toMatch(/copy yesterday/i);
   });
 
   it("never says unlimited while Pro has a daily cap", () => {
@@ -198,6 +211,13 @@ describe("App Store listing: claims the code can contradict", () => {
     expect(forSale).not.toMatch(
       /apple watch|heart rate|live activit|dynamic island|push notification/i
     );
+  });
+
+  it("does not offer guided runs, which the run chooser no longer lists", () => {
+    // Trim1 call 8 (November 2026) took the three fixed guided runs out
+    // of the chooser: structured sessions come from the plan. The
+    // description had "long runs and guided runs".
+    expect(everything).not.toMatch(/guided run/i);
   });
 });
 

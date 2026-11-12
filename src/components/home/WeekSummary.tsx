@@ -1,26 +1,34 @@
-import type { CSSProperties } from "react";
 import type { WeekSummaryCounts } from "@/lib/weekSummary";
 
-interface Column {
+interface Part {
   key: string;
   label: string;
   done: number;
   of: number | null;
   unit?: string;
-  fill: string;
 }
 
 /**
- * The week so far, as up to three columns with bars (DS3 Home).
+ * What the week's count is made of, as one quiet line under Home's week
+ * segments (Trim1 call 1): "Lifts 2 of 3", "Runs 1 of 2", "Food logged 4
+ * of 7 days".
+ *
+ * It was a card of its own at the foot of Home, three columns with bars
+ * under a "This week" heading (DS3). The line above the segments ("3 of 5
+ * sessions this week") read the same counts, so Home said the week twice.
+ * The two are one card now, and the segments are its picture.
+ *
+ * Lifts and runs are listed only when the week holds both. With one of
+ * them, the line above the segments is already its count, and saying it
+ * again is what this card stopped doing.
  *
  * A discipline the week has neither planned nor logged is left out, so a
- * runner who does not lift is not shown "0 of 0 lifts" every week. Food
- * is always shown: it is the one every week has. Each bar is the share of
- * the plan done, full once the plan is met.
+ * runner who does not lift is not shown "0 lifts" every week. A runner
+ * always has Runs (Home4 (1)): on a free-run plan nothing is planned, and
+ * it would otherwise appear only after the week's first run.
  *
- * A runner always sees Runs (Home4 (1)): on a free-run plan nothing is
- * planned, and the column would otherwise appear only after the week's
- * first run.
+ * Food is always listed. It is the one every week has, and nothing else
+ * on Home counts its days.
  */
 export default function WeekSummary({
   counts,
@@ -30,86 +38,52 @@ export default function WeekSummary({
   /** The person runs (setup's `runFrequency` is not "none"). */
   runner?: boolean;
 }) {
-  const columns: Column[] = [];
+  const training: Part[] = [];
   if (counts.lifts.planned !== null || counts.lifts.done > 0)
-    columns.push({
+    training.push({
       key: "lifts",
       label: "Lifts",
       done: counts.lifts.done,
       of: counts.lifts.planned,
-      fill: "hsl(var(--lifting))",
     });
   if (runner || counts.runs.planned !== null || counts.runs.done > 0)
-    columns.push({
+    training.push({
       key: "runs",
       label: "Runs",
       done: counts.runs.done,
       of: counts.runs.planned,
-      fill: "hsl(var(--running))",
     });
-  columns.push({
-    key: "food",
-    label: "Food logged",
-    done: counts.foodDays,
-    of: counts.foodDayTotal,
-    unit: "days",
-    fill: "hsl(var(--nutrition))",
-  });
+  const parts: Part[] = [
+    ...(training.length > 1 ? training : []),
+    {
+      key: "food",
+      label: "Food logged",
+      done: counts.foodDays,
+      of: counts.foodDayTotal,
+      unit: "days",
+    },
+  ];
 
-  /* One column under 10em of card (double text on a phone), where a third
-     of the card was narrower than "logged". Wide-first, so a browser
-     without container queries keeps the columns. */
   return (
-    <div className="@container">
-      <div
-        className="grid gap-3 grid-cols-[repeat(var(--week-columns),minmax(0,1fr))] @max-[10em]:grid-cols-1"
-        style={{ "--week-columns": columns.length } as CSSProperties}
-      >
-        {columns.map((c) => {
-          const share =
-            c.of !== null ? Math.min(1, c.done / c.of) : c.done > 0 ? 1 : 0;
-          return (
-            <div
-              key={c.key}
-              role="group"
-              aria-label={
-                c.of !== null
-                  ? `${c.label}: ${c.done} of ${c.of}${c.unit ? ` ${c.unit}` : ""}`
-                  : `${c.label}: ${c.done}`
-              }
-              className="min-w-0"
-            >
-              <p className="text-xs font-semibold text-muted-foreground">
-                {c.label}
-              </p>
-              <p
-                className="mt-1 text-sm text-muted-foreground"
-                aria-hidden="true"
-              >
-                <span className="text-lg font-extrabold font-figure tabular-nums text-foreground">
-                  {c.done}
-                </span>
-                {c.of !== null && (
-                  <>
-                    {" of "}
-                    <span className="font-mono tabular-nums">{c.of}</span>
-                    {c.unit ? ` ${c.unit}` : ""}
-                  </>
-                )}
-              </p>
-              <div
-                className="mt-1.5 h-1.5 rounded-full overflow-hidden bg-muted-foreground/22 dark:track-cut"
-                aria-hidden="true"
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${share * 100}%`, backgroundColor: c.fill }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <ul
+      aria-label="This week so far"
+      className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-0.5 text-sm text-muted-foreground"
+    >
+      {parts.map((p) => (
+        <li key={p.key} data-week-part={p.key}>
+          {p.label}{" "}
+          <span className="font-mono font-semibold tabular-nums text-foreground">
+            {p.done}
+          </span>
+          {p.of !== null && (
+            <>
+              {" of "}
+              <span className="font-mono tabular-nums">{p.of}</span>
+              {p.unit ? ` ${p.unit}` : ""}
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }

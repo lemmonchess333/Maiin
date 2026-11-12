@@ -47,19 +47,12 @@ test.describe("tooltip screenshots", () => {
 
   test("Performance Index tooltip — light + dark", async ({ page }) => {
     test.setTimeout(120_000);
-    // The index's gauge, and its tooltip, live on the Performance page.
-    await page.goto("history?view=performance");
+    // The index's tooltip sits beside the Performance heading, at the
+    // top of the Analytics overview.
+    await page.goto("history");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20_000 });
-
-    // Analytics → Performance tab (SegmentedControls are role=radio).
-    await page
-      .getByRole("radio", { name: /performance/i })
-      .click({ timeout: 15_000 })
-      .catch(() => {
-        /* already on Performance / control absent — the anchor wait decides */
-      });
 
     const openTooltip = async () => {
       await page

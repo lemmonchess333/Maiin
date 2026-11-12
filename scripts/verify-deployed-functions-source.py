@@ -94,7 +94,7 @@ def source_targets():
                           "lib/deletionTransactionGuard.js",
                           "lib/accountDeletionStatus.js", "lib/triggerRetry.js"]
     league_paths = ["index.js", "package-lock.json"] + league_lib + [
-                    "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
+                    "lib/weekTally.js", "lib/deletionTransactionGuard.js",
                     "lib/accountDeletionStatus.js", "lib/restriction.js",
                     "lib/accountDeletionLocks.js"]
     return {

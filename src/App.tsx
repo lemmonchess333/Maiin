@@ -139,9 +139,6 @@ const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
 const SettingsProfile = lazyRetry(
   () => import("@/pages/settings/SettingsProfile")
 );
-const SettingsTraining = lazyRetry(
-  () => import("@/pages/settings/SettingsTraining")
-);
 const SettingsRunPlan = lazyRetry(
   () => import("@/pages/settings/SettingsRunPlan")
 );
@@ -150,9 +147,6 @@ const SettingsLiftPlan = lazyRetry(
 );
 const SettingsNutrition = lazyRetry(
   () => import("@/pages/settings/SettingsNutrition")
-);
-const SettingsWorkoutPrefs = lazyRetry(
-  () => import("@/pages/settings/SettingsWorkoutPrefs")
 );
 const SettingsUnitsAppearance = lazyRetry(
   () => import("@/pages/settings/SettingsUnitsAppearance")
@@ -167,9 +161,6 @@ const SettingsNotifications = lazyRetry(
 const SettingsHealth = lazyRetry(
   () => import("@/pages/settings/SettingsHealth")
 );
-const SettingsSubscription = lazyRetry(
-  () => import("@/pages/settings/SettingsSubscription")
-);
 const SettingsSupportLegal = lazyRetry(
   () => import("@/pages/settings/SettingsSupportLegal")
 );
@@ -179,7 +170,6 @@ const SettingsAccount = lazyRetry(
 const SettingsRecentlyDeleted = lazyRetry(
   () => import("@/pages/settings/SettingsRecentlyDeleted")
 );
-const SettingsData = lazyRetry(() => import("@/pages/settings/SettingsData"));
 const SettingsPantry = lazyRetry(
   () => import("@/pages/settings/SettingsPantry")
 );
@@ -765,13 +755,11 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Trim1 call 2: the Programme page is gone; links already saved
+                            land on the editor that took its reset. */}
                         <Route
                           path="/settings/training"
-                          element={
-                            <RouteErrorBoundary>
-                              <SettingsTraining />
-                            </RouteErrorBoundary>
-                          }
+                          element={<Navigate to="/settings/lift-plan" replace />}
                         />
                         <Route
                           path="/settings/run-plan"
@@ -797,13 +785,10 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Trim1 call 7: the rest timer is on Lift plan. */}
                         <Route
                           path="/settings/workout-prefs"
-                          element={
-                            <RouteErrorBoundary>
-                              <SettingsWorkoutPrefs />
-                            </RouteErrorBoundary>
-                          }
+                          element={<Navigate to="/settings/lift-plan" replace />}
                         />
                         <Route
                           path="/settings/units-appearance"
@@ -845,13 +830,10 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Trim1 call 7: the plan is on Account. */}
                         <Route
                           path="/settings/subscription"
-                          element={
-                            <RouteErrorBoundary>
-                              <SettingsSubscription />
-                            </RouteErrorBoundary>
-                          }
+                          element={<Navigate to="/settings/account" replace />}
                         />
                         <Route
                           path="/settings/support-legal"
@@ -885,13 +867,10 @@ function SignedInRoutes({
                             </RouteErrorBoundary>
                           }
                         />
+                        {/* Trim1 call 7: the exports and deleted meals are on Account. */}
                         <Route
                           path="/settings/data"
-                          element={
-                            <RouteErrorBoundary>
-                              <SettingsData />
-                            </RouteErrorBoundary>
-                          }
+                          element={<Navigate to="/settings/account" replace />}
                         />
                         <Route
                           path="/upgrade"

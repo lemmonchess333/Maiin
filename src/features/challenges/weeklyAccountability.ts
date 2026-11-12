@@ -2,20 +2,24 @@
  * Phase 1 — accountability-first framing for the weekly challenge card.
  *
  * The weekly card leads with the next useful action, not a ranking. This pure
- * helper maps the three signals that matter — the user's own sessions this
- * week, how many people they FOLLOW have trained (the leaderboard population is
- * the follow graph, never "crew"), and the weekly session target — to a calm,
- * action-first message + CTA. Cold-start (no follows, nobody trained) falls
- * back to a PERSONAL consistency goal, not fake social proof, per the
+ * helper maps the two signals that matter — the user's own sessions this
+ * week and the weekly session target — to a calm, action-first message + CTA.
+ * A week with nothing in it yet is a PERSONAL goal, per the
  * design-for-the-user-base rule: the empty state is one of the most-seen states
  * across the user base, so it gets a real, personal call to action.
+ *
+ * Until 11 November 2026 a third signal, how many people the person FOLLOWS
+ * had trained, gave a week with nothing in it a line of its own ("3 people
+ * you follow trained this week"). It was counted from the friends board, and
+ * went with it (Trim1 call 3(a)): nothing else counts other people's weeks
+ * for someone who has not joined them in a challenge, a league or a Circle.
  *
  * The lines under the titles state the week's count and nothing more (house
  * voice). They closed on pep-talk tails ("one more keeps it
  * alive", "keep the streak alive", "Build your consistency"), and the first
  * said "one more" whatever the target was.
  *
- * Pure + injected so all four states are unit-testable without Firestore.
+ * Pure + injected so every state is unit-testable without Firestore.
  */
 export interface WeeklyAccountability {
   title: string;
@@ -30,8 +34,6 @@ export interface WeeklyAccountability {
 export function getWeeklyAccountability(input: {
   /** The current user's workout_count this week. */
   myWeeklyCount: number;
-  /** How many DIFFERENT followed people have trained this week (>0 each). */
-  othersTrained: number;
   /** Weekly session target (challenge bronze tier; default 2). */
   target: number;
   /** The week's challenge, when there is one the person hasn't joined.
@@ -40,7 +42,7 @@ export function getWeeklyAccountability(input: {
    *  your 2-session week" read as done above "Join challenge"). */
   unjoined?: { name: string };
 }): WeeklyAccountability {
-  const { myWeeklyCount, othersTrained, target, unjoined } = input;
+  const { myWeeklyCount, target, unjoined } = input;
 
   if (unjoined) {
     const plural = (n: number) => (n === 1 ? "session" : "sessions");
@@ -81,20 +83,7 @@ export function getWeeklyAccountability(input: {
     };
   }
 
-  // State B — others trained, you haven't: real social proof (follow graph).
-  if (othersTrained > 0) {
-    return {
-      title: `${othersTrained} ${
-        othersTrained === 1 ? "person" : "people"
-      } you follow trained this week`,
-      sub: "Join them — one planned session today.",
-      ctaLabel: "Do today’s session",
-      ctaTo: "/program",
-      goalMet: false,
-    };
-  }
-
-  // State A — cold-start / sparse: personal goal, never fake social proof.
+  // State A — nothing yet this week: the personal goal.
   const targetWord = target === 2 ? "twice" : `${target} times`;
   return {
     title: `Train ${targetWord} this week`,

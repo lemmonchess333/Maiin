@@ -12,9 +12,9 @@
  *   5. Neither save nor reset runs before the programme has loaded
  *      (`readiness`), since both are built on it.
  *
- * The lifting fields live in ONE view ("lift": Settings → Lift plan). The
- * Programme page ("overview") shows the setup, opens each part's own page
- * and holds the reset; it edits nothing (the owner's call, Settings pass).
+ * The lifting fields live in ONE view, Settings → Lift plan, and the
+ * reset is at its foot. A second view, for a Programme page that showed
+ * the setup and edited nothing, went with that page in Trim1 call 2.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -91,7 +91,6 @@ type Programme = {
 
 function setup(
   profileOverrides: Partial<UserProfile> = {},
-  variant: "overview" | "lift" = "lift",
   stateOverride?: ProgramState,
   programme: Programme = {}
 ) {
@@ -107,7 +106,6 @@ function setup(
   }: Programme) => (
     <MemoryRouter>
       <ProgrammeSettings
-        variant={variant}
         recentRuns={recentRuns}
         profile={profile}
         programState={loaded}
@@ -137,9 +135,9 @@ beforeEach(() => {
   vi.mocked(buildPlan).mockClear();
 });
 
-describe("ProgrammeSettings — lift variant (Section-Split)", () => {
-  it("shows lifting controls but hides nutrition, running and reset", () => {
-    setup({}, "lift");
+describe("ProgrammeSettings — the lifting editor (Section-Split)", () => {
+  it("shows lifting controls and the reset, and no nutrition or running", () => {
+    setup({});
     // Lifting-shaping controls are present.
     expect(screen.getByText("Training focus")).toBeInTheDocument();
     expect(screen.getByText("Lift days per week")).toBeInTheDocument();
@@ -148,13 +146,15 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     // Out-of-scope sections are gone.
     expect(screen.queryByText("Nutrition phase")).not.toBeInTheDocument();
     expect(screen.queryByText("Running")).not.toBeInTheDocument();
+    // The reset closes the editor (Trim1 call 2). It was the foot of a
+    // Programme page that held nothing else of its own.
     expect(
-      screen.queryByRole("button", { name: /reset programme/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: /reset programme/i })
+    ).toBeInTheDocument();
   });
 
   it("names each control once, with no group title stacked over it", () => {
-    setup({}, "lift");
+    setup({});
     // "Goal" over "Training focus" read as two tiers of one heading.
     for (const outer of ["Goal", "Weekly plan", "Constraints"])
       expect(screen.queryByRole("heading", { name: outer })).toBeNull();
@@ -194,7 +194,6 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
         runMode: "race_prep",
         raceGoal: { distance: "10k", targetDate: "2027-03-01" },
       },
-      "lift",
       undefined,
       { recentRuns }
     );
@@ -224,8 +223,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
         weeklyRunDaysTarget: 3,
         runVolume: "lighter",
         runDifficulty: "harder",
-      },
-      "lift"
+      }
     );
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
@@ -247,7 +245,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
         }
       )
     );
-    setup({}, "lift");
+    setup({});
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
@@ -285,7 +283,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     ],
   ])("a save refused as out of date %s", async (_label, err, shown) => {
     configureSpy.mockRejectedValueOnce(err);
-    setup({}, "lift");
+    setup({});
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
@@ -293,7 +291,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
   });
 
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
-    const { refreshProfile } = setup({}, "lift");
+    const { refreshProfile } = setup({});
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
@@ -447,96 +445,45 @@ describe("ProgrammeSettings — toggles live-save without rebuild", () => {
   });
 });
 
-describe("ProgrammeSettings — overview (the Programme page)", () => {
-  it("shows the setup and where each part is set, and edits nothing itself", () => {
-    setup({}, "overview");
-    expect(screen.getByText("Current setup")).toBeInTheDocument();
-    for (const name of [
-      /lift plan/i,
-      /run plan/i,
-      /nutrition phase/i,
-      /weekly layout/i,
-    ]) {
-      expect(screen.getByRole("button", { name })).toBeInTheDocument();
-    }
-    // None of the lift editor's fields, and nothing to save.
-    expect(screen.queryByText("Training focus")).not.toBeInTheDocument();
-    expect(screen.queryByText("Equipment access")).not.toBeInTheDocument();
-    expect(screen.queryByText("Get stronger")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("switch", { name: /auto progression/i })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /save changes/i })
-    ).not.toBeInTheDocument();
-  });
-
-  it("opens Lift plan and Run plan on their own pages", () => {
-    setup(
-      {
-        runMode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
-      },
-      "overview"
-    );
-    const run = screen.getByRole("button", { name: /run plan/i });
-    expect(run).toHaveTextContent("Race prep · 10K");
-    fireEvent.click(run);
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/settings/run-plan"
-    );
-    fireEvent.click(screen.getByRole("button", { name: /lift plan/i }));
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/settings/lift-plan"
-    );
-  });
-
-  it("nutrition phase is READ-ONLY here — it opens Nutrition, where goal weight sets it", () => {
-    setup({}, "overview"); // program.goal = "recomp"
-    const row = screen.getByRole("button", { name: /nutrition phase/i });
-    expect(row).toHaveTextContent("Recomp");
-    // The old direct-pick options are gone — no clickable "Cutting".
-    expect(screen.queryByText("Cutting")).not.toBeInTheDocument();
-    fireEvent.click(row);
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      "/settings/nutrition"
-    );
-  });
-
-  it("counts the same lift days in Current setup and the weekly layout when they change while it is open", () => {
-    const page = (weeklyWorkoutsTarget: number) => (
+describe("ProgrammeSettings — the reset, at the editor's foot", () => {
+  /* Trim1 call 2. A Programme page held the reset under a summary of the
+     setup and four rows that opened other pages. Settings lists Lift plan
+     and Run plan itself now, so the page is gone and the reset is here. */
+  it("comes after the form and whatever the page adds to it", () => {
+    render(
       <MemoryRouter>
         <ProgrammeSettings
-          variant="overview"
           recentRuns={null}
-          profile={makeProfile({ weeklyWorkoutsTarget })}
+          profile={makeProfile()}
           programState={programState}
           readiness="ready"
           updateSettings={vi.fn()}
           regenerateProgram={vi.fn()}
           refreshProfile={vi.fn().mockResolvedValue(undefined)}
           onOpenWeeklyLayout={vi.fn()}
+          afterForm={<p>The page's own addition</p>}
         />
       </MemoryRouter>
     );
-    const { rerender } = render(page(3));
-    const layout = () => screen.getByRole("button", { name: /weekly layout/i });
-    expect(screen.getByText(/3 lift days/)).toBeInTheDocument();
-    expect(layout()).toHaveTextContent("3 lift");
-
-    rerender(page(5));
-    expect(screen.getByText(/5 lift days/)).toBeInTheDocument();
-    expect(layout()).toHaveTextContent("5 lift");
+    const advanced = screen.getByRole("heading", { name: "Advanced" });
+    const added = screen.getByText("The page's own addition");
+    const reset = screen.getByRole("button", { name: /reset programme/i });
+    const follows = (a: Node, b: Node) =>
+      a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(follows(advanced, added)).toBeTruthy();
+    expect(follows(added, reset)).toBeTruthy();
   });
 
-  it("opens the weekly layout editor", () => {
-    const { onOpenWeeklyLayout } = setup({}, "overview");
-    fireEvent.click(screen.getByRole("button", { name: /weekly layout/i }));
-    expect(onOpenWeeklyLayout).toHaveBeenCalledTimes(1);
+  it("has no page of rows that only open other pages", () => {
+    setup({});
+    expect(screen.queryByText("Current setup")).not.toBeInTheDocument();
+    for (const name of [/^lift plan/i, /^run plan/i, /^nutrition phase/i]) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    }
   });
 
   it("Reset → confirm → regenerateProgram", () => {
-    const { regenerateProgram } = setup({}, "overview");
+    const { regenerateProgram } = setup({});
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
     expect(
       within(screen.getByRole("alertdialog")).getByText(
@@ -548,7 +495,7 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
   });
 
   it("the confirmation is named, takes focus, and Escape cancels it", async () => {
-    const { regenerateProgram } = setup({}, "overview");
+    const { regenerateProgram } = setup({});
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
     const dialog = screen.getByRole("alertdialog", {
       name: "Reset programme?",
@@ -565,7 +512,7 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
   });
 
   it("a reset that fails says so, rather than nothing", async () => {
-    const { regenerateProgram } = setup({}, "overview");
+    const { regenerateProgram } = setup({});
     regenerateProgram.mockRejectedValueOnce(
       Object.assign(new Error("Missing or insufficient permissions."), {
         code: "permission-denied",
@@ -604,7 +551,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
     "Couldn’t load your programme. Reopen this page to try again.";
 
   it("Save changes waits while the programme loads, then saves on it", async () => {
-    const page = setup({}, "lift", undefined, {
+    const page = setup({}, undefined, {
       readiness: "pending",
       programState: null,
     });
@@ -639,7 +586,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
   });
 
   it("a failed load says so, and Save changes opens nothing", () => {
-    setup({}, "lift", undefined, { readiness: "failed", programState: null });
+    setup({}, undefined, { readiness: "failed", programState: null });
     fireEvent.click(screen.getByText("Get stronger"));
 
     const save = screen.getByRole("button", { name: "Save changes" });
@@ -651,7 +598,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
   });
 
   it("Reset waits while the programme loads, then resets", async () => {
-    const page = setup({}, "overview", undefined, {
+    const page = setup({}, undefined, {
       readiness: "pending",
       programState: null,
     });
@@ -681,7 +628,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
   });
 
   it("a failed load says so in the reset dialog, and Reset does nothing", async () => {
-    const { regenerateProgram } = setup({}, "overview", undefined, {
+    const { regenerateProgram } = setup({}, undefined, {
       readiness: "failed",
       programState: null,
     });
@@ -823,7 +770,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   } as unknown as ProgramState;
 
   it("offers the choice with honest consequence copy, no silent default", () => {
-    setup({}, "lift", liftState);
+    setup({}, liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     // Both explicit saves, plus cancel — the single "Save" is gone.
@@ -841,7 +788,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   it("'update sessions' sends the represcribed workouts through configurePlan", async () => {
     const { represcribeWorkouts } =
       await import("@/features/program/represcribe");
-    setup({}, "lift", liftState);
+    setup({}, liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(
@@ -860,7 +807,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   });
 
   it("'keep current sessions' sends the workouts verbatim", async () => {
-    setup({}, "lift", liftState);
+    setup({}, liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(
@@ -880,7 +827,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     // nowhere without the choice.
     const { represcribeWorkouts } =
       await import("@/features/program/represcribe");
-    setup({}, "lift", liftState);
+    setup({}, liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /^advanced/i }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
@@ -897,7 +844,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   });
 
   it("no choice when lift days change too — the rebuild arm owns that", () => {
-    setup({}, "lift", liftState);
+    setup({}, liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("radio", { name: "5" }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));

@@ -74,9 +74,6 @@ vi.mock("@/components/social/views/CommunityView", () => ({
 vi.mock("@/components/social/views/PeopleView", () => ({
   default: () => null,
 }));
-vi.mock("@/components/social/LeaderboardCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/social/TrajectoryCard", () => ({
   default: () => null,
 }));

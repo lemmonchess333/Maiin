@@ -309,7 +309,7 @@ test.describe("axe", () => {
     await check(page, "settings", found);
     for (const section of [
       "profile",
-      "training",
+      "lift-plan",
       "nutrition",
       "notifications",
       "privacy",

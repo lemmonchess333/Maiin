@@ -268,40 +268,28 @@ test.describe("app screenshots", () => {
       );
     }
 
-    // History's Badges tab — the badge collection. The stashed-tab hook
-    // (History.tsx reads sessionStorage("history-tab") on mount) gives a
-    // deterministic route without scripting the tab UI.
-    //
-    // The stored value has been "badges", then "milestones", and is
-    // "badges" again — the Milestones chronology was removed as a
-    // restatement of the PRs tab. History's stashed-tab read consults
-    // LEGACY_TAB_REDIRECTS, so a stale value still resolves — but the catch
-    // below swallows a genuine miss silently, so a spec left on a value that
-    // is neither current NOR redirected captures Analytics and reads as a
-    // regression in whatever it was pointed at. Keep this literal in step
-    // with VALID_TABS.
-    await page.addInitScript(() => {
-      try {
-        window.sessionStorage.setItem("history-tab", "badges");
-      } catch {
-        /* fine — capture lands on Analytics instead */
-      }
-    });
-    await page.goto("history");
+    // The badge collection. It was History's Badges tab until Trim1 call
+    // 3(c) moved it to the person's own profile, behind the shelf's "See
+    // all". The old tab's address is used on purpose: it needs no uid,
+    // and it holds that a saved link to the tab still lands on the
+    // collection (History.tsx, `BADGE_TAB_NAMES`).
+    await page.goto("history?tab=badges");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    /* Prove the stashed value actually landed before shooting. Without
-       this the catch above is a silent failure: a stale literal drops the
-       capture on Analytics and the frame still gets written, still gets
-       committed, and reads in the diff report as a regression in whatever
-       it was pointed at. The tabs are a SegmentedControl, so they are
-       role="radio" — not buttons. */
-    await expect(page.getByRole("radio", { name: "Badges" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-      { timeout: 10000 }
-    );
+    /* Prove the redirect landed and the collection is open before
+       shooting. Without this a miss still writes a frame, of whatever
+       page it stopped on, which then reads in the diff report as a
+       regression in the badges. */
+    await expect(page).toHaveURL(/\/user\/[^/?]+\?badges=all$/, {
+      timeout: 10000,
+    });
+    await expect(
+      page.getByRole("button", { name: "Show fewer" })
+    ).toHaveAttribute("aria-expanded", "true", { timeout: 10000 });
+    await expect(page.getByText("Badges earned")).toBeVisible({
+      timeout: 10000,
+    });
     await page.waitForTimeout(1600);
     await shootLightDark("badges");
 
@@ -382,12 +370,12 @@ test.describe("app screenshots", () => {
     await shoot(page, "sheet-dayaction-light");
   });
 
-  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus).
+  // GsPb1-slate surfaces (Circles / Training Blocks).
   // ONE TEST PER SURFACE — do not merge these into a multi-goto test.
   // Diagnosed 2026-07-11: rapid same-context hard navigations leave the
   // previous page's Firestore webchannel connections draining, and the
   // NEXT page's one-shot reads (getDoc/getDocs — exactly what gates
-  // TrainingBlockCard and FoodConsistencyCard) can starve for 15s+
+  // TrainingBlockCard) can starve for 15s+
   // while that page's own listeners stream fine. A fresh context per
   // test (Playwright default) sidesteps it entirely; the explicit
   // row-waits below also absorb slow-CI read latency. Product surfaces
@@ -450,34 +438,5 @@ test.describe("app screenshots", () => {
       .catch(() => {});
     await page.waitForTimeout(900);
     await shootLightDarkOn(page, "sheet-trainingblock");
-  });
-
-  test("food weekly logging focus picker", async ({ page }) => {
-    test.setTimeout(90_000);
-    // The card renders nothing until its commitment+meals reads settle.
-    await page.goto("food");
-    await page
-      .getByRole("navigation", { name: /main navigation/i })
-      .waitFor({ state: "visible", timeout: 20000 });
-    const foodRowStart = Date.now();
-    await page
-      .getByRole("button", { name: /set a weekly logging focus/i })
-      .waitFor({ state: "visible", timeout: 15000 })
-      .then(() =>
-        console.log(
-          `[capture] logging-focus row visible after ${Date.now() - foodRowStart}ms`
-        )
-      )
-      .catch(() =>
-        console.log(
-          "[capture] logging-focus row NEVER appeared within 15s — capturing the card-less state"
-        )
-      );
-    await page
-      .getByRole("button", { name: /set a weekly logging focus/i })
-      .click({ timeout: 2000 })
-      .catch(() => {});
-    await page.waitForTimeout(700);
-    await shootLightDarkOn(page, "food-focus-picker");
   });
 });

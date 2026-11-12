@@ -96,7 +96,6 @@ function renderPeople(blockedReady: boolean) {
     <MemoryRouter>
       <PeopleView
         active
-        chromeHidden={false}
         blockedUsers={new Set()}
         blockedReady={blockedReady}
         openTogether={vi.fn()}

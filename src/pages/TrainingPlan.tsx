@@ -697,7 +697,7 @@ export default function TrainingPlan() {
               </p>
             )}
             <Link
-              to="/settings/training"
+              to="/settings/lift-plan"
               className={buttonClasses({
                 variant: "ghost",
                 fullWidth: true,
@@ -706,7 +706,21 @@ export default function TrainingPlan() {
             >
               <span className="inline-flex items-center gap-2">
                 <Settings className="size-4" aria-hidden="true" />
-                Programme settings
+                Lift plan
+              </span>
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Link>
+            <Link
+              to="/settings/run-plan"
+              className={buttonClasses({
+                variant: "ghost",
+                fullWidth: true,
+                className: "justify-between",
+              })}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Settings className="size-4" aria-hidden="true" />
+                Run plan
               </span>
               <ChevronRight className="size-4" aria-hidden="true" />
             </Link>

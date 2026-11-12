@@ -149,9 +149,6 @@ vi.mock("@/components/food/FoodHeroCard", () => ({
     </button>
   ),
 }));
-vi.mock("@/components/food/FoodConsistencyCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/ManualFoodLogger", () => ({
   ManualFoodLogger: ({ open }: { open: boolean }) =>
     open ? <div data-testid="manual-logger" /> : null,

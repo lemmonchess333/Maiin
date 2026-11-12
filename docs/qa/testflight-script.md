@@ -219,7 +219,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 ### Credits, weather, push and exports for the App Store
 
 - [ ] In both light and dark theme, open a live run, a saved run, the finish screen and the route planner. The map draws each time. The OpenFreeMap credit shows and shrinks to an (i) after 5 seconds; tapping (i) shows it again, and its links open outside the app. On the live run the credit sits top-right, clear of the GPS pill and the sheet. On a saved run it sits bottom-left, clear of Replay.
-- [ ] On the iPhone app, open Settings > Your data > Export workouts. The share sheet opens. Save to Files, open the .csv in Numbers, and the 'Workouts exported' toast shows. Closing the sheet shows nothing. Export GPX on the run finish screen and on a saved run opens the sheet with a .gpx file.
+- [ ] On the iPhone app, open Settings > Account > Export workouts. The share sheet opens. Save to Files, open the .csv in Numbers, and the 'Workouts exported' toast shows. Closing the sheet shows nothing. Export GPX on the run finish screen and on a saved run opens the sheet with a .gpx file.
 
 ### Push on the iPhone
 

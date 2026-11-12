@@ -765,7 +765,8 @@ Home reads this week's meals and 60 weigh-ins, the daily logs read covers
 this month and week, the challenges listener reaches back eight days and
 its reads follow the challenges' ids, the Spaces directory reads each Space
 once for every copy open, the training-load curve reads only on the
-Performance page, and a return to the app re-claims an unchanged push token
+Performance page (since Trim1 call 5, 2026-11-11: only while the score's
+details are open on the Analytics overview), and a return to the app re-claims an unchanged push token
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
@@ -829,33 +830,39 @@ true`, the app shows the restricted notice before a post, and
       Firestore console, reads null within a minute and the profile shows
       the person unnamed.
 
-## Friends board (Polish2, 2026-10-20)
+## Friends board, retired (Trim1 call 3(a), 2026-11-12)
 
-The feed's board ranks this week's sessions for you and the people you
-follow who share their week; the full board adds Distance and Volume. The
-server keeps each tally (`friendsBoard/{uid}`); the unit, rules
-(`firestore.friendsBoard.rules.test.ts`) and trigger tests cover the logic.
-These need the release and two real accounts that follow each other.
+The friends board is gone: its card on the feed, its full list, the Show
+my week switch, the `setBoardSharing` callable and the tally the server
+kept (`friendsBoard/{uid}`). The league is the one weekly ranking. The
+five device rows this section held went with it. These need the release
+and the Firebase console.
 
-- [ ] **The release carries the rules and the callable.** Passing: the
-      Deploy production run's Firestore and Functions stages are green, and
-      Firebase console → Functions lists `setBoardSharing`.
-- [ ] **Show my week starts the tally.** On two TestFlight accounts, A
-      and B, B following A: A logs a workout, then taps Show my week on the
-      feed's board. Passing: Firestore console shows `friendsBoard/{A}`
-      with `sessions: 1` and A's `weekKey` (A's Monday), and B's board
-      lists A.
-- [ ] **A session saved later moves the board.** Passing: A finishes a
-      run; within a minute `friendsBoard/{A}` reads `sessions: 2` and B's
-      Distance tab shows A's km. Deleting the run takes it back off.
-- [ ] **Off leaves nothing to read.** A turns off Settings → Social &
-      privacy → Show my week on friends' boards. Passing: the
-      `friendsBoard/{A}` document is gone, B's board no longer lists A,
-      and A's own board does not ask again.
-- [ ] **The week turns over where the person is.** On a Monday morning,
-      an account in a timezone ahead of UTC (Auckland). Passing: its board
-      reads an empty week before it logs anything that day, not last
-      week's figures.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `setBoardSharing`, and
+      the deployed rules have no `friendsBoard` match.
+- [ ] **Stored weeks are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgeFriendsBoardDocs.js`,
+      read the two counts, then run it without `DRY_RUN`. Passing: a
+      second dry run reports 0 weeks and 0 answers, and Firestore console
+      shows no `friendsBoard` collection. Once this is ticked, account
+      deletion's own delete of `friendsBoard/{uid}` and its inventory
+      entry (`friendsBoardOwn`) can go.
+- [ ] **The feed's week card.** On a TestFlight account following two or
+      more people, with a session this week. Passing: Following shows
+      "Your trajectory" under the third post where the board was, and no
+      board.
+- [ ] **The weekly challenge's leaders.** Joined, with one lift this
+      week. Passing: the card on Together lists up to three people under
+      "Leading this week", with "You" picked out if you are one of them;
+      before joining, and with no session yet, it lists nobody.
+- [ ] **An older build.** A TestFlight build from before this change,
+      on an account following two or more people. Passing: its feed's
+      board reads "Nothing to compare yet" (its reads are refused), and
+      its Show my week switch answers "Couldn’t change who sees your
+      week. Try again." Nothing else on it changes.
 
 ## Follow approval (Polish2, 2026-10-20)
 
@@ -1317,7 +1324,7 @@ Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
 `trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
 phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
 "Remind me before the trial ends", Home's strip for a trial's last two
-days, Settings → Subscription. The email goes at 10:00 local, two days
+days, Settings → Account. The email goes at 10:00 local, two days
 before the last moment to cancel (a day before the trial ends).
 
 Unit tests cover the timing in every zone, the record and the email's
@@ -1547,7 +1554,7 @@ need a phone and a deploy.
 - [x] _(Proven 2026-10-17: src/components/settings/**tests**/NotificationsSection.push.test.tsx, 'keeps the reminders on the native app and offers no push there' (and the web case). src/pages/**tests**/settingsNotificationsRow.test.tsx, 'does not name push on the native app' (expects 'Reminders, activity'). Both branches are pinned against the native-platform flag.)_ **No push on the iPhone app.** Settings > Notifications shows the
       meal, workout and streak reminders and no push switch; the Settings
       list says "Reminders, activity". The web build still has the switch.
-- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+- [ ] **Exports on the iPhone app.** Settings > Account > Export
       workouts opens the share sheet; Save to Files saves a .csv that
       opens in Numbers, then "Workouts exported" shows. Closing the sheet
       says nothing. On a slow connection a "Workouts export ready" toast
@@ -2335,7 +2342,7 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceSection.tsx` (beside the Performance heading on the Analytics overview since Trim1 call 5, 2026-11-11; it was in `PerformanceTab.tsx`), Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
 
 **STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
@@ -4207,8 +4214,8 @@ unit suites replay those orders; only a phone fires them for real.
       Passing: the ring empties and the run carries on; a full hold still
       finishes it.
 - [ ] **A long press held on.** Hold an exercise row on Train for a full
-      second before lifting, and hold a saved food in Food's Quick add for
-      a second. Passing: Train's menu opens and the exercise's history does
+      second before lifting, and hold a saved food under Food's Log again
+      for a second. Passing: Train's menu opens and the exercise's history does
       not; the food is removed (with Undo) and nothing is logged.
 - [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
       finger and then the other without moving it, then tap once. Passing:
@@ -4228,7 +4235,7 @@ are SVG with an illustration inside; how WebKit draws them at row size is
 for a phone to show.
 
 - [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
-      race ahead (Settings → Programme, a race picked from the list), open
+      race ahead (Settings → Run plan, a race picked from the list), open
       Social → Together. Passing: the race's photo fills the first card with
       its name, "Your race · N weeks to go", its date and place, and the
       words readable over the photo at Settings → Accessibility → Larger
@@ -4312,7 +4319,7 @@ WKWebView.
       deeper orange and its head stands clear of the first lap by a thin
       line of the page's colour. Passing: the two laps can be told apart
       at arm's length, in light and in dark.
-- [ ] **The flight.** Log a food by typing, and again from the Quick add
+- [ ] **The flight.** Log a food by typing, and again from the Log again
       list. Passing: its drawing rises from the field to the end of the
       arc and the arc then grows, in about half a second, with no stutter
       and no jump of the page; the keyboard stays up and the next food
@@ -4421,3 +4428,76 @@ overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
       Passing: the picture's cards are sized and placed as on a current
       phone (they are measured from the screen, since iOS 15 has no
       container query units).
+
+## The score is shown once, on Analytics (Trim1 calls 5 and 6, 2026-11-11)
+
+The Performance page is gone. The score sits in a ring on the card at the
+top of the Analytics overview, and "Score details" under it opens in place
+what the page held. The unit suites cover the words, the colours and the
+links; these need a phone.
+
+- [ ] **The ring holds its score at the largest text size.** With the
+      phone's text size at its largest, open Analytics. Passing: the score
+      sits inside the ring with room around it, the words wrap under the
+      ring instead of beside it where they no longer fit, and nothing runs
+      past the card.
+- [ ] **Score details opens where you are.** Tap Score details. Passing:
+      the page does not jump, the six-week line gives way to the twelve-week
+      chart, and the training load's range pills change its curve. Tap it
+      again: the page closes back to the card.
+- [ ] **A saved link still lands.** Open `/history#performance` and
+      `/history?view=performance` (a bookmark, or a link from before).
+      Passing: each opens the overview with Score details open.
+- [ ] **The tooltip opens on a tap.** Tap the small "i" beside
+      Performance. Passing: the explanation opens, reads in both themes,
+      and a tap elsewhere closes it.
+
+## Badges and medals are one shelf, on the profile (Trim1 call 3(c), 2026-11-11)
+
+Analytics' Badges tab is gone. A profile shows badges above medals, and on
+your own "See all" opens the whole badge collection in place. The unit
+suites cover the fold, the links and who sees what; these need a phone.
+
+- [ ] **From the streak.** On Home tap the streak chip, then "See your
+      badges". Passing: your profile opens with the Badges heading at the
+      top of the screen and the whole collection open under it.
+- [ ] **A saved link to the tab.** Open `/history?tab=badges`. Passing: it
+      lands on your profile with the collection open, and Analytics shows
+      two tabs, Analytics and Bests.
+- [ ] **Open and close.** On your profile tap "See all", then "Show
+      fewer". Passing: the collection opens where it is, the page does not
+      jump, and closing returns the newest four.
+- [ ] **Someone else's profile.** Open another person's profile.
+      Passing: their newest badges and their medals, and no "See all" on
+      the badges.
+- [ ] **Larger Text.** With the phone's text at its largest, open the
+      collection. Passing: the three streak figures and the badge tiles
+      wrap inside the screen, and nothing is cut off.
+
+## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
+
+Affects: the Settings list (ten rows, from twelve), Lift plan (the rest
+timer's two controls and Reset programme at its foot), Run plan (voice
+cues), Account (the plan, AI usage, the three exports and recently deleted
+meals), and four routes that are now redirects (`/settings/training`,
+`/settings/workout-prefs`, `/settings/subscription`, `/settings/data`).
+Captured in Chromium at 393 and 320 px; a phone has not drawn them.
+
+- [ ] **Back from the editors.** Settings → Lift plan, then swipe back
+      from the screen's left edge; the same from Run plan. Passing: each
+      returns to the Settings list, not to a blank or a third page.
+- [ ] **Reset programme, at the foot of Lift plan.** Scroll Lift plan to
+      its end and tap Reset programme. Passing: the confirmation opens
+      over the page with Cancel first; Cancel leaves the plan as it was.
+- [ ] **The rest timer, where it now lives.** On Lift plan, switch
+      Auto-start rest timer off, start a workout and finish a set.
+      Passing: no timer starts. Switch it back on and it does.
+- [ ] **Voice cues, where they now live.** On Run plan, switch Audio cues
+      off and open a run's setup. Passing: its Run controls line reads
+      "Voice cues off".
+- [ ] **The plan on Account.** On a free account, Settings shows "Free"
+      on the Account row; Account's first card opens the Pro page. On a
+      trial it reads the days left.
+- [ ] **An old link.** From Safari or a note, open a saved link to
+      `/settings/training` in the installed app. Passing: Lift plan
+      opens.

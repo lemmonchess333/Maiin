@@ -649,7 +649,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // the real list by settingsAccountRowSelector.test.tsx.
     await clickPastCelebration(
       page,
-      page.getByRole("button", { name: /email, password, sign out/i })
+      page.getByRole("button", { name: /plan, sign-in, your data/i })
     );
     await signOutViaUI(page);
 

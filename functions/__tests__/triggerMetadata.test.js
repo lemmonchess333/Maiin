@@ -534,11 +534,6 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
   },
-  setBoardSharing: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
-  },
   // Soc15 call 3: weekly leagues. Joining or leaving, and the week's turn,
   // Monday 12:15 UTC, after every timezone's Sunday has ended.
   setLeagueSharing: {

@@ -6,9 +6,8 @@ import { lazy, type ComponentType, type LazyExoticComponent } from "react";
    errors from stale Service Worker caches.
 
    Extracted from App.tsx (where it lived for page-level lazy loads)
-   so sub-component lazy loads (e.g. Social.tsx's FullLeaderboard /
-   ChallengeList per Soc5 item 10) can share the same chunk-error
-   recovery path. */
+   so sub-component lazy loads (e.g. Social.tsx's ChallengeList, per
+   Soc5 item 10) can share the same chunk-error recovery path. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyRetry<T extends { default: ComponentType<any> }>(
   factory: () => Promise<T>,

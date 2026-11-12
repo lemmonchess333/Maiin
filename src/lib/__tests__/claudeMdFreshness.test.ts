@@ -39,13 +39,12 @@ describe("CLAUDE.md — the Home composition sentence", () => {
     "StackedCTACards",
     "WeekSessions",
     "WeekStrip",
+    "WeekSummary",
+    "WeeklyReviewEntry",
     "DayPeekCard",
     "TodayEnergy",
     "WaterCard",
     "WeightStepsTiles",
-    "WeeklyReviewEntry",
-    "WeekSummary",
-    "PerformanceHeroCard",
   ];
 
   const homeSrc = readFileSync(resolve(repoRoot, "src/pages/Home.tsx"), "utf8");

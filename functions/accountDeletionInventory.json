@@ -652,7 +652,7 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "This week's sessions, distance and volume, shown on followers' friends boards (Polish2 call 5), written by the server only for someone who chose to share. Deleted with the account; the session triggers that recompute it check the deletion lock before writing.",
+      "reason": "A week's sessions, distance and volume, stored for followers' friends boards (Polish2 call 5) for someone who chose to share. The board went on 12 November 2026 (Trim1 call 3(a)) and nothing writes this now; a week stored before then is deleted with the account, until functions/scripts/purgeFriendsBoardDocs.js has cleared them all.",
       "testCoverageKey": "smoke::topLevelOwn::friendsBoard",
       "testCoverageStatus": "implemented",
       "implementation": "functions/accountDeletion.js"

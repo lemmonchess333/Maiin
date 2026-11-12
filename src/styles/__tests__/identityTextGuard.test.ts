@@ -105,7 +105,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 42 → 40. The run plan page asks about a race on the coral segmented
   // control, so the two mode cards' footprints icon went; and the race
   // card's Race community row is social, so its icon is neutral.
-  running: 40, // Calendar status icons now use the strong colour step.
+  // 2026-11-12: 40 → 39. The friends board's card went (Trim1 call
+  // 3(a)), and its distance board's footprints icon with it.
+  running: 39, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -129,7 +131,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // its trend icon with it (Lift4).
   // 2026-10-08: 18 → 17. The Performance tab's "Lifting suggestions" card
   // went, and its dumbbell icon with it (Lift4 (3)).
-  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 2026-11-11: 17 → 16. Settings → Programme went (Trim1 call 2), and
+  // its Lift plan row's icon with it.
+  // 2026-11-12: 16 → 15. The friends board's card went (Trim1 call
+  // 3(a)), and its volume board's dumbbell icon with it.
+  lifting: 15, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -141,7 +147,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // on white, under the 3:1 a graphic needs, so the Settings row's and
   // the Go deeper tile's icons, and the food consistency card's two,
   // take `text-nutrition-strong`.
-  nutrition: 2,
+  // 2026-11-11: 2 → 1. Settings → Programme went (Trim1 call 2), and its
+  // Nutrition phase row's icon with it.
+  nutrition: 1,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -224,7 +232,9 @@ const EXPECTED_INLINE_USES = {
   // flame from amber to the brand purple.
   // 33 → 34. The notification tray's league result (Soc15 call 3): its
   // medal icon, in the brand purple Social's rewards wear.
-  "THEME.brand": 33,
+  // 2026-11-12: 33 → 32. The friends board's card went (Trim1 call
+  // 3(a)), and its sessions board's bolt icon with it.
+  "THEME.brand": 32,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -341,7 +351,9 @@ function bareUses(token: string): string[] {
 // 43 → 44 with the drawn pull to refresh: PullToRefreshIndicator's
 // arrow turns brand purple once a release would refresh. An ICON on the
 // card chip, with no words.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
+// 2026-11-11: 44 → 43. Workout preferences went as a page (Trim1 call 7),
+// and its timer icon with it; the Subscription card kept its crown.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

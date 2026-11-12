@@ -25,9 +25,6 @@ export const SOCIAL_GATES = {
    *  threshold the feed shows a "Following N of 3" progress row instead
    *  of the standard empty state. */
   FOLLOWING_FEED_MIN_FOLLOWS: 3,
-  /** A vs-others leaderboard only renders for a cohort of ≥20 — small
-   *  cohorts make rank meaningless and expose individuals. */
-  LEADERBOARD_MIN_COHORT: 20,
   /** A challenge percentile line ("top 40% this month") shows only once the
    *  challenge has ≥50 participants; below that, personal progress only. */
   CHALLENGE_PERCENTILE_MIN_PARTICIPANTS: 50,
@@ -47,15 +44,6 @@ export function shouldShowFollowingFeed(activeFollowCount: number): boolean {
  *  owned that branch is retired). */
 export function shouldRenderFollowingList(activeFollowCount: number): boolean {
   return activeFollowCount > 0;
-}
-
-/**
- * A vs-others leaderboard renders only for a cohort of ≥20. When this is
- * true the leaderboard must STILL be percentile / neighbourhood-framed (the
- * threshold gates visibility; the framing is a separate, always-on rule).
- */
-export function shouldShowLeaderboard(cohortSize: number): boolean {
-  return cohortSize >= SOCIAL_GATES.LEADERBOARD_MIN_COHORT;
 }
 
 /**

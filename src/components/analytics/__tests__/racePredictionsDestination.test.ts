@@ -77,7 +77,7 @@ describe("race predictions settings links", () => {
     // Without this the test above would pass for any page that happened to
     // render a second copy, and "the only writer" would be a claim rather
     // than a fact this file checks.
-    for (const page of ["SettingsTraining", "SettingsProfile"]) {
+    for (const page of ["SettingsLiftPlan", "SettingsProfile"]) {
       expect(
         read(`src/pages/settings/${page}.tsx`),
         `${page} now renders RunFitnessSection too — the CTA's destination ` +

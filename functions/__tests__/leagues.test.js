@@ -16,7 +16,7 @@ const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const leagues = require("../lib/leagues");
 const rules = require("../lib/leagueRules");
-const { currentWeek } = require("../lib/friendsBoard");
+const { currentWeek } = require("../lib/weekTally");
 
 const DAY = 86400000;
 const NOW = Date.now();

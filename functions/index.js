@@ -44,7 +44,6 @@ const followRemoval = require("./lib/followRemoval");
 const followBackfill = require("./lib/followBackfill");
 const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
-const friendsBoard = require("./lib/friendsBoard");
 // Soc15 call 3: weekly leagues, scored against each person's own plan.
 const leagues = require("./lib/leagues");
 const leagueRules = require("./lib/leagueRules");
@@ -5304,9 +5303,6 @@ exports.onWorkoutCreated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5471,9 +5467,6 @@ exports.onRunCreated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5683,9 +5676,6 @@ exports.onWorkoutUpdated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5732,9 +5722,6 @@ exports.onRunUpdated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5813,9 +5800,6 @@ exports.onWorkoutDeleted = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5892,9 +5876,6 @@ exports.onRunDeleted = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -8976,52 +8957,12 @@ exports.onFollowingEdgeWritten = functions
   });
 
 /**
- * setBoardSharing — the person's answer to "Show my week" on friends'
- * boards (Polish2 call 5). Yes stores the answer and computes this week's
- * tally at once (friendsBoard.js); no stores the answer and deletes the
- * tally. The answer is server-written, so the tally and the answer cannot
- * disagree because a client wrote one and not the other.
- *
- * A restricted account cannot start sharing (it reaches no one, S4e) but
- * can always stop.
- */
-exports.setBoardSharing = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
-    }
-    const uid = context.auth.uid;
-    const share = data && data.share;
-    if (typeof share !== "boolean") {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "share must be true or false."
-      );
-    }
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-    if (share) await restriction.assertNotRestricted(db, uid, functions);
-    const limited = await isRateLimited(uid, "boardSharing", 10, 60_000);
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many attempts. Try again in a minute."
-      );
-    }
-    await friendsBoard.setBoardSharing(db, uid, share);
-    return { share };
-  });
-
-/**
  * setLeagueSharing — the person's answer to weekly leagues (Soc15 call 3):
  * join or leave. Joining stores the answer and a Bronze membership; the
  * person is placed in a group on the next Monday's turn. Leaving stores the
  * answer, deletes their standing and takes them out of their group at once
- * (lib/leagues.js). The answer is server-written, as setBoardSharing's is,
- * so the membership and the answer cannot disagree.
+ * (lib/leagues.js). The answer is server-written, so the membership and
+ * the answer cannot disagree.
  *
  * A restricted account cannot join (it reaches no one, S4e) but can always
  * leave.
