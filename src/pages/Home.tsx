@@ -1600,7 +1600,7 @@ export default function Home() {
               title={recal.title}
               description={recal.description}
               ctaLabel="Edit plan"
-              ctaHref="/settings/training"
+              ctaHref="/settings/lift-plan"
               visible={true}
             />
           ) : null;

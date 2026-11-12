@@ -21,12 +21,10 @@ const read = (rel: string) => readFileSync(resolve(repoRoot, rel), "utf8");
 
 describe("rest between sets", () => {
   it("an untouched setting reads the plan’s suggestion", () => {
-    expect(read("src/pages/settings/SettingsWorkoutPrefs.tsx")).toMatch(
-      /defaultRestSeconds \?\? 0/
-    );
-    expect(read("src/components/settings/WorkoutPrefsSection.tsx")).toMatch(
-      /<option value=\{0\}>Plan’s suggestion<\/option>/
-    );
+    // The rest timer's two controls are on Lift plan since Trim1 call 7.
+    const prefs = read("src/components/settings/RestTimerPrefs.tsx");
+    expect(prefs).toMatch(/defaultRestSeconds \?\? 0/);
+    expect(prefs).toMatch(/<option value=\{0\}>Plan’s suggestion<\/option>/);
   });
 
   it("and the session then rests as the plan suggests", () => {
