@@ -116,6 +116,24 @@ ceiling); the range now starts lower and keeps its width (`rangedReps`, both
 copies), so none. The owner's "12-13" pushdown was not reproduced, and like
 #14 it needs the stored plan.
 
+STATUS 2026-11-12, #14 (one lift, two weights): parked, not built. One
+strength per lift (a session moves every day that holds the lift, each day's
+weight from its own rep target) loops when the lift is truly weaker on one
+day: the owner's squat is 85 kg × 10 on Pull A and 60 kg × 6 on Legs A, after
+deadlifts, so each day's session would pull the other up and down. Two weights
+can be right; what is unexplained is Legs A's fall to 47.5 kg, below the 60 kg
+lifted there, which needs the stored plan (`README.md` 2.1, item 3).
+
+STATUS 2026-11-12, #7 (the lift order chosen too early): tried, not shipped.
+Moving `orderForAdjacency` after the time fit breaks the six-day rotation
+(Pull, Push, Legs, Push, Pull, Legs, where `programEngine.test.ts` holds the
+two halves equal) and moves the simulator's coaching findings both ways: the
+owner's marathon loses its chest-coverage finding and gains a barbell row
+stall, the advanced man gains overhead press misses, the hybrid lighter week
+trades its deadlift and RDL stalls for a leg curl stall. It changes what is
+built, so it goes to the owner as a printed panel, perhaps with the order
+limited to rotations of the builders' week.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one
