@@ -35,6 +35,7 @@ import {
   sessionMinutesFor,
   warmupsOutgrewFit,
 } from "./sessionFit";
+import { withPairsTogether } from "./pairSlot";
 import {
   applyEquipmentFilterToWorkouts,
   dropUnavailableAccessories,
@@ -2973,11 +2974,20 @@ export function refitOutgrownSessions(
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
+  // Lift22: a lift the person moved away from its partner breaks the pair,
+  // and the day prices the two apart. That is their order, not weights
+  // that grew, so each day is judged, and re-fitted, with its pairs
+  // together, as the plan fitted it (training deep dive, D11).
+  const together = workouts.map((day) => ({
+    ...day,
+    exercises: withPairsTogether(day.exercises),
+  }));
   return keepRefitCuts(
     workouts,
-    workouts.map((day) => warmupsOutgrewFit(day.exercises, minutes)),
+    together.map((day) => warmupsOutgrewFit(day.exercises, minutes)),
     experience,
-    minutes
+    minutes,
+    together
   );
 }
 
@@ -3012,28 +3022,38 @@ export function refitSessionsASaveOverran(
 }
 
 /** Re-fit the week to `minutes` and keep the re-fit's cuts to sets on the
- *  days `which` names; every other day comes back as it was. */
+ *  days `which` names; every other day comes back as it was. The re-fit
+ *  reads `fitWeek`, the same lifts in the order to judge them in. */
 function keepRefitCuts(
   workouts: WorkoutDay[],
   which: readonly boolean[],
   experience: Experience | undefined,
-  minutes: number
+  minutes: number,
+  fitWeek: WorkoutDay[] = workouts
 ): WorkoutDay[] {
   const outgrown = which;
   if (!outgrown.includes(true)) return workouts;
-  const refitted = refitSessionsToTime(workouts, experience, minutes);
+  const refitted = refitSessionsToTime(fitWeek, experience, minutes);
   return workouts.map((day, d) => {
     if (!outgrown[d]) return day;
-    // The re-fit moves sets only, so each lift is where it was in the day.
+    // The re-fit moves sets only: each lift is found by its slot, or, with
+    // none, where it was in the day.
     const fitted = refitted[d].exercises;
     let cut = false;
     const exercises = day.exercises.map((ex, e) => {
-      const same =
-        fitted[e]?.exerciseId === ex.exerciseId &&
-        fitted[e]?.instanceId === ex.instanceId;
-      if (!same || !(fitted[e].sets < ex.sets)) return ex;
+      const match =
+        ex.instanceId !== undefined
+          ? fitted.find(
+              (f) =>
+                f.instanceId === ex.instanceId && f.exerciseId === ex.exerciseId
+            )
+          : fitted[e]?.exerciseId === ex.exerciseId &&
+              fitted[e]?.instanceId === undefined
+            ? fitted[e]
+            : undefined;
+      if (match === undefined || !(match.sets < ex.sets)) return ex;
       cut = true;
-      return { ...ex, sets: fitted[e].sets, baseSets: fitted[e].sets };
+      return { ...ex, sets: match.sets, baseSets: match.sets };
     });
     return cut ? { ...day, exercises } : day;
   });

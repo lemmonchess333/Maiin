@@ -33,6 +33,8 @@ import {
   warmupsOutgrewFit,
 } from "../sessionFit";
 import type { RaceBlockWeek } from "../weekPrescription";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { withPairsTogether } from "../pairSlot";
 import { rollLiftWeeks, rollRunWeeks } from "../weekRollover";
 
 /** A Monday. Weeks from here cross Auckland's change to summer time. */
@@ -604,5 +606,81 @@ describe("refitOutgrownSessions", () => {
     expect(refitted[d].exercises[from].sets).toBe(1);
     expectOnlySetsCut(before.workouts[d], refitted[d]);
     expect(sessionFits(refitted[d].exercises, minutes)).toBe(true);
+  });
+});
+
+describe("a day the person put in their own order (D11)", () => {
+  // A 45-minute plan pairs its last lifts (Lift22). Moving one of a pair to
+  // the front breaks the pair, and the day prices the two apart; over 256
+  // plans and every single move, 10 such moves took a set at the rollover
+  // and kept it off (the curl first here took 13 sets to 12). The week
+  // judges the day with its pairs together.
+  const input = {
+    primaryGoal: "hypertrophy",
+    nutritionPhase: "recomp",
+    experience: "intermediate",
+    sessionMinutes: 45,
+    bodyweightKg: 80,
+    sex: "male",
+    liftDays: 5,
+    preferredSplit: "auto",
+    runMode: "freeform",
+    weeklyRunDays: 0,
+    equipment: "full_gym",
+    injuries: [],
+    currentDate: "2026-11-09",
+    preserveHistory: false,
+  } as unknown as PlanBuilderInput;
+
+  it("keeps its sets when a lift moved away from its partner takes it over", () => {
+    const state = buildPlan(input).programState;
+    const minutes = state.sessionMinutes!;
+    const d = state.workouts.findIndex(
+      (day) => day.dayName === "Pull — Lat Focus"
+    );
+    const day = state.workouts[d];
+    const curl = day.exercises.find((ex) => ex.exerciseId === "db-curl")!;
+    expect(day.exercises.some((ex) => ex.supersetWith !== undefined)).toBe(
+      true
+    );
+    expect(sessionFits(day.exercises, minutes)).toBe(true);
+    const moved = [curl, ...day.exercises.filter((ex) => ex !== curl)];
+    expect(sessionFits(moved, minutes)).toBe(false);
+    const week = state.workouts.map((w, i) =>
+      i === d ? { ...w, exercises: moved } : w
+    );
+    const refitted = refitOutgrownSessions(week, "intermediate", minutes);
+    expect(refitted[d]).toBe(week[d]);
+  });
+});
+
+describe("withPairsTogether", () => {
+  const lift = (instanceId: string, supersetWith?: string) => ({
+    instanceId,
+    ...(supersetWith !== undefined ? { supersetWith } : {}),
+  });
+
+  it("puts a partner back after the lift that names it", () => {
+    const day = [lift("b"), lift("main"), lift("a", "b"), lift("c")];
+    expect(withPairsTogether(day).map((ex) => ex.instanceId)).toEqual([
+      "main",
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("moves the pair with its first lift, where that went", () => {
+    const day = [lift("a", "b"), lift("main"), lift("b")];
+    expect(withPairsTogether(day).map((ex) => ex.instanceId)).toEqual([
+      "a",
+      "b",
+      "main",
+    ]);
+  });
+
+  it("keeps a day whose pairs stand together, and a partner that is gone", () => {
+    const day = [lift("main"), lift("a", "b"), lift("b"), lift("c", "gone")];
+    expect(withPairsTogether(day)).toEqual(day);
   });
 });
