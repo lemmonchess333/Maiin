@@ -47,10 +47,9 @@ describe("the six-rep floor", () => {
     ).toEqual({ sets: 3, bottom: 8, top: 12 });
   });
 
-  it("holds through a heavy day's shift", () => {
-    expect(
-      repFloorFor({ exerciseId: "bulgarian-split", isAccessory: true })
-    ).toBe(6);
+  it("holds through a heavy day's shift, in a main lift's slot too", () => {
+    expect(repFloorFor({ exerciseId: "db-bench" })).toBe(SIX_REP_FLOOR);
+    expect(repFloorFor({ exerciseId: "bulgarian-split" })).toBe(SIX_REP_FLOOR);
     expect(repFloorFor({ exerciseId: "squat" })).toBe(3);
   });
 });
