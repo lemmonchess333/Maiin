@@ -99,7 +99,7 @@ Progress
 
 With other people
 • Share sessions with the people who follow you, give props and comment.
-• Join Spaces for races and interests, start a Circle of up to 8 people, and keep a shared streak with a training partner.
+• Join Spaces for races and interests, and start a Circle of up to 8 people.
 • Weekly, monthly and seasonal challenges, and a weekly leaderboard with the people you follow.
 • Choose who sees each session, and report or block anyone.
 
