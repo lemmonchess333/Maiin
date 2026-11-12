@@ -10,6 +10,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import TrialEndingStrip from "@/components/home/TrialEndingStrip";
 import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
+import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useRunReturn } from "@/features/program/useRunReturn";
@@ -1570,6 +1571,12 @@ export default function Home() {
           <StreakSheet
             open={streakSheet}
             onOpenChange={(open) => setStreakSheet(open)}
+            /* The badges are on the profile, above the medals (Trim1
+               call 3(c)); Analytics' Badges tab still redirects there for
+               the moment before the account is known. */
+            badgesTo={
+              user?.uid ? badgeShelfPath(user.uid) : "/history?tab=badges"
+            }
           />
         </Suspense>
       )}

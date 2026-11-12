@@ -716,6 +716,6 @@ describe("Home — the streak flame (Mob1 call 4)", () => {
     ).toBeInTheDocument();
     expect(
       within(sheet).getByRole("link", { name: "See your badges" })
-    ).toHaveAttribute("href", "/history?tab=badges");
+    ).toHaveAttribute("href", "/user/u1?badges=all");
   });
 });
