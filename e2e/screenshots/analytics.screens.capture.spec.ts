@@ -394,9 +394,11 @@ test.describe("analytics tab screenshots", () => {
     await settleFullPageHeight(page);
     await shootBoth(page, "analytics-rich");
 
-    /* The index's gauge, chart and training load moved to the
-       Performance page, one tap from the overview's card. */
-    await page.getByRole("button", { name: "Details", exact: true }).click();
+    /* What the score is made of opens in place under its card (Trim1
+       call 5): the index's chart and the training load among it. */
+    await page
+      .getByRole("button", { name: "Score details", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Performance Index" })
     ).toBeVisible({ timeout: 15_000 });
@@ -434,7 +436,9 @@ test.describe("analytics tab screenshots", () => {
 
     await settleFullPageHeight(page);
     await shootBoth(page, "analytics-performance");
-    await page.getByRole("button", { name: "Overview", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Score details", exact: true })
+      .click();
 
     /* The PRs tab's STEADY state, which nothing filmed either.
        "PRs tab states its units" above signs up a fresh account and

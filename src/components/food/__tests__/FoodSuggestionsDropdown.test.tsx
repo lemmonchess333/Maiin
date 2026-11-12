@@ -254,13 +254,10 @@ function renderQuickAdd(quickAdd: Partial<QuickAddSection> = {}) {
   return section;
 }
 
-describe("FoodSuggestionsDropdown — empty-focus Quick Add (wave2 D)", () => {
-  it("renders the user's items under a 'Quick Add' header, with the calorie unit", () => {
+describe("FoodSuggestionsDropdown — empty-focus Log again (wave2 D)", () => {
+  it("renders the user's items under a 'Log again' header, with the calorie unit", () => {
     renderQuickAdd({ items: [makeItem({ name: "Protein Shake", cal: 250 })] });
-    // The heading; the list's last row is also named Quick add.
-    expect(
-      screen.getByText(/^quick add$/i, { ignore: "script, style, button *" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Log again")).toBeInTheDocument();
     expect(screen.getByText("Protein Shake")).toBeInTheDocument();
     expect(
       screen.getByText(new RegExp(`250 ${CALORIE_UNIT}`))
@@ -270,9 +267,20 @@ describe("FoodSuggestionsDropdown — empty-focus Quick Add (wave2 D)", () => {
   it("frames seeded items as 'Examples' for cold-start accounts", () => {
     renderQuickAdd({ asExamples: true });
     expect(screen.getByText(/examples/i)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/^quick add$/i, { ignore: "script, style, button *" })
-    ).toBeNull();
+    expect(screen.queryByText("Log again")).toBeNull();
+  });
+
+  /* Trim1 call 4: the heading and the list's last row both read "Quick
+     add", for a list of foods and for a form that takes calories with
+     no name. The row keeps the name (Mob2 call 4, and MacroFactor,
+     MyFitnessPal, Lifesum and Life Reset use it for the same thing). */
+  it("says Quick add of one thing only, the by-number row", () => {
+    renderQuickAdd({ items: [makeItem({ name: "Protein Shake", cal: 250 })] });
+    const said = screen.getAllByText(/quick add/i);
+    expect(said).toHaveLength(1);
+    expect(said[0].closest("button")).toHaveAccessibleName(
+      "Quick add Calories and macros, no name needed"
+    );
   });
 
   /* Mob2 (call 4): the way to calories without a name is named in the

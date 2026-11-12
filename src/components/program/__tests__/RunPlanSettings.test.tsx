@@ -137,7 +137,6 @@ function renderPage(
   programme: Programme = {}
 ) {
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
-  const onOpenFullSettings = vi.fn();
   const page = ({ readiness = "ready", programState = null }: Programme) => (
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
@@ -145,14 +144,12 @@ function renderPage(
         programState={programState}
         readiness={readiness}
         refreshProfile={refreshProfile}
-        onOpenFullSettings={onOpenFullSettings}
       />
     </MemoryRouter>
   );
   const { unmount, rerender } = render(page(programme));
   return {
     refreshProfile,
-    onOpenFullSettings,
     unmount,
     /** The programme arrives, as `useProgram` re-renders the page with it. */
     load: (next: Programme) => rerender(page(next)),

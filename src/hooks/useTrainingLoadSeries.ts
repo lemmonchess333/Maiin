@@ -40,8 +40,9 @@ import {
  * A same-account window change keeps the previous points until then, as
  * the card shows its skeleton while loading anyway.
  *
- * `enabled` (default true): History shows the curve on its Performance page
- * only, and reads nothing for it on the others.
+ * `enabled` (default true): History shows the curve only inside the
+ * score's details on the overview, and reads nothing for it while they
+ * are closed or another page is open.
  */
 const WARMUP_DAYS = 60;
 const MIN_HISTORY_DAYS = 365 + WARMUP_DAYS;

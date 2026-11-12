@@ -3,16 +3,20 @@ import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
  * SettingsLiftPlan — the dedicated lift-plan editing screen (Section-Split,
  * 2026-07). The lifting counterpart to SettingsRunPlan.
  *
- * The focused destination for the Programme page's "Edit lift plan" entry.
- * Renders ProgrammeSettings in `variant="lift"` — training focus, experience,
- * lift days + split, equipment, injuries, engine toggles — so editing the lift
- * plan no longer drops the user into the full goal+nutrition+running editor.
- * The nutrition + running drafts thread through the (shared) buildPlan save
- * unchanged, so a lift edit never disturbs them. The full programme editor
- * stays reachable from Settings and the Programme ⋯ "Edit programme" menu.
+ * A row on the Settings list, and the destination of Train's "Edit lift
+ * plan". Renders ProgrammeSettings: training focus, experience, lift days
+ * and split, equipment, injuries, the engine toggles. The nutrition and
+ * running drafts thread through the (shared) buildPlan save unchanged, so
+ * a lift edit never disturbs them.
  *
- * Composition mirrors SettingsTraining: useAuth for profile, useProgram for
- * the settings/rebuild/refresh writers, ProgrammeSettings for the grouped
+ * Since Trim1 calls 2 and 7 (the owner, 11 November 2026: "streamline
+ * all") it also carries what two pages with little of their own held: the
+ * rest timer's two controls, from Settings → Workouts, and Reset
+ * programme, from Settings → Programme, a page that edited nothing and
+ * that Lift plan and Run plan used to sit under.
+ *
+ * Composition: useAuth for profile, useProgram for the
+ * settings/rebuild/refresh writers, ProgrammeSettings for the grouped
  * form, and a page-level ScheduleLayoutSheet the form links out to.
  *
  * It also carries the weekly sets-per-muscle table (D-LIFT-1), which used
@@ -28,6 +32,8 @@ import { useAuth } from "@/lib/auth";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import ProgrammeSettings from "@/components/program/ProgrammeSettings";
+import RestTimerPrefs from "@/components/settings/RestTimerPrefs";
+import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { sessionMinutesFor } from "@/features/program/sessionFit";
@@ -76,24 +82,15 @@ export default function SettingsLiftPlan() {
 
   if (!profile) {
     // Brief auth-resolution window; route guards keep signed-out users out.
-    return (
-      <SettingsSection
-        title="Lift plan"
-        backTo="/settings/training"
-        backLabel="Programme"
-      />
-    );
+    return <SettingsSection title="Lift plan" />;
   }
 
   return (
     <>
-      {/* Under Programme, which opens it, so back goes there: Lift plan
-          is not a row on the Settings list. */}
       <SettingsSection
         title="Lift plan"
         subtitle="Focus, experience, lift days, equipment, injuries"
-        backTo="/settings/training"
-        backLabel="Programme"
+        section="training"
       >
         {prefillGoal && (
           <p className="mb-3 px-3 py-2.5 rounded-xl bg-primary/10 text-xs text-foreground">
@@ -102,7 +99,6 @@ export default function SettingsLiftPlan() {
           </p>
         )}
         <ProgrammeSettings
-          variant="lift"
           profile={profile}
           programState={programState}
           readiness={readiness}
@@ -118,22 +114,35 @@ export default function SettingsLiftPlan() {
               ? programState.trainingBlock.focus
               : undefined
           }
-        />
-        {/* Last, and collapsed: it rates what the fields above prescribe,
-            so it reads as the result of this form rather than another
-            setting. The goal comes from programState, which is what a
-            running block owns and what the plan was built for —
-            the profile copy would rate a block's week against the
-            PRE-block band. */}
-        <WeeklyVolumeCard
-          workouts={programState?.workouts ?? []}
-          primaryGoal={programState?.primaryGoal ?? profile.primaryGoal}
-          experience={profile.experience}
-          sessionMinutes={
-            programState?.sessionMinutes ??
-            sessionMinutesFor(profile.liftTimeBudgetMinutes)
+          afterForm={
+            <>
+              {/* Reported under the name Settings → Workouts had, so
+                  the count of people who reach the rest timer runs on. */}
+              <TrackSettingsSectionView section="workout_prefs">
+                <RestTimerPrefs
+                  key={profile.uid}
+                  profile={profile}
+                  updateProfile={updateProfile}
+                />
+              </TrackSettingsSectionView>
+              {/* Collapsed: it rates what the fields above prescribe, so
+                  it reads as the result of this form rather than another
+                  setting. The goal comes from programState, which is what
+                  a running block owns and what the plan was built for —
+                  the profile copy would rate a block's week against the
+                  PRE-block band. */}
+              <WeeklyVolumeCard
+                workouts={programState?.workouts ?? []}
+                primaryGoal={programState?.primaryGoal ?? profile.primaryGoal}
+                experience={profile.experience}
+                sessionMinutes={
+                  programState?.sessionMinutes ??
+                  sessionMinutesFor(profile.liftTimeBudgetMinutes)
+                }
+                kit={profile}
+              />
+            </>
           }
-          kit={profile}
         />
       </SettingsSection>
 

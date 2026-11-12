@@ -30,7 +30,7 @@ import {
   STARTER_NONSTOP_TEMPLATE_IDS,
   type RunTemplate,
 } from "../workoutTemplates";
-import { GUIDED_WORKOUTS } from "../guidedRun";
+import type { GuidedRunWorkout } from "../guidedRun";
 
 describe("segmentsFromIntervals", () => {
   it("orders warmup → (work, rest)×N → cooldown, no trailing rest", () => {
@@ -319,8 +319,39 @@ describe("step headings in Run21's effort words (E1)", () => {
 });
 
 describe("segmentsFromGuided", () => {
-  it("is an identity mapping over the catalogue's segments", () => {
-    const w = GUIDED_WORKOUTS[0];
+  /* The three fixed workouts left the app in Trim1 call 8. A run saved or
+     in flight from one still carries its workout, in this shape. */
+  const stored: GuidedRunWorkout = {
+    id: "easy-30",
+    name: "Easy 30",
+    description: "A gentle 30-minute run to build your endurance",
+    totalMinutes: 30,
+    difficulty: "easy",
+    color: "#22b558",
+    segments: [
+      {
+        type: "warmup",
+        durationSeconds: 300,
+        label: "Warm Up",
+        instruction: "Start with a brisk walk or easy jog",
+      },
+      {
+        type: "easy",
+        durationSeconds: 1200,
+        label: "Easy Run",
+        instruction: "Settle into a pace you could hold a conversation at",
+      },
+      {
+        type: "cooldown",
+        durationSeconds: 300,
+        label: "Cool Down",
+        instruction: "Ease back to a walk",
+      },
+    ],
+  };
+
+  it("is an identity mapping over a stored workout's segments", () => {
+    const w = stored;
     const segs = segmentsFromGuided(w);
     expect(segs).toHaveLength(w.segments.length);
     segs.forEach((s, i) => {

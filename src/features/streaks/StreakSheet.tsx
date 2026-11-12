@@ -39,9 +39,13 @@ const DAY_CLASSES: Record<StreakDayState, string> = {
 export default function StreakSheet({
   open,
   onOpenChange,
+  badgesTo,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Where "See your badges" goes: the person's own badge collection, on
+   *  their profile (`badgeShelfPath`). The sheet's host knows whose. */
+  badgesTo: string;
 }) {
   const { currentStreak, activeDates, bridgedDates } = useStreaks();
   const todayKey = useLocalDateKey();
@@ -169,7 +173,7 @@ export default function StreakSheet({
         </p>
 
         <Link
-          to="/history?tab=badges"
+          to={badgesTo}
           onClick={() => onOpenChange(false)}
           className={buttonClasses({ variant: "secondary", fullWidth: true })}
         >

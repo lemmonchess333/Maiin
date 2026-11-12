@@ -64,13 +64,11 @@ const ROUTES = [
   "settings/profile",
   "settings/account",
   "settings/nutrition",
-  "settings/training",
+  "settings/lift-plan",
   "settings/run-plan",
   "settings/notifications",
   "settings/privacy",
   "settings/units-appearance",
-  "settings/subscription",
-  "settings/data",
 ] as const;
 
 /** The invariants, on the page as it stands. */

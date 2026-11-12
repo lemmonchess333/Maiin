@@ -29,7 +29,6 @@ const ENGINE_OWNERS = [
   "src/pages/TrainingPlan.tsx",
   "src/pages/settings/SettingsLiftPlan.tsx",
   "src/pages/settings/SettingsRunPlan.tsx",
-  "src/pages/settings/SettingsTraining.tsx",
 ];
 
 function sourceFiles(dir: string): string[] {

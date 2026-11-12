@@ -900,7 +900,7 @@ export default function WorkoutSession({
     };
   }, [sessionUid]);
 
-  // Rest timer: the rest fixed in Settings → Workout preferences, or the
+  // Rest timer: the rest fixed in Settings → Lift plan, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30
   // minutes (`restSecondsFor`, Lift4 (5)).
   const fixedRest =

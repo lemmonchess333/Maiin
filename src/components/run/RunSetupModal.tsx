@@ -18,7 +18,6 @@ import {
   Route,
   Flag,
   Dumbbell,
-  Headphones,
   Sun,
   CloudSun,
   Cloud,
@@ -56,10 +55,8 @@ import {
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { heatLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
-import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
-import { segmentsFromGuided, segmentsFromIntervals } from "@/lib/runSegments";
-import type { GuidedRunWorkout } from "@/lib/guidedRun";
+import { segmentsFromIntervals } from "@/lib/runSegments";
 import type { ActivityType, RunPlace } from "@/types/run";
 import { isTreadmillRun, requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -112,7 +109,6 @@ const ICON_MAP: Record<
   RefreshCw,
   Route,
   Flag,
-  Headphones,
 };
 
 // getWeatherIcon() returns an icon-NAME ("cloud-drizzle"), not display text.
@@ -226,9 +222,6 @@ export default function RunSetupModal({
   const [showCustomise, setShowCustomise] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(
-    null
-  );
   /* Last-run snapshot for the empty-state context card. Single
      latest doc, volume-eligibility filtered (so a saved-anyway
      misclick doesn't masquerade as the user's last real run).
@@ -535,11 +528,10 @@ export default function RunSetupModal({
           onSelect={(id) => updateConfig({ shoeId: id })}
         />
 
-        {/* STRUCT-SESS-01: prefilled structure for non-interval, non-guided
-            sessions (tempo warmup/blocks/cooldown, easy + strides). The
-            interval and guided branches below own their own previews. */}
+        {/* STRUCT-SESS-01: prefilled structure for non-interval sessions
+            (tempo warmup/blocks/cooldown, easy + strides). The interval
+            branch below owns its own preview. */}
         {config.activityType !== "intervals" &&
-          config.activityType !== "guided" &&
           (config.segments?.length ?? 0) > 0 && (
             <SessionStructureView segments={config.segments!} />
           )}
@@ -665,31 +657,6 @@ export default function RunSetupModal({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Guided run picker — shown for guided type */}
-        <AnimatePresence>
-          {config.activityType === "guided" && (
-            <motion.div
-              initial={motionSafe({ opacity: 0, height: 0 })}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={motionSafe({ opacity: 0, height: 0 })}
-              className="overflow-hidden space-y-2"
-            >
-              <GuidedRunPicker
-                selected={selectedGuided}
-                onSelect={(w) => {
-                  setSelectedGuided(w);
-                  updateConfig({ guidedWorkout: w });
-                }}
-              />
-              {selectedGuided && (
-                <SessionStructureView
-                  segments={segmentsFromGuided(selectedGuided)}
-                />
-              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1220,7 +1187,7 @@ export default function RunSetupModal({
       {/* Sticky CTA. Underlined "Change type" link removed — the
           selected-run card at the top now owns that affordance.
           Start text is contextual per run type ("Start free run",
-          "Start guided run") so the button mirrors the user's
+          "Start tempo run") so the button mirrors the user's
           selection; on the treadmill it says where the run starts
           ("Start on the treadmill"), whatever its type (Pgm8). */}
       {/* Pinned to the viewport bottom with `fixed` (was `sticky bottom-0`).
@@ -1322,6 +1289,8 @@ export default function RunSetupModal({
         <div className="flex-1 overflow-y-auto px-3 pt-3 pb-6 space-y-4">
           {(["outdoor", "other"] as const).map((group) => {
             const items = ACTIVITY_TYPES.filter((a) => a.group === group);
+            // "Other" held the guided run alone until Trim1 call 8.
+            if (items.length === 0) return null;
             return (
               <div key={group} className="space-y-1">
                 <SectionLabel className="px-2">

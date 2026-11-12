@@ -145,7 +145,7 @@ export default function SettingsNutrition() {
         onRecalculate={() => updateProfile(payload)}
         program={program}
       />
-      {/* The saved foods Quick add offers, to correct or remove (F2d's
+      {/* The saved foods Log again offers, to correct or remove (F2d's
           "Settings → My pantry"). */}
       <SettingsGroup title="Your foods">
         <SettingsRow
