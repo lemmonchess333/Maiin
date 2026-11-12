@@ -3413,21 +3413,26 @@ export function withRaceLegTrim(
 }
 
 /**
- * Race week's lifting (Lift4 (10)): one short session, the week's first,
- * with nothing heavy for the legs; the other days are skipped. Its sets are
- * already halved (`applyDeload`), and each leg lift comes down to half its
- * weight on its own steps, stashed so the next week gets it back
- * (`resetToBaseSets`). A leg lift already under its stash stays as it is,
- * so a rebuild can apply it again.
+ * Race week's lifting (Lift4 (10)): one short session, the first of the
+ * week's days still to do (the week's first, from a rollover), with nothing
+ * heavy for the legs; the other days still to do are skipped, and a day
+ * done stays as it was. Its sets are already halved (`applyDeload`), and
+ * each leg lift comes down to half its weight on its own steps, stashed so
+ * the next week gets it back (`resetToBaseSets`). A leg lift already under
+ * its stash stays as it is, so a rebuild can apply it again.
  */
 export function raceWeekSession(
   workouts: WorkoutDay[],
   smallPlates: boolean,
   unit: LiftUnit
 ): WorkoutDay[] {
+  const toDo = (day: WorkoutDay) => !day.completed && day.skipped !== true;
+  const session = workouts.findIndex(toDo);
   return workouts.map((day, index) =>
-    index > 0
-      ? { ...day, skipped: true }
+    index !== session
+      ? toDo(day)
+        ? { ...day, skipped: true }
+        : day
       : {
           ...day,
           exercises: day.exercises.map((ex) => {

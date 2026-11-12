@@ -275,6 +275,7 @@ The last lifting before the race is Sunday's deadlift session at full weight, th
 - **Fix:** in `buildPlan`, when the run plan's week is one of the race's (`raceBlockWeek`, `raceLiftWeek`), halve the sessions not yet done, apply race week's one session, and stamp `currentPhase` and `raceWeek`.
 - **Size:** S to M.
 - **In the way:** nothing. This is Lift4 (10) not reaching one path.
+- **STATUS 2026-11-12:** built as the fix says, reading the race's week for the week the lifts are in (a plan made from a Thursday on starts its runs and its lifts' long first week the Monday after). See `build-plan.md`, slice 3, #6.
 
 ### 5. Without a race the hybrid has no combined plan
 
