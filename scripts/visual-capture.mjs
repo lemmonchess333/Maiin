@@ -105,10 +105,10 @@ async function capturePass(browser, dark) {
   p.setDefaultTimeout(20000);
   await p.goto(BASE);
   await settle(p);
-  // A first visit opens on the welcome screen, whose "I have an account"
+  // A first visit opens on the welcome screen, whose "Sign in"
   // leads to the form.
   const haveAccount = p.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   await haveAccount

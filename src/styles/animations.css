@@ -23,38 +23,6 @@
   }
 }
 
-/* ─── THE WELCOME'S PICTURE ARRIVES (WelcomePreview) ─────────
-   The week card, then today's session, then the target, each rising
-   14px as it fades in, 90 ms apart; the target's ring then draws to its
-   share. Once, when the screen opens: a first visit sees it one time.
-   `translate` and not `transform`, so the two tilted cards keep their
-   `rotate` while they rise. */
-@keyframes welcome-rise {
-  from {
-    opacity: 0;
-    translate: 0 14px;
-  }
-}
-@keyframes welcome-ring {
-  from {
-    stroke-dasharray: 0 252;
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .welcome-rise {
-    animation: welcome-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-  }
-  .welcome-today {
-    animation-delay: 90ms;
-  }
-  .welcome-target {
-    animation-delay: 180ms;
-  }
-  .welcome-ring-arc {
-    animation: welcome-ring 700ms cubic-bezier(0.22, 1, 0.36, 1) 380ms backwards;
-  }
-}
-
 /* ─── SKELETON (LoadingSkeleton's `Skeleton`) ─────────────────
    A breathing opacity and a sweep across the theme-flipped
    `--skeleton-shimmer` gradient the component sets inline. Only when

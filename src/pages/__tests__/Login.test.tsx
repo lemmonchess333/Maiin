@@ -100,9 +100,9 @@ describe("Login — who sees which screen", () => {
     expect(screens()).toEqual(["welcome", "sign_up"]);
   });
 
-  it("I have an account opens the sign-in form", () => {
+  it("Sign in opens the sign-in form", () => {
     show();
-    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(
       screen.getByRole("heading", { name: "Welcome back" })
     ).toBeInTheDocument();
@@ -120,15 +120,23 @@ describe("Login — who sees which screen", () => {
   });
 });
 
-/* DS8: the welcome's picture is the product, and the forms open on a
-   lifter who faces you. Both carry the lockup and sit on the page. */
-describe("Login — what the signed-out screens show (DS8)", () => {
-  it("the welcome carries the lockup and its picture", () => {
-    show();
+/* The welcome stands on photographs of athletes (owner, 2026-11-12), and
+   the forms open on a lifter who faces you (DS8). Both carry the lockup. */
+describe("Login — what the signed-out screens show", () => {
+  it("the welcome carries the lockup over its photographs, in the dark theme", () => {
+    const { container } = show();
     expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
+    const photos = container.querySelector(".welcome-photos");
+    // A picture, not content: the words say what Tropos is.
+    expect(photos).toHaveAttribute("aria-hidden", "true");
+    expect(photos?.querySelector("img")).toHaveAttribute("alt", "");
+    // Light words on a dark ground in either theme: the stage's colours,
+    // which are fixed, not the theme's.
     expect(
-      screen.getByRole("img", { name: /^An example plan:/ })
-    ).toBeInTheDocument();
+      screen.getByRole("heading", {
+        name: "Your training and food, planned together",
+      })
+    ).toHaveClass("text-stage-foreground");
   });
 
   it("sign-in and sign-up share one lifter, which is not drawn again on the way across", () => {
@@ -374,7 +382,7 @@ describe("Login — reading the Terms and coming back", () => {
 
   it("brings the form back once, not on every later visit", () => {
     withLegalPages();
-    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(

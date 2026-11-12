@@ -190,7 +190,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     await page.goto("./");
     const emailField = page.locator("#login-email");
     const signIn = page.getByRole("button", {
-      name: "I have an account",
+      name: "Sign in",
       exact: true,
     });
     await signIn.or(emailField).first().waitFor();

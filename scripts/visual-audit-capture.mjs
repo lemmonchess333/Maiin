@@ -115,10 +115,10 @@ const run = async () => {
   console.log("Signing in…");
   await page.goto(BASE);
   await settle(page);
-  // A first visit opens on the welcome screen, whose "I have an account"
+  // A first visit opens on the welcome screen, whose "Sign in"
   // leads to the form.
   const haveAccount = page.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   await haveAccount
