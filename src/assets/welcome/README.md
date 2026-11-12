@@ -9,7 +9,8 @@ from about a hundred candidates, set against those welcomes on Mobbin.
 These are the one place outside places and communities (Soc16) where the
 app shows a photograph of people: the owner asked for the welcome to carry
 "photos of the athletes or people in athletic wear" (DS8 STATUS
-2026-11-11), and this replaces DS8 call 1's example week.
+2026-11-11), and this replaces DS8 call 1's example week. The decision is
+DS9 in the plan file.
 
 ## The rules for a file here
 
