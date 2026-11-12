@@ -220,12 +220,18 @@ longer replacing itself; only a phone shows the card.
       moves the countdown on; End rest or the next set takes the card away
       at once. After the lift, no ended rest cards are left on the Lock
       Screen.
-- [ ] **A run on the lock screen.** On the same build, start an outdoor
-      run and lock the phone. Passing: a dark card with "Recording" and the
-      distance, pace and time, updating while locked; Pause reads "Paused";
+- [ ] **A run on the lock screen.** On a build with the runner's drawing
+      (Wid2, 2026-11-12 or later), start an outdoor run and lock the phone.
+      Passing: a dark card with the runner drawn on the left in a coral
+      light, "RECORDING", the distance large and the pace and time under
+      it, updating while locked; the runner changes pose about every four
+      seconds; Pause reads "PAUSED" and the runner dims and holds still;
       Finish or Discard takes the card away at once, leaving no blank card;
-      on an iPhone with a Dynamic
-      Island, the run's distance shows there. The rest of
+      on an iPhone with a Dynamic Island, the run's distance shows there,
+      and a long press shows the runner with the distance and pace. Failing
+      in a way to report: a grey photo icon where the runner should be (the
+      image did not load), no card at all (ActivityKit refused the image's
+      size), or a dark box with a lighter band round it. The rest of
       `docs/run-live-activity.md`'s device checklist goes with it.
 - [ ] **A card a closed app left.** On the same build, swipe the app
       away during a rest, open it again and tick the next set. Passing:

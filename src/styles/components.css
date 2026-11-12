@@ -829,3 +829,19 @@ html.guiding [data-brand-mark] {
     transition: none;
   }
 }
+
+/* ─── A RACE'S PLACE IN THE RACE PICKER (RaceGoalPlanner) ──────
+   Each upcoming race is a card with its cover on the right, fading into
+   the card under the words, as Runna's race list draws it: a race is
+   known by its place faster than by its name in a list of sixty (Soc16
+   allows a race's real place). The fade is the card's own colour, so the
+   words sit on the card in either theme and the photograph never sits
+   under them. */
+.race-pick-fade {
+  background: linear-gradient(
+    to right,
+    hsl(var(--card)) 36%,
+    hsl(var(--card) / 0.82) 50%,
+    hsl(var(--card) / 0) 82%
+  );
+}
