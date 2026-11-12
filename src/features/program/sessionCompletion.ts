@@ -18,6 +18,7 @@ import { keptSwap, type SessionSwap } from "./sessionSwap";
 import type { SessionSuperset } from "./superset";
 
 import { loadsTheLegs } from "./easierToday";
+import { plannedSupersets } from "./planSupersets";
 import { WELCOME_BACK_DAYS } from "./liftLayoff";
 import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -91,9 +92,13 @@ export function sessionPrescription(
         ? ex.sessionProgression.baseline
         : ex
     );
+  const supersets = plannedSupersets(day.exercises);
   return structuredClone({
     dayName: day.dayName,
     exercises: day.exercises.map((ex) => sessionExercise(ex, completionId)),
+    // The plan's pairs open as the session's supersets (Lift22). Split
+    // there, a pair is the session's to change and the plan keeps its own.
+    ...(supersets.length > 0 && { supersets }),
     progressionBaseline: day.exercises.map((ex) =>
       baseline(
         progressionBaseline?.find(

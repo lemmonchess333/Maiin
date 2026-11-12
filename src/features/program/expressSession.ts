@@ -39,6 +39,7 @@ import {
   WARMUP_REST_SECONDS,
   type RestContext,
 } from "./restTime";
+import { pairedWithNext } from "./pairSlot";
 import { warmupSetCounts } from "./warmupRamp";
 
 /** The time-budgeted express variants this module builds. */
@@ -49,10 +50,7 @@ export type ExpressVariant = "express45" | "express30";
  *  execution-clone contract, different policy (one set less +
  *  deload-policy loads instead of a time budget). */
 export type SessionVariant =
-  | "full"
-  | ExpressVariant
-  | "easier_today"
-  | "time_budget";
+  "full" | ExpressVariant | "easier_today" | "time_budget";
 
 /**
  * Draft namespace for a session variant (PROGRAM-ADAPT-01 follow-up).
@@ -141,6 +139,8 @@ export type PricedExercise = Pick<ProgramExercise, "sets"> &
       | "isAccessory"
       | "repUnit"
       | "movementCategory"
+      | "instanceId"
+      | "supersetWith"
     >
   >;
 
@@ -177,15 +177,28 @@ export function estimateSessionSeconds(
   rest: RestContext = {}
 ): number {
   const warmups = warmupSetCounts(exercises);
-  return exercises.reduce((total, ex, i) => {
-    const restSeconds = restSecondsFor(
+  const restOf = (ex: PricedExercise) =>
+    restSecondsFor(
       { ...ex, exerciseId: ex.exerciseId ?? "", reps: ex.reps ?? 8 },
       rest
     );
-    const working = ex.sets * (WORK_SECONDS_PER_SET + restSeconds);
+  return exercises.reduce((total, ex, i) => {
+    const working = ex.sets * WORK_SECONDS_PER_SET;
     const warmup = warmups[i] * WARMUP_SECONDS_PER_SET;
-    return total + SETUP_SECONDS_PER_EXERCISE + warmup + working;
+    return total + SETUP_SECONDS_PER_EXERCISE + warmup + working + restsOf(i);
   }, 0);
+
+  /* A superset is priced as the workout screen runs it (Lift22 call 4):
+     one rest a round, after its second lift, so the first lift of a pair
+     rests nowhere and the second rests once for each round of the two. */
+  function restsOf(i: number): number {
+    const ex = exercises[i];
+    if (pairedWithNext(exercises, i)) return 0;
+    const first =
+      i > 0 && pairedWithNext(exercises, i - 1) ? exercises[i - 1] : null;
+    const rounds = first ? Math.max(first.sets, ex.sets) : ex.sets;
+    return rounds * restOf(ex);
+  }
 }
 
 function isAccessoryExercise(ex: ProgramExercise): boolean {

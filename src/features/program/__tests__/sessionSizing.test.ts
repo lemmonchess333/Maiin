@@ -16,6 +16,7 @@ import { estimateSessionSeconds } from "../expressSession";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
 import type { PrimaryGoal, WorkoutDay } from "../programTypes";
 import { FLOOR_DEADLIFT_IDS } from "../roleTable";
+import { pairedWithNext } from "../pairSlot";
 import { FIT_TOLERANCE, sessionFits } from "../sessionFit";
 
 const DAYS = [2, 3, 4, 5, 6] as const;
@@ -193,7 +194,7 @@ describe("a new plan's week, for every setup of the panel (Lift21)", () => {
         }
   });
 
-  it("holds the lifts an intermediate's time buys: three or four at 45 minutes, four or five at an hour", () => {
+  it("holds the lifts an intermediate's time buys: three to five at 45 minutes, four or five at an hour", () => {
     for (const s of SETUPS.filter(
       (x) => x.level !== "beginner" && x.days >= 4
     )) {
@@ -203,7 +204,8 @@ describe("a new plan's week, for every setup of the panel (Lift21)", () => {
         s.minutes === 30
           ? [2, 4]
           : s.minutes === 45
-            ? [3, 4]
+            ? // Lift22: two pairs give a day back a lift.
+              [3, 5]
             : s.minutes === 60
               ? [4, 5]
               : [5, 6];
@@ -263,10 +265,17 @@ describe("a new plan's week, for every setup of the panel (Lift21)", () => {
 });
 
 describe("the order a day gives its lifts up in", () => {
+  // A pair the plan wrote reads "a 3 + b 3" (Lift22).
   const shape = (week: WorkoutDay[]) =>
     week.map(
       (d) =>
-        `${d.dayName}: ${d.exercises.map((e) => `${e.exerciseId} ${String(e.sets)}`).join(", ")}`
+        `${d.dayName}: ${d.exercises
+          .map(
+            (e, i) =>
+              `${e.exerciseId} ${String(e.sets)}${pairedWithNext(d.exercises, i) ? " +" : ","}`
+          )
+          .join(" ")
+          .replace(/,$/, "")}`
     );
   const sixDays = (minutes: number) =>
     shape(weekOf({ days: 6, minutes, level: "intermediate", goal: "general" }));
@@ -274,14 +283,16 @@ describe("the order a day gives its lifts up in", () => {
   // Lift21's first reference: six days of General fitness, the week the
   // decision was taken on. Written out so a change to a rank or to the
   // sizing shows as a changed week, not only as a count.
-  it("keeps each day's first pieces at 45 minutes", () => {
+  // Lift22: the time a 45-minute day's pairs save goes to the lifts it
+  // had given up, in its own order, and then to sets.
+  it("keeps each day's first pieces at 45 minutes, its last ones paired", () => {
     expect(sixDays(45)).toEqual([
-      "Pull — Lat Focus: pull-ups 3, barbell-row 3, db-curl 3, face-pulls 3",
-      "Push — Chest Focus: bench-press 3, overhead-press 3, rope-tricep-pushdown 3, lateral-raise 3",
-      "Legs — Squat Focus: squat 3, romanian-deadlift 3, hack-squat 3, standing-calf-raise 3",
-      "Pull — Row Focus: barbell-row 3, lat-pulldown 3, db-curl 3, reverse-flyes 3",
-      "Push — Shoulder Focus: overhead-press 4, db-bench 3, rope-tricep-pushdown 3, lateral-raise 3",
-      "Legs — Deadlift Focus: deadlift 3, squat 4, seated-leg-curl 4",
+      "Pull — Lat Focus: pull-ups 4, barbell-row 4, db-curl 3 + face-pulls 3",
+      "Push — Chest Focus: bench-press 4, overhead-press 4, rope-tricep-pushdown 3 + lateral-raise 3",
+      "Legs — Squat Focus: squat 4, romanian-deadlift 3, hack-squat 3 + standing-calf-raise 3",
+      "Pull — Row Focus: barbell-row 4, lat-pulldown 4, db-curl 3 + reverse-flyes 3",
+      "Push — Shoulder Focus: overhead-press 3, db-bench 3, db-shoulder-press 3, rope-tricep-pushdown 3 + lateral-raise 3",
+      "Legs — Deadlift Focus: deadlift 3, squat 3, seated-leg-curl 3 + cable-crunch 3",
     ]);
   });
 

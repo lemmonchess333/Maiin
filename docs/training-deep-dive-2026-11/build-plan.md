@@ -81,8 +81,13 @@ Not part of Lift21. The marathon long run (decision 9) and starting from the
 runner's own week (decision 10) come to the owner as printed seasons for his
 own race, beside what main plans, before either changes.
 
+## Lift22: supersets in short plans
+
+STATUS 2026-11-12: built after panel 3 (`panel-3-supersets.md`) and the
+owner's two calls the same day: calls 2 and 3 widened, and Train draws a
+pair as its own block (B). New plans only.
+
 ## Not in this plan
 
-Sets that rise through a block, a priority muscle, supersets written into
-short plans, the split as a choice, the combined week (hybrid) and the watch.
+Sets that rise through a block, a priority muscle, the split as a choice, the combined week (hybrid) and the watch.
 Each is in the README's steps 2 to 5 and waits for its own decision.

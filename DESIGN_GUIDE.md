@@ -1103,6 +1103,13 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
 "race"`), never `templateId === "race"` (race ids are `5k_race` …
   `marathon_race`). Template swap is scoped per-day ("Changes this day
   only.").
+- **`SupersetBlock`** — a pair of lifts the plan wrote as a superset
+  (Lift22), on Train's day list: the two rows in a block of the lifting
+  colour at 6%, under one line, "Superset · One set of each, then rest".
+  The owner chose it on 12 November 2026 (B) over a rail beside the rows
+  with a "Superset A" tag, which squeezed the rows' words, and over a link
+  chip between them, which covered the second row. A pair lasts only while
+  its two lifts stand together (`pairSlot.ts`), so a reorder ends it.
 
 Locked model (Run9a): the Run surface is **two states only** — freeform
 substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
