@@ -230,7 +230,13 @@ function SettingsOptionCard({
         style={
           selected
             ? {
-                background: `${accent}14`,
+                /* The tint lies over the card, not in place of it. A bare
+                   `${accent}14` replaced `bg-card` with a wash over the
+                   PAGE, so in light the description under it (muted, 12px)
+                   was 4.23:1 on #e3e2ee, and in dark the selected card sat
+                   darker than its neighbours. axe caught it once Settings
+                   listed this editor (Trim1 call 2). */
+                background: `linear-gradient(${accent}14, ${accent}14), hsl(var(--card))`,
                 borderColor: `${accent}45`,
               }
             : undefined
