@@ -29,6 +29,7 @@ import { parseLocalDate } from "@/lib/dateHelpers";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import RaceFilters from "@/features/spaces/RaceFilters";
+import { spaceEditorialImage } from "@/lib/editorialImages";
 import {
   ALL_RACE_FILTERS,
   filterRaceDefs,
@@ -197,47 +198,35 @@ function UpcomingRacePicker({
                       setOpen(false);
                     }}
                     className={cn(
-                      "w-full min-h-[44px] flex flex-col items-start gap-1 rounded-lg px-3 py-2 text-left border transition-colors",
-                      isSelected ? "border-transparent" : "border-border/50"
+                      "race-pick-row relative w-full min-h-[72px] overflow-hidden flex flex-col justify-center items-start gap-1 rounded-xl bg-card px-3 py-2.5 text-left border transition-colors",
+                      isSelected ? "border-running" : "border-border/50"
                     )}
-                    style={
-                      isSelected
-                        ? { background: `${THEME.running}14` }
-                        : undefined
-                    }
                   >
-                    <span className="min-w-0 flex items-center gap-1.5">
+                    {/* The race's real place (Soc16), as Runna's race
+                        list shows it: its cover on the right, fading into
+                        the card under the words. */}
+                    <RacePlacePhoto spaceId={race.id} />
+                    <span className="relative flex items-center gap-1.5 text-caption font-semibold text-running-strong">
                       {isSelected && (
-                        <Check
-                          className="size-3.5 shrink-0 text-running"
-                          aria-hidden
-                        />
+                        <Check className="size-3.5 shrink-0" aria-hidden />
                       )}
-                      <span className="text-sm font-medium text-foreground">
-                        {race.name}
-                      </span>
-                    </span>
-                    <span className="shrink-0 flex items-center gap-2">
-                      <span className="text-caption text-muted-foreground font-mono tabular-nums">
+                      <span className="font-mono tabular-nums">
                         {formatDayMonthYear(parseLocalDate(dateKey))}
                       </span>
-                      <span
-                        className="text-caption text-muted-foreground"
-                        aria-hidden="true"
-                      >
-                        ·
-                      </span>
+                      <span aria-hidden="true">·</span>
                       <span
                         className={cn(
-                          "text-caption text-foreground",
                           /\d/.test(
                             RACE_DISTANCE_LABELS[race.event!.distance]
                           ) && "font-mono tabular-nums"
                         )}
                       >
-                        {RACE_DISTANCE_LABELS[race.event!.distance]}{" "}
-                        {race.event!.countryFlag}
+                        {RACE_DISTANCE_LABELS[race.event!.distance]}
                       </span>
+                    </span>
+                    <span className="relative max-w-[62%] text-sm font-semibold text-foreground">
+                      {race.name}{" "}
+                      <span aria-hidden="true">{race.event!.countryFlag}</span>
                     </span>
                   </button>
                 );
@@ -247,6 +236,30 @@ function UpcomingRacePicker({
         </div>
       </Collapse>
     </div>
+  );
+}
+
+/**
+ * A race's cover in its row of the picker: the right of the card, fading
+ * into it under the words. Decorative, since the row's name says which
+ * race it is. A race with no cover keeps the plain card.
+ */
+function RacePlacePhoto({ spaceId }: { spaceId: string }) {
+  const photo = spaceEditorialImage(spaceId);
+  if (!photo) return null;
+  return (
+    <>
+      <img
+        src={photo}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className="race-pick-photo absolute inset-y-0 right-0 h-full w-[64%] object-cover"
+      />
+      <span aria-hidden="true" className="race-pick-fade absolute inset-0" />
+    </>
   );
 }
 

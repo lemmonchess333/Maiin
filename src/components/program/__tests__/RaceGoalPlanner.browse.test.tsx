@@ -35,6 +35,37 @@ describe("race picker browsing", () => {
       weeklyRunDays: 3,
     }),
   };
+  it("shows each race on a card with its real place, as a picture only", () => {
+    const handlers = callbacks();
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...handlers}
+        selectedEventSpaceId="london-marathon"
+        targetDate="2027-04-24"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "London Marathon" }));
+    const london = screen.getByRole("option", {
+      name: /London Marathon 24 Apr 2027/,
+    });
+    const photo = london.querySelector("img.race-pick-photo");
+    // The race's own cover (the same file as its Space and race hero),
+    // decorative: the row's name already says which race it is.
+    expect(photo?.getAttribute("src")).toMatch(/space-london-marathon/);
+    expect(photo).toHaveAttribute("alt", "");
+    expect(photo).toHaveAttribute("aria-hidden", "true");
+    expect(photo).toHaveAttribute("loading", "lazy");
+    // Every race the picker offers has a cover today.
+    const missing = within(
+      screen.getByRole("listbox", { name: "Upcoming races" })
+    )
+      .getAllByRole("option")
+      .filter((option) => !option.querySelector("img.race-pick-photo"))
+      .map((option) => option.getAttribute("aria-label"));
+    expect(missing).toEqual([]);
+  });
+
   it("offers both London race days and passes the selected day into the plan draft", () => {
     const handlers = callbacks();
     render(
