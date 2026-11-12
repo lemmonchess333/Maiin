@@ -33,7 +33,7 @@ export function suggestedRestSeconds(
 
 /** Where a set's rest comes from besides the lift itself. */
 export interface RestContext {
-  /** The rest the person fixed in Workout preferences
+  /** The rest the person fixed in Settings → Lift plan
    *  (`profile.defaultRestSeconds`); 0 or absent leaves it to the plan. */
   fixedRest?: number;
   /** The session length the plan is built for. */
@@ -50,8 +50,8 @@ export interface RestContext {
 export const WARMUP_REST_SECONDS = 45;
 
 /**
- * The rest a set gets: the one the person fixed in Workout preferences, or,
- * where they left it to the plan, the plan's suggestion.
+ * The rest a set gets: the one the person fixed in Settings → Lift plan,
+ * or, where they left it to the plan, the plan's suggestion.
  */
 export function restSecondsFor(
   exercise: Parameters<typeof suggestedRestSeconds>[0],

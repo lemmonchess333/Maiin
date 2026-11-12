@@ -111,21 +111,17 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
-| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                           |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                     |
-| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
-| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
-| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, with the rest timer and Reset programme at its foot           |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor, with voice cues (Train's Run tab deep-links here)              |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
 | `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Quick add offers (F2d)             |
-| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
 | `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                    |
 | `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                              |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                 |
-| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                              |
 | `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                               |
 | `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
@@ -135,6 +131,13 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
+
+Four Settings routes are redirects, kept for links already saved (Trim1,
+2026-11-11): `/settings/training` and `/settings/workout-prefs` open Lift
+plan, and `/settings/subscription` and `/settings/data` open Account. The
+Settings list has ten rows: Lift plan, Run plan, Nutrition, Shoes;
+Notifications, Units & appearance, Social & privacy, Apple Health; Account,
+Support & legal.
 
 ## Key Business Logic (src/lib/)
 

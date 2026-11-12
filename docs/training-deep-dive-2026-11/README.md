@@ -26,6 +26,7 @@ evidence, with file and line for every code claim.
 | `panel-1-six-days-general.md` | The first printed week under Pgm9: today beside a target          |
 | `build-plan.md`               | The slices that follow Lift21, and what the owner sees after each |
 | `panel-2-every-split.md`      | Slice 1: the sizing rules run on 96 setups, today beside new      |
+| `panel-3-supersets.md`        | Lift22: pairs in 30 and 45 minute plans, beside Lift21            |
 | `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything       |
 
 ## 1. The answers
