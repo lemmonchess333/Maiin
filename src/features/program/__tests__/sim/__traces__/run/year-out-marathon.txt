@@ -263,38 +263,30 @@ w52 2027-03-01  recovery, plan week 52 of 52  counted 4/4  plan 352 min, long 0.
   week    336 min · 56.8 km · easy 27% · longest ×2.11 the month's
   runner  VDOT 41.21 · fitness 246 min · easy own 5:58–6:43, prescribed 5:59–6:44
   · 2027-03-07: server entered recovery until 2027-04-04
-w53 2027-03-08  recovery, plan week 52 of 52  counted 3/4  plan 120 min, long 0.0 km, quality 0
-  planned Tue:easy_30 · Wed:easy_30 · Sat:easy_30 · Sun:easy_30
-  ran     Wed easy_30 4.7 km/30 min 6:21 [on target] · Sat easy_30 4.7 km/30 min 6:19 [on target] · Sun easy_30 4.9 km/30 min 6:10 [on target]
-  week    90 min · 14.3 km · easy 100% · longest ×0.12 the month's
-  runner  VDOT 40.68 · fitness 222 min · easy own 5:54–6:38, prescribed 5:59–6:44
-w54 2027-03-15  recovery, plan week 52 of 52  counted 4/4  plan 120 min, long 0.0 km, quality 0
-  planned Tue:easy_30 · Wed:easy_30 · Sat:easy_30 · Sun:easy_30
-  ran     Tue easy_30 4.9 km/30 min 6:07 [on target] · Wed easy_30 4.9 km/30 min 6:11 [on target] · Sat easy_30 4.8 km/30 min 6:16 [on target] · Sun easy_30 4.8 km/30 min 6:13 [on target]
-  week    120 min · 19.4 km · easy 100% · longest ×0.12 the month's
-  runner  VDOT 40.30 · fitness 207 min · easy own 5:57–6:41, prescribed 5:59–6:44
-w55 2027-03-22  recovery, plan week 52 of 52  counted 3/4  plan 120 min, long 0.0 km, quality 0
-  planned Tue:easy_30 · Wed:easy_30 · Sat:easy_30 · Sun:easy_30
-  ran     Tue easy_30 4.7 km/30 min 6:19 [on target] · Wed easy_30 4.9 km/30 min 6:08 [on target] · Sat easy_30 4.9 km/30 min 6:09 [on target]
-  week    90 min · 14.5 km · easy 100% · longest ×0.12 the month's
-  runner  VDOT 39.83 · fitness 189 min · easy own 5:59–6:44, prescribed 5:59–6:44
-w56 2027-03-29  recovery, plan week 52 of 52  counted 4/4  plan 120 min, long 0.0 km, quality 0
-  planned Tue:easy_30 · Wed:easy_30 · Sat:easy_30 · Sun:easy_30
-  ran     Tue easy_30 4.8 km/30 min 6:15 [on target] · Wed easy_30 4.8 km/30 min 6:11 [on target] · Sat easy_30 4.7 km/30 min 6:20 [on target] · Sun easy_30 4.7 km/30 min 6:23 [on target]
-  week    120 min · 19.1 km · easy 100% · longest ×0.11 the month's
-  runner  VDOT 39.54 · fitness 178 min · easy own 6:02–6:47, prescribed 5:59–6:44
+w53 2027-03-08  recovery, plan week 52 of 52  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 40.33 · fitness 208 min
+w54 2027-03-15  recovery, plan week 52 of 52  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 39.48 · fitness 176 min
+w55 2027-03-22  recovery, plan week 52 of 52  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 38.66 · fitness 149 min
+w56 2027-03-29  recovery, plan week 52 of 52  counted 0/0  plan 0 min, long 0.0 km, quality 0
+  week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
+  runner  VDOT 37.90 · fitness 126 min
 w57 2027-04-05  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 38.72 · fitness 151 min
+  runner  VDOT 37.20 · fitness 107 min
   · 2027-04-11: server ended recovery
 w58 2027-04-12  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 37.96 · fitness 128 min
+  runner  VDOT 36.56 · fitness 90 min
 w59 2027-04-19  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 37.25 · fitness 108 min
+  runner  VDOT 35.98 · fitness 76 min
 
-runs 195 · counted 195 of the 195 planned · injuries 0 · VDOT 40.0 → 37.25
+runs 181 · counted 181 of the 181 planned · injuries 0 · VDOT 40.0 → 35.98
 race 2027-03-07 marathon_race 4:05:45 at VDOT 40.07
 
 year-out-marathon · seed 1 · base model · 59 weeks from 2026-03-09 · sessions fitted to 60 minutes

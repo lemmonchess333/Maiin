@@ -606,6 +606,41 @@ describe("after race day, the race plan waits for the race's own ending", () => 
     expect(next.runPlan?.recoveryEndDate).toBe(shift(raceDay, 7));
   });
 
+  it("rolls on through a week off after a marathon (D10)", () => {
+    // A marathon's recovery starts with a week of no runs. The rollover
+    // moves a race plan on from its runs' week, so the empty week keeps its
+    // key on the plan, and the weeks after it are planned as they come.
+    const { state, profile } = inRaceWeek();
+    const marathon = { distance: "marathon", targetDate: raceDay };
+    const recovering: ProgramState = {
+      ...state,
+      runPlan: {
+        ...state.runPlan!,
+        raceGoal: marathon,
+        phase: "recovery",
+        recoveryEndDate: shift(raceDay, 28),
+      },
+    };
+    const marathoner = { ...profile, raceGoal: marathon };
+    const weekOff = onDay(mondayAfter, () =>
+      rollRunWeeks(recovering, marathoner, weekOf(mondayAfter), "none", null)
+    );
+    expect(weekOff.weeks).toBe(1);
+    expect(weekOff.state.runDays).toEqual([]);
+    expect(weekOff.state.runPlan?.emptyRunWeekKey).toBe(weekOf(mondayAfter));
+    const later = shift(mondayAfter, 14);
+    const back = onDay(later, () =>
+      rollRunWeeks(weekOff.state, marathoner, weekOf(later), "none", null)
+    );
+    expect(back.weeks).toBe(2);
+    expect(back.state.runDays?.length).toBeGreaterThan(0);
+    expect(
+      back.state.runDays?.every((run) => run.weekKey === weekOf(later))
+    ).toBe(true);
+    expect(back.state.runPlan?.emptyRunWeekKey).toBeUndefined();
+    expect(back.state.runPlan?.phase).toBe("recovery");
+  });
+
   it("keeps a plan a newer build wrote, and its runs, as they are", () => {
     // A plan this build cannot build. Read as free running it was cleared
     // on the first rollover an older build ran.
