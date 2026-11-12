@@ -92,6 +92,25 @@ function sexFactor(sex: string | undefined): number {
 }
 
 /**
+ * The most bodyweight a first weight is scaled from (training deep dive,
+ * D8). The multiples above are a lean lifter's; past these, more bodyweight
+ * says less about strength, and a 150 kg man who called himself a beginner
+ * was given a 105 kg squat and a 127.5 kg deadlift for his first session. A
+ * heavier lifter who is stronger than this lifts more, and the plan follows
+ * the weight lifted from the first session.
+ */
+export const SEED_BODYWEIGHT_CAP_KG = { female: 70, other: 90 } as const;
+
+function seedBodyweight(bodyweightKg: number, sex: string | undefined) {
+  return Math.min(
+    bodyweightKg,
+    sex === "female"
+      ? SEED_BODYWEIGHT_CAP_KG.female
+      : SEED_BODYWEIGHT_CAP_KG.other
+  );
+}
+
+/**
  * Build a StartingLoadContext from a profile-like object, or `undefined` when
  * there's no usable bodyweight (→ generateProgram skips seeding and keeps the
  * hardcoded fallbacks). Centralises the experience coercion + the bodyweight
@@ -131,8 +150,8 @@ export function startingWeightForCategory(
   category: MovementCategory,
   ctx: StartingLoadContext
 ): number {
-  const bw = ctx.bodyweightKg;
-  if (!Number.isFinite(bw) || bw <= 0) return 0;
+  if (!Number.isFinite(ctx.bodyweightKg) || ctx.bodyweightKg <= 0) return 0;
+  const bw = seedBodyweight(ctx.bodyweightKg, ctx.sex);
   const mult = BW_MULTIPLE[category]?.[ctx.experience] ?? 0;
   if (mult <= 0) return 0;
   const raw = bw * mult * sexFactor(ctx.sex);

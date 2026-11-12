@@ -212,6 +212,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Root cause: `startingWeightForCategory` is bodyweight x multiple x sex factor with no cap (`startingLoads.ts:125-136`).
 - Fix: cap the bodyweight the seed reads (for example 90 kg for men, 70 kg for women) and floor it too. Build Pull-Ups as Lat Pulldown above a bodyweight line, as the beginner rule already does.
 - Size: S. No lock (Lift4 (5) says only that starting weights are estimated).
+- STATUS 2026-11-12: the cap built (90 kg, 70 kg for a woman); no floor; pull-ups above a bodyweight line not yet. See `build-plan.md`, slice 3.
 
 ### D9. "Support my running" is the size plan with low reps. Hurts quality.
 
