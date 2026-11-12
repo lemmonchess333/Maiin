@@ -18,7 +18,11 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BAR_KG, barWeight } from "./warmupRamp";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { equipmentGridFor, loadGridFor } from "./loadSteps";
-import { contraindicatedFor } from "./injurySubstitutions";
+import {
+  contraindicatedFor,
+  heldForInjury,
+  INJURY_SWAP_LOAD_SHARE,
+} from "./injurySubstitutions";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
 
 import type {
@@ -432,10 +436,14 @@ export function seedStartingLoads(
   {
     unloadedOnly = false,
     building,
+    injuries = [],
   }: {
     /** Seed only lifts at 0 kg: a plan the person already has keeps the
      *  loads it shows, and only a lift with none gets a first guess. */
     unloadedOnly?: boolean;
+    /** The person's injuries: a lift swapped in for one of them starts at
+     *  `INJURY_SWAP_LOAD_SHARE` of its seed (training deep dive, D2). */
+    injuries?: readonly string[];
     /** Set when the generator builds the week, from nothing or for new
      *  lift days: the lifts it builds start at the bar or over it
      *  (`noneUnderTheBar`). Unset, as for a settings save that keeps the
@@ -498,11 +506,17 @@ export function seedStartingLoads(
             ex.repUnit
           );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
+      const first =
+        !fromTheBar && heldForInjury(ex, injuries)
+          ? loadGridFor(ex.exerciseId, false, ctx?.unit ?? "kg").nearest(
+              seed * INJURY_SWAP_LOAD_SHARE
+            )
+          : seed;
       return {
         ...ex,
-        weight: seed,
-        lastSuccessfulWeight: seed,
-        lastAttemptedWeight: seed,
+        weight: first,
+        lastSuccessfulWeight: first,
+        lastAttemptedWeight: first,
       };
     }),
   }));

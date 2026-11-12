@@ -4,7 +4,10 @@ import {
   CONTRAINDICATED,
   contraindicatedFor,
   findSafeSubstitute,
+  INJURY_SWAP_LOAD_SHARE,
 } from "./injurySubstitutions";
+import { repUnitForExerciseId } from "./repUnits";
+import { loadGridFor } from "./loadSteps";
 import { offerableTo, toExperience, type Experience } from "./experienceModel";
 import {
   exerciseBank,
@@ -85,18 +88,44 @@ function replaceExercise(
   exerciseId: string,
   name: string,
   loadCtx: StartingLoadContext | undefined,
-  notes: string
+  notes: string,
+  /** Of the mapped load, the share the new lift starts at: less than all of
+   *  it for a lift chosen to spare an injury (`INJURY_SWAP_LOAD_SHARE`). */
+  loadShare = 1
 ): ProgramExercise {
   if (exerciseId === ex.exerciseId) return { ...ex, notes };
   const calibrated = weightAfterExerciseSwap(ex, exerciseId, loadCtx);
+  const weight =
+    loadShare < 1 && calibrated.weight > 0
+      ? loadGridFor(exerciseId, false, loadCtx?.unit ?? "kg").nearest(
+          calibrated.weight * loadShare
+        )
+      : calibrated.weight;
+  // A hold and a lift counted in reps don't share numbers: a crunch's 12
+  // reps would be a 12-second plank, and a superman hold's 30 seconds 30
+  // reps of a dead bug. The new unit starts at Train's Replace's numbers.
+  const repUnit = repUnitForExerciseId(exerciseId);
+  const unitChanged = (ex.repUnit === "seconds") !== (repUnit === "seconds");
+  const { repUnit: _oldUnit, repRangeMax: _oldMax, ...rest } = ex;
+  const counted = unitChanged
+    ? { reps: repUnit === "seconds" ? 30 : 10 }
+    : {
+        reps: ex.reps,
+        ...(ex.repRangeMax !== undefined
+          ? { repRangeMax: ex.repRangeMax }
+          : {}),
+      };
   return {
-    ...ex,
+    ...rest,
+    ...counted,
+    ...(unitChanged ? { baseReps: counted.reps } : {}),
+    ...(repUnit !== undefined ? { repUnit } : {}),
     exerciseId,
     name,
     movementCategory: calibrated.movementCategory,
-    weight: calibrated.weight,
-    lastSuccessfulWeight: calibrated.weight,
-    lastAttemptedWeight: calibrated.weight,
+    weight,
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
     consecutiveFailures: 0,
     plateauCount: 0,
     performanceHistory: [],
@@ -258,7 +287,8 @@ export function applyInjuryFiltersToWorkouts(
         safe.id,
         safe.name,
         loadCtx,
-        `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`
+        `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`,
+        INJURY_SWAP_LOAD_SHARE
       );
       continue;
     }

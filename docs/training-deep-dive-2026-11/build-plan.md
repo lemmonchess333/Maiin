@@ -62,6 +62,17 @@ weight, the lower-back swaps, the bodyweight cap, one-rep ranges, the lifting
 taper in the week a plan is made, lift order chosen last, and one weight for a
 lift held on two days.
 
+STATUS 2026-11-12, #2 (the lower back): the rack pull and the kettlebell
+swing are off the lower-back lists; crunches, the cable crunch, the decline
+sit-up and the hanging leg raise are ruled out for a sore lower back, with the
+dead bug, the Pallof press and the planks in their place; a lift swapped in for
+an injury starts at 70% of its seed (`INJURY_SWAP_LOAD_SHARE`); and a swap
+across units (a hold for a lift counted in reps) takes numbers in its own unit.
+Over 2,700 lower-back plans the heaviest hinge went from 102% of the deadlift
+the same person would get to 71% (`lowerBackPlans.test.ts`). The 8-12 range for
+an injury swap goes with #5, which sets rep floors by lift type in the same
+place.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one

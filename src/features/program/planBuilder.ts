@@ -97,7 +97,7 @@ import {
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
-import { contraindicatedFor } from "./injurySubstitutions";
+import { heldForInjury } from "./injurySubstitutions";
 import {
   generateRacePlanV2,
   scheduleStructuredWeekV2,
@@ -341,10 +341,7 @@ function keepInjurySwaps(
     ...day,
     exercises: day.exercises.map((ex, e) => {
       const was = before[d]?.exercises[e];
-      const held =
-        was?.swappedFrom !== undefined &&
-        contraindicatedFor(was.swappedFrom.exerciseId, injuries).length > 0;
-      return held ? { ...was } : ex;
+      return was && heldForInjury(was, injuries) ? { ...was } : ex;
     }),
   }));
 }
@@ -576,6 +573,7 @@ function buildLiftProgram(input: LiftProgramInput): {
     mainRepAnchor(input.primaryGoal, toExperience(input.experience)),
     {
       unloadedOnly: !loadCtx,
+      injuries: input.injuries,
       // Pgm8 L15, as generateProgram built the week, or this pass would put
       // a lift it started at the bar back under it. The week is fitted, so
       // nothing new is built here. A save that keeps the week builds
