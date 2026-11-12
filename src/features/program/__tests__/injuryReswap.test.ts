@@ -15,6 +15,8 @@
 import { rescaleForSwap } from "@/features/program/variationBank";
 import { describe, it, expect } from "vitest";
 import { applyInjuryFiltersToWorkouts } from "../matchTemplate";
+import { INJURY_SWAP_LOAD_SHARE } from "../injurySubstitutions";
+import { loadGridFor } from "../loadSteps";
 import type { WorkoutDay, ProgramExercise } from "../programTypes";
 
 function ex(
@@ -66,8 +68,13 @@ describe("applyInjuryFiltersToWorkouts", () => {
     // knee; carrying it verbatim is the dangerous direction. Rescaled by the
     // load-factor ratio instead. History and sets still carry verbatim, which
     // is what this test was really protecting.
+    // And a lift chosen to spare an injury starts lighter than that
+    // (training deep dive, D2): at INJURY_SWAP_LOAD_SHARE of the mapped load.
     expect(swapped.weight).toBe(
-      rescaleForSwap(140, "squat", swapped.exerciseId, "knee_dominant")
+      loadGridFor(swapped.exerciseId, false).nearest(
+        rescaleForSwap(140, "squat", swapped.exerciseId, "knee_dominant") *
+          INJURY_SWAP_LOAD_SHARE
+      )
     );
     expect(swapped.weight).toBeLessThan(140);
     expect(swapped.sets).toBe(5); // sets carried
@@ -108,6 +115,30 @@ describe("applyInjuryFiltersToWorkouts", () => {
     expect(twice[0].exercises[0].exerciseId).toBe(
       once[0].exercises[0].exerciseId
     );
+  });
+
+  it("gives a lift swapped across units numbers in its own unit", () => {
+    // A superman hold is held for seconds, its substitute the dead bug
+    // counted in reps; the crunch's reps would have made a plank of reps.
+    const out = applyInjuryFiltersToWorkouts(
+      [
+        day([
+          ex("superman-hold", "Superman Hold", {
+            movementCategory: "core",
+            reps: 30,
+            baseReps: 30,
+            repUnit: "seconds",
+            weight: 0,
+          }),
+        ]),
+      ],
+      ["lower_back"]
+    );
+    const swapped = out[0].exercises[0];
+    expect(swapped.exerciseId).toBe("dead-bug");
+    expect(swapped.repUnit).toBeUndefined();
+    expect(swapped.reps).toBe(10);
+    expect(swapped.baseReps).toBe(10);
   });
 });
 

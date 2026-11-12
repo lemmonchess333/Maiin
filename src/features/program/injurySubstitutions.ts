@@ -61,11 +61,7 @@
  */
 
 export type InjuryCategory =
-  | "knee"
-  | "shoulder"
-  | "lower_back"
-  | "wrist"
-  | "elbow";
+  "knee" | "shoulder" | "lower_back" | "wrist" | "elbow";
 
 export interface SafeSubstitute {
   /** Exercise id from `src/lib/exercises.ts`. Must resolve to a real entry. */
@@ -96,7 +92,12 @@ function sub(
  *
  *   lower_back  "Avoids heavy loads on your spine": the deadlifts, the
  *               bent-over barbell rows, the barbell squats and the standing
- *               barbell press.
+ *               barbell press, and the core lifts that bend the spine under
+ *               load (crunches, the cable crunch, the decline sit-up, the
+ *               hanging leg raise; training deep dive, 11 November 2026).
+ *               Neither the rack pull nor the kettlebell swing is a
+ *               substitute: one is the deadlift from the knee at more weight,
+ *               the other a fast hinge.
  *   knee        "Adjusts squat and lunge variations": the barbell and
  *               machine squats, the lunges and the leg extension. The goblet
  *               squat, the Bulgarian split squat and the step-up are the
@@ -123,6 +124,12 @@ export const CONTRAINDICATED: Readonly<
   "romanian-deadlift": ["lower_back"],
   "db-rdl": ["lower_back"],
   "superman-hold": ["lower_back"],
+  // Trunk flexion, repeated and loaded: the spine bends under load, which
+  // the header's framework (McGill) is built to avoid.
+  crunches: ["lower_back"],
+  "cable-crunch": ["lower_back"],
+  "decline-sit-up": ["lower_back"],
+  "leg-raise": ["lower_back"],
   "barbell-row": ["lower_back"],
   "pendlay-row": ["lower_back"],
   "t-bar-row": ["lower_back"],
@@ -163,6 +170,26 @@ export const CONTRAINDICATED: Readonly<
   "diamond-push-ups": ["elbow", "wrist"],
 };
 
+/**
+ * How much of the mapped load a lift swapped in for an injury starts at
+ * (training deep dive, D2): a trap bar deadlift chosen for a sore back
+ * started at the deadlift's full weight. The lift then climbs from the
+ * person's own sessions, as any lift does.
+ */
+export const INJURY_SWAP_LOAD_SHARE = 0.7;
+
+/** Whether a lift holds its place for an injury: the lift it replaced
+ *  (`swappedFrom`) is one the person's injuries rule out. */
+export function heldForInjury(
+  ex: { swappedFrom?: { exerciseId: string } },
+  injuries: readonly string[]
+): boolean {
+  return (
+    ex.swappedFrom !== undefined &&
+    contraindicatedFor(ex.swappedFrom.exerciseId, injuries).length > 0
+  );
+}
+
 /** The injuries, of `injuries`, a lift is contraindicated for. */
 export function contraindicatedFor(
   exerciseId: string,
@@ -183,12 +210,6 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Trap Bar Deadlift",
       ["lower_back"],
       "More upright torso reduces erector-spinae activation"
-    ),
-    sub(
-      "rack-pull",
-      "Rack Pull",
-      ["lower_back"],
-      "Reduced ROM, starts at knee height, less lumbar flexion"
     ),
     sub(
       "hip-thrust",
@@ -216,12 +237,6 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Hip Thrust",
       ["lower_back", "knee"],
       "Targets same posterior chain without hinging under load"
-    ),
-    sub(
-      "kettlebell-swing",
-      "Kettlebell Swing",
-      ["lower_back"],
-      "Ballistic pattern, lighter load, shorter TUT"
     ),
     sub(
       "glute-ham-raise",
@@ -344,12 +359,6 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Glute-hamstring focus with spine supported"
     ),
     sub(
-      "kettlebell-swing",
-      "Kettlebell Swing",
-      ["lower_back"],
-      "Ballistic posterior-chain work, lighter load"
-    ),
-    sub(
       "glute-ham-raise",
       "Glute-Ham Raise",
       ["lower_back"],
@@ -385,6 +394,101 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Hip Thrust",
       ["lower_back", "knee"],
       "Glute focus without spinal extension"
+    ),
+  ],
+
+  // Crunches, the cable crunch, the decline sit-up and the hanging leg
+  // raise flex the spine under load, many times a set. The core work that
+  // holds the spine still instead: the dead bug and the Pallof press, with
+  // the planks for a day that has those already. The dead bug comes first
+  // because it is counted in reps, as the lifts it replaces are.
+  crunches: [
+    sub(
+      "dead-bug",
+      "Dead Bug",
+      ["lower_back", "knee", "shoulder", "wrist", "elbow"],
+      "Trains the abs while the spine stays still"
+    ),
+    sub(
+      "pallof-press",
+      "Pallof Press",
+      ["lower_back", "knee"],
+      "Resists rotation with the spine held still"
+    ),
+    sub(
+      "side-plank",
+      "Side Plank",
+      ["lower_back", "knee"],
+      "A held side bridge, no bending of the spine"
+    ),
+    sub(
+      "plank",
+      "Plank",
+      ["lower_back", "knee"],
+      "A held brace, no bending of the spine"
+    ),
+  ],
+
+  "cable-crunch": [
+    sub(
+      "pallof-press",
+      "Pallof Press",
+      ["lower_back", "knee"],
+      "The same cable, resisting rotation with the spine held still"
+    ),
+    sub(
+      "dead-bug",
+      "Dead Bug",
+      ["lower_back", "knee", "shoulder", "wrist", "elbow"],
+      "Trains the abs while the spine stays still"
+    ),
+    sub(
+      "plank",
+      "Plank",
+      ["lower_back", "knee"],
+      "A held brace, no bending of the spine"
+    ),
+  ],
+
+  "decline-sit-up": [
+    sub(
+      "dead-bug",
+      "Dead Bug",
+      ["lower_back", "knee", "shoulder", "wrist", "elbow"],
+      "Trains the abs while the spine stays still"
+    ),
+    sub(
+      "pallof-press",
+      "Pallof Press",
+      ["lower_back", "knee"],
+      "Resists rotation with the spine held still"
+    ),
+    sub(
+      "plank",
+      "Plank",
+      ["lower_back", "knee"],
+      "A held brace, no bending of the spine"
+    ),
+  ],
+
+  "leg-raise": [
+    sub(
+      "dead-bug",
+      "Dead Bug",
+      ["lower_back", "knee", "shoulder", "wrist", "elbow"],
+      "Lowers the legs with the lower back held down"
+    ),
+    sub(
+      "pallof-press",
+      "Pallof Press",
+      ["lower_back", "knee"],
+      "Resists rotation with the spine held still"
+    ),
+    sub(
+      "plank",
+      "Plank",
+      ["lower_back", "knee"],
+      "A held brace, no bending of the spine"
     ),
   ],
 
