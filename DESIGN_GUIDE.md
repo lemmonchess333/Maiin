@@ -1339,6 +1339,10 @@ record of what each button was for:
   fit the chip. What it costs: a snack between 10:00 and 15:00 is filed
   as lunch until it is moved on its row, and that cancels the day's
   lunch reminder. This replaces Food11 call 3's chip.
+- **2026-11-11, Trim1 call 4 — Copy yesterday is gone.** The owner:
+  "streamline all". Its "Log selected meals" button (the 13 October
+  entry above) went with it. The weekly logging focus card left the page
+  in the same change.
 - **2026-11-11 — Food11: Scan is an icon inside the field.** The owner
   asked for scanning to be placed as the food apps place it. Of ten apps
   surveyed, none draws a filled, coloured camera button on its day

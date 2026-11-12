@@ -1319,7 +1319,6 @@ describe("an action takes its domain's colour wherever it appears", () => {
       "src/components/nutrition/ServingSizeDrawer.tsx Log food",
       "src/components/ManualFoodLogger.tsx Log meal",
       "src/components/food/QuickMealPortionSheet.tsx Log this portion",
-      "src/components/food/CopyMealsSheet.tsx Log selected meals",
       "src/components/FoodAnalyzer.tsx Log to",
       "src/pages/RunSummary.tsx Log recovery food",
       "src/pages/Food.tsx Log",

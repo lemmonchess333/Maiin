@@ -92,10 +92,17 @@ describe("Food page order", () => {
     expect(composer).not.toContain("Cancel adding to");
   });
 
-  it("the weekly-focus card follows the diary", () => {
+  it("nothing follows the diary but the water row", () => {
+    // Trim1 call 4 (the owner, 11 November 2026: "streamline all"). The
+    // weekly logging focus card and the Copy yesterday button closed the
+    // page. The week bars show the same days, and the usual row repeats
+    // a meal in one tap.
     const timeline = food.indexOf("<FoodTimeline");
-    const focus = food.indexOf("<FoodConsistencyCard");
+    const water = food.indexOf("<FoodWaterRow");
     expect(timeline).toBeGreaterThan(-1);
-    expect(focus).toBeGreaterThan(timeline);
+    expect(water).toBeGreaterThan(timeline);
+    expect(food).not.toContain("FoodConsistencyCard");
+    expect(food).not.toContain("CopyMealsSheet");
+    expect(food).not.toMatch(/Copy yesterday/i);
   });
 });

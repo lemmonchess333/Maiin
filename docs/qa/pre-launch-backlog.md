@@ -4205,8 +4205,8 @@ unit suites replay those orders; only a phone fires them for real.
       Passing: the ring empties and the run carries on; a full hold still
       finishes it.
 - [ ] **A long press held on.** Hold an exercise row on Train for a full
-      second before lifting, and hold a saved food in Food's Quick add for
-      a second. Passing: Train's menu opens and the exercise's history does
+      second before lifting, and hold a saved food under Food's Log again
+      for a second. Passing: Train's menu opens and the exercise's history does
       not; the food is removed (with Undo) and nothing is logged.
 - [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
       finger and then the other without moving it, then tap once. Passing:
@@ -4310,7 +4310,7 @@ WKWebView.
       deeper orange and its head stands clear of the first lap by a thin
       line of the page's colour. Passing: the two laps can be told apart
       at arm's length, in light and in dark.
-- [ ] **The flight.** Log a food by typing, and again from the Quick add
+- [ ] **The flight.** Log a food by typing, and again from the Log again
       list. Passing: its drawing rises from the field to the end of the
       arc and the arc then grows, in about half a second, with no stutter
       and no jump of the page; the keyboard stays up and the next food
