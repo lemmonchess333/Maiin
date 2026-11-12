@@ -192,6 +192,13 @@ describe("App Store listing: claims the code can contradict", () => {
       /apple watch|heart rate|live activit|dynamic island|push notification/i
     );
   });
+
+  it("does not offer guided runs, which the run chooser no longer lists", () => {
+    // Trim1 call 8 (November 2026) took the three fixed guided runs out
+    // of the chooser: structured sessions come from the plan. The
+    // description had "long runs and guided runs".
+    expect(everything).not.toMatch(/guided run/i);
+  });
 });
 
 describe("App Store listing: house voice", () => {
