@@ -115,7 +115,7 @@ import type {
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { raceLegTrimCut } from "@/features/program/programEngine";
 import { sessionLengthOption } from "@/features/program/sessionFit";
-import { legTrimEffect } from "@/lib/liftSessionPurpose";
+import { legTrimEffect } from "@/lib/legTrimEffect";
 import {
   runTuningFromProfile,
   type RunVolumePreset,

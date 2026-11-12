@@ -99,7 +99,7 @@ import InviteCodeField from "@/components/onboarding/InviteCodeField";
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { useInviteCodeInput } from "@/hooks/usePendingInvite";
 import { raceLegTrimCut } from "@/features/program/programEngine";
-import { legTrimEffect } from "@/lib/liftSessionPurpose";
+import { legTrimEffect } from "@/lib/legTrimEffect";
 import {
   clearPendingInvite,
   pendingInviteUnchanged,
