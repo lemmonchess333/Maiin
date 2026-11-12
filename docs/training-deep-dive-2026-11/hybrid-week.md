@@ -305,6 +305,7 @@ The last lifting before the race is Sunday's deadlift session at full weight, th
 - **Fix:** now: do not show the switch when it would change nothing, and word what it does. Then: see defect 9.
 - **Size:** S for the copy.
 - **In the way:** Lift4 (10); decisions.md L12 measured this and answered "Kept" (the two-set floor). The promise in the copy was not part of that answer.
+- **STATUS 2026-11-12:** the "now" half built: the switch shows only where a yes takes a set, and names the count. See `build-plan.md`, slice 3, #13.
 
 ### 8. Two sessions on one day: no order by content, no gap, and the clash flag is never shown
 

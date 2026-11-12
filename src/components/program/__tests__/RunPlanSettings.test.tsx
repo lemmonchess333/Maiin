@@ -558,11 +558,81 @@ describe("RunPlanSettings", () => {
       "Your recent running. The plan climbs from it each week.",
       "How long your longest runs get.",
       "How much tempo and interval work each week has.",
-      "A third fewer leg sets, at the same weights.",
     ]) {
       expect(screen.getByText(line)).toBeInTheDocument();
       expect(line.length).toBeLessThanOrEqual(60);
     }
+    // The leg trim says the sets it takes, which the plan decides.
+    const trim = screen.getByText(
+      /^\d+ fewer leg sets? a week, at the same weights\.$/
+    );
+    expect(trim.textContent!.length).toBeLessThanOrEqual(60);
+  });
+
+  /** A week whose one leg lift has `sets` sets, and an upper lift. */
+  const legWeek = (sets: number) =>
+    ({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 2,
+      splitType: "full_body",
+      fatigueScore: 0,
+      updatedAt: 1,
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      workouts: [
+        {
+          dayName: "Full Body A",
+          dayType: "full_body",
+          completed: false,
+          exercises: [
+            {
+              name: "Barbell Squat",
+              exerciseId: "squat",
+              movementCategory: "knee_dominant",
+              sets,
+              reps: 8,
+              weight: 80,
+            },
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              movementCategory: "horizontal_push",
+              sets: 3,
+              reps: 8,
+              weight: 60,
+            },
+          ],
+        },
+      ],
+    }) as unknown as ProgramState;
+
+  it("training deep dive: offers the leg trim only where it takes a set, and says how many", () => {
+    renderPage(baseProfile, "/settings/run-plan", {
+      programState: legWeek(4),
+    });
+    pickRacePrep();
+    expect(
+      screen.getByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("1 fewer leg set a week, at the same weights.")
+    ).toBeInTheDocument();
+  });
+
+  it("training deep dive: does not offer the leg trim to a plan it would not change", () => {
+    // A lift keeps two sets, so two-set leg lifts lose none.
+    renderPage(baseProfile, "/settings/run-plan", {
+      programState: legWeek(2),
+    });
+    pickRacePrep();
+    expect(
+      screen.queryByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeNull();
   });
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {

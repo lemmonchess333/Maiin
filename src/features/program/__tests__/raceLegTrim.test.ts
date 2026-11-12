@@ -12,6 +12,7 @@ import {
   advanceWeek,
   easeBackIn,
   raceLegSets,
+  raceLegTrimCut,
   withRaceLegTrim,
 } from "../programEngine";
 import { isRaceBuildWeek, type RaceBlockWeek } from "../weekPrescription";
@@ -103,6 +104,47 @@ const setsOf = (s: Pick<ProgramState, "workouts">) =>
 describe("raceLegSets", () => {
   it("takes a third off, never below two sets", () => {
     expect([1, 2, 3, 4, 5, 6].map(raceLegSets)).toEqual([1, 2, 2, 3, 3, 4]);
+  });
+});
+
+describe("raceLegTrimCut", () => {
+  const week = (legSets: number[], upperSets = 3): WorkoutDay[] => [
+    {
+      dayName: "Legs",
+      dayType: "lower",
+      completed: false,
+      exercises: [
+        ...legSets.map((sets, i) => ({
+          name: `Leg ${String(i)}`,
+          exerciseId: i === 0 ? "squat" : "romanian-deadlift",
+          movementCategory: i === 0 ? "knee_dominant" : "hip_dominant",
+          sets,
+          reps: 8,
+          weight: 60,
+        })),
+        {
+          name: "Bench Press",
+          exerciseId: "bench-press",
+          movementCategory: "horizontal_push",
+          sets: upperSets,
+          reps: 8,
+          weight: 60,
+        },
+      ] as unknown as WorkoutDay["exercises"],
+    },
+  ];
+
+  it("counts the leg sets a yes takes off the week", () => {
+    expect(raceLegTrimCut(week([4, 3]))).toBe(2);
+    expect(raceLegTrimCut(week([6]))).toBe(2);
+  });
+
+  it("is none where every leg lift has two sets (training deep dive)", () => {
+    expect(raceLegTrimCut(week([2, 2], 5))).toBe(0);
+  });
+
+  it("reads a trimmed week by its plan's sets", () => {
+    expect(raceLegTrimCut(withRaceLegTrim(week([4, 3]), true))).toBe(2);
   });
 });
 
