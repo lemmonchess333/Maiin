@@ -4554,18 +4554,17 @@ no rebuild has gone through the deployed `configurePlan` yet.
 Affects: the deadlift's card picture (Home's hero on a day it leads, Train,
 the exercise rows), now drawn from the front
 (`docs/exercise-art/cutout-sources/deadlift.json`), and Home's animation for
-it, which is removed until it can be made again
+it, made again from the front the same day
 (`docs/exercise-art/motion/README.md`). The form guide keeps its six frames
 drawn from behind. Checked in Chromium at 393 px in both themes; no phone
 has drawn it.
 
 - [ ] **Home on a deadlift day.** On a day whose plan starts with the
       deadlift (Pull A), open Home. Passing: the hero shows the athlete from
-      the front with the bar on the floor, and the picture stays still (no
-      animation from behind plays over it).
+      the front with the bar on the floor, plays the lift from the front
+      for about five seconds (floor, lockout, back to the floor), and stops
+      on the card with no jump.
 - [ ] **The form guide is unchanged.** Open the deadlift's form guide in a
       workout. Passing: the six frames from behind, as before.
-- [ ] **Operator: the new animation.** Once the Gemini project's prepaid
-      credits are topped up, make the deadlift's flipbook from the front
-      start and lockout drawings as the motion README says. Passing: Home
-      plays the athlete lifting from the front, then rests on the card.
+- [ ] **Reduce Motion.** With Reduce Motion on, open Home on a deadlift
+      day. Passing: the front-view card shows and nothing moves.
