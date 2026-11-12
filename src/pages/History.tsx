@@ -31,7 +31,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import PeriodSummaryCard, {
   type SummaryFigure,
 } from "@/components/analytics/PeriodSummaryCard";
-import PerformanceOverviewCard from "@/components/analytics/PerformanceOverviewCard";
+import PerformanceSection from "@/components/analytics/PerformanceSection";
 import AnalyticsTrends from "@/components/analytics/AnalyticsTrends";
 import AnalyticsMuscles from "@/components/analytics/AnalyticsMuscles";
 import TrainingWeeksCard from "@/components/analytics/TrainingWeeksCard";
@@ -151,14 +151,6 @@ const MacroDistribution = lazyRetry(
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
 );
-/* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
-   PerformanceSection (the inline accordion's expanded body), not
-   rendered as a top-level tab. The dedicated `performance` tab was
-   removed; deep-links to /history#performance route to the section
-   anchor inside Analytics. */
-const PerformanceSection = lazyRetry(
-  () => import("@/components/analytics/PerformanceSection")
-);
 import Card from "@/components/ui/Card";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
@@ -211,9 +203,8 @@ const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
    work. The four sport-filtered values + the old "all" value all
    redirect to "analytics" (the unified scroll page). Performance
-   redirects too — PR 6 folded it into Analytics with a hash anchor
-   target (`#performance`); the reconciliation effect promotes the
-   hash alongside the tab rewrite for direct deep-link continuity. */
+   redirects too: it is the overview's first section, and the
+   reconciliation effect opens its details for a link that named it. */
 const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   all: "analytics",
   running: "analytics",
@@ -228,9 +219,10 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   milestones: "badges",
 };
 
-/* The section anchors Performance used to be scrolled to. Home's
-   Performance row still links to `#performance`, and so do older
-   bookmarks; each now opens the Performance page. */
+/* The section anchors Performance used to be scrolled to. Older
+   bookmarks and the links Home's Performance row made still carry
+   `#performance`; each opens the overview with the score's details
+   open. */
 const PERFORMANCE_ANCHORS = new Set([
   "performance",
   "performance-expanded",
@@ -241,17 +233,19 @@ const PERFORMANCE_ANCHORS = new Set([
 /* DS3: the Analytics tab is a short overview with pages behind it,
    chosen by `?view=`. Absent or unknown is the overview. Four pages hold
    one discipline's charts each, which used to stack into a single scroll
-   about 4,700 px tall on a phone; the fifth, Performance, holds the
-   index's gauge, chart, insights and training load, opened from the
-   overview's Performance card and from Home. */
-type AnalyticsView = "overview" | AnalyticsPage | "performance";
-const ANALYTICS_VIEWS: AnalyticsView[] = [
-  "lifting",
-  "running",
-  "body",
-  "food",
-  "performance",
-];
+   about 4,700 px tall on a phone. There was a fifth, Performance, until
+   Trim1 call 5 (11 November 2026): the score is shown once, on the
+   overview, and what it is made of opens there in place. */
+type AnalyticsView = "overview" | AnalyticsPage;
+const ANALYTICS_VIEWS: AnalyticsView[] = ["lifting", "running", "body", "food"];
+
+/* `?score=details`: the overview's Performance card with "Score details"
+   open. In the URL so a refresh, a shared link and the links that used to
+   open the Performance page all land on it. */
+const SCORE_PARAM = "score";
+const SCORE_DETAILS = "details";
+/** The retired page's `?view=` value; it opens the details now. */
+const RETIRED_PERFORMANCE_VIEW = "performance";
 
 /* Pre-Hist5 `?tab=` values that named a discipline land on its page now,
    rather than on the top of one long scroll. */
@@ -259,7 +253,6 @@ const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsView>> = {
   running: "running",
   lifting: "lifting",
   nutrition: "food",
-  performance: "performance",
 };
 
 // Module-level so the useCallback consuming it has a stable
@@ -373,18 +366,38 @@ export default function History() {
      page on this very render, before the reconciliation below rewrites
      the URL, so the overview never flashes first. */
   const viewFromUrl = searchParams.get("view");
-  /* Read here rather than after the reconciliation below rewrites it, so
-     a `#performance` link opens on the Performance page, not on the
-     overview for a frame. */
-  const hashOpensPerformance =
-    typeof window !== "undefined" &&
-    PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, ""));
   const view: AnalyticsView = ANALYTICS_VIEWS.includes(
     viewFromUrl as AnalyticsView
   )
     ? (viewFromUrl as AnalyticsView)
-    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ??
-      (hashOpensPerformance ? "performance" : "overview"));
+    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ?? "overview");
+  /* Whether the score's details are open. A link to the retired
+     Performance page (`?view=performance`, `?tab=performance`, a
+     `#performance` anchor) is read here, on this very render, rather than
+     after the reconciliation below rewrites it, so it never shows the
+     closed card for a frame. */
+  const linkNamesPerformance =
+    viewFromUrl === RETIRED_PERFORMANCE_VIEW ||
+    tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
+    (typeof window !== "undefined" &&
+      PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
+  const scoreOpen =
+    searchParams.get(SCORE_PARAM) === SCORE_DETAILS || linkNamesPerformance;
+  /* A replace, not a push: opening a fold is not a place to go back to. */
+  const setScoreOpen = useCallback(
+    (open: boolean) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (open) updated.set(SCORE_PARAM, SCORE_DETAILS);
+          else updated.delete(SCORE_PARAM);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   /* A push, not a replace: the back gesture on a page returns to the
      overview, the way a pushed screen would. */
   const setView = useCallback(
@@ -424,18 +437,19 @@ export default function History() {
        canonical Hist5 value on first mount. Share-cards / push
        notifications / bookmarks from before the tab consolidation
        still land on the right surface; the URL bar reflects the
-       new contract once they arrive. A value that named a page —
-       a discipline, or Performance — opens that page. */
+       new contract once they arrive. A value that named a discipline
+       opens its page, and Performance opens the score's details. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
       const legacyView = LEGACY_TAB_TO_VIEW[tabFromUrl];
-      if (legacyView) {
+      if (legacyView || tabFromUrl === RETIRED_PERFORMANCE_VIEW) {
         // One update: two setSearchParams calls in a tick overwrite
         // each other.
         setSearchParams(
           (params) => {
             const updated = new URLSearchParams(params);
             updated.delete("tab");
-            updated.set("view", legacyView);
+            if (legacyView) updated.set("view", legacyView);
+            else updated.set(SCORE_PARAM, SCORE_DETAILS);
             return updated;
           },
           { replace: true }
@@ -481,36 +495,40 @@ export default function History() {
     } catch {
       /* private mode */
     }
-    if (typeof window !== "undefined" && window.location.hash) {
-      /* `#performance` (Home's Performance row, PR #635) and the other
-         Performance anchors named a section of one long scroll; the
-         section is a page now. The render above already opened it; this
-         moves that into the URL, which drops the hash. Skipped when a
-         legacy `?tab=` rewrite is in flight: two updates in one tick
-         overwrite each other, and that rewrite names its own page.
-         Every other hash was a one-shot tab hint, and is stripped. */
-      const currentHash = window.location.hash.replace(/^#/, "");
-      const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
-      if (
-        PERFORMANCE_ANCHORS.has(currentHash) &&
-        !viewFromUrl &&
-        !legacyRewrite
-      ) {
-        setSearchParams(
-          (params) => {
-            const updated = new URLSearchParams(params);
-            updated.set("view", "performance");
-            return updated;
-          },
-          { replace: true }
-        );
-      } else {
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search
-        );
-      }
+    /* The retired Performance page. `?view=performance` and the
+       `#performance` anchors (Home's row, PR #635, and older bookmarks)
+       named a page, and before that a section of one long scroll; the
+       score's details open on the overview now. The render above already
+       opened them; this moves that into the URL, which drops the hash and
+       the dead `view`. Skipped when a legacy `?tab=` rewrite is in
+       flight: two updates in one tick overwrite each other, and that
+       rewrite says where it lands. Every other hash was a one-shot tab
+       hint, and is stripped. */
+    const currentHash =
+      typeof window !== "undefined"
+        ? window.location.hash.replace(/^#/, "")
+        : "";
+    const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
+    const retiredView = viewFromUrl === RETIRED_PERFORMANCE_VIEW;
+    if (
+      !legacyRewrite &&
+      (retiredView || (PERFORMANCE_ANCHORS.has(currentHash) && !viewFromUrl))
+    ) {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (retiredView) updated.delete("view");
+          updated.set(SCORE_PARAM, SCORE_DETAILS);
+          return updated;
+        },
+        { replace: true }
+      );
+    } else if (currentHash) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+      );
     }
     // Intentionally only on mount — the ref guard ensures this
     // runs once per page load even if React renders the effect
@@ -574,9 +592,9 @@ export default function History() {
   });
   // Training-load curve feed — self-fetching (needs warmup history beyond
   // the visible range, so it can't reuse the range-scoped runs above), and
-  // only while the Performance page that draws it is open.
+  // only while the score's details, which draw it, are open.
   const trainingLoad = useTrainingLoadSeries(rangeDays, {
-    enabled: filter === "analytics" && view === "performance",
+    enabled: filter === "analytics" && view === "overview" && scoreOpen,
   });
   const uid = useUid();
   const {
@@ -1198,14 +1216,6 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
-            {/* Hist6 — Performance pinned to the top, range-independent
-              ("this week"). The TimeRange control below scopes only the
-              history under it, so changing the range never moves the
-              index — the two mental models (current form vs adjustable
-              history) are separated spatially. Suppressed in cold-start:
-              the "Your first week starts here" card below stands in until the first
-              session is logged. `/history#performance` opens the
-              Performance page. */}
             {/* A deeper page's one control row: the way back to the
                 overview, and beside it the range that scopes the page.
                 The range keeps 15em; where the row cannot give it that
@@ -1213,9 +1223,8 @@ export default function History() {
             {filter === "analytics" && view !== "overview" && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <AnalyticsBackRow onBack={() => setView("overview")} />
-                {/* The Body page's weight chart keeps its own range, and
-                    the Performance page's sits in its training load card. */}
-                {view !== "body" && view !== "performance" && (
+                {/* The Body page's weight chart keeps its own range. */}
+                {view !== "body" && (
                   <div className="min-w-[min(100%,15em)] flex-1">
                     <TimeRangePills
                       selected={timeRange}
@@ -1226,56 +1235,50 @@ export default function History() {
               </div>
             )}
 
-            {/* The week's index, range-independent, above the range
-                pills (Hist6): the pills scope everything below them. The
-                overview shows the card; its Details open the page. */}
+            {/* Hist6: Performance pinned to the top, range-independent
+                ("this week"). The range below scopes only the history
+                under it, so changing it never moves the index. Trim1
+                call 5: this is the one place the score is shown, and
+                what it is made of opens in place under "Score details",
+                the training load among it, which carries the range in
+                its own card as it did on the Performance page.
+                Suppressed in cold-start: the "Your first week starts
+                here" card below stands in until the first session is
+                logged. */}
             {filter === "analytics" &&
               view === "overview" &&
               !isAnalyticsColdStart && (
                 <SectionErrorBoundary sectionName="performance-section">
-                  <PerformanceOverviewCard
+                  <PerformanceSection
+                    /* A meal alone clears the cold-start gate, so this can
+                       render for someone with no session at all, and the
+                       score is server-written, so someone who has just
+                       logged their first workout reaches it too. */
                     hasLoggedSession={
                       workouts.length > 0 || lifetimeRuns.runCount > 0
                     }
-                    onOpenDetails={() => setView("performance")}
-                  />
+                    distanceUnit={unit}
+                    detailsOpen={scoreOpen}
+                    onToggleDetails={setScoreOpen}
+                  >
+                    <SectionErrorBoundary sectionName="training-load">
+                      <TrainingLoadCard
+                        points={trainingLoad.points}
+                        loading={trainingLoad.loading}
+                        failed={trainingLoad.failed}
+                        onRetry={trainingLoad.refresh}
+                        guardrails={trainingLoad.guardrails}
+                        range={{ selected: timeRange, onChange: setTimeRange }}
+                      />
+                    </SectionErrorBoundary>
+                  </PerformanceSection>
                 </SectionErrorBoundary>
               )}
-            {filter === "analytics" && view === "performance" && (
-              <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection
-                  /* A meal alone clears the cold-start gate, so this can
-                     render for someone with no session at all — and the
-                     perf doc is server-written, so a user who has just
-                     logged their first workout reaches it too. */
-                  hasLoggedSession={
-                    workouts.length > 0 || lifetimeRuns.runCount > 0
-                  }
-                  distanceUnit={unit}
-                />
-              </SectionErrorBoundary>
-            )}
 
             {/* The range scopes the history below it. On a page it shares
                 the way back's row, above. */}
             {view === "overview" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
-            )}
-
-            {/* Fitness, fatigue and form across lifting and running: the
-                load behind the index, so it sits on the Performance page,
-                under the range it follows. */}
-            {filter === "analytics" && view === "performance" && (
-              <SectionErrorBoundary sectionName="training-load">
-                <TrainingLoadCard
-                  points={trainingLoad.points}
-                  loading={trainingLoad.loading}
-                  failed={trainingLoad.failed}
-                  onRetry={trainingLoad.refresh}
-                  guardrails={trainingLoad.guardrails}
-                  range={{ selected: timeRange, onChange: setTimeRange }}
-                />
-              </SectionErrorBoundary>
             )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on

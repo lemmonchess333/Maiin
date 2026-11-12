@@ -22,6 +22,11 @@ interface ProgressRingProps {
    *  as without it. For a ring on a card: on the page there is no darker
    *  to cut to. A `trackColor` wins over it. */
   cut?: boolean;
+  /** Size the ring in rem, so it grows with the reader's text size and
+   *  the number inside it still fits at larger text. `size` and `stroke`
+   *  are then the ring's size at the default 16px. For a ring that holds
+   *  a large figure; a ring among fixed-size controls stays in pixels. */
+  scaleWithText?: boolean;
   /** Centre content — the number the ring is about. */
   children?: ReactNode;
   className?: string;
@@ -47,6 +52,7 @@ export default function ProgressRing({
   color,
   trackColor,
   cut = false,
+  scaleWithText = false,
   children,
   className,
 }: ProgressRingProps) {
@@ -58,11 +64,15 @@ export default function ProgressRing({
   return (
     <div
       className={cn("relative flex-shrink-0", className)}
-      style={{ width: size, height: size }}
+      style={
+        scaleWithText
+          ? { width: `${size / 16}rem`, height: `${size / 16}rem` }
+          : { width: size, height: size }
+      }
     >
       <svg
-        width={size}
-        height={size}
+        width={scaleWithText ? "100%" : size}
+        height={scaleWithText ? "100%" : size}
         viewBox={`0 0 ${size} ${size}`}
         className={cn("-rotate-90", cutIn && "overflow-visible")}
         aria-hidden="true"

@@ -19,7 +19,12 @@ import { readFileSync } from "node:fs";
  */
 
 const ENGINE = readFileSync("functions/performanceEngine.js", "utf8");
-const TAB = readFileSync("src/components/analytics/PerformanceTab.tsx", "utf8");
+// The sentence sits beside the Performance heading on the Analytics
+// overview: the one place the score is shown (Trim1 call 5).
+const TAB = readFileSync(
+  "src/components/analytics/PerformanceSection.tsx",
+  "utf8"
+);
 
 function constant(name: string): number {
   const m = ENGINE.match(new RegExp(`const ${name} = (\\d+);`));
