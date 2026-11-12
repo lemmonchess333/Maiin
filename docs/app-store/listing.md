@@ -78,7 +78,7 @@ Lifting
 
 Running
 • GPS runs with pace, splits, elevation and a route map coloured by pace.
-• Easy runs, tempo runs, intervals, long runs and guided runs, with spoken splits and pace alerts.
+• Easy runs, tempo runs, intervals and long runs, with spoken splits and pace alerts.
 • Race plans for 5K, 10K, half marathon and marathon, built back from race day through base, build and taper. Choose a race from the directory or enter your own date.
 • Adjust a week when you're unwell or busy, and keep the race date.
 • Plan routes, run them again against your last time, and hide the start and end of the runs you share.
@@ -259,7 +259,7 @@ The demo account has finished setup and has several weeks of workouts, runs and 
 Where to find things
 - Today's session: the card at the top of Home. Start opens the workout.
 - Food logging: the Food tab. Type a meal, or tap the orange camera button to scan a meal photo (Pro) or a barcode (free).
-- Pro: the offer shown after setup, any "Try Pro free" button, or Settings > Subscription. Restore is on the same screen.
+- Pro: the offer shown after setup, any "Try Pro free" button, or the plan card at the top of Settings > Account. Restore is on the Pro screen each of them opens.
 - Settings: tap the photo or initials at the top right of Home.
 - Account deletion: Settings > Account > Delete account.
 - Reporting and blocking: "More options" on a post (Report activity, Block user), "Post options" on a Space post (Report post, Block user), the "More options" button beside someone else's comment (Report comment, Block user) and "More options" on a profile (Report user, Block user). Blocked people are listed in Settings > Social & privacy.

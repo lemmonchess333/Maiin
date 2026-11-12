@@ -37,7 +37,7 @@ import StreakSheet from "../StreakSheet";
 function open() {
   return render(
     <MemoryRouter>
-      <StreakSheet open onOpenChange={vi.fn()} />
+      <StreakSheet open onOpenChange={vi.fn()} badgesTo="/user/me?badges=all" />
     </MemoryRouter>
   );
 }
@@ -103,11 +103,13 @@ describe("StreakSheet", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the badges a tap away", () => {
+  it("keeps the badges a tap away, where its host says they are", () => {
+    // They are on the person's own profile (Trim1 call 3(c)); the sheet
+    // is told the address, since its host knows whose profile.
     open();
     expect(
       screen.getByRole("link", { name: "See your badges" })
-    ).toHaveAttribute("href", "/history?tab=badges");
+    ).toHaveAttribute("href", "/user/me?badges=all");
   });
 
   it("says nothing of freezes, shields, tokens or a streak at risk", () => {

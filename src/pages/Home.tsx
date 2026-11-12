@@ -10,6 +10,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import TrialEndingStrip from "@/components/home/TrialEndingStrip";
 import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
+import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useRunReturn } from "@/features/program/useRunReturn";
@@ -95,7 +96,6 @@ import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
-import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
 import WeekSessions from "@/components/home/WeekSessions";
 import InlineNumerals from "@/components/ui/InlineNumerals";
@@ -107,19 +107,16 @@ import StackedCTACards from "@/components/home/StackedCTACards";
 import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
 import WeekSummary from "@/components/home/WeekSummary";
-import Card from "@/components/ui/Card";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
@@ -457,20 +454,6 @@ export default function Home() {
     effectiveTargets?.protein ?? null,
     { key: todayKey, protein: todayIntake.protein }
   );
-
-  // Performance data for the hero card: this week's score, and the week
-  // before it for the delta chip. The documents are daily, so "the one
-  // before" is yesterday's rolling week; the hook steps back a whole week
-  // (performanceSeries.ts). The raw document count feeds the
-  // baseline-establishing gate.
-  const {
-    currentWeek: perfWeek,
-    previousWeek: perfPrevWeek,
-    docsAvailable: perfDocsAvailable,
-    loading: perfLoading,
-    failed: perfFailed,
-    refresh: refreshPerformance,
-  } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
@@ -1370,7 +1353,7 @@ export default function Home() {
               className={cardClasses({
                 size: "compact",
                 padded: false,
-                className: "space-y-2 px-4 pt-3.5 pb-1.5",
+                className: "space-y-2 px-4 pt-3.5 pb-3",
               })}
             >
               <WeekSessions
@@ -1390,6 +1373,23 @@ export default function Home() {
                 extraRunDates={extraRunDates}
                 startKey={startKey}
               />
+              {/* What the count above is made of, and the way into the
+                  Weekly Review while one waits (Trim1 call 1). Both were
+                  a "This week" card at the foot of Home, which read the
+                  same counts as the line above the segments. */}
+              <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border pt-2.5">
+                <SectionErrorBoundary sectionName="week-summary">
+                  <WeekSummary
+                    counts={weekCounts}
+                    runner={
+                      !!profile?.runFrequency && profile.runFrequency !== "none"
+                    }
+                  />
+                </SectionErrorBoundary>
+                <SectionErrorBoundary sectionName="weekly-review-entry">
+                  <WeeklyReviewEntry />
+                </SectionErrorBoundary>
+              </div>
             </div>
             <AnimatePresence>
               {peekDate && (
@@ -1530,61 +1530,6 @@ export default function Home() {
         </SectionErrorBoundary>
       </motion.div>
 
-      {/* This week: the week so far and its Performance Index, with the
-          Weekly Review link on the heading while a review is waiting. The
-          performance row keeps the ring, verdict and delta chip that made
-          it the week's verdict (PI1 + PI4); it opens Analytics. */}
-      <section aria-label="This week" className="space-y-2">
-        <SectionHeading
-          className="px-1"
-          action={
-            <SectionErrorBoundary sectionName="weekly-review-entry">
-              <WeeklyReviewEntry />
-            </SectionErrorBoundary>
-          }
-        >
-          This week
-        </SectionHeading>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <Card className="space-y-4 rounded-xl">
-            <SectionErrorBoundary sectionName="week-summary">
-              <WeekSummary
-                counts={weekCounts}
-                runner={
-                  !!profile?.runFrequency && profile.runFrequency !== "none"
-                }
-              />
-            </SectionErrorBoundary>
-            <div className="border-t border-border pt-3">
-              <TrackSectionView section="hero">
-                <SectionErrorBoundary sectionName="performance-hero">
-                  <PerformanceHeroCard
-                    currentWeek={perfWeek ?? null}
-                    previousWeek={perfPrevWeek}
-                    weeksAvailable={perfDocsAvailable}
-                    loading={perfLoading}
-                    failed={perfFailed}
-                    onRetry={refreshPerformance}
-                    /* The perf doc is written by the server, so "no doc" is
-                       not "no session" — this keeps the row from telling
-                       someone who has just logged their first workout that
-                       they logged nothing. */
-                    hasLoggedSession={
-                      workouts.length > 0 || lifetimeRunCount > 0
-                    }
-                  />
-                </SectionErrorBoundary>
-              </TrackSectionView>
-            </div>
-          </Card>
-        </motion.div>
-      </section>
-
       <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
@@ -1600,7 +1545,7 @@ export default function Home() {
               title={recal.title}
               description={recal.description}
               ctaLabel="Edit plan"
-              ctaHref="/settings/training"
+              ctaHref="/settings/lift-plan"
               visible={true}
             />
           ) : null;
@@ -1626,6 +1571,12 @@ export default function Home() {
           <StreakSheet
             open={streakSheet}
             onOpenChange={(open) => setStreakSheet(open)}
+            /* The badges are on the profile, above the medals (Trim1
+               call 3(c)); Analytics' Badges tab still redirects there for
+               the moment before the account is known. */
+            badgesTo={
+              user?.uid ? badgeShelfPath(user.uid) : "/history?tab=badges"
+            }
           />
         </Suspense>
       )}

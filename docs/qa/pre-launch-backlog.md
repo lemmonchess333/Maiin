@@ -758,7 +758,8 @@ Home reads this week's meals and 60 weigh-ins, the daily logs read covers
 this month and week, the challenges listener reaches back eight days and
 its reads follow the challenges' ids, the Spaces directory reads each Space
 once for every copy open, the training-load curve reads only on the
-Performance page, and a return to the app re-claims an unchanged push token
+Performance page (since Trim1 call 5, 2026-11-11: only while the score's
+details are open on the Analytics overview), and a return to the app re-claims an unchanged push token
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
@@ -1311,7 +1312,7 @@ Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
 `trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
 phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
 "Remind me before the trial ends", Home's strip for a trial's last two
-days, Settings → Subscription. The email goes at 10:00 local, two days
+days, Settings → Account. The email goes at 10:00 local, two days
 before the last moment to cancel (a day before the trial ends).
 
 Unit tests cover the timing in every zone, the record and the email's
@@ -1541,7 +1542,7 @@ need a phone and a deploy.
 - [x] _(Proven 2026-10-17: src/components/settings/**tests**/NotificationsSection.push.test.tsx, 'keeps the reminders on the native app and offers no push there' (and the web case). src/pages/**tests**/settingsNotificationsRow.test.tsx, 'does not name push on the native app' (expects 'Reminders, activity'). Both branches are pinned against the native-platform flag.)_ **No push on the iPhone app.** Settings > Notifications shows the
       meal, workout and streak reminders and no push switch; the Settings
       list says "Reminders, activity". The web build still has the switch.
-- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+- [ ] **Exports on the iPhone app.** Settings > Account > Export
       workouts opens the share sheet; Save to Files saves a .csv that
       opens in Numbers, then "Workouts exported" shows. Closing the sheet
       says nothing. On a slow connection a "Workouts export ready" toast
@@ -2329,7 +2330,7 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceSection.tsx` (beside the Performance heading on the Analytics overview since Trim1 call 5, 2026-11-11; it was in `PerformanceTab.tsx`), Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
 
 **STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
@@ -4225,7 +4226,7 @@ are SVG with an illustration inside; how WebKit draws them at row size is
 for a phone to show.
 
 - [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
-      race ahead (Settings → Programme, a race picked from the list), open
+      race ahead (Settings → Run plan, a race picked from the list), open
       Social → Together. Passing: the race's photo fills the first card with
       its name, "Your race · N weeks to go", its date and place, and the
       words readable over the photo at Settings → Accessibility → Larger
@@ -4418,3 +4419,76 @@ overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
       Passing: the picture's cards are sized and placed as on a current
       phone (they are measured from the screen, since iOS 15 has no
       container query units).
+
+## The score is shown once, on Analytics (Trim1 calls 5 and 6, 2026-11-11)
+
+The Performance page is gone. The score sits in a ring on the card at the
+top of the Analytics overview, and "Score details" under it opens in place
+what the page held. The unit suites cover the words, the colours and the
+links; these need a phone.
+
+- [ ] **The ring holds its score at the largest text size.** With the
+      phone's text size at its largest, open Analytics. Passing: the score
+      sits inside the ring with room around it, the words wrap under the
+      ring instead of beside it where they no longer fit, and nothing runs
+      past the card.
+- [ ] **Score details opens where you are.** Tap Score details. Passing:
+      the page does not jump, the six-week line gives way to the twelve-week
+      chart, and the training load's range pills change its curve. Tap it
+      again: the page closes back to the card.
+- [ ] **A saved link still lands.** Open `/history#performance` and
+      `/history?view=performance` (a bookmark, or a link from before).
+      Passing: each opens the overview with Score details open.
+- [ ] **The tooltip opens on a tap.** Tap the small "i" beside
+      Performance. Passing: the explanation opens, reads in both themes,
+      and a tap elsewhere closes it.
+
+## Badges and medals are one shelf, on the profile (Trim1 call 3(c), 2026-11-11)
+
+Analytics' Badges tab is gone. A profile shows badges above medals, and on
+your own "See all" opens the whole badge collection in place. The unit
+suites cover the fold, the links and who sees what; these need a phone.
+
+- [ ] **From the streak.** On Home tap the streak chip, then "See your
+      badges". Passing: your profile opens with the Badges heading at the
+      top of the screen and the whole collection open under it.
+- [ ] **A saved link to the tab.** Open `/history?tab=badges`. Passing: it
+      lands on your profile with the collection open, and Analytics shows
+      two tabs, Analytics and Bests.
+- [ ] **Open and close.** On your profile tap "See all", then "Show
+      fewer". Passing: the collection opens where it is, the page does not
+      jump, and closing returns the newest four.
+- [ ] **Someone else's profile.** Open another person's profile.
+      Passing: their newest badges and their medals, and no "See all" on
+      the badges.
+- [ ] **Larger Text.** With the phone's text at its largest, open the
+      collection. Passing: the three streak figures and the badge tiles
+      wrap inside the screen, and nothing is cut off.
+
+## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
+
+Affects: the Settings list (ten rows, from twelve), Lift plan (the rest
+timer's two controls and Reset programme at its foot), Run plan (voice
+cues), Account (the plan, AI usage, the three exports and recently deleted
+meals), and four routes that are now redirects (`/settings/training`,
+`/settings/workout-prefs`, `/settings/subscription`, `/settings/data`).
+Captured in Chromium at 393 and 320 px; a phone has not drawn them.
+
+- [ ] **Back from the editors.** Settings → Lift plan, then swipe back
+      from the screen's left edge; the same from Run plan. Passing: each
+      returns to the Settings list, not to a blank or a third page.
+- [ ] **Reset programme, at the foot of Lift plan.** Scroll Lift plan to
+      its end and tap Reset programme. Passing: the confirmation opens
+      over the page with Cancel first; Cancel leaves the plan as it was.
+- [ ] **The rest timer, where it now lives.** On Lift plan, switch
+      Auto-start rest timer off, start a workout and finish a set.
+      Passing: no timer starts. Switch it back on and it does.
+- [ ] **Voice cues, where they now live.** On Run plan, switch Audio cues
+      off and open a run's setup. Passing: its Run controls line reads
+      "Voice cues off".
+- [ ] **The plan on Account.** On a free account, Settings shows "Free"
+      on the Account row; Account's first card opens the Pro page. On a
+      trial it reads the days left.
+- [ ] **An old link.** From Safari or a note, open a saved link to
+      `/settings/training` in the installed app. Passing: Lift plan
+      opens.

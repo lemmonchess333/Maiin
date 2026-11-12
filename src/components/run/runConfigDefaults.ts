@@ -28,7 +28,7 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { isTreadmillRun } from "@/lib/runGuards";
 
 /** The four one-tap direct-launch types, in tile display order. Everything
- *  else (intervals / guided / race / route, and any run on the treadmill)
+ *  else (intervals / race / route, and any run on the treadmill)
  *  needs config and lives behind "More options" → the full modal. Owned
  *  here (not in RunTilePicker) so the repeat-last resolver below and the
  *  tile grid can't drift on what counts as directly launchable. */
@@ -44,7 +44,7 @@ export const DIRECT_LAUNCH_TYPES: ActivityType[] = [
  * chip's decision rule. Returns the type to offer as "Repeat <type>" when the
  * TWO most recent volume-eligible runs share the same DIRECT-launch type —
  * a recurring habit signal, not a one-off. Anything else (mixed types, fewer
- * than two eligible runs, or a structured type like intervals/guided/race
+ * than two eligible runs, or a structured type like intervals/race
  * that needs the modal) returns null and the picker renders exactly as
  * before. So does a run on the treadmill: a tile starts an outdoor run, and
  * a treadmill habit repeated by one would set off with the GPS (Pgm8 keeps
@@ -165,7 +165,9 @@ export const DEFAULT_INTERVAL_CONFIG: NonNullable<RunConfig["intervals"]> = {
    measurement source outdoors (on the treadmill the setup shows its own);
    `group` drives the chooser's Outdoor / Other split.
    `'manual'` is deliberately absent — that activityType is set
-   programmatically by the GPS-fallback "Track without GPS" path. So is the
+   programmatically by the GPS-fallback "Track without GPS" path. `'guided'`
+   is absent too: its three fixed workouts left the setup in Trim1 call 8,
+   and the type stays in `ActivityType` for runs already saved. So is the
    treadmill: it is where a run is done, the setup's "On a treadmill"
    switch, not a type (Pgm8). */
 export type ActivityTypeOption = {
@@ -246,17 +248,6 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
     chooserDescription: "Race effort",
     chooserChip: "GPS",
     group: "outdoor",
-  },
-  {
-    type: "guided",
-    label: "Guided",
-    name: "Guided run",
-    icon: "Headphones",
-    cardDescription: "Coach-led workout",
-    cardChip: "Audio",
-    chooserDescription: "Coach-led workout",
-    chooserChip: "Audio",
-    group: "other",
   },
 ];
 

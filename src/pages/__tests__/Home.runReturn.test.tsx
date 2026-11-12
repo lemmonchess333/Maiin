@@ -266,9 +266,6 @@ vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
 vi.mock("@/components/home/TodayEnergy", () => ({ default: () => null }));
 vi.mock("@/components/home/VerifyEmailBanner", () => ({ default: () => null }));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
-vi.mock("@/components/home/PerformanceHeroCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/home/ContextualTipBanner", () => ({
   default: () => null,
 }));

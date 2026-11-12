@@ -7,7 +7,9 @@
  * the row's description. When the Settings pass rewrote the list, the
  * description changed from "Sign out, delete account" to "Email, password,
  * sign out", and the spec's regex matched nothing: the journey timed out
- * in the emulator job, which is the only place it runs.
+ * in the emulator job, which is the only place it runs. (It changed again
+ * with Trim1 call 7, to "Plan, sign-in, your data", and this test is what
+ * said so.)
  *
  * So the regex is read out of the spec here and run against the rendered
  * list. If either side moves, this fails in the unit suite.

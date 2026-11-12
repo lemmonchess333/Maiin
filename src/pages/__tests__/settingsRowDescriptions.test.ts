@@ -54,11 +54,14 @@ describe("Settings row descriptions", () => {
   it("reads the whole catalogue — the fixture this rests on", () => {
     // Without a floor here, a regex that stopped matching would leave the
     // assertion below passing over an empty list.
-    // Twelve rows since the Settings pass: Profile became the card at the
-    // top of the list, and Lift plan and Run plan open from Programme.
+    // Ten rows since Trim1 calls 2 and 7: Lift plan and Run plan are rows
+    // of their own, and Programme, Workouts, Subscription and Your data
+    // joined other pages. Apple Health carries two descriptions, so the
+    // catalogue reads as eleven.
     const all = descriptions();
-    expect(all.length).toBeGreaterThanOrEqual(12);
-    expect(all).toContain("Export, recently deleted");
+    expect(all.length).toBeGreaterThanOrEqual(11);
+    expect(all).toContain("Plan, sign-in, your data");
+    expect(all).not.toContain("Export, recently deleted");
     // Apple Health's description follows the connected training gate.
     expect(all).toContain("Daily step count on Home");
     expect(all).toContain("Steps, Watch runs, workouts");
@@ -89,7 +92,7 @@ describe("Settings row names", () => {
     const labels = [...index.matchAll(/^\s*label: "([^"]*)",/gm)].map(
       (m) => m[1]
     );
-    expect(labels.length).toBeGreaterThanOrEqual(12);
+    expect(labels).toHaveLength(10);
     const dir = resolve(repoRoot, "src/pages/settings");
     const titles = new Set(
       readdirSync(dir)

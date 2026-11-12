@@ -23,7 +23,6 @@ export type HomeEvent =
 
 /** Home tiles and first-week actions that can be selected. */
 export type HomeCard =
-  | "performance"
   | "water"
   | "steps"
   | "weight"
@@ -39,7 +38,7 @@ export type HomeCard =
 
 /** Lazy-loaded sections whose first paint is worth instrumenting. */
 export type HomeSection =
-  "hero" | "stacked_cta" | "today_energy" | "hybrid_balance" | "insights";
+  "stacked_cta" | "today_energy" | "hybrid_balance" | "insights";
 
 export interface HomeEventMetadata {
   /** home_initial_render_ms: rounded ms from mount to first

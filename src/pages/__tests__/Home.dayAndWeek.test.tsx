@@ -259,9 +259,6 @@ vi.mock("@/components/home/TodayEnergy", () => ({
   ),
 }));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
-vi.mock("@/components/home/PerformanceHeroCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/home/ContextualTipBanner", () => ({
   default: () => null,
 }));
@@ -357,13 +354,19 @@ function renderHome() {
   );
 }
 
-/** The week summary column, by its accessible name ("Food logged: 1 of 7 days"). */
-function column(label: string): string {
-  const group = screen
-    .getAllByRole("group")
-    .find((g) => (g.getAttribute("aria-label") ?? "").startsWith(`${label}:`));
-  if (!group) throw new Error(`no "${label}" column in the week summary`);
-  return group.getAttribute("aria-label") ?? "";
+/** The week's count above the segments ("1 of 2 sessions this week"). A
+ *  week with one discipline says its lifts or runs here and nowhere else
+ *  (Trim1 call 1). */
+function weekCount(): string {
+  const line = screen.getByText(/sessions? this\s+week/);
+  return (line.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
+/** A part of the line under the segments, as read ("Food logged 1 of 7
+ *  days"); null when the week does not list it. */
+function weekPart(key: "lifts" | "runs" | "food"): string | null {
+  const part = document.querySelector(`[data-week-part="${key}"]`);
+  return part ? (part.textContent ?? "").replace(/\s+/g, " ").trim() : null;
 }
 
 /** The rest hero's next session, as "Pull A · Tomorrow": its name, then
@@ -479,7 +482,7 @@ describe("Home — the date follows the clock", () => {
     h.workouts = [{ id: "w1", date: localDateString(thisMonday) }];
     pinClock(lateSunday);
     renderHome();
-    expect(column("Lifts")).toBe("Lifts: 1 of 2");
+    expect(weekCount()).toBe("1 of 2 sessions this week");
 
     act(() => {
       vi.setSystemTime(new Date(2026, 8, 28, 0, 0, 30));
@@ -487,7 +490,7 @@ describe("Home — the date follows the clock", () => {
     });
 
     // The new week has no session in it yet.
-    expect(column("Lifts")).toBe("Lifts: 0 of 2");
+    expect(weekCount()).toBe("0 of 2 sessions this week");
   });
 });
 
@@ -520,7 +523,7 @@ describe("Home — the week's runs, as every screen counts them", () => {
       },
     ];
     renderHome();
-    expect(column("Runs")).toBe("Runs: 1 of 2");
+    expect(weekCount()).toBe("1 of 2 sessions this week");
   });
 
   it("shows a free runner's runs with no target to count against", () => {
@@ -529,7 +532,7 @@ describe("Home — the week's runs, as every screen counts them", () => {
     h.profile = profileWith({ 2: "run", 4: "run" });
     h.runs = [{ id: "r1", day: tuesday(), distance: 5000, duration: 1800 }];
     renderHome();
-    expect(column("Runs")).toBe("Runs: 1");
+    expect(weekCount()).toBe("1 session this week");
   });
 });
 
@@ -551,7 +554,7 @@ describe("Home — the week's food days are days with a meal", () => {
     h.meals = [];
     h.mealsLoading = false;
     renderHome();
-    expect(column("Food logged")).toBe("Food logged: 0 of 7 days");
+    expect(weekPart("food")).toBe("Food logged 0 of 7 days");
   });
 
   it("reads the daily log while the meals are still loading", () => {
@@ -561,7 +564,7 @@ describe("Home — the week's food days are days with a meal", () => {
     h.meals = [];
     h.mealsLoading = true;
     renderHome();
-    expect(column("Food logged")).toBe("Food logged: 1 of 7 days");
+    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
   });
 
   it("reads the daily log when the meals could not be read", () => {
@@ -572,13 +575,13 @@ describe("Home — the week's food days are days with a meal", () => {
     h.meals = [];
     h.mealsError = "Couldn’t load your food diary.";
     renderHome();
-    expect(column("Food logged")).toBe("Food logged: 1 of 7 days");
+    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
   });
 
   it("counts a loaded meal whose day has no log yet", () => {
     h.meals = [{ id: "m1", date: tuesday() }];
     renderHome();
-    expect(column("Food logged")).toBe("Food logged: 1 of 7 days");
+    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
   });
 });
 
@@ -694,8 +697,8 @@ describe("Home — a new account's first days", () => {
       createdAt: { toMillis: () => WEDNESDAY.getTime() },
     };
     renderHome();
-    expect(column("Lifts")).toBe("Lifts: 0 of 1");
-    expect(column("Food logged")).toBe("Food logged: 0 of 5 days");
+    expect(weekCount()).toBe("0 of 1 session this week");
+    expect(weekPart("food")).toBe("Food logged 0 of 5 days");
   });
 });
 
@@ -713,6 +716,6 @@ describe("Home — the streak flame (Mob1 call 4)", () => {
     ).toBeInTheDocument();
     expect(
       within(sheet).getByRole("link", { name: "See your badges" })
-    ).toHaveAttribute("href", "/history?tab=badges");
+    ).toHaveAttribute("href", "/user/u1?badges=all");
   });
 });

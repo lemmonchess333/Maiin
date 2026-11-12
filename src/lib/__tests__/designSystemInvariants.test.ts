@@ -251,8 +251,6 @@ describe("D15 · DS invariant — numbers take one of the two number tiers", () 
   const SMALL = /^text-(?:xs|sm|base|caption|micro|small|body)$/;
   const LARGE = /^text-(?:xl|[2-9]xl|h1|h2|h3|display)$/;
   const SMALL_FIGURES = new Map([
-    // The Performance Index inside Home's progress ring.
-    ["src/components/home/PerformanceHeroCard.tsx", 2],
     // The average day's calories inside Analytics' macro donut.
     ["src/components/analytics/MacroDistribution.tsx", 1],
   ]);

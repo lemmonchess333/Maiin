@@ -104,28 +104,24 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
-| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: the week's sessions, badges and medals (yours: all), posts  |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
-| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                           |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                     |
-| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
-| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
-| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, with the rest timer and Reset programme at its foot           |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor, with voice cues (Train's Run tab deep-links here)              |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
 | `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Food offers again (F2d)            |
-| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
 | `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                    |
 | `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                              |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                 |
-| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                              |
 | `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                               |
 | `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
@@ -135,6 +131,13 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
+
+Four Settings routes are redirects, kept for links already saved (Trim1,
+2026-11-11): `/settings/training` and `/settings/workout-prefs` open Lift
+plan, and `/settings/subscription` and `/settings/data` open Account. The
+Settings list has ten rows: Lift plan, Run plan, Nutrition, Shoes;
+Notifications, Units & appearance, Social & privacy, Apple Health; Account,
+Support & legal.
 
 ## Key Business Logic (src/lib/)
 
@@ -147,7 +150,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `savedWorkouts.ts`      | The one saved-workout reader: query, parse, day, queued ones   |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `guidedRun.ts`          | A run step's kinds and colours, and a stored guided workout    |
 | `weather.ts`            | Weather API integration for runs                               |
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
@@ -224,6 +227,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `useStreaks.tsx` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
+- `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
 - `__tests__/badges.test.ts`
 
 ### program/
@@ -581,18 +585,19 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   by SessionHero: the session's name, its focus and minutes, its picture,
   one line against last time, one neutral Start; a day's second session
   is a compact card under it; the words are `homeHero.ts`'s) → the week
-  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  card: WeekSessions over WeekStrip's seven segments, then WeekSummary
+  (what the count is made of, and the days with food logged) beside
+  WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
-  WeeklyReviewEntry (a link on its heading while a review waits) →
-  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
-  Performance sits LAST by owner decision: the first thing on the scroll
-  should be something to do today, not a verdict on the week just gone.
+  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  carries no performance score (Trim1 call 1, 2026-11-11): the "This
+  week" card that closed the page, with its Performance row, is gone,
+  and the score is on Analytics.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
