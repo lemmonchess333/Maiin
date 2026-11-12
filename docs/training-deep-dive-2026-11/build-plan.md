@@ -99,6 +99,18 @@ fewer leg sets a week, at the same weights" (`raceLegTrimCut`), where they said
 "a third fewer" of plans whose two-set leg lifts lose none. Why this session
 says "fewer sets", not "a third fewer". The stored answer is kept either way.
 
+STATUS 2026-11-12, #5 (swaps keep barbell rep numbers): a dumbbell,
+kettlebell or one-leg lift is never prescribed under six reps (`hasSixRepFloor`,
+`SIX_REP_FLOOR`, mirrored in `functions/lib/roleTable.js` and held through a
+heavy day's shift by `repFloorFor`), and a lift held for an injury asks 8 to 12
+where its slot asked fewer (`injurySwapReps`), for its first plan: a training
+block's start or end gives it the slot's numbers again. A floor deadlift keeps
+its own row. Over 2,700 plans, dumbbell and one-leg slots under six went from
+3,168 to none, and a sore knee's split squat from the squat's fixed five to 8
+to 12 (780 slots). The owner left the call to the session ("you figure it
+out"). Easy bodyweight lifts under eight (2,212 slots, pull-ups excluded) are
+the No equipment work's, #12, whose PR #3107 holds that floor.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one

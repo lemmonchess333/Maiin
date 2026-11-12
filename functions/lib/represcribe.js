@@ -60,7 +60,12 @@
  */
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
-const { roleRepsFor, toExperience } = require("./roleTable");
+const {
+  SIX_REP_FLOOR,
+  hasSixRepFloor,
+  roleRepsFor,
+  toExperience,
+} = require("./roleTable");
 
 /** Mirror of programEngine.ts MAX_BODYWEIGHT_REPS: where a bodyweight lift's
  *  climb stops and the plan asks for load. */
@@ -188,6 +193,8 @@ function undulationDeltaFor(ex, role) {
 
 /** Mirror of programEngine.ts repFloorFor. */
 function repFloorFor(ex) {
+  if (ex && ex.exerciseId !== undefined && hasSixRepFloor(ex.exerciseId))
+    return SIX_REP_FLOOR;
   return ex && ex.isAccessory === true ? 6 : 3;
 }
 

@@ -166,6 +166,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Fix: 1. An injury swap starts lighter than the lift it replaces (for example 70% of the mapped load) and takes a moderate range (8-12) whatever the slot, for its first block. 2. Remove rack pull and kettlebell swing from the lower-back lists; add cable crunch, crunches, hanging leg raise and decline sit-up to the lower-back set with plank, dead bug, side plank and Pallof press as substitutes (all in the catalogue). 3. A rep floor by lift type: unilateral and dumbbell lifts never under 6, easy bodyweight lifts never under 8 (the second half is already locked, see D4). 4. Add a sweep assertion on load: no lower-back plan holds a hinge above X% of the uninjured deadlift seed.
 - Size: M. In the way: Lift4 (11) says "every lift the promises name is covered", which this keeps. The trap bar as the deadlift's first substitute is the table's own choice, not a lock row.
 - STATUS 2026-11-12: fixes 1 (the load half), 2 and 4 built; see `build-plan.md`, slice 3. The 8-12 range and fix 3 go with D5.
+- STATUS 2026-11-12, later: the 8-12 range and fix 3's dumbbell and one-leg half built with D5.
 
 ### D3. Changing session length on a plan the person has does not fit the new length. Breaks trust.
 
@@ -189,6 +190,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Root cause: as D2 (b). The day's heavier/lighter shift and the goal's fixed targets apply to the slot, not the lift.
 - Fix: the rep floor by lift type from D2, applied in `applyRoleTable` and `represcribeWorkouts` (and the server mirror `functions/lib/represcribe.js`).
 - Size: M. No lock in the way; the 2026-11-09 STATUS already asks for the bodyweight half.
+- STATUS 2026-11-12: the dumbbell and one-leg floor built, client and server; the bodyweight half is #3107's. See `build-plan.md`, slice 3, #5.
 
 ### D6. The person cannot set sets or reps, or choose a split. Hurts quality.
 
