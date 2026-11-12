@@ -54,6 +54,21 @@ const approved = (
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  // Redrawn from the front at the owner's request on 2026-11-12 (it was
+  // drawn from behind and "just looks weird"); the owner record supersedes
+  // the 2026-10-14 strict approval.
+  deadlift: {
+    version: "anatomy-v3-2026-11-12-gemini-front-three-quarter-v1",
+    status: "owner-released-with-findings",
+    width: 1080,
+    height: 1080,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/deadlift/2026-11-12/${i + 1}.webp`
+    ),
+    reference: "form-frames/deadlift/2026-11-12/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-11-12/deadlift.json",
+  },
   // Redrawn at the owner's request on 2026-11-07 ("looks bad", "needs
   // redoing"); the owner record supersedes the 2026-10-20 strict approval.
   "straight-arm-pulldown": {

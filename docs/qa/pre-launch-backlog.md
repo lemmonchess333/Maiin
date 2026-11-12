@@ -4522,3 +4522,24 @@ components; no signed-in account has drawn Train on a phone.
       session, and Train still shows the pair after Finish.
 - [ ] **An hour's plan.** Reset at 60 minutes. Passing: no day shows a
       "Superset" block.
+
+## The deadlift is drawn from the front (2026-11-12)
+
+Affects: the deadlift's card picture (Home's hero on a day it leads, Train,
+the exercise rows), its six form frames (`form-frames/deadlift/2026-11-12/`)
+and Home's animation for it, which is removed until it can be made again
+(`docs/exercise-art/motion/README.md`). Checked in Chromium at 393 px in both
+themes; no phone has drawn them.
+
+- [ ] **Home on a deadlift day.** On a day whose plan starts with the
+      deadlift (Pull A), open Home. Passing: the hero shows the athlete from
+      the front with the bar on the floor, and the picture stays still (no
+      animation from behind plays over it).
+- [ ] **The form guide.** Open the deadlift's form guide in a workout and
+      let it play. Passing: six frames, the bar rising from the shins to the
+      knees to the hips and back, the athlete facing the camera in every
+      frame, in both themes.
+- [ ] **Operator: the new animation.** Once the Gemini project's prepaid
+      credits are topped up, make the deadlift's flipbook from frames 1 and
+      4 as the motion README says. Passing: Home plays the athlete lifting
+      from the front, then rests on the card.

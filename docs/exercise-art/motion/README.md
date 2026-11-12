@@ -24,6 +24,15 @@ hip-thrust, arnold-press, kettlebell-swing). Re-run the sweep when
 templates, swaps or the lead rule change. A lead with no flipbook shows its
 still, as before.
 
+**The deadlift has none, from 2026-11-12.** It was redrawn from the front
+that day at the owner's request (`docs/exercise-art/releases/2026-11-12/`),
+and its flipbook, drawn from behind, was removed so it would not play over
+the new still. The new one could not be made: the video call answered 402,
+the Gemini project's prepaid credits used up. To make it once they are
+topped up, pair `form-frames/deadlift/2026-11-12/1.webp` (the card) with
+`4.webp` (the lockout) as in "How one is made", 9:16, and the sweep's 24
+are whole again.
+
 A day with no compound primary is pictured by its first compound movement
 before an isolation (owner, 2026-11-10: a primary mover leads). The
 straight-arm pulldown led 640 of the builds that way, a beginner's home

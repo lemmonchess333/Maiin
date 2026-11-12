@@ -34,15 +34,18 @@ describe("the artwork registry", () => {
     ).toEqual([]);
   });
 
-  it("lists only the owner-released straight-arm pulldown redraw by hand", () => {
-    // The owner had the set redrawn on 2026-11-07; its owner record
-    // supersedes the 2026-10-20 strict approval until a strict review.
+  it("lists only the owner-released deadlift and straight-arm pulldown redraws by hand", () => {
+    // The owner had each set redrawn (the pulldown on 2026-11-07, the
+    // deadlift from the front on 2026-11-12); each owner record supersedes
+    // its strict approval until a strict review.
     expect(Object.keys(HAND_LISTED_FORM_ARTWORK)).toEqual([
+      "deadlift",
       "straight-arm-pulldown",
     ]);
-    expect(HAND_LISTED_FORM_ARTWORK["straight-arm-pulldown"].status).toBe(
-      "owner-released-with-findings"
-    );
+    for (const id of ["deadlift", "straight-arm-pulldown"])
+      expect(HAND_LISTED_FORM_ARTWORK[id].status, id).toBe(
+        "owner-released-with-findings"
+      );
   });
 
   it("builds every approved set from its record", () => {

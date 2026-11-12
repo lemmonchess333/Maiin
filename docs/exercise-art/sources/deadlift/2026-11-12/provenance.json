@@ -1,0 +1,71 @@
+{
+  "exerciseId": "deadlift",
+  "date": "2026-11-12",
+  "generator": "gemini-3-pro-image through scripts/art/gemini-image.py, --aspect 1:1 --size 2K (2048 px square); every call attached the canonical athlete or a drawing made with it",
+  "note": "The API returned JPEG bytes for every call. The four drawings used are kept byte for byte under generated/ with a .jpg name; build.py turns three of them into the six pilot PNGs and the six released WebPs.",
+  "references": {
+    "athlete": {
+      "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+    },
+    "trapBar": {
+      "path": "public/form-frames/trap-bar-deadlift/1.webp",
+      "sha256": "47e537513a4e2a02f0df77d94bca798c4fe10ef18fbc3f114edf9e3e9c9df267",
+      "note": "sent as PNG, decoded from this file"
+    },
+    "oldFloor": {
+      "path": "public/form-frames/deadlift/1.webp",
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "note": "the 2026-10-14 rear-oblique set, sent as PNG for pose only"
+    },
+    "oldKnee": {
+      "path": "public/form-frames/deadlift/3.webp",
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "note": "as above"
+    },
+    "oldLockout": {
+      "path": "public/form-frames/deadlift/4.webp",
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "note": "as above"
+    }
+  },
+  "calls": [
+    {
+      "call": "master (start, bar on the floor)",
+      "used": "generated/start-master.jpg",
+      "refs": ["athlete", "trapBar", "oldFloor"],
+      "prompt": "Draw one new anatomical exercise illustration: the CONVENTIONAL BARBELL DEADLIFT, start position (bar on the floor, athlete set up and gripping it).\n\nIMAGE 1 is the canonical athlete. Copy him exactly: the same bald, faceless, muscular anatomical male; white and light-grey skin, crisp muscle separation, fine dark-grey contour lines, soft grey shading; smooth featureless pelvis with no genital detail, no shorts, no underwear, no clothing of any kind; the same plain white trainers. Same proportions, head, hands, feet, limb thickness and line weight. Polished flat 2D anatomical illustration.\n\nIMAGE 2 is the trap-bar deadlift from the same library. Copy its CAMERA and its drawing of the grey plates and steel sleeves: the athlete is seen from the FRONT THREE-QUARTER, facing the viewer and turned about 30 degrees to the picture's right, camera at hip height. Do not copy its hexagonal trap bar or its handles.\n\nIMAGE 3 is the same deadlift drawn from behind. Use it ONLY for the pose and the equipment: one straight Olympic barbell with ONE grey bumper plate on each end, the bar resting on the floor at mid-shin height, the grip just outside the shins. Do not copy its rear camera.\n\nSCENE: pure black background. Nothing under the athlete: no floor line, no platform, no shadow, no reflection. No text, labels, arrows, numbers or logos. Exactly one person. The whole athlete, both plates and both bar ends are inside the picture with black space around them.\n\nCAMERA: front three-quarter, as in IMAGE 2. We see the athlete's face side, chest, the front of both thighs and shins, and the near side of his hips. The barbell runs across the picture in front of his shins, slightly diagonal because of the three-quarter turn; the near plate is a little larger than the far plate.\n\nPOSE (start): feet hip-width apart and flat, toes slightly out, the bar over the middle of the feet and touching the shins. Hips hinged back and set ABOVE the knees, shoulders slightly in front of the bar, back flat and neutral from hips to head, chest up, neck neutral with the head looking a little ahead on the floor. BOTH ARMS ARE STRAIGHT and hang vertically, hands gripping the bar overhand just outside the shins. Knees bent and pushed slightly out over the toes.\n\nMUSCLE COLOURS: the glutes and the hamstrings are filled solid medium violet #7B72E9 where they are visible. The spinal erectors and the trapezius are filled a lighter lilac #9590E0 where they are visible. Every other muscle stays white-grey. The colour never changes muscle size or hides the contour lines.\n\nSquare picture, the athlete large in the frame.\n",
+      "sha256": "f343f60011e25c486f827bb9dfee03e1f132b81907057c90cd2789720c0aa2ef"
+    },
+    {
+      "call": "start, colour edit of the master",
+      "used": "generated/start.jpg",
+      "refs": ["generated/start-master.jpg", "generated/mid.jpg"],
+      "prompt": "Edit IMAGE 1 by changing ONLY colours. Every line, shape, pose, the camera, the barbell, the plates, the background and the size and position of everything stay exactly the same, pixel for pixel where possible.\n\nThe colour change: the FRONT and the OUTER SIDE of both thighs (the quadriceps, from the hip down to the knee) become WHITE-GREY, shaded exactly like the white-grey skin of the arms and chest. The solid medium violet #7B72E9 stays ONLY on the buttock (gluteus) and on a band along the BACK edge of each thigh (the hamstrings), the way IMAGE 2 shows the violet on a later moment of the same lift. The lighter lilac #9590E0 on the trapezius on top of the shoulders stays as it is. Nothing else changes.\n",
+      "sha256": "c9753179856f4a8cce5212a4b0fafc7e6702cd5bb4f0bacdba26edcccce27e8e",
+      "why": "The master coloured the whole visible thigh violet; the knee and lockout drawings show violet only on the buttock and the back edge of the thigh, as the deadlift muscle key (glutes, hamstrings) asks. This edit changed only that colour; its pose, camera, bar and feet are the master's."
+    },
+    {
+      "call": "mid (bar at the knees)",
+      "used": "generated/mid.jpg",
+      "refs": ["athlete", "trapBar", "oldKnee"],
+      "prompt": "Draw one new anatomical exercise illustration: the CONVENTIONAL BARBELL DEADLIFT at the moment the bar passes the knees on the way up.\n\nIMAGE 1 is the canonical athlete. Copy him exactly: bald, faceless, muscular anatomical male; white and light-grey skin, crisp muscle separation, fine dark-grey contour lines, soft grey shading; smooth featureless pelvis with no genital detail, no clothing of any kind; plain white trainers. Polished flat 2D anatomical illustration.\n\nIMAGE 2 is the trap-bar deadlift from the same library. Copy its CAMERA and its drawing of the grey plates and steel sleeves: front three-quarter at hip height, the athlete facing the viewer and turned about 30 degrees to the picture's RIGHT, his face looking to the picture's right. Do not copy its hexagonal trap bar or its pose.\n\nIMAGE 3 is this exact position drawn from behind. Copy its POSE and the HEIGHT OF ITS BAR: the straight Olympic barbell with ONE grey plate on each end is at the athlete's KNEES, touching the legs just above the knee caps; both plates are well off the floor. Knees almost straight, shins vertical, hips behind the bar, back flat and neutral at about 45 degrees, chest up, head neutral. Arms straight and vertical, overhand grip just outside the legs. Do not copy its rear camera or its colours.\n\nSCENE: pure black background. Nothing under the athlete: no floor line, no platform, no shadow. No text. Exactly one person. The whole athlete and both plates inside the picture with black space around them. The near (left) plate is a little larger than the far plate.\n\nMUSCLE COLOURS: the buttocks (glutes) and the BACK of the thighs (hamstrings) are solid medium violet #7B72E9, so in this view the violet shows on the side of the buttock and along the back edge of the thigh. The FRONT of the thighs is WHITE-GREY. The trapezius on top of the shoulders is lighter lilac #9590E0. Every other muscle stays white-grey.\n\nSquare picture, the athlete large in the frame.\n",
+      "sha256": "41e2bc46167ff1389794f2dfbe58621a38f8bc1ffc29505760743431e61a29bb"
+    },
+    {
+      "call": "lockout",
+      "used": "generated/lockout.jpg",
+      "refs": ["athlete", "generated/start-master.jpg", "oldLockout"],
+      "prompt": "Draw one new anatomical exercise illustration in a series about the CONVENTIONAL BARBELL DEADLIFT.\n\nIMAGE 1 is the canonical athlete. Copy him exactly: bald, faceless, muscular anatomical male; white and light-grey skin, crisp muscle separation, fine dark-grey contour lines, soft grey shading; smooth featureless pelvis with no genital detail, no clothing of any kind; plain white trainers. Polished flat 2D anatomical illustration.\n\nIMAGE 2 is the FIRST picture of this series (the start, bar on the floor). Your picture is a LATER moment of the same lift, so copy from IMAGE 2: the camera (front three-quarter at hip height, the body turned about 30 degrees to the picture's RIGHT, face looking to the picture's right, the outer side of the left hip and thigh visible; NOT square-on), the scale of the athlete, the drawing of the barbell with one grey plate on each end (left plate nearer and larger), the position and size of the feet on the page, and the pure black background with no floor line, no shadow and no text.\n\nIMAGE 3 shows the wanted position of the lift from behind. Copy ONLY its pose and the height of its bar.\n\nExactly one person. Square picture, the whole athlete and both plates inside the picture.\n\nPOSE, lockout: the athlete stands fully upright holding the bar. Hips and knees straight, shoulders above the hips, chest up, shoulders down (no shrug), no leaning back, head neutral looking ahead and to the picture's right. Arms straight and hanging, overhand grip just outside the thighs, the bar against the top of the thighs. The plates hang at mid-thigh height.\n\nMUSCLE COLOURS: standing upright and seen from the front three-quarter, the glutes and hamstrings face AWAY from the camera, so almost no violet shows: at most a thin violet strip on the side of the left buttock and the back edge of the left thigh, solid medium violet #7B72E9. The whole FRONT and the outer side of both thighs (quadriceps) are WHITE-GREY like the rest of the body, NOT violet. The trapezius on top of the shoulders is lighter lilac #9590E0. Every other muscle stays white-grey.\n",
+      "sha256": "405b97cabb9d646dbc0a4b8e1211fe1e529c62af01bc408bf07017091a3a7e5f"
+    }
+  ],
+  "rejected": [
+    "Start, 6 of 7: two first drafts and three later ones painted the front of the thighs (quadriceps) violet, drew lighter grey plates or set the hips at knee height (a squat, not a deadlift set-up); one was drawn from behind.",
+    "Knee position, 17 of 18: 10 kept the bar on the floor beside a start drawing they were given; 3 stood up straight; 1 bent over but kept the lockout's bar height pixel for pixel, so the bar would not have moved between frames 3 and 4; 1 put the bar at mid-thigh at a larger scale; 1 drew lighter plates; 1 was as good as the one used and was not needed. The one used was drawn without a start drawing to copy.",
+    "Lockout, 13 of 14: 5 painted the quadriceps violet, 3 of them square-on to the camera; 1 came back as the start drawing; the other 7 were close, and lockout 7 was kept because its near shoe matches the start to the pixel.",
+    "Colour edit, 2 of 3: both redrew the pose as the knee position."
+  ],
+  "callsMade": 42,
+  "callsUsed": 4
+}
