@@ -14,7 +14,10 @@
  * added weight: conditioning, and a lift the body is the load for.
  *
  * The factors err light, as the bank's do: a light first set corrects itself
- * the next session, a heavy one costs a failed one.
+ * the next session, a heavy one costs a failed one. A lift the generator
+ * places as an accessory took 0.3 before this table (the lateral raise, the
+ * face pull, the leg extension, the calf raises), and keeps it, so a built
+ * plan moves only where 0.3 was wrong: reverse flyes at 16 kg a hand.
  * `catalogueLoads.test.ts` walks the whole catalogue, so a loaded lift added
  * to it later without a row here fails a test instead of taking a main
  * lift's weight.
@@ -47,9 +50,9 @@ export const CATALOGUE_LOADS: Readonly<Record<string, CatalogueLoad>> = {
 
   // Back and rear shoulders, against the barbell row.
   "meadows-row": load("horizontal_pull", 0.4),
-  "face-pulls": load("horizontal_pull", 0.35),
-  "reverse-pec-deck": load("horizontal_pull", 0.35),
-  "rear-delt-machine-fly": load("horizontal_pull", 0.35),
+  "face-pulls": load("horizontal_pull", 0.3),
+  "reverse-pec-deck": load("horizontal_pull", 0.3),
+  "rear-delt-machine-fly": load("horizontal_pull", 0.3),
   "reverse-flyes": load("horizontal_pull", 0.1),
   // A shrug moves more than a row: the barbell one at about the row's
   // weight, the dumbbells at 0.4 a hand.
@@ -60,7 +63,7 @@ export const CATALOGUE_LOADS: Readonly<Record<string, CatalogueLoad>> = {
   "shoulder-press-machine": load("vertical_push", 0.9),
   "smith-shoulder-press": load("vertical_push", 0.9),
   "barbell-upright-row": load("vertical_push", 0.8),
-  "lateral-raise": load("vertical_push", 0.25),
+  "lateral-raise": load("vertical_push", 0.3),
   "front-raise": load("vertical_push", 0.25),
   "cable-lateral-raise": load("vertical_push", 0.15),
   "cuban-press": load("vertical_push", 0.15),
@@ -94,11 +97,11 @@ export const CATALOGUE_LOADS: Readonly<Record<string, CatalogueLoad>> = {
   "barbell-step-ups": load("knee_dominant", 0.35),
   lunges: load("knee_dominant", 0.2),
   "walking-dumbbell-lunges": load("knee_dominant", 0.2),
-  "leg-extension": load("knee_dominant", 0.4),
-  "calf-raise": load("knee_dominant", 0.45),
-  "standing-calf-raise": load("knee_dominant", 0.45),
-  "donkey-calf-raise": load("knee_dominant", 0.45),
-  "seated-calf-raise": load("knee_dominant", 0.35),
+  "leg-extension": load("knee_dominant", 0.3),
+  "calf-raise": load("knee_dominant", 0.3),
+  "standing-calf-raise": load("knee_dominant", 0.3),
+  "donkey-calf-raise": load("knee_dominant", 0.3),
+  "seated-calf-raise": load("knee_dominant", 0.3),
   "sled-push-pull": load("knee_dominant", 0.5),
 
   // Hips, against the deadlift.

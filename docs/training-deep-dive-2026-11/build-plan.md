@@ -66,12 +66,13 @@ STATUS 2026-11-12, #1 (an added lift's first weight): every loaded catalogue
 lift the bank does not list has its own factor and category
 (`catalogueLoads.ts`, 70 rows), so Add exercise, Replace and a session's add or
 swap start it at its own weight: for an 80 kg intermediate man a 10 kg lateral
-raise (was 32.5), a 35 kg leg extension (85), a 10 kg cable fly (62.5), a 20 kg
+raise (was 32.5), a 25 kg leg extension (85), a 10 kg cable fly (62.5), a 20 kg
 kettlebell swing (100), and conditioning at no weight (a treadmill was 35 kg).
-`catalogueLoads.test.ts` walks the catalogue, so a lift added later without a
-row fails. An added lift still counts as a main lift (`isAccessory` unset);
-setting it from the lift's role crosses the command boundary and is its own
-change.
+A built plan's accessories keep the 0.3 they had, except the reverse flyes,
+which go from 16 kg a hand to 5. `catalogueLoads.test.ts` walks the catalogue,
+so a lift added later without a row fails. An added lift still counts as a
+main lift (`isAccessory` unset); setting it from the lift's role crosses the
+command boundary and is its own change.
 
 ### 4. A kept plan that has outgrown its time
 

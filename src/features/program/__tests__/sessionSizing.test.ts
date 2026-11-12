@@ -284,13 +284,15 @@ describe("the order a day gives its lifts up in", () => {
   // decision was taken on. Written out so a change to a rank or to the
   // sizing shows as a changed week, not only as a count.
   // Lift22: the time a 45-minute day's pairs save goes to the lifts it
-  // had given up, in its own order, and then to sets.
+  // had given up, in its own order, and then to sets. D1 (slice 3): the
+  // reverse flyes start at 5 kg a hand, not 16, and take no warm-up, so the
+  // row day keeps its seated row.
   it("keeps each day's first pieces at 45 minutes, its last ones paired", () => {
     expect(sixDays(45)).toEqual([
       "Pull — Lat Focus: pull-ups 4, barbell-row 4, db-curl 3 + face-pulls 3",
       "Push — Chest Focus: bench-press 4, overhead-press 4, rope-tricep-pushdown 3 + lateral-raise 3",
       "Legs — Squat Focus: squat 4, romanian-deadlift 3, hack-squat 3 + standing-calf-raise 3",
-      "Pull — Row Focus: barbell-row 4, lat-pulldown 4, db-curl 3 + reverse-flyes 3",
+      "Pull — Row Focus: barbell-row 3, lat-pulldown 3, seated-row 3, db-curl 3 + reverse-flyes 3",
       "Push — Shoulder Focus: overhead-press 3, db-bench 3, db-shoulder-press 3, rope-tricep-pushdown 3 + lateral-raise 3",
       "Legs — Deadlift Focus: deadlift 3, squat 3, seated-leg-curl 3 + cable-crunch 3",
     ]);
@@ -301,7 +303,7 @@ describe("the order a day gives its lifts up in", () => {
       "Pull — Lat Focus: pull-ups 4, barbell-row 4, lat-pulldown 3, db-curl 4, face-pulls 3",
       "Push — Chest Focus: bench-press 4, overhead-press 4, db-bench 3, rope-tricep-pushdown 4, lateral-raise 3",
       "Legs — Squat Focus: squat 4, romanian-deadlift 4, hack-squat 3, standing-calf-raise 3, seated-leg-curl 3",
-      "Pull — Row Focus: barbell-row 4, lat-pulldown 4, seated-row 3, db-curl 4, reverse-flyes 3",
+      "Pull — Row Focus: barbell-row 4, lat-pulldown 4, seated-row 4, db-curl 3, reverse-flyes 3",
       "Push — Shoulder Focus: overhead-press 4, db-bench 4, db-shoulder-press 4, rope-tricep-pushdown 3, lateral-raise 3",
       "Legs — Deadlift Focus: deadlift 3, squat 3, seated-leg-curl 3, hack-squat 3, cable-crunch 3",
     ]);
