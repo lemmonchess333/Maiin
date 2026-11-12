@@ -1445,6 +1445,7 @@ export default function Run() {
       pace: paceS !== null ? paceLabel(paceS, unit) : "—",
       elapsed: timer.formatTime(timer.elapsed),
       label: phase === "paused" ? "Paused" : "Recording",
+      paused: phase === "paused",
     };
     void startRunActivity(data);
     void updateRunActivity(data);
