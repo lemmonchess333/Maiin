@@ -1758,6 +1758,28 @@ export function repRangeMaxFor(
 }
 
 /**
+ * A lift's reps and the top of its range, from the reps its row and its
+ * session give it. Where the ceiling (`prescribedRepCeiling`) leaves less
+ * than two reps of room, the range starts lower and keeps its width: a
+ * lighter day's +2 on a bodyweight 12-15 read "14-15", a range of one rep
+ * (training deep dive, D5). Used where the day shift applies
+ * (`represcribeWorkouts`); the server's copy is in
+ * `functions/lib/represcribe.js`.
+ */
+export function rangedReps(
+  ex: { exerciseId?: string; repUnit?: string; isAccessory?: boolean },
+  reps: number,
+  span: number
+): { reps: number; rangeMax: number | undefined } {
+  const ceiling = prescribedRepCeiling(ex);
+  const start =
+    span >= 2 && ceiling - reps < 2
+      ? Math.max(repFloorFor(ex), ceiling - span)
+      : reps;
+  return { reps: start, rangeMax: repRangeMaxFor(ex, start, span) };
+}
+
+/**
  * Deterministic role per generated day: first half of the week heavier,
  * back half higher-rep, an odd middle day at the goal base, and a
  * single-day week entirely at base.

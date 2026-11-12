@@ -43,6 +43,7 @@ import {
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
+  rangedReps,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
 import { exerciseRole } from "./exerciseRole";
@@ -144,11 +145,14 @@ export function represcribeWorkouts(
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
+      const { reps, rangeMax } = rangedReps(
+        ex,
+        Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(repFloorFor(ex), row.bottom + delta)
+        ),
+        span
       );
-      const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out: ProgramExercise = {
         ...ex,

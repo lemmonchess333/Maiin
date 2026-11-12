@@ -109,7 +109,12 @@ its own row. Over 2,700 plans, dumbbell and one-leg slots under six went from
 3,168 to none, and a sore knee's split squat from the squat's fixed five to 8
 to 12 (780 slots). The owner left the call to the session ("you figure it
 out"). Easy bodyweight lifts under eight (2,212 slots, pull-ups excluded) are
-the No equipment work's, #12, whose PR #3107 holds that floor.
+the No equipment work's, #12, whose PR #3107 holds that floor. One-rep ranges:
+a new plan makes none, and an older plan's lighter day made 616 in a block's
+new numbers (a bodyweight 12-15 shifted to "14-15" against the 15-rep
+ceiling); the range now starts lower and keeps its width (`rangedReps`, both
+copies), so none. The owner's "12-13" pushdown was not reproduced, and like
+#14 it needs the stored plan.
 
 ### 4. A kept plan that has outgrown its time
 

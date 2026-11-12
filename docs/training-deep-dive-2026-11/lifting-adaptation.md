@@ -190,7 +190,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Root cause: as D2 (b). The day's heavier/lighter shift and the goal's fixed targets apply to the slot, not the lift.
 - Fix: the rep floor by lift type from D2, applied in `applyRoleTable` and `represcribeWorkouts` (and the server mirror `functions/lib/represcribe.js`).
 - Size: M. No lock in the way; the 2026-11-09 STATUS already asks for the bodyweight half.
-- STATUS 2026-11-12: the dumbbell and one-leg floor built, client and server; the bodyweight half is #3107's. See `build-plan.md`, slice 3, #5.
+- STATUS 2026-11-12: the dumbbell and one-leg floor built, client and server, and a range the ceiling squeezed to one rep ("14-15") starts lower; the bodyweight half is #3107's. See `build-plan.md`, slice 3, #5.
 
 ### D6. The person cannot set sets or reps, or choose a split. Hurts quality.
 

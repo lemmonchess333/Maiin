@@ -14,7 +14,8 @@ import {
   roleRepsFor,
   SIX_REP_FLOOR,
 } from "../roleTable";
-import { repFloorFor } from "../programEngine";
+import { prescribedRepRange, rangedReps, repFloorFor } from "../programEngine";
+import { represcribeWorkouts } from "../represcribe";
 import { buildPlan, type PlanBuilderInput } from "../planBuilder";
 import { getExerciseById } from "@/lib/exercises";
 
@@ -158,5 +159,49 @@ describe("plans built with the floors", () => {
             ).toBeGreaterThanOrEqual(6);
         }
       }
+  });
+});
+
+describe("a range the rep ceiling squeezes", () => {
+  it("starts lower and keeps its width, where it read one rep", () => {
+    const calf = { exerciseId: "single-leg-calf-raise", isAccessory: true };
+    expect(rangedReps(calf, 14, 3)).toEqual({ reps: 12, rangeMax: 15 });
+    expect(rangedReps(calf, 15, 3)).toEqual({ reps: 12, rangeMax: 15 });
+  });
+
+  it("leaves a range with two reps of room as it is", () => {
+    const calf = { exerciseId: "single-leg-calf-raise", isAccessory: true };
+    expect(rangedReps(calf, 13, 3)).toEqual({ reps: 13, rangeMax: 15 });
+    expect(rangedReps({ exerciseId: "bench-press" }, 8, 4)).toEqual({
+      reps: 8,
+      rangeMax: 12,
+    });
+  });
+
+  it("never reads 14-15 on an older plan's lighter day after a block", () => {
+    const built = buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "intermediate",
+      bodyweightKg: 80,
+      sex: "male",
+      liftDays: 4,
+      preferredSplit: "auto",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      equipment: "minimal",
+      injuries: [],
+      sessionMinutes: 60,
+      currentDate: "2026-03-08",
+    } as PlanBuilderInput).programState.workouts.map(
+      // An older plan keeps no roles, so a block gives them by position.
+      ({ dayRole: _role, ...day }) => day
+    );
+    const after = represcribeWorkouts(built, "hypertrophy", "intermediate");
+    expect(after.some((d) => d.dayRole === "pump")).toBe(true);
+    for (const ex of after.flatMap((d) => d.exercises)) {
+      const { bottom, top } = prescribedRepRange(ex);
+      expect(top - bottom, ex.exerciseId).not.toBe(1);
+    }
   });
 });
