@@ -1,0 +1,141 @@
+{
+  "updatedOn": "2026-11-12",
+  "notes": "The welcome screen's photographs (owner, 2026-11-12): five Unsplash+ photographs that fill the screen behind the welcome's words and fade from one to the next, chosen by the owner against Strava's, Nike's and Tonal's welcomes on Mobbin. Unsplash+ rather than the free licence because its photographs carry model releases, which matter for faces on the screen that introduces the app. Each is the full source height cut to 9:19.5 around the subject, encoded as 1080 x 2340 WebP at quality 68, original colour, no retouching. The originals and nine backups were handed to the owner on 2026-11-12, since nothing can be downloaded once the subscription ends.",
+  "images": [
+    {
+      "asset": "welcome-1-sprint.webp",
+      "sourceUrl": "https://unsplash.com/photos/woman-running-in-black-sportswear-QtngT7qLmvA",
+      "unsplashId": "QtngT7qLmvA",
+      "photographer": "ohlamour studio",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "sport": "run",
+      "content": "A woman sprinting in a grey studio, close to the camera, sweat on her face, black sports bra and headband. Licensed editorial photograph; not Tropos members.",
+      "markCheck": "No marks on the bra, headband, sleeves or tights at 3x brightness.",
+      "sourceSize": [5002, 7500],
+      "crop": {
+        "rect": [1540, 0, 5002, 7500],
+        "rule": "Full source height, cut to 9:19.5 (a full-screen iPhone) around the subject."
+      },
+      "output": {
+        "size": [1080, 2340],
+        "format": "WebP",
+        "quality": 68,
+        "method": 6,
+        "bytes": 50952
+      },
+      "sourceSha256": "0b4a3647d9065502ba3cfe3ac0d7f8907f77613e14e318eb8672cf5c8caf00f5",
+      "outputSha256": "43c38efe461c434225b40dbd358c678b086bc796072eb0ae316c7924150216fb",
+      "retouching": "none"
+    },
+    {
+      "asset": "welcome-2-squat.webp",
+      "sourceUrl": "https://unsplash.com/photos/male-athlete-holding-barbell-above-his-head-while-doing-squats-during-cross-training-in-a-gym-copy-space-nSSY61sey1k",
+      "unsplashId": "nSSY61sey1k",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "sport": "lift",
+      "content": "A man at the bottom of an overhead squat in a cross-training gym, the bar and plates above his head. Licensed editorial photograph; not Tropos members.",
+      "markCheck": "The plates read \"15 KG\", their weight, not a maker's mark (the 2026-10-17 kettlebell's \"24KG\" was treated the same). Out-of-focus boxes in the background carry a label that cannot be read at any size; they sit behind his knee, under the words. His shoes are plain at native resolution.",
+      "sourceSize": [4000, 6000],
+      "crop": {
+        "rect": [616, 0, 3385, 6000],
+        "rule": "Full source height, cut to 9:19.5 (a full-screen iPhone) around the subject."
+      },
+      "output": {
+        "size": [1080, 2340],
+        "format": "WebP",
+        "quality": 68,
+        "method": 6,
+        "bytes": 100928
+      },
+      "sourceSha256": "44a62e29c382eeef38d240e2c55d29c304479dec50aeacc6dbb131ca9ba286b9",
+      "outputSha256": "c375b7373d46bc0ff86191f783d3ab574f0858f392804ae15857e192da7b64ff",
+      "retouching": "none"
+    },
+    {
+      "asset": "welcome-3-crew.webp",
+      "sourceUrl": "https://unsplash.com/photos/three-women-running-workout-lfDpgAP5_Ao",
+      "unsplashId": "lfDpgAP5_Ao",
+      "photographer": "A. C.",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "sport": "run",
+      "content": "Three women running together along a stone wall, two laughing toward the camera. Licensed editorial photograph; not Tropos members.",
+      "markCheck": "One sports-bra strap is printed with the word \"RUN\" twice, about 3 px tall on a phone. A word, not a brand mark, so it is kept; a local retouch was tried and left visible edits, so the photo ships unedited. No other marks.",
+      "sourceSize": [4672, 7008],
+      "crop": {
+        "rect": [1093, 0, 4327, 7008],
+        "rule": "Full source height, cut to 9:19.5 (a full-screen iPhone) around the subject."
+      },
+      "output": {
+        "size": [1080, 2340],
+        "format": "WebP",
+        "quality": 68,
+        "method": 6,
+        "bytes": 198902
+      },
+      "sourceSha256": "a5e9b5974dccd59b295182746bd0a9823417ac983f85250d0304b5c0e248bbc4",
+      "outputSha256": "02d3945a29b2b88931e6d47dcbde09a4ddb3c6b0950dc97c7922886f056d765a",
+      "retouching": "none"
+    },
+    {
+      "asset": "welcome-4-pull-up.webp",
+      "sourceUrl": "https://unsplash.com/photos/VgAUb1q9qvY",
+      "unsplashId": "VgAUb1q9qvY",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "sport": "lift",
+      "content": "A woman holding the top of a strict pull-up in a bright gym, medicine balls and plates on the rack behind her. Licensed editorial photograph; not Tropos members.",
+      "markCheck": "No marks on the rack, plates, balls or clothing at 3x brightness.",
+      "sourceSize": [4480, 6720],
+      "crop": {
+        "rect": [689, 0, 3791, 6720],
+        "rule": "Full source height, cut to 9:19.5 (a full-screen iPhone) around the subject."
+      },
+      "output": {
+        "size": [1080, 2340],
+        "format": "WebP",
+        "quality": 68,
+        "method": 6,
+        "bytes": 86304
+      },
+      "sourceSha256": "e62358cfd3bf9bef8644bec7829851c318e661bf6f952ea400a6b5441026bd21",
+      "outputSha256": "f3f53eec0626b306cee5fcf8c523e81e0b927f8f37c22a72e5cb9e76454a0388",
+      "retouching": "none"
+    },
+    {
+      "asset": "welcome-5-runner.webp",
+      "sourceUrl": "https://unsplash.com/photos/sweaty-runner-looks-determined-against-a-blue-sky-zfi-JwNwKuk",
+      "unsplashId": "zfi-JwNwKuk",
+      "photographer": "Natalia Blauth",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "sport": "run",
+      "content": "A runner in an orange tee against a blue sky, sweat on his face, looking past the camera. Licensed editorial photograph; not Tropos members.",
+      "markCheck": "No marks on the tee at 3x brightness.",
+      "sourceSize": [6240, 4160],
+      "crop": {
+        "rect": [3595, 0, 5515, 4160],
+        "rule": "Full source height, cut to 9:19.5 (a full-screen iPhone) around the subject."
+      },
+      "output": {
+        "size": [1080, 2340],
+        "format": "WebP",
+        "quality": 68,
+        "method": 6,
+        "bytes": 106626
+      },
+      "sourceSha256": "ef54199c97559011399b5fecb7715269ca8cf81f2d11f2a19edeb84a9bbf893a",
+      "outputSha256": "168de9f6256d02762b4188a61b2a2101b793ee963dd24acf4e6e17e7ddc75edf",
+      "retouching": "none"
+    }
+  ]
+}

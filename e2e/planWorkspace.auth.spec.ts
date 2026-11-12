@@ -166,7 +166,7 @@ test("reviews a run move while preserving actual history, lift rotation and usua
     await page.goto("./");
     const emailField = page.locator("#login-email");
     const signIn = page.getByRole("button", {
-      name: "I have an account",
+      name: "Sign in",
       exact: true,
     });
     await signIn.or(emailField).first().waitFor();

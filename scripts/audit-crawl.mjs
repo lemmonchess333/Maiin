@@ -107,10 +107,10 @@ async function signIn() {
   results.push(cur);
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await settle(800);
-  // A first visit opens on the welcome screen, whose "I have an account"
+  // A first visit opens on the welcome screen, whose "Sign in"
   // leads to the form.
   const haveAccount = page.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   await haveAccount
