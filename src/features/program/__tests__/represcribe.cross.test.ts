@@ -9,6 +9,7 @@ import {
   repDeltaForRole,
   repFloorFor,
   repRangeMaxFor,
+  rangedReps,
 } from "../programEngine";
 import { toExperience, usesUndulation } from "../experienceModel";
 import {
@@ -56,6 +57,11 @@ const cf = require("../../../../functions/lib/represcribe") as {
     reps: number,
     span: number
   ) => number | undefined;
+  rangedReps: (
+    ex: unknown,
+    reps: number,
+    span: number
+  ) => { reps: number; rangeMax: number | undefined };
   represcribeWorkouts: (
     workouts: unknown,
     goal: string,
@@ -303,6 +309,21 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             cf.repRangeMaxFor(ex, reps, span),
             `${JSON.stringify(ex)} reps=${reps} span=${span}`
           ).toBe(repRangeMaxFor(ex, reps, span));
+        }
+  });
+
+  it("rangedReps agrees where the ceiling squeezes a range", () => {
+    for (const ex of [
+      { exerciseId: "bench-press" },
+      { exerciseId: "pull-ups", isAccessory: true },
+      { exerciseId: "single-leg-calf-raise", isAccessory: true },
+    ])
+      for (const reps of [3, 8, 12, 13, 14, 15, 19, 20])
+        for (const span of [0, 1, 2, 3, 5]) {
+          expect(
+            cf.rangedReps(ex, reps, span),
+            `${JSON.stringify(ex)} reps=${reps} span=${span}`
+          ).toEqual(rangedReps(ex, reps, span));
         }
   });
 

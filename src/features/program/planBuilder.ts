@@ -514,7 +514,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     ),
     input.primaryGoal,
     toExperience(input.experience),
-    input.existingState?.settings?.loadUnit ?? input.loadUnit
+    input.existingState?.settings?.loadUnit ?? input.loadUnit,
+    input.injuries
   );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as

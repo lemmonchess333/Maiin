@@ -43,10 +43,17 @@ import {
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
+  rangedReps,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
 import { exerciseRole } from "./exerciseRole";
-import { isFloorDeadlift, roleReps, roleRepsFor } from "./roleTable";
+import {
+  injurySwapReps,
+  isFloorDeadlift,
+  roleReps,
+  roleRepsFor,
+} from "./roleTable";
+import { heldForInjury } from "./injurySubstitutions";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
   ActiveTrainingBlock,
@@ -138,11 +145,14 @@ export function represcribeWorkouts(
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
+      const { reps, rangeMax } = rangedReps(
+        ex,
+        Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(repFloorFor(ex), row.bottom + delta)
+        ),
+        span
       );
-      const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out: ProgramExercise = {
         ...ex,
@@ -264,7 +274,10 @@ export function represcribeSwapped(
   after: readonly WorkoutDay[],
   goal: PrimaryGoal,
   experience: Experience | undefined,
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** The person's injuries: a lift swapped in for one takes 8 to 12
+   *  (`injurySwapReps`, training deep dive D2). */
+  injuries: readonly string[] = []
 ): WorkoutDay[] {
   const fresh = represcribeWorkouts(after, goal, experience, unit);
   return after.map((day, d) => ({
@@ -275,8 +288,28 @@ export function represcribeSwapped(
       const sets = isFloorDeadlift(ex.exerciseId)
         ? Math.min(ex.sets, roleRepsFor(goal, ex, experience).sets)
         : ex.sets;
+      const numbered = fresh[d].exercises[e];
+      const held = heldForInjury(ex, injuries)
+        ? injurySwapReps(goal, ex, experience)
+        : null;
+      const rangeMax =
+        held?.top === undefined
+          ? undefined
+          : repRangeMaxFor(ex, held.bottom, held.top - held.bottom);
+      const { repRangeMax: _numberedMax, ...numberedRest } = numbered;
       return {
-        ...fresh[d].exercises[e],
+        ...(held
+          ? {
+              ...numberedRest,
+              reps: held.bottom,
+              baseReps: held.bottom,
+              progressionType:
+                held.top === undefined
+                  ? ("linear" as const)
+                  : ("double" as const),
+              ...(rangeMax !== undefined ? { repRangeMax: rangeMax } : {}),
+            }
+          : numbered),
         sets,
         ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
       };
