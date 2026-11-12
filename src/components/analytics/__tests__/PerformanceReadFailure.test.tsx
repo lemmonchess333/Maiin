@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PerformanceOverviewCard from "../PerformanceOverviewCard";
 import PerformanceSection from "../PerformanceSection";
-import PerformanceTab from "../PerformanceTab";
+import PerformanceDetails from "../PerformanceDetails";
 
 const mock = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -26,12 +25,8 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
 }));
 
 const surfaces = [
-  [
-    "overview",
-    () => <PerformanceOverviewCard hasLoggedSession onOpenDetails={() => {}} />,
-  ],
   ["section", () => <PerformanceSection hasLoggedSession />],
-  ["tab", () => <PerformanceTab />],
+  ["details", () => <PerformanceDetails />],
 ] as const;
 
 beforeEach(() => {

@@ -49,7 +49,7 @@ function AgainstUsual({ measure }: { measure: WeekMeasure }) {
 }
 
 /**
- * The Performance page's account of its score: what the seven days
+ * The account of the score, first in its details: what the seven days
  * actually held, against the user's usual week. It replaces the server's
  * insight bullets, which were templates chosen from these same figures
  * ("…great progression"), and one of which cited sleep the app never

@@ -5,9 +5,13 @@ import { dirname, resolve } from "node:path";
 
 /**
  * DS3: Analytics is a short overview with Lifting, Running, Body and Food
- * pages behind it, chosen by `?view=`, and a Performance page behind its
- * Performance card. The one long scroll it replaced was about 4,700 px
- * tall on a phone.
+ * pages behind it, chosen by `?view=`. The one long scroll it replaced
+ * was about 4,700 px tall on a phone.
+ *
+ * There was a fifth page, Performance, behind the overview's Performance
+ * card. Trim1 call 5 (11 November 2026) made that card the one place the
+ * score is shown, and what the page held opens under it in place: five
+ * views, not six.
  *
  * Pinned at the source, as the other History tests are: the page mounts
  * charts, maps and several Firestore hooks, and a render test would pin
@@ -52,7 +56,8 @@ describe("Analytics — each discipline on its own page", () => {
   });
 
   it.each([
-    "<PerformanceOverviewCard",
+    "<PerformanceSection",
+    "<TrainingLoadCard",
     "<PeriodSummaryCard",
     "<AnalyticsTrends",
     "<AnalyticsMuscles",
@@ -63,20 +68,41 @@ describe("Analytics — each discipline on its own page", () => {
   });
 
   it.each(["<PerformanceSection", "<TrainingLoadCard"])(
-    "%s moved to the Performance page",
+    "%s is mounted once",
     (marker) => {
-      expect(pageOf(marker)).toBe("performance");
-      // Once only: not also left behind on the overview.
       expect(history.split(marker).length - 1).toBe(1);
     }
   );
 
-  it("the overview's Performance card opens the Performance page", () => {
-    const card = history.slice(
-      history.indexOf("<PerformanceOverviewCard"),
-      history.indexOf("/>", history.indexOf("<PerformanceOverviewCard"))
+  it("has no Performance page: four pages and the overview", () => {
+    const views = history.slice(
+      history.indexOf("const ANALYTICS_VIEWS"),
+      history.indexOf("];", history.indexOf("const ANALYTICS_VIEWS"))
     );
-    expect(card).toContain('setView("performance")');
+    expect(views.match(/"\w+"/g)).toEqual([
+      '"lifting"',
+      '"running"',
+      '"body"',
+      '"food"',
+    ]);
+    expect(history).not.toMatch(/view === "performance"/);
+    expect(history).not.toContain('setView("performance")');
+  });
+
+  it("draws the training load inside the score's details, read only while they are open", () => {
+    const section = history.slice(
+      history.indexOf("<PerformanceSection"),
+      history.indexOf("</PerformanceSection>")
+    );
+    expect(section).toContain("<TrainingLoadCard");
+    expect(section).toContain("detailsOpen={scoreOpen}");
+    const hook = history.slice(
+      history.indexOf("useTrainingLoadSeries(rangeDays"),
+      history.indexOf("});", history.indexOf("useTrainingLoadSeries(rangeDays"))
+    );
+    expect(hook).toContain(
+      'enabled: filter === "analytics" && view === "overview" && scoreOpen'
+    );
   });
 
   it("gives every page but the overview a way back", () => {
@@ -95,21 +121,50 @@ describe("Analytics — links into the pages", () => {
     expect(map).toContain('running: "running"');
     expect(map).toContain('lifting: "lifting"');
     expect(map).toContain('nutrition: "food"');
-    expect(map).toContain('performance: "performance"');
+    // Performance named a page once. It opens the score's details now.
+    expect(map).not.toContain("performance");
   });
 
-  it("opens the Performance page from a #performance link", () => {
+  it("opens the score's details from every link that named Performance", () => {
     /* Home's row linked to `/history#performance` until Trim1 call 1 took
-       the score off Home; links already saved and sent still do. The
-       render reads the anchor so the page opens first time, and the mount
-       effect moves it into `?view=`. */
-    expect(history).toContain('hashOpensPerformance ? "performance"');
+       the score off Home, the overview's card to `?view=performance`
+       until call 5, and older links to `?tab=performance`. Links already
+       saved and sent still do. The render reads all three, so the details
+       are open first time, and the mount effect moves that into
+       `?score=details`. */
+    const reads = history.slice(
+      history.indexOf("const linkNamesPerformance"),
+      history.indexOf("const setScoreOpen")
+    );
+    expect(reads).toContain("viewFromUrl === RETIRED_PERFORMANCE_VIEW");
+    expect(reads).toContain("tabFromUrl === RETIRED_PERFORMANCE_VIEW");
+    expect(reads).toContain("PERFORMANCE_ANCHORS.has(");
+    expect(reads).toContain(
+      "searchParams.get(SCORE_PARAM) === SCORE_DETAILS || linkNamesPerformance"
+    );
+    expect(history).toContain('const RETIRED_PERFORMANCE_VIEW = "performance"');
     const anchors = history.slice(
       history.indexOf("const PERFORMANCE_ANCHORS"),
       history.indexOf("]);", history.indexOf("const PERFORMANCE_ANCHORS"))
     );
     expect(anchors).toContain('"performance"');
     expect(anchors).toContain('"performance-expanded"');
+    // The rewrite: the dead `view` goes, the fold's state takes its place.
+    expect(history).toContain('if (retiredView) updated.delete("view")');
+    expect(
+      history.split("updated.set(SCORE_PARAM, SCORE_DETAILS)").length - 1
+    ).toBeGreaterThanOrEqual(3);
+  });
+
+  it("opens the fold with a replace: it is not a place to go back to", () => {
+    const setScoreOpen = history.slice(
+      history.indexOf("const setScoreOpen = useCallback("),
+      history.indexOf(
+        "[setSearchParams]",
+        history.indexOf("const setScoreOpen")
+      )
+    );
+    expect(setScoreOpen).toContain("replace: true");
   });
 
   it("pushes a page, so the back gesture returns to the overview", () => {
@@ -130,7 +185,7 @@ describe("Analytics — links into the pages", () => {
   });
 
   it("draws one control row on a page: the way back, with the range beside it", () => {
-    // The tab switch is the overview's (and the PRs and Badges tabs').
+    // The tab switch is the overview's (and the Bests tab's).
     expect(conditionBefore("<FilterPills")).toContain(
       '(filter !== "analytics" || view === "overview")'
     );
@@ -142,8 +197,56 @@ describe("Analytics — links into the pages", () => {
     );
     expect(row).toContain("<TimeRangePills");
     expect(conditionBefore("<TimeRangePills selected={timeRange}", 60)).toMatch(
-      /view === "overview"|view !== "performance"/
+      /view === "overview"/
     );
+  });
+});
+
+describe("Analytics — two tabs (Trim1 calls 3(c) and 6)", () => {
+  /* Badges had a tab here. They are on the profile now, above the medals
+     (`BadgeShelf`), which Hist5b said the tab was an interim place for. */
+  it("has Analytics and Bests, and no third", () => {
+    const tabs = history.slice(
+      history.indexOf("const VALID_TABS"),
+      history.indexOf("];", history.indexOf("const VALID_TABS"))
+    );
+    expect(tabs.match(/"\w+"/g)).toEqual(['"analytics"', '"prs"']);
+    expect(history).not.toContain("<BadgeGrid");
+    expect(history).not.toMatch(/filter === "badges"/);
+  });
+
+  it("sends a link that named the Badges tab to the person's own badges", () => {
+    const names = history.slice(
+      history.indexOf("const BADGE_TAB_NAMES"),
+      history.indexOf("]);", history.indexOf("const BADGE_TAB_NAMES"))
+    );
+    // Both names the tab has had: a bookmark from either still lands.
+    expect(names).toContain('"badges"');
+    expect(names).toContain('"milestones"');
+    // `?tab=`, a `#` anchor and the stored hint are all read.
+    const reads = history.slice(
+      history.indexOf("const [hintNamedBadges]"),
+      history.indexOf("const filter: FilterTab")
+    );
+    expect(reads).toContain("window.location.hash");
+    expect(reads).toContain('sessionStorage.getItem("history-tab")');
+    expect(reads).toContain("BADGE_TAB_NAMES.has(tabFromUrl)");
+    expect(history).toContain(
+      "return <Navigate to={badgeShelfPath(uid)} replace />"
+    );
+  });
+
+  it("spells the shelf's address once", async () => {
+    const { badgeShelfPath, BADGES_PARAM, BADGES_ALL } =
+      await import("@/lib/badgeShelfLink");
+    expect(badgeShelfPath("u1")).toBe("/user/u1?badges=all");
+    expect(`${BADGES_PARAM}=${BADGES_ALL}`).toBe("badges=all");
+    // The profile reads the same names it is linked with.
+    const profile = readFileSync(
+      resolve(repoRoot, "src/pages/UserProfile.tsx"),
+      "utf8"
+    );
+    expect(profile).toContain("searchParams.get(BADGES_PARAM) === BADGES_ALL");
   });
 });
 

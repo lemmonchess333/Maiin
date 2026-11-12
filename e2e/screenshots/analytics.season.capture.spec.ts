@@ -66,6 +66,9 @@ const PAGES: {
     anchor: (page) => page.getByText("kg lifted").first(),
   },
   {
+    // The overview with the score's details open: the page Performance
+    // had until Trim1 call 5. Its old address is used on purpose, so
+    // this also holds that a saved link still lands on the details.
     name: "performance",
     path: "/Maiin/history?view=performance",
     anchor: (page) => page.getByRole("heading", { name: "Performance Index" }),

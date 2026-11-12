@@ -104,7 +104,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
-| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: the week's sessions, badges and medals (yours: all), posts  |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
@@ -224,6 +224,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `useStreaks.tsx` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
+- `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
 - `__tests__/badges.test.ts`
 
 ### program/

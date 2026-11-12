@@ -84,10 +84,10 @@ export default function TrainingLoadCard({
   onRetry?: () => void;
   /** Computed from history before cropping the chart, including the 28-day base. */
   guardrails?: LoadGuardrails;
-  /** The range the curve covers, as the card's own control: on the
-   *  Performance page it scopes this card and nothing else, so it sits
-   *  under the card's title rather than across the page. It stays put
-   *  while a new range loads. */
+  /** The range the curve covers, as the card's own control: inside the
+   *  score's details it sits above the overview's range, which scopes
+   *  what is below it, so the card carries the control under its own
+   *  title. It stays put while a new range loads. */
   range?: { selected: string; onChange: (value: string) => void };
 }) {
   const rangeRow = range ? (
