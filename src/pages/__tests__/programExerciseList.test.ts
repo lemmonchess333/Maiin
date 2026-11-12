@@ -85,6 +85,17 @@ describe("the list renders with the day, ungated", () => {
   });
 });
 
+describe("a pair the plan wrote (Lift22)", () => {
+  it("stands in its own block in the day's list", () => {
+    /* Anchored on the rows: the list walks the day's lifts as runs, and a
+       run of two is drawn inside the block that says what a superset is. */
+    const body = dayBody();
+    expect(body).toContain("pairRuns(selectedWorkout.exercises)");
+    expect(body).toContain("<SupersetBlock");
+    expect(body).toContain("More options for ");
+  });
+});
+
 describe("the page reads top to bottom", () => {
   const at = (needle: string) => {
     const i = code.indexOf(needle);

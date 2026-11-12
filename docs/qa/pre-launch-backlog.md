@@ -4501,3 +4501,24 @@ Captured in Chromium at 393 and 320 px; a phone has not drawn them.
 - [ ] **An old link.** From Safari or a note, open a saved link to
       `/settings/training` in the installed app. Passing: Lift plan
       opens.
+
+## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
+
+Affects: new plans of 30 and 45 minutes past beginner (`planSupersets.ts`,
+`sizeSessionsToTime`), the session clock (`estimateSessionSeconds`), a
+session's opening supersets (`sessionPrescription`) and Train's day list
+(`SupersetBlock`). Unit-tested and captured in Chromium from the app's own
+components; no signed-in account has drawn Train on a phone.
+
+- [ ] **A new 45-minute plan.** Reset the programme at 45 minutes,
+      intermediate, four days or more. Passing: Train shows at least one
+      day with a "Superset" block of two lifts, the block's line reads
+      "One set of each, then rest", and the day's minutes are 45 or under.
+- [ ] **The pair in the workout.** Start that day. Passing: the first
+      lift of the pair reads "Superset with" the second, finishing a set
+      of it moves to the second, and the rest timer runs after the second.
+- [ ] **Splitting it.** Open the first lift's "…" and tap "Remove from
+      superset". Passing: the two run as straight sets for the rest of the
+      session, and Train still shows the pair after Finish.
+- [ ] **An hour's plan.** Reset at 60 minutes. Passing: no day shows a
+      "Superset" block.

@@ -55,6 +55,7 @@ The rule:
 ### Lifting (for cross-reference)
 
 - **workouts** — array of prescribed lift sessions on programState. Each has `dayIndex`, `dayName`, `exercises[]`, `completed`, `skipped`.
+- **superset (plan pair)** — two neighbouring lifts a 30 or 45 minute plan writes to be done one set of each, then the rest (Lift22). The first holds its partner's slot (`supersetWith`); `planSupersets.ts` has the rules and `pairSlot.ts` the reading. Distinct from a superset a person makes in a session (Mob1, `superset.ts`), which stays the session's.
 - **weekHistory** — array of archived past weeks, currently storing `{ workouts, weekNumber }`. Proposed extension (Q6): also store `runDays`.
 
 ### Training-week scheduling ontology & surfaces
