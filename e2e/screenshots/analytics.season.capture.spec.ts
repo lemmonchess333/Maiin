@@ -150,10 +150,12 @@ test.describe("analytics — a season of training", () => {
     await settleFullPageHeight(page);
     await shootBoth(page, "season-prs");
 
-    /* Home's Performance row, whose change is now against last week. */
+    /* Home's week card, which says a season's week once: the count, the
+       seven days and what the count is made of. (The Performance row
+       closed this capture until Trim1 call 1 took the score off Home.) */
     await page.goto("/Maiin/");
     await expect(
-      page.getByRole("link", { name: /Performance Index \d+/ })
+      page.getByRole("list", { name: "This week so far" })
     ).toBeVisible({ timeout: 30_000 });
     await settleImages(page);
     await settleFullPageHeight(page);
