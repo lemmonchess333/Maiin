@@ -361,6 +361,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Root cause: `scheduleRecoveryWeekV2` puts `easy_30` on every run day (`runScheduler.ts:970-1000`).
 - Fix: by distance: after a marathon no run for 4 to 7 days, then two or three short easy runs, then 50%, 75% of the pre-race week.
 - Size S.
+- STATUS 2026-11-12: built by distance, with fixed steps (20, 30, then 40 minutes) standing for the 50% and 75%, since the recovery does not read the pre-race week. See `build-plan.md`, slice 3, #9.
 
 ### D11. Coming back after 3 to 4 weeks: the right idea, the wrong first week, and the race stays. Moderate injury risk.
 

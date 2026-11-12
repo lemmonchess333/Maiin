@@ -156,6 +156,17 @@ Monday after. On the deep dive's probe, a 10K added 5, 12 and 19 days out now
 gives race, lighter and lighter weeks (`raceWeekAtBuild.test.ts`), where all
 three kept full sets.
 
+STATUS 2026-11-12, #9 (an easy 30 the day after a marathon): a recovery is
+graded from the race by its distance (`RECOVERY_STEPS` in `runScheduler.ts`):
+days off after it (a 5K one, a 10K two, a half four, a marathon seven), then at
+most three 20-minute runs a week on days apart, then 30 minutes on every run
+day, then 40 for a half or a marathon. A Sunday marathon's runner G had six
+easy 30s the week after it and every week for four; now none, then three 20s
+and a 30, then five 30s and a 40, then 40s (`raceRecovery.test.ts`). A week
+with no run keeps its key (`emptyRunWeekKey`) so the rollover moves on. The
+simulator's jump check no longer counts the recovery's climb back. PR-E's
+STATUS line (#3238) records the change.
+
 STATUS 2026-11-12, #10 (the first week back is the full base week): a race
 plan reads the week a runner came back in after a gap of 21 days or more from
 the runs it already reads (`returnWeekKey`), and that week opens a rung under

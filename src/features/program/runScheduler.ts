@@ -960,10 +960,35 @@ export function scheduleStructuredWeekV2(
 }
 
 /**
- * PR-E: Recovery-phase week generator. All scheduled run/both
- * slots emit `easy_30` regardless of weekly position — no long
- * run, no tempo, no intervals. Frequency unchanged from the
- * user's weekSchedule.
+ * The weeks after a race, by its distance (training deep dive, D10): days
+ * from the race (race day is 0) before the first run, until short runs
+ * give way to 30-minute ones, and until those give way to 40-minute ones;
+ * the recovery ends `recoveryWeeksForDistance` weeks after the race, so a
+ * 5K's and a 10K's never reach 40 minutes. A marathon is a week off, a week of two or three 20-minute runs, a week at
+ * about half the build's running and a week at about three quarters, where
+ * PR-E put an easy 30 on every run day from the day after.
+ */
+const RECOVERY_STEPS: Record<
+  "5k" | "10k" | "half" | "marathon",
+  { firstRun: number; thirty: number; forty: number }
+> = {
+  "5k": { firstRun: 2, thirty: 4, forty: Number.POSITIVE_INFINITY },
+  "10k": { firstRun: 3, thirty: 7, forty: Number.POSITIVE_INFINITY },
+  half: { firstRun: 5, thirty: 11, forty: 18 },
+  marathon: { firstRun: 8, thirty: 14, forty: 21 },
+};
+
+/** At most this many short runs a week while they are short, none on
+ *  consecutive days. */
+const RECOVERY_SHORT_RUNS = 3;
+
+/**
+ * PR-E: Recovery-phase week generator. Each scheduled run/both slot gets
+ * an easy run, no long run, no tempo, no intervals, graded from the race
+ * when the plan knows it (`RECOVERY_STEPS`, D10): no run in the days right
+ * after it, then a few short runs, then 30 and 40 minutes on every run day.
+ * A day on or before the race, or a plan with no race date or distance,
+ * keeps PR-E's easy 30.
  *
  * Used by `refreshRunSchedule` when `runPlan.phase === "recovery"`.
  * Auto-entered by `completeRunDay` (PR-D) when the race-day
@@ -977,6 +1002,8 @@ export function scheduleRecoveryWeekV2(input: {
   weekStart: string;
   /** Run20 (5): as the race plan takes it (`RacePlanV2Input`). */
   newRunnerUntil?: string | null;
+  /** The race the recovery follows (`runPlan.raceGoal`). */
+  race?: { distance: string; targetDate: string } | null;
 }): ScheduledRunDay[] {
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -984,24 +1011,58 @@ export function scheduleRecoveryWeekV2(input: {
   if (runEligibleSlots.length === 0) return [];
 
   const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
+  const weekKey = localDateString(weekStart);
   // A new runner's recovery week is that week's run-walk, or the runs the
   // running has built to, as the race plan's weeks are.
-  const templateId =
-    newRunnerTemplate(
-      "easy_30",
-      localDateString(weekStart),
-      input.newRunnerUntil
-    )?.id ?? "easy_30";
-  return runEligibleSlots
-    .map((dayIndex) =>
-      buildRunDayV2({
-        dayIndex,
-        templateId,
-        type: "easy",
-        weekStart,
-      })
-    )
-    .sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex));
+  const forRunner = (templateId: string) =>
+    newRunnerTemplate(templateId, weekKey, input.newRunnerUntil)?.id ??
+    templateId;
+  const steps =
+    input.race && input.race.distance in RECOVERY_STEPS
+      ? RECOVERY_STEPS[input.race.distance as keyof typeof RECOVERY_STEPS]
+      : null;
+  const raceDay = input.race ? parseLocalDate(input.race.targetDate) : null;
+  const daysFromRace = (dayIndex: number) =>
+    raceDay === null || Number.isNaN(raceDay.getTime())
+      ? null
+      : Math.round(
+          (parseLocalDate(
+            dateForDayOfWeek(localWeekKey(weekStart), dayIndex)
+          ).getTime() -
+            raceDay.getTime()) /
+            86_400_000
+        );
+
+  const slots = [...runEligibleSlots].sort(
+    (a, b) => weekPosition(a) - weekPosition(b)
+  );
+  let shortRuns = 0;
+  let lastShort: number | null = null;
+  const planned: Array<{ dayIndex: number; templateId: string }> = [];
+  for (const dayIndex of slots) {
+    const days = daysFromRace(dayIndex);
+    if (steps === null || days === null || days <= 0) {
+      planned.push({ dayIndex, templateId: forRunner("easy_30") });
+      continue;
+    }
+    if (days < steps.firstRun) continue;
+    if (days < steps.thirty) {
+      const position = weekPosition(dayIndex);
+      if (shortRuns >= RECOVERY_SHORT_RUNS) continue;
+      if (lastShort !== null && position - lastShort < 2) continue;
+      shortRuns += 1;
+      lastShort = position;
+      planned.push({ dayIndex, templateId: forRunner("easy_20") });
+      continue;
+    }
+    planned.push({
+      dayIndex,
+      templateId: forRunner(days < steps.forty ? "easy_30" : "easy_40"),
+    });
+  }
+  return planned.map(({ dayIndex, templateId }) =>
+    buildRunDayV2({ dayIndex, templateId, type: "easy", weekStart })
+  );
 }
 
 /**
