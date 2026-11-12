@@ -758,7 +758,8 @@ Home reads this week's meals and 60 weigh-ins, the daily logs read covers
 this month and week, the challenges listener reaches back eight days and
 its reads follow the challenges' ids, the Spaces directory reads each Space
 once for every copy open, the training-load curve reads only on the
-Performance page, and a return to the app re-claims an unchanged push token
+Performance page (since Trim1 call 5, 2026-11-11: only while the score's
+details are open on the Analytics overview), and a return to the app re-claims an unchanged push token
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
@@ -2329,7 +2330,7 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceSection.tsx` (beside the Performance heading on the Analytics overview since Trim1 call 5, 2026-11-11; it was in `PerformanceTab.tsx`), Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
 
 **STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
@@ -4418,6 +4419,51 @@ overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
       Passing: the picture's cards are sized and placed as on a current
       phone (they are measured from the screen, since iOS 15 has no
       container query units).
+
+## The score is shown once, on Analytics (Trim1 calls 5 and 6, 2026-11-11)
+
+The Performance page is gone. The score sits in a ring on the card at the
+top of the Analytics overview, and "Score details" under it opens in place
+what the page held. The unit suites cover the words, the colours and the
+links; these need a phone.
+
+- [ ] **The ring holds its score at the largest text size.** With the
+      phone's text size at its largest, open Analytics. Passing: the score
+      sits inside the ring with room around it, the words wrap under the
+      ring instead of beside it where they no longer fit, and nothing runs
+      past the card.
+- [ ] **Score details opens where you are.** Tap Score details. Passing:
+      the page does not jump, the six-week line gives way to the twelve-week
+      chart, and the training load's range pills change its curve. Tap it
+      again: the page closes back to the card.
+- [ ] **A saved link still lands.** Open `/history#performance` and
+      `/history?view=performance` (a bookmark, or a link from before).
+      Passing: each opens the overview with Score details open.
+- [ ] **The tooltip opens on a tap.** Tap the small "i" beside
+      Performance. Passing: the explanation opens, reads in both themes,
+      and a tap elsewhere closes it.
+
+## Badges and medals are one shelf, on the profile (Trim1 call 3(c), 2026-11-11)
+
+Analytics' Badges tab is gone. A profile shows badges above medals, and on
+your own "See all" opens the whole badge collection in place. The unit
+suites cover the fold, the links and who sees what; these need a phone.
+
+- [ ] **From the streak.** On Home tap the streak chip, then "See your
+      badges". Passing: your profile opens with the Badges heading at the
+      top of the screen and the whole collection open under it.
+- [ ] **A saved link to the tab.** Open `/history?tab=badges`. Passing: it
+      lands on your profile with the collection open, and Analytics shows
+      two tabs, Analytics and Bests.
+- [ ] **Open and close.** On your profile tap "See all", then "Show
+      fewer". Passing: the collection opens where it is, the page does not
+      jump, and closing returns the newest four.
+- [ ] **Someone else's profile.** Open another person's profile.
+      Passing: their newest badges and their medals, and no "See all" on
+      the badges.
+- [ ] **Larger Text.** With the phone's text at its largest, open the
+      collection. Passing: the three streak figures and the badge tiles
+      wrap inside the screen, and nothing is cut off.
 
 ## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
 

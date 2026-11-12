@@ -121,7 +121,7 @@ describe("pacePatchForType / chooserPaceFor", () => {
     expect(chooserPaceFor("guided", table, "km")).toBeNull();
   });
 
-  it("lists run types only: the treadmill is where a run is done (Pgm8)", () => {
+  it("lists run types only: the treadmill is where a run is done (Pgm8), and the guided run is gone (Trim1 call 8)", () => {
     expect(ACTIVITY_TYPES.map((t) => t.type)).toEqual([
       "freerun",
       "easy",
@@ -129,7 +129,6 @@ describe("pacePatchForType / chooserPaceFor", () => {
       "intervals",
       "long",
       "race",
-      "guided",
     ]);
   });
 });

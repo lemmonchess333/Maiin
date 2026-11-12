@@ -114,6 +114,34 @@ function newestBadges(earnedMap: Record<string, unknown>): EarnedBadge[] {
 }
 
 /**
+ * A person's own badge record (`users/{uid}/streaks/data`.badges) as the
+ * id → date map `newestBadges` reads.
+ *
+ * The streaks provider stores a LIST of badges, each with its `id` and
+ * `earnedAt` (`useStreaks`, `tx.set(streaksRef, { badges })`), and mirrors
+ * the map to the public profile. This reader took the list for the map, so
+ * every entry's "date" was an object and was skipped: your own profile
+ * showed none of your badges, with tests green on fixtures seeded in the
+ * shape nothing writes. A map is still read, in case an older record has
+ * one.
+ */
+export function ownEarnedMap(stored: unknown): Record<string, unknown> {
+  if (Array.isArray(stored)) {
+    const map: Record<string, unknown> = {};
+    for (const entry of stored) {
+      if (!entry || typeof entry !== "object") continue;
+      const { id, earnedAt } = entry as { id?: unknown; earnedAt?: unknown };
+      // An unearned badge is stored too, with no date.
+      if (typeof id === "string" && earnedAt) map[id] = earnedAt;
+    }
+    return map;
+  }
+  return stored && typeof stored === "object"
+    ? (stored as Record<string, unknown>)
+    : {};
+}
+
+/**
  * Everything the profile page reads, for one (viewer, profile) pair. The
  * page is keyed by that pair, so a new profile starts from a fresh hook
  * and nothing from the last one can show while it loads.
@@ -136,6 +164,10 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
   const [countsFailed, setCountsFailed] = useState(false);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [badgesFailed, setBadgesFailed] = useState(false);
+  /* Whether the badges have been read. Until they have, an empty list
+     says nothing: a profile must not tell someone with badges that they
+     have none yet. */
+  const [badgesReady, setBadgesReady] = useState(false);
   // The trophy case (Soc15): null until the public profile has been read,
   // so a failed read is not drawn as "no medals".
   const [medals, setMedals] = useState<Medal[] | null>(null);
@@ -186,6 +218,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           const summary = pubData.badgeSummary as
             { earnedMap?: Record<string, unknown> } | undefined;
           setBadges(newestBadges(summary?.earnedMap ?? {}));
+          setBadgesReady(true);
         }
       }
       // A profile with no public copy yet holds no medals; a read that
@@ -249,12 +282,11 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     if (isOwn) {
       getDoc(doc(db, "users", uid, "streaks", "data"))
         .then((snap) => {
-          if (!live() || !snap.exists()) return;
-          setBadges(
-            newestBadges(
-              (snap.data().badges as Record<string, string> | undefined) ?? {}
-            )
-          );
+          if (!live()) return;
+          // No record yet is an account that has earned nothing.
+          setBadgesReady(true);
+          if (!snap.exists()) return;
+          setBadges(newestBadges(ownEarnedMap(snap.data().badges)));
         })
         .catch((err) => {
           logger.warn(`[profile] badges read failed for ${uid}`, err);
@@ -294,6 +326,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     setFollowingCount(null);
     setCountsFailed(false);
     setBadgesFailed(false);
+    setBadgesReady(false);
     setMedals(null);
     setAttempt((n) => n + 1);
   }, []);
@@ -318,6 +351,7 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     countsFailed,
     badges,
     badgesFailed,
+    badgesReady,
     medals,
     posts: posts.items,
     postsLoading: posts.loading,

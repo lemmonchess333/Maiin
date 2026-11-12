@@ -92,10 +92,7 @@ afterEach(() => {
 });
 
 type Attempt =
-  | "stall-leaving-lock"
-  | "stall-leaving-stubborn-lock"
-  | "apt"
-  | "fail";
+  "stall-leaving-lock" | "stall-leaving-stubborn-lock" | "apt" | "fail";
 
 /**
  * Runs the script, sourced, with `npx` replaced by a stand-in that plays
@@ -154,10 +151,19 @@ function stage(attempts: Attempt[], options: { oldRetryStep?: boolean } = {}) {
       `case "$(sed -n "\${n}p" "${dir}/attempts")" in`,
       "  stall-leaving-lock | stall-leaving-stubborn-lock)",
       `    mode=$([[ $(sed -n "\${n}p" "${dir}/attempts") == *stubborn* ]] && echo stubborn || echo plain)`,
+      /* A stop that comes before the holder has the lock waits for it.
+         The first attempt's limit is one second, and on a busy runner
+         starting Bash and Python took longer: the attempt was stopped
+         with the lock still free, the retry took it, and the script
+         installed where these tests stage a failure. */
+      "    stopped=0; trap 'stopped=1' TERM",
       `    setsid "${dir}/${stray}" "${frontend}" "$mode" </dev/null >/dev/null 2>&1 &`,
       // Stall only once the lock is taken, as apt-get had it when it hung.
       `    until grep -q ":$(stat -c %i "${frontend}") " /proc/locks; do sleep 0.05; done`,
-      "    sleep 60 ;;",
+      // From here a stop ends the attempt at once, as it always did.
+      "    trap 'exit 143' TERM",
+      '    [ "$stopped" = 1 ] && exit 143',
+      "    sleep 60 & wait $! ;;",
       `  apt) exec "${dir}/apt-probe" "${frontend}" ;;`,
       "  *) exit 1 ;;",
       "esac",

@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
-import {
-  auditGuidedWorkouts,
-  getSegmentColor,
-  GUIDED_WORKOUTS,
-  type SegmentType,
-} from "@/lib/guidedRun";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { getSegmentColor, type SegmentType } from "@/lib/guidedRun";
+import { ACTIVITY_TYPES } from "@/components/run/runConfigDefaults";
 
 describe("getSegmentColor", () => {
   it("returns correct color for each segment type", () => {
@@ -23,82 +21,34 @@ describe("getSegmentColor", () => {
   });
 });
 
-describe("GUIDED_WORKOUTS", () => {
-  it("has 3 workouts", () => {
-    expect(GUIDED_WORKOUTS).toHaveLength(3);
+/* Trim1 call 8 (the owner, 11 November 2026: "streamline all"). Running
+   had two sources of sessions: the plan, which writes easy runs,
+   intervals, tempo and long runs with their steps, and three fixed
+   "guided" workouts picked in the run setup. The three are gone. */
+describe("running has one source of sessions", () => {
+  const read = (rel: string) =>
+    readFileSync(resolve(__dirname, "../..", rel), "utf8");
+
+  it("the run setup offers no guided run", () => {
+    expect(ACTIVITY_TYPES.map((t) => t.type)).not.toContain("guided");
+    const setup = read("components/run/RunSetupModal.tsx");
+    expect(setup).not.toContain("GuidedRunPicker");
+    expect(setup).not.toContain("guidedWorkout:");
   });
 
-  it("each workout has non-empty segments", () => {
-    for (const workout of GUIDED_WORKOUTS) {
-      expect(workout.segments.length).toBeGreaterThan(0);
-    }
+  it("the module holds no workouts of its own", () => {
+    const src = read("lib/guidedRun.ts");
+    expect(src).not.toContain("GUIDED_WORKOUTS");
+    expect(src).not.toMatch(/durationSeconds:\s*\d/);
   });
 
-  it("segment durations sum exactly to totalMinutes * 60", () => {
-    for (const workout of GUIDED_WORKOUTS) {
-      const sum = workout.segments.reduce(
-        (acc, s) => acc + s.durationSeconds,
-        0
-      );
-      const expected = workout.totalMinutes * 60;
-      expect(sum).toBe(expected);
-    }
-  });
-
-  it("describes each run in plain words (Run21 (2))", () => {
-    // A physiology word appears only as "Coaches also call this".
-    for (const w of GUIDED_WORKOUTS) {
-      for (const text of [
-        w.description,
-        ...w.segments.map((s) => s.instruction),
-      ]) {
-        expect(text, w.id).not.toMatch(
-          /aerobic|threshold|economy|VO2|lactate/i
-        );
-      }
-    }
-  });
-
-  it("passes a strict metadata integrity audit", () => {
-    const issues = auditGuidedWorkouts(GUIDED_WORKOUTS);
-    expect(issues).toEqual([]);
-  });
-});
-
-describe("auditGuidedWorkouts", () => {
-  it("reports invalid programme issues with actionable codes", () => {
-    const issues = auditGuidedWorkouts([
-      {
-        id: "dup",
-        name: "Broken 1",
-        description: "Broken",
-        totalMinutes: 1,
-        difficulty: "easy",
-        color: "#fff",
-        segments: [],
-      },
-      {
-        id: "dup",
-        name: "Broken 2",
-        description: "Broken",
-        totalMinutes: 1,
-        difficulty: "hard",
-        color: "#000",
-        segments: [
-          { type: "hard", durationSeconds: 0, label: " ", instruction: "" },
-        ],
-      },
-    ]);
-
-    expect(issues.map((i) => i.code)).toEqual(
-      expect.arrayContaining([
-        "segment_missing",
-        "segment_duration_non_positive",
-        "segment_label_blank",
-        "segment_instruction_blank",
-        "total_duration_mismatch",
-        "workout_id_duplicate",
-      ])
-    );
+  it("a run already begun from one is still given its steps", () => {
+    /* The stored config carries the workout. Run reads it and draws it
+       with the step shell every structured run uses; the overlay only
+       guided runs had is gone. */
+    const run = read("pages/Run.tsx");
+    expect(run).toContain("segmentsFromGuided(config.guidedWorkout)");
+    expect(run).not.toContain("GuidedRunOverlay");
+    expect(run).not.toContain('activityType !== "guided"');
   });
 });

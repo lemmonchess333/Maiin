@@ -104,7 +104,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
-| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: the week's sessions, badges and medals (yours: all), posts  |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
@@ -150,7 +150,7 @@ Support & legal.
 | `savedWorkouts.ts`      | The one saved-workout reader: query, parse, day, queued ones   |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `guidedRun.ts`          | A run step's kinds and colours, and a stored guided workout    |
 | `weather.ts`            | Weather API integration for runs                               |
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
@@ -227,6 +227,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `useStreaks.tsx` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
+- `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
 - `__tests__/badges.test.ts`
 
 ### program/
@@ -584,18 +585,19 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   by SessionHero: the session's name, its focus and minutes, its picture,
   one line against last time, one neutral Start; a day's second session
   is a compact card under it; the words are `homeHero.ts`'s) → the week
-  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  card: WeekSessions over WeekStrip's seven segments, then WeekSummary
+  (what the count is made of, and the days with food logged) beside
+  WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
-  WeeklyReviewEntry (a link on its heading while a review waits) →
-  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
-  Performance sits LAST by owner decision: the first thing on the scroll
-  should be something to do today, not a verdict on the week just gone.
+  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  carries no performance score (Trim1 call 1, 2026-11-11): the "This
+  week" card that closed the page, with its Performance row, is gone,
+  and the score is on Analytics.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
