@@ -508,33 +508,40 @@ index and the trigger in production.
       counts `notification` and names no one, and Cloud Logging has no
       "requires an index" error from the function.
 
-## Partner streaks are counted on the server (2026-10-25)
+## Partner streaks, retired (Trim1 call 3(b), 2026-11-12)
 
-The rules no longer let an app create a partner bond. The
-`startPartnerStreak` callable makes each one, counting both people's bonds
-against the limit of five in the transaction that creates it, with the
-mutual follow, a block either way, both accounts' deletion state and a
-restriction checked as the rules checked them. An iPhone build from before
-this change writes the bond itself, so on it Start streak now fails with
-"Couldn't start the streak. Try again."; nothing is lost, and an existing
-streak still shows and can be ended. The unit, rules and emulator suites
-cover each part, including two starts racing for one person's last place;
-only a deploy confirms the callable in production.
+Partner streaks are gone: the card on a mutual follow's profile, the
+"Streak ready" chip on People's rows, the `startPartnerStreak` callable,
+the two session triggers' streak step and the bond's rule. Two people who
+train together use a Circle, which keeps no streak. The rows this file
+held for partner streaks went with them. These need the release and the
+Firebase console.
 
-- [ ] **Start a streak, then hit the limit.** After Deploy production has
-      shipped (`startPartnerStreak` is on the deployed-source list), on
-      two accounts that follow each other, tap Start streak on one's
-      profile from the other. Passing: "Streak started with …", and in the
-      console `partnerBonds/{a}__{b}` with streak 0 and a server
-      `createdAt`. With five streaks on either account, a sixth says whose
-      five it is ("You have 5 streak partners already. End one to start
-      another." or "{name} has 5 streak partners already.") and writes no
-      bond.
-- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
-      is on TestFlight or the App Store, and if anyone still runs an
-      older one, set `config/client.minSupportedVersion` to that build's
-      version, so the older build shows the update screen instead of a
-      Start streak button that fails.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `startPartnerStreak`,
+      and the deployed rules have no `partnerBonds` match.
+- [ ] **Stored bonds are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgePartnerBondDocs.js`, read
+      the count, then run it without `DRY_RUN`. Passing: a second dry run
+      reports 0 bonds, and Firestore console shows no `partnerBonds`
+      collection. Once this is ticked, account deletion's own delete of a
+      member's bonds (step 3b) and its inventory entry
+      (`partnerBondsMember`) can go.
+- [ ] **The profile and People.** On two TestFlight accounts that follow
+      each other. Passing: the other's profile has no streak card, People
+      has no "Streak ready" chip, and a session saved by each on the same
+      day writes nothing under `partnerBonds`.
+- [ ] **An older build.** A TestFlight build from before this change, on
+      two accounts that follow each other. Passing: the other's profile
+      shows no streak card (its read of the bond is refused), and nothing
+      else on it changes.
+- [ ] **Deleting a session.** Open a saved workout or run and tap
+      Delete. Passing: the confirmation's second sentence reads "Badges
+      you’ve already earned stay." and says nothing about a streak. It
+      named streaks while partner streaks existed; your own streak can
+      get shorter when a day's only log is deleted.
 
 ## Circle invite codes expire (2026-10-25)
 
@@ -1285,8 +1292,7 @@ these need a phone's keyboard.
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
-follows, Space and challenge joins, Circle events and partner bonds), the
-props, comment, like, reaction and Circle callables
+follows, Space and challenge joins and Circle events), the props, comment, like, reaction and Circle callables
 (`functions/lib/restriction.js`), the app's gates (`RestrictedNotice`,
 `showRestrictedToast`), Settings → Social & privacy's explanation, and
 the moderation page's Restricted accounts with Lift (`listRestrictedUsers`,
@@ -1300,8 +1306,8 @@ console.
       second from the first, then Restrict user on the moderation page.
       On the second account (no sign-out): the feed and Space composers,
       comments, props, likes, reactions, Follow (a profile's too), Space,
-      challenge and Circle joins, a Circle check-in and a partner streak
-      each say "Your account is restricted" and nothing goes out; taking
+      challenge and Circle joins and a Circle check-in each say "Your
+      account is restricted" and nothing goes out; taking
       back props, unfollowing and leaving still work; Social & privacy
       explains it, and Contact support opens Mail.
 - [ ] **Lift.** Lift the second account from Restricted accounts: within
@@ -3022,7 +3028,7 @@ same precedence the client uses.
 Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
 
 - [x] _(Proven 2026-10-17: Run 39063239262 logged 'Verified deployed source: onWorkoutCreated' and 'onRunCreated' (index.js byte-identical). main's index.js:57-59 requires ./lib/partnerStreakPersist, and lines 4574 and 4699 call applyPartnerActivity.)_ **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
-- [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b), so there is no shared day to count. See "Partner streaks, retired".)_ **First real shared day counts.**
 - [x] _(Proven 2026-10-17: functions/**tests**/partnerStreakPersist.test.js 'is idempotent on a same-day re-log (no second write)'. Deployed source verified (run 39063239262).)_ **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [x] _(Proven 2026-10-18: `functions/__tests__/partnerStreakPersist.test.js` 'onRunCreated — an ineligible run does not count'. index.js's onRunCreated decides with `isVolumeEligibleRun(data)` and calls applyPartnerActivity once, inside the `if (isCountable)` block. Moving the call above the gate, or into its else branch, turns the test red.)_ **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
 - [x] **Freeze ledger uses Monday weeks** — covered, by composition rather
@@ -3636,11 +3642,8 @@ tests cover them; these need a phone or the deployed rules.
       Share invite link, and a Circle's Share invite: the share sheet's
       link is `https://troposfit.com`, and it opens the web app from
       Messages. It was `capacitor://localhost`.
-- [ ] **A partner streak is offered.** After the Deploy production run
-      that ships the rules, open the profile of someone you follow who
-      follows you back and has no bond with you: the partner streak card
-      offers to start one. Before, the read of a bond that did not exist
-      yet was refused and the card never showed.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b).)_
+      **A partner streak is offered.**
 - [ ] **The route keeps off the distance.** In the feed on a phone, at
       the phone's largest text size too, a run card's route sits above
       its distance, never on it.

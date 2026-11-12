@@ -491,13 +491,13 @@ async function deleteAccount({
       );
     }
 
-    // 3b. Partner-streak bonds the user is a member of (SOCIAL S3).
-    // Bonds are 1:1; when one member deletes their account the bond is
-    // deleted (the deletion-safe behaviour — the surviving partner's
-    // PartnerStreak surface reverts to its invite state). Query by the
-    // `members` array (array-contains), same query-delete shape as (3),
-    // and BEFORE the auth user (7) so a throw here leaves credentials
-    // intact for a retry.
+    // 3b. Partner-streak bonds the user was a member of (SOCIAL S3).
+    // Partner streaks went on 12 November 2026 (Trim1 call 3(b)) and
+    // nothing makes a bond now; this deletes one stored before then, and
+    // stays until scripts/purgePartnerBondDocs.js has cleared them all.
+    // Query by the `members` array (array-contains), same query-delete
+    // shape as (3), and BEFORE the auth user (7) so a throw here leaves
+    // credentials intact for a retry.
     const bondsSnap = await firestore
       .collection("partnerBonds")
       .where("members", "array-contains", uid)

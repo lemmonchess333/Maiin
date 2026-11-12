@@ -202,7 +202,9 @@ const EXPECTED_INLINE_USES = {
   // paused, so its coral is one side of a choice and no longer counted.
   // 2026-11-10: 16 → 17. Together's race hero (Soc16) without a photo:
   // its 160px ghosted flag, an icon, as the Space hero's fallback draws.
-  "THEME.running": 17,
+  // 2026-11-12: 17 → 16. The "Streak ready" chip on People's rows went
+  // with partner streaks (Trim1 call 3(b)), and its flame icon with it.
+  "THEME.running": 16,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.

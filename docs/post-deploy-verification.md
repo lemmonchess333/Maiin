@@ -42,12 +42,6 @@ the **Firestore doc** to spot-check. Run a query in
 - **Filter:** text `onWorkoutCreated` / `onRunCreated`
 - **Expect on a real save:** challenge-progress increments logged (pre-#815 this silently TypeError'd on `participantSnap.exists()`); for a race-templated run at ≥95% planned distance on the race date, `onRunCreated: recovery-entry written for {uid}` and `programState.runPlan.phase` flips to `"recovery"`. **No** `applyPartnerActivity: error` line.
 
-### Partner-streak persist (`applyPartnerActivity`) — Soc7
-
-- **Filter:** text `applyPartnerActivity`
-- **Expect (NEW success log):** with two mutually-followed bonded accounts both logging on the same local day → `applyPartnerActivity: bond <id> streak→1 lastShared=YYYY-MM-DD (uid …, day …)`. A **same-day re-log emits NO line** (the no-op-skip path) — that absence IS the confirmation. An ineligible run (`isInvalid`/`savedAnyway`/sub-threshold) → no line (gated upstream).
-- **Spot-check:** `partnerBonds/<id>` doc — `streak 0→1`, `lastSharedDay`=today. Over a gap that consumes a freeze, `freezeWeek.<uid>` is the **Monday-anchored** week key.
-
 ### Global hybrid challenge + `hybrid_score` sync — Soc8
 
 - After the 00:05 UTC `rolloverChallenges`: `challenges/global-monthly-<YYYY-MM-01>` exists, `metric:"hybrid_score"`, `participantCount:0`.

@@ -35,9 +35,9 @@ import {
  * What the user gets back, per ADR-0012: challenge progress and lifetime
  * totals are reversed by the trigger; the Performance Index recovers on
  * its next recompute; a `fastest_effort` best whose driving run is
- * deleted is REBUILT from surviving runs (third amendment); partner
- * streaks and milestone badges stay. The confirmation copy says so
- * rather than implying a clean undo.
+ * deleted is REBUILT from surviving runs (third amendment); milestone
+ * badges stay. The confirmation copy says so rather than implying a
+ * clean undo.
  *
  * A deleted workout also marks the best-lift map stale, in the same
  * commit, so its next load rebuilds the bests from the workouts that

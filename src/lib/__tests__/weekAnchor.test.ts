@@ -14,8 +14,8 @@
  * of a week agree and `dateForDayOfWeek` lands on the right weekday.
  *
  * Two do pin the value, deliberately and with literal dates. The anchor is
- * MONDAY now (RunWk2 — en-GB and ISO-8601, and what `streakEngine.weekKey`
- * and the coach-prompt ids always used), and a structural suite cannot
+ * MONDAY now (RunWk2 — en-GB and ISO-8601, and what the partner
+ * streak's engine, since removed, and the coach-prompt ids always used), and a structural suite cannot
  * tell you which day that is: every assertion in it passes just as well
  * under Sunday. A literal is the only thing that fails when someone
  * changes the constant without meaning to.

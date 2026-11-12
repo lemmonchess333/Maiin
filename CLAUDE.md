@@ -49,7 +49,6 @@ src/
 │   ├── challenges/     # Challenge system
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
-│   ├── partnerStreak/  # Partner bonds + shared-day streaks
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
 │   ├── run/            # Run-surface feature modules
 │   ├── spaces/         # Space definitions (incl. race spaces)
@@ -195,17 +194,17 @@ Support & legal.
 
 ## Feature Modules (src/features/)
 
-### goalSpace/ · spaces/ · partnerStreak/ · run/
+### goalSpace/ · spaces/ · run/
 
 `goalSpace/` owns Goal Spaces (Circles) — membership,
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
-`partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
-the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md` —
-and makes every bond: the `startPartnerStreak` callable counts both people's
-bonds against `MAX_PARTNERS` in the transaction that creates one, and the
-rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
-both sides). `run/` holds run-surface feature modules.
+`run/` holds run-surface feature modules. Partner streaks (`partnerStreak/`,
+a 1:1 bond and a shared-day streak) went on 12 November 2026 (Trim1 call
+3(b)): two people who train together use a Circle, which keeps no streak.
+Nothing writes or reads `partnerBonds/{bondId}`, the rules refuse it, and a
+bond stored before then is deleted with either member's account and by
+`functions/scripts/purgePartnerBondDocs.js`.
 
 ### league/
 
@@ -301,7 +300,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
-- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
+- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins and Circle events, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
 - **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows. One exception (Soc15 call 4, 2026-11-04; narrowed by its STATUS of 2026-11-05): a new account that joins from someone's invite link or code is followed by them at once, written only by the `redeemInvite` callable (`functions/lib/inviteCodes.js`; edges carry `fromInvite`), since using their link counts as the new person accepting them. The new person follows the inviter at once only when the inviter has Approve followers off; otherwise `redeemInvite` writes their follow request, marked `fromInvite`, which the inviter accepts in one tap, so a code posted publicly reaches no followers-only post. A code is renewed (Soc15 STATUS 2026-11-10) by its owner at any time (`renewInviteCode`, People's New code) and by a block of someone who joined from it (`onBlockWritten` reads the `invitedBy` that `redeemInvite` stamps), and the old code stops working at once, so a person blocked cannot make a new account and join from it again.
 - **A follow count is the server's, recounted.** `followCounts/{uid}` = `{ followers, followersAt, following, followingAt }`: how many accounts follow one and how many it follows. SERVER-written only, by `onFollowerEdgeWritten` and `onFollowingEdgeWritten` (`functions/lib/followCounts.js`), each from a count aggregation over the list whose edge was made or removed and never an increment, and never for an account being deleted. A profile reads someone else's numbers from it (`getFollowCounts` in `socialApi.ts`), so no screen reads another person's lists; your own profile counts your own lists, which are right the moment you follow someone. Anyone signed in reads one, except someone its owner blocked, and nobody lists them. A side the server has not counted is absent: the app counts the list for it while the rules allow that, and reads it as 0 once they keep a list to its owner (Polish4 call 1; `functions/scripts/backfill-follow-counts.js` counts every account first, and stays as the repair).
 - **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.

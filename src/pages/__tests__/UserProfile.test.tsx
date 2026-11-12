@@ -68,9 +68,6 @@ vi.mock("@/components/social/FollowButton", () => ({
     </button>
   ),
 }));
-vi.mock("@/features/partnerStreak/PartnerStreakCard", () => ({
-  default: () => null,
-}));
 // The chip's own display gate (a race space, its day not passed) is
 // pinned in TrainingForChip.test.tsx; here it says which race it was given.
 /* The whole collection has its own tests; here it is a marker. */

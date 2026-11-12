@@ -28,8 +28,8 @@ export function localDateString(d: Date = new Date()): string {
  * 1 = Monday.
  *
  * MONDAY, per RunWk2 — the en-GB and ISO-8601 convention, and the one
- * `streakEngine.weekKey` and the coach-prompt doc ids already used while
- * everything else here anchored on Sunday.
+ * the partner streak's engine (since removed) and the coach-prompt doc
+ * ids already used while everything else here anchored on Sunday.
  *
  * This is the ONE place the app decides. It was decided in six places:
  * `localWeekKey` here, plus `setDate(getDate() - getDay())` written out by

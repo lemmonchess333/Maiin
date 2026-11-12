@@ -12,7 +12,6 @@ import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
 import FollowRequestBanner from "../components/social/FollowRequestBanner";
 import TrainingForChip from "@/features/spaces/TrainingForChip";
-import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
 import { ActivityCardSkeleton, Skeleton } from "../components/LoadingSkeleton";
 import { Button } from "../components/ui/Button";
@@ -452,12 +451,6 @@ function ProfileContent({
         />
       ) : (
         <>
-          {/* Partner-streak entry (SOCIAL S3) — renders only for another
-          user you mutually follow; null otherwise. */}
-          {!isOwnProfile && (
-            <PartnerStreakCard partnerUid={uid} partnerName={name} />
-          )}
-
           {/* This week, from what they shared: all a profile can read, and
           the label says so. Replaced two lifetime-looking pills that
           summed the last ten shared posts. */}

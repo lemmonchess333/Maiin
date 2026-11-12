@@ -129,6 +129,13 @@ describe("App Store listing: the pasteable fields", () => {
 describe("App Store listing: claims the code can contradict", () => {
   const everything = [...FIELDS.values()].flat().join("\n");
 
+  it("does not offer a streak with a training partner, which went", () => {
+    // Trim1 call 3(b) (November 2026) removed partner streaks: two people
+    // who train together use a Circle, which keeps no streak. The
+    // description had "keep a shared streak with a training partner".
+    expect(everything).not.toMatch(/shared streak|training partner/i);
+  });
+
   it("quotes the trial length the paywall offers", () => {
     const paywall = read("../proPlans.ts").match(
       /export const TRIAL_DAYS = (\d+);/

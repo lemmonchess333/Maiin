@@ -741,7 +741,7 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "reason": "SOCIAL S3 partner-streak bonds (1:1). The deleting user is one of two `members`; the bond is deleted on their account deletion (deletion-safe \u2014 the surviving partner reverts to invite state). Query-delete by members array-contains, mirroring activitiesOwn. Executor: accountDeletion.js step 3b.",
+      "reason": "Partner-streak bonds (1:1, SOCIAL S3). Partner streaks went on 12 November 2026 (Trim1 call 3(b)) and nothing makes a bond now. A bond stored before then names the deleting user as one of two `members` and is deleted with the account, until functions/scripts/purgePartnerBondDocs.js has cleared them all. Query-delete by members array-contains, mirroring activitiesOwn. Executor: accountDeletion.js step 3b.",
       "testCoverageKey": "smoke::partnerBonds",
       "testCoverageStatus": "planned"
     },
