@@ -69,6 +69,22 @@ line with the day's real minutes and two choices: rebuild the plan for the
 length, or keep the day as it is. A mockup comes first (DESIGN_GUIDE, pictures
 before code). This is the deep dive's decision 5, taken as "ask".
 
+STATUS 2026-11-12: built. The owner chose B from three mockups
+(`docs/visual-audit/lift-day-outgrown-2026-11-12/options-a-b-c.webp`): a
+notice under the day's card, not a row at the top of the list (A hid Start
+workout) or a line inside the card (C). It shows on a day still to train,
+in a plan fitted to a length, once the day prices past 125% of it
+(`outgrownDay.ts`). "Rebuild for 45 min" asks first, then builds the lift
+days again from the saved setup (`rebuildLiftDays` in `planBuilder.ts`) and
+saves through `configurePlan` as the lift plan editor does
+(`liftPlanRebuild.ts`, now shared by both). The week number, the history,
+the lighter week and each day done or skipped this week stay
+(`keepWeekProgress`), and a lift the person has trained keeps its weight
+where the new day holds it. "Keep this day" is remembered on the device
+for that day as it stands (`keptLongDays.ts`): adding a lift, or a new
+length, brings the notice back. A plan from before plans were fitted to a
+length still trims at Start and gets no notice.
+
 ### 5. The clock
 
 Compare the estimator with saved sessions' durations and set its constants

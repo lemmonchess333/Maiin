@@ -34,12 +34,7 @@
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
  * ScheduleLayoutSheet, which this editor links to.
  */
-import {
-  appErrorMessage,
-  describeRejection,
-  isRateLimitedRejection,
-  PLAN_SAVES_TOO_OFTEN,
-} from "@/lib/callableErrors";
+import { appErrorMessage } from "@/lib/callableErrors";
 import { useId, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Dialog } from "@/components/ui/Dialog";
@@ -58,10 +53,7 @@ import {
   Heart,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
-import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { THEME } from "@/lib/theme";
 import { focusLabel } from "@/features/program/trainingBlock";
 import { Toggle } from "@/components/ui/Toggle";
@@ -71,13 +63,16 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { profileNewRunnerUntil } from "@/features/program/newRunner";
-import { toExperience } from "@/features/program/experienceModel";
+import {
+  configureLiftPlan,
+  liftPlanInput,
+  planSaveRejection,
+  savedLiftPlan,
+} from "@/features/program/liftPlanRebuild";
 import {
   focusRepSummary,
   represcribeWorkouts,
 } from "@/features/program/represcribe";
-import { runTuningFromProfile } from "@/features/program/runScheduler";
 import {
   chooseSplit,
   splitLabel,
@@ -88,12 +83,7 @@ import {
   programmePreservationNote,
 } from "@/lib/programmeChanges";
 import SessionLengthLabel from "./SessionLengthLabel";
-import {
-  SESSION_MINUTES_OPTIONS,
-  sessionLengthOption,
-} from "@/features/program/sessionFit";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { localDateString } from "@/lib/dateHelpers";
+import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
 import PendingChangesSummary from "./PendingChangesSummary";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
@@ -104,7 +94,6 @@ import type {
   ProgramSettings,
   Experience,
   Equipment,
-  RaceDistance,
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
@@ -113,13 +102,6 @@ import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
 // single-source measure vocabularies (D3) — no longer re-declared here.
-// The editor's split vocabulary IS the normalisation allow-list — derive it
-// from VALID_SPLIT_CHOICES so the type can't drift from the runtime guard.
-// (auto / full_body / upper_lower / ppl — a subset of PreferredSplit; the old
-// `SplitType | "auto"` wrongly admitted ppl_ul/ppl_x2/ppl_x2_fb, which the
-// guard at line ~373 can never produce.)
-type SplitChoice = (typeof VALID_SPLIT_CHOICES)[number];
-
 interface ProgrammeSettingsProps {
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   /** `useProgram().recentRuns`: the saved runs read with the layoff, null
@@ -337,18 +319,6 @@ const EXPERIENCE_OPTIONS: {
   },
 ];
 
-// Pgm5 (Q1): the split is a DERIVED DISPLAY, not a user chooser — the engine
-// owns structure (chooseSplit from weekly lift days). VALID_SPLIT_CHOICES is
-// retained only to normalise a legacy stored profile.preferredSplit (which may
-// be "bro_split", a value the engine's SplitType can't build) before it's
-// threaded — inertly — back through buildPlan.
-const VALID_SPLIT_CHOICES = [
-  "auto",
-  "full_body",
-  "upper_lower",
-  "ppl",
-] as const;
-
 const EQUIPMENT_OPTIONS: {
   id: Equipment;
   label: string;
@@ -437,36 +407,7 @@ export default function ProgrammeSettings({
 }: ProgrammeSettingsProps) {
   const loadFailedId = useId();
   // ── Persisted values (also the dirty-check baseline) ──────────────
-  const saved = useMemo(
-    () => ({
-      primaryGoal: (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
-      nutritionPhase: getNutritionPhase(profile),
-      experience: toExperience(profile.experience),
-      liftDays: profile.weeklyWorkoutsTarget ?? 4,
-      // Lift4 (5): how long a session is; the plan is fitted to it.
-      sessionMinutes: sessionLengthOption(profile.liftTimeBudgetMinutes),
-      preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
-        profile.preferredSplit ?? ""
-      )
-        ? (profile.preferredSplit as SplitChoice)
-        : "auto",
-      equipment: (profile.equipment as Equipment) ?? "full_gym",
-      // Lift4 (11): "what do you have?" beside a home gym's kit.
-      barbellAtHome: profile.barbellAtHome === true,
-      injuries: profile.injuries ?? [],
-      runMode: profile.runMode ?? "freeform",
-      weeklyRunDays: getWeeklyRunTarget(profile) || 2,
-      raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
-      raceTargetDate: profile.raceGoal?.targetDate ?? "",
-      // Optional event name — carried through the rebuild so a lifting-only
-      // edit (configurePlan) can never wipe it off the stored raceGoal.
-      raceEventName: profile.raceGoal?.eventName,
-      // Pgm6 knobs — missing → standard (same lazy default the engine uses).
-      runVolume: runTuningFromProfile(profile).volume,
-      runDifficulty: runTuningFromProfile(profile).difficulty,
-    }),
-    [profile]
-  );
+  const saved = useMemo(() => savedLiftPlan(profile), [profile]);
 
   // ── Draft state ───────────────────────────────────────────────────
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
@@ -600,82 +541,24 @@ export default function ProgrammeSettings({
     setConfirmRebuild(false);
     setSaving(true);
     try {
-      const plan = buildPlan({
-        // Blk2 / H2. Pass the STANDING focus, never the block's.
-        //
-        // This read `activeBlockFocus ?? primaryGoal`, which looked like it
-        // was keeping programState honest — but `buildProfileUpdates` writes
-        // `primaryGoal: input.primaryGoal` into the PROFILE unconditionally,
-        // so one injury edit during a block overwrote the user's standing
-        // focus with the block's. After release the two copies diverged
-        // permanently, and the next block captured the wrong `goalBefore`,
-        // compounding it. It also falsified the invariant useProgram states
-        // in writing: the profile holds the STANDING focus and the block
-        // never writes it.
-        //
-        // Nothing is lost by dropping it: `buildPlan` already pins
-        // `programState.primaryGoal` from the carried block, so ownership
-        // needs no profile write at all.
-        primaryGoal,
-        nutritionPhase,
-        experience,
-        // Marks this as a save of someone's own plan, so the experience gate
-        // leaves its exercises alone. A level change is a content edit
-        // (Lift4): it keeps the week, as the confirm above it says.
-        previousExperience: saved.experience,
-        // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
-        bodyweightKg: profile.weightKg,
-        sex: profile.sex,
-        liftDays,
-        // Lift4 (5): a new plan is fitted to the session length; a changed
-        // one re-fits the plan the person has, sets only.
-        sessionMinutes,
-        previousSessionMinutes: saved.sessionMinutes,
-        // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
-        // value (inert in generation, keeps profileUpdates consistent).
-        preferredSplit:
-          saved.preferredSplit === "auto" ? "full_body" : saved.preferredSplit,
-        // D14: the run plan threads through the rebuild from the SAVED
-        // profile values — lifting edits never disturb the run plan, and
-        // run edits happen on /settings/run-plan.
-        runMode: saved.runMode,
-        weeklyRunDays: effectiveRunDays,
-        runTuning: { volume: saved.runVolume, difficulty: saved.runDifficulty },
-        // Run17: the long-run ceiling is measured at the confirmed easy pace.
-        runFitness: profile.runFitness ?? null,
-        runningBaseline: profile.runningBaseline ?? null,
-        runTimeLimits: profile.runTimeLimits ?? null,
-        recentLayoff,
-        recentRuns,
-        newRunnerUntil: profileNewRunnerUntil(profile),
-        weekSchedule: profile.weekSchedule,
-        ...(saved.runMode === "race_prep" && saved.raceTargetDate
-          ? {
-              raceGoal: {
-                distance: saved.raceDistance,
-                targetDate: saved.raceTargetDate,
-                // Preserve the optional event name through the rebuild —
-                // omit the key entirely when absent (clean writes).
-                ...(saved.raceEventName
-                  ? { eventName: saved.raceEventName }
-                  : {}),
-              },
-            }
-          : {}),
-        equipment,
-        barbellAtHome,
-        injuries,
-        currentDate: localDateString(new Date()),
-        existingState: programState ?? undefined,
-        preserveHistory: true,
-      });
-
-      // This editor never changes the race. configurePlan stores the goal it
-      // is sent whole, so it gets the stored one, with the race link and goal
-      // time buildPlan does not carry.
-      if (plan.profileUpdates.raceGoal && profile.raceGoal) {
-        plan.profileUpdates.raceGoal = profile.raceGoal;
-      }
+      const plan = buildPlan(
+        liftPlanInput({
+          profile,
+          programState,
+          saved,
+          draft: {
+            primaryGoal,
+            experience,
+            liftDays,
+            sessionMinutes,
+            equipment,
+            barbellAtHome,
+            injuries,
+          },
+          recentLayoff,
+          recentRuns,
+        })
+      );
 
       // LIFT-EV-06: the user chose "update my sessions" — apply the block
       // transform to the preserved workouts before they travel. buildPlan's
@@ -690,25 +573,7 @@ export default function ProgrammeSettings({
         );
       }
 
-      const configurePlanCallable = httpsCallable(functions, "configurePlan");
-      await configurePlanCallable({
-        baseProgramState: programState ?? null,
-        baseProfile: Object.fromEntries(
-          Object.keys(plan.profileUpdates)
-            .filter(
-              (key) =>
-                (profile as unknown as Record<string, unknown>)[key] !==
-                undefined
-            )
-            .map((key) => [
-              key,
-              (profile as unknown as Record<string, unknown>)[key],
-            ])
-        ),
-        profileUpdates: plan.profileUpdates,
-        programState: plan.programState,
-        weekSchedule: plan.weekSchedule,
-      });
+      await configureLiftPlan(plan, profile, programState);
 
       // configurePlan writes through the Admin SDK, outside updateProfile's
       // optimistic local-state path. Re-hydrating the authoritative profile
@@ -733,28 +598,16 @@ export default function ProgrammeSettings({
       onSaved?.();
     } catch (err) {
       logger.error("[ProgrammeSettings] save failed:", err);
-      const code = (err as { code?: string })?.code;
-      if (code === "functions/unauthenticated" || code === "unauthenticated") {
-        toast.error("Sign in again to update your plan.");
-      } else if (code?.endsWith("failed-precondition")) {
+      const rejection = planSaveRejection(
+        err,
+        "Your programme changed. Reopen settings to review the latest plan before saving."
+      );
+      if (rejection.refresh) {
         await refreshProfile().catch((error) =>
           logger.warn("Plan refresh failed", error)
         );
-        // The server's sentence says what changed, when it wrote one.
-        toast.error(
-          describeRejection(err) ??
-            "Your programme changed. Reopen settings to review the latest plan before saving."
-        );
-      } else if (
-        code === "functions/invalid-argument" ||
-        code === "invalid-argument"
-      ) {
-        toast.error("Plan didn’t validate. Try a different combination.");
-      } else if (isRateLimitedRejection(err)) {
-        toast.error(PLAN_SAVES_TOO_OFTEN);
-      } else {
-        toast.error("Couldn’t save your plan. Try again.");
       }
+      toast.error(rejection.message);
     } finally {
       setSaving(false);
     }

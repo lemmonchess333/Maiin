@@ -4523,6 +4523,32 @@ components; no signed-in account has drawn Train on a phone.
 - [ ] **An hour's plan.** Reset at 60 minutes. Passing: no day shows a
       "Superset" block.
 
+## Train says when a lift day runs past its length (slice 4, 2026-11-12)
+
+Affects: Train's Lift tab, under the day's card (`OutgrownDayNotice`), and
+the lift plan editor's save, which now shares its builder input and its
+refusal wording with Train's rebuild (`liftPlanRebuild.ts`). Captured from
+the components in Chromium at 393 and 320 px; a phone has not drawn it, and
+no rebuild has gone through the deployed `configurePlan` yet.
+
+- [ ] **The owner's Pull A.** On the plan with the 12-lift Pull A, open
+      Train on that day. Passing: under the card, "Pull A takes about N
+      min" with N the card's own minutes, and "Your sessions are 45 min."
+- [ ] **Rebuild for 45 min.** Tap it, then Rebuild. Passing: a toast says
+      the lift days were rebuilt; every day's card reads 56 min or less;
+      the week number in the header is unchanged; a day done this week
+      still shows done, and its session still opens from it; the deadlift
+      and the other lifts the new days hold keep their weights.
+- [ ] **Cancel rebuilds nothing.** Tap Rebuild for 45 min, then Cancel.
+      Passing: the days are as they were.
+- [ ] **Keep this day.** On another long day, tap Keep this day. Passing:
+      the notice goes; close and reopen the app and it stays gone; add a
+      lift to that day and it comes back.
+- [ ] **Not on a done day, nor in a past week.** Open a done day and a
+      day of a past week. Passing: no notice on either.
+- [ ] **Offline.** Turn on airplane mode and tap Rebuild. Passing: an
+      error toast, and the plan unchanged once back online.
+
 ## The deadlift's card faces the person (2026-11-12)
 
 Affects: the deadlift's card picture (Home's hero on a day it leads, Train,

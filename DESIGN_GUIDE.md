@@ -1089,6 +1089,16 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
   drawing, else the category's muscles, else a dumbbell), and Train shows
   one advice notice at a time (`programNotices`).
+- **`OutgrownDayNotice`** (slice 4; the owner chose B on 2026-11-12, from
+  `docs/visual-audit/lift-day-outgrown-2026-11-12/`) — a warning `Banner`
+  under a lift day's card, above "Why this session", when a day still to
+  train prices past 125% of the length its plan is fitted to: "Pull A
+  takes about 95 min", then the length and the two choices. "Rebuild for
+  45 min" (secondary, small) asks first in a `ConfirmDialog`, since it
+  builds every lift day again; "Keep this day" (ghost) hides it on the
+  device until the day or the length changes. Never inside the card: its
+  action slot holds Start workout, and a row at the top of the list hid
+  it (option A). It gives way to the week-level lighter-week notice.
 - **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
   (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
   day cells (purple lift / coral run) in the Home WeekStrip visual language
