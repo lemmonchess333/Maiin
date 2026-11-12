@@ -74,8 +74,9 @@ describe("findSafeSubstitute — excludeIds", () => {
     const excluded = new Set(["trap-bar-deadlift"]);
     const result = findSafeSubstitute("deadlift", ["lower_back"], excluded);
     expect(result?.id).not.toBe("trap-bar-deadlift");
-    /* Next candidate in deadlift's list is rack-pull. */
-    expect(result?.id).toBe("rack-pull");
+    /* Next candidate in deadlift's list is the hip thrust: the rack pull
+       left the list (training deep dive, D2). */
+    expect(result?.id).toBe("hip-thrust");
   });
 
   it("returns null when ALL safe candidates are excluded", () => {
@@ -128,7 +129,7 @@ describe("findSafeSubstitute — a preference below equipment (the week's cap)",
 
   it("takes the first safe substitute the preference accepts", () => {
     /* The injury filter prefers a lift the week has fewer than twice:
-       with the trap bar deadlift on two days already, the rack pull. */
+       with the trap bar deadlift on two days already, the hip thrust. */
     const result = findSafeSubstitute(
       "deadlift",
       ["lower_back"],
@@ -136,7 +137,7 @@ describe("findSafeSubstitute — a preference below equipment (the week's cap)",
       undefined,
       (id) => id !== "trap-bar-deadlift"
     );
-    expect(result?.id).toBe("rack-pull");
+    expect(result?.id).toBe("hip-thrust");
   });
 
   it("ranks below equipment: a lift the person can do beats one under the cap", () => {
@@ -201,6 +202,33 @@ describe("CONTRAINDICATED — the lifts each injury's promise names (Lift4 (11))
       }
     }
     expect(loops).toEqual([]);
+  });
+
+  it("offers a sore lower back no rack pull and no kettlebell swing", () => {
+    // Training deep dive, D2: the rack pull is the deadlift from the knee at
+    // more weight, and the swing a fast hinge at up to the deadlift's.
+    const offered = Object.entries(INJURY_SUBSTITUTIONS).flatMap(
+      ([id, candidates]) =>
+        candidates
+          .filter((c) => c.safeFor.includes("lower_back"))
+          .filter((c) => c.id === "rack-pull" || c.id === "kettlebell-swing")
+          .map((c) => `${id} → ${c.id}`)
+    );
+    expect(offered).toEqual([]);
+  });
+
+  it("rules out loaded trunk flexion for a sore lower back", () => {
+    for (const id of [
+      "crunches",
+      "cable-crunch",
+      "decline-sit-up",
+      "leg-raise",
+    ]) {
+      expect(contraindicatedFor(id, ["lower_back"])).toEqual(["lower_back"]);
+      expect(findSafeSubstitute(id, ["lower_back"])?.id).toMatch(
+        /^(dead-bug|pallof-press|plank|side-plank)$/
+      );
+    }
   });
 
   it("reads only the injuries asked about", () => {

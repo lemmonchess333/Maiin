@@ -2309,7 +2309,10 @@ export function generateProgram(
     workouts,
     loadCtx,
     mainRepAnchor(primaryGoal, experience),
-    { building: { kept: existingWorkouts, injuries: limits?.injuries } }
+    {
+      building: { kept: existingWorkouts, injuries: limits?.injuries },
+      injuries: limits?.injuries,
+    }
   );
   // Lift21: time sets how many lifts a day has, not how many sets each
   // gets. Each day is sized to the minutes the person has

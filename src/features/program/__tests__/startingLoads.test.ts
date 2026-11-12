@@ -8,6 +8,7 @@ import {
   type StartingLoadContext,
 } from "../startingLoads";
 import { equipmentGridFor, loadGridFor } from "../loadSteps";
+import { INJURY_SWAP_LOAD_SHARE } from "../injurySubstitutions";
 import { EXERCISES } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
@@ -194,6 +195,33 @@ describe("weightAfterExerciseSwap", () => {
 });
 
 describe("seedStartingLoads", () => {
+  it("starts a lift swapped in for an injury lighter (training deep dive, D2)", () => {
+    const trapBar = (over: Partial<ProgramExercise> = {}) =>
+      ex({
+        exerciseId: "trap-bar-deadlift",
+        movementCategory: "hip_dominant",
+        weight: 0,
+        ...over,
+      });
+    const seedOf = (row: ProgramExercise, injuries: string[]) =>
+      seedStartingLoads([day([row])], ctx(), undefined, { injuries })[0]
+        .exercises[0].weight;
+    const plain = seedOf(trapBar(), ["lower_back"]);
+    const held = seedOf(trapBar({ swappedFrom: { exerciseId: "deadlift" } }), [
+      "lower_back",
+    ]);
+    expect(held).toBe(
+      loadGridFor("trap-bar-deadlift", false).nearest(
+        plain * INJURY_SWAP_LOAD_SHARE
+      )
+    );
+    expect(held).toBeLessThan(plain);
+    // A swap for kit, or one whose injury has gone, starts at the full seed.
+    expect(
+      seedOf(trapBar({ swappedFrom: { exerciseId: "deadlift" } }), [])
+    ).toBe(plain);
+  });
+
   it("calibrates an untrained loaded template row that starts at 0 kg", () => {
     const out = seedStartingLoads(
       [
