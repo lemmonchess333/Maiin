@@ -29,6 +29,7 @@ import { estimateSessionSeconds } from "./expressSession";
 import { exerciseRole } from "./exerciseRole";
 import { toExperience } from "./experienceModel";
 import { isLiftTimeBudget } from "./liftTimeBudget";
+import { plansPairs, withoutPairs, writePairs } from "./planSupersets";
 import { isFloorDeadlift } from "./roleTable";
 import {
   startingWeightForExercise,
@@ -345,10 +346,14 @@ export function sizeSessionsToTime(
 ): WorkoutDay[] {
   const sets = setsByPlace(minutes, experience);
   const short = minutes <= SHORT_SESSION_MINUTES;
+  // Lift22: a 30 or 45 minute plan pairs its days' last lifts, and each
+  // list the fit weighs is priced with the pairs it would write, so the
+  // time a pair saves keeps a lift the day would have given up.
+  const shape = plansPairs(minutes, experience) ? writePairs : withoutPairs;
 
   return workouts.map((day) => {
     const mainIndex = day.exercises.findIndex((ex) => ex.isAccessory !== true);
-    const placed = sets.place(day.exercises);
+    const placed = withoutPairs(sets.place(day.exercises));
     if (!Number.isFinite(minutes)) return { ...day, exercises: placed };
     // The order lifts are given up in: the highest rank first, and among
     // lifts with none (added after the builders) the last first.
@@ -363,7 +368,7 @@ export function sizeSessionsToTime(
       short ? MIN_SHORT_LIFTS : MIN_SIZED_LIFTS
     );
     const gone = new Set<number>();
-    const kept = () => placed.filter((_, i) => !gone.has(i));
+    const kept = () => shape(placed.filter((_, i) => !gone.has(i)));
     for (const i of order) {
       if (sessionFits(kept(), minutes)) break;
       if (placed.length - gone.size <= fewest) break;
@@ -400,9 +405,13 @@ export function refitSessionsToTime(
   minutes: number
 ): WorkoutDay[] {
   const sets = setsByPlace(minutes, experience);
+  // A plan's pairs go when its sessions grow past the length that pairs
+  // lifts (Lift22 call 1); a shorter one keeps those it has.
+  const pairs = plansPairs(minutes, experience);
   return workouts.map((day) => {
+    const placed = sets.place(day.exercises);
     const fitted = fitDay(
-      { ...day, exercises: sets.place(day.exercises) },
+      { ...day, exercises: pairs ? placed : withoutPairs(placed) },
       minutes
     );
     sets.deepen(fitted.exercises);

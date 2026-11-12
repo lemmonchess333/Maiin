@@ -113,7 +113,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "stall:seated-leg-curl",
     "stall:standing-calf-raise",
   ],
-  "six-days-general": ["stall:overhead-press"],
 };
 
 const seasons = new Map<string, Season>();

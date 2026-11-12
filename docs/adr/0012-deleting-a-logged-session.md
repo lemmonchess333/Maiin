@@ -294,3 +294,14 @@ This is a fifth kind beside the tally above: put back while still current
 (the plan). The reversal, recompute and rebuild rules for the other state
 are unchanged, and the confirmation copy needed nothing new: the plan's
 numbers go back to what the remaining sessions explain.
+
+## Sixth amendment (2026-11-12) — partner streaks are gone
+
+Decision 4 left partner streaks standing when a session was deleted, as
+history rather than an accumulator. Partner streaks themselves went on 12
+November 2026 (Trim1 call 3(b)): the bond, its engine on both sides and
+the two session triggers' streak step. So decision 4 has nothing left to
+apply to, and where the later amendments list what a delete leaves
+standing "as history", read that list without partner streaks. Milestone
+badges stay on it. The reasoning in decision 4 is kept above as the
+record of why a shared day was never reversed.

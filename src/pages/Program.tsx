@@ -88,6 +88,8 @@ import { isLongDayKept, keepLongDay } from "@/lib/keptLongDays";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import SupersetBlock from "@/components/program/SupersetBlock";
+import { pairRuns } from "@/features/program/pairSlot";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
@@ -112,6 +114,7 @@ import {
   type SessionVariant,
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
+import type { ProgramExercise } from "@/features/program/programTypes";
 import {
   buildEasierSession,
   pickLighterDay,
@@ -1895,116 +1898,129 @@ function ProgramInner() {
                              and still has the "…" that opens that menu
                              visibly. */
                           <div className="rounded-xl bg-card card-shadow overflow-hidden divide-y divide-border">
-                            {selectedWorkout.exercises.map((ex, i) => (
-                              <div
-                                key={rowId(ex, idx, i)}
-                                data-swipe-card="true"
-                              >
-                                <SortableExerciseRow
-                                  id={rowId(ex, idx, i)}
-                                  label={ex.name}
-                                  showHandle={false}
-                                  onDelete={() => removeExFromDay(idx, i)}
+                            {pairRuns(selectedWorkout.exercises).map((run) => {
+                              const row = (ex: ProgramExercise, i: number) => (
+                                <div
+                                  key={rowId(ex, idx, i)}
+                                  data-swipe-card="true"
                                 >
-                                  {/* Owner request 2026-09-02: removing an
-                                    exercise was reachable only by swipe or
-                                    long-press. The "…" opens the same
-                                    manage menu (Replace / Remove / Move)
-                                    visibly; swipe and long-press stay. */}
-                                  <div className="@container/exrow flex items-center">
-                                    {/* Its own button, before the row's: a
-                                      button cannot hold another. It gives
-                                      way to the name where the summary's
-                                      own drawing did, at 10em of summary
-                                      (14.5em of row at the designed text
-                                      size). */}
-                                    <button
-                                      type="button"
-                                      aria-label={`How to do ${ex.name}`}
-                                      onClick={() => {
-                                        haptic("light");
-                                        setFormGuide({
-                                          name: ex.name,
-                                          open: true,
-                                        });
-                                      }}
-                                      className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
-                                    >
-                                      <ExerciseThumb
-                                        exerciseId={ex.exerciseId}
+                                  <SortableExerciseRow
+                                    id={rowId(ex, idx, i)}
+                                    label={ex.name}
+                                    showHandle={false}
+                                    onDelete={() => removeExFromDay(idx, i)}
+                                  >
+                                    {/* Owner request 2026-09-02: removing an
+                                      exercise was reachable only by swipe or
+                                      long-press. The "…" opens the same
+                                      manage menu (Replace / Remove / Move)
+                                      visibly; swipe and long-press stay. */}
+                                    <div className="@container/exrow flex items-center">
+                                      {/* Its own button, before the row's: a
+                                        button cannot hold another. It gives
+                                        way to the name where the summary's
+                                        own drawing did, at 10em of summary
+                                        (14.5em of row at the designed text
+                                        size). */}
+                                      <button
+                                        type="button"
+                                        aria-label={`How to do ${ex.name}`}
+                                        onClick={() => {
+                                          haptic("light");
+                                          setFormGuide({
+                                            name: ex.name,
+                                            open: true,
+                                          });
+                                        }}
+                                        className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
+                                      >
+                                        <ExerciseThumb
+                                          exerciseId={ex.exerciseId}
+                                        />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (exercisePress.swallowClick())
+                                            return;
+                                          navigate(
+                                            `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                            { state: { initialTab: "form" } }
+                                          );
+                                        }}
+                                        className="flex-1 min-w-0 flex items-center p-3 text-left transition-colors active:bg-muted"
+                                        onTouchStart={(e) => {
+                                          if (reorderMode) return;
+                                          exercisePress.start(e, {
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                          });
+                                        }}
+                                        onTouchMove={exercisePress.move}
+                                        onTouchEnd={exercisePress.end}
+                                        onTouchCancel={exercisePress.end}
+                                        onContextMenu={(e) => {
+                                          // D-LIFT-17: long-press is touch-only —
+                                          // right-click is its pointer/desktop
+                                          // equivalent for the same manage menu.
+                                          e.preventDefault();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: e.clientX,
+                                            y: e.clientY,
+                                          });
+                                        }}
+                                      >
+                                        <ExerciseRowSummary
+                                          exercise={ex}
+                                          lastSets={lastSetsOf(ex)}
+                                          showNotes
+                                          showThumb={false}
+                                        />
+                                      </button>
+                                      <IconButton
+                                        aria-label={`More options for ${ex.name}`}
+                                        aria-haspopup="menu"
+                                        aria-expanded={
+                                          contextMenu?.dayIndex === idx &&
+                                          contextMenu?.exIndex === i
+                                        }
+                                        icon={
+                                          <MoreHorizontal className="size-5" />
+                                        }
+                                        variant="ghost"
+                                        size="md"
+                                        className="mr-1 text-muted-foreground"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const r = (
+                                            e.currentTarget as HTMLElement
+                                          ).getBoundingClientRect();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: r.left + r.width / 2,
+                                            y: r.bottom + 4,
+                                          });
+                                        }}
                                       />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (exercisePress.swallowClick())
-                                          return;
-                                        navigate(
-                                          `/history/exercise/${encodeURIComponent(ex.name)}`,
-                                          { state: { initialTab: "form" } }
-                                        );
-                                      }}
-                                      className="flex-1 min-w-0 flex items-center p-3 text-left transition-colors active:bg-muted"
-                                      onTouchStart={(e) => {
-                                        if (reorderMode) return;
-                                        exercisePress.start(e, {
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                        });
-                                      }}
-                                      onTouchMove={exercisePress.move}
-                                      onTouchEnd={exercisePress.end}
-                                      onTouchCancel={exercisePress.end}
-                                      onContextMenu={(e) => {
-                                        // D-LIFT-17: long-press is touch-only —
-                                        // right-click is its pointer/desktop
-                                        // equivalent for the same manage menu.
-                                        e.preventDefault();
-                                        setContextMenu({
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                          x: e.clientX,
-                                          y: e.clientY,
-                                        });
-                                      }}
-                                    >
-                                      <ExerciseRowSummary
-                                        exercise={ex}
-                                        lastSets={lastSetsOf(ex)}
-                                        showNotes
-                                        showThumb={false}
-                                      />
-                                    </button>
-                                    <IconButton
-                                      aria-label={`More options for ${ex.name}`}
-                                      aria-haspopup="menu"
-                                      aria-expanded={
-                                        contextMenu?.dayIndex === idx &&
-                                        contextMenu?.exIndex === i
-                                      }
-                                      icon={
-                                        <MoreHorizontal className="size-5" />
-                                      }
-                                      variant="ghost"
-                                      size="md"
-                                      className="mr-1 text-muted-foreground"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        const r = (
-                                          e.currentTarget as HTMLElement
-                                        ).getBoundingClientRect();
-                                        setContextMenu({
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                          x: r.left + r.width / 2,
-                                          y: r.bottom + 4,
-                                        });
-                                      }}
-                                    />
-                                  </div>
-                                </SortableExerciseRow>
-                              </div>
-                            ))}
+                                    </div>
+                                  </SortableExerciseRow>
+                                </div>
+                              );
+                              /* Lift22: a pair the plan wrote stands in its own
+                                 block, which says once what a superset is. */
+                              return run.length === 2 ? (
+                                <SupersetBlock
+                                  key={rowId(run[0].ex, idx, run[0].i)}
+                                >
+                                  {run.map(({ ex, i }) => row(ex, i))}
+                                </SupersetBlock>
+                              ) : (
+                                row(run[0].ex, run[0].i)
+                              );
+                            })}
                           </div>
                         )}
 

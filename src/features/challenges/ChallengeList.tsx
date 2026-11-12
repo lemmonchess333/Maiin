@@ -66,7 +66,6 @@ const LIST_CARD = cardClasses({
  * start-or-join card's Start a circle.
  */
 export function ChallengeList({
-  onFindFriends,
   refreshRef,
   hero,
   circles,
@@ -74,7 +73,6 @@ export function ChallengeList({
   league,
   weeklyLeads = true,
 }: {
-  onFindFriends?: () => void;
   /** CommunityView's pull-to-refresh awaits this section's progress
    *  refetch (challenge docs are already a live subscription). */
   refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
@@ -172,13 +170,13 @@ export function ChallengeList({
             weekly={weeklyCh}
             joined={!!(weeklyCh && myProgress[weeklyCh.id])}
             progress={weeklyCh ? myProgress[weeklyCh.id] : undefined}
+            leaderboard={weeklyCh ? leaderboards[weeklyCh.id] : undefined}
             hasChallenges={challenges.length > 0}
             leads={weeklyLeads}
             onJoin={join}
             onLeave={async (ch) => {
               await leaveChallenge(ch.id);
             }}
-            onFindFriends={onFindFriends}
           />
         )}
         {!loading && joined.length > 0 && (

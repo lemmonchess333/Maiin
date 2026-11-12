@@ -156,9 +156,6 @@ vi.mock("@/components/social/PeopleToFollowRow", () => ({
   default: ({ people }: { people: unknown[] }) =>
     people.length ? <div data-testid="people-row" /> : null,
 }));
-vi.mock("@/components/social/LeaderboardCard", () => ({
-  default: () => <div data-testid="points">leaderboard</div>,
-}));
 /* The live pulse reads Firestore, which this suite does not fake; its
    line is driven on the one fake in PulseLine.test and Social.feed.test. */
 vi.mock("@/components/social/PulseLine", () => ({
@@ -228,7 +225,6 @@ function setup(overrides: FeedViewProps = {}) {
         openPeople={vi.fn()}
         openTogether={openTogether}
         refreshRef={refreshRef}
-        onOverlayChange={vi.fn()}
         {...overrides}
         {...more}
       />
@@ -367,8 +363,8 @@ describe("FeedView — who you follow could not be read", () => {
 });
 
 describe("FeedView — posts first (2026-10-01)", () => {
-  /* The points card only arms on Following with a thin graph (<2
-     follows) — exactly where TrajectoryCard used to self-fetch. */
+  /* The points card arms on Following for anyone who follows someone.
+     A thin graph (under three follows) also gets the people row. */
   const thinGraph = {
     feedSubTab: "following" as const,
     followingCount: 1,
@@ -404,12 +400,15 @@ describe("FeedView — posts first (2026-10-01)", () => {
     expect(feedOrder()).toEqual(["a", "b", "c", "d"]);
   });
 
-  it("with two follows or more the friends' leaderboard takes the slot, and the trajectory is never read", () => {
+  it("with two follows or more the slot is still the person's own week", async () => {
+    /* Until 11 November 2026 the friends' board took the slot from the
+       second follow and the person's own week was never read (Trim1 call
+       3(a)). */
     feedItems = ["a", "b", "c", "d"].map(post);
     setup({ feedSubTab: "following", followingCount: 3 });
-    expect(screen.getByTestId("points")).toHaveTextContent("leaderboard");
+    expect(await screen.findByTestId("points")).toBeInTheDocument();
     expect(feedOrder()).toEqual(["a", "b", "c", "points", "d"]);
-    expect(mockGetPersonalTrajectory).not.toHaveBeenCalled();
+    expect(mockGetPersonalTrajectory).toHaveBeenCalledTimes(1);
   });
 
   it("with nothing posted yet, the row and the points card follow the empty state", async () => {
@@ -426,13 +425,13 @@ describe("FeedView — posts first (2026-10-01)", () => {
     ).toBeTruthy();
   });
 
-  it("with three follows and nothing posted, the leaderboard stays", () => {
+  it("with three follows and nothing posted, the week card stays", async () => {
     setup({ feedSubTab: "following", followingCount: 3 });
     expect(
       screen.getByText("Nothing from people you follow yet")
     ).toBeInTheDocument();
+    expect(await screen.findByTestId("points")).toBeInTheDocument();
     expect(feedOrder()).toEqual(["points"]);
-    expect(screen.getByTestId("points")).toHaveTextContent("leaderboard");
   });
 
   it("Explore has no points card", () => {

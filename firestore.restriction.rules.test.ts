@@ -5,8 +5,8 @@
  * A moderator restricts an account from the report queue, which writes
  * `globalRestrictedUids/{uid}`. Until this suite, no rule read that
  * document: a restricted account could still post to the feed and Spaces,
- * follow, join and start a partner streak by writing straight to
- * Firestore, whatever the app showed. `isRestricted()` now refuses every
+ * follow and join by writing straight to Firestore, whatever the app
+ * showed. `isRestricted()` now refuses every
  * client write that reaches another person; the callables refuse the rest
  * (`functions/lib/restriction.js`).
  *
@@ -14,7 +14,7 @@
  * restricted, so a rule that refuses everything cannot pass here. The
  * second half pins what a restriction leaves open: logging, the person's
  * own profile, blocking, and taking things back (unfollowing, leaving,
- * narrowing or deleting a post, ending a partner streak).
+ * narrowing or deleting a post).
  *
  * Run: `npm run test:rules`. Skipped when FIRESTORE_EMULATOR_HOST is unset,
  * a hard failure when CI sets REQUIRE_FIRESTORE_EMULATOR=1. The projectId
@@ -40,7 +40,6 @@ import {
   Timestamp,
   type Firestore,
 } from "firebase/firestore";
-import { emptyStreakState } from "./src/features/partnerStreak/streakEngine";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 if (process.env.REQUIRE_FIRESTORE_EMULATOR === "1" && !EMULATOR_HOST) {
@@ -201,9 +200,6 @@ suite("firestore.rules — a restricted account", () => {
           requestedAt: serverTimestamp(),
         }),
     },
-    // Starting a partner streak is not here: no client creates a bond, so
-    // the startPartnerStreak callable refuses a restricted account
-    // (functions/__tests__/partnerBonds.test.js).
     {
       name: "a Circle event",
       write: (uid, c) =>
@@ -306,17 +302,6 @@ suite("firestore.rules — a restricted account", () => {
       await assertSucceeds(
         deleteDoc(doc(me(), `followers/${OTHER}/users/${RESTRICTED}`))
       );
-    });
-
-    it("ending a partner streak", async () => {
-      const members = [RESTRICTED, OTHER].sort();
-      const id = members.join("__");
-      await seed(`partnerBonds/${id}`, {
-        members,
-        ...emptyStreakState(),
-        createdAt: new Date(),
-      });
-      await assertSucceeds(deleteDoc(doc(me(), "partnerBonds", id)));
     });
 
     it("blocking someone", async () => {

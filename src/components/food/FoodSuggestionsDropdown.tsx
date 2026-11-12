@@ -299,8 +299,12 @@ function FoodSuggestionsDropdown({
     >
       {quickAdd && quickAdd.items.length > 0 && (
         <div>
-          {/* Empty-focus Quick Add section (wave2 D) — the user's instant
-              repeat-log items, shown while the input is focused + empty.
+          {/* Empty-focus Log again section (wave2 D named it Quick Add) —
+              the user's instant repeat-log items, shown while the input
+              is focused + empty. Its heading was "Quick add" until Trim1
+              call 4: the list's last row is the by-number form, which
+              Mob2 (call 4) also named Quick add, so one list said it of
+              two things. The row keeps the name the other apps use.
               Tap = instant log (same semantics as the old chip strip:
               haptic, instant save via the parent's handler, no portion
               drawer). Long-press on a favourite-backed row = remove.
@@ -313,7 +317,7 @@ function FoodSuggestionsDropdown({
             <SectionLabel as="span" tier="section">
               {quickAdd.asExamples
                 ? "Examples — tap to describe your own"
-                : "Quick add"}
+                : "Log again"}
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (

@@ -2,14 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   SOCIAL_GATES,
   shouldShowFollowingFeed,
-  shouldShowLeaderboard,
   shouldShowChallengePercentile,
 } from "../socialGates";
 
 describe("SOCIAL_GATES thresholds (pinned to the researched values)", () => {
   it("matches the spec", () => {
     expect(SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS).toBe(3);
-    expect(SOCIAL_GATES.LEADERBOARD_MIN_COHORT).toBe(20);
     expect(SOCIAL_GATES.CHALLENGE_PERCENTILE_MIN_PARTICIPANTS).toBe(50);
   });
 });
@@ -22,14 +20,6 @@ describe("shouldShowFollowingFeed", () => {
     expect(shouldShowFollowingFeed(2)).toBe(false);
     expect(shouldShowFollowingFeed(3)).toBe(true);
     expect(shouldShowFollowingFeed(10)).toBe(true);
-  });
-});
-
-describe("shouldShowLeaderboard", () => {
-  it("hidden below a 20-member cohort", () => {
-    expect(shouldShowLeaderboard(19)).toBe(false);
-    expect(shouldShowLeaderboard(20)).toBe(true);
-    expect(shouldShowLeaderboard(100)).toBe(true);
   });
 });
 

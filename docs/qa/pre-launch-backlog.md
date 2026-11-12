@@ -508,33 +508,40 @@ index and the trigger in production.
       counts `notification` and names no one, and Cloud Logging has no
       "requires an index" error from the function.
 
-## Partner streaks are counted on the server (2026-10-25)
+## Partner streaks, retired (Trim1 call 3(b), 2026-11-12)
 
-The rules no longer let an app create a partner bond. The
-`startPartnerStreak` callable makes each one, counting both people's bonds
-against the limit of five in the transaction that creates it, with the
-mutual follow, a block either way, both accounts' deletion state and a
-restriction checked as the rules checked them. An iPhone build from before
-this change writes the bond itself, so on it Start streak now fails with
-"Couldn't start the streak. Try again."; nothing is lost, and an existing
-streak still shows and can be ended. The unit, rules and emulator suites
-cover each part, including two starts racing for one person's last place;
-only a deploy confirms the callable in production.
+Partner streaks are gone: the card on a mutual follow's profile, the
+"Streak ready" chip on People's rows, the `startPartnerStreak` callable,
+the two session triggers' streak step and the bond's rule. Two people who
+train together use a Circle, which keeps no streak. The rows this file
+held for partner streaks went with them. These need the release and the
+Firebase console.
 
-- [ ] **Start a streak, then hit the limit.** After Deploy production has
-      shipped (`startPartnerStreak` is on the deployed-source list), on
-      two accounts that follow each other, tap Start streak on one's
-      profile from the other. Passing: "Streak started with …", and in the
-      console `partnerBonds/{a}__{b}` with streak 0 and a server
-      `createdAt`. With five streaks on either account, a sixth says whose
-      five it is ("You have 5 streak partners already. End one to start
-      another." or "{name} has 5 streak partners already.") and writes no
-      bond.
-- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
-      is on TestFlight or the App Store, and if anyone still runs an
-      older one, set `config/client.minSupportedVersion` to that build's
-      version, so the older build shows the update screen instead of a
-      Start streak button that fails.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `startPartnerStreak`,
+      and the deployed rules have no `partnerBonds` match.
+- [ ] **Stored bonds are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgePartnerBondDocs.js`, read
+      the count, then run it without `DRY_RUN`. Passing: a second dry run
+      reports 0 bonds, and Firestore console shows no `partnerBonds`
+      collection. Once this is ticked, account deletion's own delete of a
+      member's bonds (step 3b) and its inventory entry
+      (`partnerBondsMember`) can go.
+- [ ] **The profile and People.** On two TestFlight accounts that follow
+      each other. Passing: the other's profile has no streak card, People
+      has no "Streak ready" chip, and a session saved by each on the same
+      day writes nothing under `partnerBonds`.
+- [ ] **An older build.** A TestFlight build from before this change, on
+      two accounts that follow each other. Passing: the other's profile
+      shows no streak card (its read of the bond is refused), and nothing
+      else on it changes.
+- [ ] **Deleting a session.** Open a saved workout or run and tap
+      Delete. Passing: the confirmation's second sentence reads "Badges
+      you’ve already earned stay." and says nothing about a streak. It
+      named streaks while partner streaks existed; your own streak can
+      get shorter when a day's only log is deleted.
 
 ## Circle invite codes expire (2026-10-25)
 
@@ -823,33 +830,39 @@ true`, the app shows the restricted notice before a post, and
       Firestore console, reads null within a minute and the profile shows
       the person unnamed.
 
-## Friends board (Polish2, 2026-10-20)
+## Friends board, retired (Trim1 call 3(a), 2026-11-12)
 
-The feed's board ranks this week's sessions for you and the people you
-follow who share their week; the full board adds Distance and Volume. The
-server keeps each tally (`friendsBoard/{uid}`); the unit, rules
-(`firestore.friendsBoard.rules.test.ts`) and trigger tests cover the logic.
-These need the release and two real accounts that follow each other.
+The friends board is gone: its card on the feed, its full list, the Show
+my week switch, the `setBoardSharing` callable and the tally the server
+kept (`friendsBoard/{uid}`). The league is the one weekly ranking. The
+five device rows this section held went with it. These need the release
+and the Firebase console.
 
-- [ ] **The release carries the rules and the callable.** Passing: the
-      Deploy production run's Firestore and Functions stages are green, and
-      Firebase console → Functions lists `setBoardSharing`.
-- [ ] **Show my week starts the tally.** On two TestFlight accounts, A
-      and B, B following A: A logs a workout, then taps Show my week on the
-      feed's board. Passing: Firestore console shows `friendsBoard/{A}`
-      with `sessions: 1` and A's `weekKey` (A's Monday), and B's board
-      lists A.
-- [ ] **A session saved later moves the board.** Passing: A finishes a
-      run; within a minute `friendsBoard/{A}` reads `sessions: 2` and B's
-      Distance tab shows A's km. Deleting the run takes it back off.
-- [ ] **Off leaves nothing to read.** A turns off Settings → Social &
-      privacy → Show my week on friends' boards. Passing: the
-      `friendsBoard/{A}` document is gone, B's board no longer lists A,
-      and A's own board does not ask again.
-- [ ] **The week turns over where the person is.** On a Monday morning,
-      an account in a timezone ahead of UTC (Auckland). Passing: its board
-      reads an empty week before it logs anything that day, not last
-      week's figures.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `setBoardSharing`, and
+      the deployed rules have no `friendsBoard` match.
+- [ ] **Stored weeks are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgeFriendsBoardDocs.js`,
+      read the two counts, then run it without `DRY_RUN`. Passing: a
+      second dry run reports 0 weeks and 0 answers, and Firestore console
+      shows no `friendsBoard` collection. Once this is ticked, account
+      deletion's own delete of `friendsBoard/{uid}` and its inventory
+      entry (`friendsBoardOwn`) can go.
+- [ ] **The feed's week card.** On a TestFlight account following two or
+      more people, with a session this week. Passing: Following shows
+      "Your trajectory" under the third post where the board was, and no
+      board.
+- [ ] **The weekly challenge's leaders.** Joined, with one lift this
+      week. Passing: the card on Together lists up to three people under
+      "Leading this week", with "You" picked out if you are one of them;
+      before joining, and with no session yet, it lists nobody.
+- [ ] **An older build.** A TestFlight build from before this change,
+      on an account following two or more people. Passing: its feed's
+      board reads "Nothing to compare yet" (its reads are refused), and
+      its Show my week switch answers "Couldn’t change who sees your
+      week. Try again." Nothing else on it changes.
 
 ## Follow approval (Polish2, 2026-10-20)
 
@@ -1279,8 +1292,7 @@ these need a phone's keyboard.
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
-follows, Space and challenge joins, Circle events and partner bonds), the
-props, comment, like, reaction and Circle callables
+follows, Space and challenge joins and Circle events), the props, comment, like, reaction and Circle callables
 (`functions/lib/restriction.js`), the app's gates (`RestrictedNotice`,
 `showRestrictedToast`), Settings → Social & privacy's explanation, and
 the moderation page's Restricted accounts with Lift (`listRestrictedUsers`,
@@ -1294,8 +1306,8 @@ console.
       second from the first, then Restrict user on the moderation page.
       On the second account (no sign-out): the feed and Space composers,
       comments, props, likes, reactions, Follow (a profile's too), Space,
-      challenge and Circle joins, a Circle check-in and a partner streak
-      each say "Your account is restricted" and nothing goes out; taking
+      challenge and Circle joins and a Circle check-in each say "Your
+      account is restricted" and nothing goes out; taking
       back props, unfollowing and leaving still work; Social & privacy
       explains it, and Contact support opens Mail.
 - [ ] **Lift.** Lift the second account from Restricted accounts: within
@@ -3016,7 +3028,7 @@ same precedence the client uses.
 Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
 
 - [x] _(Proven 2026-10-17: Run 39063239262 logged 'Verified deployed source: onWorkoutCreated' and 'onRunCreated' (index.js byte-identical). main's index.js:57-59 requires ./lib/partnerStreakPersist, and lines 4574 and 4699 call applyPartnerActivity.)_ **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
-- [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b), so there is no shared day to count. See "Partner streaks, retired".)_ **First real shared day counts.**
 - [x] _(Proven 2026-10-17: functions/**tests**/partnerStreakPersist.test.js 'is idempotent on a same-day re-log (no second write)'. Deployed source verified (run 39063239262).)_ **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [x] _(Proven 2026-10-18: `functions/__tests__/partnerStreakPersist.test.js` 'onRunCreated — an ineligible run does not count'. index.js's onRunCreated decides with `isVolumeEligibleRun(data)` and calls applyPartnerActivity once, inside the `if (isCountable)` block. Moving the call above the gate, or into its else branch, turns the test red.)_ **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
 - [x] **Freeze ledger uses Monday weeks** — covered, by composition rather
@@ -3630,11 +3642,8 @@ tests cover them; these need a phone or the deployed rules.
       Share invite link, and a Circle's Share invite: the share sheet's
       link is `https://troposfit.com`, and it opens the web app from
       Messages. It was `capacitor://localhost`.
-- [ ] **A partner streak is offered.** After the Deploy production run
-      that ships the rules, open the profile of someone you follow who
-      follows you back and has no bond with you: the partner streak card
-      offers to start one. Before, the read of a bond that did not exist
-      yet was refused and the card never showed.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b).)_
+      **A partner streak is offered.**
 - [ ] **The route keeps off the distance.** In the feed on a phone, at
       the phone's largest text size too, a run card's route sits above
       its distance, never on it.
@@ -4205,8 +4214,8 @@ unit suites replay those orders; only a phone fires them for real.
       Passing: the ring empties and the run carries on; a full hold still
       finishes it.
 - [ ] **A long press held on.** Hold an exercise row on Train for a full
-      second before lifting, and hold a saved food in Food's Quick add for
-      a second. Passing: Train's menu opens and the exercise's history does
+      second before lifting, and hold a saved food under Food's Log again
+      for a second. Passing: Train's menu opens and the exercise's history does
       not; the food is removed (with Undo) and nothing is logged.
 - [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
       finger and then the other without moving it, then tap once. Passing:
@@ -4310,7 +4319,7 @@ WKWebView.
       deeper orange and its head stands clear of the first lap by a thin
       line of the page's colour. Passing: the two laps can be told apart
       at arm's length, in light and in dark.
-- [ ] **The flight.** Log a food by typing, and again from the Quick add
+- [ ] **The flight.** Log a food by typing, and again from the Log again
       list. Passing: its drawing rises from the field to the end of the
       arc and the arc then grows, in about half a second, with no stutter
       and no jump of the page; the keyboard stays up and the next food
@@ -4492,6 +4501,27 @@ Captured in Chromium at 393 and 320 px; a phone has not drawn them.
 - [ ] **An old link.** From Safari or a note, open a saved link to
       `/settings/training` in the installed app. Passing: Lift plan
       opens.
+
+## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
+
+Affects: new plans of 30 and 45 minutes past beginner (`planSupersets.ts`,
+`sizeSessionsToTime`), the session clock (`estimateSessionSeconds`), a
+session's opening supersets (`sessionPrescription`) and Train's day list
+(`SupersetBlock`). Unit-tested and captured in Chromium from the app's own
+components; no signed-in account has drawn Train on a phone.
+
+- [ ] **A new 45-minute plan.** Reset the programme at 45 minutes,
+      intermediate, four days or more. Passing: Train shows at least one
+      day with a "Superset" block of two lifts, the block's line reads
+      "One set of each, then rest", and the day's minutes are 45 or under.
+- [ ] **The pair in the workout.** Start that day. Passing: the first
+      lift of the pair reads "Superset with" the second, finishing a set
+      of it moves to the second, and the rest timer runs after the second.
+- [ ] **Splitting it.** Open the first lift's "…" and tap "Remove from
+      superset". Passing: the two run as straight sets for the rest of the
+      session, and Train still shows the pair after Finish.
+- [ ] **An hour's plan.** Reset at 60 minutes. Passing: no day shows a
+      "Superset" block.
 
 ## Train says when a lift day runs past its length (slice 4, 2026-11-12)
 

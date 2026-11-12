@@ -105,7 +105,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 42 → 40. The run plan page asks about a race on the coral segmented
   // control, so the two mode cards' footprints icon went; and the race
   // card's Race community row is social, so its icon is neutral.
-  running: 40, // Calendar status icons now use the strong colour step.
+  // 2026-11-12: 40 → 39. The friends board's card went (Trim1 call
+  // 3(a)), and its distance board's footprints icon with it.
+  running: 39, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -131,7 +133,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // went, and its dumbbell icon with it (Lift4 (3)).
   // 2026-11-11: 17 → 16. Settings → Programme went (Trim1 call 2), and
   // its Lift plan row's icon with it.
-  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-11-12: 16 → 15. The friends board's card went (Trim1 call
+  // 3(a)), and its volume board's dumbbell icon with it.
+  lifting: 15, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -198,7 +202,9 @@ const EXPECTED_INLINE_USES = {
   // paused, so its coral is one side of a choice and no longer counted.
   // 2026-11-10: 16 → 17. Together's race hero (Soc16) without a photo:
   // its 160px ghosted flag, an icon, as the Space hero's fallback draws.
-  "THEME.running": 17,
+  // 2026-11-12: 17 → 16. The "Streak ready" chip on People's rows went
+  // with partner streaks (Trim1 call 3(b)), and its flame icon with it.
+  "THEME.running": 16,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
@@ -226,7 +232,9 @@ const EXPECTED_INLINE_USES = {
   // flame from amber to the brand purple.
   // 33 → 34. The notification tray's league result (Soc15 call 3): its
   // medal icon, in the brand purple Social's rewards wear.
-  "THEME.brand": 33,
+  // 2026-11-12: 33 → 32. The friends board's card went (Trim1 call
+  // 3(a)), and its sessions board's bolt icon with it.
+  "THEME.brand": 32,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

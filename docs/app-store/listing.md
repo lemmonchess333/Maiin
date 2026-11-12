@@ -87,7 +87,7 @@ Running
 
 Food
 • Type a meal the way you'd say it, search the food database, or scan a barcode.
-• Log your usual breakfast in one tap, or copy yesterday's meals.
+• Log your usual breakfast in one tap.
 • A daily calorie target from your weight, height, age and goal, with protein, carbs and fat.
 • Water and weight on Home, with your weight trend rather than the day-to-day swings.
 
@@ -99,8 +99,8 @@ Progress
 
 With other people
 • Share sessions with the people who follow you, give props and comment.
-• Join Spaces for races and interests, start a Circle of up to 8 people, and keep a shared streak with a training partner.
-• Weekly, monthly and seasonal challenges, and a weekly leaderboard with the people you follow.
+• Join Spaces for races and interests, and start a Circle of up to 8 people.
+• Weekly, monthly and seasonal challenges.
 • Choose who sees each session, and report or block anyone.
 
 Tropos Pro

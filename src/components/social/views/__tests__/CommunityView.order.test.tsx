@@ -51,9 +51,7 @@ vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
   useUid: () => h.user.uid,
 }));
-vi.mock("@/lib/leaderboard", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/leaderboard")>()),
-  loadBoardWeeks: async () => [],
+vi.mock("@/features/challenges/myWeekLifts", () => ({
   countMyWeekLifts: async () => 0,
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -180,9 +178,7 @@ async function openTogether() {
     <MemoryRouter>
       <CommunityView
         active
-        chromeHidden={false}
         uid="me"
-        openPeople={() => {}}
         refreshRef={{ current: null }}
       />
     </MemoryRouter>

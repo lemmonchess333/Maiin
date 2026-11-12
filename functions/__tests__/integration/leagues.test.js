@@ -23,7 +23,7 @@ let db;
 let idx;
 let admin;
 const leagues = require("../../lib/leagues");
-const { currentWeek } = require("../../lib/friendsBoard");
+const { currentWeek } = require("../../lib/weekTally");
 
 const DAY = 86400000;
 const PREFIX = "league-it-";
