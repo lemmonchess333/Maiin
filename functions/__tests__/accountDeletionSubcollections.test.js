@@ -57,6 +57,25 @@ const NOT_A_USER_SUBCOLLECTION = {
   scanUsage: "top-level collection keyed by uid; deleted separately",
 };
 
+/**
+ * Names the sweep KEEPS although no source writes them now. Each was
+ * written by a build that shipped, so documents exist under real accounts
+ * and have to go with the account: dropping the name from the sweep the
+ * day its writer leaves the repo would orphan them, which is the failure
+ * this file exists to stop. Each needs a reason, and the last test below
+ * fails if a name here gains a writer again.
+ */
+const KEPT_WITHOUT_A_WRITER = {
+  // Server-owned. The client deliberately stopped writing it (see
+  // src/lib/pushNotifications.ts), so it appears in no source path.
+  devices: "server-owned; the client stopped writing it",
+  // The weekly logging focus card (GsPb1) left Food on 2026-11-11 (Trim1
+  // call 4). Builds already on phones still write a commitment, and the
+  // ones written before then are still there.
+  nutritionCommitments:
+    "the weekly logging focus card, removed 2026-11-11; shipped builds still write it",
+};
+
 function sourceFiles() {
   return [
     ...globSync("src/**/*.{ts,tsx}", { cwd: ROOT }),
@@ -132,16 +151,27 @@ describe("account deletion covers every user subcollection", () => {
   it("does not sweep names that no writer produces", () => {
     /* The other half of the drift. Five phantom entries had accumulated,
        each costing an empty query per deletion and, worse, making the
-       list read as authoritative when it was not. `devices` is exempt: it
-       is server-owned, the client deliberately stopped writing it (see
-       src/lib/pushNotifications.ts), so it appears in no source path. */
+       list read as authoritative when it was not. The exemptions are
+       KEPT_WITHOUT_A_WRITER's, each with its reason. */
     const observed = observedSubcollections();
     const phantom = USER_SUBCOLLECTIONS.filter(
-      (name) => name !== "devices" && !observed.has(name)
+      (name) => !(name in KEPT_WITHOUT_A_WRITER) && !observed.has(name)
     );
     expect(
       phantom,
-      `USER_SUBCOLLECTIONS names collections nothing writes: ${phantom.join(", ")}. Either the name is wrong (the real one is still orphaning) or the collection is gone and the entry is dead weight.`
+      `USER_SUBCOLLECTIONS names collections nothing writes: ${phantom.join(", ")}. Either the name is wrong (the real one is still orphaning), or the collection is gone and the entry is dead weight, or a shipped build wrote it and its documents still exist, which goes in KEPT_WITHOUT_A_WRITER with a reason.`
+    ).toEqual([]);
+  });
+
+  it("keeps an exemption only while the name has no writer and is still swept", () => {
+    const observed = observedSubcollections();
+    const swept = new Set(USER_SUBCOLLECTIONS);
+    const stale = Object.keys(KEPT_WITHOUT_A_WRITER).filter(
+      (name) => observed.has(name) || !swept.has(name)
+    );
+    expect(
+      stale,
+      `KEPT_WITHOUT_A_WRITER lists names that are written again, or are no longer swept: ${stale.join(", ")}. Remove them from the list.`
     ).toEqual([]);
   });
 });
