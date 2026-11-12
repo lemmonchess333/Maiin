@@ -185,7 +185,7 @@ describe("Analytics — links into the pages", () => {
   });
 
   it("draws one control row on a page: the way back, with the range beside it", () => {
-    // The tab switch is the overview's (and the PRs and Badges tabs').
+    // The tab switch is the overview's (and the Bests tab's).
     expect(conditionBefore("<FilterPills")).toContain(
       '(filter !== "analytics" || view === "overview")'
     );
@@ -199,6 +199,54 @@ describe("Analytics — links into the pages", () => {
     expect(conditionBefore("<TimeRangePills selected={timeRange}", 60)).toMatch(
       /view === "overview"/
     );
+  });
+});
+
+describe("Analytics — two tabs (Trim1 calls 3(c) and 6)", () => {
+  /* Badges had a tab here. They are on the profile now, above the medals
+     (`BadgeShelf`), which Hist5b said the tab was an interim place for. */
+  it("has Analytics and Bests, and no third", () => {
+    const tabs = history.slice(
+      history.indexOf("const VALID_TABS"),
+      history.indexOf("];", history.indexOf("const VALID_TABS"))
+    );
+    expect(tabs.match(/"\w+"/g)).toEqual(['"analytics"', '"prs"']);
+    expect(history).not.toContain("<BadgeGrid");
+    expect(history).not.toMatch(/filter === "badges"/);
+  });
+
+  it("sends a link that named the Badges tab to the person's own badges", () => {
+    const names = history.slice(
+      history.indexOf("const BADGE_TAB_NAMES"),
+      history.indexOf("]);", history.indexOf("const BADGE_TAB_NAMES"))
+    );
+    // Both names the tab has had: a bookmark from either still lands.
+    expect(names).toContain('"badges"');
+    expect(names).toContain('"milestones"');
+    // `?tab=`, a `#` anchor and the stored hint are all read.
+    const reads = history.slice(
+      history.indexOf("const [hintNamedBadges]"),
+      history.indexOf("const filter: FilterTab")
+    );
+    expect(reads).toContain("window.location.hash");
+    expect(reads).toContain('sessionStorage.getItem("history-tab")');
+    expect(reads).toContain("BADGE_TAB_NAMES.has(tabFromUrl)");
+    expect(history).toContain(
+      "return <Navigate to={badgeShelfPath(uid)} replace />"
+    );
+  });
+
+  it("spells the shelf's address once", async () => {
+    const { badgeShelfPath, BADGES_PARAM, BADGES_ALL } =
+      await import("@/lib/badgeShelfLink");
+    expect(badgeShelfPath("u1")).toBe("/user/u1?badges=all");
+    expect(`${BADGES_PARAM}=${BADGES_ALL}`).toBe("badges=all");
+    // The profile reads the same names it is linked with.
+    const profile = readFileSync(
+      resolve(repoRoot, "src/pages/UserProfile.tsx"),
+      "utf8"
+    );
+    expect(profile).toContain("searchParams.get(BADGES_PARAM) === BADGES_ALL");
   });
 });
 

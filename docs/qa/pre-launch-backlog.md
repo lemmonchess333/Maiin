@@ -4442,3 +4442,25 @@ links; these need a phone.
 - [ ] **The tooltip opens on a tap.** Tap the small "i" beside
       Performance. Passing: the explanation opens, reads in both themes,
       and a tap elsewhere closes it.
+
+## Badges and medals are one shelf, on the profile (Trim1 call 3(c), 2026-11-11)
+
+Analytics' Badges tab is gone. A profile shows badges above medals, and on
+your own "See all" opens the whole badge collection in place. The unit
+suites cover the fold, the links and who sees what; these need a phone.
+
+- [ ] **From the streak.** On Home tap the streak chip, then "See your
+      badges". Passing: your profile opens with the Badges heading at the
+      top of the screen and the whole collection open under it.
+- [ ] **A saved link to the tab.** Open `/history?tab=badges`. Passing: it
+      lands on your profile with the collection open, and Analytics shows
+      two tabs, Analytics and Bests.
+- [ ] **Open and close.** On your profile tap "See all", then "Show
+      fewer". Passing: the collection opens where it is, the page does not
+      jump, and closing returns the newest four.
+- [ ] **Someone else's profile.** Open another person's profile.
+      Passing: their newest badges and their medals, and no "See all" on
+      the badges.
+- [ ] **Larger Text.** With the phone's text at its largest, open the
+      collection. Passing: the three streak figures and the badge tiles
+      wrap inside the screen, and nothing is cut off.

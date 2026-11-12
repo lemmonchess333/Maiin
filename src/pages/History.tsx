@@ -1,6 +1,13 @@
-import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import {
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  Suspense,
+} from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
@@ -17,6 +24,7 @@ import { focusLabel } from "@/features/program/trainingBlock";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
+import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
@@ -155,9 +163,6 @@ import Card from "@/components/ui/Card";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
-const BadgeGrid = lazyRetry(() =>
-  import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
-);
 const TrendWeight = lazyRetry(() =>
   import("@/components/progress/TrendWeight").then((m) => ({
     default: m.TrendWeight,
@@ -170,34 +175,33 @@ const ProgressPhotos = lazyRetry(
   () => import("@/components/progress/ProgressPhotos")
 );
 
-/* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
-   Performance fold (PR 6) + PRs tab introduction (PR 7a).
-   Sport-filtered tabs were dropped in PR 5a; the Performance tab
-   folded into Analytics in PR 6. "All" was renamed "analytics" to
-   match the page's frame commitment (Hist5a).
+/* Two tabs: Analytics and Bests (Trim1 calls 3(c) and 6, 11 November
+   2026).
 
-   Tabs are Analytics + PRs + Badges. The third slot briefly held a
-   MILESTONES chronology; do not bring it back. Its dominant entry
-   kind was `lift-pr`, which the PRs tab already shows as a
-   current-bests table and `ExerciseHistory` — one tap down the
-   chevron on every PR row — already shows as a per-lift
-   progression chart, and the PRs tab carries "Recent bests · Last
-   30 days" on top of that. A third, flatter projection of the same
-   lifts is not a third role.
+   Hist5b consolidated six tabs to three after the Performance fold and
+   the PRs tab: Analytics, PRs and Badges. It called the Badges tab an
+   interim place and said badges would move to the profile. They have:
+   the profile shows a person's badges above their medals, and on your
+   own "See all" opens the collection this tab held
+   (`features/streaks/BadgeShelf.tsx`). A link that named the tab lands
+   there (`BADGE_TAB_NAMES`, below).
 
-   Its shape also failed in both directions: on day one every first
-   log is a "first logged best", so it floods with rows mirroring
-   the PR list, and in steady state new PRs get rare and it thins
-   to a few rows a month.
+   The third slot briefly held a MILESTONES chronology; do not bring it
+   back. Its dominant entry kind was `lift-pr`, which the PRs tab already
+   shows as a current-bests table and `ExerciseHistory`, one tap down the
+   chevron on every PR row, already shows as a per-lift progression
+   chart, and the PRs tab carries "Recent bests · Last 30 days" on top of
+   that. A third, flatter projection of the same lifts is not a third
+   role. */
+type FilterTab = "analytics" | "prs";
 
-   Nothing was orphaned — every non-PR entry kind already has a
-   badge (`first-workout` → `first_step`, `block-complete` →
-   `programme_complete`, `race-complete` → the distance badges),
-   and its `badge` entries were badges listed twice on one screen,
-   once in the chronology and again in the grid below it. */
-type FilterTab = "analytics" | "prs" | "badges";
+const VALID_TABS: FilterTab[] = ["analytics", "prs"];
 
-const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
+/* What the Badges tab was called, in `?tab=`, a `#` anchor or the
+   `history-tab` hint: "badges", then "milestones" while the third slot
+   was the chronology, then "badges" again. Each opens the badge
+   collection on the person's own profile now. */
+const BADGE_TAB_NAMES = new Set(["badges", "milestones"]);
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
@@ -211,12 +215,6 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   lifting: "analytics",
   nutrition: "analytics",
   performance: "analytics",
-  /* "badges" is the live tab again, so the redirect points the other way
-     now: bookmarks saved while the third tab was the Milestones
-     chronology land on the badge collection. Both values have been the
-     canonical one at some point, which is exactly why the map has to keep
-     an entry rather than silently 404 one of them. */
-  milestones: "badges",
 };
 
 /* The section anchors Performance used to be scrolled to. Older
@@ -283,8 +281,7 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label:
-          f === "analytics" ? "Analytics" : f === "prs" ? "Bests" : "Badges",
+        label: f === "analytics" ? "Analytics" : "Bests",
       }))}
     />
   );
@@ -334,6 +331,22 @@ export default function History() {
   //      mount)
   //   4. "all"
   const tabFromUrl = searchParams.get("tab");
+  /* A link to the Badges tab this page had. Read here, on this render,
+     so the page is never drawn for a frame before the person is sent to
+     their badges. The anchor and the stored hint are one-shot entry
+     points the reconciliation below clears, so they are read once. */
+  const [hintNamedBadges] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (BADGE_TAB_NAMES.has(window.location.hash.replace(/^#/, "")))
+      return true;
+    try {
+      return BADGE_TAB_NAMES.has(sessionStorage.getItem("history-tab") ?? "");
+    } catch {
+      return false; // private mode: nothing to read
+    }
+  });
+  const linkNamesBadges =
+    hintNamedBadges || (!!tabFromUrl && BADGE_TAB_NAMES.has(tabFromUrl));
   /* Resolve filter from URL with legacy-redirect awareness: legacy
      `?tab=running|lifting|nutrition|all` values map to "analytics"
      (the unified scroll page). The actual URL rewrite happens in
@@ -432,6 +445,17 @@ export default function History() {
   useEffect(() => {
     if (reconciledRef.current) return;
     reconciledRef.current = true;
+
+    /* On the way to the profile's badges: nothing here to reconcile, and
+       the stored hint has done its job. */
+    if (linkNamesBadges) {
+      try {
+        sessionStorage.removeItem("history-tab");
+      } catch {
+        /* private mode */
+      }
+      return;
+    }
 
     /* Hist5c pin 11 — rewrite any legacy `?tab=` value to the
        canonical Hist5 value on first mount. Share-cards / push
@@ -1141,6 +1165,12 @@ export default function History() {
   const isAnalyticsColdStart =
     !showRunningSection && !showLiftingSection && !showNutritionSection;
 
+  /* The Badges tab is on the profile now: a link that named it goes to
+     the person's own badge collection. */
+  if (linkNamesBadges && uid) {
+    return <Navigate to={badgeShelfPath(uid)} replace />;
+  }
+
   return (
     <PageShell
       {...pullBindProps}
@@ -1194,17 +1224,7 @@ export default function History() {
           </div>
         }
       >
-        {filter === "badges" ? (
-          <SectionErrorBoundary sectionName="badges-tab">
-            {/* The grid alone. It answers what the chronology above it could
-                not: what is still in PROGRESS and how close it is. That was
-                the one thing the Milestones arrangement got right, and it
-                was an argument for the grid rather than for the list on top
-                of it — a list of things that already happened is
-                structurally incapable of showing the next one. */}
-            <BadgeGrid />
-          </SectionErrorBoundary>
-        ) : filter === "prs" ? (
+        {filter === "prs" ? (
           <SectionErrorBoundary sectionName="prs-tab">
             <PRsTab
               runningPRs={runningPRs}
