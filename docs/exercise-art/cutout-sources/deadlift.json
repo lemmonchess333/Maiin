@@ -1,0 +1,10 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "deadlift.png",
+  "imageSha256": "8704a8f9410a5bd48d78848a5a8a628846cdba516069a263fee43af1ea29c5f9",
+  "reference": "form-frames/deadlift/1.webp",
+  "referenceSha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+  "method": "The owner asked on 2026-11-12 for the deadlift's card and Home animation to face the person; the reviewed form guide keeps its six frames drawn from behind. This is the same position as the reference (the bar on the floor, set and gripped), drawn from the front three-quarter by gemini-3-pro-image with the canonical athlete, lined up by build.py and keyed out of its black stage by scripts/art/keying.ts, as every black-stage card is. Reviewed by Claude at native size and as a card on both themes; the owner has not yet seen this card in the app.",
+  "reviewEvidence": "docs/exercise-art/pilots/redraw-20261112/deadlift-front/start.png",
+  "provenance": "docs/exercise-art/sources/deadlift/2026-11-12/provenance.json"
+}
