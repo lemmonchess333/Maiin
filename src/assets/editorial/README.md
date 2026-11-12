@@ -119,6 +119,9 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 ## Drop-in contract
 
+The welcome's photographs of athletes are not here: they live in
+`src/assets/welcome/` with their own rules.
+
 Photographs here are for places and communities only (Soc16): a race shows
 its real place, a Space its cover. A challenge carries no photograph; its
 picture is its own medal (`MedalArt`), as Strava's, Nike Run Club's and

@@ -53,10 +53,10 @@ export async function openSignUpForm(page: Page): Promise<void> {
     .waitFor({ state: "visible", timeout: 20_000 });
 }
 
-/** The sign-in form, by "I have an account" from the welcome screen. */
+/** The sign-in form, by "Sign in" from the welcome screen. */
 export async function openSignInForm(page: Page): Promise<void> {
   const haveAccount = page.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   const email = page.locator("#login-email");
