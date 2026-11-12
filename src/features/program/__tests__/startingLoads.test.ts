@@ -75,10 +75,40 @@ describe("startingWeightForCategory", () => {
   });
 
   it("applies a lower factor for female lifters", () => {
-    // 80 × 0.45 × 0.75 = 27 → 27.5
+    // 60 × 0.45 × 0.75 = 20.25 → 20
     expect(
-      startingWeightForCategory("horizontal_push", ctx({ sex: "female" }))
-    ).toBe(27.5);
+      startingWeightForCategory(
+        "horizontal_push",
+        ctx({ sex: "female", bodyweightKg: 60 })
+      )
+    ).toBe(20);
+  });
+
+  it("scales from no more than 90 kg of bodyweight, 70 kg for a woman (D8)", () => {
+    // A 150 kg beginner man was given a 105 kg squat for his first session.
+    expect(
+      startingWeightForCategory("knee_dominant", ctx({ bodyweightKg: 150 }))
+    ).toBe(
+      startingWeightForCategory("knee_dominant", ctx({ bodyweightKg: 90 }))
+    );
+    expect(
+      startingWeightForCategory("knee_dominant", ctx({ bodyweightKg: 150 }))
+    ).toBe(62.5);
+    expect(
+      startingWeightForCategory(
+        "knee_dominant",
+        ctx({ bodyweightKg: 110, sex: "female" })
+      )
+    ).toBe(
+      startingWeightForCategory(
+        "knee_dominant",
+        ctx({ bodyweightKg: 70, sex: "female" })
+      )
+    );
+    // Under the cap nothing changes.
+    expect(
+      startingWeightForCategory("knee_dominant", ctx({ bodyweightKg: 80 }))
+    ).toBe(55);
   });
 
   it("returns 0 when bodyweight is missing/invalid", () => {

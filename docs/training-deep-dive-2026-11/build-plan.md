@@ -85,6 +85,14 @@ so a lift added later without a row fails. An added lift still counts as a
 main lift (`isAccessory` unset); setting it from the lift's role crosses the
 command boundary and is its own change.
 
+STATUS 2026-11-12, #3 (first weights uncapped by bodyweight): a first weight
+is scaled from no more than 90 kg of bodyweight, 70 kg for a woman
+(`SEED_BODYWEIGHT_CAP_KG`). A 150 kg beginner man's first squat goes from 105 kg
+to 62.5. No floor: a light lifter's light start corrects itself, and the plan
+follows the weight lifted from the first session. Building pull-ups as a lat
+pulldown above a bodyweight line is left for the level and kit work it belongs
+with.
+
 STATUS 2026-11-12, #13 ("Lighten leg sessions" where it changes nothing): setup
 and Run plan offer the switch only where a yes takes a set, and say how many: "4
 fewer leg sets a week, at the same weights" (`raceLegTrimCut`), where they said
