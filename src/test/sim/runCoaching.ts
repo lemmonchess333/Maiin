@@ -15,7 +15,8 @@
  * - `spike`: a run more than 10% longer than the runner's longest of the
  *   30 days before (§2 item 2: the single-run guard).
  * - `volume-jump`: a week planning over 25% more minutes than the week
- *   before, outside race week (audit §7 item 1).
+ *   before, outside race week and the recovery after it, which climbs
+ *   back from days off on purpose (audit §7 item 1; deep dive D10).
  * - `taper-long`: a half or marathon plan with no long run in the two
  *   weeks before race week (§4.5: a reduced long run 2–3 weeks out; audit
  *   §7 item 6).
@@ -88,6 +89,7 @@ export function runCoachingFindings(
       prev &&
       prev.plannedMinutes > 0 &&
       !holdsRace(w) &&
+      w.phase !== "recovery" &&
       w.plannedMinutes > JUMP * prev.plannedMinutes
     )
       found.add("volume-jump");

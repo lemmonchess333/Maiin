@@ -108,6 +108,7 @@ import {
   regenerateRacePlan,
   rollLiftWeeks,
   rollRunWeeks,
+  withRecoveryWeekKey,
 } from "./weekRollover";
 import {
   addedExerciseWeight,
@@ -2665,8 +2666,9 @@ export function useProgram() {
             weekSchedule,
             weekStart,
             newRunnerUntil: profileNewRunnerUntil(profile),
+            race: base.runPlan?.raceGoal,
           });
-          runPlan = { ...base.runPlan! };
+          runPlan = withRecoveryWeekKey(base.runPlan!, runDays, weekStart);
         } else if (
           profile.runMode === "race_prep" &&
           profile.raceGoal &&

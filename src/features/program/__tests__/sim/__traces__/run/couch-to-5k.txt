@@ -57,26 +57,26 @@ w11 2026-05-18  recovery, plan week 10 of 10  counted 2/3  plan 104 min, long 0.
   week    64 min · 8.4 km · easy 47% · longest ×0.89 the month's
   runner  VDOT 26.46 · fitness 71 min · easy own 8:18–9:17, prescribed none
   · 2026-05-24: server entered recovery until 2026-05-31
-w12 2026-05-25  recovery, plan week 10 of 10  counted 2/3  plan 90 min, long 0.0 km, quality 0
-  planned Wed:easy_30 · Fri:easy_30 · Sun:easy_30
-  ran     Wed easy_30 3.3 km/30 min 8:59 [on target] · Fri easy_30 3.4 km/30 min 8:55 [on target] INJURY short
-  week    60 min · 6.7 km · easy 100% · longest ×0.60 the month's
-  runner  VDOT 26.39 · fitness 69 min · easy own 8:15–9:14, prescribed none
+w12 2026-05-25  recovery, plan week 10 of 10  counted 2/3  plan 80 min, long 0.0 km, quality 0
+  planned Wed:easy_20 · Fri:easy_30 · Sun:easy_30
+  ran     Wed easy_20 2.2 km/20 min 8:59 [on target] · Fri easy_30 3.4 km/30 min 8:54 [on target] INJURY short
+  week    50 min · 5.6 km · easy 100% · longest ×0.60 the month's
+  runner  VDOT 26.32 · fitness 68 min · easy own 8:16–9:15, prescribed none
   · 2026-05-25: the app derived a benchmark from a race, 5.0 km in 34:17 (VDOT 26.2, true 26.5)
   · 2026-05-29: short injury on easy_30
 w13 2026-06-01  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 25.91 · fitness 59 min
+  runner  VDOT 25.85 · fitness 57 min
   · 2026-06-07: server ended recovery
 w14 2026-06-08  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 25.49 · fitness 50 min
+  runner  VDOT 25.44 · fitness 49 min
 w15 2026-06-15  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 25.13 · fitness 42 min
+  runner  VDOT 25.08 · fitness 41 min
 w16 2026-06-22  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 24.98 · fitness 39 min
+  runner  VDOT 24.94 · fitness 38 min
 
-runs 30 · counted 30 of the 30 planned · injuries 1 · VDOT 24.0 → 24.98
+runs 30 · counted 30 of the 30 planned · injuries 1 · VDOT 24.0 → 24.94
 race 2026-05-24 5k_race 34:17 at VDOT 26.21
