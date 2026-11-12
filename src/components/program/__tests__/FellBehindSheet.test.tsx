@@ -32,9 +32,11 @@ function basePrompt() {
 function setup({
   raceModeActive = true,
   recentLayoff = "none",
+  outOfReach = null,
 }: {
   raceModeActive?: boolean;
   recentLayoff?: "none" | "gap" | "detrained";
+  outOfReach?: { longest: string; raceName: string; race: string } | null;
 } = {}) {
   const dismissFellBehindPrompt = vi.fn(async () => APPLIED);
   const realignRacePlan = vi.fn(async () => {});
@@ -50,6 +52,7 @@ function setup({
       onRaceMoved={onRaceMoved}
       raceModeActive={raceModeActive}
       recentLayoff={recentLayoff}
+      outOfReach={outOfReach}
     />
   );
   return {
@@ -224,6 +227,58 @@ describe("FellBehindSheet — detrained register", () => {
       screen.getByRole("button", { name: /Realign my plan/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/Welcome back/i)).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Run15 (deep dive D11): back from a layoff with the race too close for the
+ * plan to build the long run up to it. The sheet says how far each is and
+ * leads with moving the race; the rebuild stays one tap below, the same
+ * writer as ever.
+ */
+describe("FellBehindSheet — a race out of reach", () => {
+  const HALF = {
+    longest: "12 km",
+    raceName: "A half marathon",
+    race: "21.1 km",
+  };
+  const choiceNames = () =>
+    screen.getAllByRole("button").map((b) => b.textContent?.trim() ?? "");
+
+  it("says how far the long run gets and how far the race is", () => {
+    setup({ recentLayoff: "detrained", outOfReach: HALF });
+    expect(
+      screen.getByText(
+        "By race day your long run gets to 12 km. A half marathon is 21.1 km. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/ease you back in — easy running first/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("leads with moving the race, the rebuild one tap below", () => {
+    setup({ recentLayoff: "detrained", outOfReach: HALF });
+    const names = choiceNames();
+    const move = names.findIndex((n) => /Move my race/.test(n));
+    const rebuild = names.findIndex((n) => /Rebuild my plan/.test(n));
+    expect(move).toBeGreaterThanOrEqual(0);
+    expect(rebuild).toBe(move + 1);
+  });
+
+  it("each choice keeps its writer", async () => {
+    const first = setup({ recentLayoff: "detrained", outOfReach: HALF });
+    fireEvent.click(screen.getByRole("button", { name: /Move my race/i }));
+    await waitFor(() => expect(first.onRaceMoved).toHaveBeenCalled());
+    expect(first.realignRacePlan).not.toHaveBeenCalled();
+  });
+
+  it("says nothing of it outside the welcome-back register", () => {
+    setup({ recentLayoff: "gap", outOfReach: HALF });
+    expect(screen.queryByText(/By race day/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /My race moved/i })
+    ).toBeInTheDocument();
   });
 });
 

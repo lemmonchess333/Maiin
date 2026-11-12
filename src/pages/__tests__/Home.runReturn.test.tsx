@@ -32,6 +32,11 @@ const h = vi.hoisted(() => ({
     offer: "easy-run" | "rebuild" | null;
   },
   recentLayoff: "none" as "none" | "gap" | "detrained",
+  /** The recent runs the program hook read, and the reach the plan's
+   *  weeks give (`raceLongRunReach`, stubbed: its own suite builds them). */
+  recentRuns: null as null | unknown[],
+  reach: null as null | { longestKm: number; raceKm: number; fullKm: number },
+  reachRuns: undefined as unknown,
   /** Dismissal keys stored this test, for the two return surfaces. */
   dismissed: new Set<string>(),
   realignRacePlan: vi.fn(),
@@ -132,6 +137,7 @@ vi.mock("@/features/program/useHomeProgram", () => ({
     programState: h.programState,
     loading: false,
     recentLayoff: h.recentLayoff,
+    recentRuns: h.recentRuns,
     controller: null,
     overrideRunDay: vi.fn(),
     markManualComplete: vi.fn(),
@@ -144,6 +150,15 @@ vi.mock("@/features/program/useHomeProgram", () => ({
     realignRacePlan: h.realignRacePlan,
     easeBackIn: vi.fn(),
   }),
+}));
+vi.mock("@/features/program/raceWeeksAhead", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/features/program/raceWeeksAhead")
+  >()),
+  raceLongRunReach: (input: { recentRuns?: unknown }) => {
+    h.reachRuns = input.recentRuns;
+    return h.reach;
+  },
 }));
 vi.mock("@/features/program/useRunReturn", () => ({
   useRunReturn: () => h.runReturn,
@@ -343,6 +358,9 @@ beforeEach(() => {
   h.workouts = [];
   h.runReturn = { daysAway: null, dismissKey: null, offer: null };
   h.recentLayoff = "none";
+  h.recentRuns = null;
+  h.reach = null;
+  h.reachRuns = undefined;
   h.dismissed = new Set();
   h.realignRacePlan.mockReset();
   h.realignRacePlan.mockResolvedValue({
@@ -453,6 +471,56 @@ describe("Home — a race plan's welcome back", () => {
     );
     expect(h.dismissed.has(`tropos-run-return:${daysAgo(25)}`)).toBe(true);
     expect(h.dismissFellBehindPrompt).not.toHaveBeenCalled();
+  });
+});
+
+describe("Home — a race the plan can't build up to in time", () => {
+  /* Run15 (deep dive D11). The reach itself is `raceLongRunReach`'s suite;
+     here, that Home asks it with the runs it read and says the answer in
+     the reader's unit. */
+  beforeEach(() => {
+    h.profile = racePlan();
+    h.runReturn = { daysAway: 25, dismissKey: daysAgo(25), offer: "rebuild" };
+    h.recentRuns = [];
+  });
+
+  it("says how far each is and leads with moving the race", async () => {
+    h.reach = { longestKm: 12, raceKm: 21.1, fullKm: 20 };
+    renderHome();
+    await findSheet("Welcome back");
+    expect(h.reachRuns).toBe(h.recentRuns);
+    expect(
+      screen.getByText(
+        /By race day your long run gets to 12 km\. A half marathon is 21\.1 km\./
+      )
+    ).toBeInTheDocument();
+    const names = screen.getAllByRole("button").map((b) => b.textContent ?? "");
+    const move = names.findIndex((n) => /Move my race/.test(n));
+    expect(move).toBeGreaterThanOrEqual(0);
+    expect(names.findIndex((n) => /Rebuild my plan/.test(n))).toBe(move + 1);
+  });
+
+  it("in miles for a reader in miles", async () => {
+    h.profile = { ...racePlan(), preferredDistanceUnit: "mi" };
+    h.reach = { longestKm: 12, raceKm: 21.1, fullKm: 20 };
+    renderHome();
+    await findSheet("Welcome back");
+    expect(
+      screen.getByText(/gets to 7\.5 mi\. A half marathon is 13\.1 mi\./)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the rebuild first for a race in reach", async () => {
+    h.reach = { longestKm: 20, raceKm: 21.1, fullKm: 20 };
+    renderHome();
+    await findSheet("Welcome back");
+    expect(screen.queryByText(/By race day/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Rebuild my plan/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Move my race/i })
+    ).not.toBeInTheDocument();
   });
 });
 

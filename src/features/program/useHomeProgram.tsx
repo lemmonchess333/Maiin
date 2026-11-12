@@ -11,8 +11,8 @@ import { useAuth } from "@/lib/auth";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { logger } from "@/lib/logger";
 import { homeProgramSnapshot } from "./homeProgramSnapshot";
-import { fetchRecentLayoff } from "./fetchRecentLayoff";
-import type { LayoffClass } from "./layoffDetection";
+import { fetchRecentRuns } from "./fetchRecentLayoff";
+import type { DatedRun, LayoffClass } from "./layoffDetection";
 import type { ProgramState } from "./programTypes";
 import type { ProgramController } from "./HomeProgramController";
 
@@ -58,6 +58,9 @@ export function useHomeProgram() {
   const [layoff, setLayoff] = useState<{
     uid: string;
     value: LayoffClass;
+    /** The runs it was read from: the welcome-back sheet weighs the race
+     *  against the plan they build (`raceLongRunReach`). */
+    runs: DatedRun[] | null;
   } | null>(null);
   /** The account whose missing programme could not be built. */
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
@@ -186,8 +189,8 @@ export function useHomeProgram() {
     let active = true;
     // Read again for each new day, as the engine reads it: the fell-behind
     // sheet's words have to match what its button will build.
-    void fetchRecentLayoff(uid, today).then((value) => {
-      if (active) setLayoff({ uid, value });
+    void fetchRecentRuns(uid, today).then(({ layoff: value, runs }) => {
+      if (active) setLayoff({ uid, value, runs });
     });
     return () => {
       active = false;
@@ -229,6 +232,8 @@ export function useHomeProgram() {
     maintenanceFailed: !!uid && maintenanceFailed === uid,
     recentLayoff:
       layoff && layoff.uid === uid ? layoff.value : ("none" as LayoffClass),
+    /** The runs the layoff was read from, this account's only. */
+    recentRuns: layoff && layoff.uid === uid ? layoff.runs : null,
     controller: Controller ? <Controller key={uid} publish={publish} /> : null,
     overrideRunDay: action("overrideRunDay"),
     markManualComplete: action("markManualComplete"),

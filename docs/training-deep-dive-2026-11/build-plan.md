@@ -181,6 +181,24 @@ leading the return prompt with moving the race when the long run cannot reach
 it, contradicts Run15's voice call ("it never says that"), so it is the
 owner's. Run15's STATUS line records the change.
 
+STATUS 2026-11-12, #10, second half (leading with moving the race): the owner
+left it to us, and it is built as a fact rather than a verdict. When the race
+is out of the plan's reach, the welcome-back sheet says how far the long run
+gets by race day and how far the race is ("By race day your long run gets to
+12 km. A half marathon is 21.1 km."), puts "Move my race" first and keeps
+"Rebuild my plan" one tap below. Out of reach is measured on the weeks the
+rollover will build (`raceLongRunReach`): the long run gets neither to the
+race's distance nor to three quarters of what the same plan builds with a
+full block's weeks (`raceOutOfReach`). The 1.5x of the race that the fix first
+named was dropped on measurement: the long-run ladder tops out at 25 km, so
+every marathon would have been told to move however far off it was. Measured
+on the deep dive's returning runner: a half five weeks out reaches 12 km of
+the plan's 20 and leads with moving it; six weeks out reaches 15 and does not;
+a marathon reaches 15 km of 25 up to six weeks out and the plan's full 25
+from eight; a 5K is in reach whenever the long run already runs past it
+(`raceLongRunReach.test.ts`). The climb back catches the ramp within a few
+weeks, so what decides it is the weeks left, not the length of the gap.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one

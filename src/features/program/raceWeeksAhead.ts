@@ -51,7 +51,7 @@ import {
 } from "@/lib/workoutTemplates";
 import type { DatedRun, LayoffClass } from "./layoffDetection";
 import type { ProgramState, RunPlan, ScheduledRunDay } from "./programTypes";
-import { isRunStepBackWeek } from "./runPlanTiming";
+import { getRaceMinWeeks, isRunStepBackWeek } from "./runPlanTiming";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
 import { nextRunWeek } from "./weekRollover";
 
@@ -278,4 +278,95 @@ export function raceWeeksAhead({
     }
   }
   return weeks;
+}
+
+/** A race's distance in km, by the plan's distance key. */
+const RACE_KM: Record<string, number> = {
+  "5k": 5,
+  "10k": 10,
+  half: 21.1,
+  marathon: 42.2,
+};
+
+/** The longest long run in the weeks after this one to race week, as the
+ *  rollover will build them; 0 when they hold none. */
+function longestLongKm(input: Parameters<typeof raceWeeksAhead>[0]): number {
+  return Math.max(
+    0,
+    ...raceWeeksAhead(input).map(({ holds }) => {
+      const km = templateOf(holds.long?.templateId)?.config.targetDistanceKm;
+      return holds.race === null && typeof km === "number" ? km : 0;
+    })
+  );
+}
+
+export interface RaceLongRunReach {
+  /** The longest long run the plan builds before the race. */
+  longestKm: number;
+  /** The race's distance. */
+  raceKm: number;
+  /** The longest the same plan builds for this runner when it has the
+   *  weeks a full block takes (`getRaceMinWeeks`, and two more). */
+  fullKm: number;
+}
+
+/**
+ * How far a race is past the long run the plan can build to before it
+ * (Run15, deep dive D11): the longest long run in the weeks after this one
+ * to race week, as the rollover will build them (`raceWeeksAhead`), beside
+ * the race's distance and what the same plan builds with a full block's
+ * weeks. This week is left out: a plan the runner is coming back to may
+ * still hold the week from before the gap, which the rebuild replaces.
+ * Null without a race plan, a known distance, a long run in those weeks,
+ * or, for a return, the runs it climbs from: without them the plan climbs
+ * no further than base, which says nothing about what it will build once
+ * the runs are read.
+ */
+export function raceLongRunReach(
+  input: Parameters<typeof raceWeeksAhead>[0]
+): RaceLongRunReach | null {
+  const goal = input.profile.raceGoal;
+  const raceKm = RACE_KM[goal?.distance ?? ""];
+  if (!goal || !raceKm) return null;
+  if (input.recentLayoff === "detrained" && !input.recentRuns) return null;
+  const longestKm = longestLongKm(input);
+  if (longestKm === 0) return null;
+  const fullWeeks = getRaceMinWeeks(goal.distance) + 2;
+  const fullKm = longestLongKm({
+    ...input,
+    profile: {
+      ...input.profile,
+      raceGoal: {
+        ...goal,
+        targetDate: localDateString(
+          addLocalDays(
+            parseLocalDate(localWeekKey(parseLocalDate(input.today))),
+            fullWeeks * 7 + 6
+          )
+        ),
+      },
+    },
+  });
+  return { longestKm, raceKm, fullKm: Math.max(fullKm, longestKm) };
+}
+
+/** Of the long run a full block builds, the share a return has to reach
+ *  before its race for the welcome-back sheet to offer the rebuild first
+ *  (deep dive D11). A Tropos heuristic in the RUN-EV-06 register, not a
+ *  source rule: a half plan that peaks at 20 km is in reach from 15. */
+export const RACE_REACH_SHARE = 0.75;
+
+/**
+ * Whether a race is out of the plan's reach (deep dive D11): its long run
+ * gets neither to the race's distance nor to `RACE_REACH_SHARE` of what a
+ * full block builds. A 5K the plan already runs past is in reach however
+ * close; a marathon whose long run gets to the plan's own peak is in reach
+ * though the peak is well short of 42.2 km.
+ */
+export function raceOutOfReach(reach: RaceLongRunReach | null): boolean {
+  return (
+    !!reach &&
+    reach.longestKm < reach.raceKm &&
+    reach.longestKm < RACE_REACH_SHARE * reach.fullKm
+  );
 }

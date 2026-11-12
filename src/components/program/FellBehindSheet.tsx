@@ -83,6 +83,19 @@ interface FellBehindSheetProps {
    *  through every regen site; this prop only makes the words match what
    *  the button will actually do. */
   recentLayoff: LayoffClass;
+  /** Run15 (deep dive D11): a race the plan's long run can't build up to
+   *  in time (`raceOutOfReach`), in the reader's unit. In the welcome-back register the sheet then says
+   *  how far each is and leads with moving the race; the rebuild stays one
+   *  tap below. Never a verdict on the race: the two distances, and what
+   *  each choice gives. */
+  outOfReach?: {
+    /** The longest long run the plan builds before the race ("12 km"). */
+    longest: string;
+    /** The race ("A half marathon"). */
+    raceName: string;
+    /** Its distance ("21.1 km"). */
+    race: string;
+  } | null;
 }
 
 export default function FellBehindSheet({
@@ -94,12 +107,16 @@ export default function FellBehindSheet({
   onRaceMoved,
   raceModeActive,
   recentLayoff,
+  outOfReach = null,
   surface = "fell-behind",
 }: FellBehindSheetProps) {
   // The week's ledger, when there is one to show and the gap is a missed
   // week rather than a return.
   const ledger = recentLayoff === "detrained" ? null : (prompt ?? null);
   const detrained = ledger === null;
+  /** Lead with moving the race: a return whose race is past what the
+   *  plan can build to. */
+  const moveFirst = detrained && raceModeActive && outOfReach !== null;
 
   /**
    * `return_choice`, paired with the `return_surface_shown` the coordinator
@@ -120,37 +137,46 @@ export default function FellBehindSheet({
     trackLifecycleEvent("return_choice", { surface, choice });
   };
 
-  const choices: Choice[] = [
-    ...(raceModeActive
-      ? [
-          {
-            id: "realign",
-            label: detrained ? "Rebuild my plan" : "Realign my plan",
-            pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
-            /* `sport`, not `primary`: this is the RUN return sheet, and
+  const raceChoices: Choice[] = raceModeActive
+    ? [
+        {
+          id: "realign",
+          label: detrained ? "Rebuild my plan" : "Realign my plan",
+          pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
+          /* `sport`, not `primary`: this is the RUN return sheet, and
                the canonical CTA mapping gives running its coral. The
                surface already says so — its icon carries the running
                identity — so
                purple here was the one element on the sheet not
                sport-coded. `LiftReturnSheet`, the same sheet for lifting,
                is purple throughout and stays that way. */
-            variant: "sport" as const,
-            onSelect: async () => {
-              reportChoice(detrained ? "rebuild" : "realign");
-              await realignRacePlan();
-            },
+          variant: "sport" as const,
+          onSelect: async () => {
+            reportChoice(detrained ? "rebuild" : "realign");
+            await realignRacePlan();
           },
-          {
-            id: "race-moved",
-            label: "My race moved →",
-            variant: "secondary" as const,
-            onSelect: async () => {
-              reportChoice("shift");
-              onRaceMoved();
-            },
+        },
+        {
+          id: "race-moved",
+          label: moveFirst ? "Move my race →" : "My race moved →",
+          variant: "secondary" as const,
+          onSelect: async () => {
+            reportChoice("shift");
+            onRaceMoved();
           },
-        ]
-      : []),
+        },
+      ]
+    : [];
+  // Moving the race first: it takes the sport colour, and the rebuild the
+  // secondary one.
+  const ordered: Choice[] = moveFirst
+    ? [
+        { ...raceChoices[1], variant: "sport" as const },
+        { ...raceChoices[0], variant: "secondary" as const },
+      ]
+    : raceChoices;
+  const choices: Choice[] = [
+    ...ordered,
     {
       id: "skip",
       label: "Not now",
@@ -193,13 +219,15 @@ export default function FellBehindSheet({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {detrained
-          ? raceModeActive
-            ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
-            : "Ease back in — a couple of short, easy runs is the win this week."
-          : raceModeActive
-            ? "Want to adjust the plan to match where you are now?"
-            : "Your weekly target stays the same."}
+        {moveFirst && outOfReach
+          ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
+          : detrained
+            ? raceModeActive
+              ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
+              : "Ease back in — a couple of short, easy runs is the win this week."
+            : raceModeActive
+              ? "Want to adjust the plan to match where you are now?"
+              : "Your weekly target stays the same."}
       </p>
     </ChoiceSheet>
   );

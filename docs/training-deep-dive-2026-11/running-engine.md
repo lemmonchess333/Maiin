@@ -371,6 +371,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Fix: first week back at about 60% of the last trained week with the long run a rung under base, then a rung a week while time allows; when the race is more than 1.5x what the long run can reach, lead the return prompt with moving the race.
 - Size S to M. Lock: Run15 (spec for re-entry) needs a STATUS line.
 - STATUS 2026-11-12: the first week back and the climb built (20-minute easy runs and a rung under base, then a rung and ten minutes a week). Leading the return prompt with moving the race is left to the owner: Run15 decided Tropos never tells someone their race is out of reach. See `build-plan.md`, slice 3, #10.
+- STATUS 2026-11-12, second half: built, as a fact rather than a verdict (the owner left the call to us). When the long run gets neither to the race's distance nor to three quarters of what a full block builds, the welcome-back sheet gives both distances and leads with "Move my race", the rebuild one tap below. Not the 1.5x above: the long-run ladder stops at 25 km, so 1.5x would have flagged every marathon. See `build-plan.md`, slice 3, #10.
 
 ### D12. With a goal time every tempo becomes goal pace; without one there is no race-pace work. Hurts quality.
 

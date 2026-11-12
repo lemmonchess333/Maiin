@@ -133,6 +133,11 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { distanceLabel } from "@/lib/runLabels";
+import {
+  raceLongRunReach,
+  raceOutOfReach,
+} from "@/features/program/raceWeeksAhead";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -164,6 +169,14 @@ const BadgeEarnedModal = lazyRetry(() =>
 const GoalReachedSheet = lazyRetry(
   () => import("@/components/home/GoalReachedSheet")
 );
+/** A race, as the welcome-back sheet names it (Run15, deep dive D11). */
+const RACE_NAME: Record<string, string> = {
+  "5k": "A 5K",
+  "10k": "A 10K",
+  half: "A half marathon",
+  marathon: "A marathon",
+};
+
 const FellBehindSheet = lazyRetry(
   () => import("@/components/program/FellBehindSheet")
 );
@@ -218,6 +231,7 @@ export default function Home() {
     realignRacePlan,
     easeBackIn,
     recentLayoff,
+    recentRuns,
     controller: programController,
   } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -755,6 +769,43 @@ export default function Home() {
     dismissRunReturn();
     runReturnSurface.dismiss();
   };
+  /**
+   * Run15 (deep dive D11): a returning runner's race, when the plan's long
+   * run can't build up to it in time (`raceOutOfReach`), in the reader's
+   * unit.
+   * Only worked out while a welcome-back sheet could open: it walks the
+   * plan's weeks to the race (`raceLongRunReach`).
+   */
+  const outOfReachRace = useMemo(() => {
+    const returning =
+      runReturn.offer === "rebuild" ||
+      (!!fellBehindPrompt && recentLayoff === "detrained");
+    if (!returning || !profile || !profile.raceGoal) return null;
+    const reach = raceLongRunReach({
+      profile,
+      programState,
+      recentLayoff: "detrained",
+      recentRuns,
+      today: todayKey,
+    });
+    if (!reach || !raceOutOfReach(reach)) return null;
+    const unit = resolveDistanceUnit(profile.preferredDistanceUnit);
+    const label = (km: number) =>
+      distanceLabel(km * 1000, unit).replace(/\.0(?= )/, "");
+    return {
+      longest: label(reach.longestKm),
+      raceName: RACE_NAME[profile.raceGoal.distance] ?? "The race",
+      race: label(reach.raceKm),
+    };
+  }, [
+    runReturn.offer,
+    fellBehindPrompt,
+    recentLayoff,
+    profile,
+    programState,
+    recentRuns,
+    todayKey,
+  ]);
   /** Re-plan the race from today, and say what was built. A refusal or a
    *  failed save has already been said by the writer. Whether it landed. */
   const realignAndSay = async (): Promise<boolean> => {
@@ -1698,6 +1749,7 @@ export default function Home() {
               profile?.runMode === "race_prep" && !!profile.raceGoal
             }
             recentLayoff={recentLayoff}
+            outOfReach={outOfReachRace}
           />
         )}
       </Suspense>
@@ -1744,6 +1796,7 @@ export default function Home() {
             // The offer is made from the detrained line, so this is the
             // layoff a rebuild plans from.
             recentLayoff="detrained"
+            outOfReach={outOfReachRace}
           />
         )}
       </Suspense>
