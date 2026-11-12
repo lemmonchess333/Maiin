@@ -18,7 +18,7 @@
  *
  *   GOAL_PROFILES, goalProfileFor, prescribedRepCeiling, assignDayRoles,
  *   dayRoleOf,
- *   repDeltaForRole, repFloorFor, repRangeMaxFor  → programEngine.ts
+ *   repDeltaForRole, repFloorFor, repRangeMaxFor, rangedReps → programEngine.ts
  *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
  *   withRoleNumbers                               → represcribe.ts
@@ -60,7 +60,12 @@
  */
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
-const { roleRepsFor, toExperience } = require("./roleTable");
+const {
+  SIX_REP_FLOOR,
+  hasSixRepFloor,
+  roleRepsFor,
+  toExperience,
+} = require("./roleTable");
 
 /** Mirror of programEngine.ts MAX_BODYWEIGHT_REPS: where a bodyweight lift's
  *  climb stops and the plan asks for load. */
@@ -188,6 +193,8 @@ function undulationDeltaFor(ex, role) {
 
 /** Mirror of programEngine.ts repFloorFor. */
 function repFloorFor(ex) {
+  if (ex && ex.exerciseId !== undefined && hasSixRepFloor(ex.exerciseId))
+    return SIX_REP_FLOOR;
   return ex && ex.isAccessory === true ? 6 : 3;
 }
 
@@ -195,6 +202,17 @@ function repFloorFor(ex) {
 function repRangeMaxFor(ex, reps, span) {
   const ceiling = Math.min(reps + span, prescribedRepCeiling(ex));
   return span > 0 && ceiling > reps ? ceiling : undefined;
+}
+
+/** Mirror of programEngine.ts rangedReps: where the ceiling leaves less than
+ *  two reps of room, the range starts lower and keeps its width. */
+function rangedReps(ex, reps, span) {
+  const ceiling = prescribedRepCeiling(ex);
+  const start =
+    span >= 2 && ceiling - reps < 2
+      ? Math.max(repFloorFor(ex), ceiling - span)
+      : reps;
+  return { reps: start, rangeMax: repRangeMaxFor(ex, start, span) };
 }
 
 /** Mirror of experienceModel.ts usesUndulation. */
@@ -254,11 +272,14 @@ function represcribeWorkouts(workouts, goal, experience, unit = "kg") {
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
+      const { reps, rangeMax } = rangedReps(
+        ex,
+        Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(repFloorFor(ex), row.bottom + delta)
+        ),
+        span
       );
-      const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out = {
         ...ex,
@@ -334,6 +355,7 @@ module.exports = {
   goalProfileFor,
   makeBlockId,
   prescribedRepCeiling,
+  rangedReps,
   repDeltaForRole,
   repFloorFor,
   repRangeMaxFor,

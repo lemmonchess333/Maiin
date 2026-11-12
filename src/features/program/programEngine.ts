@@ -43,6 +43,7 @@ import {
   restoreSwappedLifts,
 } from "./matchTemplate";
 import { twiceWeeklyAdditions } from "./weeklyFrequency";
+import { heldForInjury } from "./injurySubstitutions";
 import {
   seedStartingLoads,
   weightAfterExerciseSwap,
@@ -64,7 +65,14 @@ import {
   surplusExposures,
 } from "./overlapModel";
 import { applyComplexityGate, offerableTo } from "./experienceModel";
-import { isMainFloorDeadlift, mainRepAnchor, roleRepsFor } from "./roleTable";
+import {
+  hasSixRepFloor,
+  injurySwapReps,
+  isMainFloorDeadlift,
+  mainRepAnchor,
+  roleRepsFor,
+  SIX_REP_FLOOR,
+} from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import {
   hardestEffort,
@@ -1720,8 +1728,15 @@ export function undulationDeltaFor(
   return delta;
 }
 
-/** Lowest rep target a shifted day may fall to, by session role. */
-export function repFloorFor(ex: { isAccessory?: boolean }): number {
+/** Lowest rep target a shifted day may fall to, by session role, and six
+ *  for a dumbbell, kettlebell or one-leg lift (`hasSixRepFloor`, training
+ *  deep dive D5): a heavy day's -2 took a split squat to four. */
+export function repFloorFor(ex: {
+  isAccessory?: boolean;
+  exerciseId?: string;
+}): number {
+  if (ex.exerciseId !== undefined && hasSixRepFloor(ex.exerciseId))
+    return SIX_REP_FLOOR;
   return ex.isAccessory === true ? 6 : 3;
 }
 
@@ -1741,6 +1756,28 @@ export function repRangeMaxFor(
 ): number | undefined {
   const ceiling = Math.min(reps + span, prescribedRepCeiling(ex));
   return span > 0 && ceiling > reps ? ceiling : undefined;
+}
+
+/**
+ * A lift's reps and the top of its range, from the reps its row and its
+ * session give it. Where the ceiling (`prescribedRepCeiling`) leaves less
+ * than two reps of room, the range starts lower and keeps its width: a
+ * lighter day's +2 on a bodyweight 12-15 read "14-15", a range of one rep
+ * (training deep dive, D5). Used where the day shift applies
+ * (`represcribeWorkouts`); the server's copy is in
+ * `functions/lib/represcribe.js`.
+ */
+export function rangedReps(
+  ex: { exerciseId?: string; repUnit?: string; isAccessory?: boolean },
+  reps: number,
+  span: number
+): { reps: number; rangeMax: number | undefined } {
+  const ceiling = prescribedRepCeiling(ex);
+  const start =
+    span >= 2 && ceiling - reps < 2
+      ? Math.max(repFloorFor(ex), ceiling - span)
+      : reps;
+  return { reps: start, rangeMax: repRangeMaxFor(ex, start, span) };
 }
 
 /**
@@ -1798,6 +1835,19 @@ export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({ ...day, dayRole: "moderate" }));
 }
 
+/** A built lift's row: its role's, or a lift held for an injury's 8 to 12
+ *  (`injurySwapReps`, training deep dive D2). */
+function builtRow(
+  goal: PrimaryGoal | undefined,
+  ex: ProgramExercise,
+  experience: Experience | undefined,
+  injuries: readonly string[]
+) {
+  return heldForInjury(ex, injuries)
+    ? injurySwapReps(goal, ex, experience)
+    : roleRepsFor(goal, ex, experience);
+}
+
 /**
  * Lift4 (5): every lift's sets, reps and progression from its role
  * (`roleTable.ts`). A range climbs ("double"); a fixed target steps whenever
@@ -1806,13 +1856,14 @@ export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
 function applyRoleTable(
   workouts: WorkoutDay[],
   goal: PrimaryGoal | undefined,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  injuries: readonly string[] = []
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
       if (ex.repUnit === "seconds") return ex;
-      const row = roleRepsFor(goal, ex, experience);
+      const row = builtRow(goal, ex, experience, injuries);
       return {
         ...ex,
         sets: row.sets,
@@ -2297,7 +2348,12 @@ export function generateProgram(
   // (`roleTable.ts`), once the identity passes have settled who is where
   // and each day has its one main lift (Lift21).
   workouts = withDayRoles(
-    applyRoleTable(oneMainLiftADay(workouts), primaryGoal, experience)
+    applyRoleTable(
+      oneMainLiftADay(workouts),
+      primaryGoal,
+      experience,
+      limits?.injuries
+    )
   );
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
@@ -2339,7 +2395,7 @@ export function generateProgram(
       const { keepRank: _rank, ...built } = ex;
       const out: ProgramExercise = { ...built, baseSets: ex.sets };
       if (ex.repUnit === "seconds") return out;
-      const row = roleRepsFor(primaryGoal, ex, experience);
+      const row = builtRow(primaryGoal, ex, experience, limits?.injuries ?? []);
       const span = row.top === undefined ? 0 : row.top - row.bottom;
       // The ceiling is clamped at both ends inside `repRangeMaxFor` —
       // otherwise a target clamped to 15 still advertises a 20-rep top end
