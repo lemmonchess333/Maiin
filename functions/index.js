@@ -78,10 +78,6 @@ const {
   lifetimeMilestoneBadges,
   liftWeightMilestoneBadges,
 } = require("./lib/badgeRules");
-const {
-  applyPartnerActivity,
-  resolvePartnerActivityDay,
-} = require("./lib/partnerStreakPersist");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const {
@@ -5321,9 +5317,8 @@ exports.onWorkoutCreated = functions
 
     // Each side effect runs whatever happens to the others, and any that
     // failed fail the event, so failurePolicy delivers it again. Every
-    // step is idempotent on this workout (markers, `earnedAt`, the
-    // partner engine's MAX per day), so the retry repeats only what did
-    // not land. Caught and logged, as they all were, a transient error
+    // step is idempotent on this workout (markers, `earnedAt`), so the
+    // retry repeats only what did not land. Caught and logged, as they all were, a transient error
     // lost that credit for good.
     const steps = triggerSteps(`onWorkoutCreated ${uid}/${workoutId}`);
 
@@ -5385,18 +5380,6 @@ exports.onWorkoutCreated = functions
     await steps.run("correction", async () => {
       if ((await snap.ref.get()).data()?.revision > 0)
         await reconcileWorkoutMetrics(db, uid, workoutId);
-    });
-
-    // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
-    // rolling-window / cooldown early-returns below so a workout always
-    // counts toward the streak even when it's outside the perf window.
-    await steps.run("partner streak", async () => {
-      const workoutStreakDay = await resolvePartnerActivityDay(
-        db,
-        uid,
-        data.date
-      );
-      await applyPartnerActivity(db, uid, workoutStreakDay);
     });
 
     // Soc15: the live pulse counts every saved workout on its own day
@@ -5539,18 +5522,6 @@ exports.onRunCreated = functions
     const isCountable = isVolumeEligibleRun(data);
 
     if (isCountable) {
-      // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
-      // same eligibility predicate as challenges so isInvalid /
-      // savedAnyway / sub-threshold runs don't count toward a streak.
-      await steps.run("partner streak", async () => {
-        const runStreakDay = await resolvePartnerActivityDay(
-          db,
-          uid,
-          data.date
-        );
-        await applyPartnerActivity(db, uid, runStreakDay);
-      });
-
       // Server-side milestone badges (running distances + speed). The client
       // can't compute these from its WINDOWED streak snapshots, so they're
       // awarded here off the full run doc — gated by the same isCountable
@@ -5795,9 +5766,10 @@ exports.onRunUpdated = functions
 // are reversed; the Performance Index needs nothing (it is a projection
 // and self-heals on the next recompute); a `fastest_effort` best is
 // REBUILT from surviving runs when its driving run is deleted (ADR-0012
-// third amendment, lib/fastestEffortRebuild); partner streaks and
-// milestone badges are deliberately left standing as history rather
-// than accumulators.
+// third amendment, lib/fastestEffortRebuild); milestone badges are
+// deliberately left standing as history rather than accumulators.
+// (Partner streaks were left standing too, until they went with Trim1
+// call 3(b) on 12 November 2026.)
 //
 // THE GUARD IS NOT OPTIONAL. The account-deletion executor sweeps
 // `workouts` and `runs`, so these fire once per document during every
@@ -8383,50 +8355,6 @@ exports._isVolumeEligibleRun = _isVolumeEligibleRun;
 exports._fellBehindRatio = _fellBehindRatio;
 exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
-
-// ═══════════════════════════════════════════════════════════════
-// Partner streaks: the one way a bond is made. The rules refuse every
-// client create, because only a transaction can count each person's
-// bonds against the limit (lib/partnerBonds.js). A restricted account
-// is refused, as the rules refused it, and so is one being deleted.
-// ═══════════════════════════════════════════════════════════════
-const partnerBonds = require("./lib/partnerBonds");
-
-exports.startPartnerStreak = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-    }
-    const uid = context.auth.uid;
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
-    if (await isRateLimited(uid, "partnerStreakStart", 10, 600_000)) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many requests. Try again in a few minutes."
-      );
-    }
-    try {
-      return await partnerBonds.startPartnerBond({
-        firestore: admin.firestore(),
-        uid,
-        partnerUid: data?.partnerUid,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (err) {
-      if (err instanceof partnerBonds.PartnerBondError) {
-        throw new functions.https.HttpsError(err.code, err.reason, {
-          reason: err.reason,
-        });
-      }
-      functions.logger.error("startPartnerStreak failed", err);
-      throw new functions.https.HttpsError("internal", "Something went wrong.");
-    }
-  });
 
 // ═══════════════════════════════════════════════════════════════
 // GOALS-CORE-01 (slice 3) — Goal Space membership callables.

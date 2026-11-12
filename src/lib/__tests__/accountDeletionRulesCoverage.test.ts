@@ -142,17 +142,9 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   // rule remains for R1A to guard, so it leaves PROTECTED_PATHS. The
   // executor's crewMemberships collectionGroup sweep is unaffected
   // (Admin SDK).
-  {
-    // SOCIAL S3 — partner-streak bond. Symmetric 1:1 doc naming two
-    // members. CREATE and UPDATE are `if false`: the startPartnerStreak
-    // callable makes each bond (it reads both members' deletion state in
-    // its transaction), and streak state is server-written via the Admin
-    // SDK. DELETE is the one client write, and it freezes the actor.
-    pathPattern: "match /partnerBonds/{bondId}",
-    sides: ["actor"],
-    notes:
-      "create and update are server-only (if false); delete is member-only and frozen on the actor (executor sweeps in step 3b)",
-  },
+  // Trim1 call 3(b), 12 November 2026: /partnerBonds/{bondId} left this
+  // list with its rule. Partner streaks went, so no client write to a
+  // bond remains to freeze; the executor still sweeps a stored bond.
   {
     // Spc1 PR1 — Community Spaces membership (nested block; semantic
     // path spaces/{spaceId}/members/{uid}). CREATE (join) freezes the
@@ -316,7 +308,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (31 paths)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (30 paths)", () => {
     // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
     // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
@@ -333,6 +325,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // full drift inventory (with its own count) lives in
     // accountDeletionWriteRulesSnapshot.test.ts.
     // Connected training adds one owner-writable Health receipt collection.
-    expect(PROTECTED_PATHS.length).toBe(31);
+    // Trim1 call 3(b) (2026-11-12) removed /partnerBonds/{bondId} (→30).
+    expect(PROTECTED_PATHS.length).toBe(30);
   });
 });

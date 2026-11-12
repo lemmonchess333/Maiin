@@ -70,9 +70,6 @@ vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), ready: true }),
 }));
 vi.mock("@/components/social/FollowsYouBadge", () => ({ default: () => null }));
-vi.mock("@/components/social/PartnerReadyBadge", () => ({
-  default: () => null,
-}));
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
 const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: toasts }));

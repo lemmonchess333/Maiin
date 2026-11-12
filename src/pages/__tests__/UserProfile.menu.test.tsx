@@ -35,9 +35,6 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 vi.mock("@/components/social/FollowButton", () => ({
   default: () => <button type="button">Follow</button>,
 }));
-vi.mock("@/features/partnerStreak/PartnerStreakCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/features/spaces/TrainingForChip", () => ({ default: () => null }));
 vi.mock("@/components/social/ActivityCard", () => ({ default: () => null }));
 /* What the report sheet does is its own suite's; here it only has to

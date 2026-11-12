@@ -12,9 +12,9 @@
  *                       and self-heals on the next recompute.
  *   Challenge progress  reversed here.
  *   Lifetime totals     reversed here.
- *   Partner streaks     deliberately NOT reversed. A shared day is a fact
- *                       about a DAY, and stays true if the user logged two
- *                       sessions and deleted one.
+ *   Partner streaks     gone (Trim1 call 3(b), 12 November 2026). While
+ *                       they existed they were deliberately NOT reversed:
+ *                       a shared day is a fact about a DAY.
  *
  * Two things the ADR did not have right, both found while writing this and
  * both recorded in its second amendment:
@@ -247,9 +247,8 @@ async function reverseChallengeProgressInOne(db, challengeDocId, challenge, uid,
  * `appliedValue` and are immune.
  *
  * Milestone badges are NOT revoked. A badge is an achievement that was
- * genuinely reached, and un-awarding it on a mis-log delete is the same
- * category error as breaking a partner streak — history, not an
- * accumulator. The lifetime total dropping back below the threshold is
+ * genuinely reached, and un-awarding it on a mis-log delete is a
+ * category error: it is history, not an accumulator. The lifetime total dropping back below the threshold is
  * harmless: `awardMilestoneBadges` is idempotent via `earnedAt`, so a
  * later re-crossing is a no-op rather than a duplicate award.
  */

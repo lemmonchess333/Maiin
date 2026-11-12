@@ -1826,15 +1826,6 @@ suite("firestore.rules — tombstone freeze (completed deletion)", () => {
     );
   });
 
-  it("create a partner bond naming the tombstoned account FAILS", async () => {
-    await assertFails(
-      setDoc(doc(aliceDb(), "partnerBonds", "bond1"), {
-        members: [ALICE, BOB],
-        streak: 0,
-      })
-    );
-  });
-
   it("create a group FAILS", async () => {
     await assertFails(
       setDoc(doc(aliceDb(), "groups", "crew1"), {
@@ -4156,480 +4147,362 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
   });
 });
 
-const A_UID = "partner-a";
-const B_UID = "partner-b";
-const C_UID = "partner-c";
+/* This suite held the partner-bond rules first (SOCIAL S3), and the
+   suites below it were nested here as they were written. The bond's rule
+   went with partner streaks (Trim1 call 3(b), 12 November 2026);
+   firestore.partnerBonds.rules.test.ts pins that nobody reads or writes
+   a bond now. */
+suite(
+  "firestore.rules — social child reads, reports, diagnostics, push tokens",
+  () => {
+    let env: RulesTestEnvironment;
 
-suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
-  let env: RulesTestEnvironment;
-
-  beforeAll(async () => {
-    const [host, portStr] = (EMULATOR_HOST || "").split(":");
-    env = await initializeTestEnvironment({
-      projectId: PROJECT_ID,
-      firestore: {
-        rules: readFileSync("firestore.rules", "utf8"),
-        host,
-        port: Number(portStr),
-      },
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
     });
-  });
 
-  afterAll(async () => {
-    await env?.cleanup();
-  });
+    afterAll(async () => {
+      await env?.cleanup();
+    });
 
-  beforeEach(async () => {
-    await env.clearFirestore();
-    // A and B follow each other: the consent a bond stands on.
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      for (const [from, to] of [
-        [A_UID, B_UID],
-        [B_UID, A_UID],
-      ]) {
-        await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
-          createdAt: serverTimestamp(),
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    // ── Packet 13 — kudos/comment child reads obey parent visibility ──────
+    describe("social child reads follow the parent activity's visibility", () => {
+      const AUTHOR = "activity-author";
+      const FOLLOWER = "follower-uid";
+      const STRANGER = "stranger-uid";
+      const ACT = "act-1";
+
+      async function seedActivity(visibility: string) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          const db = ctx.firestore();
+          await setDoc(doc(db, "activities", ACT), {
+            authorId: AUTHOR,
+            visibility,
+          });
+          // A kudos child + a comment child to read back.
+          await setDoc(doc(db, "kudos", ACT, "users", AUTHOR), {
+            createdAt: serverTimestamp(),
+          });
+          await setDoc(doc(db, "comments", ACT, "items", "c1"), {
+            authorId: AUTHOR,
+            text: "hi",
+            createdAt: serverTimestamp(),
+          });
         });
       }
-    });
-  });
-
-  // The id createBond derives: the pair's uids, sorted.
-  const BOND = `${A_UID}__${B_UID}`;
-  const coldBond = (members: string[]) => ({
-    members,
-    streak: 0,
-    lastSharedDay: null,
-    lastActive: {},
-    freezeWeek: {},
-    createdAt: serverTimestamp(),
-  });
-
-  async function seedBond(
-    members: string[],
-    extra: Record<string, unknown> = {}
-  ) {
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), {
-        ...coldBond(members),
-        ...extra,
-      });
-    });
-  }
-
-  it("a member reads the bond; a non-member cannot", async () => {
-    await seedBond([A_UID, B_UID]);
-    await assertSucceeds(
-      getDoc(
-        doc(env.authenticatedContext(A_UID).firestore(), "partnerBonds", BOND)
-      )
-    );
-    await assertFails(
-      getDoc(
-        doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND)
-      )
-    );
-  });
-
-  it("refuses even a cold bond from one of its two members: only the server makes bonds", async () => {
-    // The startPartnerStreak callable counts both members' bonds before it
-    // creates one, which a rule cannot; a direct create would skip the
-    // count (firestore.partnerBonds.rules.test.ts has the full case).
-    const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
-    );
-  });
-
-  it("rejects a create with a forged head-start (streak != 0)", async () => {
-    const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), {
-        ...coldBond([A_UID, B_UID]),
-        streak: 99,
-      })
-    );
-  });
-
-  it("rejects a create where the creator isn't a member", async () => {
-    const cDb = env.authenticatedContext(C_UID).firestore();
-    await assertFails(
-      setDoc(doc(cDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
-    );
-  });
-
-  it("rejects a create with duplicate / non-2 members", async () => {
-    const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, A_UID]))
-    );
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID, C_UID]))
-    );
-  });
-
-  it("Soc7: streak writes are SERVER-ONLY — even a member cannot update", async () => {
-    // The engine now runs server-side (applyPartnerActivity, Admin SDK).
-    // `allow update: if false` removes the client-write cheat vector, so a
-    // member's attempt to bump their own streak is rejected. (A non-member
-    // was always rejected; the new invariant is that a MEMBER is too.)
-    await seedBond([A_UID, B_UID]);
-    const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), {
-        ...coldBond([A_UID, B_UID]),
-        streak: 3,
-        lastSharedDay: "2026-06-12",
-      })
-    );
-    // A members-swap is just one form of update — also blocked by `if false`
-    // (the dedicated immutability check is now subsumed).
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), {
-        ...coldBond([A_UID, C_UID]),
-        streak: 1,
-      })
-    );
-  });
-
-  it("either member can delete the bond; a non-member cannot", async () => {
-    await seedBond([A_UID, B_UID]);
-    await assertFails(
-      deleteDoc(
-        doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND)
-      )
-    );
-    await assertSucceeds(
-      deleteDoc(
-        doc(env.authenticatedContext(B_UID).firestore(), "partnerBonds", BOND)
-      )
-    );
-  });
-
-  it("R1A: can't create a bond while a member is mid-deletion", async () => {
-    // Seed a running deletion request for B via admin bypass.
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "accountDeletionRequests", B_UID), {
-        status: "running",
-      });
-    });
-    const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertFails(
-      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
-    );
-  });
-
-  // ── Packet 13 — kudos/comment child reads obey parent visibility ──────
-  describe("social child reads follow the parent activity's visibility", () => {
-    const AUTHOR = "activity-author";
-    const FOLLOWER = "follower-uid";
-    const STRANGER = "stranger-uid";
-    const ACT = "act-1";
-
-    async function seedActivity(visibility: string) {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        const db = ctx.firestore();
-        await setDoc(doc(db, "activities", ACT), {
-          authorId: AUTHOR,
-          visibility,
-        });
-        // A kudos child + a comment child to read back.
-        await setDoc(doc(db, "kudos", ACT, "users", AUTHOR), {
-          createdAt: serverTimestamp(),
-        });
-        await setDoc(doc(db, "comments", ACT, "items", "c1"), {
-          authorId: AUTHOR,
-          text: "hi",
-          createdAt: serverTimestamp(),
-        });
-      });
-    }
-    async function seedFollower(uid: string) {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "followers", AUTHOR, "users", uid), {
-          since: serverTimestamp(),
-        });
-      });
-    }
-    const kudosDoc = (uid: string) =>
-      doc(
-        env.authenticatedContext(uid).firestore(),
-        "kudos",
-        ACT,
-        "users",
-        AUTHOR
-      );
-    const kudosCol = (uid: string) =>
-      collection(
-        env.authenticatedContext(uid).firestore(),
-        "kudos",
-        ACT,
-        "users"
-      );
-    const commentDoc = (uid: string) =>
-      doc(
-        env.authenticatedContext(uid).firestore(),
-        "comments",
-        ACT,
-        "items",
-        "c1"
-      );
-    const commentCol = (uid: string) =>
-      collection(
-        env.authenticatedContext(uid).firestore(),
-        "comments",
-        ACT,
-        "items"
-      );
-
-    it("PUBLIC: any authed user can read kudos + comment children", async () => {
-      await seedActivity("public");
-      await assertSucceeds(getDoc(kudosDoc(STRANGER)));
-      await assertSucceeds(getDocs(kudosCol(STRANGER)));
-      await assertSucceeds(getDoc(commentDoc(STRANGER)));
-      await assertSucceeds(getDocs(commentCol(STRANGER)));
-    });
-
-    it("PRIVATE: owner reads children; a stranger cannot", async () => {
-      await seedActivity("private");
-      await assertSucceeds(getDoc(kudosDoc(AUTHOR)));
-      await assertSucceeds(getDocs(commentCol(AUTHOR)));
-      await assertFails(getDoc(kudosDoc(STRANGER)));
-      await assertFails(getDocs(kudosCol(STRANGER)));
-      await assertFails(getDoc(commentDoc(STRANGER)));
-      await assertFails(getDocs(commentCol(STRANGER)));
-    });
-
-    it("FOLLOWERS: a current follower reads; a former follower / stranger cannot", async () => {
-      await seedActivity("followers");
-      await seedFollower(FOLLOWER);
-      await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
-      await assertSucceeds(getDocs(commentCol(FOLLOWER)));
-      // Not a follower.
-      await assertFails(getDoc(kudosDoc(STRANGER)));
-      await assertFails(getDoc(commentDoc(STRANGER)));
-    });
-
-    it("FOLLOWERS: a follower blocked either way reads no children, as the parent", async () => {
-      await seedActivity("followers");
-      await seedFollower(FOLLOWER);
-      for (const [blocker, blocked] of [
-        [AUTHOR, FOLLOWER],
-        [FOLLOWER, AUTHOR],
-      ]) {
+      async function seedFollower(uid: string) {
         await env.withSecurityRulesDisabled(async (ctx) => {
           await setDoc(
-            doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+            doc(ctx.firestore(), "followers", AUTHOR, "users", uid),
             {
-              blockedAt: serverTimestamp(),
+              since: serverTimestamp(),
             }
           );
         });
-        await assertFails(getDoc(kudosDoc(FOLLOWER)));
-        await assertFails(getDocs(kudosCol(FOLLOWER)));
-        await assertFails(getDoc(commentDoc(FOLLOWER)));
-        await assertFails(getDocs(commentCol(FOLLOWER)));
+      }
+      const kudosDoc = (uid: string) =>
+        doc(
+          env.authenticatedContext(uid).firestore(),
+          "kudos",
+          ACT,
+          "users",
+          AUTHOR
+        );
+      const kudosCol = (uid: string) =>
+        collection(
+          env.authenticatedContext(uid).firestore(),
+          "kudos",
+          ACT,
+          "users"
+        );
+      const commentDoc = (uid: string) =>
+        doc(
+          env.authenticatedContext(uid).firestore(),
+          "comments",
+          ACT,
+          "items",
+          "c1"
+        );
+      const commentCol = (uid: string) =>
+        collection(
+          env.authenticatedContext(uid).firestore(),
+          "comments",
+          ACT,
+          "items"
+        );
+
+      it("PUBLIC: any authed user can read kudos + comment children", async () => {
+        await seedActivity("public");
+        await assertSucceeds(getDoc(kudosDoc(STRANGER)));
+        await assertSucceeds(getDocs(kudosCol(STRANGER)));
+        await assertSucceeds(getDoc(commentDoc(STRANGER)));
+        await assertSucceeds(getDocs(commentCol(STRANGER)));
+      });
+
+      it("PRIVATE: owner reads children; a stranger cannot", async () => {
+        await seedActivity("private");
+        await assertSucceeds(getDoc(kudosDoc(AUTHOR)));
+        await assertSucceeds(getDocs(commentCol(AUTHOR)));
+        await assertFails(getDoc(kudosDoc(STRANGER)));
+        await assertFails(getDocs(kudosCol(STRANGER)));
+        await assertFails(getDoc(commentDoc(STRANGER)));
+        await assertFails(getDocs(commentCol(STRANGER)));
+      });
+
+      it("FOLLOWERS: a current follower reads; a former follower / stranger cannot", async () => {
+        await seedActivity("followers");
+        await seedFollower(FOLLOWER);
+        await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
+        await assertSucceeds(getDocs(commentCol(FOLLOWER)));
+        // Not a follower.
+        await assertFails(getDoc(kudosDoc(STRANGER)));
+        await assertFails(getDoc(commentDoc(STRANGER)));
+      });
+
+      it("FOLLOWERS: a follower blocked either way reads no children, as the parent", async () => {
+        await seedActivity("followers");
+        await seedFollower(FOLLOWER);
+        for (const [blocker, blocked] of [
+          [AUTHOR, FOLLOWER],
+          [FOLLOWER, AUTHOR],
+        ]) {
+          await env.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(
+              doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+              {
+                blockedAt: serverTimestamp(),
+              }
+            );
+          });
+          await assertFails(getDoc(kudosDoc(FOLLOWER)));
+          await assertFails(getDocs(kudosCol(FOLLOWER)));
+          await assertFails(getDoc(commentDoc(FOLLOWER)));
+          await assertFails(getDocs(commentCol(FOLLOWER)));
+          await env.withSecurityRulesDisabled(async (ctx) => {
+            await deleteDoc(
+              doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+            );
+          });
+        }
+        // Unblocked again: the follower reads, so the refusals were the block.
+        await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
+      });
+
+      it("TRANSITION: a stranger who could read a public child loses access when it turns private", async () => {
+        await seedActivity("public");
+        await assertSucceeds(getDoc(kudosDoc(STRANGER)));
+        // Owner flips the parent to private.
         await env.withSecurityRulesDisabled(async (ctx) => {
-          await deleteDoc(
-            doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+          await setDoc(
+            doc(ctx.firestore(), "activities", ACT),
+            { authorId: AUTHOR, visibility: "private" },
+            { merge: true }
           );
         });
-      }
-      // Unblocked again: the follower reads, so the refusals were the block.
-      await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
+        await assertFails(getDoc(kudosDoc(STRANGER)));
+        await assertFails(getDocs(kudosCol(STRANGER)));
+        await assertFails(getDoc(commentDoc(STRANGER)));
+      });
+
+      it("a child whose parent activity does not exist is not readable", async () => {
+        // No seedActivity — parent missing.
+        await assertFails(getDoc(kudosDoc(STRANGER)));
+        await assertFails(getDoc(commentDoc(STRANGER)));
+      });
     });
 
-    it("TRANSITION: a stranger who could read a public child loses access when it turns private", async () => {
-      await seedActivity("public");
-      await assertSucceeds(getDoc(kudosDoc(STRANGER)));
-      // Owner flips the parent to private.
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(
-          doc(ctx.firestore(), "activities", ACT),
-          { authorId: AUTHOR, visibility: "private" },
-          { merge: true }
+    // ── Packet 14 — reportAuthority is server-only (unforgeable marker) ────
+    describe("reportAuthority is denied to all clients", () => {
+      it("an authed client cannot create or read a reportAuthority doc", async () => {
+        const db = env.authenticatedContext(OTHER_UID).firestore();
+        await assertFails(
+          setDoc(doc(db, "reportAuthority", "forged"), {
+            version: 1,
+            targetType: "activity",
+            targetId: "victim-activity",
+            targetUid: "victim",
+          })
+        );
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "reportAuthority", "real"), {
+            version: 1,
+          });
+        });
+        await assertFails(getDoc(doc(db, "reportAuthority", "real")));
+      });
+    });
+
+    // ── Packet 14 lockdown — /reports is server-only (createReport callable) ──
+    describe("reports direct writes are denied to clients", () => {
+      it("an authed client cannot create a report", async () => {
+        const client = env.authenticatedContext(OTHER_UID).firestore();
+        await assertFails(
+          setDoc(doc(client, "reports", "client-forged-report"), {
+            reporterId: OTHER_UID,
+            targetType: "activity",
+            targetId: "activity-a",
+            targetUid: "victim-b",
+            status: "pending",
+          })
         );
       });
-      await assertFails(getDoc(kudosDoc(STRANGER)));
-      await assertFails(getDocs(kudosCol(STRANGER)));
-      await assertFails(getDoc(commentDoc(STRANGER)));
-    });
 
-    it("a child whose parent activity does not exist is not readable", async () => {
-      // No seedActivity — parent missing.
-      await assertFails(getDoc(kudosDoc(STRANGER)));
-      await assertFails(getDoc(commentDoc(STRANGER)));
-    });
-  });
-
-  // ── Packet 14 — reportAuthority is server-only (unforgeable marker) ────
-  describe("reportAuthority is denied to all clients", () => {
-    it("an authed client cannot create or read a reportAuthority doc", async () => {
-      const db = env.authenticatedContext(OTHER_UID).firestore();
-      await assertFails(
-        setDoc(doc(db, "reportAuthority", "forged"), {
-          version: 1,
-          targetType: "activity",
-          targetId: "victim-activity",
-          targetUid: "victim",
-        })
-      );
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "reportAuthority", "real"), {
-          version: 1,
+      it("an authed client cannot update an existing report", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "reports", "existing-report"), {
+            reporterId: OTHER_UID,
+            status: "pending",
+          });
         });
-      });
-      await assertFails(getDoc(doc(db, "reportAuthority", "real")));
-    });
-  });
-
-  // ── Packet 14 lockdown — /reports is server-only (createReport callable) ──
-  describe("reports direct writes are denied to clients", () => {
-    it("an authed client cannot create a report", async () => {
-      const client = env.authenticatedContext(OTHER_UID).firestore();
-      await assertFails(
-        setDoc(doc(client, "reports", "client-forged-report"), {
-          reporterId: OTHER_UID,
-          targetType: "activity",
-          targetId: "activity-a",
-          targetUid: "victim-b",
-          status: "pending",
-        })
-      );
-    });
-
-    it("an authed client cannot update an existing report", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "reports", "existing-report"), {
-          reporterId: OTHER_UID,
-          status: "pending",
-        });
-      });
-      const client = env.authenticatedContext(OTHER_UID).firestore();
-      await assertFails(
-        setDoc(
-          doc(client, "reports", "existing-report"),
-          { targetUid: "victim-b" },
-          { merge: true }
-        )
-      );
-    });
-  });
-
-  // ── Packets 17+19 lockdown — push device tokens are server-only ──
-  // Re-cut 2026-08-03 from stale PR #1635 (whose branch would have
-  // REVERTED later allow-list fixes; only this lock was still wanted).
-  // The client's push registration goes through claimPushDeviceToken /
-  // releasePushDeviceToken; no client code reads or writes these paths
-  // (pushNotifications.ts). An owner-readable device list would leak
-  // token bindings, so even the OWNER is denied.
-  describe("a user can read their OWN crash reports (/diagnostics)", () => {
-    // `errorReporting.persistToFirestore` writes here and
-    // `src/pages/Diagnostics.tsx` reads here — but read was denied, so the
-    // page built to surface a crash always rendered "none logged" while the
-    // crash sat in Firestore. Found chasing a real "Something went wrong" on
-    // the Train route: the evidence existed and the app could not read it.
-    it("the owner can read their own error doc", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e1"), {
-          message: "boom",
-          createdAt: 1,
-        });
-      });
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertSucceeds(
-        getDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e1"))
-      );
-    });
-
-    it("another user cannot read it", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e2"), {
-          message: "boom",
-          createdAt: 1,
-        });
-      });
-      const otherDb = env.authenticatedContext(OTHER_UID).firestore();
-      await assertFails(
-        getDoc(doc(otherDb, "users", OWNER_UID, "errors", "e2"))
-      );
-    });
-
-    it("the owner still cannot rewrite or delete their crash history", async () => {
-      // The create-only stance is what stops a compromised session editing
-      // its own trail; owner-READ does not weaken it.
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "errors", "e3"), {
-          message: "boom",
-          createdAt: 1,
-        });
-      });
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertFails(
-        setDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"), {
-          message: "rewritten",
-        })
-      );
-      await assertFails(
-        deleteDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"))
-      );
-    });
-  });
-
-  describe("push device tokens + claim ledger are server-only", () => {
-    it("the owner cannot write their own device-token doc", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertFails(
-        setDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"), {
-          token: "fcm-token",
-          createdAt: 1,
-        })
-      );
-    });
-
-    it("the owner cannot read their own device-token doc", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(
-          doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-a"),
-          { token: "fcm-token" }
+        const client = env.authenticatedContext(OTHER_UID).firestore();
+        await assertFails(
+          setDoc(
+            doc(client, "reports", "existing-report"),
+            { targetUid: "victim-b" },
+            { merge: true }
+          )
         );
       });
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertFails(
-        getDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"))
-      );
     });
 
-    it("the owner cannot delete a device-token doc (revocation is the callable's)", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(
-          doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-b"),
-          { token: "fcm-token" }
+    // ── Packets 17+19 lockdown — push device tokens are server-only ──
+    // Re-cut 2026-08-03 from stale PR #1635 (whose branch would have
+    // REVERTED later allow-list fixes; only this lock was still wanted).
+    // The client's push registration goes through claimPushDeviceToken /
+    // releasePushDeviceToken; no client code reads or writes these paths
+    // (pushNotifications.ts). An owner-readable device list would leak
+    // token bindings, so even the OWNER is denied.
+    describe("a user can read their OWN crash reports (/diagnostics)", () => {
+      // `errorReporting.persistToFirestore` writes here and
+      // `src/pages/Diagnostics.tsx` reads here — but read was denied, so the
+      // page built to surface a crash always rendered "none logged" while the
+      // crash sat in Firestore. Found chasing a real "Something went wrong" on
+      // the Train route: the evidence existed and the app could not read it.
+      it("the owner can read their own error doc", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "errors", "e1"),
+            {
+              message: "boom",
+              createdAt: 1,
+            }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertSucceeds(
+          getDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e1"))
         );
       });
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertFails(
-        deleteDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-b"))
-      );
+
+      it("another user cannot read it", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "errors", "e2"),
+            {
+              message: "boom",
+              createdAt: 1,
+            }
+          );
+        });
+        const otherDb = env.authenticatedContext(OTHER_UID).firestore();
+        await assertFails(
+          getDoc(doc(otherDb, "users", OWNER_UID, "errors", "e2"))
+        );
+      });
+
+      it("the owner still cannot rewrite or delete their crash history", async () => {
+        // The create-only stance is what stops a compromised session editing
+        // its own trail; owner-READ does not weaken it.
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "errors", "e3"),
+            {
+              message: "boom",
+              createdAt: 1,
+            }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(
+          setDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"), {
+            message: "rewritten",
+          })
+        );
+        await assertFails(
+          deleteDoc(doc(ownerDb, "users", OWNER_UID, "errors", "e3"))
+        );
+      });
     });
 
-    it("fcmTokenClaims is unreadable and unwritable, even for the token's owner", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), "fcmTokenClaims", "token-hash-a"), {
-          ownerUid: OWNER_UID,
-          status: "claimed",
-        });
+    describe("push device tokens + claim ledger are server-only", () => {
+      it("the owner cannot write their own device-token doc", async () => {
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(
+          setDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"), {
+            token: "fcm-token",
+            createdAt: 1,
+          })
+        );
       });
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertFails(getDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a")));
-      await assertFails(
-        setDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a"), {
-          ownerUid: OTHER_UID,
-        })
-      );
+
+      it("the owner cannot read their own device-token doc", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-a"),
+            { token: "fcm-token" }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(
+          getDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-a"))
+        );
+      });
+
+      it("the owner cannot delete a device-token doc (revocation is the callable's)", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "users", OWNER_UID, "devices", "token-hash-b"),
+            { token: "fcm-token" }
+          );
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(
+          deleteDoc(doc(ownerDb, "users", OWNER_UID, "devices", "token-hash-b"))
+        );
+      });
+
+      it("fcmTokenClaims is unreadable and unwritable, even for the token's owner", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(doc(ctx.firestore(), "fcmTokenClaims", "token-hash-a"), {
+            ownerUid: OWNER_UID,
+            status: "claimed",
+          });
+        });
+        const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+        await assertFails(
+          getDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a"))
+        );
+        await assertFails(
+          setDoc(doc(ownerDb, "fcmTokenClaims", "token-hash-a"), {
+            ownerUid: OTHER_UID,
+          })
+        );
+      });
     });
-  });
-});
+  }
+);
 
 // HealthKit steps flag doc (Prompt 3). It lives at
 // users/{uid}/settings/healthKit and is covered by the generic

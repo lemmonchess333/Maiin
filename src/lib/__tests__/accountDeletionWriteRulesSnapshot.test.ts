@@ -95,14 +95,10 @@ const PROTECTED_PATHS = [
   // data-recreation vector, so both are fully frozen now.
   "match /activities/{activityId}",
   "match /participants/{uid}",
-  // SOCIAL S3 — partner-streak bond. Client-writable delete (either of
-  // the two members), frozen on the actor. CREATE is server-only (the
-  // startPartnerStreak callable counts both members' bonds and reads
-  // their deletion state in one transaction) and UPDATE is server-only
-  // (streak state is written by the Admin SDK persist path). Still a
-  // protected path (delete is client-writable). R1A executor sweeps
-  // these in step 3b (inventory key: partnerBondsMember).
-  "match /partnerBonds/{bondId}",
+  // Trim1 call 3(b), 12 November 2026: /partnerBonds/{bondId} left this
+  // list with its rule. Partner streaks went, nothing client-writable
+  // remains for the freeze to guard, and the executor still sweeps a
+  // bond stored before then (step 3b, inventory key partnerBondsMember).
   // Spc1 PR1 — Community Spaces. Parser sees the bare nested forms
   // (like /participants/{uid} under challenges): semantic paths are
   // spaces/{spaceId}/members/{uid} and spaces/{spaceId}/posts/{postId}.
@@ -422,6 +418,9 @@ describe("Blocker E — path-count reconciliation", () => {
     // Polish2 (2026-10-20) added /followRequests/{uid}/users/{requesterUid}
     // (create frozen via isWriteFrozen on both sides), → 38.
     // Connected training adds an owner-writable, deletion-frozen receipt.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
+    // Trim1 call 3(b) (2026-11-12) removed /partnerBonds/{bondId} with
+    // partner streaks: its one client write, a member's delete, went
+    // with the rule, → 38.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });

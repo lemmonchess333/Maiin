@@ -12,7 +12,6 @@ import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
 import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
-import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
 import { Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { THEME } from "@/lib/theme";
@@ -300,7 +299,6 @@ export default function PeopleView({
                           {u.displayName || "Athlete"}
                         </p>
                         <FollowsYouBadge uid={u.uid} />
-                        <PartnerReadyBadge uid={u.uid} />
                       </div>
                     </div>
                   </Link>
@@ -406,7 +404,6 @@ export default function PeopleView({
                         {p.displayName}
                       </p>
                       <FollowsYouBadge uid={p.uid} />
-                      <PartnerReadyBadge uid={p.uid} />
                     </div>
                     {/* No reason, no line: the name sits alone. */}
                     {suggestionReason(p) && (

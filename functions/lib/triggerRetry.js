@@ -6,9 +6,8 @@
  * A trigger with `failurePolicy: true` is delivered again when it throws,
  * with backoff, for up to seven days. The session and social triggers each
  * caught and logged their failures, so none of them ever threw: a
- * contended transaction or a timeout lost that session's partner streak,
- * badge, lifetime total or challenge credit, or that post's feed copies,
- * for good. A trigger that throws on a bug, though, would be delivered
+ * contended transaction or a timeout lost that session's badge, lifetime
+ * total or challenge credit, or that post's feed copies, for good. A trigger that throws on a bug, though, would be delivered
  * again for a week.
  *
  * - `RETRY_WINDOW_MS` is how long an event keeps being retried. A day
