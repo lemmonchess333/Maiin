@@ -14,6 +14,7 @@
  * sessions. Pure + mirror-ready.
  */
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
+import { catalogueLoadFor } from "./catalogueLoads";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BAR_KG, barWeight } from "./warmupRamp";
 import type { LiftUnit } from "@/lib/liftLoad";
@@ -257,14 +258,22 @@ export function startingWeightForExercise(
   // curl at the SQUAT's 85 kg instead of 25 kg. The bank is where the load
   // metadata lives, so it is the authority on which category to scale from.
   const bankCategory = movementCategoryForExerciseId(exerciseId);
-  const seedCategory = bankCategory ?? category;
+  // A catalogue lift the bank does not list has its own row (training deep
+  // dive, D1): without it, an added lateral raise took the overhead press's
+  // whole seed.
+  const listed =
+    bankCategory === undefined ? catalogueLoadFor(exerciseId) : undefined;
+  if (listed?.factor === 0) return 0;
+  const seedCategory = bankCategory ?? listed?.category ?? category;
   const base = startingWeightForCategory(seedCategory, ctx);
   if (base <= 0) return 0;
 
-  // Unknown to the bank AND flagged as assistance → no load metadata exists,
-  // so scale down rather than hand it the compound's multiple.
-  const factor =
-    bankCategory === undefined && isAccessory === true
+  // Unknown to the bank and the catalogue AND flagged as assistance → no
+  // load metadata exists, so scale down rather than hand it the compound's
+  // multiple.
+  const factor = listed
+    ? listed.factor
+    : bankCategory === undefined && isAccessory === true
       ? UNKNOWN_ACCESSORY_FACTOR
       : loadFactorFor(exerciseId, seedCategory);
 

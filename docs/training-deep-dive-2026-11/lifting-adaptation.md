@@ -149,6 +149,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Fix: give every loaded catalogue lift a load factor (a column on the catalogue or the bank), and pin it with a test that walks the whole catalogue ("no isolation seeds above 40% of its category's main lift; no dumbbell or kettlebell lift above the rack"). Stopgap: treat `mechanic === "isolation"` as the 0.3 case in both functions. That fixes raises and flyes but not lunges, swings or get-ups.
 - Size: S for the stopgap, M for the table. No lock in the way (Lift5 covers the sets and reps, not the weight).
 - Related: an added lift has `isAccessory` undefined, so it counts as a main lift everywhere the engine asks (never cut by the time fit, protected in the short-session trims). Set the flag from the lift's role when it is added.
+- STATUS 2026-11-12: the table built (`catalogueLoads.ts`); see `build-plan.md`, slice 3. The `isAccessory` flag is not yet set on an add.
 
 ### D2. Injury swaps change the lift and keep the load and the prescription. Breaks trust.
 
