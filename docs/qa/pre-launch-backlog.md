@@ -537,6 +537,11 @@ Firebase console.
       two accounts that follow each other. Passing: the other's profile
       shows no streak card (its read of the bond is refused), and nothing
       else on it changes.
+- [ ] **Deleting a session.** Open a saved workout or run and tap
+      Delete. Passing: the confirmation's second sentence reads "Badges
+      you’ve already earned stay." and says nothing about a streak. It
+      named streaks while partner streaks existed; your own streak can
+      get shorter when a day's only log is deleted.
 
 ## Circle invite codes expire (2026-10-25)
 
