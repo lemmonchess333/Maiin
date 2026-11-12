@@ -107,7 +107,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // card's Race community row is social, so its icon is neutral.
   // 2026-11-12: 40 → 39. The friends board's card went (Trim1 call
   // 3(a)), and its distance board's footprints icon with it.
-  running: 39, // Calendar status icons now use the strong colour step.
+  // 2026-11-12: 39 → 38. The race picker's rows became photo cards, and
+  // the selected race's tick takes the date line's `-strong` step.
+  running: 38, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
