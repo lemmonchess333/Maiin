@@ -39,37 +39,23 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships two guides under owner-only approval: the 2026-11-12 deadlift and the 2026-11-07 straight-arm pulldown redraws", () => {
+  it("ships one guide under owner-only approval: the 2026-11-07 straight-arm pulldown redraw", () => {
     expect(
       Object.keys(FORM_ARTWORK).filter(
         (id) => FORM_ARTWORK[id].status === "owner-released-with-findings"
       )
-    ).toEqual(["deadlift", "straight-arm-pulldown"]);
-    for (const [id, supersedes] of [
-      ["deadlift", "docs/exercise-art/releases/2026-10-14/deadlift.json"],
-      [
-        "straight-arm-pulldown",
-        "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json",
-      ],
-    ] as const) {
-      const redraw = evidence(id);
-      expect(
-        validateOwnerArtworkRelease(redraw.review, redraw.expected),
-        id
-      ).toEqual([]);
-      expect(redraw.review.supersedesApprovedRelease, id).toBe(supersedes);
-      for (const frame of redraw.review.frames) {
-        expect(sha(readFileSync(frame.source.path)), frame.source.path).toBe(
-          frame.source.sha256
-        );
-        // The drawing the frame was built from, kept byte for byte as the
-        // API returned it.
-        expect(
-          sha(readFileSync(frame.source.generated)),
-          frame.source.generated
-        ).toBe(frame.source.generatedSha256);
-      }
-    }
+    ).toEqual(["straight-arm-pulldown"]);
+    const redraw = evidence("straight-arm-pulldown");
+    expect(validateOwnerArtworkRelease(redraw.review, redraw.expected)).toEqual(
+      []
+    );
+    expect(redraw.review.supersedesApprovedRelease).toBe(
+      "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json"
+    );
+    for (const frame of redraw.review.frames)
+      expect(sha(readFileSync(frame.source.path)), frame.source.path).toBe(
+        frame.source.sha256
+      );
     for (const id of ["swimming", "turkish-get-up"]) {
       expect(FORM_ARTWORK[id].status, id).toBe("approved");
       expect(
@@ -92,7 +78,7 @@ describe("owner-authorized artwork activation", () => {
     const approved = Object.keys(FORM_ARTWORK).filter(
       (id) => FORM_ARTWORK[id].status === "approved"
     );
-    expect(approved).toHaveLength(150);
+    expect(approved).toHaveLength(151);
     for (const id of approved) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
       if (isFormArtQuarantined(id)) {

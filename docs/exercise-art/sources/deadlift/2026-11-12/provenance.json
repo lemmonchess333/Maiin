@@ -2,7 +2,7 @@
   "exerciseId": "deadlift",
   "date": "2026-11-12",
   "generator": "gemini-3-pro-image through scripts/art/gemini-image.py, --aspect 1:1 --size 2K (2048 px square); every call attached the canonical athlete or a drawing made with it",
-  "note": "The API returned JPEG bytes for every call. The four drawings used are kept byte for byte under generated/ with a .jpg name; build.py turns three of them into the six pilot PNGs and the six released WebPs.",
+  "note": "The API returned JPEG bytes for every call. The four drawings used are kept byte for byte under generated/ with a .jpg name. build.py lines up three of them as docs/exercise-art/pilots/redraw-20261112/deadlift-front/{start,knees,lockout}.png; card.ts keys start.png into the deadlift's card source (docs/exercise-art/cutout-sources/deadlift.png). The form guide keeps its reviewed 2026-10-14 frames, drawn from behind: the owner wants the front view on the card and Home's animation, and agreed the guide teaches the lift better from behind. The knee drawing is not shipped; it is kept for a front-view animation or guide later.",
   "references": {
     "athlete": {
       "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
