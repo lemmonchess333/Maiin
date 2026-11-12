@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { getExerciseById } from "@/lib/exercises";
 import { estimateSessionSeconds } from "../expressSession";
 import { pairRuns, pairedWithNext } from "../pairSlot";
@@ -25,7 +26,7 @@ function lift(
     name: known.name,
     exerciseId,
     instanceId: `slot-${exerciseId}`,
-    movementCategory: "isolation",
+    movementCategory: inferMovementCategory(known.name, exerciseId),
     sets: opts.sets ?? 3,
     reps: opts.reps ?? 10,
     weight: 20,
@@ -94,7 +95,7 @@ describe("writing a day's pairs", () => {
     // Leg extension and calf raise pair; the hack squat cannot pair with
     // the leg extension (both quads), and the Romanian deadlift is a
     // barbell lift.
-    expect(day.map((ex, i) => pairedWithNext(day, i))).toEqual([
+    expect(day.map((_, i) => pairedWithNext(day, i))).toEqual([
       false,
       false,
       false,
