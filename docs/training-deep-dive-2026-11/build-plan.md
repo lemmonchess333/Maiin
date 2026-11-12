@@ -167,6 +167,20 @@ with no run keeps its key (`emptyRunWeekKey`) so the rollover moves on. The
 simulator's jump check no longer counts the recovery's climb back. PR-E's
 STATUS line (#3238) records the change.
 
+STATUS 2026-11-12, #10 (the first week back is the full base week): a race
+plan reads the week a runner came back in after a gap of 21 days or more from
+the runs it already reads (`returnWeekKey`), and that week opens a rung under
+the base long run with 20-minute easy runs, about 60% of the last week trained;
+each week after climbs one rung and ten minutes, never past the plan's own
+ramp. On the deep dive's half (five weeks trained, three off) the week back
+goes from three 30s and 10 km (158 minutes against 179) to three 20s and 8 km
+(105), then 10 and 12 km, where it held 10 km for three weeks
+(`runReentryClimb.test.ts`). Without the runs to see the gap in, a detrained
+runner's long run ramps toward base as before. The second half of the fix,
+leading the return prompt with moving the race when the long run cannot reach
+it, contradicts Run15's voice call ("it never says that"), so it is the
+owner's. Run15's STATUS line records the change.
+
 ### 4. A kept plan that has outgrown its time
 
 When a day prices at more than 125% of the session length, Train shows one

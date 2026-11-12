@@ -46,6 +46,7 @@ import { isVolumeEligible, type RunRecord } from "@/lib/runStatsEligibility";
 import {
   addLocalDays,
   localDateString,
+  localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
 
@@ -213,6 +214,40 @@ export function layoffFromRuns(
   const byRecency = classifyLayoff(daysSinceLastRun(runs, todayKey));
   if (byRecency === "detrained") return byRecency;
   return isInReentryWindow(runs, todayKey) ? "detrained" : byRecency;
+}
+
+/**
+ * The Monday of the week a runner came back in after a detraining-length
+ * gap (Run15, deep dive D11): the week of their first
+ * eligible run after it, or the week of `asOfKey` while they are still away
+ * (they come back in it). Null when no such gap shows in the runs read: a
+ * runner who has run steadily, or whose return is now older than the runs
+ * the read holds, has nothing to climb back from. The race plan climbs its
+ * long run back from this week, a rung a week from below base.
+ */
+export function returnWeekKey(
+  runs: readonly DatedRun[],
+  asOfKey: string
+): string | null {
+  const dates = [
+    ...new Set(
+      (runs ?? [])
+        .filter((r) => r?.date && isVolumeEligible(r) && r.date <= asOfKey)
+        .map((r) => r.date as string)
+    ),
+  ].sort();
+  if (dates.length === 0) return null;
+  const days = (from: string, to: string) =>
+    Math.round(
+      (parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) /
+        86_400_000
+    );
+  if (days(dates[dates.length - 1], asOfKey) >= LAYOFF_DETRAINED_DAYS)
+    return localWeekKey(parseLocalDate(asOfKey));
+  for (let i = dates.length - 1; i > 0; i--)
+    if (days(dates[i - 1], dates[i]) >= LAYOFF_DETRAINED_DAYS)
+      return localWeekKey(parseLocalDate(dates[i]));
+  return null;
 }
 
 /*
