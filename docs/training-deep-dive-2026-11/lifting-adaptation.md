@@ -237,6 +237,7 @@ The lift-days dialog says the edits will go ("Any exercises you've added, remove
 - Root cause: `warmupsOutgrewFit` cannot tell a reorder from a load change (`sessionFit.ts:195-203`); `advanceWeek` `programEngine.ts:3077-3084`.
 - Fix: stamp the fitted order or price on the day and re-fit only when loads grew.
 - Size: S. Lift7 stands.
+- STATUS 2026-11-12: built another way. Since Lift22 the overruns come from a broken pair, which the plan already stores (`supersetWith`), so the rollover judges each day with its pairs together and nothing new is stored. See `build-plan.md`, slice 3, #11.
 
 ### D12. Smaller items. Polish.
 

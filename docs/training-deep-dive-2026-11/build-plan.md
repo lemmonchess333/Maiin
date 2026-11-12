@@ -96,8 +96,8 @@ with.
 STATUS 2026-11-12, #13 ("Lighten leg sessions" where it changes nothing): setup
 and Run plan offer the switch only where a yes takes a set, and say how many: "4
 fewer leg sets a week, at the same weights" (`raceLegTrimCut`), where they said
-"a third fewer" of plans whose two-set leg lifts lose none. Why this session
-says "fewer sets", not "a third fewer". The stored answer is kept either way.
+"a third fewer" of plans whose two-set leg lifts lose none. The stored answer is
+kept either way.
 
 STATUS 2026-11-12, #5 (swaps keep barbell rep numbers): a dumbbell,
 kettlebell or one-leg lift is never prescribed under six reps (`hasSixRepFloor`,
@@ -133,6 +133,16 @@ stall, the advanced man gains overhead press misses, the hybrid lighter week
 trades its deadlift and RDL stalls for a leg curl stall. It changes what is
 built, so it goes to the owner as a printed panel, perhaps with the order
 limited to rotations of the builders' week.
+
+STATUS 2026-11-12, #11 (a reorder costs sets at the rollover): the cause has
+moved. Lift22 pairs a 30 or 45 minute plan's last lifts, and moving one of a
+pair to the front breaks the pair, so the day prices the two apart and the
+rollover read that as warm-ups that grew: over 256 plans and every single
+move, 10 moves took a set for good (a 45 minute Pull day's curl moved first,
+13 sets to 12). The rollover now judges and re-fits each day with its pairs
+together (`withPairsTogether`), so none; a day its weights outgrew is cut as
+before. The warm-up case the deep dive found (a 60 minute day's lateral raise
+first) no longer cuts at all since #1 gave the raise its own weight.
 
 STATUS 2026-11-12, #6 (no lifting taper in the week a plan is made): a plan
 made, or a race added, inside the race's final weeks now gets them at once,

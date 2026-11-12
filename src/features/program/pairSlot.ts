@@ -33,3 +33,46 @@ export function pairRuns<
   }
   return runs;
 }
+
+/**
+ * A day's lifts with each pair standing together, as the plan wrote it: a
+ * lift moved away from its partner breaks the pair (`pairedWithNext`), and
+ * the session clock prices the two apart. The week's re-fit judges a day in
+ * this order (`refitOutgrownSessions`), so the person's order is not read
+ * as weights that grew (training deep dive, D11). Copies the list; the
+ * lifts are the same objects.
+ */
+export function withPairsTogether<
+  T extends Pick<ProgramExercise, "instanceId" | "supersetWith">,
+>(exercises: readonly T[]): T[] {
+  const byId = new Map<string, T>();
+  for (const ex of exercises)
+    if (ex.instanceId !== undefined) byId.set(ex.instanceId, ex);
+  const leads = new Set<string>();
+  for (const ex of exercises) {
+    const partner = ex.supersetWith;
+    if (partner !== undefined && partner !== ex.instanceId && byId.has(partner))
+      leads.add(partner);
+  }
+  const out: T[] = [];
+  const placed = new Set<T>();
+  for (const ex of exercises) {
+    if (placed.has(ex)) continue;
+    // A partner waits for the lift that names it.
+    if (ex.instanceId !== undefined && leads.has(ex.instanceId)) {
+      const lead = exercises.find(
+        (o) => o.supersetWith === ex.instanceId && o !== ex
+      );
+      if (lead !== undefined && !placed.has(lead)) continue;
+    }
+    out.push(ex);
+    placed.add(ex);
+    const partner =
+      ex.supersetWith !== undefined ? byId.get(ex.supersetWith) : undefined;
+    if (partner !== undefined && partner !== ex && !placed.has(partner)) {
+      out.push(partner);
+      placed.add(partner);
+    }
+  }
+  return out;
+}
