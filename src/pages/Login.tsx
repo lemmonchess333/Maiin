@@ -21,7 +21,7 @@ import { isNativePlatform } from "@/lib/platform";
 import { IconButton } from "@/components/ui/IconButton";
 import InviteNote from "@/components/onboarding/InviteNote";
 import AuthLockup from "@/components/auth/AuthLockup";
-import WelcomePreview from "@/components/auth/WelcomePreview";
+import WelcomePhotos from "@/components/auth/WelcomePhotos";
 import SignInFigure from "@/components/auth/SignInFigure";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
@@ -281,54 +281,61 @@ export default function Login() {
 
   if (view === "welcome") {
     return (
-      <div className="ds-auth-shell">
-        <div className="ds-auth-page gap-4">
-          <AuthLockup />
-          <div>
-            <h1 className="text-h1 font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
-              Your training and food, planned together
-            </h1>
-            <p className="mt-2.5 text-sm text-muted-foreground">
-              Answer a few questions and get a week of training and a daily
-              calorie target that fit you.
-            </p>
-          </div>
-          {/* Soc15: arrived from a friend's invite link. */}
-          <InviteNote />
-          {/* The screen's picture. It takes the height left over. */}
-          <WelcomePreview />
-          {/* The brand's filled button, as Create account, Sign In and
-              setup's Continue are: one colour for the way in, from here
-              to the plan. */}
-          <div className="space-y-2">
-            <Button fullWidth size="md" onClick={() => setView("signUp")}>
-              Get started
-            </Button>
-            <Button
-              fullWidth
-              size="md"
-              variant="ghost"
-              onClick={() => setView("signIn")}
-            >
-              I have an account
-            </Button>
-          </div>
-          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-            <Link
-              to="/privacy"
-              onClick={keepForm}
-              className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              to="/terms"
-              onClick={keepForm}
-              className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
-            >
-              Terms of Service
-            </Link>
+      // The welcome is drawn on its photographs, so its words are the
+      // stage's (light on a dark ground) in either theme, as every welcome
+      // built on a photograph is (Strava, Nike, Tonal).
+      <div className="ds-auth-shell welcome-shell">
+        {/* The screen's picture (owner, 2026-11-12): athletes, filling the
+            screen and fading from one to the next. */}
+        <WelcomePhotos />
+        <div className="ds-auth-page welcome-page">
+          <AuthLockup className="text-stage-foreground" />
+          <div className="welcome-copy">
+            <div>
+              <h1 className="text-h2 font-extrabold leading-[1.12] tracking-tight text-stage-foreground text-balance">
+                Your training and food, planned together
+              </h1>
+              <p className="mt-1.5 text-sm text-stage-foreground/80">
+                Answer a few questions and get a week of training and a daily
+                calorie target that fit you.
+              </p>
+            </div>
+            {/* Soc15: arrived from a friend's invite link. */}
+            <InviteNote />
+            {/* The brand's filled button, as Create account, Sign In and
+                setup's Continue are: one colour for the way in, from here
+                to the plan. Under it, one quiet way back in for an
+                account, as Strava's and Nike's welcomes have. */}
+            <div className="flex flex-col items-center gap-1">
+              <Button fullWidth size="md" onClick={() => setView("signUp")}>
+                Get started
+              </Button>
+              <Button
+                size="md"
+                variant="ghost"
+                className="text-stage-foreground hover:bg-white/10"
+                onClick={() => setView("signIn")}
+              >
+                Sign in
+              </Button>
+            </div>
+            <div className="flex items-center justify-center gap-3 text-xs text-stage-muted">
+              <Link
+                to="/privacy"
+                onClick={keepForm}
+                className="inline-flex items-center min-h-[44px] px-1 hover:text-stage-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span aria-hidden="true">·</span>
+              <Link
+                to="/terms"
+                onClick={keepForm}
+                className="inline-flex items-center min-h-[44px] px-1 hover:text-stage-foreground transition-colors"
+              >
+                Terms of Service
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -349,10 +349,11 @@ select.ds-input:focus {
 }
 
 /* The column fills a phone from the lockup to the last row, which is
-   what lets the welcome's picture take the height left over. On a
-   window taller than a phone it stops at 50rem and the shell centres
-   it. `--auth-column` is the column's own width, for the picture and
-   the lifter to measure themselves by: the shell's two 16px margins off
+   what lets the welcome keep its name at the top and its words at the
+   foot. On a window taller than a phone it stops at 50rem and the shell
+   centres it (the welcome's shell sets it at the foot). `--auth-column`
+   is the column's own width, for the lifter to measure itself by: the
+   shell's two 16px margins off
    the screen, up to the column's limit. It is written from the screen
    and not asked of a container, because container units arrived in iOS
    16 and the app runs on 15.4. */
@@ -381,191 +382,112 @@ select.ds-input:focus {
   letter-spacing: -0.01em;
 }
 
-/* ─── THE WELCOME'S PICTURE (WelcomePreview, DS8 call 1) ──────
-   An example week, today's session and a daily target, drawn as one
-   picture. Every length inside it is a share of the column's width
-   (`--u` is one design pixel of a 361px column), so it keeps its
-   proportions on a 320pt phone and does not grow with the text size, as
-   a picture does not.
+/* ─── THE WELCOME'S PHOTOGRAPHS (WelcomePhotos, owner 2026-11-12) ──
+   Five photographs fill the screen behind the welcome's words and fade
+   from one to the next, as Strava's, Nike's and Tonal's welcomes do
+   (src/assets/welcome/README.md). The layer fills the shell, safe area
+   included, and on a window wider than a phone it stops at a phone's
+   width in the middle, as the column does. Each photograph is 9:19.5,
+   a full-screen iPhone; on a shorter screen `object-position` (each
+   photo's focus, set by WelcomePhotos) chooses which part of the height
+   is kept, so the face stays between the name and the headline.
 
-   The box takes the height the screen has left (`flex: 1`), never under
-   the week card's, and fades out its lower edge, so on a short phone
-   the two tilted cards are cut before the buttons leave the screen. Its
-   side padding is room for the cards' shadows, taken back as margin. */
-.welcome-preview {
-  flex: 1 1 0;
-  min-height: 188px;
-  margin: 0 -12px;
-  padding: 0 12px;
+   A crossfade is opacity alone, so it runs on the compositor. The first
+   photograph fades in as it arrives rather than appearing a line at a
+   time. Under Reduce Motion nothing fades: one photograph, there at once. */
+.welcome-shell {
+  position: relative;
+  justify-content: flex-end;
+  /* The stage's ground, fixed dark in both themes, behind photographs
+     that have not arrived yet and either side of them on a wide window. */
+  background: hsl(var(--stage));
+  color-scheme: dark;
+}
+.welcome-photos {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: min(100%, 30rem);
+  translate: -50% 0;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 calc(100% - 24px),
-    transparent
-  );
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+  background: hsl(var(--stage));
 }
-.welcome-art {
-  --u: calc(var(--auth-column) / 361);
-  position: relative;
-  height: calc(362 * var(--u));
-}
-.welcome-light {
+.welcome-photo {
   position: absolute;
-  left: 50%;
-  top: 64%;
-  width: calc(332 * var(--u));
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  transform: translate(-50%, -50%);
-}
-.welcome-week {
-  position: relative;
-  border-radius: calc(20 * var(--u));
-  padding: calc(14 * var(--u)) calc(14 * var(--u)) calc(16 * var(--u));
-}
-.welcome-title,
-.welcome-caption,
-.welcome-meta,
-.welcome-note {
-  font-size: calc(12 * var(--u));
-  line-height: 1.25;
-  color: hsl(var(--muted-foreground));
-}
-.welcome-title {
-  margin-bottom: calc(10 * var(--u));
-  font-weight: 700;
-  color: hsl(var(--foreground));
-}
-.welcome-caption {
-  font-weight: 600;
-}
-.welcome-meta {
-  margin-top: calc(2 * var(--u));
-  white-space: nowrap;
-}
-.welcome-days {
-  display: flex;
-  gap: calc(6 * var(--u));
-}
-.welcome-day {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(6 * var(--u));
-}
-.welcome-cell {
+  inset: 0;
   width: 100%;
-  height: calc(44 * var(--u));
-  border-radius: calc(10 * var(--u));
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.welcome-dot {
-  width: calc(10 * var(--u));
-  height: calc(10 * var(--u));
-  border-radius: 9999px;
+.welcome-photo[data-shown="true"][data-ready="true"] {
+  opacity: 1;
 }
-/* A day's colour is its sport's, as a wash with a dot of the full
-   colour; a rest day is the neutral tile. The washes are set here and
-   not as `bg-lifting/20`: no words sit on them, and a tint written as a
-   class is read as one a label may sit on (tokenContrast.test.ts). */
-[data-day="lift"] > .welcome-cell {
-  background: hsl(var(--lifting) / 0.2);
+@media (prefers-reduced-motion: reduce) {
+  .welcome-photo {
+    transition: none;
+  }
 }
-[data-day="run"] > .welcome-cell {
-  background: hsl(var(--running) / 0.2);
-}
-[data-day="rest"] > .welcome-cell {
-  background: hsl(var(--muted));
-}
-[data-day="lift"] .welcome-dot,
-[data-key="lift"] > .welcome-key-dot {
-  background: hsl(var(--lifting));
-}
-[data-day="run"] .welcome-dot,
-[data-key="run"] > .welcome-key-dot {
-  background: hsl(var(--running));
-}
-[data-day="rest"] .welcome-dot {
-  background: hsl(var(--muted-foreground) / 0.4);
-}
-.welcome-key {
-  display: flex;
-  gap: calc(14 * var(--u));
-  margin-top: calc(12 * var(--u));
-}
-.welcome-key-item {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(6 * var(--u));
-}
-.welcome-key-dot {
-  width: calc(8 * var(--u));
-  height: calc(8 * var(--u));
-  border-radius: 9999px;
-}
-/* The two cards under the week lie at a slight tilt, one over the
-   other, each lifted a step higher than a card in a list. */
-.welcome-today,
-.welcome-target {
+/* The top darkens a little under the status bar and the name, wherever
+   the photograph is bright there (a studio wall, a sky). */
+.welcome-photos::after {
+  content: "";
   position: absolute;
-  border-radius: calc(20 * var(--u));
-  box-shadow: var(--ds-shadow-card-hover);
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.4) 0,
+    rgb(0 0 0 / 0) calc(var(--safe-top) + 100px)
+  );
 }
-.welcome-today {
-  left: calc(-6 * var(--u));
-  top: calc(164 * var(--u));
-  padding: calc(12 * var(--u));
-  /* The target card lies over this much of its right edge. */
-  padding-right: calc(30 * var(--u));
-  display: flex;
-  align-items: center;
-  gap: calc(14 * var(--u));
-  rotate: -3deg;
+
+/* The column: the name at the top, the words at the foot. */
+.welcome-page {
+  position: relative;
+  justify-content: space-between;
+  gap: 24px;
 }
-.welcome-today-art {
-  height: calc(84 * var(--u));
-  width: auto;
-}
-.welcome-session {
-  margin-top: calc(2 * var(--u));
-  font-size: calc(16 * var(--u));
-  font-weight: 700;
-  line-height: 1.2;
-  color: hsl(var(--foreground));
-}
-.welcome-target {
-  right: calc(-4 * var(--u));
-  top: calc(192 * var(--u));
-  width: calc(164 * var(--u));
-  padding: calc(12 * var(--u)) calc(10 * var(--u));
+
+/* The words sit on their own dark ground, which starts 120px above the
+   headline and darkens to the foot of the screen, so the photograph
+   shows through above the words and never fights them, on a tall phone
+   or a short one, at any text size. It is drawn from the words and not
+   from the screen, because the headline sits at about two thirds of a
+   tall phone and at half of a short one. It is as wide as the
+   photographs and reaches past the bottom of the column to the screen's
+   edge (the shell's 16px and the safe area). */
+.welcome-copy {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: calc(7 * var(--u));
-  text-align: center;
-  rotate: 3deg;
+  gap: 10px;
 }
-.welcome-ring {
-  display: block;
-  width: calc(70 * var(--u));
-  height: calc(70 * var(--u));
+.welcome-copy::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -120px;
+  bottom: calc(-16px - var(--safe-bottom));
+  left: 50%;
+  width: min(100vw, 30rem);
+  translate: -50% 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.42) 120px,
+    rgb(0 0 0 / 0.72) 230px,
+    rgb(0 0 0 / 0.86) 100%
+  );
+  pointer-events: none;
 }
-.welcome-figure {
-  font-size: calc(18 * var(--u));
-  font-weight: 700;
-  line-height: 1.1;
-  color: hsl(var(--foreground));
+/* A soft shadow under the words, for the brightest part of a photograph
+   (a white studio wall, a cloud) that the ground has not yet darkened. */
+.welcome-copy h1 {
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.45);
 }
-.welcome-unit {
-  font-size: calc(12 * var(--u));
-  font-weight: 500;
-}
-.welcome-note {
-  margin-top: calc(-3 * var(--u));
+.welcome-copy h1 + p {
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.5);
 }
 
 /* ─── THE LIFTER ON SIGN-IN (SignInFigure, DS8 call 2) ────────

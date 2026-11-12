@@ -42,7 +42,7 @@ The remote container should already have:
 - `npx firebase-tools` available (install via `npm install --no-save
 firebase-tools` if absent — required for the emulator). Note: bare
   `npx firebase emulators:start` can fail with `could not determine
-  executable to run` when firebase-tools isn't linked on PATH — after
+executable to run` when firebase-tools isn't linked on PATH — after
   the install, invoke the local binary directly:
   `node_modules/.bin/firebase emulators:start ...`.
 - Java (`which java`) — the auth emulator's a JAR
@@ -134,7 +134,7 @@ MUST:
   emulator route
 - Reach the sign-in form the way `openSignInForm` in `e2e/helpers/auth.ts`
   does: a browser that has never signed in opens on the welcome screen, so
-  tap "I have an account" first. Then use the `#login-email` /
+  tap "Sign in" first. Then use the `#login-email` /
   `#login-password` / `button[type="submit"]` selectors
 - Wait for `<nav>` first child visible as the sign-in success signal
   (bottom-nav only renders inside authenticated Layout)

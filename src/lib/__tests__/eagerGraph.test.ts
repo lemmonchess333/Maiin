@@ -266,10 +266,11 @@ describe("Home programme loading", () => {
 describe("the signed-out screens", () => {
   it("draw their pictures without the exercise database or the animation library", () => {
     /* Login is its own chunk, fetched before anyone has signed in. Its
-       drawings are named by path (authArt.ts) so the 105 KB catalogue
-       stays behind, and its figure moves by a flipbook, not framer. */
+       drawing is named by path (authArt.ts) so the 105 KB catalogue
+       stays behind, its figure moves by a flipbook, and the welcome's
+       photographs fade by CSS, not framer. */
     const graph = eagerGraph(resolve(SRC, "pages/Login.tsx"));
-    expect(graph.has(resolve(SRC, "components/auth/WelcomePreview.tsx"))).toBe(
+    expect(graph.has(resolve(SRC, "components/auth/WelcomePhotos.tsx"))).toBe(
       true
     );
     for (const path of ["lib/exercises.ts", "lib/formArtCutouts.ts"]) {
