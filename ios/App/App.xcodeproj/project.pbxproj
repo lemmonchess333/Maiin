@@ -29,6 +29,7 @@
 		E10000000000000000000001 /* LiveActivitiesBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000004 /* LiveActivitiesBundle.swift */; };
 		E10000000000000000000002 /* LiveActivitiesKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1000000000000000000000A /* LiveActivitiesKit */; };
 		E10000000000000000000003 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* LiveActivitiesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E1000000000000000000001B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000001A /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +102,7 @@
 		E10000000000000000000005 /* LiveActivitiesExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivitiesExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E10000000000000000000009 /* LiveActivities.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveActivities.entitlements; sourceTree = "<group>"; };
+		E1000000000000000000001A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,6 +193,7 @@
 				E10000000000000000000004 /* LiveActivitiesBundle.swift */,
 				E10000000000000000000008 /* Info.plist */,
 				E10000000000000000000009 /* LiveActivities.entitlements */,
+				E1000000000000000000001A /* Assets.xcassets */,
 			);
 			path = LiveActivities;
 			sourceTree = "<group>";
@@ -335,6 +338,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1000000000000000000001B /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
