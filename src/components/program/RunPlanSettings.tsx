@@ -66,7 +66,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, Minus, Plus, SlidersHorizontal } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -187,8 +187,6 @@ interface RunPlanSettingsProps {
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
   refreshProfile: () => Promise<void>;
-  /** Deep-link to the full programme editor (goal/nutrition/lift/…). */
-  onOpenFullSettings: () => void;
 }
 
 /** Seconds → the string the goal-time input round-trips ("24:30",
@@ -226,7 +224,6 @@ export default function RunPlanSettings({
   programState,
   readiness,
   refreshProfile,
-  onOpenFullSettings,
 }: RunPlanSettingsProps) {
   // ── Saved baseline (the dirty-check reference) ──────────────────────
   const saved = useMemo(
@@ -1120,42 +1117,6 @@ export default function RunPlanSettings({
           )}
         </>
       )}
-
-      {/* ── The way back to the Programme page ───────────────────────── */}
-      {/* The container is a wrapper, not the button: a query against the
-          button itself did not apply reliably to its children. */}
-      <div className="@container">
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            onOpenFullSettings();
-          }}
-          className="w-full text-left rounded-2xl bg-card border border-border/40 px-[14px] py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
-        >
-          {/* Icon container + trailing chevron, i.e. the row shape every
-            other drill-in in Settings uses (`SettingsIndex.tsx`). Without
-            them this was the only cross-page navigation row in Settings
-            with neither affordance, so the one escape hatch out to
-            /settings/training read as a static description card. */}
-          {/* Under 12em (larger text on the phone) the icon gives way so
-            "Programme" keeps room, and a word wider than the row still
-            hyphenates rather than running out of it. Wide-first. */}
-          <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 @max-[10em]:hidden">
-            <SlidersHorizontal className="size-4 text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0 break-words hyphens-auto">
-            <p className="text-sm font-medium text-foreground">Programme</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Your setup, lift plan, reset
-            </p>
-          </div>
-          <ChevronRight
-            className="size-4 text-muted-foreground shrink-0"
-            aria-hidden="true"
-          />
-        </button>
-      </div>
 
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (

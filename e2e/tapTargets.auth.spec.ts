@@ -60,16 +60,12 @@ const ROUTES = [
   "settings/profile",
   "settings/account",
   "settings/nutrition",
-  "settings/training",
   "settings/run-plan",
   "settings/lift-plan",
-  "settings/workout-prefs",
   "settings/shoes",
   "settings/notifications",
   "settings/privacy",
   "settings/units-appearance",
-  "settings/subscription",
-  "settings/data",
 ] as const;
 
 test.describe("form controls clear the touch floor", () => {

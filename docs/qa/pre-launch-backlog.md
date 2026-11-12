@@ -1312,7 +1312,7 @@ Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
 `trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
 phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
 "Remind me before the trial ends", Home's strip for a trial's last two
-days, Settings → Subscription. The email goes at 10:00 local, two days
+days, Settings → Account. The email goes at 10:00 local, two days
 before the last moment to cancel (a day before the trial ends).
 
 Unit tests cover the timing in every zone, the record and the email's
@@ -1542,7 +1542,7 @@ need a phone and a deploy.
 - [x] _(Proven 2026-10-17: src/components/settings/**tests**/NotificationsSection.push.test.tsx, 'keeps the reminders on the native app and offers no push there' (and the web case). src/pages/**tests**/settingsNotificationsRow.test.tsx, 'does not name push on the native app' (expects 'Reminders, activity'). Both branches are pinned against the native-platform flag.)_ **No push on the iPhone app.** Settings > Notifications shows the
       meal, workout and streak reminders and no push switch; the Settings
       list says "Reminders, activity". The web build still has the switch.
-- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+- [ ] **Exports on the iPhone app.** Settings > Account > Export
       workouts opens the share sheet; Save to Files saves a .csv that
       opens in Numbers, then "Workouts exported" shows. Closing the sheet
       says nothing. On a slow connection a "Workouts export ready" toast
@@ -4226,7 +4226,7 @@ are SVG with an illustration inside; how WebKit draws them at row size is
 for a phone to show.
 
 - [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
-      race ahead (Settings → Programme, a race picked from the list), open
+      race ahead (Settings → Run plan, a race picked from the list), open
       Social → Together. Passing: the race's photo fills the first card with
       its name, "Your race · N weeks to go", its date and place, and the
       words readable over the photo at Settings → Accessibility → Larger
@@ -4464,3 +4464,31 @@ suites cover the fold, the links and who sees what; these need a phone.
 - [ ] **Larger Text.** With the phone's text at its largest, open the
       collection. Passing: the three streak figures and the badge tiles
       wrap inside the screen, and nothing is cut off.
+
+## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
+
+Affects: the Settings list (ten rows, from twelve), Lift plan (the rest
+timer's two controls and Reset programme at its foot), Run plan (voice
+cues), Account (the plan, AI usage, the three exports and recently deleted
+meals), and four routes that are now redirects (`/settings/training`,
+`/settings/workout-prefs`, `/settings/subscription`, `/settings/data`).
+Captured in Chromium at 393 and 320 px; a phone has not drawn them.
+
+- [ ] **Back from the editors.** Settings → Lift plan, then swipe back
+      from the screen's left edge; the same from Run plan. Passing: each
+      returns to the Settings list, not to a blank or a third page.
+- [ ] **Reset programme, at the foot of Lift plan.** Scroll Lift plan to
+      its end and tap Reset programme. Passing: the confirmation opens
+      over the page with Cancel first; Cancel leaves the plan as it was.
+- [ ] **The rest timer, where it now lives.** On Lift plan, switch
+      Auto-start rest timer off, start a workout and finish a set.
+      Passing: no timer starts. Switch it back on and it does.
+- [ ] **Voice cues, where they now live.** On Run plan, switch Audio cues
+      off and open a run's setup. Passing: its Run controls line reads
+      "Voice cues off".
+- [ ] **The plan on Account.** On a free account, Settings shows "Free"
+      on the Account row; Account's first card opens the Pro page. On a
+      trial it reads the days left.
+- [ ] **An old link.** From Safari or a note, open a saved link to
+      `/settings/training` in the installed app. Passing: Lift plan
+      opens.

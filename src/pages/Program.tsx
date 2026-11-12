@@ -2544,12 +2544,10 @@ function ProgramInner() {
                     </span>
                   </span>
                 </button>
-                {/* Pgm4: single free "Edit programme" entry. The three
-                    previous items (Configure wizard / Programme settings /
-                    Reset) and their Pro gate were consolidated into the
-                    unified ProgrammeSettings editor at /settings/training —
-                    goal, nutrition phase, lifting, running, equipment,
-                    injuries, toggles and reset all live there now. */}
+                {/* One edit entry, to the editor of the tab in view. Pgm4
+                    made it a single free entry; until Trim1 call 2 the Run
+                    tab's went to a Programme page that edited nothing and
+                    linked on to Run plan. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -2557,7 +2555,7 @@ function ProgramInner() {
                     navigate(
                       activeTab === "lift"
                         ? "/settings/lift-plan"
-                        : "/settings/training"
+                        : "/settings/run-plan"
                     );
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
@@ -2568,12 +2566,12 @@ function ProgramInner() {
                     <span className="block text-sm font-medium text-foreground">
                       {activeTab === "lift"
                         ? "Edit lift plan"
-                        : "Edit programme"}
+                        : "Edit run plan"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       {activeTab === "lift"
                         ? "Focus, lift days, equipment, injuries, weekly volume"
-                        : "Goal, nutrition, lifting, running, equipment, injuries"}
+                        : "Race or no race, run days, long runs, zones"}
                     </span>
                   </span>
                 </button>

@@ -129,7 +129,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // its trend icon with it (Lift4).
   // 2026-10-08: 18 → 17. The Performance tab's "Lifting suggestions" card
   // went, and its dumbbell icon with it (Lift4 (3)).
-  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 2026-11-11: 17 → 16. Settings → Programme went (Trim1 call 2), and
+  // its Lift plan row's icon with it.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -141,7 +143,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // on white, under the 3:1 a graphic needs, so the Settings row's and
   // the Go deeper tile's icons, and the food consistency card's two,
   // take `text-nutrition-strong`.
-  nutrition: 2,
+  // 2026-11-11: 2 → 1. Settings → Programme went (Trim1 call 2), and its
+  // Nutrition phase row's icon with it.
+  nutrition: 1,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -339,7 +343,9 @@ function bareUses(token: string): string[] {
 // 43 → 44 with the drawn pull to refresh: PullToRefreshIndicator's
 // arrow turns brand purple once a release would refresh. An ICON on the
 // card chip, with no words.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
+// 2026-11-11: 44 → 43. Workout preferences went as a page (Trim1 call 7),
+// and its timer icon with it; the Subscription card kept its crown.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {
