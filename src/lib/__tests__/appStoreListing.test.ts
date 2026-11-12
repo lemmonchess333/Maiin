@@ -167,6 +167,13 @@ describe("App Store listing: claims the code can contradict", () => {
     expect(LISTING).toContain(`raise the rating to **${minimum![1]}+**`);
   });
 
+  it("does not offer Copy yesterday, which the Food page no longer has", () => {
+    // Trim1 call 4 (November 2026) took Copy yesterday off the Food page:
+    // a usual meal is one tap. The description had "or copy yesterday's
+    // meals" and would have gone on promising it.
+    expect(everything).not.toMatch(/copy yesterday/i);
+  });
+
   it("never says unlimited while Pro has a daily cap", () => {
     // The paywall's own "Unlimited AI photo food logging" is the copy
     // this guards against repeating: Pro is capped per day.

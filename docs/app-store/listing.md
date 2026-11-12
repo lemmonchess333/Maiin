@@ -87,7 +87,7 @@ Running
 
 Food
 • Type a meal the way you'd say it, search the food database, or scan a barcode.
-• Log your usual breakfast in one tap, or copy yesterday's meals.
+• Log your usual breakfast in one tap.
 • A daily calorie target from your weight, height, age and goal, with protein, carbs and fat.
 • Water and weight on Home, with your weight trend rather than the day-to-day swings.
 
