@@ -159,6 +159,12 @@ describe("App Store listing: claims the code can contradict", () => {
     for (const id of ids) expect(LISTING).toContain(`\`${id}\``);
   });
 
+  it("does not offer a leaderboard with the people you follow, which went", () => {
+    // Trim1 call 3(a) (November 2026) removed the friends board. The
+    // description had "a weekly leaderboard with the people you follow".
+    expect(everything).not.toMatch(/leaderboard with the people you follow/i);
+  });
+
   it("rates the app at the minimum age setup enforces", () => {
     const minimum = read("../../pages/Onboarding.tsx").match(
       /You need to be at least (\d+) to use Tropos/
