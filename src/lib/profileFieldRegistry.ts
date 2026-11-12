@@ -212,10 +212,6 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // value-gated in firestore.rules (`shareDefaultsValid`) and validated by
   // the sanitiser on the same vocabulary.
   { field: "shareDefaults", sanitized: true },
-  // Polish2 call 5: "Show my week" on friends' boards. Written only by the
-  // setBoardSharing callable, which keeps the tally (friendsBoard/{uid})
-  // in step with the answer.
-  { field: "showWeekOnBoard", sanitized: false, serverOnly: true },
   // Run9's starter goal (30 minutes without stopping). Value-gated in
   // firestore.rules (`starterGoalValid`); the programme's transaction writes
   // it when the goal is finished.

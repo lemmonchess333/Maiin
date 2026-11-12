@@ -744,7 +744,7 @@ service cloud.firestore {
       // Admin SDK (deleteMyAccount), and nothing in the app deletes this
       // document. A delete followed by a fresh create would wipe the
       // fields only the server writes (hasUsedTrial, subscriptionTrial,
-      // stripeCustomerId, activationJourneyVersion, showWeekOnBoard), and
+      // stripeCustomerId, activationJourneyVersion, leagueOptIn), and
       // a trial is decided from hasUsedTrial.
       allow delete: if false;
     }
@@ -2191,22 +2191,11 @@ service cloud.firestore {
         && (request.auth.uid == uid || request.auth.uid == requesterUid);
     }
 
-    /* A person's week on friends' boards (Polish2 call 5): sessions,
-       distance and volume, kept by the server (functions/lib/
-       friendsBoard.js) only for someone who said yes. Read by them and by
-       their followers, who are people they accepted, never across a block
-       either way, as followers-only posts are read. */
-    match /friendsBoard/{uid} {
-      allow read: if request.auth != null
-        && (
-          request.auth.uid == uid
-          || (
-            exists(/databases/$(database)/documents/followers/$(uid)/users/$(request.auth.uid))
-            && !blockExistsBetween(uid, request.auth.uid)
-          )
-        );
-      allow write: if false;
-    }
+    /* friendsBoard/{uid} has no rule, so nobody reads or writes it. It
+       held a person's week for their followers' friends boards (Polish2
+       call 5) until the board went on 12 November 2026 (Trim1 call 3(a)).
+       A week stored before then is deleted with its account, and by
+       functions/scripts/purgeFriendsBoardDocs.js. */
 
     /* How many people follow an account and how many it follows, counted
        by the server from the two lists (functions/lib/followCounts.js), so

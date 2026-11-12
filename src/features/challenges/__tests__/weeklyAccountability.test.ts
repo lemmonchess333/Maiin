@@ -2,10 +2,9 @@ import { describe, it, expect } from "vitest";
 import { getWeeklyAccountability } from "../weeklyAccountability";
 
 describe("getWeeklyAccountability", () => {
-  it("State A — cold-start (no follows, nobody trained): personal goal, no fake social proof", () => {
+  it("State A — nothing yet this week: personal goal, no social proof", () => {
     const a = getWeeklyAccountability({
       myWeeklyCount: 0,
-      othersTrained: 0,
       target: 2,
     });
     expect(a.title).toBe("Train twice this week");
@@ -19,34 +18,25 @@ describe("getWeeklyAccountability", () => {
   it("State A — non-2 target reads grammatically", () => {
     const a = getWeeklyAccountability({
       myWeeklyCount: 0,
-      othersTrained: 0,
       target: 4,
     });
     expect(a.title).toBe("Train 4 times this week");
   });
 
-  it("State B — others trained, you haven't: real follow-graph social proof + action CTA", () => {
-    const single = getWeeklyAccountability({
-      myWeeklyCount: 0,
-      othersTrained: 1,
-      target: 2,
-    });
-    expect(single.title).toBe("1 person you follow trained this week");
-    expect(single.ctaLabel).toBe("Do today’s session");
-    expect(single.ctaTo).toBe("/program");
-
-    const many = getWeeklyAccountability({
-      myWeeklyCount: 0,
-      othersTrained: 3,
-      target: 2,
-    });
-    expect(many.title).toBe("3 people you follow trained this week");
+  it("a week with nothing in it is the personal goal, whoever else trained", () => {
+    /* Until 11 November 2026 a count of followed people who had trained
+       ("3 people you follow trained this week") took this state. It was
+       read from the friends board and went with it (Trim1 call 3(a)). */
+    const a = getWeeklyAccountability({ myWeeklyCount: 0, target: 2 });
+    expect(`${a.title} ${a.sub}`).not.toMatch(
+      /follow|people|person|join them/i
+    );
+    expect(a.ctaLabel).toBe("Start today’s session");
   });
 
   it("State C′ — on the board, short of target: the count, plainly", () => {
     const c = getWeeklyAccountability({
       myWeeklyCount: 1,
-      othersTrained: 5,
       target: 2,
     });
     expect(c.title).toBe("You’re on the board");
@@ -58,7 +48,6 @@ describe("getWeeklyAccountability", () => {
   it("State C — goal met: celebrate + view progress (success tone)", () => {
     const c = getWeeklyAccountability({
       myWeeklyCount: 2,
-      othersTrained: 0,
       target: 2,
     });
     expect(c.title).toBe("You’ve hit your 2-session week");
@@ -70,7 +59,6 @@ describe("getWeeklyAccountability", () => {
   it("C′ never says 'one more' when more than one is needed", () => {
     const c = getWeeklyAccountability({
       myWeeklyCount: 1,
-      othersTrained: 0,
       target: 4,
     });
     expect(c.sub).toBe("1 of 4 sessions this week.");
@@ -78,10 +66,9 @@ describe("getWeeklyAccountability", () => {
 
   it("no line closes on a pep-talk tail (house voice)", () => {
     const states = [
-      { myWeeklyCount: 0, othersTrained: 0, target: 2 },
-      { myWeeklyCount: 0, othersTrained: 2, target: 2 },
-      { myWeeklyCount: 1, othersTrained: 2, target: 2 },
-      { myWeeklyCount: 3, othersTrained: 0, target: 2 },
+      { myWeeklyCount: 0, target: 2 },
+      { myWeeklyCount: 1, target: 2 },
+      { myWeeklyCount: 3, target: 2 },
     ];
     for (const input of states) {
       const { title, sub } = getWeeklyAccountability(input);
@@ -90,22 +77,17 @@ describe("getWeeklyAccountability", () => {
   });
 
   it("goal met says the count, singular when it is one", () => {
-    expect(
-      getWeeklyAccountability({ myWeeklyCount: 1, othersTrained: 0, target: 1 })
-        .sub
-    ).toBe("1 session this week.");
-    expect(
-      getWeeklyAccountability({ myWeeklyCount: 3, othersTrained: 0, target: 2 })
-        .sub
-    ).toBe("3 sessions this week.");
+    expect(getWeeklyAccountability({ myWeeklyCount: 1, target: 1 }).sub).toBe(
+      "1 session this week."
+    );
+    expect(getWeeklyAccountability({ myWeeklyCount: 3, target: 2 }).sub).toBe(
+      "3 sessions this week."
+    );
   });
 
-  it("my own progress takes precedence over others' (C beats B)", () => {
-    // Even when many followed people trained, if I've met my target the
-    // message is about ME, not the leaderboard.
+  it("past the target is still the goal met", () => {
     const c = getWeeklyAccountability({
       myWeeklyCount: 5,
-      othersTrained: 9,
       target: 2,
     });
     expect(c.goalMet).toBe(true);
@@ -122,7 +104,6 @@ describe("a weekly challenge not joined yet", () => {
     expect(
       getWeeklyAccountability({
         myWeeklyCount: 0,
-        othersTrained: 3,
         target: 2,
         unjoined,
       })
@@ -133,7 +114,6 @@ describe("a weekly challenge not joined yet", () => {
     expect(
       getWeeklyAccountability({
         myWeeklyCount: 1,
-        othersTrained: 0,
         target: 2,
         unjoined,
       }).sub
@@ -143,7 +123,6 @@ describe("a weekly challenge not joined yet", () => {
   it("never says the week is done above Join", () => {
     const shown = getWeeklyAccountability({
       myWeeklyCount: 3,
-      othersTrained: 0,
       target: 2,
       unjoined,
     });

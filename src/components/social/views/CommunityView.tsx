@@ -44,12 +44,7 @@ export interface CommunityViewProps {
    *  itself stays mounted across tab switches (SOCIAL-HOME-01 Stage A)
    *  so its state survives exactly as it did pre-extraction. */
   active: boolean;
-  /** True while FeedView's FullLeaderboard overlay is open: the shell
-   *  hides the tab bar and every tab section. */
-  chromeHidden: boolean;
   uid: string | undefined;
-  /** Open the People search overlay (challenge empty-state CTA). */
-  openPeople: () => void;
   /** The shell's pull-to-refresh action for this tab (same ref
    *  pattern as FeedView). */
   refreshRef: MutableRefObject<(() => Promise<void>) | null>;
@@ -57,9 +52,7 @@ export interface CommunityViewProps {
 
 export default function CommunityView({
   active,
-  chromeHidden,
   uid,
-  openPeople,
   refreshRef,
 }: CommunityViewProps) {
   /* Pull-to-refresh awaits the sections' real handles (circles reload
@@ -90,7 +83,7 @@ export default function CommunityView({
     []
   );
 
-  if (!active || chromeHidden) return null;
+  if (!active) return null;
 
   const circles = uid ? (
     <CirclesSection
@@ -116,7 +109,6 @@ export default function CommunityView({
       >
         <ChallengeList
           hero={uid ? <RaceHero /> : null}
-          onFindFriends={openPeople}
           refreshRef={challengesRefreshRef}
           circles={circles}
           spaces={<SpacesDirectory />}

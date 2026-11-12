@@ -48,7 +48,7 @@
  * incremented: whatever was saved before the group existed counts.
  *
  * A STANDING. `done` counts sessions as the friends board does (every saved
- * workout, every run the challenges would credit: friendsBoard.tallyWeek).
+ * workout, every run the challenges would credit: weekTally.tallyWeek).
  * `planned` is read from the plan while the week is the member's current
  * one; once it is over the stored figure stands, because the plan's run
  * days are regenerated each Monday and no longer hold last week's.
@@ -60,7 +60,7 @@
 
 const rules = require("./leagueRules");
 const { leaguePlanned } = require("./leaguePlanned");
-const { tallyWeek, weekKeyOf, currentWeek } = require("./friendsBoard");
+const { tallyWeek, weekKeyOf, currentWeek } = require("./weekTally");
 const { isValidDateKey } = require("./challengeActivityWindow");
 const { utcDateString, parseUtcDate } = require("./dateUtils");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");

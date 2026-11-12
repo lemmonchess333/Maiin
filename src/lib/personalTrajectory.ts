@@ -2,21 +2,19 @@
  * Personal trajectory — this week's sessions against last week's, for a
  * single user.
  *
- * Counted as the friends board counts them (Polish2 call 5): every saved
- * workout, and every run that counts toward volume. Sessions is the one
- * measure a lifter and a runner share; the points this replaced
- * (`km * 100 + kg * 0.1`) made 1 km worth 1,000 kg. We count both the
- * current week (Monday 00:00 local → now) and the prior week (Monday
- * 00:00 → Sunday 23:59:59) so the Social "leaderboard slot" can show a
- * week-over-week trajectory when the user doesn't have enough friends for
- * a meaningful leaderboard. Distance and volume stay as the breakdown.
+ * Counted as the league and the challenges count them (Polish2 call 5):
+ * every saved workout, and every run that counts toward volume. Sessions
+ * is the one measure a lifter and a runner share; the points this
+ * replaced (`km * 100 + kg * 0.1`) made 1 km worth 1,000 kg. We count
+ * both the current week (Monday 00:00 local → now) and the prior week
+ * (Monday 00:00 → Sunday 23:59:59) so the Following feed's week card can
+ * show a week-over-week trajectory. Distance and volume stay as the
+ * breakdown.
  *
- * This is the solo-user alternative to LeaderboardCard. Design
- * rationale (from the council review): when you're the only athlete
- * in the leaderboard, showing it to yourself reads as "the app is
- * empty". Reframing the same slot as personal progression surfaces
- * the app's USP (adaptive-fitness over time) and turns the blank
- * space into a useful motivational signal.
+ * It began as the stand-in for the friends board (from the council
+ * review: when you're the only athlete on a board, showing it to
+ * yourself reads as "the app is empty"). The board went on 11 November
+ * 2026 (Trim1 call 3(a)) and the card stayed.
  */
 
 import { localDateString, startOfLocalWeek } from "@/lib/dateHelpers";
