@@ -23,7 +23,7 @@ const {
   creditSessionToPulse,
   reverseSessionFromPulse,
 } = require("../lib/pulse");
-const { tallyWeek } = require("../lib/friendsBoard");
+const { tallyWeek } = require("../lib/weekTally");
 const { USER_SUBCOLLECTIONS } = require("../accountDeletion");
 
 const fieldValue = { increment, serverTimestamp: () => "now" };

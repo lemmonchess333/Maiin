@@ -153,7 +153,9 @@ describe("nothing decides the week boundary on its own", () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
   const files = [
     "src/lib/personalTrajectory.ts",
-    "src/lib/leaderboard.ts",
+    // The weekly challenge card's own count, which lived in
+    // `leaderboard.ts` until the friends board went (Trim1 call 3(a)).
+    "src/features/challenges/myWeekLifts.ts",
     "src/pages/History.tsx",
     "src/lib/chartGranularity.ts",
   ];

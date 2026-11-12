@@ -1,12 +1,15 @@
 /**
- * The friends board (Polish2 call 5), against the real rules engine.
+ * What is left of the friends board, against the real rules engine.
  *
- * `friendsBoard/{uid}` is one person's week (sessions, distance, volume),
- * kept by the server only for someone who said yes. They read it, and so
- * do their followers, who are people they accepted (Polish2 call 4); a
- * blocked pair cannot, either way round, and nobody else can. No client
- * writes it, the person included: the figures are the server's count of
- * their sessions, not a claim.
+ * `friendsBoard/{uid}` held one person's week (sessions, distance, volume)
+ * for their followers' boards (Polish2 call 5). The board went on 12
+ * November 2026 (Trim1 call 3(a)) and its rule with it, so a week stored
+ * before then is read and written by no one: not its owner, not a
+ * follower. The server deletes it with the account, and
+ * functions/scripts/purgeFriendsBoardDocs.js deletes the rest.
+ *
+ * This stays while those documents can still exist, so a rule added later
+ * cannot open them by accident.
  *
  * Run: `npm run test:rules`. Skipped when FIRESTORE_EMULATOR_HOST is unset,
  * a hard failure when CI sets REQUIRE_FIRESTORE_EMULATOR=1. Its own
@@ -17,7 +20,6 @@ import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
   assertFails,
-  assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import {
@@ -40,7 +42,7 @@ if (process.env.REQUIRE_FIRESTORE_EMULATOR === "1" && !EMULATOR_HOST) {
 const suite = EMULATOR_HOST ? describe : describe.skip;
 
 const PROJECT_ID = "tropos-friendsboard-rules-test";
-const ALICE = "fb-alice"; // whose week it is
+const ALICE = "fb-alice"; // whose week it was
 const BOB = "fb-bob"; // follows Alice
 const CAROL = "fb-carol"; // does not
 
@@ -82,7 +84,7 @@ const WEEK = {
 };
 const board = (as: string) => doc(db(as), "friendsBoard", ALICE);
 
-suite("friendsBoard/{uid}", () => {
+suite("friendsBoard/{uid}, after the board went", () => {
   beforeEach(async () => {
     await env.clearFirestore();
     await seed(`friendsBoard/${ALICE}`, WEEK);
@@ -90,31 +92,10 @@ suite("friendsBoard/{uid}", () => {
     await seed(`following/${BOB}/users/${ALICE}`, { followedAt: 1 });
   });
 
-  it("the person reads their own week", async () => {
-    await assertSucceeds(getDoc(board(ALICE)));
-  });
-
-  it("a follower reads it", async () => {
-    await assertSucceeds(getDoc(board(BOB)));
-  });
-
-  it("someone who does not follow them cannot", async () => {
-    await assertFails(getDoc(board(CAROL)));
-  });
-
-  it("a following edge alone is not a follow: the follower edge is the one they accepted", async () => {
-    await seed(`following/${CAROL}/users/${ALICE}`, { followedAt: 1 });
-    await assertFails(getDoc(board(CAROL)));
-  });
-
-  it("a block either way stops a follower reading it", async () => {
-    await seed(`blocks/${ALICE}/users/${BOB}`, { blockedAt: 1 });
+  it("nobody reads a week left from before: not its owner, not a follower", async () => {
+    await assertFails(getDoc(board(ALICE)));
     await assertFails(getDoc(board(BOB)));
-    await env.clearFirestore();
-    await seed(`friendsBoard/${ALICE}`, WEEK);
-    await seed(`followers/${ALICE}/users/${BOB}`, { followedAt: 1 });
-    await seed(`blocks/${BOB}/users/${ALICE}`, { blockedAt: 1 });
-    await assertFails(getDoc(board(BOB)));
+    await assertFails(getDoc(board(CAROL)));
   });
 
   it("signed out, nobody reads it", async () => {

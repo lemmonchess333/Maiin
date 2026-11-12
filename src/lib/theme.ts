@@ -186,8 +186,7 @@ export type MacroKey = keyof typeof THEME.macros;
 /**
  * Medal colours for leaderboard ranks 1/2/3 (gold/silver/bronze), derived
  * from the canonical `THEME.tier` set. The single source for the rank chips
- * across LeaderboardCard, FullLeaderboard, and the challenge leaderboard —
- * index by `rank - 1`.
+ * on `LeaderboardRow` and the challenge leaderboards: index by `rank - 1`.
  */
 export const RANK_COLORS = [
   THEME.tier.gold,

@@ -21,11 +21,7 @@ vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
   useUid: () => h.user.uid,
 }));
-vi.mock("@/lib/leaderboard", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/leaderboard")>()),
-  loadBoardWeeks: async () => [],
-  countMyWeekLifts: async () => 0,
-}));
+vi.mock("../myWeekLifts", () => ({ countMyWeekLifts: async () => 0 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
 vi.mock("@/hooks/useRestrictedStatus", () => ({

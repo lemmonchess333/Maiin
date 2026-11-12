@@ -152,14 +152,12 @@ describe("onRunUpdated", () => {
   it("carries a rename to the post, and leaves other updates alone", async () => {
     const deletion = require("../lib/accountDeletionLocks");
     const projection = require("../lib/challengeParticipationProgress");
-    const board = require("../lib/friendsBoard");
     const rename = require("../lib/runRename");
     const fns = require("../index");
     vi.spyOn(deletion, "shouldSystemWriteProceed").mockResolvedValue(true);
     vi.spyOn(projection, "reconcileParticipationChallenges").mockResolvedValue(
       undefined
     );
-    vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
     const carried = vi
       .spyOn(rename, "syncSharedRunName")
       .mockResolvedValue("renamed");

@@ -823,33 +823,39 @@ true`, the app shows the restricted notice before a post, and
       Firestore console, reads null within a minute and the profile shows
       the person unnamed.
 
-## Friends board (Polish2, 2026-10-20)
+## Friends board, retired (Trim1 call 3(a), 2026-11-12)
 
-The feed's board ranks this week's sessions for you and the people you
-follow who share their week; the full board adds Distance and Volume. The
-server keeps each tally (`friendsBoard/{uid}`); the unit, rules
-(`firestore.friendsBoard.rules.test.ts`) and trigger tests cover the logic.
-These need the release and two real accounts that follow each other.
+The friends board is gone: its card on the feed, its full list, the Show
+my week switch, the `setBoardSharing` callable and the tally the server
+kept (`friendsBoard/{uid}`). The league is the one weekly ranking. The
+five device rows this section held went with it. These need the release
+and the Firebase console.
 
-- [ ] **The release carries the rules and the callable.** Passing: the
-      Deploy production run's Firestore and Functions stages are green, and
-      Firebase console → Functions lists `setBoardSharing`.
-- [ ] **Show my week starts the tally.** On two TestFlight accounts, A
-      and B, B following A: A logs a workout, then taps Show my week on the
-      feed's board. Passing: Firestore console shows `friendsBoard/{A}`
-      with `sessions: 1` and A's `weekKey` (A's Monday), and B's board
-      lists A.
-- [ ] **A session saved later moves the board.** Passing: A finishes a
-      run; within a minute `friendsBoard/{A}` reads `sessions: 2` and B's
-      Distance tab shows A's km. Deleting the run takes it back off.
-- [ ] **Off leaves nothing to read.** A turns off Settings → Social &
-      privacy → Show my week on friends' boards. Passing: the
-      `friendsBoard/{A}` document is gone, B's board no longer lists A,
-      and A's own board does not ask again.
-- [ ] **The week turns over where the person is.** On a Monday morning,
-      an account in a timezone ahead of UTC (Auckland). Passing: its board
-      reads an empty week before it logs anything that day, not last
-      week's figures.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `setBoardSharing`, and
+      the deployed rules have no `friendsBoard` match.
+- [ ] **Stored weeks are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgeFriendsBoardDocs.js`,
+      read the two counts, then run it without `DRY_RUN`. Passing: a
+      second dry run reports 0 weeks and 0 answers, and Firestore console
+      shows no `friendsBoard` collection. Once this is ticked, account
+      deletion's own delete of `friendsBoard/{uid}` and its inventory
+      entry (`friendsBoardOwn`) can go.
+- [ ] **The feed's week card.** On a TestFlight account following two or
+      more people, with a session this week. Passing: Following shows
+      "Your trajectory" under the third post where the board was, and no
+      board.
+- [ ] **The weekly challenge's leaders.** Joined, with one lift this
+      week. Passing: the card on Together lists up to three people under
+      "Leading this week", with "You" picked out if you are one of them;
+      before joining, and with no session yet, it lists nobody.
+- [ ] **An older build.** A TestFlight build from before this change,
+      on an account following two or more people. Passing: its feed's
+      board reads "Nothing to compare yet" (its reads are refused), and
+      its Show my week switch answers "Couldn’t change who sees your
+      week. Try again." Nothing else on it changes.
 
 ## Follow approval (Polish2, 2026-10-20)
 

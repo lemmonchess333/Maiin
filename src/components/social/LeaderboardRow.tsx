@@ -3,11 +3,14 @@ import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
 
 /**
- * The single leaderboard row (visual audit Phase 6 W6). Before this,
- * LeaderboardCard carried two near-identical 40-line copies of the row
- * markup (its <3 and ≥3 branches) and FullLeaderboard a third, each with
- * subtly different rank sizing (`w-5 text-xs` vs `w-6 text-sm`) and a
- * self-row that sometimes dropped its rank colour. One component, one
+ * The single leaderboard row (visual audit Phase 6 W6): the weekly
+ * challenge card's leaders (`WeeklyChallengeCard`). It was written for
+ * the friends board, whose card carried two near-identical 40-line
+ * copies of the row markup and whose full list carried a third, each
+ * with subtly different rank sizing (`w-5 text-xs` vs `w-6 text-sm`) and
+ * a self-row that sometimes dropped its rank colour. The board went on 11
+ * November 2026 (Trim1 call 3(a)); the row stayed, and the weekly card's
+ * own fourth copy of the markup gave way to it. One component, one
  * treatment:
  *   - rank: w-6, mono tabular, medal-coloured for the top 3 everywhere
  *   - "you" highlight: bg-primary/10 + border-primary/25 (the old /5+/15
