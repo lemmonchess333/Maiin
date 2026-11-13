@@ -66,7 +66,8 @@ says which.
     delete the rest of the unused ones.
 18. Person-to-person events send a push: comments, follow requests, an
     invite joined, a league result. Props arrive as one daily bundle.
-19. **Stripe is kept** (the owner, for a website that sells). Fixed on
+19. **Stripe is kept** (the owner, for a website that sells), as the
+    gateway under RevenueCat Billing once Q77 was answered. Fixed on
     13 November so it works (see "Fixed at once" below).
 20. The two riskiest loose-flag flows are fixed first: finishing a lift
     (it can be "saved" and "needs attention" at once) and checkout (a
@@ -177,32 +178,45 @@ faults, fixed at once (below).
 
 ## Fixed at once (owner: "fix the five faults now")
 
-| Fault                                                                                                       | Fix                                                                                  | PR branch                 |
-| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------- |
-| Push asked for only from a Settings switch                                                                  | The one ask (Q66)                                                                    | `claude/one-reminder-ask` |
-| Web checkout could not start: no sign-in token, an address only the app's page answered, placeholder prices | Token, the function's own address, the plan named and the price chosen by the server | `claude/web-checkout`     |
-| Nowhere for a Stripe subscriber to cancel                                                                   | `createStripeBillingPortal` built                                                    | `claude/web-checkout`     |
-| A Stripe trial got no reminder                                                                              | The webhook records it; the email names Tropos and Account                           | `claude/web-checkout`     |
-| A share carried no link                                                                                     | The link in every shared card's words; an absolute preview image                     | `claude/share-links`      |
-| (Q67) Trial words named a target that never adapted                                                         | Named only when it had                                                               | `claude/trial-wording`    |
+| Fault                                                                                                                                                      | Fix                                                                                                                                                                                                                                                         | PR branch                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| Push asked for only from a Settings switch                                                                                                                 | The one ask (Q66)                                                                                                                                                                                                                                           | `claude/one-reminder-ask` |
+| Web checkout could not start: no sign-in token, an address only the app's page answered, placeholder prices; no way to cancel; no reminder for a web trial | Replaced, not patched: the owner chose RevenueCat Billing on Stripe the same night (Q77, below). The web opens RevenueCat's hosted checkout as the signed-in account; Manage subscription opens RevenueCat's management link; a web trial gets the reminder | `claude/revenuecat-web`   |
+| A share carried no link                                                                                                                                    | The link in every shared card's words; an absolute preview image                                                                                                                                                                                            | `claude/share-links`      |
+| (Q67) Trial words named a target that never adapted                                                                                                        | Named only when it had                                                                                                                                                                                                                                      | `claude/trial-wording`    |
 
 ## What this overturns
 
-| Earlier decision                                                                       | Overturned by      |
-| -------------------------------------------------------------------------------------- | ------------------ |
-| Sub4 (5 July): do not build `createStripeBillingPortal`; Stripe dormant                | Q19, the fix above |
-| Mob1 call 3: setup's optional reminder row                                             | Q66                |
-| XB1 call 8: the reminder offer only for new accounts in their first week, with no push | Q66                |
-| XB1's activation comparison group                                                      | Q27                |
-| Rev1: the weekly review is passive narration                                           | Q36                |
-| Trim1 call 5's placing: the score shown on two surfaces                                | Q12                |
-| Today's Pro list (what costs money to run)                                             | Q45                |
+| Earlier decision                                                                       | Overturned by                                                                                                       |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Sub4 (5 July): Stripe Checkout dormant for a later web store                           | Q19 and Q77: the web sells through RevenueCat Billing on Stripe; our own Stripe functions are retired once it works |
+| Mob1 call 3: setup's optional reminder row                                             | Q66                                                                                                                 |
+| XB1 call 8: the reminder offer only for new accounts in their first week, with no push | Q66                                                                                                                 |
+| XB1's activation comparison group                                                      | Q27                                                                                                                 |
+| Rev1: the weekly review is passive narration                                           | Q36                                                                                                                 |
+| Trim1 call 5's placing: the score shown on two surfaces                                | Q12                                                                                                                 |
+| Today's Pro list (what costs money to run)                                             | Q45                                                                                                                 |
+
+## After the five faults: Q77 answered (13 November)
+
+While the fixes were being written the owner asked: "Do we have to have
+Stripe? Or can we use RevenueCat on the web?" RevenueCat's web billing
+still needs a payment processor underneath (Stripe or Paddle); what it
+removes is our own Stripe code. Its docs, read that night: RevenueCat
+Billing uses Stripe as the gateway with Tropos as merchant of record,
+adds no RevenueCat fee for the web, provides a hosted checkout (Web
+Purchase Links) and a customer portal, and grants the same entitlements
+as the App Store. The owner: **"Yes do RevenueCat on Stripe."** So the
+patch to our own Stripe checkout was dropped unpushed, and
+`claude/revenuecat-web` builds the web on RevenueCat instead. The old
+`createCheckoutSession` and `stripeWebhook` stay dormant until the new
+path has worked, then go.
 
 ## Waiting on Round 7
 
 The research for these is in; the questions are not yet asked: the price
 and trial length (Q45 to Q48), whether readiness has a number at all
 (Q42), the win-back days (Q54), how much reminding at the person's own time
-is worth (Q59), which Health plugin, whether RevenueCat's web billing
-replaces the Stripe code, and the App Store rules for the website by
-country.
+is worth (Q59), which Health plugin, and the App Store rules for the
+website by country. Round 7 was sent with these as Q70 to Q81; Q77
+(RevenueCat on the web) is answered above.
