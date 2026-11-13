@@ -31,6 +31,8 @@ import {
   trialReminderFireAt,
   TRIAL_NOTIFICATION_ID,
   TRIAL_REMINDER_TITLE,
+  TRIAL_REMINDER_BODY,
+  TRIAL_REMINDER_BODY_SCANS_ONLY,
 } from "../useTrialReminder";
 import {
   resetNotifications,
@@ -118,6 +120,32 @@ describe("useTrialReminderInternal — the schedule", () => {
     expect(payload.title).toBe(TRIAL_REMINDER_TITLE);
     expect(payload.scheduleAt).toEqual(new Date(2026, 8, 6, 10, 0, 0, 0));
     expect(payload.repeats).toBeFalsy();
+  });
+
+  it("names only photo logging when the calorie target never started adapting", async () => {
+    // The adaptive target needs 14 days of weigh-ins, so most 7-day
+    // trials never see it; the reminder used to say it "stops adapting".
+    mockProfile = { trialExpiresAt: expiryFrom(0), subscriptionTier: "free" };
+    renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledAt(TRIAL_NOTIFICATION_ID)!.body).toBe(
+      TRIAL_REMINDER_BODY_SCANS_ONLY
+    );
+    expect(TRIAL_REMINDER_BODY_SCANS_ONLY).not.toMatch(/adapt/);
+  });
+
+  it("names the adapting target once it has set one", async () => {
+    mockProfile = {
+      trialExpiresAt: expiryFrom(0),
+      subscriptionTier: "free",
+      adaptiveCapState: {
+        lastApplied: 2310,
+        lastAppliedAt: new Date(2026, 8, 2).toISOString(),
+      },
+    };
+    renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledAt(TRIAL_NOTIFICATION_ID)!.body).toBe(TRIAL_REMINDER_BODY);
   });
 
   it("holds nothing for a subscriber whose old trial expiry is still in the future", async () => {
