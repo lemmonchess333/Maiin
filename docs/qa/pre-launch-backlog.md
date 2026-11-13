@@ -4405,6 +4405,10 @@ the handover.
 
 ## The welcome shows your week, and sign-in a lifter who faces you (DS8, 2026-11-11)
 
+**The welcome rows below are replaced** by "The welcome stands on
+photographs of athletes" (DS9, 2026-11-12) further down: the example week
+is gone. The sign-in rows still apply; their button names now read "Sign in".
+
 Affects: `Login.tsx` (the welcome, sign-in and sign-up), `WelcomePreview`,
 `SignInFigure`, `AuthLockup` and the `.ds-auth-*`, `.welcome-*` and
 `.signin-*` styles. Captured in Chromium at 393 and 320 px and measured for
@@ -4415,15 +4419,15 @@ overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
       status bar; the week card, today's card and the target card are all
       whole above "Get started"; the three cards rise in once and the ring
       draws; nothing reaches past either edge of the screen.
-- [ ] **Sign-in on a phone.** Tap "I have an account". Passing: the lifter
+- [ ] **Sign-in on a phone.** Tap "Sign in". Passing: the lifter
       appears at once (the drawing is in the app, not fetched), presses the
       bar twice and rests with it overhead; "Welcome back" is on one line
       beside it; the screen fits from the lockup to "Sign up" without
       scrolling on a 6.1 inch phone.
-- [ ] **Across the forms.** Tap "Sign up", then "Sign In". Passing: the
+- [ ] **Across the forms.** Tap "Sign up", then "Sign in". Passing: the
       heading changes and the lifter does not start its rep again.
 - [ ] **The keyboard.** Tap Email. Passing: the field is above the
-      keyboard, and the page scrolls so "Sign In" can be reached.
+      keyboard, and the page scrolls so "Sign in" can be reached.
 - [ ] **Reduce Motion.** With Reduce Motion on, open the welcome and
       sign-in. Passing: the cards are in place with no rise, and the lifter
       stands still.
@@ -4574,3 +4578,63 @@ has drawn it.
       workout. Passing: the six frames from behind, as before.
 - [ ] **Reduce Motion.** With Reduce Motion on, open Home on a deadlift
       day. Passing: the front-view card shows and nothing moves.
+
+## The welcome stands on photographs of athletes (DS9, 2026-11-12)
+
+Affects: the welcome in `Login.tsx`, `WelcomePhotos.tsx`, the photographs in
+`src/assets/welcome/` and the `.welcome-*` styles. Captured in Chromium at
+393, 375 and 320 px in both themes and at 1.35x and 2x text; WebKit on a
+phone has not drawn it, and nothing here can film a cold start.
+
+- [ ] **The first photograph on a cold start.** Delete the app, install a
+      build made after the merge, and open it on mobile data. Passing: the
+      first photograph (a woman sprinting) fades in within about a second,
+      with no white flash; the lockup is clear of the status bar; the
+      headline, Get started, Sign in and the links sit at the foot on the
+      dark ground.
+- [ ] **The fade.** Wait on the welcome. Passing: a new photograph fades in
+      every four or five seconds, five in all, then the first again; the
+      words never move; faces stay clear of the headline on a 6.1 inch
+      phone and on an iPhone SE.
+- [ ] **Away and back.** Switch to another app for a minute and back.
+      Passing: the photographs carry on from where they were, with no jump.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the welcome. Passing:
+      the first photograph only, still.
+- [ ] **Light mode.** With the phone in light mode, open it. Passing: the
+      same as dark, light words on the photographs.
+- [ ] **Owner to-do (optional): the word on one strap.** One sports-bra
+      strap in the third photograph (three women running) carries the word
+      "RUN", about 3 px tall on a phone. It is a word, not a brand, and can
+      stay. To remove it: open `93-lfDpgAP5_Ao.jpg` from the welcome
+      originals zip in Photos on an iPhone, use Clean Up on the strap, and
+      send the result; the next session swaps it into
+      `src/assets/welcome/welcome-3-crew.webp` and its manifest.
+
+## Social covers and the race list's photographs (2026-11-12)
+
+Affects: six interest Space covers in `src/assets/editorial/` (New to
+Tropos, Runners, Women's Running, Lifters, Hybrid Training, Triathlon &
+Multisport), and the race list in the run plan and in setup
+(`UpcomingRacePicker.tsx`, `.race-pick-fade`). Captured in Chromium against
+the emulators at 393 px; no phone has drawn them.
+
+- [ ] **The Spaces row.** Open Social and scroll to Spaces. Passing: the six
+      new covers are sharp, and each name sits clear of the faces.
+- [ ] **A Space's header.** Open New to Tropos and Lifters. Passing: the
+      faces and the bars are inside the header band.
+- [ ] **The race list.** Settings → Run plan → Training for a race → A race
+      I've entered → Choose an upcoming race. Passing: each race is a card
+      with its place on the right, fading into the card under the date,
+      distance and name; the words read in light and dark.
+- [ ] **A long list.** Clear the filters and scroll the whole list.
+      Passing: it scrolls smoothly, and each photograph appears as its card
+      comes into view.
+- [ ] **Choosing a race.** Tap one. Passing: it is selected (a tick and a
+      coral edge), the list closes, and the race's name and date fill the
+      plan.
+- [ ] **Choosing a race in setup (2026-11-13).** On a new account, choose
+      Support my running, a race plan, then "A race I've entered", and
+      choose a race from the list. Passing: the same cards with their
+      places; the race's day fills the date; the review names the race; and
+      once setup is done, the run plan shows the race chosen, and its
+      Space's hero counts you in the plan group (once 3 or more have it).
