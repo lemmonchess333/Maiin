@@ -187,8 +187,76 @@ export function runSessionAbout(
         "Went off too fast and faded? It still counts. Next time start a little slower than feels right.",
     };
   }
+  if (config.progression) {
+    // Run24 (5): easy, then a comfortably hard finish.
+    const { easySec, finishSec } = config.progression;
+    return {
+      what: `Easy running for ${spanOf(easySec).noun}, then ${spanOf(finishSec).noun} comfortably hard to the finish.`,
+      feel: "Easy, then comfortably hard for the finish: a few words at a time, and even to the end.",
+      ifWrong:
+        "The finish won’t come today? Run it easy to the end instead. That still counts as the session.",
+      alsoCalled: "A fast-finish run.",
+    };
+  }
+  if (template.type === "intervals" && config.uphill && config.intervals) {
+    // Run24 (5): hill repeats, by feel.
+    const iv = config.intervals;
+    const warmUp = iv.warmupDuration
+      ? `A ${spanOf(iv.warmupDuration).adj} warm-up to the foot of a hill`
+      : "A warm-up to the foot of a hill";
+    const coolDown = iv.cooldownDuration
+      ? `a ${spanOf(iv.cooldownDuration).adj} cool-down`
+      : "a cool-down";
+    return {
+      what: `${warmUp}, then ${iv.reps} climbs of ${spanOf(iv.workDuration ?? 60).noun}, hard, jogging or walking back down between, then ${coolDown}.`,
+      feel: "Hard on the way up: tall, with short quick steps. Easy on the way down.",
+      ifWrong:
+        "No hill nearby? Run the repeats on the flat at the same effort. Legs heavy? Climb fewer times. The first few are the session.",
+    };
+  }
+  if (
+    template.type === "intervals" &&
+    config.repeatsAt === "feel" &&
+    config.intervals
+  ) {
+    // Run24 (5): a fartlek's pick-ups, by feel.
+    const iv = config.intervals;
+    const warmUp = iv.warmupDuration
+      ? `A ${spanOf(iv.warmupDuration).adj} warm-up`
+      : "A warm-up";
+    const coolDown = iv.cooldownDuration
+      ? `a ${spanOf(iv.cooldownDuration).adj} cool-down`
+      : "a cool-down";
+    return {
+      what: `${warmUp}, then ${iv.reps} pick-ups of ${spanOf(iv.workDuration ?? 60).noun}, comfortably hard, with ${spanOf(iv.restDuration).noun} of easy running between, then ${coolDown}.`,
+      feel: "Comfortably hard on the pick-ups, by feel and not the watch. Easy between them.",
+      ifWrong:
+        "Pick-ups hard to hold? Shorten them, or run them a little gentler. Smooth matters more than fast.",
+      alsoCalled: "Fartlek, Swedish for speed play.",
+    };
+  }
+  if (
+    template.type === "intervals" &&
+    (config.repeatsAt === "5k" || config.repeatsAt === "10k")
+  ) {
+    // Run24 (5): repeats at a race's own pace.
+    const race = config.repeatsAt === "5k" ? "5K" : "10K";
+    return {
+      what: config.intervals
+        ? intervalShape(config.intervals, `at ${race} pace`)
+        : `Repeats at ${race} pace, with a short rest between each.`,
+      feel:
+        config.repeatsAt === "5k"
+          ? "Hard, and even at 5K pace: the rhythm you’ll hold on race day."
+          : "Hard but controlled at 10K pace: the rhythm you’ll hold on race day.",
+      ifWrong:
+        "Can’t hold the pace today? Ease off a little and finish the reps. One fewer rep is still the session.",
+    };
+  }
   if (template.type === "intervals") {
-    const shortReps = (config.intervals?.workDistance ?? 1000) < 1000;
+    const shortReps =
+      config.repeatsAt === "repetition" ||
+      (config.intervals?.workDistance ?? 1000) < 1000;
     return shortReps
       ? {
           what: config.intervals

@@ -552,8 +552,18 @@ export default function RunSetupModal({
               exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
+              {/* The planned session's own steps while its repeats are
+                  as planned (Run24 (5): a hill or fartlek session's words,
+                  a time trial's one effort); built from the repeats once
+                  they are customised. */}
               <SessionStructureView
-                segments={segmentsFromIntervals(intervalConfig, unit)}
+                segments={
+                  config.segments?.length &&
+                  JSON.stringify(config.intervals) ===
+                    JSON.stringify(savedPreferences?.intervals)
+                    ? config.segments
+                    : segmentsFromIntervals(intervalConfig, unit)
+                }
               />
               <button
                 type="button"

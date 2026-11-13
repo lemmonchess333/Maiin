@@ -202,6 +202,23 @@ export function runSessionExplainer(
   if (isTimeTrialTemplateId(input.templateId)) {
     return "It finds your paces from what you can run now, and Tropos offers them after it.";
   }
+  // Run24 (5): the session library's own reasons, where the type's would
+  // say something the session isn't.
+  const config = RUN_TEMPLATES.find((t) => t.id === templateId)?.config;
+  if (config?.progression) {
+    return "It finishes faster than it starts: the easy minutes build endurance, and the finish teaches you to run strong on tired legs.";
+  }
+  if (config?.uphill) {
+    return phase === "base"
+      ? "Short hills build strength and a quicker stride, a light start on faster running before the harder sessions."
+      : "Hill repeats build strength and power for running. The jog back down is part of the session.";
+  }
+  if (config?.repeatsAt === "feel") {
+    return "A light fartlek wakes up faster running by feel, at little cost, before the harder sessions start.";
+  }
+  if (config?.repeatsAt === "5k" || config?.repeatsAt === "10k") {
+    return "It teaches your legs what race pace feels like, so it’s familiar when it counts.";
+  }
   // Base / build.
   if (type === "long") {
     if (phase === "base") {
