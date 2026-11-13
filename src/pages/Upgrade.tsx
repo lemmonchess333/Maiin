@@ -64,6 +64,7 @@ import {
 import {
   canSellInThisBuild,
   isNativeIOS,
+  syncAfterWebPurchase,
   manageSubscription,
 } from "@/lib/purchaseProvider";
 import ProNotOnSale from "@/components/paywall/ProNotOnSale";
@@ -213,7 +214,7 @@ export default function Upgrade() {
     track("paywall_viewed", { source, platform });
   }, [source, platform]);
 
-  // Checkout round-trip status. Stripe redirects back here with
+  // Checkout round-trip status. The web checkout returns here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
   // the analytics event, and clear the query so a reload doesn't
   // double-fire the banner / toast.
@@ -222,6 +223,9 @@ export default function Upgrade() {
     if (!checkoutStatus) return;
     if (checkoutStatus === "success") {
       track("checkout_success_returned", { source: "upgrade_page", platform });
+      // Back from RevenueCat's web checkout: read the new entitlement now
+      // rather than wait for the webhook, so Pro is on as the page shows.
+      void syncAfterWebPurchase();
     } else if (checkoutStatus === "cancelled") {
       track("checkout_cancelled_returned", {
         source: "upgrade_page",

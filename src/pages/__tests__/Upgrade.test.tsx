@@ -59,7 +59,9 @@ const manageSubscriptionMock = vi.fn();
 const isNativeIOSMock = vi.fn();
 const canSellMock = vi.fn();
 
+const syncAfterWebPurchaseMock = vi.fn(async () => {});
 vi.mock("@/lib/purchaseProvider", () => ({
+  syncAfterWebPurchase: () => syncAfterWebPurchaseMock(),
   purchase: (...args: unknown[]) => purchaseMock(...args),
   restorePurchases: vi.fn(),
   manageSubscription: (...args: unknown[]) => manageSubscriptionMock(...args),
@@ -819,9 +821,12 @@ describe("Upgrade — checkout return banner", () => {
   }
 
   it("?checkout=success shows the success status banner", () => {
+    syncAfterWebPurchaseMock.mockClear();
     renderWithQuery("?checkout=success");
     const banner = screen.getByRole("status");
     expect(banner.textContent).toContain("Payment received");
+    // Back from RevenueCat's web checkout: Pro is read now, not later.
+    expect(syncAfterWebPurchaseMock).toHaveBeenCalledOnce();
   });
 
   it("?checkout=cancelled shows the cancelled status banner", () => {

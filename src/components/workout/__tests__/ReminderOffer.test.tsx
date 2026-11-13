@@ -20,6 +20,10 @@ const h = vi.hoisted(() => ({
   record: vi.fn(async (_: string) => true),
   track: vi.fn(),
   pushAsked: vi.fn(),
+  pushPermission: vi.fn(async () => true),
+  pushUpdate: vi.fn(async (_: unknown) => true),
+  pushRegister: vi.fn(async (_: string) => ({ ok: true })),
+  pushOffered: true,
   doneDay: null as string | null,
 }));
 
@@ -59,16 +63,17 @@ vi.mock("@/hooks/RemindersProvider", () => ({
 vi.mock("@/hooks/usePushSettings", () => ({
   usePushSettings: () => ({
     consent: { enabled: false },
-    update: h.pushAsked,
+    update: h.pushUpdate,
     loading: false,
     configured: false,
     failed: false,
   }),
 }));
 vi.mock("@/lib/pushNotifications", () => ({
+  isRemotePushOffered: () => h.pushOffered,
   isPushSupported: async () => true,
-  requestRemotePushPermission: h.pushAsked,
-  registerDeviceToken: h.pushAsked,
+  requestRemotePushPermission: h.pushPermission,
+  registerDeviceToken: h.pushRegister,
   unregisterDeviceToken: h.pushAsked,
 }));
 vi.mock("@/hooks/useFirstSessionReturnChoice", () => ({
@@ -82,12 +87,12 @@ vi.mock("@/hooks/useFirstSessionReturnChoice", () => ({
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: h.track }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import FirstWeekReturnOffer from "../FirstWeekReturnOffer";
+import ReminderOffer from "../ReminderOffer";
 
 function open() {
   return render(
     <MemoryRouter>
-      <FirstWeekReturnOffer kind="lift" />
+      <ReminderOffer kind="lift" />
     </MemoryRouter>
   );
 }
@@ -97,13 +102,16 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 29, 12));
   h.version = 2;
+  h.startMs = new Date(2026, 9, 28, 12).getTime();
   h.enabled = false;
   h.choiceResponse = null;
   h.doneDay = null;
   h.requestPermission.mockResolvedValue(true);
+  h.pushPermission.mockResolvedValue(true);
+  h.pushOffered = true;
 });
 
-describe("a v2 account's one first-week reminder ask", () => {
+describe("the one ask for notifications, after a saved session", () => {
   it("offers the training-day reminder by naming the next session and when", async () => {
     open();
     expect(
@@ -127,8 +135,33 @@ describe("a v2 account's one first-week reminder ask", () => {
     );
     expect(h.requestPermission).toHaveBeenCalledOnce();
     expect(h.record).toHaveBeenCalledWith("accepted");
-    // No streak nudge, and no push, is asked for.
+    // The same yes turns the server's pushes on and registers the device;
+    // until 13 Nov 2026 they were asked for only from Settings.
+    await waitFor(() => expect(h.pushRegister).toHaveBeenCalledWith("u1"));
+    expect(h.pushUpdate).toHaveBeenCalledWith({ enabled: true });
+    // No streak-reminder switch is asked for on its own.
     expect(h.pushAsked).not.toHaveBeenCalled();
+  });
+
+  it("turns on the reminder alone in a build without push", async () => {
+    h.pushOffered = false;
+    open();
+    fireEvent.click(await screen.findByRole("button", { name: "Remind me" }));
+    await waitFor(() => expect(h.record).toHaveBeenCalledWith("accepted"));
+    expect(h.updateReminders).toHaveBeenCalledWith({
+      enabled: true,
+      time: "07:30",
+    });
+    expect(h.pushUpdate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the reminder on when push cannot be turned on", async () => {
+    h.pushPermission.mockResolvedValue(false);
+    open();
+    fireEvent.click(await screen.findByRole("button", { name: "Remind me" }));
+    await waitFor(() => expect(h.record).toHaveBeenCalledWith("accepted"));
+    expect(h.updateReminders).toHaveBeenCalled();
+    expect(h.pushUpdate).not.toHaveBeenCalled();
   });
 
   // A session saved at 06:40: today's 07:30 reminder is not sent, so the
@@ -167,7 +200,7 @@ describe("a v2 account's one first-week reminder ask", () => {
     ).toHaveLength(1);
   });
 
-  it("asks nothing when setup already turned the reminder on", async () => {
+  it("asks nothing when the reminder is already on", async () => {
     h.enabled = true;
     open();
     await act(async () => {});
@@ -192,8 +225,18 @@ describe("a v2 account's one first-week reminder ask", () => {
     expect(h.updateReminders).not.toHaveBeenCalled();
   });
 
-  it("is not shown to a legacy account", async () => {
+  it("asks every account, not only a new one in its first week", async () => {
+    // An older account, a month after setup: it was never asked.
     h.version = undefined;
+    h.startMs = new Date(2026, 8, 20, 12).getTime();
+    open();
+    expect(
+      await screen.findByRole("button", { name: "Remind me" })
+    ).toBeVisible();
+  });
+
+  it("asks nothing once the account has answered", async () => {
+    h.choiceResponse = "later";
     open();
     await act(async () => {});
     expect(screen.queryByRole("button", { name: "Remind me" })).toBeNull();

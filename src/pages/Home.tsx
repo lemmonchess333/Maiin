@@ -128,6 +128,7 @@ import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import TrialEndedDialog from "@/components/home/TrialEndedDialog";
+import { targetHasAdapted } from "@/hooks/useTrialReminder";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
@@ -1844,6 +1845,7 @@ export default function Home() {
       <AnimatePresence>
         {trialSurface.active && (
           <TrialEndedDialog
+            targetAdapted={targetHasAdapted(profile?.adaptiveCapState)}
             onDismiss={function () {
               trialSurface.dismiss();
               updateProfile({ trialExpiryPromptShown: true });

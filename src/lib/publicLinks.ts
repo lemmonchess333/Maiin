@@ -25,3 +25,11 @@ export function appInviteUrl(code?: string): string {
     ? `${PUBLIC_APP_ORIGIN}/?${INVITE_PARAM}=${encodeURIComponent(code)}`
     : PUBLIC_APP_ORIGIN;
 }
+
+/** A shared card's words with the way back to Tropos after them. A card
+ *  reaches people who do not have the app, and until 13 Nov 2026 it was
+ *  an image and words with nowhere to go (owner, Q69). The address is the
+ *  front door every other shared link uses. */
+export function withAppLink(text: string): string {
+  return `${text} ${PUBLIC_APP_ORIGIN}`;
+}

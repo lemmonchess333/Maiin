@@ -301,9 +301,9 @@ export function useStreakReminderInternal(
   // Foreground events are NOT handled here directly. The hasLoggedToday
   // value comes from useStreaks, whose onSnapshot subscriptions reflect
   // activity changes in near-real-time while the app is open. Consent
-  // (`enabled` and `primingShown`) is asked on a saved workout's or run's
-  // finish screen (`CompletionReminderChoice`; in a v2 account's first
-  // week, `FirstWeekReturnOffer`) and in Settings.
+  // (`enabled` and `primingShown`) is asked in Settings. The finish
+  // screen's one ask (`ReminderOffer`, Q66) turns on the training-day
+  // reminder and push instead; push owns the streak nudge once it is on.
 
   useEffect(() => {
     if (!uid || loading || streaksLoading) return;

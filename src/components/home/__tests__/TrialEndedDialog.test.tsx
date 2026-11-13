@@ -12,7 +12,9 @@ afterEach(cleanup);
 
 describe("TrialEndedDialog", () => {
   it("says what the lapse changed, and what still works", () => {
-    render(<TrialEndedDialog onDismiss={vi.fn()} onKeep={vi.fn()} />);
+    render(
+      <TrialEndedDialog targetAdapted onDismiss={vi.fn()} onKeep={vi.fn()} />
+    );
     expect(
       screen.getByRole("dialog", { name: "Your free trial has ended" })
     ).toBeInTheDocument();
@@ -22,11 +24,26 @@ describe("TrialEndedDialog", () => {
     expect(screen.getByText(/work as before/)).toBeInTheDocument();
   });
 
+  it("names no adapting target to someone whose target never adapted", () => {
+    render(
+      <TrialEndedDialog
+        targetAdapted={false}
+        onDismiss={vi.fn()}
+        onKeep={vi.fn()}
+      />
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent(
+      "Photo logging is paused. Typing, search and your programme work as before."
+    );
+    expect(dialog.textContent).not.toMatch(/adapt/);
+  });
+
   it("names nothing that is free as a reason to pay", () => {
     // Performance insights, the PI and the week's verdict are free (Sub2).
     // The old copy promised "performance insights" for subscribing.
     const { container } = render(
-      <TrialEndedDialog onDismiss={vi.fn()} onKeep={vi.fn()} />
+      <TrialEndedDialog targetAdapted onDismiss={vi.fn()} onKeep={vi.fn()} />
     );
     expect(container.textContent).not.toMatch(/performance|insight|verdict/i);
   });
@@ -34,7 +51,9 @@ describe("TrialEndedDialog", () => {
   it("Keep Pro and Not now each fire their own handler, once", () => {
     const onDismiss = vi.fn();
     const onKeep = vi.fn();
-    render(<TrialEndedDialog onDismiss={onDismiss} onKeep={onKeep} />);
+    render(
+      <TrialEndedDialog targetAdapted onDismiss={onDismiss} onKeep={onKeep} />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Keep Pro" }));
     expect(onKeep).toHaveBeenCalledTimes(1);
     expect(onDismiss).not.toHaveBeenCalled();
@@ -45,7 +64,9 @@ describe("TrialEndedDialog", () => {
 
   it("takes focus, keeps it, and treats Escape as Not now", () => {
     const onDismiss = vi.fn();
-    render(<TrialEndedDialog onDismiss={onDismiss} onKeep={vi.fn()} />);
+    render(
+      <TrialEndedDialog targetAdapted onDismiss={onDismiss} onKeep={vi.fn()} />
+    );
     const dialog = screen.getByRole("dialog", {
       name: "Your free trial has ended",
     });
@@ -72,7 +93,9 @@ describe("TrialEndedDialog", () => {
 
   it("tapping the backdrop dismisses", () => {
     const onDismiss = vi.fn();
-    render(<TrialEndedDialog onDismiss={onDismiss} onKeep={vi.fn()} />);
+    render(
+      <TrialEndedDialog targetAdapted onDismiss={onDismiss} onKeep={vi.fn()} />
+    );
     // The shared dialog's backdrop: the layer behind the panel.
     const backdrop = document.querySelector('[role="presentation"]');
     expect(backdrop).not.toBeNull();

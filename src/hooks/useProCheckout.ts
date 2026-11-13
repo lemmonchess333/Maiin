@@ -35,21 +35,14 @@ import type { ProFeatureKey } from "@/lib/proFeatures";
 export interface StartCheckoutOptions {
   /** Analytics dimension (`upgrade_page`, `feature_gate`, etc.). */
   source?: PaywallSource;
-  /** Closed-set entry-point token forwarded to the Stripe checkout
-   *  flow; the server uses it to synthesise the return URL. When
-   *  unset, the hook derives it from the current pathname so a
-   *  paywall modal opened on the Upgrade page still returns the
-   *  user to /upgrade rather than the default. */
+  /** Where the paywall was opened from. When unset, the hook derives it
+   *  from the current pathname. */
   entryPoint?: CheckoutEntryPoint;
   /** Feature gate that triggered the modal, when relevant — only
    *  forwarded to analytics. */
   featureKey?: ProFeatureKey;
-  /** Sub1a P1 — request a 7-day free trial on this checkout. The
-   *  server is authoritative (it checks `hasUsedTrial` inside a
-   *  Firestore transaction and either grants the trial or ignores
-   *  the flag); the client sends this purely to express the user's
-   *  intent. Apple IAP defers to the App Store introductory-offer
-   *  config; this flag affects only the Stripe pipeline. */
+  /** Whether the paywall offered a trial. The trial is the store's own:
+   *  App Store Connect's introductory offer, or the web product's. */
   withTrial?: boolean;
 }
 
@@ -181,8 +174,9 @@ export function useProCheckout(): UseProCheckoutResult {
             error: result.detail ?? message,
           });
         }
-        // Success path: on Stripe, purchase() has already navigated
-        // the window away. On Apple IAP, AuthProvider's subscription
+        // Success path: on the web, purchase() has already sent the
+        // window to RevenueCat's checkout, and Upgrade syncs Pro on the
+        // way back. On Apple IAP, AuthProvider's subscription
         // listener picks up the server-confirmed tier, including a delayed
         // webhook when the best-effort sync fails. Restore uses the same
         // listener, so neither surface needs its own refresh race.
