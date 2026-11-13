@@ -63,6 +63,9 @@ export type PaywallSource =
   /** A half or full marathon plan past its free first week: Home's run
    *  card or Train's (whole-app grill Q85). */
   | "race_plan"
+  /** The run summary's offer of faster paces to a free account (owner,
+   *  13 November 2026). */
+  | "paces"
   | "unknown";
 
 export interface PaywallEventMetadata {

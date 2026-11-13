@@ -4824,3 +4824,19 @@ Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out
 - [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
 - [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
 - [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
+
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.
