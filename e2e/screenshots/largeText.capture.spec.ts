@@ -49,6 +49,7 @@ import {
   openSignInForm,
   signInAsTestUser,
 } from "../helpers/auth";
+import { setTestUserTier } from "../helpers/testUserTier";
 import { emulatorActive } from "../helpers/emulator";
 import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
@@ -310,32 +311,38 @@ test.describe("large text", () => {
       monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7));
       monday.setHours(12, 0, 0, 0);
       await page.clock.setFixedTime(monday);
-      await signInAsTestUser(page);
+      // Six months is a Pro range (whole-app grill Q84).
+      await setTestUserTier("pro");
       const found: string[] = [];
-      const nav = page.getByRole("navigation").first();
+      try {
+        await signInAsTestUser(page);
+        const nav = page.getByRole("navigation").first();
 
-      for (const [range, views] of [
-        ["1W", [""]],
-        ["1M", ["", "lifting", "running"]],
-        ["6M", ["", "lifting", "running"]],
-      ] as const) {
-        for (const view of views) {
-          await page.goto(
-            `history?${view ? `view=${view}&` : ""}range=${range}`
-          );
-          await ready(page, nav);
-          // The chart is what this measures: a page without it would pass.
-          await page
-            .getByTestId("axis-ends")
-            .first()
-            .waitFor({ state: "attached", timeout: 20_000 });
-          await measure(
-            page,
-            `history${view ? `-${view}` : ""}-${range}-monday`,
-            width,
-            found
-          );
+        for (const [range, views] of [
+          ["1W", [""]],
+          ["1M", ["", "lifting", "running"]],
+          ["6M", ["", "lifting", "running"]],
+        ] as const) {
+          for (const view of views) {
+            await page.goto(
+              `history?${view ? `view=${view}&` : ""}range=${range}`
+            );
+            await ready(page, nav);
+            // The chart is what this measures: a page without it would pass.
+            await page
+              .getByTestId("axis-ends")
+              .first()
+              .waitFor({ state: "attached", timeout: 20_000 });
+            await measure(
+              page,
+              `history${view ? `-${view}` : ""}-${range}-monday`,
+              width,
+              found
+            );
+          }
         }
+      } finally {
+        await setTestUserTier("free");
       }
 
       expect(found).toEqual([]);
