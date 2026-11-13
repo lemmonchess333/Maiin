@@ -396,9 +396,18 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 30K",
     type: "long",
     icon: "route",
-    description: "Easy effort, the marathon build's longest run",
+    description: "Easy effort, a long marathon build run",
     estimatedDuration: 170,
     config: { targetDistanceKm: 30 },
+  },
+  {
+    id: "long_32k",
+    name: "Long 32K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, the marathon build's longest run",
+    estimatedDuration: 180,
+    config: { targetDistanceKm: 32 },
   },
   // Run-walk ladder (Run20 (5)), see RUN_WALK_TEMPLATE_IDS. Type "easy": the
   // running is easy, by feel, and no pace is set for any of it.
