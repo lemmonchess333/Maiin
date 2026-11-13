@@ -150,11 +150,13 @@ describe("shareFile — the web downloads when it cannot share", () => {
 describe("shareImageFile — the share card on the same path", () => {
   const card = new File(["png"], "tropos-story.png", { type: "image/png" });
 
-  it("shares the card with its text", async () => {
+  it("shares the card with its text and the way back to Tropos", async () => {
+    // A card reaches people without the app; the words carry the link
+    // (owner, Q69, 13 Nov 2026), not a separate url some targets drop.
     expect(await shareImageFile(card, "My run on Tropos")).toBe("shared");
     expect(share).toHaveBeenCalledWith({
       files: [card],
-      text: "My run on Tropos",
+      text: "My run on Tropos https://troposfit.com",
     });
   });
 
