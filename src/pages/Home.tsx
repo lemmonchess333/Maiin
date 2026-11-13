@@ -132,6 +132,7 @@ import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { targetHasAdapted } from "@/hooks/useTrialReminder";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
+import { racePlanLocked } from "@/lib/racePlanAccess";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { usePriorHomeVisit } from "@/hooks/usePriorHomeVisit";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
@@ -505,6 +506,22 @@ export default function Home() {
     storeTrialEligibility,
     DEFAULT_PLAN
   );
+  // A half or full marathon plan past its free first week (whole-app grill
+  // Q85): today's planned run offers Pro; the race itself still starts.
+  const raceDistance =
+    profile?.raceGoal?.distance ??
+    programState?.runPlan?.raceGoal?.distance ??
+    null;
+  const runPlanLocked = racePlanLocked({
+    isPro,
+    runPlan: programState?.runPlan,
+    raceDistance,
+  })
+    ? {
+        cta: proStripTrialEligible ? "Try Pro free" : "See Pro",
+        raceName: raceDistance === "half" ? "half marathon" : "marathon",
+      }
+    : null;
   const proStripOffersTrial =
     proStripTrialEligible && effectiveTargets.personalTarget != null;
   const showProStrip = shouldShowHomeProStrip({
@@ -1407,6 +1424,7 @@ export default function Home() {
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
+                runPlanLocked={runPlanLocked}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);

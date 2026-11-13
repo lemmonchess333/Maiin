@@ -56,7 +56,6 @@ function plan(
     ...extra,
   });
 }
-const ids = (week: ScheduledRunDay[]) => week.map((run) => run.templateId);
 const longOf = (week: ScheduledRunDay[]) =>
   week.find((run) => run.type === "long")?.templateId ?? null;
 const easiesOf = (week: ScheduledRunDay[]) =>
@@ -123,10 +122,10 @@ describe("a marathon three weeks out, under the taper floor", () => {
 describe("a compressed block whose short build stays under them", () => {
   it("tapers from their own long run, not the build's", () => {
     const weeks = plan("marathon", 5).weeks;
-    // The one build week ramps from the plan's base; three and two weeks
-    // out take their shares of the starting point's 22 km.
+    // The one build week starts from the starting point's 22 km (Run24
+    // (2)); three and two weeks out take their shares of it.
     expect(weeks.map(longOf)).toEqual([
-      "long_14k",
+      "long_22k",
       "long_16k",
       "long_12k",
       null,
@@ -136,12 +135,19 @@ describe("a compressed block whose short build stays under them", () => {
 });
 
 describe("what it leaves as it was", () => {
-  it("a full block's taper", () => {
+  it("a full block's taper, which takes its shares of the build", () => {
+    // Run24 (2): a full block starts from the starting point, so its taper
+    // steps down from the longer build that gives it, never a run past it.
     const withStart = plan("half", 12);
     const without = plan("half", 12, { runningBaseline: null });
-    const taper = (weeks: ScheduledRunDay[][]) => weeks.slice(-3).map(ids);
     expect(withStart.compressed).toBe(false);
-    expect(taper(withStart.weeks)).toEqual(taper(without.weeks));
+    const taperLong = (weeks: ScheduledRunDay[][]) =>
+      weeks.slice(-3).map(longOf);
+    expect(taperLong(withStart.weeks)).toEqual(["long_12k", null, null]);
+    expect(taperLong(without.weeks)).toEqual(["long_10k", null, null]);
+    expect(withStart.weeks.at(-1)!.map((run) => run.templateId)).toEqual(
+      without.weeks.at(-1)!.map((run) => run.templateId)
+    );
   });
 
   it("a detrained runner's", () => {
