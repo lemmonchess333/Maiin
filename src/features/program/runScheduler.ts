@@ -1578,11 +1578,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         })
         // The event remains visible, not a claim of beginner race readiness.
         .slice(0, beginnerBlock ? 2 : undefined)
+        // Run24 (10), deep dive D13: race week keeps its runs, as the
+        // taper's evidence keeps frequency (Bosquet 2007), and each is a
+        // 20-minute shake-out (a Tropos heuristic inside the deep dive's
+        // 15 to 20), never above the build's own easy runs.
         .forEach((d) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: "easy_30",
+              templateId: "easy_20",
               type: "easy",
               weekStart,
             })
@@ -2011,10 +2015,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     if (phase !== "taper" && phase !== "race") return week;
     const held = taperBuild().easyMinutes;
-    if (held >= EASY_BASE_MINUTES) return week;
+    // Race week's shake-outs are 20 minutes already (Run24 (10)): only a
+    // build of shorter easy runs shortens them.
+    const floorIds =
+      phase === "race"
+        ? new Set([...TAPER_FLOOR_IDS, "easy_20"])
+        : TAPER_FLOOR_IDS;
+    if (held >= (phase === "race" ? 20 : EASY_BASE_MINUTES)) return week;
     const floorId = held >= 20 ? "easy_20" : "easy_10";
     return week.map((run) =>
-      run.type === "easy" && TAPER_FLOOR_IDS.has(run.templateId)
+      run.type === "easy" && floorIds.has(run.templateId)
         ? {
             ...run,
             templateId: floorId,

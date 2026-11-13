@@ -4692,6 +4692,41 @@ drawn them.
       Passing: the cards grow taller and keep every word; the band grows
       with the race's name.
 
+## Readiness, and the Health plugin that reads sleep and heart (2026-11-13)
+
+Affects: the Health plugin (`@capgo/capacitor-health` 8.12.3 in place of
+`capacitor-health`), `healthKit.ts`, WatchRun's `openAppSettings`,
+readiness on Home's lift hero (`ReadinessStrip`, `useTodayReadiness`,
+`readiness.ts`), Train's `easier=1` link, and Pro's sleep and heart
+(`useBodySignals`, `bodySignals.ts`). Unit tests mock the plugin and the
+end-to-end tests run in Chromium; no phone has run any of it, and the
+simulator build in CI is the only native compile.
+
+- [ ] **Steps still read (the plugin switch).** On an account with steps
+      connected, open Home. Passing: today's steps match the Health app;
+      Settings → Apple Health's "Open Settings" opens Tropos's page in iOS
+      Settings, as before.
+- [ ] **The morning question.** On a lift day with nothing known, Home's
+      hero asks "How do you feel today?". Passing: Tired shows "Steady ·
+      You said you’re tired" and "Go easier today"; tapping it opens the
+      session with one set less per lift and lighter loads; Change asks
+      again; tomorrow it asks afresh.
+- [ ] **Sleep and heart (Pro).** On a Pro account with a Watch, tap "Add
+      sleep and heart from Apple Health" and allow all three. Passing:
+      after a normal night Home says "Ready · 7 h … of sleep, resting
+      heart rate as usual"; after a short night, Steady with the night's
+      hours against the usual; the minutes match the Health app's Sleep
+      for that night, counted once when both phone and Watch recorded it.
+- [ ] **Refused in Health.** Turn the three off in the Health app.
+      Passing: no sleep or heart line appears and nothing errors; the
+      question is asked as for a free account.
+- [ ] **The permission sheet.** Passing: iOS shows Steps on its first
+      ask, and Sleep, Resting Heart Rate and Heart Rate Variability on
+      the readiness ask, with the new wording; nothing asks to write.
+- [ ] **App Store privacy answers.** Sleep and heart are read on the
+      phone and never sent, so the "Health and Fitness" data answer is
+      unchanged; confirm in App Store Connect before submitting.
+
 ## Charts older than 3 months and the score's details are Pro (Q84, 2026-11-13)
 
 Affects: Analytics' range pills (6M and 1Y), an exercise's chart (6M, 1Y,

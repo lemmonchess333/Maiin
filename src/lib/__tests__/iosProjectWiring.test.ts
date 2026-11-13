@@ -212,11 +212,13 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     }
   });
 
-  it("asks Health for steps alone in a standard build, and for heart rate and workout export only in the pilot", () => {
-    // A standard build reads steps and nothing else, so its Health prompt
-    // says that. The pilot's expanded text names the Watch's heart rate and
-    // the workout export it adds. One switch, WATCH_RUN_RELEASE_ENABLED,
-    // picks the text, the Watch app and the native gate together.
+  it("asks Health for steps and readiness's sleep and heart in a standard build, and for Watch heart rate and workout export only in the pilot", () => {
+    // A standard build reads steps, and sleep and heart for readiness once
+    // a Pro account adds them (whole-app grill Q39-Q43), so its Health
+    // prompt says that and nothing more. The pilot's expanded text names
+    // the Watch's heart rate and the workout export it adds. One switch,
+    // WATCH_RUN_RELEASE_ENABLED, picks the text, the Watch app and the
+    // native gate together.
     for (const configuration of ["Debug", "Release"]) {
       const standardShare = appInfoPlistString(
         "NSHealthShareUsageDescription",
@@ -229,7 +231,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
         configuration
       );
       expect(standardShare).toBe(
-        "Tropos reads your step count from Health to show today's steps on Home."
+        "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
       );
       expect(standardUpdate).toBe(
         "Tropos does not add workouts or any other data to Health."

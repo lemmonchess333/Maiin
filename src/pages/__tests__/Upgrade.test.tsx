@@ -370,6 +370,8 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "A calorie target that adapts to you",
       "Macros that shift with your training",
       "Running paces that update from your races and tempo runs",
+      "Readiness from your sleep and heart rate in Apple Health",
+      "Charts older than 3 months, your training load and your score’s details",
     ]);
     const freeKeeps = screen.getByText(
       "Free keeps your training plan, run tracking, and typed and barcode food logging."
@@ -404,7 +406,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       within(screen.getByRole("list", { name: "What Pro includes" }))
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toHaveLength(4);
+    ).toHaveLength(6);
     expect(screen.queryByText(/^Free keeps/)).toBeNull();
   });
 

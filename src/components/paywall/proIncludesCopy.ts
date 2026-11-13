@@ -6,7 +6,8 @@ import { DAILY_AI_LIMITS } from "@/lib/subscription";
  *  line is a runtime Pro gate: the first three are the gates in
  *  `proFeatures.ts`, and the last is the pace insight (`usePaceInsight`),
  *  which a free account never sees and which opens no paywall of its own,
- *  so it has no registry key. It was Pro and missing from this list until
+ *  so it has no registry key; so does readiness's sleep and heart
+ *  (`useBodySignals`), which reads only for Pro. It was Pro and missing from this list until
  *  13 November 2026. The server caps Pro scans (`DAILY_AI_LIMITS`), so the
  *  photo line names the cap, not "unlimited". */
 export const PRO_INCLUDES: readonly string[] = [
@@ -14,6 +15,8 @@ export const PRO_INCLUDES: readonly string[] = [
   "A calorie target that adapts to you",
   "Macros that shift with your training",
   "Running paces that update from your races and tempo runs",
+  "Readiness from your sleep and heart rate in Apple Health",
+  "Charts older than 3 months, your training load and your score’s details",
 ];
 
 /** What stays free, said once under the list on the offer. Each is
