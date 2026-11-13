@@ -253,6 +253,12 @@ describe("a new runner's runs after the run-walk weeks", () => {
       newRunnerUntil: newRunner,
       ...more,
     });
+  /* Run24 (8): a beginner's block holds tempo and intervals only once they
+     have run 40 minutes in one go; this one ran 45 two days before. */
+  const ranForty = {
+    recentRuns: [{ date: "2026-09-05", duration: 45 * 60, distance: 7500 }],
+    recentRunsAsOf: start,
+  };
   const minutes = (run: ScheduledRunDay) =>
     plannedRunMinutes(RUN_TEMPLATES.find((t) => t.id === run.templateId)!);
   const races: [RacePlanV2Input["raceGoal"]["distance"], number][] = [
@@ -282,8 +288,8 @@ describe("a new runner's runs after the run-walk weeks", () => {
     // A 10K fourteen weeks out, week 9: three weeks after run-walk, so 35
     // minutes. Week 7 is 20 minutes three times: nothing between 20 and 25
     // minutes is a run of its kind.
-    const regular = plan("10k", 14, null);
-    const fresh = plan("10k", 14, until);
+    const regular = plan("10k", 14, null, ranForty);
+    const fresh = plan("10k", 14, until, ranForty);
     expect(regular.weeks[8].map((r) => r.templateId)).toEqual([
       "long_10k",
       "easy_50",
@@ -308,8 +314,8 @@ describe("a new runner's runs after the run-walk weeks", () => {
 
   it("are the plan's own wherever the plan's run fits, and the race is the race", () => {
     for (const [distance, weeks] of races) {
-      const regular = plan(distance, weeks, null);
-      const fresh = plan(distance, weeks, until);
+      const regular = plan(distance, weeks, null, ranForty);
+      const fresh = plan(distance, weeks, until, ranForty);
       const firstTaper = weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance];
       const buildHeldQuality = fresh.weeks
         .slice(0, firstTaper)
@@ -319,7 +325,7 @@ describe("a new runner's runs after the run-walk weeks", () => {
         if (i < NEW_RUNNER_WEEKS) return;
         const most = 20 + 5 * (i - NEW_RUNNER_WEEKS + 1);
         week.forEach((run) => {
-          const own = regular.weeks[i].find(day => day.date === run.date)!;
+          const own = regular.weeks[i].find((day) => day.date === run.date)!;
           // A new runner whose build never reached quality keeps the
           // taper easy, even when the sharpener now fits their minutes.
           if (
@@ -354,12 +360,16 @@ describe("a new runner's runs after the run-walk weeks", () => {
       });
     }
     // A 5K fourteen weeks out is the plan's own from week 11.
-    const regular = plan("5k", 14, null);
-    plan("5k", 14, until).weeks.slice(10).forEach((week, offset) => {
-      for (const run of week) {
-        expect(run).toEqual(regular.weeks[offset + 10].find(day => day.date === run.date));
-      }
-    });
+    const regular = plan("5k", 14, null, ranForty);
+    plan("5k", 14, until, ranForty)
+      .weeks.slice(10)
+      .forEach((week, offset) => {
+        for (const run of week) {
+          expect(run).toEqual(
+            regular.weeks[offset + 10].find((day) => day.date === run.date)
+          );
+        }
+      });
   });
 
   it("does not make taper the first quality week after run-walk", () => {
@@ -397,9 +407,11 @@ describe("a new runner's runs after the run-walk weeks", () => {
         const plan2 = (newRunner: string | null) =>
           generateRacePlanV2({
             recentLayoff: "none",
-            weekSchedule: generateSchedule(0, days).map(day => ({
+            weekSchedule: generateSchedule(0, days).map((day) => ({
               ...day,
-              type: starterRunSlots(generateSchedule(0, days)).includes(day.day) ? "run" : "rest",
+              type: starterRunSlots(generateSchedule(0, days)).includes(day.day)
+                ? "run"
+                : "rest",
             })),
             weeklyRunDays: Math.min(days, 3),
             raceGoal: {
@@ -417,7 +429,10 @@ describe("a new runner's runs after the run-walk weeks", () => {
           week.forEach((run) => {
             if (run.type !== "tempo" && run.type !== "intervals") return;
             expect(
-              family(regular.weeks[i].find(day => day.date === run.date)!.templateId),
+              family(
+                regular.weeks[i].find((day) => day.date === run.date)!
+                  .templateId
+              ),
               `${distance} in ${weeks} weeks, ${days} days, week ${i + 1}`
             ).toContain(run.templateId);
           })

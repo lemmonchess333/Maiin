@@ -23,6 +23,12 @@ function instant(text: string | null | undefined): Date | null {
   return Number.isFinite(at.getTime()) ? at : null;
 }
 
+/** A trial bought on the website: RevenueCat Billing on Stripe, or Paddle
+ *  (owner, 13 Nov 2026). Managed from the web app's Account, not a store. */
+export function isWebStore(store: string): boolean {
+  return store === "rc_billing" || store === "paddle";
+}
+
 /** The store's own list of a person's subscriptions, where they cancel. */
 export function storeSubscriptionsUrl(store: string): string {
   return store === "play_store"

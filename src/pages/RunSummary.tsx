@@ -123,7 +123,6 @@ import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
-import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -2230,13 +2229,7 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
-            {saved && (
-              <CompletionExtras
-                share={shareAction}
-                kind="run"
-                activationJourneyV2={isActivationJourneyV2(profile)}
-              />
-            )}
+            {saved && <CompletionExtras share={shareAction} kind="run" />}
 
             {/* The save action the post-save fields never had. It appears
                 only once they differ from what was written, so a user who

@@ -107,6 +107,11 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["REVENUECAT_REST_KEY"],
   },
+  getSubscriptionManagementUrl: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   trialReminderSweep: {
     kind: "schedule",
     maxInstances: 1,
