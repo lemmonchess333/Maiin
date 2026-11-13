@@ -212,6 +212,13 @@ patch to our own Stripe checkout was dropped unpushed, and
 `createCheckoutSession` and `stripeWebhook` stay dormant until the new
 path has worked, then go.
 
+Then: **"we need to sell to EU and America as well"**, which overturns
+Q78 (UK first). On RevenueCat Billing Tropos is the seller of record and
+owes EU VAT from the first sale and US sales tax past each state's
+threshold. RevenueCat's Paddle Billing engine makes Paddle the seller of
+record, handling both for about 5% + 50 cents. The app accepts a purchase
+from either engine, so which one is a dashboard setting.
+
 ## Waiting on Round 7
 
 The research for these is in; the questions are not yet asked: the price
