@@ -7,13 +7,18 @@
  * owns the whole estimate → cap → precedence → view-assembly pipeline as ONE
  * pure function, so the decision matrix has a single test surface and the hook
  * (`useAdaptiveTdee`) is left as plumbing (Firestore I/O + the session latch +
- * cap persistence). The smaller `resolveTargetSource` / `applyWeeklyCap` /
- * `isAdaptiveActive` are the pure steps it composes (kept exported so each step
- * stays independently table-testable).
+ * cap persistence). The smaller `resolveTargetSource` / `applyWeeklyCap` are
+ * pure steps it composes (kept exported so each step stays independently
+ * table-testable); `isPersonalTargetWorkedOut` is the gate the hook shares
+ * with it for whether to read at all.
  *
  * Locked invariants (Nutr2, stale-hold amendment 2026-08-05):
  * - Precedence: manual override > learned (Pro/trial + ready-or-held) > formula.
- * - Free users never see learned and never see the warmup ("no tease").
+ * - Free users never have learned APPLIED. Since the whole-app grill's Q49
+ *   and Q87 (13 November 2026) the estimate is worked out for them too: they
+ *   see the warmup, and once the gate clears they are told their personal
+ *   target, and the 7-day trial is offered then (Q71). This builds the
+ *   free-user teaser Nutr2's Q4 deferred to the paywall work (its option B).
  * - The learned number moves at most ±150 kcal per rolling 7 days, seeded from
  *   the formula target so the formula→learned handoff never jumps — and once
  *   learned, an un-ready gate HOLDS the last applied value rather than
@@ -161,18 +166,31 @@ export function applyWeeklyCap(
 // ── Orchestrator: the adaptive-target engine entry point ─────────────────
 
 /**
- * Adaptive is active ONLY for a signed-in Pro/trial user without a manual
- * calorie override (Q4 lock A). This is the SINGLE definition of the
- * eligibility gate — both the resolver and the hook's data-load gate call it,
- * so the precedence ladder can't drift between "do we read data" and "what do
- * we show".
+ * Adaptive is APPLIED only for a signed-in Pro/trial user without a manual
+ * calorie override (Q4 lock A). Whether the estimate is read and worked out
+ * at all is `isPersonalTargetWorkedOut`, which the hook's data-load gate
+ * shares with the resolver, so "do we read data" and "what do we show"
+ * still cannot drift.
  */
-export function isAdaptiveActive(p: {
+function isAdaptiveActive(p: {
   hasUser: boolean;
   isPro: boolean;
   isManualOverride: boolean;
 }): boolean {
   return p.hasUser && p.isPro && !p.isManualOverride;
+}
+
+/**
+ * Whether the personal target is WORKED OUT for this account: signed in,
+ * with no manual calorie target, Pro or free (whole-app grill Q49, Q87).
+ * The hook's data-load gate reads this; `isAdaptiveActive` decides only
+ * whether the result is applied.
+ */
+export function isPersonalTargetWorkedOut(p: {
+  hasUser: boolean;
+  isManualOverride: boolean;
+}): boolean {
+  return p.hasUser && !p.isManualOverride;
 }
 
 /** The fully-resolved adaptive view consumed by `useEffectiveTargets`. */
@@ -194,6 +212,14 @@ export interface AdaptiveTdeeView {
   /** The learned maintenance behind a learned target (the target before
    *  the goal's deficit or surplus); null while the formula wins. */
   maintenance: number | null;
+  /**
+   * The personal target the estimate points at today (learned maintenance
+   * plus the goal's offset, with the same floor as the formula), for any
+   * account it is worked out for (Q49, Q87); null until the gate clears.
+   * Pro moves `value` toward it through the weekly cap; a free account is
+   * told it and keeps the formula.
+   */
+  personalTarget: number | null;
 }
 
 export interface ResolveAdaptiveTargetInput {
@@ -259,7 +285,18 @@ function inactiveView(formulaTarget: number): AdaptiveTdeeView {
     warmupFraction: 0,
     stalled: false,
     maintenance: null,
+    personalTarget: null,
   };
+}
+
+/** The target a ready estimate points at: learned maintenance plus the
+ *  goal's offset, floored as `calculateTDEE` floors the formula (NUTR-L5). */
+function personalTargetFrom(
+  learnedTDEE: number | null,
+  goalOffset: number
+): number | null {
+  if (learnedTDEE == null || !Number.isFinite(learnedTDEE)) return null;
+  return Math.round(floorTargetCalories(learnedTDEE + goalOffset, learnedTDEE));
 }
 
 /**
@@ -287,9 +324,36 @@ export function resolveAdaptiveTarget(
     frozen,
   } = input;
 
-  if (!isAdaptiveActive({ hasUser, isPro, isManualOverride })) {
+  if (!isPersonalTargetWorkedOut({ hasUser, isManualOverride })) {
     return {
       view: inactiveView(formulaTarget),
+      capState: null,
+      capChanged: false,
+    };
+  }
+
+  // A free account (Q49, Q87): the estimate is worked out and shown as
+  // progress, then as a personal target once the gate clears, but never
+  // applied: the target stays the formula and no cap moves or is stored.
+  // A downgraded account's leftover cap state is left alone for when it
+  // comes back to Pro.
+  if (!isAdaptiveActive({ hasUser, isPro, isManualOverride })) {
+    const result = estimateAdaptiveTDEE({ intakeByDay, weighIns });
+    const liveFraction = computeWarmupProgress(result).fraction;
+    return {
+      view: {
+        active: false,
+        ready: result.ready,
+        source: "formula",
+        value: formulaTarget,
+        showWarmup: loaded && !result.ready,
+        warmupFraction: Math.max(latched, liveFraction),
+        stalled: loaded && !result.ready && liveFraction + 0.001 < latched,
+        maintenance: null,
+        personalTarget: result.ready
+          ? personalTargetFrom(result.learnedTDEE, goalOffset)
+          : null,
+      },
       capState: null,
       capChanged: false,
     };
@@ -309,6 +373,8 @@ export function resolveAdaptiveTarget(
         warmupFraction: Math.max(latched, 1),
         stalled: false,
         maintenance: capPrev.lastApplied - goalOffset,
+        // No estimate runs during the freeze.
+        personalTarget: null,
       },
       capState: capPrev,
       capChanged: false,
@@ -357,6 +423,8 @@ export function resolveAdaptiveTarget(
         warmupFraction: Math.max(latched, liveFraction),
         stalled: loaded && liveFraction + 0.001 < latched,
         maintenance: capPrev.lastApplied - goalOffset,
+        // The gate is down: no fresh estimate to point at.
+        personalTarget: null,
       },
       capState: capPrev,
       capChanged: false,
@@ -371,13 +439,13 @@ export function resolveAdaptiveTarget(
   // endpoints share it and the formula→learned handoff stays continuous.
   // NUTR-L5: the same safety floor as `calculateTDEE` — the offset can never
   // push the learned target below min(learned maintenance, MIN_TARGET_CALORIES).
+  const personalTarget = result.ready
+    ? personalTargetFrom(result.learnedTDEE, goalOffset)
+    : null;
   const cap =
-    result.ready && result.learnedTDEE != null
+    personalTarget != null
       ? applyWeeklyCap({
-          rawLearned: floorTargetCalories(
-            result.learnedTDEE + goalOffset,
-            result.learnedTDEE
-          ),
+          rawLearned: personalTarget,
           formulaTarget,
           prev: capPrev,
           now,
@@ -411,6 +479,7 @@ export function resolveAdaptiveTarget(
           : result.learnedTDEE != null
             ? Math.round(result.learnedTDEE)
             : resolved.value - goalOffset,
+      personalTarget,
     },
     capState: cap?.capState ?? null,
     capChanged: cap?.changed ?? false,

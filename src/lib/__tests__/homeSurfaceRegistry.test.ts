@@ -90,6 +90,7 @@ describe("Home's tier-4 surface registry", () => {
         "first-visit-guide",
         "goal-reached",
         "lift-return",
+        "race-check",
         "run-return",
         "trial-expired",
       ].sort()
@@ -122,6 +123,18 @@ describe("Home's tier-4 surface registry", () => {
     // week's ledger and its flag, so the run return stands down.
     const runReturn = regs.find((r) => r.id === "run-return")!;
     expect(runReturn.suppressedBy).toContain("fell-behind");
+  });
+
+  it("lets the weekly check and the run return speak before the race check", () => {
+    // Run24 (11): the race check reads the same runs; a week the server
+    // flagged, or an absence the run return greets, is said once.
+    const raceCheck = regs.find((r) => r.id === "race-check")!;
+    expect(raceCheck.suppressedBy).toEqual(
+      expect.arrayContaining(["fell-behind", "run-return"])
+    );
+    const byId = Object.fromEntries(regs.map((r) => [r.id, r.priority]));
+    expect(byId["run-return"]).toBeGreaterThan(byId["race-check"]);
+    expect(byId["race-check"]).toBeGreaterThan(byId["goal-reached"]);
   });
 
   it("asks a hybrid about the weights before the running", () => {

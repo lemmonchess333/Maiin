@@ -39,7 +39,7 @@ import type { ProgramState } from "@/features/program/programTypes";
 import { raceLongRunReach } from "@/features/program/raceWeeksAhead";
 import { raceOutOfReach } from "@/features/program/runPlanTiming";
 import type { UserProfile } from "@/lib/auth";
-import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { resolveDistanceUnit, type DistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel } from "@/lib/runLabels";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
@@ -65,7 +65,7 @@ interface FellBehindSheetProps {
   };
   /** Which return surface opened the sheet, for `return_choice`: the
    *  weekly check's prompt, or the run return. */
-  surface?: Extract<ReturnSurface, "fell-behind" | "run-return">;
+  surface?: Extract<ReturnSurface, "fell-behind" | "run-return" | "race-check">;
   /** Writers from useProgram. */
   dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
   /** Re-anchor the plan to today (keep the race date). Already wrapped by the
@@ -97,6 +97,18 @@ interface FellBehindSheetProps {
    *  distances, and what each choice gives. Worked out here, in the
    *  sheet's own chunk, so the engine loads with the sheet and not with
    *  every visit to Home. */
+  /** Run24 (11), deep dive D14: the weekly check from the long runs
+   *  actually done (`raceLongRunCheck`), when its reach is under half the
+   *  race. Opens the sheet in its race register: the runner's longest run,
+   *  what it builds to before the taper and the race, and moving the race
+   *  first. In km. */
+  raceCheck?: {
+    longestKm: number;
+    reachKm: number;
+    raceKm: number;
+    distance: string;
+    unit: DistanceUnit;
+  } | null;
   raceReach?: {
     profile: UserProfile;
     programState: ProgramState | null | undefined;
@@ -125,12 +137,14 @@ export default function FellBehindSheet({
   raceModeActive,
   recentLayoff,
   raceReach = null,
+  raceCheck = null,
   surface = "fell-behind",
 }: FellBehindSheetProps) {
   // The week's ledger, when there is one to show and the gap is a missed
   // week rather than a return.
-  const ledger = recentLayoff === "detrained" ? null : (prompt ?? null);
-  const detrained = ledger === null;
+  const ledger =
+    raceCheck || recentLayoff === "detrained" ? null : (prompt ?? null);
+  const detrained = ledger === null && !raceCheck;
   /** A return's race the plan can't build up to in time, in the reader's
    *  unit. Only walked while the sheet is open in that register. */
   const outOfReach = useMemo(() => {
@@ -147,9 +161,22 @@ export default function FellBehindSheet({
       race: label(reach.raceKm),
     };
   }, [open, detrained, raceModeActive, raceReach]);
+  /** The race register's distances, in the reader's unit. */
+  const checked = raceCheck
+    ? (() => {
+        const label = (km: number) =>
+          distanceLabel(km * 1000, raceCheck.unit).replace(/\.0(?= )/, "");
+        return {
+          longest: label(raceCheck.longestKm),
+          reach: label(raceCheck.reachKm),
+          race: label(raceCheck.raceKm),
+          raceName: RACE_NAME[raceCheck.distance] ?? "The race",
+        };
+      })()
+    : null;
   /** Lead with moving the race: a return whose race is past what the
-   *  plan can build to. */
-  const moveFirst = outOfReach !== null;
+   *  plan can build to, or the weekly check's race register. */
+  const moveFirst = outOfReach !== null || checked !== null;
 
   /**
    * `return_choice`, paired with the `return_surface_shown` the coordinator
@@ -229,7 +256,13 @@ export default function FellBehindSheet({
         reportChoice("dismissed");
         onClose();
       }}
-      title={detrained ? "Welcome back" : "Last week didn’t go to plan"}
+      title={
+        checked
+          ? "Your long runs and your race"
+          : detrained
+            ? "Welcome back"
+            : "Last week didn’t go to plan"
+      }
       description="Pick how you want to adjust"
       hideHeader
       choices={choices}
@@ -241,26 +274,30 @@ export default function FellBehindSheet({
         </div>
         <div>
           <SectionLabel>
-            {detrained ? "Welcome back" : "Last week"}
+            {checked ? "Long runs" : detrained ? "Welcome back" : "Last week"}
           </SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
-            {ledger
-              ? `${ledger.realRunCount} of ${ledger.weeklyTarget} runs (${Math.round(ledger.completedRatio * 100)}%)`
-              : "It’s been a while between runs"}
+            {checked
+              ? `Your longest run in four weeks: ${checked.longest}`
+              : ledger
+                ? `${ledger.realRunCount} of ${ledger.weeklyTarget} runs (${Math.round(ledger.completedRatio * 100)}%)`
+                : "It’s been a while between runs"}
           </p>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {outOfReach
-          ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
-          : detrained
-            ? raceModeActive
-              ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
-              : "Ease back in — a couple of short, easy runs is the win this week."
-            : raceModeActive
-              ? "Want to adjust the plan to match where you are now?"
-              : "Your weekly target stays the same."}
+        {checked
+          ? `Building on that a little each week, your long run gets to about ${checked.reach} before the taper. ${checked.raceName} is ${checked.race}. Moving the race gives your running time to build up to it, or realign the plan and keep the date.`
+          : outOfReach
+            ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
+            : detrained
+              ? raceModeActive
+                ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
+                : "Ease back in — a couple of short, easy runs is the win this week."
+              : raceModeActive
+                ? "Want to adjust the plan to match where you are now?"
+                : "Your weekly target stays the same."}
       </p>
     </ChoiceSheet>
   );

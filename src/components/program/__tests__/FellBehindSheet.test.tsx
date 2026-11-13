@@ -388,6 +388,69 @@ describe("FellBehindSheet — opened by the run return", () => {
   });
 });
 
+/* Run24 (11), deep dive D14: the weekly check from the long runs done
+   opens the sheet in its race register, with the runner's longest run,
+   what it builds to and the race, and moving the race first. */
+describe("FellBehindSheet — the race register", () => {
+  function setupCheck(unit: "km" | "mi" = "km") {
+    const dismissFellBehindPrompt = vi.fn(async () => APPLIED);
+    const realignRacePlan = vi.fn(async () => {});
+    const onRaceMoved = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <FellBehindSheet
+        open={true}
+        onClose={onClose}
+        dismissFellBehindPrompt={dismissFellBehindPrompt}
+        realignRacePlan={realignRacePlan}
+        onRaceMoved={onRaceMoved}
+        raceModeActive={true}
+        recentLayoff="none"
+        surface="race-check"
+        raceCheck={{
+          longestKm: 4,
+          reachKm: 12,
+          raceKm: 42.2,
+          distance: "marathon",
+          unit,
+        }}
+      />
+    );
+    return { realignRacePlan, onRaceMoved, onClose };
+  }
+
+  it("gives the longest run, what it builds to and the race", () => {
+    setupCheck();
+    expect(
+      screen.getByText("Your longest run in four weeks: 4 km")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /your long run gets to about 12 km before the taper\. A marathon is 42\.2 km\./
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/ of .* runs \(/i)).not.toBeInTheDocument();
+  });
+
+  it("leads with moving the race, and keeps the realign one tap below", async () => {
+    const { onRaceMoved, onClose } = setupCheck();
+    const buttons = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(buttons.indexOf("Move my race →")).toBeLessThan(
+      buttons.indexOf("Realign my plan")
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Move my race/i }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onRaceMoved).toHaveBeenCalledTimes(1);
+  });
+
+  it("says the distances in miles for a reader in miles", () => {
+    setupCheck("mi");
+    expect(
+      screen.getByText(/Your longest run in four weeks: 2\.5 mi/)
+    ).toBeInTheDocument();
+  });
+});
+
 describe("sport-coding — the return sheets are two colours, not one", () => {
   /* The Run return sheet's main CTA was `primary` (purple), the same as
      the LIFT return sheet's, while its own icon was `text-running`. So
