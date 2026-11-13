@@ -26,7 +26,6 @@ import WeekPreview from "@/components/onboarding/WeekPreview";
 import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
 import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
 import DailyTarget from "@/components/onboarding/DailyTarget";
-import { SETUP_REMINDER_TIME } from "@/lib/workoutReminderCopy";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { injuryChanges } from "@/features/program/injuryChanges";
 import {
@@ -110,9 +109,6 @@ import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 
 /* The review's reminder row is its own chunk, fetched once setup has
    drawn, so the questions before it do not carry it. */
-const loadSetupReminderRow = () =>
-  import("@/components/onboarding/SetupReminderRow");
-const SetupReminderRow = lazyRetry(loadSetupReminderRow);
 /* The list of upcoming races is its own chunk as well, fetched once someone
    says they have entered a race. */
 const loadSetupRacePicker = () =>
@@ -405,11 +401,6 @@ export default function Onboarding() {
   const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(
     draft?.paceKgPerWeek ?? 0.5
   );
-  // The review's optional reminder (Mob1 call 3): off until turned on.
-  const [reminderOn, setReminderOn] = useState(draft?.reminderOn ?? false);
-  const [reminderTime, setReminderTime] = useState(
-    draft?.reminderTime ?? SETUP_REMINDER_TIME
-  );
   const liftUnit = liftUnitForBodyWeight(weightDisplayUnit);
   const [metricsValid, setMetricsValid] = useState(true);
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
@@ -459,8 +450,6 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
-      reminderOn,
-      reminderTime,
     }),
     [
       step,
@@ -506,17 +495,12 @@ export default function Onboarding() {
       runningLongestMinutes,
       goalWeightText,
       paceKgPerWeek,
-      reminderOn,
-      reminderTime,
     ]
   );
   useEffect(() => {
     if (user && !saving && !onboardingCompletedRef.current)
       saveOnboardingDraft(user.uid, answers);
   }, [user, saving, answers]);
-  useEffect(() => {
-    void loadSetupReminderRow().catch(() => {});
-  }, []);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1044,22 +1028,6 @@ export default function Onboarding() {
 
       onboardingCompletedRef.current = true;
       clearOnboardingDraft(user.uid);
-
-      // The review's reminder, when it was turned on: the settings
-      // document the reminders read (`useWorkoutReminders`), written
-      // before the app's route set changes so the reminders find it when
-      // they start. Best-effort, like the public profile below: the plan
-      // is saved, and Settings → Notifications can turn it on again.
-      if (reminderOn) {
-        try {
-          await setDocGuarded(
-            doc(db, "users", user.uid, "settings", "workoutReminders"),
-            { enabled: true, time: reminderTime }
-          );
-        } catch (reminderErr) {
-          logger.warn("Onboarding: reminder save failed", reminderErr);
-        }
-      }
 
       // Data is saved server-side (the CF flipped onboardingComplete=true
       // and wrote the chosen experience/plan fields via the Admin SDK).
@@ -2222,18 +2190,6 @@ export default function Onboarding() {
                 )}
 
               {validBody && <DailyTarget {...dailyTarget} />}
-              <Suspense fallback={null}>
-                <SetupReminderRow
-                  on={reminderOn}
-                  time={reminderTime}
-                  schedule={plan.weekSchedule}
-                  programme={hasLifting ? plan.programState : null}
-                  onChange={(next) => {
-                    if (next.on !== undefined) setReminderOn(next.on);
-                    if (next.time !== undefined) setReminderTime(next.time);
-                  }}
-                />
-              </Suspense>
               <details className="rounded-2xl bg-card card-shadow px-4">
                 <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
                   Your answers

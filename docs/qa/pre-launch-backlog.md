@@ -65,12 +65,31 @@ gate (`raceGoalValid`) takes it from the Firestore deploy.
       read back as A race I've entered), and on the goal's date the run
       tab says "Your 10K" and "Start your 10K".
 
+## The one ask for notifications (owner, Q66, 13 November 2026)
+
+The section below is the first-week offer this widened. Since 13 November
+every account is asked, once, on the finish screen of its first saved
+session with no answer on file (`ReminderOffer`), and one Remind me turns
+on the training-day reminder AND the server's pushes (streak nudge, weekly
+recap, badge): one iPhone permission covers both, and push had been asked
+for only from a switch in Settings. Setup's reminder row and the finish
+screen's evening-reminder switch are gone.
+
+- [ ] **One prompt, both channels.** On a TestFlight build, a new account,
+      save a first workout and answer the share question. Passing: Remind
+      me shows the iOS permission prompt once; after Allow, Settings →
+      Notifications shows training-day reminders on and Push on, and
+      Diagnostics shows this device's push token registered.
+- [ ] **An older account is asked too.** On an account set up before
+      this build that never answered the offer, save a session. Passing:
+      the offer shows once, and not again after either answer.
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
 share question is answered, the finish screen offers the training-day
 reminder by naming the next session ("Remind you before Pull B?", with
-when it would first go off) and Not now (`FirstWeekReturnOffer`). Remind
+when it would first go off) and Not now (`FirstWeekReturnOffer`, now `ReminderOffer`). Remind
 me asks the phone for notification permission and turns on the reminder
 at setup's 07:30; a refusal says where to allow it. It asks nothing when
 setup's reminder row already turned it on, and a v2 account is no longer
