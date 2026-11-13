@@ -394,6 +394,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D16. "Harder" on six days puts tempo, a 75 to 90 minute run and intervals on consecutive days. Polish.
 
 - Evidence: `evidence/direct/outlines.json`, `marathon-18w-harder-6days-easy-323`, weeks 9 to 14 (for example week 14: Mon 6x1k, Tue easy_90, Wed tempo_40). Root cause: with no clear day the fill order is kept (`src/features/program/runPlacement.ts:62-80`). Fix: in a two-quality week cap the medium-long at 50 to 60 min or drop it. Size S.
+- STATUS 2026-11-13: built. A week with two quality sessions whose medium-long has no day clear of them and the long run holds it at 50 minutes, under the hour Run20 counts as demanding: the six-day harder marathon's Tuesdays of 60, 75 and 90 minutes between intervals and a tempo are 50 (`midLongTwoQuality.test.ts`). Its stepped taper then takes its shares of the 50 the build held (Run22). A week with one quality session, or a clear day, keeps its medium-long.
 
 ### D17. Heart rate plays no part in a plan. Hurts quality against HR-led competitors.
 

@@ -36,6 +36,7 @@ import { newRunnerTemplate } from "./newRunner";
 import { starterRunSlots, starterTemplateId } from "./starterPlan";
 import {
   chooseQualityRunSlots,
+  clearOf,
   easyDaysInFillOrder,
   pickLongRunSlot,
 } from "./runPlacement";
@@ -289,6 +290,11 @@ const EASY_PEAK_MINUTES = 50;
  * ceiling above, these are TROPOS HEURISTICS (RUN-EV-06 register), not
  * source-derived safety rules.
  */
+/** Deep dive D16: the medium-long of a week with two quality sessions and
+ *  no day clear of them, held under the hour that makes it demanding
+ *  (Run20). */
+const CROWDED_MEDIUM_LONG_MINUTES = 50;
+
 const MEDIUM_LONG_PEAK_MINUTES: Record<
   "5k" | "10k" | "half" | "marathon",
   number
@@ -1806,11 +1812,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               })
             );
           }
-          easyDaysInFillOrder({
+          const easyOrder = easyDaysInFillOrder({
             easyDays: remaining.filter((day) => !qualitySlots.includes(day)),
             demandingDays: [longSlot, ...qualitySlots],
             mediumLongDemanding: midLongDemanding,
-          }).forEach((d, i) =>
+          });
+          /* Deep dive D16: a week with two quality sessions and no day clear
+             of them and the long run put an hour-and-a-half run between
+             intervals and a tempo (6 x 1 km, 90 minutes, 40 minutes of
+             tempo on Monday to Wednesday). There the medium-long is held
+             under the hour, so it is not one more demanding run beside
+             them. A Tropos heuristic in the RUN-EV-06 register. */
+          const weekMidLongId =
+            secondQualityHere &&
+            midLongDemanding &&
+            easyOrder.length > 0 &&
+            !clearOf(easyOrder[0], [longSlot, ...qualitySlots])
+              ? easyTierForMinutes(CROWDED_MEDIUM_LONG_MINUTES)
+              : midLongId;
+          easyOrder.forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
@@ -1818,7 +1838,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
                 // WAVE1-STRIDES: the next plain easy gains strides.
                 templateId:
                   i === 0
-                    ? midLongId
+                    ? weekMidLongId
                     : i === 1 && input.recentLayoff !== "detrained"
                       ? stridesVariantOf(easyId)
                       : easyId,
