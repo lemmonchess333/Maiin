@@ -127,7 +127,7 @@ import {
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { useWeekPulse } from "@/hooks/useWeekPulse";
 import {
   historyRange,
   liftFigures,
@@ -676,6 +676,12 @@ export default function History() {
     error: mealsError,
   });
   const { profile } = useAuth();
+  /* This week as Home and the finish screens count it, read once: the
+     lifts and runs the plan holds now (`trainingWeek`; grill Q14, one
+     module for every weekly count). */
+  const weekPulse = useWeekPulse();
+  const plannedThisWeek =
+    (weekPulse?.lifts?.planned ?? 0) + (weekPulse?.runs?.planned ?? 0);
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
@@ -1452,16 +1458,12 @@ export default function History() {
                         to: periodHistoryHref,
                         returnTo: historyReturnTo,
                       }}
-                      /* The user's own weekly targets. `daysPerWeek` is what
-                         onboarding asked for and, capped at 6, is never
-                         reshaped by the engine's 7-day cap — so requested
-                         and actual agree. The run side goes through the
-                         canonical resolver rather than reading either of
-                         the two drifted profile fields directly. */
-                      plannedThisWeek={
-                        (profile?.daysPerWeek ?? 0) +
-                        getWeeklyRunTarget(profile)
-                      }
+                      /* This week's planned sessions from the plan as it is
+                         now (`trainingWeek`, the count Home and the finish
+                         screens show), not the days asked for at setup,
+                         which are written once (App1's third settings
+                         fault). */
+                      plannedThisWeek={plannedThisWeek}
                       distanceUnit={unit}
                     />
                   </SectionErrorBoundary>
