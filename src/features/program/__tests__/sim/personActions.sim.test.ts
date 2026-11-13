@@ -79,7 +79,9 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   deadlift's own range (5 to 8) reaches its top sooner than 8 to 12 did,
  *   so the wait is long enough for the check to see.
  * - gone: the light trainer's missed press, the swapped squat's
- *   `acsm-size:quads` (F12) and the dumbbell lifter's waiting curl.
+ *   `acsm-size:quads` (F12) and the dumbbell lifter's waiting curl; the
+ *   half marathoner's `volume-jump`, with Run24 (6)'s hold of a week to
+ *   15% over the last full one.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
@@ -98,7 +100,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "spike",
     "volume-jump",
   ],
-  "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
+  "half-moves-long-run": ["long-share", "spike", "under-dose"],
 };
 
 const seasons = new Map<string, Season>();

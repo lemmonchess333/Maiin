@@ -280,7 +280,7 @@ describe("the layoff reaches the plan the runner is given", () => {
     // the base — if this ever stops being true the test below is vacuous.
     const week = await weekAfterRollover(1);
     expect(hardCount(week)).toBeGreaterThan(0);
-    expect(longestKm(week)).toBeGreaterThan(15);
+    expect(longestKm(week)).toBeGreaterThan(16);
   });
 
   it("retains saved time limits when a real hook rolls into a build week", async () => {
@@ -533,7 +533,7 @@ describe("what else a regenerated week is built from", () => {
   it("caps the long run at a slow runner's confirmed easy pace", async () => {
     // Run17: at a confirmed easy pace of 10:42/km (VDOT 20) the
     // marathon's 180-minute ceiling (Run24 (1)) admits no long run past
-    // 15 km. The trained runner above reaches past 15 km in the same week,
+    // 16 km. The trained runner above reaches past 16 km in the same week,
     // so a week built without the pace would too.
     await rolledOver(() => ({
       ...raceProfile(),
@@ -544,7 +544,7 @@ describe("what else a regenerated week is built from", () => {
     );
     const week = persistedRunDays("userA");
     expect(longestKm(week)).toBeGreaterThan(0);
-    expect(longestKm(week)).toBeLessThanOrEqual(15);
+    expect(longestKm(week)).toBeLessThanOrEqual(16);
   });
 
   it("gives a runner new to running no tempo or intervals in their first weeks", async () => {

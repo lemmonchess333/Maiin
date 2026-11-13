@@ -42,7 +42,10 @@ import {
   type RunVolumePreset,
 } from "../runScheduler";
 import { generateSchedule } from "@/lib/scheduleUtils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import {
+  RETIRED_RUN_TEMPLATE_IDS,
+  RUN_TEMPLATES,
+} from "@/lib/workoutTemplates";
 import {
   localDateString,
   localWeekKey,
@@ -146,9 +149,15 @@ describe("LONG_RUN_TIERS ↔ RUN_TEMPLATES", () => {
     // a template that was renamed away) is invisible until a plan emits an
     // id the prefill can't resolve. A rung nothing can reach is the same
     // dead data as the `peakLongKm: 32` this module was written to fix.
+    // Run24 (6): `long_15k` and `long_25k` stay in the registry so a plan
+    // that holds them still reads; the 2 km ladder climbs past them.
+    const retired = RETIRED_RUN_TEMPLATE_IDS;
     const reachable = new Set(
       [...LONG_MIN_BY_ID.entries()]
-        .filter(([, min]) => min <= MARATHON_LONG_RUN_MAX_MINUTES)
+        .filter(
+          ([id, min]) =>
+            min <= MARATHON_LONG_RUN_MAX_MINUTES && !retired.has(id)
+        )
         .map(([id]) => id)
     );
     expect(emittedLongIds()).toEqual(reachable);
@@ -296,13 +305,13 @@ describe("the long run progresses toward the race", () => {
         ).toBeLessThanOrEqual(atPeak);
       }
       // Run17: the ramp ends at the peak the ceiling lets THIS runner
-      // schedule — 25 km on the nominal table, held for the last ~15% of
+      // schedule — 26 km on the nominal table, held for the last ~15% of
       // the ramp — not at the 32 km the config declares, which left the
       // last six weeks flat at the ceiling tier.
-      expect(maxSchedulableLongKm(null)).toBe(25);
-      expect(atPeak).toBeLessThanOrEqual(25 * (1 + PEAK_HOLD_FRACTION));
-      expect(atPeak).toBeGreaterThanOrEqual(25);
-      expect(longTierForKm(atPeak)).toBe("long_25k");
+      expect(maxSchedulableLongKm(null)).toBe(26);
+      expect(atPeak).toBeLessThanOrEqual(26 * (1 + PEAK_HOLD_FRACTION));
+      expect(atPeak).toBeGreaterThanOrEqual(26);
+      expect(longTierForKm(atPeak)).toBe("long_26k");
     }
   });
 });
@@ -326,9 +335,10 @@ describe("Run17 — the ceiling measures the runner's own pace: 150 minutes, and
   const marathonCeiling = { maxMinutes: MARATHON_LONG_RUN_MAX_MINUTES };
 
   it("no confirmed benchmark → the nominal table", () => {
-    expect(maxSchedulableLongKm(null)).toBe(25);
-    expect(maxSchedulableLongKm(undefined)).toBe(25);
-    expect(longTierForKm(32)).toBe("long_25k");
+    // Run24 (6): the 2 km ladder's 26 km is its nominal 145 minutes.
+    expect(maxSchedulableLongKm(null)).toBe(26);
+    expect(maxSchedulableLongKm(undefined)).toBe(26);
+    expect(longTierForKm(32)).toBe("long_26k");
     // The marathon's 180 minutes take the nominal 32 km's 180.
     expect(maxSchedulableLongKm(null, marathonCeiling)).toBe(32);
     // A 20-week block climbs a rung a week (Run23) and reaches 30 before
@@ -343,25 +353,25 @@ describe("Run17 — the ceiling measures the runner's own pace: 150 minutes, and
     expect(peakKm(marathon(300))).toBe(30);
   });
 
-  it("6:00/km → 25 km sits on the 150 and 30 km on the marathon's 180", () => {
-    expect(maxSchedulableLongKm(360)).toBe(25);
+  it("6:00/km → 24 km fits the 150 and 30 km sits on the marathon's 180", () => {
+    expect(maxSchedulableLongKm(360)).toBe(24);
     expect(maxSchedulableLongKm(360, marathonCeiling)).toBe(30);
     expect(peakKm(marathon(360))).toBe(30);
   });
 
-  it("7:00/km → 25 km takes 175 minutes: past the 150, inside the marathon's 180", () => {
+  it("7:00/km → 24 km takes 168 minutes: past the 150, inside the marathon's 180", () => {
     expect(maxSchedulableLongKm(420)).toBe(20);
     expect(longTierForKm(32, 420)).toBe("long_20k");
-    expect(longTierForKm(32, 420, marathonCeiling)).toBe("long_25k");
-    expect(peakKm(marathon(420))).toBe(25);
+    expect(longTierForKm(32, 420, marathonCeiling)).toBe("long_24k");
+    expect(peakKm(marathon(420))).toBe(24);
   });
 
   it("never drops under a long run already run (Run24 (1))", () => {
-    // A 7:30 /km runner's 180 minutes reach 24 km; one who has run 25 keeps it.
-    expect(maxSchedulableLongKm(450, marathonCeiling)).toBe(20);
+    // A 7:30 /km runner's 180 minutes reach 24 km; one who has run 26 keeps it.
+    expect(maxSchedulableLongKm(450, marathonCeiling)).toBe(24);
     expect(
-      maxSchedulableLongKm(450, { ...marathonCeiling, floorKm: 25.3 })
-    ).toBe(25);
+      maxSchedulableLongKm(450, { ...marathonCeiling, floorKm: 26.4 })
+    ).toBe(26);
   });
 
   it("a pace so slow that no tier fits still yields the shortest tier — the floor, not the ceiling", () => {

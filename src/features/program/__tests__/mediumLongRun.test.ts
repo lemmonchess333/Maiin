@@ -206,7 +206,10 @@ describe("the medium-long in generated plans", () => {
       }
     }
     expect(maxShare).toBeGreaterThan(0);
-    expect(maxShare).toBeLessThan(0.52); // was 0.55
+    // Run24 (6): the 2 km ladder keeps a cutback week's long run at its 75%
+    // (18 km of 24) where the coarser one rounded it down to 15, so the
+    // cutback week's share, the binding one, sits at about 53%.
+    expect(maxShare).toBeLessThan(0.54); // was 0.55
     expect(longestWeekShare).toBeLessThan(0.5); // was 0.53
   });
 });

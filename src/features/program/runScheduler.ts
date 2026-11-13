@@ -204,9 +204,18 @@ const LONG_RUN_TIERS: ReadonlyArray<{
   { id: "long_8k", km: 8, minutes: 45 },
   { id: "long_10k", km: 10, minutes: 55 },
   { id: "long_12k", km: 12, minutes: 65 },
-  { id: "long_15k", km: 15, minutes: 80 },
+  // Run24 (6), deep dive D2: a rung every 2 km, so one rung a week
+  // (Run23) is a step of 2 km. `long_15k` and `long_25k` stay in the
+  // registry for the plans that hold them; the ladder no longer climbs
+  // through them.
+  { id: "long_14k", km: 14, minutes: 75 },
+  { id: "long_16k", km: 16, minutes: 85 },
+  { id: "long_18k", km: 18, minutes: 100 },
   { id: "long_20k", km: 20, minutes: 110 },
-  { id: "long_25k", km: 25, minutes: 140 },
+  { id: "long_22k", km: 22, minutes: 120 },
+  { id: "long_24k", km: 24, minutes: 135 },
+  { id: "long_26k", km: 26, minutes: 145 },
+  { id: "long_28k", km: 28, minutes: 160 },
   { id: "long_30k", km: 30, minutes: 170 },
   // Run24 (1): the marathon's longest, under its own ceiling.
   { id: "long_32k", km: 32, minutes: 180 },
@@ -290,6 +299,19 @@ const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
   { id: "easy_90", minutes: 90 },
 ];
 const EASY_BASE_MINUTES = 30;
+/** Run24 (6): how far a base or build week's planned minutes may rise over
+ *  the last week that was not a step-back. A Tropos heuristic. */
+const WEEK_RISE_CAP = 1.15;
+/** The easy tier a tier under `id`, its strides kept; null at the base 30
+ *  or for a run that is not one of the ladder's easy runs. */
+function easyTierBelow(id: string): string | null {
+  const strides = id.endsWith("_strides");
+  const plain = strides ? id.slice(0, -"_strides".length) : id;
+  const at = EASY_RUN_TIERS.findIndex((tier) => tier.id === plain);
+  if (at <= 0) return null;
+  const below = EASY_RUN_TIERS[at - 1].id;
+  return strides ? stridesVariantOf(below) : below;
+}
 /** The easy runs a taper or race week falls back to (deep dive D13). */
 const TAPER_FLOOR_IDS: ReadonlySet<string> = new Set([
   "easy_30",
@@ -509,7 +531,7 @@ function rampShape(input: {
   const clamped = Math.min(Math.max(0, input.weekIndex), lastRampWeek);
   return {
     progress: clamped / lastRampWeek,
-    isCutback: isRampStepBack(input.weekIndex, lastRampWeek),
+    isCutback: isRampStepBack(input.weekIndex, lastRampWeek, input.totalWeeks),
   };
 }
 
@@ -900,6 +922,12 @@ function pickLongTemplateId(input: {
  * Each week's rung depends on every week before it, so a plan keeps the
  * climb as it goes (`climb`, one per `generateRacePlanV2` call, keyed by the
  * ramp's inputs): the weeks cost one step each, not a walk from week 0.
+ *
+ * Run24 (6): a step-back week sits at least a rung under the longest so far.
+ * Its 75% of the ramp's line is under the climb when the climb keeps up;
+ * in a short block, where the line runs ahead, on the 2 km ladder it could
+ * land on the rung the climb had reached and the week stepped back from
+ * nothing.
  */
 function rampLongTierId(
   input: {
@@ -939,7 +967,19 @@ function rampLongTierId(
           input.ceiling
         )
     );
-    const rung = k === 0 ? wanted : Math.min(wanted, held.highest + 1);
+    const stepsBack =
+      rampShape({
+        weekIndex: k,
+        totalWeeks: input.totalWeeks,
+        taperWeeks: input.taperWeeks,
+      })?.isCutback ?? false;
+    const rung =
+      k === 0
+        ? wanted
+        : Math.min(
+            wanted,
+            stepsBack ? Math.max(0, held.highest - 1) : held.highest + 1
+          );
     held.rungs.push(rung);
     held.highest = Math.max(held.highest, rung);
   }
@@ -2084,7 +2124,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      starting point still climbing, a time limit) ran more on the weekdays
      of the taper than in the build: five 30s after five 20s. Their easy
      runs at that floor now stay at what the build held. */
-  const blockWeekRuns = (w: number): ScheduledRunDay[] => {
+  const blockWeekRunsFloored = (w: number): ScheduledRunDay[] => {
     const week = blockWeekRunsAsRamped(w);
     if (w < 0) return week;
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
@@ -2110,6 +2150,65 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           }
         : run
     );
+  };
+
+  /* Run24 (6), deep dive D2: a base or build week's planned minutes held to
+     about 15% over the last week that was not a step-back, so the week
+     after a cutback no longer jumps 20 to 38% past the one before it. Its
+     easy runs give way, the longest first, a tier at a time; the long run
+     and the quality are the ramp's own (Run23). A property of the ladder,
+     never a rule shown to the runner, and a Tropos heuristic. */
+  const cappedWeeks = new Map<number, ScheduledRunDay[]>();
+  const weekMinutes = (week: readonly ScheduledRunDay[]) =>
+    week.reduce((total, run) => {
+      const template = RUN_TEMPLATES.find((t) => t.id === run.templateId);
+      return (
+        total +
+        (template && run.type !== "race"
+          ? plannedRunMinutes(template, input.easyPaceSPerKm)
+          : 0)
+      );
+    }, 0);
+  const blockWeekRuns = (w: number): ScheduledRunDay[] => {
+    const cached = cappedWeeks.get(w);
+    if (cached) return cached;
+    let week = blockWeekRunsFloored(w);
+    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    let previous = w - 1;
+    while (
+      previous >= 0 &&
+      isRunStepBackWeek(previous, blockWeeks, input.raceGoal.distance)
+    )
+      previous -= 1;
+    if ((phase === "base" || phase === "build") && previous >= 0) {
+      const cap = weekMinutes(blockWeekRuns(previous)) * WEEK_RISE_CAP;
+      while (cap > 0 && weekMinutes(week) > cap) {
+        const easy = week
+          .map((run, i) => ({ run, i, tier: easyTierBelow(run.templateId) }))
+          .filter(({ run, tier }) => run.type === "easy" && tier !== null)
+          .sort(
+            (a, b) =>
+              tierMinutesOfEasy(b.run.templateId.replace(/_strides$/, "")) -
+              tierMinutesOfEasy(a.run.templateId.replace(/_strides$/, ""))
+          )[0];
+        if (!easy) break;
+        const templateId = easy.tier!;
+        week = week.map((run, i) =>
+          i === easy.i
+            ? {
+                ...run,
+                templateId,
+                id: generateScheduledRunId(
+                  { dayIndex: run.dayIndex, templateId },
+                  run.weekKey!
+                ),
+              }
+            : run
+        );
+      }
+    }
+    cappedWeeks.set(w, week);
+    return week;
   };
 
   // Run9 phase-3 (Slice C) — clash flag. pickLongRunSlot prefers run-only

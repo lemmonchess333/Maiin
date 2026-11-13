@@ -494,35 +494,47 @@ describe("the taper's long run steps down from the longest the build held (Run22
   it("a build that reached the plan's peak keeps the taper it had", () => {
     // Pinned as numbers, three and two weeks before race week: only a build
     // its fits held short of the peak steps down from less.
-    // Run24 (1): the marathon's 180 minutes take a full build to 30 or 32
-    // km, whose 75% and 60% in the plan's sizes are 20 and 15.
-    const marathons: [string, Partial<RacePlanV2Input>, number, number][] = [
-      ["standard", {}, 20, 15],
+    // Run24 (1), Run24 (6): the marathon's 180 minutes take a full build to
+    // 30 km in 17 weeks and 32 in more, 2 km a week; 75% and 60% of those
+    // in the plan's sizes are 22 and 18, and 24 and 18.
+    const marathons: [
+      string,
+      Partial<RacePlanV2Input>,
+      [number, number],
+      [number, number],
+    ][] = [
+      ["standard", {}, [22, 18], [24, 18]],
       [
         "lighter",
         { tuning: { volume: "lighter", difficulty: "standard" } },
-        15,
-        12,
+        [18, 14],
+        [18, 14],
       ],
       [
         "bigger",
         { tuning: { volume: "bigger", difficulty: "standard" } },
-        20,
-        15,
+        [22, 18],
+        [24, 18],
       ],
-      ["a 5:00/km easy pace", { easyPaceSPerKm: 300 }, 20, 15],
-      // 25 km in its 180 minutes: 15 and 15.
-      ["a 7:00/km easy pace", { easyPaceSPerKm: 420 }, 15, 15],
-      ["detrained", { recentLayoff: "detrained" }, 8, 6],
+      ["a 5:00/km easy pace", { easyPaceSPerKm: 300 }, [22, 18], [24, 18]],
+      // 24 km in its 180 minutes: 18 and 14.
+      ["a 7:00/km easy pace", { easyPaceSPerKm: 420 }, [18, 14], [18, 14]],
+      // A detrained runner's build holds the plan's 14 km base.
+      ["detrained", { recentLayoff: "detrained" }, [10, 8], [10, 8]],
     ];
     for (const weeks of [8, 17, 29, 43])
-      for (const [label, more, three, two] of marathons) {
-        // Eight weeks is too few to climb a rung a week to 30 km (Run23):
-        // the build peaks at 25, and the taper takes 15 and 15 of that.
-        const short = weeks === 8 && three === 20;
+      for (const [label, more, at17, longer] of marathons) {
+        // Eight weeks is too few to climb a rung a week past 18 km (Run23):
+        // the taper takes 14 and 12 of that.
+        const [three, two] =
+          weeks === 8 && label !== "detrained"
+            ? [14, 12]
+            : weeks === 17
+              ? at17
+              : longer;
         const out = fromRaceWeek(built("marathon", weeks, more));
         const at = `a marathon ${weeks} weeks out, ${label}`;
-        expect(longKm(out(3)), at).toBe(short ? 15 : three);
+        expect(longKm(out(3)), at).toBe(three);
         expect(longKm(out(2)), at).toBe(two);
       }
     const halves: [string, Partial<RacePlanV2Input>, number][] = [
@@ -534,11 +546,14 @@ describe("the taper's long run steps down from the longest the build held (Run22
         expect(
           longKm(fromRaceWeek(built("half", weeks, more))(2)),
           `a half ${weeks} weeks out, ${label}`
-        ).toBe(two);
+        ).toBe(
+          // Run24 (6): twelve weeks climb 2 km a week to 18, whose 60% is 10.
+          weeks === 12 && label === "standard" ? 10 : two
+        );
     // A time limit the ramp stays under, and a block with no room to ramp:
-    // the build's longest is its base, 12 km.
+    // the build's longest is its base, 14 km.
     const out = fromRaceWeek(built("marathon", 5, timeLimited));
-    expect([longKm(out(3)), longKm(out(2))]).toEqual([8, 6]);
+    expect([longKm(out(3)), longKm(out(2))]).toEqual([10, 8]);
   });
 });
 
@@ -643,7 +658,9 @@ describe("the taper's easy runs step down from what the last build week held (Ru
           ),
           `a ${distance} ${weeks} weeks out, ${volume}, ${days} days`
         ).toBe(easy);
-    // A compressed marathon ten weeks out builds to the same easy runs.
-    expect(stepped(built("marathon", 10), 3)).toBe("30 60 | 30 50");
+    // A compressed marathon ten weeks out holds its last build week to 15%
+    // over the week before (Run24 (6)): its easy run gives way, and the
+    // taper steps down from what that week held.
+    expect(stepped(built("marathon", 10), 3)).toBe("30 30 | 30 30");
   });
 });
