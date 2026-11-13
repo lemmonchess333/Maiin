@@ -475,9 +475,9 @@ describe("Home — a race plan's welcome back", () => {
 });
 
 describe("Home — a race the plan can't build up to in time", () => {
-  /* Run15 (deep dive D11). The reach itself is `raceLongRunReach`'s suite;
-     here, that Home asks it with the runs it read and says the answer in
-     the reader's unit. */
+  /* Run15 (deep dive D11). The reach itself is `raceLongRunReach`'s suite
+     and its words `FellBehindSheet`'s; here, that Home hands the sheet the
+     runs it read. */
   beforeEach(() => {
     h.profile = racePlan();
     h.runReturn = { daysAway: 25, dismissKey: daysAgo(25), offer: "rebuild" };
@@ -498,29 +498,6 @@ describe("Home — a race the plan can't build up to in time", () => {
     const move = names.findIndex((n) => /Move my race/.test(n));
     expect(move).toBeGreaterThanOrEqual(0);
     expect(names.findIndex((n) => /Rebuild my plan/.test(n))).toBe(move + 1);
-  });
-
-  it("in miles for a reader in miles", async () => {
-    h.profile = { ...racePlan(), preferredDistanceUnit: "mi" };
-    h.reach = { longestKm: 12, raceKm: 21.1, fullKm: 20 };
-    renderHome();
-    await findSheet("Welcome back");
-    expect(
-      screen.getByText(/gets to 7\.5 mi\. A half marathon is 13\.1 mi\./)
-    ).toBeInTheDocument();
-  });
-
-  it("keeps the rebuild first for a race in reach", async () => {
-    h.reach = { longestKm: 20, raceKm: 21.1, fullKm: 20 };
-    renderHome();
-    await findSheet("Welcome back");
-    expect(screen.queryByText(/By race day/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Rebuild my plan/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /Move my race/i })
-    ).not.toBeInTheDocument();
   });
 });
 

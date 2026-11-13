@@ -30,11 +30,19 @@
  * which buttons appear when.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Footprints } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
+import type { ProgramState } from "@/features/program/programTypes";
+import {
+  raceLongRunReach,
+  raceOutOfReach,
+} from "@/features/program/raceWeeksAhead";
+import type { UserProfile } from "@/lib/auth";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { distanceLabel } from "@/lib/runLabels";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
   track as trackLifecycleEvent,
@@ -83,20 +91,31 @@ interface FellBehindSheetProps {
    *  through every regen site; this prop only makes the words match what
    *  the button will actually do. */
   recentLayoff: LayoffClass;
-  /** Run15 (deep dive D11): a race the plan's long run can't build up to
-   *  in time (`raceOutOfReach`), in the reader's unit. In the welcome-back register the sheet then says
-   *  how far each is and leads with moving the race; the rebuild stays one
-   *  tap below. Never a verdict on the race: the two distances, and what
-   *  each choice gives. */
-  outOfReach?: {
-    /** The longest long run the plan builds before the race ("12 km"). */
-    longest: string;
-    /** The race ("A half marathon"). */
-    raceName: string;
-    /** Its distance ("21.1 km"). */
-    race: string;
+  /** Run15 (deep dive D11): what the plan's weeks to the race are built
+   *  from, for a returning runner on a race plan. When its long run can't
+   *  build up to the race in time (`raceOutOfReach`), the welcome-back
+   *  register says how far each is and leads with moving the race; the
+   *  rebuild stays one tap below. Never a verdict on the race: the two
+   *  distances, and what each choice gives. Worked out here, in the
+   *  sheet's own chunk, so the engine loads with the sheet and not with
+   *  every visit to Home. */
+  raceReach?: {
+    profile: UserProfile;
+    programState: ProgramState | null | undefined;
+    /** The recent runs the layoff was read from; null when unread. */
+    recentRuns: readonly DatedRun[] | null;
+    /** Local "YYYY-MM-DD". */
+    today: string;
   } | null;
 }
+
+/** A race, as the welcome-back sheet names it (Run15, deep dive D11). */
+const RACE_NAME: Record<string, string> = {
+  "5k": "A 5K",
+  "10k": "A 10K",
+  half: "A half marathon",
+  marathon: "A marathon",
+};
 
 export default function FellBehindSheet({
   open,
@@ -107,16 +126,32 @@ export default function FellBehindSheet({
   onRaceMoved,
   raceModeActive,
   recentLayoff,
-  outOfReach = null,
+  raceReach = null,
   surface = "fell-behind",
 }: FellBehindSheetProps) {
   // The week's ledger, when there is one to show and the gap is a missed
   // week rather than a return.
   const ledger = recentLayoff === "detrained" ? null : (prompt ?? null);
   const detrained = ledger === null;
+  /** A return's race the plan can't build up to in time, in the reader's
+   *  unit. Only walked while the sheet is open in that register. */
+  const outOfReach = useMemo(() => {
+    if (!open || !detrained || !raceModeActive || !raceReach) return null;
+    const reach = raceLongRunReach({ ...raceReach, recentLayoff: "detrained" });
+    if (!reach || !raceOutOfReach(reach)) return null;
+    const unit = resolveDistanceUnit(raceReach.profile.preferredDistanceUnit);
+    const label = (km: number) =>
+      distanceLabel(km * 1000, unit).replace(/\.0(?= )/, "");
+    return {
+      longest: label(reach.longestKm),
+      raceName:
+        RACE_NAME[raceReach.profile.raceGoal?.distance ?? ""] ?? "The race",
+      race: label(reach.raceKm),
+    };
+  }, [open, detrained, raceModeActive, raceReach]);
   /** Lead with moving the race: a return whose race is past what the
    *  plan can build to. */
-  const moveFirst = detrained && raceModeActive && outOfReach !== null;
+  const moveFirst = outOfReach !== null;
 
   /**
    * `return_choice`, paired with the `return_surface_shown` the coordinator
@@ -219,7 +254,7 @@ export default function FellBehindSheet({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {moveFirst && outOfReach
+        {outOfReach
           ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
           : detrained
             ? raceModeActive
