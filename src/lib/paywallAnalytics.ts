@@ -54,6 +54,9 @@ export type PaywallSource =
   | "trial_strip"
   /** Home's Pro strip for a free account. */
   | "home_strip"
+  /** Food's card telling a free account its personal target is ready
+   *  (whole-app grill Q49, Q71, Q87). */
+  | "personal_target"
   | "unknown";
 
 export interface PaywallEventMetadata {

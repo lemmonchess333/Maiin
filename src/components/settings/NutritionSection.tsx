@@ -57,6 +57,9 @@ interface NutritionSectionProps {
   /** The programme Home's targets read, for the protein the training block
    *  sets. Absent, protein follows the goal's phase alone. */
   program?: ProgramState | null;
+  /** Pro or in a trial: the target adapts. A free account's status line
+   *  says what it gets instead (Q87). Absent reads as Pro. */
+  isPro?: boolean;
   inline?: boolean;
 }
 
@@ -76,6 +79,7 @@ export default function NutritionSection({
   updateProfile,
   onRecalculate,
   program,
+  isPro = true,
   inline = false,
 }: NutritionSectionProps) {
   /** The age as typed, while the field is being edited. */
@@ -470,7 +474,8 @@ export default function NutritionSection({
                 adaptiveStatus,
                 // The learned value, so the line can't claim the formula
                 // figure above it is the adapted one.
-                profile?.adaptiveCapState?.lastApplied
+                profile?.adaptiveCapState?.lastApplied,
+                isPro
               )}
             </p>
             {showDrift && drift && (

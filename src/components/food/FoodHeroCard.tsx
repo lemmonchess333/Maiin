@@ -20,6 +20,7 @@ import CalorieRing from "./CalorieRing";
 import { LOG_MOMENT_MS, WHEEL_GROW_MS } from "./logMoment";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
+import { PersonalTargetOffer } from "./PersonalTargetCard";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
@@ -360,11 +361,19 @@ export default function FoodHeroCard({
       {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
           wheel. Reads from the single source of truth
           (useEffectiveTargets). Hidden once the gate clears (learned
-          takeover, #982). */}
+          takeover, #982). A free account sees it too since Q87. */}
       {isToday && dailyTargets.showWarmup && (
         <AdaptiveWarmupBar
           fraction={dailyTargets.warmupFraction}
           stalled={dailyTargets.adaptiveStalled}
+        />
+      )}
+      {/* Where the bar leads for a free account (whole-app grill Q49, Q71,
+          Q87): its personal target, and the 7-day trial offered then. */}
+      {isToday && dailyTargets.personalTarget != null && (
+        <PersonalTargetOffer
+          personalTarget={dailyTargets.personalTarget}
+          currentTarget={dailyTargets.finalTarget}
         />
       )}
 
