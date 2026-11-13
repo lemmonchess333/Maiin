@@ -90,9 +90,16 @@ describe("a marathon four weeks out, with a 20 km long run behind them", () => {
     }).weeks;
     expect(
       bare
+        .slice(0, -1)
         .flat()
-        .filter((run) => run.type !== "race")
         .every((run) => run.templateId === "easy_30")
+    ).toBe(true);
+    // Race week's shake-outs are 20 minutes (Run24 (10)).
+    expect(
+      bare
+        .at(-1)!
+        .filter((run) => run.type !== "race")
+        .every((run) => run.templateId === "easy_20")
     ).toBe(true);
   });
 });

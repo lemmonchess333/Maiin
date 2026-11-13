@@ -596,8 +596,8 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
-				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
-				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
 				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
 				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
 				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";
@@ -628,8 +628,8 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				TROPOS_HEALTH_SHARE_USAGE = "$(TROPOS_HEALTH_SHARE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
-				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home.";
-				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
+				TROPOS_HEALTH_SHARE_USAGE_NO = "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.";
+				TROPOS_HEALTH_SHARE_USAGE_YES = "Tropos reads your step count for Home, your sleep, resting heart rate and heart rate variability for readiness if you add them, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.";
 				TROPOS_HEALTH_UPDATE_USAGE = "$(TROPOS_HEALTH_UPDATE_USAGE_$(WATCH_RUN_RELEASE_ENABLED))";
 				TROPOS_HEALTH_UPDATE_USAGE_NO = "Tropos does not add workouts or any other data to Health.";
 				TROPOS_HEALTH_UPDATE_USAGE_YES = "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.";

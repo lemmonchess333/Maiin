@@ -63,6 +63,7 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
     "long_20k",
     "long_25k",
     "long_30k",
+    "long_32k",
   ],
 ];
 

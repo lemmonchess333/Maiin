@@ -73,38 +73,38 @@ w13 2026-06-01  taper, plan week 13 of 14  counted 3/3  plan 90 min, long 0.0 km
   ran     Wed 8x400 7.4 km/40 min 5:24 · Fri easy_30 4.8 km/30 min 6:14 [on target] · Sun easy_30 4.8 km/30 min 6:13 [on target]
   week    100 min · 17.0 km · easy 86% · longest ×0.37 the month's
   runner  VDOT 41.23 · fitness 150 min · easy own 5:50–6:34, prescribed 5:45–6:28
-w14 2026-06-08  recovery, plan week 14 of 14  counted 3/3  plan 190 min, long 0.0 km, quality 0
-  planned Wed:easy_30 · Fri:easy_30 · Sun:half_race
-  ran     Wed easy_30 4.8 km/30 min 6:12 [on target] · Fri easy_30 4.8 km/30 min 6:12 [on target] · Sun half_race 21.1 km/107 min 5:05 [on target] INJURY short finish 1:47:06
-  week    167 min · 30.8 km · easy 36% · longest ×1.05 the month's
-  runner  VDOT 41.52 · fitness 159 min · easy own 5:52–6:37, prescribed 5:45–6:28
+w14 2026-06-08  recovery, plan week 14 of 14  counted 3/3  plan 170 min, long 0.0 km, quality 0
+  planned Wed:easy_20 · Fri:easy_20 · Sun:half_race
+  ran     Wed easy_20 3.2 km/20 min 6:12 [on target] · Fri easy_20 3.2 km/20 min 6:12 [on target] · Sun half_race 21.1 km/107 min 5:04 [on target] INJURY short finish 1:46:46
+  week    147 min · 27.6 km · easy 27% · longest ×1.05 the month's
+  runner  VDOT 41.42 · fitness 156 min · easy own 5:53–6:37, prescribed 5:45–6:28
   · 2026-06-14: server entered recovery until 2026-07-05
   · 2026-06-14: short injury on half_race
 w15 2026-06-15  recovery, plan week 14 of 14  counted 2/2  plan 40 min, long 0.0 km, quality 0
   planned Fri:easy_20 · Sun:easy_20
-  ran     Fri easy_20 3.3 km/20 min 6:06 [on target] · Sun easy_20 3.3 km/20 min 6:07 [on target]
+  ran     Fri easy_20 3.3 km/20 min 6:06 [on target] · Sun easy_20 3.3 km/20 min 6:06 [on target]
   week    40 min · 6.6 km · easy 100% · longest ×0.16 the month's
-  runner  VDOT 40.95 · fitness 141 min · easy own 5:52–6:36, prescribed 5:45–6:28
+  runner  VDOT 40.86 · fitness 138 min · easy own 5:53–6:37, prescribed 5:45–6:28
 w16 2026-06-22  recovery, plan week 14 of 14  counted 3/3  plan 80 min, long 0.0 km, quality 0
   planned Wed:easy_20 · Fri:easy_30 · Sun:easy_30
-  ran     Wed easy_20 3.3 km/20 min 6:08 [on target] · Fri easy_30 4.9 km/30 min 6:10 [on target] · Sun easy_30 4.9 km/30 min 6:08 [on target]
+  ran     Wed easy_20 3.3 km/20 min 6:08 [on target] · Fri easy_30 4.9 km/30 min 6:10 [on target] · Sun easy_30 4.9 km/30 min 6:09 [on target]
   week    80 min · 13.0 km · easy 100% · longest ×0.23 the month's
-  runner  VDOT 40.65 · fitness 132 min · easy own 5:55–6:39, prescribed 5:45–6:28
+  runner  VDOT 40.57 · fitness 130 min · easy own 5:55–6:40, prescribed 5:45–6:28
 w17 2026-06-29  recovery, plan week 14 of 14  counted 3/3  plan 110 min, long 0.0 km, quality 0
   planned Wed:easy_30 · Fri:easy_40 · Sun:easy_40
-  ran     Wed easy_30 4.9 km/30 min 6:10 [on target] · Fri easy_40 6.5 km/40 min 6:07 [on target] · Sun easy_40 6.3 km/40 min 6:20 [on target]
+  ran     Wed easy_30 4.9 km/30 min 6:10 [on target] · Fri easy_40 6.5 km/40 min 6:08 [on target] · Sun easy_40 6.3 km/40 min 6:21 [on target]
   week    110 min · 17.7 km · easy 100% · longest ×0.31 the month's
-  runner  VDOT 40.55 · fitness 129 min · easy own 5:56–6:40, prescribed 5:45–6:28
+  runner  VDOT 40.48 · fitness 127 min · easy own 5:56–6:41, prescribed 5:45–6:28
 w18 2026-07-06  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 39.84 · fitness 109 min
+  runner  VDOT 39.78 · fitness 108 min
   · 2026-07-12: server ended recovery
 w19 2026-07-13  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 39.19 · fitness 92 min
+  runner  VDOT 39.14 · fitness 91 min
 w20 2026-07-20  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 38.61 · fitness 78 min
+  runner  VDOT 38.56 · fitness 77 min
 
-runs 44 · counted 44 of the 44 planned · injuries 1 · VDOT 42.0 → 38.61
-race 2026-06-14 half_race 1:47:06 at VDOT 40.89
+runs 44 · counted 44 of the 44 planned · injuries 1 · VDOT 42.0 → 38.56
+race 2026-06-14 half_race 1:46:46 at VDOT 40.79
