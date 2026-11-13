@@ -4691,3 +4691,23 @@ drawn them.
 - [ ] **Larger Text.** At the largest size, open Run plan and Train.
       Passing: the cards grow taller and keep every word; the band grows
       with the race's name.
+
+## Charts older than 3 months and the score's details are Pro (Q84, 2026-11-13)
+
+Affects: Analytics' range pills (6M and 1Y), an exercise's chart (6M, 1Y,
+All), and Score details with the training load chart, for a free account.
+A person's sessions, bests, lifetime totals and exports stay free.
+Unit-tested; the capture specs that film 6M and the details now sign the
+test user in as Pro for the length of the capture.
+
+- [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
+      lock; tapping one opens the Pro page and leaves the range where it
+      was; Score details shows "Pro" and opens the Pro page, not the fold.
+- [ ] **An old link.** As a free account, open a saved link to
+      `history?range=1Y&score=details`. Passing: Analytics shows 3 months
+      and the headline score, with the details closed.
+- [ ] **VoiceOver.** Swipe the range pills as a free account. Passing:
+      each locked one is read as "6M, Pro".
+- [ ] **After a trial starts.** Passing: every range and the details open
+      at once, with no restart.
+

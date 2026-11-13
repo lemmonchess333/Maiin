@@ -286,6 +286,16 @@ describe("the Performance card while the baseline forms", () => {
 });
 
 describe("Score details", () => {
+  it("is Pro for a free account: a lock, no fold, and the tap asks to open it (Q84)", () => {
+    const onToggleDetails = vi.fn();
+    serve(history(72, "high"));
+    renderSection({ onToggleDetails, detailsLocked: true });
+    const row = screen.getByRole("button", { name: "Score details Pro" });
+    expect(row).not.toHaveAttribute("aria-expanded");
+    fireEvent.click(row);
+    expect(onToggleDetails).toHaveBeenCalledWith(true);
+  });
+
   it("is closed until asked for, and says so", () => {
     serve(history(72, "high"));
     renderSection();

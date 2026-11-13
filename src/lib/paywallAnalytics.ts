@@ -54,6 +54,9 @@ export type PaywallSource =
   | "trial_strip"
   /** Home's Pro strip for a free account. */
   | "home_strip"
+  /** Analytics or an exercise's chart: a range older than 3 months, or the
+   *  score's details (whole-app grill Q84). */
+  | "history"
   | "unknown";
 
 export interface PaywallEventMetadata {

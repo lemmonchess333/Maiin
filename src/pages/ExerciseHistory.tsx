@@ -21,6 +21,10 @@ import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { useSubscription } from "@/lib/subscription";
+import { track } from "@/lib/paywallAnalytics";
+import { HISTORY_UPGRADE_PATH, isRangeOpen } from "@/lib/historyAccess";
+import RangeLabel from "@/components/analytics/RangeLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import {
@@ -111,6 +115,9 @@ export default function ExerciseHistory() {
 
   const [timeRange, setTimeRange] =
     useState<(typeof RANGE_ORDER)[number]>("3M");
+  // Charts older than 3 months are Pro (whole-app grill Q84); the
+  // all-time bests above the chart stay free.
+  const { isPro } = useSubscription();
   const [metric, setMetric] = useState<Metric>("1RM");
   // Top-level tab: "progress" (chart + sessions) or "form" (muscle
   // diagrams + instructions). Default depends on entry point — opening
@@ -572,9 +579,17 @@ export default function ExerciseHistory() {
             value={timeRange}
             onChange={(value) => {
               haptic("light");
+              if (!isRangeOpen(value, isPro)) {
+                track("paywall_cta_clicked", { source: "history" });
+                navigate(HISTORY_UPGRADE_PATH);
+                return;
+              }
               setTimeRange(value);
             }}
-            options={RANGE_ORDER.map((r) => ({ value: r, label: r }))}
+            options={RANGE_ORDER.map((r) => ({
+              value: r,
+              label: <RangeLabel range={r} locked={!isRangeOpen(r, isPro)} />,
+            }))}
           />
 
           {/* ── Chart with metric toggle ────────────────────────────── */}

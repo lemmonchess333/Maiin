@@ -17,6 +17,10 @@ vi.mock("framer-motion", () => ({
   ),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+vi.mock("@/lib/subscription", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/subscription")>()),
+  useSubscription: () => ({ isPro: true }),
+}));
 
 // useWorkouts — empty + loaded for both empty-state branches. Spy so we can
 // assert ExerciseHistory opts into COMPLETE lifetime coverage (packet 16).
