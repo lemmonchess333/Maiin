@@ -80,8 +80,10 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   so the wait is long enough for the check to see.
  * - gone: the light trainer's missed press, the swapped squat's
  *   `acsm-size:quads` (F12) and the dumbbell lifter's waiting curl; the
- *   half marathoner's `volume-jump`, with Run24 (6)'s hold of a week to
- *   15% over the last full one.
+ *   half marathoner's `long-share` and `under-dose`, with the plan started
+ *   from their own week (Run24 (2)). Their `volume-jump`, gone with Run24
+ *   (6)'s hold of a week to 15% over the last full one, is back: the week
+ *   after their cutback is 28% over it, 9% over the week before it.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
@@ -100,7 +102,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "spike",
     "volume-jump",
   ],
-  "half-moves-long-run": ["long-share", "spike", "under-dose"],
+  "half-moves-long-run": ["spike", "volume-jump"],
 };
 
 const seasons = new Map<string, Season>();

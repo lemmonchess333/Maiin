@@ -137,7 +137,7 @@ describe("confirmed running starting point", () => {
     for (const row of rows)
       expect(saved.programState.runDays).toContainEqual(row);
   });
-  it("preserves race day and regenerates the same future weeks, and a start above the race's curve shapes nothing", () => {
+  it("preserves race day and regenerates the same future weeks, and a start above the race's curve starts the plan from it", () => {
     const weekSchedule = buildPlan(input).weekSchedule;
     const args = {
       weekSchedule,
@@ -170,10 +170,30 @@ describe("confirmed running starting point", () => {
       });
       expect(regenerated.weeks[0]).toEqual(block.weeks[i]);
     }
-    // 400 minutes a week and a 150-minute run are past anything this
-    // marathon asks for: the race's curve is the plan, every week, and no
-    // week turns easy for want of a review.
-    expect(block.weeks).toEqual(unrestricted.weeks);
+    // Run24 (2): 400 minutes a week and a 150-minute run are past where
+    // this marathon's plan starts, so the plan starts from them: a longer
+    // first long run and longer weekday runs, and no week turns easy for
+    // want of a review.
+    const minutesOf = (week: ScheduledRunDay[]) =>
+      week.reduce(
+        (sum, run) =>
+          sum +
+          (RUN_TEMPLATES.find((t) => t.id === run.templateId)
+            ?.estimatedDuration ?? 0),
+        0
+      );
+    expect(minutesOf(block.weeks[0])).toBeGreaterThan(
+      minutesOf(unrestricted.weeks[0])
+    );
+    expect(Math.max(...block.weeks.map(minutesOf))).toBeGreaterThan(
+      Math.max(...unrestricted.weeks.map(minutesOf))
+    );
+    const quality = (weeks: ScheduledRunDay[][]) =>
+      weeks
+        .flat()
+        .filter((run) => run.type === "tempo" || run.type === "intervals")
+        .length;
+    expect(quality(block.weeks)).toBe(quality(unrestricted.weeks));
   });
   it("does not delete days or disguise a floor that exceeds the report", () => {
     const week: ScheduledRunDay[] = [0, 1, 2].map((dayIndex) => ({
