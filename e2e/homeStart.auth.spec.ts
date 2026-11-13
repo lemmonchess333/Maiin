@@ -165,6 +165,10 @@ test.describe("Home's Today card", () => {
       // "Bench Press" anywhere on screen would pass whichever day the session
       // had opened.
       await expect(close.locator("../..")).toContainText("Session 1");
+      // The full session: a warm-up set, then the bench's 3 planned sets.
+      await expect(
+        page.getByRole("button", { name: "Mark set complete" })
+      ).toHaveCount(4);
       // The link is consumed, so a refresh or Back lands on the day.
       await expect(page).toHaveURL(/\/program\?day=0$/);
 
@@ -208,6 +212,11 @@ test.describe("Home's Today card", () => {
       const close = page.getByLabel("Close workout");
       await expect(close).toBeVisible({ timeout: 15_000 });
       await expect(close.locator("../..")).toContainText("Session 1");
+      // Easier: the bench's 3 planned work sets are 2, after its warm-up
+      // set (the full session above has 4 rows).
+      await expect(
+        page.getByRole("button", { name: "Mark set complete" })
+      ).toHaveCount(3);
       // Both parts of the link are consumed.
       await expect(page).toHaveURL(/\/program\?day=0$/);
     } finally {
