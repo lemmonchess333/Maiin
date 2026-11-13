@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/lib/auth";
+import { plannedIntervalPaceSPerKm } from "./intervalRest";
 import type {
   ProgramState,
   ScheduledRunDay,
@@ -198,6 +199,10 @@ export interface TodayRun {
    *  s/km, which the hero's line states for an easy or long run. Absent
    *  reads as none. */
   easyPaceSPerKm?: number | null;
+  /** The interval pace a confirmed benchmark gives
+   *  (`plannedIntervalPaceSPerKm`), s/km: an interval session's rest is a
+   *  share of its repeat at it (deep dive D15). Absent reads as none. */
+  intervalPaceSPerKm?: number | null;
 }
 
 /** Next session, as the rest-day card names it. `dateKey` appears only when
@@ -344,6 +349,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           isFirst: framing.firstRun,
           dose: runDose(resolved.run.runDay, profile),
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: plannedIntervalPaceSPerKm(profile?.runFitness),
           ...runNameAndPace(resolved.run.runDay, profile, programState),
         }
       : null,
@@ -611,7 +617,11 @@ function runDose(
       )
     : null;
   return template
-    ? runDoseLine(template, planningEasyPaceSPerKm(profile?.runFitness))
+    ? runDoseLine(
+        template,
+        planningEasyPaceSPerKm(profile?.runFitness),
+        plannedIntervalPaceSPerKm(profile?.runFitness)
+      )
     : null;
 }
 

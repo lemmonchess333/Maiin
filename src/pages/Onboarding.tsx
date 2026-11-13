@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { plannedIntervalPaceSPerKm } from "@/lib/intervalRest";
 import { STARTER_MOST_RUNS_A_WEEK } from "@/features/program/starterPlan";
 import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
 import { setStarterGoalPatch } from "@/features/program/runModeResolution";
@@ -729,6 +730,7 @@ export default function Onboarding() {
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
   // plan itself uses.
   const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
+  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(profile?.runFitness);
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -1397,6 +1399,7 @@ export default function Onboarding() {
                   draft
                   freeRunning={freeRunning}
                   easyPaceSPerKm={easyPaceSPerKm}
+                  intervalPaceSPerKm={intervalPaceSPerKm}
                 />
               )}
             </div>
@@ -1798,6 +1801,7 @@ export default function Onboarding() {
                   draft
                   freeRunning={freeRunning}
                   easyPaceSPerKm={easyPaceSPerKm}
+                  intervalPaceSPerKm={intervalPaceSPerKm}
                 />
               )}
             </div>
@@ -1955,6 +1959,7 @@ export default function Onboarding() {
                   draft
                   freeRunning={freeRunning}
                   easyPaceSPerKm={easyPaceSPerKm}
+                  intervalPaceSPerKm={intervalPaceSPerKm}
                 />
               </details>
             </div>
@@ -2187,7 +2192,7 @@ export default function Onboarding() {
                   <p className="text-sm text-muted-foreground">
                     <InlineNumerals>
                       {firstRunTemplate
-                        ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
+                        ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm, intervalPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."}
@@ -2211,6 +2216,7 @@ export default function Onboarding() {
                 runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
                 easyPaceSPerKm={easyPaceSPerKm}
+                intervalPaceSPerKm={intervalPaceSPerKm}
               />
               {effectiveRunMode === "race_prep" &&
                 (profile?.runTimeLimits?.sessionMinutes ||

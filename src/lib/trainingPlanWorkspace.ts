@@ -3,6 +3,7 @@ import type {
   ScheduledRunDay,
   WorkoutDay,
 } from "@/features/program/programTypes";
+import { plannedIntervalPaceSPerKm } from "./intervalRest";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { UserProfile } from "./auth";
 import type { Workout } from "./savedWorkouts";
@@ -204,7 +205,8 @@ export function buildTrainingPlanWorkspace({
                 .join(" · ")
             : runDoseLine(
                 day.run.template,
-                planningEasyPaceSPerKm(profile?.runFitness)
+                planningEasyPaceSPerKm(profile?.runFitness),
+                plannedIntervalPaceSPerKm(profile?.runFitness)
               )
           : null;
       activities.push({
