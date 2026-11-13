@@ -4710,4 +4710,3 @@ test user in as Pro for the length of the capture.
       each locked one is read as "6M, Pro".
 - [ ] **After a trial starts.** Passing: every range and the details open
       at once, with no restart.
-
