@@ -367,6 +367,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "AI photo food logging, up to 100 scans a day",
       "A calorie target that adapts to you",
       "Macros that shift with your training",
+      "Running paces that update from your races and tempo runs",
     ]);
     const freeKeeps = screen.getByText(
       "Free keeps your training plan, run tracking, and typed and barcode food logging."
@@ -401,7 +402,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       within(screen.getByRole("list", { name: "What Pro includes" }))
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toHaveLength(3);
+    ).toHaveLength(4);
     expect(screen.queryByText(/^Free keeps/)).toBeNull();
   });
 
