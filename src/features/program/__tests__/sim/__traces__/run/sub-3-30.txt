@@ -78,39 +78,39 @@ w15 2026-06-15  taper, plan week 15 of 16  counted 5/5  plan 150 min, long 0.0 k
   ran     Mon easy_30 5.1 km/30 min 5:55 [on target] · Tue easy_30 5.0 km/30 min 6:01 [on target] · Wed 8x400 7.5 km/40 min 5:19 · Fri easy_30 5.1 km/30 min 5:53 [on target] · Sun easy_30 5.1 km/30 min 5:54 [on target]
   week    160 min · 27.8 km · easy 91% · longest ×0.38 the month's
   runner  VDOT 44.06 · fitness 235 min · easy own 5:32–6:14, prescribed 5:52–6:36
-w16 2026-06-22  recovery, plan week 16 of 16  counted 5/5  plan 365 min, long 0.0 km, quality 0
-  planned Mon:easy_30 · Tue:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:marathon_race
-  ran     Mon easy_30 5.2 km/30 min 5:50 [on target] · Tue easy_30 5.2 km/30 min 5:46 [on target] · Wed easy_30 5.1 km/30 min 5:56 [on target] · Fri easy_30 5.2 km/30 min 5:47 [on target] · Sun marathon_race 42.2 km/229 min 5:26 [on target] INJURY long finish 3:49:01
-  week    349 min · 62.8 km · easy 34% · longest ×2.11 the month's
-  runner  VDOT 44.72 · fitness 265 min · easy own 5:34–6:16, prescribed 5:52–6:36
+w16 2026-06-22  recovery, plan week 16 of 16  counted 5/5  plan 326 min, long 0.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Fri:easy_20 · Sun:marathon_race
+  ran     Mon easy_20 3.4 km/20 min 5:50 [on target] · Tue easy_20 3.5 km/20 min 5:46 [on target] · Wed easy_20 3.4 km/20 min 5:55 [on target] · Fri easy_20 3.5 km/20 min 5:47 [on target] · Sun marathon_race 42.2 km/229 min 5:26 [on target] INJURY long finish 3:49:25
+  week    309 min · 55.9 km · easy 26% · longest ×2.11 the month's
+  runner  VDOT 44.60 · fitness 260 min · easy own 5:35–6:17, prescribed 5:52–6:36
   · 2026-06-28: long injury on marathon_race
   · 2026-06-28: server entered recovery until 2026-07-26
 w17 2026-06-29  recovery, plan week 16 of 16  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 43.83 · fitness 225 min
+  runner  VDOT 43.71 · fitness 220 min
 w18 2026-07-06  recovery, plan week 16 of 16  counted 0/4  plan 90 min, long 0.0 km, quality 0
   planned Mon:easy_20 · Wed:easy_20 · Fri:easy_20 · Sun:easy_30
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 42.96 · fitness 190 min
+  runner  VDOT 42.85 · fitness 186 min
 w19 2026-07-13  recovery, plan week 16 of 16  counted 0/5  plan 160 min, long 0.0 km, quality 0
   planned Mon:easy_30 · Tue:easy_30 · Wed:easy_30 · Fri:easy_30 · Sun:easy_40
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 42.13 · fitness 161 min
+  runner  VDOT 42.02 · fitness 157 min
 w20 2026-07-20  recovery, plan week 16 of 16  counted 1/5  plan 200 min, long 0.0 km, quality 0
   planned Mon:easy_40 · Tue:easy_40 · Wed:easy_40 · Fri:easy_40 · Sun:easy_40
-  ran     Sun easy_40 6.6 km/40 min 6:04 [on target]
+  ran     Sun easy_40 6.6 km/40 min 6:05 [on target]
   week    40 min · 6.6 km · easy 100% · longest ×0.16 the month's
-  runner  VDOT 41.56 · fitness 143 min · easy own 5:49–6:32, prescribed 5:52–6:36
+  runner  VDOT 41.46 · fitness 140 min · easy own 5:49–6:33, prescribed 5:52–6:36
 w21 2026-07-27  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 40.81 · fitness 121 min
+  runner  VDOT 40.72 · fitness 118 min
   · 2026-08-02: server ended recovery
 w22 2026-08-03  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 40.12 · fitness 102 min
+  runner  VDOT 40.04 · fitness 100 min
 w23 2026-08-10  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 39.50 · fitness 87 min
+  runner  VDOT 39.42 · fitness 85 min
 
-runs 74 · counted 74 of the 74 planned · injuries 2 · VDOT 45.0 → 39.50
-race 2026-06-28 marathon_race 3:49:01 at VDOT 43.76
+runs 74 · counted 74 of the 74 planned · injuries 2 · VDOT 45.0 → 39.42
+race 2026-06-28 marathon_race 3:49:25 at VDOT 43.61

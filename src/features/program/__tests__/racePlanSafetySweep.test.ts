@@ -406,7 +406,8 @@ describe("race plans — the block is the calendar weeks from this week through 
         .map((r) => `${r.date}:${r.templateId}`);
     expect(ahead(sunday)).toEqual(ahead(monday));
     expect(new Set(ahead(sunday).map((k) => k.split(":")[1]))).toEqual(
-      new Set(["easy_30", "marathon_race"])
+      // Race week's shake-outs are 20 minutes (Run24 (10)).
+      new Set(["easy_30", "easy_20", "marathon_race"])
     );
   });
 });
