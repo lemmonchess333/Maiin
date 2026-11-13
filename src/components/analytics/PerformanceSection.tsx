@@ -324,6 +324,7 @@ export default function PerformanceSection({
           haptic("light");
           onToggleDetails?.(!detailsOpen);
         }}
+        aria-label={detailsLocked ? "Score details, Pro" : undefined}
         aria-expanded={detailsLocked ? undefined : detailsOpen}
         aria-controls={detailsLocked ? undefined : detailsId}
         className={cn(
@@ -335,7 +336,6 @@ export default function PerformanceSection({
         {detailsLocked ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Lock aria-hidden="true" className="size-3.5" />
-            <span className="sr-only">, </span>
             Pro
           </span>
         ) : (
