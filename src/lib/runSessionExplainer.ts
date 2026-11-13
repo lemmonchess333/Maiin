@@ -200,7 +200,7 @@ export function runSessionExplainer(
 
   // Run24 (4): the plan's benchmark session.
   if (isTimeTrialTemplateId(input.templateId)) {
-    return "It sets your paces from what you can run now. After it, Tropos offers the new paces to take with one tap.";
+    return "It finds your paces from what you can run now, and Tropos offers them after it.";
   }
   // Base / build.
   if (type === "long") {

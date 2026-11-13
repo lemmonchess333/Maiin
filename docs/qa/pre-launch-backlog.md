@@ -4809,10 +4809,26 @@ phone has drawn it.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
 
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.
+
 ## The time trial in the plan (Run24 (4), 2026-11-13)
 
 Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`'s trial weeks), their segments on the run screen (`segmentsFromTimeTrial`), and the run summary reading the trial's work as a race (`benchmarkEffortOf`). Unit tests drive each piece; no phone has run a time trial.
 
 - [ ] **Week 2 without a benchmark.** Set up a half 16 weeks out with no race time. Passing: week 2 shows "3K time trial" on the strides day, with its words (a warm-up, 3 km as hard as you can hold evenly, a cool-down, a parkrun does the same job).
 - [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
-- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces with one tap, on a free account too, read from the 3 km only (not the warm-up and cool-down); nothing changes until the tap.
+- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces, read from the 3 km only (not the warm-up and cool-down); on a Pro account one tap takes them, on a free account the card names Pro and nothing changes; with no paces before, the card reads "Your training paces, from this run".
