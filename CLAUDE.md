@@ -26,7 +26,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Animation:** Framer Motion 12
 - **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
 - **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
-- **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
+- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
