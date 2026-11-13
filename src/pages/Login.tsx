@@ -546,7 +546,7 @@ export default function Login() {
             fullWidth
             size="md"
           >
-            {isSignUp ? "Create account" : "Sign In"}
+            {isSignUp ? "Create account" : "Sign in"}
             {!isSignUp && lastMethod === "password" && <LastUsed />}
           </Button>
         </form>
@@ -582,7 +582,7 @@ export default function Login() {
             aria-pressed={isSignUp}
             className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
-            {isSignUp ? "Sign In" : "Sign up"}
+            {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
       </div>

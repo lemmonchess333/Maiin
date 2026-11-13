@@ -194,7 +194,8 @@ test("browses lifts and runs, filters an older period and restores the expanded 
       exact: true,
     });
     await signIn.or(emailField).first().waitFor();
-    if (await signIn.isVisible()) await signIn.click();
+    // The form's submit is "Sign in" too: the email field says which screen is open.
+    if (!(await emailField.isVisible())) await signIn.first().click();
     await emailField.fill(email);
     await page.locator("#login-password").fill(password);
     await page.locator('button[type="submit"]').first().click();
