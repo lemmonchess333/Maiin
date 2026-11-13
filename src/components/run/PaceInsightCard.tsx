@@ -63,19 +63,33 @@ export default function PaceInsightCard({
     >
       <div>
         <p className="text-sm font-semibold text-foreground">
-          {insight.direction === "faster"
-            ? "A recent race or tempo supports faster targets"
-            : "Your saved targets may be too quick right now"}
+          {insight.direction === "first"
+            ? "Your training paces, from this run"
+            : insight.direction === "faster"
+              ? "A recent race or tempo supports faster targets"
+              : "Your saved targets may be too quick right now"}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Update every upcoming training pace from VDOT{" "}
-          <span className="font-mono tabular-nums">{insight.currentVdot}</span>{" "}
-          to{" "}
-          <span className="font-mono tabular-nums">
-            {insight.suggestedVdot}
-          </span>
-          ?
-        </p>
+        {insight.direction === "first" ? (
+          <p className="text-xs text-muted-foreground">
+            Set every upcoming training pace from VDOT{" "}
+            <span className="font-mono tabular-nums">
+              {insight.suggestedVdot}
+            </span>
+            ?
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Update every upcoming training pace from VDOT{" "}
+            <span className="font-mono tabular-nums">
+              {insight.currentVdot}
+            </span>{" "}
+            to{" "}
+            <span className="font-mono tabular-nums">
+              {insight.suggestedVdot}
+            </span>
+            ?
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">

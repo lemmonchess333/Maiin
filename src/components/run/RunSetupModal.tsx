@@ -240,6 +240,13 @@ export default function RunSetupModal({
      below the run type. It never touches `activityType`, so a planned run
      done on the treadmill is still the planned run. */
   const onTreadmill = isTreadmillRun(config);
+  /* Run24 (4): an interval-type session the plan gave its own shape and no
+     repeats, the time trial, runs as planned: its structure shows, and no
+     default repeats are stamped on it. */
+  const fixedSession =
+    config.activityType === "intervals" &&
+    !config.intervals &&
+    (config.segments?.length ?? 0) > 0;
   const intervalConfig = config.intervals ?? {
     reps: 5,
     workDistance: 1000,
@@ -531,14 +538,14 @@ export default function RunSetupModal({
         {/* STRUCT-SESS-01: prefilled structure for non-interval sessions
             (tempo warmup/blocks/cooldown, easy + strides). The interval
             branch below owns its own preview. */}
-        {config.activityType !== "intervals" &&
+        {(config.activityType !== "intervals" || fixedSession) &&
           (config.segments?.length ?? 0) > 0 && (
             <SessionStructureView segments={config.segments!} />
           )}
 
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
-          {config.activityType === "intervals" && (
+          {config.activityType === "intervals" && !fixedSession && (
             <motion.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
@@ -1225,7 +1232,7 @@ export default function RunSetupModal({
               onClick={() => {
                 if (!targetError)
                   onStart(
-                    config.activityType === "intervals"
+                    config.activityType === "intervals" && !fixedSession
                       ? { ...config, intervals: intervalConfig }
                       : config
                   );

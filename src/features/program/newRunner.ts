@@ -232,6 +232,7 @@ export function newRunnerTemplate(
       t.type !== "race" &&
       !isRunWalkTemplateId(t.id) &&
       !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
+      !t.config.timeTrial &&
       minutes(t) <= most
   ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
   const quality = original.type === "tempo" || original.type === "intervals";
