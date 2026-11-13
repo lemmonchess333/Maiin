@@ -1,6 +1,6 @@
 /**
- * Make the seeded test user Pro for the length of one capture, then free
- * again. The seed makes it free, and some screens draw their Pro half only
+ * Make a seeded test user (the shared one unless another email is given)
+ * Pro for the length of one capture, then free again. The seed makes it free, and some screens draw their Pro half only
  * for Pro: since whole-app grill Q84 the charts older than 3 months and the
  * performance score's details are Pro. Specs that film those call this in
  * a try/finally so the next spec meets the account as seeded.
@@ -24,9 +24,12 @@ function adminApp(): App {
   );
 }
 
-export async function setTestUserTier(tier: "pro" | "free"): Promise<void> {
+export async function setTestUserTier(
+  tier: "pro" | "free",
+  email: string = TEST_USER.email
+): Promise<void> {
   const app = adminApp();
-  const { uid } = await getAuth(app).getUserByEmail(TEST_USER.email);
+  const { uid } = await getAuth(app).getUserByEmail(email);
   await getFirestore(app)
     .collection("users")
     .doc(uid)
