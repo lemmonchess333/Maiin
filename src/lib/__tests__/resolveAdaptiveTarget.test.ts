@@ -11,7 +11,7 @@
 import { describe, it, expect } from "vitest";
 import {
   resolveAdaptiveTarget,
-  isAdaptiveActive,
+  isPersonalTargetWorkedOut,
   type CapState,
 } from "../adaptiveTarget";
 
@@ -45,19 +45,36 @@ const baseInput = {
   latched: 0,
 };
 
-describe("isAdaptiveActive — the single eligibility gate", () => {
-  it("requires signed-in + Pro + no manual override", () => {
+describe("the two gates: worked out for, and applied for", () => {
+  it("the estimate is worked out for any signed-in account with no manual target (Q87)", () => {
     expect(
-      isAdaptiveActive({ hasUser: true, isPro: true, isManualOverride: false })
+      isPersonalTargetWorkedOut({ hasUser: true, isManualOverride: false })
     ).toBe(true);
     expect(
-      isAdaptiveActive({ hasUser: false, isPro: true, isManualOverride: false })
+      isPersonalTargetWorkedOut({ hasUser: false, isManualOverride: false })
     ).toBe(false);
     expect(
-      isAdaptiveActive({ hasUser: true, isPro: false, isManualOverride: false })
+      isPersonalTargetWorkedOut({ hasUser: true, isManualOverride: true })
+    ).toBe(false);
+  });
+
+  it("it is applied only for signed-in + Pro + no manual override", () => {
+    const applied = (p: {
+      hasUser: boolean;
+      isPro: boolean;
+      isManualOverride: boolean;
+    }) => resolveAdaptiveTarget({ ...baseInput, ...p, ...fullWindow() }).view;
+    expect(
+      applied({ hasUser: true, isPro: true, isManualOverride: false }).active
+    ).toBe(true);
+    expect(
+      applied({ hasUser: false, isPro: true, isManualOverride: false }).active
     ).toBe(false);
     expect(
-      isAdaptiveActive({ hasUser: true, isPro: true, isManualOverride: true })
+      applied({ hasUser: true, isPro: false, isManualOverride: false }).active
+    ).toBe(false);
+    expect(
+      applied({ hasUser: true, isPro: true, isManualOverride: true }).active
     ).toBe(false);
   });
 });
@@ -77,20 +94,71 @@ describe("resolveAdaptiveTarget — precedence ladder", () => {
       warmupFraction: 0,
       stalled: false,
       maintenance: null,
+      personalTarget: null,
     });
     expect(capState).toBeNull();
     expect(capChanged).toBe(false);
   });
 
-  it("free user → formula, never teased with the warmup", () => {
-    const { view } = resolveAdaptiveTarget({
+  it("free user, full window → told the personal target, never applied (Q49, Q87)", () => {
+    const { view, capState, capChanged } = resolveAdaptiveTarget({
       ...baseInput,
       isPro: false,
       ...fullWindow(),
     });
     expect(view.active).toBe(false);
-    expect(view.showWarmup).toBe(false);
+    expect(view.ready).toBe(true);
+    // The whole learned value, not the first capped step: the cap is about
+    // what the person is told to eat, and a free account still eats to the
+    // formula.
+    expect(view.personalTarget).toBe(2350);
     expect(view.source).toBe("formula");
+    expect(view.value).toBe(2200);
+    expect(view.showWarmup).toBe(false);
+    // Nothing is stored for a target that is not applied.
+    expect(capState).toBeNull();
+    expect(capChanged).toBe(false);
+  });
+
+  it("free user, below the gate → the warmup shows once loaded, no personal target", () => {
+    const loaded = resolveAdaptiveTarget({ ...baseInput, isPro: false });
+    expect(loaded.view.showWarmup).toBe(true);
+    expect(loaded.view.personalTarget).toBeNull();
+    expect(loaded.view.value).toBe(2200);
+    const loading = resolveAdaptiveTarget({
+      ...baseInput,
+      isPro: false,
+      loaded: false,
+    });
+    expect(loading.view.showWarmup).toBe(false);
+  });
+
+  it("free user's personal target carries the goal's offset, floored like the formula", () => {
+    const cut = resolveAdaptiveTarget({
+      ...baseInput,
+      isPro: false,
+      goalOffset: -500,
+      ...fullWindow(),
+    });
+    expect(cut.view.personalTarget).toBe(1850);
+    const steep = resolveAdaptiveTarget({
+      ...baseInput,
+      isPro: false,
+      goalOffset: -2000,
+      ...fullWindow(),
+    });
+    // 2350 − 2000 = 350, floored to min(2350, MIN_TARGET_CALORIES = 1200).
+    expect(steep.view.personalTarget).toBe(1200);
+  });
+
+  it("Pro sees the personal target its applied value is moving toward", () => {
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      goalOffset: 300,
+      ...fullWindow(),
+    });
+    expect(view.personalTarget).toBe(2650);
+    expect(view.value).toBe(2350);
   });
 
   it("manual override → formula even for a Pro with a full window", () => {
@@ -393,14 +461,20 @@ describe("resolveAdaptiveTarget — stale-hold across a logging lapse", () => {
   });
 
   it("a downgraded (free) user with a leftover capPrev never sees the held value", () => {
-    // "Free users never see learned" (Q4 lock A) survives the hold.
-    const { view } = resolveAdaptiveTarget({
+    // Free users never have learned applied (Q4 lock A), and the hold is
+    // no exception. Like any free account (Q87) they see the warmup until
+    // a fresh estimate is ready, and their cap state is left alone.
+    const { view, capState, capChanged } = resolveAdaptiveTarget({
       ...baseInput,
       capPrev: held,
       isPro: false,
     });
     expect(view.source).toBe("formula");
-    expect(view.showWarmup).toBe(false);
+    expect(view.value).toBe(2200);
+    expect(view.showWarmup).toBe(true);
+    expect(view.personalTarget).toBeNull();
+    expect(capState).toBeNull();
+    expect(capChanged).toBe(false);
   });
 
   it("suppresses the warmup indicator until the first read resolves, but still holds", () => {
