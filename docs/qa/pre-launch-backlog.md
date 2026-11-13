@@ -4787,3 +4787,19 @@ has spoken it on a real run.
 - [ ] **No benchmark, or the cue switched off.** Without a confirmed
       benchmark, or with pace alerts off in the run's settings, run fast on
       an easy run. Passing: no easy cue.
+
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.

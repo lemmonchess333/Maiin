@@ -87,12 +87,48 @@ describe("usePaceInsightFromRuns — gating", () => {
     expect(result.current.insight).toBeNull();
   });
 
-  it("the run summary's one tap is every account's (Run24 (4))", () => {
+  it("the run summary works it out for every account (Run24 (4))", () => {
     H.isPro = false;
     const { result } = renderHook(() =>
       usePaceInsightFromRuns([run()], { everyAccount: true })
     );
     expect(result.current.insight).toEqual(INSIGHT);
+  });
+
+  it("faster paces on a free account are shown locked and cannot be taken", async () => {
+    H.isPro = false;
+    const { result } = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(result.current.locked).toBe(true);
+    let outcome: string | undefined;
+    await act(async () => {
+      outcome = await result.current.accept();
+    });
+    expect(outcome).toBe("failure");
+    expect(authState.updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("slower paces stay one tap for a free account", async () => {
+    H.isPro = false;
+    H.engineInsight = { ...INSIGHT, suggestedVdot: 40, direction: "slower" };
+    const { result } = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(result.current.locked).toBe(false);
+    let outcome: string | undefined;
+    await act(async () => {
+      outcome = await result.current.accept();
+    });
+    expect(outcome).toBe("success");
+    expect(authState.updateProfile).toHaveBeenCalled();
+  });
+
+  it("a Pro account takes faster paces with no lock", () => {
+    const { result } = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(result.current.locked).toBe(false);
   });
 
   it("loading or missing fitness returns null", () => {
