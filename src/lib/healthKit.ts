@@ -235,6 +235,16 @@ export async function readSleepSamples(
   }
 }
 
+/** The local day a day bucket starts on. The plugin gives an instant
+ *  ("2026-11-11T23:00:00.000Z" for a local midnight an hour ahead of UTC),
+ *  read as local time; a bare "YYYY-MM-DD" is already the day, and parsing
+ *  it as an instant would make it UTC midnight, the day before for anyone
+ *  west of Greenwich. */
+function bucketDayKey(startDate: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return startDate;
+  return localDateString(new Date(Date.parse(startDate)));
+}
+
 /** One value a day (the day's average) for a daily reading, keyed by the
  *  LOCAL day its bucket starts on. Null on the web or when the read fails. */
 export async function readDailyAverages(
@@ -255,10 +265,7 @@ export async function readDailyAverages(
     });
     return (samples ?? [])
       .filter((s) => Number.isFinite(s.value) && s.value > 0)
-      .map((s) => ({
-        dateKey: localDateString(new Date(s.startDate)),
-        value: s.value,
-      }));
+      .map((s) => ({ dateKey: bucketDayKey(s.startDate), value: s.value }));
   } catch {
     return null;
   }

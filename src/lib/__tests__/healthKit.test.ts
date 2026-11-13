@@ -201,5 +201,12 @@ describe("readiness's sleep and heart, in the iOS app", () => {
         aggregation: "average",
       })
     );
+    // A bucket given as a bare day is that day, in every timezone.
+    plugin.queryAggregated.mockResolvedValueOnce({
+      samples: [{ startDate: "2026-11-12", value: 41, values: {}, unit: "ms" }],
+    });
+    expect(
+      await readDailyAverages("heartRateVariability", day, new Date())
+    ).toEqual([{ dateKey: "2026-11-12", value: 41 }]);
   });
 });
