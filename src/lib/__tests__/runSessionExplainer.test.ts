@@ -408,7 +408,7 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
       racePace: "tempo",
     });
     expect(why).toBe(
-      "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts."
+      "It teaches your legs and breathing what race pace feels like, so it’s familiar when it counts."
     );
   });
 

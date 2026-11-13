@@ -200,16 +200,22 @@ export function runSessionAbout(
   }
   if (template.type === "tempo" && racePace?.kind === "tempo") {
     // A2: the goal pace, not the comfortably hard pace fitness would set.
+    // Without a goal time it is a marathon's band (Run24 (9)), named so.
     const blocks = config.tempo?.workSecs.length ?? 1;
+    const band = racePace.source === "band";
+    const pace = band ? "marathon pace" : "your goal race pace";
     return {
       what: config.tempo
-        ? tempoShape(config.tempo, "at your goal race pace")
+        ? tempoShape(config.tempo, `at ${pace}`)
         : blocks > 1
-          ? "A warm-up, then your goal race pace in two blocks with easy running between, then a cool-down."
-          : "A warm-up, then a block at your goal race pace, then a cool-down.",
-      feel: "Race pace: even and controlled, the rhythm you’ll hold on race day.",
-      ifWrong:
-        "Race pace won’t come today? Ease off to a pace you can hold and finish the time. If it keeps feeling out of reach, you can change your goal time in your run plan.",
+          ? `A warm-up, then ${pace} in two blocks with easy running between, then a cool-down.`
+          : `A warm-up, then a block at ${pace}, then a cool-down.`,
+      feel: band
+        ? "Marathon pace: even and controlled, the rhythm you’ll hold on race day."
+        : "Race pace: even and controlled, the rhythm you’ll hold on race day.",
+      ifWrong: band
+        ? "Marathon pace won’t come today? Ease off to a pace you can hold and finish the time."
+        : "Race pace won’t come today? Ease off to a pace you can hold and finish the time. If it keeps feeling out of reach, you can change your goal time in your run plan.",
     };
   }
   if (template.type === "tempo") {
@@ -228,7 +234,10 @@ export function runSessionAbout(
   }
   if (template.type === "long" && racePace?.kind === "finish") {
     return {
-      what: "Your longest run of the week, finishing at your goal race pace.",
+      what:
+        racePace.source === "band"
+          ? "Your longest run of the week, finishing at marathon pace."
+          : "Your longest run of the week, finishing at your goal race pace.",
       feel: "Easy until the final stretch, then strong and even at race pace.",
       ifWrong:
         "Race pace won’t come today? Run the rest easy. Finishing the distance matters more than the pace.",

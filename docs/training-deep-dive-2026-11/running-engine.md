@@ -330,6 +330,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Root cause: reps are by distance (`src/lib/workoutTemplates.ts:261-330`); the new-runner cap fits a session by its nominal minutes, 29 for `4x1k`, which assumes reps at about 3:40 /km (`src/features/program/runTimeLimits.ts:38-50`, `src/features/program/newRunner.ts:185-213`); quality is allowed from the first week after the six run-walk weeks (`newRunner.ts:26`, `runScheduler.ts:1647-1652`).
 - Fix: no tempo or 1 km reps in a block begun as a new runner until continuous runs reach 40 to 45 min; until then strides or 6 x 1 min pick-ups by time; size interval sessions in minutes at the runner's pace wherever a cap is applied.
 - Size S to M. Lock: Run20 (5) sets six weeks without quality; this extends it (a STATUS line).
+- STATUS 2026-11-13: built (Run24 (8)). A block begun as a new runner holds no tempo or intervals, its first six weeks or after, until the runner has run 40 minutes in one go (`beginnerQualityWeek`: from the week after the earliest such run among the recent runs); its easy weeks keep their strides until then, and the ladders start at their first rung when quality begins. In the repo's `new-runner-marathon` trace the tempo two weeks after run-walk goes, and the first quality session is 4 x 1 km the week after the runner's first 47-minute long run; in `couch-to-5k` the build's quality slot becomes a strides run. Sizing interval sessions in minutes at the runner's pace wherever a cap applies is not built.
 
 ### D7. No plan without a race date, and nothing after the recovery weeks. Breaks trust.
 
@@ -378,6 +379,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D12. With a goal time every tempo becomes goal pace; without one there is no race-pace work. Hurts quality.
 
 - Evidence: plan G: tempos at 4:37, threshold 4:21 never run; plan F: none. Root cause: `racePace.ts:146-150`. Fix: alternate threshold and goal-pace sessions; use the marathon band when no goal is typed. Size S.
+- STATUS 2026-11-13: built (Run24 (9)). A build's tempos alternate race pace and threshold in pairs of weeks (`buildTempoAtRacePace`), so with tempos every other week every other one is at race pace; every taper tempo stays at race pace. A marathon with no goal time runs its race-pace work, tempos and long-run finishes, at the middle of the marathon band a confirmed benchmark gives, and the words say "marathon pace", never a goal the runner did not set. A half with no goal time has none, as the lock reads.
 
 ### D13. Race week and the taper ignore how much the runner runs. Polish to quality.
 

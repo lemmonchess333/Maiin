@@ -271,6 +271,13 @@ const runDays = (days: number) => ({
   weeklyRunDays: days,
 });
 const newRunner = { newRunnerUntil: newRunnerUntil("new", START) };
+/* Run24 (8): a new runner whose build holds quality, having run 45 minutes
+   in one go two days before the plan. */
+const newRunnerWithQuality = {
+  ...newRunner,
+  recentRuns: [{ date: "2026-09-05", duration: 45 * 60, distance: 7500 }],
+  recentRunsAsOf: START,
+};
 const timeLimited = {
   runTimeLimits: { sessionMinutes: null, longRunMinutes: 90 },
 };
@@ -551,8 +558,8 @@ describe("the taper's easy runs step down from what the last build week held (Ru
 
   it("take the lock's shares of what the last build week held, and never run longer", () => {
     for (const [distance, weeks, more, who] of [
-      ["marathon", 20, newRunner, "a new runner"],
-      ["half", 16, newRunner, "a new runner"],
+      ["marathon", 20, newRunnerWithQuality, "a new runner"],
+      ["half", 16, newRunnerWithQuality, "a new runner"],
       ["marathon", 20, sessionLimited, "a 45-minute session limit"],
     ] as const)
       for (const days of [3, 4, 5]) {

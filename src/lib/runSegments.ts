@@ -108,8 +108,7 @@ export function livePaceTarget(config: {
 }
 
 export type SegmentTarget =
-  | { kind: "duration"; seconds: number }
-  | { kind: "distance"; meters: number };
+  { kind: "duration"; seconds: number } | { kind: "distance"; meters: number };
 
 export interface SessionSegment {
   /** Visual/coaching class — reuses the guided-run vocabulary so
@@ -304,6 +303,9 @@ export function segmentsFromTempo(
      *  race prep), not a fitness-derived threshold — cues say so and
      *  the pace is pinned against band re-suffixing. */
     atGoalPace?: boolean;
+    /** Run24 (9): the race pace is a marathon's band, with no goal time
+     *  typed, so the words say "marathon pace". */
+    marathonBand?: boolean;
   },
   /** Same cross-run rotation contract as segmentsFromIntervals. */
   seed: number = 0
@@ -333,13 +335,16 @@ export function segmentsFromTempo(
     }
     const atGoal = opts?.atGoalPace && paceTarget;
     const blockEffort = atGoal ? "RACE PACE" : EFFORT_EYEBROW.comfortablyHard;
+    const named = opts?.marathonBand ? "marathon pace" : "goal pace";
     out.push({
       type: "moderate",
       label: atGoal
-        ? `${min(seconds)} min goal pace${pace}`
+        ? `${min(seconds)} min ${named}${pace}`
         : `${min(seconds)} min tempo${pace}`,
       instruction: atGoal
-        ? "Your goal race pace — hold the rhythm"
+        ? opts?.marathonBand
+          ? "Marathon pace — hold the rhythm"
+          : "Your goal race pace — hold the rhythm"
         : "Comfortably hard — hold the rhythm",
       target: { kind: "duration", seconds },
       ...(paceTarget ? { paceTarget } : {}),
@@ -348,7 +353,7 @@ export function segmentsFromTempo(
         ? { rep: i + 1, totalReps: shape.workSecs.length }
         : {}),
       effort: atGoal
-        ? `${min(seconds)} min @ goal pace`
+        ? `${min(seconds)} min @ ${named}`
         : `${min(seconds)} min tempo`,
       eyebrow:
         shape.workSecs.length > 1
@@ -356,8 +361,10 @@ export function segmentsFromTempo(
           : blockEffort,
       cue: atGoal
         ? shape.workSecs.length > 1
-          ? `Block ${i + 1} of ${shape.workSecs.length} at goal race pace. Settle into your race rhythm.`
-          : "Goal race pace. Settle into your race rhythm."
+          ? `Block ${i + 1} of ${shape.workSecs.length} at ${opts?.marathonBand ? "marathon pace" : "goal race pace"}. Settle into your race rhythm.`
+          : opts?.marathonBand
+            ? "Marathon pace. Settle into your race rhythm."
+            : "Goal race pace. Settle into your race rhythm."
         : shape.workSecs.length > 1
           ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard — settle into the rhythm.`
           : "Tempo. Comfortably hard — settle into the rhythm.",
@@ -440,9 +447,12 @@ export function segmentsFromLongWithRacePace(
   totalKm: number,
   blockKm: number,
   goalPaceS: number,
-  unit: DistanceUnit
+  unit: DistanceUnit,
+  /** Run24 (9): the pace is a marathon's band, with no goal time typed. */
+  marathonBand = false
 ): SessionSegment[] {
   const easyKm = Math.max(0, totalKm - blockKm);
+  const named = marathonBand ? "marathon pace" : "goal pace";
   const paceLabel = paceMinSec(Math.round(goalPaceS), unit);
   /* The block lengths are PLAN data in kilometres; only their labels move.
      The distance TARGETS below stay in metres either way, so a converted
@@ -470,13 +480,15 @@ export function segmentsFromLongWithRacePace(
     {
       type: "moderate",
       label: `${blockLabel} ${u} @ ${paceLabel} ${paceUnitLabel(unit)}`,
-      instruction: "Your goal race pace — strong to the finish",
+      instruction: marathonBand
+        ? "Marathon pace — strong to the finish"
+        : "Your goal race pace — strong to the finish",
       target: { kind: "distance", meters: Math.round(blockKm * 1000) },
       paceTarget: goalPaceS,
       pacePinned: true,
-      effort: `${blockKm}K @ goal pace`,
+      effort: `${blockKm}K @ ${named}`,
       eyebrow: "RACE PACE",
-      cue: `Race-pace block. ${blockKm} kilometres at your goal pace — strong to the finish.`,
+      cue: `Race-pace block. ${blockKm} kilometres at ${marathonBand ? "marathon pace" : "your goal pace"} — strong to the finish.`,
     },
   ];
 }

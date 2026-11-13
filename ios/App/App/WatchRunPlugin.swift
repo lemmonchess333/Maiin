@@ -1,5 +1,6 @@
 import Capacitor
 import Foundation
+import UIKit
 
 @objc(WatchRunPlugin)
 final class WatchRunPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -18,7 +19,8 @@ final class WatchRunPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "requestWorkoutWritePermission", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getWorkoutExportStatus", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "exportWorkout", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "deleteWorkout", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "deleteWorkout", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openAppSettings", returnType: CAPPluginReturnPromise)
     ]
 
     private let coordinator = WatchRunCoordinator.shared
@@ -30,6 +32,21 @@ final class WatchRunPlugin: CAPPlugin, CAPBridgedPlugin {
     override func load() {
         coordinator.onEvent = { [weak self] event, payload in
             self?.notifyListeners(event, data: payload, retainUntilConsumed: true)
+        }
+    }
+
+    /// The app's own page in Settings, where Health access is reached.
+    /// iOS gives no link into Health's own pages. The Health plugin had this
+    /// until it was replaced (13 November 2026); the new one opens nothing
+    /// on iOS, so it lives here, in the plugin every build registers.
+    @objc func openAppSettings(_ call: CAPPluginCall) {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            call.reject("Unable to open app-specific settings")
+            return
+        }
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            call.resolve()
         }
     }
 
