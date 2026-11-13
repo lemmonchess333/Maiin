@@ -76,6 +76,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
+import RacePlanProNote from "./RacePlanProNote";
 import PhotoChoiceCards, {
   type PhotoChoice,
 } from "@/components/program/PhotoChoiceCards";
@@ -196,6 +197,10 @@ interface RunPlanSettingsProps {
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
   refreshProfile: () => Promise<void>;
+  /** Pro or in a trial. A free account is told that half and full
+   *  marathon plans are Pro after their first week (Q85). Absent reads as
+   *  Pro, so nothing is said. */
+  isPro?: boolean;
 }
 
 /** Seconds → the string the goal-time input round-trips ("24:30",
@@ -257,6 +262,7 @@ export default function RunPlanSettings({
   programState,
   readiness,
   refreshProfile,
+  isPro = true,
 }: RunPlanSettingsProps) {
   // ── Saved baseline (the dirty-check reference) ──────────────────────
   const saved = useMemo(
@@ -960,7 +966,8 @@ export default function RunPlanSettings({
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
-        <div ref={raceGoalRef}>
+        <div ref={raceGoalRef} className="space-y-2">
+          <RacePlanProNote distance={raceDistance} isPro={isPro} />
           <RaceGoalPlanner
             distance={raceDistance}
             targetDate={raceTargetDate}

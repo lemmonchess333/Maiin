@@ -103,6 +103,7 @@ function sourceFromParam(from: string | null): PaywallSource {
   if (from === "trial_strip") return "trial_strip";
   if (from === "home_strip") return "home_strip";
   if (from === "personal_target") return "personal_target";
+  if (from === "race_plan") return "race_plan";
   if (from === "settings") return "settings";
   return "upgrade_page";
 }

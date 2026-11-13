@@ -79,11 +79,15 @@ afterEach(() => {
 function launchLong(
   targetTimeS?: number,
   templateId = "long_15k",
-  type = "long"
+  type = "long",
+  tier: "pro" | "free" = "pro"
 ) {
   const today = new Date();
   const raceGoal = { distance: "half", targetDate: "2099-04-18" };
   profile = {
+    // A half marathon plan in its sixth week is Pro (whole-app grill Q85);
+    // a free account's planned runs open as free runs.
+    subscriptionTier: tier,
     uid: "launch-test",
     runMode: "race_prep",
     raceGoal: { ...raceGoal, ...(targetTimeS ? { targetTimeS } : {}) },
@@ -114,6 +118,14 @@ function launchLong(
       </Routes>
     </MemoryRouter>
   );
+  // A free account past the plan's first week gets no planned-run launch
+  // card at all (Q85): its run opens as a free run.
+  if (tier === "free") {
+    return {
+      finish: screen.queryByTestId("finish")?.textContent ?? null,
+      purpose: "",
+    };
+  }
   return {
     finish: screen.getByTestId("finish").textContent,
     purpose: screen.getByTestId("purpose").textContent ?? "",
@@ -132,6 +144,11 @@ describe("Run launch card — a long run that finishes at race pace", () => {
     const { finish, purpose } = launchLong(6330, "tempo_20", "tempo");
     expect(finish).toBe("tempo");
     expect(purpose).toMatch(/what race pace feels like/);
+  });
+
+  it("a free account past the plan's first week runs it as a free run (Q85)", () => {
+    const { finish } = launchLong(6330, "long_15k", "long", "free");
+    expect(finish).toBeNull();
   });
 
   it("names none without a goal time", () => {

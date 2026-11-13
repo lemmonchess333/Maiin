@@ -4749,3 +4749,24 @@ sandbox has run it.
       target is ready (from day 3). Passing: before, "Log meals from a
       photo with Pro" and See plans; after, "Your personal target is ready:
       try Pro free for 7 days" and Start trial.
+
+## Half and full marathon plans are Pro after their first week (Q85, 2026-11-13)
+
+Affects: Home's run card and Train's Run tab (today's planned session offers
+Pro), the Run page (a planned training run on a locked plan opens as a free
+run), and the distance control in setup and Settings → Run plan (a note for a
+free account choosing a half or full marathon). The race itself, recovery
+weeks, 5K and 10K plans, the starter and free runs stay free. Unit-tested; no
+phone has drawn it.
+
+- [ ] **Week 1 free.** A free account sets up a half marathon. Passing: the
+      plan's first week (and any lead-in days) start as usual from Home and
+      Train; setup and Run plan say the plan is Pro after its first week.
+- [ ] **Week 2 on.** The same account in its second week. Passing: Home's run
+      card reads "Your half marathon plan continues with Pro" with Try Pro
+      free (or See Pro); Train's Start says the same; Start free run on Train
+      still records a run.
+- [ ] **After the trial starts.** Passing: Start comes back on Home and Train
+      at once, on the week the plan has reached.
+- [ ] **Race day and recovery.** Passing: Start race works on race day for a
+      free account, and the recovery weeks after it start as usual.
