@@ -205,7 +205,7 @@ const formatRaceTime = formatClock;
 /** Whether the runner is training for a race. The stored mode follows from
  *  the answer (Run9a); the words never name it. Run9's starter goal sits
  *  between the two for those it is offered to (`starterOffered`). */
-/** The running goal's cards (owner, 2026-11-13): each a photograph with
+/** The running goal's cards (DESIGN_GUIDE §14m rule 26): each a photograph with
  *  one fact. "Training for a race" shows the race's own place once the
  *  goal is bound to one, and says which race. */
 function raceOrNotOptions(
@@ -906,7 +906,7 @@ export default function RunPlanSettings({
       {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
           whether there is a race. Photograph cards, as the race's
-          Distance below (owner, 2026-11-13). */}
+          Distance below (DESIGN_GUIDE §14m rule 26). */}
       <div className="space-y-2">
         <SectionHeading size="compact">Running goal</SectionHeading>
         <PhotoChoiceCards<RunMode>

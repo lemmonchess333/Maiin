@@ -11,9 +11,9 @@
  * user-facing freeform/structured/race_prep toggle (Run9a).
  *
  * A race bound to its race Space opens on that race's place: a band of
- * its Space cover across the card's top, the race's name on it (owner,
- * 2026-11-13, choosing prototype (a); DESIGN_GUIDE §14m rule 26 has the
- * exception). A goal with no race, or a race with no cover, keeps the
+ * its Space cover across the card's top, the race's name on it (the
+ * owner's exception in DESIGN_GUIDE §14m rule 26). A goal with no race,
+ * or a race with no cover, keeps the
  * plain card.
  *
  * Palette: coral (running) accents only, on a standard card surface. The

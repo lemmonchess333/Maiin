@@ -8,8 +8,8 @@ import marathon from "@/assets/plan/plan-marathon.webp";
 import type { RaceDistance } from "./raceGoalPlanner";
 
 /**
- * The photographs on Run plan's goal and distance cards (owner,
- * 2026-11-13), cut small for a card (640 x 356). Where each comes from is
+ * The photographs on Run plan's goal and distance cards (DESIGN_GUIDE §14m
+ * rule 26), cut small for a card (640 x 356). Where each comes from is
  * in `src/assets/plan/README.md` and its manifest. "Training for a race"
  * shows the race's own place when the goal is bound to one; this is its
  * picture otherwise.

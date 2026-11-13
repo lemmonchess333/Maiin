@@ -36,7 +36,7 @@ import PhotoChoiceCards, { type PhotoChoice } from "./PhotoChoiceCards";
 import { PLAN_DISTANCE_PHOTOS } from "@/lib/planPhotos";
 import { getRaceMinWeeks } from "@/features/program/runPlanTiming";
 
-/* The distances as photograph cards (owner, 2026-11-13), each with its
+/* The distances as photograph cards (DESIGN_GUIDE §14m rule 26), each with its
    length and the weeks a full build takes (`getRaceMinWeeks`). */
 const DISTANCE_OPTIONS: PhotoChoice<RaceDistance>[] = (
   [

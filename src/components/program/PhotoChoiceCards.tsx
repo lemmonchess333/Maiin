@@ -3,8 +3,8 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * A choice drawn as photograph cards, two to a row (owner, 2026-11-13: Run
- * plan's running goal and distance, as Runna draws them). Each card is a
+ * A choice drawn as photograph cards, two to a row (Run plan's running goal
+ * and distance, as Runna draws them; DESIGN_GUIDE §14m rule 26). Each card is a
  * photograph under a scrim, its name and one fact at its foot in white, and
  * the chosen one has the running colour's outline and a tick.
  *
