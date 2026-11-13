@@ -167,12 +167,14 @@ test.describe("onboarding screenshots", () => {
     await page.waitForTimeout(200);
     await shootBoth(page, "onboarding-3-race-advisory-tight");
 
-    // Same step, ~9 weeks out → the compressed-runway line.
+    // Same step, ~9 weeks out → the compressed runway. Its line says what
+    // the plan's weeks hold (deep dive D8), so the status title is what
+    // names the state.
     const nearer = new Date(Date.now() + 63 * 86_400_000)
       .toISOString()
       .slice(0, 10);
     await dateInput.fill(nearer);
-    await expect(page.getByText(/compress/i).first()).toBeVisible({
+    await expect(page.getByText("Short runway").first()).toBeVisible({
       timeout: 5000,
     });
     await shootBoth(page, "onboarding-3-race-advisory-compressed");
