@@ -10,6 +10,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isWorkSegment,
+  judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
   pinnedWorkPace,
@@ -690,5 +691,41 @@ describe("segmentTargetLabel", () => {
     expect(label(330)).toBe("5 min 30 s");
     expect(label(1200)).toBe("20 min");
     expect(segmentTargetLabel({ kind: "distance", meters: 1000 })).toBe("1K");
+  });
+});
+
+/* Run24 (12), deep dive D17: the easy cue judges an easy or a long run in
+   its easy running only. */
+describe("judgesEasyNow — where the Run screen holds easy running to easy", () => {
+  const strides = segmentsFromEasyWithStrides(30, {
+    reps: 4,
+    workSeconds: 20,
+  });
+  const raceFinish = segmentsFromLongWithRacePace(20, 6, 300, "km");
+
+  it("judges an easy or a long run with no steps throughout", () => {
+    expect(judgesEasyNow("easy", [], null)).toBe(true);
+    expect(judgesEasyNow("long", [], null)).toBe(true);
+  });
+
+  it("leaves the strides and a race-pace finish alone", () => {
+    expect(
+      strides
+        .filter((s) => judgesEasyNow("easy", strides, s))
+        .map((s) => s.type)
+    ).toEqual(strides.filter((s) => s.type === "easy").map((s) => s.type));
+    expect(
+      strides.some(
+        (s) => s.type !== "easy" && judgesEasyNow("easy", strides, s)
+      )
+    ).toBe(false);
+    expect(raceFinish.map((s) => judgesEasyNow("long", raceFinish, s))).toEqual(
+      [true, false]
+    );
+  });
+
+  it("never judges a tempo, intervals or a race", () => {
+    for (const type of ["tempo", "intervals", "race", undefined])
+      expect(judgesEasyNow(type, [], null)).toBe(false);
   });
 });

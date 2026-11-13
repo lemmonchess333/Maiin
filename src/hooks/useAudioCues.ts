@@ -10,8 +10,10 @@ import {
   halfwayCue,
   finalStretchCue,
   type SplitComparison,
+  easyCeilingCue,
 } from "@/lib/runCueCopy";
 import { paceMinSec } from "@/lib/runLabels";
+import { EASY_CEILING_MARGIN_S } from "@/lib/runSegments";
 import { lapMetresFor, finalStretchM } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
@@ -227,6 +229,47 @@ export function useAudioCues(
   const alertDirection = useRef<"behind" | "ahead" | null>(null);
   const withinBandSince = useRef<number | null>(null);
 
+  /**
+   * Run24 (12), deep dive D17: on an easy or a long run, a runner with a
+   * confirmed benchmark who goes faster than easy hears so, spaced and
+   * capped like the pace alert, in one direction only. Back at easy and
+   * holding there ends the stretch quietly.
+   */
+  const easyStreak = useRef(0);
+  const easyCooldown = useRef(0);
+  const easySince = useRef<number | null>(null);
+
+  const checkEasyCeiling = useCallback(
+    (
+      currentPaceSeconds: number,
+      easyFastEdgeSeconds: number,
+      elapsed: number
+    ) => {
+      if (!enabled || !cueConfig.paceAlerts || !easyFastEdgeSeconds) return;
+      if (currentPaceSeconds >= easyFastEdgeSeconds - EASY_CEILING_MARGIN_S) {
+        if (easyStreak.current === 0) return;
+        if (easySince.current === null) {
+          easySince.current = elapsed;
+          return;
+        }
+        if (elapsed - easySince.current >= RESOLVE_HOLD_SECONDS) {
+          easyStreak.current = 0;
+          easySince.current = null;
+        }
+        return;
+      }
+      easySince.current = null;
+      if (easyStreak.current >= MAX_ALERTS_PER_STRETCH) return;
+      const spacing =
+        ALERT_SPACINGS[Math.min(easyStreak.current, ALERT_SPACINGS.length - 1)];
+      if (elapsed - easyCooldown.current <= spacing) return;
+      easyCooldown.current = elapsed;
+      easyStreak.current += 1;
+      speak(easyCeilingCue(bumpVariant()));
+    },
+    [enabled, cueConfig.paceAlerts, speak, bumpVariant]
+  );
+
   const checkPaceAlert = useCallback(
     (
       currentPaceSeconds: number,
@@ -326,6 +369,9 @@ export function useAudioCues(
     alertStreak.current = 0;
     alertDirection.current = null;
     withinBandSince.current = null;
+    easyStreak.current = 0;
+    easyCooldown.current = 0;
+    easySince.current = null;
     cueVariant.current = cueConfig.variantSeed;
   }, [cueConfig.variantSeed]);
 
@@ -335,6 +381,7 @@ export function useAudioCues(
     checkDistanceCue,
     checkTimeCue,
     checkPaceAlert,
+    checkEasyCeiling,
     checkHalfway,
     checkFinal500,
     reset,

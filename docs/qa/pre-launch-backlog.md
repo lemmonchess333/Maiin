@@ -4662,3 +4662,22 @@ drawn them.
 - [ ] **Larger Text.** At the largest size, open Run plan and Train.
       Passing: the cards grow taller and keep every word; the band grows
       with the race's name.
+
+## The easy cue on easy and long runs (Run24 (12), 2026-11-13)
+
+Affects: `checkEasyCeiling` in `useAudioCues`, called from `Run.tsx` on an
+easy or a long run in its easy running (`judgesEasyNow`) for a runner with
+a confirmed benchmark. Unit tests drive the spacing and the gate; no phone
+has spoken it on a real run.
+
+- [ ] **An easy run, too quick.** With a confirmed benchmark, start an easy
+      run and run clearly faster than the fast end of your easy pace for
+      two minutes. Passing: one spoken line about easing off after about
+      half a minute, then at most two more, a minute and two minutes
+      apart; nothing once you are back at easy.
+- [ ] **Strides and a race-pace finish.** Run an easy run with strides and
+      a long run that finishes at race pace. Passing: no easy cue during
+      the strides or the race-pace block.
+- [ ] **No benchmark, or the cue switched off.** Without a confirmed
+      benchmark, or with pace alerts off in the run's settings, run fast on
+      an easy run. Passing: no easy cue.

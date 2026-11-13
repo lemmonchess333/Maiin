@@ -83,6 +83,7 @@ import {
   type SessionDistanceMode,
 } from "@/lib/sessionPlayerCheckpoint";
 import {
+  judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
   segmentsFromGuided,
@@ -621,6 +622,12 @@ export default function Run() {
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
   const judgingPace = judgesPaceNow(
+    runConfig?.activityType,
+    player.segments,
+    player.current
+  );
+  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`).
+  const judgingEasy = judgesEasyNow(
     runConfig?.activityType,
     player.segments,
     player.current
@@ -1410,6 +1417,17 @@ export default function Run() {
       }
     }
 
+    // Run24 (12), deep dive D17: an easy or a long run going faster than
+    // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
+    // in its easy running only (`judgesEasyNow`), never on a run-walk.
+    const easyFastEdge = paceTable?.easy[0];
+    if (easyFastEdge && !runWalkSession && judgingEasy) {
+      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+      if (currentPaceSec !== null) {
+        audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
+      }
+    }
+
     // Halfway and final 500m for distance targets.
     // target.value is metres per the RunConfig contract (see the
     // type definition in RunSetupModal). Read through the helper
@@ -1430,6 +1448,8 @@ export default function Run() {
     runConfig,
     judgingPace,
     runWalkSession,
+    paceTable,
+    judgingEasy,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
