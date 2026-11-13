@@ -104,6 +104,11 @@ import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import { useTodayReadiness } from "@/hooks/useTodayReadiness";
+import {
+  buildEasierSession,
+  summarizeEasier,
+} from "@/features/program/easierToday";
 import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
@@ -565,6 +570,34 @@ export default function Home() {
       routinesInFlight,
     ]
   );
+  // Readiness above the lift hero's Start (whole-app grill Q41): the
+  // morning question, or a word and its fact, and the easier session on a
+  // Steady or Go easy day. Free: sleep and heart join it for Pro once
+  // Health is connected.
+  const heroLift = session.lift;
+  const todayReadiness = useTodayReadiness(heroLift?.workout ?? undefined);
+  const liftReadiness = useMemo(() => {
+    const day = heroLift?.workout;
+    if (
+      !heroLift ||
+      !day ||
+      !heroLift.isStartable ||
+      heroLift.inProgress ||
+      !heroLift.startTarget.includes("start=1")
+    ) {
+      return null;
+    }
+    return {
+      today: todayReadiness,
+      easierTarget: `${heroLift.startTarget}&easier=1`,
+      easierSummary: summarizeEasier(
+        buildEasierSession(day, session.restContext, {
+          smallPlates: programState?.settings?.smallPlates === true,
+          loadUnit: programState?.settings?.loadUnit,
+        })
+      ),
+    };
+  }, [heroLift, todayReadiness, session.restContext, programState]);
   // The hero's words around the session (homeHero.ts): the kicker beside
   // the date, the week's count and the next session beside the segments.
   const heroPositionLabel = useMemo(
@@ -1327,6 +1360,7 @@ export default function Home() {
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
                 session={session}
+                liftReadiness={liftReadiness}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
