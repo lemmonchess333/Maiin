@@ -15,11 +15,7 @@
  */
 
 export type RunIntensity =
-  | "easy"
-  | "marathon"
-  | "threshold"
-  | "interval"
-  | "repetition";
+  "easy" | "marathon" | "threshold" | "interval" | "repetition";
 
 /** [faster, slower] sec/km — a band, like Runna shows. */
 export type PaceBand = [number, number];
@@ -114,10 +110,7 @@ export function vdotFromRace(distanceM: number, timeS: number): number {
  * that pace can never disagree on where the boundary sits.
  */
 export type RaceTargetBand =
-  | "on_track"
-  | "within_reach"
-  | "stretch"
-  | "long_shot";
+  "on_track" | "within_reach" | "stretch" | "long_shot";
 
 export function raceTargetBand(gapVdot: number): RaceTargetBand {
   if (gapVdot <= 0) return "on_track";
@@ -532,14 +525,33 @@ export function vdotFromTempoPace(paceSPerKm: number): number {
   return vo2 > 0 ? vo2 / TEMPO_PCT : 0;
 }
 
+/** The middle of the interval band as a fraction of VO2max: where interval
+ *  repeats are prescribed (`resolveSessionPaces("intervals")`). */
+const INTERVAL_PCT =
+  (INTENSITY_PCT.interval[0] + INTENSITY_PCT.interval[1]) / 2;
+
+/**
+ * Run24 (4), deep dive D4: the VDOT interval repeats held at `paceSPerKm`
+ * imply. Repeats are run at Daniels' I pace, about the velocity at VO2max,
+ * so the pace is read at the interval band's middle, as a tempo's is at the
+ * threshold band's: repeats run at the pace a VDOT prescribes give that VDOT
+ * back. Repeats run harder than asked read as more fitness than the runner
+ * has, as a tempo's do; a Tropos heuristic, and only ever a suggestion.
+ */
+export function vdotFromIntervalPace(paceSPerKm: number): number {
+  if (!Number.isFinite(paceSPerKm) || paceSPerKm <= 0) return 0;
+  const vo2 = vo2AtVelocity(60000 / paceSPerKm);
+  return vo2 > 0 ? vo2 / INTERVAL_PCT : 0;
+}
+
 /**
  * Pgm8 R1 — an effort a benchmark may be derived from (`benchmarkEfforts.ts`
  * picks them from the saved runs): a race or time trial, whole, or a tempo's
  * work segments, its blocks without the warm-up and cool-down.
  */
 export interface BenchmarkEffort {
-  kind: "race" | "tempo";
-  /** Metres: the race, or the tempo's work segments. */
+  kind: "race" | "tempo" | "intervals";
+  /** Metres: the race, or the tempo's or the repeats' work segments. */
   distanceM: number;
   /** Seconds, over the same stretch. */
   timeS: number;
@@ -551,9 +563,12 @@ export interface BenchmarkEffort {
 /** The VDOT an effort implies: a race by its finish, a tempo by its pace. */
 export function effortVdot(effort: BenchmarkEffort): number {
   if (!(effort.distanceM > 0) || !(effort.timeS > 0)) return 0;
-  return effort.kind === "race"
-    ? vdotFromRace(effort.distanceM, effort.timeS)
-    : vdotFromTempoPace((effort.timeS / effort.distanceM) * 1000);
+  const pace = (effort.timeS / effort.distanceM) * 1000;
+  if (effort.kind === "race")
+    return vdotFromRace(effort.distanceM, effort.timeS);
+  return effort.kind === "intervals"
+    ? vdotFromIntervalPace(pace)
+    : vdotFromTempoPace(pace);
 }
 
 /**

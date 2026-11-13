@@ -17,8 +17,10 @@ import { logger } from "@/lib/logger";
  * Since Pgm8 R1 the efforts are a race, a time trial or a tempo's work, read
  * by `benchmarkEfforts` as for the benchmark the app derives.
  *
- * PRO-gated per the locked decision (§10): personalized paces are free, the
- * adaptive loop is Pro. Free users get `insight: null`.
+ * The run summary offers it to every account (Run24 (4), deep dive D4):
+ * a plan on stale paces is a correctness problem, not a premium feature.
+ * The continuous form, `usePaceInsight` on Settings, stays Pro (§10), and
+ * there free users get `insight: null`.
  *
  * `usePaceInsightFromRuns` is the reusable controller — it consumes an
  * already-loaded run list so a caller (RunSummary) that already queried the
@@ -62,9 +64,14 @@ const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
 export function usePaceInsightFromRuns(
   runs: PaceInsightRun[],
-  opts: { enabled?: boolean; loading?: boolean } = {}
+  opts: {
+    enabled?: boolean;
+    loading?: boolean;
+    /** Offer it whatever the plan (Run24 (4)): the run summary's one tap. */
+    everyAccount?: boolean;
+  } = {}
 ): PaceInsightController {
-  const { enabled = true, loading = false } = opts;
+  const { enabled = true, loading = false, everyAccount = false } = opts;
   const { user, profile, updateProfile } = useAuth();
   const { isPro } = useSubscription();
   const uid = user?.uid ?? null;
@@ -92,7 +99,13 @@ export function usePaceInsightFromRuns(
   const runFitness = profile?.runFitness ?? null;
 
   const insight = useMemo<PaceInsight | null>(() => {
-    if (!enabled || !isPro || loading || !profileIsCurrent || !runFitness) {
+    if (
+      !enabled ||
+      !(isPro || everyAccount) ||
+      loading ||
+      !profileIsCurrent ||
+      !runFitness
+    ) {
       return null;
     }
 
@@ -117,6 +130,7 @@ export function usePaceInsightFromRuns(
   }, [
     enabled,
     isPro,
+    everyAccount,
     loading,
     profileIsCurrent,
     dismissedVdot,
