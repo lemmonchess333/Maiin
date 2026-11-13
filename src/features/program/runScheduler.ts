@@ -32,7 +32,7 @@ import {
 } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
-import { newRunnerTemplate } from "./newRunner";
+import { beginnerQualityWeek, newRunnerTemplate } from "./newRunner";
 import { starterRunSlots, starterTemplateId } from "./starterPlan";
 import {
   chooseQualityRunSlots,
@@ -1398,6 +1398,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     !!input.newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, -Math.max(0, startIndex) * 7)) <
       input.newRunnerUntil;
+  /* Run24 (8): a block begun as a new runner holds no tempo or intervals
+     until the runner has run 40 minutes in one go
+     (`beginnerQualityWeek`), its first weeks or not; the build's easy weeks
+     keep their strides until then. Without the runs it is not known, so the
+     block holds none. Asked of the block's earlier weeks too, so a ladder
+     starts at its first rung when quality begins (Run20 (4)). */
+  const beginnerQualityFrom = beginnerBlock
+    ? beginnerQualityWeek(input.recentRuns)
+    : null;
+  const holdsNoQuality = (blockWeek: number) =>
+    isNewRunnerWeek(blockWeek) ||
+    (beginnerBlock &&
+      (beginnerQualityFrom === null ||
+        localDateString(
+          addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)
+        ) < beginnerQualityFrom));
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
   /* Run15 (deep dive D11): the week a runner came back in
@@ -1772,7 +1788,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               phase: getPhaseForWeek(k, blockWeeks, input.raceGoal.distance),
               ...rules,
               // Run20 (5): a new runner's week held none.
-              skipQuality: rules.skipQuality || isNewRunnerWeek(k),
+              skipQuality: rules.skipQuality || holdsNoQuality(k),
             });
             if (!held.includes(flavour)) continue;
             const id = qualityTemplateId({
@@ -1792,7 +1808,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           weekIndex: w,
           phase,
           ...rules,
-          skipQuality: rules.skipQuality || newRunnerWeek,
+          // Run24 (8): nor a beginner's block until they can run 40
+          // minutes. Its taper then holds none either: its build held none.
+          skipQuality: rules.skipQuality || holdsNoQuality(w),
         });
         if (flavours.length > 0) {
           const qualityType = flavours[0];

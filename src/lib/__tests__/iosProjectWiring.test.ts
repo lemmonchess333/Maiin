@@ -191,13 +191,13 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
   });
 
   it("declares HealthKit usage strings for as long as the plugin is a dependency", () => {
-    // useSteps().connect → requestHealthPermissions → HKHealthStore
+    // useSteps().connect → requestAuthorization → HKHealthStore
     // .requestAuthorization, reached from Settings → Health and from the
     // Home steps priming sheet, which auto-opens. Without
     // NSHealthShareUsageDescription the OS terminates the app on that tap.
     // The strings come from build settings (see the pilot test below), so
     // both kinds of build are read as they resolve, not as typed.
-    const usesHealthKit = "capacitor-health" in pkg.dependencies;
+    const usesHealthKit = "@capgo/capacitor-health" in pkg.dependencies;
     expect(usesHealthKit).toBe(true);
     for (const gate of ["NO", "YES"]) {
       for (const key of [
@@ -562,7 +562,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
     // HKHealthStore refuses an app that does not carry the entitlement.
     expect(keys.includes("com.apple.developer.healthkit")).toBe(
-      "capacitor-health" in pkg.dependencies
+      "@capgo/capacitor-health" in pkg.dependencies
     );
     // The native App Check provider attests with App Attest.
     expect(

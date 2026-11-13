@@ -338,7 +338,8 @@ rows of the locked table, built.
 - **It writes the run as a workout.** With Save workouts to Apple Health
   on, a synced run is written as an `HKWorkout` by the iPhone app's own
   writer (`HealthWorkoutStore.swift`, through the `WatchRun` plugin).
-  `capacitor-health` still asks for steps alone. A receipt reserved on the
+  The Health plugin (`@capgo/capacitor-health` since 13 November 2026,
+  `capacitor-health` before) still asks for steps alone. A receipt reserved on the
   server before each write (`users/{uid}/healthWorkoutExports/{runId}`)
   stops a duplicate, and deleting the run in Tropos deletes the workout,
   as Q4 requires.

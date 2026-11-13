@@ -206,7 +206,7 @@ export function runSessionExplainer(
         : "The week’s anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo" && input.racePace === "tempo") {
-    return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
+    return "It teaches your legs and breathing what race pace feels like, so it’s familiar when it counts.";
   }
   if (type === "tempo") {
     return "A tempo builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
