@@ -218,7 +218,7 @@ export const TABS = {
   train: "Train",
   food: "Food",
   social: "Social",
-  analytics: "Analytics",
+  progress: "Progress",
 } as const;
 
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];

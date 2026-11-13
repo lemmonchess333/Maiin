@@ -183,7 +183,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 - [ ] On an iPhone, tick a set: the box should pop and the check draw once. Go back to an earlier exercise and the tick should not replay. Turn on Settings → Accessibility → Reduce Motion and repeat: nothing should animate.
 - [ ] On an iPhone, finish a workout that earns a new best or a badge. On the finish screen, Done should stay pinned above the home indicator while the page scrolls under it. With VoiceOver on, saving should put focus on Done.
 - [ ] On an iPhone, open Food on a day with a scanned meal. That row should show a small photo of the meal and the other rows their meal tile. Swipe the photo row to delete it and it should fold away smoothly.
-- [ ] Force-quit the app, turn on Low Data Mode or a weak signal, reopen, and go straight to Analytics. The grey placeholder should have the page's shape, and nothing should jump as the score and range card load. Repeat with a larger text size.
+- [ ] Force-quit the app, turn on Low Data Mode or a weak signal, reopen, and go straight to Progress. The grey placeholder should have the page's shape, and nothing should jump as the score and range card load. Repeat with a larger text size.
 
 ### The run screen in the training-engine pass
 

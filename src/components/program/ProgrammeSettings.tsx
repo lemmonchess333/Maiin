@@ -688,7 +688,7 @@ export default function ProgrammeSettings({
             </h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
               {confirmReset
-                ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in Analytics."
+                ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in Progress."
                 : focusChangedSameFrequency
                   ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                   : programmePreservationNote({
@@ -1055,7 +1055,7 @@ export default function ProgrammeSettings({
           that edited nothing; this editor is where the programme is set
           now (Trim1 call 2). */}
       <div className="pt-4">
-        <SettingsGroup footer="Rebuilds your programme from Week 1. Past week summaries clear; logged workouts and runs stay in Analytics.">
+        <SettingsGroup footer="Rebuilds your programme from Week 1. Past week summaries clear; logged workouts and runs stay in Progress.">
           <SettingsRow
             tone="destructive"
             label="Reset programme"

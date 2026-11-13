@@ -161,7 +161,7 @@ const BARS = [
   { x: 16.25, y: 5, height: 15 },
 ] as const;
 
-export function AnalyticsTabIcon(props: TabIconProps) {
+export function ProgressTabIcon(props: TabIconProps) {
   const bars = (fill?: string) =>
     BARS.map((bar) => (
       <rect key={bar.x} {...bar} width={3.5} rx={1.1} fill={fill} />

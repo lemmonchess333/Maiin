@@ -486,7 +486,7 @@ export default function HeroDrillDownSheet({
               <SettingsRow
                 icon={CalendarDays}
                 label="This week"
-                description="Days on target and protein, on Analytics"
+                description="Days on target and protein, on Progress"
                 onClick={onOpenWeek}
               />
             </ul>
