@@ -39,6 +39,12 @@ import {
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  ageOn,
+  DATE_OF_BIRTH_MESSAGES,
+  dateOfBirthBounds,
+  dateOfBirthProblem,
+} from "@/lib/age";
+import {
   getRaceGoalPlannerState,
   MIN_RACE_RUN_DAYS,
   raceRunDaysNote,
@@ -48,7 +54,6 @@ import {
   saveOnboardingDraft,
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
-  DRAFT_AGE_RANGES,
   DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
@@ -121,14 +126,9 @@ const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
 const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
-const AGE_MIDPOINTS = {
-  "under-16": 14,
-  "16-24": 20,
-  "25-34": 30,
-  "35-44": 40,
-  "45-54": 50,
-  "55+": 60,
-};
+/* The age the calorie estimate shows before a date of birth is given; the
+   plan is never made with it, since the step waits for the date. */
+const AGE_BEFORE_ANSWER = 30;
 const STEP_META = [
   [
     "What would you like to work towards?",
@@ -204,6 +204,12 @@ export default function Onboarding() {
   );
   const hasLifting = trainingActivity !== "running";
   const flow = onboardingFlow(trainingActivity);
+  /* A draft saved past About you before setup asked for a date of birth
+     (App1, Q57) holds an age range instead, which the plan no longer uses:
+     it opens on About you for the date, and goes back to the review. */
+  const [askDateOfBirthAgain] = useState(
+    () => !!draft && draft.step > 5 && !draft.dateOfBirth
+  );
   const [step, setStep] = useState(() => {
     const storedStep =
       draft?.step === 6
@@ -211,6 +217,7 @@ export default function Onboarding() {
         : draft?.step === 2 && draft.runConfirmed === undefined
           ? 3
           : (draft?.step ?? 0);
+    if (askDateOfBirthAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
   /* Which way the last step change went: forward on Continue, back on Back
@@ -222,7 +229,7 @@ export default function Onboarding() {
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
   const [returnToReview, setReturnToReview] = useState(
-    draft?.returnToReview ?? false
+    askDateOfBirthAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -254,18 +261,17 @@ export default function Onboarding() {
   );
   /* The same shape as goalConfirmed above: the VALUE a control sits on and
      the fact that the user chose it are two different things, and only the
-     second may become a personal input. Equipment, experience and age range
-     all arrived on a value and were written to the profile unread —
+     second may become a personal input. Equipment, experience and the age
+     range all arrived on a value and were written to the profile unread —
      equipment shapes the generated plan, experience sets the starting
-     loads, and the age range's midpoint feeds the calorie estimate. */
+     loads, and the age feeds the calorie estimate. The date of birth that
+     replaced the age range (App1, Q57) starts empty, so it is always the
+     person's own answer. */
   const [equipmentConfirmed, setEquipmentConfirmed] = useState(
     draft?.equipmentConfirmed ?? Boolean(draft && draft.step > 2)
   );
   const [experienceConfirmed, setExperienceConfirmed] = useState(
     draft?.experienceConfirmed ?? Boolean(draft && draft.step > 2)
-  );
-  const [ageConfirmed, setAgeConfirmed] = useState(
-    draft?.ageConfirmed ?? Boolean(draft && draft.step > 5)
   );
   /* Height and weight keep their numbers — a spin dial has to point
      somewhere, and the plan preview on the steps BEFORE this one needs a
@@ -389,9 +395,7 @@ export default function Onboarding() {
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
   );
-  const [ageRange, setAgeRange] = useState<OnboardingDraft["ageRange"]>(
-    draft?.ageRange ?? "25-34"
-  );
+  const [dateOfBirth, setDateOfBirth] = useState(draft?.dateOfBirth ?? "");
   const [heightCm, setHeightCm] = useState(draft?.heightCm ?? 175);
   const [weightKg, setWeightKg] = useState(draft?.weightKg ?? 75);
   const [heightUnit, setHeightUnit] = useState<OnboardingDraft["heightUnit"]>(
@@ -427,7 +431,7 @@ export default function Onboarding() {
       ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
       injuries,
       gender,
-      ageRange,
+      dateOfBirth,
       heightCm,
       weightKg,
       heightUnit,
@@ -438,7 +442,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -472,7 +475,7 @@ export default function Onboarding() {
       raceEventName,
       injuries,
       gender,
-      ageRange,
+      dateOfBirth,
       heightCm,
       weightKg,
       heightUnit,
@@ -483,7 +486,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -577,13 +579,13 @@ export default function Onboarding() {
       calculateTDEE(
         weightKg,
         heightCm,
-        AGE_MIDPOINTS[ageRange],
+        age ?? AGE_BEFORE_ANSWER,
         activityLevel,
         goalPlan.fitnessGoal,
         gender === "female" ? "female" : "male",
         goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
+    [weightKg, heightCm, age, activityLevel, goalPlan, gender]
   );
   /* Asked of someone who runs already: a new runner has no recent race to
      give. Typed as minutes and seconds, because a phone's number pad has no
@@ -773,9 +775,9 @@ export default function Onboarding() {
     !(recentRace && "error" in recentRace) &&
     runningStartValid;
   const validBody =
-    ageConfirmed &&
+    dateOfBirth !== "" &&
+    dateOfBirthIssue === null &&
     bodyAnswered &&
-    ageRange !== "under-16" &&
     metricsValid &&
     !goalWeightInvalid &&
     !goalWeightMissing &&
@@ -874,7 +876,9 @@ export default function Onboarding() {
               ? "Hybrid"
               : "Lifter",
         gender,
-        ageRange,
+        // App1 (Q57): the date of birth, the one stored copy of the age.
+        // Neither `age` nor `ageRange` is sent (Q21).
+        dateOfBirth,
         heightCm,
         weightKg,
         // Fast-start: the goal-weight step was deferred, so we persist the
@@ -935,7 +939,6 @@ export default function Onboarding() {
           : {}),
         onboardingComplete: true,
         // TDEE targets
-        age: AGE_MIDPOINTS[ageRange],
         sex: gender === "female" ? "female" : "male",
         activityLevel,
         tdeeBase: tdee.targetCalories,

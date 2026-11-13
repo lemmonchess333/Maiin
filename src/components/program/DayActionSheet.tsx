@@ -74,6 +74,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import {
   parseLocalDate,
@@ -283,7 +284,7 @@ export default function DayActionSheet({
   // (then we just don't show the pill — the pace pill still stands alone).
   const selectedRunHr: string[] = (() => {
     if (!selectedRunTemplate) return [];
-    const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profile?.age ?? 0);
+    const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedRunTemplate.type,
       maxHr,

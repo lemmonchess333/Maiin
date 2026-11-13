@@ -12,9 +12,13 @@ import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
 import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
+import {
+  DATE_OF_BIRTH_MESSAGES,
+  dateOfBirthBounds,
+  dateOfBirthProblem,
+} from "@/lib/age";
 
 type Sex = "male" | "female";
-type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
 
 /* The sex the calorie maths uses (`sex`), as setup asks it. This was a
    Gender control writing `gender`, which nothing reads: a change here never
@@ -34,8 +38,6 @@ function sexShown(profile: UserProfile): Sex | undefined {
   return undefined;
 }
 
-// "under-16" intentionally omitted — it's the signup age gate, not a
-// legitimate edit target for an existing user.
 /* Body metrics are STORED in kg and cm and shown in the unit chosen under
    Units & appearance. These fields showed kg and cm whatever was chosen. */
 const CM_PER_INCH = 2.54;
@@ -55,14 +57,6 @@ function feetInches(cm: number): { feet: number; inches: number } {
   const total = Math.round(cm / CM_PER_INCH);
   return { feet: Math.floor(total / 12), inches: total % 12 };
 }
-
-const AGE_RANGE_OPTIONS: { value: AgeRange; label: string }[] = [
-  { value: "16-24", label: "16 – 24" },
-  { value: "25-34", label: "25 – 34" },
-  { value: "35-44", label: "35 – 44" },
-  { value: "45-54", label: "45 – 54" },
-  { value: "55+", label: "55+" },
-];
 
 interface ProfileInfoSectionProps {
   profile: UserProfile;
@@ -89,9 +83,10 @@ export default function ProfileInfoSection({
   const nameRevision = useRef(0);
   const heightRevision = useRef(0);
   const whyRevision = useRef(0);
-  const pendingSaves = useRef({ name: 0, height: 0, why: 0 });
+  const dobRevision = useRef(0);
+  const pendingSaves = useRef({ name: 0, height: 0, why: 0, dob: 0 });
   async function saveField(
-    field: "name" | "height" | "why",
+    field: "name" | "height" | "why" | "dob",
     data: Partial<UserProfile>
   ) {
     pendingSaves.current[field]++;
@@ -106,6 +101,7 @@ export default function ProfileInfoSection({
       nameRevision.current++;
       heightRevision.current++;
       whyRevision.current++;
+      dobRevision.current++;
     },
     []
   );
@@ -157,6 +153,51 @@ export default function ProfileInfoSection({
     });
     await updateProfile({ ...payload, sex: next });
   }
+
+  /* The date of birth replaces the age range (App1, grill Q57), which
+     wrote a field nothing reads. The age the calorie maths and the
+     heart-rate zones use is worked out from it (`profileAge`), and a new
+     one changes the targets, which are stored, so they are worked out again
+     with it, as `saveSex` does above and for the same reason: an account
+     with no goal weight writes only the date. `age` and `ageRange` are
+     never written here (Q21). An account set up before the date was asked
+     shows the field empty, and its old `age` is used until it adds one. */
+  const savedDob = profile.dateOfBirth ?? "";
+  const [dob, setDob] = useState(savedDob);
+  const [dobError, setDobError] = useState<string | null>(null);
+
+  function dateOfBirthPatch(next: string): Partial<UserProfile> {
+    if (profile.goalWeightKg == null) return { dateOfBirth: next };
+    const { payload } = buildGoalWeightPersistPayload({
+      profile: { ...profile, dateOfBirth: next },
+      currentKg: profile.weightKg || 70,
+      targetKg: profile.goalWeightKg,
+      rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
+    });
+    return { ...payload, dateOfBirth: next };
+  }
+
+  async function commitDateOfBirth() {
+    const submitted = ++dobRevision.current;
+    // The profile stays on the last saved date while a save runs, so a
+    // return to it is another write, as for the height.
+    if (dob === savedDob && pendingSaves.current.dob === 0) return;
+    // A cleared or half-typed date reads as "": the saved one comes back.
+    if (dob === "") {
+      setDob(savedDob);
+      setDobError(null);
+      return;
+    }
+    const problem = dateOfBirthProblem(dob, localDateString());
+    if (problem) {
+      setDobError(DATE_OF_BIRTH_MESSAGES[problem]);
+      return;
+    }
+    setDobError(null);
+    const result = await saveField("dob", dateOfBirthPatch(dob));
+    if (!result.ok && dobRevision.current === submitted) setDob(savedDob);
+  }
+  const dobBounds = dateOfBirthBounds(localDateString());
 
   async function commitWeight() {
     const shown = weightText(savedKg, weightUnit);
@@ -407,18 +448,51 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <span className="text-xs text-muted-foreground">Age range</span>
-        <SegmentedControl
-          ariaLabel="Age range"
-          layout="wrap"
-          className="mt-1.5"
-          value={profile.ageRange}
-          onChange={(value) => {
-            haptic("light");
-            void updateProfile({ ageRange: value });
+        <label htmlFor="profile-dob" className="text-xs text-muted-foreground">
+          Date of birth
+        </label>
+        {/* The phone's own date picker, on iOS and on the web. */}
+        <input
+          id="profile-dob"
+          type="date"
+          value={dob}
+          min={dobBounds.min}
+          max={dobBounds.max}
+          aria-invalid={dobError ? true : undefined}
+          aria-describedby={
+            dobError ? "profile-dob-error profile-dob-why" : "profile-dob-why"
+          }
+          onChange={(e) => {
+            dobRevision.current++;
+            setDob(e.target.value);
+            setDobError(null);
           }}
-          options={AGE_RANGE_OPTIONS}
+          onBlur={() => void commitDateOfBirth()}
+          className="ds-input mt-1 min-h-11 text-sm"
         />
+        {dobError && (
+          <p
+            id="profile-dob-error"
+            role="alert"
+            className="text-xs text-destructive-strong mt-1"
+          >
+            {dobError}
+          </p>
+        )}
+        <p
+          id="profile-dob-why"
+          className="mt-1.5 text-xs text-muted-foreground text-pretty"
+        >
+          Your calorie target and heart-rate zones are worked out from your
+          age.
+          {!savedDob && profile.age != null && (
+            <>
+              {" "}
+              Until you add it, they use an age of{" "}
+              <span className="font-mono tabular-nums">{profile.age}</span>.
+            </>
+          )}
+        </p>
       </div>
 
       <div>

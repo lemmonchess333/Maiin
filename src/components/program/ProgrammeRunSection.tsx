@@ -133,6 +133,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -978,7 +979,7 @@ export default function ProgrammeRunSection({
   // neither, so the card just shows pace/type as before.
   const selectedHrItems: string[] = (() => {
     if (!selectedTemplate) return [];
-    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
+    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedTemplate.type,
       maxHr,

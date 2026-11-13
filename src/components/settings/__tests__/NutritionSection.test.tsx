@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { lbToKg } from "@/lib/weightUnits";
+import { localDateString } from "@/lib/dateHelpers";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -893,9 +894,11 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
 describe("NutritionSection — the age field", () => {
   function AgeHarness({
     profileAge,
+    dateOfBirth,
     updateProfile,
   }: {
     profileAge: number;
+    dateOfBirth?: string;
     updateProfile: (d: Partial<UserProfile>) => Promise<UpdateProfileResult>;
   }) {
     const [age, setAge] = useState(profileAge);
@@ -903,7 +906,7 @@ describe("NutritionSection — the age field", () => {
       <>
         <output data-testid="age-in-use">{age}</output>
         <NutritionSection
-          profile={{ uid: "u-1", age: profileAge } as UserProfile}
+          profile={{ uid: "u-1", age: profileAge, dateOfBirth } as UserProfile}
           age={age}
           setAge={setAge}
           activityLevel={"moderate" as ActivityLevel}
@@ -948,6 +951,31 @@ describe("NutritionSection — the age field", () => {
     expect(inUse()).toBe("34");
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ age: 34 });
+  });
+
+  /* App1 (Q57, Q21): an account with a date of birth has its age worked
+     out from it, so the age is set in one place, Profile. */
+  it("with a date of birth, shows the age and sends the change to Profile", () => {
+    const year = Number(localDateString().slice(0, 4));
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(
+      <AgeHarness
+        profileAge={30}
+        dateOfBirth={`${year - 30}-01-01`}
+        updateProfile={updateProfile}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TDEE calculator/ }));
+    expect(screen.queryByLabelText("Age")).toBeNull();
+    expect(
+      screen.getByText("From your date of birth. Change it in Profile.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Age").nextElementSibling).toHaveTextContent(
+      "30"
+    );
   });
 
   it.each(["300", "0", "-5", "15", ""])(

@@ -16,7 +16,8 @@ import type { UserProfile } from "@/lib/auth";
  * `updateProfile` chain (allow-list + profileSanitizer fixed alongside).
  *
  * `null`/absent maxHeartRate → fall back to the Tanaka age estimate; with no
- * age either, we prompt for it rather than render bogus bands.
+ * age either (no date of birth, and no age from before one was asked), we
+ * prompt for it rather than render bogus bands.
  *
  * The section says where the zones come from and nothing about live heart
  * rate: heartRateSource.ts has no source on any platform, so nothing
@@ -123,11 +124,10 @@ export default function HeartRateZonesSection({
         ) : (
           <div>
             <p className="text-sm font-semibold text-foreground">
-              Add your age to see zones
+              Add your date of birth to see zones
             </p>
             <p className="text-xs text-muted-foreground">
-              Set your age in your profile, or enter your max heart rate
-              directly below.
+              Add it in Profile, or enter your max heart rate directly below.
             </p>
             {!editing && (
               <Button

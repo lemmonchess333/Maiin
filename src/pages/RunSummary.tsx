@@ -120,6 +120,7 @@ import {
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
 import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
@@ -451,6 +452,9 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // The age the zones' estimate reads: from the date of birth, else an
+  // older account's age (App1, Q57).
+  const ageYears = profileAge(profile);
   useEffect(() => {
     if (
       !user?.uid ||
@@ -466,7 +470,7 @@ export default function RunSummary() {
         if (!active) return;
         const measuredMax = profile?.maxHeartRate ?? 0;
         const maxHr =
-          measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+          measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
         const summary = summarizeHeartRate(
           samples,
           activeIntervals,
@@ -488,7 +492,7 @@ export default function RunSummary() {
     state?.elapsed,
     state?.runConfig,
     profile?.maxHeartRate,
-    profile?.age,
+    ageYears,
   ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
@@ -1235,7 +1239,7 @@ export default function RunSummary() {
           }
           const measuredMax = profile?.maxHeartRate ?? 0;
           const maxHr =
-            measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+            measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
           heartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,

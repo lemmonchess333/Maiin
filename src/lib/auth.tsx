@@ -228,6 +228,18 @@ export interface UserProfileFitness {
    * so every user was scored on the unknown branch.
    */
   goal?: string;
+  /**
+   * The day the person was born, a local "YYYY-MM-DD": the one stored fact
+   * about their age (App1, grill Q57 and Q21). Read it through `profileAge`
+   * (src/lib/age.ts), which works the age out on the day it is read.
+   */
+  dateOfBirth?: string;
+  /**
+   * The age an account set up before `dateOfBirth` was given: a whole
+   * number of years that never goes up. Read only through `profileAge`, as
+   * the fallback for an account with no date of birth, and written only by
+   * Settings → Nutrition's Age field for such an account.
+   */
   age?: number;
   sex?: "male" | "female";
   activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
@@ -570,6 +582,9 @@ export interface UserProfileRunning {
 
 /** Onboarding quiz answers */
 export interface UserProfileOnboarding {
+  /** LEGACY: setup's and Settings' age range before the date of birth
+   *  replaced it (App1, Q57). Read by nothing and written by nothing; an
+   *  older account may carry it. */
   ageRange?: "16-24" | "25-34" | "35-44" | "45-54" | "55+";
   primaryGoal?: "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
   experience?: "beginner" | "intermediate" | "advanced";

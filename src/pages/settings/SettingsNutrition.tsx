@@ -16,6 +16,7 @@ import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
+import { profileAge } from "@/lib/age";
 import { logger } from "@/lib/logger";
 import { localDateString } from "@/lib/dateHelpers";
 import { useTrainingFuelData } from "@/hooks/useTrainingFuelData";
@@ -41,7 +42,9 @@ export default function SettingsNutrition() {
   // shown here is the training block's, as on Home.
   const { program } = useTrainingFuelData(user?.uid ?? null, localDateString());
 
-  const [age, setAge] = useState(profile?.age ?? 25);
+  // From the date of birth, else an older account's age (App1, Q57). Only
+  // an account with no date of birth edits it here.
+  const [age, setAge] = useState(profileAge(profile) ?? 25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
     (profile?.activityLevel as ActivityLevel) ?? "moderate"
   );

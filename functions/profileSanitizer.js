@@ -95,6 +95,44 @@ function isCalendarDay(s) {
   );
 }
 
+/**
+ * Whole years from a date of birth to a day, both "YYYY-MM-DD" calendar
+ * days. A birthday on 29 February comes on 1 March in a year without one.
+ */
+function yearsOn(dateOfBirth, day) {
+  const [by, bm, bd] = dateOfBirth.split("-").map(Number);
+  const [y, m, d] = day.split("-").map(Number);
+  const beforeBirthday = m < bm || (m === bm && d < bd);
+  return y - by - (beforeBirthday ? 1 : 0);
+}
+
+/** The age range a profile keeps, as `age` above holds it. */
+const AGE_YEARS = Object.freeze({ min: 16, max: 120 });
+
+/**
+ * A date of birth (App1, grill Q57): a real calendar day that makes the
+ * person 16 to 120, or undefined. The app checks it on the person's own
+ * day; this runs on the server's, in UTC, and a person's day can be a day
+ * either side of that. So the youngest age is checked on the server's
+ * tomorrow and the oldest on its yesterday, and a date is in the future
+ * only once it is after the server's tomorrow: someone turning 16 in
+ * Auckland this morning is not refused because London is still on
+ * yesterday. The same rule as the app's `dateOfBirthProblem`
+ * (src/lib/age.ts), held to it by bodyMetrics.cross.test.ts.
+ */
+function cleanDateOfBirth(value, now = new Date()) {
+  if (!isCalendarDay(value)) return undefined;
+  const dayKey = (offsetDays) =>
+    new Date(now.getTime() + offsetDays * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+  const latest = dayKey(1);
+  if (value > latest) return undefined;
+  if (yearsOn(value, latest) < AGE_YEARS.min) return undefined;
+  if (yearsOn(value, dayKey(-1)) > AGE_YEARS.max) return undefined;
+  return value;
+}
+
 function cleanEnum(value, allowed) {
   if (typeof value !== "string") return undefined;
   return allowed.includes(value) ? value : undefined;
@@ -195,8 +233,13 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // written with them.
   gender: (v) =>
     cleanEnum(v, ["male", "female", "unspecified", "other", "prefer_not_say"]),
+  // LEGACY: setup sent an age range and its midpoint as `age` until the
+  // date of birth replaced both (App1, Q57). Kept for clients still running
+  // an older bundle; `age` stays the fallback for an account with no date
+  // of birth.
   ageRange: (v) => cleanString(v, 20),
-  age: (v) => cleanNumber(v, { min: 16, max: 120, integer: true }),
+  age: (v) => cleanNumber(v, { ...AGE_YEARS, integer: true }),
+  dateOfBirth: (v) => cleanDateOfBirth(v),
   sex: (v) => cleanEnum(v, ["male", "female"]),
   activityLevel: (v) =>
     cleanEnum(v, ["sedentary", "light", "moderate", "active", "very_active"]),
@@ -551,10 +594,13 @@ function sanitizeProfileData(input) {
 }
 
 module.exports = {
+  AGE_YEARS,
   MAX_DISPLAY_NAME_LENGTH,
   SERVER_MANAGED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
+  cleanDateOfBirth,
+  yearsOn,
 };
