@@ -263,13 +263,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "4 reps of 1 km hard with 90s rest",
-    estimatedDuration: 29,
+    estimatedDuration: 34,
     config: {
       intervals: {
         reps: 4,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -280,13 +280,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "5 reps of 1 km hard with 90s rest",
-    estimatedDuration: 35,
+    estimatedDuration: 40,
     config: {
       intervals: {
         reps: 5,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -297,13 +297,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "6 reps of 1 km hard with 90s rest",
-    estimatedDuration: 41,
+    estimatedDuration: 46,
     config: {
       intervals: {
         reps: 6,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -314,13 +314,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "wind",
     description: "8 reps of 400m with 60s rest",
-    estimatedDuration: 25,
+    estimatedDuration: 30,
     config: {
       intervals: {
         reps: 8,
         workDistance: 400,
         restDuration: 60,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },

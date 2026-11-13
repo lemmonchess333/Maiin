@@ -257,7 +257,7 @@ describe("each session's shape, and the name coaches give it (Run21 (2))", () =>
       "A 5-minute warm-up, 20 minutes comfortably hard, then a 5-minute cool-down."
     );
     expect(about("4x1k").what).toBe(
-      "A 5-minute warm-up, then 4 repeats of 1K, hard, with 90 seconds of easy jogging or walking between, then a 5-minute cool-down."
+      "A 10-minute warm-up, then 4 repeats of 1K, hard, with 90 seconds of easy jogging or walking between, then a 5-minute cool-down."
     );
     expect(about("8x400").what).toMatch(
       /8 repeats of 400 m, quick and relaxed, with 1 minute of easy jogging/

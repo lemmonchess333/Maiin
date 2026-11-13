@@ -390,6 +390,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D15. Interval sessions are thin on structure. Polish.
 
 - 5 min warm-up before 1 km reps, 90 s recovery for every runner (a 3:56 rep and a 6:37 rep get the same rest), `workoutTemplates.ts:261-330`. Fix: 10 to 15 min warm-up, recovery 50 to 90% of the rep's time. Size S.
+- STATUS 2026-11-13, the warm-up: built. The four interval sessions warm up for 10 minutes, not 5, and their planned minutes rise by the same 5 (4 x 1 km 34, 5 x 1 km 40, 6 x 1 km 46, 8 x 400 m 30), so a week's planned minutes and the time-limit fits count it; the season traces move by those minutes and nothing else. Recovery as a share of the rep's time is not built: the rest is read in the launch config, the session player, Home's hero and "What it is", and a pace-led rest needs the rep pace at each of them, so it waits for its own change.
 
 ### D16. "Harder" on six days puts tempo, a 75 to 90 minute run and intervals on consecutive days. Polish.
 
