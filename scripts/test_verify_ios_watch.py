@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import verify_ios_watch as verifier
 
 STANDARD_HEALTH = {
-    "NSHealthShareUsageDescription": "Tropos reads your step count from Health to show today's steps on Home.",
+    "NSHealthShareUsageDescription": "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.",
     "NSHealthUpdateUsageDescription": "Tropos does not add workouts or any other data to Health.",
 }
 PILOT_HEALTH = {
@@ -127,6 +127,9 @@ class BuildModeTests(unittest.TestCase):
         self.write_iphone("NO", PILOT_HEALTH)
         with self.assertRaisesRegex(ValueError, "short Health text"):
             self.inspect("NO")
+        # Readiness's resting heart rate is not the pilot's Watch heart rate.
+        self.write_iphone("NO", STANDARD_HEALTH)
+        self.inspect("NO")
         self.write_iphone("NO", {**STANDARD_HEALTH, "NSHealthShareUsageDescription": "$(TROPOS_HEALTH_SHARE_USAGE)"})
         with self.assertRaisesRegex(ValueError, "not resolved"):
             self.inspect("NO")

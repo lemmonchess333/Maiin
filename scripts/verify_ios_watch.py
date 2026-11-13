@@ -1,7 +1,8 @@
 """Verify what an iOS build carries for its connected training mode.
 
 A standard build (release gate NO) embeds no Watch app and carries the short
-Health usage text, because it reads steps and nothing else. A pilot build
+Health usage text: it reads steps, and sleep, resting heart rate and heart
+rate variability for readiness, and writes nothing. A pilot build
 (gate YES) embeds exactly one Watch app, names the iPhone as its companion,
 carries the gate in both apps and the expanded Health text. deploy-ios.yml
 runs this on the signed archive and on the exported IPA before upload, where
@@ -64,18 +65,23 @@ def validate_connected_training_flags(iphone_info, watch_info, expected):
 
 
 def validate_health_usage(iphone_info, expected):
-    """The pilot asks for heart rate and workout export; a standard build for steps."""
+    """The pilot asks for heart rate on Apple Watch runs and workout export; a
+    standard build reads steps and readiness signals (resting heart rate
+    among them, so "heart rate" alone no longer marks the pilot) and writes
+    nothing."""
     texts = {}
     for key in (HEALTH_SHARE, HEALTH_UPDATE):
         text = iphone_info.get(key)
         if not isinstance(text, str) or not text.strip() or "$(" in text:
             raise ValueError(f"The iPhone app's {key} is missing or was not resolved.")
         texts[key] = text.lower()
-    pilot_text = "heart rate" in texts[HEALTH_SHARE] or "export" in texts[HEALTH_UPDATE]
+    pilot_text = "apple watch" in texts[HEALTH_SHARE] or "export" in texts[HEALTH_UPDATE]
     if expected == "YES" and not (
-        "heart rate" in texts[HEALTH_SHARE] and "export" in texts[HEALTH_UPDATE]
+        "apple watch" in texts[HEALTH_SHARE] and "export" in texts[HEALTH_UPDATE]
     ):
-        raise ValueError("A pilot build must carry the expanded Health text: heart rate and workout export.")
+        raise ValueError(
+            "A pilot build must carry the expanded Health text: Apple Watch heart rate and workout export."
+        )
     if expected == "NO" and pilot_text:
         raise ValueError("A standard build must carry the short Health text, not the pilot's.")
 
