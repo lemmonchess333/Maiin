@@ -398,6 +398,27 @@ describe("todaySession — a run's dose", () => {
     expect(dose("long_15k", confirmed)).toBe("15 km · about 100 min");
   });
 
+  // Deep dive D15: an interval session's minutes at the runner's own
+  // repeat pace, with the rest that pace gives.
+  it("is an interval session's minutes at a confirmed pace", () => {
+    expect(dose("4x1k")).toBe("34 min");
+    expect(dose("4x1k", confirmed)).toMatch(/^about \d+ min$/);
+  });
+
+  it("carries the interval pace the hero's rest is given at", () => {
+    const run = (extra: Partial<UserProfile> = {}) =>
+      todaySession(
+        input({
+          profile: profileWith({ 3: "run" }, extra),
+          programState: programStateWith({
+            runDays: [runDay(WEDNESDAY, { templateId: "4x1k" })],
+          }),
+        })
+      ).run;
+    expect(run()?.intervalPaceSPerKm).toBeNull();
+    expect(run(confirmed)?.intervalPaceSPerKm).toBeGreaterThan(240);
+  });
+
   it("waits for a derived benchmark to be confirmed", () => {
     expect(
       dose("long_15k", {

@@ -1232,6 +1232,32 @@ describe("Adaptive Paces — interval work-pace personalization", () => {
     expect(prefill.intervals?.workPace).toBeGreaterThan(0);
   });
 
+  // Deep dive D15: the rest the run plays is a share of the repeat at the
+  // runner's own pace, and its recoveries carry it.
+  it("rests between repeats for the runner's own repeat time", () => {
+    const { prefill } = computePlanMetadata({
+      displayUnit: "km",
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "5x1k",
+      urlType: null,
+      paceTable: fastTable,
+    });
+    const workPace = prefill.intervals!.workPace!;
+    const rest = prefill.intervals!.restDuration;
+    expect(rest).toBe(Math.max(60, Math.round((workPace * 0.7) / 30) * 30));
+    expect(rest).not.toBe(90);
+    const recoveries = (prefill.segments ?? []).filter(
+      (segment) => segment.type === "recovery"
+    );
+    expect(recoveries).toHaveLength(4);
+    for (const recovery of recoveries) {
+      expect(recovery.target).toEqual({ kind: "duration", seconds: rest });
+    }
+  });
+
   it("leaves interval work pace undefined with no pace table", () => {
     const { prefill } = computePlanMetadata({
       displayUnit: "km",
@@ -1244,6 +1270,7 @@ describe("Adaptive Paces — interval work-pace personalization", () => {
     });
     expect(prefill.intervals?.reps).toBe(5);
     expect(prefill.intervals?.workPace).toBeUndefined();
+    expect(prefill.intervals?.restDuration).toBe(90);
   });
 });
 

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { withPlannedRest } from "@/lib/intervalRest";
 import { localDateString } from "@/lib/dateHelpers";
 import { Play } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -45,6 +46,7 @@ export default function RunCTACard({
   inProgress = null,
   startTarget,
   easyPaceSPerKm = null,
+  intervalPaceSPerKm = null,
   freeLine = null,
   variant = "hero",
 }: {
@@ -65,6 +67,9 @@ export default function RunCTACard({
   /** The confirmed easy pace, s/km (`planningEasyPaceSPerKm`), for the
    *  line of an easy or long run. */
   easyPaceSPerKm?: number | null;
+  /** The confirmed interval pace, s/km (`plannedIntervalPaceSPerKm`): the
+   *  rest an interval session's line states (deep dive D15). */
+  intervalPaceSPerKm?: number | null;
   /** A free run's line (`freeRunHeroLine`): this week's distance against
    *  last week's. Drawn only where no planned run is named. */
   freeLine?: HeroLine | null;
@@ -99,7 +104,13 @@ export default function RunCTACard({
      kicker's beside the date, and the reasons are Train's ("Why this
      run"). */
   const meta = tmpl && dose ? dose.split(" · ") : [];
-  const line = tmpl ? runHeroLine(tmpl, easyPaceSPerKm, unit) : freeLine;
+  const line = tmpl
+    ? runHeroLine(
+        withPlannedRest(tmpl, intervalPaceSPerKm),
+        easyPaceSPerKm,
+        unit
+      )
+    : freeLine;
 
   const start = function () {
     // The run starts as the Run page opens, so the voice cues are

@@ -75,6 +75,7 @@ export default function StackedCTACards({
         inProgress={run.inProgress}
         startTarget={run.startTarget}
         easyPaceSPerKm={run.easyPaceSPerKm}
+        intervalPaceSPerKm={run.intervalPaceSPerKm}
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
       />
