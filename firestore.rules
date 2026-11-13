@@ -526,6 +526,24 @@ service cloud.firestore {
         || starterGoalValid();
     }
 
+    /* racePlanFreeWeekUsed (whole-app grill Q85): the account has had the
+       free week of a half or full marathon plan, so a later one is Pro from
+       its first week. The app writes `true` once (useRacePlanLocked); null
+       stands for never. Once true it stays: a client cannot clear it to
+       start a second free week. */
+    function racePlanFreeWeekUsedValid() {
+      return !('racePlanFreeWeekUsed' in request.resource.data)
+        || request.resource.data.racePlanFreeWeekUsed == null
+        || request.resource.data.racePlanFreeWeekUsed == true;
+    }
+
+    function racePlanFreeWeekUsedUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['racePlanFreeWeekUsed'])
+        || (racePlanFreeWeekUsedValid()
+          && resource.data.get('racePlanFreeWeekUsed', null) != true);
+    }
+
     /* shareDefaults value gate — who sees a finished session, per type:
        the answer to "Share sessions automatically?", which the finish
        screen acts on without asking again. The client writes one field
@@ -668,6 +686,10 @@ service cloud.firestore {
         // Lift4 (10): the race-setup answer on the leg trim. Also in
         // profileSanitizer.js.
         'raceLegTrim',
+        // Q85: the free week of a half or full marathon plan is used.
+        // Value-gated by racePlanFreeWeekUsedValid() above; never sent to
+        // the plan callables, so not in profileSanitizer.js.
+        'racePlanFreeWeekUsed',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
@@ -730,7 +752,8 @@ service cloud.firestore {
         && starterGoalValid()
         && shareDefaultsValid()
         && notificationPreferencesValid()
-        && approveFollowersValid();
+        && approveFollowersValid()
+        && racePlanFreeWeekUsedValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
@@ -739,7 +762,8 @@ service cloud.firestore {
         && starterGoalUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
-        && approveFollowersUnchangedOrValid();
+        && approveFollowersUnchangedOrValid()
+        && racePlanFreeWeekUsedUnchangedOrValid();
       // No client delete. Account deletion runs on the server with the
       // Admin SDK (deleteMyAccount), and nothing in the app deletes this
       // document. A delete followed by a fresh create would wipe the

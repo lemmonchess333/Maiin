@@ -29,6 +29,7 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import {
+  deleteField,
   doc,
   serverTimestamp,
   setDoc,
@@ -1286,6 +1287,97 @@ suite("users/{uid} — notificationPreferences value gate", () => {
       setDoc(doc(ok, "users/np3"), {
         ...signupProfile("np3"),
         notificationPreferences: { kudos: false },
+      })
+    );
+  });
+});
+
+/**
+ * `racePlanFreeWeekUsed` value gate (whole-app grill Q85's gap).
+ *
+ * The free week of a half or full marathon plan is once per account: the app
+ * writes `true` the first time a free account's plan passes it, and a later
+ * plan is Pro from its first week. Only `true` (or `null`, never set) is
+ * taken, and once `true` it stays, so a client cannot clear it to start a
+ * second free week. Each refusal is paired with the nearest accepted write.
+ */
+suite("users/{uid} — racePlanFreeWeekUsed value gate", () => {
+  const UID = "fw1";
+
+  async function signedIn() {
+    await seedProfile(UID);
+    return env.authenticatedContext(UID).firestore();
+  }
+
+  it("accepts the one write the app sends", async () => {
+    const db = await signedIn();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: true },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses any value but true, or null where it was never set", async () => {
+    const db = await signedIn();
+    for (const bad of [false, "true", 1, {}, ["x"]]) {
+      await assertFails(
+        setDoc(
+          doc(db, `users/${UID}`),
+          { racePlanFreeWeekUsed: bad },
+          { merge: true }
+        )
+      );
+    }
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: null },
+        { merge: true }
+      )
+    );
+  });
+
+  it("keeps it once set: no clearing, no false, no delete", async () => {
+    const db = await signedIn();
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), { racePlanFreeWeekUsed: true })
+    );
+    for (const cleared of [null, false]) {
+      await assertFails(
+        updateDoc(doc(db, `users/${UID}`), { racePlanFreeWeekUsed: cleared })
+      );
+    }
+    await assertFails(
+      updateDoc(doc(db, `users/${UID}`), {
+        racePlanFreeWeekUsed: deleteField(),
+      })
+    );
+    // Writing true again beside another field still goes through.
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { racePlanFreeWeekUsed: true, darkMode: false },
+        { merge: true }
+      )
+    );
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("fw2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/fw2"), {
+        ...signupProfile("fw2"),
+        racePlanFreeWeekUsed: false,
+      })
+    );
+    const ok = env.authenticatedContext("fw3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/fw3"), {
+        ...signupProfile("fw3"),
+        racePlanFreeWeekUsed: true,
       })
     );
   });

@@ -197,6 +197,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
   { field: "raceLegTrim", sanitized: true },
+  // Q85: the account has had its free week of a half or full marathon
+  // plan. Written once, `true`, by `useRacePlanLocked` through
+  // updateProfile; never sent to the plan callables. Value-gated in
+  // firestore.rules (`racePlanFreeWeekUsedValid`), which keeps it once set.
+  { field: "racePlanFreeWeekUsed", sanitized: false },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
   { field: "runDifficulty", sanitized: true },
   { field: "runFitness", sanitized: true },
