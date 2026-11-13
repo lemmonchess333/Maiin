@@ -4824,3 +4824,19 @@ Affects: setup's race preview, the stored run plan's `shortBase`, and every surf
 - [ ] **Setup.** As a regular runner, give 330 minutes a week and a 120-minute longest run, and set a half 16 weeks out. Passing: the preview says "Your build starts in week 5, since you already run 330 minutes a week." A building runner with the same numbers sees no such line.
 - [ ] **Week 5.** On the plan's fifth Monday, open Train and Home. Passing: the race card's rail lights Build, the week's tempo is there, "Why this run" reads "Build · week 5 of 16", and the lift label ends "· Build".
 - [ ] **A plan made before this build.** On an account whose race plan was saved before this shipped, roll a week and change a run day in Settings. Passing: its phases stay where they were (Base until week 7 of a 16-week half); the plan gains no `shortBase`.
+
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.
