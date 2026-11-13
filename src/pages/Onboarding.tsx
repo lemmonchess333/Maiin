@@ -6,6 +6,7 @@ import { setStarterGoalPatch } from "@/features/program/runModeResolution";
 import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
 import { doc, serverTimestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable } from "firebase/functions";
@@ -19,6 +20,7 @@ import { HEIGHT_CM, WEIGHT_KG, formatHeight } from "@/lib/bodyMetrics";
 import { logger } from "@/lib/logger";
 import Button from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import RacePlanProNote from "@/components/program/RacePlanProNote";
 import { IconButton } from "@/components/ui/IconButton";
 import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
@@ -190,6 +192,9 @@ const GOALS = [
 
 export default function Onboarding() {
   const { user, profile, refreshProfile, signOut } = useAuth();
+  // A half or full marathon plan is Pro after its first week (Q85): the
+  // distance control says so to a free account.
+  const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();
   const [draft] = useState(() =>
     user ? loadOnboardingDraft(user.uid, 7) : null
@@ -1505,6 +1510,10 @@ export default function Onboarding() {
                           { value: "half", label: "Half" },
                           { value: "marathon", label: "Full" },
                         ]}
+                      />
+                      <RacePlanProNote
+                        distance={raceDistance}
+                        isPro={onboardingIsPro}
                       />
                       <div className="space-y-2">
                         <p className="text-sm">Race or on your own</p>

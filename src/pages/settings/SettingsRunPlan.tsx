@@ -14,6 +14,7 @@
  * is on screen.
  */
 import { useAuth } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import RunPlanSettings from "@/components/program/RunPlanSettings";
@@ -23,6 +24,7 @@ import VoiceCuesPref from "@/components/settings/VoiceCuesPref";
 
 export default function SettingsRunPlan() {
   const { profile, updateProfile, refreshProfile } = useAuth();
+  const { isPro } = useSubscription();
   const { programState, readiness, recentLayoff } = useProgram();
 
   if (!profile) {
@@ -39,6 +41,7 @@ export default function SettingsRunPlan() {
         readiness={readiness}
         recentLayoff={recentLayoff}
         refreshProfile={refreshProfile}
+        isPro={isPro}
       />
       <VoiceCuesPref
         key={`cues-${profile.uid}`}

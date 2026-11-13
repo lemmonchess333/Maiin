@@ -173,6 +173,10 @@ import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
+import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
+import { useProCtaLabel } from "@/hooks/useProCtaLabel";
+import { RACE_PLAN_UPGRADE_PATH } from "@/lib/racePlanAccess";
+import { track as trackPaywall } from "@/lib/paywallAnalytics";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
@@ -411,6 +415,10 @@ export default function ProgrammeRunSection({
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);
+  // Q85: a half or full marathon plan past its free first week. Today's
+  // planned session offers Pro; the race itself and free runs still start.
+  const planLocked = useRacePlanLocked(programState?.runPlan);
+  const proCtaLabel = useProCtaLabel();
   const raceCompressed = !!programState?.runPlan?.compressed;
   /* `belowFloor` is persisted on runPlan (programTypes.ts). This read was
      added to carry it to the cockpit — but the JSX prop was never passed, so
@@ -1003,6 +1011,10 @@ export default function ProgrammeRunSection({
   // Suppress the selected-day card when a race state-overlay hero already
   // owns today's slot AND today is what's selected — avoids a double CTA.
   const selectedIsToday = selectedDateKey === todayKeyDerivation;
+  /* Today's planned session on a locked plan offers Pro (Q85). Another
+     day's still opens to be looked over; the race itself still starts. */
+  const selectedLocked =
+    planLocked && selectedIsToday && !!selectedTemplate && !selectedIsRace;
   const heroOwnsSelectedToday =
     selectedIsToday &&
     (heroState === "race-today" || heroState === "race-recent");
@@ -1770,11 +1782,13 @@ export default function ProgrammeRunSection({
                   /* Run21 (2): the session's one feel line. Its shape
                      is "What it is", in "Why this run" below. */
                   description={
-                    selectedTemplate
-                      ? runSessionAbout(selectedTemplate, {
-                          racePace: selectedRacePace,
-                        }).feel
-                      : undefined
+                    selectedLocked
+                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      : selectedTemplate
+                        ? runSessionAbout(selectedTemplate, {
+                            racePace: selectedRacePace,
+                          }).feel
+                        : undefined
                   }
                   /* No plan position ("Base · week 1 of 10"): the page
                      header, the race card's date line and its rail say
@@ -1785,16 +1799,25 @@ export default function ProgrammeRunSection({
                      Start does (`startOnArrival`). Another day's opens the
                      run's own card to look it over. */
                   primaryActionLabel={
-                    selectedIsToday
-                      ? selectedIsRace
-                        ? "Start race"
-                        : "Start run"
-                      : selectedIsRace
-                        ? "View race"
-                        : "View run"
+                    selectedLocked
+                      ? proCtaLabel
+                      : selectedIsToday
+                        ? selectedIsRace
+                          ? "Start race"
+                          : "Start run"
+                        : selectedIsRace
+                          ? "View race"
+                          : "View run"
                   }
                   onPrimaryAction={() => {
                     haptic();
+                    if (selectedLocked) {
+                      trackPaywall("paywall_cta_clicked", {
+                        source: "race_plan",
+                      });
+                      navigate(RACE_PLAN_UPGRADE_PATH);
+                      return;
+                    }
                     // startUrl carries ?template=&scheduledRunId= so the run
                     // fulfils this exact planned slot (claim-map binding).
                     const url = selectedRun.startUrl ?? FREE_RUN_URL;

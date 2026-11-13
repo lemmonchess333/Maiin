@@ -140,6 +140,7 @@ import { computeRouteQuality } from "../lib/routeQuality";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { useBackDismiss } from "../lib/backDismiss";
 import { useProgram } from "../features/program/useProgram";
+import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
 import {
   computePlanMetadata,
   finalisePlanMetadata,
@@ -272,6 +273,9 @@ export default function Run() {
   // matches through the claims (useClaimMapForProgram). We only read programState +
   // loading here to drive the prefill memo.
   const { programState, loading: programLoading } = useProgram();
+  // Q85: past a half or full marathon plan's free first week, a planned
+  // training run opens as a free run (the race itself still starts).
+  const runPlanLocked = useRacePlanLocked(programState?.runPlan);
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
   const isFreeformUser = profileRunMode === "freeform";
   const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
@@ -734,12 +738,24 @@ export default function Run() {
         `[Run] Programme runDay templateId "${todayDay.userOverride ?? todayDay.templateId}" not in RUN_TEMPLATES; no prefill applied`
       );
     }
+    if (
+      runPlanLocked &&
+      result.metadata.plannedTemplateType &&
+      result.metadata.plannedTemplateType !== "race"
+    ) {
+      return {
+        metadata: freeformPlanMetadata(result.metadata.planMode),
+        prefill: {} as Partial<RunConfig>,
+        strip: null as ProgramContextStrip | null,
+      };
+    }
     return {
       metadata: result.metadata,
       prefill: result.prefill as Partial<RunConfig>,
       strip: deriveStrip(result.metadata, programState?.runPlan, unit),
     };
   }, [
+    runPlanLocked,
     isFreeformUser,
     profileRunMode,
     programState?.runPlan,

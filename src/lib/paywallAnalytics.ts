@@ -60,6 +60,9 @@ export type PaywallSource =
   /** Food's card telling a free account its personal target is ready
    *  (whole-app grill Q49, Q71, Q87). */
   | "personal_target"
+  /** A half or full marathon plan past its free first week: Home's run
+   *  card or Train's (whole-app grill Q85). */
+  | "race_plan"
   | "unknown";
 
 export interface PaywallEventMetadata {
