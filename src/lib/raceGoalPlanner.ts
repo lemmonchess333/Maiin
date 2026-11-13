@@ -46,6 +46,7 @@ import {
   parseLocalDate,
 } from "./dateHelpers";
 import {
+  firstBuildWeek,
   getRaceMinWeeks,
   getRaceFloorWeeks,
   getRacePhaseLabel,
@@ -439,6 +440,7 @@ export function getRaceGoalPlannerState(
       newRunnerUntil: input.newRunnerUntil,
       planTotalWeeks: continued?.totalWeeks,
       leadInWeek: continued?.leadInWeek,
+      shortBase: continued?.shortBase,
       recentRuns: input.recentRuns,
     });
   // The week the save plans (Run19): from today, over a continuing plan's
@@ -511,7 +513,8 @@ export function getRaceGoalPlannerState(
   const firstWeekPhase = getRacePhaseLabel(
     blockWeeks - plan.totalWeeks,
     blockWeeks,
-    distance
+    distance,
+    plan.shortBase
   );
 
   const lower = distanceLabel.toLowerCase();
@@ -600,9 +603,18 @@ export function getRaceGoalPlannerState(
       peak && held.longestKm > 0
         ? ` Your longest run will be ${peak.reads}${peakPace ? `, about ${aboutTime(peak.minutes)}` : ""}.`
         : "";
+    /* Run24 (2): a regular runner above the plan's base gets a shorter
+       base, and setup says where the build starts and why. */
+    const buildFrom = plan.shortBase
+      ? firstBuildWeek(blockWeeks, distance, true)
+      : null;
+    const shortBaseLine =
+      buildFrom !== null && input.runningBaseline
+        ? ` Your build starts in week ${buildFrom + 1}, since you already run ${input.runningBaseline.weeklyMinutes} minutes a week.`
+        : "";
     statusDescription =
       shortLine ??
-      `Full Base → Build → Taper → Race progression for your ${lower}.${peakLine}`;
+      `Full Base → Build → Taper → Race progression for your ${lower}.${shortBaseLine}${peakLine}`;
     ctaLabel = "Save race plan";
   } else if (status === "compressed") {
     statusTitle = "Short runway";

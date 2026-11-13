@@ -679,6 +679,14 @@ export interface RunPlan {
    *  rollover into the plan's first week drops it, and that week is
    *  `currentWeek` 0. */
   leadInWeek?: string;
+  /** Run24 (2), deep dive D3: the plan was made for a regular runner whose
+   *  own week was above the plan's base, so its base is a shorter share of
+   *  the weeks before the taper (`SHORT_BASE_SHARE`). Decided when the block
+   *  is made (`generateRacePlanV2`'s `shortBase`) and carried by every
+   *  rebuild of the same block, so its phases stay put as the runner's
+   *  starting point and runs change. Absent: the plan's base is
+   *  `BASE_SHARE`, as every plan without it reads. */
+  shortBase?: boolean;
 }
 
 /* ================================

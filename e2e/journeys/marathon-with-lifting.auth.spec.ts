@@ -85,7 +85,8 @@ function planWeek(state: ProgramState, monday: string) {
         : getPhaseForWeek(
             plan?.currentWeek ?? 0,
             plan?.totalWeeks ?? 1,
-            "marathon"
+            "marathon",
+            plan?.shortBase
           ),
     runs,
     quality: types.some((type) => type === "tempo" || type === "intervals"),
