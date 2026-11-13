@@ -22,6 +22,7 @@ import { runTemplateName } from "@/lib/runLabels";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
+  TAPER_WEEKS_BY_DISTANCE,
 } from "@/features/program/runPlanTiming";
 import { differenceInCalendarDays } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -255,6 +256,11 @@ export interface RaceCockpitViewModel {
    *  progression shortened", wording RUN-EV-05 replaced because it described
    *  the compressed band backwards. Requoted from the live string. */
   belowFloor: boolean;
+  /** Deep dive D8: a compressed block with no build, whose first week is
+   *  its taper (a marathon four weeks out). Its weeks hold no long-run
+   *  build to pack into fewer weeks, so the compressed copy says it tapers
+   *  to race day instead. */
+  noBuild: boolean;
 }
 
 /**
@@ -319,6 +325,11 @@ export function buildRaceCockpitViewModel(args: {
     ),
     compressed,
     belowFloor,
+    noBuild:
+      compressed &&
+      totalWeeks != null &&
+      distance in TAPER_WEEKS_BY_DISTANCE &&
+      totalWeeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance] < 1,
   };
 }
 

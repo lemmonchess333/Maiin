@@ -51,7 +51,11 @@ import {
 } from "@/lib/workoutTemplates";
 import type { DatedRun, LayoffClass } from "./layoffDetection";
 import type { ProgramState, RunPlan, ScheduledRunDay } from "./programTypes";
-import { getRaceMinWeeks, isRunStepBackWeek } from "./runPlanTiming";
+import {
+  getRaceMinWeeks,
+  isRunStepBackWeek,
+  type RaceLongRunReach,
+} from "./runPlanTiming";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
 import { nextRunWeek } from "./weekRollover";
 
@@ -300,16 +304,6 @@ function longestLongKm(input: Parameters<typeof raceWeeksAhead>[0]): number {
   );
 }
 
-export interface RaceLongRunReach {
-  /** The longest long run the plan builds before the race. */
-  longestKm: number;
-  /** The race's distance. */
-  raceKm: number;
-  /** The longest the same plan builds for this runner when it has the
-   *  weeks a full block takes (`getRaceMinWeeks`, and two more). */
-  fullKm: number;
-}
-
 /**
  * How far a race is past the long run the plan can build to before it
  * (Run15, deep dive D11): the longest long run in the weeks after this one
@@ -348,25 +342,4 @@ export function raceLongRunReach(
     },
   });
   return { longestKm, raceKm, fullKm: Math.max(fullKm, longestKm) };
-}
-
-/** Of the long run a full block builds, the share a return has to reach
- *  before its race for the welcome-back sheet to offer the rebuild first
- *  (deep dive D11). A Tropos heuristic in the RUN-EV-06 register, not a
- *  source rule: a half plan that peaks at 20 km is in reach from 15. */
-export const RACE_REACH_SHARE = 0.75;
-
-/**
- * Whether a race is out of the plan's reach (deep dive D11): its long run
- * gets neither to the race's distance nor to `RACE_REACH_SHARE` of what a
- * full block builds. A 5K the plan already runs past is in reach however
- * close; a marathon whose long run gets to the plan's own peak is in reach
- * though the peak is well short of 42.2 km.
- */
-export function raceOutOfReach(reach: RaceLongRunReach | null): boolean {
-  return (
-    !!reach &&
-    reach.longestKm < reach.raceKm &&
-    reach.longestKm < RACE_REACH_SHARE * reach.fullKm
-  );
 }

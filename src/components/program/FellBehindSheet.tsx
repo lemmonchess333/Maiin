@@ -36,10 +36,8 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
-import {
-  raceLongRunReach,
-  raceOutOfReach,
-} from "@/features/program/raceWeeksAhead";
+import { raceLongRunReach } from "@/features/program/raceWeeksAhead";
+import { raceOutOfReach } from "@/features/program/runPlanTiming";
 import type { UserProfile } from "@/lib/auth";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel } from "@/lib/runLabels";

@@ -23,7 +23,8 @@ import {
 import { normalizeProgramState, type ProgramState } from "../programTypes";
 import { migrateProgramState } from "../migrations";
 import type { DatedRun } from "../layoffDetection";
-import { raceLongRunReach, raceOutOfReach } from "../raceWeeksAhead";
+import { raceLongRunReach } from "../raceWeeksAhead";
+import { raceOutOfReach } from "../runPlanTiming";
 
 const TODAY = localDateString(new Date());
 const MONDAY = localWeekKey(parseLocalDate(TODAY));

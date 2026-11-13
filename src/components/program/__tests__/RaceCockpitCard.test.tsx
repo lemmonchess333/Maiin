@@ -135,6 +135,17 @@ describe("RaceCockpitCard", () => {
     );
   });
 
+  /* Deep dive D8: a compressed block with no build (a marathon four weeks
+     out) has no long-run build to pack, so the card says it tapers. */
+  it("says a block with no build tapers to race day", () => {
+    renderCard({ compressed: true, noBuild: true, totalWeeks: 4 });
+    expect(
+      screen.getByText(/no weeks for a build at this distance/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/packed into fewer weeks/i)).toBeNull();
+    expect(screen.queryByText(/bigger jumps/i)).toBeNull();
+  });
+
   /**
    * A below-floor plan ALWAYS also has `compressed: true`, so before
    * 2026-08-04 it fell into the compressed branch and permanently told the

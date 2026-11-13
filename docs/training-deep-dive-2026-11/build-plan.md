@@ -156,6 +156,21 @@ Monday after. On the deep dive's probe, a 10K added 5, 12 and 19 days out now
 gives race, lighter and lighter weeks (`raceWeekAtBuild.test.ts`), where all
 three kept full sets.
 
+STATUS 2026-11-13, #8 (a race the plan cannot prepare for, in words that are
+not true): a compressed block's taper now takes its shares from the runner's
+own running when its build is shorter than that or there is none. A marathon
+four weeks out, made by a runner with a 20 km long run behind them, was twelve
+easy 30s; it is now a 15 km and a 12 km long run three and two weeks out, with
+the other runs at the same shares of their week, then the easy week and the
+race (`raceTaperFromStart.test.ts`). With no running starting point, for a new
+runner and for a detrained one, the weeks are as they were. The planner says
+what the weeks hold in place of what a compressed plan does in general, and
+when the race is out of the plan's reach (the welcome-back sheet's rule) it
+says that first, as distances: "Your longest run now is about 12 km. By race
+day the plan's long run gets to 6 km, and a marathon is 42.2 km. A later race
+or a shorter one gives it time." The race card on Train says a block with no
+build tapers to race day.
+
 STATUS 2026-11-12, #9 (an easy 30 the day after a marathon): a recovery is
 graded from the race by its distance (`RECOVERY_STEPS` in `runScheduler.ts`):
 days off after it (a 5K one, a 10K two, a half four, a marathon seven), then at

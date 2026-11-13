@@ -54,6 +54,9 @@ interface RaceCockpitCardProps {
   /** Finish-safely plan — implies `compressed` but gets its own copy, since
    *  a below-floor plan has no long-run progression to shorten. */
   belowFloor?: boolean;
+  /** A compressed block with no build, which tapers from its first week
+   *  (deep dive D8; the view model's `noBuild`). */
+  noBuild?: boolean;
   /** raceGoal.eventSpaceId (races plan PR4) — when it resolves to a
    *  known race space, the card offers a quiet "Race community" link.
    *  Manual goals lack the binding and render no row. */
@@ -78,6 +81,7 @@ export default function RaceCockpitCard({
   inTaper,
   compressed,
   belowFloor = false,
+  noBuild = false,
   raceSpaceId,
   weeksAhead,
   onAdjustWeek,
@@ -261,10 +265,9 @@ export default function RaceCockpitCard({
              the sentence describing it is corrected. Register matches
              realignCopy's "compressible" case ("a tighter build"). */
           <p className="text-xs text-muted-foreground">
-            Compressed plan — your target date is sooner than the ideal build
-            for this distance, so interval work is trimmed and the long-run
-            build is packed into fewer weeks. Expect bigger jumps between long
-            runs than a full-length plan would use.
+            {noBuild
+              ? "Compressed plan — your target date leaves no weeks for a build at this distance, so the plan tapers to race day, with no tempo or intervals."
+              : "Compressed plan — your target date is sooner than the ideal build for this distance, so interval work is trimmed and the long-run build is packed into fewer weeks. Expect bigger jumps between long runs than a full-length plan would use."}
           </p>
         )
       )}
