@@ -633,6 +633,15 @@ describe("trials", () => {
     });
   });
 
+  it("reads a trial bought on the website, where Tropos takes the money", () => {
+    // RevenueCat Billing on Tropos's own Stripe account (13 Nov 2026).
+    expect(trialSnapshot({ store: "rc_billing" }).trial).toMatchObject({
+      store: "rc_billing",
+      endsAtMs: TRIAL_END,
+      willRenew: true,
+    });
+  });
+
   it("drops a trial whose end cannot be read rather than failing the sync", () => {
     const response = subscriberResponse({
       expires: TRIAL_END,

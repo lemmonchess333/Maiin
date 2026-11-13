@@ -2340,6 +2340,15 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 - [x] ~~**Launch gate:** add the web App-Store steer~~ Not built, by the owner's call (17 October): the web build is not a sales surface, and web Pro comes later through a Stripe website (#2866). Was: — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
 - [ ] When #2866 builds the website, confirm no web surface but its checkout reaches Stripe (`useProCheckout` call sites).
 
+### The website sells through RevenueCat Billing on Stripe (owner, 13 November 2026)
+
+The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
+
+- [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
+- [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
+- [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
+- [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
+
 ## Legacy meal photos in Storage (uploaded before Food9)
 
 Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). New meal photos stay on the device ("Meal photos moved to the device (Food9)" above); these checks cover the photos uploaded before that. The agent sandbox runs the Storage emulator (`npm run test:rules:storage`).

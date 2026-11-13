@@ -35,7 +35,19 @@ const STORES = Object.freeze({
   },
 });
 
-function storeFor(store) {
+/** Who charges and where to cancel. A trial bought on the website
+ *  (RevenueCat Billing) is charged by Tropos itself and cancelled from the
+ *  web app's Settings, Account, Manage subscription, which opens the
+ *  customer portal; every billing email RevenueCat sends links it too. */
+function storeFor(store, manageUrl) {
+  if (store === "rc_billing") {
+    return {
+      charger: "Tropos",
+      steps:
+        "sign in to Tropos on the web, open Settings, then Account, then Manage subscription, or use the link in any billing email from Tropos",
+      url: manageUrl || "https://troposfit.com/settings/account",
+    };
+  }
   return store === "play_store" ? STORES.google : STORES.apple;
 }
 
@@ -120,15 +132,21 @@ function formatDateKey(dateKey, timeZone, referenceMs) {
  * @param {object} args.trial - a `subscriptionTrial` record
  * @param {string} [args.timeZone] - the profile's IANA zone
  * @param {string} [args.appName]
+ * @param {string} [args.manageUrl] - for a web trial: where it is managed
  * @returns {{ subject: string, text: string, html: string }}
  */
-function buildTrialReminderEmail({ trial, timeZone, appName = "Tropos" }) {
+function buildTrialReminderEmail({
+  trial,
+  timeZone,
+  appName = "Tropos",
+  manageUrl,
+}) {
   const zone = trialReminder.resolveTimeZone(timeZone);
   const endsAtMs = Date.parse(trial.endsAt);
   const cancelByMs = Date.parse(trial.cancelBy);
   const sentAtMs = Date.parse(trial.reminderAt);
   const reference = Number.isFinite(sentAtMs) ? sentAtMs : endsAtMs;
-  const store = storeFor(trial.store);
+  const store = storeFor(trial.store, manageUrl);
   const period = trialReminder.periodFor(trial.productId);
   const price =
     trial.price && typeof trial.price.display === "string"

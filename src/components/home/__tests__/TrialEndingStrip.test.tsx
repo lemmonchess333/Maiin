@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import TrialEndingStrip from "../TrialEndingStrip";
 import type { SubscriptionTrial } from "@/lib/auth";
 
@@ -48,6 +49,20 @@ describe("TrialEndingStrip", () => {
       "https://apps.apple.com/account/subscriptions"
     );
     expect(strip).toHaveTextContent("Manage");
+  });
+
+  it("opens Account for a trial bought on the website, where it is managed", () => {
+    at(new Date(2026, 9, 9, 18, 0));
+    render(
+      <MemoryRouter>
+        <TrialEndingStrip trial={trial({ store: "rc_billing" })} />
+      </MemoryRouter>
+    );
+    const strip = screen.getByRole("link", {
+      name: /Free trial ends tomorrow, then £34\.99 a year/,
+    });
+    expect(strip).toHaveAttribute("href", "/settings/account");
+    expect(strip).not.toHaveAttribute("target");
   });
 
   it("shows nothing before the last two days, after the end, or once renewal is off", () => {

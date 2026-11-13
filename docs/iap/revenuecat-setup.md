@@ -197,6 +197,19 @@ Functions → the function → Variables) before relying on it.
 
 ---
 
+## Part W — the website's checkout (RevenueCat Billing on Stripe)
+
+The owner chose this on 13 November 2026 (whole-app grill, Q77): Pro is sold on the website through RevenueCat Billing, with Tropos's own Stripe account as the payment gateway. RevenueCat adds no fee for the web; Stripe takes its card fee. A web purchase grants the same `pro` entitlement as the App Store, through the same webhook (`rc_billing` maps to the `stripe` subscription source in `functions/lib/revenueCatEntitlement.js`). Our own Stripe Checkout functions (`createCheckoutSession`, `stripeWebhook`) stay dormant until this has worked end to end, then are retired.
+
+1. **RevenueCat → Project → Apps → + New → Web Billing (RevenueCat Billing).** Connect the Stripe account (or start with RevenueCat's claimable sandbox). Set the support email and the brand.
+2. **Products.** Two subscriptions, with the **same identifiers as the App Store's**: `com.tropos.app.pro.monthly` and `com.tropos.app.pro.yearly`. The trial reminder reads the period from the identifier (`PRODUCT_PERIODS`, held to the App Store ids by `subscriptionTrial.cross.test.ts`). Give each the price and, if offered, the 7-day free trial. Attach both to the `pro` entitlement.
+3. **Offering.** Add the two products to the current offering as the packages `$rc_monthly` and `$rc_annual` (`WEB_PACKAGE_IDS` in `src/lib/purchaseProvider.ts`).
+4. **Funnels → Purchase Links → new link** for that offering. Success behaviour: **custom redirect** to `https://troposfit.com/upgrade?checkout=success`. Upgrade shows "Payment received" and asks the server to read the new entitlement at once.
+5. **Repository variable** `REVENUECAT_WEB_PURCHASE_TOKEN` = the link's **production** token (the part after `https://pay.rev.cat/`). Never the sandbox token: anyone with it subscribes free. Only the Firebase Hosting build reads it (`deploy-hosting.yml`); unset, the web shows no price and no buy button.
+6. **Test with the sandbox URL** from the same page and a Stripe test card, signed in as a uid on `REVENUECAT_SANDBOX_UIDS` (a sandbox purchase grants Pro to nobody else).
+
+The app builds the link as `https://pay.rev.cat/<token>/<uid>?package_id=…&email=…`, so the purchase belongs to the signed-in account. Manage subscription on the web calls `getSubscriptionManagementUrl`, which returns RevenueCat's `management_url` for that account (for a web purchase, the customer portal, where they cancel or change their card). RevenueCat's docs do not say in so many words that the field is filled for RevenueCat Billing; if it comes back empty, the app says where the subscription is managed and the billing emails RevenueCat sends still carry the portal link.
+
 ## Acceptance checklist (#1097)
 
 - [x] Paid Apps agreement active; banking/tax done
