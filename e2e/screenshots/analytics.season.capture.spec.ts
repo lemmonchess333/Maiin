@@ -20,6 +20,7 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { signInAsTestUser } from "../helpers/auth";
+import { setTestUserTier } from "../helpers/testUserTier";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -128,6 +129,16 @@ test.describe("analytics — a season of training", () => {
 
   test("every page, with sixteen weeks behind it", async ({ page }) => {
     test.setTimeout(300_000);
+    // The score's details are Pro (whole-app grill Q84); this films them.
+    await setTestUserTier("pro", SEASON.email);
+    try {
+      await filmSeason(page);
+    } finally {
+      await setTestUserTier("free", SEASON.email);
+    }
+  });
+
+  async function filmSeason(page: Page) {
     await signInAsTestUser(page, SEASON);
 
     for (const { name, path, anchor } of PAGES) {
@@ -163,5 +174,5 @@ test.describe("analytics — a season of training", () => {
     await settleImages(page);
     await settleFullPageHeight(page);
     await shootBoth(page, "season-home");
-  });
+  }
 });

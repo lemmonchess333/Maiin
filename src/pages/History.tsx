@@ -7,7 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
@@ -24,6 +24,13 @@ import { focusLabel } from "@/features/program/trainingBlock";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
+import { track } from "@/lib/paywallAnalytics";
+import {
+  HISTORY_UPGRADE_PATH,
+  isRangeOpen,
+  lockedRanges,
+} from "@/lib/historyAccess";
 import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
@@ -394,11 +401,25 @@ export default function History() {
     tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
     (typeof window !== "undefined" &&
       PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
+  /* Q84: the score's details (the training load among them) and the
+     ranges older than 3 months are Pro. A free account's link to either
+     lands on what it has: the headline score, 3 months. */
+  const { isPro } = useSubscription();
+  const navigate = useNavigate();
+  const openHistoryPro = useCallback(() => {
+    track("paywall_cta_clicked", { source: "history" });
+    navigate(HISTORY_UPGRADE_PATH);
+  }, [navigate]);
   const scoreOpen =
-    searchParams.get(SCORE_PARAM) === SCORE_DETAILS || linkNamesPerformance;
+    isPro &&
+    (searchParams.get(SCORE_PARAM) === SCORE_DETAILS || linkNamesPerformance);
   /* A replace, not a push: opening a fold is not a place to go back to. */
   const setScoreOpen = useCallback(
     (open: boolean) => {
+      if (open && !isPro) {
+        openHistoryPro();
+        return;
+      }
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
@@ -409,7 +430,7 @@ export default function History() {
         { replace: true }
       );
     },
-    [setSearchParams]
+    [setSearchParams, isPro, openHistoryPro]
   );
   /* A push, not a replace: the back gesture on a page returns to the
      overview, the way a pushed screen would. */
@@ -566,16 +587,23 @@ export default function History() {
   // we strip the param so /history reads cleanly. Matches the
   // pattern landed for Food6 ci5 (`?date=`) and Soc5 (`?tab=`).
   const rangeFromUrl = searchParams.get("range");
-  const timeRange: ValidRange = (VALID_RANGES as readonly string[]).includes(
+  const urlRange: ValidRange = (VALID_RANGES as readonly string[]).includes(
     rangeFromUrl ?? ""
   )
     ? (rangeFromUrl as ValidRange)
     : "1M";
+  // A free account's link to a Pro range shows 3 months (Q84).
+  const timeRange: ValidRange = isRangeOpen(urlRange, isPro) ? urlRange : "3M";
+  const lockedTimeRanges = lockedRanges(VALID_RANGES, isPro);
   const setTimeRange = useCallback(
     (next: string) => {
       // Defensive: TimeRangePills passes a string. Reject unknown
       // values rather than letting them silently land in the URL.
       if (!(VALID_RANGES as readonly string[]).includes(next)) return;
+      if (!isRangeOpen(next, isPro)) {
+        openHistoryPro();
+        return;
+      }
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
@@ -590,7 +618,7 @@ export default function History() {
         rangeType: "pill",
       });
     },
-    [setSearchParams]
+    [setSearchParams, isPro, openHistoryPro]
   );
   const rangeDays =
     timeRange === "1W"
@@ -1249,6 +1277,7 @@ export default function History() {
                     <TimeRangePills
                       selected={timeRange}
                       onChange={setTimeRange}
+                      locked={lockedTimeRanges}
                     />
                   </div>
                 )}
@@ -1280,6 +1309,7 @@ export default function History() {
                     distanceUnit={unit}
                     detailsOpen={scoreOpen}
                     onToggleDetails={setScoreOpen}
+                    detailsLocked={!isPro}
                   >
                     <SectionErrorBoundary sectionName="training-load">
                       <TrainingLoadCard
@@ -1298,7 +1328,11 @@ export default function History() {
             {/* The range scopes the history below it. On a page it shares
                 the way back's row, above. */}
             {view === "overview" && (
-              <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+              <TimeRangePills
+                selected={timeRange}
+                onChange={setTimeRange}
+                locked={lockedTimeRanges}
+              />
             )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
