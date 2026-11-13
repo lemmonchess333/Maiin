@@ -290,7 +290,7 @@ describe("Score details", () => {
     const onToggleDetails = vi.fn();
     serve(history(72, "high"));
     renderSection({ onToggleDetails, detailsLocked: true });
-    const row = screen.getByRole("button", { name: "Score details Pro" });
+    const row = screen.getByRole("button", { name: "Score details, Pro" });
     expect(row).not.toHaveAttribute("aria-expanded");
     fireEvent.click(row);
     expect(onToggleDetails).toHaveBeenCalledWith(true);

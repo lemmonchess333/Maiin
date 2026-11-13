@@ -335,6 +335,7 @@ export default function PerformanceSection({
         {detailsLocked ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Lock aria-hidden="true" className="size-3.5" />
+            <span className="sr-only">, </span>
             Pro
           </span>
         ) : (
