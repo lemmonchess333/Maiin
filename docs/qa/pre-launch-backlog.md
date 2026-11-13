@@ -4808,3 +4808,11 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## The time trial in the plan (Run24 (4), 2026-11-13)
+
+Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`'s trial weeks), their segments on the run screen (`segmentsFromTimeTrial`), and the run summary reading the trial's work as a race (`benchmarkEffortOf`). Unit tests drive each piece; no phone has run a time trial.
+
+- [ ] **Week 2 without a benchmark.** Set up a half 16 weeks out with no race time. Passing: week 2 shows "3K time trial" on the strides day, with its words (a warm-up, 3 km as hard as you can hold evenly, a cool-down, a parkrun does the same job).
+- [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
+- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces with one tap, on a free account too, read from the 3 km only (not the warm-up and cool-down); nothing changes until the tap.

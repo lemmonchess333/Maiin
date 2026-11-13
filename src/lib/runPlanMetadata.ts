@@ -36,6 +36,7 @@ import {
   segmentsFromLongWithRacePace,
   segmentsFromRunWalk,
   segmentsFromTempo,
+  segmentsFromTimeTrial,
   type SessionSegment,
 } from "./runSegments";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
@@ -825,7 +826,11 @@ function templateToPrefill(
   // derive from the (personalized) interval config; tempo from the promoted
   // structure with the resolved target pace; strides from the easy variant.
   // A2 adds the build-phase long run closing at goal race pace.
-  if (prefill.intervals) {
+  if (tmpl.config.timeTrial) {
+    // Run24 (4): no pace on a time trial; the run is how it is found.
+    delete prefill.target;
+    prefill.segments = segmentsFromTimeTrial(tmpl.config.timeTrial, seed);
+  } else if (prefill.intervals) {
     prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed);
   } else if (tmpl.config.tempo) {
     prefill.segments = segmentsFromTempo(

@@ -753,6 +753,8 @@ export default function RunSummary() {
       // work segments, unless they were pinned to a goal pace.
       workPortion: state.workPortion ?? null,
       workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
+      // Run24 (4): a time trial is read by its work as a race.
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 

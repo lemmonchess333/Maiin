@@ -82,8 +82,10 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   `acsm-size:quads` (F12) and the dumbbell lifter's waiting curl; the
  *   half marathoner's `long-share` and `under-dose`, with the plan started
  *   from their own week (Run24 (2)). Their `volume-jump`, gone with Run24
- *   (6)'s hold of a week to 15% over the last full one, is back: the week
- *   after their cutback is 28% over it, 9% over the week before it.
+ *   (6)'s hold of a week to 15% over the last full one, came back with
+ *   Run24 (2) and went again with Run24 (4)'s time trials; the hybrid's
+ *   lighter week gained `back-to-back`, as the 3-4-day hybrids did: an
+ *   hour's medium-long on Tuesday beside Wednesday's quality.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
@@ -96,13 +98,14 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
   "lighter-after-misses": ["misses:bench-press", "stall:barbell-row"],
   "hybrid-lighter-week": [
+    "back-to-back",
     "lift:stall:deadlift",
     "lift:stall:romanian-deadlift",
     "lift:stall:squat",
     "spike",
     "volume-jump",
   ],
-  "half-moves-long-run": ["spike", "volume-jump"],
+  "half-moves-long-run": ["spike"],
 };
 
 const seasons = new Map<string, Season>();

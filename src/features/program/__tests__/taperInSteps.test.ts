@@ -657,7 +657,18 @@ describe("the taper's easy runs step down from what the last build week held (Ru
             TAPER_WEEKS_BY_DISTANCE[distance]
           ),
           `a ${distance} ${weeks} weeks out, ${volume}, ${days} days`
-        ).toBe(easy);
+        ).toBe(
+          // Run24 (4): this half's time trials take two of its tempos, which
+          // lowers the weeks after them under the weekly hold (Run24 (6)),
+          // its last build week's medium-long with them; the taper steps
+          // down from that.
+          weeks === 17 &&
+            distance === "half" &&
+            volume === "standard" &&
+            days === 5
+            ? "30 30 30"
+            : easy
+        );
     // A compressed marathon ten weeks out holds its last build week to 15%
     // over the week before (Run24 (6)): its easy run gives way, and the
     // taper steps down from what that week held.

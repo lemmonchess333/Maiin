@@ -11,7 +11,11 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
-import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  isTimeTrialTemplateId,
+  RUN_TEMPLATES,
+} from "@/lib/workoutTemplates";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export interface SessionExplainerInput {
@@ -194,6 +198,10 @@ export function runSessionExplainer(
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
 
+  // Run24 (4): the plan's benchmark session.
+  if (isTimeTrialTemplateId(input.templateId)) {
+    return "It sets your paces from what you can run now. After it, Tropos offers the new paces to take with one tap.";
+  }
   // Base / build.
   if (type === "long") {
     if (phase === "base") {
