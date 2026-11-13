@@ -832,7 +832,9 @@ function templateToPrefill(
       tmpl.config.tempo,
       unit,
       prefill.target?.type === "pace" ? prefill.target.value : undefined,
-      tempoAtGoal ? { atGoalPace: true } : undefined,
+      tempoAtGoal
+        ? { atGoalPace: true, marathonBand: tempoAtGoal.source === "band" }
+        : undefined,
       seed
     );
   } else if (tmpl.config.strides) {
@@ -861,7 +863,8 @@ function templateToPrefill(
       tmpl.config.targetDistanceKm,
       raceFinish.blockKm,
       raceFinish.goalPaceS,
-      unit
+      unit,
+      raceFinish.source === "band"
     );
   }
   return prefill;

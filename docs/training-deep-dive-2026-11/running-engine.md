@@ -377,6 +377,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D12. With a goal time every tempo becomes goal pace; without one there is no race-pace work. Hurts quality.
 
 - Evidence: plan G: tempos at 4:37, threshold 4:21 never run; plan F: none. Root cause: `racePace.ts:146-150`. Fix: alternate threshold and goal-pace sessions; use the marathon band when no goal is typed. Size S.
+- STATUS 2026-11-13: built (Run24 (9)). A build's tempos alternate race pace and threshold in pairs of weeks (`buildTempoAtRacePace`), so with tempos every other week every other one is at race pace; every taper tempo stays at race pace. A marathon with no goal time runs its race-pace work, tempos and long-run finishes, at the middle of the marathon band a confirmed benchmark gives, and the words say "marathon pace", never a goal the runner did not set. A half with no goal time has none, as the lock reads.
 
 ### D13. Race week and the taper ignore how much the runner runs. Polish to quality.
 
