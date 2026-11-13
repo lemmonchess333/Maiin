@@ -780,24 +780,21 @@ function ProgramInner() {
     if (viewingHistoryIndex !== null || urlDay === null) return;
     const day = programState.workouts[urlDay];
     if (!day || day.completed || day.skipped) return;
-    if (easierRequested) {
-      /* eslint-disable react-hooks/set-state-in-effect -- a one-shot
-         reaction to the deep link, consumed above so it cannot repeat */
-      setSessionVariant("easier_today");
-      setSessionDayIndex(urlDay);
-      /* eslint-enable react-hooks/set-state-in-effect */
-      return;
-    }
-    // A plan built to fit the person's time (Lift4 (5)) starts in full; one
-    // built before that still trims to their usual time at Start.
-    const budget = usualLiftBudget(
-      programState,
-      profile?.liftTimeBudgetMinutes
-    );
     /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
        to the deep link, consumed above so it cannot repeat */
-    setSessionBudgetMinutes(budget ?? 60);
-    setSessionVariant(budget === null ? "full" : "time_budget");
+    if (easierRequested) {
+      // Train's own Easier today, as its row starts it.
+      setSessionVariant("easier_today");
+    } else {
+      // A plan built to fit the person's time (Lift4 (5)) starts in full;
+      // one built before that still trims to their usual time at Start.
+      const budget = usualLiftBudget(
+        programState,
+        profile?.liftTimeBudgetMinutes
+      );
+      setSessionBudgetMinutes(budget ?? 60);
+      setSessionVariant(budget === null ? "full" : "time_budget");
+    }
     setSessionDayIndex(urlDay);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [
