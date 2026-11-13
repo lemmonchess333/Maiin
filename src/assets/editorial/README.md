@@ -17,20 +17,21 @@ With Unsplash+ licensed for the welcome (DS9), the owner asked for the
 Social covers to be improved where an Unsplash+ photograph is clearly
 better, and for the race covers to stay. Twenty-one candidates were drawn
 as directory cards and Space headers beside the current covers, and he
-took five. Trail Running, Destination Races and Triathlon & Multisport keep
-theirs.
+took five, then Triathlon & Multisport as a sixth. Trail Running and
+Destination Races keep theirs.
 
-| Asset                   | Photographer   | Was                                  | Now                                               |
-| ----------------------- | -------------- | ------------------------------------ | ------------------------------------------------- |
-| `space-new-to-tropos`   | Leire Cavia    | Silhouettes on a red track           | Six friends in kit laughing at the camera         |
-| `space-runners`         | Getty Images   | Five people in hoodies on a bridge   | A mixed group running at you through a green park |
-| `space-womens-running`  | Natalia Blauth | Two women on a path, one in a hoodie | Three women running together, mountains behind    |
-| `space-lifters`         | Getty Images   | A black-and-white squat class        | A class in the front rack, bright gym, in colour  |
-| `space-hybrid-training` | Leire Cavia    | One man on battle ropes              | A man and a woman passing a medicine ball         |
+| Asset                        | Photographer   | Was                                  | Now                                               |
+| ---------------------------- | -------------- | ------------------------------------ | ------------------------------------------------- |
+| `space-new-to-tropos`        | Leire Cavia    | Silhouettes on a red track           | Six friends in kit laughing at the camera         |
+| `space-runners`              | Getty Images   | Five people in hoodies on a bridge   | A mixed group running at you through a green park |
+| `space-womens-running`       | Natalia Blauth | Two women on a path, one in a hoodie | Three women running together, mountains behind    |
+| `space-lifters`              | Getty Images   | A black-and-white squat class        | A class in the front rack, bright gym, in colour  |
+| `space-hybrid-training`      | Leire Cavia    | One man on battle ropes              | A man and a woman passing a medicine ball         |
+| `space-triathlon-multisport` | Getty Images   | Two swimmers seen from above         | A swimmer at eye level, red cap, sun and spray    |
 
 Each is the full source width cut to 24:13, so the faces sit inside both
 the directory card and the 393 × 176 header, original colour, no
-retouching. Four are 1200 px wide and under 120 KB. `space-runners` is
+retouching. Five are 1200 px wide and under 120 KB. `space-runners` is
 1000 px at about 152 KB: its leaves reach 120 KB only at a quality that
 blotches, the reason the audit below kept seven dense covers over budget.
 Unsplash+ photographs carry model releases; the downloads were registered
