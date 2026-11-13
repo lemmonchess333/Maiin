@@ -1,7 +1,11 @@
 import { Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { SubscriptionTrial } from "@/lib/auth";
-import { storeSubscriptionsUrl, trialStripText } from "@/lib/subscriptionTrial";
+import {
+  isWebStore,
+  storeSubscriptionsUrl,
+  trialStripText,
+} from "@/lib/subscriptionTrial";
 
 /**
  * Home's strip in a renewing store trial's last two days (Sub1 pin 12's
@@ -38,10 +42,10 @@ export default function TrialEndingStrip({
       </span>
     </>
   );
-  // A trial bought on the website (RevenueCat Billing) is managed from
+  // A trial bought on the website (RevenueCat Billing or Paddle) is managed from
   // Account, whose Manage subscription opens the customer portal. A store's
   // is managed in the store's own list.
-  if (trial.store === "rc_billing") {
+  if (isWebStore(trial.store)) {
     return (
       <Link to="/settings/account" className={className}>
         {body}

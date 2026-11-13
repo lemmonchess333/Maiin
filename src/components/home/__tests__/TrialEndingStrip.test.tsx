@@ -63,6 +63,16 @@ describe("TrialEndingStrip", () => {
     });
     expect(strip).toHaveAttribute("href", "/settings/account");
     expect(strip).not.toHaveAttribute("target");
+    cleanup();
+    render(
+      <MemoryRouter>
+        <TrialEndingStrip trial={trial({ store: "paddle" })} />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "href",
+      "/settings/account"
+    );
   });
 
   it("shows nothing before the last two days, after the end, or once renewal is off", () => {

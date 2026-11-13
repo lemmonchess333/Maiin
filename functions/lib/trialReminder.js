@@ -38,13 +38,14 @@ const DEFAULT_TIMEZONE = "Europe/London";
 /** Stores that bill at the end of a trial. A promotional grant or a web
  *  purchase through another store is not a trial anyone is charged for
  *  here, so it gets no reminder. `rc_billing` is RevenueCat Billing, the
- *  website's checkout on Tropos's own Stripe account (owner, 13 Nov 2026),
- *  where Tropos itself takes the money. */
+ *  website's checkout on Tropos's own Stripe account, and `paddle` the same
+ *  checkout with Paddle as the seller (owner, 13 Nov 2026). */
 const BILLED_STORES = new Set([
   "app_store",
   "mac_app_store",
   "play_store",
   "rc_billing",
+  "paddle",
 ]);
 
 /** How often each product renews, for the email's "every month". Pinned to

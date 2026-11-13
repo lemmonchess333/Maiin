@@ -245,6 +245,7 @@ describe("planEntitlementWrite", () => {
       ["play_store", "android_iap"],
       ["stripe", "stripe"],
       ["rc_billing", "stripe"],
+      ["paddle", "stripe"],
     ]) {
       expect(
         rc.planEntitlementWrite(FREE, snapshot({ store })).write

@@ -132,6 +132,19 @@ describe("buildTrialReminderEmail", () => {
     expect(html).toContain(`href="${manageUrl}"`);
   });
 
+  it("names Paddle as the seller when the website sells through Paddle", () => {
+    const { text } = buildTrialReminderEmail({
+      trial: record({ store: "paddle" }),
+      timeZone: "Europe/London",
+      manageUrl: "https://troposfit.com/settings/account",
+    });
+    expect(text).toContain(
+      "Paddle, which sells Tropos Pro for us, will charge you £3.99 when the trial ends"
+    );
+    expect(text).toContain("any billing email from Paddle");
+    expect(text).not.toContain("Apple");
+  });
+
   it("speaks for Google Play when the trial is there", () => {
     const { text } = email({ store: "play_store" });
     expect(text).toContain("Google Play will charge you £3.99");

@@ -40,6 +40,15 @@ const STORES = Object.freeze({
  *  web app's Settings, Account, Manage subscription, which opens the
  *  customer portal; every billing email RevenueCat sends links it too. */
 function storeFor(store, manageUrl) {
+  if (store === "paddle") {
+    // Paddle is the seller of record: it takes the payment for Tropos.
+    return {
+      charger: "Paddle, which sells Tropos Pro for us,",
+      steps:
+        "sign in to Tropos on the web, open Settings, then Account, then Manage subscription, or use the link in any billing email from Paddle",
+      url: manageUrl || "https://troposfit.com/settings/account",
+    };
+  }
   if (store === "rc_billing") {
     return {
       charger: "Tropos",

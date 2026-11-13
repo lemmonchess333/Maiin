@@ -2348,6 +2348,7 @@ The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own
 - [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
 - [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
 - [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
+- [ ] Selling to the EU and the US (owner, 13 November): either Paddle as the engine (it handles VAT and sales tax; approve the domain, give its API key Customer portal sessions (Write)), or on Stripe: register for EU VAT (non-Union OSS) before the first EU sale, turn on Stripe Tax, and watch US state thresholds. Prices in GBP, EUR and USD in whichever engine is chosen.
 
 ## Legacy meal photos in Storage (uploaded before Food9)
 
