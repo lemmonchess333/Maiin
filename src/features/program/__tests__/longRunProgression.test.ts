@@ -341,16 +341,18 @@ describe("Run17 — the ceiling measures the runner's own pace: 150 minutes, and
     expect(longTierForKm(32)).toBe("long_26k");
     // The marathon's 180 minutes take the nominal 32 km's 180.
     expect(maxSchedulableLongKm(null, marathonCeiling)).toBe(32);
-    // A 20-week block climbs a rung a week (Run23) and reaches 30 before
-    // its taper; the 32 km rung is there for a block that climbs to it.
-    expect(peakKm(marathon(null))).toBe(30);
+    // The race is on a Monday 20 weeks on, the plan's 21st week: a week of
+    // rolling base, then a 20-week block (Run24 (3)), which climbs a rung a
+    // week (Run23) to the 32 km rung before its taper.
+    expect(peakKm(marathon(null))).toBe(32);
   });
 
   it("5:00/km → 30 km fits in 150 minutes, and the marathon reaches its 32 km cap", () => {
     expect(maxSchedulableLongKm(300)).toBe(30);
     expect(longTierForKm(32, 300)).toBe("long_30k");
     expect(longTierForKm(40, 300, marathonCeiling)).toBe("long_32k");
-    expect(peakKm(marathon(300))).toBe(30);
+    // A week of base and a 20-week block (Run24 (3)), as above.
+    expect(peakKm(marathon(300))).toBe(32);
   });
 
   it("6:00/km → 24 km fits the 150 and 30 km sits on the marathon's 180", () => {

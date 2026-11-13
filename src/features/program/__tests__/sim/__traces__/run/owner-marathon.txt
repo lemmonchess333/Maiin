@@ -21,155 +21,155 @@ w4 2026-03-30  base, plan week 3 of 25  counted 4/6  plan 90 min, long 0.0 km, q
   ran     Mon easy_10 1.2 km/10 min 8:29 · Thu easy_10 1.2 km/10 min 8:29 · Fri easy_10 1.2 km/10 min 8:27 · Sun easy_40 4.8 km/40 min 8:18
   week    70 min · 8.4 km · easy 100% · longest ×1.35 the month's
   runner  VDOT 28.51 · fitness 61 min · easy own 7:50–8:46, prescribed none
-w5 2026-04-06  base, plan week 4 of 25  counted 6/6  plan 80 min, long 0.0 km, quality 0
-  planned Mon:easy_10 · Tue:easy_10 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:easy_30
-  ran     Mon easy_10 1.2 km/10 min 8:26 · Tue easy_10 1.2 km/10 min 8:17 · Wed easy_10 1.2 km/10 min 8:18 · Thu easy_10 1.2 km/10 min 8:21 · Fri easy_10 1.2 km/10 min 8:26 · Sun easy_30 3.6 km/30 min 8:23
-  week    80 min · 9.6 km · easy 100% · longest ×0.74 the month's
-  runner  VDOT 28.65 · fitness 64 min · easy own 7:47–8:43, prescribed none
-w6 2026-04-13  base, plan week 5 of 25  counted 6/6  plan 110 min, long 0.0 km, quality 0
+w5 2026-04-06  base, plan week 4 of 25  counted 6/6  plan 110 min, long 0.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_10 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:easy_50
-  ran     Mon easy_20 2.4 km/20 min 8:21 · Tue easy_10 1.2 km/10 min 8:24 · Wed easy_10 1.2 km/10 min 8:26 · Thu easy_10 1.2 km/10 min 8:24 · Fri easy_10 1.2 km/10 min 8:21 · Sun easy_50 6.0 km/50 min 8:20
-  week    110 min · 13.2 km · easy 100% · longest ×1.24 the month's
-  runner  VDOT 28.97 · fitness 71 min · easy own 7:45–8:41, prescribed none
+  ran     Mon easy_20 2.4 km/20 min 8:26 · Tue easy_10 1.2 km/10 min 8:16 · Wed easy_10 1.2 km/10 min 8:18 · Thu easy_10 1.2 km/10 min 8:21 · Fri easy_10 1.2 km/10 min 8:26 · Sun easy_50 6.0 km/50 min 8:23
+  week    110 min · 13.1 km · easy 100% · longest ×1.24 the month's
+  runner  VDOT 28.86 · fitness 69 min · easy own 7:47–8:42, prescribed none
+w6 2026-04-13  base, plan week 5 of 25  counted 6/6  plan 90 min, long 0.0 km, quality 0
+  planned Mon:easy_10 · Tue:easy_10 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:easy_40
+  ran     Mon easy_10 1.2 km/10 min 8:18 · Tue easy_10 1.2 km/10 min 8:21 · Wed easy_10 1.2 km/10 min 8:24 · Thu easy_10 1.2 km/10 min 8:21 · Fri easy_10 1.2 km/10 min 8:19 · Sun easy_40 4.8 km/40 min 8:20
+  week    90 min · 10.8 km · easy 100% · longest ×0.81 the month's
+  runner  VDOT 29.01 · fitness 72 min · easy own 7:44–8:39, prescribed none
 w7 2026-04-20  base, plan week 6 of 25  counted 5/6  plan 119 min, long 6.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:long_6k
-  ran     Mon easy_20 2.4 km/20 min 8:27 · Tue easy_20 2.4 km/20 min 8:24 · Wed easy_10 1.2 km/10 min 8:25 · Thu easy_10 1.2 km/10 min 8:15 · Sun long_6k 6.0 km/50 min 8:25
-  week    110 min · 13.1 km · easy 100% · longest ×1.00 the month's
-  runner  VDOT 29.23 · fitness 78 min · easy own 7:42–8:37, prescribed none
+  ran     Mon easy_20 2.4 km/20 min 8:26 · Tue easy_20 2.4 km/20 min 8:24 · Wed easy_10 1.2 km/10 min 8:24 · Thu easy_10 1.2 km/10 min 8:15 · Sun long_6k 6.0 km/50 min 8:23
+  week    110 min · 13.2 km · easy 100% · longest ×1.01 the month's
+  runner  VDOT 29.27 · fitness 78 min · easy own 7:41–8:37, prescribed none
 w8 2026-04-27  base, plan week 7 of 25  counted 6/6  plan 134 min, long 8.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:long_8k
-  ran     Mon easy_20 2.4 km/20 min 8:18 · Tue easy_20 2.4 km/20 min 8:21 · Wed easy_10 1.2 km/10 min 8:11 · Thu easy_10 1.2 km/10 min 8:17 · Fri easy_10 1.2 km/10 min 8:22 · Sun long_8k 8.0 km/65 min 8:07
+  ran     Mon easy_20 2.4 km/20 min 8:18 · Tue easy_20 2.4 km/20 min 8:21 · Wed easy_10 1.2 km/10 min 8:10 · Thu easy_10 1.2 km/10 min 8:16 · Fri easy_10 1.2 km/10 min 8:21 · Sun long_8k 8.0 km/65 min 8:06
   week    135 min · 16.4 km · easy 100% · longest ×1.33 the month's
-  runner  VDOT 29.61 · fitness 87 min · easy own 7:38–8:33, prescribed none
-w9 2026-05-04  base, plan week 8 of 25  counted 4/6  plan 134 min, long 8.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_10 · Thu:easy_10 · Fri:easy_10 · Sun:long_8k
-  ran     Mon easy_20 2.5 km/20 min 8:06 · Wed easy_10 1.2 km/10 min 8:10 · Thu easy_10 1.2 km/10 min 8:24 · Sun long_8k 8.0 km/65 min 8:07
-  week    105 min · 12.9 km · easy 100% · longest ×1.00 the month's
-  runner  VDOT 29.75 · fitness 90 min · easy own 7:36–8:31, prescribed none
+  runner  VDOT 29.64 · fitness 87 min · easy own 7:38–8:33, prescribed none
+w9 2026-05-04  base, plan week 8 of 25  counted 4/6  plan 160 min, long 10.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_10 · Fri:easy_10 · Sun:long_10k
+  ran     Mon easy_20 2.5 km/20 min 8:06 · Wed easy_20 2.5 km/20 min 8:09 · Thu easy_10 1.2 km/10 min 8:22 · Sun long_10k 10.0 km/81 min 8:07
+  week    131 min · 16.1 km · easy 100% · longest ×1.25 the month's
+  runner  VDOT 29.93 · fitness 95 min · easy own 7:35–8:30, prescribed none
 w10 2026-05-11  base, plan week 9 of 25  counted 6/6  plan 159 min, long 10.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_10 · Fri:easy_10 · Sun:long_10k
-  ran     Mon easy_20 2.5 km/20 min 8:03 · Tue easy_20 2.5 km/20 min 8:04 · Wed easy_20 2.5 km/20 min 8:06 · Thu easy_10 1.2 km/10 min 8:10 · Fri easy_10 1.2 km/10 min 8:15 · Sun long_10k 10.0 km/82 min 8:09
-  week    162 min · 19.9 km · easy 100% · longest ×1.25 the month's
-  runner  VDOT 30.20 · fitness 101 min · easy own 7:32–8:27, prescribed none
-w11 2026-05-18  build, plan week 10 of 25  counted 4/6  plan 185 min, long 12.0 km, quality 0
+  ran     Mon easy_20 2.5 km/20 min 8:00 · Tue easy_20 2.5 km/20 min 8:03 · Wed easy_20 2.5 km/20 min 8:04 · Thu easy_10 1.2 km/10 min 8:08 · Fri easy_10 1.2 km/10 min 8:13 · Sun long_10k 10.0 km/81 min 8:09
+  week    161 min · 19.9 km · easy 100% · longest ×1.00 the month's
+  runner  VDOT 30.35 · fitness 105 min · easy own 7:30–8:24, prescribed none
+w11 2026-05-18  base, plan week 10 of 25  counted 4/6  plan 185 min, long 12.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_12k
-  ran     Mon easy_20 2.4 km/20 min 8:21 · Wed easy_20 2.4 km/20 min 8:12 · Thu easy_20 2.5 km/20 min 8:03 · Fri easy_10 1.3 km/10 min 7:59
+  ran     Mon easy_20 2.4 km/20 min 8:19 · Wed easy_20 2.4 km/20 min 8:10 · Thu easy_20 2.5 km/20 min 8:02 · Fri easy_10 1.3 km/10 min 7:57
   week    70 min · 8.6 km · easy 100% · longest ×0.25 the month's
-  runner  VDOT 30.00 · fitness 96 min · easy own 7:27–8:21, prescribed none
-w12 2026-05-25  build, plan week 11 of 25  counted 3/6  plan 185 min, long 12.0 km, quality 0
+  runner  VDOT 30.13 · fitness 100 min · easy own 7:25–8:19, prescribed none
+w12 2026-05-25  base, plan week 11 of 25  counted 3/6  plan 184 min, long 12.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_12k
-  ran     Wed easy_20 2.6 km/20 min 7:47 · Thu easy_20 2.5 km/20 min 7:52 · Sun long_12k 12.0 km/95 min 7:53
-  week    135 min · 17.1 km · easy 100% · longest ×1.20 the month's
-  runner  VDOT 30.27 · fitness 103 min · easy own 7:32–8:27, prescribed none
-w13 2026-06-01  build, plan week 12 of 25  counted 6/6  plan 199 min, long 14.0 km, quality 0
+  ran     Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:50 · Sun long_12k 12.0 km/94 min 7:52
+  week    134 min · 17.1 km · easy 100% · longest ×1.20 the month's
+  runner  VDOT 30.37 · fitness 106 min · easy own 7:31–8:25, prescribed none
+w13 2026-06-01  base, plan week 12 of 25  counted 6/6  plan 199 min, long 14.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_14k
-  ran     Mon easy_20 2.5 km/20 min 8:06 · Tue easy_20 2.5 km/20 min 8:01 · Wed easy_20 2.5 km/20 min 7:59 · Thu easy_20 2.4 km/20 min 8:11 · Fri easy_10 1.2 km/10 min 8:02 · Sun long_14k 14.0 km/112 min 8:02
+  ran     Mon easy_20 2.5 km/20 min 8:04 · Tue easy_20 2.5 km/20 min 8:00 · Wed easy_20 2.5 km/20 min 7:58 · Thu easy_20 2.5 km/20 min 8:10 · Fri easy_10 1.2 km/10 min 8:01 · Sun long_14k 14.0 km/112 min 8:00
   week    202 min · 25.2 km · easy 100% · longest ×1.17 the month's
-  runner  VDOT 30.86 · fitness 119 min · easy own 7:26–8:20, prescribed none
-w14 2026-06-08  build, plan week 13 of 25  counted 4/6  plan 225 min, long 16.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_16k
-  ran     Mon easy_20 2.5 km/20 min 8:06 · Tue easy_20 2.5 km/20 min 7:56 · Wed easy_20 2.5 km/20 min 7:58 · Fri easy_20 2.5 km/20 min 8:03
-  week    80 min · 10.0 km · easy 100% · longest ×0.18 the month's
-  runner  VDOT 30.63 · fitness 113 min · easy own 7:20–8:13, prescribed none
-w15 2026-06-15  build, plan week 14 of 25  counted 6/6  plan 223 min, long 16.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_16k
-  ran     Mon easy_20 2.5 km/20 min 7:51 · Tue easy_20 2.5 km/20 min 7:58 · Wed easy_20 2.5 km/20 min 8:01 · Thu easy_20 2.6 km/20 min 7:48 · Fri easy_20 2.5 km/20 min 7:53 · Sun long_16k 16.0 km/126 min 7:53
-  week    226 min · 28.7 km · easy 100% · longest ×1.14 the month's
-  runner  VDOT 31.28 · fitness 131 min · easy own 7:22–8:15, prescribed none
-w16 2026-06-22  build, plan week 15 of 25  counted 6/6  plan 246 min, long 18.0 km, quality 0
+  runner  VDOT 30.94 · fitness 122 min · easy own 7:25–8:19, prescribed none
+w14 2026-06-08  build, plan week 13 of 25  counted 4/6  plan 215 min, long 16.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_16k
+  ran     Mon easy_20 2.5 km/20 min 8:06 · Tue easy_20 2.5 km/20 min 7:55 · Wed easy_20 2.5 km/20 min 7:58 · Fri easy_10 1.2 km/10 min 8:03
+  week    70 min · 8.8 km · easy 100% · longest ×0.18 the month's
+  runner  VDOT 30.64 · fitness 113 min · easy own 7:19–8:12, prescribed none
+w15 2026-06-15  build, plan week 14 of 25  counted 6/6  plan 213 min, long 16.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_16k
+  ran     Mon easy_20 2.6 km/20 min 7:50 · Tue easy_20 2.5 km/20 min 7:56 · Wed easy_20 2.5 km/20 min 7:59 · Thu easy_20 2.6 km/20 min 7:47 · Fri easy_10 1.3 km/10 min 7:51 · Sun long_16k 16.0 km/125 min 7:51
+  week    215 min · 27.4 km · easy 100% · longest ×1.14 the month's
+  runner  VDOT 31.24 · fitness 130 min · easy own 7:22–8:16, prescribed none
+w16 2026-06-22  build, plan week 15 of 25  counted 6/6  plan 237 min, long 18.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_18k
+  ran     Mon easy_20 2.5 km/20 min 7:52 · Tue easy_20 2.5 km/20 min 7:54 · Wed easy_20 2.6 km/20 min 7:41 · Thu easy_20 2.6 km/20 min 7:48 · Fri easy_20 2.6 km/20 min 7:45 · Sun long_18k 18.0 km/144 min 7:59
+  week    244 min · 30.8 km · easy 100% · longest ×1.13 the month's
+  runner  VDOT 31.86 · fitness 149 min · easy own 7:16–8:09, prescribed none
+w17 2026-06-29  build, plan week 16 of 25  counted 5/6  plan 260 min, long 20.0 km, quality 0
+  planned Mon:easy_30 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_20k
+  ran     Mon easy_30 3.8 km/30 min 7:49 · Tue easy_20 2.6 km/20 min 7:48 · Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:44 · Sun long_20k 20.0 km/154 min 7:43
+  week    244 min · 31.6 km · easy 100% · longest ×1.11 the month's
+  runner  VDOT 32.35 · fitness 164 min · easy own 7:11–8:03, prescribed none
+w18 2026-07-06  build, plan week 17 of 25  counted 4/6  plan 246 min, long 18.0 km, quality 0
   planned Mon:easy_30 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_18k
-  ran     Mon easy_30 3.8 km/30 min 7:52 · Tue easy_20 2.5 km/20 min 7:53 · Wed easy_20 2.6 km/20 min 7:40 · Thu easy_20 2.6 km/20 min 7:47 · Fri easy_20 2.6 km/20 min 7:44 · Sun long_18k 18.0 km/144 min 7:59
-  week    254 min · 32.1 km · easy 100% · longest ×1.13 the month's
-  runner  VDOT 31.94 · fitness 151 min · easy own 7:15–8:08, prescribed none
-w17 2026-06-29  build, plan week 16 of 25  counted 5/6  plan 240 min, long 16.0 km, quality 0
-  planned Mon:easy_30 · Tue:easy_30 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_16k
-  ran     Mon easy_30 3.9 km/30 min 7:48 · Tue easy_30 3.9 km/30 min 7:47 · Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:42 · Sun long_16k 16.0 km/123 min 7:43
-  week    223 min · 28.9 km · easy 100% · longest ×0.89 the month's
-  runner  VDOT 32.30 · fitness 163 min · easy own 7:10–8:02, prescribed none
-w18 2026-07-06  build, plan week 17 of 25  counted 4/6  plan 271 min, long 20.0 km, quality 0
-  planned Mon:easy_30 · Tue:easy_30 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_20k
-  ran     Mon easy_30 3.9 km/30 min 7:45 · Tue easy_30 3.9 km/30 min 7:41 · Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:42
-  week    100 min · 13.0 km · easy 100% · longest ×0.22 the month's
-  runner  VDOT 31.99 · fitness 153 min · easy own 7:04–7:55, prescribed none
-w19 2026-07-13  build, plan week 18 of 25  counted 5/6  plan 272 min, long 20.0 km, quality 0
-  planned Mon:easy_30 · Tue:easy_30 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_20k
-  ran     Mon easy_30 3.9 km/30 min 7:39 · Tue easy_30 4.0 km/30 min 7:33 · Wed easy_20 2.6 km/20 min 7:33 · Thu easy_20 2.6 km/20 min 7:36 · Fri easy_20 2.6 km/20 min 7:34
-  week    120 min · 15.8 km · easy 100% · longest ×0.22 the month's
-  runner  VDOT 31.81 · fitness 147 min · easy own 7:07–7:59, prescribed none
-w20 2026-07-20  build, plan week 19 of 25  counted 4/6  plan 273 min, long 20.0 km, quality 0
-  planned Mon:easy_30 · Tue:easy_30 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_20k
-  ran     Mon easy_30 3.9 km/30 min 7:39 · Wed easy_20 2.7 km/20 min 7:32 · Thu easy_20 2.7 km/20 min 7:29 · Fri easy_20 2.6 km/20 min 7:38
-  week    90 min · 11.9 km · easy 100% · longest ×0.22 the month's
-  runner  VDOT 31.51 · fitness 138 min · easy own 7:10–8:02, prescribed none
-w21 2026-07-27  build, plan week 20 of 25  counted 5/6  plan 223 min, long 16.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_16k
-  ran     Mon easy_20 2.7 km/20 min 7:29 · Tue easy_20 2.7 km/20 min 7:32 · Wed easy_20 2.7 km/20 min 7:31 · Thu easy_20 2.7 km/20 min 7:31 · Fri easy_20 2.7 km/20 min 7:32
-  week    100 min · 13.3 km · easy 100% · longest ×0.17 the month's
-  runner  VDOT 31.30 · fitness 132 min · easy own 7:12–8:05, prescribed none
-w22 2026-08-03  build, plan week 21 of 25  counted 5/6  plan 140 min, long 0.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:easy_40
-  ran     Mon easy_20 2.6 km/20 min 7:36 · Wed easy_20 2.6 km/20 min 7:39 · Thu easy_20 2.7 km/20 min 7:31 · Fri easy_20 2.6 km/20 min 7:35 · Sun easy_40 5.3 km/40 min 7:33
-  week    120 min · 15.8 km · easy 100% · longest ×1.33 the month's
-  runner  VDOT 31.25 · fitness 130 min · easy own 7:17–8:10, prescribed none
-w23 2026-08-10  taper, plan week 22 of 25  counted 5/6  plan 146 min, long 6.0 km, quality 0
-  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_6k
-  ran     Mon easy_20 2.6 km/20 min 7:42 · Wed easy_20 2.6 km/20 min 7:37 · Thu easy_20 2.7 km/20 min 7:30 · Fri easy_20 2.6 km/20 min 7:42 · Sun long_6k 6.0 km/46 min 7:39
-  week    126 min · 16.5 km · easy 100% · longest ×1.13 the month's
-  runner  VDOT 31.23 · fitness 130 min · easy own 7:17–8:10, prescribed none
+  ran     Mon easy_30 3.9 km/30 min 7:44 · Tue easy_20 2.6 km/20 min 7:40 · Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:42
+  week    90 min · 11.7 km · easy 100% · longest ×0.19 the month's
+  runner  VDOT 31.98 · fitness 152 min · easy own 7:04–7:56, prescribed none
+w19 2026-07-13  build, plan week 18 of 25  counted 5/6  plan 277 min, long 22.0 km, quality 0
+  planned Mon:easy_30 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_22k
+  ran     Mon easy_30 3.9 km/30 min 7:40 · Tue easy_20 2.6 km/20 min 7:34 · Wed easy_20 2.6 km/20 min 7:33 · Thu easy_20 2.6 km/20 min 7:36 · Fri easy_20 2.6 km/20 min 7:35
+  week    110 min · 14.5 km · easy 100% · longest ×0.20 the month's
+  runner  VDOT 31.76 · fitness 145 min · easy own 7:07–8:00, prescribed none
+w20 2026-07-20  build, plan week 19 of 25  counted 4/6  plan 278 min, long 22.0 km, quality 0
+  planned Mon:easy_30 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_22k
+  ran     Mon easy_30 3.9 km/30 min 7:39 · Wed easy_20 2.7 km/20 min 7:32 · Thu easy_20 2.7 km/20 min 7:30 · Fri easy_20 2.6 km/20 min 7:38
+  week    90 min · 11.9 km · easy 100% · longest ×0.20 the month's
+  runner  VDOT 31.46 · fitness 137 min · easy own 7:11–8:03, prescribed none
+w21 2026-07-27  build, plan week 20 of 25  counted 5/6  plan 269 min, long 22.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:long_22k
+  ran     Mon easy_20 2.7 km/20 min 7:30 · Tue easy_20 2.7 km/20 min 7:32 · Wed easy_20 2.7 km/20 min 7:31 · Thu easy_20 2.7 km/20 min 7:32 · Fri easy_20 2.6 km/20 min 7:33
+  week    100 min · 13.3 km · easy 100% · longest ×0.13 the month's
+  runner  VDOT 31.26 · fitness 131 min · easy own 7:13–8:05, prescribed none
+w22 2026-08-03  build, plan week 21 of 25  counted 5/6  plan 130 min, long 0.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:easy_40
+  ran     Mon easy_20 2.6 km/20 min 7:36 · Wed easy_20 2.6 km/20 min 7:39 · Thu easy_20 2.7 km/20 min 7:32 · Fri easy_10 1.3 km/10 min 7:35 · Sun easy_40 5.3 km/40 min 7:34
+  week    110 min · 14.5 km · easy 100% · longest ×1.35 the month's
+  runner  VDOT 31.16 · fitness 128 min · easy own 7:18–8:11, prescribed none
+w23 2026-08-10  taper, plan week 22 of 25  counted 5/6  plan 136 min, long 6.0 km, quality 0
+  planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_6k
+  ran     Mon easy_20 2.6 km/20 min 7:42 · Wed easy_20 2.6 km/20 min 7:37 · Thu easy_20 2.7 km/20 min 7:31 · Fri easy_10 1.3 km/10 min 7:43 · Sun long_6k 6.0 km/46 min 7:39
+  week    116 min · 15.2 km · easy 100% · longest ×1.14 the month's
+  runner  VDOT 31.10 · fitness 126 min · easy own 7:19–8:12, prescribed none
 w24 2026-08-17  taper, plan week 23 of 25  counted 5/6  plan 152 min, long 8.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_10 · Sun:long_8k
-  ran     Mon easy_20 2.6 km/20 min 7:37 · Wed easy_20 2.6 km/20 min 7:50 · Thu easy_20 2.6 km/20 min 7:42 · Fri easy_10 1.3 km/10 min 7:51 · Sun long_8k 8.0 km/60 min 7:31
-  week    130 min · 17.1 km · easy 100% · longest ×1.33 the month's
-  runner  VDOT 31.25 · fitness 130 min · easy own 7:18–8:11, prescribed none
+  ran     Mon easy_20 2.6 km/20 min 7:37 · Wed easy_20 2.6 km/20 min 7:50 · Thu easy_20 2.6 km/20 min 7:43 · Fri easy_10 1.3 km/10 min 7:52 · Sun long_8k 8.0 km/60 min 7:31
+  week    130 min · 17.0 km · easy 100% · longest ×1.33 the month's
+  runner  VDOT 31.14 · fitness 127 min · easy own 7:19–8:12, prescribed none
 w25 2026-08-24  taper, plan week 24 of 25  counted 6/6  plan 120 min, long 0.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sun:easy_20
-  ran     Mon easy_20 2.6 km/20 min 7:36 · Tue easy_20 2.6 km/20 min 7:42 · Wed easy_20 2.6 km/20 min 7:45 · Thu easy_20 2.6 km/20 min 7:39 · Fri easy_20 2.6 km/20 min 7:40 · Sun easy_20 2.6 km/20 min 7:46
+  ran     Mon easy_20 2.6 km/20 min 7:37 · Tue easy_20 2.6 km/20 min 7:44 · Wed easy_20 2.6 km/20 min 7:47 · Thu easy_20 2.6 km/20 min 7:40 · Fri easy_20 2.6 km/20 min 7:42 · Sun easy_20 2.6 km/20 min 7:48
   week    120 min · 15.6 km · easy 100% · longest ×0.33 the month's
-  runner  VDOT 31.19 · fitness 129 min · easy own 7:16–8:09, prescribed none
+  runner  VDOT 31.10 · fitness 126 min · easy own 7:17–8:10, prescribed none
 w26 2026-08-31  recovery, plan week 25 of 25  counted 6/6  plan 411 min, long 0.0 km, quality 0
   planned Mon:easy_20 · Tue:easy_20 · Wed:easy_20 · Thu:easy_20 · Fri:easy_20 · Sat:marathon_race
-  ran     Mon easy_20 2.6 km/20 min 7:37 · Tue easy_20 2.6 km/20 min 7:35 · Wed easy_20 2.6 km/20 min 7:40 · Thu easy_20 2.6 km/20 min 7:47 · Fri easy_20 2.6 km/20 min 7:49 · Sat marathon_race 42.2 km/314 min 7:27 INJURY reduced finish 5:14:20
-  week    414 min · 55.2 km · easy 24% · longest ×5.27 the month's
-  runner  VDOT 33.06 · fitness 190 min · easy own 7:15–8:08, prescribed none
+  ran     Mon easy_20 2.6 km/20 min 7:38 · Tue easy_20 2.6 km/20 min 7:36 · Wed easy_20 2.6 km/20 min 7:41 · Thu easy_20 2.6 km/20 min 7:48 · Fri easy_20 2.6 km/20 min 7:50 · Sat marathon_race 42.2 km/315 min 7:29 INJURY reduced finish 5:15:28
+  week    415 min · 55.2 km · easy 24% · longest ×5.27 the month's
+  runner  VDOT 33.00 · fitness 188 min · easy own 7:16–8:09, prescribed none
   · 2026-09-05: reduced injury on marathon_race
   · 2026-09-05: server entered recovery until 2026-10-03
-  · 2026-09-06: the app derived a benchmark from a race, 42.2 km in 314:20 (VDOT 27.1, true 33.2)
+  · 2026-09-06: the app derived a benchmark from a race, 42.2 km in 315:28 (VDOT 26.9, true 33.1)
 w27 2026-09-07  recovery, plan week 25 of 25  counted 1/1  plan 20 min, long 0.0 km, quality 0
   planned Sun:easy_20
-  ran     Sun easy_20 2.6 km/20 min 7:38 [easy too fast]
+  ran     Sun easy_20 2.6 km/20 min 7:39 [easy too fast]
   week    20 min · 2.6 km · easy 100% · longest ×0.06 the month's
-  runner  VDOT 32.32 · fitness 164 min · easy own 7:04–7:56, prescribed none
+  runner  VDOT 32.27 · fitness 162 min · easy own 7:04–7:56, prescribed none
 w28 2026-09-14  recovery, plan week 25 of 25  counted 4/4  plan 90 min, long 0.0 km, quality 0
   planned Mon:easy_20 · Wed:easy_20 · Fri:easy_20 · Sun:easy_30
-  ran     Mon easy_20 2.6 km/20 min 7:42 [easy too fast] · Wed easy_20 2.6 km/20 min 7:45 [easy too fast] · Fri easy_20 2.7 km/20 min 7:21 [easy too fast] · Sun easy_30 4.1 km/30 min 7:19 [easy too fast]
+  ran     Mon easy_20 2.6 km/20 min 7:43 [easy too fast] · Wed easy_20 2.6 km/20 min 7:47 [easy too fast] · Fri easy_20 2.7 km/20 min 7:23 [easy too fast] · Sun easy_30 4.1 km/30 min 7:20 [easy too fast]
   week    90 min · 12.0 km · easy 100% · longest ×0.10 the month's
-  runner  VDOT 31.98 · fitness 153 min · easy own 7:08–8:00, prescribed none
+  runner  VDOT 31.93 · fitness 151 min · easy own 7:08–8:01, prescribed none
 w29 2026-09-21  recovery, plan week 25 of 25  counted 5/6  plan 190 min, long 0.0 km, quality 0
   planned Mon:easy_30 · Tue:easy_30 · Wed:easy_30 · Thu:easy_30 · Fri:easy_30 · Sun:easy_40
-  ran     Mon easy_30 4.0 km/30 min 7:24 [easy too fast] · Wed easy_30 4.0 km/30 min 7:27 [easy too fast] · Thu easy_30 4.0 km/30 min 7:32 [easy too fast] · Fri easy_30 4.0 km/30 min 7:29 [easy too fast] · Sun easy_40 5.3 km/40 min 7:36 [easy too fast]
+  ran     Mon easy_30 4.0 km/30 min 7:25 [easy too fast] · Wed easy_30 4.0 km/30 min 7:27 [easy too fast] · Thu easy_30 4.0 km/30 min 7:33 [easy too fast] · Fri easy_30 4.0 km/30 min 7:30 [easy too fast] · Sun easy_40 5.3 km/40 min 7:37 [easy too fast]
   week    160 min · 21.3 km · easy 100% · longest ×0.12 the month's
-  runner  VDOT 32.02 · fitness 154 min · easy own 7:08–8:00, prescribed none
+  runner  VDOT 31.98 · fitness 153 min · easy own 7:09–8:01, prescribed none
 w30 2026-09-28  recovery, plan week 25 of 25  counted 6/6  plan 240 min, long 0.0 km, quality 0
   planned Mon:easy_40 · Tue:easy_40 · Wed:easy_40 · Thu:easy_40 · Fri:easy_40 · Sun:easy_40
-  ran     Mon easy_40 5.3 km/40 min 7:29 [easy too fast] · Tue easy_40 5.3 km/40 min 7:35 [easy too fast] · Wed easy_40 5.3 km/40 min 7:29 [easy too fast] · Thu easy_40 5.3 km/40 min 7:31 [easy too fast] · Fri easy_40 5.2 km/40 min 7:38 [easy too fast] · Sun easy_40 5.4 km/40 min 7:28 [easy too fast]
-  week    240 min · 31.9 km · easy 100% · longest ×0.13 the month's
-  runner  VDOT 32.41 · fitness 167 min · easy own 7:04–7:56, prescribed none
+  ran     Mon easy_40 5.3 km/40 min 7:30 [easy too fast] · Tue easy_40 5.3 km/40 min 7:36 [easy too fast] · Wed easy_40 5.3 km/40 min 7:30 [easy too fast] · Thu easy_40 5.3 km/40 min 7:31 [easy too fast] · Fri easy_40 5.2 km/40 min 7:39 [easy too fast] · Sun easy_40 5.3 km/40 min 7:29 [easy too fast]
+  week    240 min · 31.8 km · easy 100% · longest ×0.13 the month's
+  runner  VDOT 32.38 · fitness 166 min · easy own 7:04–7:56, prescribed none
 w31 2026-10-05  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 31.61 · fitness 141 min
+  runner  VDOT 31.58 · fitness 140 min
   · 2026-10-10: server ended recovery
 w32 2026-10-12  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 30.87 · fitness 119 min
+  runner  VDOT 30.84 · fitness 119 min
 w33 2026-10-19  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 30.19 · fitness 101 min
+  runner  VDOT 30.16 · fitness 100 min
 w34 2026-10-26  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 29.65 · fitness 88 min
+  runner  VDOT 29.63 · fitness 87 min
 
-runs 145 · counted 145 of the 145 planned · injuries 1 · VDOT 28.0 → 29.65
-race 2026-09-05 marathon_race 5:14:20 at VDOT 31.23
+runs 145 · counted 145 of the 145 planned · injuries 1 · VDOT 28.0 → 29.63
+race 2026-09-05 marathon_race 5:15:28 at VDOT 31.15
 
 owner-marathon · seed 1 · base model · 34 weeks from 2026-03-15 · sessions fitted to 60 minutes
 
@@ -240,234 +240,241 @@ w4 2026-03-30  plan week 3 progression  5/6 sessions  58–62 min
   sets/days: Chest 11/1 · FrontDelts 11/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 28/5 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
   · 2026-04-01: took barbell-row down to 50 kg (plan 60 × 8)
 
-w5 2026-04-06  plan week 4 deload  5/6 sessions  39–41 min
-  squat           plan 80 × 8 × 2  1RM 102.9 logged 98.2  77.5×[8,8] hold
-  bench-press     plan 65 × 9 × 2  1RM 82.1 logged 84.5  65×[9,7] hold
-  deadlift        plan 117.5 × 7 × 2  1RM 133.7 logged -
-  overhead-press  plan 42.5 × 8 × 2  1RM 51.3 logged 53.8  42.5×[8,7] hold | 37.5×[8,8] hold
-  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 16/5 · LowerBack 2/1 · Biceps 16/2 · Quads 4/1 · Hamstrings 6/1 · Glutes 6/1 · Calves 4/1
+w5 2026-04-06  plan week 4 progression  5/6 sessions  60–62 min
+  squat           plan 80 × 8 × 4  1RM 103.0 logged 98.2  77.5×[8,8,8,8] step
+  bench-press     plan 65 × 9 × 4  1RM 82.2 logged 84.5  65×[9,7,6,4] miss
+  deadlift        plan 117.5 × 7 × 3  1RM 133.7 logged -
+  overhead-press  plan 40 × 8 × 4  1RM 51.3 logged 53.8  42.5×[8,7] 35×[8,8] LOWERED | 37.5×[8,8,8] 32.5×[8] step
+  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 28/5 · LowerBack 4/1 · Biceps 30/2 · Quads 7/1 · Hamstrings 11/1 · Glutes 11/1 · Calves 6/1
 
-w6 2026-04-13  plan week 5 progression  4/6 sessions  56–62 min
-  squat           plan 82.5 × 8 × 3  1RM 103.6 logged 101.3  80×[8,8,8] step | 77.5×[8,8,8,8] step
-  bench-press     plan 65 × 9 × 4  1RM 82.4 logged -
-  deadlift        plan 117.5 × 7 × 3  1RM 134.6 logged 141.0  117.5×[6,5] 102.5×[5] hold
-  overhead-press  plan 42.5 × 9 × 4  1RM 51.5 logged 53.8  42.5×[8,8,8,8] reps
-  sets/days: Chest 12/1 · FrontDelts 12/1 · SideDelts 3/1 · RearDelts 15/1 · Triceps 15/1 · Lats 12/1 · UpperBack 21/4 · LowerBack 7/2 · Biceps 15/1 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+w6 2026-04-13  plan week 5 deload  4/6 sessions  38–43 min
+  squat           plan 80 × 8 × 2  1RM 103.6 logged 101.3  80×[8,8] hold | 80×[8,8] hold
+  bench-press     plan 65 × 9 × 2  1RM 82.4 logged -
+  deadlift        plan 117.5 × 7 × 2  1RM 134.6 logged 141.0  117.5×[6,5] hold
+  overhead-press  plan 40 × 8 × 2  1RM 51.5 logged 47.5  37.5×[8,8] hold
+  sets/days: Chest 6/1 · FrontDelts 6/1 · SideDelts 2/1 · RearDelts 8/1 · Triceps 8/1 · Lats 6/1 · UpperBack 12/4 · LowerBack 4/2 · Biceps 8/1 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w7 2026-04-20  plan week 6 progression  4/6 sessions  56–61 min
-  squat           plan 85 × 8 × 3  1RM 104.0 logged 104.5  82.5×[8,8,8] step
-  bench-press     plan 65 × 9 × 4  1RM 82.9 logged 84.5  65×[9,8,7,5] miss
-  deadlift        plan 117.5 × 7 × 3  1RM 135.2 logged 141.0  117.5×[6,5] 102.5×[5] hold
-  overhead-press  plan 42.5 × 10 × 4  1RM 51.8 logged 55.3  37.5×[8,8,8,8] step | 42.5×[9,9,9,9] reps
+  squat           plan 82.5 × 8 × 3  1RM 104.0 logged 101.3  80×[8,8,8] step
+  bench-press     plan 65 × 9 × 4  1RM 82.8 logged 84.5  65×[9,9,7,5] miss
+  deadlift        plan 117.5 × 7 × 3  1RM 135.2 logged 141.0  117.5×[6,5,2] miss
+  overhead-press  plan 42.5 × 8 × 4  1RM 51.7 logged 50.7  40×[8,8,8] 32.5×[8] step | 37.5×[8,8,8,8] step
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 14/1 · Triceps 30/2 · Lats 11/1 · UpperBack 16/4 · LowerBack 3/1 · Biceps 15/1 · Quads 6/1 · Hamstrings 9/1 · Glutes 9/1 · Calves 3/1 · Abs 3/1
 
-w8 2026-04-27  plan week 7 progression  4/6 sessions  60–62 min
-  squat           plan 85 × 8 × 3  1RM 104.5 logged 101.3  80×[8,8,8,8] step
-  bench-press     plan 65 × 10 × 4  1RM 83.2 logged 84.5  65×[9,9,9,9] reps
+w8 2026-04-27  plan week 7 progression  4/6 sessions  60–61 min
+  squat           plan 82.5 × 8 × 4  1RM 104.5 logged 101.3  80×[8,8,8,8] step
+  bench-press     plan 65 × 10 × 4  1RM 83.0 logged 84.5  65×[9,9,9,9] reps
   deadlift        plan 117.5 × 7 × 3  1RM 135.8 logged -
-  overhead-press  plan 42.5 × 8 × 4  1RM 52.0 logged 50.7  40×[8,8,8,8] step
+  overhead-press  plan 42.5 × 9 × 4  1RM 51.9 logged 53.8  42.5×[8,8,8] 32.5×[8] reps
   sets/days: Chest 11/1 · FrontDelts 11/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 25/4 · LowerBack 4/1 · Biceps 30/2 · Quads 7/1 · Hamstrings 11/1 · Glutes 11/1 · Calves 6/1
 
-w9 2026-05-04  plan week 8 deload  5/6 sessions  38–43 min
-  squat           plan 85 × 8 × 2  1RM 104.9 logged 107.7  85×[8,8] hold | 82.5×[8,8] hold
-  bench-press     plan 65 × 10 × 2  1RM 83.3 logged -
-  deadlift        plan 117.5 × 7 × 2  1RM 136.4 logged 144.9  117.5×[7,7] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 52.1 logged 56.7  42.5×[10,10] hold
-  sets/days: Chest 6/1 · FrontDelts 6/1 · SideDelts 2/1 · RearDelts 16/2 · Triceps 8/1 · Lats 12/2 · UpperBack 16/5 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
+w9 2026-05-04  plan week 8 progression  5/6 sessions  56–62 min
+  squat           plan 85 × 8 × 3  1RM 105.0 logged 104.5  82.5×[8,8,8] step | 82.5×[8,8,8,8] step
+  bench-press     plan 65 × 10 × 4  1RM 83.3 logged -
+  deadlift        plan 117.5 × 8 × 3  1RM 136.4 logged 144.9  117.5×[7,7,7] reps
+  overhead-press  plan 42.5 × 8 × 4  1RM 52.0 logged 50.7  40×[8,8,8,8] step
+  sets/days: Chest 12/1 · FrontDelts 12/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 28/5 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+  · 2026-05-09: took barbell-row down to 47.5 kg (plan 60 × 9)
+  · 2026-05-09: took face-pulls down to 12.5 kg (plan 17.5 × 11)
 
-w10 2026-05-11  plan week 9 progression  6/6 sessions  56–61 min
-  squat           plan 85 × 9 × 3  1RM 105.5 logged 107.7  85×[8,8,8] reps | 82.5×[8,8,8,8] step
-  bench-press     plan 65 × 11 × 4  1RM 83.7 logged 86.7  65×[10,10,10,10] reps
-  deadlift        plan 117.5 × 8 × 3  1RM 137.1 logged 144.9  117.5×[7,7,7] reps
-  overhead-press  plan 42.5 × 9 × 4  1RM 52.3 logged 56.7  42.5×[8,8,8,8] reps | 42.5×[10,8,6,5] miss
-  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+w10 2026-05-11  plan week 9 deload  6/6 sessions  39–43 min
+  squat           plan 85 × 8 × 2  1RM 105.5 logged 107.7  85×[8,8] hold | 85×[8,8] hold
+  bench-press     plan 65 × 10 × 2  1RM 83.6 logged 86.7  65×[10,10] hold
+  deadlift        plan 117.5 × 8 × 2  1RM 137.1 logged 148.8  117.5×[8,7] hold
+  overhead-press  plan 42.5 × 9 × 2  1RM 52.2 logged 55.3  42.5×[9,9] hold | 42.5×[8,8] hold
+  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w11 2026-05-18  plan week 10 progression  6/6 sessions  56–62 min
-  squat           plan 85 × 10 × 3  1RM 106.0 logged 110.5  85×[9,9,9] reps | 85×[8,8,8,8] reps
-  bench-press     plan 65 × 11 × 4  1RM 84.0 logged 86.7  65×[10,8,6,5] miss
+  squat           plan 85 × 9 × 3  1RM 106.0 logged 107.7  85×[8,8,8] reps | 85×[8,8,8,8] reps
+  bench-press     plan 65 × 10 × 4  1RM 84.0 logged 86.7  65×[10,8,6,5] miss
   deadlift        plan 120 × 5 × 3  1RM 137.7 logged 148.8  117.5×[8,8,8] step
-  overhead-press  plan 42.5 × 9 × 4  1RM 52.5 logged 55.3  42.5×[9,7,5,3] miss | 42.5×[9,7,5,3] LOWERED
+  overhead-press  plan 42.5 × 9 × 4  1RM 52.5 logged 55.3  42.5×[9,7,6,3] miss | 42.5×[8,8,6,5] miss
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
-  · 2026-05-20: took db-shoulder-press down to 10 kg (plan 15 × 10)
+  · 2026-05-18: took lateral-raise down to 9 kg (plan 12.5 × 15)
 
 w12 2026-05-25  plan week 11 progression  6/6 sessions  58–62 min
-  squat           plan 85 × 11 × 3  1RM 106.4 logged 113.3  85×[10,10,10] reps | 85×[9,9,9,9] reps
-  bench-press     plan 65 × 11 × 4  1RM 84.4 logged 88.8  65×[11,9,7,6] hold
+  squat           plan 85 × 10 × 3  1RM 106.4 logged 110.5  85×[9,9,9] reps | 85×[9,9,9,9] reps
+  bench-press     plan 65 × 10 × 4  1RM 84.3 logged 86.7  65×[10,10,8,6] hold
   deadlift        plan 120 × 6 × 3  1RM 138.2 logged 140.0  120×[5,5,5] reps
-  overhead-press  plan 40 × 10 × 4  1RM 52.7 logged 55.3  42.5×[9,9,7,6] LOWERED | 37.5×[10,10,10,10] step
+  overhead-press  plan 37.5 × 9 × 4  1RM 52.7 logged 55.3  42.5×[9,9,7,6] LOWERED | 42.5×[8,7,5,2] LOWERED
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+  · 2026-05-27: took db-shoulder-press down to 10 kg (plan 15 × 11)
+  · 2026-05-27: took lateral-raise down to 9 kg (plan 12.5 × 13)
 
-w13 2026-06-01  plan week 12 deload  5/6 sessions  38–45 min
-  squat           plan 85 × 11 × 2  1RM 106.8 logged 113.3  85×[10,8] hold | 85×[8,7] hold
-  bench-press     plan 65 × 11 × 2  1RM 84.6 logged 88.8  65×[11,8] hold
-  deadlift        plan 120 × 6 × 2  1RM 138.7 logged 144.0  120×[6,5] hold
-  overhead-press  plan 40 × 10 × 2  1RM 52.9 logged 53.3  37.5×[9,9] hold | 40×[10,10] hold
-  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 8/1 · Triceps 16/2 · Lats 6/1 · UpperBack 14/5 · LowerBack 4/2 · Biceps 8/1 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
+w13 2026-06-01  plan week 12 progression  5/6 sessions  58–60 min
+  squat           plan 85 × 10 × 3  1RM 106.8 logged 113.3  85×[10,8,6] hold | 85×[8,7,5,2] miss
+  bench-press     plan 65 × 10 × 4  1RM 84.6 logged 86.7  65×[10,8,6,5] miss
+  deadlift        plan 120 × 6 × 3  1RM 138.8 logged 144.0  120×[6,5,2] miss
+  overhead-press  plan 40 × 9 × 4  1RM 52.8 logged 48.8  37.5×[9,9,9,9] step | 37.5×[8,8,8,8] step
+  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 15/1 · Triceps 30/2 · Lats 12/1 · UpperBack 24/5 · LowerBack 7/2 · Biceps 15/1 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+  · 2026-06-05: took romanian-deadlift down to 57.5 kg (plan 72.5 × 11)
 
-w14 2026-06-08  plan week 13 progression  6/6 sessions  58–61 min
-  squat           plan 85 × 11 × 3  1RM 107.2 logged 113.3  85×[10,8,7] hold | 85×[10,10,8,6] hold
-  bench-press     plan 65 × 11 × 4  1RM 84.9 logged 88.8  65×[11,11,9,7] hold
-  deadlift        plan 120 × 6 × 3  1RM 139.3 logged 144.0  120×[6,6,4] hold
-  overhead-press  plan 42.5 × 10 × 4  1RM 53.0 logged 53.3  37.5×[9,9,9,9] step | 40×[10,10,10,10] step
-  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+w14 2026-06-08  plan week 13 deload  6/6 sessions  38–45 min
+  squat           plan 85 × 10 × 2  1RM 107.2 logged 113.3  85×[10,8] hold | 85×[10,10] hold
+  bench-press     plan 65 × 10 × 2  1RM 84.8 logged 86.7  65×[10,10] hold
+  deadlift        plan 120 × 6 × 2  1RM 139.3 logged 144.0  120×[6,6] hold
+  overhead-press  plan 40 × 9 × 2  1RM 53.0 logged 52.0  40×[9,9] hold | 40×[8,8] hold
+  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w15 2026-06-15  plan week 14 progression  6/6 sessions  58–62 min
-  squat           plan 85 × 11 × 3  1RM 107.6 logged 113.3  85×[9,7,6] miss | 85×[10,10,10,10] reps
-  bench-press     plan 65 × 11 × 4  1RM 85.1 logged 88.8  65×[11,11,11,9] hold
-  deadlift        plan 120 × 6 × 3  1RM 139.7 logged 144.0  120×[6,3,0] miss
-  overhead-press  plan 42.5 × 9 × 4  1RM 53.2 logged 56.7  40×[9,9,9,9] step | 42.5×[10,10,8,6] hold
-  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 30/6 · LowerBack 6/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 19/2 · Glutes 19/2 · Calves 9/2 · Abs 3/1
+  squat           plan 85 × 10 × 3  1RM 107.6 logged 113.3  85×[9,7,6] miss | 85×[10,10,10,10] reps
+  bench-press     plan 65 × 11 × 4  1RM 85.1 logged 86.7  65×[10,10,10,10] reps
+  deadlift        plan 120 × 6 × 3  1RM 139.8 logged 144.0  120×[6,4,1] miss
+  overhead-press  plan 42.5 × 9 × 4  1RM 53.1 logged 52.0  40×[9,9,9,9] step | 40×[8,8,8,8] step
+  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
+  · 2026-06-18: took db-shoulder-press down to 10 kg (plan 15 × 13)
 
 w16 2026-06-22  plan week 15 progression  6/6 sessions  58–62 min
-  squat           plan 85 × 11 × 3  1RM 107.9 logged 116.2  85×[11,9,7] hold | 85×[11,9,7,6] hold
+  squat           plan 85 × 10 × 3  1RM 107.9 logged 116.2  85×[10,10,8] hold | 85×[11,9,7,6] hold
   bench-press     plan 65 × 11 × 4  1RM 85.3 logged 88.8  65×[11,11,9,7] hold
   deadlift        plan 120 × 6 × 3  1RM 140.2 logged 144.0  120×[6,6,5] hold
-  overhead-press  plan 42.5 × 10 × 4  1RM 53.3 logged 55.3  42.5×[9,9,9,9] reps | 42.5×[9,7,5,2] miss
+  overhead-press  plan 42.5 × 10 × 4  1RM 53.3 logged 55.3  42.5×[9,9,9,9] reps | 42.5×[8,7,6,4] miss
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
-  · 2026-06-25: took db-shoulder-press down to 10 kg (plan 15 × 10)
-  · 2026-06-25: took lateral-raise down to 10 kg (plan 12.5 × 12)
-  · 2026-06-27: took barbell-row down to 47.5 kg (plan 60 × 10)
+  · 2026-06-25: took db-shoulder-press down to 10 kg (plan 15 × 13)
+  · 2026-06-25: took lateral-raise down to 9 kg (plan 12.5 × 15)
+  · 2026-06-27: took barbell-row down to 47.5 kg (plan 60 × 9)
   · 2026-06-27: took reverse-flyes down to 4 kg (plan 6 × 10)
 
-w17 2026-06-29  plan week 16 deload  5/6 sessions  39–45 min
-  squat           plan 85 × 11 × 2  1RM 108.2 logged 116.2  85×[11,11] hold | 85×[11,9] hold
-  bench-press     plan 65 × 11 × 2  1RM 85.5 logged 88.8  65×[11,11] hold
-  deadlift        plan 120 × 6 × 2  1RM 140.5 logged 144.0  120×[6,6] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 53.4 logged 56.7  42.5×[10,10] hold | 42.5×[10,10] hold
-  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 8/1 · Triceps 16/2 · Lats 6/1 · UpperBack 12/5 · LowerBack 4/2 · Biceps 8/1 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
+w17 2026-06-29  plan week 16 progression  5/6 sessions  58–61 min
+  squat           plan 85 × 11 × 3  1RM 108.2 logged 116.2  85×[10,10,10] reps | 85×[11,9,7,5] hold
+  bench-press     plan 65 × 11 × 4  1RM 85.6 logged 88.8  65×[11,11,8,7] hold
+  deadlift        plan 120 × 7 × 3  1RM 140.6 logged 144.0  120×[6,6,6] reps
+  overhead-press  plan 42.5 × 10 × 4  1RM 53.4 logged 56.7  42.5×[10,9,7,6] hold | 42.5×[8,8,8,8] reps
+  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 14/1 · Triceps 30/2 · Lats 11/1 · UpperBack 20/5 · LowerBack 7/2 · Biceps 15/1 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
 
-w18 2026-07-06  plan week 17 progression  4/6 sessions  58–61 min
-  squat           plan 85 × 11 × 3  1RM 108.4 logged 110.5  85×[9,7,5] miss
-  bench-press     plan 65 × 11 × 4  1RM 85.7 logged 88.8  65×[11,11,11,9] hold
-  deadlift        plan 120 × 6 × 3  1RM 140.8 logged 140.0  120×[5,3,0] miss
-  overhead-press  plan 42.5 × 10 × 4  1RM 53.5 logged 56.7  42.5×[10,10,10,8] hold
-  sets/days: Chest 11/1 · FrontDelts 11/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 23/4 · LowerBack 2/1 · Biceps 30/2 · Quads 6/1 · Hamstrings 8/1 · Glutes 8/1 · Calves 3/1 · Abs 3/1
-  · 2026-07-08: took db-curl down to 4 kg (plan 6 × 10)
+w18 2026-07-06  plan week 17 deload  4/6 sessions  38–43 min
+  squat           plan 85 × 11 × 2  1RM 108.4 logged 110.5  85×[9,7] hold
+  bench-press     plan 65 × 11 × 2  1RM 85.7 logged 88.8  65×[11,11] hold
+  deadlift        plan 120 × 7 × 2  1RM 140.9 logged 140.0  120×[5,3] hold
+  overhead-press  plan 42.5 × 10 × 2  1RM 53.5 logged 56.7  42.5×[10,10] hold
+  sets/days: Chest 6/1 · FrontDelts 6/1 · SideDelts 2/1 · RearDelts 16/2 · Triceps 8/1 · Lats 12/2 · UpperBack 14/4 · LowerBack 2/1 · Biceps 16/2 · Quads 4/1 · Hamstrings 6/1 · Glutes 6/1 · Calves 2/1 · Abs 2/1
 
-w19 2026-07-13  plan week 18 progression  6/6 sessions  58–62 min
-  squat           plan 85 × 11 × 4  1RM 108.7 logged 116.2  85×[9,8,6,4] miss | 85×[11,11,11] reps
+w19 2026-07-13  plan week 18 progression  6/6 sessions  56–61 min
+  squat           plan 85 × 11 × 4  1RM 108.7 logged 116.2  85×[10,8,6,4] miss | 85×[11,11,11] reps
   bench-press     plan 65 × 11 × 4  1RM 85.9 logged 86.7  65×[10,8,6,5] miss
-  deadlift        plan 120 × 7 × 3  1RM 141.2 logged 144.0  120×[6,6,6] reps
-  overhead-press  plan 42.5 × 10 × 4  1RM 53.6 logged 56.7  42.5×[10,10,8,6] hold | 42.5×[9,7,5,3] miss
+  deadlift        plan 120 × 8 × 3  1RM 141.2 logged 148.0  120×[7,7,7] reps
+  overhead-press  plan 42.5 × 10 × 4  1RM 53.6 logged 55.3  42.5×[9,9,9,9] reps | 42.5×[9,7,6,3] miss
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
-  · 2026-07-17: took rope-tricep-pushdown down to 12.5 kg (plan 17.5 × 11)
+  · 2026-07-17: took lateral-raise down to 9 kg (plan 12.5 × 12)
 
 w20 2026-07-20  plan week 19 progression  5/6 sessions  60–62 min
   squat           plan 85 × 12 × 4  1RM 108.9 logged 116.2  85×[11,11,11,11] reps
-  bench-press     plan 65 × 11 × 4  1RM 86.1 logged 88.8  65×[11,9,7,6] hold
-  deadlift        plan 120 × 7 × 3  1RM 141.4 logged -
+  bench-press     plan 65 × 11 × 4  1RM 86.1 logged 88.8  65×[11,9,7,5] hold
+  deadlift        plan 120 × 8 × 3  1RM 141.4 logged -
   overhead-press  plan 42.5 × 10 × 4  1RM 53.7 logged 56.7  42.5×[10,10,8,6] hold | 42.5×[10,8,6,5] LOWERED
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 28/5 · LowerBack 4/1 · Biceps 30/2 · Quads 7/1 · Hamstrings 11/1 · Glutes 11/1 · Calves 6/1
 
-w21 2026-07-27  plan week 20 deload  6/6 sessions  38–43 min
-  squat           plan 85 × 12 × 2  1RM 109.1 logged 119.0  85×[12,12] hold | 85×[12,12] hold
-  bench-press     plan 65 × 11 × 2  1RM 86.2 logged 88.8  65×[11,11] hold
-  deadlift        plan 120 × 7 × 2  1RM 141.7 logged 148.0  120×[7,7] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 53.8 logged 56.7  42.5×[10,8] hold | 37.5×[10,10] hold
-  sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
+w21 2026-07-27  plan week 20 progression  6/6 sessions  56–62 min
+  squat           plan 85 × 12 × 3  1RM 109.1 logged 119.0  85×[12,12,10] hold | 85×[12,11,10,8] hold
+  bench-press     plan 65 × 11 × 4  1RM 86.2 logged 88.8  65×[11,9,7,5] hold
+  deadlift        plan 122.5 × 5 × 3  1RM 141.7 logged 152.0  120×[8,8,8] step
+  overhead-press  plan 42.5 × 10 × 4  1RM 53.8 logged 56.7  42.5×[10,8,6,5] miss | 37.5×[10,10,10,10] step
+  sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
 
-w22 2026-08-03  plan week 21 progression  4/6 sessions  56–61 min
-  squat           plan 87.5 × 8 × 3  1RM 109.3 logged 119.0  85×[12,12,12] step | 85×[11,9,7,6] hold
+w22 2026-08-03  plan week 21 progression  4/6 sessions  58–61 min
+  squat           plan 87.5 × 8 × 3  1RM 109.4 logged 119.0  85×[12,12,12] step | 85×[11,9,7,6] hold
   bench-press     plan 65 × 11 × 4  1RM 86.3 logged -
-  deadlift        plan 120 × 8 × 3  1RM 142.0 logged 148.0  120×[7,7,7] reps
-  overhead-press  plan 42.5 × 10 × 4  1RM 53.9 logged 56.7  42.5×[10,10,8,6] hold
+  deadlift        plan 122.5 × 6 × 3  1RM 142.0 logged 142.9  122.5×[5,5,5] reps
+  overhead-press  plan 42.5 × 10 × 4  1RM 53.9 logged 56.7  42.5×[10,9,7,6] hold
   sets/days: Chest 12/1 · FrontDelts 12/1 · SideDelts 3/1 · RearDelts 15/1 · Triceps 15/1 · Lats 12/1 · UpperBack 21/4 · LowerBack 7/2 · Biceps 15/1 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
 
-w23 2026-08-10  plan week 22 progression  6/6 sessions  56–62 min
+w23 2026-08-10  plan week 22 progression  6/6 sessions  58–62 min
   squat           plan 87.5 × 9 × 3  1RM 109.6 logged 113.3  87.5×[8,8,8] reps | 85×[10,8,7,5] miss
-  bench-press     plan 65 × 12 × 4  1RM 86.4 logged 88.8  65×[11,11,11,11] reps
-  deadlift        plan 120 × 8 × 3  1RM 142.3 logged 152.0  120×[8,8,6] hold
-  overhead-press  plan 42.5 × 10 × 4  1RM 54.0 logged 56.7  37.5×[10,10,10,10] step | 42.5×[10,10,10,8] hold
+  bench-press     plan 65 × 12 × 4  1RM 86.5 logged 88.8  65×[11,11,11,11] reps
+  deadlift        plan 122.5 × 7 × 3  1RM 142.3 logged 147.0  122.5×[6,6,6] reps
+  overhead-press  plan 42.5 × 10 × 4  1RM 54.0 logged 56.7  40×[10,10,10,10] step | 42.5×[10,10,10,8] hold
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
-  · 2026-08-13: took lateral-raise down to 10 kg (plan 12.5 × 13)
 
 w24 2026-08-17  plan week 23 deload (race: taper)  6/6 sessions  39–43 min
   squat           plan 87.5 × 9 × 2  1RM 109.8 logged 119.0  87.5×[8,6] hold | 85×[12,10] hold
   bench-press     plan 65 × 12 × 2  1RM 86.6 logged 91.0  65×[12,10] hold
-  deadlift        plan 120 × 8 × 2  1RM 142.5 logged 144.0  120×[6,5] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 54.1 logged 56.7  40×[10,10] hold | 42.5×[10,10] hold
+  deadlift        plan 122.5 × 7 × 2  1RM 142.6 logged 142.9  122.5×[5,3] hold
+  overhead-press  plan 42.5 × 10 × 2  1RM 54.1 logged 56.7  42.5×[10,10] hold | 42.5×[10,10] hold
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w25 2026-08-24  plan week 24 deload (race: taper)  6/6 sessions  39–43 min
   squat           plan 87.5 × 9 × 2  1RM 109.9 logged 119.0  87.5×[9,9] hold | 85×[12,10] hold
   bench-press     plan 65 × 12 × 2  1RM 86.7 logged 91.0  65×[12,11] hold
-  deadlift        plan 120 × 8 × 2  1RM 142.7 logged 152.0  120×[8,8] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 54.2 logged 56.7  40×[10,10] hold | 42.5×[10,10] hold
+  deadlift        plan 122.5 × 7 × 2  1RM 142.8 logged 151.1  122.5×[7,7] hold
+  overhead-press  plan 42.5 × 10 × 2  1RM 54.1 logged 56.7  42.5×[10,10] hold | 42.5×[10,10] hold
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w26 2026-08-31  plan week 25 deload (race: race)  1/1 sessions  40–40 min
-  squat           plan 87.5 × 9 × 2  1RM 109.7 logged -
+  squat           plan 87.5 × 9 × 2  1RM 109.8 logged -
   bench-press     plan 65 × 12 × 2  1RM 86.6 logged -
-  deadlift        plan 120 × 8 × 2  1RM 142.5 logged -
+  deadlift        plan 122.5 × 7 × 2  1RM 142.6 logged -
   overhead-press  plan 42.5 × 10 × 2  1RM 54.1 logged -
   sets/days: RearDelts 8/1 · Lats 6/1 · UpperBack 4/1 · Biceps 8/1
   · 2026-09-05: reduced injury on marathon_race
   · 2026-09-05: server entered recovery until 2026-10-03
-  · 2026-09-06: the app derived a benchmark from a race, 42.2 km in 314:20 (VDOT 27.1, true 33.2)
+  · 2026-09-06: the app derived a benchmark from a race, 42.2 km in 315:28 (VDOT 26.9, true 33.1)
 
 w27 2026-09-07  plan week 28 deload (race: after)  5/6 sessions  39–43 min
   squat           plan 87.5 × 9 × 2  1RM 109.9 logged 119.0  87.5×[9,9] hold | 85×[12,12] hold
   bench-press     plan 65 × 12 × 2  1RM 86.7 logged 91.0  65×[12,12] hold
-  deadlift        plan 120 × 8 × 2  1RM 142.7 logged 152.0  120×[8,7] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 54.2 logged 56.7  40×[10,10] hold | 42.5×[10,10] hold
+  deadlift        plan 122.5 × 7 × 2  1RM 142.8 logged 151.1  122.5×[7,7] hold
+  overhead-press  plan 42.5 × 10 × 2  1RM 54.1 logged 56.7  42.5×[10,10] hold | 42.5×[10,10] hold
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 8/1 · Triceps 16/2 · Lats 6/1 · UpperBack 12/5 · LowerBack 4/2 · Biceps 8/1 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
 
 w28 2026-09-14  plan week 29 progression  6/6 sessions  56–62 min
   squat           plan 87.5 × 10 × 3  1RM 110.1 logged 119.0  87.5×[9,9,9] reps | 85×[12,10,8,7] hold
   bench-press     plan 65 × 12 × 4  1RM 86.8 logged 86.7  65×[10,8,6,5] miss
-  deadlift        plan 120 × 8 × 3  1RM 142.9 logged 152.0  120×[8,7,6] hold
-  overhead-press  plan 42.5 × 10 × 4  1RM 54.2 logged 56.7  40×[10,10,10,8] step | 42.5×[10,10,8,6] hold
+  deadlift        plan 122.5 × 7 × 3  1RM 143.0 logged 151.1  122.5×[7,7,5] hold
+  overhead-press  plan 42.5 × 10 × 4  1RM 54.2 logged 56.7  42.5×[9,7,6,3] miss | 42.5×[10,10,8,6] hold
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
-  · 2026-09-18: took lateral-raise down to 10 kg (plan 12.5 × 13)
+  · 2026-09-16: took lateral-raise down to 9 kg (plan 12.5 × 12)
+  · 2026-09-18: took db-shoulder-press down to 10 kg (plan 15 × 16)
 
 w29 2026-09-21  plan week 30 progression  5/6 sessions  56–62 min
   squat           plan 87.5 × 11 × 3  1RM 110.2 logged 116.7  87.5×[10,10,10] reps
-  bench-press     plan 65 × 12 × 4  1RM 86.9 logged 88.8  65×[11,9,7,6] hold
-  deadlift        plan 122.5 × 5 × 3  1RM 143.1 logged 152.0  120×[8,8,8] step
-  overhead-press  plan 42.5 × 10 × 4  1RM 54.3 logged 56.7  42.5×[10,8,6,5] miss | 42.5×[10,9,7,6] hold
+  bench-press     plan 65 × 12 × 4  1RM 87.0 logged 88.8  65×[11,9,7,6] hold
+  deadlift        plan 122.5 × 8 × 3  1RM 143.2 logged 151.1  122.5×[7,7,7] reps
+  overhead-press  plan 42.5 × 10 × 4  1RM 54.3 logged 56.7  42.5×[10,8,6,5] LOWERED | 42.5×[10,9,7,6] hold
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 27/5 · LowerBack 3/1 · Biceps 30/2 · Quads 6/1 · Hamstrings 9/1 · Glutes 9/1 · Calves 3/1 · Abs 3/1
-  · 2026-09-26: took lateral-raise down to 9 kg (plan 12.5 × 13)
+  · 2026-09-26: took db-shoulder-press down to 10 kg (plan 15 × 16)
+  · 2026-09-26: took lateral-raise down to 9 kg (plan 12.5 × 16)
 
-w30 2026-09-28  plan week 31 progression  5/6 sessions  58–61 min
+w30 2026-09-28  plan week 31 progression  5/6 sessions  56–61 min
   squat           plan 87.5 × 11 × 3  1RM 110.4 logged 119.6  85×[12,10,8,6] hold | 87.5×[11,9,7] hold
   bench-press     plan 65 × 12 × 4  1RM 87.0 logged 88.8  65×[11,9,7,5] hold
-  deadlift        plan 122.5 × 6 × 3  1RM 143.3 logged 142.9  122.5×[5,5,5] reps
-  overhead-press  plan 42.5 × 10 × 4  1RM 54.4 logged 56.7  42.5×[10,8,6,5] LOWERED
+  deadlift        plan 122.5 × 8 × 3  1RM 143.4 logged 151.1  122.5×[7,6,4] hold
+  overhead-press  plan 42.5 × 10 × 4  1RM 54.3 logged 50.0  37.5×[10,10,10,10] step
   sets/days: Chest 11/1 · FrontDelts 11/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 28/5 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
 
-w31 2026-10-05  plan week 32 deload  6/6 sessions  39–45 min
+w31 2026-10-05  plan week 32 deload  6/6 sessions  39–43 min
   squat           plan 87.5 × 11 × 2  1RM 110.5 logged 119.6  85×[12,12] hold | 87.5×[11,9] hold
   bench-press     plan 65 × 12 × 2  1RM 87.1 logged 91.0  65×[12,11] hold
-  deadlift        plan 122.5 × 6 × 2  1RM 143.5 logged 147.0  122.5×[6,6] hold
-  overhead-press  plan 42.5 × 10 × 2  1RM 54.4 logged 56.7  42.5×[10,10] hold | 37.5×[10,10] hold
+  deadlift        plan 122.5 × 8 × 2  1RM 143.6 logged 151.1  122.5×[7,6] hold
+  overhead-press  plan 42.5 × 10 × 2  1RM 54.4 logged 56.7  42.5×[10,10] hold | 40×[10,10] hold
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 16/2 · Triceps 16/2 · Lats 12/2 · UpperBack 18/6 · LowerBack 4/2 · Biceps 16/2 · Quads 8/2 · Hamstrings 12/2 · Glutes 12/2 · Calves 6/2 · Abs 2/1
   · 2026-10-10: server ended recovery
 
 w32 2026-10-12  plan week 33 progression  5/6 sessions  60–62 min
   squat           plan 87.5 × 8 × 4  1RM 110.6 logged 119.0  85×[12,12,12,12] step
   bench-press     plan 65 × 12 × 4  1RM 87.2 logged 91.0  65×[12,11,9,7] hold
-  deadlift        plan 122.5 × 6 × 3  1RM 143.6 logged -
-  overhead-press  plan 42.5 × 10 × 4  1RM 54.5 logged 56.7  42.5×[10,9,8,6] hold | 37.5×[10,10,10,10] step
+  deadlift        plan 122.5 × 8 × 3  1RM 143.7 logged -
+  overhead-press  plan 42.5 × 10 × 4  1RM 54.5 logged 56.7  42.5×[10,9,7,6] hold | 40×[10,10,10,10] step
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 28/5 · LowerBack 4/1 · Biceps 30/2 · Quads 7/1 · Hamstrings 11/1 · Glutes 11/1 · Calves 6/1
+  · 2026-10-13: took db-shoulder-press down to 10 kg (plan 15 × 16)
 
-w33 2026-10-19  plan week 34 progression  6/6 sessions  58–62 min
-  squat           plan 87.5 × 11 × 3  1RM 110.7 logged 119.6  87.5×[11,9,7] hold | 87.5×[8,8,8,8] reps
+w33 2026-10-19  plan week 34 progression  6/6 sessions  56–62 min
+  squat           plan 87.5 × 11 × 3  1RM 110.8 logged 119.6  87.5×[11,9,7] hold | 87.5×[8,8,8,8] reps
   bench-press     plan 65 × 12 × 4  1RM 87.3 logged 91.0  65×[12,12,10,8] hold
-  deadlift        plan 122.5 × 7 × 3  1RM 143.8 logged 147.0  122.5×[6,6,6] reps
-  overhead-press  plan 42.5 × 11 × 4  1RM 54.5 logged 56.7  42.5×[10,10,10,10] reps | 40×[10,10,10,10] step
+  deadlift        plan 122.5 × 8 × 3  1RM 143.9 logged 155.2  122.5×[8,6,5] hold
+  overhead-press  plan 42.5 × 11 × 4  1RM 54.5 logged 56.7  42.5×[10,10,10,10] reps | 42.5×[10,10,10,10] reps
   sets/days: Chest 23/2 · FrontDelts 23/2 · SideDelts 6/2 · RearDelts 29/2 · Triceps 30/2 · Lats 23/2 · UpperBack 31/6 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
   · 2026-10-23: took db-curl down to 4 kg (plan 6 × 11)
 
 w34 2026-10-26  plan week 35 progression  5/6 sessions  56–61 min
   squat           plan 87.5 × 12 × 3  1RM 110.9 logged 119.6  87.5×[11,11,11] reps | 87.5×[9,9,9,9] reps
-  bench-press     plan 65 × 12 × 4  1RM 87.3 logged -
-  deadlift        plan 122.5 × 8 × 3  1RM 144.0 logged 151.1  122.5×[7,7,7] reps
+  bench-press     plan 65 × 12 × 4  1RM 87.4 logged -
+  deadlift        plan 125 × 5 × 3  1RM 144.0 logged 155.2  122.5×[8,8,8] step
   overhead-press  plan 42.5 × 12 × 4  1RM 54.6 logged 58.1  42.5×[11,11,11,11] reps
   sets/days: Chest 12/1 · FrontDelts 12/1 · SideDelts 3/1 · RearDelts 29/2 · Triceps 15/1 · Lats 23/2 · UpperBack 28/5 · LowerBack 7/2 · Biceps 30/2 · Quads 13/2 · Hamstrings 20/2 · Glutes 20/2 · Calves 9/2 · Abs 3/1
 
 summary
-  sessions 170/193 · lighter weeks 10 · rule failures none
+  sessions 170/193 · lighter weeks 9 · rule failures none
   squat           1RM 100.0 → 110.9 (10.9%) · plan 85 → 87.5 kg · 56 sessions: 8 steps, 14 rep climbs, 26 holds, 6 misses, 2 lowered, 0 own weight
-  bench-press     1RM 80.0 → 87.3 (9.2%) · plan 55 → 65 kg · 28 sessions: 0 steps, 4 rep climbs, 18 holds, 5 misses, 0 lowered, 1 own weight
-  deadlift        1RM 130.0 → 144.0 (10.7%) · plan 100 → 122.5 kg · 28 sessions: 2 steps, 9 rep climbs, 14 holds, 2 misses, 0 lowered, 1 own weight
-  overhead-press  1RM 50.0 → 54.6 (9.2%) · plan 35 → 42.5 kg · 56 sessions: 10 steps, 6 rep climbs, 26 holds, 7 misses, 5 lowered, 2 own weight
+  bench-press     1RM 80.0 → 87.4 (9.2%) · plan 55 → 65 kg · 28 sessions: 0 steps, 4 rep climbs, 16 holds, 7 misses, 0 lowered, 1 own weight
+  deadlift        1RM 130.0 → 144.0 (10.8%) · plan 100 → 125 kg · 28 sessions: 3 steps, 9 rep climbs, 12 holds, 3 misses, 0 lowered, 1 own weight
+  overhead-press  1RM 50.0 → 54.6 (9.1%) · plan 35 → 42.5 kg · 56 sessions: 12 steps, 7 rep climbs, 21 holds, 8 misses, 6 lowered, 2 own weight

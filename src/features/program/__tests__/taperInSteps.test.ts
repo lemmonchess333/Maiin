@@ -150,9 +150,13 @@ describe("the taper in steps (Run22)", () => {
           easyAtMost(Math.min(...lastBuild) * share)
         );
       }
-      expect(Math.max(...easyMinutes(out(taper))), distance).toBeGreaterThan(
-        30
-      );
+      // A half's block runs 18 weeks at most (Run24 (3)), and the weekly
+      // hold keeps its last build week's medium-long at an hour, so its
+      // taper's 60% of it is the base 30, as an 18-week half's always was.
+      if (distance === "marathon")
+        expect(Math.max(...easyMinutes(out(taper))), distance).toBeGreaterThan(
+          30
+        );
       for (const m of easyMinutes(out(1))) expect(m, distance).toBe(30);
     }
   });
@@ -667,7 +671,12 @@ describe("the taper's easy runs step down from what the last build week held (Ru
             volume === "standard" &&
             days === 5
             ? "30 30 30"
-            : easy
+            : // Run24 (3): a half 29 weeks out is 11 weeks of rolling base
+              // and an 18-week block, whose last build week holds its
+              // medium-long at an hour (above), so its taper runs 30s.
+              weeks === 29 && distance === "half"
+              ? "30 30 30".slice(0, 3 * (days - 2) - 1)
+              : easy
         );
     // A compressed marathon ten weeks out holds its last build week to 15%
     // over the week before (Run24 (6)): its easy run gives way, and the

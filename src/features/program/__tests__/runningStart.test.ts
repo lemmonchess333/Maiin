@@ -568,16 +568,18 @@ describe("the climb from what was done, at the runner's own pace", () => {
         .map((week) => week.holds.long?.templateId ?? null);
     // Each week a rung up from their 25 minutes, at their 8:52 /km, so
     // 6 km comes after 50 minutes; the weeks ahead aren't held for runs
-    // not yet run.
+    // not yet run. The marathon is 25 weeks out: five weeks of rolling base
+    // before its 20-week block, whose step-backs run on the block's cycle
+    // (Run24 (3)), so the first is the fifth week.
     expect(outline([afternoon])).toEqual([
       "easy_20",
       "easy_30",
       "easy_40",
-      "easy_30",
       "easy_50",
+      "easy_40",
       "long_6k",
       "long_8k",
-      "long_6k",
+      "long_10k",
     ]);
     // Without the runs, the templates' minutes: 6 km in the third week.
     expect(outline(null)[2]).toBe("long_6k");
