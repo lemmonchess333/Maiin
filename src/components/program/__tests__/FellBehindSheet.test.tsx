@@ -13,8 +13,22 @@
  */
 import { readFileSync } from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+/* The reach is `raceLongRunReach`'s suite, on the real engine; here, the
+   sheet's words and order for whatever it answers. */
+const reachStub = vi.hoisted(() => ({
+  value: null as null | { longestKm: number; raceKm: number; fullKm: number },
+}));
+vi.mock("@/features/program/raceWeeksAhead", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/features/program/raceWeeksAhead")
+  >()),
+  raceLongRunReach: () => reachStub.value,
+}));
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import FellBehindSheet from "../FellBehindSheet";
+import type { UserProfile } from "@/lib/auth";
 import {
   APPLIED,
   type ProgramOutcome,
@@ -32,9 +46,11 @@ function basePrompt() {
 function setup({
   raceModeActive = true,
   recentLayoff = "none",
+  raceReach = null,
 }: {
   raceModeActive?: boolean;
   recentLayoff?: "none" | "gap" | "detrained";
+  raceReach?: ComponentProps<typeof FellBehindSheet>["raceReach"];
 } = {}) {
   const dismissFellBehindPrompt = vi.fn(async () => APPLIED);
   const realignRacePlan = vi.fn(async () => {});
@@ -50,6 +66,7 @@ function setup({
       onRaceMoved={onRaceMoved}
       raceModeActive={raceModeActive}
       recentLayoff={recentLayoff}
+      raceReach={raceReach}
     />
   );
   return {
@@ -224,6 +241,83 @@ describe("FellBehindSheet — detrained register", () => {
       screen.getByRole("button", { name: /Realign my plan/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/Welcome back/i)).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * Run15 (deep dive D11): back from a layoff with the race too close for the
+ * plan to build the long run up to it. The sheet says how far each is and
+ * leads with moving the race; the rebuild stays one tap below, the same
+ * writer as ever.
+ */
+describe("FellBehindSheet — a race out of reach", () => {
+  const half = (unit?: "km" | "mi") => ({
+    profile: {
+      uid: "u",
+      runMode: "race_prep",
+      raceGoal: { distance: "half", targetDate: "2026-12-20" },
+      ...(unit ? { preferredDistanceUnit: unit } : {}),
+    } as unknown as UserProfile,
+    programState: null,
+    recentRuns: [],
+    today: "2026-11-13",
+  });
+  beforeEach(() => {
+    reachStub.value = { longestKm: 12, raceKm: 21.1, fullKm: 20 };
+  });
+  const choiceNames = () =>
+    screen.getAllByRole("button").map((b) => b.textContent?.trim() ?? "");
+
+  it("says how far the long run gets and how far the race is", () => {
+    setup({ recentLayoff: "detrained", raceReach: half() });
+    expect(
+      screen.getByText(
+        "By race day your long run gets to 12 km. A half marathon is 21.1 km. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/ease you back in — easy running first/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("in miles for a reader in miles", () => {
+    setup({ recentLayoff: "detrained", raceReach: half("mi") });
+    expect(
+      screen.getByText(/gets to 7\.5 mi\. A half marathon is 13\.1 mi\./)
+    ).toBeInTheDocument();
+  });
+
+  it("leads with moving the race, the rebuild one tap below", () => {
+    setup({ recentLayoff: "detrained", raceReach: half() });
+    const names = choiceNames();
+    const move = names.findIndex((n) => /Move my race/.test(n));
+    const rebuild = names.findIndex((n) => /Rebuild my plan/.test(n));
+    expect(move).toBeGreaterThanOrEqual(0);
+    expect(rebuild).toBe(move + 1);
+  });
+
+  it("each choice keeps its writer", async () => {
+    const first = setup({ recentLayoff: "detrained", raceReach: half() });
+    fireEvent.click(screen.getByRole("button", { name: /Move my race/i }));
+    await waitFor(() => expect(first.onRaceMoved).toHaveBeenCalled());
+    expect(first.realignRacePlan).not.toHaveBeenCalled();
+  });
+
+  it("keeps the rebuild first for a race in reach", () => {
+    reachStub.value = { longestKm: 20, raceKm: 21.1, fullKm: 20 };
+    setup({ recentLayoff: "detrained", raceReach: half() });
+    expect(screen.queryByText(/By race day/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Move my race/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("says nothing of it outside the welcome-back register", () => {
+    setup({ recentLayoff: "gap", raceReach: half() });
+    expect(screen.queryByText(/By race day/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /My race moved/i })
+    ).toBeInTheDocument();
   });
 });
 

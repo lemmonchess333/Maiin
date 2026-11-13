@@ -218,6 +218,7 @@ export default function Home() {
     realignRacePlan,
     easeBackIn,
     recentLayoff,
+    recentRuns,
     controller: programController,
   } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -755,6 +756,13 @@ export default function Home() {
     dismissRunReturn();
     runReturnSurface.dismiss();
   };
+  /** Run15 (deep dive D11): what the welcome-back sheets read a race's
+   *  reach from (`FellBehindSheet`'s `raceReach`). */
+  const raceReach = useMemo(
+    () =>
+      profile ? { profile, programState, recentRuns, today: todayKey } : null,
+    [profile, programState, recentRuns, todayKey]
+  );
   /** Re-plan the race from today, and say what was built. A refusal or a
    *  failed save has already been said by the writer. Whether it landed. */
   const realignAndSay = async (): Promise<boolean> => {
@@ -1698,6 +1706,7 @@ export default function Home() {
               profile?.runMode === "race_prep" && !!profile.raceGoal
             }
             recentLayoff={recentLayoff}
+            raceReach={raceReach}
           />
         )}
       </Suspense>
@@ -1744,6 +1753,7 @@ export default function Home() {
             // The offer is made from the detrained line, so this is the
             // layoff a rebuild plans from.
             recentLayoff="detrained"
+            raceReach={raceReach}
           />
         )}
       </Suspense>

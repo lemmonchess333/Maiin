@@ -30,11 +30,19 @@
  * which buttons appear when.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Footprints } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
-import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
+import type { ProgramState } from "@/features/program/programTypes";
+import {
+  raceLongRunReach,
+  raceOutOfReach,
+} from "@/features/program/raceWeeksAhead";
+import type { UserProfile } from "@/lib/auth";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { distanceLabel } from "@/lib/runLabels";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
   track as trackLifecycleEvent,
@@ -83,7 +91,31 @@ interface FellBehindSheetProps {
    *  through every regen site; this prop only makes the words match what
    *  the button will actually do. */
   recentLayoff: LayoffClass;
+  /** Run15 (deep dive D11): what the plan's weeks to the race are built
+   *  from, for a returning runner on a race plan. When its long run can't
+   *  build up to the race in time (`raceOutOfReach`), the welcome-back
+   *  register says how far each is and leads with moving the race; the
+   *  rebuild stays one tap below. Never a verdict on the race: the two
+   *  distances, and what each choice gives. Worked out here, in the
+   *  sheet's own chunk, so the engine loads with the sheet and not with
+   *  every visit to Home. */
+  raceReach?: {
+    profile: UserProfile;
+    programState: ProgramState | null | undefined;
+    /** The recent runs the layoff was read from; null when unread. */
+    recentRuns: readonly DatedRun[] | null;
+    /** Local "YYYY-MM-DD". */
+    today: string;
+  } | null;
 }
+
+/** A race, as the welcome-back sheet names it (Run15, deep dive D11). */
+const RACE_NAME: Record<string, string> = {
+  "5k": "A 5K",
+  "10k": "A 10K",
+  half: "A half marathon",
+  marathon: "A marathon",
+};
 
 export default function FellBehindSheet({
   open,
@@ -94,12 +126,32 @@ export default function FellBehindSheet({
   onRaceMoved,
   raceModeActive,
   recentLayoff,
+  raceReach = null,
   surface = "fell-behind",
 }: FellBehindSheetProps) {
   // The week's ledger, when there is one to show and the gap is a missed
   // week rather than a return.
   const ledger = recentLayoff === "detrained" ? null : (prompt ?? null);
   const detrained = ledger === null;
+  /** A return's race the plan can't build up to in time, in the reader's
+   *  unit. Only walked while the sheet is open in that register. */
+  const outOfReach = useMemo(() => {
+    if (!open || !detrained || !raceModeActive || !raceReach) return null;
+    const reach = raceLongRunReach({ ...raceReach, recentLayoff: "detrained" });
+    if (!reach || !raceOutOfReach(reach)) return null;
+    const unit = resolveDistanceUnit(raceReach.profile.preferredDistanceUnit);
+    const label = (km: number) =>
+      distanceLabel(km * 1000, unit).replace(/\.0(?= )/, "");
+    return {
+      longest: label(reach.longestKm),
+      raceName:
+        RACE_NAME[raceReach.profile.raceGoal?.distance ?? ""] ?? "The race",
+      race: label(reach.raceKm),
+    };
+  }, [open, detrained, raceModeActive, raceReach]);
+  /** Lead with moving the race: a return whose race is past what the
+   *  plan can build to. */
+  const moveFirst = outOfReach !== null;
 
   /**
    * `return_choice`, paired with the `return_surface_shown` the coordinator
@@ -120,37 +172,46 @@ export default function FellBehindSheet({
     trackLifecycleEvent("return_choice", { surface, choice });
   };
 
-  const choices: Choice[] = [
-    ...(raceModeActive
-      ? [
-          {
-            id: "realign",
-            label: detrained ? "Rebuild my plan" : "Realign my plan",
-            pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
-            /* `sport`, not `primary`: this is the RUN return sheet, and
+  const raceChoices: Choice[] = raceModeActive
+    ? [
+        {
+          id: "realign",
+          label: detrained ? "Rebuild my plan" : "Realign my plan",
+          pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
+          /* `sport`, not `primary`: this is the RUN return sheet, and
                the canonical CTA mapping gives running its coral. The
                surface already says so — its icon carries the running
                identity — so
                purple here was the one element on the sheet not
                sport-coded. `LiftReturnSheet`, the same sheet for lifting,
                is purple throughout and stays that way. */
-            variant: "sport" as const,
-            onSelect: async () => {
-              reportChoice(detrained ? "rebuild" : "realign");
-              await realignRacePlan();
-            },
+          variant: "sport" as const,
+          onSelect: async () => {
+            reportChoice(detrained ? "rebuild" : "realign");
+            await realignRacePlan();
           },
-          {
-            id: "race-moved",
-            label: "My race moved →",
-            variant: "secondary" as const,
-            onSelect: async () => {
-              reportChoice("shift");
-              onRaceMoved();
-            },
+        },
+        {
+          id: "race-moved",
+          label: moveFirst ? "Move my race →" : "My race moved →",
+          variant: "secondary" as const,
+          onSelect: async () => {
+            reportChoice("shift");
+            onRaceMoved();
           },
-        ]
-      : []),
+        },
+      ]
+    : [];
+  // Moving the race first: it takes the sport colour, and the rebuild the
+  // secondary one.
+  const ordered: Choice[] = moveFirst
+    ? [
+        { ...raceChoices[1], variant: "sport" as const },
+        { ...raceChoices[0], variant: "secondary" as const },
+      ]
+    : raceChoices;
+  const choices: Choice[] = [
+    ...ordered,
     {
       id: "skip",
       label: "Not now",
@@ -193,13 +254,15 @@ export default function FellBehindSheet({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {detrained
-          ? raceModeActive
-            ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
-            : "Ease back in — a couple of short, easy runs is the win this week."
-          : raceModeActive
-            ? "Want to adjust the plan to match where you are now?"
-            : "Your weekly target stays the same."}
+        {outOfReach
+          ? `By race day your long run gets to ${outOfReach.longest}. ${outOfReach.raceName} is ${outOfReach.race}. Moving the race gives your running time to build up to it, or rebuild the plan and keep the date.`
+          : detrained
+            ? raceModeActive
+              ? "Your plan will ease you back in — easy running first, with the long run rebuilt gradually. Your race goal stays."
+              : "Ease back in — a couple of short, easy runs is the win this week."
+            : raceModeActive
+              ? "Want to adjust the plan to match where you are now?"
+              : "Your weekly target stays the same."}
       </p>
     </ChoiceSheet>
   );

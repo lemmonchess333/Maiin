@@ -50,7 +50,10 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("../fetchRecentLayoff", () => ({
-  fetchRecentLayoff: (uid: string, day: string) => h.layoff(uid, day),
+  fetchRecentRuns: async (uid: string, day: string) => ({
+    layoff: await h.layoff(uid, day),
+    runs: [],
+  }),
 }));
 vi.mock("../HomeProgramController", () => {
   h.controllerImports++;
