@@ -821,6 +821,132 @@ describe("a race needs a date", () => {
   });
 });
 
+/* Runna's setup offers the races coming up, each with its place; ours
+   offers the run-plan editor's list, and a race chosen there is saved with
+   its Space, as the editor saves one. */
+describe("a race chosen from the list", () => {
+  const reachEnteredRace = async () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    fireEvent.click(screen.getByRole("radio", { name: "A race I’ve entered" }));
+    // The list is its own chunk; the first test to open it loads it.
+    fireEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: "Choose an upcoming race" },
+        { timeout: 10_000 }
+      )
+    );
+    // Whatever the catalogue lists from today: no race is named here, so
+    // the test does not expire with an edition.
+    const clear = screen.queryByRole("button", { name: "Clear filters" });
+    if (clear) fireEvent.click(clear);
+    return within(
+      screen.getByRole("listbox", { name: "Upcoming races" })
+    ).getAllByRole("option")[0];
+  };
+
+  it("is offered only for a race you have entered", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    expect(
+      screen.queryByRole("button", { name: "Choose an upcoming race" })
+    ).toBeNull();
+  });
+
+  it("fills the day from the race, and lets the step go on", async () => {
+    const first = await reachEnteredRace();
+    // Each race is on a card with its place.
+    expect(first.querySelector("img.race-pick-photo")).not.toBeNull();
+    fireEvent.click(first);
+    const saved = loadOnboardingDraft("setup-test", 7)!;
+    expect(saved.raceEventSpaceId).toBeTruthy();
+    expect(first).toHaveAccessibleName(
+      new RegExp(
+        `^${saved.raceEventName!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} `
+      )
+    );
+    expect(screen.getByLabelText("Race target date")).toHaveValue(
+      saved.raceTargetDate
+    );
+    // The list closes on the race chosen.
+    expect(
+      screen.getByRole("button", { name: saved.raceEventName })
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("forgets the race when the day, the distance or the answer changes by hand", async () => {
+    fireEvent.click(await reachEnteredRace());
+    expect(loadOnboardingDraft("setup-test", 7)!.raceEventSpaceId).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: RACE_DATE },
+    });
+    expect(loadOnboardingDraft("setup-test", 7)!).not.toHaveProperty(
+      "raceEventSpaceId"
+    );
+    expect(
+      screen.getByRole("button", { name: "Choose an upcoming race" })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Choose an upcoming race" })
+    );
+    const clear = screen.queryByRole("button", { name: "Clear filters" });
+    if (clear) fireEvent.click(clear);
+    fireEvent.click(
+      within(
+        screen.getByRole("listbox", { name: "Upcoming races" })
+      ).getAllByRole("option")[0]
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    expect(loadOnboardingDraft("setup-test", 7)!).not.toHaveProperty(
+      "raceEventSpaceId"
+    );
+  });
+
+  it("saves the race's Space and name on the goal", async () => {
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 120));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceDistance: "marathon",
+      raceTargetDate: raceDay,
+      raceEntry: "race",
+      raceEventSpaceId: "london-marathon",
+      raceEventName: "London Marathon",
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
+    });
+    open();
+    // The review names the race.
+    expect(screen.getByText(/^London Marathon · /)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.raceGoal).toEqual({
+      distance: "marathon",
+      targetDate: raceDay,
+      entry: "race",
+      eventName: "London Marathon",
+      eventSpaceId: "london-marathon",
+    });
+    expect(programState.runPlan.raceGoal).toMatchObject({
+      eventName: "London Marathon",
+    });
+  });
+});
+
 /* One flow, one vocabulary. The goal cards offered "Build muscle" and the
    review screen read the same choice back as "Hypertrophy focus" — two
    spellings of one value inside a single file, which is the case
