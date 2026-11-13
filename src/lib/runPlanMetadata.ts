@@ -20,11 +20,13 @@
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
+import { runSessionName } from "./runLabels";
 import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import {
   racePaceWork,
   resolveRaceEnrichment,
   type RaceEnrichment,
+  type RacePaceWork,
   type RaceTarget,
 } from "./racePace";
 import {
@@ -141,6 +143,40 @@ export function runTemplateIdOf(
     | undefined
 ): string | undefined {
   return metadata?.actualTemplateId ?? metadata?.plannedTemplateId ?? undefined;
+}
+
+/**
+ * What the Lock Screen calls a run in progress (Wid2): the session it was
+ * started as ("Easy 30", "Long 18 km with race pace"), else its type's
+ * name ("Tempo run", "Free run").
+ *
+ * The session is `actualTemplateId` alone, not `runTemplateIdOf`: a run
+ * started as another type on a planned day is saved against the plan's
+ * template, but it is not that session, and the setup's own Start button
+ * stops naming it the moment the type changes. The race-pace work belongs
+ * to the launch's session, so it is named only while the run is that one.
+ */
+export function runInProgressName(input: {
+  metadata: Pick<RunPlanMetadata, "actualTemplateId"> | null | undefined;
+  /** The session the launch card offered, and its race-pace work. */
+  launch: {
+    templateId: string | null | undefined;
+    racePace: RacePaceWork | null | undefined;
+  };
+  unit: DistanceUnit;
+  /** The run type's name, from the setup's list. */
+  typeName: string | undefined;
+}): string {
+  const id = input.metadata?.actualTemplateId ?? null;
+  const template = id ? RUN_TEMPLATES.find((t) => t.id === id) : undefined;
+  return runSessionName(
+    template,
+    id !== null && id === input.launch.templateId
+      ? input.launch.racePace
+      : null,
+    input.unit,
+    input.typeName ?? "Run"
+  );
 }
 
 /**

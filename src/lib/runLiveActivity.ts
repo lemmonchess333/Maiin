@@ -49,7 +49,7 @@ export interface RunActivityData {
   pace: string;
   /** Pre-formatted elapsed time from the run timer, e.g. "23:41". */
   elapsed: string;
-  /** State line: "Recording" | "Paused" | activity label. */
+  /** The session's name ("Easy 30", "Tempo run"), or "Paused". */
   label: string;
   /** The run is paused: the drawing holds its pose, dimmed. */
   paused?: boolean;
@@ -133,6 +133,8 @@ const runGlyph = (size: number): LayoutElement => ({
   ],
 });
 
+/** The session's name, or "PAUSED", on one line: a long name ("LONG 18 KM
+ *  WITH RACE PACE") is cut short, never wrapped under the figure. */
 const kicker: LayoutElement = {
   type: "text",
   properties: [
@@ -140,6 +142,7 @@ const kicker: LayoutElement = {
     { fontSize: 11 },
     { fontWeight: "semibold" },
     { color: CORAL_LIGHT },
+    { lineLimit: 1 },
   ],
 };
 
@@ -244,11 +247,9 @@ function dynamicIslandLayout(): DynamicIslandLayout {
   });
   return {
     expanded: {
-      leading: {
-        type: "container",
-        properties: [{ direction: "horizontal" }, { spacing: 6 }],
-        children: [runGlyph(16), kicker],
-      },
+      // The name goes under the camera with the drawing: beside it there
+      // is room for about a dozen letters, and a session's name runs longer.
+      leading: runGlyph(16),
       trailing: {
         type: "text",
         properties: [
@@ -260,7 +261,7 @@ function dynamicIslandLayout(): DynamicIslandLayout {
         ],
       },
       // The drawing can be read only here: a compact side is 37 pt tall.
-      bottom: pictureRow(84, [figure(32), line("{{paceLine}}")], []),
+      bottom: pictureRow(84, [kicker, figure(32), line("{{paceLine}}")], []),
     },
     // The two sides read as one fact: a run, and how far.
     compactLeading: runGlyph(14),
