@@ -136,6 +136,11 @@ export interface OnboardingDraft {
   /** Run9: a race entered or run on your own, unset
    *  until answered. Additive: older drafts have none. */
   raceEntry?: "race" | "own";
+  /** A race chosen from the list (a race Space's id) and its name, which
+   *  the race goal is saved with. Absent for a date typed in, and for a
+   *  goal run on your own. Additive: older drafts have neither. */
+  raceEventSpaceId?: string;
+  raceEventName?: string;
   injuries: string[];
   gender: (typeof DRAFT_GENDERS)[number];
   ageRange: (typeof DRAFT_AGE_RANGES)[number];
@@ -235,6 +240,11 @@ export function isValidDraft(
     oneOf(VALID_RACE_DISTANCE, d.raceDistance) &&
     typeof d.raceTargetDate === "string" &&
     (d.raceEntry === undefined || oneOf(["race", "own"], d.raceEntry)) &&
+    (d.raceEventSpaceId === undefined ||
+      (typeof d.raceEventSpaceId === "string" &&
+        d.raceEventSpaceId.length <= 120)) &&
+    (d.raceEventName === undefined ||
+      (typeof d.raceEventName === "string" && d.raceEventName.length <= 60)) &&
     Array.isArray(d.injuries) &&
     (d.injuries as unknown[]).every((i) => typeof i === "string") &&
     oneOf(DRAFT_GENDERS, d.gender) &&

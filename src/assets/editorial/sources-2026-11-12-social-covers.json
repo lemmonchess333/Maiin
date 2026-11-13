@@ -1,6 +1,6 @@
 {
   "updatedOn": "2026-11-12",
-  "notes": "Social's interest Space covers, 2026-11-12. With Unsplash+ licensed for the welcome (DS9), the owner asked to improve the Social covers where an Unsplash+ photograph is clearly better, leaving the race covers as they are. Twenty-one candidates were drawn as directory cards and Space headers beside the current covers; the owner took five. Trail Running, Destination Races and Triathlon & Multisport keep theirs. Each is the full source width cut to 24:13 around the faces, original colour, no retouching; four are 1200 px wide under 120 KB, and space-runners is 1000 px at about 152 KB, as its leaves only reach 120 KB at a quality that blotches (the 2026-11-10 audit kept seven dense covers over 120 KB for the same reason).",
+  "notes": "Social's interest Space covers, 2026-11-12. With Unsplash+ licensed for the welcome (DS9), the owner asked to improve the Social covers where an Unsplash+ photograph is clearly better, leaving the race covers as they are. Twenty-one candidates were drawn as directory cards and Space headers beside the current covers; the owner took five, and Triathlon & Multisport the same day as a sixth. Trail Running and Destination Races keep theirs. Each is the full source width cut to 24:13 around the faces, original colour, no retouching; four are 1200 px wide under 120 KB, and space-runners is 1000 px at about 152 KB, as its leaves only reach 120 KB at a quality that blotches (the 2026-11-10 audit kept seven dense covers over 120 KB for the same reason).",
   "images": [
     {
       "asset": "space-new-to-tropos.webp",
@@ -135,6 +135,33 @@
       },
       "sourceSha256": "12d441f9397c1e2c82c80f2cb0c4496d62905e0ae0ca972b332bcfe149c25a65",
       "outputSha256": "a5fb9d36eb4bf1c912a6101089500388dcef7bd2483c4d94736559db899e0d9f",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-triathlon-multisport.webp",
+      "sourceUrl": "https://unsplash.com/photos/two-athletes-competing-in-a-open-water-swimming-race--BP0Mps0XyQ",
+      "unsplashId": "-BP0Mps0XyQ",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "An open-water swimmer at eye level in a red cap and wetsuit, mid-stroke in sun and spray, a second swimmer behind. Licensed editorial photograph; not Tropos members.",
+      "replaces": "Two open-water swimmers seen from above (the 2026-09-14 refresh).",
+      "markCheck": "No marks on the cap, goggles or wetsuit at 3x brightness.",
+      "sourceSize": [5615, 3747],
+      "crop": {
+        "rect": [0, 468, 5615, 3509],
+        "rule": "Full width, cut to 24:13 so the swimmer sits inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 48398
+      },
+      "sourceSha256": "12e1e40da4d0e43d5ab9fa86cae5c999e546f55ff01617c1ea728aac1698987f",
+      "outputSha256": "0deedde6145f497472dd3a6f04255ffc60820c73d93586b1d3337383ec546125",
       "retouching": "none"
     }
   ]

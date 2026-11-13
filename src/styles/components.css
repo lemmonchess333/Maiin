@@ -845,3 +845,19 @@ html.guiding [data-brand-mark] {
     hsl(var(--card) / 0) 82%
   );
 }
+
+/* Run plan's photograph cards (PhotoChoiceCards) and Train's race band
+   (RaceCockpitCard): the scrim under white words on a photograph, darkest
+   at the foot where the words sit. Fixed stops, the same in both themes,
+   as the words on it are. */
+.photo-choice-scrim,
+.race-band-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.74) 0%,
+    rgb(0 0 0 / 0.46) 55%,
+    rgb(0 0 0 / 0.16) 100%
+  );
+}

@@ -195,7 +195,7 @@ describe("Login — agreeing to the Terms", () => {
   it("is on the sign-in form, where Apple and Google can create an account too", () => {
     h.signedInBefore = true;
     show();
-    expectAgreementUnderEveryButton("Sign In");
+    expectAgreementUnderEveryButton("Sign in");
   });
 
   it("is not on the welcome screen, where no account can be made", () => {
@@ -322,7 +322,7 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
       screen.getByRole("button", { name: /Continue with Google/ })
     ).not.toHaveTextContent("Last used");
     expect(
-      screen.getByRole("button", { name: /^Sign In/ })
+      screen.getByRole("button", { name: /^Sign in/ })
     ).not.toHaveTextContent("Last used");
   });
 
@@ -330,7 +330,7 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
     h.signedInBefore = true;
     localStorage.setItem("tropos.last_sign_in_method", "password");
     show();
-    expect(screen.getByRole("button", { name: /^Sign In/ })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: /^Sign in/ })).toHaveTextContent(
       "Last used"
     );
   });

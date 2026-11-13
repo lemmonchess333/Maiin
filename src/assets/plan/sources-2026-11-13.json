@@ -1,0 +1,185 @@
+{
+  "updatedOn": "2026-11-13",
+  "notes": "Run plan's goal and distance cards (owner, 2026-11-13, choosing prototype (i)): one photograph per card, cut small (640 x 356 WebP) because a card is about 176 px wide. Four reuse photographs the app already licenses (a Space cover, a welcome photograph); three are new Unsplash+ downloads (the Half, the Marathon and the race card before a race is chosen). 'Training for a race' shows the chosen race's own Space cover instead once the goal is bound to a race.",
+  "images": [
+    {
+      "asset": "plan-no-race.webp",
+      "card": "No race",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-hiking-up-a-mountain-lUNh8-Zhqo4",
+      "unsplashId": "lUNh8-Zhqo4",
+      "photographer": "Lucas Canino",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "download": "The same licensed download as its first use in the app (see the manifest named in 'firstUsedIn'); this is a second cut of it.",
+      "firstUsedIn": "src/assets/editorial/sources-2026-11-10-provenance.json (space-trail-running.webp)",
+      "content": "Three runners climbing a grassy slope under limestone peaks, from behind. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [1280, 800],
+      "crop": {
+        "rect": [0, 64, 1280, 775],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 41310
+      },
+      "sourceSha256": "acf120540aa8b820d58fd948c1c2272a33f9c954f69fbe8b92a3331e15cd6ceb",
+      "outputSha256": "fbc71b7dae574589e990b224eef8aea31f29e5cd8caabf24719c727c068cd11f",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-starter.webp",
+      "card": "30 minutes (the starter goal)",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-posing-for-a-picture-xhly9sl7XV8",
+      "unsplashId": "xhly9sl7XV8",
+      "photographer": "Leire Cavia",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "The same licensed download as its first use in the app (see the manifest named in 'firstUsedIn'); this is a second cut of it.",
+      "firstUsedIn": "src/assets/editorial/sources-2026-11-12-social-covers.json (space-new-to-tropos.webp)",
+      "content": "Six friends in running kit laughing at the camera under a blue sky. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [6000, 4000],
+      "crop": {
+        "rect": [0, 0, 6000, 3333],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 17032
+      },
+      "sourceSha256": "c4e2b3dc2791270d1474acf3bf8c9a93e79c3fcdd2409d43090b1987ce97d371",
+      "outputSha256": "439b3cc310b8f0e86b05baffc21d045c9d375d79f8d6a8f3e6c3629575f11ccb",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-race.webp",
+      "card": "Training for a race, before a race is chosen",
+      "sourceUrl": "https://unsplash.com/photos/detail-of-the-legs-of-runners-at-the-start-of-a-marathon-race-sw4RIOL3QKQ",
+      "unsplashId": "sw4RIOL3QKQ",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-13, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "content": "Runners' legs and shoes on the road at the start of a race; no faces. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [7140, 4765],
+      "crop": {
+        "rect": [0, 572, 7140, 4538],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 16756
+      },
+      "sourceSha256": "b13f5932465d829a344b2024f6fa8f0c86398de105feaca83e5797d0306bde38",
+      "outputSha256": "8705b943782c004c656421363aef8ca0778b362dedb826bb420bf2ee3fa7258f",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-5k.webp",
+      "card": "5K",
+      "sourceUrl": "https://unsplash.com/photos/group-of-young-athletes-running-in-green-sunny-summer-park-zRUgAMCnxMs",
+      "unsplashId": "zRUgAMCnxMs",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "The same licensed download as its first use in the app (see the manifest named in 'firstUsedIn'); this is a second cut of it.",
+      "firstUsedIn": "src/assets/editorial/sources-2026-11-12-social-covers.json (space-runners.webp)",
+      "content": "Four runners on a path through a green park, coming towards the camera. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [5283, 3596],
+      "crop": {
+        "rect": [0, 503, 5283, 3438],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 64462
+      },
+      "sourceSha256": "3cfa661eaf7230506b123c6ecd127c20dc1b221545112a787b040ed07879c56d",
+      "outputSha256": "e03d524dee64a5f0055efa959bb506876238c4d92395de70e1fc183f4de1b132",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-10k.webp",
+      "card": "10K",
+      "sourceUrl": "https://unsplash.com/photos/three-women-running-workout-lfDpgAP5_Ao",
+      "unsplashId": "lfDpgAP5_Ao",
+      "photographer": "A. C.",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "The same licensed download as its first use in the app (see the manifest named in 'firstUsedIn'); this is a second cut of it.",
+      "firstUsedIn": "src/assets/welcome/sources-2026-11-12.json (welcome-3-crew.webp)",
+      "content": "Three women running past a stone wall, laughing. One strap carries the word RUN, about 1 px tall at this size. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [4672, 7008],
+      "crop": {
+        "rect": [0, 2102, 4672, 4698],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 38220
+      },
+      "sourceSha256": "a5e9b5974dccd59b295182746bd0a9823417ac983f85250d0304b5c0e248bbc4",
+      "outputSha256": "ca6bd18309d7a6d7b9048412943c67c5668bc2b0aec48f67fca04ad08296457c",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-half.webp",
+      "card": "Half",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-running-in-a-marathon-o1bUGj5Gg6Y",
+      "unsplashId": "o1bUGj5Gg6Y",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-13, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "content": "A city road race coming towards the camera, the runners with numbered bibs, tall buildings behind. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [4954, 3567],
+      "crop": {
+        "rect": [0, 428, 4954, 3180],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 30770
+      },
+      "sourceSha256": "156d32f290d123c91a48ae176a919e1a99894508855f426cf7daf14b6dbc1774",
+      "outputSha256": "3aafa49b9ded965af4a3a877ba5550230dd13251a2689914ab81960f0a80057a",
+      "retouching": "none"
+    },
+    {
+      "asset": "plan-marathon.webp",
+      "card": "Marathon",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-that-are-running-in-a-race-0viwkF9LG0I",
+      "unsplashId": "0viwkF9LG0I",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-13, while the owner's Unsplash+ subscription was active; the licence is perpetual for images downloaded during it.",
+      "content": "A dark city street full of racers crossing between orange cones. Licensed photograph; not Tropos members.",
+      "markCheck": "No readable logo or brand mark at the card's size; bib numbers are numbers only.",
+      "sourceSize": [4832, 3626],
+      "crop": {
+        "rect": [725, 1450, 4107, 3330],
+        "rule": "1.8:1 band, the people in its upper middle so the card's words at its foot sit on legs or road."
+      },
+      "output": {
+        "size": [640, 356],
+        "format": "WebP",
+        "bytes": 31472
+      },
+      "sourceSha256": "b5eff5481ed2d49d4c8eaecc18f3e2e4970764b6b9f2559e7fc0a579ab25c580",
+      "outputSha256": "4e23222c268018223a70064823c55d3c7d86c0f583fd8ed13159c3aa6e2e28d9",
+      "retouching": "none"
+    }
+  ]
+}

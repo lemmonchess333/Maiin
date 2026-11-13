@@ -106,12 +106,18 @@ import {
   snapshotPendingInvite,
 } from "@/lib/pendingInvite";
 import { ENTER_CODE_LATER, redeemInviteAfterSetup } from "@/lib/invites";
+import type { PickedRace } from "@/components/onboarding/SetupRacePicker";
 
 /* The review's reminder row is its own chunk, fetched once setup has
    drawn, so the questions before it do not carry it. */
 const loadSetupReminderRow = () =>
   import("@/components/onboarding/SetupReminderRow");
 const SetupReminderRow = lazyRetry(loadSetupReminderRow);
+/* The list of upcoming races is its own chunk as well, fetched once someone
+   says they have entered a race. */
+const loadSetupRacePicker = () =>
+  import("@/components/onboarding/SetupRacePicker");
+const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -340,6 +346,26 @@ export default function Onboarding() {
   const [raceEntry, setRaceEntry] = useState<RaceGoalEntry | undefined>(
     draft?.raceEntry
   );
+  /* A race chosen from the list: its Space's id and its name, which the
+     race goal is saved with, as the run-plan editor saves them. A distance
+     or date changed by hand, or a goal run on your own, is no listed
+     race's, so either clears them. */
+  const [raceEventSpaceId, setRaceEventSpaceId] = useState(
+    draft?.raceEventSpaceId ?? ""
+  );
+  const [raceEventName, setRaceEventName] = useState(
+    draft?.raceEventName ?? ""
+  );
+  const forgetPickedRace = () => {
+    setRaceEventSpaceId("");
+    setRaceEventName("");
+  };
+  const pickRace = (race: PickedRace) => {
+    setRaceDistance(race.distance);
+    setRaceTargetDate(race.dateKey);
+    setRaceEventName(race.name.slice(0, 60));
+    setRaceEventSpaceId(race.id);
+  };
   // Adaptive paces §10.2: an optional recent race, which sets the paces.
   const [recentRaceDistance, setRecentRaceDistance] = useState<
     NonNullable<OnboardingDraft["recentRaceDistance"]>
@@ -401,6 +427,7 @@ export default function Onboarding() {
       raceDistance,
       raceTargetDate,
       raceEntry,
+      ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
       injuries,
       gender,
       ageRange,
@@ -446,6 +473,8 @@ export default function Onboarding() {
       raceDistance,
       raceTargetDate,
       raceEntry,
+      raceEventSpaceId,
+      raceEventName,
       injuries,
       gender,
       ageRange,
@@ -628,6 +657,7 @@ export default function Onboarding() {
           weeklyRunDays: planRunDays,
           raceDistance,
           raceTargetDate,
+          raceEventName: raceEventName || undefined,
           injuries,
           weightKg,
           sessionMinutes,
@@ -658,6 +688,7 @@ export default function Onboarding() {
       planRunDays,
       raceDistance,
       raceTargetDate,
+      raceEventName,
       injuries,
       weightKg,
       sessionMinutes,
@@ -892,6 +923,9 @@ export default function Onboarding() {
                 distance: raceDistance,
                 targetDate: raceTargetDate,
                 ...(raceEntry ? { entry: raceEntry } : {}),
+                ...(raceEventSpaceId
+                  ? { eventName: raceEventName, eventSpaceId: raceEventSpaceId }
+                  : {}),
               },
             }
           : {}),
@@ -942,11 +976,15 @@ export default function Onboarding() {
       // a shallow assign dropped startWeight and currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
-      // buildPlan's race goal carries no race-or-own answer (Run9); put it
-      // back on the goal the merge just replaced, as
-      // the run-plan editor re-attaches a race's Space link.
-      if (raceEntry && planShape.raceGoal) {
-        profileData.raceGoal = { ...planShape.raceGoal, entry: raceEntry };
+      // buildPlan's race goal carries no race-or-own answer (Run9) and no
+      // race's Space link; put them back on the goal the merge just
+      // replaced, as the run-plan editor does.
+      if ((raceEntry || raceEventSpaceId) && planShape.raceGoal) {
+        profileData.raceGoal = {
+          ...planShape.raceGoal,
+          ...(raceEntry ? { entry: raceEntry } : {}),
+          ...(raceEventSpaceId ? { eventSpaceId: raceEventSpaceId } : {}),
+        };
       }
       profileData.program = {
         ...(profileData.program as Record<string, unknown>),
@@ -1172,7 +1210,7 @@ export default function Onboarding() {
           ? "Free running · no scheduled runs"
           : effectiveRunMode === "starter"
             ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
-            : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+            : `${raceEventName ? `${raceEventName} · ` : ""}${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
         (recentRaceBenchmark
           ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
           : "");
@@ -1486,7 +1524,10 @@ export default function Onboarding() {
                         ariaLabel="Race distance"
                         tone="running"
                         value={raceDistance}
-                        onChange={setRaceDistance}
+                        onChange={(next) => {
+                          setRaceDistance(next);
+                          forgetPickedRace();
+                        }}
                         options={[
                           { value: "5k", label: "5K" },
                           { value: "10k", label: "10K" },
@@ -1502,13 +1543,31 @@ export default function Onboarding() {
                           layout="wrap"
                           value={raceEntry ?? ""}
                           onChange={(next) => {
-                            if (next !== "") setRaceEntry(next);
+                            if (next === "") return;
+                            setRaceEntry(next);
+                            // A goal run on your own is no listed race's.
+                            if (next === "own") forgetPickedRace();
                           }}
                           options={RACE_GOAL_ENTRY_OPTIONS.map((o) => ({
                             ...o,
                           }))}
                         />
                       </div>
+                      {/* The races coming up, each on a card with its
+                          place, as Runna's setup offers them: choosing one
+                          fills its distance and day. A race not listed is
+                          entered by its date below. */}
+                      {raceEntry === "race" && (
+                        <Suspense fallback={null}>
+                          <SetupRacePicker
+                            distance={raceDistance}
+                            selectedId={raceEventSpaceId}
+                            selectedDate={raceTargetDate}
+                            minDate={currentDate}
+                            onPick={pickRace}
+                          />
+                        </Suspense>
+                      )}
                       {raceRunDaysNote(raceDistance, weeklyRunDays) && (
                         <p className="text-sm text-muted-foreground">
                           {raceRunDaysNote(raceDistance, weeklyRunDays)}
@@ -1521,9 +1580,10 @@ export default function Onboarding() {
                           className="ds-input min-h-11 w-full"
                           min={currentDate}
                           value={raceTargetDate}
-                          onChange={(event) =>
-                            setRaceTargetDate(event.target.value)
-                          }
+                          onChange={(event) => {
+                            setRaceTargetDate(event.target.value);
+                            forgetPickedRace();
+                          }}
                           aria-invalid={racePreview.status === "invalid"}
                         />
                       </label>

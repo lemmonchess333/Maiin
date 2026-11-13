@@ -76,6 +76,11 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
+import PhotoChoiceCards, {
+  type PhotoChoice,
+} from "@/components/program/PhotoChoiceCards";
+import { PLAN_GOAL_PHOTOS } from "@/lib/planPhotos";
+import { spaceEditorialImage } from "@/lib/editorialImages";
 import {
   getRaceGoalPlannerState,
   MIN_RACE_RUN_DAYS,
@@ -200,15 +205,39 @@ const formatRaceTime = formatClock;
 /** Whether the runner is training for a race. The stored mode follows from
  *  the answer (Run9a); the words never name it. Run9's starter goal sits
  *  between the two for those it is offered to (`starterOffered`). */
+/** The running goal's cards (DESIGN_GUIDE §14m rule 26): each a photograph with
+ *  one fact. "Training for a race" shows the race's own place once the
+ *  goal is bound to one, and says which race. */
 function raceOrNotOptions(
-  starterOffered: boolean
-): { value: RunMode; label: string }[] {
+  starterOffered: boolean,
+  race: { spaceId: string; name: string }
+): PhotoChoice<RunMode>[] {
+  const racePlace = race.spaceId ? spaceEditorialImage(race.spaceId) : null;
   return [
-    { value: "freeform", label: "No race" },
+    {
+      value: "freeform",
+      label: "No race",
+      fact: "Run when you like",
+      photo: PLAN_GOAL_PHOTOS.freeform,
+      focus: "50% 40%",
+    },
     ...(starterOffered
-      ? [{ value: "starter" as const, label: STARTER_GOAL_NAME }]
+      ? [
+          {
+            value: "starter" as const,
+            label: STARTER_GOAL_NAME,
+            fact: "About nine weeks",
+            photo: PLAN_GOAL_PHOTOS.starter,
+            focus: "50% 25%",
+          },
+        ]
       : []),
-    { value: "race_prep", label: "Training for a race" },
+    {
+      value: "race_prep",
+      label: "Training for a race",
+      fact: (racePlace && race.name) || "A plan to race day",
+      photo: racePlace ?? PLAN_GOAL_PHOTOS.race_prep,
+    },
   ];
 }
 
@@ -876,15 +905,17 @@ export default function RunPlanSettings({
     <div className="space-y-4 pb-6">
       {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
-          whether there is a race. The same control as the race's
-          Distance, in the running colour. */}
+          whether there is a race. Photograph cards, as the race's
+          Distance below (DESIGN_GUIDE §14m rule 26). */}
       <div className="space-y-2">
         <SectionHeading size="compact">Running goal</SectionHeading>
-        <SegmentedControl
+        <PhotoChoiceCards<RunMode>
           ariaLabel="Running goal"
-          tone="running"
-          options={raceOrNotOptions(starterOffered)}
-          layout={starterOffered ? "wrap" : undefined}
+          tall
+          options={raceOrNotOptions(starterOffered, {
+            spaceId: raceEventSpaceId,
+            name: raceEventName.trim(),
+          })}
           value={runMode}
           onChange={(next) => {
             haptic();
@@ -1024,7 +1055,9 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
               disabled={weeklyRunDays <= minRunDays}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+              /* px, not rem: a control keeps its size with larger text,
+                 so the heading beside it keeps the row (largeText). */
+              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -1039,7 +1072,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.min(7, n + 1));
               }}
               disabled={weeklyRunDays >= 7}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>

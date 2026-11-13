@@ -53,15 +53,19 @@ export async function openSignUpForm(page: Page): Promise<void> {
     .waitFor({ state: "visible", timeout: 20_000 });
 }
 
-/** The sign-in form, by "Sign in" from the welcome screen. */
+/** The sign-in form, by "Sign in" from the welcome screen. The form's own
+ *  submit button is "Sign in" too, so the email field decides which screen
+ *  is open: a device that has signed in before opens on the form. */
 export async function openSignInForm(page: Page): Promise<void> {
-  const haveAccount = page.getByRole("button", {
+  const welcomeSignIn = page.getByRole("button", {
     name: "Sign in",
     exact: true,
   });
   const email = page.locator("#login-email");
-  await expect(haveAccount.or(email)).toBeVisible({ timeout: 20_000 });
-  if (await haveAccount.isVisible()) await haveAccount.click();
+  await expect(welcomeSignIn.or(email).first()).toBeVisible({
+    timeout: 20_000,
+  });
+  if (!(await email.isVisible())) await welcomeSignIn.first().click();
   await email.waitFor({ state: "visible", timeout: 20_000 });
 }
 

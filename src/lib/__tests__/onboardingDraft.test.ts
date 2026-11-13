@@ -284,6 +284,29 @@ describe("the legs while the runs build (Lift4 (10))", () => {
   });
 });
 
+describe("a race chosen from the list", () => {
+  it("round-trips the race's Space and name, and rejects anything else", () => {
+    const answered = makeDraft({
+      raceEntry: "race",
+      raceEventSpaceId: "london-marathon",
+      raceEventName: "London Marathon",
+    });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    for (const bad of [
+      { raceEventSpaceId: 7 },
+      { raceEventName: null },
+      { raceEventName: "x".repeat(61) },
+    ])
+      expect(
+        isValidDraft(
+          { ...makeDraft(), ...bad } as unknown as OnboardingDraft,
+          MAX_STEP
+        )
+      ).toBe(false);
+  });
+});
+
 describe("a recent race (adaptive paces §10.2)", () => {
   it("round-trips the distance and the time as typed, and rejects others", () => {
     const answered = makeDraft({

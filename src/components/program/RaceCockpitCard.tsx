@@ -10,6 +10,12 @@
  * locked 2-state model). It carries no mode language — there is no
  * user-facing freeform/structured/race_prep toggle (Run9a).
  *
+ * A race bound to its race Space opens on that race's place: a band of
+ * its Space cover across the card's top, the race's name on it (the
+ * owner's exception in DESIGN_GUIDE §14m rule 26). A goal with no race,
+ * or a race with no cover, keeps the
+ * plain card.
+ *
  * Palette: coral (running) accents only, on a standard card surface. The
  * phase rail reflects the REAL engine phases (Base · Build · Taper ·
  * Race from getPhaseForWeek) — no invented "Peak" segment, so the active
@@ -30,6 +36,8 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { spaceDef } from "@/features/spaces/spaceDefs";
+import { spaceEditorialImage } from "@/lib/editorialImages";
+import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthYear } from "@/utils/formatters";
 import PhaseRail from "./PhaseRail";
@@ -89,6 +97,9 @@ export default function RaceCockpitCard({
   // a space merged away) degrades to no row, never a broken link.
   const raceSpace = raceSpaceId ? spaceDef(raceSpaceId) : undefined;
   const raceSpaceLinked = raceSpace?.kind === "race";
+  const placePhoto = raceSpaceLinked
+    ? spaceEditorialImage(raceSpace!.id)
+    : null;
   const hasProgress = currentWeek != null && totalWeeks != null;
   const progress = hasProgress
     ? Math.min(100, Math.max(0, ((currentWeek! + 1) / totalWeeks!) * 100))
@@ -103,24 +114,56 @@ export default function RaceCockpitCard({
   return (
     <section
       aria-label="Race plan"
-      className="rounded-xl bg-card border border-border dark:border-0 p-4 space-y-4 card-shadow"
+      className={cn(
+        "rounded-xl bg-card border border-border dark:border-0 p-4 space-y-4 card-shadow",
+        placePhoto && "overflow-hidden"
+      )}
     >
+      {placePhoto && (
+        /* The race's place across the top, its name on the scrim. The
+           band grows with larger text rather than cutting the name. */
+        <div className="relative isolate -mx-4 -mt-4 flex min-h-[88px] flex-col justify-end gap-0.5 px-4 pb-3 pt-6 text-stage-foreground">
+          <img
+            src={placePhoto}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            draggable={false}
+            className="absolute inset-0 -z-10 size-full object-cover"
+          />
+          <span aria-hidden="true" className="race-band-scrim -z-10" />
+          <SectionLabel
+            as="span"
+            className="inline-flex items-center gap-1.5 font-bold text-stage-foreground/85"
+          >
+            <Flag className="size-3.5" aria-hidden="true" />
+            Race plan
+          </SectionLabel>
+          <h3 className="text-xl font-extrabold tracking-tight leading-tight">
+            {eventName || distanceLabel}
+          </h3>
+        </div>
+      )}
       {/* "Edit run plan" drops under the heading, at the right, once the
           heading would be narrower than 9em (a long event name, or larger
           text on the phone). It is the Run tab's one way into the run plan
           editor while a race is set. */}
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="space-y-1 min-w-[min(100%,9em)] flex-1">
-          <SectionLabel
-            as="span"
-            className="inline-flex items-center gap-1.5 font-bold text-running-strong"
-          >
-            <Flag className="size-3.5" aria-hidden="true" />
-            Race plan
-          </SectionLabel>
-          <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
-            {eventName || distanceLabel}
-          </h3>
+          {!placePhoto && (
+            <>
+              <SectionLabel
+                as="span"
+                className="inline-flex items-center gap-1.5 font-bold text-running-strong"
+              >
+                <Flag className="size-3.5" aria-hidden="true" />
+                Race plan
+              </SectionLabel>
+              <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
+                {eventName || distanceLabel}
+              </h3>
+            </>
+          )}
           {/* The week sits on the date line. The rail below marks the
               phase, and the page header names the week too, so tiles for
               Week and Phase said both a third time. */}

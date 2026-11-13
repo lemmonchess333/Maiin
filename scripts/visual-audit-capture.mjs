@@ -125,7 +125,9 @@ const run = async () => {
     .or(page.locator("#login-email"))
     .first()
     .waitFor({ state: "visible" });
-  if (await haveAccount.isVisible()) await haveAccount.click();
+  // The form's submit is "Sign in" too: the email field says which screen is open.
+  if (!(await page.locator("#login-email").isVisible()))
+    await haveAccount.first().click();
   await page.locator("#login-email").waitFor({ state: "visible" });
   await page.fill("#login-email", CREDS.email);
   await page.fill("#login-password", CREDS.password);

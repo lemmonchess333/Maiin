@@ -28,6 +28,7 @@ export function buildOnboardingPlan(
     | "weeklyRunDays"
     | "raceDistance"
     | "raceTargetDate"
+    | "raceEventName"
     | "injuries"
     | "weightKg"
     | "sessionMinutes"
@@ -93,6 +94,9 @@ export function buildOnboardingPlan(
           raceGoal: {
             distance: draft.raceDistance,
             targetDate: draft.raceTargetDate,
+            // A race picked from the list keeps its name, as the run-plan
+            // editor's does.
+            ...(draft.raceEventName ? { eventName: draft.raceEventName } : {}),
           },
         }
       : {}),
