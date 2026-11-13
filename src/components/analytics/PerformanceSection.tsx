@@ -4,6 +4,7 @@ import {
   Activity,
   ChevronDown,
   Info,
+  Lock,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -82,6 +83,9 @@ interface PerformanceSectionProps {
   /** Whether "Score details" is open. History keeps it in the URL. */
   detailsOpen?: boolean;
   onToggleDetails?: (open: boolean) => void;
+  /** The details are Pro for this account (whole-app grill Q84): the row
+   *  shows a lock and asks `onToggleDetails(true)`, which offers Pro. */
+  detailsLocked?: boolean;
   /** Drawn inside the open details, after the index chart: the training
    *  load card, which History feeds from its own range. */
   children?: ReactNode;
@@ -127,6 +131,7 @@ export default function PerformanceSection({
   distanceUnit = "km",
   detailsOpen = false,
   onToggleDetails,
+  detailsLocked = false,
   children,
 }: PerformanceSectionProps = {}) {
   const {
@@ -319,21 +324,29 @@ export default function PerformanceSection({
           haptic("light");
           onToggleDetails?.(!detailsOpen);
         }}
-        aria-expanded={detailsOpen}
-        aria-controls={detailsId}
+        aria-label={detailsLocked ? "Score details, Pro" : undefined}
+        aria-expanded={detailsLocked ? undefined : detailsOpen}
+        aria-controls={detailsLocked ? undefined : detailsId}
         className={cn(
           "flex w-full items-center justify-between gap-2 min-h-11 rounded-lg text-sm font-semibold text-foreground",
           "hover:text-lifting-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
       >
         Score details
-        <ChevronDown
-          aria-hidden="true"
-          className={cn(
-            "size-4 text-muted-foreground transition-transform duration-200",
-            detailsOpen && "rotate-180"
-          )}
-        />
+        {detailsLocked ? (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <Lock aria-hidden="true" className="size-3.5" />
+            Pro
+          </span>
+        ) : (
+          <ChevronDown
+            aria-hidden="true"
+            className={cn(
+              "size-4 text-muted-foreground transition-transform duration-200",
+              detailsOpen && "rotate-180"
+            )}
+          />
+        )}
       </button>
 
       {detailsOpen && (

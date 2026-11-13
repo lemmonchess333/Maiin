@@ -775,6 +775,8 @@ export default function RunSummary() {
       currentPaceCandidate !== null &&
       isPaceEligible(currentPaceCandidate),
     loading: paceHistoryLoading,
+    // Run24 (4): new paces after a run are one tap for every account.
+    everyAccount: true,
   });
 
   /* Fun distance comparison. Two constraints shape this.

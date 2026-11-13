@@ -403,9 +403,11 @@ function finishedRun(
 
 /** A derived benchmark's effort, for the trace. */
 function effortText(effort: BenchmarkEffort): string {
-  return effort.kind === "race"
-    ? `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`
-    : `a tempo's work, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distanceM) * 1000)} /km`;
+  if (effort.kind === "race")
+    return `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`;
+  const what =
+    effort.kind === "intervals" ? "intervals' repeats" : "a tempo's work";
+  return `${what}, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distanceM) * 1000)} /km`;
 }
 
 type RunDoc = ReturnType<typeof runDocument>;

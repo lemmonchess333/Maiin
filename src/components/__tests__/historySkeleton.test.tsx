@@ -36,8 +36,9 @@ const PAGE_BLOCKS: Record<string, string> = {
   tabs: "<FilterPills",
   performance: "<PerformanceSection",
   /* The overview's range, under Performance. A page draws its own, beside
-     the way back, written over several lines higher in the file. */
-  range: "<TimeRangePills selected={timeRange} onChange={setTimeRange} />",
+     the way back, higher in the file and indented deeper, which is what
+     tells the two apart: both now name the Pro ranges (Q84). */
+  range: "<TimeRangePills\n                selected={timeRange}",
   "period-summary": "<PeriodSummaryCard",
 };
 
