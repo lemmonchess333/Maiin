@@ -72,17 +72,6 @@ beforeEach(() => {
 });
 
 describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
-  it("inactive for free users", () => {
-    subMock.mockReturnValue({ isPro: false });
-    const { result } = renderHook(() => useAdaptiveTdee());
-    expect(result.current.active).toBe(false);
-    expect(result.current.showWarmup).toBe(false);
-    // Gated hooks must SKIP the read, not read-then-discard — Firestore
-    // bills per document.
-    expect(readsAt(MEALS)).toEqual([]);
-    expect(readsAt("users/u1/bodyweightLogs")).toEqual([]);
-  });
-
   it("inactive when the user has a manual calorie override", () => {
     authMock.mockReturnValue({
       user: { uid: "u1" },
@@ -91,7 +80,10 @@ describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
     });
     const { result } = renderHook(() => useAdaptiveTdee());
     expect(result.current.active).toBe(false);
+    // Gated hooks must SKIP the read, not read-then-discard — Firestore
+    // bills per document.
     expect(readsAt(MEALS)).toEqual([]);
+    expect(readsAt("users/u1/bodyweightLogs")).toEqual([]);
   });
 
   it("inactive when logged out", () => {
@@ -117,12 +109,31 @@ describe("useAdaptiveTdee — active assembly", () => {
     expect(result.current.value).toBe(2200);
   });
 
-  it("free user resolves to the formula value (no learned, no warmup)", () => {
+  it("free user with no data: reads the evidence, warmup showing, formula target (Q87)", async () => {
     subMock.mockReturnValue({ isPro: false });
     const { result } = renderHook(() => useAdaptiveTdee());
+    await waitFor(() => expect(result.current.showWarmup).toBe(true));
+    expect(result.current.active).toBe(false);
+    expect(result.current.source).toBe("formula");
+    expect(result.current.value).toBe(2200);
+    expect(result.current.personalTarget).toBeNull();
+  });
+
+  it("free user with a full window: told the personal target, nothing applied or stored", async () => {
+    subMock.mockReturnValue({ isPro: false });
+    const ds = recentDays(21);
+    seedMeals(ds, 2500);
+    seedWeights(ds, 80);
+
+    const { result } = renderHook(() => useAdaptiveTdee());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    // Flat 80 kg at 2500 kcal → the personal target is 2500, all of it.
+    expect(result.current.personalTarget).toBe(2500);
     expect(result.current.source).toBe("formula");
     expect(result.current.value).toBe(2200);
     expect(result.current.showWarmup).toBe(false);
+    await flushSnapshots();
+    expect(updateProfileMock).not.toHaveBeenCalled();
   });
 
   it("Pro user with a full window: assembles → gate ready → warmup hidden", async () => {

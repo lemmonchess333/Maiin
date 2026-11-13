@@ -94,6 +94,7 @@ export type ReturnSurface =
   | "priming"
   | "lift-return"
   | "run-return"
+  | "race-check"
   // Soc15: a new medal's reveal, on Social (MedalRevealGate).
   | "medal-reveal"
   // Soc15 call 3: a league week's result, on Social (LeagueResultGate).

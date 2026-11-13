@@ -71,6 +71,7 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
     showWarmup: false,
     warmupFraction: 0,
     adaptiveStalled: false,
+    personalTarget: null,
     protein: 180,
     carbs: 300,
     fat: 60,
