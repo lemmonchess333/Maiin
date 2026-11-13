@@ -104,16 +104,24 @@ export default function ReadinessStrip({
         )}
       </p>
       {readiness.offerEasier && (
-        <Button
-          variant="ghost"
-          className="mt-1 w-full"
+        /* A quiet text link, not a button shape: Start stays the hero's
+           one filled control (§14m rule 21), and the link reads as the
+           sentence it is. */
+        <button
+          type="button"
+          className="mt-1 flex min-h-11 w-full items-center text-left text-sm"
           onClick={function () {
             haptic("light");
             onEasier();
           }}
         >
-          Go easier today · {easierSummary}
-        </Button>
+          <span>
+            <span className="font-semibold text-foreground underline underline-offset-2">
+              Go easier today
+            </span>{" "}
+            <span className="text-muted-foreground">· {easierSummary}</span>
+          </span>
+        </button>
       )}
       {connectLink}
     </div>
