@@ -4808,3 +4808,29 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## A finished lift gets what a finished run gets (Q30, 2026-11-13)
+
+Affects: the lift's finish screen once Save workout has worked (from Train, a
+saved routine and an empty workout), Food's refuel line, and the run's finish
+(its props prompt and recovery-food link are now the same components).
+Unit-tested; no phone has drawn it.
+
+- [ ] **Nothing before the save.** Finish a lift. Passing: the review shows
+      Save workout, with no Log recovery food, no props card and no Share.
+- [ ] **Log recovery food.** Save a lift from Train, then tap Log recovery
+      food. Passing: Food opens on today with "Nice workout. Refuel with
+      protein and carbs." in the lifting purple, the grams left after it, and
+      the cross takes it away. Back returns to Train with the session closed.
+      From a saved routine or an empty workout, Back does not start the
+      session again.
+- [ ] **The run's line.** Save a run and tap Log recovery food. Passing: "Nice
+      run. Refuel with carbs and protein." in the run's coral.
+- [ ] **Props.** With a followed account that trained today, save a lift.
+      Passing: the props card shows under the week, once that day, and Give
+      props gives them.
+- [ ] **Share to circle.** In a Circle, save a lift from Train and tap Share.
+      Passing: Share to circle sits under the card's Share; it closes the card
+      and opens the Circle sheet over the finish screen, dimming it, and sharing
+      posts "completed a session" with no numbers. A saved routine or an empty
+      workout offers no Share to circle there.

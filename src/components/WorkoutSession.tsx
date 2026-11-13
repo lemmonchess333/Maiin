@@ -359,6 +359,9 @@ interface Props {
   onClose: () => void;
   /** Open the exact saved record returned by the completion writer. */
   onViewWorkout?: (workoutId: string) => void;
+  /** Open the food log for a recovery meal (`recoveryFoodPath`), offered
+   *  once the session is saved, as after a run (App1 Q30). */
+  onLogFood?: () => void;
   /** The account has never finished a workout: the guide's first-set hint
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
@@ -387,6 +390,7 @@ export default function WorkoutSession({
   onCompleteDay,
   onClose,
   onViewWorkout,
+  onLogFood,
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
@@ -477,9 +481,6 @@ export default function WorkoutSession({
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
-  // CIRCLE-SESSION-01 — explicit Circle share from the completion
-  // screen. The sheet mounts ONLY while open so its Circle reads
-  // never fire unless the user taps "Share to circle".
   const resumeCursor = initialDraft
     ? nextIncompleteSet(initialDraft.setLogs, initialDraft.currentExIndex)
     : null;
@@ -2233,6 +2234,7 @@ export default function WorkoutSession({
               ? () => onViewWorkout(savedWorkoutId)
               : undefined
           }
+          onLogFood={onLogFood}
         />
         <KeepSwapSheet
           open={keepQuestion.open}

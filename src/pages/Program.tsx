@@ -192,6 +192,7 @@ import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
 import { lastSetsBySlot } from "@/features/program/lastSets";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 
 /**
  * IMPORTANT:
@@ -2470,6 +2471,10 @@ function ProgramInner() {
               onViewWorkout={(id) => {
                 closeSession();
                 navigate(`/workout/${encodeURIComponent(id)}`);
+              }}
+              onLogFood={() => {
+                closeSession();
+                navigate(recoveryFoodPath("lift"));
               }}
               resumeDraft={resumeOnOpen}
             />

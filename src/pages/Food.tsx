@@ -135,6 +135,7 @@ import {
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { sumMealTotals } from "@/lib/mealTotals";
+import { recoverySportOf } from "@/lib/recoveryFood";
 import type { DayBudget } from "@/lib/portionLeft";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
@@ -204,6 +205,8 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
+  /* The session a finish screen's "Log recovery food" came from, if any. */
+  const refuelSport = recoverySportOf(searchParams.get("context"));
   const location = useLocation();
   const navigate = useNavigate();
   const guideAsked = guideRequest(location.state);
@@ -2132,17 +2135,24 @@ export default function Food() {
         </Suspense>
       )}
 
-      {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
-          RunSummary's "Log recovery food" deep link (?context=post-run),
-          today, and until dismissed — a transient contextual chip, not a
-          new structural section (Food6 IA untouched). Frames the existing
-          composer with one calm data-derived line; no separate flow, no
-          prescription, finalTarget unchanged. */}
-      {searchParams.get("context") === "post-run" && isToday && (
+      {/* FOOD-02: the refuel handoff. Renders ONLY when arriving via a
+          finish screen's "Log recovery food" link (`recoveryFoodPath`: the
+          run's, and the lift's since App1 Q30), today, and until
+          dismissed — a transient contextual chip, not a new structural
+          section (Food6 IA untouched). Frames the existing composer with
+          one calm data-derived line in the session's colour; no separate
+          flow, no prescription, finalTarget unchanged. */}
+      {refuelSport && isToday && (
         <motion.div variants={pageItemVariant}>
-          <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
+          <div
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+              refuelSport === "run" ? "bg-running/10" : "bg-lifting/10"
+            }`}
+          >
             <p className="flex-1 text-sm text-foreground">
-              Nice run — refuel with carbs and protein.
+              {refuelSport === "run"
+                ? "Nice run. Refuel with carbs and protein."
+                : "Nice workout. Refuel with protein and carbs."}
               {(() => {
                 const proteinLeft = Math.max(
                   0,
