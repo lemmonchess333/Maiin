@@ -114,6 +114,37 @@ describe("buildTrialReminderEmail", () => {
     expect(text).not.toMatch(/£|\d+\.\d\d/);
   });
 
+  it("speaks for Tropos when the trial was bought on the website", () => {
+    // RevenueCat Billing on Tropos's own Stripe account (13 Nov 2026).
+    const manageUrl = "https://troposfit.com/settings/account";
+    const { text, html } = buildTrialReminderEmail({
+      trial: record({ store: "rc_billing" }),
+      timeZone: "Europe/London",
+      manageUrl,
+    });
+    expect(text).toContain(
+      "Tropos will charge you £3.99 when the trial ends, for your first month of Pro, and then £3.99 every month."
+    );
+    expect(text).toContain(
+      "To cancel, sign in to Tropos on the web, open Settings, then Account, then Manage subscription, or use the link in any billing email from Tropos. Or go to https://troposfit.com/settings/account"
+    );
+    expect(text).not.toContain("Apple");
+    expect(html).toContain(`href="${manageUrl}"`);
+  });
+
+  it("names Paddle as the seller when the website sells through Paddle", () => {
+    const { text } = buildTrialReminderEmail({
+      trial: record({ store: "paddle" }),
+      timeZone: "Europe/London",
+      manageUrl: "https://troposfit.com/settings/account",
+    });
+    expect(text).toContain(
+      "Paddle, which sells Tropos Pro for us, will charge you £3.99 when the trial ends"
+    );
+    expect(text).toContain("any billing email from Paddle");
+    expect(text).not.toContain("Apple");
+  });
+
   it("speaks for Google Play when the trial is there", () => {
     const { text } = email({ store: "play_store" });
     expect(text).toContain("Google Play will charge you £3.99");

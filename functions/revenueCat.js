@@ -335,6 +335,84 @@ async function handleSync(context, deps, data = {}) {
   }
 }
 
+// Callers of the manage link: one per tap on Manage subscription.
+const MANAGE_RATE_LIMIT = {
+  action: "revenueCatManage",
+  maxCalls: 10,
+  windowMs: 600_000,
+};
+
+const NO_MANAGEMENT_URL =
+  "There's no subscription on this account to manage here. A subscription bought in the App Store is managed in your iPhone's Settings, under your name, then Subscriptions.";
+
+/** RevenueCat's link for managing the subscriber's subscription, https
+ *  only, or null. For a purchase on the web (RevenueCat Billing) it is the
+ *  customer portal, where they cancel or change their card. */
+function readManagementUrl(response) {
+  const url =
+    response && response.subscriber && response.subscriber.management_url;
+  if (typeof url !== "string" || !url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The web's Manage subscription (owner, 13 Nov 2026: web sales through
+ * RevenueCat Billing on Stripe). The person's own subscriber is read from
+ * RevenueCat and its management link returned; nothing comes from the
+ * request. It replaces the never-built createStripeBillingPortal.
+ */
+async function handleManagementUrl(context, deps) {
+  const { db, apiKey, fetchImpl, logger } = deps;
+  if (!context || !context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Sign in to manage your subscription."
+    );
+  }
+  const uid = context.auth.uid;
+  await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
+  if (
+    await rateLimiter.isRateLimited(
+      db,
+      uid,
+      MANAGE_RATE_LIMIT.action,
+      MANAGE_RATE_LIMIT.maxCalls,
+      MANAGE_RATE_LIMIT.windowMs
+    )
+  ) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Too many requests. Try again in a few minutes."
+    );
+  }
+  let response;
+  try {
+    response = await fetchSubscriber(uid, { apiKey, fetchImpl });
+  } catch (err) {
+    logger.warn("getSubscriptionManagementUrl: read failed", {
+      uid,
+      error: err instanceof RevenueCatUnavailable ? err.code : err.message,
+    });
+    throw new functions.https.HttpsError(
+      "unavailable",
+      "Couldn't open your subscription. Try again."
+    );
+  }
+  const url = readManagementUrl(response);
+  if (!url) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      NO_MANAGEMENT_URL
+    );
+  }
+  return { url };
+}
+
 function productionDeps() {
   return {
     db: admin.firestore(),
@@ -364,6 +442,13 @@ exports.syncRevenueCatEntitlement = functions
   .runWith({ ...REVENUECAT_CAP, secrets: [REVENUECAT_REST_KEY] })
   .https.onCall((data, context) => handleSync(context, productionDeps(), data));
 
+// The web's Manage subscription (purchaseProvider.ts manageSubscription).
+exports.getSubscriptionManagementUrl = functions
+  .runWith({ ...REVENUECAT_CAP, secrets: [REVENUECAT_REST_KEY] })
+  .https.onCall((data, context) =>
+    handleManagementUrl(context, productionDeps())
+  );
+
 // The trial reminder's sweep re-reads RevenueCat through the same path
 // before it emails anyone (trialReminders.js).
 exports.syncUser = syncUser;
@@ -378,4 +463,8 @@ exports._internals = {
   syncUser,
   handleWebhook,
   handleSync,
+  MANAGE_RATE_LIMIT,
+  NO_MANAGEMENT_URL,
+  readManagementUrl,
+  handleManagementUrl,
 };
