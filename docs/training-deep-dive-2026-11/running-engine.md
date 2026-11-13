@@ -345,6 +345,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Root cause: a block that starts inside the taper has no build to take a share of, so every week is `easy_30` (`runScheduler.ts:403-414, 812-816, 1371-1373`); the marathon floor is 4 weeks, so 4 weeks is "compressed", not "very tight" (`runPlanTiming.ts:136-140`); the copy is per status, not per plan (`raceGoalPlanner.ts:492-503`).
 - Fix: when the block opens in its taper, taper from the runner's stated starting point (75% and 60% of their own longest run and week), not from zero; if the starting point's longest run is under about half the race distance and the race is inside the minimum build, say so first and offer a later date or a shorter race; write the status line from what the generated weeks hold.
 - Size S to M. No lock in the way (Pgm8 R14c already says this for new runners only).
+- STATUS 2026-11-13: built. A compressed block's taper takes its 75% and 60% from the larger of its build's longest run and the runner's starting point, so a block with no build no longer runs easy 30s to a marathon. The planner's status line says what the weeks hold, and leads with both distances when the race is out of reach (the rule `raceOutOfReach` shared with the welcome-back sheet). The race card says a block with no build tapers. See `build-plan.md`, slice 3, #8.
 
 ### D9. A race far away is the same plan stretched. Hurts quality.
 

@@ -1926,6 +1926,7 @@ export default function ProgrammeRunSection({
                    hop was missing, so the card fell through to the compressed
                    branch and described training the plan does not contain. */
               belowFloor={raceCockpitVM.belowFloor}
+              noBuild={raceCockpitVM.noBuild}
               /* PR4 cross-link — the PROFILE copy is canonical for the
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */
