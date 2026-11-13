@@ -1,6 +1,6 @@
 /**
  * Train offers "Take a lighter week" from its menu and from the
- * Performance Index's banner (`shouldSuggestDeload`) only where
+ * Performance Index's banner (`lighterWeekOffer`) only where
  * `lighterWeekAllowed` says one can be taken, and either tap sends
  * `applyDeloadWeek`. Here the client's gate is pinned to the server's
  * preconditions: an offer the server refuses tells the person no to the

@@ -71,7 +71,14 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  *     (the focused run-plan editor).
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
@@ -267,6 +274,12 @@ interface ProgrammeRunSectionProps {
   /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
    *  pace the weeks ahead size a running starting point's climb at. */
   recentRuns?: readonly DatedRun[] | null;
+  /** Train's lighter-week offer while it shows (`DeloadBanner`, from the
+   *  one decision `lighterWeekOffer` makes for both sports, whole-app
+   *  grill Q11): first among the week's notices. While it shows, the
+   *  ease-week nudge waits, one advice notice at a time, since a lighter
+   *  week shortens the runs too. */
+  lighterWeekNotice?: ReactNode;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -292,6 +305,7 @@ export default function ProgrammeRunSection({
   dismissFellBehindPrompt,
   recentLayoff,
   recentRuns,
+  lighterWeekNotice = null,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -734,7 +748,10 @@ export default function ProgrammeRunSection({
   );
   const dismissalScope = `${profile.uid}:${localWeekKey(parseLocalDate(todayKeyDerivation))}`;
   const easeNudgeVisible =
-    easeNudge.show && easeNudgeDismissed !== dismissalScope;
+    easeNudge.show &&
+    easeNudgeDismissed !== dismissalScope &&
+    // One advice notice at a time: the lighter week shortens the runs too.
+    !lighterWeekNotice;
   // A6: trigger-aware counts — the card copy branches on which signal
   // fired (user-authored ratings vs measured pace misses).
   const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
@@ -1118,6 +1135,10 @@ export default function ProgrammeRunSection({
   // The week's notices, drawn under the session card in every mode (DS4).
   const weekNotices = (
     <>
+      {/* The lighter-week offer, the one decision for both sports (Q11):
+          a week-level warning, so first. */}
+      {lighterWeekNotice}
+
       {/* Run7 Q6 + Q10: the banners, in severity-urgency order (warnings
           before info), on the shared <Banner> primitive — info = coral 6%,
           warning = amber 8%, no error variant (errors are toasts).

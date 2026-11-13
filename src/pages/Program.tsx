@@ -182,12 +182,8 @@ import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectio
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
-import {
-  loadFromRunning,
-  shouldSuggestDeload,
-} from "@/lib/deloadSuggestVisibility";
+import { lighterWeekOffer } from "@/lib/lighterWeekOffer";
 import { runHeaderLine } from "@/lib/runHeaderLine";
-import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
@@ -267,12 +263,16 @@ function ProgramInner() {
   // time trial or tempo when the user hasn't set one (the "derive" half of
   // the capture decision, narrowed to efforts by Pgm8 R1).
   useRunFitnessAutoDerive();
-  // Pgm3: deload banner data source. usePerformanceWeeks reads the
-  // server-side performance rollup; the `deloadRecommended` flag on
-  // the current week is the spec's banner trigger. Lazy — at most 2
-  // weeks fetched (current + previous) since the banner only consults
-  // the current.
-  const { currentWeek: perfWeek } = usePerformanceWeeks(2);
+  // Pgm3: the lighter-week offer's data source. usePerformanceWeeks
+  // reads the server-side performance rollup; the `deloadRecommended`
+  // flag on the current week is the offer's trigger, and the two weeks
+  // before it say which of the engine's reasons fired, for its words
+  // (`lighterWeekOffer`, whole-app grill Q11).
+  const {
+    weeks: perfWeeks,
+    currentWeek: perfWeek,
+    previousWeek: perfPreviousWeek,
+  } = usePerformanceWeeks(3);
   // PROGRAM-DELOAD-01: Apply routes through the server applyDeloadWeek
   // command; undo lives in the success toast (reversibility-over-
   // confirmation — no dialog). The banner itself fires the 'applied'
@@ -1167,27 +1167,35 @@ function ProgramInner() {
   // moved to src/lib/runHeaderLine.ts so the case could be pinned by a test.
   const resolvedRunPlan = resolveRunPlan(profile, programState, todayKey);
   /**
-   * P1d pin 2 — race-taper exclusivity for the deload-suggest banner.
+   * The one lighter-week decision (whole-app grill Q11): the engine's
+   * recommendation for lifting, running or both, while a lighter week can
+   * be taken and never on top of a race's taper (P1d pin 2: "taper IS the
+   * deload; no double-deload"), with words for the reason that fired.
    *
-   * The Performance Index can recommend a deload for a runner who is
-   * already tapering into a race, and the banner had no guard: it offered
-   * a lighter week on top of a taper that is itself a planned load
-   * cut. The lock's words are "taper IS the deload; no double-deload".
-   *
-   * The decision lives in `shouldSuggestDeload` rather than inline here,
+   * The decision lives in `lighterWeekOffer` rather than inline here,
    * following this file's own runHeaderLine precedent — the bug was a
    * missing term in a render expression, which is exactly what no test
    * can reach while it stays one.
    */
-  const showDeloadSuggest = shouldSuggestDeload({
-    deloadRecommended: resolveDeloadRecommended(perfWeek),
-    loadFromRunning: loadFromRunning(perfWeek),
+  const lighterOffer = lighterWeekOffer({
+    week: perfWeek,
+    previous: perfPreviousWeek,
+    // The week before that, only when the series has no gap between.
+    before:
+      perfWeeks.length >= 3 && perfWeeks.at(-2) === perfPreviousWeek
+        ? perfWeeks.at(-3)
+        : null,
+    plan: {
+      lifts: (programState?.workouts?.length ?? 0) > 0,
+      runs: (programState?.runDays?.length ?? 0) > 0,
+    },
     lighterWeekAllowed: !!programState && lighterWeekAllowed(programState),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
       "5k" | "10k" | "half" | "marathon" | undefined,
   });
+  const showDeloadSuggest = lighterOffer !== null;
   const liftAdvice = pickLiftAdvice({
     deload:
       showDeloadSuggest &&
@@ -1538,6 +1546,25 @@ function ProgramInner() {
             dismissFellBehindPrompt={dismissFellBehindPrompt}
             recentLayoff={recentLayoff}
             recentRuns={recentRuns}
+            /* The lighter-week offer covers both sports (Q11), so a
+               runner meets it here as a lifter does on the Lift tab: the
+               same decision, words and dismissal. The offer only; the
+               lighter week once taken is the Lift tab's state, and the
+               runs it shortened show on their own cards. */
+            lighterWeekNotice={
+              showDeloadSuggest && !deloadNotice.dismissed ? (
+                <TrackProgrammeSectionView section="deload_banner">
+                  <DeloadBanner
+                    visible
+                    reason={lighterOffer?.reason}
+                    dismissed={deloadNotice.dismissed}
+                    onDismiss={deloadNotice.dismiss}
+                    weekKey={`w${displayWeekNumber}`}
+                    onApply={handleApplyDeload}
+                  />
+                </TrackProgrammeSectionView>
+              ) : null
+            }
           />
         </div>
       )}
@@ -1771,6 +1798,7 @@ function ProgramInner() {
                 <DeloadBanner
                   /* An active lighter week is state and shows regardless. */
                   visible={showDeloadSuggest}
+                  reason={lighterOffer?.reason}
                   dismissed={deloadNotice.dismissed}
                   onDismiss={deloadNotice.dismiss}
                   weekKey={`w${displayWeekNumber}`}

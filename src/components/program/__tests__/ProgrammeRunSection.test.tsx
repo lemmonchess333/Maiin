@@ -2650,3 +2650,70 @@ describe("ProgrammeRunSection — the 30-minute goal offered", () => {
     expect(offer()).not.toBeInTheDocument();
   });
 });
+
+describe("ProgrammeRunSection — the lighter-week offer (Q11)", () => {
+  /* One lighter-week decision for both sports: Train hands the Run tab
+     the same offer the Lift tab draws, so a runner meets it where they
+     plan their runs. It leads the week's notices, before the race's own. */
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const OFFER = (
+    <section aria-label="Lighter week suggested">
+      You ran 30% more than your usual week.
+    </section>
+  );
+
+  it("draws the offer it is handed, ahead of the race's banners", () => {
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+    } as Partial<UserProfile>);
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+        lighterWeekNotice={OFFER}
+      />
+    );
+    const offer = screen.getByRole("region", {
+      name: "Lighter week suggested",
+    });
+    const elapsed = screen.getByText("Your race has passed");
+    expect(
+      offer.compareDocumentPosition(elapsed) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("draws it for a freeform runner too", () => {
+    renderSection(
+      { ...commonProps(), lighterWeekNotice: OFFER } as ReturnType<
+        typeof commonProps
+      >,
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.getByRole("region", { name: "Lighter week suggested" })
+    ).toBeInTheDocument();
+  });
+
+  it("draws nothing in its place without one", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.queryByRole("region", { name: "Lighter week suggested" })
+    ).toBeNull();
+  });
+});
