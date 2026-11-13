@@ -1,7 +1,8 @@
 /**
  * Pgm8 R1 (owner-delegated): the runs a fitness benchmark may be
- * derived from. Efforts only: a race or a time trial, and a tempo's work
- * segments; never an easy, long, recovery, run-walk, interval or free run.
+ * derived from. Efforts only: a race or a time trial, a tempo's work
+ * segments, and since Run24 (4) an interval session's repeats; never an
+ * easy, long, recovery, run-walk or free run.
  *
  * Before this, the best of a runner's first easy runs was read as a race (the
  * simulator's F17): 6.7–9.7 VDOT under the runner, and the run summary, which
@@ -42,6 +43,11 @@ const MIN_RACE_METERS = 2000;
  *  cut well short can be run faster than threshold, and would read as more
  *  fitness than the runner has. */
 const MIN_TEMPO_WORK_SECONDS = 600;
+
+/** The least repeat work an interval session must have covered to be read,
+ *  seconds (Run24 (4)): the plan's shortest session, 8 x 400 m, at about
+ *  90 seconds a repeat. A Tropos heuristic, as the tempo's is. */
+const MIN_INTERVAL_WORK_SECONDS = 720;
 
 /** What a saved run says about itself that decides whether it was an
  *  effort. A `SavedRun` carries all of it. */
@@ -90,6 +96,23 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
       return null;
     return {
       kind: "tempo",
+      distanceM: work.meters,
+      timeS: work.seconds,
+      ...source,
+    };
+  }
+  // Run24 (4), deep dive D4: an interval session by its repeats, read as
+  // repeats at interval pace (`vdotFromIntervalPace`).
+  if (run.activityType === "intervals" && !run.workPacePinned) {
+    const work = run.workPortion;
+    if (
+      !work ||
+      !(work.seconds >= MIN_INTERVAL_WORK_SECONDS) ||
+      !(work.meters > 0)
+    )
+      return null;
+    return {
+      kind: "intervals",
       distanceM: work.meters,
       timeS: work.seconds,
       ...source,
