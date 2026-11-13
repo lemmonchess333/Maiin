@@ -4638,3 +4638,26 @@ the emulators at 393 px; no phone has drawn them.
       places; the race's day fills the date; the review names the race; and
       once setup is done, the run plan shows the race chosen, and its
       Space's hero counts you in the plan group (once 3 or more have it).
+
+## Train's race band and Run plan's photograph cards (2026-11-13)
+
+Affects: `RaceCockpitCard` (a band of the race's Space cover when the goal
+is bound to a race), `PhotoChoiceCards` on Settings → Run plan (the running
+goal and the distance), and the photographs in `src/assets/plan/`. Captured
+in Chromium at 393 px in both themes against the emulators; no phone has
+drawn them.
+
+- [ ] **Train with a race chosen from the list.** Choose a race in Run plan
+      or setup and open Train's Run tab. Passing: the race card opens on
+      the race's place with its name on it, sharp, and the card's corners
+      clip the photograph. A race typed in by hand keeps the plain card.
+- [ ] **Run plan's cards.** Open Settings → Run plan. Passing: No race and
+      Training for a race, then the four distances, are photographs with
+      their names readable in both themes; tapping one moves the coral
+      edge and the tick at once, and the photographs are there on the
+      first open on mobile data within about a second.
+- [ ] **VoiceOver.** Swipe through the cards. Passing: each is read as its
+      name, "selected" or not, then its fact ("42.2 km, 12+ weeks").
+- [ ] **Larger Text.** At the largest size, open Run plan and Train.
+      Passing: the cards grow taller and keep every word; the band grows
+      with the race's name.
