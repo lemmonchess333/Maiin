@@ -82,6 +82,13 @@ jobs:
           # The ADMIN_UIDS repository variable the functions deploy reads
           # serves here too, so one setting opens the page and the queue.
           VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS || vars.ADMIN_UIDS }}
+          # The website's checkout: the PRODUCTION token of RevenueCat's Web
+          # Purchase Link (owner, 13 Nov 2026; docs/iap/revenuecat-setup.md).
+          # Public by design, it names a checkout page. Never the sandbox
+          # token, which lets anyone subscribe free. Unset, the web shows no
+          # price and no buy button (canSellInThisBuild). Hosting only: the
+          # GitHub Pages preview does not sell.
+          VITE_REVENUECAT_WEB_PURCHASE_TOKEN: ${{ vars.REVENUECAT_WEB_PURCHASE_TOKEN }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |

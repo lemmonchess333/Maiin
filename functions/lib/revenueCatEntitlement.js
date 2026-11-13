@@ -38,9 +38,11 @@ const ENTITLEMENT_ID = "pro";
 
 /**
  * RevenueCat store → the platform `subscriptionSource` the rest of the app
- * reads. Stores missing here (promotional grants, Amazon, Paddle) are
- * recorded but never change the tier: none of them is a platform the app
- * knows how to manage, and a comp is granted in Firestore directly.
+ * reads. Stores missing here (promotional grants, Amazon) are recorded but
+ * never change the tier: neither is a platform the app knows how to manage,
+ * and a comp is granted in Firestore directly. The website's two checkouts,
+ * RevenueCat Billing on Stripe and Paddle (owner, 13 Nov 2026), are the
+ * web's `stripe` source: both are managed from the web app's Account.
  */
 const STORE_SOURCES = Object.freeze({
   app_store: SOURCE_IOS_IAP,
@@ -48,6 +50,7 @@ const STORE_SOURCES = Object.freeze({
   play_store: SOURCE_ANDROID_IAP,
   stripe: SOURCE_STRIPE,
   rc_billing: SOURCE_STRIPE,
+  paddle: SOURCE_STRIPE,
 });
 
 class RevenueCatResponseError extends Error {}

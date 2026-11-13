@@ -82,6 +82,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   Object.defineProperty(window, "location", {
     configurable: true,
     value: realLocation,
@@ -126,10 +127,13 @@ describe("canSellInThisBuild — whether a paywall may show a price", () => {
     expect(canSellInThisBuild()).toBe(true);
   });
 
-  it("is true on the web, which takes the Stripe path", () => {
+  it("is true on the web once the website's checkout token is set", () => {
     onDevice("web", IPHONE_SAFARI_UA);
     rcEnabled.mockReturnValue(false);
+    vi.stubEnv("VITE_REVENUECAT_WEB_PURCHASE_TOKEN", "tok_prod");
     expect(canSellInThisBuild()).toBe(true);
+    vi.stubEnv("VITE_REVENUECAT_WEB_PURCHASE_TOKEN", "");
+    expect(canSellInThisBuild()).toBe(false);
   });
 });
 
@@ -251,30 +255,41 @@ describe("on an iPad in the iOS app", () => {
 describe("in mobile Safari on an iPhone (the web build)", () => {
   beforeEach(() => onDevice("web", IPHONE_SAFARI_UA));
 
-  it("a purchase goes to Stripe Checkout, not the App Store", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => ({ url: "https://checkout.stripe.test/session" }),
-    });
+  it("a purchase goes to RevenueCat's web checkout as this account, not the App Store", async () => {
+    vi.stubEnv("VITE_REVENUECAT_WEB_PURCHASE_TOKEN", "tok_prod");
 
-    const result = await purchase("monthly", "uid-1", "a@example.com");
+    const result = await purchase("yearly", "uid/1", "a@example.com");
 
-    expect(result).toEqual({ success: true });
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(window.location.href).toBe("https://checkout.stripe.test/session");
+    const expected =
+      "https://pay.rev.cat/tok_prod/uid%2F1?package_id=%24rc_annual&email=a%40example.com";
+    expect(result).toEqual({ success: true, redirectUrl: expected });
+    expect(window.location.href).toBe(expected);
+    expect(fetchSpy).not.toHaveBeenCalled();
     expect(rcPurchase).not.toHaveBeenCalled();
   });
 
-  it("a checkout that couldn't start says so, not the browser's error", async () => {
-    fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
+  it("a build without the web checkout sells nothing, and says so", async () => {
+    vi.stubEnv("VITE_REVENUECAT_WEB_PURCHASE_TOKEN", "");
 
-    const result = await purchase("monthly", "uid-1", "a@example.com");
+    expect(canSellInThisBuild()).toBe(false);
+    expect(await purchase("monthly", "uid-1", "a@example.com")).toEqual({
+      success: false,
+      error: "Purchases aren’t available in this build.",
+    });
+  });
+
+  it("Manage subscription asks the server for RevenueCat's link and opens it", async () => {
+    syncEntitlement.mockResolvedValueOnce({
+      data: { url: "https://billing.example/portal/1" },
+    });
+
+    const result = await manageSubscription("uid-1");
 
     expect(result).toEqual({
-      success: false,
-      error: "Couldn’t start checkout. Try again.",
-      detail: "Failed to fetch",
+      success: true,
+      redirectUrl: "https://billing.example/portal/1",
     });
+    expect(syncEntitlement).toHaveBeenCalledWith({});
   });
 
   it("a billing portal that couldn't open says so, not the callable's code", async () => {

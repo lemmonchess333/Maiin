@@ -3,13 +3,17 @@ import { DAILY_AI_LIMITS } from "@/lib/subscription";
 /** What Pro includes, in the words the Pro page lists it, both for
  *  someone deciding (under the demo, before Continue) and for a Pro
  *  member (on their Pro card). One list, so the two cannot drift. Each
- *  line is one of the runtime gates in `proFeatures.ts`. The server caps
- *  Pro scans (`DAILY_AI_LIMITS`), so the photo line names the cap, not
- *  "unlimited". */
+ *  line is a runtime Pro gate: the first three are the gates in
+ *  `proFeatures.ts`, and the last is the pace insight (`usePaceInsight`),
+ *  which a free account never sees and which opens no paywall of its own,
+ *  so it has no registry key. It was Pro and missing from this list until
+ *  13 November 2026. The server caps Pro scans (`DAILY_AI_LIMITS`), so the
+ *  photo line names the cap, not "unlimited". */
 export const PRO_INCLUDES: readonly string[] = [
   `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,
   "A calorie target that adapts to you",
   "Macros that shift with your training",
+  "Running paces that update from your races and tempo runs",
 ];
 
 /** What stays free, said once under the list on the offer. Each is
