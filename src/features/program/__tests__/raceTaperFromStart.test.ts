@@ -27,7 +27,8 @@ const START = "2026-03-09";
 const raceIn = (weeks: number) =>
   localDateString(addLocalDays(parseLocalDate(START), weeks * 7 - 1));
 
-/** 330 minutes a week, the longest 150 minutes: at 6:20 /km a 20 km rung. */
+/** 330 minutes a week, the longest 150 minutes: at 6:20 /km a 22 km rung
+ *  (Run24 (6)). */
 const TRAINED: RunningBaseline = {
   version: 1,
   experience: "regular",
@@ -61,17 +62,18 @@ const longOf = (week: ScheduledRunDay[]) =>
 const easiesOf = (week: ScheduledRunDay[]) =>
   week.filter((run) => run.type === "easy").map((run) => run.templateId);
 
-describe("a marathon four weeks out, with a 20 km long run behind them", () => {
+describe("a marathon four weeks out, with a 22 km long run behind them", () => {
   const weeks = plan("marathon", 4).weeks;
 
   it("keeps a long run three and two weeks out, at 75% and 60% of theirs", () => {
-    expect(weeks.map(longOf)).toEqual(["long_15k", "long_12k", null, null]);
+    expect(weeks.map(longOf)).toEqual(["long_16k", "long_12k", null, null]);
   });
 
   it("holds the rest of their running at the same shares", () => {
-    // 180 minutes besides the long run over three runs: 60 each.
-    expect(easiesOf(weeks[0])).toEqual(["easy_50", "easy_50", "easy_50"]);
-    expect(easiesOf(weeks[1])).toEqual(["easy_40", "easy_40", "easy_40"]);
+    // 190 minutes besides the 22 km run over three runs: about 64 each, so
+    // 48 and 38 minutes, in the plan's sizes 40 and 30.
+    expect(easiesOf(weeks[0])).toEqual(["easy_40", "easy_40", "easy_40"]);
+    expect(easiesOf(weeks[1])).toEqual(["easy_30", "easy_30", "easy_30"]);
     expect(easiesOf(weeks[2]).every((id) => id === "easy_30")).toBe(true);
   });
 
@@ -122,10 +124,10 @@ describe("a compressed block whose short build stays under them", () => {
   it("tapers from their own long run, not the build's", () => {
     const weeks = plan("marathon", 5).weeks;
     // The one build week ramps from the plan's base; three and two weeks
-    // out take their shares of the starting point's 20 km.
+    // out take their shares of the starting point's 22 km.
     expect(weeks.map(longOf)).toEqual([
-      "long_12k",
-      "long_15k",
+      "long_14k",
+      "long_16k",
       "long_12k",
       null,
       null,

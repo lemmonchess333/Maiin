@@ -67,7 +67,13 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   still cuts over half in one step (`taper-cut`). A new runner's
  *   run-walk weeks, the stepped taper with its long run, the spacing and
  *   two run days for a race took out the rest, and the climb from what was
- *   done took the hybrids' `back-to-back` and the 10K's `taper-cut`.
+ *   done took the hybrids' `back-to-back`. Run24 (6) brought two back: on
+ *   the 2 km ladder the year-out marathon's long run sits at its ramp's
+ *   24 km where the coarser ladder rounded it down to 20, over half of a
+ *   four-run week at their pace (`long-share`); and the 2–3-day hybrids'
+ *   last build week, built from the capped weeks before it, now keeps its
+ *   intervals, so the 10K's one-week taper of easy 30s comes in a minute
+ *   under half of it (`taper-cut`).
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
@@ -76,11 +82,11 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "sub-3-30": ["spike", "under-dose", "volume-jump"],
   "sick-six-weeks": ["spike", "under-dose", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
-  "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
+  "year-out-marathon": ["back-to-back", "long-share", "spike", "volume-jump"],
   "hybrid-3-4-trim": ["spike", "volume-jump"],
   "hybrid-3-4-no-trim": ["spike", "volume-jump"],
-  "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
-  "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
+  "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike", "taper-cut"],
+  "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike", "taper-cut"],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each

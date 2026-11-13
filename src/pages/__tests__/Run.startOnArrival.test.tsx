@@ -154,6 +154,7 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkDistanceCue: () => {},
     checkTimeCue: () => {},
     checkPaceAlert: () => {},
+    checkEasyCeiling: () => {},
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),

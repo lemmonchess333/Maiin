@@ -81,10 +81,18 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks());
 
 describe("usePaceInsightFromRuns — gating", () => {
-  it("free users never get a suggestion", () => {
+  it("free users get no suggestion from the continuous form", () => {
     H.isPro = false;
     const { result } = renderHook(() => usePaceInsightFromRuns([run()]));
     expect(result.current.insight).toBeNull();
+  });
+
+  it("the run summary's one tap is every account's (Run24 (4))", () => {
+    H.isPro = false;
+    const { result } = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(result.current.insight).toEqual(INSIGHT);
   });
 
   it("loading or missing fitness returns null", () => {

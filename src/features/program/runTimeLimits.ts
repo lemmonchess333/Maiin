@@ -1,5 +1,6 @@
 import {
   isRunWalkTemplateId,
+  RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
@@ -77,6 +78,7 @@ export function fitRunToTimeLimit(
     (template) =>
       template.type === original.type &&
       !isRunWalkTemplateId(template.id) &&
+      !RETIRED_RUN_TEMPLATE_IDS.has(template.id) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <

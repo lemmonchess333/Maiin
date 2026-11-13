@@ -102,6 +102,19 @@ const AHEAD = [
   "Quicker than needed. Let the pace come back to you.",
 ];
 
+/* Run24 (12), deep dive D17: an easy or a long run going faster than
+   easy. Only ever this direction: an easy run cannot be too slow. */
+const EASY_CEILING = [
+  "Quicker than easy. Ease off: easy runs do their work at an easy pace.",
+  "Back off a little. Today is an easy run.",
+  "That's faster than easy. Save it for your harder days.",
+  "Ease off to easy. You should be able to talk in full sentences.",
+];
+
+export function easyCeilingCue(variant: number): string {
+  return pick(EASY_CEILING, variant);
+}
+
 export function paceAlertCue(
   direction: "behind" | "ahead",
   variant: number

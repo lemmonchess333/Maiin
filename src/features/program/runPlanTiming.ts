@@ -102,12 +102,26 @@ export function lastRampWeekOf(totalWeeks: number, taperWeeks: number): number {
   return Math.max(0, totalWeeks - 1 - taperWeeks - 1);
 }
 
-/** Whether a week of the ramp steps back: every 4th, never the peak. */
+/** Run24 (6), deep dive D2: a block shorter than this has no step-back
+ *  in the week before its peak, which put the cutback and the peak side by
+ *  side and the long run, medium-long and quality all jumping into the
+ *  peak together. A Tropos heuristic. */
+export const SHORT_BLOCK_WEEKS = 10;
+
+/** Whether a week of the ramp steps back: every 4th, never the peak, nor
+ *  the week before it in a block under `SHORT_BLOCK_WEEKS` (Run24 (6)). */
 export function isRampStepBack(
   weekIndex: number,
-  lastRampWeek: number
+  lastRampWeek: number,
+  totalWeeks?: number
 ): boolean {
-  return (weekIndex + 1) % STEP_BACK_EVERY === 0 && weekIndex !== lastRampWeek;
+  if ((weekIndex + 1) % STEP_BACK_EVERY !== 0) return false;
+  if (weekIndex === lastRampWeek) return false;
+  return !(
+    totalWeeks !== undefined &&
+    totalWeeks < SHORT_BLOCK_WEEKS &&
+    weekIndex === lastRampWeek - 1
+  );
 }
 
 /**
@@ -124,7 +138,7 @@ export function isRunStepBackWeek(
   const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
   if (phase !== "base" && phase !== "build") return false;
   const last = lastRampWeekOf(totalWeeks, TAPER_WEEKS_BY_DISTANCE[distance]);
-  return last > 0 && isRampStepBack(weekIndex, last);
+  return last > 0 && isRampStepBack(weekIndex, last, totalWeeks);
 }
 
 /** Run9 phase-3 (Slice B) — the taper-safe FLOOR, in weeks, per distance.
