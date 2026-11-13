@@ -352,7 +352,10 @@ describe("the taper retains quality only when the fitted build held it", () => {
     for (const more of [
       {},
       { runningBaseline: startingPoint("regular") },
-      { ...runDays(2), runningBaseline: startingPoint("building") },
+      // A building runner's build now holds none: it climbs toward the
+      // marathon's longer long run all block, and a climbing runner who is
+      // not a regular one runs easy (Run24 (1)).
+      { ...runDays(2), runningBaseline: startingPoint("regular") },
     ]) {
       const p = built("marathon", 16, more);
       expect(quality(p.weeks.slice(0, 12).flat()).length).toBeGreaterThan(0);
@@ -484,8 +487,10 @@ describe("the taper's long run steps down from the longest the build held (Run22
   it("a build that reached the plan's peak keeps the taper it had", () => {
     // Pinned as numbers, three and two weeks before race week: only a build
     // its fits held short of the peak steps down from less.
+    // Run24 (1): the marathon's 180 minutes take a full build to 30 or 32
+    // km, whose 75% and 60% in the plan's sizes are 20 and 15.
     const marathons: [string, Partial<RacePlanV2Input>, number, number][] = [
-      ["standard", {}, 15, 15],
+      ["standard", {}, 20, 15],
       [
         "lighter",
         { tuning: { volume: "lighter", difficulty: "standard" } },
@@ -495,19 +500,19 @@ describe("the taper's long run steps down from the longest the build held (Run22
       [
         "bigger",
         { tuning: { volume: "bigger", difficulty: "standard" } },
-        15,
+        20,
         15,
       ],
       ["a 5:00/km easy pace", { easyPaceSPerKm: 300 }, 20, 15],
-      ["a 7:00/km easy pace", { easyPaceSPerKm: 420 }, 15, 12],
+      // 25 km in its 180 minutes: 15 and 15.
+      ["a 7:00/km easy pace", { easyPaceSPerKm: 420 }, 15, 15],
       ["detrained", { recentLayoff: "detrained" }, 8, 6],
     ];
     for (const weeks of [8, 17, 29, 43])
       for (const [label, more, three, two] of marathons) {
-        // Eight weeks is too few for a 5:00/km runner to climb a rung a week
-        // to 30 km (Run23): the build peaks at 25, and the taper takes 15 and
-        // 15 of that.
-        const short = weeks === 8 && label === "a 5:00/km easy pace";
+        // Eight weeks is too few to climb a rung a week to 30 km (Run23):
+        // the build peaks at 25, and the taper takes 15 and 15 of that.
+        const short = weeks === 8 && three === 20;
         const out = fromRaceWeek(built("marathon", weeks, more));
         const at = `a marathon ${weeks} weeks out, ${label}`;
         expect(longKm(out(3)), at).toBe(short ? 15 : three);

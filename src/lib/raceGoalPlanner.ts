@@ -1,4 +1,5 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import { recentPace } from "@/features/program/layoffDetection";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -539,7 +540,9 @@ export function getRaceGoalPlannerState(
     !input.newRunnerUntil &&
     (ownLongestKm ?? 0) < raceKm &&
     raceOutOfReach({
-      longestKm: held.longestKm,
+      // The farther of the plan's long run and the person's own: a long run
+      // they already run counts, as the welcome-back sheet holds.
+      longestKm: Math.max(held.longestKm, ownLongestKm ?? 0),
       raceKm,
       // What the same plan builds for this runner with a full block's weeks.
       fullKm: Math.max(
@@ -587,9 +590,19 @@ export function getRaceGoalPlannerState(
         : `There’s no time for a long run before race day. ${qualityLine}`;
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
+    /* Run24 (1): setup states the peak, in time too where a pace gives it:
+       the confirmed one, else the recent runs'. */
+    const peakPace =
+      input.easyPaceSPerKm ??
+      (input.recentRuns ? recentPace(input.recentRuns, currentDate) : null);
+    const peak = longestBeforeRace(plan.weeks, peakPace, unit);
+    const peakLine =
+      peak && held.longestKm > 0
+        ? ` Your longest run will be ${peak.reads}${peakPace ? `, about ${aboutTime(peak.minutes)}` : ""}.`
+        : "";
     statusDescription =
       shortLine ??
-      `Full Base → Build → Taper → Race progression for your ${lower}.`;
+      `Full Base → Build → Taper → Race progression for your ${lower}.${peakLine}`;
     ctaLabel = "Save race plan";
   } else if (status === "compressed") {
     statusTitle = "Short runway";

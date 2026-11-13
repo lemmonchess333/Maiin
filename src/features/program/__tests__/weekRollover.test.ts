@@ -223,7 +223,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_20k | plan race_prep 5/17",
     ],
   },
   {
