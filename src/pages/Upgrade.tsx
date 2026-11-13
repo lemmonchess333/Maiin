@@ -20,7 +20,8 @@
  *
  * Entry points, read from `?from=`: onboarding's save lands here with
  * `state.next` = Home (FV1; it was the first activity), and "Continue
- * with Free" goes there; the Food page's photo-logging strip sends `from=food`; every
+ * with Free" goes there; the Food page's photo-logging strip sends `from=food`,
+ * and its personal-target card `from=personal_target` (Q71); every
  * other caller (Settings, Home's trial strip, the AI-usage section)
  * gets the plain page and "Not now" goes back. The source rides into
  * every paywall event so the funnel can be read per entry.
@@ -102,6 +103,7 @@ function sourceFromParam(from: string | null): PaywallSource {
   if (from === "trial_strip") return "trial_strip";
   if (from === "home_strip") return "home_strip";
   if (from === "history") return "history";
+  if (from === "personal_target") return "personal_target";
   if (from === "settings") return "settings";
   return "upgrade_page";
 }

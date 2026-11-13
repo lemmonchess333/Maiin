@@ -4727,6 +4727,29 @@ simulator build in CI is the only native compile.
       phone and never sent, so the "Health and Fitness" data answer is
       unchanged; confirm in App Store Connect before submitting.
 
+## A free account is told its personal target (Q87, 2026-11-13)
+
+Affects: `resolveAdaptiveTarget` (the estimate is worked out for a free
+account, never applied), `PersonalTargetCard` under Food's wheel, Home's
+Pro strip (the trial is offered once the target is ready, Q71) and the
+formula line on Settings → Nutrition. Unit-tested; no phone and no store
+sandbox has run it.
+
+- [ ] **The card on a phone.** A free account with about three weeks of
+      meals and eight or more weigh-ins over 14 days. Passing: Food shows
+      "Your personal target is ready" under the wheel with the number and
+      how far it is from today's target; the wheel keeps today's target.
+- [ ] **The trial from the card.** Tap Try Pro free on a sandbox Apple ID
+      that has never had the trial. Passing: Apple's sheet offers 7 days
+      free; once it is confirmed Food's target moves the same day (to the
+      personal target when it is within 150 kcal, else 150 toward it).
+- [ ] **Not now.** Tap the cross. Passing: the card is gone, and stays
+      gone after closing and reopening the app.
+- [ ] **Home's strip.** On the same free account before and after the
+      target is ready (from day 3). Passing: before, "Log meals from a
+      photo with Pro" and See plans; after, "Your personal target is ready:
+      try Pro free for 7 days" and Start trial.
+
 ## Charts older than 3 months and the score's details are Pro (Q84, 2026-11-13)
 
 Affects: Analytics' range pills (6M and 1Y), an exercise's chart (6M, 1Y,

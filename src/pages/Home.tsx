@@ -495,13 +495,17 @@ export default function Home() {
   // Home's Pro strip for a free account (homeProStrip.ts). Trial
   // eligibility decides the copy: a first-timer is offered the trial,
   // an account that has had one is offered the plans, and so is anyone
-  // the App Store says has had it under another account.
+  // the App Store says has had it under another account. The trial is
+  // offered once the personal target is ready (whole-app grill Q71, Q87),
+  // so the 7 days start on it; before then the strip offers the plans.
   const storeTrialEligibility = useStoreTrialEligibility();
   const proStripTrialEligible = offersTrial(
     isCheckoutTrialEligible(profile),
     storeTrialEligibility,
     DEFAULT_PLAN
   );
+  const proStripOffersTrial =
+    proStripTrialEligible && effectiveTargets.personalTarget != null;
   const showProStrip = shouldShowHomeProStrip({
     isPro,
     isInTrial,
@@ -1318,12 +1322,14 @@ export default function Home() {
               className="size-4 text-primary shrink-0"
             />
             <span className="text-xs font-medium text-foreground flex-1 text-pretty">
-              {proStripTrialEligible
-                ? "Log meals from a photo — try Pro free for 7 days"
-                : "Upgrade to Pro"}
+              {proStripOffersTrial
+                ? "Your personal target is ready: try Pro free for 7 days"
+                : proStripTrialEligible
+                  ? "Log meals from a photo with Pro"
+                  : "Upgrade to Pro"}
             </span>
             <span className="text-micro font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
-              {proStripTrialEligible ? "Start trial" : "See plans"}
+              {proStripOffersTrial ? "Start trial" : "See plans"}
             </span>
           </button>
           <IconButton

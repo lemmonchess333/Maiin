@@ -63,6 +63,16 @@ describe("adaptiveCalorieStatus", () => {
     ).toMatch(/5d ago/);
     expect(adaptiveCalorieStatusLabel({ kind: "formula" })).toMatch(/Formula/);
   });
+
+  it("a free account's formula line promises no adapting, only the personal target (Q87)", () => {
+    const free = adaptiveCalorieStatusLabel({ kind: "formula" }, null, false);
+    expect(free).not.toMatch(/adapts/);
+    expect(free).toMatch(/personal target/);
+    expect(free).toMatch(/Pro uses it/);
+    expect(adaptiveCalorieStatusLabel({ kind: "formula" }, null, true)).toMatch(
+      /adapts to your real expenditure/
+    );
+  });
 });
 
 describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", () => {

@@ -57,6 +57,9 @@ export type PaywallSource =
   /** Analytics or an exercise's chart: a range older than 3 months, or the
    *  score's details (whole-app grill Q84). */
   | "history"
+  /** Food's card telling a free account its personal target is ready
+   *  (whole-app grill Q49, Q71, Q87). */
+  | "personal_target"
   | "unknown";
 
 export interface PaywallEventMetadata {

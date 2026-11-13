@@ -54,7 +54,7 @@ test("setup days after sign-up still opens on first-week day one", async ({
     ).toBeVisible();
     await expect(
       page.getByRole("button", {
-        name: /Log meals from a photo|Upgrade to Pro/,
+        name: /Log meals from a photo|Upgrade to Pro|personal target is ready/,
       })
     ).toHaveCount(0);
   } finally {
