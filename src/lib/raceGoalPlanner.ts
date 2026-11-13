@@ -620,7 +620,8 @@ export function getRaceGoalPlannerState(
        renaming persisted vocabulary buys no user value). */
     statusDescription = far
       ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
-      : `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
+      : // Run24 (7): the honest sentence and the alternatives first.
+        `Too soon for a full ${lower} build. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 

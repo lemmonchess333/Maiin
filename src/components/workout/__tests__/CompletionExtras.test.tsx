@@ -24,7 +24,7 @@ vi.mock("@/components/workout/SessionShareRow", async () => {
     },
   };
 });
-vi.mock("@/components/workout/CompletionReminderChoice", () => ({
+vi.mock("@/components/workout/ReminderOffer", () => ({
   default: () => <p>Reminder offer</p>,
 }));
 
@@ -38,7 +38,7 @@ const share = {
 
 describe("CompletionExtras", () => {
   it("offers reminders only once the share question is answered", async () => {
-    render(<CompletionExtras share={share} kind="lift" activationJourneyV2 />);
+    render(<CompletionExtras share={share} kind="lift" />);
     await act(async () => {});
     expect(screen.getByText("Share sessions automatically?")).toBeVisible();
     expect(screen.queryByText("Reminder offer")).toBeNull();
@@ -47,7 +47,7 @@ describe("CompletionExtras", () => {
   });
 
   it("offers reminders at once when there is nothing to share", async () => {
-    render(<CompletionExtras kind="run" activationJourneyV2 />);
+    render(<CompletionExtras kind="run" />);
     expect(await screen.findByText("Reminder offer")).toBeVisible();
   });
 });

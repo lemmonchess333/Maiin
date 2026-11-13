@@ -119,6 +119,7 @@ const { pushableBadgeIds } = require("./lib/badgeNudge");
 const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+exports.getSubscriptionManagementUrl = revenueCat.getSubscriptionManagementUrl;
 
 // The reminder before a free trial is charged (Sub1, STATUS 2026-10-06).
 exports.trialReminderSweep = require("./trialReminders").trialReminderSweep;

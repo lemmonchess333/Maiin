@@ -71,7 +71,6 @@ interface SessionCompleteScreenProps {
   sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   completing: boolean;
   saved?: boolean;
-  activationJourneyV2?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
   planContext?: { next: string };
   /** The saved session's feed post. The finish screen asks once, posts
@@ -111,7 +110,6 @@ export default function SessionCompleteScreen({
   sessionVariant,
   completing,
   saved = false,
-  activationJourneyV2 = false,
   saveStatus,
   planContext,
   share,
@@ -632,12 +630,7 @@ export default function SessionCompleteScreen({
               session begun on Sunday night keeps past midnight. */}
           {saved && <WeekPulseCard sessionDay={liftSessionDay(startedAt)} />}
           {saved && (
-            <CompletionExtras
-              share={share}
-              badge={false}
-              kind="lift"
-              activationJourneyV2={activationJourneyV2}
-            />
+            <CompletionExtras share={share} badge={false} kind="lift" />
           )}
 
           {hasMuscleFigure(muscleCategories) && (

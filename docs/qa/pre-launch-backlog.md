@@ -65,12 +65,31 @@ gate (`raceGoalValid`) takes it from the Firestore deploy.
       read back as A race I've entered), and on the goal's date the run
       tab says "Your 10K" and "Start your 10K".
 
+## The one ask for notifications (owner, Q66, 13 November 2026)
+
+The section below is the first-week offer this widened. Since 13 November
+every account is asked, once, on the finish screen of its first saved
+session with no answer on file (`ReminderOffer`), and one Remind me turns
+on the training-day reminder AND the server's pushes (streak nudge, weekly
+recap, badge): one iPhone permission covers both, and push had been asked
+for only from a switch in Settings. Setup's reminder row and the finish
+screen's evening-reminder switch are gone.
+
+- [ ] **One prompt, both channels.** On a TestFlight build, a new account,
+      save a first workout and answer the share question. Passing: Remind
+      me shows the iOS permission prompt once; after Allow, Settings →
+      Notifications shows training-day reminders on and Push on, and
+      Diagnostics shows this device's push token registered.
+- [ ] **An older account is asked too.** On an account set up before
+      this build that never answered the offer, save a session. Passing:
+      the offer shows once, and not again after either answer.
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
 share question is answered, the finish screen offers the training-day
 reminder by naming the next session ("Remind you before Pull B?", with
-when it would first go off) and Not now (`FirstWeekReturnOffer`). Remind
+when it would first go off) and Not now (`FirstWeekReturnOffer`, now `ReminderOffer`). Remind
 me asks the phone for notification permission and turns on the reminder
 at setup's 07:30; a refusal says where to allow it. It asks nothing when
 setup's reminder row already turned it on, and a v2 account is no longer
@@ -2339,6 +2358,16 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 
 - [x] ~~**Launch gate:** add the web App-Store steer~~ Not built, by the owner's call (17 October): the web build is not a sales surface, and web Pro comes later through a Stripe website (#2866). Was: — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
 - [ ] When #2866 builds the website, confirm no web surface but its checkout reaches Stripe (`useProCheckout` call sites).
+
+### The website sells through RevenueCat Billing on Stripe (owner, 13 November 2026)
+
+The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
+
+- [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
+- [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
+- [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
+- [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
+- [ ] Selling to the EU and the US (owner, 13 November): either Paddle as the engine (it handles VAT and sales tax; approve the domain, give its API key Customer portal sessions (Write)), or on Stripe: register for EU VAT (non-Union OSS) before the first EU sale, turn on Stripe Tax, and watch US state thresholds. Prices in GBP, EUR and USD in whichever engine is chosen.
 
 ## Legacy meal photos in Storage (uploaded before Food9)
 

@@ -106,6 +106,21 @@ describe("getRaceGoalPlannerState", () => {
     expect(s.statusDescription).not.toMatch(/\bhard\b/i);
   });
 
+  // Run24 (7): a race too close says so first, then what gives it time,
+  // and still offers the plan.
+  it("leads a race too close with the alternatives, and still offers the plan", () => {
+    const tight = getRaceGoalPlannerState({
+      ...base,
+      targetDate: "2026-06-22",
+      newRunnerUntil: newRunnerUntil("new", TODAY),
+    });
+    expect(tight.status).toBe("below-floor");
+    expect(tight.statusDescription).toMatch(
+      /^Too soon for a full marathon build\. A later race or a shorter one gives it time\. /
+    );
+    expect(tight.ctaLabel).toBe("Save mostly-easy plan");
+  });
+
   // ── State E — below floor / finish safely ──────────────────────────
   it("State E: marathon 3 weeks out → below-floor, Save mostly-easy plan", () => {
     const s = getRaceGoalPlannerState({ ...base, targetDate: "2026-06-22" });
