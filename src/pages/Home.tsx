@@ -15,6 +15,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useRunReturn } from "@/features/program/useRunReturn";
 import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
+import { raceLongRunCheck } from "@/features/program/raceLongRunCheck";
 import { APPLIED } from "@/features/program/programOutcome";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { useMeals } from "@/hooks/useMeals";
@@ -806,6 +807,29 @@ export default function Home() {
   const closeRunReturn = () => {
     dismissRunReturn();
     runReturnSurface.dismiss();
+  };
+  /**
+   * Run24 (11), deep dive D14: the weekly check of a race against the long
+   * runs actually done (`raceLongRunCheck`). It opens the fell-behind sheet
+   * in its race register once a week, below the weekly check's own sheet
+   * and the run return, which greet the same runner first.
+   */
+  const raceCheck = useMemo(
+    () =>
+      raceLongRunCheck({ profile, programState, recentRuns, today: todayKey }),
+    [profile, programState, recentRuns, todayKey]
+  );
+  const { dismissed: raceCheckDismissed, dismiss: dismissRaceCheck } =
+    useDismissOnce(`tropos-race-check:${raceCheck?.weekKey ?? "none"}`);
+  const raceCheckSurface = useSurface({
+    id: "race-check",
+    priority: 26,
+    eligible: raceCheck !== null && !raceCheckDismissed,
+    suppressedBy: ["fell-behind", "run-return"],
+  });
+  const closeRaceCheck = () => {
+    dismissRaceCheck();
+    raceCheckSurface.dismiss();
   };
   /** Run15 (deep dive D11): what the welcome-back sheets read a race's
    *  reach from (`FellBehindSheet`'s `raceReach`). */
@@ -1808,6 +1832,30 @@ export default function Home() {
             // layoff a rebuild plans from.
             recentLayoff="detrained"
             raceReach={raceReach}
+          />
+        )}
+        {raceCheck && profile?.raceGoal && (
+          <FellBehindSheet
+            open={raceCheckSurface.active}
+            onClose={closeRaceCheck}
+            surface="race-check"
+            // No weekly prompt to clear: "Not now" settles this week's check.
+            dismissFellBehindPrompt={async () => APPLIED}
+            realignRacePlan={async () => {
+              if (!(await realignAndSay()))
+                throw new Error("The plan wasn’t realigned");
+            }}
+            onRaceMoved={() => {
+              closeRaceCheck();
+              navigate("/settings/run-plan");
+            }}
+            raceModeActive
+            recentLayoff="none"
+            raceCheck={{
+              ...raceCheck,
+              distance: profile.raceGoal.distance,
+              unit: resolveDistanceUnit(profile.preferredDistanceUnit),
+            }}
           />
         )}
       </Suspense>
