@@ -223,8 +223,9 @@ longer replacing itself; only a phone shows the card.
 - [ ] **A run on the lock screen.** On a build with the runner's drawing
       (Wid2, 2026-11-12 or later), start an outdoor run and lock the phone.
       Passing: a dark card with the runner drawn on the left in a coral
-      light, "RECORDING", the distance large and the pace and time under
-      it, updating while locked; the runner changes pose about every four
+      light, the session's name in capitals ("EASY 30" for a planned easy
+      run, "FREE RUN" for one with no plan), the distance large and the
+      pace and time under it, updating while locked; the runner changes pose about every four
       seconds; Pause reads "PAUSED" and the runner dims and holds still;
       Finish or Discard takes the card away at once, leaving no blank card;
       on an iPhone with a Dynamic Island, the run's distance shows there,

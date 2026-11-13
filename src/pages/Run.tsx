@@ -55,6 +55,7 @@ import RunLaunchCard from "../components/run/RunLaunchCard";
 import RunTilePicker from "../components/run/RunTilePicker";
 import { useLastRunType } from "../hooks/useLastRunType";
 import {
+  ACTIVITY_TYPES,
   buildLaunchConfig,
   buildTileConfig,
 } from "../components/run/runConfigDefaults";
@@ -142,6 +143,7 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runInProgressName,
   runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
@@ -1440,16 +1442,34 @@ export default function Run() {
     if (!isOutdoorGpsRun(runConfig)) return;
     if (phase !== "active" && phase !== "paused") return;
     const paceS = rollingPaceSeconds(gps.points, 30);
+    // The card names the session the run was started as, or its type.
+    const name = runInProgressName({
+      metadata: runConfig?.planMetadata,
+      launch: { templateId: launchWorkout?.id, racePace: launchRacePace },
+      unit,
+      typeName: ACTIVITY_TYPES.find((a) => a.type === runConfig?.activityType)
+        ?.name,
+    });
     const data = {
       distance: distanceLabel(gps.distance, unit),
       pace: paceS !== null ? paceLabel(paceS, unit) : "—",
       elapsed: timer.formatTime(timer.elapsed),
-      label: phase === "paused" ? "Paused" : "Recording",
+      label: phase === "paused" ? "Paused" : name,
       paused: phase === "paused",
     };
     void startRunActivity(data);
     void updateRunActivity(data);
-  }, [phase, timer, timer.elapsed, gps.distance, gps.points, unit, runConfig]);
+  }, [
+    phase,
+    timer,
+    timer.elapsed,
+    gps.distance,
+    gps.points,
+    unit,
+    runConfig,
+    launchWorkout,
+    launchRacePace,
+  ]);
 
   // Dismiss the Live Activity the moment the run leaves the live states
   // (finish → summary, discard, GPS-fail exit) and on unmount — a card

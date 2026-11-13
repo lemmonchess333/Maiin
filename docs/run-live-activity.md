@@ -33,14 +33,20 @@ design C: the picture leads):
 
 - **The Lock Screen card.** The runner's drawing on the left, in one soft
   light of the run's coral in that corner of a dark card. Beside it: the
-  state in small capitals ("RECORDING" / "PAUSED"), the distance as the
+  session's name in small capitals ("EASY 30", "TEMPO RUN"; "PAUSED" while
+  paused), the distance as the
   card's one large figure with its unit small beside it, and one line with
   the pace and the time ("5:12 /km · 23:41").
 - **The Dynamic Island.** Compact: the run glyph and the distance.
   Minimal: the distance alone, since Apple asks for something live in the
-  smallest size. Expanded: the glyph and the state on the left of the
-  camera, the time on its right, and under them the drawing with the
+  smallest size. Expanded: the glyph on the left of the camera, the time
+  on its right, and under them the drawing with the session's name, the
   distance and "Pace 5:12 /km".
+- **The name is the session's.** The one the run was started as, as the
+  setup's Start button named it ("Easy 30", "Long 18 km with race pace"),
+  or the run type's name once it is another type or no plan's session
+  ("Tempo run", "Free run"): `runInProgressName` in `runPlanMetadata.ts`.
+  It is on one line, cut short if it runs past the card.
 - **The drawing changes pose.** A Live Activity plays no clip, so the card
   shows one pose of the runner and takes the next on every second update,
   about every four seconds. Paused, it holds its pose at 45%.
@@ -54,10 +60,9 @@ refuses a card whose image is larger than the card, so the height stays
 inside the card's 160 pt; `liveActivityArt.test.ts` holds the sizes, the
 names and the catalog's place in the extension's bundle.
 
-Two things in the mockup are not in this card. Its figure is the system's
+One thing in the mockup is not in this card. Its figure is the system's
 bold face: the plugin draws only the system's fonts, and Archivo needs our
-own views. And its state reads "Recording", where the mockup named the
-session ("Easy run").
+own views.
 
 All values arrive pre-formatted from the app (unit-aware `distanceLabel` /
 `paceLabel`, the run timer's formatter), so the lock screen and the in-app
@@ -156,7 +161,7 @@ and exported with no change to the workflow. Apple's side needs, once:
 | --- | ------------------------------------------------------------------------------------ | ------ | ----- |
 | 1   | Start outdoor run → card appears on lock screen with the runner, distance, pace/time | ⬜     |       |
 | 2   | Stats keep updating with screen locked (rides the background-GPS foreground service) | ⬜     |       |
-| 3   | Pause run → card state line flips to "Paused"; resume flips back                     | ⬜     |       |
+| 3   | Pause run → the name reads "PAUSED" and the runner dims; resume brings the name back | ⬜     |       |
 | 4   | Finish run → card dismisses (no stale card after save)                               | ⬜     |       |
 | 5   | Discard run → card dismisses                                                         | ⬜     |       |
 | 6   | Dynamic Island (14 Pro+): compact distance; expanded the runner, distance and pace   | ⬜     |       |

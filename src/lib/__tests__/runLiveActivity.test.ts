@@ -54,7 +54,7 @@ const DATA: RunActivityData = {
   distance: "1.2 km",
   pace: "5:12 /km",
   elapsed: "6:14",
-  label: "Recording",
+  label: "Easy 30",
 };
 
 beforeEach(() => {
@@ -146,6 +146,16 @@ describe("start", () => {
       "image"
     );
     expect(opts.data.pose).toBe("run-easy-pose-1");
+    // The session's name sits with the drawing, under the camera, on one
+    // line: beside the camera there is room for about a dozen letters.
+    const expanded = opts.dynamicIslandLayout.expanded as unknown as {
+      leading: { type: string };
+      bottom: { children: { children?: { properties: object[] }[] }[] };
+    };
+    expect(expanded.leading.type).toBe("image");
+    const words = expanded.bottom.children[1].children!;
+    expect(words[0].properties).toContainEqual({ text: "{{kicker}}" });
+    expect(words[0].properties).toContainEqual({ lineLimit: 1 });
     // The smallest size shows the distance, not an icon: Apple asks for
     // something live there.
     expect(opts.dynamicIslandLayout.minimal.type).toBe("text");
@@ -241,7 +251,7 @@ describe("the drawing's pose", () => {
 describe("what the card says", () => {
   it("splits the distance into its figure and its unit", () => {
     expect(runCardData(DATA, 0)).toMatchObject({
-      kicker: "RECORDING",
+      kicker: "EASY 30",
       distanceValue: "1.2",
       distanceUnit: "km",
       line: "5:12 /km · 6:14",
