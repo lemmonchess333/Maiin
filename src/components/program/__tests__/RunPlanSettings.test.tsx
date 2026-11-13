@@ -194,7 +194,7 @@ function openPickerFor(race: ReturnType<typeof firstUpcomingRace>) {
     "5k": "5K",
     "10k": "10K",
     half: "Half",
-    marathon: "Full",
+    marathon: "Marathon",
   }[race.event!.distance as "5k" | "10k" | "half" | "marathon"];
   fireEvent.click(
     within(screen.getByRole("radiogroup", { name: "Race distance" })).getByRole(
@@ -499,18 +499,46 @@ describe("RunPlanSettings", () => {
      is a race, on the same coral segmented control as Distance, where two
      cards named the stored modes ("Freeform", "Race prep") and the chosen
      one wore a hand-mixed coral wash. */
-  it("asks whether there is a race on a coral segmented control", () => {
+  /* Owner, 2026-11-13: the goal and the distance are photograph cards,
+     as Runna draws them; the chosen card has the running colour's edge. */
+  it("asks whether there is a race on photograph cards", () => {
     renderPage(baseProfile);
     const group = screen.getByRole("radiogroup", { name: "Running goal" });
     const noRace = screen.getByRole("radio", { name: "No race" });
     expect(group).toContainElement(noRace);
     expect(noRace).toHaveAttribute("aria-checked", "true");
-    expect(noRace.className).toContain("bg-running-fill");
+    expect(noRace.className).toContain("outline-running");
+    // The fact is the card's description, not part of its name.
+    expect(noRace).toHaveAccessibleDescription("Run when you like");
+    for (const card of within(group).getAllByRole("radio"))
+      expect(card.querySelector("img")).toHaveAttribute("alt", "");
     expect(screen.queryByText("Freeform")).not.toBeInTheDocument();
     expect(screen.queryByText("Race prep")).not.toBeInTheDocument();
   });
 
-  it("draws the plan's two knobs in the running colour, as Distance is", () => {
+  it("names the race on its card, over the race's own place", () => {
+    renderPage({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "marathon",
+        targetDate: localDateString(addLocalDays(new Date(), 140)),
+        eventName: "London Marathon",
+        eventSpaceId: "london-marathon",
+        entry: "race",
+      },
+    } as UserProfile);
+    const race = screen.getByRole("radio", { name: "Training for a race" });
+    expect(race).toHaveAccessibleDescription("London Marathon");
+    expect(race.querySelector("img")?.getAttribute("src")).toMatch(
+      /space-london-marathon/
+    );
+    const distance = screen.getByRole("radio", { name: "Marathon" });
+    expect(distance).toHaveAttribute("aria-checked", "true");
+    expect(distance).toHaveAccessibleDescription(/^42\.2 km · \d+\+ weeks$/);
+  });
+
+  it("draws the plan's two knobs in the running colour", () => {
     renderPage(baseProfile);
     pickRacePrep();
     for (const name of ["Long-run volume", "Plan intensity"]) {
@@ -998,7 +1026,7 @@ describe("RunPlanSettings", () => {
       ["5K", "24:30"],
       ["10K", "50:00"],
       ["Half", "1:50:00"],
-      ["Full", "3:59:00"],
+      ["Marathon", "3:59:00"],
     ]) {
       fireEvent.click(screen.getByRole("radio", { name: distance }));
       expect(time).toHaveAttribute("placeholder", `e.g. ${example}`);

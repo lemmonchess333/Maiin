@@ -32,13 +32,25 @@ import {
 } from "@/lib/raceGoalEntry";
 import PhaseRail from "./PhaseRail";
 import UpcomingRacePicker from "./UpcomingRacePicker";
+import PhotoChoiceCards, { type PhotoChoice } from "./PhotoChoiceCards";
+import { PLAN_DISTANCE_PHOTOS } from "@/lib/planPhotos";
+import { getRaceMinWeeks } from "@/features/program/runPlanTiming";
 
-const DISTANCE_OPTIONS: { value: RaceDistance; label: string }[] = [
-  { value: "5k", label: "5K" },
-  { value: "10k", label: "10K" },
-  { value: "half", label: "Half" },
-  { value: "marathon", label: "Full" },
-];
+/* The distances as photograph cards (owner, 2026-11-13), each with its
+   length and the weeks a full build takes (`getRaceMinWeeks`). */
+const DISTANCE_OPTIONS: PhotoChoice<RaceDistance>[] = (
+  [
+    ["5k", "5K", "5 km"],
+    ["10k", "10K", "10 km"],
+    ["half", "Half", "21.1 km"],
+    ["marathon", "Marathon", "42.2 km"],
+  ] as const
+).map(([value, label, km]) => ({
+  value,
+  label,
+  fact: `${km} · ${getRaceMinWeeks(value)}+ weeks`,
+  photo: PLAN_DISTANCE_PHOTOS[value],
+}));
 
 interface RaceGoalPlannerProps {
   distance: RaceDistance;
@@ -117,9 +129,8 @@ export default function RaceGoalPlanner({
       {/* Distance */}
       <div className="space-y-2">
         <SectionHeading size="compact">Distance</SectionHeading>
-        <SegmentedControl
+        <PhotoChoiceCards<RaceDistance>
           ariaLabel="Race distance"
-          tone="running"
           options={DISTANCE_OPTIONS}
           value={distance}
           onChange={onDistanceChange}
