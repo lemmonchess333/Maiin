@@ -75,7 +75,8 @@ Apple Health's permission belongs to the install while `connected` lives on
 the account (a new phone or a reinstall otherwise reads nothing forever).
 
 **iOS (shipped):** the Home Steps tile shows the real daily step count from
-Apple Health via the `capacitor-health` plugin (peer `@capacitor/core >=8`).
+Apple Health via the `@capgo/capacitor-health` plugin (peer
+`@capacitor/core >=8`; `capacitor-health` until 13 November 2026).
 The tile is always on (the `STEPS_TILE_ENABLED` flag was removed once
 HealthKit shipped). On the native shell it hides only when Health is
 unavailable (`stepsStatus === "unavailable"`). On the web it shows the state
@@ -124,7 +125,7 @@ never an invented "denied".
       back. If iOS forgot the permission, its sheet appears first.
 
 **Remaining follow-up — Android / Health Connect (needs Android Studio):**
-`capacitor-health` also backs Health Connect. Add the `READ_STEPS` Health
+`@capgo/capacitor-health` also backs Health Connect. Add the steps read Health
 Connect permission to `AndroidManifest.xml`, handle the
 `showHealthConnectInPlayStore()` / `openHealthConnectSettings()` recovery
 paths (Health Connect app may be absent), and re-run the device checklist on
@@ -145,6 +146,13 @@ sessions, heart rate, sleep. Most of it cannot be built on the installed
 | Write sessions       | No                     | `WRITE_WORKOUTS` is in the permission list, but the plugin has no write method                                                                                     |
 | Heart rate           | Only after the fact    | Only attached to a workout (`queryWorkouts({ includeHeartRate: true })`), so only for runs another app recorded; live heart rate is `docs/heart-rate-healthkit.md` |
 | Sleep                | No                     | No data type                                                                                                                                                       |
+
+**13 November 2026: the plugin was replaced** by `@capgo/capacitor-health`
+8.12.3 (the owner, whole-app grill Q75), whose `definitions.d.ts` reads
+weight, sleep with its stages, resting heart rate, heart rate variability,
+respiratory rate, VO2 max and wrist temperature, and has a `saveSample`
+write. The table above is the old plugin's; only active energy's row still
+holds as written.
 
 Body weight has the most product value: it feeds the adaptive-TDEE slope,
 ADR-0007 Q3 designed the merge, and `isPreferred()` in

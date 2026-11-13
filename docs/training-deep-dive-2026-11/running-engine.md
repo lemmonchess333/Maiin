@@ -329,6 +329,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Root cause: reps are by distance (`src/lib/workoutTemplates.ts:261-330`); the new-runner cap fits a session by its nominal minutes, 29 for `4x1k`, which assumes reps at about 3:40 /km (`src/features/program/runTimeLimits.ts:38-50`, `src/features/program/newRunner.ts:185-213`); quality is allowed from the first week after the six run-walk weeks (`newRunner.ts:26`, `runScheduler.ts:1647-1652`).
 - Fix: no tempo or 1 km reps in a block begun as a new runner until continuous runs reach 40 to 45 min; until then strides or 6 x 1 min pick-ups by time; size interval sessions in minutes at the runner's pace wherever a cap is applied.
 - Size S to M. Lock: Run20 (5) sets six weeks without quality; this extends it (a STATUS line).
+- STATUS 2026-11-13: built (Run24 (8)). A block begun as a new runner holds no tempo or intervals, its first six weeks or after, until the runner has run 40 minutes in one go (`beginnerQualityWeek`: from the week after the earliest such run among the recent runs); its easy weeks keep their strides until then, and the ladders start at their first rung when quality begins. In the repo's `new-runner-marathon` trace the tempo two weeks after run-walk goes, and the first quality session is 4 x 1 km the week after the runner's first 47-minute long run; in `couch-to-5k` the build's quality slot becomes a strides run. Sizing interval sessions in minutes at the runner's pace wherever a cap applies is not built.
 
 ### D7. No plan without a race date, and nothing after the recovery weeks. Breaks trust.
 
@@ -345,6 +346,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 - Root cause: a block that starts inside the taper has no build to take a share of, so every week is `easy_30` (`runScheduler.ts:403-414, 812-816, 1371-1373`); the marathon floor is 4 weeks, so 4 weeks is "compressed", not "very tight" (`runPlanTiming.ts:136-140`); the copy is per status, not per plan (`raceGoalPlanner.ts:492-503`).
 - Fix: when the block opens in its taper, taper from the runner's stated starting point (75% and 60% of their own longest run and week), not from zero; if the starting point's longest run is under about half the race distance and the race is inside the minimum build, say so first and offer a later date or a shorter race; write the status line from what the generated weeks hold.
 - Size S to M. No lock in the way (Pgm8 R14c already says this for new runners only).
+- STATUS 2026-11-13: built. A compressed block's taper takes its 75% and 60% from the larger of its build's longest run and the runner's starting point, so a block with no build no longer runs easy 30s to a marathon. The planner's status line says what the weeks hold, and leads with both distances when the race is out of reach (the rule `raceOutOfReach` shared with the welcome-back sheet). The race card says a block with no build tapers. See `build-plan.md`, slice 3, #8.
 
 ### D9. A race far away is the same plan stretched. Hurts quality.
 
@@ -376,10 +378,12 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D12. With a goal time every tempo becomes goal pace; without one there is no race-pace work. Hurts quality.
 
 - Evidence: plan G: tempos at 4:37, threshold 4:21 never run; plan F: none. Root cause: `racePace.ts:146-150`. Fix: alternate threshold and goal-pace sessions; use the marathon band when no goal is typed. Size S.
+- STATUS 2026-11-13: built (Run24 (9)). A build's tempos alternate race pace and threshold in pairs of weeks (`buildTempoAtRacePace`), so with tempos every other week every other one is at race pace; every taper tempo stays at race pace. A marathon with no goal time runs its race-pace work, tempos and long-run finishes, at the middle of the marathon band a confirmed benchmark gives, and the words say "marathon pace", never a goal the runner did not set. A half with no goal time has none, as the lock reads.
 
 ### D13. Race week and the taper ignore how much the runner runs. Polish to quality.
 
 - Evidence: race week is an `easy_30` on every run day before the race (six, Saturday included, for runner G; `runScheduler.ts:1434-1453`). In the repo's `owner-marathon` trace the taper and race week hold more weekday running (five 30-minute runs) than the build did (five 20-minute runs), lines 124-131 of `src/features/program/__tests__/sim/__traces__/run/owner-marathon.txt`. Fix: race week of two or three short runs and a 15 to 20 minute shake-out, never above the build's own easy runs. Size S.
+- STATUS 2026-11-13, never above the build: built. Two causes. A week with no long run gave its weekday runs the long run's minutes as well, which is right for a lead-in and is how the owner's week before race week held five 30s after a build of five 20s; a taper or race week with no long run now keeps its weekday runs to their own minutes, cut to no shorter than 20. And a taper or race week fell back to 30-minute runs whatever the build held; where the build's easy runs were under 30 (a new runner's, a time limit), its 30s are now the build's. In the owner's trace the week before race week goes from 160 to 120 minutes and race week's runs before the race from 150 to 110 (`taperCutsWeekdays.test.ts`, `newRunner.test.ts`). Two or three runs in race week in place of one on every run day is not built: it cuts how often they run, which the taper's evidence keeps (Bosquet 2007), so it is a call to make on its own.
 
 ### D14. Missed long runs collapse the plan without a word about the race. Breaks trust.
 
@@ -390,10 +394,13 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D15. Interval sessions are thin on structure. Polish.
 
 - 5 min warm-up before 1 km reps, 90 s recovery for every runner (a 3:56 rep and a 6:37 rep get the same rest), `workoutTemplates.ts:261-330`. Fix: 10 to 15 min warm-up, recovery 50 to 90% of the rep's time. Size S.
+- STATUS 2026-11-13, the warm-up: built. The four interval sessions warm up for 10 minutes, not 5, and their planned minutes rise by the same 5 (4 x 1 km 34, 5 x 1 km 40, 6 x 1 km 46, 8 x 400 m 30), so a week's planned minutes and the time-limit fits count it; the season traces move by those minutes and nothing else. Recovery as a share of the rep's time is not built: the rest is read in the launch config, the session player, Home's hero and "What it is", and a pace-led rest needs the rep pace at each of them, so it waits for its own change.
+- STATUS 2026-11-13, the rest: built. With a confirmed benchmark the rest between repeats is 70% of the repeat at the runner's own interval pace, in half minutes and never under a minute (`src/lib/intervalRest.ts`): 1 km at 3:56 rests 3 minutes, at 6:37 4½. The run plays it (the launch's intervals and their recoveries), and Home's hero, the day's sheet, Train's run and "What it is" say it. An interval session's minutes are stated at that pace and rest too ("about 45 min"), as a long run's are at the easy pace, since the template's assume repeats of about 3:40 /km. Without a confirmed benchmark nothing changes: the template's 90 seconds and its minutes. A session someone sets up themselves keeps the rest they chose. The week's planned minutes and the time-limit fits still count the template's minutes, as they count its rep time.
 
 ### D16. "Harder" on six days puts tempo, a 75 to 90 minute run and intervals on consecutive days. Polish.
 
 - Evidence: `evidence/direct/outlines.json`, `marathon-18w-harder-6days-easy-323`, weeks 9 to 14 (for example week 14: Mon 6x1k, Tue easy_90, Wed tempo_40). Root cause: with no clear day the fill order is kept (`src/features/program/runPlacement.ts:62-80`). Fix: in a two-quality week cap the medium-long at 50 to 60 min or drop it. Size S.
+- STATUS 2026-11-13: built. A week with two quality sessions whose medium-long has no day clear of them and the long run holds it at 50 minutes, under the hour Run20 counts as demanding: the six-day harder marathon's Tuesdays of 60, 75 and 90 minutes between intervals and a tempo are 50 (`midLongTwoQuality.test.ts`). Its stepped taper then takes its shares of the 50 the build held (Run22). A week with one quality session, or a clear day, keeps its medium-long.
 
 ### D17. Heart rate plays no part in a plan. Hurts quality against HR-led competitors.
 

@@ -80,12 +80,14 @@ describe("getRaceGoalPlannerState", () => {
     // The compressed band packs the long-run build into fewer weeks, so its
     // jumps are the steepest in the system (racePlanSafetySweep): the copy
     // says so, as the race cockpit does, rather than "a shorter
-    // long-run progression".
+    // long-run progression". Deep dive D8: it says it of this plan's weeks,
+    // which climb to a 20 km long run and hold tempo and intervals.
     expect(s.statusDescription).not.toMatch(/shorter long-run/);
-    expect(s.statusDescription).toMatch(/fewer weeks/);
+    expect(s.statusDescription).toBe(
+      "The long run builds to 20 km before race week in fewer weeks than a full plan, with bigger jumps between them. Fewer quality sessions than a full plan."
+    );
     // "Hard" is the effort word only (Run21 (4)): the family is "quality
     // sessions".
-    expect(s.statusDescription).toMatch(/fewer quality sessions/);
     expect(s.statusDescription).not.toMatch(/\bhard\b/i);
   });
 
@@ -523,8 +525,102 @@ describe("getRaceGoalPlannerState — the runway from the running starting point
     const s = at("marathon", weeksOut(9), start);
     expect(s.status).toBe("compressed");
     expect(s.statusTitle).toBe("Short runway");
+    // C's line leads, then what the weeks hold besides (deep dive D8).
     expect(s.statusDescription).toMatch(
-      /^Tropos will compress the plan.*Starting from your running now, the long run builds to about/
+      /^Starting from your running now, the long run builds to about .* gives it time\. No tempo or intervals\.$/
     );
+  });
+});
+
+/* Deep dive D8: a race too close for a build was described by status, not
+   by plan: "the long runs build in fewer weeks, with bigger jumps" for a
+   marathon plan of twelve easy 30s. The line now says what the plan's
+   weeks hold, and when the race is out of their reach (the welcome-back
+   sheet's rule, `raceOutOfReach`) it says that first, as two distances. */
+describe("getRaceGoalPlannerState — the words for a race too close", () => {
+  const monday = "2026-06-01";
+  const sunday = (weeks: number) =>
+    localDateString(addLocalDays(parseLocalDate(monday), weeks * 7 - 1));
+  const starting = (weeklyMinutes: number, longestRunMinutes: number) => ({
+    version: 1 as const,
+    experience: "regular" as const,
+    weeklyMinutes,
+    longestRunMinutes,
+    confirmedAt: monday,
+    source: "self_reported" as const,
+  });
+  const at = (
+    distance: RaceDistance,
+    weeks: number,
+    extra: Partial<Parameters<typeof getRaceGoalPlannerState>[0]> = {}
+  ) =>
+    getRaceGoalPlannerState({
+      distance,
+      targetDate: sunday(weeks),
+      currentDate: monday,
+      liftDays: 0,
+      weeklyRunDays: 4,
+      ...extra,
+    });
+
+  it("a marathon four weeks out with no long run says so, not 'bigger jumps'", () => {
+    const s = at("marathon", 4);
+    expect(s.status).toBe("compressed");
+    expect(s.statusDescription).toBe(
+      "There’s no time for a long run before race day, and a marathon is 42.2 km. A later race or a shorter one gives it time. No tempo or intervals."
+    );
+  });
+
+  it("from a 12 km longest run, gives both distances first", () => {
+    const s = at("marathon", 4, {
+      runningBaseline: starting(170, 83),
+      easyPaceSPerKm: 416,
+    });
+    expect(s.statusDescription).toBe(
+      "Your longest run now is about 12 km. By race day the plan’s long run gets to 6 km, and a marathon is 42.2 km. A later race or a shorter one gives it time. No tempo or intervals."
+    );
+  });
+
+  it("from a 24 km longest run, says what the taper holds", () => {
+    const s = at("marathon", 4, {
+      runningBaseline: starting(330, 150),
+      easyPaceSPerKm: 380,
+    });
+    expect(s.statusDescription).toBe(
+      "The longest run before race week is 15 km. No tempo or intervals."
+    );
+  });
+
+  it("in miles for a reader in miles", () => {
+    const s = at("marathon", 4, { distanceUnit: "mi" });
+    expect(s.statusDescription).toMatch(/a marathon is 26\.2 mi\./);
+  });
+
+  it("leaves a race they already run past alone, however close", () => {
+    const s = at("10k", 2, {
+      runningBaseline: starting(170, 83),
+      easyPaceSPerKm: 416,
+    });
+    expect(s.statusDescription).toBe(
+      "There’s no time for a long run before race day, only easy runs up to the race."
+    );
+  });
+
+  it("keeps the mostly-easy words under the floor", () => {
+    const s = at("marathon", 3, {
+      runningBaseline: starting(170, 83),
+      easyPaceSPerKm: 416,
+    });
+    expect(s.status).toBe("below-floor");
+    expect(s.statusDescription).toBe(
+      "Your longest run now is about 12 km. By race day the plan’s long run gets to 6 km, and a marathon is 42.2 km. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions."
+    );
+  });
+
+  it("leaves a new runner to their own line", () => {
+    const s = at("marathon", 4, {
+      newRunnerUntil: newRunnerUntil("new", monday),
+    });
+    expect(s.statusDescription).not.toMatch(/gives it time/);
   });
 });

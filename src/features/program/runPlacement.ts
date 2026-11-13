@@ -60,6 +60,12 @@ export function chooseQualityRunSlots({
  *  beside the long run or a quality session, where there is one; otherwise
  *  the week keeps its own order, since the days are the person's.
  */
+/** Whether `day` has a day between it and each of `others` (the week
+ *  wraps, as `gap` holds it). */
+export function clearOf(day: number, others: readonly number[]): boolean {
+  return others.every((other) => gap(day, other) > 1);
+}
+
 export function easyDaysInFillOrder({
   easyDays,
   demandingDays,
@@ -71,9 +77,7 @@ export function easyDaysInFillOrder({
 }): number[] {
   const days = [...easyDays];
   if (!mediumLongDemanding || days.length < 2) return days;
-  const clear = days.find((day) =>
-    demandingDays.every((other) => gap(day, other) > 1)
-  );
+  const clear = days.find((day) => clearOf(day, demandingDays));
   if (clear === undefined || clear === days[0]) return days;
   return [clear, ...days.filter((day) => day !== clear)];
 }

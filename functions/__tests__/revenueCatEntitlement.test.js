@@ -245,6 +245,7 @@ describe("planEntitlementWrite", () => {
       ["play_store", "android_iap"],
       ["stripe", "stripe"],
       ["rc_billing", "stripe"],
+      ["paddle", "stripe"],
     ]) {
       expect(
         rc.planEntitlementWrite(FREE, snapshot({ store })).write
@@ -630,6 +631,15 @@ describe("trials", () => {
     expect(trialSnapshot({ store: "promotional" }).trial).toBeNull();
     expect(trialSnapshot({ store: "play_store" }).trial).toMatchObject({
       store: "play_store",
+    });
+  });
+
+  it("reads a trial bought on the website, where Tropos takes the money", () => {
+    // RevenueCat Billing on Tropos's own Stripe account (13 Nov 2026).
+    expect(trialSnapshot({ store: "rc_billing" }).trial).toMatchObject({
+      store: "rc_billing",
+      endsAtMs: TRIAL_END,
+      willRenew: true,
     });
   });
 

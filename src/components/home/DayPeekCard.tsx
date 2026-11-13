@@ -1,4 +1,5 @@
 import { liftDayNameIn } from "@/lib/liftDayLabel";
+import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { formatDuration, formatShortWeekdayDayMonth } from "@/utils/formatters";
@@ -42,7 +43,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { runDoseLine } from "@/lib/runDose";
+import { runDoseLine, runMinutesLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -363,7 +364,13 @@ export default function DayPeekCard({
   );
   const runName = runSessionName(runTemplate, runRacePace, unit);
   const runAbout = runTemplate
-    ? runSessionAbout(runTemplate, { racePace: runRacePace })
+    ? runSessionAbout(
+        withPlannedRest(
+          runTemplate,
+          plannedIntervalPaceSPerKm(profile?.runFitness)
+        ),
+        { racePace: runRacePace }
+      )
     : null;
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
@@ -620,7 +627,13 @@ export default function DayPeekCard({
                             runTemplate,
                             planningEasyPaceSPerKm(profile?.runFitness)
                           )
-                        : `${runTemplate.estimatedDuration} min total`}
+                        : `${
+                            runMinutesLine(
+                              runTemplate,
+                              null,
+                              plannedIntervalPaceSPerKm(profile?.runFitness)
+                            ) ?? `${runTemplate.estimatedDuration} min`
+                          } total`}
                     </span>
                     {/* Run21 (2): the session's one feel line. */}
                     {" · "}

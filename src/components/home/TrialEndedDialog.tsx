@@ -7,8 +7,11 @@ import { Dialog } from "@/components/ui/Dialog";
  * lapses.
  *
  * Says what actually changed, in the house register: photo logging is
- * paused and the calorie target has stopped adapting — the two things
- * Pro gates (Sub2) — and what has not: typing, search and the programme.
+ * paused, and the calorie target has stopped adapting when it had started
+ * to (`targetAdapted`) — the two things Pro gates (Sub2) — and what has
+ * not: typing, search and the programme. The target needs 14 days of
+ * weigh-ins, so most of a 7-day trial never saw it adapt; naming it for
+ * them named a loss they never had (owner, Q67, 13 Nov 2026).
  * Performance insights are NOT on the list: they are free (Sub2), and a
  * popup that names a free feature as the reason to pay is the
  * paywall-honesty failure in one sentence.
@@ -20,9 +23,15 @@ import { Dialog } from "@/components/ui/Dialog";
 interface Props {
   onDismiss: () => void;
   onKeep: () => void;
+  /** Whether the adaptive target ever set a number for this person. */
+  targetAdapted: boolean;
 }
 
-export default function TrialEndedDialog({ onDismiss, onKeep }: Props) {
+export default function TrialEndedDialog({
+  onDismiss,
+  onKeep,
+  targetAdapted,
+}: Props) {
   /* The shared dialog: focus moves in (to Not now) and stays there,
      Escape and the device's Back mean Not now, and focus goes back where
      it was. Home mounts this only while the prompt is due. */
@@ -45,7 +54,9 @@ export default function TrialEndedDialog({ onDismiss, onKeep }: Props) {
           </p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Photo logging is paused and your calorie target has stopped adapting.
+          {targetAdapted
+            ? "Photo logging is paused and your calorie target has stopped adapting."
+            : "Photo logging is paused."}{" "}
           Typing, search and your programme work as before.
         </p>
         <div className="flex gap-3">

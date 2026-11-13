@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
   runEvidenceDate,
@@ -987,7 +988,11 @@ export default function ProgrammeRunSection({
     const meta: string[] = [];
     // Run21 (5): a long run's minutes at the runner's own pace.
     meta.push(
-      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
+      runDoseLine(
+        selectedTemplate,
+        planningEasyPaceSPerKm(profile.runFitness),
+        plannedIntervalPaceSPerKm(profile.runFitness)
+      )
     );
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
     meta.push(...selectedHrItems);
@@ -1802,7 +1807,13 @@ export default function ProgrammeRunSection({
                 />
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
-                  template={selectedTemplate}
+                  template={
+                    selectedTemplate &&
+                    withPlannedRest(
+                      selectedTemplate,
+                      plannedIntervalPaceSPerKm(profile.runFitness)
+                    )
+                  }
                   racePace={selectedRacePace}
                   run={selectedRun.runDay}
                   runDays={runDays}
@@ -1926,6 +1937,7 @@ export default function ProgrammeRunSection({
                    hop was missing, so the card fell through to the compressed
                    branch and described training the plan does not contain. */
               belowFloor={raceCockpitVM.belowFloor}
+              noBuild={raceCockpitVM.noBuild}
               /* PR4 cross-link — the PROFILE copy is canonical for the
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */

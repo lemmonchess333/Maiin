@@ -236,7 +236,11 @@ Keep this list and the dependencies the same.
   removed rather than left beside it: `cap sync` re-wires every plugin in
   `package.json` into the native project, so keeping the dependency meant
   shipping two StoreKit observers that race to finish a transaction.
-- `capacitor-health` — HealthKit steps (ADR-0007).
+- `@capgo/capacitor-health` — HealthKit steps (ADR-0007). It replaced
+  `capacitor-health` on 13 November 2026 because it can also read sleep,
+  resting heart rate, heart rate variability and weight, which the old one
+  could not. It has no iOS settings link, so the app's own `WatchRun` plugin
+  opens the app's page in Settings.
 - `capacitor-live-activities` — the run's Live Activity.
 - `@capacitor/filesystem` — meal photos kept on the device (Food9).
 - `@capacitor/haptics`, `@capacitor/splash-screen`,

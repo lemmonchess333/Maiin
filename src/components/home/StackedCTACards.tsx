@@ -12,6 +12,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { heroLead, type HeroLine } from "@/lib/homeHero";
+import type { ComponentProps } from "react";
 
 const stagger = {
   hidden: {},
@@ -46,6 +47,7 @@ export default function StackedCTACards({
   unit,
   liftUnit = "kg",
   freeRunLine = null,
+  liftReadiness = null,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
@@ -57,6 +59,9 @@ export default function StackedCTACards({
   /** A free run's line, the week's distance (`freeRunHeroLine`), drawn
    *  when the hero is a run with no plan behind it. */
   freeRunLine?: HeroLine | null;
+  /** Readiness for the lift hero (`useTodayReadiness`); the compact card
+   *  under a run hero shows none. */
+  liftReadiness?: ComponentProps<typeof LiftCTACard>["readiness"];
 }) {
   const { lift, run, rest } = session;
   // On a day with both, the run leads when running is the person's aim,
@@ -75,6 +80,7 @@ export default function StackedCTACards({
         inProgress={run.inProgress}
         startTarget={run.startTarget}
         easyPaceSPerKm={run.easyPaceSPerKm}
+        intervalPaceSPerKm={run.intervalPaceSPerKm}
         freeLine={freeRunLine}
         variant={runLeads ? "hero" : "compact"}
       />
@@ -95,6 +101,7 @@ export default function StackedCTACards({
         inProgress={lift.inProgress}
         unit={liftUnit}
         variant={runLeads ? "compact" : "hero"}
+        readiness={runLeads ? null : liftReadiness}
       />
     </motion.div>
   ) : lift ? (

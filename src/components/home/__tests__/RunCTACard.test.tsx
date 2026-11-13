@@ -151,3 +151,31 @@ describe("RunCTACard — the runner", () => {
     expect(screen.queryByRole("img")).toBeNull();
   });
 });
+
+/* Deep dive D15: the hero says the rest the run will play, a share of the
+   repeat at the runner's own interval pace. */
+describe("RunCTACard — an interval session's rest", () => {
+  const heroLine = (intervalPaceSPerKm: number | null) => {
+    render(
+      <RunCTACard
+        unit="km"
+        todayRun={runDay("4x1k", "intervals")}
+        startTarget={runStartTarget(runDay("4x1k", "intervals"))}
+        navigate={vi.fn()}
+        intervalPaceSPerKm={intervalPaceSPerKm}
+      />
+    );
+    const line = screen.getByText(/easy between$/).textContent;
+    cleanup();
+    return line;
+  };
+
+  it("is the template's 90 seconds without a confirmed pace", () => {
+    expect(heroLine(null)).toBe("90 s easy between");
+  });
+
+  it("is the runner's own rest at their pace", () => {
+    expect(heroLine(397)).toBe("4½ min easy between");
+    expect(heroLine(240)).toBe("3 min easy between");
+  });
+});

@@ -276,14 +276,14 @@ describe("Apple Health permissions and storage match the policy", () => {
   it("the existing steps bridge still asks only for steps", () => {
     // Run heart rate and workout export use the native Watch bridge. They
     // must not broaden the steps tile's request for Health permissions.
-    const asked = HEALTH_KIT.match(/permissions:\s*\[([^\]]*)\]/g);
-    expect(asked).toEqual(['permissions: ["READ_STEPS"]']);
-    expect(HEALTH_KIT).not.toMatch(/WRITE_/);
-    // No other module should reach for capacitor-health around this seam.
+    const asked = HEALTH_KIT.match(/requestAuthorization\(\{[^}]*\}\)/g);
+    expect(asked).toEqual(['requestAuthorization({ read: ["steps"] })']);
+    expect(HEALTH_KIT).not.toMatch(/\bwrite:/);
+    // No other module should reach for the Health plugin around this seam.
     const others = sourceFiles("src").filter(
       (f) =>
         !f.endsWith("lib/healthKit.ts") &&
-        /from\s+["']capacitor-health["']|import\(\s*["']capacitor-health["']\s*\)/.test(
+        /from\s+["']@capgo\/capacitor-health["']|import\(\s*["']@capgo\/capacitor-health["']\s*\)/.test(
           readFileSync(f, "utf8")
         )
     );

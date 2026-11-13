@@ -17,6 +17,7 @@
  * data: profile snapshot, programState (or its absence), URL params.
  */
 
+import { intervalRestSeconds } from "./intervalRest";
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
@@ -800,8 +801,14 @@ function templateToPrefill(
     // user's fitness; falls through to undefined (PaceZoneBar's own fallback)
     // when there's no benchmark.
     const workPace = resolveSessionPaces(tmpl.type, paceTable ?? null).workPace;
+    // Deep dive D15: with the rep pace known, the rest is a share of the
+    // rep's own time (`intervalRestSeconds`).
     prefill.intervals = workPace
-      ? { ...tmpl.config.intervals, workPace }
+      ? {
+          ...tmpl.config.intervals,
+          workPace,
+          restDuration: intervalRestSeconds(tmpl.config.intervals, workPace),
+        }
       : tmpl.config.intervals;
   }
   // A2: a goal-pace tempo overrides the benchmark-derived threshold —
@@ -825,7 +832,9 @@ function templateToPrefill(
       tmpl.config.tempo,
       unit,
       prefill.target?.type === "pace" ? prefill.target.value : undefined,
-      tempoAtGoal ? { atGoalPace: true } : undefined,
+      tempoAtGoal
+        ? { atGoalPace: true, marathonBand: tempoAtGoal.source === "band" }
+        : undefined,
       seed
     );
   } else if (tmpl.config.strides) {
@@ -854,7 +863,8 @@ function templateToPrefill(
       tmpl.config.targetDistanceKm,
       raceFinish.blockKm,
       raceFinish.goalPaceS,
-      unit
+      unit,
+      raceFinish.source === "band"
     );
   }
   return prefill;

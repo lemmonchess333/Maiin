@@ -227,3 +227,29 @@ and trial length (Q45 to Q48), whether readiness has a number at all
 is worth (Q59), which Health plugin, and the App Store rules for the
 website by country. Round 7 was sent with these as Q70 to Q81; Q77
 (RevenueCat on the web) is answered above.
+
+## Later on 13 November: Q75 and Q84 to Q87
+
+The owner: "84 to 86 go and start 87", and the Health plugin switch merged
+(#3264).
+
+- **Q75, yes.** `@capgo/capacitor-health` replaced `capacitor-health`
+  before launch, so sleep, resting heart rate and HRV can be read.
+- **Q84, yes.** Pro adds history and charts older than 3 months, the
+  training load chart and the performance score's details. Logging and
+  recent history stay free.
+- **Q85, yes.** Race plans (half and full marathon) are Pro after their
+  first week, as Runna sells them; general training and the 5K starter stay
+  free. This overturns Q7 ("all training stays free").
+- **Q86, yes.** Barcode scanning and unlimited routines stay free.
+- **Q87, yes.** The adapting target is worked out for every account, and
+  the 7-day trial is offered when it is ready (Q49, Q71).
+
+Readiness shipped in words with the training reasons free and sleep and
+heart Pro (#3265, #3267: Q74 and Q76 as recommended). The owner asked for
+the free and Pro split to be looked at again, and finds both Stripe's and
+Paddle's web fees too high, so the web engine (Q77) is open again. The
+research behind Q84 to Q86 is a 16-app survey of lifetime plans and free
+and paid lines (13 November): 2 of 16 sell a lifetime (Hevy, Strong, both
+simple loggers), and the apps that charge about £50 to £70 a year lock the
+adapting plan, long history, or both.
