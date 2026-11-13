@@ -333,11 +333,12 @@ describe("a new runner's runs after the run-walk weeks", () => {
           }
           // Run22: a taper week's long run and easy runs are its shares of
           // what the build held, and a new runner's build held shorter runs
-          // than the plan's own (`taperInSteps.test.ts`).
+          // than the plan's own (`taperInSteps.test.ts`). Race week's easy
+          // runs too stay at what the build held (deep dive D13).
           if (
             (own.type === "long" || own.type === "easy") &&
             i >= weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance] &&
-            i < weeks - 1
+            (i < weeks - 1 || own.type === "easy")
           ) {
             expect(
               minutes(run),
@@ -371,9 +372,11 @@ describe("a new runner's runs after the run-walk weeks", () => {
         .flat()
         .every((run) => run.type === "easy")
     ).toBe(true);
+    // The taper holds the 20-minute runs the build did, not the 30s it
+    // once fell back to (deep dive D13).
     expect(fresh.weeks[7].map((run) => run.templateId)).toEqual([
-      "easy_30",
-      "easy_30",
+      "easy_20",
+      "easy_20",
       "easy_20",
     ]);
     expect(fresh.weeks.at(-1)!.some((run) => run.type === "race")).toBe(true);

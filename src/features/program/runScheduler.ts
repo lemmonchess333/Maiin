@@ -265,6 +265,11 @@ const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
   { id: "easy_90", minutes: 90 },
 ];
 const EASY_BASE_MINUTES = 30;
+/** The easy runs a taper or race week falls back to (deep dive D13). */
+const TAPER_FLOOR_IDS: ReadonlySet<string> = new Set([
+  "easy_30",
+  "easy_30_strides",
+]);
 const EASY_PEAK_MINUTES = 50;
 
 /**
@@ -1412,7 +1417,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
    *  behind the runner has a negative `offset`: the taper's walk of the
    *  build builds those (`taperBuild`). */
-  const blockWeekRuns = (w: number): ScheduledRunDay[] => {
+  const blockWeekRunsAsRamped = (w: number): ScheduledRunDay[] => {
     const offset = w - startIndex;
     const weekStart = addLocalDays(weekStartDate, offset * 7);
     // Established blocks retain chosen training/taper frequency unchanged.
@@ -1977,6 +1982,33 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     );
   };
 
+  /* Deep dive D13: the taper and race week fall back to 30-minute easy runs,
+     and a runner whose build held its easy runs to 20 minutes (a running
+     starting point still climbing, a time limit) ran more on the weekdays
+     of the taper than in the build: five 30s after five 20s. Their easy
+     runs at that floor now stay at what the build held. */
+  const blockWeekRuns = (w: number): ScheduledRunDay[] => {
+    const week = blockWeekRunsAsRamped(w);
+    if (w < 0) return week;
+    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    if (phase !== "taper" && phase !== "race") return week;
+    const held = taperBuild().easyMinutes;
+    if (held >= EASY_BASE_MINUTES) return week;
+    const floorId = held >= 20 ? "easy_20" : "easy_10";
+    return week.map((run) =>
+      run.type === "easy" && TAPER_FLOOR_IDS.has(run.templateId)
+        ? {
+            ...run,
+            templateId: floorId,
+            id: generateScheduledRunId(
+              { dayIndex: run.dayIndex, templateId: floorId },
+              run.weekKey!
+            ),
+          }
+        : run
+    );
+  };
+
   // Run9 phase-3 (Slice C) — clash flag. pickLongRunSlot prefers run-only
   // slots and only falls back to a "both" day when none exist, so a HARD run
   // landing on a both-day is the forced lift+run clash (the 6-day-lifter case
@@ -2096,7 +2128,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
                 : null,
           })
         : null,
-      climbPace
+      climbPace,
+      // A taper or race week cuts its running (deep dive D13).
+      (() => {
+        if (!weekKey) return false;
+        const index = wholeWeeksBetween(blockWeekZero, weekKey);
+        if (index < 0 || index >= blockWeeks) return false;
+        const phase = getPhaseForWeek(
+          index,
+          blockWeeks,
+          input.raceGoal.distance
+        );
+        return phase === "taper" || phase === "race";
+      })()
     );
     return fitted.map((row, index) => {
       const rd =
