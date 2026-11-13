@@ -16,7 +16,9 @@ import { aboutMinutes, focusPhrase, liftHeroLine } from "@/lib/homeHero";
 import type { LiftUnit } from "@/lib/liftLoad";
 import InProgressStrip from "@/components/session/InProgressStrip";
 import SessionHero from "@/components/home/SessionHero";
+import ReadinessStrip from "@/components/home/ReadinessStrip";
 import type { SessionInProgress } from "@/lib/sessionsInFlight";
+import type { TodayReadiness } from "@/hooks/useTodayReadiness";
 
 type LiftCardExercise = Partial<PricedExercise> &
   Partial<Pick<ProgramExercise, "weight" | "lastPerformance" | "repUnit">> & {
@@ -39,6 +41,11 @@ type LiftCardExercise = Partial<PricedExercise> &
  * done (`liftHeroLine`). A day with no art shows no picture rather than a
  * stand-in. No rationale: the reasons stay behind "Why this session" on
  * Train (DS4 call 5).
+ *
+ * Readiness (whole-app grill Q41) sits above Start on the hero when Home
+ * passes it: the morning question, or a word and its fact, and on a
+ * Steady or Go easy day a link to the easier session (`easierTarget`,
+ * Train's own "Go easier today", started the way its Start is).
  */
 export default function LiftCTACard({
   nextWorkout,
@@ -53,6 +60,7 @@ export default function LiftCTACard({
   inProgress = null,
   unit = "kg",
   variant = "hero",
+  readiness = null,
 }: {
   nextWorkout: {
     completed?: boolean;
@@ -83,6 +91,13 @@ export default function LiftCTACard({
   unit?: LiftUnit;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
+  /** Today's readiness, for the hero's planned day (`useTodayReadiness`),
+   *  with where the easier session starts and what it changes. */
+  readiness?: {
+    today: TodayReadiness;
+    easierTarget: string;
+    easierSummary: string;
+  } | null;
 }) {
   const state =
     status ??
@@ -165,16 +180,35 @@ export default function LiftCTACard({
       />
     ) : state === "planned" ? (
       variant === "hero" ? (
-        /* The screen's one full-width filled button is neutral (DS4,
-           DESIGN_GUIDE §14i): the lifting colour stays on the data. */
-        <Button
-          variant="neutral"
-          className="pointer-events-auto w-full text-base"
-          onClick={start}
-        >
-          <Play className="size-4 fill-current" aria-hidden="true" />
-          Start workout
-        </Button>
+        <div className="space-y-3">
+          {readiness && (
+            <ReadinessStrip
+              readiness={readiness.today.readiness}
+              feel={readiness.today.feel}
+              onFeel={readiness.today.setFeel}
+              easierSummary={readiness.easierSummary}
+              onEasier={function () {
+                /* A plain "start": nothing variant- or reason-shaped
+                   enters analytics (easierToday.ts, Privacy). */
+                trackHomeEvent("home_card_tapped", {
+                  card: "today_workout",
+                  action: "start",
+                });
+                navigate(readiness.easierTarget);
+              }}
+            />
+          )}
+          {/* The screen's one full-width filled button is neutral (DS4,
+              DESIGN_GUIDE §14i): the lifting colour stays on the data. */}
+          <Button
+            variant="neutral"
+            className="pointer-events-auto w-full text-base"
+            onClick={start}
+          >
+            <Play className="size-4 fill-current" aria-hidden="true" />
+            Start workout
+          </Button>
+        </div>
       ) : (
         /* The compact card under the hero keeps the screen to one filled
            button (DESIGN_GUIDE §14m rule 21): purple, but tinted. */

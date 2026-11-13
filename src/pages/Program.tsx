@@ -762,12 +762,17 @@ function ProgramInner() {
     if (day && !day.completed && !day.skipped) setExpressChooserDay(urlDay);
   }, [expressRequested, programState, urlDay, setSearchParams]);
   const startRequested = searchParams.get("start") === "1";
+  /* Home's readiness link adds `easier=1` (whole-app grill Q40): the same
+     start, as Train's own "Go easier today" (one set less per lift,
+     lighter loads). It is offered there, never chosen for the person. */
+  const easierRequested = searchParams.get("easier") === "1";
   useEffect(() => {
     if (!startRequested || !programState) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete("start");
+        next.delete("easier");
         return next;
       },
       { replace: true }
@@ -775,6 +780,14 @@ function ProgramInner() {
     if (viewingHistoryIndex !== null || urlDay === null) return;
     const day = programState.workouts[urlDay];
     if (!day || day.completed || day.skipped) return;
+    if (easierRequested) {
+      /* eslint-disable react-hooks/set-state-in-effect -- a one-shot
+         reaction to the deep link, consumed above so it cannot repeat */
+      setSessionVariant("easier_today");
+      setSessionDayIndex(urlDay);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      return;
+    }
     // A plan built to fit the person's time (Lift4 (5)) starts in full; one
     // built before that still trims to their usual time at Start.
     const budget = usualLiftBudget(
@@ -789,6 +802,7 @@ function ProgramInner() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [
     startRequested,
+    easierRequested,
     programState,
     viewingHistoryIndex,
     urlDay,
