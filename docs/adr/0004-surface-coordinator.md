@@ -252,3 +252,22 @@ full-screen reveal for a medal (DESIGN_GUIDE §14l).
 - **Once per result, per device.** What has been revealed is kept on the
   device (`leagueResultReveals.ts`), recorded as the reveal shows, not on
   the server-owned result, which no client may write.
+
+## Amendment 2026-11-13 — the race check
+
+Run24 (11), deep dive D14. A runner who missed their long runs while doing
+most of their other runs never tripped the weekly check, which counts runs,
+and their plan shrank toward a race at five times the month's longest run
+without a word.
+
+- **It is a tier-4 surface**, `race-check`, priority 26: below the run
+  return (27), above GoalReached (25).
+- **One sheet, a third register.** `raceLongRunCheck` reads the farthest
+  run of the last four weeks and builds on it 2 km a week through the weeks
+  before the taper; when that is under half the race, `FellBehindSheet`
+  opens in its race register with the three distances and moving the race
+  first, the realign one tap below.
+- **Said once.** It is suppressed by `fell-behind` and `run-return`, which
+  greet the same runner first, and asked once a week (`useDismissOnce`,
+  keyed by the week).
+
