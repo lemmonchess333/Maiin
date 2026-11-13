@@ -20,6 +20,9 @@ const FEELS: ReadonlyArray<readonly [Feel, string]> = [
  *
  * "Change" clears the morning's answer so it can be given again; a fact
  * the app read cannot be changed here, only the person's own word.
+ *
+ * For Pro on the phone, before Health is asked, one quiet link adds sleep
+ * and heart (Q76, as recommended); a free account sees no link here.
  */
 export default function ReadinessStrip({
   readiness,
@@ -27,6 +30,7 @@ export default function ReadinessStrip({
   onFeel,
   onEasier,
   easierSummary,
+  onConnectBody = null,
 }: {
   readiness: Readiness;
   feel: Feel | null;
@@ -34,7 +38,22 @@ export default function ReadinessStrip({
   onEasier: () => void;
   /** What the easier session changes ("one set less per lift, lighter loads"). */
   easierSummary: string;
+  /** Pro on the phone, before Health has been asked: one quiet link to add
+   *  sleep and heart. Null hides it. */
+  onConnectBody?: (() => Promise<void>) | null;
 }) {
+  const connectLink = onConnectBody ? (
+    <button
+      type="button"
+      className="pointer-events-auto mt-1 inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-2"
+      onClick={function () {
+        haptic("light");
+        void onConnectBody();
+      }}
+    >
+      Add sleep and heart from Apple Health
+    </button>
+  ) : null;
   if (readiness.word === null) {
     return (
       <div
@@ -59,6 +78,7 @@ export default function ReadinessStrip({
             </Button>
           ))}
         </div>
+        {connectLink}
       </div>
     );
   }
@@ -95,6 +115,7 @@ export default function ReadinessStrip({
           Go easier today · {easierSummary}
         </Button>
       )}
+      {connectLink}
     </div>
   );
 }

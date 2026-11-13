@@ -27,6 +27,8 @@
  * as the *ambiguous* state, not an error.
  */
 import { isNativePlatform } from "./platform";
+import { localDateString } from "./dateHelpers";
+import type { DailyValue, SleepSampleLike } from "./bodySignals";
 import type { HealthPlugin } from "@capgo/capacitor-health";
 import type { Plugin } from "@capacitor/core";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
@@ -174,6 +176,91 @@ export async function requestStepsReadPermission(): Promise<
     return "granted";
   } catch {
     return "denied";
+  }
+}
+
+/** What readiness reads from Health for a Pro account (whole-app grill
+ *  Q39-Q43): sleep, resting heart rate and heart rate variability. Read
+ *  on the phone each time and never stored or sent (`bodySignals.ts`). */
+export const BODY_SIGNAL_TYPES = [
+  "sleep",
+  "restingHeartRate",
+  "heartRateVariability",
+] as const;
+
+/**
+ * Ask to read sleep and heart. As with steps, iOS never says whether a read
+ * was refused, so a request that completes is "granted"; a refused read
+ * simply returns nothing, and readiness then says nothing about sleep or
+ * heart.
+ */
+export async function requestBodySignalsReadPermission(): Promise<
+  "granted" | "denied"
+> {
+  if (!isNativePlatform()) return "denied";
+  try {
+    await (
+      await getPlugin()
+    ).plugin.requestAuthorization({ read: [...BODY_SIGNAL_TYPES] });
+    return "granted";
+  } catch {
+    return "denied";
+  }
+}
+
+/** Every sleep sample between two instants, oldest first. Null on the web
+ *  or when the read fails. */
+export async function readSleepSamples(
+  start: Date,
+  end: Date
+): Promise<SleepSampleLike[] | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    const { samples } = await (
+      await getPlugin()
+    ).plugin.readSamples({
+      dataType: "sleep",
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      limit: 5000,
+      ascending: true,
+    });
+    return (samples ?? []).map((s) => ({
+      startDate: s.startDate,
+      endDate: s.endDate,
+      sleepState: s.sleepState,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/** One value a day (the day's average) for a daily reading, keyed by the
+ *  LOCAL day its bucket starts on. Null on the web or when the read fails. */
+export async function readDailyAverages(
+  dataType: "restingHeartRate" | "heartRateVariability",
+  start: Date,
+  end: Date
+): Promise<DailyValue[] | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    const { samples } = await (
+      await getPlugin()
+    ).plugin.queryAggregated({
+      dataType,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      bucket: "day",
+      aggregation: "average",
+    });
+    return (samples ?? [])
+      .filter((s) => Number.isFinite(s.value) && s.value > 0)
+      .map((s) => ({
+        dateKey: localDateString(new Date(s.startDate)),
+        value: s.value,
+      }));
+  } catch {
+    return null;
   }
 }
 
