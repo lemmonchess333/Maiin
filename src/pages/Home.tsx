@@ -105,6 +105,7 @@ import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import { useTodayReadiness } from "@/hooks/useTodayReadiness";
+import { useBodySignals } from "@/hooks/useBodySignals";
 import {
   buildEasierSession,
   summarizeEasier,
@@ -576,10 +577,14 @@ export default function Home() {
   );
   // Readiness above the lift hero's Start (whole-app grill Q41): the
   // morning question, or a word and its fact, and the easier session on a
-  // Steady or Go easy day. Free: sleep and heart join it for Pro once
-  // Health is connected.
+  // Steady or Go easy day. Free; sleep and heart from Apple Health join it
+  // for Pro on the phone once Health is asked (Q76, as recommended).
   const heroLift = session.lift;
-  const todayReadiness = useTodayReadiness(heroLift?.workout ?? undefined);
+  const bodySignals = useBodySignals(isPro);
+  const todayReadiness = useTodayReadiness(
+    heroLift?.workout ?? undefined,
+    bodySignals.signals
+  );
   const liftReadiness = useMemo(() => {
     const day = heroLift?.workout;
     if (
@@ -593,6 +598,7 @@ export default function Home() {
     }
     return {
       today: todayReadiness,
+      connectBody: bodySignals.canConnect ? bodySignals.connect : null,
       easierTarget: `${heroLift.startTarget}&easier=1`,
       easierSummary: summarizeEasier(
         buildEasierSession(day, session.restContext, {
@@ -601,7 +607,14 @@ export default function Home() {
         })
       ),
     };
-  }, [heroLift, todayReadiness, session.restContext, programState]);
+  }, [
+    heroLift,
+    todayReadiness,
+    bodySignals.canConnect,
+    bodySignals.connect,
+    session.restContext,
+    programState,
+  ]);
   // The hero's words around the session (homeHero.ts): the kicker beside
   // the date, the week's count and the next session beside the segments.
   const heroPositionLabel = useMemo(

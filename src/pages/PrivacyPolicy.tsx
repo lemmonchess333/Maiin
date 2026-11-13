@@ -116,10 +116,12 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Apple Health (optional):
                 </strong>{" "}
-                if you connect it, today’s step count for Home. With Apple Watch
-                runs enabled, Tropos also reads heart rate during a run. Saving
-                a completed Tropos run as a workout in Apple Health is a
-                separate choice. See section 8.
+                if you connect it, today’s step count for Home. With Pro, if you
+                add them, your sleep, resting heart rate and heart rate
+                variability for readiness. With Apple Watch runs enabled, Tropos
+                also reads heart rate during a run. Saving a completed Tropos
+                run as a workout in Apple Health is a separate choice. See
+                section 8.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -470,10 +472,11 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Apple:</strong> Sign in with
-                Apple (if you use it), Apple Health (optional steps, run heart
-                rate and workout export; section 8), In-App Purchase (Pro bought
-                in the app; Apple handles the payment) and App Attest (which
-                confirms that requests come from the real app on your iPhone).
+                Apple (if you use it), Apple Health (optional steps, sleep and
+                heart for readiness, run heart rate and workout export; section
+                8), In-App Purchase (Pro bought in the app; Apple handles the
+                payment) and App Attest (which confirms that requests come from
+                the real app on your iPhone).
               </li>
               <li>
                 <strong className="text-foreground">RevenueCat:</strong> manages
@@ -561,7 +564,11 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">Apple Health.</strong> If you
               connect steps, Tropos reads today’s step count to show it on Home.
-              The step count is not stored or sent to Tropos. If you use Apple
+              The step count is not stored or sent to Tropos. With Pro, if you
+              add sleep and heart, Tropos reads your sleep, resting heart rate
+              and heart rate variability for the last four weeks to say how
+              ready you are for today’s session. They are read on your phone
+              each time and are not stored or sent to Tropos. If you use Apple
               Watch runs, Tropos reads heart rate during that run to show a live
               reading and calculate a run summary. Raw heart rate samples are
               held on your device until you save or discard the run; a saved run

@@ -95,6 +95,9 @@ export default function LiftCTACard({
    *  with where the easier session starts and what it changes. */
   readiness?: {
     today: TodayReadiness;
+    /** Pro on the phone, before Health has been asked for sleep and
+     *  heart: ask it. Null otherwise. */
+    connectBody?: (() => Promise<void>) | null;
     easierTarget: string;
     easierSummary: string;
   } | null;
@@ -187,6 +190,7 @@ export default function LiftCTACard({
               feel={readiness.today.feel}
               onFeel={readiness.today.setFeel}
               easierSummary={readiness.easierSummary}
+              onConnectBody={readiness.connectBody ?? null}
               onEasier={function () {
                 /* A plain "start": nothing variant- or reason-shaped
                    enters analytics (easierToday.ts, Privacy). */

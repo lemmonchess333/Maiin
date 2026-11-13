@@ -15,6 +15,7 @@ const plugin = {
   isAvailable: vi.fn(),
   requestAuthorization: vi.fn(),
   queryAggregated: vi.fn(),
+  readSamples: vi.fn(),
 };
 vi.mock("@capgo/capacitor-health", () => {
   return { Health: capacitorPlugin(plugin) };
@@ -35,6 +36,9 @@ import {
   getTodayStepTotal,
   isHealthAvailable,
   openHealthSettings,
+  readDailyAverages,
+  readSleepSamples,
+  requestBodySignalsReadPermission,
   requestStepsReadPermission,
 } from "../healthKit";
 
@@ -49,6 +53,11 @@ describe("on the web", () => {
     expect(await isHealthAvailable()).toBe(false);
     expect(await requestStepsReadPermission()).toBe("denied");
     expect(await getTodayStepTotal()).toBeNull();
+    expect(await requestBodySignalsReadPermission()).toBe("denied");
+    expect(await readSleepSamples(new Date(), new Date())).toBeNull();
+    expect(
+      await readDailyAverages("restingHeartRate", new Date(), new Date())
+    ).toBeNull();
     await openHealthSettings();
     for (const fn of Object.values(plugin)) expect(fn).not.toHaveBeenCalled();
     expect(watchRun.openAppSettings).not.toHaveBeenCalled();
@@ -120,5 +129,84 @@ describe("in the iOS app", () => {
     expect(registered).toContain("WatchRun");
     watchRun.openAppSettings.mockRejectedValueOnce(new Error("x"));
     await expect(openHealthSettings()).resolves.toBeUndefined();
+  });
+});
+
+describe("readiness's sleep and heart, in the iOS app", () => {
+  it("asks to read sleep, resting heart rate and HRV, and nothing else", async () => {
+    plugin.requestAuthorization.mockResolvedValueOnce({
+      readAuthorized: [],
+      readDenied: [],
+      writeAuthorized: [],
+      writeDenied: [],
+    });
+    expect(await requestBodySignalsReadPermission()).toBe("granted");
+    expect(plugin.requestAuthorization).toHaveBeenCalledWith({
+      read: ["sleep", "restingHeartRate", "heartRateVariability"],
+    });
+    plugin.requestAuthorization.mockRejectedValueOnce(new Error("x"));
+    expect(await requestBodySignalsReadPermission()).toBe("denied");
+  });
+
+  it("reads sleep samples oldest first, keeping only times and stage", async () => {
+    plugin.readSamples.mockResolvedValueOnce({
+      samples: [
+        {
+          dataType: "sleep",
+          value: 120,
+          unit: "minute",
+          startDate: "2026-11-12T23:00:00.000Z",
+          endDate: "2026-11-13T01:00:00.000Z",
+          sleepState: "deep",
+          sourceName: "Watch",
+        },
+      ],
+    });
+    const start = new Date("2026-10-15T18:00:00.000Z");
+    const end = new Date("2026-11-13T09:00:00.000Z");
+    expect(await readSleepSamples(start, end)).toEqual([
+      {
+        startDate: "2026-11-12T23:00:00.000Z",
+        endDate: "2026-11-13T01:00:00.000Z",
+        sleepState: "deep",
+      },
+    ]);
+    expect(plugin.readSamples).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dataType: "sleep",
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        ascending: true,
+      })
+    );
+    plugin.readSamples.mockRejectedValueOnce(new Error("x"));
+    expect(await readSleepSamples(start, end)).toBeNull();
+  });
+
+  it("reads a day's average by local day, and drops empty days", async () => {
+    const day = new Date(2026, 10, 12, 0, 0, 0);
+    plugin.queryAggregated.mockResolvedValueOnce({
+      samples: [
+        { startDate: day.toISOString(), value: 54.4, values: {}, unit: "bpm" },
+        { startDate: day.toISOString(), value: 0, values: {}, unit: "bpm" },
+      ],
+    });
+    expect(
+      await readDailyAverages("restingHeartRate", day, new Date())
+    ).toEqual([{ dateKey: "2026-11-12", value: 54.4 }]);
+    expect(plugin.queryAggregated).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        dataType: "restingHeartRate",
+        bucket: "day",
+        aggregation: "average",
+      })
+    );
+    // A bucket given as a bare day is that day, in every timezone.
+    plugin.queryAggregated.mockResolvedValueOnce({
+      samples: [{ startDate: "2026-11-12", value: 41, values: {}, unit: "ms" }],
+    });
+    expect(
+      await readDailyAverages("heartRateVariability", day, new Date())
+    ).toEqual([{ dateKey: "2026-11-12", value: 41 }]);
   });
 });

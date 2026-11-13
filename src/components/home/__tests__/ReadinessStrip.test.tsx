@@ -14,7 +14,10 @@ const quiet: ReadinessInput = {
   body: null,
 };
 
-function draw(input: ReadinessInput) {
+function draw(
+  input: ReadinessInput,
+  onConnectBody: (() => Promise<void>) | null = null
+) {
   const onFeel = vi.fn();
   const onEasier = vi.fn();
   render(
@@ -24,6 +27,7 @@ function draw(input: ReadinessInput) {
       onFeel={onFeel}
       onEasier={onEasier}
       easierSummary="one set less per lift, lighter loads"
+      onConnectBody={onConnectBody}
     />
   );
   return { onFeel, onEasier };
@@ -60,7 +64,9 @@ describe("ReadinessStrip", () => {
   it("a Ready day offers no easier session", () => {
     draw({ ...quiet, feel: "good" });
     expect(screen.getByText("Ready")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Go easier today/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Go easier today/ })
+    ).toBeNull();
   });
 
   it("a fact the app read has no Change: only the person's own word does", () => {
@@ -70,5 +76,21 @@ describe("ReadinessStrip", () => {
     expect(
       screen.getByRole("button", { name: /Go easier today/ })
     ).toBeInTheDocument();
+  });
+
+  it("offers Pro on the phone sleep and heart once, and a free account nothing", () => {
+    const connect = vi.fn(() => Promise.resolve());
+    draw(quiet, connect);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add sleep and heart from Apple Health",
+      })
+    );
+    expect(connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("has no Apple Health link without the Pro connect", () => {
+    draw(quiet);
+    expect(screen.queryByRole("button", { name: /Apple Health/ })).toBeNull();
   });
 });
