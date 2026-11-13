@@ -223,7 +223,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 41 load 2262.5 | runs 2026-10-12 easy_30_strides,easy_30,long_20k | plan race_prep 5/17",
     ],
   },
   {
@@ -240,8 +240,8 @@ const cases: {
     // F6: the runs stop at race week and the plan stays, for the race's
     // own ending; the lifts carry the calendar on, to the same place.
     expected: [
-      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 18 load 615.0 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
-      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 30 load 1177.5 | runs 2026-09-21 easy_30,easy_30,half_race | plan race_prep 2/3",
+      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 18 load 615.0 | runs 2026-09-21 easy_20,easy_20,half_race | plan race_prep 2/3",
+      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 30 load 1177.5 | runs 2026-09-21 easy_20,easy_20,half_race | plan race_prep 2/3",
     ],
   },
   {

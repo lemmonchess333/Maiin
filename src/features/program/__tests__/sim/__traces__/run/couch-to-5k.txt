@@ -51,32 +51,32 @@ w10 2026-05-11  taper, plan week 9 of 10  counted 3/3  plan 80 min, long 0.0 km,
   ran     Wed easy_20 2.3 km/20 min 8:50 · Fri easy_30 3.4 km/30 min 8:55 · Sun easy_30 3.4 km/30 min 8:52
   week    80 min · 9.0 km · easy 100% · longest ×1.00 the month's
   runner  VDOT 26.15 · fitness 64 min · easy own 8:21–9:20, prescribed none
-w11 2026-05-18  recovery, plan week 10 of 10  counted 2/3  plan 104 min, long 0.0 km, quality 0
-  planned Wed:easy_30 · Fri:easy_30 · Sun:5k_race
-  ran     Wed easy_30 3.4 km/30 min 8:44 · Sun 5k_race 5.0 km/34 min 6:53 finish 34:23
-  week    64 min · 8.4 km · easy 47% · longest ×1.46 the month's
-  runner  VDOT 26.24 · fitness 66 min · easy own 8:21–9:20, prescribed none
+w11 2026-05-18  recovery, plan week 10 of 10  counted 2/3  plan 84 min, long 0.0 km, quality 0
+  planned Wed:easy_20 · Fri:easy_20 · Sun:5k_race
+  ran     Wed easy_20 2.3 km/20 min 8:44 · Sun 5k_race 5.0 km/34 min 6:52 finish 34:18
+  week    54 min · 7.3 km · easy 37% · longest ×1.47 the month's
+  runner  VDOT 26.17 · fitness 64 min · easy own 8:22–9:22, prescribed none
   · 2026-05-24: server entered recovery until 2026-05-31
 w12 2026-05-25  recovery, plan week 10 of 10  counted 2/3  plan 80 min, long 0.0 km, quality 0
   planned Wed:easy_20 · Fri:easy_30 · Sun:easy_30
-  ran     Wed easy_20 2.2 km/20 min 9:02 [on target] · Fri easy_30 3.4 km/30 min 8:57 [on target] INJURY short
+  ran     Wed easy_20 2.2 km/20 min 9:01 [on target] · Fri easy_30 3.4 km/30 min 8:57 [on target] INJURY short
   week    50 min · 5.6 km · easy 100% · longest ×0.67 the month's
-  runner  VDOT 26.13 · fitness 64 min · easy own 8:19–9:18, prescribed none
-  · 2026-05-25: the app derived a benchmark from a race, 5.0 km in 34:23 (VDOT 26.1, true 26.2)
+  runner  VDOT 26.07 · fitness 62 min · easy own 8:20–9:19, prescribed none
+  · 2026-05-25: the app derived a benchmark from a race, 5.0 km in 34:18 (VDOT 26.2, true 26.2)
   · 2026-05-29: short injury on easy_30
 w13 2026-06-01  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 25.69 · fitness 54 min
+  runner  VDOT 25.64 · fitness 53 min
   · 2026-06-07: server ended recovery
 w14 2026-06-08  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 25.30 · fitness 46 min
+  runner  VDOT 25.25 · fitness 45 min
 w15 2026-06-15  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 24.95 · fitness 39 min
+  runner  VDOT 24.92 · fitness 38 min
 w16 2026-06-22  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
-  runner  VDOT 24.82 · fitness 36 min
+  runner  VDOT 24.78 · fitness 35 min
 
-runs 30 · counted 30 of the 30 planned · injuries 1 · VDOT 24.0 → 24.82
-race 2026-05-24 5k_race 34:23 at VDOT 25.97
+runs 30 · counted 30 of the 30 planned · injuries 1 · VDOT 24.0 → 24.78
+race 2026-05-24 5k_race 34:18 at VDOT 25.90

@@ -22,6 +22,19 @@ const base: RaceGoalPlannerInput = {
 };
 
 describe("getRaceGoalPlannerState", () => {
+  // Run24 (1): setup states the plan's longest run, in time too where a
+  // pace gives it.
+  it("states the longest run a full plan builds to", () => {
+    const full = { ...base, targetDate: "2026-10-04" };
+    const at = (easyPaceSPerKm: number | null) =>
+      getRaceGoalPlannerState({ ...full, easyPaceSPerKm }).statusDescription;
+    expect(at(null)).toMatch(/ Your longest run will be \d+ km\.$/);
+    // 30 km at 6:00 /km is three hours.
+    expect(at(360)).toBe(
+      "Full Base → Build → Taper → Race progression for your marathon. Your longest run will be 30 km, about 3 h."
+    );
+  });
+
   // ── State A — no date ──────────────────────────────────────────────
   it("State A: empty date → empty status, no CTA, calm prompt", () => {
     const s = getRaceGoalPlannerState(base);
@@ -81,14 +94,31 @@ describe("getRaceGoalPlannerState", () => {
     // jumps are the steepest in the system (racePlanSafetySweep): the copy
     // says so, as the race cockpit does, rather than "a shorter
     // long-run progression". Deep dive D8: it says it of this plan's weeks,
-    // which climb to a 20 km long run and hold tempo and intervals.
+    // which climb to a 20 km long run and hold tempo and intervals; with a
+    // full block's 30 km and more (Run24 (1)), 20 km is out of the
+    // marathon's reach, which leads.
     expect(s.statusDescription).not.toMatch(/shorter long-run/);
     expect(s.statusDescription).toBe(
-      "The long run builds to 20 km before race week in fewer weeks than a full plan, with bigger jumps between them. Fewer quality sessions than a full plan."
+      "By race day the plan’s long run gets to 20 km, and a marathon is 42.2 km. A later race or a shorter one gives it time. Fewer quality sessions than a full plan."
     );
     // "Hard" is the effort word only (Run21 (4)): the family is "quality
     // sessions".
     expect(s.statusDescription).not.toMatch(/\bhard\b/i);
+  });
+
+  // Run24 (7): a race too close says so first, then what gives it time,
+  // and still offers the plan.
+  it("leads a race too close with the alternatives, and still offers the plan", () => {
+    const tight = getRaceGoalPlannerState({
+      ...base,
+      targetDate: "2026-06-22",
+      newRunnerUntil: newRunnerUntil("new", TODAY),
+    });
+    expect(tight.status).toBe("below-floor");
+    expect(tight.statusDescription).toMatch(
+      /^Too soon for a full marathon build\. A later race or a shorter one gives it time\. /
+    );
+    expect(tight.ctaLabel).toBe("Save mostly-easy plan");
   });
 
   // ── State E — below floor / finish safely ──────────────────────────
@@ -506,10 +536,11 @@ describe("getRaceGoalPlannerState — the runway from the running starting point
     // ...but from a 25-minute longest run the long run reaches 15 km.
     const s = at("marathon", weeksOut(12), start);
     expect(s.status).toBe("healthy");
-    expect(s.shortOfRace).toEqual({ reaches: "15 km", raceNeeds: "25 km" });
+    // Run24 (1): a marathon plan with these weeks builds to 30 km.
+    expect(s.shortOfRace).toEqual({ reaches: "15 km", raceNeeds: "30 km" });
     expect(s.statusTitle).toBe("Short runway for your running");
     expect(s.statusDescription).toBe(
-      "Starting from your running now, the long run builds to about 15 km before race week, where a marathon plan with these weeks builds to 25 km. A later race or a shorter one gives it time."
+      "Starting from your running now, the long run builds to about 15 km before race week, where a marathon plan with these weeks builds to 30 km. A later race or a shorter one gives it time."
     );
   });
 

@@ -614,8 +614,14 @@ describe("the climb from what was done, at the runner's own pace", () => {
       planTotalWeeks: 25,
       recentRuns: fast,
     });
-    // The weeks ahead, which go by the calendar, are the same either way.
-    expect(withRuns.weeks.slice(1)).toEqual(plan.weeks.slice(1));
+    // The weeks ahead, which go by the calendar, run the same either way.
+    // (The plan's own record of the long run it climbs to, under the fit,
+    // follows this week's runs, as Run23's climb does.)
+    const runs = (p: typeof plan) =>
+      p.weeks
+        .slice(1)
+        .map((week) => week.map((r) => `${r.date} ${r.templateId}`));
+    expect(runs(withRuns)).toEqual(runs(plan));
     expect(sized).toBe(48);
   });
 });
