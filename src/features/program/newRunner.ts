@@ -5,6 +5,7 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { startDayKey } from "@/lib/startDay";
 import {
   isRunWalkTemplateId,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/workoutTemplates";
 import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import { plannedRunMinutes } from "./runTimeLimits";
+import type { DatedRun } from "./layoffDetection";
 import { STARTER_STAGES, starterNewRunnerUntil } from "./starterPlan";
 
 /**
@@ -24,6 +26,35 @@ import { STARTER_STAGES, starterNewRunnerUntil } from "./starterPlan";
  * heuristic inside that range.
  */
 export const NEW_RUNNER_WEEKS = 6;
+
+/**
+ * Run24 (8), deep dive D6: a block begun as a new runner holds no tempo or
+ * intervals until the runner has run this long in one go, the lower end of
+ * the lock's 40 to 45 minutes (a Tropos heuristic). A run-walk session never
+ * reaches it: the ladder's longest is half an hour.
+ */
+export const BEGINNER_QUALITY_RUN_MINUTES = 40;
+
+/**
+ * The week a beginner's block may first hold quality (Run24 (8)): the week
+ * after the earliest counted run of `BEGINNER_QUALITY_RUN_MINUTES` or more
+ * among `runs`, as a week key. Null while there is none. The earliest one the
+ * runs reach, so a long-past first one reads later than it was, which only
+ * starts the ladders lower.
+ */
+export function beginnerQualityWeek(
+  runs: readonly DatedRun[] | null | undefined
+): string | null {
+  let first: string | null = null;
+  for (const run of runs ?? []) {
+    if (!run.date || !isVolumeEligible(run)) continue;
+    if ((run.duration ?? 0) < BEGINNER_QUALITY_RUN_MINUTES * 60) continue;
+    if (first === null || run.date < first) first = run.date;
+  }
+  return first === null
+    ? null
+    : localWeekKey(addLocalDays(parseLocalDate(first), 7));
+}
 
 /**
  * The profile's fields a new runner's first weeks are read from: setup's
