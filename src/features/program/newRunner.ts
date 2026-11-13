@@ -9,6 +9,7 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { startDayKey } from "@/lib/startDay";
 import {
   isRunWalkTemplateId,
+  RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
   RUN_WALK_TEMPLATE_IDS,
   type RunTemplate,
@@ -227,7 +228,11 @@ export function newRunnerTemplate(
   const minutes = (t: RunTemplate) => plannedRunMinutes(t, easyPaceSPerKm);
   if (most === null || minutes(original) <= most) return null;
   const fitting = RUN_TEMPLATES.filter(
-    (t) => t.type !== "race" && !isRunWalkTemplateId(t.id) && minutes(t) <= most
+    (t) =>
+      t.type !== "race" &&
+      !isRunWalkTemplateId(t.id) &&
+      !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
+      minutes(t) <= most
   ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
   const quality = original.type === "tempo" || original.type === "intervals";
   const rungs = DELOAD_LADDERS.find((ladder) => ladder.includes(original.id));

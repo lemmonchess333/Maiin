@@ -136,17 +136,17 @@ describe("Pgm6 — volume knob", () => {
     expect(peakLongKmOf(marathon)).toBeGreaterThan(peakLongKmOf(half));
   });
 
-  it("bigger unlocks the 15K tier for a 10K plan (standard keeps it at 10K)", () => {
+  it("bigger takes a 10K plan's long run a rung past standard's", () => {
+    // Run24 (6): 25% over the 10K's 12 km is 15, and the 2 km ladder's
+    // rung under it is 14.
     const standard = plan({ distance: "10k", daysAhead: 60 });
-    expect(allDays(standard).some((d) => d.templateId === "long_15k")).toBe(
-      false
-    );
+    expect(peakLongKmOf(standard)).toBeLessThanOrEqual(12);
     const bigger = plan({
       distance: "10k",
       daysAhead: 60,
       tuning: { volume: "bigger", difficulty: "standard" },
     });
-    expect(allDays(bigger).some((d) => d.templateId === "long_15k")).toBe(true);
+    expect(allDays(bigger).some((d) => d.templateId === "long_14k")).toBe(true);
   });
 
   it("bigger does NOT inflate a 5K plan (peak 8km stays under the bigger threshold)", () => {

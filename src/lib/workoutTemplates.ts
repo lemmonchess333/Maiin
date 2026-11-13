@@ -93,6 +93,14 @@ export function isRunWalkTemplateId(id: string | null | undefined): boolean {
   );
 }
 
+/** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
+ *  A plan made then holds them, so they stay and read as before; nothing
+ *  picks them for a new run. */
+export const RETIRED_RUN_TEMPLATE_IDS: ReadonlySet<string> = new Set([
+  "long_15k",
+  "long_25k",
+]);
+
 const repeat = (seconds: number, times: number) =>
   Array.from({ length: times }, () => seconds);
 
@@ -365,6 +373,15 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 12 },
   },
   {
+    id: "long_14k",
+    name: "Long 14K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 75,
+    config: { targetDistanceKm: 14 },
+  },
+  {
     id: "long_15k",
     name: "Long 15K",
     type: "long",
@@ -372,6 +389,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "Easy effort, time on feet",
     estimatedDuration: 80,
     config: { targetDistanceKm: 15 },
+  },
+  {
+    id: "long_16k",
+    name: "Long 16K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 85,
+    config: { targetDistanceKm: 16 },
+  },
+  {
+    id: "long_18k",
+    name: "Long 18K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a half marathon needs",
+    estimatedDuration: 100,
+    config: { targetDistanceKm: 18 },
   },
   {
     id: "long_20k",
@@ -383,6 +418,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 20 },
   },
   {
+    id: "long_22k",
+    name: "Long 22K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 120,
+    config: { targetDistanceKm: 22 },
+  },
+  {
+    id: "long_24k",
+    name: "Long 24K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 135,
+    config: { targetDistanceKm: 24 },
+  },
+  {
     id: "long_25k",
     name: "Long 25K",
     type: "long",
@@ -390,6 +443,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "Easy effort, building the endurance a marathon needs",
     estimatedDuration: 140,
     config: { targetDistanceKm: 25 },
+  },
+  {
+    id: "long_26k",
+    name: "Long 26K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 145,
+    config: { targetDistanceKm: 26 },
+  },
+  {
+    id: "long_28k",
+    name: "Long 28K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, a long marathon build run",
+    estimatedDuration: 160,
+    config: { targetDistanceKm: 28 },
   },
   {
     id: "long_30k",

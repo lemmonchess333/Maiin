@@ -7,6 +7,7 @@ import {
 } from "@/lib/dateHelpers";
 import {
   isRunWalkTemplateId,
+  RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
@@ -77,7 +78,7 @@ interface ClimbRung {
 function longRunRungs(easyPaceSPerKm?: number | null): ClimbRung[] {
   const rungs = RUN_TEMPLATES.filter(
     (t) =>
-      t.type === "long" ||
+      (t.type === "long" && !RETIRED_RUN_TEMPLATE_IDS.has(t.id)) ||
       (t.type === "easy" && !t.config?.strides && !isRunWalkTemplateId(t.id))
   )
     .map((t): ClimbRung => ({
@@ -323,6 +324,7 @@ export function fitWeekToRunningBaseline(
       (t) =>
         t.type !== "race" &&
         !isRunWalkTemplateId(t.id) &&
+        !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides

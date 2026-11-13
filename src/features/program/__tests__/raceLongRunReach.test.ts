@@ -119,22 +119,25 @@ describe("a race the plan can't build up to in time", () => {
     expect(raceOutOfReach(r)).toBe(true);
   });
 
-  it("is a marathon six weeks out: 15 km of the plan's 25", () => {
+  it("is a marathon six weeks out: 18 km of the plan's 30", () => {
     const r = reach(returningTo("marathon", 6));
-    expect(r?.longestKm).toBe(15);
+    expect(r?.longestKm).toBe(18);
+    expect(r?.fullKm).toBe(30);
     expect(raceOutOfReach(r)).toBe(true);
   });
 });
 
 describe("a race in reach", () => {
+  // Run24 (6): the long run climbs 2 km a week, so the weeks it takes to
+  // reach the plan's peak are more than on the coarser ladder.
   it("is a half with the weeks to build to the plan's own peak", () => {
-    const r = reach(returningTo("half", 8));
+    const r = reach(returningTo("half", 9));
     expect(r?.longestKm).toBe(r?.fullKm);
     expect(raceOutOfReach(r)).toBe(false);
   });
 
   it("is a marathon whose long run gets to the plan's peak, short of 42.2 km", () => {
-    const r = reach(returningTo("marathon", 10));
+    const r = reach(returningTo("marathon", 14));
     expect(r!.longestKm).toBeLessThan(r!.raceKm);
     expect(r?.longestKm).toBe(r?.fullKm);
     expect(raceOutOfReach(r)).toBe(false);
@@ -147,7 +150,7 @@ describe("a race in reach", () => {
   });
 
   it("is a half whose long run gets to three quarters of the plan's peak", () => {
-    const r = reach(returningTo("half", 6));
+    const r = reach(returningTo("half", 7));
     expect(r!.longestKm).toBeGreaterThanOrEqual(0.75 * r!.fullKm);
     expect(raceOutOfReach(r)).toBe(false);
   });

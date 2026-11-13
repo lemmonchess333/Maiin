@@ -86,8 +86,20 @@ describe("stepDownOneRung", () => {
   it("steps down within the family, keeping what the session IS", () => {
     expect(stepDownOneRung("tempo_40")).toBe("tempo_30");
     expect(stepDownOneRung("6x1k")).toBe("5x1k");
-    expect(stepDownOneRung("long_20k")).toBe("long_15k");
+    expect(stepDownOneRung("long_20k")).toBe("long_16k");
     expect(stepDownOneRung("easy_50")).toBe("easy_40");
+  });
+
+  it("steps a long run down about as far as the coarser ladder did (Run24 (6))", () => {
+    // 2 km rungs: 4 km off from 16 km up, 2 km under it.
+    expect(stepDownOneRung("long_32k")).toBe("long_28k");
+    expect(stepDownOneRung("long_16k")).toBe("long_12k");
+    expect(stepDownOneRung("long_14k")).toBe("long_12k");
+    expect(stepDownOneRung("long_12k")).toBe("long_10k");
+    expect(stepDownOneRung("long_8k")).toBe("long_6k");
+    // A plan made before the 2 km ladder keeps its old steps.
+    expect(stepDownOneRung("long_15k")).toBe("long_12k");
+    expect(stepDownOneRung("long_25k")).toBe("long_20k");
   });
 
   it("keeps strides sessions on the strides ladder", () => {
@@ -131,7 +143,7 @@ describe("planDeloadWeek", () => {
     expect(swaps.map((s) => [s.fromTemplateId, s.toTemplateId])).toEqual([
       ["tempo_40", "tempo_30"],
       ["6x1k", "5x1k"],
-      ["long_20k", "long_15k"],
+      ["long_20k", "long_16k"],
     ]);
   });
 

@@ -59,9 +59,16 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
     "long_8k",
     "long_10k",
     "long_12k",
+    "long_14k",
     "long_15k",
+    "long_16k",
+    "long_18k",
     "long_20k",
+    "long_22k",
+    "long_24k",
     "long_25k",
+    "long_26k",
+    "long_28k",
     "long_30k",
     "long_32k",
   ],
@@ -81,12 +88,34 @@ export interface DeloadSwap {
   toName: string;
 }
 
-/** The rung below `templateId`, or null when it is a floor / not laddered. */
+/** Run24 (6): the long runs' rungs are 2 km apart, so a long run of 16 km
+ *  or more steps down 4 km, the size of the step the coarser ladder took
+ *  (20 → 15, 25 → 20 km), and a shorter one 2 km, as it did. */
+const LONG_STEP_KM = (km: number) => (km >= 16 ? 4 : 2);
+const longKmOf = (id: string): number | undefined => {
+  const template = RUN_TEMPLATES.find((t) => t.id === id);
+  return template?.type === "long"
+    ? template.config.targetDistanceKm
+    : undefined;
+};
+
+/** The rung below `templateId`, or null when it is a floor / not laddered.
+ *  A long run steps to the longest rung at or under its distance less
+ *  `LONG_STEP_KM`; `long_15k` and `long_25k`, which a plan made before the
+ *  2 km ladder holds, step to 12 and 20 km. */
 export function stepDownOneRung(templateId: string): string | null {
   for (const ladder of DELOAD_LADDERS) {
     const i = ladder.indexOf(templateId);
-    if (i > 0) return ladder[i - 1];
     if (i === 0) return null; // floor — nowhere below
+    if (i < 0) continue;
+    const km = longKmOf(templateId);
+    if (km === undefined) return ladder[i - 1];
+    const target = km - LONG_STEP_KM(km);
+    for (let j = i - 1; j >= 0; j--) {
+      const below = longKmOf(ladder[j]);
+      if (below !== undefined && below <= target) return ladder[j];
+    }
+    return ladder[0];
   }
   return null; // races and anything unladdered
 }
