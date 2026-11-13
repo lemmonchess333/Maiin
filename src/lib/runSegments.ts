@@ -89,6 +89,26 @@ export function judgesPaceNow(
 }
 
 /**
+ * Run24 (12), deep dive D17: whether the run screen judges an easy or a long
+ * run against the top of easy now: in an easy segment, or any time on a run
+ * with none. Strides, a race-pace finish and a run-walk's walks are not easy
+ * running to hold back.
+ */
+export function judgesEasyNow(
+  activityType: string | undefined,
+  segments: readonly Pick<SessionSegment, "type">[],
+  current: Pick<SessionSegment, "type"> | null
+): boolean {
+  if (activityType !== "easy" && activityType !== "long") return false;
+  return segments.length === 0 || current?.type === "easy";
+}
+
+/** How far past the fast end of the easy band a run goes before the easy
+ *  cue speaks, s/km (Run24 (12)): GPS wanders by about this much. A
+ *  Tropos heuristic. */
+export const EASY_CEILING_MARGIN_S = 10;
+
+/**
  * The pace the Run screen's live bar judges against: an interval session's
  * work pace, or a pace target. Null when the run has no pace to judge, as a
  * tempo or an interval session has none until a benchmark gives one

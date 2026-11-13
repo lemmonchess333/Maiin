@@ -410,6 +410,7 @@ The generator's own outline with no starting point (what "The weeks ahead" is bu
 ### D17. Heart rate plays no part in a plan. Hurts quality against HR-led competitors.
 
 - No session is prescribed by zone. Live heart rate needs the Watch bridge, which is off unless `VITE_CONNECTED_TRAINING_ENABLED` is set (`src/lib/heartRateSource.ts:107-111`, `src/lib/connectedTrainingRelease.ts:6-7`). Easy and long runs carry no pace target and no in-run "too fast" cue (`src/lib/runPaces.ts:432-437`); the summary says so afterwards. Fix: an easy-run ceiling cue in-run; optional zone targets once the Watch path ships. Size M. The handoff bars "mandatory" zones only.
+- STATUS 2026-11-13: the easy cue built (Run24 (12)). For a runner with a confirmed benchmark, an easy or a long run going more than 10 s /km faster than the fast end of easy hears so (`checkEasyCeiling`), spaced 30, 60 and 120 seconds and at most three a stretch like the pace alert, in its easy running only (`judgesEasyNow`: not the strides, a race-pace finish or a run-walk), under the run's pace-alert switch. The run still carries no pace target. Zones wait for the Watch path. A device check is in `docs/qa/pre-launch-backlog.md`.
 
 ### D18. Short-race long runs are low and flat. Polish.
 
