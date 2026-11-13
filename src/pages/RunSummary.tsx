@@ -55,6 +55,8 @@ import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { readRunHistory, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
+import { PACE_UPDATE_UPGRADE_PATH } from "@/lib/paceUpdateAccess";
+import { track as trackPaywall } from "@/lib/paywallAnalytics";
 import {
   usePaceInsightFromRuns,
   type PaceInsightRun,
@@ -775,7 +777,9 @@ export default function RunSummary() {
       currentPaceCandidate !== null &&
       isPaceEligible(currentPaceCandidate),
     loading: paceHistoryLoading,
-    // Run24 (4): new paces after a run are one tap for every account.
+    // Run24 (4): worked out for every account. Slower paces are one tap
+    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
+    // account sees them `locked` with the Pro page one tap away.
     everyAccount: true,
   });
 
@@ -2189,14 +2193,20 @@ export default function RunSummary() {
                 />
               )}
 
-            {/* Pace insight (Pro) — surfaced at the post-run decision moment,
+            {/* Pace insight — surfaced at the post-run decision moment,
                 before navigation. Only in this valid-run post-save stack;
-                explicit approve/dismiss, never a silent benchmark change. */}
+                explicit approve/dismiss, never a silent benchmark change.
+                Faster paces on a free account offer Pro instead. */}
             {saved && paceInsight.insight && (
               <PaceInsightCard
                 insight={paceInsight.insight}
                 onAccept={paceInsight.accept}
                 onDismiss={paceInsight.dismiss}
+                locked={paceInsight.locked}
+                onUpgrade={() => {
+                  trackPaywall("paywall_cta_clicked", { source: "paces" });
+                  navigate(PACE_UPDATE_UPGRADE_PATH);
+                }}
               />
             )}
 
