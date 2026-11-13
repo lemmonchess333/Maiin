@@ -7,7 +7,11 @@
  * person's invite (Soc15) carries their code in the same address.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { appInviteUrl, PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
+import {
+  appInviteUrl,
+  PUBLIC_APP_ORIGIN,
+  withAppLink,
+} from "@/lib/publicLinks";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -41,6 +45,14 @@ describe("appInviteUrl", () => {
     expect(appInviteUrl()).toBe("https://troposfit.com");
     expect(appInviteUrl("K7P49M2H")).toBe(
       "https://troposfit.com/?invite=K7P49M2H"
+    );
+  });
+});
+
+describe("withAppLink", () => {
+  it("ends a shared card's words with the way back to Tropos (Q69)", () => {
+    expect(withAppLink("My run on Tropos")).toBe(
+      "My run on Tropos https://troposfit.com"
     );
   });
 });
