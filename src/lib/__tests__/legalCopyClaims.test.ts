@@ -246,6 +246,14 @@ describe("Apple Health permissions and storage match the policy", () => {
     expect(PRIVACY_PROSE).toMatch(
       /The step count is not stored or sent to Tropos/
     );
+    // Readiness's sleep and heart (whole-app grill Q39-Q44): read on the
+    // phone, never stored or sent, and the policy says so.
+    expect(PRIVACY_PROSE).toMatch(
+      /your sleep, resting heart rate and heart rate variability for the last four weeks/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /They are read on your phone each time and are not stored or sent to Tropos/
+    );
     expect(PRIVACY_PROSE).toMatch(
       /If you use Apple Watch runs, Tropos reads heart rate/
     );
@@ -269,7 +277,12 @@ describe("Apple Health permissions and storage match the policy", () => {
     const share = appInfoPlistString("NSHealthShareUsageDescription", "NO");
     const update = appInfoPlistString("NSHealthUpdateUsageDescription", "NO");
     expect(share).toMatch(/step count/);
-    expect(share).not.toMatch(/heart rate|workout/);
+    // Readiness reads sleep, resting heart rate and HRV (Pro, when added);
+    // a standard build reads no workouts and no heart rate during a run.
+    expect(share).toMatch(
+      /your sleep, resting heart rate and heart rate variability/
+    );
+    expect(share).not.toMatch(/workout|during Apple Watch runs/);
     expect(update).toMatch(/does not add workouts/);
   });
 
@@ -277,7 +290,15 @@ describe("Apple Health permissions and storage match the policy", () => {
     // Run heart rate and workout export use the native Watch bridge. They
     // must not broaden the steps tile's request for Health permissions.
     const asked = HEALTH_KIT.match(/requestAuthorization\(\{[^}]*\}\)/g);
-    expect(asked).toEqual(['requestAuthorization({ read: ["steps"] })']);
+    // Steps alone for the tile; readiness asks separately, for exactly
+    // what the policy names (BODY_SIGNAL_TYPES).
+    expect(asked).toEqual([
+      'requestAuthorization({ read: ["steps"] })',
+      "requestAuthorization({ read: [...BODY_SIGNAL_TYPES] })",
+    ]);
+    expect(HEALTH_KIT).toMatch(
+      /BODY_SIGNAL_TYPES = \[\s*"sleep",\s*"restingHeartRate",\s*"heartRateVariability",\s*\] as const/
+    );
     expect(HEALTH_KIT).not.toMatch(/\bwrite:/);
     // No other module should reach for the Health plugin around this seam.
     const others = sourceFiles("src").filter(
