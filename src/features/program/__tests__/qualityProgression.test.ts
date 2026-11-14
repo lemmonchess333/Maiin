@@ -72,9 +72,14 @@ const TEMPO_WORK: Record<string, number> = {
   tempo_30: 30,
   tempo_40: 40,
 };
+// The 1 km repeats at the interval band: a 10K's sharpener runs its 1 km
+// repeats at 10K pace (Run24 (5)).
 const INTERVAL_REPS = new Map(
   RUN_TEMPLATES.filter(
-    (t) => t.type === "intervals" && t.config.intervals?.workDistance === 1000
+    (t) =>
+      t.type === "intervals" &&
+      t.config.intervals?.workDistance === 1000 &&
+      !t.config.repeatsAt
   ).map((t) => [t.id, t.config.intervals!.reps])
 );
 

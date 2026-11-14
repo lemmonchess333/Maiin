@@ -11,6 +11,7 @@ import {
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
+import { shorteningRank } from "@/lib/planDeloadWeek";
 import { firstFullWeekKey } from "./runPlanTiming";
 import { plannedRunMinutes } from "./runTimeLimits";
 import type { ScheduledRunDay } from "./programTypes";
@@ -331,9 +332,17 @@ export function fitWeekToRunningBaseline(
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides
-          : t.type === original.type &&
+          : shorteningRank(original, t) !== null &&
             Boolean(t.config?.strides) === Boolean(original.config?.strides))
-    ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
+    ).sort(
+      (a, b) =>
+        // Run24 (5): the same kind of work, its own ladder first.
+        (onlyEasy
+          ? 0
+          : shorteningRank(original, b)! - shorteningRank(original, a)!) ||
+        minutes(b) - minutes(a) ||
+        a.id.localeCompare(b.id)
+    );
     return (
       fitting[0] ??
       RUN_TEMPLATES.filter(

@@ -4841,6 +4841,16 @@ Affects: setup's race preview, the stored run plan's `shortBase`, and every surf
 - [ ] **Week 5.** On the plan's fifth Monday, open Train and Home. Passing: the race card's rail lights Build, the week's tempo is there, "Why this run" reads "Build · week 5 of 16", and the lift label ends "· Build".
 - [ ] **A plan made before this build.** On an account whose race plan was saved before this shipped, roll a week and change a run day in Settings. Passing: its phases stay where they were (Base until week 7 of a 16-week half); the plan gains no `shortBase`.
 
+## The session library on the run screen (Run24 (5), 2026-11-13)
+
+Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` with a style, `segmentsFromProgression`), their spoken cues, the setup's step preview, and their words on Home, Train and the launch card. Unit tests build each session from template to segments; no phone has run one. Open each from a run day's template picker (day sheet → Template) to try it before a plan holds it.
+
+- [ ] **Hills.** Start Hills 6×60s with a confirmed benchmark. Passing: a 15-minute warm-up, then "1 min uphill" headed "HARD · HILL 1/6" with no pace bar and no pace alerts, "Jog down" between, a spoken "Hill 1 of 6" at each climb.
+- [ ] **A fartlek.** Start Fartlek 30. Passing: six "1 min pick-up" steps headed "COMFORTABLY HARD", no pace anywhere, "Pick-up 1 of 6" spoken.
+- [ ] **Repeats at 5K pace.** With a confirmed benchmark, start 4×800m at 5K pace. Passing: each repeat shows its own pace (about the 5K pace the app predicts), headed "5K PACE · REP 1/4", and the in-run heading never swaps it for the interval band; a minute's rest between. Without a benchmark: "5K EFFORT", no pace.
+- [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
+- [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),
