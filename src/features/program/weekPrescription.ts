@@ -96,6 +96,9 @@ export interface RaceBlockWeek {
   weekIndex: number;
   totalWeeks: number;
   distance: RaceDistance;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)): where its
+   *  build, and the lifting's race build weeks, start. */
+  shortBase?: boolean;
 }
 
 /**
@@ -123,7 +126,12 @@ export function raceBlockWeek(
   ) {
     return null;
   }
-  return { weekIndex: currentWeek, totalWeeks, distance };
+  return {
+    weekIndex: currentWeek,
+    totalWeeks,
+    distance,
+    ...(runPlan.shortBase ? { shortBase: true } : {}),
+  };
 }
 
 /**
@@ -166,7 +174,12 @@ export function isRaceBuildWeek(
   week: RaceBlockWeek | null | undefined
 ): boolean {
   if (!week) return false;
-  const phase = getPhaseForWeek(week.weekIndex, week.totalWeeks, week.distance);
+  const phase = getPhaseForWeek(
+    week.weekIndex,
+    week.totalWeeks,
+    week.distance,
+    week.shortBase
+  );
   return (
     (phase === "build" || phase === "taper") &&
     raceLiftWeek(week, undefined) === null
