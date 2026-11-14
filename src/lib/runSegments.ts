@@ -24,7 +24,7 @@
  * strides and tempo structure REPLACE minutes, never extend the session.
  */
 import type { GuidedRunWorkout, SegmentType } from "./guidedRun";
-import { paceMinSec } from "./runLabels";
+import { paceBandLabel, paceMinSec } from "./runLabels";
 import {
   distanceIn,
   distanceUnitLabel,
@@ -249,6 +249,30 @@ export function stepEyebrow(seg: SessionSegment): string {
     if (seg.type === "moderate") return `${effort} · BLOCK ${of}`;
   }
   return effort;
+}
+
+/**
+ * A step's prescription, the line under its heading on the Run screen and
+ * on the Watch: band-first when the runner has a personalized band and the
+ * segment declares its bare effort (#18's band-first rule), else the built
+ * label. A `pacePinned` segment keeps its built label: its pace IS the
+ * prescription (the runner's own goal pace), not a template default the
+ * fitness band should supersede.
+ */
+export function stepHeadline(
+  seg: SessionSegment,
+  unit: DistanceUnit,
+  band?: [number, number]
+): string {
+  if (
+    band &&
+    seg.effort &&
+    !seg.pacePinned &&
+    (seg.type === "hard" || seg.type === "moderate")
+  ) {
+    return `${seg.effort} at ${paceBandLabel(band, unit)}`;
+  }
+  return seg.label;
 }
 
 /**

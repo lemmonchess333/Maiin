@@ -221,6 +221,52 @@ describe("Apple Health export reconciliation", () => {
     );
   });
 
+  it("writes an interrupted attempt once, when native verifies no workout is there", async () => {
+    // The app was killed, or the phone locked, between the receipt and the
+    // save. With write access HealthKit shows the app every workout it
+    // saved, so native can say none is there.
+    seedRun("run-1");
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-1": {
+        runId: "run-1",
+        state: "attempted",
+        revision: "old",
+      },
+    });
+    writer.getWorkoutExportStatus.mockResolvedValue({
+      status: "absent",
+      verified: true,
+    });
+    queueHealthWorkoutExport("u1", "run-1", true);
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).toHaveBeenCalledTimes(1);
+    expect(readDoc("users/u1/healthWorkoutExports/run-1")?.state).toBe(
+      "exported"
+    );
+    expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+    // Once exported, a later pass writes nothing more.
+    await reconcilePendingHealthExports("u1");
+    expect(writer.exportWorkout).toHaveBeenCalledTimes(1);
+  });
+
+  it("finishes a remote deletion when native verifies the workout is already gone", async () => {
+    // Removed in Health by hand, then the run deleted in Tropos.
+    seedFirestore({
+      "users/u1/healthWorkoutExports/run-remote": {
+        runId: "run-remote",
+        state: "pending-delete",
+      },
+    });
+    writer.deleteWorkout.mockResolvedValue({
+      status: "absent",
+      verified: true,
+    });
+    await reconcilePendingHealthExports("u1");
+    expect(writer.deleteWorkout).toHaveBeenCalledWith({ runId: "run-remote" });
+    expect(readDoc("users/u1/healthWorkoutExports/run-remote")).toBeUndefined();
+    expect(pendingHealthWorkoutExports("u1")).toEqual([]);
+  });
+
   it("picks up a remote run deletion and clears its receipt after verified Health cleanup", async () => {
     seedRun("run-remote");
     queueHealthWorkoutExport("u1", "run-remote", true);
