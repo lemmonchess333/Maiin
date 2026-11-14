@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
+import { heatEasedPaceTable } from "@/lib/heatAdjustment";
 import type { RunPlanMetadata } from "@/lib/runPlanMetadata";
 import { RUN_WALK_TEMPLATE_IDS } from "@/lib/workoutTemplates";
 
@@ -214,5 +215,99 @@ describe("workPaceSeconds", () => {
     expect(workPaceSeconds({ seconds: 300, meters: 399 })).toBeNull();
     expect(workPaceSeconds(null)).toBeNull();
     expect(workPaceSeconds(undefined)).toBeNull();
+  });
+});
+
+describe("plannedRunVerdict on a hot day (heatAdjustment.ts)", () => {
+  const easy = resolveSessionPaces("easy", TABLE).band!;
+  const tempo = resolveSessionPaces("tempo", TABLE);
+  const tempoTarget = tempo.targetPace ?? tempo.workPace!;
+  const hot = (
+    templateId: string,
+    avgPaceSeconds: number,
+    extra: Partial<Parameters<typeof plannedRunVerdict>[0]> = {}
+  ) =>
+    plannedRunVerdict({
+      planMetadata: planned(templateId),
+      avgPaceSeconds,
+      distance: 6000,
+      runFitness: FITNESS,
+      unit: "km",
+      hotDay: true,
+      ...extra,
+    });
+
+  it("never calls a tempo slower than its pace slow: slower is expected", () => {
+    // The same run on a cooler day is "slow", and two of those in a
+    // fortnight offer "Take this week easier?" (A6).
+    expect(verdict(planned("tempo_20"), tempoTarget + 30)?.tone).toBe("slow");
+    const v = hot("tempo_20", tempoTarget + 30);
+    expect(v?.tone).toBe("heat");
+    expect(v?.line).toMatch(
+      /^Slower in the heat today: \d+:\d{2} \/km\. That’s expected, and it still counts\.$/
+    );
+    // It speaks where the cooler day's judgement would have.
+    expect(v?.speaks).toBe(true);
+  });
+
+  it("keeps an easy run slower than its window quiet, as on any day", () => {
+    const v = hot("easy_30", easy[1] + 40);
+    expect(v?.tone).toBe("heat");
+    expect(v?.speaks).toBe(false);
+  });
+
+  it("still names running quick in the heat, and an on-target run stays quiet", () => {
+    expect(hot("easy_30", easy[0] - 30)?.tone).toBe("easy-too-fast");
+    expect(hot("tempo_20", tempoTarget - 30)?.tone).toBe("fast");
+    const on = hot("tempo_20", tempoTarget);
+    expect(on?.tone).toBe("on");
+    expect(on?.speaks).toBe(false);
+  });
+
+  it("judges a run adjusted for heat against the eased paces it was set", () => {
+    const adjustment = { from: 0.04, to: 0.06 };
+    const eased = heatEasedPaceTable(TABLE, adjustment)!;
+    const easedTempo = resolveSessionPaces("tempo", eased);
+    // At the eased pace: on target, where the plain pace would call it slow.
+    const atEased = easedTempo.targetPace!;
+    expect(
+      verdict(planned("tempo_20"), atEased)?.tone,
+      "unadjusted, this is past the plain window"
+    ).toBe("slow");
+    expect(hot("tempo_20", atEased, { heatAdjustment: adjustment })?.tone).toBe(
+      "on"
+    );
+    // An easy run at the plain window's fast edge is now quicker than the
+    // eased easy window.
+    expect(
+      hot("easy_30", easy[0] - 5, { heatAdjustment: adjustment })?.tone
+    ).toBe("easy-too-fast");
+  });
+
+  it("does not judge the pace of a run adjusted to effort only", () => {
+    const v = hot("tempo_20", tempoTarget + 60, {
+      heatAdjustment: { from: 0.08, to: 0.1, effortOnly: true },
+    });
+    expect(v).toEqual({
+      tone: "heat",
+      line: "Run by feel in the heat, so its pace isn’t judged.",
+      speaks: false,
+    });
+  });
+
+  it("judges only what it judged before: no plan, a treadmill or intervals stay unjudged", () => {
+    expect(
+      hot("tempo_20", tempoTarget + 30, { planMetadata: null })
+    ).toBeNull();
+    expect(
+      hot("tempo_20", tempoTarget + 30, { place: "treadmill" })
+    ).toBeNull();
+    expect(hot("5x1k", 300)).toBeNull();
+  });
+
+  it("judges the pace as before on a day that was not hot", () => {
+    expect(hot("tempo_20", tempoTarget + 30, { hotDay: false })?.tone).toBe(
+      "slow"
+    );
   });
 });

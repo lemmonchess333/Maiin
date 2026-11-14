@@ -41,6 +41,7 @@ inside that type.
 | A lift day               | `src/features/program/liftDayStatus.ts` (`LiftDayStatus`)                                    | today, upcoming, completed, skipped, missed                                                                          |
 | A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                   |
 | Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                   |
+| Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.

@@ -591,6 +591,24 @@ export function segmentsFromTimeTrial(
 }
 
 /**
+ * A timed easy run: one easy step of its minutes, played by the same
+ * pause-corrected player, remaining-time display and finish cue as every
+ * structured session. A planned easy run's (`templateToPrefill`), and the
+ * easy run a hot day offers in place of a quality session.
+ */
+export function segmentsFromEasy(minutes: number): SessionSegment[] {
+  return [
+    {
+      type: "easy",
+      label: `Easy ${minutes} min`,
+      instruction: "Conversational pace",
+      target: { kind: "duration", seconds: minutes * 60 },
+      cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
+    },
+  ];
+}
+
+/**
  * An easy run closing with strides. The strides block (stride + walk-back,
  * per rep) is carved OUT of the stated duration, so the session total is
  * unchanged — the template-duration contract from WAVE1-STRIDES.

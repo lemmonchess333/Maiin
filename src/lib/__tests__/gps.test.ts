@@ -21,6 +21,7 @@ import {
   isImpossibleStep,
   KalmanFilter,
   toGPX,
+  rawTrace,
   climbBySegment,
   movingClockMs,
   movingSecondsBetween,
@@ -1080,6 +1081,54 @@ describe("toGPX", () => {
     expect(gpx).toContain('<trkpt lat="51.5" lon="-0.1">');
     expect(gpx).toContain("<ele>10.0</ele>");
     expect(gpx).toContain("<time>1970-01-01T00:00:00.000Z</time>");
+  });
+
+  it("starts a new track segment after a hold, keeping every fix's own time", () => {
+    /* Paused for 5 minutes between the second and third points: nothing
+       was recorded, as a receiver switched off records nothing. The times
+       stay the times the fixes were taken. */
+    const held = [
+      makePoint({ lat: 51.5, lon: -0.1, timestamp: 0 }),
+      makePoint({ lat: 51.5001, lon: -0.1, timestamp: 1000 }),
+      makePoint({
+        lat: 51.5002,
+        lon: -0.1,
+        timestamp: 302_000,
+        pausedMs: 300_000,
+      }),
+      makePoint({
+        lat: 51.5003,
+        lon: -0.1,
+        timestamp: 303_000,
+        pausedMs: 300_000,
+      }),
+    ];
+    const gpx = toGPX(held, "Paused run");
+    expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
+    expect(gpx).toContain("<time>1970-01-01T00:05:02.000Z</time>");
+  });
+});
+
+describe("rawTrace", () => {
+  it("puts each point at its raw fix and leaves everything else", () => {
+    const p = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      rawLat: 51.5001,
+      rawLon: -0.1001,
+      timestamp: 5000,
+      pausedMs: 2000,
+    });
+    expect(rawTrace([p])).toEqual([{ ...p, lat: 51.5001, lon: -0.1001 }]);
+  });
+
+  it("keeps a point's position when its raw fix is missing", () => {
+    const p = {
+      ...makePoint({ lat: 51.5, lon: -0.1 }),
+      rawLat: undefined as unknown as number,
+      rawLon: undefined as unknown as number,
+    };
+    expect(rawTrace([p])[0]).toBe(p);
   });
 });
 
