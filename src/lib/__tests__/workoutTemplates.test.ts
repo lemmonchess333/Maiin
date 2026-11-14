@@ -70,14 +70,25 @@ describe("RUN_TEMPLATES", () => {
   });
 
   it("interval templates have interval config", () => {
+    // Run24 (4): a time trial is an interval-type session with its own
+    // shape, one distance at one effort.
     const intervalTemplates = RUN_TEMPLATES.filter(
-      (t) => t.type === "intervals"
+      (t) => t.type === "intervals" && !t.config.timeTrial
     );
     expect(intervalTemplates.length).toBeGreaterThan(0);
     for (const t of intervalTemplates) {
       expect(t.config.intervals).toBeDefined();
       expect(t.config.intervals!.reps).toBeGreaterThan(0);
       expect(t.config.intervals!.restDuration).toBeGreaterThan(0);
+    }
+  });
+
+  it("time trials carry their distance and no repeats (Run24 (4))", () => {
+    for (const id of ["time_trial_3k", "time_trial_5k"]) {
+      const t = RUN_TEMPLATES.find((template) => template.id === id)!;
+      expect(t.type).toBe("intervals");
+      expect(t.config.timeTrial?.distanceKm).toBeGreaterThan(0);
+      expect(t.config.intervals).toBeUndefined();
     }
   });
 

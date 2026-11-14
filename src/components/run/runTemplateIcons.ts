@@ -4,6 +4,7 @@ import {
   PersonStanding,
   RefreshCw,
   Route,
+  Timer,
   Wind,
   Zap,
   type LucideIcon,
@@ -24,6 +25,8 @@ export const RUN_TEMPLATE_ICONS: Readonly<Record<string, LucideIcon>> = {
   wind: Wind,
   route: Route,
   flag: Flag,
+  // Run24 (4): the time trial, the plan's benchmark session.
+  timer: Timer,
 };
 
 /** The glyph for a run template's icon key; a plain run's footprints when

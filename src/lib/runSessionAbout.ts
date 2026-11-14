@@ -177,6 +177,16 @@ export function runSessionAbout(
       ifWrong: `Can’t talk on a run? Slow down, or start the walk early.${swapBack}`,
     };
   }
+  if (config.timeTrial) {
+    // Run24 (4): the plan's benchmark session.
+    const km = config.timeTrial.distanceKm;
+    return {
+      what: `A warm-up, then ${km} km as hard as you can hold evenly, then a cool-down. A parkrun does the same job.`,
+      feel: "Hard, and even: you finish with nothing much left, not having slowed.",
+      ifWrong:
+        "Went off too fast and faded? It still counts. Next time start a little slower than feels right.",
+    };
+  }
   if (template.type === "intervals") {
     const shortReps = (config.intervals?.workDistance ?? 1000) < 1000;
     return shortReps

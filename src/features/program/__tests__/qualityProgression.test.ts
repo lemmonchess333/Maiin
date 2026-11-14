@@ -148,16 +148,17 @@ describe("quality sessions progress", () => {
     }
   });
 
-  it("volume ramps monotonically to the peak, then holds", () => {
-    // Not a formula check: read the emitted sizes for one flavour and require
-    // that the maximum is reached MORE THAN ONCE. One exposure at peak
-    // quality is a test, not a stimulus.
+  it("volume ramps monotonically to the peak", () => {
+    // Not a formula check: read the emitted sizes for one flavour and
+    // require the peak every distance builds to. It used to require the
+    // peak MORE THAN ONCE (one exposure at peak quality is a test, not a
+    // stimulus); Run24 (4)'s time trials take a quality week in five, half
+    // of them interval weeks, so the intervals now reach their peak in the
+    // last build week. A trade the lock made: the paces those sessions run
+    // at come from the trials.
     for (const distance of DISTANCES) {
       const sizes = qualitySizes(distance, "intervals");
-      const peak = Math.max(...sizes);
-      expect(sizes.filter((s) => s === peak).length, distance).toBeGreaterThan(
-        1
-      );
+      expect(Math.max(...sizes), distance).toBe(6);
     }
   });
 

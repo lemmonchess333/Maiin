@@ -402,6 +402,46 @@ export function segmentsFromTempo(
 }
 
 /**
+ * Run24 (4), deep dive D4: a time trial, the plan's benchmark session. An
+ * easy warm-up, the distance as one hard segment with no pace on it (the
+ * run is how the pace is found), and an easy cool-down. Its one work
+ * segment is the run's work portion, which is read as a race.
+ */
+export function segmentsFromTimeTrial(
+  shape: { distanceKm: number; warmupSec: number; cooldownSec: number },
+  seed: number = 0
+): SessionSegment[] {
+  const km = `${shape.distanceKm} km`;
+  return [
+    {
+      type: "warmup",
+      label: "Warm-up",
+      instruction: "Easy jogging, a few quick strides at the end",
+      target: { kind: "duration", seconds: shape.warmupSec },
+      cue: warmupCue(seed),
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+    {
+      type: "hard",
+      label: `${km} time trial`,
+      instruction: "As hard as you can hold evenly to the end",
+      eyebrow: "TIME TRIAL",
+      target: { kind: "distance", meters: shape.distanceKm * 1000 },
+      effort: `${km} time trial`,
+      cue: `${km} time trial. Start a little slower than feels right, then hold it to the end.`,
+    },
+    {
+      type: "cooldown",
+      label: "Cool-down",
+      instruction: "Easy jogging",
+      target: { kind: "duration", seconds: shape.cooldownSec },
+      cue: cooldownCue(seed),
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+  ];
+}
+
+/**
  * An easy run closing with strides. The strides block (stride + walk-back,
  * per rep) is carved OUT of the stated duration, so the session total is
  * unchanged — the template-duration contract from WAVE1-STRIDES.

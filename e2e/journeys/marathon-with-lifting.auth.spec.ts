@@ -49,7 +49,10 @@ import type {
   ScheduledRunDay,
 } from "../../src/features/program/programTypes";
 import { liftWeekLabel } from "../../src/lib/liftWeekLabel";
-import { RUN_TEMPLATES } from "../../src/lib/workoutTemplates";
+import {
+  isTimeTrialTemplateId,
+  RUN_TEMPLATES,
+} from "../../src/lib/workoutTemplates";
 import {
   LIFT_WEEK_BANNER,
   RUN_RECOVERY,
@@ -76,7 +79,6 @@ function planWeek(state: ProgramState, monday: string) {
   const runs = (state.runDays ?? []).filter(
     (run) => run.date && run.date >= monday && run.date <= plusDays(monday, 6)
   );
-  const types = runs.map((run) => templateOf(run).type);
   const long = runs.find((run) => templateOf(run).type === "long");
   return {
     phase:
@@ -88,7 +90,15 @@ function planWeek(state: ProgramState, monday: string) {
             "marathon"
           ),
     runs,
-    quality: types.some((type) => type === "tempo" || type === "intervals"),
+    // A time trial (Run24 (4)) sets the paces, in base weeks too; it is
+    // not the build's quality.
+    quality: runs.some((run) => {
+      const template = templateOf(run);
+      return (
+        (template.type === "tempo" || template.type === "intervals") &&
+        !isTimeTrialTemplateId(template.id)
+      );
+    }),
     longKm: long ? (templateOf(long).config.targetDistanceKm ?? 0) : null,
     minutes: runs.reduce((sum, run) => sum + plannedSize(run).minutes, 0),
     mainSets: state.workouts[0]?.exercises[0]?.sets ?? 0,
