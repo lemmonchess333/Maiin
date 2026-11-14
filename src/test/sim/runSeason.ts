@@ -217,15 +217,18 @@ export function raceTimeS(
   return Math.max(equivalent, distanceM / speed);
 }
 
-/** A segment's intensity, from its type and the session's. */
+/** A segment's intensity, from its type and the session's. A long run's
+ *  race-pace blocks (Run24 (5)) are run at their race's. */
 function segmentIntensity(
   sessionType: string,
   segmentType: string,
-  race: keyof typeof RACE_M | null
+  race: keyof typeof RACE_M | null,
+  blocksRace: keyof typeof RACE_M | null = null
 ): RunIntensity {
   if (segmentType === "hard")
     return sessionType === "intervals" ? "interval" : "repetition";
   if (segmentType === "moderate") {
+    if (sessionType === "long" && blocksRace) return RACE_INTENSITY[blocksRace];
     if (sessionType === "long" && race) return RACE_INTENSITY[race];
     return "threshold";
   }
@@ -255,7 +258,12 @@ export function sessionSegments(
     ];
   if (prefill.segments?.length)
     return prefill.segments.map((seg) => ({
-      intensity: segmentIntensity(type, seg.type, race),
+      intensity: segmentIntensity(
+        type,
+        seg.type,
+        race,
+        template?.config.racePaceBlocks?.race ?? null
+      ),
       ...(seg.target.kind === "duration"
         ? { minutes: seg.target.seconds / 60 }
         : { km: seg.target.meters / 1000 }),

@@ -22,7 +22,11 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { BASE_LIGHT_TEMPLATE_IDS, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import {
+  BASE_LIGHT_TEMPLATE_IDS,
+  racePaceLongTemplateId,
+  RUN_TEMPLATES,
+} from "@/lib/workoutTemplates";
 import {
   recentPace,
   recentRunning,
@@ -376,15 +380,28 @@ function isRaceBlockInputs(value: unknown): value is RaceBlockInputs {
 /** Run24 (6): how far a base or build week's planned minutes may rise over
  *  the last week that was not a step-back. A Tropos heuristic. */
 const WEEK_RISE_CAP = 1.15;
-/** The easy tier a tier under `id`, its strides kept; null at the base 30
- *  or for a run that is not one of the ladder's easy runs. */
+const EASY_VARIANT_SUFFIXES = ["_strides", "_pickups"] as const;
+/** An easy run's tier and the variant it is (`_strides`, `_pickups`), if
+ *  any. */
+function easyVariantOf(id: string): { plain: string; suffix: string } {
+  const suffix = EASY_VARIANT_SUFFIXES.find((end) => id.endsWith(end)) ?? "";
+  return { plain: id.slice(0, id.length - suffix.length), suffix };
+}
+
+/** The easy tier a tier under `id`, its strides or pick-ups kept; null at
+ *  the base 30, for a variant with no tier under it, or for a run that is
+ *  not one of the ladder's easy runs. */
 function easyTierBelow(id: string): string | null {
-  const strides = id.endsWith("_strides");
-  const plain = strides ? id.slice(0, -"_strides".length) : id;
+  const { plain, suffix } = easyVariantOf(id);
   const at = EASY_RUN_TIERS.findIndex((tier) => tier.id === plain);
   if (at <= 0) return null;
   const below = EASY_RUN_TIERS[at - 1].id;
-  return strides ? stridesVariantOf(below) : below;
+  if (suffix === "_strides") return stridesVariantOf(below);
+  if (suffix === "_pickups") {
+    const held = pickUpsVariantOf(below);
+    return held === below ? null : held;
+  }
+  return below;
 }
 /** The easy runs a taper or race week falls back to (deep dive D13). */
 const TAPER_FLOOR_IDS: ReadonlySet<string> = new Set([
@@ -930,6 +947,24 @@ export function stridesVariantOf(easyId: string): string {
       return "easy_40_strides";
     case "easy_50":
       return "easy_50_strides";
+    default:
+      return easyId;
+  }
+}
+
+/**
+ * Run24 (8), deep dive D6: the pick-ups variant of a plain easy run, its
+ * minutes the same, as `stridesVariantOf`'s are. Ids with none pass
+ * through untouched.
+ */
+export function pickUpsVariantOf(easyId: string): string {
+  switch (easyId) {
+    case "easy_30":
+      return "easy_30_pickups";
+    case "easy_40":
+      return "easy_40_pickups";
+    case "easy_50":
+      return "easy_50_pickups";
     default:
       return easyId;
   }
@@ -1903,6 +1938,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         ) < beginnerQualityFrom));
   /** Run23: how far up the long-run ladder the block's weeks have climbed. */
   const climb: LongRunClimb = new Map();
+  /** The block's weeks whose long run a return from a gap holds under the
+   *  ramp's, as each week is built. */
+  const longHeldBack = new Set<number>();
   /* Run15 (deep dive D11): the week a runner came back in
      after a detraining-length gap, from the runs read. Its week starts a
      rung under the base long run, with 20-minute easy runs, and each week
@@ -1961,6 +1999,13 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const week: ScheduledRunDay[] = [];
     // Run20 (5): a new runner's first weeks hold no tempo or intervals.
     const newRunnerWeek = isNewRunnerWeek(w);
+    /* Run24 (8), deep dive D6: a block begun as a new runner, past its
+       run-walk weeks and before it holds quality, has 6 x 1 minute
+       pick-ups by time in place of its strides every other week. */
+    const stridesRunOf = (id: string) =>
+      beginnerBlock && !newRunnerWeek && holdsNoQuality(w) && w % 2 === 1
+        ? pickUpsVariantOf(id)
+        : stridesVariantOf(id);
     /** Whole weeks since the runner came back (`returnWeek`), in a base or
      *  build week from that one on; null otherwise. */
     const weeksBack = (() => {
@@ -2195,6 +2240,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             Math.min(rampRung, Math.max(0, baseLongRung - 1 + weeksBack))
           ].id
         : rampLongId;
+    // A long run held under the ramp's on the way back from a gap keeps
+    // easy, with no race-pace blocks (Run24 (5), `racePaceWeeks`).
+    if (longId !== rampLongId) longHeldBack.add(w);
     week.push(
       buildRunDayV2({
         dayIndex: longSlot,
@@ -2293,25 +2341,31 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             })
           )
         );
-        easyDaysInFillOrder({
+        const baseEasyDays = easyDaysInFillOrder({
           easyDays: remaining.filter((d) => !lightDays.includes(d)),
           demandingDays: [longSlot, ...lightDays],
           mediumLongDemanding: midLongDemanding,
-        }).forEach((d, i) =>
+        });
+        /* Run24 (5), deep dive D5 ("strides twice"): on three run days the
+           light session takes the strides run's day, so the week's one
+           easy run, the medium-long, keeps the strides where its tier has
+           them (an hour or more has none). */
+        const stridesAt =
+          lightDays.length > 0 && baseEasyDays.length === 1 ? 0 : 1;
+        baseEasyDays.forEach((d, i) => {
+          const id = i === 0 ? midLongId : easyId;
           week.push(
             buildRunDayV2({
               dayIndex: d,
               templateId:
-                i === 0
-                  ? midLongId
-                  : i === 1 && input.recentLayoff !== "detrained"
-                    ? stridesVariantOf(easyId)
-                    : easyId,
+                i === stridesAt && input.recentLayoff !== "detrained"
+                  ? stridesRunOf(id)
+                  : id,
               type: "easy",
               weekStart,
             })
-          )
-        );
+          );
+        });
       } else if (phase === "build") {
         // 1 quality + rest easy (or all easy if compressed and the long run
         // already consumed the week's quality budget); gentler forces the
@@ -2457,7 +2511,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
                   i === 0
                     ? weekMidLongId
                     : i === 1 && input.recentLayoff !== "detrained"
-                      ? stridesVariantOf(easyId)
+                      ? stridesRunOf(easyId)
                       : easyId,
                 type: "easy",
                 weekStart,
@@ -2480,7 +2534,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
                   i === 0
                     ? midLongId
                     : i === 1 && input.recentLayoff !== "detrained"
-                      ? stridesVariantOf(easyId)
+                      ? stridesRunOf(easyId)
                       : easyId,
                 type: "easy",
                 weekStart,
@@ -2614,6 +2668,72 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       if (fits(at)) trialWeeks.add(at);
     }
   }
+  /* Run24 (5), deep dive D5: a marathon's or a half's later build weeks
+     hold a session of their own at race pace, a long run with blocks at it
+     (`racePaceLongTemplateId`: 2 or 3 x 3 km), every other week from the
+     build's second half, in place of the plain long run. It is the same
+     distance and minutes, so the week runs as far and the weekly hold is
+     the plain run's. Not in a step-back week, the ramp's last (the peak
+     long run stays easy), nor a time trial's, nor a new runner's, a
+     detrained, compressed or gentler block. The order and the turns are a
+     Tropos heuristic. */
+  const racePaceRace =
+    input.raceGoal.distance === "marathon" || input.raceGoal.distance === "half"
+      ? input.raceGoal.distance
+      : null;
+  const racePaceWeeks = new Set<number>();
+  if (
+    racePaceRace &&
+    !beginnerBlock &&
+    !detrained &&
+    !compressed &&
+    !belowFloor &&
+    tuning.difficulty !== "gentler"
+  ) {
+    const build = Array.from({ length: blockWeeks }, (_, w) => w).filter(
+      (w) => phaseOf(w) === "build"
+    );
+    const from = (build[0] ?? 0) + Math.floor(build.length / 2);
+    let turn = 0;
+    for (const w of build) {
+      if (w < from || stepsBack(w) || w === lastRampWeek || trialWeeks.has(w))
+        continue;
+      if (turn % 2 === 0) racePaceWeeks.add(w);
+      turn += 1;
+    }
+  }
+  /** Week `w` as the plan holds it, its long run given race-pace blocks in
+   *  a week that holds them. After the fits: in a week whose runs the
+   *  starting point's climb holds short (`trainingBasis`), the runner still
+   *  building to the plan, or whose long run a return from a gap holds
+   *  under the ramp's, it stays plain. */
+  const withRacePaceLong = (
+    week: ScheduledRunDay[],
+    w: number
+  ): ScheduledRunDay[] => {
+    if (
+      !racePaceRace ||
+      !racePaceWeeks.has(w) ||
+      longHeldBack.has(w) ||
+      week.some((run) => run.trainingBasis)
+    )
+      return week;
+    return week.map((run) => {
+      if (run.type !== "long" || run.userOverride) return run;
+      const templateId = racePaceLongTemplateId(run.templateId, racePaceRace);
+      return templateId
+        ? {
+            ...run,
+            templateId,
+            id: generateScheduledRunId(
+              { dayIndex: run.dayIndex, templateId },
+              run.weekKey!
+            ),
+          }
+        : run;
+    });
+  };
+
   /** A week as the plan holds it before its fits: the ramp, the floor,
    *  the weekly hold, then its time trial, which the hold does not see. */
   const blockWeekRunsWithTrial = (w: number): ScheduledRunDay[] => {
@@ -2920,7 +3040,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // One week per calendar week from this one: the lead-in first, when this
   // week is one, then the plan's.
   const weeks = Array.from({ length: calendarWeeks }, (_, offset) =>
-    fittedWeek(blockWeekRunsWithTrial(startIndex + offset))
+    withRacePaceLong(
+      fittedWeek(blockWeekRunsWithTrial(startIndex + offset)),
+      startIndex + offset
+    )
   );
   return {
     totalWeeks,
@@ -3058,8 +3181,8 @@ function easeEasyRunsUnder(
       .filter(({ run, tier }) => run.type === "easy" && tier !== null)
       .sort(
         (a, b) =>
-          tierMinutesOfEasy(b.run.templateId.replace(/_strides$/, "")) -
-          tierMinutesOfEasy(a.run.templateId.replace(/_strides$/, ""))
+          tierMinutesOfEasy(easyVariantOf(b.run.templateId).plain) -
+          tierMinutesOfEasy(easyVariantOf(a.run.templateId).plain)
       )[0];
     if (!easy) break;
     const templateId = easy.tier!;
