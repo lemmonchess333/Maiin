@@ -1,4 +1,7 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
+import OptionalSummaryBoundary from "@/components/OptionalSummaryBoundary";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
 import {
@@ -8,8 +11,6 @@ import {
   useRef,
   useSyncExternalStore,
   Suspense,
-  Component,
-  type ReactNode,
 } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -217,27 +218,10 @@ function RetryBanner({
 const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"), {
   reloadOnChunkError: false,
 });
-const SavedRunKudos = lazyRetry(
-  () => import("@/components/social/SavedRunKudos"),
+const SavedSessionKudos = lazyRetry(
+  () => import("@/components/social/SavedSessionKudos"),
   { reloadOnChunkError: false }
 );
-
-// Optional panels may disappear, but a failed import/render must never lose
-// the saved receipt or Done action. Lazy rejects are cached, so no dead Retry.
-class OptionalSummaryBoundary extends Component<
-  { children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 interface InvalidRunReviewProps {
   unit: DistanceUnit;
@@ -1747,9 +1731,10 @@ export default function RunSummary() {
           {saved && (
             <OptionalSummaryBoundary>
               <Suspense fallback={null}>
-                <SavedRunKudos
+                <SavedSessionKudos
                   uid={user?.uid}
                   fromName={profile?.displayName}
+                  className="mx-4 mb-4"
                 />
               </Suspense>
             </OptionalSummaryBoundary>
@@ -2273,22 +2258,12 @@ export default function RunSummary() {
             )}
 
             {doneShown && (
-              /* FOOD-02: post-run → Food handoff, at the moment the runner
-                 has refuel intent. Secondary and skippable — routes into
-                 the EXISTING composer flow with a narrow context param
-                 (Food renders a dismissible refuel line); no separate
-                 recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. Logging
-                 food is the food orange on any page, tinted here because
-                 it is the skippable step and Done is the run's coral one
-                 (DESIGN_GUIDE §14i). */
-              <Button
-                variant="nutrition-tinted"
-                fullWidth
-                onClick={() => navigate("/food?context=post-run")}
-              >
-                Log recovery food
-              </Button>
+              /* FOOD-02: post-run → Food handoff, the same link the lift's
+                 finish has (App1 Q30). Only rendered in the valid-run path
+                 (this whole stack is), post-save. */
+              <RecoveryFoodButton
+                onClick={() => navigate(recoveryFoodPath("run"))}
+              />
             )}
 
             {canShowDiscard({ saveStatus }) && (

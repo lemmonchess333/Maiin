@@ -1,7 +1,8 @@
 /**
  * CIRCLE-SESSION-01 — explicit, summary-only session share into a
- * Circle, offered AFTER a planned session completes (lift complete
- * screen / post-run summary). Never auto-posted.
+ * Circle, offered AFTER a planned session is saved (the lift's finish
+ * screen and the run's, under the share card; App1 Q30) and from a saved
+ * workout's page. Never auto-posted.
  *
  * Privacy contract (the whole point): the ONLY thing published is the
  * existing `session_completed` Goal Space event via
@@ -114,6 +115,11 @@ export default function CircleShareSheet({
       onOpenChange={onOpenChange}
       title="Share to circle"
       description="Only 'completed a session' is shared — never your numbers."
+      /* Lifted above the default stack, as the workout's own sheets are:
+         it opens over the lift's finish screen, a full-screen layer at
+         z-50 that would cover the default z-40 dimming. */
+      className="z-[70]"
+      overlayClassName="z-[60]"
     >
       <div className="px-4 pt-3 pb-6 space-y-3">
         {loading && (

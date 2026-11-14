@@ -163,7 +163,7 @@ vi.mock("@/components/WeekPulseView", () => ({
     return null;
   },
 }));
-vi.mock("@/components/social/SavedRunKudos", () => ({
+vi.mock("@/components/social/SavedSessionKudos", () => ({
   default: () => {
     h.optionalAttempts.push("kudos");
     if (h.failedOptional === "kudos")
