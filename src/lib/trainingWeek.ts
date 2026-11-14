@@ -88,6 +88,23 @@ export interface TrainingWeekInput {
   now?: Date;
 }
 
+/**
+ * The saved sessions a count of sessions counts: every saved lift (a
+ * session on a rest day happened), and every run that counts
+ * (`isVolumeEligible`, so a run saved anyway counts nowhere). The week's
+ * done counts are these, in its seven days; an anniversary's 50th and
+ * 100th session are these, ever (App1 Q58).
+ */
+export function countedSessions<
+  W extends { date: string },
+  R extends RunRecord,
+>(
+  workouts: readonly W[],
+  runs: readonly R[]
+): { lifts: readonly W[]; runs: R[] } {
+  return { lifts: workouts, runs: runs.filter((run) => isVolumeEligible(run)) };
+}
+
 /** The seven days of the week that starts on `weekKey`. */
 export function weekDays(weekKey: string): string[] {
   const monday = parseLocalDate(weekKey);
@@ -115,9 +132,11 @@ export function trainingWeek({
     startKey
   );
 
-  const counted = runs.filter(
-    (run) => inWeek(run.day) && isVolumeEligible(run)
+  const sessions = countedSessions(
+    workouts.filter((w) => inWeek(w.date)),
+    runs.filter((run) => inWeek(run.day))
   );
+  const counted = sessions.runs;
   const daysWithARun = new Set(counted.map((run) => run.day));
 
   const plannedRuns: { date: string; runDay: ScheduledRunDay }[] = [];
@@ -143,7 +162,7 @@ export function trainingWeek({
   return {
     weekKey,
     lifts: {
-      done: workouts.filter((w) => inWeek(w.date)).length,
+      done: sessions.lifts.length,
       planned: liftDays > 0 ? liftDays : null,
     },
     runs: {

@@ -113,7 +113,10 @@ import {
   runPostName,
 } from "@/lib/runName";
 import { racePaceWorkFor } from "@/lib/racePace";
-import { isPaceEligible } from "../lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "../lib/runStatsEligibility";
+import { startDayKey } from "@/lib/startDay";
+import type { FinishedSession } from "@/lib/anniversaries";
+import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
@@ -533,6 +536,10 @@ export default function RunSummary() {
     streak: StreakChange | null;
     firstSession: boolean;
   } | null>(null);
+  /* The run as an anniversary reads it (App1 Q58), once it is saved. */
+  const [anniversaryRun, setAnniversaryRun] = useState<FinishedSession | null>(
+    null
+  );
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -1433,6 +1440,17 @@ export default function RunSummary() {
         ),
         history: finishedRun.moments?.history ?? null,
         firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+      });
+      setAnniversaryRun({
+        id: saveRunId,
+        sport: "run",
+        day: runDay(finishedRun),
+        counts: isVolumeEligible({
+          distance,
+          duration: elapsed,
+          isInvalid,
+        }),
+        metres: distance,
       });
       setSaveStatus("saved");
       setSaveError(null);
@@ -2372,6 +2390,23 @@ export default function RunSummary() {
           open
           onOpenChange={setCircleShareOpen}
           uid={user.uid}
+        />
+      )}
+
+      {/* The 50th or 100th session, a year of Tropos or 1,000 km, full
+          screen over the saved finish (App1 Q58). It counts from the
+          runs this screen already read, when it read them all. */}
+      {user && (
+        <AnniversaryGate
+          uid={user.uid}
+          session={anniversaryRun}
+          startDay={startDayKey(profile?.createdAt)}
+          runs={
+            historyRead?.known && historyRead.uid === user.uid
+              ? historyRead.runs
+              : null
+          }
+          held={shareOpen}
         />
       )}
 

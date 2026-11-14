@@ -324,3 +324,36 @@ describe("ShareCardRenderer", () => {
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 });
+
+describe("ShareCardRenderer — an anniversary (App1 Q58)", () => {
+  it("draws its name, the figure and the sentence, with the mark and handle", () => {
+    const { container } = render(
+      <ShareCardRenderer
+        data={{
+          unit: "km",
+          template: "anniversary",
+          format: "square",
+          background: "brand",
+          handle: "Alex",
+          date: "14 Nov 2026",
+          headline: "Your 50th session",
+          figure: "50",
+          figureUnit: "sessions",
+          line: "You’ve trained 50 times. 100 is next.",
+          tone: "lifting",
+        }}
+      />
+    );
+    const text = container.textContent ?? "";
+    for (const words of [
+      "Your 50th session",
+      "50",
+      "sessions",
+      "You’ve trained 50 times. 100 is next.",
+      "Alex",
+      "14 Nov 2026",
+    ])
+      expect(text).toContain(words);
+    expect(container.querySelector("[data-share-mark]")).not.toBeNull();
+  });
+});

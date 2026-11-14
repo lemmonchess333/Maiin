@@ -47,11 +47,7 @@ export type SocialEvent =
 export type SocialTab = "together" | "feed" | "find";
 export type SocialFeedSubTab = "following" | "explore" | "communities";
 export type ShareCardTemplate =
-  | "run"
-  | "lift"
-  | "hybrid"
-  | "nutrition"
-  | "recap";
+  "run" | "lift" | "hybrid" | "nutrition" | "recap" | "anniversary";
 export type ShareCardFormat = "story" | "square";
 export type ShareCardBackground = "brand" | "dark" | "transparent" | "photo";
 

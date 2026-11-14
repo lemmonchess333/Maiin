@@ -55,7 +55,8 @@ function elevationLabelCompact(metres: number, unit: DistanceUnit) {
  * (shareCardGenerator) and entry wiring live elsewhere.
  */
 
-export type ShareTemplate = "run" | "lift" | "hybrid" | "nutrition" | "recap";
+export type ShareTemplate =
+  "run" | "lift" | "hybrid" | "nutrition" | "recap" | "anniversary";
 export type ShareFormat = "story" | "square";
 export type ShareBackground = "brand" | "dark" | "transparent" | "photo";
 
@@ -150,6 +151,12 @@ export interface ShareCardRenderData {
   //    totals rather than a single session's) ──
   sessionsCount?: number;
   streakDays?: number;
+
+  // ── ANNIVERSARY (App1 Q58; reuses headline, line and tone) ──
+  /** The anniversary's display figure ("50", "1,000") and the word under
+   *  it ("sessions", "km"). */
+  figure?: string;
+  figureUnit?: string;
 }
 
 const DIMS: Record<ShareFormat, { w: number; h: number }> = {
@@ -169,7 +176,11 @@ function bgStyle(
       // into the page. A run is coral and a lift purple, as everywhere in
       // the app; a new best is gold. Nutrition and the hybrid and recap
       // cards keep their own washes.
-      if (template === "run" || template === "lift")
+      if (
+        template === "run" ||
+        template === "lift" ||
+        template === "anniversary"
+      )
         return {
           backgroundColor: STAGE,
           backgroundImage: `radial-gradient(ellipse 72% 40% at 50% ${template === "lift" ? 30 : 32}%, ${meaning}5c 0%, ${meaning}24 45%, ${meaning}00 100%)`,
@@ -493,6 +504,10 @@ function ShareCardRenderer({
         {data.template === "recap" && (
           <RecapTemplate data={data} scale={scale} show={show} />
         )}
+        {/* ANNIVERSARY */}
+        {data.template === "anniversary" && (
+          <AnniversaryTemplate data={data} accent={meaning} scale={scale} />
+        )}
 
         {/* Footer: small brand mark + handle + date (the ONLY branding) */}
         <div
@@ -519,6 +534,46 @@ function ShareCardRenderer({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** An earned anniversary (App1 Q58): its name, the figure in the display
+ *  register in the achievement's colour, and the reveal's sentence, on
+ *  the dark stage with one soft light of that colour, as a finish's card
+ *  is drawn. */
+function AnniversaryTemplate({
+  data,
+  accent,
+  scale,
+}: {
+  data: ShareCardRenderData;
+  accent: string;
+  scale: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        justifyContent: "center",
+        gap: 48 * scale,
+      }}
+    >
+      {data.headline && <Headline text={data.headline} scale={scale} />}
+      {data.figure && (
+        <Hero
+          value={data.figure}
+          label={data.figureUnit ?? ""}
+          color={accent}
+          scale={scale}
+          display
+        />
+      )}
+      {data.line && (
+        <RewardSentence text={data.line} color={accent} scale={scale} />
+      )}
     </div>
   );
 }
