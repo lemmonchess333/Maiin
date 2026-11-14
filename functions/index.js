@@ -121,6 +121,9 @@ const { pushableBadgeIds } = require("./lib/badgeNudge");
 // reminder nobody answers goes quiet.
 const pushBudget = require("./lib/pushBudget");
 const reminderAttention = require("./lib/reminderAttention");
+// App1 Q18: pushes from people, and props once a day.
+const socialPush = require("./lib/socialPush");
+const { wantsNotification } = require("./lib/notificationPreferences");
 
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
@@ -4147,6 +4150,265 @@ exports.hourlyChallengeAnnouncements = functions
   );
 
 exports._maybeSendChallengeAnnouncement = maybeSendChallengeAnnouncement;
+
+// ══════════════════════════════════════════════
+// App1 Q18 — pushes from people (lib/socialPush.js)
+// ══════════════════════════════════════════════
+//
+// A comment, a follow request (both ways), an invite joined and a league
+// result push as their tray row is written; props come together once a
+// day at 19:00 local. Outside App1 Q60's budget, which is for pushes not
+// from a person. createNotification is still the one writer of the rows,
+// with the block check and the recipient's switch; the push follows a row
+// it wrote, and is checked again as it goes.
+
+/** One push to an account's devices: leased, sent, released, pruned.
+ *  `message` is complete (`withNativePushAlert` already applied). */
+async function sendPushToAccount(uid, message) {
+  const registrations = await leaseClaimedPushRegistrations(uid);
+  const tokens = registrations.map((r) => r.token);
+  if (tokens.length === 0) return false;
+  let batch;
+  try {
+    batch = await admin
+      .messaging()
+      .sendEachForMulticast({ tokens, ...message });
+  } finally {
+    await releaseClaimedPushSendLeases(uid, registrations);
+  }
+  await pruneDeadPushTokens(uid, registrations, batch);
+  return batch.successCount > 0;
+}
+
+/** Whether `uid` takes a social push of `type` now: the account takes
+ *  push, and the switch for the kind is still on. */
+async function takesSocialPush(uid, type, profile) {
+  const consent =
+    (await db.doc(`users/${uid}/settings/push`).get()).data() || null;
+  if (!consent || consent.enabled !== true) return false;
+  return wantsNotification((profile || {}).notificationPreferences, type);
+}
+
+/** Whether a push may carry `fromUid`'s act to `uid`: someone else, with
+ *  no block either way and no restriction (the league's result is the
+ *  server's own). */
+async function mayPushFrom(uid, fromUid) {
+  if (fromUid === leagues.LEAGUE_SENDER) return true;
+  if (typeof fromUid !== "string" || !fromUid || fromUid === uid) return false;
+  if (await blockGuard.isBlockedBetween(db, uid, fromUid)) return false;
+  return !(await restriction.isRestricted(db, fromUid));
+}
+
+/** A social push as it goes: quietly in the person's quiet hours, and
+ *  gone after a day undelivered. */
+function socialDelivery(message, uid, now, timezone) {
+  let full = withNativePushAlert(message, uid);
+  if (socialPush.quietNow(now, timezone)) full = socialPush.quietly(full);
+  return socialPush.withSocialDelivery(full, now);
+}
+
+function propsBundleRef(uid) {
+  return db.doc(`users/${uid}/settings/${socialPush.PROPS_BUNDLE_DOC}`);
+}
+
+/** Props given: into the bundle due at the next 19:00 local. */
+async function addToPropsBundle(uid, item, timezone, now) {
+  if (
+    typeof item.fromUserId !== "string" ||
+    typeof item.activityId !== "string"
+  )
+    return;
+  const due = socialPush.propsBundleDueAt(now, timezone);
+  if (!due) return;
+  const ref = propsBundleRef(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const bundle = snap.exists ? snap.data() : null;
+    tx.set(ref, {
+      propsBundleDueAt:
+        (bundle && bundle.propsBundleDueAt) ||
+        admin.firestore.Timestamp.fromDate(due),
+      entries: socialPush.withProps(bundle, {
+        from: item.fromUserId,
+        activityId: item.activityId,
+        name: item.fromName,
+      }),
+    });
+  });
+}
+
+/** Props taken back before the bundle went: out of it. */
+async function removeFromPropsBundle(uid, item) {
+  const ref = propsBundleRef(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const entries = socialPush.withoutProps(snap.data(), {
+      from: item.fromUserId,
+      activityId: item.activityId,
+    });
+    if (entries.length === 0) tx.delete(ref);
+    else tx.set(ref, { ...snap.data(), entries });
+  });
+}
+
+async function handleNotificationItemWrite(change, context) {
+  const { uid } = context.params;
+  const before = change.before.exists ? change.before.data() || {} : null;
+  const after = change.after.exists ? change.after.data() || {} : null;
+  const type = (after || before || {}).type;
+  const bundled = type === socialPush.BUNDLED_PUSH_TYPE;
+  if (!bundled && !socialPush.SOCIAL_PUSH_TYPES.includes(type)) return null;
+  if (!after) {
+    if (bundled) await removeFromPropsBundle(uid, before);
+    return null;
+  }
+  if (!socialPush.isNewNotice(before, after)) return null;
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "onNotificationItemWritten"
+    ))
+  )
+    return null;
+  const profile = (await db.doc(`users/${uid}`).get()).data() || {};
+  if (
+    !(await takesSocialPush(uid, type, profile)) ||
+    !(await mayPushFrom(uid, after.fromUserId))
+  )
+    return null;
+  const now = new Date();
+  if (bundled) {
+    await addToPropsBundle(uid, after, profile.timezone || null, now);
+    return null;
+  }
+  const message = socialPush.socialPushMessage(after);
+  const key = socialPush.noticeKey(after);
+  if (!message || !key) return null;
+  // Claimed on the row before it goes: a retried event never sends twice.
+  const claimed = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(change.after.ref);
+    if (!snap.exists) return false;
+    const row = snap.data() || {};
+    if (socialPush.noticeKey(row) !== key || row.pushReceipt === key)
+      return false;
+    tx.update(change.after.ref, { pushReceipt: key });
+    return true;
+  });
+  if (!claimed) return null;
+  await sendPushToAccount(
+    uid,
+    socialDelivery(message, uid, now, profile.timezone || null)
+  );
+  return null;
+}
+
+// Every row of the tray passes here; only the kinds above do anything,
+// and only for a new notice (a read, a carried name or the push's own
+// receipt is an update with the same createdAt). Retried when it throws,
+// which is safe twice: the push is claimed on its row before it goes, so a
+// second delivery sends nothing again, and the bundle's writes replace one
+// entry per person and session. A push more than a day late is dropped.
+exports.onNotificationItemWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("notifications/{uid}/items/{itemId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    return handleNotificationItemWrite(change, context);
+  });
+
+/** Sends one bundle that is due, and clears it first: a sweep run twice
+ *  sends it once. Props from someone since blocked or restricted are left
+ *  out; nothing left, nothing sent. */
+async function sendPropsBundle(ref, now) {
+  const parts = ref.path.split("/");
+  if (
+    parts.length !== 4 ||
+    parts[0] !== "users" ||
+    parts[3] !== socialPush.PROPS_BUNDLE_DOC
+  )
+    return false;
+  const uid = parts[1];
+  const bundle = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return null;
+    const data = snap.data() || {};
+    const dueAt = socialPush.millisOf(data.propsBundleDueAt);
+    if (dueAt === null || dueAt > now.getTime()) return null;
+    tx.delete(ref);
+    return data;
+  });
+  if (!bundle) return false;
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "hourlyPropsBundle"
+    ))
+  )
+    return false;
+  const profile = (await db.doc(`users/${uid}`).get()).data() || {};
+  if (!(await takesSocialPush(uid, socialPush.BUNDLED_PUSH_TYPE, profile)))
+    return false;
+  const entries = [];
+  for (const entry of socialPush.bundleEntries(bundle))
+    if (await mayPushFrom(uid, entry.from)) entries.push(entry);
+  const sessions = [...new Set(entries.map((entry) => entry.activityId))];
+  const sessionTypes = {};
+  if (sessions.length === 1) {
+    const activity = await db.doc(`activities/${sessions[0]}`).get();
+    if (activity.exists) sessionTypes[sessions[0]] = activity.data().type;
+  }
+  const message = socialPush.propsBundleMessage(entries, { sessionTypes });
+  if (!message) return false;
+  return sendPushToAccount(
+    uid,
+    socialDelivery(message, uid, now, profile.timezone || null)
+  );
+}
+
+// The props bundles that are due (lib/socialPush.js: 19:00 local), on the
+// hour. A collection-group read of the one settings document that carries
+// `propsBundleDueAt` (firestore.indexes.json holds its index).
+exports.hourlyPropsBundle = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyPropsBundle", async () => {
+      const now = new Date();
+      const due = await db
+        .collectionGroup("settings")
+        .where(
+          "propsBundleDueAt",
+          "<=",
+          admin.firestore.Timestamp.fromDate(now)
+        )
+        .limit(1000)
+        .get();
+      let sent = 0;
+      let failed = 0;
+      for (let offset = 0; offset < due.docs.length; offset += 10) {
+        await Promise.all(
+          due.docs.slice(offset, offset + 10).map(async (doc) => {
+            try {
+              if (await sendPropsBundle(doc.ref, now)) sent++;
+            } catch (error) {
+              failed++;
+              console.error("hourlyPropsBundle: send failed", {
+                message: error && error.message,
+              });
+            }
+          })
+        );
+      }
+      return { due: due.size, sent, failed };
+    })
+  );
+
+exports._handleNotificationItemWrite = handleNotificationItemWrite;
+exports._sendPropsBundle = sendPropsBundle;
 
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
 // FCM message to the caller's own registered tokens so a user can confirm

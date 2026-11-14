@@ -207,6 +207,24 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // App1 Q18: a comment, a follow request, an invite joined and a league
+  // result push as their tray row is written; props once a day at 19:00
+  // local (lib/socialPush.js).
+  onNotificationItemWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/notifications/{uid}/items/{itemId}",
+  },
+  hourlyPropsBundle: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
   dailyRaceReconciliationSweep: {
     kind: "schedule",
     maxInstances: 1,

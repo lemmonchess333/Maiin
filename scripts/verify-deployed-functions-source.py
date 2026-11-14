@@ -27,6 +27,7 @@ RETRY_REQUIRED = frozenset({
     "onBlockWritten", "onPublicProfileIdentityChanged",
     "onChallengeParticipantWritten", "onRaceGoalWritten",
     "onFollowerEdgeWritten", "onFollowingEdgeWritten",
+    "onNotificationItemWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -34,6 +35,7 @@ PUSH_RUNTIME_LIMITS = {
     "sendTestPush": (100, None),
     "hourlyStreakNudge": (1, "540s"),
     "hourlyChallengeAnnouncements": (1, "540s"),
+    "hourlyPropsBundle": (1, "540s"),
 }
 
 
@@ -211,6 +213,12 @@ def source_targets():
         # App1 Q60's one push a day and Q62's quiet rule run in both sweeps.
         "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js",
                                            "lib/pushBudget.js", "lib/reminderAttention.js"],
+        # App1 Q18: pushes from people, and the props bundle.
+        "onNotificationItemWritten": push_paths + ["lib/socialPush.js", "lib/notificationPreferences.js",
+                                                   "lib/blockGuard.js", "lib/restriction.js",
+                                                   "lib/triggerRetry.js"],
+        "hourlyPropsBundle": push_paths + ["lib/socialPush.js", "lib/notificationPreferences.js",
+                                           "lib/blockGuard.js", "lib/restriction.js", "lib/jobRuns.js"],
         "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js", "lib/pushBudget.js",
                                                       "lib/challengeTiers.js",
                                                       "lib/challengeDefs.js", "lib/challengeActivityWindow.js", "lib/dateUtils.js",

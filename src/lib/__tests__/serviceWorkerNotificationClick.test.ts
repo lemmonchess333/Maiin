@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
+import { nativePushRoute } from "../nativePushRoute";
 
 type AppWindow = {
   url: string;
@@ -95,6 +96,24 @@ describe.each(["sw.js", "firebase-messaging-sw.js"])(
       expect(focus).not.toHaveBeenCalled();
       expect(worker.openWindow).toHaveBeenCalledWith(
         "https://app.example/Maiin/program"
+      );
+    });
+
+    it.each([
+      "/review",
+      "/league",
+      "/activity/a1B2_c-3?comments=1",
+      "/space/runners/post/p9?comments=1",
+      "/user/other",
+      "/user/../settings",
+      "/activity/x?comments=1&next=//example.com",
+      "/unrelated",
+    ])("routes %s as the iPhone does (nativePushRoute)", async (route) => {
+      const worker = loadWorker(filename, "/Maiin/");
+      await worker.tap(route);
+      const expected = nativePushRoute({ ownerUid: "me", route }, "me") ?? "/";
+      expect(worker.openWindow).toHaveBeenCalledWith(
+        `https://app.example/Maiin${expected}`
       );
     });
 
