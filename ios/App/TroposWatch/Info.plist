@@ -25,6 +25,7 @@
     <key>WKBackgroundModes</key>
     <array>
         <string>workout-processing</string>
+        <string>audio</string>
     </array>
     <key>WKCompanionAppBundleIdentifier</key>
     <string>com.tropos.app</string>
@@ -32,6 +33,8 @@
     <string>$(WATCH_RUN_RELEASE_ENABLED)</string>
     <key>NSHealthShareUsageDescription</key>
     <string>Tropos reads heart rate during a run you start on your iPhone so you can see it on your Watch and in your run summary.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Apple Watch asks this of any app that runs a workout session, which is how Tropos reads your heart rate during a run. The Watch saves no workout to Health. Saving runs there is a separate choice on your iPhone.</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
 </dict>

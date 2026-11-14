@@ -101,11 +101,56 @@ final class WatchRunPlugin: CAPPlugin, CAPBridgedPlugin {
             }
             snapshot["saveStatus"] = saveStatus
         }
+        // The live step of a structured run (watchRunStep.ts). A figure like
+        // the distance: a malformed one is left out, never the snapshot.
+        if phase != "review", let step = call.getObject("step"),
+           let sanitized = Self.sanitizedStep(step) {
+            snapshot["step"] = sanitized
+        }
         guard coordinator.publish(snapshot) else {
             call.reject("Watch snapshot was not accepted")
             return
         }
         call.resolve()
+    }
+
+    /// The bounds `isWatchRunStep` checks on the web side: whole-number
+    /// index and total (at most 200 steps), lines of 1 to 64 characters,
+    /// known effort and haptic names, and figures inside a day of seconds,
+    /// 100 km of metres and a whole step.
+    private static func sanitizedStep(_ step: JSObject) -> [String: Any]? {
+        func number(_ key: String) -> Double? {
+            guard let value = (step[key] as? NSNumber)?.doubleValue, value.isFinite else { return nil }
+            return value
+        }
+        func wholeNumber(_ key: String) -> Int? {
+            guard let value = number(key), value == value.rounded(), abs(value) < 1e6 else { return nil }
+            return Int(value)
+        }
+        guard let total = wholeNumber("total"), (1...200).contains(total),
+              let index = wholeNumber("index"), (0...total).contains(index) else { return nil }
+        var sanitized: [String: Any] = ["index": index, "total": total]
+        for key in ["eyebrow", "headline", "next"] {
+            if let text = step[key] as? String, !text.isEmpty, text.count <= 64 {
+                sanitized[key] = text
+            }
+        }
+        if let effort = step["effort"] as? String, ["work", "easy", "recovery"].contains(effort) {
+            sanitized["effort"] = effort
+        }
+        if let haptic = step["haptic"] as? String, ["start", "stop", "next", "done"].contains(haptic) {
+            sanitized["haptic"] = haptic
+        }
+        if let seconds = number("remainingSeconds"), (0...86_400).contains(seconds) {
+            sanitized["remainingSeconds"] = seconds
+        }
+        if let meters = number("remainingMeters"), (0...100_000).contains(meters) {
+            sanitized["remainingMeters"] = meters
+        }
+        if let progress = number("progress"), (0...1).contains(progress) {
+            sanitized["progress"] = progress
+        }
+        return sanitized
     }
 
     @objc func acknowledgeCommand(_ call: CAPPluginCall) {
