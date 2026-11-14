@@ -11,8 +11,9 @@
  *     the first fix the reading gate passes.
  *  4. A 40 m fix does not start the clock; a later 18 m one does.
  *  5. The session player's first step, the saved run's start, Apple
- *     Health's start and the trace's first point (where the first
- *     kilometre's split starts) are all the clock's start.
+ *     Health's start, the trace's first point (where the first
+ *     kilometre's split starts) and the Watch's first snapshot are all
+ *     the clock's start.
  *  6. A treadmill run never shows "Finding GPS".
  *  7. Location refused keeps the screen it had: its own words and Track
  *     without GPS, and no Start anyway.
@@ -47,6 +48,9 @@ const h = vi.hoisted(() => ({
   watches: [] as FakeWatch[],
   permission: "granted" as PermissionState,
   spoken: [] as string[],
+  /** The Watch companion on, and what the phone sends it. */
+  watchOn: false,
+  published: [] as unknown[],
 }));
 
 vi.mock("@/lib/locationSource", () => ({
@@ -69,9 +73,46 @@ vi.mock("@/lib/locationSource", () => ({
   }),
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ profile: { uid: UID, runMode: "freeform" } }),
+  useAuth: () => ({
+    user: { uid: UID },
+    profile: { uid: UID, runMode: "freeform" },
+  }),
   useUidForStorageKey: () => UID,
   useUid: () => UID,
+}));
+vi.mock("@/lib/firebase", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/firebase")>()),
+  auth: { currentUser: { uid: "gps-start-test" } },
+}));
+vi.mock("@/lib/connectedTrainingRelease", () => ({
+  CONNECTED_TRAINING_RELEASED: true,
+}));
+vi.mock("@/hooks/useConnectedTrainingPrefs", () => ({
+  useConnectedTrainingPrefs: () => ({
+    prefs: { useWatchForRuns: h.watchOn, saveWorkoutsToHealth: false },
+    loading: false,
+    failed: false,
+    update: vi.fn(),
+    retry: vi.fn(),
+  }),
+}));
+vi.mock("@/hooks/useWatchRunSwitch", () => ({ useWatchRunSwitch: () => {} }));
+vi.mock("@/lib/watchRunBridge", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/watchRunBridge")>()),
+  publishWatchRunSnapshot: vi.fn(async (snapshot: unknown) => {
+    h.published.push(snapshot);
+    return true;
+  }),
+  acknowledgeWatchRunCommand: vi.fn(async () => true),
+  subscribeWatchRunCommands: vi.fn(async () => () => {}),
+  getWatchRunStatus: vi.fn(async () => ({
+    available: true,
+    paired: true,
+    installed: true,
+    reachable: true,
+    enabled: true,
+  })),
+  clearWatchRunSession: vi.fn(async () => {}),
 }));
 vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => ({ programState: null, loading: false }),
@@ -262,6 +303,8 @@ beforeEach(() => {
   h.watches.length = 0;
   h.permission = "granted";
   h.spoken.length = 0;
+  h.watchOn = false;
+  h.published.length = 0;
   Object.defineProperty(navigator, "geolocation", {
     value: {},
     configurable: true,
@@ -406,6 +449,56 @@ describe("a GPS run's clock waits for the first good fix", () => {
     // read through the smoothing's first few fixes.
     expect(run.splits[0].time).toBeGreaterThan(245);
     expect(run.splits[0].time).toBeLessThan(256);
+  });
+
+  it("(5) the Watch's first snapshot and its first step start with the clock", async () => {
+    h.watchOn = true;
+    open("/run?template=run_walk_1");
+    await act(async () => {});
+    await tap("Start run");
+    wait(4000);
+    // Nothing goes to the wrist while GPS is being found.
+    expect(h.published).toEqual([]);
+    const fixAt = T0 + 4000;
+    vi.setSystemTime(fixAt + 300);
+    deliver(fix(0, 12, fixAt, 4));
+    // In the instant the page saw the fix: the clock at 0, and the walk
+    // with all of its 300 s to go (the step follows the phase by one
+    // render, as at any start).
+    expect(h.published.length).toBeGreaterThan(0);
+    for (const sent of h.published)
+      expect(sent).toMatchObject({
+        phase: "running",
+        elapsedSeconds: 0,
+        recordedAtMs: fixAt + 300,
+      });
+    expect(h.published.at(-1)).toMatchObject({
+      step: { index: 0, remainingSeconds: 300 },
+    });
+    for (let k = 1; k <= 5; k++) {
+      wait(2000);
+      deliver(fix(8 * k, 5, fixAt + 2000 * k, 4));
+    }
+    expect(clock()).toBe("0:10");
+    // Every second's snapshot sends the run's clock and the walk's time
+    // left from the one start: they add up to the walk's 300 s, and the
+    // clock is the seconds since the fix (a beat sends the figures the
+    // page last drew, at most a second or two behind under the test's
+    // batched clock).
+    const later = h.published.filter(
+      (sent) => (sent as { elapsedSeconds: number }).elapsedSeconds > 0
+    ) as {
+      elapsedSeconds: number;
+      recordedAtMs: number;
+      step: { remainingSeconds: number };
+    }[];
+    expect(later.length).toBeGreaterThanOrEqual(5);
+    for (const sent of later) {
+      expect(sent.elapsedSeconds + sent.step.remainingSeconds).toBe(300);
+      const sinceFix = (sent.recordedAtMs - fixAt) / 1000;
+      expect(sinceFix - sent.elapsedSeconds).toBeGreaterThanOrEqual(0);
+      expect(sinceFix - sent.elapsedSeconds).toBeLessThan(2.5);
+    }
   });
 
   it("(6) a treadmill run never shows Finding GPS, and its clock starts at once", async () => {
