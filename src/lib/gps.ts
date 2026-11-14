@@ -999,8 +999,40 @@ function escapeXml(s: string): string {
     .replace(/'/g, "&apos;");
 }
 
+/**
+ * The trace as its fixes were taken: each point at its raw fix
+ * (`rawLat`/`rawLon`) instead of the smoothed position the app measures and
+ * draws. What a GPX export carries: an app that reads the file (Strava sums
+ * the distance from point to point in a GPX without a distance stream) runs
+ * its own clean-up on the positions, and expects the positions a device
+ * recorded, not ones already smoothed. A point without a usable raw fix (an
+ * imported or planned route) keeps its own position.
+ */
+export function rawTrace(points: GPSPoint[]): GPSPoint[] {
+  return points.map((p) =>
+    Number.isFinite(p.rawLat) && Number.isFinite(p.rawLon)
+      ? { ...p, lat: p.rawLat, lon: p.rawLon }
+      : p
+  );
+}
+
+/**
+ * A GPX 1.1 track of the points as given (callers export `rawTrace`, cut
+ * by the privacy zones on those same coordinates, `exportTrace` in
+ * shareRoute.ts). Each point keeps the time its fix was taken, in UTC: GPX
+ * has no pause event, so the receiving app works out moving time from the
+ * points, and a time moved to hide a pause would misplace every fix after
+ * it. A new track segment starts at a break (a privacy cut, a GPX track
+ * break) and after every hold, when nothing was recorded (a pause, an
+ * auto-pause), as GPX does for a receiver that was off.
+ */
 export function toGPX(points: GPSPoint[], name: string): string {
-  const segments = splitRouteSegments(points)
+  const marked = points.map((p, i) =>
+    i > 0 && !p.breakBefore && pausedMsOf(p) > pausedMsOf(points[i - 1])
+      ? { ...p, breakBefore: true }
+      : p
+  );
+  const segments = splitRouteSegments(marked)
     .map((segment) => {
       const trkpts = segment
         .map((p) => {
