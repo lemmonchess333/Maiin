@@ -83,6 +83,7 @@ function makeRunPlanRecord(
     compressed: boolean;
     belowFloor: boolean;
     leadInWeek: string | null;
+    shortBase: boolean;
   },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -102,6 +103,8 @@ function makeRunPlanRecord(
     belowFloor: v2.belowFloor,
     // While a plan made partway through a week is in its lead-in.
     ...(v2.leadInWeek ? { leadInWeek: v2.leadInWeek } : {}),
+    // Run24 (2): the block's shorter base, kept for every rebuild of it.
+    ...(v2.shortBase ? { shortBase: true } : {}),
   };
 }
 
@@ -177,6 +180,11 @@ export function regenerateRacePlan({
      *  `totalWeeks`, or a rebuild in that week reads the plan as a week
      *  shorter than the time left and starts it again from this week. */
     leadInWeek?: string;
+    /** Run24 (2): the plan's shorter base (`RunPlan.shortBase`), carried
+     *  with `totalWeeks`. A key every carry names, set or not: a rebuild
+     *  that left it out would read the block's phases with the longer base
+     *  and move its build a few weeks later. */
+    shortBase: boolean | undefined;
     completedRaces?: string[];
     /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
      *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
@@ -236,6 +244,7 @@ export function regenerateRacePlan({
       // position 0.
       planTotalWeeks: carry?.totalWeeks,
       leadInWeek: carry?.leadInWeek,
+      shortBase: carry?.shortBase,
       recentRuns,
       recentRunsAsOf,
     });
@@ -476,6 +485,7 @@ export function nextRunWeek(
             ? 0
             : (runPlan?.currentWeek ?? 0) + 1,
         totalWeeks: runPlan?.totalWeeks,
+        shortBase: runPlan?.shortBase,
         completedRaces: runPlan?.completedRaces,
       },
     });
