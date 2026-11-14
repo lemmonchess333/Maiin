@@ -50,7 +50,7 @@ import type {
 } from "../../src/features/program/programTypes";
 import { liftWeekLabel } from "../../src/lib/liftWeekLabel";
 import {
-  isBaseLightTemplateId,
+  BASE_LIGHT_TEMPLATE_IDS,
   isTimeTrialTemplateId,
   RUN_TEMPLATES,
 } from "../../src/lib/workoutTemplates";
@@ -100,7 +100,7 @@ function planWeek(state: ProgramState, monday: string) {
       return (
         (template.type === "tempo" || template.type === "intervals") &&
         !isTimeTrialTemplateId(template.id) &&
-        !isBaseLightTemplateId(template.id)
+        !(BASE_LIGHT_TEMPLATE_IDS as readonly string[]).includes(template.id)
       );
     }),
     longKm: long ? (templateOf(long).config.targetDistanceKm ?? 0) : null,

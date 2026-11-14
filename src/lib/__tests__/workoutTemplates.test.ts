@@ -18,7 +18,6 @@ import { describe, it, expect } from "vitest";
 import {
   BASE_LIGHT_TEMPLATE_IDS,
   RUN_TEMPLATES,
-  isBaseLightTemplateId,
   isRaceTemplateId,
   isScheduledRaceRunDay,
 } from "../workoutTemplates";
@@ -251,18 +250,11 @@ describe("descriptions in plain words (Run21 (2))", () => {
 });
 
 describe("the base's light sessions (Run24 (5))", () => {
-  it("names templates that exist, each half an hour of quality by feel", () => {
+  it("names templates that exist, each a quality session", () => {
     for (const id of BASE_LIGHT_TEMPLATE_IDS) {
       const template = RUN_TEMPLATES.find((t) => t.id === id);
       expect(template, id).toBeDefined();
       expect(["tempo", "intervals"]).toContain(template!.type);
-      expect(isBaseLightTemplateId(id)).toBe(true);
     }
-  });
-
-  it("is not every quality session", () => {
-    expect(isBaseLightTemplateId("tempo_20")).toBe(false);
-    expect(isBaseLightTemplateId("hills_6x60s")).toBe(false);
-    expect(isBaseLightTemplateId(null)).toBe(false);
   });
 });

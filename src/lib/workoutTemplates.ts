@@ -130,11 +130,6 @@ export function isTimeTrialTemplateId(id: string | null | undefined): boolean {
  *  build's quality. */
 export const BASE_LIGHT_TEMPLATE_IDS = ["fartlek_30", "hills_6x30s"] as const;
 
-/** Run24 (5): whether a template is one of the base's light sessions. */
-export function isBaseLightTemplateId(id: string | null | undefined): boolean {
-  return (BASE_LIGHT_TEMPLATE_IDS as readonly string[]).includes(id ?? "");
-}
-
 /** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
  *  A plan made then holds them, so they stay and read as before; nothing
  *  picks them for a new run. */
