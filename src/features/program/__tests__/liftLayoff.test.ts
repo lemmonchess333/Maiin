@@ -6,12 +6,22 @@
  * "welcome back" reads as the app not knowing who it is talking to. The run
  * side documents the same two traps.
  *
- * Everything goes through `assessLiftReturn`, the module's only export —
- * testing the contract the app actually calls rather than internals that a
- * refactor could rename without breaking anything real.
+ * Everything goes through the one return check's lifting half
+ * (`assessTrainingReturn`, App1 Q35), the contract Home actually calls,
+ * for a plan that holds lifting and no running.
  */
 import { describe, it, expect } from "vitest";
-import { assessLiftReturn, type DatedWorkout } from "../liftLayoff";
+import type { DatedWorkout } from "../liftLayoff";
+import { assessTrainingReturn } from "../trainingReturn";
+
+const assessLiftReturn = (workouts: DatedWorkout[], todayKey: string) =>
+  assessTrainingReturn({
+    workouts,
+    runs: [],
+    todayKey,
+    lifting: true,
+    running: "none",
+  }).lift;
 import { LAYOFF_GAP_DAYS, LAYOFF_DETRAINED_DAYS } from "../layoffDetection";
 
 /** A session with work in it. */
