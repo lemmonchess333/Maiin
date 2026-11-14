@@ -34,6 +34,7 @@ import {
 import { groupTextRe } from "@/test/localeGrouping";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -245,9 +246,15 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
   it("keeps the actual dose and strides visible while disclosing the coaching reason", () => {
     const date = dayOfThisWeek(2);
-    const profile = makeProfile(
-      makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
-    );
+    // A race plan's runner: the card reads the run mode through the
+    // programme (`runModeWithPlan`), where a profile with none is free
+    // running, as Train has it.
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
     const program = makeProgramState([
       makeRunDay({
         dayIndex: 2,
@@ -349,9 +356,13 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     // intervals (Run15), and its reason can't be the sessions it doesn't have.
     const date = dayOfThisWeek(2);
     const weekKey = localWeekKey(parseLocalDate(date));
-    const profile = makeProfile(
-      makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
-    );
+    // A race plan's runner, as the test above has it (`runModeWithPlan`).
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
+      ),
+      runMode: "race_prep",
+    } as UserProfile;
     const withWeek = (otherTemplateId: string) => {
       const program = makeProgramState([
         makeRunDay({ dayIndex: 2, date, weekKey, templateId: "easy_30" }),
@@ -1447,6 +1458,84 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
     expect(screen.queryByText(/race pace/)).toBeNull();
+  });
+});
+
+describe("DayPeekCard — a run in a plan with no race date (Run24 (3))", () => {
+  // The profile stays on free running; the plan is the programme's.
+  function renderRolling(
+    templateId: string,
+    type: string,
+    rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null
+  ) {
+    const date = dayOfThisWeek(2);
+    const weekKey = localWeekKey(parseLocalDate(date));
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+      ),
+      runMode: "freeform",
+    } as UserProfile;
+    const program = makeProgramState([
+      makeRunDay({ dayIndex: 2, date, weekKey, templateId, type }),
+    ]);
+    program.runPlan = {
+      mode: "rolling",
+      rollingGoal: "build_10k",
+      currentWeek: 5,
+      rollingWeekKey: weekKey,
+    };
+    return renderCard(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        rollingContexts={
+          rollingContexts === undefined
+            ? new Map([
+                [
+                  weekKey,
+                  {
+                    goal: "build_10k",
+                    unit: "km",
+                    opening: false,
+                    lighter: false,
+                    longRun: { topKm: 12, holding: false },
+                  },
+                ],
+              ])
+            : rollingContexts
+        }
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("says why a long run is in the week, in the plan's terms", () => {
+    renderRolling("long_10k", "long");
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it’s in your week.*It climbs a step at a time to 12 km, then holds there\./
+    );
+  });
+
+  it("says a time trial is the plan's benchmark", () => {
+    renderRolling("time_trial_5k", "intervals");
+    expect(
+      screen.getByText("Why this run").closest("details")!
+    ).toHaveTextContent(/Why it’s in your week.*finds your paces/);
+  });
+
+  it("gives no reason it cannot read, and names no race phase", () => {
+    renderRolling("long_10k", "long", null);
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveTextContent(/Why it’s in your week/);
+    expect(why).not.toHaveTextContent(/base|race/i);
   });
 });
 

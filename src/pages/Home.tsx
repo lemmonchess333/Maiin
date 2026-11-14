@@ -49,6 +49,7 @@ import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
 import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -249,6 +250,15 @@ export default function Home() {
   // tomorrow's session all read it, so an app resumed the next morning
   // names the new day rather than the one it was opened on.
   const todayKey = useLocalDateKey();
+  // Run24 (3): a plan with no race date's weeks, for each run's reason on
+  // the day peek and the day's sheet.
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: todayKey,
+  });
   // The day, and the moment Home read it: both move when the day turns, so
   // a new account's window and a trial's end are measured on the same day
   // as everything else here.
@@ -1506,6 +1516,7 @@ export default function Home() {
                   workouts={peekW}
                   dailyTotals={peekT}
                   sessionsLoading={workoutsLoading || savedRunsLoading}
+                  rollingContexts={rollingContexts}
                   onClose={function () {
                     setPeekDate(null);
                   }}
@@ -1736,6 +1747,7 @@ export default function Home() {
           restoreWorkoutDay={restoreWorkoutDay}
           moveRunDay={moveRunDay}
           sessionsOnDate={manageSessions}
+          rollingContexts={rollingContexts}
         />
       </Suspense>
 
