@@ -58,6 +58,11 @@ vi.mock("@/lib/errorReporting", () => ({ captureError: vi.fn() }));
 import SettingsHiddenPosts from "../SettingsHiddenPosts";
 
 const at = (iso: string) => Timestamp.fromMillis(Date.parse(iso));
+/** Noon on a day in the device's own zone: the line prints the post's day
+ *  where the person is, so a UTC instant would be the day before in
+ *  Midway or the day after in Kiritimati. */
+const atLocalNoon = (y: number, month: number, d: number) =>
+  Timestamp.fromMillis(new Date(y, month - 1, d, 12).getTime());
 
 /** Two posts from last year, so their day carries the year whatever the
  *  clock says. */
@@ -78,7 +83,7 @@ function seedTwoHidden() {
       visibility: "public",
       activityTitle: "Easy run",
       distance: 5200,
-      createdAt: at("2025-03-20T08:00:00Z"),
+      createdAt: atLocalNoon(2025, 3, 20),
     },
     "activities/lift-1": {
       authorId: "sam",
@@ -87,7 +92,7 @@ function seedTwoHidden() {
       visibility: "public",
       workoutName: "Pull — Lat Focus",
       exerciseCount: 6,
-      createdAt: at("2025-02-11T18:00:00Z"),
+      createdAt: atLocalNoon(2025, 2, 11),
     },
   });
 }
@@ -266,7 +271,7 @@ describe("SettingsHiddenPosts — blocks", () => {
         type: "run",
         visibility: "public",
         distance: 5200,
-        createdAt: at("2025-03-20T08:00:00Z"),
+        createdAt: atLocalNoon(2025, 3, 20),
       },
     });
     state.blocked = new Set(["maya"]);
