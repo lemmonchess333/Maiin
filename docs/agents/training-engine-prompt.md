@@ -594,6 +594,15 @@ at the start.
 - Signed-in E2E suite on the emulators: 46 tests passed in 4.7 minutes.
 - A simulated week: about 2–5 ms headless; about 15–20 s through the browser.
 
+Real outcomes, beside the simulator's (added 2026-11-14): every goal race run
+on a plan keeps what Tropos predicted for it on the race's run
+(`src/lib/racePrediction.ts`). Before changing how a race time is predicted,
+read how the predictions have done:
+`node functions/scripts/report-race-predictions.js --project=adaptive-fitness-af8bb`
+prints the mean, spread and mean absolute error by distance and by weeks of
+the plan done (`--json` for the same as JSON). A row of a few races is not
+evidence either way.
+
 ## What the prompt routes to the owner
 
 The owner delegated the decisions on 2026-10-07 (`owner-answers.md`). What

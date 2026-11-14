@@ -14,6 +14,10 @@
  *    Retry after a later step failed resumes against that id, so the run
  *    is saved once (`completeRun`).
  *
+ * 4. The goal race (`racePrediction.ts`): set against the last prediction
+ *    Tropos made before it, and saved with the predictions on the run; a
+ *    shorter run on race day is neither.
+ *
  * The mocked `useProgram` runs at the top of every render, so it records
  * what the previous commit left in the DOM — that is how a commit that
  * showed something for one frame is caught. Firestore runs on the one
@@ -1392,5 +1396,109 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
     expect(h.paceEnabled.at(-1)).toBe(true);
+  });
+});
+
+describe("RunSummary — the goal race against what Tropos predicted", () => {
+  /* Race day is today: a run with no trace is today's. */
+  const today = localDateString();
+  const LOG = "users/runner/programState/racePrediction";
+  const prediction = (predictedS: number, weeksDone: number) => ({
+    at: new Date(Date.now() - (12 - weeksDone) * 7 * 86_400_000).toISOString(),
+    reason: weeksDone === 0 ? "first" : "changed",
+    predictedS,
+    vdot: 38.3,
+    source: "race",
+    weeksDone,
+    planWeeks: 12,
+    daysToRace: (12 - weeksDone) * 7,
+  });
+  const profile = h.auth.profile as Record<string, unknown>;
+  const queued = () => pendingDocumentWrites("runner", "users/runner/runs");
+
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    profile.runMode = "race_prep";
+    profile.raceGoal = { distance: "10k", targetDate: today };
+    seedFirestore({
+      [LOG]: {
+        v: 1,
+        distance: "10k",
+        targetDate: today,
+        snapshots: [prediction(3127, 0), prediction(3002, 4)],
+      },
+    });
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  });
+  afterEach(() => {
+    online.mockRestore();
+    delete profile.runMode;
+    delete profile.raceGoal;
+  });
+
+  /** A finished run, not yet saved, started as a race. */
+  function renderRun(distance: number, elapsed: number) {
+    const { savedRun: _receipt, ...run } = savedRun();
+    return render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: {
+              ...run,
+              distance,
+              elapsed,
+              runConfig: { ...run.runConfig, activityType: "race" },
+            },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("sets the race against the last prediction and keeps the predictions on the saved run", async () => {
+    renderRun(10_050, 2950);
+    expect(await screen.findByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 50:02. You ran 49:10, 0:52 faster."
+    );
+    expect(screen.getByText(/First predicted/)).toHaveTextContent(
+      "First predicted 52:07 in week 1 of 12."
+    );
+    fireEvent.click(screen.getByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).toMatchObject({
+      racePrediction: {
+        v: 1,
+        distance: "10k",
+        targetDate: today,
+        entry: "race",
+        goalTimeS: null,
+        predictions: [
+          expect.objectContaining({ predictedS: 3127, weeksDone: 0 }),
+          expect.objectContaining({ predictedS: 3002, weeksDone: 4 }),
+        ],
+      },
+    });
+  });
+
+  it("says nothing and keeps nothing for a run on race day that was not the race", async () => {
+    // The warm-up jog before the start.
+    renderRun(2400, 840);
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    // POSITIVE anchor: the run was saved.
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).not.toHaveProperty("racePrediction");
+    expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+    expect(readsAt(LOG)).toHaveLength(0);
   });
 });

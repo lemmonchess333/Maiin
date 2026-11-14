@@ -41,6 +41,7 @@ import { runNameOf } from "@/lib/runName";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import type { HeartRateSummary } from "@/lib/hrZones";
+import type { GoalRaceRecord } from "@/lib/racePrediction";
 
 /** A finished run, as the finish screen holds it. */
 export interface FinishedRun {
@@ -93,6 +94,10 @@ export interface FinishedRun {
    *  it is compared with, the streak, whether it is the first session.
    *  Read for the post's moments, never saved on the run. */
   moments?: RunMomentContext;
+  /** The goal race's predictions, when this run was the goal race
+   *  (`racePrediction.ts`): kept on the run so the race can be judged
+   *  against them once the plan has moved on. */
+  racePrediction?: GoalRaceRecord | null;
 }
 
 /** Privacy cuts change the route, not when the run started. Older callers
@@ -218,6 +223,10 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     planWeekIndex: plan.planWeekIndex,
     planTotalWeeks: plan.planTotalWeeks,
     scheduledRunId: plan.scheduledRunId,
+    // Only on the goal race, and never on a run saved anyway.
+    ...(run.racePrediction && !run.isInvalid
+      ? { racePrediction: run.racePrediction }
+      : {}),
   };
 }
 

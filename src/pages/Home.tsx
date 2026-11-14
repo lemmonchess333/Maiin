@@ -141,6 +141,7 @@ import {
   useStoreTrialEligibility,
 } from "@/hooks/useStoreTrialEligibility";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
+import { useRacePredictionCapture } from "@/hooks/useRacePredictionLog";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -229,6 +230,9 @@ export default function Home() {
     recentRuns,
     controller: programController,
   } = useHomeProgram();
+  // The goal race's prediction, recorded as the plan runs so the race can
+  // be judged against it (`racePrediction.ts`).
+  useRacePredictionCapture(programState);
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
