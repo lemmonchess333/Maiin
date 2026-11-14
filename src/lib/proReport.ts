@@ -35,16 +35,10 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /* ── What Pro changed ──────────────────────────────────────────── */
 
-export type ProChangeKind = "calories" | "paces";
-
-export interface ProChange {
-  kind: ProChangeKind;
-  /** When the change was made, an ISO instant. */
-  at: string;
-  /** Calories in kcal, paces as VDOT. Null for a runner's first paces. */
-  from: number | null;
-  to: number;
-}
+// The stored shape lives in proChange.ts, which imports nothing, because the
+// profile type in auth.tsx needs it and this module reads the profile type.
+import type { ProChange } from "./proChange";
+export type { ProChange, ProChangeKind } from "./proChange";
 
 /** How many changes the account keeps: the target moves at most once a
  *  week (`CAP_CADENCE_DAYS`), so this holds well over a year of both. */

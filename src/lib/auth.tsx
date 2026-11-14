@@ -65,7 +65,7 @@ import {
 } from "@/lib/shareDefaults";
 import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
-import type { ProChange } from "@/lib/proReport";
+import type { ProChange } from "@/lib/proChange";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
