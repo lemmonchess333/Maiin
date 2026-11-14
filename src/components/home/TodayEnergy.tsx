@@ -237,11 +237,15 @@ export default function TodayEnergy({
         </p>
       )}
 
-      {/* Situational note — never a second way into the food log. */}
-      {nudgeText && !mealsError && (
-        <p className="mt-3 text-xs font-medium text-nutrition-strong">
-          {nudgeText}
-        </p>
+      {/* Situational notes — never a second way into the food log. First
+          the day's fuel label (App1 Q29), the line Food's hero says under
+          its wheel: race week's carb load, a taper week, or the eve of a
+          long run. Then what a session just done asks for. */}
+      {!mealsError && (targets.fuelLabel || nudgeText) && (
+        <div className="mt-3 space-y-1 text-xs font-medium text-nutrition-strong">
+          {targets.fuelLabel && <p>{targets.fuelLabel}</p>}
+          {nudgeText && <p>{nudgeText}</p>}
+        </div>
       )}
     </section>
   );
