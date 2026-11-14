@@ -213,6 +213,17 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // reading the deletion state in their transaction; the executor sweeps
   // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
   "match /pulse/{dateKey}",
+  // Run26 call 3: segments. No client writes any of these: the segment
+  // callables are actor-locked and read the deletion state in their
+  // transaction, as do the run triggers that write efforts and board
+  // entries. A segment names no one and is read by anyone signed in; its
+  // board is server only; its owner record and the efforts are read by
+  // their owner. The executor removes the account's segments, its board
+  // entries and its efforts (removeSegmentTracesForUser, USER_SUBCOLLECTIONS).
+  "match /users/{uid}/segmentEfforts/{effortId}",
+  "match /segments/{segmentId}",
+  "match /board/{runnerUid}",
+  "match /segmentOwners/{segmentId}",
   // Polish3 call 1: who has blocked this account. Read by that account
   // only; onBlockWritten writes it (system-writer guard), and the
   // executor deletes it both ways (blockedByOwn, blockedByReverse).

@@ -96,6 +96,40 @@ function setup(extra = {}) {
       sessionId: "r1",
       dateKey: pulseDay,
     },
+    // Run26 call 3: a segment Alice made, which Bob has run, and one Bob
+    // made, which both have run.
+    "segments/seg-alice": { name: "Alice's hill", lengthMeters: 800 },
+    "segmentOwners/seg-alice": { uid: "alice", sourceRunId: "r9" },
+    "segments/seg-alice/board/alice": { uid: "alice", elapsedSeconds: 200 },
+    "segments/seg-alice/board/bob": { uid: "bob", elapsedSeconds: 190 },
+    "users/alice/segmentEfforts/r9_seg-alice_1": {
+      uid: "alice",
+      segmentId: "seg-alice",
+      runId: "r9",
+      elapsedSeconds: 200,
+    },
+    "users/bob/segmentEfforts/b1_seg-alice_1": {
+      uid: "bob",
+      segmentId: "seg-alice",
+      runId: "b1",
+      elapsedSeconds: 190,
+    },
+    "segments/seg-bob": { name: "Bob's straight", lengthMeters: 1000 },
+    "segmentOwners/seg-bob": { uid: "bob", sourceRunId: "b1" },
+    "segments/seg-bob/board/alice": { uid: "alice", elapsedSeconds: 260 },
+    "segments/seg-bob/board/bob": { uid: "bob", elapsedSeconds: 250 },
+    "users/alice/segmentEfforts/r9_seg-bob_1": {
+      uid: "alice",
+      segmentId: "seg-bob",
+      runId: "r9",
+      elapsedSeconds: 260,
+    },
+    "users/bob/segmentEfforts/b1_seg-bob_1": {
+      uid: "bob",
+      segmentId: "seg-bob",
+      runId: "b1",
+      elapsedSeconds: 250,
+    },
     "friendsBoard/bob": { sessions: 1 },
     "followCounts/bob": { followers: 4, following: 1 },
     // Soc15: Alice's invite code, an old one of hers, and Bob's.
@@ -241,6 +275,10 @@ function setup(extra = {}) {
 // smoke::leagueStandings
 // smoke::userSubcollections::leagueResults
 // smoke::userSubcollections::pulseCredits
+// smoke::userSubcollections::segmentEfforts
+// unit::segments.removeSegmentTracesForUser.owned
+// unit::segments.removeSegmentTracesForUser.owners
+// unit::segments.removeSegmentTracesForUser.entries
 /* The billing tombstone's secret, which a restricted account's kept
    identities are hashed with. */
 let priorSecret;
@@ -282,6 +320,16 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/alice",
       "users/alice/leagueResults/2026-09-07",
       "users/alice/pulseCredits/workout_w1",
+      // Run26 call 3: Alice's segment with everyone's efforts on it and its
+      // board, her efforts, and her entry on Bob's board.
+      "segments/seg-alice",
+      "segmentOwners/seg-alice",
+      "segments/seg-alice/board/alice",
+      "segments/seg-alice/board/bob",
+      "users/bob/segmentEfforts/b1_seg-alice_1",
+      "users/alice/segmentEfforts/r9_seg-alice_1",
+      "users/alice/segmentEfforts/r9_seg-bob_1",
+      "segments/seg-bob/board/alice",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -317,6 +365,11 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/bob",
       "users/bob/leagueResults/2026-09-07",
       "users/bob/pulseCredits/run_r1",
+      // Bob's segment, his entry on it and his own effort stay.
+      "segments/seg-bob",
+      "segmentOwners/seg-bob",
+      "segments/seg-bob/board/bob",
+      "users/bob/segmentEfforts/b1_seg-bob_1",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);

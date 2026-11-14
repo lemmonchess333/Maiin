@@ -21,6 +21,7 @@ const activityReversal = require("../lib/activityReversal");
 const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const communityGoal = require("../lib/communityGoal");
 const pulse = require("../lib/pulse");
+const segments = require("../lib/segments");
 const { onWorkoutDeleted, onRunDeleted } = require("../index");
 
 const UID = "deleter";
@@ -80,13 +81,18 @@ beforeEach(() => {
   vi.spyOn(pulse, "reverseSessionFromPulse").mockImplementation(async () => {
     reversed.push("pulse");
   });
+  // Run26 call 3: a run's segment efforts go with it.
+  vi.spyOn(segments, "removeRunEfforts").mockImplementation(async () => {
+    reversed.push("segments");
+  });
 });
 
-/* A run also comes off the community goal; a workout never went on it.
-   Both come off the live pulse (Soc15). */
+/* A run also comes off the community goal and takes its segment efforts
+   (Run26 call 3); a workout has neither. Both come off the live pulse
+   (Soc15). */
 const all = (name) =>
   name === "onRunDeleted"
-    ? ["challenges", "community goal", "lifetime", "pulse"]
+    ? ["challenges", "community goal", "lifetime", "pulse", "segments"]
     : ["challenges", "lifetime", "pulse"];
 const without = (name, step) => all(name).filter((s) => s !== step);
 
@@ -127,7 +133,7 @@ describe.each(CASES)("%s", (_name, trigger, params, data) => {
         new Error("ABORTED")
       );
       await expect(deliver()).rejects.toThrow(/community goal failed/);
-      expect(reversed).toEqual(["challenges", "lifetime", "pulse"]);
+      expect(reversed).toEqual(["challenges", "lifetime", "pulse", "segments"]);
     }
   );
 
