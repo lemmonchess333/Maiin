@@ -2,9 +2,9 @@ import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
 import { WifiOff, Check, CloudUpload } from "lucide-react";
 import {
-  AnalyticsTabIcon,
   FoodTabIcon,
   HomeTabIcon,
+  ProgressTabIcon,
   SocialTabIcon,
   TrainTabIcon,
   type TabIcon,
@@ -80,7 +80,7 @@ const tabs: { to: string; icon: TabIcon; label: string }[] = [
   { to: "/program", icon: TrainTabIcon, label: "Train" },
   { to: "/food", icon: FoodTabIcon, label: "Food" },
   { to: "/social", icon: SocialTabIcon, label: "Social" },
-  { to: "/history", icon: AnalyticsTabIcon, label: "Analytics" },
+  { to: "/history", icon: ProgressTabIcon, label: "Progress" },
 ];
 
 export default function Layout() {

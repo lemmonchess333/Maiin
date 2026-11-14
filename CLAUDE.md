@@ -88,7 +88,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                        |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode                              |
-| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)   |
+| `History.tsx`                          | `/history`                         | Progress: an overview, with Lifting / Running / Body / Food pages (`?view=`)    |
 | `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                            |
@@ -608,7 +608,7 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   unopened, App1 Q62) → TodayEnergy → WaterCard → WeightTile. Home says the week once and
   carries no performance score (Trim1 call 1, 2026-11-11): the "This
   week" card that closed the page, with its Performance row, is gone,
-  and the score is on Analytics. Nor does it carry a steps count (App1
+  and the score is on Progress. Nor does it carry a steps count (App1
   Q31, 2026-11-13): steps feed the activity level offer under Food's
   wheel (`stepActivity.ts`, Pro, phone only), and Home asks to connect
   Health only where they can change the target.

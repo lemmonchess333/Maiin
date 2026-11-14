@@ -37,7 +37,7 @@ const SCREENS: { name: string; path: string; kind: DomFigures["kind"] }[] = [
   { name: "Home", path: "/Maiin/", kind: "root" },
   { name: "Train", path: "/Maiin/program", kind: "root" },
   { name: "Food", path: "/Maiin/food", kind: "root" },
-  { name: "Analytics", path: "/Maiin/history", kind: "root" },
+  { name: "Progress", path: "/Maiin/history", kind: "root" },
   { name: "Social Together", path: "/Maiin/social?tab=together", kind: "root" },
   { name: "Social Feed", path: "/Maiin/social?tab=feed", kind: "root" },
   { name: "League", path: "/Maiin/league", kind: "detail" },

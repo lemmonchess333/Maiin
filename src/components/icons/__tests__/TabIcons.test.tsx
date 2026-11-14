@@ -6,9 +6,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import {
-  AnalyticsTabIcon,
   FoodTabIcon,
   HomeTabIcon,
+  ProgressTabIcon,
   SocialTabIcon,
   TrainTabIcon,
 } from "../TabIcons";
@@ -25,7 +25,7 @@ const ICONS = {
   Train: TrainTabIcon,
   Food: FoodTabIcon,
   Social: SocialTabIcon,
-  Analytics: AnalyticsTabIcon,
+  Progress: ProgressTabIcon,
 };
 
 function svgOf(Icon: (typeof ICONS)[keyof typeof ICONS], active: boolean) {
@@ -66,7 +66,7 @@ describe("the tab bar draws them", () => {
             { to: "/program", icon: TrainTabIcon, label: "Train" },
             { to: "/food", icon: FoodTabIcon, label: "Food" },
             { to: "/social", icon: SocialTabIcon, label: "Social" },
-            { to: "/history", icon: AnalyticsTabIcon, label: "Analytics" },
+            { to: "/history", icon: ProgressTabIcon, label: "Progress" },
           ]}
           pathname="/food"
           socialNewActivity={false}
@@ -79,7 +79,7 @@ describe("the tab bar draws them", () => {
         .querySelector("svg")!
         .getAttribute("data-tab-icon");
     expect(form("Food")).toBe("filled");
-    for (const label of ["Home", "Train", "Social", "Analytics"])
+    for (const label of ["Home", "Train", "Social", "Progress"])
       expect(form(label)).toBe("outline");
   });
 });

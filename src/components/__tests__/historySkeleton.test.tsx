@@ -32,7 +32,7 @@ const history = stripComments(
 
 /** What renders each of the overview's blocks, as History writes it. */
 const PAGE_BLOCKS: Record<string, string> = {
-  title: 'title="Analytics"',
+  title: 'title="Progress"',
   tabs: "<FilterPills",
   performance: "<PerformanceSection",
   /* The overview's range, under Performance. A page draws its own, beside

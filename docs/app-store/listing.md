@@ -239,7 +239,7 @@ password and doesn't expire. Before submitting, the account should:
 - have finished setup;
 - have a verified email address, or posting and commenting are refused;
 - have a few weeks of workouts, runs, meals and weigh-ins, entered by hand,
-  so Analytics and the weekly review have something in them (the seed
+  so Progress and the weekly review have something in them (the seed
   scripts only work against the emulator);
 - follow someone and have joined a Space with a post;
 - have its uid in `REVENUECAT_SANDBOX_UIDS`, or its test purchase won't
@@ -254,7 +254,7 @@ submit; the 24-hour promise is yours to keep (item 7 under
 ```text
 Tropos is a training and food app. Setup asks about goals, training days, equipment and experience, then builds a weekly lifting and running plan and a daily calorie target.
 
-The demo account has finished setup and has several weeks of workouts, runs and meals, so Analytics and the weekly review have data. Its email address is verified, so posting and commenting work, and it can make sandbox purchases.
+The demo account has finished setup and has several weeks of workouts, runs and meals, so Progress and the weekly review have data. Its email address is verified, so posting and commenting work, and it can make sandbox purchases.
 
 Where to find things
 - Today's session: the card at the top of Home. Start opens the workout.

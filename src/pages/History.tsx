@@ -183,7 +183,9 @@ const ProgressPhotos = lazyRetry(
 );
 
 /* Two tabs: Analytics and Bests (Trim1 calls 3(c) and 6, 11 November
-   2026).
+   2026). The page is Progress since App1 Q4 (13 November 2026), so the
+   first tab says Overview; its `?tab=` value stays "analytics" for the
+   links already saved.
 
    Hist5b consolidated six tabs to three after the Performance fold and
    the PRs tab: Analytics, PRs and Badges. It called the Badges tab an
@@ -288,7 +290,7 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : "Bests",
+        label: f === "analytics" ? "Overview" : "Bests",
       }))}
     />
   );
@@ -1210,7 +1212,7 @@ export default function History() {
     <PageShell
       {...pullBindProps}
       className={ONE_CARD_RADIUS}
-      title="Analytics"
+      title="Progress"
       actions={
         <Link
           to={periodHistoryHref}
@@ -1255,7 +1257,7 @@ export default function History() {
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics…
+            Loading progress…
           </div>
         }
       >

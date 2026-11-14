@@ -27,7 +27,7 @@ import { signInAsTestUser } from "./helpers/auth";
 const ROUTES = [
   { path: "/", name: "Home" },
   { path: "/food", name: "Food" },
-  { path: "/history", name: "Analytics" },
+  { path: "/history", name: "Progress" },
   { path: "/program", name: "Programme" },
   { path: "/social", name: "Social" },
   { path: "/settings", name: "Settings" },

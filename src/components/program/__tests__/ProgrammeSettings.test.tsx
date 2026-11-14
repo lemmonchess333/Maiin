@@ -487,7 +487,7 @@ describe("ProgrammeSettings — the reset, at the editor's foot", () => {
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
     expect(
       within(screen.getByRole("alertdialog")).getByText(
-        /logged workouts and runs stay in analytics/i
+        /logged workouts and runs stay in progress/i
       )
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));

@@ -74,7 +74,7 @@ export default function BottomNavigation({
                  standard iOS tab-bar convention applies to ALL tabs
                  (matches Twitter/X / Apple's first-party apps), so the
                  plain scroll-to-top runs for Home/Programme/Food/
-                 Social/Analytics alike.
+                 Social/Progress alike.
                    Soc5 cross-cutting pin (3) additionally locks the
                  Social tab to *refresh its feed* on retap — that part
                  stays scoped to /social via the retap CustomEvent below;
@@ -97,7 +97,7 @@ export default function BottomNavigation({
                 }}
                 className={cn(
                   // `min-w-0` lets flex-1 actually shrink the cells on
-                  // iPhone SE width so the longest label ("Analytics")
+                  // iPhone SE width so the longest label ("Progress")
                   // doesn't push siblings off-screen. Active state comes
                   // from activeTabForPath; Link also preserves aria-current
                   // on owned routes such as /user/:uid outside /social.

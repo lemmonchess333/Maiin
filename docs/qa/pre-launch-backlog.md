@@ -5587,3 +5587,21 @@ any of it.
 - [ ] **Larger text.** Open the month card and both recap cards at 320 px
       with 1.35x and 2x text. Passing: nothing runs past the screen and each
       card scrolls to its button.
+
+## The fifth tab is Progress (App1 Q4, 2026-11-13)
+
+Affects: the tab bar's fifth label (`Layout.tsx`), the page's title and its
+first tab, now Overview (`History.tsx`), the way back from All sessions
+(`TrainingHistory.tsx`) and the lines that send people there (Food's day
+sheet, Reset programme, a performance insight). The route stays `/history`
+and its `?tab=` and `?view=` values are unchanged, so saved links still
+land. Older rows above that say Analytics mean this tab. Unit-tested; no
+phone has drawn it.
+
+- [ ] **The label fits.** On an iPhone SE (320 pt) with the largest text
+      size, look at the tab bar. Passing: "Progress" sits on one line under
+      its icon and no tab is pushed off the bar.
+- [ ] **VoiceOver.** With VoiceOver on, move to the fifth tab. Passing: it
+      reads "Progress", and the page's heading reads "Progress".
+- [ ] **A saved link.** Open `/history?tab=analytics&view=running` from a
+      note or bookmark. Passing: Progress opens on its Running page.
