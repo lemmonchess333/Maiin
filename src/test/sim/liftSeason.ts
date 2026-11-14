@@ -235,6 +235,16 @@ export interface SeasonOptions {
    *  persona's own running gives (`runnerStartingPoint`); null for none,
    *  as someone who left it blank, or as every plan before R5. */
   runningStart?: RunningBaseline | null;
+  /** Home's inputs each day the app is opened, after the rollover: the plan,
+   *  the profile and the recent runs it reads. For a test of something Home
+   *  works out from them each visit (Run24 (11)'s race check); it changes
+   *  nothing. */
+  observeHome?: (home: {
+    date: string;
+    state: ProgramState;
+    profile: UserProfile;
+    recentRuns: readonly DatedRun[] | null;
+  }) => void;
 }
 
 /** A plan the app doesn't build, for a measured comparison. `start`
@@ -978,6 +988,12 @@ export function simulateLiftSeason(
             "this week's race runs no longer match the race"
           );
         if (runSide) profile = runSide.deriveBenchmark(profile, date);
+        options.observeHome?.({
+          date,
+          state,
+          profile,
+          recentRuns: runSide?.recentRuns() ?? null,
+        });
         const weekOpened = opened === null || weekOf(opened) !== weekOf(date);
         if (weekOpened) season.failures.push(...weekStartFailures(state, date));
         opened = date;
@@ -1403,7 +1419,8 @@ export function simulateLiftSeason(
               ? getPhaseForWeek(
                   plan.currentWeek,
                   plan.totalWeeks,
-                  distance as "5k" | "10k" | "half" | "marathon"
+                  distance as "5k" | "10k" | "half" | "marathon",
+                  plan.shortBase
                 )
               : null,
         offered: runsOffered,
