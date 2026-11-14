@@ -991,6 +991,9 @@ function buildRunPlan(
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
           leadInWeek: continued?.leadInWeek,
+          // Run24 (1), (2), (8): an edit to the same race's plan keeps what
+          // its block is sized from.
+          blockInputs: continued?.blockInputs,
           shortBase: continued?.shortBase,
           recentRuns: input.recentRuns,
         }),
@@ -1006,6 +1009,7 @@ function buildRunPlan(
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
     const {
       leadInWeek: _keptLeadIn,
+      blockInputs: _keptInputs,
       shortBase: _keptShortBase,
       ...kept
     } = continued ?? {};
@@ -1026,6 +1030,7 @@ function buildRunPlan(
         // Run9 phase-3 (Slice B): an initial plan set inside the taper-safe
         // floor is finish-safely — carry the marker so the UI names the risk.
         belowFloor: racePlan.belowFloor,
+        ...(racePlan.blockInputs ? { blockInputs: racePlan.blockInputs } : {}),
         // Run24 (11): what the plan builds to, for the weekly race check.
         peakLongRunKm: peakPlannedLongRunKm(racePlan.weeks),
         // Run24 (2): the block's shorter base, as the generator kept or

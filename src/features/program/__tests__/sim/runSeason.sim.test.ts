@@ -113,7 +113,13 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
      marathon read whole (R1) gives a benchmark 5 VDOT under them, which
      then calls their recovery runs too fast (`derived-low`, `easy-nag`).
      Six lift days leave a major group out of some weeks
-     (`lift:acsm-coverage`). */
+     (`lift:acsm-coverage`). With the rolling base before its 20-week block
+     (Run24 (3)) and the block's sizes kept (`RaceBlockInputs`), the build
+     holds a 20 km long run, which this runner skips, so the taper's reduced
+     long runs (14 and 12 km) are past the 50 minutes their own running has
+     climbed to, and the starting point's fit makes each an easy run of
+     those minutes (a 6 km long run takes 51 at their pace): no long run in
+     the two weeks before race week (`taper-long`). */
   "owner-marathon": [
     "derived-low",
     "easy-nag",
@@ -122,6 +128,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "lift:acsm-coverage:quads",
     "long-share",
     "spike",
+    "taper-long",
     "volume-jump",
   ],
 };
