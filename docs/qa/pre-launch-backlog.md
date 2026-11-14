@@ -4886,3 +4886,23 @@ rollover; no phone has written or read the field through Firestore.
 - [ ] **A plan from before.** On an account whose race plan was made before
       this build, open the app. Passing: the week is the one it would have
       been; `blockInputs` appears once a rebuild has read saved runs.
+
+## Coming back after a break is one check for both sports (Q35, 2026-11-13)
+
+Affects: Home's Welcome back for the weights (`LiftReturnSheet`, whose line
+now reads "It’s been about N weeks since your last lift"), Home's run return
+and the race plan's re-entry weeks, all measured by one rule over both
+sports' sessions (`trainingReturn.ts`). A break from a sport is time away
+from that sport; a sport the plan does not hold is never greeted. The easing
+amounts are unchanged. Unit-tested; no phone has shown it.
+
+- [ ] **Stopped lifting, kept running.** On a hybrid plan, run as usual and
+      log no lift for three weeks. Passing: Home offers Welcome back for the
+      weights with Ease back in first, and its line names the last lift; the
+      run plan carries on, with no run greeting.
+- [ ] **Stopped running, kept lifting.** On a race plan, lift as usual and
+      log no run for three weeks. Passing: Home opens the race plan's
+      welcome back, and a rebuild plans the re-entry weeks; no Welcome back
+      for the weights.
+- [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
+      running-only plan. Passing: no Welcome back for the weights.
