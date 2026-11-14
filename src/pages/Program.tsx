@@ -52,7 +52,6 @@ import { useProgram } from "@/features/program/useProgram";
 import { changeStands } from "@/features/program/programOutcome";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { isRaceRestDay } from "@/features/program/raceRest";
-import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -147,10 +146,7 @@ import { useMotionSafe } from "@/hooks/useMotionSafe";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
 import { splitLabel } from "@/features/program/programEngine";
-import {
-  isCycleEndWeek,
-  lighterWeekAllowed,
-} from "@/features/program/weekPrescription";
+import { lighterWeekAllowed } from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
@@ -250,7 +246,6 @@ function ProgramInner() {
     readiness,
   } = useProgram();
   const { user, profile, updateProfile, refreshProfile } = useAuth();
-  const { awardEventBadge } = useStreaks();
   // Today, from the shared day key: it moves at midnight and when the app
   // comes back, so a screen left open overnight names the new day.
   const todayKey = useLocalDateKey();
@@ -1221,19 +1216,12 @@ function ProgramInner() {
         : null,
   });
 
+  // Moving on from a finished cycle's last week earns programme_complete,
+  // awarded by the server when it sees the plan move on (App1 Q33,
+  // onProgramStateWritten).
   const handleAdvanceWeek = async () => {
     setAdvancing(true);
-    // Capture the week being COMPLETED before it advances. A deload week is
-    // the last week of a 4-week periodization mesocycle (isCycleEndWeek derives
-    // this from generateWeekPrescription, so it can't drift from the schedule),
-    // so completing it = "finished a full programme cycle". advanceToNextWeek
-    // is gated on all days done/skipped → a genuine completion, not a calendar
-    // catch-up rollover.
-    const completedWeek = programState?.weekNumber ?? 0;
     await advanceToNextWeek();
-    if (isCycleEndWeek(completedWeek)) {
-      awardEventBadge("programme_complete");
-    }
     setAdvancing(false);
   };
 

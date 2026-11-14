@@ -5,8 +5,9 @@
  *
  * The streak reads STREAK_WINDOW_DAYS back, not the newest few hundred
  * documents of each source. early_bird counts its five early days over all
- * time, so the days it has seen are kept on streaks/data and only grow, and
- * a document without them is seeded once from the deeper read.
+ * time: the server's award keeps the days it has seen on streaks/data
+ * (App1 Q33), and the app reads them with its window's for the ring, and
+ * writes none.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
@@ -95,60 +96,49 @@ describe("the streak's window", () => {
 });
 
 describe("early_bird's days", () => {
-  it("counts the days kept on the document with the window's", async () => {
+  it("shows the server's kept days with the window's, and writes neither", async () => {
     seedFirestore({
       [STREAKS]: {
         badges: [],
         earlyLogDays: [day(200), day(201), day(202), day(203)],
       },
       "users/early/meals/m1": meal(day(1), at(1, 6)),
-    });
-    await settle();
-    await waitFor(() => expect(earned("early_bird")).not.toBeNull());
-  });
-
-  it("keeps a new early day beside the stored ones", async () => {
-    seedFirestore({
-      [STREAKS]: { badges: [], earlyLogDays: [day(200)] },
-      "users/early/meals/m1": meal(day(1), at(1, 6)),
       "users/early/meals/m2": meal(day(2), at(2, 9)),
     });
-    await settle();
+    const view = await settle();
+    // POSITIVE anchor: the ring has the window's early day beside the
+    // server's four, and not the 09:00 one.
     await waitFor(() =>
-      expect(readDoc(STREAKS)?.earlyLogDays).toEqual([day(200), day(1)])
+      expect(view.result.current.badgeProgressCtx.earlyLogDays).toEqual([
+        day(203),
+        day(202),
+        day(201),
+        day(200),
+        day(1),
+      ])
     );
+    // The award is the server's: the record is as it was.
+    expect(readDoc(STREAKS)?.earlyLogDays).toEqual([
+      day(200),
+      day(201),
+      day(202),
+      day(203),
+    ]);
+    expect(earned("early_bird")).toBeNull();
   });
 
-  it("seeds a document without them from the deeper read, once", async () => {
-    // An early meal older than the window: only the seed reaches it.
+  it("reads a record without them as none", async () => {
     seedFirestore({
       [STREAKS]: { badges: [] },
       "users/early/meals/m1": meal(day(120), at(120, 6)),
+      "users/early/meals/m2": meal(day(3), at(3, 5)),
     });
     const view = await settle();
-    await waitFor(() =>
-      expect(readDoc(STREAKS)?.earlyLogDays).toEqual([day(120)])
-    );
     await waitFor(() =>
       expect(view.result.current.badgeProgressCtx.earlyLogDays).toEqual([
-        day(120),
+        day(3),
       ])
     );
-  });
-
-  it("does not seed a document that already has them", async () => {
-    seedFirestore({
-      [STREAKS]: { badges: [], earlyLogDays: [] },
-      "users/early/meals/m1": meal(day(120), at(120, 6)),
-    });
-    const view = await settle();
-    expect(view.result.current.badgeProgressCtx.earlyLogDays).toEqual([]);
-    expect(readDoc(STREAKS)?.earlyLogDays).toEqual([]);
-  });
-
-  it("stores a counted empty list, so the next load reads only the window", async () => {
-    seedFirestore({ [STREAKS]: { badges: [] } });
-    await settle();
-    await waitFor(() => expect(readDoc(STREAKS)?.earlyLogDays).toEqual([]));
+    expect(readDoc(STREAKS)?.earlyLogDays).toBeUndefined();
   });
 });

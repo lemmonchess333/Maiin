@@ -84,8 +84,8 @@ const STREAK_FIELDS = [
   "totalActiveDays",
 ];
 
-/** Writes that carry a streak figure. A badge award may still run: it
- *  reads the stored badges inside its own transaction and only adds. */
+/** Writes that carry a streak figure. (The app awards no badge: the
+ *  server does, App1 Q33.) */
 const streakWrites = () =>
   writeLog().filter(
     (w) =>
@@ -133,7 +133,7 @@ describe("useStreaks — a failed read is not saved over the record", () => {
     expect(unfiredFailures()).toEqual([]);
     expect(readDoc(STREAKS)?.longestStreak).toBe(200);
     expect(streakWrites()).toEqual([]);
-    // The award that did run kept the stored badge's date.
+    // The stored badge is as it was.
     const badges = readDoc(STREAKS)?.badges as {
       id: string;
       earnedAt: string;

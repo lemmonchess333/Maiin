@@ -395,7 +395,7 @@ export default function WorkoutSession({
   // Loads are stored in kg; the lifter reads and types them in this unit.
   const liftUnit = useLiftUnit();
   const [initialDay] = useState(incomingDay);
-  const { awardEventBadge, awardEventBadges, streakWithDay } = useStreaks();
+  const { streakWithDay } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
   // are positional over day.exercises, so a draft from a different
@@ -1979,8 +1979,8 @@ export default function WorkoutSession({
       // The stable completionId makes a retry target the SAME workout doc.
       // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
       // for why this boundary matters and why it lives in a pure module.
-      // Computed once: the command carries it, and the Plate-Club check
-      // below scores exactly what the server will build from it.
+      // The server's Plate-Club badge scores the workout it builds from
+      // these same sets.
       const completionLogs = toCompletionSetLogs(setLogs);
       const receipt = await onCompleteDay(dayIndex, {
         completionId: completionIdRef.current,
@@ -2003,7 +2003,7 @@ export default function WorkoutSession({
       });
 
       // A callback from an outgoing account must never recreate its draft
-      // after sign-out, mark the next user's session saved, or award a badge.
+      // after sign-out or mark the next user's session saved.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
       setSavedWorkoutId(receipt.workoutId);
       setFinishMoments(receipt.moments ?? null);
@@ -2014,25 +2014,10 @@ export default function WorkoutSession({
         clearDraft(completionIdRef.current);
         setSaved(true);
         setSaveStatus("synced");
-        if (firedPRs.size > 0) awardEventBadge("first_pr");
-        // Plate-Club (60 / 100 / 140 kg on a compound) is decided here, on
-        // the same completed sets the command just carried, so the seal
-        // cracks now rather than after onWorkoutCreated's round-trip —
-        // which was long enough for the owner to have left the screen. The
-        // server still awards it; the transaction behind awardEventBadges
-        // makes the second arrival a no-op whichever side that is. The
-        // rule loads on its own, after the save: nothing waits for it.
-        const exercises = day.exercises;
-        void import("@/features/streaks/liftWeightMilestones").then(
-          ({ exercisesForLiftBadges, liftWeightMilestoneBadges }) => {
-            if (completionUid && auth.currentUser?.uid !== completionUid)
-              return;
-            const lifts = liftWeightMilestoneBadges(
-              exercisesForLiftBadges(exercises, completionLogs)
-            );
-            if (lifts.length > 0) awardEventBadges(lifts);
-          }
-        );
+        // The badges this workout earns (first_pr from its new bests, the
+        // Plate Club from its heaviest compound set, and the rest) are the
+        // server's to award once it is saved (App1 Q33, onWorkoutCreated);
+        // the reveal comes from its record.
       };
       if (queuedReceipt) {
         setSaved(true);

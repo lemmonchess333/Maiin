@@ -35,6 +35,18 @@ const rules = require_("../../../../functions/lib/badgeRules") as {
   LIFETIME_RUN_METERS_MILESTONE: number;
   LIFETIME_LIFT_VOLUME_KG_MILESTONE: number;
   COMPOUND_LIFT_IDS: Set<string>;
+  BADGE_IDS: readonly string[];
+  STREAK_BADGES: readonly { id: string; days: number }[];
+  HYBRID_WINDOW_BADGES: readonly {
+    id: string;
+    days: number;
+    lifts: number;
+    runs: number;
+  }[];
+  EARLY_BIRD_DAYS: number;
+  MEAL_PREP_RUN_DAYS: number;
+  NUTRITION_STREAK_DAYS: number;
+  ULTIMATE_ATHLETE_COUNT: number;
 };
 
 /** Every id the server can write, produced by exercising the award
@@ -124,6 +136,45 @@ describe("server badge awards ≡ client catalogue", () => {
     );
     expect(catalogue.get("tonnage_100")?.description).toContain(
       `${rules.LIFETIME_LIFT_VOLUME_KG_MILESTONE / 1000} tonnes`
+    );
+  });
+});
+
+/* App1 Q33: every badge is awarded by the server, so its list is the whole
+   catalogue — a badge the server cannot award would sit locked forever. */
+describe("the server awards every badge in the catalogue", () => {
+  it("BADGE_IDS is BADGE_DEFINITIONS' ids, in its order", () => {
+    expect([...rules.BADGE_IDS]).toEqual(BADGE_DEFINITIONS.map((d) => d.id));
+  });
+
+  it("the streak badges are the catalogue's thresholds", () => {
+    expect(rules.STREAK_BADGES.map(({ id, days }) => ({ id, days }))).toEqual(
+      BADGE_DEFINITIONS.filter((d) => typeof d.threshold === "number").map(
+        (d) => ({ id: d.id, days: d.threshold })
+      )
+    );
+  });
+
+  it("descriptions state the server's numbers", () => {
+    for (const b of rules.HYBRID_WINDOW_BADGES) {
+      const text = catalogue.get(b.id)?.description ?? "";
+      if (b.lifts > 1) expect(text, b.id).toContain(`${b.lifts} lifts`);
+      if (b.runs > 1) expect(text, b.id).toContain(`${b.runs} runs`);
+      expect(text, b.id).toMatch(b.days === 7 ? /week/ : /14 days/);
+    }
+    expect(catalogue.get("early_bird")?.description).toContain(
+      `${rules.EARLY_BIRD_DAYS} days`
+    );
+    expect(catalogue.get("meal_prep_master")?.description).toContain(
+      `${rules.MEAL_PREP_RUN_DAYS} days`
+    );
+    for (const id of ["protein_pro", "hydration_hero"]) {
+      expect(catalogue.get(id)?.description, id).toContain(
+        `${rules.NUTRITION_STREAK_DAYS} days`
+      );
+    }
+    expect(catalogue.get("ultimate_athlete")?.description).toContain(
+      `${rules.ULTIMATE_ATHLETE_COUNT} badges`
     );
   });
 });

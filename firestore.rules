@@ -828,9 +828,20 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    /* The streak's figures are the app's to write. Its earned badges and
+       early_bird's days are the server's (App1 Q33, functions/lib/
+       badgeAwards.js), as medals are: a client that could write them could
+       award itself any badge. So a write leaves both as they are stored,
+       and no client deletes the document (the deletion executor sweeps
+       it). */
     match /users/{uid}/streaks/{doc} {
       allow read: if isOwner(uid);
-      allow write: if isOwnerAndNotDeleting(uid);
+      allow create: if isOwnerAndNotDeleting(uid)
+        && !request.resource.data.keys().hasAny(['badges', 'earlyLogDays']);
+      allow update: if isOwnerAndNotDeleting(uid)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['badges', 'earlyLogDays']);
+      allow delete: if false;
     }
     /* FCM device tokens — SERVER-ONLY since the packets-17+19 migration
        (#1630, Rules lock PR-E; re-cut 2026-08-03 from stale PR #1635).
@@ -1061,10 +1072,9 @@ service cloud.firestore {
         /* The figures other people read on a profile (survey item 18).
            They are the owner's own device's to write, so these gates bound
            the shape, not the truth: a joined date that is the server's or
-           left as it was (no backdated account), streaks that are whole
-           days, and a badge summary the size of the catalogue whose count
-           is its own. A stored value the write leaves as it is passes, as
-           the name gate's does. */
+           left as it was (no backdated account) and streaks that are whole
+           days. A stored value the write leaves as it is passes, as the
+           name gate's does. The badge summary below is the server's. */
         && (
           !('createdAt' in request.resource.data)
           || request.resource.data.createdAt == request.time
@@ -1101,27 +1111,18 @@ service cloud.firestore {
               && request.resource.data.medalSummary
                    == resource.data.get('medalSummary', null))
         )
+        /* The badges other people read (App1 Q33). Written only by the
+           server's award (functions/lib/badgeAwards.js), with the badge
+           itself, so the owner's device may leave it as it is and nothing
+           else: a client that could write it could show any badge it
+           liked. A write without the field (a first profile, a full
+           overwrite) passes, as medalSummary's does; the next award writes
+           the whole summary back. */
         && (
           !('badgeSummary' in request.resource.data)
           || (resource != null
               && request.resource.data.badgeSummary
                    == resource.data.get('badgeSummary', null))
-          || (request.resource.data.badgeSummary is map
-              && request.resource.data.badgeSummary.keys().hasOnly(['earnedMap', 'count'])
-              && request.resource.data.badgeSummary.earnedMap is map
-              && request.resource.data.badgeSummary.earnedMap.size() <= 100
-              /* Each entry is a badge id (18 characters at most) and an
-                 ISO date (24). The entry cap alone left both unbounded in
-                 a document every search result downloads. Rules cannot
-                 visit each value, so the ids and dates are each held to
-                 100 entries of 40 characters in all. join() writes a
-                 number or a boolean out as text and refuses a nested map,
-                 so a value's type is the reader's to check
-                 (useUserProfileData skips a date that is not a string). */
-              && request.resource.data.badgeSummary.earnedMap.keys().join('').size() <= 4000
-              && request.resource.data.badgeSummary.earnedMap.values().join('').size() <= 4000
-              && request.resource.data.badgeSummary.count
-                   == request.resource.data.badgeSummary.earnedMap.size())
         );
     }
 

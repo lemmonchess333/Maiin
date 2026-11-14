@@ -7,7 +7,7 @@ import {
 import {
   pendingBadgeIds,
   subscribePendingBadges,
-  queueBadgeReveals,
+  queueServerAwards,
   dismissBadgeReveal,
 } from "./pendingBadgeReveals";
 import {
@@ -27,7 +27,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
   where,
   writeBatch,
   limit,
@@ -38,11 +37,10 @@ import { useUid } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
 import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
-import { setDocGuarded } from "@/lib/firestoreWrite";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
-import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
+import { earnedBadgeCount } from "./badgeEarning";
 import { useNutritionBadgeData } from "@/hooks/useNutritionBadgeData";
 import {
   computeNutritionBadgeDays,
@@ -88,11 +86,13 @@ export interface StreakData {
    */
   totalActiveDays: number;
   /**
-   * Up to five distinct days with a log before 07:00 (`earlyLogDays.ts`),
-   * so early_bird's count outlives the window. Absent on a document that
-   * predates it, which is seeded once from a deeper read.
+   * Up to five distinct days with a log before 07:00, kept by the server's
+   * award (functions/lib/badgeAwards.js) so early_bird's count outlives the
+   * window. Read here for its progress ring only.
    */
   earlyLogDays?: string[];
+  /** Every badge, earned or not. Earned ones are the server's (App1 Q33):
+   *  this hook reads them and writes none. */
   badges: EarnedBadge[];
 }
 
@@ -111,8 +111,8 @@ const DEFAULT_STREAKS: StreakData = {
 // so a backfilled meal is read whatever its date. A long streak outlives
 // the window through the persisted anchor (computeStreakSpanAnchored): the
 // window only has to reach the last save plus grace, and every active day
-// saves. Earned badges stay earned, and the one rule that counts over all
-// time, early_bird, keeps its days on the streak document (earlyLogDays).
+// saves. Badges are the server's (App1 Q33): earned ones stay earned, and
+// early_bird's days are kept on the streak document by its award.
 // The caps are a backstop for a heavy logger, not the bound.
 // totalActiveDays remains windowed, not truly lifetime (D13 — the
 // saturation is a DELIBERATE accepted limit, documented on the
@@ -175,47 +175,13 @@ interface MealRow {
 // ── Pure helpers ─────────────────────────────────────────────────────────
 
 /**
- * Coerce a value to an ISO 8601 string for badgeSummary mirror writes.
- *
- * Defensive across multiple shapes even though the current EarnedBadge.earnedAt
- * is typed and written as `string | null` — an older or future write path
- * could produce a Date / Timestamp / epoch number. Any path beyond `string`
- * indicates schema drift; log on hit so we notice.
- */
-function toIsoString(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value instanceof Date) {
-    logger.warn(
-      "[Streaks] toIsoString: Date received (expected ISO string)",
-      value
-    );
-    return value.toISOString();
-  }
-  if (typeof value === "number") {
-    logger.warn(
-      "[Streaks] toIsoString: number received (expected ISO string)",
-      value
-    );
-    return new Date(value).toISOString();
-  }
-  if (value && typeof (value as { toDate?: unknown }).toDate === "function") {
-    logger.warn(
-      "[Streaks] toIsoString: Timestamp received (expected ISO string)",
-      value
-    );
-    return (value as { toDate: () => Date }).toDate().toISOString();
-  }
-  logger.warn("[Streaks] toIsoString: unexpected value", value);
-  return new Date().toISOString();
-}
-
-/**
  * Hydrate a stored `streaks/data.badges` array against the catalogue: every
  * definition, in catalogue order, with the stored `earnedAt` (or null).
- * Stored entries may be full EarnedBadge objects (client writes) or the
- * minimal `{ id, earnedAt }` pairs the server appends — this is what makes
- * the two shapes interchangeable, and it auto-backfills new definitions as
- * unearned for existing users with no migration.
+ * Stored entries may be full EarnedBadge objects (what the app wrote when
+ * it awarded badges itself, before App1 Q33) or the `{ id, earnedAt,
+ * earnedBy }` entries the server's award writes — this is what makes the
+ * shapes interchangeable, and it backfills new definitions as unearned for
+ * existing users with no migration.
  */
 function mergeWithCatalogue(
   stored: readonly { id: string; earnedAt?: string | null }[] | undefined
@@ -677,8 +643,7 @@ function useStreaksInternal() {
   );
 
   // Loading gates — 4 independent flags. We wait for all 4 to flip before
-  // computing or persisting anything, so silent backfill can't double-award
-  // badges that already have an earnedAt set in Firestore.
+  // computing or persisting anything.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
   // A failed read settles its loaded flag (below) so nothing hangs, but
@@ -695,9 +660,9 @@ function useStreaksInternal() {
   // — sign-out, or A → B with no signed-out render between — drops all of
   // it in the same render that sees the new uid. From an effect the reset
   // would land a commit late: that commit would render the previous
-  // account's streak, and with its loaded flags still true the badge and
-  // persist effects would run against A's rows under B's uid. Cleared
-  // here, the flags hold both effects off until the new account's four
+  // account's streak, and with its loaded flags still true the persist
+  // effect would run against A's rows under B's uid. Cleared
+  // here, the flags hold it off until the new account's four
   // streams have landed. The refs are reset in the subscription effect's
   // signed-out branch: a ref can't be written while rendering.
   const [streamsUid, setStreamsUid] = useState(uid);
@@ -711,13 +676,8 @@ function useStreaksInternal() {
     setMealsFailed(false);
   }
 
-  // Reveal only confirmed awards from this account. Intent may be queued
-  // before the write resolves, so reloads retain it without announcing a failed save.
-  const [confirmedRevealBadges, setConfirmedRevealBadges] = useState<{
-    uid: string;
-    badges: EarnedBadge[];
-  } | null>(null);
-  // New-badge queue — multiple badges awarded in one pass show one at a time.
+  // The reveal queue: the server's awards this device has not revealed
+  // (pendingBadgeReveals.ts), one at a time, each once it is in the record.
   const pendingIds = useSyncExternalStore(
     subscribePendingBadges,
     () => pendingBadgeIds(uid),
@@ -725,38 +685,13 @@ function useStreaksInternal() {
   );
   const newBadge =
     pendingIds
-      .map((id) =>
-        confirmedRevealBadges?.uid === uid
-          ? confirmedRevealBadges.badges.find((b) => b.id === id && b.earnedAt)
-          : undefined
-      )
+      .map((id) => streakData.badges.find((b) => b.id === id && b.earnedAt))
       .find(Boolean) ?? null;
 
   // Refs — track state across renders without triggering re-runs
   // What the last streak save wrote (its fields, as JSON), so a recompute
   // that changes nothing writes nothing.
   const lastWrittenStreakRef = useRef<string | null>(null);
-  const hasLoadedRef = useRef(false);
-  // Badge ids with an award write currently in flight — prevents the
-  // check effect from firing duplicate concurrent commits for the same
-  // badge before the first resolves.
-  const awardInFlightRef = useRef<Set<string>>(new Set());
-  // Awards run one after another, never concurrently. Each is a transaction
-  // that reads streaks/data live, so a second award always sees the first
-  // one's commit — two calls in the same tick can no longer overwrite each
-  // other's earnedAt (the pre-transaction code built the whole badges array
-  // from a stale closure and wrote it back, so the later write reverted
-  // the earlier award until the next snapshot re-derived it). Real
-  // Firestore would also retry a contended transaction; the chain means
-  // correctness does not depend on that.
-  const awardChainRef = useRef<Promise<void>>(Promise.resolve());
-  // Earned-badge ids already accounted for, so an earnedAt that NEWLY appears
-  // in a streaks/data snapshot can be detected as an EXTERNAL (server-side)
-  // award and celebrated. null until the first snapshot seeds the baseline
-  // (so historical badges don't all pop the reveal on app open). Local awards
-  // add themselves here before their own write, so the returning snapshot
-  // doesn't double-queue them.
-  const seenEarnedRef = useRef<Set<string> | null>(null);
 
   // ── Subscribe to all 4 streams ─────────────────────────────────────────
 
@@ -767,8 +702,6 @@ function useStreaksInternal() {
       // are this effect's to clear, so the next account starts from a
       // clean baseline.
       lastWrittenStreakRef.current = null;
-      hasLoadedRef.current = false;
-      seenEarnedRef.current = null;
       return;
     }
 
@@ -798,8 +731,6 @@ function useStreaksInternal() {
           // Merge badge definitions with saved earned dates — this auto-backfills
           // new badges as earnedAt: null for existing users. No migration needed.
           const merged = mergeWithCatalogue(data.badges);
-          if (!snap.metadata?.hasPendingWrites)
-            setConfirmedRevealBadges({ uid, badges: merged });
           // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
           // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
           // into state — that previously caused `Math.max(n, undefined) === NaN`
@@ -859,27 +790,9 @@ function useStreaksInternal() {
             badges: merged,
           });
 
-          // Celebrate badges awarded EXTERNALLY — i.e. server-side milestone
-          // awarding (onRunCreated) — that this client didn't award itself.
-          // The first snapshot seeds the baseline silently; thereafter any
-          // badge whose earnedAt newly appears (and wasn't a local award,
-          // which registers itself in seenEarnedRef before its own write) is
-          // queued for the reveal modal.
-          const earnedNow = merged.filter((b) => b.earnedAt);
-          if (seenEarnedRef.current === null) {
-            seenEarnedRef.current = new Set(earnedNow.map((b) => b.id));
-          } else {
-            const fresh = earnedNow.filter(
-              (b) => !seenEarnedRef.current!.has(b.id)
-            );
-            if (fresh.length > 0) {
-              for (const b of fresh) seenEarnedRef.current!.add(b.id);
-              queueBadgeReveals(
-                uid,
-                fresh.map((b) => b.id)
-              );
-            }
-          }
+          // The server's awards this device has not revealed yet, earned
+          // while it watched or while it was away (pendingBadgeReveals).
+          queueServerAwards(uid, data.badges);
         } else {
           setStreakData(DEFAULT_STREAKS);
         }
@@ -1066,78 +979,14 @@ function useStreaksInternal() {
     ]);
   }, [allLoaded, workouts, runs, meals]);
 
-  // early_bird's days: the window's, with the ones kept on the streak
-  // document and, for a document that predates them, the seed's. The
-  // badge counts over all time, so a day that ages out of the window stays
-  // counted.
-  const earlyBirdEarned = streakData.badges.some(
-    (b) => b.id === "early_bird" && !!b.earnedAt
-  );
+  // early_bird's days for its progress ring: the ones the server's award
+  // keeps on the streak document (the count outlives the window there),
+  // with the window's.
   const storedEarly = streakData.earlyLogDays;
-  const [seededEarly, setSeededEarly] = useState<{
-    uid: string;
-    days: string[];
-  } | null>(null);
-  const seededDays = seededEarly?.uid === uid ? seededEarly.days : null;
   const earlyLogDays = useMemo(
-    () =>
-      allLoaded ? keptEarlyDays(storedEarly, seededDays, windowEarlyDays) : [],
-    [allLoaded, storedEarly, seededDays, windowEarlyDays]
+    () => (allLoaded ? keptEarlyDays(storedEarly, windowEarlyDays) : []),
+    [allLoaded, storedEarly, windowEarlyDays]
   );
-
-  // The seed: a document without the field gets one deeper read, so early
-  // days older than the window are kept. Once per account and mount; a
-  // failed read writes nothing, and the next load tries again.
-  const seedTriedForRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!allLoaded || !uid || readFailed) return;
-    if (storedEarly !== undefined || earlyBirdEarned) return;
-    if (seedTriedForRef.current === uid) return;
-    seedTriedForRef.current = uid;
-    void (async () => {
-      try {
-        const { readSeedEarlyDays } = await import("./earlyBirdSeed");
-        const days = await readSeedEarlyDays(uid, {
-          meals: MEAL_CAP,
-          workouts: WORKOUT_CAP,
-          runs: RUN_CAP,
-        });
-        setSeededEarly({ uid, days });
-      } catch (err) {
-        logger.error("[useStreaks] early-bird seed read failed", err);
-      }
-    })();
-  }, [allLoaded, uid, readFailed, storedEarly, earlyBirdEarned]);
-
-  // Keep the days on the streak document when they grow, or once the seed
-  // has counted a document that had none. Never with a read failed: the
-  // window's days would be missing, not absent.
-  const lastWrittenEarlyRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!allLoaded || !uid || readFailed || earlyBirdEarned) return;
-    if (storedEarly === undefined && seededDays === null) return;
-    if (storedEarly !== undefined && earlyLogDays.length <= storedEarly.length)
-      return;
-    const signature = `${uid}:${earlyLogDays.join(",")}`;
-    if (signature === lastWrittenEarlyRef.current) return;
-    lastWrittenEarlyRef.current = signature;
-    setDocGuarded(
-      doc(db, "users", uid, "streaks", "data"),
-      { earlyLogDays },
-      { merge: true }
-    ).catch((err) => {
-      lastWrittenEarlyRef.current = null;
-      logger.error("[useStreaks] early-bird days save failed", err);
-    });
-  }, [
-    allLoaded,
-    uid,
-    readFailed,
-    earlyBirdEarned,
-    storedEarly,
-    seededDays,
-    earlyLogDays,
-  ]);
 
   // Earned badge count (excl. ultimate_athlete itself) — drives the
   // ultimate_athlete progress ring; the earning pass derives the same number
@@ -1229,182 +1078,6 @@ function useStreaksInternal() {
   // no-op alias — but explicit is clearer for consumers like BadgeGrid).
   const allBadges = streakData.badges;
 
-  // Stable signature over earnedAt values — lets us depend on badge state
-  // changes without triggering re-runs on every snapshot reflow.
-  const badgesSignature = useMemo(
-    () => streakData.badges.map((b) => `${b.id}:${b.earnedAt ?? ""}`).join("|"),
-    [streakData.badges]
-  );
-
-  // ── Badge award helper ─────────────────────────────────────────────────
-
-  /**
-   * Award badges in ONE transaction on streaks/data.
-   *
-   * Transactional because the server awards too (onWorkoutCreated writes
-   * Plate-Club and run milestones into the same array): whichever side
-   * lands second reads the other's earnedAt and leaves it alone. The old
-   * batch write rebuilt the whole array from local state, so a
-   * server-awarded badge that had not reached this client yet was
-   * silently reverted to unearned.
-   *
-   * Only ids this call actually SETS are registered in seenEarnedRef.
-   * That placement is load-bearing: registering a candidate before the
-   * transaction has decided would mark a server-awarded badge as already
-   * seen, and the snapshot's external-award path would then skip its
-   * celebration.
-   *
-   * The reveal queue moved inside for tidiness, NOT correctness — hoisting
-   * it back out was measured against `awardBadges.test.tsx` and changes
-   * nothing, because `queueBadgeReveals` is a dedupe set and the snapshot
-   * path queues the same id anyway. Queuing before the commit is
-   * deliberate either way (inherited): a reveal is INTENT, and `newBadge`
-   * only fires once a snapshot confirms an earnedAt, so intent recorded
-   * for a write that then failed never reveals anything.
-   */
-  const awardBadgeIds = useCallback(
-    async (ids: readonly string[], silent: boolean) => {
-      if (!uid) return;
-
-      // Cheap local pre-filter: unknown ids, ids already earned as far as
-      // this client knows, and ids with a write in flight. The transaction
-      // below is the authority; this just avoids pointless round-trips.
-      const candidates = [...new Set(ids)].filter((id) => {
-        const badge = streakData.badges.find((b) => b.id === id);
-        return !!badge && !badge.earnedAt && !awardInFlightRef.current.has(id);
-      });
-      if (candidates.length === 0) return;
-      for (const id of candidates) awardInFlightRef.current.add(id);
-
-      const run = async () => {
-        const streaksRef = doc(db, "users", uid, "streaks", "data");
-        const publicProfileRef = doc(db, "users", uid, "public", "profile");
-        let setNow: string[] = [];
-        try {
-          const next = await runTransaction(db, async (tx) => {
-            const snap = await tx.get(streaksRef);
-            const stored = snap.exists()
-              ? (snap.data() as { badges?: unknown }).badges
-              : undefined;
-            const badges: EarnedBadge[] = Array.isArray(stored)
-              ? [...(stored as EarnedBadge[])]
-              : [];
-            const now = new Date().toISOString();
-            setNow = [];
-            for (const id of candidates) {
-              const idx = badges.findIndex((b) => b && b.id === id);
-              if (idx === -1) {
-                const def = BADGE_DEFINITIONS.find((d) => d.id === id);
-                if (!def) continue;
-                badges.push({ ...def, earnedAt: now });
-                setNow.push(id);
-              } else if (!badges[idx].earnedAt) {
-                badges[idx] = { ...badges[idx], earnedAt: now };
-                setNow.push(id);
-              }
-            }
-            if (setNow.length === 0) return null;
-
-            // Register before the write so the echo snapshot isn't
-            // re-detected as an external award; persist reveal intent
-            // before the ack so a killed app still reveals once the next
-            // snapshot confirms. Both are idempotent, so a transaction
-            // retry re-running this body is harmless.
-            for (const id of setNow) seenEarnedRef.current?.add(id);
-            if (!silent) queueBadgeReveals(uid, setNow);
-
-            // Public mirror: ids + earnedAt only, from the LIVE array — so
-            // a server-earned badge this client had not seen is counted.
-            const earnedMap: Record<string, string> = {};
-            for (const b of badges) {
-              if (!b.earnedAt) continue;
-              earnedMap[b.id] = toIsoString(b.earnedAt);
-            }
-            tx.set(streaksRef, { badges }, { merge: true });
-            tx.set(
-              publicProfileRef,
-              {
-                badgeSummary: {
-                  earnedMap,
-                  count: Object.keys(earnedMap).length,
-                },
-              },
-              { merge: true }
-            );
-            return badges;
-          });
-          if (next) {
-            setConfirmedRevealBadges({ uid, badges: mergeWithCatalogue(next) });
-          }
-        } catch (error) {
-          // Un-register what this call claimed, so a later server award of
-          // the same id is still celebrated as new. Badge awards are
-          // background reconciliation, not a user action — log, no toast
-          // (this used to produce stacked "Failed to save badge" errors).
-          for (const id of setNow) seenEarnedRef.current?.delete(id);
-          logger.error("[Streaks] Badge save failed:", error);
-        } finally {
-          for (const id of candidates) awardInFlightRef.current.delete(id);
-        }
-      };
-      const chained = awardChainRef.current.then(run, run);
-      awardChainRef.current = chained;
-      await chained;
-    },
-    [uid, streakData.badges]
-  );
-
-  const awardBadge = useCallback(
-    (badgeId: string, silent: boolean) => awardBadgeIds([badgeId], silent),
-    [awardBadgeIds]
-  );
-
-  // ── Badge check logic — runs after every snapshot change once loaded ─
-
-  useEffect(() => {
-    if (!allLoaded) return;
-
-    const silent = !hasLoadedRef.current;
-
-    // The pure earning decision (streak thresholds + rolling-window balanced)
-    // lives in ./badgeEarning; the hook just awards what it returns.
-    const toAward = badgesToAward(streakData.badges, {
-      currentStreak,
-      workouts,
-      runs,
-      mealDates,
-      earlyLogDays,
-      macroMasterDays,
-      proteinHitDays,
-      waterHitDays,
-      today: new Date(),
-    });
-    void (async () => {
-      for (const id of toAward) await awardBadge(id, silent);
-    })();
-
-    // Flip to loud mode after the first pass completes.
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-    }
-    // badgesSignature is included so we re-evaluate after an earned badge
-    // lands in the snapshot — this lets multi-threshold crossings award in
-    // sequence without infinite loops (already-earned badges short-circuit).
-  }, [
-    allLoaded,
-    currentStreak,
-    workouts,
-    runs,
-    mealDates,
-    earlyLogDays,
-    macroMasterDays,
-    proteinHitDays,
-    waterHitDays,
-    badgesSignature,
-    streakData.badges,
-    awardBadge,
-  ]);
-
   // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
   //
   // Atomic batch writes three docs in one commit:
@@ -1420,9 +1093,10 @@ function useStreaksInternal() {
   //                                           firestore.rules). Only the
   //                                           allowlisted fields land here.
   //
-  // Mirror-write contract: streaks/data carries the full state (badges,
-  // lastActiveDate, totalActiveDays); users/{uid} + public/profile carry
-  // only the two summary numbers we denormalise for cross-surface reads.
+  // Mirror-write contract: streaks/data carries the full state
+  // (lastActiveDate, totalActiveDays; its badges are the server's);
+  // users/{uid} + public/profile carry only the two summary numbers we
+  // denormalise for cross-surface reads.
 
   useEffect(() => {
     // A failed read is not an empty one: with the streaks document unread,
@@ -1560,8 +1234,9 @@ function useStreaksInternal() {
   const earnedBadges = streakData.badges.filter((b) => b.earnedAt);
   const lockedBadges = streakData.badges.filter((b) => !b.earnedAt);
 
-  // Inputs for badgeProgress() — same shape as the earning context, so the
-  // grid's rings + "next badge" nudge are computed from exactly what awards.
+  // Inputs for badgeProgress(): the facts this device can see, read by the
+  // client copy of the server's rules (badgeRules.cross.test.ts), so a ring
+  // fills when the server would award.
   const badgeProgressCtx = useMemo(
     () => ({
       currentStreak,
@@ -1588,27 +1263,8 @@ function useStreaksInternal() {
     ]
   );
 
-  // Imperatively award an EVENT-based badge (first_pr, programme_complete)
-  // from feature code at the moment the event fires — these can't be derived
-  // from the windowed snapshots the badge pass reads. Idempotent (awardBadge
-  // no-ops if already earned / a write is in flight) and non-silent, so it pops
-  // the standard celebration via the same queue as every other award.
-  const awardEventBadges = useCallback(
-    (badgeIds: readonly string[]) => {
-      void awardBadgeIds(badgeIds, false);
-    },
-    [awardBadgeIds]
-  );
-  const awardEventBadge = useCallback(
-    (badgeId: string) => awardEventBadges([badgeId]),
-    [awardEventBadges]
-  );
-
-  // Open all four streams again after a failure. The pass after it is a
-  // first load, as on opening the app: badges found then are backfilled
-  // quietly rather than celebrated one by one.
+  // Open all four streams again after a failure.
   const retryLoad = () => {
-    hasLoadedRef.current = false;
     setStreaksDocFailed(false);
     setMealsFailed(false);
     setStreaksDocLoaded(false);
@@ -1641,8 +1297,6 @@ function useStreaksInternal() {
     lockedBadges,
     allBadges,
     badgeProgressCtx,
-    awardEventBadge,
-    awardEventBadges,
     newBadge,
     dismissNewBadge,
     // Per-day target snapshots (date → calories + macros as they stood on that

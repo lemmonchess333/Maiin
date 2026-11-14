@@ -39,8 +39,6 @@ const h = vi.hoisted(() => ({
   message: vi.fn(),
   user: null as { uid: string } | null,
   profile: null as Record<string, unknown> | null,
-  awardEventBadge: vi.fn(),
-  awardEventBadges: vi.fn(),
   authReads: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
@@ -60,10 +58,7 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
-  useStreaks: () => ({
-    awardEventBadge: h.awardEventBadge,
-    awardEventBadges: h.awardEventBadges,
-  }),
+  useStreaks: () => ({}),
 }));
 vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
   // The pure helpers (`draftLayout`) stay real.
@@ -1900,7 +1895,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
      cancels the animation; the extra tick lets the pending frame fire on
      jsdom's own driver, which is what opens both latches. The full
      mechanism, and the five fixes that do NOT work, are recorded above
-     `completeAndSave` in the Plate-Club group.
+     `completeAndSave` in the Plate-Club sets group.
 
      Found by `--sequence.shuffle`: written order put every victim ahead
      of this block, so the file passed. */
@@ -2130,13 +2125,13 @@ it("Undo followed by finishing early saves only the final completed work", async
   });
 });
 
-describe("Plate-Club badges are awarded the moment the workout saves", () => {
-  /* The server awards these from onWorkoutCreated too; this pins that the
-     client no longer waits for that round-trip. The owner reported the
-     badge appearing only after leaving and returning to the screen — by
-     then the function had finished. Now the same completed sets the
-     command carries are scored here, in `acknowledge`, and handed to the
-     transactional award. */
+describe("a saved workout carries the sets the server's Plate Club scores", () => {
+  /* Every badge is awarded by the server (App1 Q33): onWorkoutCreated
+     scores the Plate Club from the workout built from the completed sets
+     this command carries, and the screen awards nothing itself. Until
+     then the screen scored them here too, so the seal cracked before the
+     trigger's round trip; the reveal now comes from the server's record,
+     on this screen if it is still open and from Home's row if not. */
   async function completeAndSave(
     exercise: Partial<ProgramExercise>,
     kg: string
@@ -2221,17 +2216,6 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     return onCompleteDay;
   }
 
-  it("a 100 kg compound set awards plate_club AND two_plate on save, in one call", async () => {
-    await completeAndSave({ exerciseId: "squat", name: "Squat" }, "100");
-    await vi.waitFor(() =>
-      expect(h.awardEventBadges).toHaveBeenCalledWith([
-        "plate_club",
-        "two_plate",
-      ])
-    );
-    expect(h.awardEventBadges).toHaveBeenCalledTimes(1);
-  });
-
   it("scores what the command carries: the weight on the completed sets, not the plan", async () => {
     // Prescribed 0 kg, lifted 62.5 — the logged weight is what counts.
     const cmd = await completeAndSave(
@@ -2244,21 +2228,6 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     expect(sent.setLogs[0].every((l) => l.completed && l.weight === 62.5)).toBe(
       true
     );
-    await vi.waitFor(() =>
-      expect(h.awardEventBadges).toHaveBeenCalledWith(["plate_club"])
-    );
-  });
-
-  it("a non-compound lift at 140 kg awards nothing", async () => {
-    await completeAndSave(
-      { exerciseId: "barbell-curl", name: "Barbell Curl" },
-      "140"
-    );
-    // `acknowledge` is where the award lives, and its first line clears
-    // the draft — so the draft-clear spy is the proof that the code path
-    // ran and chose to award nothing, rather than never running at all.
-    await vi.waitFor(() => expect(h.clear).toHaveBeenCalled());
-    expect(h.awardEventBadges).not.toHaveBeenCalled();
   });
 });
 

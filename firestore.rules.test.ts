@@ -184,10 +184,6 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         currentStreak: 3,
         longestStreak: 7,
         createdAt: serverTimestamp(),
-        badgeSummary: {
-          earnedMap: { first_step: "2026-01-01T00:00:00Z" },
-          count: 1,
-        },
       })
     );
   });
@@ -255,9 +251,9 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 
-  it("owner writes a subset (just badgeSummary) — succeeds", async () => {
+  it("owner writes a badgeSummary — fails (the server's, App1 Q33)", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { badgeSummary: { earnedMap: {}, count: 0 } },
@@ -4105,45 +4101,78 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
     );
   });
 
-  // ── useStreaks badge-save coverage: the hook commits a 2-doc batch
-  //    (streaks/data badges + public/profile badgeSummary). Pin that the
-  //    batch + each write individually are rules-valid (no deletion ledger). ──
-  it("owner writes streaks/data alone — succeeds", async () => {
+  // ── Earned badges are the server's (App1 Q33, lib/badgeAwards.js).
+  //    The app writes the streak's figures to streaks/data and nothing
+  //    else there; each refusal is paired with the write it does make. ──
+  it("owner writes the streak's figures to streaks/data — succeeds", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
+        { currentStreak: 3, longestStreak: 7, lastActiveDate: "2026-06-07" },
+        { merge: true }
+      )
+    );
+  });
+
+  it("owner awards itself a badge on streaks/data — fails", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
         { badges: [{ id: "first_step", earnedAt: "2026-06-07" }] },
         { merge: true }
       )
     );
-  });
-
-  it("owner writes public/profile badgeSummary — succeeds", async () => {
-    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(
-        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-        { badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 } },
+        doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
+        { earlyLogDays: ["2026-06-01", "2026-06-02"] },
         { merge: true }
       )
     );
   });
 
-  it("owner commits the useStreaks badge-save batch (streaks/data + public/profile) — succeeds", async () => {
+  it("owner keeps the server's badges while writing the streak — succeeds; changing them fails", async () => {
+    const path = `users/${OWNER_UID}/streaks/data`;
+    const badges = [
+      {
+        id: "first_step",
+        earnedAt: "2026-06-07T08:00:00.000Z",
+        earnedBy: { kind: "workout", id: "w1" },
+      },
+    ];
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), path), {
+        badges,
+        earlyLogDays: ["2026-06-01"],
+      });
+    });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    const batch = writeBatch(ownerDb);
-    batch.set(
-      doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
-      { badges: [{ id: "first_step", earnedAt: "2026-06-07" }] },
-      { merge: true }
+    await assertSucceeds(
+      setDoc(doc(ownerDb, path), { currentStreak: 4 }, { merge: true })
     );
-    batch.set(
-      doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-      { badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 } },
-      { merge: true }
+    await assertFails(
+      setDoc(
+        doc(ownerDb, path),
+        { badges: [...badges, { id: "year_long", earnedAt: "2026-06-08" }] },
+        { merge: true }
+      )
     );
-    await assertSucceeds(batch.commit());
+    await assertFails(
+      setDoc(doc(ownerDb, path), { badges: [] }, { merge: true })
+    );
+    await assertFails(
+      setDoc(
+        doc(ownerDb, path),
+        { earlyLogDays: ["2026-06-01", "2026-06-02"] },
+        { merge: true }
+      )
+    );
+    // A full overwrite drops them, which is a change too.
+    await assertFails(setDoc(doc(ownerDb, path), { currentStreak: 5 }));
+    // No client takes the document, and its badges, away.
+    await assertFails(deleteDoc(doc(ownerDb, path)));
   });
 });
 
