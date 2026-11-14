@@ -1347,6 +1347,15 @@ export interface RacePlanV2Input {
    */
   planTotalWeeks?: number;
   /**
+   * Run24 (2), deep dive D3: the carried plan's own choice of a shorter
+   * base (`RunPlan.shortBase`), read when `planTotalWeeks` carries the
+   * block. A fresh block decides it here: a regular runner whose own week
+   * is above the plan's base (`OwnWeek`). Absent on a carried block: the
+   * plan's base is `BASE_SHARE`, so a plan made without the choice keeps
+   * its phases.
+   */
+  shortBase?: boolean | null;
+  /**
    * Run17 — the runner's CONFIRMED easy pace in seconds per km, resolved by
    * the caller through `planningEasyPaceSPerKm(profile.runFitness)` (which
    * applies RUN-EV-08's prescription gate). Decides which long-run tiers the
@@ -1420,6 +1429,10 @@ export interface RacePlanV2Output {
    *  shape — all easy, no quality, the long run capped at baseLongKm.
    *  `belowFloor` implies `compressed`. */
   belowFloor: boolean;
+  /** Run24 (2): whether the block's base is its shorter share, as the plan
+   *  carried it or, for a fresh block, as decided here. The record keeps it
+   *  (`RunPlan.shortBase`). */
+  shortBase: boolean;
   /** Week-by-week scheduled runs. weeks[0] is the current week: the
    *  lead-in, when there is one, then the plan's weeks. */
   weeks: ScheduledRunDay[][];
@@ -1481,7 +1494,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
    *  one is the lead-in. */
   const totalWeeks = leadIn ? calendarWeeks - 1 : calendarWeeks;
   /** Whether the block is the carried plan's, which keeps what it was made
-   *  with (`blockInputs`), rather than a fresh one. */
+   *  with (`shortBase`, `blockInputs`), rather than a fresh one. */
   const carriedBlock = carried !== null && carried >= totalWeeks;
   const blockWeeks = carriedBlock ? carried : totalWeeks;
   /** How many weeks of the block are already behind the runner: 0 when the
@@ -1627,6 +1640,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       leadInWeek: leadIn ? thisWeekKey : null,
       compressed,
       belowFloor,
+      shortBase: carriedBlock && input.shortBase === true,
       weeks: [],
       blockInputs: blockInputsFor([]),
     };
@@ -1684,6 +1698,20 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       ),
     };
   })();
+  /* Run24 (2), deep dive D3: a regular runner whose own week is above the
+     plan's base (`ownWeek`, so not a new runner's block nor a detrained
+     one) gets a shorter base (`SHORT_BASE_SHARE`): base weeks hold no
+     quality, and their easy running is the week they already run. Decided
+     when the block is made; a carried block keeps the plan's choice, so its
+     phases do not move as the starting point or the runs read change. */
+  const shortBase = carriedBlock
+    ? input.shortBase === true
+    : ownWeek !== null &&
+      isRunningBaseline(input.runningBaseline) &&
+      input.runningBaseline.experience === "regular";
+  /** The phase of week `w` of the block, by the plan's own base share. */
+  const phaseOf = (w: number) =>
+    getPhaseForWeek(w, blockWeeks, input.raceGoal.distance, shortBase);
   /** The long run's base and peak for the ramp: the plan's, or from the
    *  runner's own week, a peak `OWN_PEAK_SHARE` above their longest. */
   const rampBaseLongKm = ownWeek?.longKm ?? config.baseLongKm;
@@ -1779,7 +1807,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         )
         .filter((run) => !run.date || run.date >= input.currentDate)
         .sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex));
-    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    const phase = phaseOf(w);
     const week: ScheduledRunDay[] = [];
     // Run20 (5): a new runner's first weeks hold no tempo or intervals.
     const newRunnerWeek = isNewRunnerWeek(w);
@@ -2109,7 +2137,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           for (let k = 0; k < w; k++) {
             const held = qualityFlavoursForWeek({
               weekIndex: k,
-              phase: getPhaseForWeek(k, blockWeeks, input.raceGoal.distance),
+              phase: phaseOf(k),
               ...rules,
               // Run20 (5): a new runner's week held none.
               skipQuality: rules.skipQuality || holdsNoQuality(k),
@@ -2354,7 +2382,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       w >= 0 &&
       w < lastRampWeek &&
       !holdsNoQuality(w) &&
-      getPhaseForWeek(w, blockWeeks, input.raceGoal.distance) !== "taper";
+      phaseOf(w) !== "taper";
     if (noBenchmark && fits(1)) trialWeeks.add(1);
     for (
       let w = 1 + TRIAL_EVERY_WEEKS;
@@ -2390,7 +2418,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           run.type === "easy" &&
           run.templateId.endsWith("_strides") &&
           clearOf(run.dayIndex, longDays) &&
-          getPhaseForWeek(w, blockWeeks, input.raceGoal.distance) === "base"
+          phaseOf(w) === "base"
       );
     const slot = quality >= 0 ? quality : (easyCandidates[0]?.i ?? -1);
     if (slot < 0) return week;
@@ -2417,7 +2445,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const blockWeekRunsFloored = (w: number): ScheduledRunDay[] => {
     const week = blockWeekRunsAsRamped(w);
     if (w < 0) return week;
-    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    const phase = phaseOf(w);
     if (phase !== "taper" && phase !== "race") return week;
     const held = taperBuild().easyMinutes;
     // Race week's shake-outs are 20 minutes already (Run24 (10)): only a
@@ -2463,7 +2491,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const cached = cappedWeeks.get(w);
     if (cached) return cached;
     let week = blockWeekRunsFloored(w);
-    const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
+    const phase = phaseOf(w);
     let previous = w - 1;
     while (
       previous >= 0 &&
@@ -2624,11 +2652,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         if (!weekKey) return false;
         const index = wholeWeeksBetween(blockWeekZero, weekKey);
         if (index < 0 || index >= blockWeeks) return false;
-        const phase = getPhaseForWeek(
-          index,
-          blockWeeks,
-          input.raceGoal.distance
-        );
+        const phase = phaseOf(index);
         return phase === "taper" || phase === "race";
       })()
     );
@@ -2744,6 +2768,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     leadInWeek: leadIn ? thisWeekKey : null,
     compressed,
     belowFloor,
+    shortBase,
     weeks,
     blockInputs: blockInputsFor(weeks),
   };

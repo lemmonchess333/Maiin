@@ -112,7 +112,12 @@ export function resolveRaceEnrichment(
   return {
     distance: target.distance,
     goalPaceS: target.targetTimeS / RACE_GOAL_KM[target.distance],
-    phase: getPhaseForWeek(plan.currentWeek, plan.totalWeeks, target.distance),
+    phase: getPhaseForWeek(
+      plan.currentWeek,
+      plan.totalWeeks,
+      target.distance,
+      plan.shortBase
+    ),
     week: plan.currentWeek,
     source: target.source ?? "goal",
   };

@@ -904,6 +904,7 @@ function buildRunPlan(
           // Run24 (1), (2), (8): an edit to the same race's plan keeps what
           // its block is sized from.
           blockInputs: continued?.blockInputs,
+          shortBase: continued?.shortBase,
           recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
@@ -919,6 +920,7 @@ function buildRunPlan(
     const {
       leadInWeek: _keptLeadIn,
       blockInputs: _keptInputs,
+      shortBase: _keptShortBase,
       ...kept
     } = continued ?? {};
     return {
@@ -939,6 +941,9 @@ function buildRunPlan(
         // floor is finish-safely — carry the marker so the UI names the risk.
         belowFloor: racePlan.belowFloor,
         ...(racePlan.blockInputs ? { blockInputs: racePlan.blockInputs } : {}),
+        // Run24 (2): the block's shorter base, as the generator kept or
+        // decided it.
+        ...(racePlan.shortBase ? { shortBase: true } : {}),
       },
     };
   }

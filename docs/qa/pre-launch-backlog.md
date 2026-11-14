@@ -4833,6 +4833,14 @@ Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`
 - [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
 - [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces, read from the 3 km only (not the warm-up and cool-down); on a Pro account one tap takes them, on a free account the card names Pro and nothing changes; with no paces before, the card reads "Your training paces, from this run".
 
+## A shorter base for a regular runner (Run24 (2), 2026-11-13)
+
+Affects: setup's race preview, the stored run plan's `shortBase`, and every surface that names a week's phase (the race card's rail, "Why this run" on Home, Train and the run screen, Train's lift label). Unit tests drive each reader from one stored plan; no phone has made or carried such a plan.
+
+- [ ] **Setup.** As a regular runner, give 330 minutes a week and a 120-minute longest run, and set a half 16 weeks out. Passing: the preview says "Your build starts in week 5, since you already run 330 minutes a week." A building runner with the same numbers sees no such line.
+- [ ] **Week 5.** On the plan's fifth Monday, open Train and Home. Passing: the race card's rail lights Build, the week's tempo is there, "Why this run" reads "Build · week 5 of 16", and the lift label ends "· Build".
+- [ ] **A plan made before this build.** On an account whose race plan was saved before this shipped, roll a week and change a run day in Settings. Passing: its phases stay where they were (Base until week 7 of a 16-week half); the plan gains no `shortBase`.
+
 ## A race plan's sizes kept on the plan (Run24 (1), (2), (8), 2026-11-14)
 
 Affects: the run plan document (`programState.runPlan.blockInputs`), written

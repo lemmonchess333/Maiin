@@ -101,6 +101,8 @@ function rebuilt(
     weekStart: week(n),
     planTotalWeeks: made.totalWeeks,
     blockInputs: made.blockInputs,
+    // Run24 (2): the block's shorter base, carried beside them.
+    shortBase: made.shortBase,
     recentRuns: runs,
     ...more,
   });

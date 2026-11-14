@@ -311,6 +311,7 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
         totalWeeks: plan.totalWeeks,
         leadInWeek: plan.leadInWeek,
         blockInputs: plan.blockInputs,
+        shortBase: plan.shortBase,
       },
       prior: { runDays: made.programState.runDays ?? [] },
     });

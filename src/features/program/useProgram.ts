@@ -543,6 +543,7 @@ export function useProgram() {
                   totalWeeks: next.runPlan.totalWeeks,
                   leadInWeek: next.runPlan.leadInWeek,
                   blockInputs: next.runPlan.blockInputs,
+                  shortBase: next.runPlan.shortBase,
                   completedRaces: next.runPlan.completedRaces,
                 }
               : undefined,
@@ -2705,6 +2706,7 @@ export function useProgram() {
               totalWeeks: base.runPlan?.totalWeeks,
               leadInWeek: base.runPlan?.leadInWeek,
               blockInputs: base.runPlan?.blockInputs,
+              shortBase: base.runPlan?.shortBase,
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
@@ -3707,6 +3709,7 @@ export function useProgram() {
             totalWeeks: prevRunPlan?.totalWeeks,
             leadInWeek: prevRunPlan?.leadInWeek,
             blockInputs: prevRunPlan?.blockInputs,
+            shortBase: prevRunPlan?.shortBase,
             completedRaces: prevRunPlan?.completedRaces,
           },
           prior: {

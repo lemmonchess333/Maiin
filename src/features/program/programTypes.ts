@@ -627,7 +627,8 @@ export interface ScheduledRunDay {
  * (`generateRacePlanV2`). Read again from each rollover's runs, a failed
  * read or a few seconds' drift in the month's pace moved the long run a
  * rung, and a race in the month lifted a marathon's ceiling until it left
- * the window.
+ * the window. The block's shorter base (`RunPlan.shortBase`) is decided
+ * and kept the same way, beside these, and carried by the same rebuilds.
  */
 export interface RaceBlockInputs {
   /** The starting point the pace was read with
@@ -711,6 +712,14 @@ export interface RunPlan {
    *  before they were kept: it reads them from the runs it is given, and
    *  keeps them from the first rebuild that reads runs. */
   blockInputs?: RaceBlockInputs;
+  /** Run24 (2), deep dive D3: the plan was made for a regular runner whose
+   *  own week was above the plan's base, so its base is a shorter share of
+   *  the weeks before the taper (`SHORT_BASE_SHARE`). Decided when the block
+   *  is made (`generateRacePlanV2`'s `shortBase`) and carried by every
+   *  rebuild of the same block, so its phases stay put as the runner's
+   *  starting point and runs change. Absent: the plan's base is
+   *  `BASE_SHARE`, as every plan without it reads. */
+  shortBase?: boolean;
 }
 
 /* ================================

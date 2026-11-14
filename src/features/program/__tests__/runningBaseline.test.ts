@@ -171,6 +171,8 @@ describe("confirmed running starting point", () => {
         weekStart: date,
         planTotalWeeks: block.totalWeeks,
         blockInputs,
+        // Run24 (2): the block's shorter base, carried as the record does.
+        shortBase: block.shortBase,
       });
       expect(regenerated.weeks[0]).toEqual(block.weeks[i]);
       blockInputs = regenerated.blockInputs;
@@ -198,7 +200,10 @@ describe("confirmed running starting point", () => {
         .flat()
         .filter((run) => run.type === "tempo" || run.type === "intervals")
         .length;
-    expect(quality(block.weeks)).toBe(quality(unrestricted.weeks));
+    // One more: a regular runner above the base gets a shorter base, so its
+    // build starts sooner (Run24 (2)).
+    expect(block.shortBase).toBe(true);
+    expect(quality(block.weeks)).toBe(quality(unrestricted.weeks) + 1);
   });
   it("does not delete days or disguise a floor that exceeds the report", () => {
     const week: ScheduledRunDay[] = [0, 1, 2].map((dayIndex) => ({
