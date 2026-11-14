@@ -304,16 +304,26 @@ build for paired-device proof with internal TestFlight testers, then enable a
 regular release only after the matrix passes. A web deploy or an unsigned
 simulator build does not validate the TestFlight path.
 
-Before expanding beyond the pilot, complete the real-device checks in
+The pilot's Watch app carries its own two Health usage texts and the
+Workout Processing and Audio background modes, and the verifier refuses a
+pilot without them: Apple's "Running workout sessions" asks the app that runs
+a workout session to request sharing workouts as well as reading heart rate
+(the Watch saves no workout), and asks for the Audio mode of an app that
+plays haptics during one, as the Watch does at each step of a structured run.
+
+Before expanding beyond the pilot, run the device acceptance kit in
+[`docs/qa/pre-launch-backlog.md`](qa/pre-launch-backlog.md) ("Apple Watch
+companion: device acceptance kit"), which covers the native feasibility gate
+and the acceptance matrix of
 [`docs/proposals/connected-training.md`](proposals/connected-training.md):
-start and control an outdoor run with the iPhone locked; interrupt the Watch
-connection and recover without replaying stale controls; finish on Watch and
-review on iPhone after an app restart; save once through the offline queue;
-and verify Apple Health shows no workout when export is off and exactly one
-when it is on. Test an account switch as well as revoked Health permissions.
-Start with export off. Turn it on only on a test account for the duplicate,
-reinstall and cross-device deletion checks. Record the iPhone/Watch models and
-OS versions used for the check.
+the session's steps on the wrist; start and control an outdoor run with the
+iPhone locked; interrupt the Watch connection and recover without replaying
+stale controls; finish on Watch and review on iPhone after an app restart;
+save once through the offline queue; and Apple Health showing no workout when
+export is off and exactly one when it is on. It tests an account switch and
+revoked Health permissions too, starts with export off, and turns it on only
+on a test account for the duplicate, reinstall and cross-device deletion
+checks. Its first rows record the iPhone and Watch models and OS versions.
 
 This Linux checkout has no Xcode or paired Apple devices. The watchOS target,
 signing and live behavior remain unverified until the macOS workflow and this

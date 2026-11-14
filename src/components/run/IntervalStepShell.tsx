@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
-import { stepEyebrow, type SessionSegment } from "@/lib/runSegments";
-import { paceBandLabel } from "@/lib/runLabels";
+import { stepEyebrow, stepHeadline } from "@/lib/runSegments";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
@@ -50,26 +48,8 @@ function countdownLabel(remainingS: number): string {
   return formatClock(Math.ceil(remainingS));
 }
 
-/** The prescription line: band-first when the runner has a personalized
- *  band and the segment declares its bare effort; else the built label.
- *  A2: `pacePinned` segments keep their built label — their pace IS the
- *  prescription (the user's own goal pace), not a template default the
- *  fitness band should supersede. */
-function headlineFor(
-  seg: SessionSegment,
-  unit: DistanceUnit,
-  band?: [number, number]
-): string {
-  if (
-    band &&
-    seg.effort &&
-    !seg.pacePinned &&
-    (seg.type === "hard" || seg.type === "moderate")
-  ) {
-    return `${seg.effort} at ${paceBandLabel(band, unit)}`;
-  }
-  return seg.label;
-}
+/** The prescription line, shared with the Watch (`stepHeadline`). */
+const headlineFor = stepHeadline;
 
 export default function IntervalStepShell({
   player,

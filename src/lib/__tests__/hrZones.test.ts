@@ -8,6 +8,8 @@ import {
   zoneShortLabel,
   ZONE_NAMES,
   summarizeHeartRate,
+  heartRateCoverageBand,
+  ZONE_COVERAGE_MIN,
 } from "../hrZones";
 
 describe("zoneShortLabel", () => {
@@ -231,5 +233,17 @@ describe("summarizeHeartRate — elapsed time rather than sample counts", () => 
       maxHr: 0,
       zoneSeconds: [0, 0, 0, 0, 0],
     });
+  });
+});
+
+describe("heartRateCoverageBand — how much of a Watch run was measured", () => {
+  it("is none, partial below the zone threshold, or full", () => {
+    expect(heartRateCoverageBand(null)).toBe("none");
+    expect(heartRateCoverageBand({ coverage: 0 })).toBe("none");
+    expect(heartRateCoverageBand({ coverage: Number.NaN })).toBe("none");
+    expect(heartRateCoverageBand({ coverage: 0.49 })).toBe("partial");
+    // The summary card shows time in zone from exactly this share.
+    expect(heartRateCoverageBand({ coverage: ZONE_COVERAGE_MIN })).toBe("full");
+    expect(heartRateCoverageBand({ coverage: 1 })).toBe("full");
   });
 });

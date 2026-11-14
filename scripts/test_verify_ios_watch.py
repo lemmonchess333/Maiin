@@ -13,6 +13,10 @@ STANDARD_HEALTH = {
     "NSHealthShareUsageDescription": "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.",
     "NSHealthUpdateUsageDescription": "Tropos does not add workouts or any other data to Health.",
 }
+WATCH_HEALTH = {
+    "NSHealthShareUsageDescription": "Tropos reads heart rate during a run you start on your iPhone.",
+    "NSHealthUpdateUsageDescription": "Apple Watch asks this of any app that runs a workout session. The Watch saves no workout to Health.",
+}
 PILOT_HEALTH = {
     "NSHealthShareUsageDescription": "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.",
     "NSHealthUpdateUsageDescription": "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.",
@@ -82,13 +86,17 @@ class BuildModeTests(unittest.TestCase):
         info = {"CFBundleIdentifier": self.companion, verifier.GATE: gate, **health}
         (self.iphone / "Info.plist").write_bytes(plistlib.dumps(info))
 
-    def write_watch(self, gate, companion=None, background=("workout-processing",)):
+    def write_watch(
+        self, gate, companion=None, background=("workout-processing", "audio"),
+        health=WATCH_HEALTH,
+    ):
         watch = self.iphone / "Watch" / "TroposWatch.app"
         watch.mkdir(parents=True, exist_ok=True)
         info = {
             "CFBundleIdentifier": self.bundle,
             "WKCompanionAppBundleIdentifier": companion or self.companion,
             verifier.GATE: gate,
+            **health,
         }
         if background is not None:
             info["WKBackgroundModes"] = list(background)
@@ -163,11 +171,33 @@ class BuildModeTests(unittest.TestCase):
         self.write_watch("YES")
         self.inspect("YES", signed=False)
 
+    def test_a_pilot_watch_app_can_buzz_at_each_step_in_the_background(self):
+        self.write_iphone("YES", PILOT_HEALTH)
+        self.write_watch("YES", background=("workout-processing",))
+        with self.assertRaisesRegex(ValueError, "audio"):
+            self.inspect("YES", signed=False)
+        self.write_watch("YES")
+        self.inspect("YES", signed=False)
+
+    def test_a_pilot_watch_app_explains_both_health_requests(self):
+        self.write_iphone("YES", PILOT_HEALTH)
+        for key in WATCH_HEALTH:
+            missing = {k: v for k, v in WATCH_HEALTH.items() if k != key}
+            self.write_watch("YES", health=missing)
+            with self.assertRaisesRegex(ValueError, key):
+                self.inspect("YES", signed=False)
+            self.write_watch("YES", health={**WATCH_HEALTH, key: "$(UNSET)"})
+            with self.assertRaisesRegex(ValueError, "not resolved"):
+                self.inspect("YES", signed=False)
+        self.write_watch("YES")
+        self.inspect("YES", signed=False)
+
     def test_the_project_watch_app_declares_it(self):
         info = plistlib.loads(
             (Path(__file__).resolve().parents[1] / "ios/App/TroposWatch/Info.plist").read_bytes()
         )
         verifier.validate_watch_background(info)
+        verifier.validate_watch_health_usage(info)
 
     def test_a_pilot_build_needs_both_gates_and_the_expanded_health_text(self):
         self.write_iphone("YES", PILOT_HEALTH)
