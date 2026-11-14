@@ -952,7 +952,7 @@ describe("RunPlanSettings", () => {
       raceGoal: { distance: "marathon", targetDate: RACE_TARGET_DATE },
     } as unknown as UserProfile;
     renderPage(raceProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /No race/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "No race" }));
     fireEvent.click(await screen.findByRole("button", { name: /Save/i }));
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
     const payload = sentPayload();
@@ -964,6 +964,39 @@ describe("RunPlanSettings", () => {
     expect(payload.profileUpdates.weeklyRunsTarget).toBe(0);
     // The stale runDays clear in the SAME commit.
     expect(payload.programState.runDays ?? []).toHaveLength(0);
+  });
+
+  it("Run24 (3): a plan with no race date saves as free running, with its goal on the programme", async () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Plan, no race" }));
+    fireEvent.click(screen.getByRole("button", { name: /Build to 10K/ }));
+    // Free on every account: no Pro note, and its knobs are shown.
+    expect(screen.getByText("Long-run volume")).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: /Save/i }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runMode).toBe("freeform");
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBeGreaterThanOrEqual(
+      2
+    );
+    expect(payload.programState.runPlan).toMatchObject({
+      mode: "rolling",
+      rollingGoal: "build_10k",
+      currentWeek: 0,
+    });
+    expect((payload.programState.runDays ?? []).length).toBeGreaterThan(0);
+  });
+
+  it("Run24 (3): ?goal=keep_fit opens on a plan with no race date, Keep fit chosen", () => {
+    renderPage(baseProfile, "/settings/run-plan?goal=keep_fit");
+    expect(
+      screen.getByRole("radio", { name: "Plan, no race" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: /Keep fit/ })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
   });
 
   it("A2: a goal time rides the raceGoal and shows the feasibility register", async () => {
@@ -1235,7 +1268,7 @@ describe("RunPlanSettings", () => {
        out of. */
     const { unmount } = renderPage(baseProfile);
     pickRacePrep();
-    fireEvent.click(screen.getByRole("radio", { name: /No race/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "No race" }));
     unmount();
 
     renderPage(baseProfile);
@@ -1377,7 +1410,7 @@ describe("RunPlanSettings", () => {
       baseProfile,
       "/settings/run-plan?distance=half&date=2020-01-01&spaceId=the-big-half"
     );
-    expect(screen.getByRole("radio", { name: /No race/i })).toHaveAttribute(
+    expect(screen.getByRole("radio", { name: "No race" })).toHaveAttribute(
       "aria-checked",
       "true"
     );

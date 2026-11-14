@@ -9,9 +9,12 @@ import {
   isRunPlanFromNewerBuild,
   raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
+  rollingGoalOf,
+  runModeWithPlan,
   starterWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
+import { regenerateRollingPlan, rollingRunnerOf } from "./rollingWeek";
 import { raceRestSkips } from "./raceRest";
 import {
   markDayDone,
@@ -198,7 +201,12 @@ export interface CompletedSessionData {
 }
 import type { RaceTiming } from "./runPlanTiming";
 import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
-import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import {
+  localWeekKey,
+  localDateString,
+  addLocalDays,
+  wholeWeeksBetween,
+} from "@/lib/dateHelpers";
 import { getDeviceTimezone } from "@/lib/captureTimezone";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
@@ -542,6 +550,8 @@ export function useProgram() {
                   currentWeek: next.runPlan.currentWeek,
                   totalWeeks: next.runPlan.totalWeeks,
                   leadInWeek: next.runPlan.leadInWeek,
+                  blockInputs: next.runPlan.blockInputs,
+                  shortBase: next.runPlan.shortBase,
                   completedRaces: next.runPlan.completedRaces,
                 }
               : undefined,
@@ -1199,7 +1209,8 @@ export function useProgram() {
     // migration and commits it; the effect re-runs on the result.
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
-    if (!profile.runMode || profile.runMode === "freeform") return;
+    // Free running with a plan with no race date rolls as a plan (Run24 (3)).
+    if (runModeWithPlan(profile, programState) === "freeform") return;
     // RUN-EV-03: the layoff classification is a REGENERATION DEPENDENCY.
     // The plan paints from the IndexedDB cache in ~ms while
     // fetchRecentLayoff needs the network, so pre-fix this effect rolled a
@@ -1335,9 +1346,11 @@ export function useProgram() {
      this is not a subscription. Race-prep only: a freeform runner has no
      plan for a layoff to reshape, so the read is not worth making for
      them. */
+  // A plan with no race date is reshaped by a layoff too (Run24 (3)).
+  const readsLayoff = runModeWithPlan(profile, programState) !== "freeform";
   useEffect(() => {
     if (!user?.uid) return;
-    if (!profile?.runMode || profile.runMode === "freeform") return;
+    if (!readsLayoff) return;
     let cancelled = false;
     const uid = user.uid;
     const clears = runClears;
@@ -1354,7 +1367,7 @@ export function useProgram() {
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode, today, recentRunsFor, runClears]);
+  }, [user?.uid, readsLayoff, today, recentRunsFor, runClears]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1715,7 +1728,7 @@ export function useProgram() {
     // the button.
     //
     // Next week's runs are planned from today's layoff, waited for.
-    const runsPlanned = !!profile?.runMode && profile.runMode !== "freeform";
+    const runsPlanned = runModeWithPlan(profile, programState) !== "freeform";
     const read = runsPlanned ? await resolveLayoff() : NOTHING_READ;
     // Built against the live document, with the gate re-checked there: an
     // advance that overlaps the rollover's own transaction — which has just
@@ -2454,7 +2467,8 @@ export function useProgram() {
       const weeklyTarget =
         weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
       const read =
-        profile.runMode === "race_prep" && profile.raceGoal
+        (profile.runMode === "race_prep" && profile.raceGoal) ||
+        rollingGoalOf(programState, profile)
           ? await resolveLayoff()
           : NOTHING_READ;
       // Prefer programState's persisted primaryGoal (set at onboarding),
@@ -2482,7 +2496,38 @@ export function useProgram() {
         // (caller intent is "rebuild this plan from scratch").
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (profile.runMode && profile.runMode !== "freeform") {
+        const rollingGoal = rollingGoalOf(base, profile);
+        if (rollingGoal) {
+          // Run24 (3): a reset of the lifts keeps a plan with no race
+          // date, its goal and its week; its week is laid again from today
+          // on the layout, the days already gone as they were.
+          const effectiveSchedule =
+            overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+          const weekStart = localWeekKey();
+          const today = localDateString();
+          const from = base?.runPlan?.rollingWeekKey ?? weekStart;
+          ({ runDays, runPlan } = regenerateRollingPlan({
+            runner: rollingRunnerOf(profile),
+            goal: rollingGoal,
+            planWeek:
+              (base?.runPlan?.currentWeek ?? 0) +
+              Math.max(0, wholeWeeksBetween(from, weekStart)),
+            weekSchedule: effectiveSchedule,
+            weeklyRunDays:
+              overrides?.weeklyRunDaysTarget ??
+              (getWeeklyRunTarget(profile) || 3),
+            currentDate: today,
+            weekStart,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
+          }));
+          runDays = rebuiltWeekFromToday(
+            base?.runDays ?? [],
+            runDays,
+            today,
+            weekStart
+          );
+        } else if (profile.runMode && profile.runMode !== "freeform") {
           const runTarget =
             overrides?.weeklyRunDaysTarget ??
             (getWeeklyRunTarget(profile) || 3);
@@ -2617,7 +2662,9 @@ export function useProgram() {
           throw new Error("Wait for your programme to load, then try again.");
         return;
       }
-      if (!profile.runMode || profile.runMode === "freeform") return;
+      // Run24 (3): free running with a plan with no race date is refreshed
+      // as a plan; free running with none has nothing to refresh.
+      if (runModeWithPlan(profile, programState) === "freeform") return;
 
       const weekSchedule =
         overrides?.weekSchedule ?? profile.weekSchedule ?? [];
@@ -2701,6 +2748,8 @@ export function useProgram() {
               currentWeek: base.runPlan?.currentWeek,
               totalWeeks: base.runPlan?.totalWeeks,
               leadInWeek: base.runPlan?.leadInWeek,
+              blockInputs: base.runPlan?.blockInputs,
+              shortBase: base.runPlan?.shortBase,
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
@@ -2724,6 +2773,24 @@ export function useProgram() {
               starter?.runPlan?.stageWeekKey,
             today: localDateString(),
             prior: starter?.runDays,
+          }));
+        } else if (rollingGoalOf(base, profile)) {
+          // Run24 (3): a plan with no race date keeps its goal and its
+          // week; the week is laid again on the new run days from today.
+          const goal = rollingGoalOf(base, profile)!;
+          const from = base.runPlan?.rollingWeekKey ?? weekStart;
+          ({ runDays, runPlan } = regenerateRollingPlan({
+            runner: rollingRunnerOf(profile, overrides?.tuning),
+            goal,
+            planWeek:
+              (base.runPlan?.currentWeek ?? 0) +
+              Math.max(0, wholeWeeksBetween(from, weekStart)),
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+            recentLayoff: read.layoff,
+            recentRuns: read.runs,
           }));
         } else if (isRunPlanFromNewerBuild(base.runPlan)) {
           // A newer build's plan: this build cannot rebuild it, and must
@@ -3702,6 +3769,8 @@ export function useProgram() {
             // build phase.
             totalWeeks: prevRunPlan?.totalWeeks,
             leadInWeek: prevRunPlan?.leadInWeek,
+            blockInputs: prevRunPlan?.blockInputs,
+            shortBase: prevRunPlan?.shortBase,
             completedRaces: prevRunPlan?.completedRaces,
           },
           prior: {

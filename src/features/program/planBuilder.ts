@@ -73,6 +73,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import { firstFullWeekKey } from "./runPlanTiming";
+import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
   generateProgram,
@@ -91,6 +92,8 @@ import {
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
 import { starterWeekFrom } from "./starterWeek";
+import { isRollingGoal, type RollingGoal } from "./rollingPlan";
+import { regenerateRollingPlan } from "./rollingWeek";
 import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
@@ -176,7 +179,14 @@ export interface PlanBuilderInput {
 
   runMode: RunMode;
 
-  /** Run days per week. Ignored when runMode === "freeform". */
+  /** Run24 (3): a plan with no race date, on free running. Null takes it
+   *  away; absent keeps the one `existingState` holds, so a lifting change
+   *  never ends it (`rollingGoalFor`). Read only when runMode is
+   *  "freeform". */
+  rollingGoal?: RollingGoal | null;
+
+  /** Run days per week. Ignored when runMode === "freeform" with no plan
+   *  (`rollingGoalFor`). */
   weeklyRunDays: number;
 
   /** Required when runMode === "race_prep". */
@@ -326,11 +336,48 @@ export interface PlanBuilderOutput {
 function buildWeekSchedule(
   input: Pick<
     PlanBuilderInput,
-    "liftDays" | "runMode" | "weeklyRunDays" | "weekSchedule"
+    | "liftDays"
+    | "runMode"
+    | "weeklyRunDays"
+    | "weekSchedule"
+    | "rollingGoal"
+    | "existingState"
   >
 ): ScheduleDay[] {
-  const runDays = input.runMode === "freeform" ? 0 : input.weeklyRunDays;
-  return planWeekSchedule(input.liftDays, runDays, input.weekSchedule);
+  return planWeekSchedule(
+    input.liftDays,
+    plannedRunDays(input),
+    input.weekSchedule
+  );
+}
+
+/**
+ * Run24 (3): the goal of the plan with no race date this build makes, for
+ * free running: the one asked for, or, when the caller says nothing, the
+ * one the programme already holds, so a save from the lift plan or the
+ * weekly layout keeps it. Null for every other run mode.
+ */
+export function rollingGoalFor(
+  input: Pick<PlanBuilderInput, "runMode" | "rollingGoal" | "existingState">
+): RollingGoal | null {
+  if (input.runMode !== "freeform") return null;
+  if (input.rollingGoal !== undefined) return input.rollingGoal;
+  const kept = input.existingState?.runPlan;
+  return kept?.mode === "rolling" && isRollingGoal(kept.rollingGoal)
+    ? kept.rollingGoal
+    : null;
+}
+
+/** The week's run days: none on free running with no plan. */
+function plannedRunDays(
+  input: Pick<
+    PlanBuilderInput,
+    "runMode" | "weeklyRunDays" | "rollingGoal" | "existingState"
+  >
+): number {
+  return input.runMode === "freeform" && rollingGoalFor(input) === null
+    ? 0
+    : input.weeklyRunDays;
 }
 
 /**
@@ -844,7 +891,50 @@ function buildRunPlan(
   const weekStart = localWeekKey(parseLocalDate(input.currentDate));
 
   if (input.runMode === "freeform") {
-    return { runDays: [], runPlan: undefined };
+    // Run24 (3): a plan with no race date. One kept through a change of
+    // layout or lifts keeps its week, laid again from today on the new
+    // days; a new one, or a new goal, starts at its first week.
+    const goal = rollingGoalFor(input);
+    if (!goal) return { runDays: [], runPlan: undefined };
+    const existing = input.existingState?.runPlan;
+    const continuing =
+      input.preserveHistory &&
+      existing?.mode === "rolling" &&
+      existing.rollingGoal === goal;
+    const weekKey =
+      continuing && existing.rollingWeekKey
+        ? existing.rollingWeekKey
+        : weekStart;
+    const { runDays, runPlan } = regenerateRollingPlan({
+      runner: {
+        tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
+        easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+        runningBaseline: input.runningBaseline ?? null,
+        runTimeLimits: input.runTimeLimits ?? null,
+        newRunnerUntil: input.newRunnerUntil ?? null,
+      },
+      goal,
+      planWeek:
+        (continuing ? (existing.currentWeek ?? 0) : 0) +
+        Math.max(0, wholeWeeksBetween(weekKey, weekStart)),
+      weekSchedule,
+      weeklyRunDays: input.weeklyRunDays,
+      currentDate: input.currentDate,
+      weekStart,
+      recentLayoff: input.recentLayoff ?? "none",
+      recentRuns: input.recentRuns ?? null,
+      plannedFrom: input.currentDate,
+      fresh: !continuing,
+      ...(continuing
+        ? {
+            prior: {
+              runDays: input.existingState?.runDays ?? [],
+              manualCompletions: input.existingState?.manualCompletions,
+            },
+          }
+        : {}),
+    });
+    return { runDays, runPlan };
   }
 
   // Run9's starter goal: a change of layout or lifts keeps its stage, and
@@ -901,6 +991,10 @@ function buildRunPlan(
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
           leadInWeek: continued?.leadInWeek,
+          // Run24 (1), (2), (8): an edit to the same race's plan keeps what
+          // its block is sized from.
+          blockInputs: continued?.blockInputs,
+          shortBase: continued?.shortBase,
           recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
@@ -913,7 +1007,12 @@ function buildRunPlan(
         : undefined
     );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
-    const { leadInWeek: _keptLeadIn, ...kept } = continued ?? {};
+    const {
+      leadInWeek: _keptLeadIn,
+      blockInputs: _keptInputs,
+      shortBase: _keptShortBase,
+      ...kept
+    } = continued ?? {};
     return {
       runDays,
       runPlan: {
@@ -931,6 +1030,12 @@ function buildRunPlan(
         // Run9 phase-3 (Slice B): an initial plan set inside the taper-safe
         // floor is finish-safely — carry the marker so the UI names the risk.
         belowFloor: racePlan.belowFloor,
+        ...(racePlan.blockInputs ? { blockInputs: racePlan.blockInputs } : {}),
+        // Run24 (11): what the plan builds to, for the weekly race check.
+        peakLongRunKm: peakPlannedLongRunKm(racePlan.weeks),
+        // Run24 (2): the block's shorter base, as the generator kept or
+        // decided it.
+        ...(racePlan.shortBase ? { shortBase: true } : {}),
       },
     };
   }
@@ -960,8 +1065,8 @@ function buildProfileUpdates(
     weekSchedule,
     weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
     weeklyWorkoutsTarget: input.liftDays,
-    weeklyRunDaysTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
-    weeklyRunsTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
+    weeklyRunDaysTarget: plannedRunDays(input),
+    weeklyRunsTarget: plannedRunDays(input),
     runMode: input.runMode,
     runVolume: (input.runTuning ?? DEFAULT_RUN_TUNING).volume,
     runDifficulty: (input.runTuning ?? DEFAULT_RUN_TUNING).difficulty,
