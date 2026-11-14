@@ -130,7 +130,7 @@ const GROUPS: SectionGroup[] = [
         label: "Apple Health",
         description: CONNECTED_TRAINING_RELEASED
           ? "Steps, Watch runs, workouts"
-          : "Daily step count on Home",
+          : "Steps for your activity level",
         icon: HeartPulse,
         migrated: true,
       },

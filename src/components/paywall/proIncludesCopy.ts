@@ -8,7 +8,9 @@ import { DAILY_AI_LIMITS } from "@/lib/subscription";
  *  which a free account never sees and which opens no paywall of its own,
  *  so it has no registry key; so does readiness's sleep and heart
  *  (`useBodySignals`), which reads only for Pro. It was Pro and missing from this list until
- *  13 November 2026. The server caps Pro scans (`DAILY_AI_LIMITS`), so the
+ *  13 November 2026. The activity level offer from a week of steps
+ *  (`stepsFeedTheTarget`, Q31) is Pro too, and is the calorie target's
+ *  line. The server caps Pro scans (`DAILY_AI_LIMITS`), so the
  *  photo line names the cap, not "unlimited". */
 export const PRO_INCLUDES: readonly string[] = [
   `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,

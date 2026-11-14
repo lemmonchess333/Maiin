@@ -44,7 +44,7 @@ describe("CLAUDE.md — the Home composition sentence", () => {
     "DayPeekCard",
     "TodayEnergy",
     "WaterCard",
-    "WeightStepsTiles",
+    "WeightTile",
   ];
 
   const homeSrc = readFileSync(resolve(repoRoot, "src/pages/Home.tsx"), "utf8");

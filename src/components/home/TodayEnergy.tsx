@@ -77,7 +77,7 @@ export default function TodayEnergy({
    * is the returning user who logged a full day yesterday. The guard is
    * `calories === 0` rather than `mealsLoading` alone, so a load that
    * already has a figure keeps showing it instead of flickering back to a
-   * skeleton. Same shape as WeightStepsTiles' `pending`.
+   * skeleton. Same shape as WeightTile's `pending`.
    */
   const hasIntake = [calories, protein, carbs, fat].some((value) => value > 0);
   const hideUnknownTotals = Boolean(mealsError) && !hasIntake;

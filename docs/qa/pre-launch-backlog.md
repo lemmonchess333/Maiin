@@ -5203,3 +5203,35 @@ tapped. Unit-tested; no phone has drawn it.
 - [ ] **Cleared by the tray.** Tap Social, then the bell. Passing: the dot
       stays after tapping the tab, and goes as the tray opens; it does not
       come back after closing the tray or relaunching the app.
+
+## Steps offer a change to activity level; the steps tile leaves Home (Q31, 2026-11-13)
+
+Affects: Food (a card under the wheel, today only, for a Pro account on the
+formula's target, no manual target, not in a taper), Home (no Steps tile; the
+Weight tile stands alone beside Water; the Apple Health prompt asks only a Pro
+account on the formula's target), Settings → Apple Health (its words), and the
+Health permission text iOS shows. The web never reads steps and never shows the
+card. Unit-tested; no phone has drawn it.
+
+- [ ] **The offer.** On an iPhone with Apple Health holding at least 5 days of
+      steps last week, a Pro account whose stored activity level is far from
+      them (for example Light at about 11,000 a day). Passing: Food shows
+      "Your steps say Active" with last week's average, and "Active sets your
+      target to … kcal, up from … kcal", where the second number is the
+      wheel's.
+- [ ] **Use.** Tap Use Active. Passing: the card goes, the wheel shows the new
+      target, Settings → Nutrition shows Active selected with the same daily
+      target, and the toast's Undo puts the old level and target back.
+- [ ] **Keep.** Tap Keep Light. Passing: the card goes and does not come back
+      on this phone or another signed into the account for 30 days.
+- [ ] **A move down with a lift.** A week of few steps with one lift logged.
+      Passing: no offer to move down that week.
+- [ ] **Not offered.** A free account, a Pro account whose target has started
+      adapting, and one with a manual target. Passing: no card, and on Home
+      the Apple Health prompt does not ask a free account.
+- [ ] **Home.** Passing: no Steps tile on Home at 393 and 320 pt with larger
+      text; the Weight tile matches the Water tile's height and nothing runs
+      past it.
+- [ ] **The iOS permission sheet.** On a fresh install, connect Apple Health.
+      Passing: the sheet's text says Tropos reads the daily step count to
+      check the activity level the calorie target assumes.

@@ -597,10 +597,13 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  TodayEnergy → WaterCard → WeightTile. Home says the week once and
   carries no performance score (Trim1 call 1, 2026-11-11): the "This
   week" card that closed the page, with its Performance row, is gone,
-  and the score is on Analytics.
+  and the score is on Analytics. Nor does it carry a steps count (App1
+  Q31, 2026-11-13): steps feed the activity level offer under Food's
+  wheel (`stepActivity.ts`, Pro, phone only), and Home asks to connect
+  Health only where they can change the target.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.

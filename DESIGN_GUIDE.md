@@ -743,7 +743,7 @@ and the score arriving dropped the page about 70 px).
 The trap this table exists to catch is the middle one: a loading state
 that is height-stable and confident reads as final. Home renders past the
 profile skeleton with live data still arriving, so each card owns its own
-pending treatment — `WeightStepsTiles` and `TodayEnergy` are the
+pending treatment — `WeightTile` and `TodayEnergy` are the
 reference implementations.
 
 ---

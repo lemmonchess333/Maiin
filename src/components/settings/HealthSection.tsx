@@ -293,7 +293,7 @@ export default function HealthSection({
       subtitle={
         CONNECTED_TRAINING_RELEASED
           ? "Steps, Watch runs, workout export"
-          : "Daily step count on Home"
+          : "Steps for your activity level"
       }
     >
       <div className="space-y-3">
@@ -312,7 +312,8 @@ export default function HealthSection({
             <div className={LABEL}>
               <p className="text-sm text-foreground">Connect Apple Health</p>
               <p className="text-xs text-muted-foreground">
-                Show your daily step count on Home.
+                With Pro, Food checks your activity level against a week of your
+                steps.
               </p>
             </div>
             <Button

@@ -1,19 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WaterCard from "../WaterCard";
-import WeightStepsTiles from "../WeightStepsTiles";
-import { groupRe } from "@/test/localeGrouping";
+import WeightTile from "../WeightTile";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
-/* The steps tile is gated on isNativePlatform(), so on web it does not
-   render at all — which is why no capture frame has ever contained it and
-   why its drift went unseen. Driven through a mutable flag so one file can
-   assert both the web tree and the native one. */
-const platform = { native: false };
-vi.mock("@/lib/platform", () => ({
-  isNativePlatform: () => platform.native,
-}));
 
 /**
  * Water and Weight are PEER compact tiles: the same row on Home, the
@@ -45,7 +36,7 @@ describe("Home compact tiles share one numeral tier", () => {
       <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
     );
     const { container: weight } = render(
-      <WeightStepsTiles
+      <WeightTile
         lastWeight="70.0"
         weightUnit="kg"
         onLogWeight={vi.fn()}
@@ -81,7 +72,7 @@ describe("Home compact tiles share one numeral tier", () => {
       <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
     );
     const { getByText: inWeight } = render(
-      <WeightStepsTiles
+      <WeightTile
         lastWeight="70.0"
         weightUnit="kg"
         onLogWeight={vi.fn()}
@@ -94,54 +85,6 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(inWeight("kg")).toHaveClass("text-sm", "font-medium");
     // "kg" is outside the figure, so it is the text face already.
     expect(inWeight("kg").closest(".font-figure")).toBeNull();
-  });
-
-  it("the steps figure is rendered at the same size and weight as the weight figure above it", () => {
-    /* Weight and Steps are peer tiles STACKED in one column — steps
-       directly beneath weight — so a tier gap between them reads as
-       steps being the lesser stat rather than the equal one it is.
-       They had drifted: steps at text-xl / 700 under weight at
-       text-2xl / 800.
-
-       This pair lives inside a SINGLE component, which is what makes it
-       a different miss from the water/weight one above: there the two
-       halves were in different files, here they were fifty lines apart
-       and still disagreed. What hid it is the native gate — the whole
-       tile is invisible on the web build the capture channel films. */
-    platform.native = true;
-    try {
-      const { container } = render(
-        <WeightStepsTiles
-          lastWeight="70.0"
-          weightUnit="kg"
-          onLogWeight={vi.fn()}
-          lastWeightDate="From profile"
-          stepsStatus="connected"
-          steps={8432}
-        />
-      );
-
-      const weightNum = numeralOf(container, /70\.0/);
-      const stepsNum = numeralOf(container, new RegExp(groupRe(8432)));
-
-      for (const cls of [
-        "text-2xl",
-        "font-extrabold",
-        "font-figure",
-        "tabular-nums",
-      ]) {
-        expect(weightNum, `weight numeral missing ${cls}`).toHaveClass(cls);
-        expect(stepsNum, `steps numeral missing ${cls}`).toHaveClass(cls);
-      }
-      expect(stepsNum.className.match(/text-\dxl/)?.[0]).toBe(
-        weightNum.className.match(/text-\dxl/)?.[0]
-      );
-      expect(
-        stepsNum.className.match(/font-(extrabold|bold|semibold)/)?.[0]
-      ).toBe(weightNum.className.match(/font-(extrabold|bold|semibold)/)?.[0]);
-    } finally {
-      platform.native = false;
-    }
   });
 
   it("both tiles name themselves in the same register", () => {
@@ -157,7 +100,7 @@ describe("Home compact tiles share one numeral tier", () => {
       <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
     );
     const { container: weight } = render(
-      <WeightStepsTiles
+      <WeightTile
         lastWeight="70.0"
         weightUnit="kg"
         onLogWeight={vi.fn()}
@@ -227,7 +170,7 @@ describe("Home compact tiles share one numeral tier", () => {
       />
     );
     const { container: weight } = render(
-      <WeightStepsTiles
+      <WeightTile
         lastWeight="70.0"
         weightUnit="kg"
         onLogWeight={vi.fn()}

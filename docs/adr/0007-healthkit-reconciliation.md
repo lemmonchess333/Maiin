@@ -366,3 +366,37 @@ built for weight sync (Q3), it records grants and sync progress per type
 and must not stand in for the workout-write consent, and the
 connected-training consent stays off the profile, out of
 `profileSanitizer.js` and `allowedUserFields()`.
+
+## Status addendum — 2026-11-13: steps feed the activity level offer (App1, whole-app grill Q31)
+
+The owner's App1 answers (`docs/whole-app-2026-11/grill.md`, Q31: "A 7-day
+step average offers a change to activity level; heart rate waits for the
+Watch. The steps tile leaves Home until it feeds something.") give steps
+their first consumer. This changes the Steps row of the locked table, which
+said "display count only"; the rest of it holds.
+
+- **Steps still never become a kcal figure.** Last full week's daily
+  totals (a statistics query, local days, `readDailyStepTotals`) are
+  averaged over the days with a reading, at least 5 of 7, and placed in one
+  of five step bands (Tudor-Locke and Bassett 2004), one per activity
+  level. When the band and the stored `activityLevel` disagree, Food offers
+  the band's level. The level's multiplier in `tdee.ts` sets the target, as
+  it always has; no step term enters the target, the burn, the balance or
+  the adaptive estimate, and nothing changes without the person's tap.
+- **The offer is Pro, and only where it can change something**
+  (`stepsFeedTheTarget`): the formula's target, no manual target, outside a
+  taper. A learned target already contains what the steps would say, which
+  is this ADR's own argument for refusing Active Energy, so the offer is
+  never made against one.
+- **Q6's backfill contingency.** Q6 allowed free step backfill because
+  steps fed nothing. The offer reads Health's own record of the last week
+  each time and stores no count, so a connection made today can offer a
+  change today; that is prospective, needs a tap, and rewrites no history,
+  streak or past budget. Any later consumer that does rewrite history
+  re-opens Q6.
+- **Steps miss lifting.** A move down is offered only for a week with no
+  lift logged, since a lifting week with few steps says nothing about
+  whether the stored level is too high.
+- **State.** "Keep" stores only its time, in
+  `users/{uid}/settings/stepActivityOffer`, like the steps connection's
+  flag beside it; no step count is stored or sent.

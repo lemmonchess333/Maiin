@@ -370,7 +370,7 @@ export default function WaterCard({
         <div className="relative z-10 flex flex-col flex-1">
           {/* Card body opens the size sheet (choose a container). */}
           {/* Focus ring + 0.97 press mirror the peer tile's button
-              (WeightStepsTiles.tsx:124). This button had NO
+              (WeightTile.tsx). This button had NO
               focus-visible styling at all, so keyboard focus on the
               water tile was invisible while focus on the weight tile
               beside it drew a ring. The ring sits 4px outside a 12px
@@ -468,9 +468,10 @@ export default function WaterCard({
               It is under the 44px floor, deliberately — a transient
               affordance whose permanent, full-size equivalent is the
               sheet's log, one tap away on the same tile. */}
-          {/* An empty day's tile is as tall as Weight and Steps together,
-              and before the first drink its lower half was blank. It
-              offers the two everyday sizes there instead, one tap each.
+          {/* An empty day's tile was as tall as the Weight and Steps
+              tiles beside it (Steps left Home with Q31), and before the
+              first drink its lower half was blank. It offers the two
+              everyday sizes there instead, one tap each.
               The first drink fills the tile from the bottom, and the
               wave takes the space. */}
           {!hasWater && (
@@ -504,7 +505,7 @@ export default function WaterCard({
           )}
         </div>
         {/* Permanently mounted, sr-only when idle — the peer tile's shape
-            (WeightStepsTiles.tsx:182-189). A live region inserted with
+            (WeightTile.tsx). A live region inserted with
             its text already present is commonly not announced, so the
             old conditional mount meant NEITHER the sync line nor a
             quick log ever reached a screen reader. The retry control

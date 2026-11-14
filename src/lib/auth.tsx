@@ -340,7 +340,7 @@ export interface UserProfilePreferences {
   preferredDistanceUnit: "km" | "mi";
   darkMode: boolean;
   /** #984 "Hide the number" anti-anxiety mode. When true, the raw
-   *  body-weight figure is suppressed app-wide (home WeightStepsTiles
+   *  body-weight figure is suppressed app-wide (home WeightTile
    *  tile + Progress TrendWeight chart) and replaced with
    *  direction/trend + goal-progress framing. Undefined / missing =
    *  OFF (default behaviour — the number shows). */

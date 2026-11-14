@@ -8,6 +8,7 @@ import {
 } from "./tdee";
 import { offsetFromWeeklyRate } from "./macroConstants";
 import { profileAge } from "./age";
+import { getNutritionPhase } from "./nutritionPhase";
 
 /**
  * Goal-weight + rate → nutrition direction (Tier 2).
@@ -236,6 +237,42 @@ export function buildGoalWeightPersistPayload(args: {
       targetCarbs: effectiveTdee.carbs,
       targetFat: effectiveTdee.fat,
     },
+  };
+}
+
+/**
+ * The patch a change of activity level saves: the level, and the goal-
+ * weight payload above worked out at it, with the inputs Settings →
+ * Nutrition seeds that payload from (current weight `|| 70`, the stored
+ * goal weight or else today's weight, the stored rate's size or else 0.5).
+ * Settings writes the level, and its reactive save then writes this same
+ * payload; the activity level offer on Food (whole-app grill Q31) writes
+ * both in one patch.
+ *
+ * `keepsPhase` says the save leaves the nutrition phase where it is. When
+ * the person's weight has moved across their goal since the last save,
+ * re-deriving would also switch them to maintenance or out of it, which
+ * is the goal-reached prompt's question to ask, not this one's.
+ */
+export function buildActivityLevelPersistPayload(
+  profile: GoalWeightProfileInputs,
+  activityLevel: ActivityLevel
+): {
+  payload: GoalWeightPersistPayload & { activityLevel: ActivityLevel };
+  targetCalories: number;
+  keepsPhase: boolean;
+} {
+  const currentKg = profile.weightKg || 70;
+  const built = buildGoalWeightPersistPayload({
+    profile: { ...profile, activityLevel },
+    currentKg,
+    targetKg: profile.goalWeightKg ?? currentKg,
+    rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
+  });
+  return {
+    payload: { activityLevel, ...built.payload },
+    targetCalories: built.payload.targetCalories,
+    keepsPhase: built.plan.fitnessGoal === getNutritionPhase(profile),
   };
 }
 

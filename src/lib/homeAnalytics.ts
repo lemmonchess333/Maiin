@@ -24,7 +24,6 @@ export type HomeEvent =
 /** Home tiles and first-week actions that can be selected. */
 export type HomeCard =
   | "water"
-  | "steps"
   | "weight"
   | "today_workout"
   | "today_run"

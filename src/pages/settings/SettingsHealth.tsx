@@ -11,7 +11,7 @@ export default function SettingsHealth() {
       subtitle={
         CONNECTED_TRAINING_RELEASED
           ? "Steps, Watch runs, workout export"
-          : "Daily step count on Home"
+          : "Steps for your activity level"
       }
       section="health"
     >

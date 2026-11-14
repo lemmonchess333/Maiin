@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 
 /**
- * One-time steps priming modal (surface B of the HealthKit steps work,
- * POST_LAUNCH.md "Steps tile"). Fires at most once per account: whichever
+ * One-time steps priming modal (surface B of the HealthKit steps work).
+ * Steps feed the activity level offer on Food (whole-app grill Q31), so
+ * the ask says that; Home shows it only where they can change the target
+ * (`stepsFeedTheTarget`). Fires at most once per account: whichever
  * choice the user makes, the caller persists `primingShown: true` so it never
  * nags again — the same rationale as the notification-priming pattern in
  * NotificationsSection.
@@ -30,8 +32,8 @@ export default function StepsPrimingModal({
     <Dialog
       open={open}
       onClose={onDismiss}
-      title="Count your steps"
-      description="See your daily step count on Home, pulled from Apple Health."
+      title="Check your activity level"
+      description="Tropos compares a week of your steps in Apple Health with your activity level. If they differ, Food offers a new calorie target."
       size="sm"
     >
       <div className="flex gap-2 pt-1">
