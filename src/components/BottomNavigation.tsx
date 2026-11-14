@@ -9,9 +9,16 @@ import { preloadTab } from "@/lib/preloadTab";
 interface BottomNavigationProps {
   tabs: readonly { to: string; icon: TabIcon; label: string }[];
   pathname: string;
-  unreadCount: number;
-  onSocialVisit: () => void;
+  /** The notification tray holds something unread: someone's props, a
+   *  comment, a follow request (App1 Q34). A dot on Social, and the tab's
+   *  name says so. It clears when the tray is opened, not on this tab. */
+  socialNewActivity: boolean;
 }
+
+/** What the Social tab's name adds while its dot shows: "Social, new
+ *  activity". The dot is drawn for sight; this is the same news for
+ *  VoiceOver (DESIGN_GUIDE §10). */
+export const SOCIAL_NEW_ACTIVITY = "new activity";
 
 /** Web navigation surface. Layout owns routes and data; a future native
  * bar can replace this renderer without changing page content or queries.
@@ -19,8 +26,7 @@ interface BottomNavigationProps {
 export default function BottomNavigation({
   tabs,
   pathname,
-  unreadCount,
-  onSocialVisit,
+  socialNewActivity,
 }: BottomNavigationProps) {
   const activeTab = activeTabForPath(pathname);
   const prefersReducedMotion = useReducedMotion();
@@ -42,7 +48,7 @@ export default function BottomNavigation({
         readers. */}
         <div className="bottom-nav-frost max-w-md mx-auto flex items-stretch rounded-full p-[4px]">
           {tabs.map((tab) => {
-            const hasBadge = tab.to === "/social" && unreadCount > 0;
+            const hasDot = tab.to === "/social" && socialNewActivity;
             const Icon = tab.icon;
             const isActive = activeTab === tab.to;
             return (
@@ -60,15 +66,10 @@ export default function BottomNavigation({
                   if (!isActive) preloadTab(tab.to);
                 }}
                 aria-label={
-                  hasBadge
-                    ? `${tab.label}, ${
-                        unreadCount > 9 ? "9+" : unreadCount
-                      } unread`
-                    : tab.label
+                  hasDot ? `${tab.label}, ${SOCIAL_NEW_ACTIVITY}` : tab.label
                 }
                 onClick={() => {
                   haptic("light");
-                  if (tab.to === "/social") onSocialVisit();
                   /* Tap on an already-active tab → scroll to top. The
                  standard iOS tab-bar convention applies to ALL tabs
                  (matches Twitter/X / Apple's first-party apps), so the
@@ -121,17 +122,17 @@ export default function BottomNavigation({
                       {/* DS3's own tab icons: an outline, and a
                           filled form drawn for the open tab. */}
                       <Icon active={isActive} className="size-[22px]" />
-                      {/* Notification badge */}
-                      {/* Unread Social activity is "new", not an error —
-                          use the brand token, NOT bg-destructive (reserved
-                          for genuine errors / destructive states; a red dot
-                          over-escalates ordinary unread to "problem"). The
-                          dot stays small to keep the 5-tab nav calm; the
-                          count + accessible unread detail live in the
-                          aria-label above and the Social header. */}
-                      {hasBadge && (
+                      {/* New activity is "new", not an error — the brand
+                          token, NOT bg-destructive (reserved for genuine
+                          errors / destructive states; a red dot
+                          over-escalates ordinary news to "problem"). The
+                          dot stays small, with no number, to keep the
+                          five-tab bar calm; the count is on Social's bell,
+                          and the tab's name carries the news. */}
+                      {hasDot && (
                         <div
                           aria-hidden="true"
+                          data-new-activity
                           className="absolute -top-1 -right-1 size-2 rounded-full bg-primary"
                         />
                       )}

@@ -7,7 +7,8 @@
  * `useBlockedUsers` merges with the account's own blocks into the one set
  * every surface filters on. The first half here drives surfaces through the
  * REAL hook against the Firestore fake (ADR-0009), seeding only that copy:
- * the tray, the unread badge and the photos on every list. The second half
+ * the tray (whose unread count is the Social tab's dot) and the photos on
+ * every list. The second half
  * holds every other filtering surface to the merged set, because each one
  * reads it the same way and a surface that read `youBlocked` instead would
  * hide only one direction.
@@ -33,7 +34,6 @@ vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 import { Timestamp } from "firebase/firestore";
 import { useNotifications } from "../useNotifications";
-import { useUnreadCount } from "../useUnreadCount";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 
@@ -80,24 +80,8 @@ describe("what the person blocked no longer sees of the blocker", () => {
     await waitFor(() =>
       expect(result.current.items.map((i) => i.fromUserId)).toEqual(["friend"])
     );
-  });
-
-  it("the unread badge does not count the blocker's posts", async () => {
-    const me = newViewer();
-    const item = (authorId: string) => ({
-      schemaVersion: 2,
-      authorId,
-      activityId: `${authorId}-post`,
-      createdAt: hoursAgo(1),
-    });
-    seedFirestore({
-      [`feeds/${me}/items/a`]: item("blocker"),
-      [`feeds/${me}/items/b`]: item("friend"),
-      [`feeds/${me}/items/c`]: item("another"),
-    });
-    const { result } = renderHook(() => useUnreadCount());
-    await waitFor(() => expect(result.current.count).toBeGreaterThan(0));
-    await waitFor(() => expect(result.current.count).toBe(2));
+    // And the Social tab's dot, which is this count, does not count them.
+    expect(result.current.unreadCount).toBe(1);
   });
 
   it("lists show the blocker without their photo", async () => {
@@ -125,7 +109,7 @@ describe("what the person blocked no longer sees of the blocker", () => {
 });
 
 /* Every surface that leaves people out reads the merged `blocked`. The
-   tray, badge and photos are driven above; these are pinned by their
+   tray and photos are driven above; these are pinned by their
    own suites against `blocked` (CommentSheet, ActivityPostComments,
    SpaceCommentSheet, Space, FollowList,
    SpacePost, Social, PeopleView, ActivityCard, useChallenges),
@@ -143,7 +127,6 @@ const FILTERING_SURFACES: Record<string, string> = {
   "src/hooks/useNotifications.ts": "the notification tray",
   "src/pages/ActivityPost.tsx": "a post a notice opens",
   "src/pages/SpacePost.tsx": "a Space post a notice opens",
-  "src/hooks/useUnreadCount.ts": "the unread badge",
   "src/features/challenges/useChallenges.ts": "challenge leaderboards",
 };
 const READS_MERGED = /const \{[^}]*\bblocked\b[^}]*\} = useBlockedUsers\(\);/;

@@ -143,8 +143,7 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
             { to: "/program", icon: TrainTabIcon, label: "Train" },
           ]}
           pathname="/"
-          unreadCount={0}
-          onSocialVisit={() => {}}
+          socialNewActivity={false}
         />
       </MemoryRouter>
     );
@@ -163,8 +162,7 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
             { to: "/program", icon: TrainTabIcon, label: "Train" },
           ]}
           pathname="/"
-          unreadCount={0}
-          onSocialVisit={() => {}}
+          socialNewActivity={false}
         />
       </MemoryRouter>
     );
