@@ -514,14 +514,21 @@ export function getRaceGoalPlannerState(
     distance
   );
 
-  const lower = distanceLabel.toLowerCase();
+  // In a sentence: "5K", never "5k".
+  const lower = RACE_IN_A_SENTENCE[distance];
+  /* Run24 (7): what gives the plan time. A 5K is the shortest race there
+     is, so only a later one. */
+  const givesItTime =
+    distance === "5k"
+      ? "A later race gives it time."
+      : "A later race or a shorter one gives it time.";
   let statusTitle: string;
   let statusDescription: string;
   let ctaLabel: string;
   // C: the weeks are only half of the runway; the other half is where the
   // long run starts from.
   const shortLine = shortOfRace
-    ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. A later race or a shorter one gives it time.`
+    ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. ${givesItTime}`
     : null;
   // D8: a plan without the weeks to build says what its weeks hold, and,
   // when the race is out of its reach, that first.
@@ -577,7 +584,7 @@ export function getRaceGoalPlannerState(
       ? "No tempo or intervals."
       : "Fewer quality sessions than a full plan.";
   const far = outOfReach
-    ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. A later race or a shorter one gives it time.`
+    ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. ${givesItTime}`
     : null;
   const longest = distanceWords(held.longestKm, unit);
   const holdLine =
@@ -621,7 +628,7 @@ export function getRaceGoalPlannerState(
     statusDescription = far
       ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
       : // Run24 (7): the honest sentence and the alternatives first.
-        `Too soon for a full ${lower} build. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
+        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 
