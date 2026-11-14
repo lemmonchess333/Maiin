@@ -4935,3 +4935,30 @@ amounts are unchanged. Unit-tested; no phone has shown it.
       for the weights.
 - [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
       running-only plan. Passing: no Welcome back for the weights.
+
+## One lighter-week offer for both sports, in the words of its reason (Q11, 2026-11-13)
+
+Affects: Train's "Consider a lighter week" banner. It is offered whenever
+the engine recommends a lighter week and one can be taken, for a week of
+lifting, of running or of both (a lifting-only week was never offered one),
+and it now shows on the Run tab too, first among the week's notices (the
+ease-week nudge waits while it shows). Its words name the engine's reason
+(recovery score low, two high weeks running, or the plan's targets missed)
+and the sport furthest over its usual week, then what a lighter week does
+for the plan the person has. Unit-tested; no phone has drawn it.
+
+- [ ] **A lifting-only week.** Seed a lifter whose last 7 days the engine
+      flags. Passing: the Lift tab offers a lighter week, and its line starts
+      "You lifted" with a per cent and never says running.
+- [ ] **A running-only week, on the Run tab.** Passing: the offer leads the
+      Run tab's notices, says "You ran …", and "Take a lighter week" shortens
+      the runs left; it is gone from both tabs once taken, and dismissing it
+      on one tab dismisses it on the other.
+- [ ] **Each reason.** With weeks seeded for each: the recovery line ends
+      "and your recovery score is low", the sustained one reads "… two weeks
+      in a row", and the missed-targets one "… while missing your plan’s
+      targets".
+- [ ] **Race taper.** A runner in a race's taper or race week. Passing: no
+      offer on either tab.
+- [ ] **Larger text, 320 px.** Passing: the two sentences wrap inside the
+      banner with the button under them.

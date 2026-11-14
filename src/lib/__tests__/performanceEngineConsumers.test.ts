@@ -88,20 +88,29 @@ function importsAcross(roots: string[]): Map<string, string[]> {
 }
 
 describe("client PI engine — production consumers", () => {
-  it("the app imports only the two non-scoring helpers", () => {
+  it("the app imports only the three non-scoring helpers", () => {
     /* Asserted as the whole map, not as "does not include scorePerformance":
        a new scoring import under a name nobody thought to ban would pass the
-       negative form. */
+       negative form.
+
+       `shouldRecommendDeload` joined on 13 November 2026 (whole-app grill
+       Q11): the lighter-week offer asks it one branch at a time, over the
+       sub-scores the server stored, to say which of its three reasons
+       fired. It decides nothing (the stored `deloadRecommended` does) and
+       puts no number on screen; reusing the pinned copy keeps the
+       thresholds in one place rather than a third. */
     expect(Object.fromEntries(importsAcross(["src"]))).toEqual({
       "src/hooks/useWeeklyReview.ts": ["weekKeyMinusN"],
+      "src/lib/lighterWeekOffer.ts": ["shouldRecommendDeload"],
       "src/lib/performanceDocFields.ts": ["computeLoadBand"],
     });
   });
 
-  it("neither helper scores anything", () => {
-    /* The point of the pair above is that they are a date function and a
-       band classifier over an already-computed score — so no surface in the
-       app derives a Performance Index of its own. */
+  it("none of the helpers scores anything", () => {
+    /* The point of the three above is that they are a date function, a
+       band classifier and a recommendation predicate over already-computed
+       scores — so no surface in the app derives a Performance Index of its
+       own. */
     const engine = readFileSync(
       resolve(repoRoot, "src/lib/performanceEngine.ts"),
       "utf8"
@@ -122,6 +131,10 @@ describe("client PI engine — production consumers", () => {
     );
     expect(body("computeLoadBand")).not.toMatch(
       /PI_WEIGHTS|performanceIndex|computeBaseline/
+    );
+    // A predicate over scores already computed, never a score of its own.
+    expect(body("shouldRecommendDeload")).not.toMatch(
+      /PI_WEIGHTS|compute\w*Score|computeBaseline|scorePerformance/
     );
   });
 
