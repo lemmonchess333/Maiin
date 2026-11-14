@@ -263,6 +263,46 @@ longer replacing itself; only a phone shows the card.
       same for a run: swipe it away while recording, open the app and
       resume the run, and one run card shows.
 
+## The island's live figure (Run26 call 1, 2026-11-14)
+
+The Dynamic Island's small views show the live figure, never a mark: a
+rest's smallest view is its countdown (it was the dumbbell), and the
+figure in the compact and minimal views is 12 pt on a run and in a rest
+(the compact side was 14). When music shares the island, most iPhones show
+each app's minimal view and the iPhone 18 Pro shows each compact view at a
+reduced width, where Apple asks each side to fit a 28 pt circle; "12.4" and
+"1:24" are estimated at about 26 pt at 12 pt and 30 at 14, which is why 14
+was cut to "1…". The plugin draws every view from the layout the app sends
+(`src/lib/runLiveActivity.ts`, `src/lib/restLiveActivity.ts`), so no Swift
+changed and CI's simulator build proves nothing here; the unit suite
+(`liveActivityIsland.test.ts`) pins the layout. Only a phone shows the
+result.
+
+- [ ] **A rest's countdown in the smallest view.** On an iPhone with a
+      Dynamic Island from before the 18 Pro, start a timer in Clock, tick
+      a working set and go to the Home Screen. Passing: Tropos's round
+      side of the island shows the time left ("1:24") in white, centred,
+      and counting down, not the dumbbell; it stops at 0:00.
+- [ ] **A run beside music.** With music playing, record an outdoor run.
+      Passing: Tropos's side of the island shows the distance in coral,
+      not cut to "1…", and still does past 10 km ("12.4"). On an iPhone 18
+      Pro the side shows the runner and the distance; on earlier iPhones
+      the distance alone.
+- [ ] **A rest beside music.** With music playing, tick a set. Passing:
+      Tropos's side shows the countdown, not "1…" (with the dumbbell beside
+      it on an iPhone 18 Pro). If the iPhone 18 Pro still cuts the figure,
+      the fix is the plugin reading Apple's limited-width flag and showing
+      the minimal view there, a patch to `capacitor-live-activities`.
+- [ ] **The compact figure at 12 pt.** With nothing else in the island,
+      record a run and tick a set. Passing: the distance and the countdown
+      beside the camera read clearly at a glance, snug to the camera, and
+      the island is no wider than with the 14 pt figure.
+- [ ] **The iPhone 13's card unchanged.** On an iPhone without an island
+      (the owner's iPhone 13), record a run and tick a set with the phone
+      locked. Passing: the Lock Screen cards look as the rows above say
+      (the runner in the coral light, the distance large; "Rest", the
+      large countdown and "Next:"), unchanged from before this round.
+
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
 A photo's result has "Add a detail": a line of up to 200 characters sent

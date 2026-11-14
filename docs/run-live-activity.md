@@ -23,7 +23,8 @@ The same extension also shows a lift's rest (`src/lib/restLiveActivity.ts`):
 a dark card with a purple dumbbell, "Rest", the system's own countdown to
 the rest's end, which stops at 0:00, and "Next:" with the exercise, and in
 the Dynamic Island the
-dumbbell and the countdown. It needs nothing more than the steps below; its
+dumbbell and the countdown, or the countdown alone in the smallest view
+(Run26 call 1). It needs nothing more than the steps below; its
 device check is in `docs/qa/pre-launch-backlog.md`.
 
 ## What ships on the lock screen
@@ -39,7 +40,9 @@ design C: the picture leads):
   the pace and the time ("5:12 /km · 23:41").
 - **The Dynamic Island.** Compact: the run glyph and the distance.
   Minimal: the distance alone, since Apple asks for something live in the
-  smallest size. Expanded: the glyph on the left of the camera, the time
+  smallest size. The distance is 12 pt in both (Run26 call 1), so it fits
+  the 28 pt Apple gives each side when the island is short of room, as
+  when music shares it. Expanded: the glyph on the left of the camera, the time
   on its right, and under them the drawing with the session's name, the
   distance and "Pace 5:12 /km".
 - **The name is the session's.** The one the run was started as, as the
@@ -169,6 +172,7 @@ and exported with no change to the workflow. Apple's side needs, once:
 | 8   | Treadmill/manual run → NO Live Activity (outdoor-GPS-only gate)                      | ⬜     |       |
 | 9   | The runner is drawn, not a grey photo icon, and changes pose about every 4 s         | ⬜     |       |
 | 10  | The card is dark to its corners, with a coral light behind the runner                | ⬜     |       |
+| 11  | Music playing (14 Pro+): the run's side of the island shows the distance, not "1…"   | ⬜     |       |
 
 Legend: ⬜ not yet run · ✅ pass · ❌ fail (add a note).
 
