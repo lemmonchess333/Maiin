@@ -28,6 +28,10 @@ vi.mock("@/lib/toast", () => ({
   },
 }));
 
+vi.mock("@/hooks/useProCtaLabel", () => ({
+  useProCtaLabel: () => "Try Pro free",
+}));
+
 const insight = (direction: "faster" | "slower"): PaceInsight => ({
   currentVdot: 42,
   suggestedVdot: 45,
@@ -147,5 +151,45 @@ describe("PaceInsightCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /not now/i }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onAccept).not.toHaveBeenCalled();
+  });
+
+  describe("locked: faster paces on a free account", () => {
+    it("says what Pro changes and offers Pro, never Update paces", () => {
+      const onAccept = vi.fn();
+      const onUpgrade = vi.fn();
+      render(
+        <PaceInsightCard
+          insight={insight("faster")}
+          onAccept={onAccept}
+          onDismiss={() => {}}
+          locked
+          onUpgrade={onUpgrade}
+        />
+      );
+      expect(
+        screen.getByText(/Pro moves every upcoming training pace from VDOT/)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /update paces/i })
+      ).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Try Pro free" }));
+      expect(onUpgrade).toHaveBeenCalledTimes(1);
+      expect(onAccept).not.toHaveBeenCalled();
+    });
+
+    it("Not now still dismisses", () => {
+      const onDismiss = vi.fn();
+      render(
+        <PaceInsightCard
+          insight={insight("faster")}
+          onAccept={vi.fn()}
+          onDismiss={onDismiss}
+          locked
+          onUpgrade={vi.fn()}
+        />
+      );
+      fireEvent.click(screen.getByRole("button", { name: /not now/i }));
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
   });
 });
