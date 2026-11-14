@@ -11,6 +11,10 @@ import type { PaceInsight } from "@/lib/runPaces";
  *   not a feature (deep dive D4: in plan G the frozen interval pace became
  *   faster than the detrained runner could hold in 5 sessions).
  *
+ * - A runner's first paces, after the plan's time trial or another effort
+ *   (Run24 (4)), are the same adaptive part, so they are Pro too: without
+ *   them the plan speaks in effort words, which is not a wrong plan.
+ *
  * A free account still sees a faster offer, with what it would change, and
  * Pro is one tap away; Settings' continuous insight stays Pro (§10).
  */
@@ -18,7 +22,7 @@ export function paceUpdateLocked(
   direction: PaceInsight["direction"],
   isPro: boolean
 ): boolean {
-  return !isPro && direction === "faster";
+  return !isPro && direction !== "slower";
 }
 
 /** Where a locked pace offer goes: the Pro page, counted as `paces`. */

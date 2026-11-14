@@ -11,6 +11,11 @@ describe("paceUpdateLocked", () => {
     expect(paceUpdateLocked("faster", false)).toBe(true);
   });
 
+  it("locks a runner's first paces for a free account (Run24 (4))", () => {
+    expect(paceUpdateLocked("first", false)).toBe(true);
+    expect(paceUpdateLocked("first", true)).toBe(false);
+  });
+
   it("leaves slower paces open to a free account", () => {
     expect(paceUpdateLocked("slower", false)).toBe(false);
   });

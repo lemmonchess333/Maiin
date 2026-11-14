@@ -2,8 +2,8 @@
  * Run24 (4), deep dive D4: a time trial in the plan, so a runner's paces
  * come from what they can run now. Without a confirmed benchmark the block
  * holds a 3 km one in its second week; every block holds a 5 km one about
- * every five weeks of its build. The run's work is read as a race, and the
- * run summary offers the new paces with one tap.
+ * every five weeks after that. The run's work is read as a race, and the
+ * run summary offers the new paces after it.
  */
 import { describe, expect, it } from "vitest";
 import { generateRacePlanV2 } from "../runScheduler";
