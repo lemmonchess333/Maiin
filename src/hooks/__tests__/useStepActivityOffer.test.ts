@@ -224,7 +224,6 @@ describe("useStepActivityOffer saves", () => {
       goalWeightKg: 82,
       weeklyRateKg: -0.5,
       program: LIGHT_CUTTER.program,
-      tdeeBase: 2210,
       targetCalories: 2210,
       targetProtein: 180,
       targetCarbs: 200,
