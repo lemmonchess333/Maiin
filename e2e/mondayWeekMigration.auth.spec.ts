@@ -109,7 +109,6 @@ test.describe("Monday migration on an existing account", () => {
           weekNumber: 3,
           splitType: "upper_lower",
           workouts,
-          fatigueScore: 17,
           updatedAt: now.getTime(),
           liftWeekKey: "2026-09-06",
           programSchemaVersion: 3,

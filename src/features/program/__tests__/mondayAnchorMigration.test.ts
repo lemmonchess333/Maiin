@@ -37,7 +37,6 @@ function legacyState(overrides: Partial<ProgramState> = {}): ProgramState {
     weekNumber: 5,
     splitType: "upper_lower",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 1_700_000_000_000,
     programSchemaVersion: 3,
     liftWeekKey: LEGACY_SUNDAY_KEY,

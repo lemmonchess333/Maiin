@@ -1255,10 +1255,6 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         : 1,
     splitType,
     workouts: weekWorkouts,
-    fatigueScore:
-      input.preserveHistory && input.existingState
-        ? input.existingState.fatigueScore
-        : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
     settings,
     weekHistory:

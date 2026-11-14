@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const {
   PROGRAM_STATE_KEYS,
+  RETIRED_PROGRAM_STATE_KEYS,
+  RETIRED_PROGRAM_STATE_SUBKEYS,
   MAX_PROGRAM_STATE_BYTES,
   sanitizeProgramState,
   programStateTooLarge,
@@ -28,7 +30,6 @@ const realProgramState = {
   workouts: [
     { dayName: "Upper", dayType: "lift", exercises: [], completed: false },
   ],
-  fatigueScore: 0,
   updatedAt: 1717_000_000_000,
   settings: { autoProgression: true, smallPlates: true },
   weekHistory: [],
@@ -69,7 +70,6 @@ describe("sanitizeProgramState", () => {
         realRunCount: 1,
         weeklyTarget: 4,
       },
-      templateId: "ppl_4day",
       // PROGRAM-DELOAD-01: without this key in the allow-list the
       // command transaction's own sanitizer would strip the stash it
       // just wrote and undo would always fail.
@@ -77,15 +77,12 @@ describe("sanitizeProgramState", () => {
         weekNumber: 5,
         workouts: [],
         currentPhase: "progression",
-        fatigueScore: 3,
         appliedAt: 1000,
       },
     };
     const { value, dropped } = sanitizeProgramState(withOptionals);
     expect(dropped).toEqual([]);
-    expect(value.manualCompletions).toEqual({ "run-1": { at: 1 } });
-    expect(value.templateId).toBe("ppl_4day");
-    expect(value.deloadSnapshot).toMatchObject({ weekNumber: 5 });
+    expect(value).toEqual(withOptionals);
   });
 
   it("leaves nested values untouched (only top-level is allow-listed)", () => {
@@ -135,7 +132,6 @@ describe("sanitizeProgramState", () => {
         durationWeeks: 8,
         startDate: "2026-08-01",
         goalBefore: "hypertrophy",
-        amnestyWeeksLeft: 3,
         weeklyLiftTarget: 4,
         anchorExerciseIds: ["squat"],
         why: "",
@@ -146,6 +142,82 @@ describe("sanitizeProgramState", () => {
     const { value, dropped } = sanitizeProgramState(withBlock);
     expect(dropped).toEqual([]);
     expect(value.trainingBlock).toEqual(withBlock.trainingBlock);
+  });
+});
+
+// App1 Q24. Stored plans carry these until the strip script has run, and
+// an app from before the change still writes `fatigueScore`. Reported as
+// dropped, any one would make applyProgramCommand refuse every command on
+// that plan, so each goes silently.
+describe("retired keys", () => {
+  const stored = () => ({
+    ...realProgramState,
+    fatigueScore: 7,
+    plateauResponses: 2,
+    templateId: "ppl_4day",
+    recoveringMuscles: ["Chest"],
+    settings: { autoProgression: true, smallPlates: true, microloading: true },
+    trainingBlock: { id: "b1", owned: true, amnestyWeeksLeft: 3 },
+    deloadSnapshot: {
+      weekNumber: 1,
+      workouts: [],
+      currentPhase: "progression",
+      fatigueScore: 7,
+      appliedAt: 1000,
+    },
+    runDays: [{ id: "r1", dayIndex: 1, templateId: "easy_30" }],
+  });
+
+  it("deletes each one without reporting it as dropped", () => {
+    const { value, dropped } = sanitizeProgramState(stored());
+    expect(dropped).toEqual([]);
+    for (const key of RETIRED_PROGRAM_STATE_KEYS) {
+      expect(key in value, key).toBe(false);
+    }
+    for (const [parent, keys] of Object.entries(
+      RETIRED_PROGRAM_STATE_SUBKEYS
+    )) {
+      for (const key of keys) {
+        expect(key in value[parent], `${parent}.${key}`).toBe(false);
+      }
+    }
+  });
+
+  it("keeps everything else in the objects it reaches into", () => {
+    const { value } = sanitizeProgramState(stored());
+    expect(value.settings).toEqual({
+      autoProgression: true,
+      smallPlates: true,
+    });
+    expect(value.trainingBlock).toEqual({ id: "b1", owned: true });
+    expect(value.deloadSnapshot).toEqual({
+      weekNumber: 1,
+      workouts: [],
+      currentPhase: "progression",
+      appliedAt: 1000,
+    });
+  });
+
+  it("never touches a run day's templateId, which is live", () => {
+    const { value } = sanitizeProgramState(stored());
+    expect(value.runDays).toEqual([
+      { id: "r1", dayIndex: 1, templateId: "easy_30" },
+    ]);
+  });
+
+  it("leaves the input as it was", () => {
+    const input = stored();
+    sanitizeProgramState(input);
+    expect(input).toEqual(stored());
+  });
+
+  it("are never also allow-listed", () => {
+    for (const key of RETIRED_PROGRAM_STATE_KEYS) {
+      expect(PROGRAM_STATE_KEYS.has(key), key).toBe(false);
+    }
+    for (const parent of Object.keys(RETIRED_PROGRAM_STATE_SUBKEYS)) {
+      expect(PROGRAM_STATE_KEYS.has(parent), parent).toBe(true);
+    }
   });
 });
 

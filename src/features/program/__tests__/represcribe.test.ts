@@ -8,7 +8,6 @@ import {
   represcribeSwapped,
   represcribeWorkouts,
   scaleLoadForReps,
-  BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
 import { advanceWeek, assignDayRoles, generateProgram } from "../programEngine";
 import { FOCUS_ORDER, isProgressionHeld } from "../trainingBlock";
@@ -418,7 +417,6 @@ describe("isProgressionHeld", () => {
       durationWeeks: 8,
       startDate: "2026-08-01",
       goalBefore: "hypertrophy",
-      amnestyWeeksLeft: 3,
       weeklyLiftTarget: 4,
       anchorExerciseIds: [],
       why: "",
@@ -468,7 +466,6 @@ describe("advanceWeek — a block's first weeks", () => {
         }),
       ]),
     ],
-    fatigueScore: 0,
     updatedAt: 0,
     primaryGoal: "strength",
     ...(trainingBlock ? { trainingBlock } : {}),
@@ -482,7 +479,6 @@ describe("advanceWeek — a block's first weeks", () => {
     durationWeeks: 8,
     startDate: "2026-08-01",
     goalBefore: "hypertrophy",
-    amnestyWeeksLeft: BLOCK_AMNESTY_WEEKS,
     weeklyLiftTarget: 1,
     anchorExerciseIds: [],
     why: "",

@@ -63,7 +63,6 @@ const plan = () =>
       },
     ],
     settings: { autoProgression: true, smallPlates: false },
-    fatigueScore: 0,
     weekHistory: [],
     updatedAt: 0,
   } as unknown as ProgramState);

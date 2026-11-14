@@ -29,6 +29,13 @@ function memoryFirestore(seed = {}) {
         for (const [field, v] of Object.entries(value)) {
           const keys = field.split(".");
           const last = keys.pop();
+          if (isFieldDelete(v)) {
+            // Deleting a field that is not there changes nothing, and
+            // makes no parent for it, as Firestore's does.
+            const parent = keys.reduce((obj, key) => obj?.[key], next);
+            if (parent && typeof parent === "object") delete parent[last];
+            continue;
+          }
           const parent = keys.reduce((obj, key) => (obj[key] ||= {}), next);
           parent[last] = isIncrement(v)
             ? (Number(parent[last]) || 0) + v.__increment
@@ -222,4 +229,12 @@ function increment(n) {
 function isIncrement(v) {
   return !!v && typeof v === "object" && typeof v.__increment === "number";
 }
-module.exports = { memoryFirestore, increment };
+// A stand-in for FieldValue.delete, for code that takes it as an argument:
+// `update` removes the field (a dotted path reaches into a map).
+function fieldDelete() {
+  return { __delete: true };
+}
+function isFieldDelete(v) {
+  return !!v && typeof v === "object" && v.__delete === true;
+}
+module.exports = { memoryFirestore, increment, fieldDelete };
