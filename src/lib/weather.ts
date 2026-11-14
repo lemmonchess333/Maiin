@@ -10,12 +10,27 @@
  * coordinates: that API is for non-commercial use only, and its licence
  * needed a credit the app never showed.
  *
+ * The answer carries the next twelve hours' air temperature and dew point
+ * as well (Run26 (5)), which name today's coolest hour on a hot day
+ * (heatAdjustment.ts). They are optional here: a server that hasn't
+ * deployed them sends none, and nothing then names an hour.
+ *
  * MET's data is CC BY 4.0, so wherever weather shows, WEATHER_CREDIT goes
  * with it. The weather codes are WMO's, which the server maps MET's
  * symbols onto (weatherSymbols.cross.test.ts holds the two together); the
  * description is MET's own wording.
  */
 import { getFunctions, httpsCallable } from "firebase/functions";
+
+/** One forecast hour ahead (Run26 (5), today's coolest hour). */
+export interface WeatherHour {
+  /** When the hour starts, ms since the epoch. */
+  at: number;
+  /** Air temperature, °C. */
+  temperature: number;
+  /** Dew point, °C. */
+  dewPoint: number;
+}
 
 export interface WeatherData {
   temperature: number;
@@ -25,6 +40,34 @@ export interface WeatherData {
   windSpeed: number;
   weatherCode: number;
   description: string;
+  /** The next hours, in time order (Run26 (5)). Absent where the server
+   *  sent none: a callable deployed before them answers without, and the
+   *  coolest hour then simply isn't named. */
+  hours?: WeatherHour[];
+}
+
+/** The most hours kept from an answer: the server sends twelve, and a
+ *  day has no more than 24 to look through. */
+const MAX_HOURS = 24;
+
+/** The answer's hours, where it sent any: each hour with a start time and
+ *  finite figures, in time order, at most 24. An hour that isn't one is
+ *  dropped, never guessed at; anything but a list gives none. */
+function asWeatherHours(value: unknown): WeatherHour[] | null {
+  if (!Array.isArray(value)) return null;
+  const hours: WeatherHour[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const at = typeof e.time === "string" ? Date.parse(e.time) : NaN;
+    if (!Number.isFinite(at)) continue;
+    const { temperature, dewPoint } = e;
+    if (typeof temperature !== "number" || !Number.isFinite(temperature))
+      continue;
+    if (typeof dewPoint !== "number" || !Number.isFinite(dewPoint)) continue;
+    hours.push({ at, temperature, dewPoint });
+  }
+  return hours.sort((a, b) => a.at - b.at).slice(0, MAX_HOURS);
 }
 
 /** The credit MET Norway's licence asks for, shown wherever weather is. */
@@ -44,7 +87,7 @@ export function roundCoord(value: number): number {
 }
 
 /** The server's answer, if it has the shape the strip draws, as a copy
- *  holding only those fields. */
+ *  holding only those fields and, where it sent them, the next hours. */
 export function asWeatherData(value: unknown): WeatherData | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Record<string, unknown>;
@@ -59,6 +102,7 @@ export function asWeatherData(value: unknown): WeatherData | null {
     if (typeof v[key] !== "number" || !Number.isFinite(v[key])) return null;
   }
   if (typeof v.description !== "string" || !v.description) return null;
+  const hours = asWeatherHours(v.hours);
   return {
     temperature: v.temperature as number,
     feelsLike: v.feelsLike as number,
@@ -66,6 +110,7 @@ export function asWeatherData(value: unknown): WeatherData | null {
     windSpeed: v.windSpeed as number,
     weatherCode: v.weatherCode as number,
     description: v.description,
+    ...(hours ? { hours } : {}),
   };
 }
 

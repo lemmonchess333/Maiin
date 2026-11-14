@@ -43,6 +43,7 @@ import {
 } from "@/lib/weather";
 import { paceMinSec, distanceValue, runTitle } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { temperatureLabel, temperatureUnitFor } from "@/lib/temperature";
 import {
   paceUnitLabel,
   distanceUnitLabel,
@@ -170,6 +171,8 @@ export interface RunSetupHeat {
   level: "hot" | "extreme";
   /** The heat line (`heatLine`). */
   line: string;
+  /** Today's coolest hour still ahead (`coolestHourLine`), or none. */
+  coolest?: string | null;
   /** The adjustment offered, or null where the run has nothing to adjust. */
   adjustment: HeatAdjustment | null;
   /** The planned run built from the eased paces: what accepting sets. */
@@ -250,6 +253,7 @@ export default function RunSetupModal({
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  const temperatureUnit = temperatureUnitFor(unit);
   const motionSafe = useMotionSafe();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
@@ -534,10 +538,13 @@ export default function RunSetupModal({
             })()}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                {weather.temperature}°C
+                {/* In the runner's unit (temperature.ts, Run26 (5)), as
+                    the heat panel's coolest hour is. */}
+                {temperatureLabel(weather.temperature, temperatureUnit)}
                 {weather.feelsLike !== weather.temperature && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    (feels {weather.feelsLike}°)
+                    (feels{" "}
+                    {temperatureLabel(weather.feelsLike, temperatureUnit)})
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground ml-1.5">
@@ -590,6 +597,7 @@ export default function RunSetupModal({
           <HeatPanel
             level={heat.level}
             line={heat.line}
+            coolest={heat.coolest}
             adjust={
               stillPlannedSession && heat.adjustment && heat.prefill
                 ? {

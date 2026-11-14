@@ -177,6 +177,7 @@ import {
 } from "../features/run/startOnArrival";
 import { useHotDay } from "../hooks/useHotDay";
 import {
+  coolestHourLine,
   easeBand,
   heatAdjustedLine,
   heatAdjustmentFor,
@@ -193,6 +194,7 @@ import {
   HEAT_SWAP_START,
 } from "../lib/heatAdjustment";
 import { getHeartRateSource } from "../lib/heartRateSource";
+import { temperatureUnitFor } from "../lib/temperature";
 import { plannedSessionMinutes } from "../lib/runDose";
 import { plannedIntervalPaceSPerKm } from "../lib/intervalRest";
 import type {
@@ -1117,6 +1119,16 @@ export default function Run() {
     );
   };
   const heatLineNow = heatLine(heat.weather);
+  /* Today's coolest hour still ahead, where one is meaningfully cooler
+     (Run26 (5)): on every surface the heat line shows on. */
+  const coolestNow =
+    heat.coolest && heat.weather
+      ? coolestHourLine(
+          heat.coolest,
+          heat.weather.temperature,
+          temperatureUnitFor(unit)
+        )
+      : null;
   const heatAdjust: HeatPanelAdjust | null =
     heatCanAdjust && heatOffer
       ? {
@@ -1150,6 +1162,7 @@ export default function Run() {
       ? {
           level: heat.level,
           line: heatLineNow,
+          coolest: coolestNow,
           adjustment: heatCanAdjust ? heatOffer : null,
           prefill: heatCanAdjust ? heatPrefill : null,
           adjustedLine:
@@ -2572,6 +2585,7 @@ export default function Run() {
                   ? {
                       level: heat.level,
                       line: heatLineNow,
+                      coolest: coolestNow,
                       adjust: heatAdjust,
                       swap: heatSwap,
                     }
@@ -2668,7 +2682,11 @@ export default function Run() {
               gpsSignal={setupSignal}
               heat={
                 hotNow && heatLineNow && heat.level !== "none"
-                  ? { level: heat.level, line: heatLineNow }
+                  ? {
+                      level: heat.level,
+                      line: heatLineNow,
+                      coolest: coolestNow,
+                    }
                   : null
               }
             />

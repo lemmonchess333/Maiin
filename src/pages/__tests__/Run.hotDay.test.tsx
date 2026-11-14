@@ -27,6 +27,7 @@ import { racePaceLongTemplateId } from "@/lib/workoutTemplates";
 import { heatEasedPaceTable } from "@/lib/heatAdjustment";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import { RUN } from "@/test/journeyScreens";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 const RACE_GOAL = { distance: "10k", targetDate: "2099-04-18" };
 const HOME_EASY = "/run?template=easy_30&scheduledRunId=runday_today&start=1";
@@ -211,6 +212,7 @@ vi.mock("@/components/run/RunLaunchCard", () => ({
     heat?: {
       level: string;
       line: string;
+      coolest?: string | null;
       adjust?: {
         accepted: boolean;
         adjustedLine: string;
@@ -225,6 +227,7 @@ vi.mock("@/components/run/RunLaunchCard", () => ({
       <>
         <button onClick={onStart}>The run's card</button>
         {heat && <p>{heat.line}</p>}
+        {heat?.coolest && <p>{heat.coolest}</p>}
         {paceRange && <p>{`Range ${paceRange}`}</p>}
         {heat?.adjust &&
           (heat.adjust.accepted ? (
@@ -534,6 +537,54 @@ describe("a hot day, started from Home", () => {
       })
     ).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
+  });
+});
+
+describe("today's coolest hour on the run's card (Run26 (5))", () => {
+  /** Today at the hour given, on the device's clock. */
+  function today(hour: number): Date {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour);
+  }
+  beforeEach(() => {
+    h.runFitness = FITNESS;
+    // 13:00 today, so the evening's hours are today's in every time zone.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(today(13));
+  });
+  afterEach(() => restoreRealTimers());
+
+  it("names the coolest hour still ahead today beside the heat line", async () => {
+    planToday("tempo_30");
+    h.weather = async () => ({
+      ...HOT,
+      hours: [14, 16, 18, 20, 21, 22].map((hour) => ({
+        at: today(hour).getTime(),
+        temperature: hour === 21 ? 24 : 33,
+        dewPoint: hour === 21 ? 20 : 24,
+      })),
+    });
+    await open(HOME_TEMPO);
+    expect(
+      await screen.findByText("Coolest at 21:00, 24 °C against 32 °C now.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "By a common rule of thumb, this heat slows the same effort by 6–8%."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("names none where the weather has no hours, as a server that predates them answers", async () => {
+    planToday("tempo_30");
+    h.weather = async () => HOT;
+    await open(HOME_TEMPO);
+    expect(
+      await screen.findByText(
+        "By a common rule of thumb, this heat slows the same effort by 6–8%."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Coolest/)).toBeNull();
   });
 });
 

@@ -59,11 +59,13 @@ interface RunLaunchCardProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
-  /** A hot or extreme day (heatAdjustment.ts): the heat line, the offer to
-   *  adjust this run for heat and any swap. Null on any other day. */
+  /** A hot or extreme day (heatAdjustment.ts): the heat line, today's
+   *  coolest hour still ahead, the offer to adjust this run for heat and
+   *  any swap. Null on any other day. */
   heat?: {
     level: "hot" | "extreme";
     line: string;
+    coolest?: string | null;
     adjust?: HeatPanelAdjust | null;
     swap?: HeatPanelSwap | null;
   } | null;
@@ -227,6 +229,7 @@ export default function RunLaunchCard({
           <HeatPanel
             level={heat.level}
             line={heat.line}
+            coolest={heat.coolest}
             adjust={heat.adjust}
             swap={heat.swap}
           />

@@ -16,14 +16,16 @@ import type {
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 const weather = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@/lib/weather", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/weather")>()),
   getCurrentWeather: () => weather.get(),
 }));
+const distance = vi.hoisted(() => ({ unit: "km" as "km" | "mi" }));
 vi.mock("@/hooks/useDistanceUnit", () => ({
-  useDistanceUnit: () => "km" as const,
+  useDistanceUnit: () => distance.unit,
 }));
 
 const HOT = {
@@ -99,8 +101,12 @@ function peek(dateKey: string, runDays: ScheduledRunDay[]) {
 
 beforeEach(() => {
   weather.get.mockReset();
+  distance.unit = "km";
 });
-afterEach(() => cleanup());
+afterEach(async () => {
+  await restoreRealTimers();
+  cleanup();
+});
 
 describe("DayPeekCard on a hot day", () => {
   it("says it is hot on today's run still to do, and where it can be adjusted", async () => {
@@ -138,6 +144,64 @@ describe("DayPeekCard on a hot day", () => {
     const today = new Date();
     peek(localDateString(today), [runDayOn(today, { status: "skipped" })]);
     expect(weather.get).not.toHaveBeenCalled();
+    expect(screen.queryByRole("note", { name: "Hot day" })).toBeNull();
+  });
+});
+
+describe("DayPeekCard: today's coolest hour (Run26 (5))", () => {
+  /** Today at the hour given, on the device's clock. */
+  function today(hour: number): Date {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour);
+  }
+  /** The next hours from 13:00 as the callable sends them: 33 °C through
+   *  the afternoon, 24 °C at 21:00. */
+  function hoursFrom13() {
+    return [14, 15, 16, 17, 18, 19, 20, 21, 22, 23].map((h) => ({
+      at: today(h).getTime(),
+      temperature: h === 21 ? 24 : 33,
+      dewPoint: h === 21 ? 20 : 24,
+    }));
+  }
+  beforeEach(() => {
+    // 13:00 today, so the evening's hours are today's in every time zone.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(today(13));
+  });
+
+  it("names it under the heat line on a hot day", async () => {
+    weather.get.mockResolvedValue({ ...HOT, hours: hoursFrom13() });
+    peek(localDateString(), [runDayOn(new Date())]);
+    const note = await screen.findByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent(
+      "Coolest at 21:00, 24 °C against 32 °C now."
+    );
+  });
+
+  it("names it in °F for a runner who reads miles", async () => {
+    distance.unit = "mi";
+    weather.get.mockResolvedValue({ ...HOT, hours: hoursFrom13() });
+    peek(localDateString(), [runDayOn(new Date())]);
+    const note = await screen.findByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent(
+      "Coolest at 21:00, 75 °F against 90 °F now."
+    );
+  });
+
+  it("names nothing from a server that sends no hours, and still says it is hot", async () => {
+    weather.get.mockResolvedValue(HOT);
+    peek(localDateString(), [runDayOn(new Date())]);
+    const note = await screen.findByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent("Hot today");
+    expect(note).not.toHaveTextContent(/Coolest/);
+  });
+
+  it("names nothing on a mild day, however cool the evening", async () => {
+    weather.get.mockResolvedValue({ ...MILD, hours: hoursFrom13() });
+    peek(localDateString(), [runDayOn(new Date())]);
+    await vi.waitFor(() => expect(weather.get).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(screen.queryByText(/Coolest/)).toBeNull();
     expect(screen.queryByRole("note", { name: "Hot day" })).toBeNull();
   });
 });

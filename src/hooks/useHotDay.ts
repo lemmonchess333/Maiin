@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
-import { getCurrentWeather, type WeatherData } from "@/lib/weather";
-import { heatLevel, type HeatLevel } from "@/lib/heatAdjustment";
+import {
+  getCurrentWeather,
+  type WeatherData,
+  type WeatherHour,
+} from "@/lib/weather";
+import {
+  coolestHourAhead,
+  heatLevel,
+  type HeatLevel,
+} from "@/lib/heatAdjustment";
 
 /** The weather where the phone is, as the heat surfaces read it. */
 export interface HotDay {
@@ -10,6 +18,10 @@ export interface HotDay {
   weather: WeatherData | null;
   /** Hot, extreme or neither (`heatLevel`); "none" while checking. */
   level: HeatLevel;
+  /** Today's coolest hour still ahead on a hot day (`coolestHourAhead`,
+   *  Run26 (5)), judged from when the reading arrived; null on any other
+   *  day, while checking, and where the reading has no hours. */
+  coolest: WeatherHour | null;
 }
 
 /**
@@ -23,25 +35,32 @@ export interface HotDay {
  * changes on it. Reads nothing while `enabled` is false.
  */
 export function useHotDay(enabled = true): HotDay {
-  const [weather, setWeather] = useState<WeatherData | null | undefined>(
-    undefined
-  );
+  const [reading, setReading] = useState<
+    { weather: WeatherData | null; at: number } | undefined
+  >(undefined);
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     getCurrentWeather()
-      .then((reading) => {
-        if (!cancelled) setWeather(reading);
+      .then((weather) => {
+        if (!cancelled) setReading({ weather, at: Date.now() });
       })
       .catch(() => {
-        if (!cancelled) setWeather(null);
+        if (!cancelled) setReading({ weather: null, at: Date.now() });
       });
     return () => {
       cancelled = true;
     };
   }, [enabled]);
-  if (!enabled) return { status: "read", weather: null, level: "none" };
-  if (weather === undefined)
-    return { status: "checking", weather: null, level: "none" };
-  return { status: "read", weather, level: heatLevel(weather) };
+  if (!enabled)
+    return { status: "read", weather: null, level: "none", coolest: null };
+  if (reading === undefined)
+    return { status: "checking", weather: null, level: "none", coolest: null };
+  const { weather, at } = reading;
+  return {
+    status: "read",
+    weather,
+    level: heatLevel(weather),
+    coolest: coolestHourAhead(weather, at),
+  };
 }

@@ -5070,6 +5070,40 @@ Unit and page tests drive it; no phone has shown it.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
 
+## Today's coolest hour (Run26 call 5, 2026-11-14)
+
+Affects: the `getCurrentWeather` callable, whose answer now carries
+`hours` (the next twelve hours' start, air temperature and dew point, read
+from the same MET Norway response, `nextHours` in
+`functions/lib/metWeather.js`), the client's weather read
+(`src/lib/weather.ts`), `coolestHourAhead` in `src/lib/heatAdjustment.ts`,
+and `HeatPanel`'s line on the run's card, the full setup, the tile picker
+and Home's day peek: "Coolest at 21:00, 24 °C against 32 °C now." Named
+only on a hot day, for an hour still to come today that starts at least an
+hour from now, is a T+DP band (10 °F) cooler and has air a whole degree
+cooler. Temperatures follow the distance setting: °F for a runner who reads
+miles, in the setup strip too. The callable ships with the next production
+release (Deploy production runs the functions deploy for any change under
+`functions/` and reads `getCurrentWeather`'s deployed source back); until
+then no line shows anywhere. Unit and page tests drive it; no phone has
+shown it.
+
+- [ ] **The deployed callable sends hours.** After the release that
+      carries this, open a run's setup on the web build with location
+      allowed and read `getCurrentWeather`'s response in the browser's
+      network panel. Passing: it has the six fields it had, and `hours`
+      with twelve entries an hour apart, the first after now.
+- [ ] **The line on an iPhone, on a hot day.** On a hot afternoon (for
+      example 30 °C at 60% humidity), with a run planned today and location
+      allowed for Tropos: Home's day peek and the run's card show "Coolest
+      at HH:MM, X °C against Y °C now." with a later hour of today, and
+      HH:MM is the phone's own clock, not UTC. With Settings → Units &
+      appearance on miles, the line and the setup strip read °F.
+- [ ] **An older build keeps working.** A TestFlight build from before
+      this change, against the deployed callable: the setup strip still
+      shows the weather and "Weather data from MET Norway", and a hot day
+      still shows "Hot today".
+
 ## Apple Watch companion: device acceptance kit (2026-11-14)
 
 The last step before `WATCH_RUN_RELEASE_ENABLED` and

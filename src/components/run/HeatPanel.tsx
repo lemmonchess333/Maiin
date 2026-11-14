@@ -29,6 +29,10 @@ interface HeatPanelProps {
   /** The heat line (`heatLine`): the rule of thumb's slowdown, or the
    *  extreme day's advice. */
   line: string;
+  /** Today's coolest hour still ahead (`coolestHourLine`, Run26 (5)), or
+   *  none where no hour is meaningfully cooler or the weather has no
+   *  hours. */
+  coolest?: string | null;
   /** A line under it where the panel only looks ahead (Home's day). */
   note?: string | null;
   /** The offer to adjust this run for heat, or none where there is
@@ -42,7 +46,8 @@ interface HeatPanelProps {
 
 /**
  * A hot day where a run is started or looked at (heatAdjustment.ts): the
- * heading, the heat line, and for a planned run the offer to adjust it for
+ * heading, the heat line, today's coolest hour still ahead where one is
+ * meaningfully cooler, and for a planned run the offer to adjust it for
  * heat (offered, never applied by itself, and cleared as easily) and any
  * swap. The caller draws it only on a hot or extreme day. Its numbers come
  * from MET Norway's weather, so the credit goes with it (CC BY 4.0,
@@ -51,6 +56,7 @@ interface HeatPanelProps {
 export default function HeatPanel({
   level,
   line,
+  coolest = null,
   note = null,
   adjust = null,
   swap = null,
@@ -75,6 +81,9 @@ export default function HeatPanel({
             {level === "extreme" ? EXTREME_HEAT_TITLE : HEAT_TITLE}
           </p>
           <p className="text-xs text-muted-foreground">{line}</p>
+          {coolest && (
+            <p className="text-xs text-muted-foreground">{coolest}</p>
+          )}
           {note && <p className="text-xs text-muted-foreground">{note}</p>}
           {adjust?.accepted && (
             <p className="text-sm text-foreground">{adjust.adjustedLine}</p>

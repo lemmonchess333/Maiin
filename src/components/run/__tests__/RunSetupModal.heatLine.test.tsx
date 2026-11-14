@@ -27,8 +27,9 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/savedRuns", () => ({
   fetchSavedRuns: vi.fn(async () => []),
 }));
+const distance = vi.hoisted(() => ({ unit: "km" as "km" | "mi" }));
 vi.mock("@/hooks/useDistanceUnit", () => ({
-  useDistanceUnit: () => "km" as const,
+  useDistanceUnit: () => distance.unit,
 }));
 vi.mock("@/components/run/ShoeSelector", () => ({ default: () => null }));
 
@@ -39,6 +40,7 @@ import { heatLine } from "@/lib/heatAdjustment";
 
 beforeEach(() => {
   weather.get.mockReset();
+  distance.unit = "km";
 });
 afterEach(() => {
   cleanup();
@@ -123,7 +125,8 @@ describe("RunSetupModal — the heat line", () => {
       />
     );
     const strip = await weatherStrip();
-    expect(within(strip).getByText(/32°C/)).toBeInTheDocument();
+    // Spaced, as the app's other units are (Run26 (5)).
+    expect(within(strip).getByText(/32 °C/)).toBeInTheDocument();
     expect(heatLine(HOT_DAY)).toBe(HOT_LINE);
     expect(
       within(strip)
@@ -156,9 +159,39 @@ describe("RunSetupModal — the heat line", () => {
       />
     );
     const strip = await weatherStrip();
-    expect(within(strip).getByText(/22°C/)).toBeInTheDocument();
+    expect(within(strip).getByText(/22 °C/)).toBeInTheDocument();
     expect(within(strip).queryAllByText(HEAT_WORDS)).toEqual([]);
     expect(screen.queryByRole("note", { name: "Hot day" })).toBeNull();
+  });
+});
+
+describe("RunSetupModal — temperatures in the runner's unit (Run26 (5))", () => {
+  it("shows the strip in °F to a runner who reads miles", async () => {
+    distance.unit = "mi";
+    weather.get.mockResolvedValue(HOT_DAY);
+    render(
+      <RunSetupModal
+        onStart={vi.fn()}
+        onCancel={vi.fn()}
+        savedPreferences={{ target: PACE_TARGET }}
+      />
+    );
+    const strip = await weatherStrip();
+    // 32 °C is 89.6 °F; feels 36 °C, 96.8 °F.
+    expect(strip).toHaveTextContent(/90 °F\s*\(feels 97 °F\)/);
+    expect(strip).not.toHaveTextContent("°C");
+  });
+
+  it("names today's coolest hour in the planned run's offer", async () => {
+    weather.get.mockResolvedValue(HOT_DAY);
+    plannedTempo({
+      ...OFFER,
+      coolest: "Coolest at 21:00, 24 °C against 32 °C now.",
+    });
+    const note = await screen.findByRole("note", { name: "Hot day" });
+    expect(
+      within(note).getByText("Coolest at 21:00, 24 °C against 32 °C now.")
+    ).toBeInTheDocument();
   });
 });
 
