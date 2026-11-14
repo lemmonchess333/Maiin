@@ -3,10 +3,13 @@ import { act, renderHook } from "@testing-library/react";
 import type { MotionSample } from "@/lib/runAutoPause";
 
 const source = vi.hoisted(() => ({
+  native: true,
   onSample: null as ((sample: MotionSample) => void) | null,
   starts: 0,
   stops: 0,
 }));
+
+vi.mock("@/lib/platform", () => ({ isNativePlatform: () => source.native }));
 
 vi.mock("@/lib/runMotionSource", () => ({
   startRunMotion: async (onSample: (sample: MotionSample) => void) => {
@@ -25,6 +28,7 @@ const AT = 1_700_000_000_000;
 // Before, not after: the last test's hook unmounts in the library's own
 // cleanup, which runs after this file's afterEach.
 beforeEach(() => {
+  source.native = true;
   source.onSample = null;
   source.starts = 0;
   source.stops = 0;
@@ -35,6 +39,14 @@ describe("useRunMotion", () => {
     const { result } = renderHook(() => useRunMotion(null));
     expect(result.current).toBeNull();
     expect(source.starts).toBe(0);
+  });
+
+  it("loads nothing on the web, where GPS alone decides", async () => {
+    source.native = false;
+    const { result } = renderHook(() => useRunMotion("run-1"));
+    await act(async () => {});
+    expect(source.starts).toBe(0);
+    expect(result.current).toBeNull();
   });
 
   it("folds a run's samples into one reading", async () => {
