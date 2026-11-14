@@ -9,6 +9,7 @@ import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import type { ProgramState } from "./programTypes";
 import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
+import { isRollingGoal, type RollingGoal } from "./rollingPlan";
 
 /**
  * The upkeep the programme engine does by itself, asked as questions of a
@@ -43,15 +44,16 @@ export function raceAwaitsItsEnding(
   );
 }
 
-/** The run plans this build makes (`race_prep`, `starter`) or retires
- *  (`structured`). A plan of any other kind was written by a newer build,
- *  and this build leaves it exactly as it is: rolling, refreshing or
+/** The run plans this build makes (`race_prep`, `starter`, `rolling`) or
+ *  retires (`structured`). A plan of any other kind was written by a newer
+ *  build, and this build leaves it exactly as it is: rolling, refreshing or
  *  rebuilding it here would clear it, since every one of those paths reads
  *  a plan it does not know as free running. */
 const RUN_PLAN_MODES_THIS_BUILD_KNOWS: readonly string[] = [
   "race_prep",
   "starter",
   "structured",
+  "rolling",
 ];
 
 export function isRunPlanFromNewerBuild(runPlan: unknown): boolean {
@@ -62,6 +64,36 @@ export function isRunPlanFromNewerBuild(runPlan: unknown): boolean {
   return (
     typeof mode === "string" && !RUN_PLAN_MODES_THIS_BUILD_KNOWS.includes(mode)
   );
+}
+
+/**
+ * The goal of a plan with no race date (Run24 (3), deep dive D7), for a
+ * profile on free running: no race goal and no starter goal, which take
+ * its place when set. Null for any other plan, and for a goal this build
+ * does not know.
+ */
+export function rollingGoalOf(
+  state: Pick<ProgramState, "runPlan"> | null | undefined,
+  profile: Pick<UserProfile, "runMode"> | null | undefined
+): RollingGoal | null {
+  const plan = state?.runPlan;
+  if (plan?.mode !== "rolling" || !isRollingGoal(plan.rollingGoal)) return null;
+  const mode = profile?.runMode ?? "freeform";
+  return mode === "freeform" ? plan.rollingGoal : null;
+}
+
+/**
+ * The run mode a surface draws: the profile's, or "rolling" when free
+ * running holds a plan with no race date (`rollingGoalOf`). The profile
+ * keeps "freeform" for such a plan (no race goal, no starter goal), so a
+ * surface that asks only the profile reads a plan as no plan.
+ */
+export function runModeWithPlan(
+  profile: Pick<UserProfile, "runMode"> | null | undefined,
+  state: Pick<ProgramState, "runPlan"> | null | undefined
+): NonNullable<UserProfile["runMode"]> | "rolling" {
+  if (rollingGoalOf(state, profile)) return "rolling";
+  return profile?.runMode ?? "freeform";
 }
 
 /** Whether the plan is the starter goal's, for a profile still on it. */
@@ -81,12 +113,15 @@ export function runWeekKeyOf(
 ): string | undefined {
   if (state.runPlan?.mode === "starter" && state.runPlan.stageWeekKey)
     return state.runPlan.stageWeekKey;
+  if (state.runPlan?.mode === "rolling" && state.runPlan.rollingWeekKey)
+    return state.runPlan.rollingWeekKey;
   return state.runDays?.[0]?.weekKey ?? state.runPlan?.emptyRunWeekKey;
 }
 
 /**
  * The week the calendar rollover moves the plan on from. A race plan with
- * run days, and a starter plan, roll over from their runs' week (runs are
+ * run days, a starter plan and a plan with no race date roll over from
+ * their runs' week (runs are
  * pinned to dates, ADR-0002, and the lifts move with them); any other plan
  * from the lifts' own. So does a race plan with nothing left to plan after
  * its race (`raceAwaitsItsEnding` on the week after its runs'), whose run
@@ -100,6 +135,9 @@ export function weekRolloverAnchor(
 ): { side: "run" | "lift"; weekKey: string } | null {
   const runWeek = runWeekKeyOf(state);
   if (isStarterPlanRunning(state, profile) && runWeek)
+    return { side: "run", weekKey: runWeek };
+  // Run24 (3): a plan with no race date follows its runs, as a race's does.
+  if (rollingGoalOf(state, profile) && runWeek)
     return { side: "run", weekKey: runWeek };
   if (
     profile.runMode === "race_prep" &&

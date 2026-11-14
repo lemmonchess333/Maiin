@@ -12,8 +12,7 @@ import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
 import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { assessLiftReturn } from "@/features/program/liftLayoff";
-import { useRunReturn } from "@/features/program/useRunReturn";
+import { useTrainingReturn } from "@/features/program/useTrainingReturn";
 import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
 import { raceLongRunCheck } from "@/features/program/raceLongRunCheck";
 import { APPLIED } from "@/features/program/programOutcome";
@@ -778,15 +777,20 @@ export default function Home() {
   const [badgeOpen, setBadgeOpen] = useState(false);
 
   /**
-   * The lifter's return. Measured from logged sessions rather than from the
-   * programme's own idea of what should have happened: a plan full of
-   * uncompleted days is not evidence of absence, and a lifter training off
-   * plan is not away.
+   * Coming back after a break, one check for both sports (App1 Q35,
+   * `trainingReturn.ts`): each sport measured the same way from what was
+   * done, lifts from logged sessions and runs from saved ones, rather than
+   * from the programme's own idea of what should have happened: a plan full
+   * of uncompleted days is not evidence of absence, and someone training
+   * off plan is not away. A sport the plan does not hold is never greeted.
    */
-  const liftReturn = useMemo(
-    () => assessLiftReturn(workouts, todayKey),
-    [workouts, todayKey]
-  );
+  const { lift: liftReturn, run: runReturn } = useTrainingReturn({
+    profile,
+    programState,
+    programLoading,
+    todayKey,
+    workouts,
+  });
   // `useDismissOnce` scopes by uid, so a dismissal cannot leak across a
   // shared device; the key identifies the absence, so dismissing settles
   // this one and a later gap asks again.
@@ -803,11 +807,12 @@ export default function Home() {
   });
 
   /**
-   * The runner's return (`runReturn.ts`): a free runner two weeks away is
-   * offered an easy run, a race plan three weeks away opens the
-   * fell-behind sheet in its welcome-back register. Measured from saved
-   * runs, as the lift's is from logged sessions, and asked once per
-   * absence: the key is the last run's day.
+   * The runner's return (`runReturn.ts`), the running half of the one
+   * check above: a free runner two weeks away is offered an easy run, a
+   * race plan three weeks away opens the fell-behind sheet in its
+   * welcome-back register. Measured from saved runs by the rule the lift's
+   * is measured with from logged sessions, and asked once per absence: the
+   * key is the last run's day.
    *
    * Below the lift's return: easing back is the only way a lifter's loads
    * come down after a break, while a race plan's weeks are already planned
@@ -816,12 +821,6 @@ export default function Home() {
    * not run. The weekly check's own sheet greets the same absence, so it
    * stands this down, and answering it settles this one (below).
    */
-  const runReturn = useRunReturn({
-    profile,
-    programState,
-    programLoading,
-    todayKey,
-  });
   const { dismissed: runReturnDismissed, dismiss: dismissRunReturn } =
     useDismissOnce(`tropos-run-return:${runReturn.dismissKey ?? "none"}`);
   const runReturnSurface = useSurface({

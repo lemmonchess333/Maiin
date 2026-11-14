@@ -24,6 +24,11 @@ import RacePlanProNote from "@/components/program/RacePlanProNote";
 import { IconButton } from "@/components/ui/IconButton";
 import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
+import RollingGoalPicker from "@/components/run/RollingGoalPicker";
+import {
+  ROLLING_GOAL_NAMES,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
 import BodyInputs from "@/components/onboarding/BodyInputs";
 import WeekPreview from "@/components/onboarding/WeekPreview";
 import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
@@ -311,11 +316,18 @@ export default function Onboarding() {
     trainingActivity === "lifting" ? "none" : chosenRunFrequency;
   const runConfirmed = trainingActivity === "lifting" || runningConfirmed;
   const [chosenRunMode, setRunMode] = useState<
-    "freeform" | "race_prep" | "starter"
+    "freeform" | "race_prep" | "starter" | "rolling"
   >(
     draft?.runMode === "race_prep" || draft?.runMode === "starter"
       ? draft.runMode
-      : "freeform"
+      : draft?.rollingGoal
+        ? "rolling"
+        : "freeform"
+  );
+  /* Run24 (3): free running's plan with no race date, and its goal. The
+     plan is free running's on the profile; the draft keeps the goal. */
+  const [rollingGoal, setRollingGoal] = useState<RollingGoal>(
+    draft?.rollingGoal ?? "keep_fit"
   );
   /* Run9's starter goal, 30 minutes without stopping, is offered to
      someone who runs only and to anyone new to running; a lifter who
@@ -324,6 +336,10 @@ export default function Onboarding() {
     trainingActivity === "running" || runFrequency === "new";
   const runMode =
     chosenRunMode === "starter" && !starterOffered ? "freeform" : chosenRunMode;
+  /** The run mode setup saves: a plan with no race date is free running's,
+   *  with its goal beside it. */
+  const draftRunMode = runMode === "rolling" ? "freeform" : runMode;
+  const draftRollingGoal = runMode === "rolling" ? rollingGoal : null;
   // The starter goal's runs a week, two or three, three unless asked for
   // two; apart from a race plan's, which starts at two (Pgm7 A7).
   const [starterRunDays, setStarterRunDays] = useState<number>(() =>
@@ -419,7 +435,8 @@ export default function Onboarding() {
       daysPerWeek,
       equipment,
       runFrequency,
-      runMode,
+      runMode: draftRunMode,
+      rollingGoal: draftRollingGoal,
       weeklyRunDays: planRunDays,
       raceDistance,
       raceTargetDate,
@@ -463,7 +480,8 @@ export default function Onboarding() {
       daysPerWeek,
       equipment,
       runFrequency,
-      runMode,
+      draftRunMode,
+      draftRollingGoal,
       planRunDays,
       raceDistance,
       raceTargetDate,
@@ -604,12 +622,12 @@ export default function Onboarding() {
   );
   const recentRaceBenchmark =
     recentRace && !("error" in recentRace) ? recentRace : null;
-  /* R5: someone who runs already, setting up a race plan, says how much
-     they run, and the plan starts there. Someone new to running starts
-     with the run-walk weeks instead. */
+  /* R5: someone who runs already, setting up a race plan or a plan with
+     no race date (Run24 (3)), says how much they run, and the plan starts
+     there. Someone new to running starts with the run-walk weeks instead. */
   const askRunningNow =
     runConfirmed &&
-    runMode === "race_prep" &&
+    (runMode === "race_prep" || runMode === "rolling") &&
     (runFrequency === "occasional" || runFrequency === "regular");
   const runningStart = useMemo<RunningBaseline | null>(
     () =>
@@ -633,6 +651,15 @@ export default function Onboarding() {
   );
   const runningStartValid =
     runningStart === null || isRunningBaseline(runningStart);
+  /* What the save builds the run plan from, which the race preview reads
+     too, so the longest run setup states is the plan's: the typed race over
+     the stored benchmark, and the starting point typed here over the stored
+     one. */
+  const planRunFitness = recentRaceBenchmark ?? profile?.runFitness;
+  const planRunningBaseline =
+    runningStart && runningStartValid
+      ? runningStart
+      : (profile?.runningBaseline ?? null);
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -643,7 +670,8 @@ export default function Onboarding() {
           gender,
           experience,
           runFrequency,
-          runMode,
+          runMode: draftRunMode,
+          rollingGoal: draftRollingGoal,
           weeklyRunDays: planRunDays,
           raceDistance,
           raceTargetDate,
@@ -659,12 +687,9 @@ export default function Onboarding() {
         goalPlan.fitnessGoal,
         currentDate,
         {
-          runningBaseline:
-            runningStart && runningStartValid
-              ? runningStart
-              : (profile?.runningBaseline ?? null),
+          runningBaseline: planRunningBaseline,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: recentRaceBenchmark ?? profile?.runFitness,
+          runFitness: planRunFitness,
         }
       ),
     [
@@ -674,7 +699,8 @@ export default function Onboarding() {
       gender,
       experience,
       runFrequency,
-      runMode,
+      draftRunMode,
+      draftRollingGoal,
       planRunDays,
       raceDistance,
       raceTargetDate,
@@ -688,12 +714,9 @@ export default function Onboarding() {
       weightDisplayUnit,
       goalPlan.fitnessGoal,
       currentDate,
-      profile?.runningBaseline,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
       profile?.runTimeLimits,
-      recentRaceBenchmark,
-      profile?.runFitness,
+      planRunFitness,
     ]
   );
   const dailyTarget = {
@@ -717,9 +740,13 @@ export default function Onboarding() {
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
-  // plan itself uses.
-  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
-  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(profile?.runFitness);
+  // plan itself uses: a race typed here is the benchmark the save keeps.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(planRunFitness);
+  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(planRunFitness);
+  /* Deep dive D8, Run24 (1): the preview runs the plan the save builds,
+     with its easy pace, time limits and starting point; without the easy
+     pace a runner who typed a slow race was told the longest run of a plan
+     built at no pace at all (32 km for a marathon the plan takes to 20). */
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -729,7 +756,9 @@ export default function Onboarding() {
         liftDays: daysPerWeek,
         weeklyRunDays,
         newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
-        runningBaseline: runningStartValid ? runningStart : null,
+        runningBaseline: planRunningBaseline,
+        runTimeLimits: profile?.runTimeLimits,
+        easyPaceSPerKm,
       }),
     [
       raceDistance,
@@ -738,8 +767,9 @@ export default function Onboarding() {
       daysPerWeek,
       weeklyRunDays,
       runFrequency,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
+      profile?.runTimeLimits,
+      easyPaceSPerKm,
     ]
   );
   /* The name step is the last; the word filter loads from the first, and
@@ -1175,20 +1205,78 @@ export default function Onboarding() {
       (template) =>
         template.id === (firstRun.userOverride || firstRun.templateId)
     );
+  /** The plan with no race date being saved, if any (Run24 (3)). */
+  const savedRollingGoal =
+    plan.programState.runPlan?.mode === "rolling"
+      ? (plan.programState.runPlan.rollingGoal ?? null)
+      : null;
   const freeRunning =
-    runConfirmed && runFrequency !== "none" && effectiveRunMode === "freeform";
+    runConfirmed &&
+    runFrequency !== "none" &&
+    effectiveRunMode === "freeform" &&
+    !savedRollingGoal;
   const runSummary = !runConfirmed
     ? "Choose your running setup"
     : runFrequency === "none"
       ? "No running selected"
-      : (effectiveRunMode === "freeform"
-          ? "Free running · no scheduled runs"
-          : effectiveRunMode === "starter"
-            ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
-            : `${raceEventName ? `${raceEventName} · ` : ""}${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+      : (savedRollingGoal
+          ? `${ROLLING_GOAL_NAMES[savedRollingGoal]} · ${effectiveRunDays} runs per week`
+          : effectiveRunMode === "freeform"
+            ? "Free running · no scheduled runs"
+            : effectiveRunMode === "starter"
+              ? `${STARTER_GOAL_NAME} · ${effectiveRunDays} runs per week`
+              : `${raceEventName ? `${raceEventName} · ` : ""}${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
         (recentRaceBenchmark
           ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
           : "");
+  /* R5: the running a plan starts from, asked with a race and with a plan
+     with no race date (Run24 (3)). */
+  const runningNowFields =
+    askRunningNow && runningStart ? (
+      <div className="space-y-2">
+        <p className="text-sm">Your running now</p>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              {
+                key: "weeklyMinutes",
+                label: "Minutes a week",
+                value: runningWeekMinutes,
+                set: setRunningWeekMinutes,
+              },
+              {
+                key: "longestRunMinutes",
+                label: "Longest run, min",
+                value: runningLongestMinutes,
+                set: setRunningLongestMinutes,
+              },
+            ] as const
+          ).map((field) => (
+            <label key={field.key} className="block space-y-1 text-sm">
+              <span className="text-muted-foreground">{field.label}</span>
+              <input
+                inputMode="numeric"
+                className="ds-input min-h-11 w-full font-mono tabular-nums"
+                value={field.value}
+                aria-invalid={field.value !== "" && !runningStartValid}
+                onChange={(event) =>
+                  field.set(event.target.value.replace(/\D/g, "").slice(0, 4))
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {runningWeekMinutes !== "" &&
+          runningLongestMinutes !== "" &&
+          !runningStartValid
+            ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
+            : runMode === "rolling"
+              ? "The plan starts from here and builds a step at a time."
+              : "The plan starts from here and builds a step a week towards the race."}
+        </p>
+      </div>
+    ) : null;
   return (
     <div
       className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
@@ -1441,10 +1529,12 @@ export default function Onboarding() {
               </div>
               {runConfirmed && runFrequency !== "none" && (
                 <div className="space-y-4">
-                  <SegmentedControl<"freeform" | "race_prep" | "starter">
+                  <SegmentedControl<
+                    "freeform" | "race_prep" | "starter" | "rolling"
+                  >
                     ariaLabel="Running plan"
                     tone="running"
-                    layout={starterOffered ? "wrap" : undefined}
+                    layout="wrap"
                     value={runMode}
                     onChange={setRunMode}
                     options={[
@@ -1452,6 +1542,8 @@ export default function Onboarding() {
                       ...(starterOffered
                         ? [{ value: "starter" as const, label: "30 minutes" }]
                         : []),
+                      // Run24 (3): a plan with no race date.
+                      { value: "rolling", label: "Plan, no race" },
                       { value: "race_prep", label: "Race prep" },
                     ]}
                   />
@@ -1475,6 +1567,36 @@ export default function Onboarding() {
                           ]}
                         />
                       </div>
+                    </div>
+                  )}
+                  {runMode === "rolling" && (
+                    <div className="space-y-4 rounded-2xl bg-card card-shadow p-4">
+                      <p className="text-sm">
+                        A plan that keeps going, with no race date. Change it or
+                        add a race any time.
+                      </p>
+                      <RollingGoalPicker
+                        value={rollingGoal}
+                        onChange={setRollingGoal}
+                      />
+                      <label className="block text-sm">
+                        Runs per week ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {weeklyRunDays}
+                        </span>
+                        <RangeInput
+                          className="min-h-11"
+                          aria-label="Runs per week"
+                          min={MIN_RACE_RUN_DAYS}
+                          max={7}
+                          step={1}
+                          value={weeklyRunDays}
+                          onChange={(event) =>
+                            setWeeklyRunDays(Number(event.target.value))
+                          }
+                        />
+                      </label>
+                      {runningNowFields}
                     </div>
                   )}
                   {runMode === "race_prep" && (
@@ -1567,60 +1689,7 @@ export default function Onboarding() {
                           aria-invalid={racePreview.status === "invalid"}
                         />
                       </label>
-                      {askRunningNow && runningStart && (
-                        <div className="space-y-2">
-                          <p className="text-sm">Your running now</p>
-                          <div className="grid grid-cols-2 gap-3">
-                            {(
-                              [
-                                {
-                                  key: "weeklyMinutes",
-                                  label: "Minutes a week",
-                                  value: runningWeekMinutes,
-                                  set: setRunningWeekMinutes,
-                                },
-                                {
-                                  key: "longestRunMinutes",
-                                  label: "Longest run, min",
-                                  value: runningLongestMinutes,
-                                  set: setRunningLongestMinutes,
-                                },
-                              ] as const
-                            ).map((field) => (
-                              <label
-                                key={field.key}
-                                className="block space-y-1 text-sm"
-                              >
-                                <span className="text-muted-foreground">
-                                  {field.label}
-                                </span>
-                                <input
-                                  inputMode="numeric"
-                                  className="ds-input min-h-11 w-full font-mono tabular-nums"
-                                  value={field.value}
-                                  aria-invalid={
-                                    field.value !== "" && !runningStartValid
-                                  }
-                                  onChange={(event) =>
-                                    field.set(
-                                      event.target.value
-                                        .replace(/\D/g, "")
-                                        .slice(0, 4)
-                                    )
-                                  }
-                                />
-                              </label>
-                            ))}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {runningWeekMinutes !== "" &&
-                            runningLongestMinutes !== "" &&
-                            !runningStartValid
-                              ? "The longest run is part of the week, so it can’t be more, and each is at least 10 min."
-                              : "The plan starts from here and builds a step a week towards the race."}
-                          </p>
-                        </div>
-                      )}
+                      {runningNowFields}
                       {racePreview.status === "empty" ? (
                         <p className="text-sm text-muted-foreground">
                           Pick your race date, or choose Free running to start
@@ -2164,13 +2233,15 @@ export default function Onboarding() {
                     {firstRunTemplate?.name ??
                       (effectiveRunMode === "race_prep"
                         ? `${racePreview.distanceLabel} plan`
-                        : "Free running")}
+                        : savedRollingGoal
+                          ? ROLLING_GOAL_NAMES[savedRollingGoal]
+                          : "Free running")}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     <InlineNumerals>
                       {firstRunTemplate
                         ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm, intervalPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
-                        : effectiveRunMode === "race_prep"
+                        : effectiveRunMode === "race_prep" || savedRollingGoal
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."}
                     </InlineNumerals>

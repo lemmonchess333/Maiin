@@ -192,3 +192,52 @@ describe("RunSetupModal — the interval session handed to Start", () => {
     );
   });
 });
+
+describe("RunSetupModal — a planned time trial (Run24 (4))", () => {
+  it("shows the trial's own structure and starts it with no repeats", async () => {
+    const { metadata, prefill } = computePlanMetadata({
+      displayUnit: "km",
+      profileRunMode: "structured",
+      todayDayIndex: 3,
+      todayDate: "2027-03-03",
+      runPlan: undefined,
+      runDays: [
+        {
+          id: "rd-trial",
+          weekKey: "2027-03-01",
+          date: "2027-03-03",
+          dayIndex: 3,
+          templateId: "time_trial_5k",
+          type: "intervals",
+          status: "planned",
+        },
+      ],
+      paceTable: null,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "rd-trial",
+      raceTarget: null,
+    });
+    const onStart = vi.fn();
+    await act(async () => {
+      render(
+        <RunSetupModal
+          onStart={onStart}
+          onCancel={vi.fn()}
+          sessionName="5K time trial"
+          savedPreferences={{
+            autoPause: true,
+            audioCues: true,
+            ...(prefill as Partial<RunConfig>),
+            planMetadata: metadata,
+          }}
+        />
+      );
+    });
+    expect(screen.getAllByText("5 km time trial").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("1K")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: /^Start / }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+    expect(onStart.mock.calls[0][0].intervals).toBeUndefined();
+  });
+});

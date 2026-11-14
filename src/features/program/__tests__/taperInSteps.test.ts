@@ -150,9 +150,13 @@ describe("the taper in steps (Run22)", () => {
           easyAtMost(Math.min(...lastBuild) * share)
         );
       }
-      expect(Math.max(...easyMinutes(out(taper))), distance).toBeGreaterThan(
-        30
-      );
+      // A half's block runs 18 weeks at most (Run24 (3)), and the weekly
+      // hold keeps its last build week's medium-long at an hour, so its
+      // taper's 60% of it is the base 30, as an 18-week half's always was.
+      if (distance === "marathon")
+        expect(Math.max(...easyMinutes(out(taper))), distance).toBeGreaterThan(
+          30
+        );
       for (const m of easyMinutes(out(1))) expect(m, distance).toBe(30);
     }
   });
@@ -366,8 +370,11 @@ describe("the taper retains quality only when the fitted build held it", () => {
     ]) {
       const p = built("marathon", 16, more);
       expect(quality(p.weeks.slice(0, 12).flat()).length).toBeGreaterThan(0);
+      // The marathon's own sharpener (Run24 (5)).
       for (const week of p.weeks.slice(12, -1))
-        expect(quality(week)).toMatchObject([{ templateId: "8x400" }]);
+        expect(quality(week)).toMatchObject([
+          { templateId: "sharpener_marathon" },
+        ]);
     }
   });
 });
@@ -657,7 +664,16 @@ describe("the taper's easy runs step down from what the last build week held (Ru
             TAPER_WEEKS_BY_DISTANCE[distance]
           ),
           `a ${distance} ${weeks} weeks out, ${volume}, ${days} days`
-        ).toBe(easy);
+        ).toBe(
+          // Run24 (3): a half 29 weeks out is 11 weeks of rolling base and an
+          // 18-week block, whose last build week holds its medium-long at an
+          // hour, so its taper runs 30s. A 29-week marathon is a 20-week
+          // block after its base, whose last build week holds 6 × 1 km, so
+          // it tapers as a 17-week one does (Run24 (5)).
+          weeks === 29 && distance === "half"
+            ? "30 30 30".slice(0, 3 * (days - 2) - 1)
+            : easy
+        );
     // A compressed marathon ten weeks out holds its last build week to 15%
     // over the week before (Run24 (6)): its easy run gives way, and the
     // taper steps down from what that week held.

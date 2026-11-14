@@ -233,9 +233,29 @@ vi.mock("@/components/program/LiftReturnSheet", () => ({
 vi.mock("@/components/program/RunReturnSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/features/program/useRunReturn", () => ({
-  useRunReturn: () => ({ daysAway: null, dismissKey: null, offer: null }),
-}));
+vi.mock("@/features/program/useTrainingReturn", async () => {
+  const { assessTrainingReturn, liftingPlan } = await vi.importActual<
+    typeof import("@/features/program/trainingReturn")
+  >("@/features/program/trainingReturn");
+  // The lift side is the real check over the workouts Home hands in; the
+  // run side's read is stubbed (useTrainingReturn.test.tsx reads it).
+  return {
+    useTrainingReturn: (input: {
+      profile: Parameters<typeof liftingPlan>[0];
+      workouts: Parameters<typeof assessTrainingReturn>[0]["workouts"];
+      todayKey: string;
+    }) => ({
+      lift: assessTrainingReturn({
+        workouts: input.workouts,
+        runs: null,
+        todayKey: input.todayKey,
+        lifting: liftingPlan(input.profile),
+        running: "none",
+      }).lift,
+      run: { daysAway: null, dismissKey: null, offer: null },
+    }),
+  };
+});
 vi.mock("@/components/program/DayActionSheet", () => ({
   default: () => null,
 }));

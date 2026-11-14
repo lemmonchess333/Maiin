@@ -22,11 +22,16 @@ import {
   LAYOFF_DETRAINED_DAYS,
   LAYOFF_GAP_DAYS,
   LAYOFF_REENTRY_DAYS,
+  absenceFromDays,
   classifyLayoff,
-  daysSinceLastRun,
   layoffFromRuns,
+  runSessionDays,
   type DatedRun,
 } from "../layoffDetection";
+
+/** Days since the last run that counts, by the one return rule. */
+const daysSinceLastRun = (runs: DatedRun[], todayKey: string) =>
+  absenceFromDays(runSessionDays(runs), todayKey).daysAway;
 
 /** A run that clears `isVolumeEligible` — 8 km in 45 min. */
 const run = (date: string, extra: Partial<DatedRun> = {}): DatedRun => ({
