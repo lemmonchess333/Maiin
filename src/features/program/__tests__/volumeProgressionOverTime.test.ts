@@ -83,7 +83,6 @@ function simulate(weeks: number): WeekRow[] {
     weekNumber: 1,
     splitType,
     workouts,
-    fatigueScore: 0,
     updatedAt: 0,
     runDays: [],
   } as unknown as ProgramState;

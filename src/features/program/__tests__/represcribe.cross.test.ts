@@ -13,7 +13,6 @@ import {
 } from "../programEngine";
 import { toExperience, usesUndulation } from "../experienceModel";
 import {
-  BLOCK_AMNESTY_WEEKS,
   represcribeWorkouts,
   scaleLoadForReps,
   withRoleNumbers,
@@ -43,7 +42,6 @@ import type { Experience } from "../experienceModel";
  */
 const require = createRequire(import.meta.url);
 const cf = require("../../../../functions/lib/represcribe") as {
-  BLOCK_AMNESTY_WEEKS: number;
   PRIMARY_GOALS: readonly string[];
   assignDayRoles: (count: number) => string[];
   dayRoleOf: (day: unknown, byPosition: string) => string;
@@ -216,10 +214,6 @@ function week(days: number): WorkoutDay[] {
 }
 
 describe("goal-prescription engine — client vs functions mirror", () => {
-  it("BLOCK_AMNESTY_WEEKS agrees", () => {
-    expect(cf.BLOCK_AMNESTY_WEEKS).toBe(BLOCK_AMNESTY_WEEKS);
-  });
-
   it("goalProfileFor agrees for every goal in the union", () => {
     for (const goal of GOALS) {
       expect(cf.goalProfileFor(goal), goal).toEqual(goalProfileFor(goal));

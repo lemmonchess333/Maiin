@@ -85,7 +85,6 @@ function docMissingCoverage(): ProgramState {
     currentPhase: "accumulation",
     weekNumber: 11,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 0,
     programSchemaVersion: 2,
     liftWeekKey: "2026-08-02",

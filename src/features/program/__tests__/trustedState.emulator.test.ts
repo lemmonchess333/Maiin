@@ -126,7 +126,6 @@ describe.skipIf(!enabled)("trusted state with the Firestore emulator", () => {
           exercises: [],
         },
       ],
-      fatigueScore: 7,
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       updatedAt: 1,

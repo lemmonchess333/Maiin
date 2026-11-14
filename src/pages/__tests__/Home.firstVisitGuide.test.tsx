@@ -287,7 +287,6 @@ function accountFrom(daysAgo: number) {
       exercises: [{ name: "Squat", exerciseId: "squat", sets: 3 }],
       completed: false,
     })),
-    fatigueScore: 0,
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

@@ -4808,3 +4808,32 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## The plan's retired fields are stripped (App1 Q24, 2026-11-13)
+
+Affects: `users/{uid}/programState/current`. Seven fields nothing reads are
+no longer written: `fatigueScore`, `plateauResponses`, the plan's own
+`templateId` (never a run day's), `recoveringMuscles`,
+`settings.microloading`, `trainingBlock.amnestyWeeksLeft` and
+`deloadSnapshot.fatigueScore`; `updatedAt` stays. The server deletes them
+silently on every programme command and never refuses a command or a plan
+save for one, so a stored plan, or an older app that still writes
+`fatigueScore`, keeps working. Tested against a fake and in the emulator
+suite. Run these after Deploy production has shipped the change (the
+functions go out before the web build; the iOS build comes later), from
+the repo root with the usual operator credentials. The script is
+`functions/scripts/stripRetiredProgramFields.js`.
+
+- [ ] **Dry run.** Run the script with `--project adaptive-fitness-af8bb`
+      and nothing else. Passing: a JSON report with `dryRun: true`, `plans`
+      about the number of accounts with a plan, and a count for each of the
+      seven fields (`fatigueScore` close to `plans`); nothing written.
+- [ ] **Strip.** The same command with `--apply` added. Passing: `stripped`
+      equals the dry run's `carrying`. If it stops partway (a plan deleted
+      mid-run), run it again, from the start or with `--after` and the last
+      printed `cursor`. A second dry run then shows `carrying: 0`, or only
+      plans an older app has written `fatigueScore` back to, which the
+      server deletes again on their next command. Nothing else is needed.
+- [ ] **Lighter week on a stripped plan.** On a phone, on a plan the strip
+      has run over, Apply lighter week, then Undo. Passing: both work and
+      the week's sets come back as they were.

@@ -130,7 +130,6 @@ function makeProgramState(
     weekNumber: 1,
     splitType: "ppl",
     workouts,
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

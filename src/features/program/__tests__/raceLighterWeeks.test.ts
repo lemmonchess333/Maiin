@@ -130,7 +130,6 @@ describe("advanceWeek with a race plan", () => {
       weekNumber: 5,
       splitType: "full_body",
       workouts: workouts.map((d) => ({ ...d, completed: true })),
-      fatigueScore: 0,
       updatedAt: 0,
       ...over,
     } as ProgramState;

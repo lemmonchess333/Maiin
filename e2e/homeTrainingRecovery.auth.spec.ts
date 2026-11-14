@@ -68,7 +68,6 @@ test.describe("Home training recovery", () => {
           weekNumber: 1,
           splitType: "ppl",
           workouts,
-          fatigueScore: 0,
           updatedAt: saturday.getTime(),
           liftWeekKey: localWeekKey(saturday),
           programSchemaVersion: 3,

@@ -154,7 +154,6 @@ async function run() {
       currentPhase: "progression",
       weekNumber: 7,
       splitType: "full_body",
-      fatigueScore: 10,
       updatedAt: Date.now(),
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
