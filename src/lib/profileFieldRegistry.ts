@@ -202,7 +202,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   {
     field: "goal",
     sanitized: false,
-    retired: "never written; the phase is `program.goal`",
+    retired: "never written; the phase is the plan’s goal",
   },
   { field: "goalWeightKg", sanitized: true },
   { field: "hasUsedTrial", sanitized: false, serverOnly: true },
@@ -248,7 +248,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   {
     field: "macroTargets",
     sanitized: false,
-    retired: "setup's day-one split, frozen; History reads the live targets",
+    retired:
+      "the day-one split from setup, frozen; History reads the live targets",
   },
   { field: "maxHeartRate", sanitized: true },
   { field: "nonRaceGoal", sanitized: true },
