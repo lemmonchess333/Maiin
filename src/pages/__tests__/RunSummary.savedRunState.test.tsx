@@ -992,6 +992,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       activityType?: string;
       segments?: Record<string, unknown>[];
       workPortion?: { seconds: number; meters: number };
+      hotDay?: boolean;
     } = {}
   ) {
     const activityType = run.activityType ?? "easy";
@@ -1001,6 +1002,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       runConfig: {
         activityType,
         ...(run.segments ? { segments: run.segments } : {}),
+        ...(run.hotDay ? { hotDay: true } : {}),
         planMetadata: {
           planMode: "race_prep",
           planSource: "today_plan",
@@ -1056,6 +1058,41 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
     ).toBeNull();
+  });
+
+  /* Heat (heatAdjustment.ts): a run started on a hot day is never judged
+     slow. The same tempo on a cooler day reads "Easier than a tempo". */
+  it("never calls a hot day's tempo slow: slower in the heat is expected", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    // The tempo blocks at 6:00 /km, well past a 25-minute 5K's threshold
+    // window of 5:16–5:22 /km.
+    const slowBlocks = { seconds: 1440, meters: 4000 };
+    const cool = renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion: slowBlocks,
+    });
+    expect(
+      await screen.findByText(/^Easier than a tempo today: 6:00 \/km/)
+    ).toBeInTheDocument();
+    cool.unmount();
+
+    renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion: slowBlocks,
+      hotDay: true,
+    });
+    expect(
+      await screen.findByText(
+        "Slower in the heat today: 6:00 /km. That’s expected, and it still counts."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Easier than a tempo/)).toBeNull();
   });
 
   /* Pgm8 R1: Pace Insight reads efforts only. The summary hands over the

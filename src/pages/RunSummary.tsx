@@ -125,7 +125,7 @@ import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
-import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
+import { announceRouteShare, exportTrace, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import {
@@ -1053,6 +1053,10 @@ export default function RunSummary() {
         distance,
         runFitness: profile?.runFitness,
         unit,
+        // A hot day's run is never judged slow, and one adjusted for heat
+        // is judged against the paces it was set (heatAdjustment.ts).
+        hotDay: runConfig?.hotDay === true,
+        heatAdjustment: runConfig?.heatAdjustment ?? null,
       });
 
   // The context-aware primary stat, a card above the stats card of four.
@@ -1497,7 +1501,11 @@ export default function RunSummary() {
     }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
-    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(runDate)}`);
+    // The raw fixes, cut by the privacy zones on those coordinates.
+    const gpx = toGPX(
+      exportTrace(state?.points ?? [], privacyZones),
+      `Tropos Run ${formatDayMonthYear(runDate)}`
+    );
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
        the same words as RunDetail's Export GPX. */

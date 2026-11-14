@@ -32,6 +32,8 @@ const VERDICT: Record<NonNullable<RunRecord["verdict"]>, string> = {
   fast: "fast",
   "easy-too-fast": "easy too fast",
   slow: "slow",
+  // The simulator has no weather, so no run of its is read by feel.
+  heat: "by feel, hot day",
 };
 
 /** One run: "Mon long_10k 10.0 km/62 min 6:11 [on target]", with the run
