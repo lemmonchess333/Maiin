@@ -361,8 +361,8 @@ export function buildTileConfig(
 
 /**
  * A long run's swap on a hot day: the same long run with its race-pace
- * finish taken off, all of it easy running, as a plain long run of that
- * distance is set up (its distance target, no steps).
+ * finish or blocks taken off, all of it easy running, as a plain long run
+ * of that distance is set up (its distance target, no steps).
  */
 export function heatLongSwapConfig(config: RunConfig): RunConfig {
   const { segments: _segments, ...rest } = config;

@@ -1038,13 +1038,17 @@ export default function Run() {
     (heatOffer.hrCeiling !== undefined || heatTarget !== null);
   const heatAdjusted = heatAccepted && heatCanAdjust;
   /* The swaps beside it: a tempo or interval session for an easy run of
-     its minutes, a long run's race-pace finish for easy running. */
+     its minutes, and a structured long run (a race-pace finish or race-pace
+     blocks, by pace or by effort) for easy running all the way. */
+  const structuredLongRun =
+    launchWorkout?.type === "long" &&
+    (planDecision.prefill.segments ?? []).some((step) => step.type !== "easy");
   const heatSwapKind: "easy" | "longEasy" | null =
     !hotNow || !launchWorkout
       ? null
       : heatSwapMinutes !== null
         ? "easy"
-        : launchWorkout.type === "long" && launchRacePace?.kind === "finish"
+        : structuredLongRun
           ? "longEasy"
           : null;
   /* The planned run as its Start begins it: adjusted for heat when the

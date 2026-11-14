@@ -23,6 +23,7 @@ import Run from "../Run";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import type { ProgramState } from "@/features/program/programTypes";
 import { HEAT_CHECK_MS } from "@/features/run/startOnArrival";
+import { racePaceLongTemplateId } from "@/lib/workoutTemplates";
 import { heatEasedPaceTable } from "@/lib/heatAdjustment";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import { RUN } from "@/test/journeyScreens";
@@ -301,7 +302,7 @@ async function open(url: string) {
   });
 }
 
-function planToday(templateId: "easy_30" | "tempo_30") {
+function planToday(templateId: string) {
   const today = new Date();
   h.programState = {
     runDays: [
@@ -311,7 +312,11 @@ function planToday(templateId: "easy_30" | "tempo_30") {
         date: localDateString(today),
         weekKey: localWeekKey(today),
         templateId,
-        type: templateId === "easy_30" ? "easy" : "tempo",
+        type: templateId.startsWith("easy")
+          ? "easy"
+          : templateId.startsWith("long")
+            ? "long"
+            : "tempo",
         completed: false,
         status: "planned",
       },
@@ -464,6 +469,20 @@ describe("a hot day, started from Home", () => {
     expect(
       screen.getByText(
         "easy · time 2700 · hot day · not adjusted · runday_today"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("offers a long run with race-pace blocks as easy running all the way", async () => {
+    const id = racePaceLongTemplateId("long_16k", "half")!;
+    planToday(id);
+    h.weather = async () => HOT;
+    await open(`/run?template=${id}&scheduledRunId=runday_today&start=1`);
+    await tap("Run it all easy");
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        "long · distance 16000 · hot day · not adjusted · runday_today"
       )
     ).toBeInTheDocument();
   });

@@ -178,7 +178,7 @@ export interface RunSetupHeat {
   adjustedLine: string;
   /** A tempo or interval session's minutes, offered as an easy run. */
   swapMinutes: number | null;
-  /** A long run with a race-pace finish, offered as all easy running. */
+  /** A structured long run, offered as all easy running. */
   longSwap: boolean;
 }
 

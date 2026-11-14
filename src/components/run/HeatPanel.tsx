@@ -35,7 +35,7 @@ interface HeatPanelProps {
    *  nothing to adjust (a free run, a run with no targets). */
   adjust?: HeatPanelAdjust | null;
   /** A swap beside it: a quality session for an easy run of its minutes,
-   *  or a long run's race-pace finish for easy running. */
+   *  or a structured long run for easy running all the way. */
   swap?: HeatPanelSwap | null;
   className?: string;
 }

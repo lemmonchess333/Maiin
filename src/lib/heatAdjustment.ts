@@ -44,8 +44,8 @@
  *    when none do. Interval repeats keep their eased paces: heart rate lags
  *    on short repeats (running-evidence.md §4.13).
  * Beside it, two swaps: a tempo or interval session for an easy run of
- * the same minutes, and a long run with a race-pace finish for an easy
- * long run.
+ * the same minutes, and a structured long run (a race-pace finish or
+ * race-pace blocks) for an easy long run of the same distance.
  *
  * Afterwards, a run started on a hot day is never judged slow
  * (plannedRunVerdict.ts): the evidence says not to mark a hot day's run a
@@ -356,8 +356,8 @@ export const HEAT_SWAP_START = "Run easy instead";
  *  setup, whose Start then starts it). */
 export const HEAT_SWAP_SWITCH = "Switch to easy";
 
-/** A long run with a race-pace finish: the swap to an easy long run of the
- *  same distance. */
+/** A structured long run (a race-pace finish or race-pace blocks): the
+ *  swap to an easy long run of the same distance. */
 export const HEAT_LONG_SWAP_LINE = "Or run it all at an easy pace.";
 export const HEAT_LONG_SWAP = "Run it all easy";
 
