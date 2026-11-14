@@ -27,10 +27,13 @@ export const BADGE_REVEAL_WINDOW_DAYS = 14;
 const cache = new Map<string, readonly string[]>();
 const listeners = new Set<() => void>();
 const EMPTY: readonly string[] = [];
+type RevealList = "pendingBadgeReveals" | "badgeRevealsQueued";
 const keyFor = (uid: string) => scopedKey("pendingBadgeReveals", uid);
 const queuedKeyFor = (uid: string) => scopedKey("badgeRevealsQueued", uid);
 
-function readIds(key: string): string[] {
+/** One of the account's two lists on this device, each under its own uid. */
+function readIds(list: RevealList, uid: string): string[] {
+  const key = scopedKey(list, uid);
   const stored = readJson<unknown>(key, []);
   return Array.isArray(stored)
     ? [...new Set(stored.filter((id): id is string => typeof id === "string"))]
@@ -39,7 +42,7 @@ function readIds(key: string): string[] {
 
 export function pendingBadgeIds(uid: string | null): readonly string[] {
   if (!uid) return EMPTY;
-  if (!cache.has(uid)) cache.set(uid, readIds(keyFor(uid)));
+  if (!cache.has(uid)) cache.set(uid, readIds("pendingBadgeReveals", uid));
   return cache.get(uid)!;
 }
 
@@ -92,7 +95,7 @@ export function queueServerAwards(
 ): void {
   const fresh = serverAwardsToReveal(stored, nowMs);
   if (fresh.length === 0) return;
-  const queued = new Set(readIds(queuedKeyFor(uid)));
+  const queued = new Set(readIds("badgeRevealsQueued", uid));
   const add = fresh.filter((id) => !queued.has(id));
   if (add.length === 0) return;
   writeJson(queuedKeyFor(uid), [...queued, ...add]);
