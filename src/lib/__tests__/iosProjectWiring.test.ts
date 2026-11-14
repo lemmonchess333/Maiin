@@ -27,7 +27,7 @@
  * entitlements the Sign in with Apple and HealthKit plugins need.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
@@ -688,9 +688,9 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
   });
 });
 
-/* ── The heart rate sensor plugin ──────────────────────────────────── */
+/* ── The app's own native plugins ─────────────────────────────────── */
 
-/** Paths the App target's Sources phase compiles, read by structure. */
+/** Paths the App target's Sources phase compiles. */
 function compiledSourcePaths(): string[] {
   const target = pbxproj.match(
     /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
@@ -708,24 +708,67 @@ function compiledSourcePaths(): string[] {
   if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
   return [
     ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
-  ].map((m) => {
-    const buildFile = pbxproj.match(
+  ].map(([, id]) => {
+    const fileRefId = pbxproj.match(
       new RegExp(
-        `^\\s*${m[1]} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+        `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
         "m"
       )
-    );
-    if (!buildFile) throw new Error(`PBXBuildFile ${m[1]} has no fileRef`);
-    const fileRef = pbxproj.match(
+    )?.[1];
+    const path = pbxproj.match(
       new RegExp(
-        `^\\s*${buildFile[1]} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+        `^\\s*${fileRefId} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
         "m"
       )
-    );
-    if (!fileRef) throw new Error(`file reference ${buildFile[1]} missing`);
-    return fileRef[1];
+    )?.[1];
+    if (!path) throw new Error(`build file ${id} has no source path`);
+    return path;
   });
 }
+
+describe("iOS project wiring — the app's own plugins", () => {
+  const appSwift = readdirSync(resolve(repoRoot, "ios/App/App")).filter((f) =>
+    f.endsWith(".swift")
+  );
+
+  it("compiles every Swift file in the app's folder into the app", () => {
+    // A file left out builds green and ships nothing: its plugin is then
+    // missing at run time, which the web side reads as an older shell.
+    expect(appSwift).toContain("MotionActivityPlugin.swift");
+    expect([...compiledSourcePaths()].sort()).toEqual([...appSwift].sort());
+  });
+
+  it("registers every app plugin with the bridge, under the name the web side asks for", () => {
+    // Capacitor's package scanner finds package plugins only; an app
+    // target's plugin exists only once TroposBridgeViewController adds it.
+    const bridge = read("ios/App/App/TroposBridgeViewController.swift");
+    const plugins = appSwift
+      .map((file) => read(`ios/App/App/${file}`))
+      .flatMap((source) => [
+        ...source.matchAll(
+          /final class (\w+): CAPPlugin, CAPBridgedPlugin[\s\S]*?let jsName = "(\w+)"/g
+        ),
+      ])
+      .map(([, cls, jsName]) => ({ cls, jsName }));
+    // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
+    expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "HeartRateSensor",
+      "MotionActivity",
+      "WatchRun",
+    ]);
+    for (const { cls, jsName } of plugins) {
+      expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
+      const callers = [
+        "src/lib/heartRateSensorBridge.ts",
+        "src/lib/runMotionSource.ts",
+        "src/lib/watchRunBridge.ts",
+      ].filter((file) =>
+        new RegExp(`registerPlugin<\\w+>\\("${jsName}"\\)`).test(read(file))
+      );
+      expect(callers).toHaveLength(1);
+    }
+  });
+});
 
 describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
   const plugin = read("ios/App/App/HeartRateSensorPlugin.swift");
