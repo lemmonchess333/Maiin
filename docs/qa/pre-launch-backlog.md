@@ -4851,6 +4851,23 @@ Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` w
 - [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
 - [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
 
+## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
+
+Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),
+which now reads `programState.runPlan.peakLongRunKm`, written whenever a race
+plan's week is built. Unit and season tests drive it; no stored plan has
+picked up the field yet.
+
+- [ ] **A stored plan picks up its peak.** On an account with a race plan
+      made before this shipped, open the app after its next Monday. Passing:
+      `users/{uid}/programState/current` has `runPlan.peakLongRunKm` (the
+      plan's longest long run in km), and until it does the sheet's race
+      register never opens.
+- [ ] **A slow marathoner in the taper.** A marathon plan whose long run
+      peaks under 21 km (setup says "Your longest run will be 20 km"), every
+      long run done, opened in a taper week. Passing: no "Your long runs and
+      your race" sheet.
+
 ## A race block capped, with a rolling base before it (Run24 (3), 2026-11-13)
 
 Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
