@@ -22,7 +22,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { BASE_LIGHT_TEMPLATE_IDS, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   recentPace,
   recentRunning,
@@ -531,9 +531,8 @@ const TAPER_SHARPENER: Record<"5k" | "10k" | "half" | "marathon", string> = {
   marathon: "sharpener_marathon",
 };
 
-/** Run24 (5): the base's light quality in turn, a fartlek and short hills,
- *  half an hour each and by feel. */
-const BASE_LIGHT_SESSIONS = ["fartlek_30", "hills_6x30s"] as const;
+/** Run24 (5): the base's light quality in turn (`BASE_LIGHT_TEMPLATE_IDS`). */
+const BASE_LIGHT_SESSIONS = BASE_LIGHT_TEMPLATE_IDS;
 
 /** Run24 (5): the library session on a flavour ladder's rung. */
 function librarySessionId(ladderId: string, family: LibraryFamily): string {
