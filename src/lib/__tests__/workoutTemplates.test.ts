@@ -16,6 +16,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  BASE_LIGHT_TEMPLATE_IDS,
   RUN_TEMPLATES,
   isRaceTemplateId,
   isScheduledRaceRunDay,
@@ -244,6 +245,16 @@ describe("descriptions in plain words (Run21 (2))", () => {
       expect(t.description, t.id).not.toMatch(
         /aerobic|threshold|economy|VO2|lactate/i
       );
+    }
+  });
+});
+
+describe("the base's light sessions (Run24 (5))", () => {
+  it("names templates that exist, each a quality session", () => {
+    for (const id of BASE_LIGHT_TEMPLATE_IDS) {
+      const template = RUN_TEMPLATES.find((t) => t.id === id);
+      expect(template, id).toBeDefined();
+      expect(["tempo", "intervals"]).toContain(template!.type);
     }
   });
 });
