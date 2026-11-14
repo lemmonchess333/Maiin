@@ -5488,3 +5488,43 @@ sender.
       source of `hourlyStreakNudge` and `hourlyChallengeAnnouncements`.
       Passing: both reach `pushBudget.claimPushBudget`, and the streak and
       recap senders call `settleReminderBeforeSend`.
+
+## Pushes from people, and props once a day (App1 Q18, 2026-11-14)
+
+Affects: `onNotificationItemWritten` (a new Firestore trigger on
+`notifications/{uid}/items`) and `hourlyPropsBundle` (a new hourly
+schedule), the collection-group index on `settings.propsBundleDueAt`
+(firestore.indexes.json), both service workers' tap routes, and
+`nativePushRoute`. Comments (sessions and Space posts), follow requests and
+their answers, an invite joined and a league result push as their tray row
+is written; props come as one push at 19:00 local. Unit-tested; nothing has
+been seen on a phone or a deployed function.
+
+- [ ] **The index is built.** After the Firestore deploy, the console shows
+      the `settings` collection-group index on `propsBundleDueAt` as
+      enabled. Passing: `hourlyPropsBundle`'s run log has no
+      FAILED_PRECONDITION and its job record reads succeeded.
+- [ ] **A comment arrives.** Account B comments on A's run while A's app is
+      closed. Passing: one push on A's iPhone, "New comment" / "B commented
+      on your activity", within a minute; tapping it opens the run with its
+      comments. The comment's own words are not on the lock screen.
+- [ ] **Follow request, invite, league.** A follow request to an account
+      with Approve followers on, an account joining from a code, and a
+      Monday league result: one push each, opening the asker's profile, the
+      new person's profile and the league.
+- [ ] **Props once a day.** Two accounts give props to A's run in the
+      morning. Passing: nothing at the time; one push at 19:00 local, "2
+      people gave props to your run", opening the run; nothing more that
+      day for later props, which come the next day at 19:00.
+- [ ] **Quiet hours.** A comment at 23:00 local. Passing: no sound and no
+      lit screen; the push is in Notification Centre in the morning. The
+      same on the web (a silent notification).
+- [ ] **Never across a block, never restricted.** B blocks A, then A
+      comments on B's older post through a stale screen (or seed a row in
+      the console). Passing: no push to B. The same with B restricted.
+- [ ] **The switches.** Turn Comments off under Settings → Notifications →
+      Activity. Passing: no row and no push for a new comment. Turn Props
+      off: no 19:00 push.
+- [ ] **Deployed functions.** After the functions deploy, the console shows
+      `onNotificationItemWritten` with retries on and `hourlyPropsBundle`
+      with one instance and 540 s; the deploy's read-back passed for both.

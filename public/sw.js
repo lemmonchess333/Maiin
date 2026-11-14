@@ -22,13 +22,28 @@ const BASE_PATH = self.location.pathname.replace(/sw\.js$/, "");
 // config (or a temporarily-unreachable CDN) still installs for offline caching.
 const ICON = BASE_PATH + "icons/icon-192x192.png";
 
+// Only destinations our senders use may navigate an app window: the fixed
+// pages, and a post, a Space post or a person by a plain id (App1 Q18).
+// src/lib/nativePushRoute.ts is the iPhone's copy of the same rule.
+function pushRoute(requested) {
+  if (requested === "/social" || requested === "/social?tab=together")
+    return "/social?tab=together";
+  if (["/program", "/review", "/league"].includes(requested)) return requested;
+  const id = "[A-Za-z0-9_-]{1,128}";
+  const allowed = [
+    new RegExp(`^/activity/${id}(?:\\?comments=1)?$`),
+    new RegExp(`^/space/${id}/post/${id}(?:\\?comments=1)?$`),
+    new RegExp(`^/user/${id}$`),
+  ];
+  return typeof requested === "string" &&
+    allowed.some((pattern) => pattern.test(requested))
+    ? requested
+    : "/";
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const requestedRoute = event.notification.data?.route;
-  // Only destinations used by our senders may navigate an app window.
-  const route = requestedRoute === "/social" || requestedRoute === "/social?tab=together"
-    ? "/social?tab=together"
-    : requestedRoute === "/program" || requestedRoute === "/review" ? requestedRoute : "/";
+  const route = pushRoute(event.notification.data?.route);
   const target = new URL(BASE_PATH.replace(/\/$/, "") + route, self.location.origin).href;
   event.waitUntil(
     clients
@@ -83,6 +98,8 @@ if (
         icon: ICON,
         badge: ICON,
         data,
+        // A social push in the person's quiet hours arrives silently.
+        silent: data.silent === "1",
       });
     });
   } catch (error) {

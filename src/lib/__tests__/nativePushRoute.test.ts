@@ -19,11 +19,24 @@ describe("native notification destinations", () => {
     expect(nativePushRoute({ route: "/social" }, "me")).toBeNull();
   });
   it.each([
+    "/activity/a1B2_c-3",
+    "/activity/a1B2_c-3?comments=1",
+    "/space/london-marathon/post/p9?comments=1",
+    "/user/other",
+    "/league",
+  ])("opens what a push from a person is about: %s (App1 Q18)", (route) => {
+    expect(nativePushRoute({ ownerUid: "me", route }, "me")).toBe(route);
+  });
+  it.each([
     "https://example.com",
     "//example.com",
     "/social?redirect=https://example.com",
     "javascript:alert(1)",
-    "/user/other",
+    "/user/../settings",
+    "/user/a/b",
+    "/activity/x?comments=1&next=//example.com",
+    "/activity/",
+    "/space/runners/post/p1/../../x",
   ])("rejects unreviewed route %s", (route) => {
     expect(nativePushRoute({ ownerUid: "me", route }, "me")).toBeNull();
   });
