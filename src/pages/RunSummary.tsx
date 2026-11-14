@@ -125,7 +125,11 @@ import {
   clearHeartRateSession,
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
-import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
+import {
+  heartRateCoverageBand,
+  maxHrFromAge,
+  summarizeHeartRate,
+} from "@/lib/hrZones";
 import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
@@ -1400,7 +1404,16 @@ export default function RunSummary() {
 
       // Activation funnel: a real saved run, once a run (a resumed save
       // has fired it). A run saved anyway is not one.
-      if (!isInvalid && !completion.resumed) trackLifecycle("run_completed");
+      // A Watch run also says how much of it the heart rate covered, as a
+      // band: the release's measurement of paired runs and coverage.
+      if (!isInvalid && !completion.resumed) {
+        if (state.watchCompanionUsed)
+          trackLifecycle("run_completed", {
+            watchCompanion: true,
+            heartRateCoverage: heartRateCoverageBand(heartRate),
+          });
+        else trackLifecycle("run_completed");
+      }
 
       // Sharing happens on the finish screen once the run is saved:
       // automatically when the user has said so, or from its share button.

@@ -261,6 +261,14 @@ describe("Apple Health permissions and storage match the policy", () => {
     expect(PRIVACY_PROSE).toMatch(
       /Raw heart rate samples are held on your device/
     );
+    // The Watch asks to save workouts only because a workout session must;
+    // the policy and the Watch's own usage text both say it saves none.
+    expect(PRIVACY_PROSE).toMatch(
+      /Apple asks an app that runs one for permission to save workouts as well; the Watch saves none/
+    );
+    expect(read("../../../ios/App/TroposWatch/Info.plist")).toMatch(
+      /<key>NSHealthUpdateUsageDescription<\/key>\s*<string>[^<]*The Watch saves no workout to Health/
+    );
     expect(PRIVACY_PROSE).toMatch(/If you separately turn on workout export/);
     expect(PRIVACY_PROSE).toMatch(/without a GPS route/);
     // The pilot build, which carries Watch runs and workout export, says
