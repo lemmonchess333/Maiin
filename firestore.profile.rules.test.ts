@@ -417,8 +417,9 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
 
 /**
  * The figures other people read on a profile (survey item 18): the joined
- * date, the two streaks and the badge summary. The owner's device writes
- * them, so the rules bound their shape rather than their truth.
+ * date and the two streaks. The owner's device writes them, so the rules
+ * bound their shape rather than their truth. The badge summary is the
+ * server's (App1 Q33): its suite is below, beside medalSummary's.
  */
 suite(
   "users/{uid}/public/profile — the joined date, streaks and badges",
@@ -517,74 +518,6 @@ suite(
       });
       await assertSucceeds(
         setDoc(ref(), { displayName: "Sam" }, { merge: true })
-      );
-    });
-
-    it("takes the badge summary the app writes, and nothing larger or inconsistent", async () => {
-      await assertSucceeds(
-        setDoc(
-          ref(),
-          {
-            badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 },
-          },
-          { merge: true }
-        )
-      );
-      const many = Object.fromEntries(
-        Array.from({ length: 101 }, (_, i) => [`b${i}`, "2026-06-07"])
-      );
-      for (const bad of [
-        { earnedMap: { first_step: "2026-06-07" }, count: 40 },
-        { earnedMap: many, count: 101 },
-        { earnedMap: {}, count: 0, extra: "payload" },
-        { earnedMap: "first_step", count: 1 },
-      ]) {
-        await assertFails(
-          setDoc(ref(), { badgeSummary: bad }, { merge: true })
-        );
-      }
-    });
-
-    /* The 100-entry cap left each entry unbounded: a 9 KB "date" a
-       hundred times parked most of a megabyte in a document every search
-       result downloads. The app writes a badge id (18 characters at most)
-       and an ISO date (24). */
-    it("takes every badge with its ISO date, but not a padded date or id", async () => {
-      // The refusals run first, on an empty document: a merge write merges
-      // the map into what is stored, so after the full map below each of
-      // these would fail the entry count instead, and prove nothing.
-      for (const bad of [
-        { earnedMap: { first_step: "x".repeat(4001) }, count: 1 },
-        // Firestore refuses a field name over 1,500 bytes itself, so the
-        // ids are padded short of that and over the total together.
-        {
-          earnedMap: {
-            ["a".repeat(1400)]: "2026-06-07",
-            ["b".repeat(1400)]: "2026-06-07",
-            ["c".repeat(1400)]: "2026-06-07",
-          },
-          count: 3,
-        },
-        // A nested map has no text form to measure. A number or boolean
-        // does, and is bounded like a date; the reader skips it.
-        { earnedMap: { first_step: { at: "x".repeat(5000) } }, count: 1 },
-      ]) {
-        await assertFails(
-          setDoc(ref(), { badgeSummary: bad }, { merge: true })
-        );
-      }
-      const all = Object.fromEntries(
-        Array.from({ length: 100 }, (_, i) => [
-          `programme_complete_${i}`,
-          "2026-06-07T08:09:10.123Z",
-        ])
-      );
-      await assertSucceeds(
-        setDoc(
-          ref(),
-          { badgeSummary: { earnedMap: all, count: 100 } },
-          { merge: true }
-        )
       );
     });
 
@@ -833,6 +766,74 @@ suite("users/{uid}/public/profile — medalSummary is the server's", () => {
      down; the server puts it back. */
   it("lets a full overwrite leave it out", async () => {
     await seed({ uid: ME, displayName: "Me", medalSummary: gold });
+    await assertSucceeds(setDoc(ref(), { uid: ME, displayName: "Me" }));
+  });
+});
+
+/**
+ * `badgeSummary` — the badges other people read (App1 Q33: every badge is
+ * awarded by the server). Written only with the badge itself, by the award
+ * in functions/lib/badgeAwards.js, so the owner may leave it as it is and
+ * nothing else, as with medalSummary. It used to be the owner's device's to
+ * write, bounded by shape; a bound on shape could not stop a client
+ * claiming a badge it had not earned. Each refusal is paired with the
+ * write the app really makes beside it.
+ */
+suite("users/{uid}/public/profile — badgeSummary is the server's", () => {
+  const ME = "pub-badges";
+  const path = `users/${ME}/public/profile`;
+  const summary = {
+    earnedMap: { first_step: "2026-06-07T08:09:10.123Z" },
+    count: 1,
+  };
+  const seed = (data: Record<string, unknown>) =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), path), data);
+    });
+  const ref = () => doc(env.authenticatedContext(ME).firestore(), path);
+
+  it("refuses a client that writes one on a new profile", async () => {
+    await assertFails(
+      setDoc(
+        ref(),
+        { displayName: "Me", badgeSummary: summary },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(setDoc(ref(), { displayName: "Me" }, { merge: true }));
+  });
+
+  it("refuses a client that adds to, changes or empties the stored one", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
+    for (const forged of [
+      {
+        earnedMap: { ...summary.earnedMap, year_long: "2026-06-08" },
+        count: 2,
+      },
+      { earnedMap: { first_step: "2020-01-01T00:00:00.000Z" }, count: 1 },
+      { earnedMap: {}, count: 0 },
+    ]) {
+      await assertFails(updateDoc(ref(), { badgeSummary: forged }));
+    }
+    // A merge write merges the map key by key, so adding one is a change.
+    await assertFails(
+      setDoc(
+        ref(),
+        { badgeSummary: { earnedMap: { year_long: "2026-06-08" } } },
+        { merge: true }
+      )
+    );
+  });
+
+  it("lets a profile holding one write its other fields", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
+    await assertSucceeds(
+      setDoc(ref(), { displayName: "Sam", currentStreak: 3 }, { merge: true })
+    );
+  });
+
+  it("lets a full overwrite leave it out", async () => {
+    await seed({ uid: ME, displayName: "Me", badgeSummary: summary });
     await assertSucceeds(setDoc(ref(), { uid: ME, displayName: "Me" }));
   });
 });

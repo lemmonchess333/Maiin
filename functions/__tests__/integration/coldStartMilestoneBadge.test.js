@@ -30,6 +30,10 @@
  * isolation, and `badgeRules.test.js` passes either way — it tests which
  * ids a run QUALIFIES for, never whether the award lands.
  *
+ * Since App1 Q33 every badge is awarded by the server, so a first session
+ * also earns `first_step` (lib/badgeAwards.js); the expectations below
+ * include it.
+ *
  * Gated on FIRESTORE_EMULATOR_HOST — skips in an ordinary unit run.
  */
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
@@ -130,7 +134,7 @@ suite("cold-start milestone badges", () => {
     await logRun("r-1", 5200, 1600);
 
     // Pre-fix: null — the trigger returned before writing anything.
-    expect(await earnedBadgeIds()).toEqual(["first_5k"]);
+    expect(await earnedBadgeIds()).toEqual(["first_5k", "first_step"]);
   });
 
   it("awards a first-ever plate_club on a cold-start workout", async () => {
@@ -138,22 +142,24 @@ suite("cold-start milestone badges", () => {
 
     await logWorkout("w-1", 60);
 
-    expect(await earnedBadgeIds()).toEqual(["plate_club"]);
+    expect(await earnedBadgeIds()).toEqual(["first_step", "plate_club"]);
   });
 
   it("mirrors the award onto the public badge summary", async () => {
     // The cross-user projection has to be created too, or the badge exists
     // for the owner and is invisible on their profile to everyone else.
     // 10.5 km in 50:00 is 4:45/km, so this run clears the sub-5:00
-    // speed_demon gate as well — all three land in one award call.
+    // speed_demon gate as well — all four (with first_step) land in one
+    // award call.
     await logRun("r-1", 10500, 3000);
 
     const pub = await publicProfileRef().get();
     expect(pub.exists).toBe(true);
-    expect(pub.data().badgeSummary.count).toBe(3);
+    expect(pub.data().badgeSummary.count).toBe(4);
     expect(Object.keys(pub.data().badgeSummary.earnedMap).sort()).toEqual([
       "10k_club",
       "first_5k",
+      "first_step",
       "speed_demon",
     ]);
   });
@@ -235,6 +241,10 @@ suite("cold-start milestone badges", () => {
     expect(data.currentStreak).toBe(4);
     expect(data.longestStreak).toBe(9);
     expect(data.totalActiveDays).toBe(30);
-    expect(await earnedBadgeIds()).toEqual(["first_5k", "week_warrior"]);
+    expect(await earnedBadgeIds()).toEqual([
+      "first_5k",
+      "first_step",
+      "week_warrior",
+    ]);
   });
 });

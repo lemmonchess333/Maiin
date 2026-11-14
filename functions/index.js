@@ -73,11 +73,10 @@ const followCounts = require("./lib/followCounts");
 const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
-const {
-  runMilestoneBadges,
-  lifetimeMilestoneBadges,
-  liftWeightMilestoneBadges,
-} = require("./lib/badgeRules");
+const { lifetimeMilestoneBadges } = require("./lib/badgeRules");
+// App1 Q33: every badge is awarded here, from the triggers that see its
+// facts (lib/badgeAwards.js has which trigger decides which badge).
+const badgeAwards = require("./lib/badgeAwards");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const {
@@ -4975,111 +4974,18 @@ exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
  * doc-growth footgun.
  */
 /**
- * Award milestone badges server-side. The catalogue's milestone badges
- * (running distances, …) can't be computed from the client's WINDOWED streak
- * snapshots, so the activity-create triggers award them here off the full doc.
- *
- * Writes the same two surfaces the client `awardBadge` does — `streaks/data`
- * (full `badges[]`, owner-only) + the `users/{uid}/public/profile.badgeSummary`
- * mirror — inside ONE transaction so concurrent activity triggers can't lose an
- * award. Idempotent: an already-earned badge (`earnedAt` set) is left alone, so
- * a trigger re-delivery (at-least-once) never re-awards. earnedAt is an ISO
- * string to match the client (`new Date().toISOString()`); the client hydrates
- * the rest of each badge from BADGE_DEFINITIONS by id on load.
- *
- * A MISSING streak doc is created rather than skipped. This used to return
- * early, under the belief — stated in this comment — that "the client
- * materialises + reconciles it on next load". The client does no such thing
- * for these badges: `badgeEarning.ts:badgesToAward` never evaluates
- * `first_5k`, `10k_club`, `plate_club` or any other single-session
- * milestone, because they are server-owned precisely BECAUSE the client's
- * snapshots are windowed (the reason stated at the top of this comment).
- * There was nothing to reconcile, and every one of these three call sites
- * is inside an `onCreate` trigger, so nothing ever retried.
- *
- * That made it a cold-start bug with no recovery, on the app's welcome
- * moment. Nothing on the server creates `streaks/data` — this function is
- * its only server-side writer and it bailed before writing — and the
- * client only creates it when the streak CHANGES (`useStreaks` explicitly
- * skips the write when the computed streak already equals the stored one,
- * and for a brand-new user both are 0). So on a user's first ever logged
- * session the doc does not exist yet, and the client's creating write
- * races the trigger. First run ≥5 km ⇒ `first_5k`; first workout with a
- * 60 kg compound set ⇒ `plate_club`. Routine, and silently lost.
- *
- * A partial doc is safe to create: `useStreaks` spreads DEFAULT_STREAKS
- * over whatever it reads and coerces non-finite numerics to 0, and every
- * write here is `merge: true`, so the client's later write fills the rest
- * in rather than colliding.
- *
- * The deletion guard below is load-bearing BECAUSE of that change. While
- * this function could only ever update an existing document it had no way
- * to resurrect one; now that it can create, it can re-create a doc the
- * account-deletion executor has already swept. Same failure ADR-0012's
- * first amendment describes for the lifetime counters.
+ * Award badges server-side, naming the session that earned them
+ * (`earnedBy`). The award is `lib/badgeAwards.js`: one transaction on
+ * `streaks/data` and the public summary, idempotent through `earnedAt`, so
+ * a trigger redelivery never re-awards. It creates a missing streak
+ * document (a first session's badge must land: the app writes that
+ * document only once its streak changes), which is why its deletion guard
+ * runs before every write: an award must not re-create a document the
+ * deletion executor has already swept (ADR-0012's first amendment).
+ * A failure is the caller's: the session triggers retry it.
  */
-async function awardMilestoneBadges(uid, ids) {
-  if (!Array.isArray(ids) || ids.length === 0) return;
-  if (
-    !(await accountDeletionLocks.shouldSystemWriteProceed(
-      db,
-      uid,
-      "awardMilestoneBadges"
-    ))
-  ) {
-    return;
-  }
-  const ref = db.doc(`users/${uid}/streaks/data`);
-  const publicRef = db.doc(`users/${uid}/public/profile`);
-  // A failure is the caller's: the session triggers retry it (idempotent
-  // through `earnedAt`), where a catch here lost the badge for good.
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const stored = snap.exists ? snap.data().badges : null;
-    const badges = Array.isArray(stored) ? stored.slice() : [];
-    const nowIso = new Date().toISOString();
-    let changed = false;
-
-    for (const id of ids) {
-      const idx = badges.findIndex((b) => b && b.id === id);
-      if (idx === -1) {
-        // Def absent from an older stored array — append the minimal pair;
-        // the client fills the rest from BADGE_DEFINITIONS by id.
-        badges.push({ id, earnedAt: nowIso });
-        changed = true;
-      } else if (!badges[idx].earnedAt) {
-        badges[idx] = { ...badges[idx], earnedAt: nowIso };
-        changed = true;
-      }
-      // else: already earned → idempotent no-op.
-    }
-
-    if (!changed) return;
-
-    // Recompute the public badge-summary mirror (same shape as the client).
-    const earnedMap = {};
-    for (const b of badges) {
-      if (!b || !b.earnedAt) continue;
-      earnedMap[b.id] =
-        typeof b.earnedAt === "string"
-          ? b.earnedAt
-          : b.earnedAt && typeof b.earnedAt.toDate === "function"
-            ? b.earnedAt.toDate().toISOString()
-            : nowIso;
-    }
-
-    tx.set(ref, { badges }, { merge: true });
-    tx.set(
-      publicRef,
-      {
-        badgeSummary: {
-          earnedMap,
-          count: Object.keys(earnedMap).length,
-        },
-      },
-      { merge: true }
-    );
-  });
+async function awardMilestoneBadges(uid, ids, earnedBy) {
+  await badgeAwards.awardBadges(db, uid, ids, earnedBy);
 }
 
 /**
@@ -5157,7 +5063,10 @@ async function accrueLifetimeStat(
     return updated;
   });
 
-  await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
+  await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal), {
+    kind: kind === "run" ? "run" : "workout",
+    id: sourceId,
+  });
 }
 
 /**
@@ -5871,12 +5780,14 @@ exports.onWorkoutCreated = functions
       );
     }
 
-    // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
-    // heaviest compound set in THIS workout. Single-doc determinable, so
-    // awarded here off the full doc (the client's windowed snapshots can't
-    // see an old PR). Idempotent via earnedAt inside awardMilestoneBadges.
-    await steps.run("weight badges", () =>
-      awardMilestoneBadges(uid, liftWeightMilestoneBadges(data.exercises))
+    // Every badge this workout can earn (App1 Q33): first_step, the plate
+    // clubs off its heaviest compound set, first_pr from the new bests it
+    // carries, the hybrid windows and triple_threat on its day, and
+    // early_bird's day. Idempotent via earnedAt (lib/badgeAwards).
+    await steps.run("badges", () =>
+      badgeAwards.awardForWorkout(db, uid, workoutId, data, {
+        nowMs: eventTimeMs(context),
+      })
     );
 
     // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
@@ -6050,11 +5961,14 @@ exports.onRunCreated = functions
       // reversal derives the same figure through the same function
       // rather than restating it — ADR-0012's load-bearing constraint.
       const runMeters = lifetimeAccrual.runMetersFor(data);
-      await steps.run("run badges", () =>
-        awardMilestoneBadges(
-          uid,
-          runMilestoneBadges(runMeters, Number(data.duration) || 0)
-        )
+      // And every other badge the run can earn (App1 Q33): first_step, the
+      // hybrid windows and triple_threat on its day, early_bird's day.
+      await steps.run("badges", () =>
+        badgeAwards.awardForRun(db, uid, runId, data, {
+          meters: runMeters,
+          day: runDayKey(data, null),
+          nowMs: eventTimeMs(context),
+        })
       );
       // Lifetime-aggregate badge: century_km (run 100 km lifetime). Maintains
       // the cumulative distance counter idempotently (per-run marker) and
@@ -6169,6 +6083,111 @@ exports.onRunCreated = functions
       await releaseLock(uid, false, err.message);
       console.error(`onRunCreated: compute error for ${uid}:`, err.message);
     }
+    return null;
+  });
+
+// ── App1 Q33: the badges no session trigger sees ──
+//
+// Every badge is awarded by the server. The workout and run triggers above
+// award what a session decides; these award what a meal, a day's water, a
+// day's target, the streak's certificate and the plan moving on decide.
+// Each reads its facts from the document written and the ones around it,
+// and awards through lib/badgeAwards' one transaction, which sets only what
+// is not yet earned: at-least-once delivery awards each badge once. A
+// failure throws, and failurePolicy delivers the event again.
+
+const docData = (snap) => (snap.exists ? snap.data() || {} : null);
+
+/** A meal written: first_step, meal_prep_master, macro_master,
+ *  protein_pro, triple_threat, early_bird. */
+exports.onMealWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/meals/{mealId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, mealId } = context.params;
+    await badgeAwards.awardForMeal(
+      db,
+      uid,
+      mealId,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** A day's water written (`waterLog/{date}`): hydration_hero. */
+exports.onWaterLogWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/waterLog/{day}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, day } = context.params;
+    await badgeAwards.awardForWater(
+      db,
+      uid,
+      day,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** A day's target snapshot written (`dailyNutrition/{date}`): the day's
+ *  food judged again against the target it now has. */
+exports.onDailyNutritionWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/dailyNutrition/{day}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, day } = context.params;
+    await badgeAwards.awardForTargets(
+      db,
+      uid,
+      day,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** The streak's certificate written (`streaks/data`): the streak badges.
+ *  The award writes this document too; a write that leaves the streak as
+ *  it was reads nothing and writes nothing, so it does not loop. */
+exports.onStreakWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/streaks/data")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const after = docData(change.after);
+    if (!after) return null;
+    await badgeAwards.awardForStreak(
+      db,
+      context.params.uid,
+      docData(change.before),
+      after,
+      { nowMs: eventTimeMs(context) }
+    );
+    return null;
+  });
+
+/** The plan written (`programState/current`): programme_complete when it
+ *  moves on from a finished cycle's last week. */
+exports.onProgramStateWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/programState/current")
+  .onUpdate(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    await badgeAwards.awardForProgramme(
+      db,
+      context.params.uid,
+      docData(change.before),
+      docData(change.after),
+      { nowMs: eventTimeMs(context) }
+    );
     return null;
   });
 

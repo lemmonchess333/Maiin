@@ -129,7 +129,8 @@ export interface BadgeDef {
   lucideIcon: string;
   tier: BadgeTier;
   category: "consistency" | "lifting" | "running" | "nutrition" | "hybrid";
-  /** Streak threshold (days). When set, useStreaks awards this badge once currentStreak >= threshold. */
+  /** Streak threshold (days). When set, the server awards this badge once
+   *  the streak reaches it (functions/lib/badgeRules.js STREAK_BADGES). */
   threshold?: number;
 }
 
@@ -436,9 +437,9 @@ export const CATEGORY_LABELS: Record<BadgeDef["category"], string> = {
 };
 
 /** The plate clubs in an lb lifter's plates (Lift18). They are earned at
- *  60, 100 and 140 kg (`liftWeightMilestones.ts`), and 135, 225 and 315 lb
- *  are each at or above those, so the lb copy never asks for less than the
- *  badge does. */
+ *  60, 100 and 140 kg (the server's LIFT_WEIGHT_MILESTONES,
+ *  functions/lib/badgeRules.js), and 135, 225 and 315 lb are each at or
+ *  above those, so the lb copy never asks for less than the badge does. */
 const LB_DESCRIPTIONS: Readonly<Record<string, string>> = {
   plate_club: "Lift 135 lb on any compound",
   two_plate: "Lift 225 lb on any compound",

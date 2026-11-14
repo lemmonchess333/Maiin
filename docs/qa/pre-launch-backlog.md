@@ -5528,3 +5528,16 @@ been seen on a phone or a deployed function.
 - [ ] **Deployed functions.** After the functions deploy, the console shows
       `onNotificationItemWritten` with retries on and `hourlyPropsBundle`
       with one instance and 540 s; the deploy's read-back passed for both.
+
+## Every badge awarded by the server (App1 Q33, 2026-11-14)
+
+Affects: every badge's award (`functions/lib/badgeAwards.js`, run by `onWorkoutCreated`, `onRunCreated` and the five new triggers `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten`, `onStreakWritten`, `onProgramStateWritten`), the rules that now refuse a client change to `streaks/data.badges`, `streaks/data.earlyLogDays` and the public `badgeSummary`, and the reveal, now fed by the server's record (`pendingBadgeReveals.ts`). Unit tests drive the rules and the award against the memory Firestore; the rules suites were updated but not run (no emulator in the build session); no deployed trigger or phone has awarded one.
+
+- [ ] **The five triggers deployed.** After the Deploy production run, open each of the five new functions' source in the Cloud console (the dedup gotcha, `docs/agents/functions-deploy.md`). Passing: each shows `badgeAwards.awardFor…`, and `onWorkoutCreated` shows the `"badges"` step.
+- [ ] **A first workout's badges.** On a new account, finish a first workout with a 60 kg squat. Passing: within a few seconds `users/{uid}/streaks/data.badges` holds `first_step` and `plate_club`, each with `earnedBy: { kind: "workout", id: <the workout id> }`, the public profile's `badgeSummary.count` is 2, and the seal opens on the finish screen if it is still open, or from Home's new-badge row if not.
+- [ ] **A badge earned offline, then synced.** On the iPhone with flight mode on, finish a run of 5 km or more, close the app, turn flight mode off and open the app again. Passing: once the run syncs, `first_5k` is in the record with the run's id, and Home shows the new-badge row for it once (dismissing it, then reopening the app, does not bring it back).
+- [ ] **Two devices.** Signed in on the iPhone and the web, earn a badge on the iPhone (a 10K run) with the web app closed. Passing: the web app shows the new-badge row for it the next time it opens, and the badge is in the record once, with one `earnedAt`.
+- [ ] **An old app can no longer award.** With a TestFlight build from before this change, log the first meal of a new account. Passing: the old build logs a refused write and nothing else (no toast); `first_step` arrives from the server, with `earnedBy`.
+- [ ] **The streak badges.** Keep a streak to 3 days. Passing: `three_day` lands with `earnedBy: { kind: "streak", id: <the third day> }` after the app saves the streak (the streak is the app's certificate; a phone that never opens the app does not save one).
+- [ ] **A finished cycle.** On a plan with lighter weeks, finish every lift of week 4 and tap the week on. Passing: `programme_complete` lands with `earnedBy: { kind: "programme", id: "week-4" }`.
+- [ ] **Badges from before stay.** On the owner's account, open your profile's badges (See all) after the deploy. Passing: every badge earned before is still earned with its old date; none is revealed again.

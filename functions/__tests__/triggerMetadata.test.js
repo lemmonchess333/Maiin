@@ -307,6 +307,49 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
+  // App1 Q33 — the badges no session trigger sees (lib/badgeAwards). A
+  // delete reaches the four write triggers too, during an account sweep,
+  // and each returns before reading anything.
+  onMealWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/meals/{mealId}",
+  },
+  onWaterLogWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/waterLog/{day}",
+  },
+  onDailyNutritionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/dailyNutrition/{day}",
+  },
+  onStreakWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/streaks/data",
+  },
+  onProgramStateWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/programState/current",
+  },
   // ADR-0012 — the delete halves. Same collections, same cap: they fire
   // once per document during an account deletion sweep, so an uncapped
   // pair would fan out across a user's entire logged history.
