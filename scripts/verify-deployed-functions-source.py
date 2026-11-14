@@ -208,8 +208,10 @@ def source_targets():
         "claimPushDeviceToken": token_paths,
         "releasePushDeviceToken": token_paths,
         "sendTestPush": push_paths,
-        "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js"],
-        "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js",
+        # App1 Q60's one push a day and Q62's quiet rule run in both sweeps.
+        "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js",
+                                           "lib/pushBudget.js", "lib/reminderAttention.js"],
+        "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js", "lib/pushBudget.js",
                                                       "lib/challengeTiers.js",
                                                       "lib/challengeDefs.js", "lib/challengeActivityWindow.js", "lib/dateUtils.js",
                                                       "lib/streakNudge.js"],
