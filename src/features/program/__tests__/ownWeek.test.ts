@@ -105,13 +105,25 @@ describe("a regular runner on 330 minutes a week, a half 16 weeks out", () => {
     }
   });
 
-  it("keeps the race and the plan's quality sessions", () => {
-    const quality = (weeks: ScheduledRunDay[][]) =>
-      weeks
-        .flat()
-        .filter((run) => run.type === "tempo" || run.type === "intervals")
-        .map((run) => run.templateId);
-    expect(quality(own.weeks)).toEqual(quality(plain.weeks));
+  it("keeps the race, and its quality sessions start two weeks sooner", () => {
+    const qualityIn = (week: ScheduledRunDay[]) =>
+      week.filter((run) => run.type === "tempo" || run.type === "intervals");
+    const firstQuality = (weeks: ScheduledRunDay[][]) =>
+      weeks.findIndex((week) => qualityIn(week).length > 0);
+    // Run24 (2): a regular runner above the plan's base gets a shorter
+    // base, so the build, and its first tempo, is week 5 (was week 7).
+    expect(own.shortBase).toBe(true);
+    expect(plain.shortBase).toBe(false);
+    expect(firstQuality(own.weeks)).toBe(4);
+    expect(firstQuality(plain.weeks)).toBe(6);
+    // From there the weeks hold the plain plan's sessions and two more,
+    // the tempo climbing a rung higher.
+    const count = (weeks: ScheduledRunDay[][]) =>
+      weeks.flatMap(qualityIn).length;
+    expect(count(own.weeks)).toBe(count(plain.weeks) + 2);
+    expect(own.weeks.flatMap(qualityIn).map((run) => run.templateId)).toContain(
+      "tempo_40"
+    );
     expect(own.weeks.at(-1)!.find((run) => run.type === "race")).toEqual(
       plain.weeks.at(-1)!.find((run) => run.type === "race")
     );

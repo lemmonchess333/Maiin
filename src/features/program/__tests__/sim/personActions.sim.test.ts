@@ -86,6 +86,20 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   Run24 (2) and went again with Run24 (4)'s time trials; the hybrid's
  *   lighter week gained `back-to-back`, as the 3-4-day hybrids did: an
  *   hour's medium-long on Tuesday beside Wednesday's quality.
+ *
+ * Since Run24 (2)'s shorter base for a regular runner above the plan's
+ * base (both personas are: their build starts two weeks sooner, and the
+ * hybrid's leg trim with it, from plan week 5, was 7):
+ *
+ * - gone: `hybrid-lighter-week`'s `back-to-back`, its Tuesday hour now 50
+ *   minutes under the week's 15% hold, and its `lift:stall` on the
+ *   Romanian deadlift.
+ * - `half-moves-long-run`'s `volume-jump`: its quality two weeks sooner
+ *   climbs a rung higher, so the week after the step-back of week 8 plans a
+ *   30-minute tempo where it held a 20, 204 minutes against the step-back's
+ *   158 (29%), and 0.5% over the last full week (Run24 (6) holds 15%). The
+ *   week after a cutback rising back to the line it stepped back from is
+ *   D2's known shape.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
@@ -98,14 +112,12 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
   "lighter-after-misses": ["misses:bench-press", "stall:barbell-row"],
   "hybrid-lighter-week": [
-    "back-to-back",
     "lift:stall:deadlift",
-    "lift:stall:romanian-deadlift",
     "lift:stall:squat",
     "spike",
     "volume-jump",
   ],
-  "half-moves-long-run": ["spike"],
+  "half-moves-long-run": ["spike", "volume-jump"],
 };
 
 const seasons = new Map<string, Season>();

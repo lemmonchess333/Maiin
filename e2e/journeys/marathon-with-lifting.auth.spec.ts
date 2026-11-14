@@ -98,7 +98,8 @@ function planWeek(state: ProgramState, monday: string) {
         : getPhaseForWeek(
             plan?.currentWeek ?? 0,
             plan?.totalWeeks ?? 1,
-            "marathon"
+            "marathon",
+            plan?.shortBase
           ),
     runs,
     // A time trial (Run24 (4)) sets the paces, in base weeks too; it is
