@@ -193,12 +193,25 @@ describe("onboarding chapters and commit", () => {
     expect(payload.profileData.goalWeightKg).toBe(81.5);
     expect(payload.profileData.weeklyRateKg).toBe(0);
     // The plan's `program` is merged in, not assigned over the map: the
-    // start weight and phase set beside the nutrition phase survive.
+    // phase set beside the nutrition phase survives.
     expect(payload.profileData.program).toEqual({
       goal: preview.profileUpdates.program.goal,
-      startWeight: 81.5,
       currentPhase: "base",
     });
+    // Retired profile fields (App1 Q24) are not sent: the email is Auth's,
+    // the streak is the streaks document's, and the day's carbs and fat
+    // are worked out from the calorie target.
+    for (const retired of [
+      "email",
+      "currentStreak",
+      "longestStreak",
+      "lastLogDate",
+      "tdeeBase",
+      "aiCalorieAdjustment",
+      "targetCarbs",
+      "targetFat",
+    ])
+      expect(payload.profileData).not.toHaveProperty(retired);
     resolve({ data: { success: true, activationJourneyVersion: 2 } });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     // The public profile seed leaves the photo alone: sign-up wrote the

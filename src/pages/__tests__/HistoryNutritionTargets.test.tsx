@@ -36,9 +36,9 @@ const history = stripComments(historyRaw);
 
 describe("History nutrition targets", () => {
   it("does not read the frozen profile.macroTargets snapshot", () => {
-    // The specific regression. `macroTargets` remains a declared profile
-    // field (pending an allow-list removal that needs a rules deploy), so
-    // re-reading it here would compile and look right.
+    // The specific regression. `macroTargets` is retired (App1 Q24) and off
+    // the profile type, but an older document still carries it until the
+    // strip script runs, so a read through a cast would look right.
     expect(history).not.toMatch(
       /profile\?\.macroTargets|profile\.macroTargets/
     );

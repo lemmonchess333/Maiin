@@ -790,8 +790,9 @@ export default function History() {
    *
    * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
    * and by nothing since. The goal-weight recipe
-   * (`buildGoalWeightPersistPayload`) writes `targetCalories` and the three
-   * gram fields but not this one, and neither does the weigh-in patch. So a
+   * (`buildGoalWeightPersistPayload`) wrote `targetCalories` and the gram
+   * fields but not this one, and neither did the weigh-in patch. The field
+   * is retired now (App1 Q24). So a
    * user who onboarded at maintenance and later set a goal weight kept
    * seeing their onboarding-day plan here — "target 2,650 kcal" against a
    * plan that had been 2,100 for months, widening with every goal change,

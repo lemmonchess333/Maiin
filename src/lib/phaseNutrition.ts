@@ -174,7 +174,6 @@ export function restDaySplit(
       targetCalories: draft.targetCalories,
       weightKg: draft.weightKg,
       program: {
-        startWeight: profile.program?.startWeight ?? draft.weightKg,
         currentPhase: profile.program?.currentPhase ?? "base",
         goal: draft.goal,
       },

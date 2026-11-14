@@ -98,14 +98,14 @@ describe("NutritionSection — editing the calorie override", () => {
       })
     );
     const patch = updateProfile.mock.calls[0][0] as Partial<UserProfile>;
-    expect(
-      Math.abs(
-        patch.targetProtein! * 4 +
-          patch.targetCarbs! * 4 +
-          patch.targetFat! * 9 -
-          2400
-      )
-    ).toBeLessThanOrEqual(10);
+    // The stored targets only: the day's carbs and fat are worked out from
+    // the calorie target wherever they are shown, never stored (App1 Q21).
+    expect(Object.keys(patch).sort()).toEqual([
+      "customCalorieTarget",
+      "targetCalories",
+      "targetProtein",
+    ]);
+    expect(patch.targetProtein! * 4).toBeLessThan(2400);
   });
 
   it("clears a stored override on blur", async () => {
@@ -132,8 +132,8 @@ describe("NutritionSection — editing the calorie override", () => {
     expect(patch.customCalorieTarget).toBe(0);
     expect(patch.targetCalories).toBeGreaterThan(0);
     expect(patch.targetProtein).toBeGreaterThan(0);
-    expect(patch.targetCarbs).toBeGreaterThan(0);
-    expect(patch.targetFat).toBeGreaterThan(0);
+    expect(patch).not.toHaveProperty("targetCarbs");
+    expect(patch).not.toHaveProperty("targetFat");
     rerender(
       <NutritionSection {...props} profile={{ ...props.profile, ...patch }} />
     );
@@ -235,7 +235,6 @@ function renderSection(
         {
           uid: "u-1",
           displayName: "T",
-          email: "t@e.com",
           customCalorieTarget: body.customCalorieTarget,
         } as UserProfile
       }
@@ -390,7 +389,7 @@ describe("NutritionSection — the grams Home shows", () => {
         uid: "u-1",
         targetCalories: LEAN_BULK_70.targetCalories,
         weightKg: 70,
-        program: { goal: "lean bulk", startWeight: 70, currentPhase: "base" },
+        program: { goal: "lean bulk", currentPhase: "base" },
       } as UserProfile,
       "rest"
     );
@@ -459,7 +458,6 @@ describe("NutritionSection — sub-floor override notice", () => {
     ({
       uid: "u-1",
       displayName: "T",
-      email: "t@e.com",
       customCalorieTarget,
     }) as UserProfile;
 
@@ -541,7 +539,6 @@ describe("NutritionSection — target drift notice", () => {
           {
             uid: "u-1",
             displayName: "T",
-            email: "t@e.com",
             targetCalories: HELD,
             weeklyRateKg: -0.5,
             ...over,
@@ -620,7 +617,6 @@ describe("NutritionSection — target drift notice", () => {
           {
             uid: "u-1",
             displayName: "T",
-            email: "t@e.com",
             targetCalories: HELD,
             weeklyRateKg: -0.5,
           } as UserProfile

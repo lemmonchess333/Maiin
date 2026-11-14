@@ -30,7 +30,6 @@ test.describe("saved workout correction", () => {
         await userRef.set({
           ...profile,
           uid: user.uid,
-          email: user.email,
           darkMode: colorScheme === "dark",
         });
         const ref = userRef.collection("workouts").doc("correct-this");

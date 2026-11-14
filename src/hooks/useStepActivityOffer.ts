@@ -37,7 +37,9 @@ export interface UseStepActivityOffer {
 }
 
 /** What the change overwrote, for Undo: the fields as they were stored,
- *  rather than worked out again, so Undo puts back exactly what was. */
+ *  rather than worked out again, so Undo puts back exactly what was. The
+ *  retired carbs and fat targets and start weight (App1 Q24) are not
+ *  written, so not put back. */
 function restorePatch(
   before: UserProfile,
   from: ActivityLevel
@@ -46,11 +48,14 @@ function restorePatch(
     activityLevel: before.activityLevel ?? from,
     goalWeightKg: before.goalWeightKg,
     weeklyRateKg: before.weeklyRateKg,
-    program: before.program,
+    // The plan's two keys, so an older document's retired start weight is
+    // not written back (App1 Q24).
+    program: before.program && {
+      goal: before.program.goal,
+      currentPhase: before.program.currentPhase,
+    },
     targetCalories: before.targetCalories,
     targetProtein: before.targetProtein,
-    targetCarbs: before.targetCarbs,
-    targetFat: before.targetFat,
   };
 }
 

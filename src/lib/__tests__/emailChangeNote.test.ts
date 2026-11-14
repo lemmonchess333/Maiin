@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearEmailChange,
+  emailChangeLanded,
   noteEmailChange,
   pendingEmailChange,
 } from "../emailChangeNote";
@@ -27,5 +28,13 @@ describe("emailChangeNote", () => {
     expect(pendingEmailChange()).toBeNull();
     localStorage.setItem("tropos-email-change-pending", '{"email":7}');
     expect(pendingEmailChange()).toBeNull();
+  });
+
+  it("has landed once Auth carries the noted address, in any case", () => {
+    expect(emailChangeLanded("new@example.com")).toBe(false);
+    noteEmailChange("New@Example.com");
+    expect(emailChangeLanded("old@example.com")).toBe(false);
+    expect(emailChangeLanded(null)).toBe(false);
+    expect(emailChangeLanded("new@example.com")).toBe(true);
   });
 });

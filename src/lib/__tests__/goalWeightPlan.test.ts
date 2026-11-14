@@ -119,7 +119,7 @@ describe("buildGoalWeightPersistPayload — the ONE persist recipe", () => {
     activityLevel: "moderate" as const,
     sex: "male" as const,
     customCalorieTarget: null,
-    program: { goal: "cut", startWeight: 92, currentPhase: "build" },
+    program: { goal: "cut", currentPhase: "build" },
   };
 
   it("persists the SIGNED rate and the derived phase", () => {
@@ -133,21 +133,43 @@ describe("buildGoalWeightPersistPayload — the ONE persist recipe", () => {
     expect(payload.weeklyRateKg).toBe(-0.5);
     expect(payload.program.goal).toBe("cut");
     // Carried, not re-seeded — the block position survives a goal tweak.
-    expect(payload.program.startWeight).toBe(92);
     expect(payload.program.currentPhase).toBe("build");
     expect(payload.goalWeightKg).toBe(80);
-    expect(payload.targetCalories).toBe(payload.tdeeBase);
+  });
+
+  it("stores only what is read: no formula baseline, carbs, fat or start weight", () => {
+    // App1 Q21, Q24: the day's carbs and fat are worked out from the
+    // calorie target, `tdeeBase` and `program.startWeight` had no reader,
+    // and an older profile still carrying a start weight does not pass it on.
+    const older = {
+      ...profile,
+      program: { goal: "cut", startWeight: 92, currentPhase: "build" },
+    } as typeof profile;
+    const { payload } = buildGoalWeightPersistPayload({
+      profile: older,
+      currentKg: 90,
+      targetKg: 80,
+      rateKgPerWeek: 0.5,
+    });
+    expect(Object.keys(payload).sort()).toEqual([
+      "goalWeightKg",
+      "program",
+      "targetCalories",
+      "targetProtein",
+      "weeklyRateKg",
+    ]);
+    expect(payload.program).toEqual({ goal: "cut", currentPhase: "build" });
   });
 
   it("a manual calorie override survives as targetCalories", () => {
-    const { payload } = buildGoalWeightPersistPayload({
+    const { payload, formulaTdee } = buildGoalWeightPersistPayload({
       profile: { ...profile, customCalorieTarget: 2000 },
       currentKg: 90,
       targetKg: 80,
       rateKgPerWeek: 0.5,
     });
     expect(payload.targetCalories).toBe(2000);
-    expect(payload.tdeeBase).not.toBe(2000);
+    expect(formulaTdee.targetCalories).not.toBe(2000);
   });
 
   it("maintain forces rate 0 and recomp", () => {
@@ -169,8 +191,7 @@ describe("buildGoalWeightPersistPayload — the ONE persist recipe", () => {
       targetKg: 80,
       rateKgPerWeek: 0.5,
     });
-    expect(payload.program.startWeight).toBe(90);
-    expect(payload.program.currentPhase).toBe("base");
+    expect(payload.program).toEqual({ goal: "cut", currentPhase: "base" });
   });
 });
 
@@ -201,11 +222,11 @@ describe("buildActivityLevelPersistPayload — the activity level offer's save",
     expect(payload).toEqual({ activityLevel: "active", ...settings });
     expect(targetCalories).toBe(settings.targetCalories);
     expect(keepsPhase).toBe(true);
-    // The pace and the phase are the person's, untouched.
+    // The pace and the phase are the person's, untouched; the retired
+    // start weight is not passed on (App1 Q24).
     expect(payload.weeklyRateKg).toBe(-0.5);
     expect(payload.program).toEqual({
       goal: "cut",
-      startWeight: 92,
       currentPhase: "build",
     });
   });
@@ -326,13 +347,12 @@ describe("buildMaintenancePayload — maintain AT today's weight", () => {
       sex: "male",
       goalWeightKg: 78,
       weeklyRateKg: -0.5,
-      program: { goal: "cut", startWeight: 92, currentPhase: "build" },
+      program: { goal: "cut", currentPhase: "build" },
     });
     expect(payload).not.toBeNull();
     expect(payload!.goalWeightKg).toBe(76.5);
     expect(payload!.weeklyRateKg).toBe(0);
-    expect(payload!.program.goal).toBe("recomp");
-    expect(payload!.program.startWeight).toBe(92);
+    expect(payload!.program).toEqual({ goal: "recomp", currentPhase: "build" });
   });
 
   it("returns null with no usable current weight", () => {

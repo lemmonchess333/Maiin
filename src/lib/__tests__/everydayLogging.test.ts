@@ -28,6 +28,7 @@ import {
 } from "../waterActions";
 import {
   saveWeightEntry,
+  restoreWeightEntry,
   parseWeightEntry,
   validWeightDate,
 } from "../weightEntry";
@@ -274,10 +275,57 @@ describe("weight correction", () => {
     expect(readDoc(weightPath)?.weight).toBe(78.412);
     expect(readDoc("users/u1")?.weightKg).toBe(78.412);
     expect(readDoc("users/u1")?.targetProtein).toBe(173);
+    // The day's carbs and fat are worked out from the calorie target, not
+    // stored (App1 Q21).
+    expect(readDoc("users/u1")).not.toHaveProperty("targetCarbs");
+    expect(readDoc("users/u1")).not.toHaveProperty("targetFat");
     await undo();
     expect(readDoc(weightPath)?.weight).toBe(80);
     expect(readDoc("users/u1")?.theme).toBe("dark");
     expect(readDoc("users/u1")?.weightKg).toBe(80);
+  });
+  it("undoes an older build's entry, whose receipt also mirrored carbs and fat", async () => {
+    // Saved by a build from before App1 Q24, then the profile was stripped
+    // of the retired fields: the undo must still put the weight back.
+    seedFirestore({
+      "users/u1": {
+        weightKg: 78,
+        targetCalories: 2200,
+        targetProtein: 173,
+        program: { goal: "cut" },
+      },
+      [weightPath]: {
+        date: today,
+        weight: 78,
+        source: "manual",
+        editId: "old-build",
+        editReceipt: {
+          before: { date: today, weight: 80, source: "manual" },
+          profileBefore: {
+            weightKg: 80,
+            targetProtein: 176,
+            targetCarbs: 210,
+            targetFat: 62,
+          },
+          mirror: {
+            weightKg: 78,
+            targetProtein: 173,
+            targetCarbs: 214,
+            targetFat: 60,
+          },
+          targetCalories: 2200,
+          goal: "cut",
+        },
+      },
+    });
+    await restoreWeightEntry("u1", today, 78, "old-build");
+    expect(readDoc(weightPath)?.weight).toBe(80);
+    expect(readDoc("users/u1")).toMatchObject({
+      weightKg: 80,
+      targetProtein: 176,
+    });
+    expect(readDoc("users/u1")).not.toHaveProperty("targetCarbs");
+    expect(readDoc("users/u1")).not.toHaveProperty("targetFat");
   });
   it("backdating never changes the current profile anchor", async () => {
     seedFirestore({ "users/u1": { weightKg: 80 } });

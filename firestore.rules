@@ -636,15 +636,13 @@ service cloud.firestore {
     // (src/lib/__tests__/profileFieldRegistry.test.ts) — drift fails CI.
     function allowedUserFields() {
       return [
-        'uid', 'displayName', 'email', 'athleteType', 'weightKg', 'heightCm',
+        'uid', 'displayName', 'athleteType', 'weightKg', 'heightCm',
         'weeklyWorkoutsTarget', 'weeklyMealsTarget', 'preferredWeightUnit',
         'liftingWeightUnit', 'preferredDistanceUnit',
         'preferredHeightUnit', 'darkMode', 'onboardingComplete', 'trialExpiresAt',
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId',
-        'currentStreak', 'longestStreak', 'lastLogDate', 'program', 'tdeeBase',
-        'aiCalorieAdjustment', 'targetCalories', 'targetProtein', 'targetCarbs',
-        'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
-        'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',
+        'program', 'targetCalories', 'targetProtein',
+        'autoRestTimer', 'defaultRestSeconds', 'audioCues',
         'hideSharedRouteEnds',
         // Soc11 share answers, per type. Value-gated by shareDefaultsValid()
         // above; also in profileSanitizer.js.
@@ -696,24 +694,22 @@ service cloud.firestore {
         // Lift4 (10): the race-setup answer on the leg trim. Also in
         // profileSanitizer.js.
         'raceLegTrim',
-        'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
+        'weeklyRunsTarget', 'age', 'sex', 'activityLevel',
         // App1 (Q57): the year of birth the age is worked out from.
         // Value-gated by birthYearValid() above; also in profileSanitizer.js.
         'birthYear',
-        'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
-        'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
+        'targetWaterGlasses', 'customCalorieTarget',
         // Goal-weight editor (#1140) — persisted by the CLIENT (Settings →
         // Goal Weight) + allowed in profileSanitizer.js, but were never added
         // to this client-write allow-list, so every Goal-Weight save was
         // rejected ("Couldn't save your settings"). Both gates now agree.
         'goalWeightKg', 'weeklyRateKg',
-        'createdAt', 'updatedAt', 'photoURL', 'lastActiveAt',
+        'createdAt', 'photoURL', 'lastActiveAt',
         'gender', 'ageRange', 'primaryGoal', 'experience',
         // Experience auto-detection: dismissed-suggestion marker, client-only.
         'experienceSuggestionDismissed',
         'daysPerWeek',
-        'equipment', 'barbellAtHome', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
-        'adjustCaloriesForTraining',
+        'equipment', 'barbellAtHome', 'preferredSplit', 'runFrequency', 'injuries',
         // D16 personal "why" — free-text motivation captured at onboarding and
         // editable in Settings. Client-written via updateProfile + set by the
         // onboarding CF (in profileSanitizer.js). Pinned by the D1 parity test.
@@ -728,7 +724,25 @@ service cloud.firestore {
         // profileSanitizer.js.
         'maxHeartRate',
         'trialExpiryPromptShown',
-        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
+        'appleOriginalTransactionId', 'subscriptionExpiresAt',
+        // RETIRED (App1 Q24, 13 November 2026). Nothing reads these and no
+        // build from that release on writes them; the registry marks each
+        // one retired. They stay allowed for now so a write from an OLDER
+        // build that still sends them is not refused: an update checks only
+        // the keys it changes, but sign-up's create checks every key with
+        // hasOnly(), and an older sign-up sends several of these. Remove
+        // this block once config/client.minSupportedVersion is past the
+        // release that stopped writing them and the strip script has run
+        // (docs/qa/pre-launch-backlog.md, the App1 Q24 section); the registry
+        // entries and the sanitiser list go in the same change, and so does
+        // the Apple product id in the two billing guards
+        // (subscriptionFieldsUnchanged, billingFieldsUnsetOnCreate).
+        'adjustCaloriesForTraining', 'aiCalorieAdjustment', 'appleProductId',
+        'autoPostBadges', 'autoPostRuns', 'autoPostWorkouts', 'crewId',
+        'currentStreak', 'defaultVisibility', 'email', 'enableRolloverCalories',
+        'goal', 'lastLogDate', 'longestStreak', 'macroTargets', 'targetCarbs',
+        'targetFat', 'targetFiber', 'targetSodium', 'targetSugar', 'tdeeBase',
+        'updatedAt'
       ];
     }
 

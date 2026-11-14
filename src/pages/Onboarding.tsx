@@ -909,10 +909,6 @@ export default function Onboarding() {
     try {
       const profileData: Record<string, unknown> = {
         displayName: displayNameValidation.trimmed,
-        email: user.email || "",
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLogDate: null,
         // Dark is the app default (see public/init.js + auth.tsx).
         darkMode: true,
         weeklyWorkoutsTarget: daysPerWeek,
@@ -991,17 +987,14 @@ export default function Onboarding() {
         // TDEE targets
         sex: gender === "female" ? "female" : "male",
         activityLevel,
-        tdeeBase: tdee.targetCalories,
-        aiCalorieAdjustment: 0,
+        // The day's carbs and fat are worked out from these two, never
+        // stored (App1 Q21).
         targetCalories: tdee.targetCalories,
         targetProtein: tdee.protein,
-        targetCarbs: tdee.carbs,
-        targetFat: tdee.fat,
         program: {
           // Nutrition phase comes from the goal-weight plan (target weight
           // owns direction), not goalToFitnessGoal(primaryGoal).
           goal: goalPlan.fitnessGoal,
-          startWeight: weightKg,
           currentPhase: "base",
         },
       };
@@ -1017,7 +1010,7 @@ export default function Onboarding() {
       // counts above so the values match the actual generated plan.
       // planBuilder's `program` carries only the nutrition phase (`goal`),
       // so it is merged into the map above rather than assigned over it:
-      // a shallow assign dropped startWeight and currentPhase.
+      // a shallow assign dropped currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
       // buildPlan's race goal carries no race-or-own answer (Run9) and no

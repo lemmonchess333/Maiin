@@ -96,7 +96,6 @@ async function syncUser({
   uid,
   apiKey,
   fetchImpl,
-  serverTimestamp,
   logger,
   reportedPrice = null,
 }) {
@@ -124,12 +123,10 @@ async function syncUser({
     if (firsts) {
       plan.write = { ...plan.write, activationBillingFirsts: firsts };
     }
+    // No `updatedAt` beside it: the profile kept a write time nothing
+    // read (App1 Q24).
     if (plan.write) {
-      txn.set(
-        userRef,
-        { ...plan.write, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
+      txn.set(userRef, plan.write, { merge: true });
     }
     const after = { ...userData, ...(plan.write || {}) };
     return {
@@ -245,7 +242,6 @@ async function handleWebhook(req, res, deps) {
         uid,
         apiKey,
         fetchImpl,
-        serverTimestamp,
         logger,
       });
       logger.log(
@@ -282,7 +278,7 @@ async function handleWebhook(req, res, deps) {
  *  `data` is ignored, and a price that does not pass readReportedPrice is
  *  dropped rather than refused, so it can never fail a purchase. */
 async function handleSync(context, deps, data = {}) {
-  const { db, apiKey, fetchImpl, serverTimestamp, logger } = deps;
+  const { db, apiKey, fetchImpl, logger } = deps;
   if (!context || !context.auth || !context.auth.uid) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -313,7 +309,6 @@ async function handleSync(context, deps, data = {}) {
       uid,
       apiKey,
       fetchImpl,
-      serverTimestamp,
       logger,
       reportedPrice: readReportedPrice(data && data.price),
     });

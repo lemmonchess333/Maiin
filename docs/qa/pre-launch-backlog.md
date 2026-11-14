@@ -1085,8 +1085,9 @@ TestFlight script names each one.
       security, on an email account. Change the password, sign out and sign
       in with the new one. Then change the email and tap the link sent to the
       new address. Passing: only the new password works; the sign-in email
-      changes only once the link is tapped; after the app's next start,
-      Firestore `users/{uid}` shows the new `email`.
+      changes only once the link is tapped, and Settings → Account then
+      shows the new address. (The profile document keeps no copy of the
+      address since App1 Q24; Auth's is the only one.)
 - [ ] **The minimum-version gate.** Firestore console → `config/client` →
       string field `minSupportedVersion` = `"99.0.0"`. Open the app, then
       delete the field and reopen. Passing: an update screen first (the
@@ -5261,3 +5262,57 @@ stood in; no phone has taken an offer from the review.
       account, and a first review. Passing: every day reads Lift, a named
       run with its distance or minutes, or Rest; the card scrolls to its
       button at 320 px and with larger text.
+
+## The profile's dead fields: stop, strip, then refuse (App1 Q24, 2026-11-13)
+
+Affects: the profile document `users/{uid}`. No build from this release on
+writes `adjustCaloriesForTraining`, `aiCalorieAdjustment`, `appleProductId`,
+`autoPostBadges`, `autoPostRuns`, `autoPostWorkouts`, `crewId`,
+`currentStreak`, `defaultVisibility`, `email`, `enableRolloverCalories`,
+`goal`, `lastLogDate`, `longestStreak`, `macroTargets`, `targetCarbs`,
+`targetFat`, `targetFiber`, `targetSodium`, `targetSugar`, `tdeeBase`,
+`updatedAt`, or `program.startWeight`; nothing read them. The rules still
+allow them (an older build's sign-up sends several, and the create checks
+every key), the callables drop them without a warning, and
+`functions/scripts/stripRetiredProfileFields.js` removes the stored copies.
+Unit-tested against the fake; the strip has not run on the real project.
+
+In this order:
+
+- [ ] **Ship a version older builds do not share.** The minimum-version
+      gate compares `package.json`'s `version` (1.2.0 when this merged, and
+      every build before it says 1.2.0 too). Raise it for the first release
+      that carries this change, then merge, let Deploy production finish,
+      and put that build on TestFlight and the App Store. Passing: Settings →
+      Support & legal shows the new version on the phone.
+- [ ] **Dry run.** From the repo root, with `npm ci` done in `functions/`
+      and gcloud application-default credentials for the project:
+      `node functions/scripts/stripRetiredProfileFields.js --project adaptive-fitness-af8bb`.
+      Passing: it writes nothing and prints how many profiles hold each
+      field (`lastLogDate` should be about every account: sign-up stored
+      it as null).
+- [ ] **Strip.** The same command with `--apply`. It prints a checkpoint
+      after each page of 200; if it stops, run it again with
+      `--after <the last checkpoint's cursor>`, or from the start. Passing: a
+      second dry run reports `holding: 0`, and one profile in the Firestore
+      console has none of the fields above (and `program` has no
+      `startWeight`). Each profile written fires `onRaceGoalWritten` once,
+      which returns without reading anything.
+- [ ] **Raise the minimum version.** Once the new build has been out long
+      enough for people to update: Firestore console → `config/client` →
+      `minSupportedVersion` = the version from the first step. Passing: an
+      older build shows the update screen; the new one opens as normal.
+- [ ] **Dry run again.** An older build used before the raise may have
+      written a field back. Passing: `holding: 0`, or `--apply` once more
+      and then `holding: 0`.
+- [ ] **Then merge the follow-up** that deletes the RETIRED block from
+      `allowedUserFields()` in `firestore.rules` (and the Apple product id
+      from the two billing guards), the registry's `retired` entries, and
+      `RETIRED_PROFILE_FIELDS` in `functions/profileSanitizer.js`. Passing:
+      a sign-up on the current build (email, and Google or Apple) still
+      reaches setup.
+- [ ] **This build, on a phone.** Sign up with email, finish setup, log a
+      weigh-in and undo it, and log something that moves the streak.
+      Passing: setup finishes; the weigh-in's undo puts the weight back;
+      the streak shows on Home and the profile badge; and in the console
+      the new `users/{uid}` holds none of the fields above.

@@ -14,6 +14,7 @@
  *   • registry field set  ≡  rules `allowedUserFields()`
  *   • registry-where-sanitized  ≡  `profileSanitizer.PROFILE_ALLOWED_FIELDS`
  *   • registry  ≡  the `UserProfile*` interfaces in `src/lib/auth.tsx`
+ *   • registry-where-retired  ≡  `profileSanitizer.RETIRED_PROFILE_FIELDS`
  * so drift fails CI instead of shipping a quiet bug.
  *
  * That THIRD pin was missing until 2026-07-25, and its absence is the reason
@@ -34,8 +35,10 @@
  *
  * Fields:
  *  - `sanitized`     — flows through `completeOnboarding` / `configurePlan`, so
- *                      it MUST have a validator in `functions/profileSanitizer.js`
- *                      (the loud-drop guard rejects unknown payload keys).
+ *                      it MUST have a validator in `functions/profileSanitizer.js`.
+ *                      Without one the callables DROP the key and log
+ *                      `unexpected_dropped_fields` (the loud-drop guard warns;
+ *                      it does not refuse the call), so the field is lost.
  *                      `false` = direct-write-only (written via `updateProfile`
  *                      straight to Firestore, never sent to those callables).
  *  - `serverGuarded` — identity / subscription / billing field that appears in
@@ -47,6 +50,19 @@
  *                      would itself be the bug (`hasUsedTrial`).
  *  - `undeclared`    — in the allow-list but not yet on the type; written via
  *                      a cast. Debt, enumerated so it can only shrink.
+ *  - `retired`       — nothing reads it and nothing writes it (App1 Q24, 13
+ *                      November 2026). Off the type and without a validator,
+ *                      but STILL in the rules allow-list, because an older
+ *                      build may still send it: sign-up's create checks every
+ *                      key with hasOnly(), so dropping one from the rules
+ *                      would refuse that build's sign-up outright. The
+ *                      sanitiser's `RETIRED_PROFILE_FIELDS` is the same list
+ *                      (it drops them without a warning), and
+ *                      `functions/scripts/stripRetiredProfileFields.js` deletes
+ *                      the stored copies. The rules entries go once
+ *                      `config/client.minSupportedVersion` is past the release
+ *                      that stopped writing them (docs/qa/pre-launch-backlog.md
+ *                      has the steps), and these entries go with them.
  *
  * @oracle — this module's PURPOSE is to be the pinned declaration read by
  *   profileFieldRegistry.test.ts / profileFieldParity.cross.test.ts. It is
@@ -74,6 +90,12 @@ export interface ProfileFieldEntry {
    * skip the type.
    */
   undeclared?: string;
+  /**
+   * Retired: no reader and no writer, kept in the rules allow-list only
+   * until no supported build sends it. The note says what it was. Never on
+   * the type, never sanitised.
+   */
+  retired?: string;
 }
 
 export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
@@ -81,7 +103,12 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "activationJourneyVersion", sanitized: false, serverOnly: true },
   { field: "activityLevel", sanitized: true },
   { field: "adaptiveCapState", sanitized: true },
-  { field: "adjustCaloriesForTraining", sanitized: true },
+  {
+    field: "adjustCaloriesForTraining",
+    sanitized: false,
+    retired:
+      "a switch Settings dropped (Nutr1); the target already counts training",
+  },
   // The age an account set up before `birthYear` was given, read as its
   // fallback (`profileAge`). `ageRange` is read and written by nothing now
   // and stays allow-listed for clients still running an older bundle.
@@ -93,7 +120,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // shape as the hideWeightNumber (#984) and goalWeight (#1140) misses; the
   // type↔registry parity test is what stops the third repeat.
   { field: "aiAnalysisEnabled", sanitized: false },
-  { field: "aiCalorieAdjustment", sanitized: true },
+  {
+    field: "aiCalorieAdjustment",
+    sanitized: false,
+    retired: "written 0 by setup, never read",
+  },
   {
     field: "appleOriginalTransactionId",
     sanitized: false,
@@ -103,8 +134,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     field: "appleProductId",
     sanitized: false,
     serverGuarded: true,
-    undeclared:
-      "Apple IAP product id; nothing writes it now, an older account may carry it",
+    retired: "Apple IAP product id from before RevenueCat; nothing wrote it",
   },
   // Polish2 call 4: Settings → Privacy → Approve followers. Value-gated in
   // firestore.rules (`approveFollowersValid`), which also reads it to
@@ -112,12 +142,21 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "approveFollowers", sanitized: false },
   { field: "athleteType", sanitized: true },
   { field: "audioCues", sanitized: true },
-  // LEGACY: superseded by the share composer's saved default (#1416) —
-  // never read, and no longer written since ShareDefaultsRow replaced the
-  // two dead Settings toggles. Kept on the same terms as `crewId`.
-  { field: "autoPostBadges", sanitized: false },
-  { field: "autoPostRuns", sanitized: false },
-  { field: "autoPostWorkouts", sanitized: false },
+  {
+    field: "autoPostBadges",
+    sanitized: false,
+    retired: "never written or read; `shareDefaults` decides sharing",
+  },
+  {
+    field: "autoPostRuns",
+    sanitized: false,
+    retired: "superseded by `shareDefaults` (#1416)",
+  },
+  {
+    field: "autoPostWorkouts",
+    sanitized: false,
+    retired: "superseded by `shareDefaults` (#1416)",
+  },
   { field: "autoRestTimer", sanitized: true },
   { field: "barbellAtHome", sanitized: true },
   // App1 (grill Q57): the year the person was born, which their age is
@@ -126,21 +165,31 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // firestore.rules (`birthYearValid`).
   { field: "birthYear", sanitized: true },
   { field: "createdAt", sanitized: false, serverGuarded: true },
-  // LEGACY: crews retired 2026-07-20 — kept so existing docs pass the
-  // allow-list; never read or written by live code.
-  { field: "crewId", sanitized: false },
-  { field: "currentStreak", sanitized: true },
+  { field: "crewId", sanitized: false, retired: "crews retired 2026-07-20" },
+  {
+    field: "currentStreak",
+    sanitized: false,
+    retired: "a copy of streaks/data nothing read on this document",
+  },
   { field: "customCalorieTarget", sanitized: true },
   { field: "darkMode", sanitized: true },
   { field: "daysPerWeek", sanitized: true },
   { field: "defaultRestSeconds", sanitized: true },
-  { field: "defaultVisibility", sanitized: false },
+  {
+    field: "defaultVisibility",
+    sanitized: false,
+    retired: "a Settings select that changed nothing; `shareDefaults` decides",
+  },
   { field: "displayName", sanitized: true },
-  { field: "email", sanitized: true },
+  {
+    field: "email",
+    sanitized: false,
+    retired: "a copy of the Auth address nothing read",
+  },
   {
     field: "enableRolloverCalories",
-    sanitized: true,
-    undeclared: "nutrition rollover toggle",
+    sanitized: false,
+    retired: "a rollover switch that never shipped",
   },
   { field: "equipment", sanitized: true },
   { field: "experience", sanitized: true },
@@ -150,7 +199,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // writes it via updateProfile; onboarding/configurePlan never send it.
   { field: "experienceSuggestionDismissed", sanitized: false },
   { field: "gender", sanitized: true },
-  { field: "goal", sanitized: true },
+  {
+    field: "goal",
+    sanitized: false,
+    retired: "never written; the phase is `program.goal`",
+  },
   { field: "goalWeightKg", sanitized: true },
   { field: "hasUsedTrial", sanitized: false, serverOnly: true },
   { field: "heightCm", sanitized: true },
@@ -171,7 +224,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     undeclared: "activity timestamp written by the Firestore triggers",
   },
-  { field: "lastLogDate", sanitized: true },
+  {
+    field: "lastLogDate",
+    sanitized: false,
+    retired: "stored null at sign-up, never read",
+  },
   // Soc15 call 3: in the weekly leagues or not. Written only by the
   // setLeagueSharing callable, which keeps the membership
   // (leagueMembers/{uid}) in step with the answer.
@@ -179,10 +236,16 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "liftTimeBudgetMinutes", sanitized: true },
   // Lift18: the unit lifting loads are shown in; loads stay stored in kg.
   { field: "liftingWeightUnit", sanitized: true },
-  { field: "longestStreak", sanitized: true },
-  // Pending removal — see the UserProfile declaration. Kept in every
-  // allow-list until no shipped client writes it.
-  { field: "macroTargets", sanitized: true },
+  {
+    field: "longestStreak",
+    sanitized: false,
+    retired: "a copy of streaks/data nothing read on this document",
+  },
+  {
+    field: "macroTargets",
+    sanitized: false,
+    retired: "setup's day-one split, frozen; History reads the live targets",
+  },
   { field: "maxHeartRate", sanitized: true },
   { field: "nonRaceGoal", sanitized: true },
   // S3 activity notification switches (Settings → Notifications). Written
@@ -234,14 +297,26 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // client that could write it could move or cancel its own reminder.
   { field: "subscriptionTrial", sanitized: false, serverOnly: true },
   { field: "targetCalories", sanitized: true },
-  { field: "targetCarbs", sanitized: true },
-  { field: "targetFat", sanitized: true },
-  { field: "targetFiber", sanitized: true },
+  {
+    field: "targetCarbs",
+    sanitized: false,
+    retired: "worked out from the calorie target wherever it is shown",
+  },
+  {
+    field: "targetFat",
+    sanitized: false,
+    retired: "worked out from the calorie target wherever it is shown",
+  },
+  { field: "targetFiber", sanitized: false, retired: "never written or read" },
   { field: "targetProtein", sanitized: true },
-  { field: "targetSodium", sanitized: true },
-  { field: "targetSugar", sanitized: true },
+  { field: "targetSodium", sanitized: false, retired: "never written or read" },
+  { field: "targetSugar", sanitized: false, retired: "never written or read" },
   { field: "targetWaterGlasses", sanitized: true },
-  { field: "tdeeBase", sanitized: true },
+  {
+    field: "tdeeBase",
+    sanitized: false,
+    retired: "the formula target, written and never read",
+  },
   // #962 device-timezone capture, written on boot by AuthProvider. It was
   // never allow-listed, and the capture is fire-and-forget behind
   // `.catch(logger.warn)`, so it failed silently for every user — leaving
@@ -256,7 +331,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   {
     field: "updatedAt",
     sanitized: false,
-    undeclared: "profile write timestamp",
+    retired: "a write time only the RevenueCat sync stamped, never read",
   },
   { field: "weekSchedule", sanitized: true },
   { field: "weekScheduleVersion", sanitized: true },
@@ -272,6 +347,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
  * Every field a client is permitted to write (≡ rules allowedUserFields()).
  * `serverOnly` entries are excluded BY CONSTRUCTION — they are recorded here
  * so the type↔registry pin is complete, not so they become writable.
+ * `retired` entries are included: the rules still let an older build write
+ * them, though this one never does.
  */
 export const CLIENT_WRITABLE_PROFILE_FIELDS: readonly string[] =
   PROFILE_FIELD_REGISTRY.filter((e) => !e.serverOnly).map((e) => e.field);
@@ -289,4 +366,14 @@ export const SANITIZED_PROFILE_FIELDS: readonly string[] =
  * be rejected by the rules with nobody the wiser.
  */
 export const TYPED_PROFILE_FIELDS: readonly string[] =
-  PROFILE_FIELD_REGISTRY.filter((e) => !e.undeclared).map((e) => e.field);
+  PROFILE_FIELD_REGISTRY.filter((e) => !e.undeclared && !e.retired).map(
+    (e) => e.field
+  );
+
+/**
+ * Retired fields (≡ profileSanitizer `RETIRED_PROFILE_FIELDS`, ⊆ the rules
+ * allow-list, absent from the type). The strip script deletes exactly these
+ * from stored profiles, plus `program.startWeight`, a key inside a field.
+ */
+export const RETIRED_PROFILE_FIELDS: readonly string[] =
+  PROFILE_FIELD_REGISTRY.filter((e) => e.retired).map((e) => e.field);

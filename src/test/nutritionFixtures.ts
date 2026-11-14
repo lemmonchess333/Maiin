@@ -84,7 +84,6 @@ export function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
     uid: "fixture-uid",
     displayName: "Fixture User",
-    email: "fixture@example.com",
     photoURL: null,
     athleteType: "Hybrid",
     weightKg: 80,
@@ -98,14 +97,9 @@ export function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     onboardingComplete: true,
     trialExpiresAt: null,
     subscriptionTier: "free",
-    currentStreak: 0,
-    longestStreak: 0,
-    lastLogDate: null,
     targetCalories: 2500,
     targetProtein: 180,
-    targetCarbs: 300,
-    targetFat: 70,
-    program: { goal: "recomp", startWeight: 80, currentPhase: "base" },
+    program: { goal: "recomp", currentPhase: "base" },
     ...overrides,
   } as UserProfile;
 }
@@ -281,10 +275,8 @@ export function HEAVY_CUTTER(
       weightKg: 120,
       targetCalories: 1500,
       targetProtein: 220,
-      targetCarbs: 80,
-      targetFat: 60,
       primaryGoal: "fat_loss",
-      program: { goal: "cut", startWeight: 120, currentPhase: "cut" },
+      program: { goal: "cut", currentPhase: "cut" },
       weekSchedule: schedule([
         "rest",
         "lift",

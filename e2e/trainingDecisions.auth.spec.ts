@@ -106,7 +106,6 @@ test("training advice, saved correction and the next session agree", async ({
   try {
     await root.set({
       uid: user.uid,
-      email: user.email,
       displayName: "Training Journey",
       photoURL: null,
       athleteType: "Hybrid",
@@ -119,10 +118,6 @@ test("training advice, saved correction and the next session agree", async ({
       preferredHeightUnit: "cm",
       onboardingComplete: true,
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 130,
       ...plan.profileUpdates,

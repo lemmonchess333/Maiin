@@ -82,7 +82,6 @@ async function run() {
     {
       uid,
       displayName: REVIEW_TEST_USER.displayName,
-      email: REVIEW_TEST_USER.email,
       photoURL: null,
       athleteType: "Hybrid",
       weightKg: 74,
@@ -95,10 +94,6 @@ async function run() {
       darkMode: false,
       onboardingComplete: true,
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 130,
       createdAt: Timestamp.fromDate(joined),

@@ -27,7 +27,7 @@ import {
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { clearEmailChange } from "./emailChangeNote";
+import { clearEmailChange, emailChangeLanded } from "./emailChangeNote";
 import { settleWrite } from "./settleWrite";
 import {
   reloadToClearFirestoreCache,
@@ -156,7 +156,6 @@ function isRecoverablePopupError(err: unknown): boolean {
 export interface UserProfileCore {
   uid: string;
   displayName: string;
-  email: string;
   photoURL: string | null;
   onboardingComplete: boolean;
   /**
@@ -198,36 +197,12 @@ export interface UserProfileFitness {
   heightCm: number;
   weeklyWorkoutsTarget: number;
   weeklyMealsTarget: number;
-  /**
-   * Public streak summary mirrored from users/{uid}/streaks/data by useStreaks
-   * on every streak mutation (atomic batch — both docs committed together).
-   *
-   * Initialised to 0 on profile creation. Intended to support cross-user reads
-   * on UserProfile, but the users/{uid} rule is currently doc-level owner-only
-   * — a rules relaxation is required before cross-user consumers can read this.
-   * Until then the field is effectively only useful for the viewer's own
-   * profile; the source of truth for live streak values remains useStreaks().
-   */
-  currentStreak: number;
-  /**
-   * Public longest-streak summary, mirrored alongside currentStreak. Same
-   * constraints apply — see currentStreak for the rules-gating caveat.
-   */
-  longestStreak: number;
-  lastLogDate: string | null;
-  /**
-   * VESTIGIAL — declared, allowed through the profile sanitizer, and written
-   * by NOTHING. The nutrition phase lives on `program.goal`; read it through
-   * `getNutritionPhase` (src/lib/nutritionPhase.ts), never from here.
-   *
-   * Kept typed rather than deleted because the sanitizer allow-list would
-   * silently drop the field for any document that somehow carries one, and
-   * because the shape is what a reader sees. It stays documented because its
-   * plausibility is what caused the bug: `functions/performanceEngine.js`
-   * passed `profile.goal` into the goal-aware PI scorer for its whole life,
-   * so every user was scored on the unknown branch.
-   */
-  goal?: string;
+  /* The streak is not kept here: it lives on users/{uid}/streaks/data
+     (useStreaks) and its public copy on users/{uid}/public/profile. Nor is
+     a top-level `goal`: the nutrition phase is `program.goal`, read through
+     `getNutritionPhase` (src/lib/nutritionPhase.ts). An older document may
+     still carry `currentStreak`, `longestStreak`, `lastLogDate` or `goal`;
+     they are retired (App1 Q24, profileFieldRegistry.ts). */
   /**
    * The year the person was born, a whole number: the one stored fact about
    * their age (App1, grill Q57 and Q21). Never shown on the profile. Read it
@@ -246,7 +221,6 @@ export interface UserProfileFitness {
   activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
   program?: {
     goal: Goal;
-    startWeight: number;
     currentPhase: string;
   };
 }
@@ -363,47 +337,16 @@ export interface UserProfilePreferences {
 
 /** Nutrition targets */
 export interface UserProfileNutrition {
-  tdeeBase?: number;
-  aiCalorieAdjustment?: number;
+  /* The calorie target is the one stored fact; the day's carbs and fat are
+     worked out from it (getAdjustedTargets), and protein is kept because
+     Home's recovery nudge reads it. `tdeeBase`, `aiCalorieAdjustment`,
+     `targetCarbs`, `targetFat`, `macroTargets`, `targetFiber`,
+     `targetSugar`, `targetSodium`, `adjustCaloriesForTraining` and
+     `enableRolloverCalories` are retired (App1 Q24): nothing read them. */
   targetCalories?: number;
   targetProtein?: number;
-  targetCarbs?: number;
-  targetFat?: number;
-
-  /**
-   * PENDING REMOVAL — no longer written, no longer read.
-   *
-   * Onboarding was its only writer and History's nutrition StatCards its
-   * only reader, and the goal-weight recipe never updated it. So it froze
-   * the onboarding-day plan and History rendered that as "target N" forever,
-   * drifting further with every goal change, weigh-in and adaptive retune.
-   * History now reads the same effective targets as Home and Food.
-   *
-   * The field itself is deliberately NOT deleted yet. It appears in three
-   * allow-lists that a parity gate keeps in lockstep — the registry,
-   * `firestore.rules`, and `functions/profileSanitizer.js` — and removing it
-   * from the rules is a deploy that would REJECT the onboarding write of any
-   * client still running the old bundle. Drop it once no shipped client
-   * writes it.
-   */
-  macroTargets?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
   customCalorieTarget?: number;
-  targetFiber?: number;
-  targetSugar?: number;
-  targetSodium?: number;
   targetWaterGlasses?: number;
-  /**
-   * When true (default), the daily calorie target dynamically reflects the
-   * greater of (a) the program's strategic day-type adjustment or (b) actual
-   * calories burned via completed workouts and runs. When false, the target
-   * uses the planned day type only. See useEffectiveTargets.
-   */
-  adjustCaloriesForTraining?: boolean;
   /**
    * Nutr2 (#982) — persisted state for the adaptive-TDEE weekly rate cap.
    * `lastApplied` is the calorie value last shown to the user; `lastAppliedAt`
@@ -418,12 +361,9 @@ export interface UserProfileNutrition {
 
 /** Social and privacy settings */
 export interface UserProfileSocial {
-  /** LEGACY: nothing ever read this. The Settings select that wrote it
-   *  ("Default visibility — Who can see your posts") saved a value and
-   *  changed nothing; who sees a session is the saved share default
-   *  (`ShareDefaultsRow`, applied by the finish screen). Kept typed and
-   *  registered on the same terms as the auto-post trio below. */
-  defaultVisibility?: "public" | "followers" | "private";
+  /* Who sees a session is `shareDefaults` alone. `defaultVisibility`, the
+     auto-post trio (`autoPostRuns`, `autoPostWorkouts`, `autoPostBadges`)
+     and `crewId` are retired (App1 Q24): nothing read them. */
   /** Who sees a finished session, per type: the answer to the finish
    *  screen's "Share sessions automatically?", changed in Settings →
    *  Privacy (`ShareDefaultsRow`). On the account so one answer applies on
@@ -460,25 +400,6 @@ export interface UserProfileSocial {
    *  `invitedAt`: a block of this account by that person renews their code
    *  (Soc15). Server-written by redeemInvite. */
   invitedBy?: string;
-  /** LEGACY (share composer superseded these, #1416): the saved share
-   *  default decides auto-posting now — `shareDefaults` above. Nothing has
-   *  READ these three since; the Settings switches that wrote
-   *  `autoPostRuns` / `autoPostWorkouts` persisted a value that changed
-   *  nothing and contradicted the composer whenever the two disagreed, so
-   *  they were replaced by `ShareDefaultsRow` (which edits the preference
-   *  that actually runs). `autoPostBadges` never had a writer at all.
-   *
-   *  Kept typed + registered on the same terms as `crewId` below: existing
-   *  docs carry them, and a future registry sweep can drop the whole group
-   *  once prod data is confirmed clean. */
-  autoPostRuns?: boolean;
-  autoPostWorkouts?: boolean;
-  autoPostBadges?: boolean;
-  /** LEGACY (crews retired 2026-07-20): no longer read or written, but
-   *  kept in the type + field registry so existing docs carrying it
-   *  still pass the profile allow-list. A future registry sweep can
-   *  drop it once prod data is confirmed clean. */
-  crewId?: string;
   /** Shared-run route privacy. When unset or true (the DEFAULT), the route
    *  preview on shared run activities is clipped ~200m off each end so the
    *  user's home/start isn't broadcast to followers. Explicit `false` opts
@@ -716,10 +637,9 @@ function syncDarkMode(dark: boolean) {
 function createDefaultProfile(
   uid: string,
   displayName: string,
-  email: string,
   /* OAuth providers (Google, Apple) populate the auth user's photoURL
      at sign-in. Email/password signups don't. Accepting this as an
-     optional 4th arg lets the OAuth flows seed a usable avatar
+     optional 3rd arg lets the OAuth flows seed a usable avatar
      without any additional UX. The user can override via the upload
      flow in Settings; this is just the default. The Firestore rule
      regex on photoURL already constrains the value to known-good
@@ -731,7 +651,6 @@ function createDefaultProfile(
   return {
     uid,
     displayName: clampDisplayName(displayName),
-    email,
     photoURL,
     athleteType: "Lifter",
     weightKg: 70,
@@ -758,13 +677,8 @@ function createDefaultProfile(
     // so they can't claim a second trial.
     trialExpiresAt: null,
     subscriptionTier: "free",
-    currentStreak: 0,
-    longestStreak: 0,
-    lastLogDate: null,
-    adjustCaloriesForTraining: true,
     program: {
       goal: "recomp",
-      startWeight: 70,
       currentPhase: "base",
     },
   };
@@ -773,14 +687,12 @@ function createDefaultProfile(
 function hydrateProfile(
   uid: string,
   data: Record<string, unknown>,
-  fallbackName = "",
-  fallbackEmail = ""
+  fallbackName = ""
 ): UserProfile {
   return {
     ...(data as Partial<UserProfile>),
     uid,
     displayName: (data.displayName as string) ?? fallbackName,
-    email: (data.email as string) ?? fallbackEmail,
     photoURL: (data.photoURL as string | null | undefined) ?? null,
     athleteType: (data.athleteType as string) ?? "Lifter",
     weightKg: (data.weightKg as number) ?? 70,
@@ -803,13 +715,6 @@ function hydrateProfile(
     trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
     subscriptionTier:
       (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
-    currentStreak: (data.currentStreak as number) ?? 0,
-    longestStreak: (data.longestStreak as number) ?? 0,
-    lastLogDate: (data.lastLogDate as string | null) ?? null,
-    // Training-aware calorie target — defaults to true for existing users who
-    // don't have the field set yet.
-    adjustCaloriesForTraining:
-      (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
     adaptiveCapState:
       (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
     runFitness: (data.runFitness as UserProfile["runFitness"]) ?? null,
@@ -827,8 +732,6 @@ function hydrateProfile(
           ?.goal as UserProfile["program"] extends { goal: infer G }
           ? G
           : never) ?? "recomp",
-      startWeight:
-        ((data.program as Record<string, unknown>)?.startWeight as number) ?? 0,
       currentPhase:
         ((data.program as Record<string, unknown>)?.currentPhase as string) ??
         "base",
@@ -1378,9 +1281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (cachedDoc.exists()) {
             const cachedProfile = hydrateProfile(
               firebaseUser.uid,
-              cachedDoc.data(),
-              "",
-              firebaseUser.email ?? ""
+              cachedDoc.data()
             );
             setProfile(cachedProfile);
             syncDarkMode(cachedProfile.darkMode);
@@ -1400,12 +1301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
-            const safeProfile = hydrateProfile(
-              firebaseUser.uid,
-              data,
-              "",
-              firebaseUser.email ?? ""
-            );
+            const safeProfile = hydrateProfile(firebaseUser.uid, data);
             setProfile(safeProfile);
             syncDarkMode(safeProfile.darkMode);
             // Boot reconciliation writes — run at most once per uid per session
@@ -1424,24 +1320,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   logger.warn("[AuthProvider] timezone capture failed", err)
                 );
               }
-              // Email-mirror reconcile: a verifyBeforeUpdateEmail change lands
-              // OUT-OF-BAND (the user clicks the confirm link, often on another
-              // device), so the profile doc's `email` copy can't be mirrored at
-              // write time. Reconcile it on boot instead — same
-              // fire-and-forget shape as the timezone capture above.
-              if (
-                typeof data.email === "string" &&
-                firebaseUser.email &&
-                data.email !== firebaseUser.email
-              ) {
-                updateDocGuarded(doc(db, "users", firebaseUser.uid), {
-                  email: firebaseUser.email,
-                }).catch((err) =>
-                  logger.warn("[AuthProvider] email reconcile failed", err)
-                );
-                // The change has landed; Login has nothing left to explain.
-                clearEmailChange();
-              }
+              // An email change lands out of band (the person taps the link
+              // in the new inbox, often on another device). Once Auth carries
+              // the address this device noted, the change has landed and
+              // Login has nothing left to explain. The address is Auth's
+              // alone: the profile keeps no copy of it (App1 Q21).
+              if (emailChangeLanded(firebaseUser.email)) clearEmailChange();
               // Share answers this device saved before they were kept on
               // the account. Fire-and-forget; a failed move leaves them on
               // the device, still applied, for the next session to retry.
@@ -1571,8 +1455,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          a path). The rule constrains this to `profile-photos/{uid}/.*`. */
       photoStoragePath: null,
       athleteType: newProfile.athleteType,
-      currentStreak: newProfile.currentStreak,
-      longestStreak: newProfile.longestStreak,
+      currentStreak: 0,
+      longestStreak: 0,
       createdAt: serverTimestamp(),
     });
     await batch.commit();
@@ -1583,7 +1467,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await revokeOutgoingAccountDeviceState();
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
-      const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
+      const newProfile = createDefaultProfile(uid, "");
       // Always finish creating the account's docs; only gate local state +
       // analytics attribution if the credential is no longer current.
       // The account exists once the credential does. A profile write that
@@ -1635,7 +1519,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newProfile = createDefaultProfile(
           uid,
           cred.user.displayName || "",
-          cred.user.email || "",
           cred.user.photoURL || null
         );
         // Finish creating the new Auth account's docs even if the UI switched,
@@ -1647,14 +1530,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         if (auth.currentUser?.uid !== uid) return;
         const data = profileDoc.data();
-        setProfile(
-          hydrateProfile(
-            uid,
-            data,
-            cred.user.displayName ?? "",
-            cred.user.email ?? ""
-          )
-        );
+        setProfile(hydrateProfile(uid, data, cred.user.displayName ?? ""));
       }
     },
     []
@@ -2067,8 +1943,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hydrateProfile(
             uid,
             snap.data() as Record<string, unknown>,
-            currentUser.displayName ?? "",
-            currentUser.email ?? ""
+            currentUser.displayName ?? ""
           )
         );
       }

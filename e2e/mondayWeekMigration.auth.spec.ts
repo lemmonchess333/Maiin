@@ -42,7 +42,6 @@ test.describe("Monday migration on an existing account", () => {
         await userRef.set({
           ...seedProfile,
           uid: user.uid,
-          email: user.email,
           darkMode: colorScheme === "dark",
           runMode: "race_prep",
           raceGoal,

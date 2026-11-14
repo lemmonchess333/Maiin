@@ -1640,27 +1640,24 @@ function useStreaksInternal(planProfile: PlanProfile | null) {
 
   // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
   //
-  // Atomic batch writes three docs in one commit:
+  // Atomic batch writes two docs in one commit:
   //   1. users/{uid}/streaks/data           — full detail (source of truth;
   //                                           owner-only).
-  //   2. users/{uid}                        — mirrored currentStreak +
-  //                                           longestStreak on the main
-  //                                           user doc (owner-only read for
-  //                                           now; kept for Home's existing
-  //                                           hydration path).
-  //   3. users/{uid}/public/profile         — cross-user-readable projection
+  //   2. users/{uid}/public/profile         — cross-user-readable projection
   //                                           (see match rule in
   //                                           firestore.rules). Only the
   //                                           allowlisted fields land here.
   //
   // Mirror-write contract: streaks/data carries the full state (badges,
-  // lastActiveDate, totalActiveDays); users/{uid} + public/profile carry
-  // only the two summary numbers we denormalise for cross-surface reads.
+  // lastActiveDate, totalActiveDays); public/profile carries only the
+  // summary other people read. The profile document (users/{uid}) kept a
+  // third copy of the two numbers that nothing read, and no longer does
+  // (App1 Q21, Q24).
 
   useEffect(() => {
     // A failed read is not an empty one: with the streaks document unread,
     // longestStreak and the last active day are the defaults, and saving
-    // would write them over the stored record and both mirrors.
+    // would write them over the stored record and the public copy.
     if (!allLoaded || !uid || readFailed) return;
     const today = format(new Date(), "yyyy-MM-dd");
     // The certificate after this write: the streak through its last active
@@ -1709,7 +1706,6 @@ function useStreaksInternal(planProfile: PlanProfile | null) {
     }
 
     const streaksRef = doc(db, "users", uid, "streaks", "data");
-    const userRef = doc(db, "users", uid);
     const publicProfileRef = doc(db, "users", uid, "public", "profile");
 
     const batch = writeBatch(db);
@@ -1724,14 +1720,6 @@ function useStreaksInternal(planProfile: PlanProfile | null) {
           ? { anchorStreak: anchor.streak, anchorDate: anchor.lastActiveDate }
           : {}),
         ...(keptThroughToStore ? { keptThrough: keptThroughToStore } : {}),
-      },
-      { merge: true }
-    );
-    batch.set(
-      userRef,
-      {
-        currentStreak,
-        longestStreak: nextLongest,
       },
       { merge: true }
     );

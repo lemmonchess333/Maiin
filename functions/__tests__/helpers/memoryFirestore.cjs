@@ -50,10 +50,13 @@ function memoryFirestore(seed = {}) {
         const next = merge ? { ...before } : {};
         for (const [field, v] of Object.entries(
           merge ? value : structuredClone(value)
-        ))
-          next[field] = isIncrement(v)
-            ? (Number(before[field]) || 0) + v.__increment
-            : v;
+        )) {
+          if (isFieldDelete(v)) delete next[field];
+          else
+            next[field] = isIncrement(v)
+              ? (Number(before[field]) || 0) + v.__increment
+              : v;
+        }
         data.set(ref.path, next);
       }
     }
@@ -229,8 +232,9 @@ function increment(n) {
 function isIncrement(v) {
   return !!v && typeof v === "object" && typeof v.__increment === "number";
 }
-// A stand-in for FieldValue.delete, for code that takes it as an argument:
-// `update` removes the field (a dotted path reaches into a map).
+// A stand-in for FieldValue.delete(), for code that takes it as an argument:
+// `update` (a dotted path reaches into a map) and a merging `set` remove the
+// field, as Firestore does.
 function fieldDelete() {
   return { __delete: true };
 }

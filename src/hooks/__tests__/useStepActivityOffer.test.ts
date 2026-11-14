@@ -223,11 +223,9 @@ describe("useStepActivityOffer saves", () => {
       activityLevel: "light",
       goalWeightKg: 82,
       weeklyRateKg: -0.5,
-      program: LIGHT_CUTTER.program,
+      program: { goal: "cut", currentPhase: "build" },
       targetCalories: 2210,
       targetProtein: 180,
-      targetCarbs: 200,
-      targetFat: 60,
     });
     await waitFor(() => expect(setDocGuarded).toHaveBeenCalledTimes(1));
     expect(toastSuccess).toHaveBeenLastCalledWith(

@@ -96,7 +96,6 @@ async function run() {
     {
       uid,
       displayName: FELLBEHIND_CAPTURE_USER.displayName,
-      email: FELLBEHIND_CAPTURE_USER.email,
       photoURL: null,
       athleteType: "Hybrid",
       weightKg: 72,
@@ -109,10 +108,6 @@ async function run() {
       darkMode: false,
       onboardingComplete: true,
       subscriptionTier: "free",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-      adjustCaloriesForTraining: true,
       targetCalories: 2100,
       targetProtein: 130,
       ...plan.profileUpdates,
