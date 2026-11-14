@@ -124,6 +124,19 @@ describe("watch — the run's own watcher", () => {
     expect(onFix).not.toHaveBeenCalled();
   });
 
+  /* Run25 call 2: the run screen watches location before Start, so the
+     fix that starts the clock is usually there already. That watch must
+     not be the permission ask, nor keep location on in the background. */
+  it("warms in the foreground only, never asking, with fresh fixes only", async () => {
+    nativeLocationSource.watch({}, vi.fn(), vi.fn(), "warm");
+    await settle();
+    expect(fake.addWatcher.mock.calls[0][0]).toEqual({
+      requestPermissions: false,
+      stale: false,
+      distanceFilter: 0,
+    });
+  });
+
   it("removes the watcher a clear raced, once its id arrives", async () => {
     // Stopping straight after Start: the native watcher exists, but its id
     // has not come back. Without this it would keep the GPS on for good.

@@ -62,6 +62,35 @@ describe("useRunTimer", () => {
     expect(result.current.isRunning).toBe(false);
   });
 
+  /* Run25 call 2: a GPS run's clock starts on its first good fix, which
+     the page acts on a moment after the fix was taken. The clock counts
+     from the fix, so every other clock started on it agrees. */
+  it("starts from a past instant when given one", () => {
+    const { result } = renderHook(() => useRunTimer());
+    const now = Date.now();
+    act(() => result.current.start(now - 800));
+    expect(result.current.getAccumulatedSeconds()).toBeCloseTo(0.8, 5);
+    vi.setSystemTime(now + 10_000);
+    act(() => result.current.recalcNow());
+    expect(result.current.elapsed).toBe(10);
+  });
+
+  it("never starts from later than now", () => {
+    const { result } = renderHook(() => useRunTimer());
+    const now = Date.now();
+    act(() => result.current.start(now + 5_000));
+    expect(result.current.getAccumulatedSeconds()).toBe(0);
+  });
+
+  it("does not start again while running, which would drop unbanked time", () => {
+    const { result } = renderHook(() => useRunTimer());
+    const now = Date.now();
+    act(() => result.current.start());
+    vi.setSystemTime(now + 4_000);
+    act(() => result.current.start());
+    expect(result.current.getAccumulatedSeconds()).toBe(4);
+  });
+
   it("formatTime formats correctly", () => {
     const { result } = renderHook(() => useRunTimer());
     expect(result.current.formatTime(0)).toBe("0:00");

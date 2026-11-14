@@ -24,7 +24,7 @@ inside that type.
 
 | Flow                     | Where                                                                                        | States                                                                                                               |
 | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`)                                         | waiting, acquiring, countdown, active, paused, finished                                                              |
+| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)  | waiting, acquiring ("Finding GPS": the clock waits for a fix within 20 m, or Start anyway), active, paused, finished |
 | Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                           | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`) |
 | Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                       | server-owned                                                                                                         |
 | Health export receipt    | `firestore.rules` (`healthWorkoutExports`), `src/lib/healthWorkoutExport.ts` (`ExportState`) | attempted, exported, pending-delete; the rules refuse any other move                                                 |

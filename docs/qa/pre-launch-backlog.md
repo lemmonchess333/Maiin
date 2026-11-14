@@ -5050,6 +5050,58 @@ activity recorded without pauses, takes out stretches below a speed
 threshold that last more than 15 s. Two phones on the same run can read
 different times for that reason alone.
 
+## Run start: the clock waits for the first good fix (2026-11-14)
+
+Affects: every GPS run's start (Run25 call 2; `src/lib/gpsStart.ts`,
+`useGPS`'s `warm` and `start({ awaitStartFix })`, `useGpsWarmup`, the run
+screen's "Finding GPS" in `src/pages/Run.tsx`). The run screen watches
+location from the moment it opens, before Start (a foreground-only watch
+that never asks for location), and a GPS run's clock, distance and steps
+start on the first fix within 20 m, or at the tap of Start when such a fix
+from the last 10 s is in hand. There is no 3-2-1 any more. The unit tests
+drive a faked location source; only a phone says how often iOS gives a
+fix within 20 m, and how soon.
+
+- [ ] **A cold start.** Outdoors in the open, with the phone just
+      unlocked and no app having used location for a while: open Tropos,
+      go straight to a run's card or Home's Start, and tap Start. Passing:
+      the screen says "Finding GPS" with Start anyway; within about 5 to
+      30 s it goes by itself to the run, "Go!" is spoken, and the clock
+      reads 0:00 then counts. The saved run's start time (the finish
+      screen's "07:42–08:23") is when "Go!" was spoken, not when Start was
+      tapped.
+- [ ] **A warm start.** Outdoors, open a run's card (or the picker) and
+      wait until the chip reads "GPS ready", then tap Start. Passing: no
+      "Finding GPS" at all; the run screen opens with the clock at 0:00 and
+      "Go!". Then put the phone down on the card for a minute and tap
+      Start: it should still be immediate. If the chip reads "Finding GPS"
+      or "Weak GPS", Start shows "Finding GPS" until the fix comes, which
+      is right. Note how long the chip takes to read "GPS ready" from
+      opening the card: under about 10 s is the expectation.
+- [ ] **An indoor start.** Indoors, a run on the treadmill (the setup's
+      "On a treadmill", or a planned run started there): Passing: never
+      "Finding GPS"; the treadmill screen and its clock start at once. An
+      outdoor run started indoors waits on "Finding GPS" (indoor fixes are
+      rarely within 20 m), and its Start anyway, Track without GPS (after
+      15 s) and On a treadmill all work.
+- [ ] **Start anyway under trees.** Under tree cover or between tall
+      buildings, start a run, and on "Finding GPS" tap Start anyway at
+      once. Passing: the clock starts at the tap; the distance reads
+      0.00 km until the phone has a fix within 150 m, then counts from
+      there; the map's chip reads "Acquiring GPS" until then. The run
+      saves with its start at the tap.
+- [ ] **The other clocks.** On one cold start with a Watch and the Live
+      Activity on: the Live Activity, the Watch's figure, the first spoken
+      cue and a structured session's first step all begin with "Go!", not
+      at the tap. The Health workout's start is "Go!".
+- [ ] **Location off.** With location turned off for Tropos, tap Start.
+      Passing: "Location is off for Tropos", Open settings, Track without
+      GPS, On a treadmill and Cancel, as before; no Start anyway.
+- [ ] **No location indicator behind your back.** Open a run's card, then
+      leave the app for the home screen without starting. Passing: the
+      location arrow goes from the status bar within a few seconds, and no
+      blue background-location pill appears at any point before Start.
+
 ## Apple Watch companion: device acceptance kit (2026-11-14)
 
 The last step before `WATCH_RUN_RELEASE_ENABLED` and

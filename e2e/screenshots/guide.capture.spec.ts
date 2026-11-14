@@ -232,8 +232,8 @@ test("a new account can start training before replaying the guide", async ({
   await shoot(page, "hint-first-set");
 
   // The run screen before a first run, pointing at what starts one. The
-  // position given is too rough to start on, so the run waits at "Acquiring
-  // GPS..." with its Cancel rather than starting to record.
+  // position given is too rough to start on, so the run waits at "Finding
+  // GPS" with its Cancel rather than starting to record (Run25 call 2).
   await page.context().grantPermissions(["geolocation"]);
   await page
     .context()
@@ -247,7 +247,7 @@ test("a new account can start training before replaying the guide", async ({
   const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
   await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
   await expect(firstRun).toHaveCount(0);
-  await expect(page.getByText("Acquiring GPS…")).toBeVisible({
+  await expect(page.getByText("Finding GPS", { exact: true })).toBeVisible({
     timeout: 10_000,
   });
   await expect(startsRun).toHaveCount(0);

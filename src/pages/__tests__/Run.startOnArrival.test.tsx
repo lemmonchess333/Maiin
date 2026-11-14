@@ -67,8 +67,15 @@ vi.mock("@/lib/nativeLocationSettings", async (importOriginal) => ({
 
 /* Stable across renders, as the real hook's useCallbacks are. */
 const gpsControls = {
-  preWarm: () => {},
-  start: () => h.gpsCalls.push("start"),
+  warm: () => {},
+  cool: () => {},
+  startAnyway: () => {},
+  // No fix in hand at Start, as the real hook says with none from the
+  // warm watch: the run waits on "Finding GPS" (Run25 call 2).
+  start: () => {
+    h.gpsCalls.push("start");
+    return false;
+  },
   stop: () => h.gpsCalls.push("stop"),
   pause: () => {},
   resume: () => {},
@@ -297,7 +304,7 @@ describe("a run started from Home", () => {
   it("starts the planned run as the page opens, with no second Start", async () => {
     planTodaysEasyRun();
     await open(HOME_START);
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.gpsCalls).toContain("start");
     expect(h.launchCardRenders).toBe(0);
     // Off the address, so going Back here from the summary, or a reload,
@@ -310,7 +317,7 @@ describe("a run started from Home", () => {
   it("starts a free run for a free runner, not the picker", async () => {
     h.runMode = "freeform";
     await open("/run?start=1");
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.pickerRenders).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await saveOnTheTreadmill("5");
@@ -365,7 +372,7 @@ describe("a run started from Home", () => {
     planTodaysEasyRun();
     h.hint = { owed: true, loading: false, runCount: 4 };
     await open(HOME_START);
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 
   it("waits for a slow read of the runs only so long", async () => {
@@ -376,7 +383,7 @@ describe("a run started from Home", () => {
     expect(h.gpsCalls).not.toContain("start");
     expect(h.launchCardRenders).toBe(0);
     expect(
-      await screen.findByText("Acquiring GPS…", undefined, {
+      await screen.findByText("Finding GPS", undefined, {
         timeout: FIRST_RUN_CHECK_MS + 2000,
       })
     ).toBeInTheDocument();
@@ -394,7 +401,7 @@ describe("a run whose location is refused", () => {
     refuse();
     await open("/run?start=1");
     expect(screen.getByText("Location is off for Tropos")).toBeInTheDocument();
-    expect(screen.queryByText("Acquiring GPS…")).toBeNull();
+    expect(screen.queryByText("Finding GPS")).toBeNull();
     expect(
       screen.queryByText("Move to an open area away from buildings")
     ).toBeNull();
@@ -462,6 +469,6 @@ describe("a run opened from Train", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "The run's card" }));
     });
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 });
