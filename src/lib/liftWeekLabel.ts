@@ -155,7 +155,12 @@ export function liftWeekLabel(
   // Race week, once race day is behind it, is still race week for the
   // lifting: the block no longer names it, the week's own mark does.
   const phase = race
-    ? getRacePhaseLabel(race.weekIndex, race.totalWeeks, race.distance)
+    ? getRacePhaseLabel(
+        race.weekIndex,
+        race.totalWeeks,
+        race.distance,
+        race.shortBase
+      )
     : !state.archived && state.raceWeek === "race"
       ? "Race"
       : null;
