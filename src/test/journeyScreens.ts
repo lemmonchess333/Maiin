@@ -224,12 +224,15 @@ export const TABS = {
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];
 
 /** Run9's starter goal: setup's option, and its Done on Home and Train
- *  (`StarterDoneCard`). */
+ *  (`StarterDoneCard`), with what comes next: the 5K, and the plans with
+ *  no race date (Run24 (3)). */
 export const STARTER = {
   setupOption: "30 minutes",
   goal: "30 minutes without stopping",
   done: "Done",
   offer: "Train for a 5K",
+  buildTo5k: "Build to 5K",
+  keepFit: "Keep fit",
   notNow: "Not now",
   /** Train's starter card once this week's runs are in. */
   weekDone: "This stage is complete. The next one starts on Monday.",
