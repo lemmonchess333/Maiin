@@ -130,6 +130,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
+| `PublicPost.tsx`                       | `/activity/:activityId`            | Signed out, a public post's card and Get Tropos; no map (App1 Q51)              |
 
 Four Settings routes are redirects, kept for links already saved (Trim1,
 2026-11-11): `/settings/training` and `/settings/workout-prefs` open Lift

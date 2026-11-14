@@ -8,8 +8,10 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  APP_STORE_URL,
   appInviteUrl,
   PUBLIC_APP_ORIGIN,
+  publicPostUrl,
   withAppLink,
 } from "@/lib/publicLinks";
 
@@ -54,5 +56,26 @@ describe("withAppLink", () => {
     expect(withAppLink("My run on Tropos")).toBe(
       "My run on Tropos https://troposfit.com"
     );
+  });
+});
+
+describe("a shared post's address (App1 Q51)", () => {
+  it("is the post's own path on the production web app", () => {
+    // The same path as the in-app route, so the iPhone app opens it as
+    // it is, and Hosting sends it to the public page for anyone else.
+    expect(publicPostUrl("AbC123")).toBe(
+      "https://troposfit.com/activity/AbC123"
+    );
+  });
+
+  it("ends a public post's card's words", () => {
+    expect(withAppLink("My run on Tropos", publicPostUrl("AbC123"))).toBe(
+      "My run on Tropos https://troposfit.com/activity/AbC123"
+    );
+  });
+
+  it("sends people to Tropos on the App Store", () => {
+    // Apple ID 6762416918 (docs/app-store/listing.md).
+    expect(APP_STORE_URL).toBe("https://apps.apple.com/app/id6762416918");
   });
 });

@@ -21,6 +21,7 @@ import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { useNativeInviteNavigation } from "@/hooks/useNativeInviteNavigation";
+import { useNativePostNavigation } from "@/hooks/useNativePostNavigation";
 import { useLocalNotificationNavigation } from "@/hooks/useLocalNotificationNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
@@ -130,6 +131,7 @@ const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
+const PublicPost = lazyRetry(() => import("@/pages/PublicPost"));
 const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
@@ -431,6 +433,8 @@ function AppRoutes() {
     !loading && !!user && !!profile?.onboardingComplete,
     !loading && !!user && !profile?.onboardingComplete
   );
+  // A shared post's link opens the post in the app (App1 Q51).
+  useNativePostNavigation(!loading && !!user && !!profile?.onboardingComplete);
   // Signed in: fetch the shell's chunks side by side, while the profile
   // loads, instead of one after another as each layer renders. A device
   // that has signed in before started them at module load already; this
@@ -555,6 +559,9 @@ function AppRoutes() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/support" element={<Support />} />
+          {/* A shared post's public page (App1 Q51); signed in, the same
+              address is the post in the app. */}
+          <Route path="/activity/:activityId" element={<PublicPost />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>

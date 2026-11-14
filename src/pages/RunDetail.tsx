@@ -718,6 +718,11 @@ export default function RunDetail() {
               month: "short",
               year: "numeric",
             }) ?? "",
+          // Shared to the feed: the card links to the post while public.
+          postId:
+            typeof run.sharedActivityId === "string"
+              ? run.sharedActivityId
+              : undefined,
           points: sharedPoints,
           distanceKm: run.distance / 1000,
           durationSec: run.duration,

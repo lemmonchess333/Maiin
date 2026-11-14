@@ -517,6 +517,8 @@ function WorkoutDetailContent() {
           template: "lift",
           handle: profile?.displayName || "Athlete",
           date: shortDate,
+          // Shared to the feed: the card links to the post while public.
+          postId: sharedActivityId ?? undefined,
           totalVolumeKg: tonnage,
           totalReps,
           exerciseCount: exercises.length,
