@@ -78,7 +78,7 @@ export function runTrace(season: Season, persona: LiftPersona): string {
     const plan = w.leadIn
       ? `lead-in to ${String(w.totalWeeks)} weeks`
       : w.phase
-        ? `${w.phase}, plan week ${String((w.planWeek ?? 0) + 1)} of ${String(w.totalWeeks)}`
+        ? `${w.phase}, plan week ${String((w.planWeek ?? 0) + 1)}${w.totalWeeks !== null ? ` of ${String(w.totalWeeks)}` : ""}`
         : "no plan";
     lines.push(
       `w${String(w.week)} ${w.weekStart}  ${plan}  counted ${String(w.counted)}/${String(w.planned.length)}  plan ${String(Math.round(w.plannedMinutes))} min, long ${w.longKm.toFixed(1)} km, quality ${String(w.quality)}`

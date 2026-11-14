@@ -60,7 +60,7 @@ export function deriveStrip(
   metadata: RunPlanMetadata,
   runPlan:
     | {
-        mode: "structured" | "race_prep" | "starter";
+        mode: "structured" | "race_prep" | "starter" | "rolling";
         raceGoal?: { distance: string; targetDate: string };
         totalWeeks?: number;
         currentWeek?: number;
@@ -123,7 +123,9 @@ export function deriveStrip(
         targetDate: runPlan?.raceGoal?.targetDate,
       };
     }
-    if (metadata.planMode === "structured") {
+    // A plan with no race date names today's run as the retired
+    // structured week did (Run24 (3)).
+    if (metadata.planMode === "structured" || metadata.planMode === "rolling") {
       if (
         metadata.plannedRunDayIndex === null &&
         metadata.planSource === "url_template"
