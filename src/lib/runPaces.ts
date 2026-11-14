@@ -470,7 +470,33 @@ export interface PaceInsight {
   suggestedVdot: number;
   /** What accepting it stores: the best effort's benchmark. */
   suggested: DerivedFitness;
-  direction: "faster" | "slower";
+  /** "first": a runner with no confirmed paces, offered their first from
+   *  an effort (Run24 (4)); `currentVdot` is then 0 or the unconfirmed
+   *  derived one. */
+  direction: "faster" | "slower" | "first";
+}
+
+/**
+ * Run24 (4), deep dive D4: the run summary's one tap for a runner with no
+ * confirmed paces (no benchmark, or one the app derived and they haven't
+ * accepted): their best recent effort, whatever its distance from the
+ * unconfirmed one, so the plan's week-2 time trial gives them paces. Null
+ * with no effort. Accepting still writes the paces (RUN-EV-08).
+ */
+export function resolveFirstPaces(
+  fitness: RunFitnessInput | null | undefined,
+  efforts: readonly BenchmarkEffort[]
+): PaceInsight | null {
+  if (fitness && fitness.pendingConfirmation !== true) return null;
+  const best = bestEffort(efforts);
+  if (!best) return null;
+  const suggested = derivedFitness(best);
+  return {
+    currentVdot: Math.round((fitness?.vdot ?? 0) * 10) / 10,
+    suggestedVdot: suggested.vdot,
+    suggested,
+    direction: "first",
+  };
 }
 
 export function resolvePaceInsight(
@@ -542,6 +568,50 @@ export function vdotFromIntervalPace(paceSPerKm: number): number {
   if (!Number.isFinite(paceSPerKm) || paceSPerKm <= 0) return 0;
   const vo2 = vo2AtVelocity(60000 / paceSPerKm);
   return vo2 > 0 ? vo2 / INTERVAL_PCT : 0;
+}
+
+/** What a session's repeats are run at where it is not the interval band
+ *  (Run24 (5)): repetition pace, a 5K's or a 10K's race pace, or by feel. */
+export type RepeatsAt = "repetition" | "5k" | "10k" | "feel";
+
+/**
+ * Run24 (5), deep dive D5: the pace a session's repeats are run at, from
+ * the runner's interval pace (the middle of the interval band a confirmed
+ * benchmark gives, `resolveSessionPaces("intervals")`). Repetition pace is
+ * the middle of the repetition band, and a race's pace the time that race
+ * takes at the same VDOT (Daniels–Gilbert, as `vdotFromRace`), both at the
+ * VDOT the interval pace gives back (`vdotFromIntervalPace`). Null for
+ * repeats run by feel, and without an interval pace.
+ *
+ * Every surface holds the interval pace, and the launch builds the run from
+ * it too, so the repeats' pace, their rest and their minutes are worked out
+ * from one number and agree wherever the session is named.
+ */
+export function repeatPaceFromIntervalPace(
+  intervalPaceSPerKm: number | null | undefined,
+  at: RepeatsAt | undefined
+): number | null {
+  if (!intervalPaceSPerKm || !(intervalPaceSPerKm > 0)) return null;
+  if (!at) return intervalPaceSPerKm;
+  if (at === "feel") return null;
+  const vdot = vdotFromIntervalPace(intervalPaceSPerKm);
+  if (!(vdot > 0)) return null;
+  if (at === "repetition") return mid(trainingBands(vdot).repetition);
+  const distanceM = RACE_DISTANCES_M[at];
+  return Math.round(raceTimeAtVdot(vdot, distanceM) / (distanceM / 1000));
+}
+
+/** The seconds a race of `distanceM` takes at `vdot`: `vdotFromRace`
+ *  solved for time. */
+function raceTimeAtVdot(vdot: number, distanceM: number): number {
+  let fast = distanceM / 10; // 10 m/s
+  let slow = distanceM; // 1 m/s
+  for (let i = 0; i < 50; i++) {
+    const t = (fast + slow) / 2;
+    if (vdotFromRace(distanceM, t) > vdot) fast = t;
+    else slow = t;
+  }
+  return (fast + slow) / 2;
 }
 
 /**

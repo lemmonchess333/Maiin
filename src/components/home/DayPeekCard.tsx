@@ -379,6 +379,7 @@ export default function DayPeekCard({
           templateId: runTemplate.id,
           currentWeek: programState?.runPlan?.currentWeek,
           totalWeeks: programState?.runPlan?.totalWeeks,
+          shortBase: programState?.runPlan?.shortBase,
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,

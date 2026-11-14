@@ -74,12 +74,23 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   their own week takes Tuesday's medium-long past the hour beside
  *   Wednesday's quality, and their Tuesday-to-Sunday days leave none
  *   clear (D16 holds it under the hour only beside two quality sessions).
+ *   Run24 (4)'s time trials, which take a quality week in five and so move
+ *   the quality ladder, gave sub-3:30 and the 2-3-day hybrids a
+ *   `volume-jump` back (the week after a cutback, 28% and 26% over it)
+ *   and the hybrids their `taper-cut`. Run24 (5), the session library in
+ *   the plan, took the 2-3-day hybrids' out again: their cutback holds
+ *   3 × 2 km at 10K pace where it held 4 × 1 km, so the week after it is
+ *   within a quarter of it, 166 minutes after 139 where it was 163 after
+ *   129 (`volume-jump`), and the 10K's own sharpener, 4 × 1 km at 10K pace,
+ *   holds their first taper week at 94 minutes of the build's 180, where
+ *   8 × 400 m held 90 of 182 (`taper-cut`). Sub-3:30 keeps its
+ *   `volume-jump` with a second quality day.
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": ["spike", "volume-jump"],
   "half-3-days": ["spike", "volume-jump"],
-  "sub-3-30": ["spike"],
+  "sub-3-30": ["spike", "volume-jump"],
   "sick-six-weeks": ["spike", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],

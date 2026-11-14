@@ -366,8 +366,11 @@ describe("the taper retains quality only when the fitted build held it", () => {
     ]) {
       const p = built("marathon", 16, more);
       expect(quality(p.weeks.slice(0, 12).flat()).length).toBeGreaterThan(0);
+      // The marathon's own sharpener (Run24 (5)).
       for (const week of p.weeks.slice(12, -1))
-        expect(quality(week)).toMatchObject([{ templateId: "8x400" }]);
+        expect(quality(week)).toMatchObject([
+          { templateId: "sharpener_marathon" },
+        ]);
     }
   });
 });
@@ -657,7 +660,23 @@ describe("the taper's easy runs step down from what the last build week held (Ru
             TAPER_WEEKS_BY_DISTANCE[distance]
           ),
           `a ${distance} ${weeks} weeks out, ${volume}, ${days} days`
-        ).toBe(easy);
+        ).toBe(
+          // Run24 (5): a 29-week marathon's last build week holds a
+          // progression run of an hour where it held 6 × 1 km, so the weekly
+          // hold (Run24 (6)) takes its medium-long a rung lower and the
+          // taper steps down from that. (A 17-week half's time trials no
+          // longer hold its last build week under the hold: the weeks
+          // before it are longer with the base's light sessions.)
+          (weeks === 29 && distance === "marathon"
+            ? (
+                {
+                  "standard 5": "30 30 50 | 30 30 40",
+                  "lighter 3": "40 | 30",
+                  "lighter 4": "30 40 | 30 30",
+                } as Record<string, string>
+              )[`${volume} ${days}`]
+            : undefined) ?? easy
+        );
     // A compressed marathon ten weeks out holds its last build week to 15%
     // over the week before (Run24 (6)): its easy run gives way, and the
     // taper steps down from what that week held.

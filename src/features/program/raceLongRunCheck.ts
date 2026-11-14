@@ -8,8 +8,17 @@
  * the month's longest run. This reads the race from the runs instead: the
  * farthest run of the last four weeks, built on by 2 km a week (the long
  * run's rungs, a Tropos heuristic) through the weeks left before the taper.
- * When that reach is under half the race, Home opens the fell-behind sheet
+ * When the runner has fallen behind the long runs the plan put in their
+ * week, and that reach is under half the race or under what the plan
+ * itself builds to, whichever is shorter, Home opens the fell-behind sheet
  * in its race register, once a week, to say so and offer its choices.
+ *
+ * Measured against the plan as well as the race: a plan whose long run
+ * peaks under half the race (a marathon at the long run's time ceiling for
+ * a slow runner, or a short block) is everything its runner can be asked
+ * to do, and no later date builds them further, so a runner who keeps up
+ * with it never hears the check. Nor does anyone in the taper or race week,
+ * when no week is left to build in.
  *
  * Pure and light: Home reads it on every visit, so it loads no scheduler.
  */
@@ -23,8 +32,10 @@ import {
 } from "@/lib/dateHelpers";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { DatedRun } from "./layoffDetection";
-import type { ProgramState } from "./programTypes";
+import type { ProgramState, ScheduledRunDay } from "./programTypes";
+import { DONE_RUNG_SHARE } from "./runningBaseline";
 import { TAPER_WEEKS_BY_DISTANCE } from "./runPlanTiming";
 
 /** The weeks of runs the reach is read from. */
@@ -41,6 +52,34 @@ const RACE_KM: Record<string, number> = {
   half: 21.1,
   marathon: 42.2,
 };
+
+/**
+ * The long run the plan put on a day, in km: its own rung, before the plan
+ * fitted it to the running done (`trainingBasis`, which keeps that rung),
+ * and after the runner's own time limit fitted it (`timeLimit`), whose rung
+ * the plan then builds on. 0 for a day without one. A swap the runner made
+ * (`userOverride`) is theirs, not the plan's.
+ */
+export function plannedLongRunKm(
+  day: Pick<ScheduledRunDay, "templateId" | "trainingBasis">
+): number {
+  const id = day.trainingBasis?.originalTemplateId ?? day.templateId;
+  const template = RUN_TEMPLATES.find((t) => t.id === id);
+  return template?.type === "long"
+    ? (template.config?.targetDistanceKm ?? 0)
+    : 0;
+}
+
+/** The longest of the plan's long runs over its weeks (`plannedLongRunKm`),
+ *  0 when they hold none: what the plan builds to. */
+export function peakPlannedLongRunKm(
+  weeks: readonly (readonly ScheduledRunDay[])[]
+): number {
+  let peak = 0;
+  for (const week of weeks)
+    for (const day of week) peak = Math.max(peak, plannedLongRunKm(day));
+  return peak;
+}
 
 export interface RaceLongRunCheck {
   /** The farthest run of the last four weeks, km. */
@@ -59,10 +98,13 @@ export function raceCheckDismissKey(weekKey: string | null): string {
 }
 
 /**
- * The check for this week, when the race is past twice what the runner's
- * running can reach before the taper; null otherwise, and whenever it is not
- * the check's to say: no race plan, a plan in its first two weeks or its
- * recovery, runs not yet read, or no run in four weeks, which is the run
+ * The check for this week, when the runner has fallen behind the plan's
+ * long runs and their running can't reach, before the taper, half the race
+ * or what the plan builds to, whichever is shorter; null otherwise, and
+ * whenever it is not the check's to say: no race plan, a plan in its first
+ * two weeks, its taper, race week or recovery, a week with no long run in
+ * the plan, a plan stored before it carried its peak (until its next
+ * build), runs not yet read, or no run in four weeks, which is the run
  * return's to greet.
  */
 export function raceLongRunCheck(input: {
@@ -83,9 +125,32 @@ export function raceLongRunCheck(input: {
   if (!raceKm || taperWeeks === undefined) return null;
   const plan = resolveRunPlan(profile, programState, today);
   if (plan.isElapsed || plan.inRecovery) return null;
-  const currentWeek = programState?.runPlan?.currentWeek;
+  const runPlan = programState?.runPlan;
+  const currentWeek = runPlan?.currentWeek;
   if (typeof currentWeek !== "number" || currentWeek < FIRST_CHECKED_WEEK)
     return null;
+
+  // The taper and race week: the race is days off, and nothing a later
+  // week builds is left to change.
+  const weekKey = localWeekKey(parseLocalDate(today));
+  const raceWeek = localWeekKey(parseLocalDate(goal.targetDate));
+  const weeksToRace = wholeWeeksBetween(weekKey, raceWeek);
+  const buildWeeks = weeksToRace - taperWeeks;
+  if (buildWeeks <= 0) return null;
+
+  // What the plan asks of the long run: this week's, and its peak.
+  const plannedKm = Math.max(
+    0,
+    ...(programState?.runDays ?? [])
+      .filter(
+        (day) =>
+          (day.date ? localWeekKey(parseLocalDate(day.date)) : day.weekKey) ===
+          weekKey
+      )
+      .map(plannedLongRunKm)
+  );
+  const peakKm = runPlan?.peakLongRunKm;
+  if (plannedKm <= 0 || typeof peakKm !== "number") return null;
 
   const from = localDateString(
     addLocalDays(parseLocalDate(today), -LOOKBACK_DAYS)
@@ -100,12 +165,11 @@ export function raceLongRunCheck(input: {
   }
   if (!ran) return null;
 
-  const weekKey = localWeekKey(parseLocalDate(today));
-  const raceWeek = localWeekKey(parseLocalDate(goal.targetDate));
-  const weeksToRace = wholeWeeksBetween(weekKey, raceWeek);
-  const buildWeeks = Math.max(0, weeksToRace - taperWeeks);
+  // Kept up with the plan: a long run of the rung under this week's, the
+  // one it climbs from, run to `DONE_RUNG_SHARE` of it.
+  if (longestKm >= (plannedKm - KM_PER_WEEK) * DONE_RUNG_SHARE) return null;
   const reachKm = longestKm + KM_PER_WEEK * buildWeeks;
-  if (reachKm >= raceKm / 2) return null;
+  if (reachKm >= Math.min(raceKm / 2, peakKm)) return null;
   return {
     longestKm: Math.round(longestKm * 10) / 10,
     reachKm: Math.round(reachKm),

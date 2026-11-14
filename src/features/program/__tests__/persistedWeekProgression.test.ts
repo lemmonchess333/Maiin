@@ -33,6 +33,7 @@
 import { describe, it, expect } from "vitest";
 
 import { generateRacePlanV2 } from "../runScheduler";
+import type { RaceBlockInputs } from "../programTypes";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
@@ -71,6 +72,7 @@ function walkSeason(args: {
   const carryBlockLength = args.carryBlockLength ?? true;
 
   let blockWeeks: number | undefined;
+  let blockInputs: RaceBlockInputs | undefined;
   const out: PersistedWeek[] = [];
 
   for (let weeksOut = startWeeksOut; weeksOut >= 1; weeksOut--) {
@@ -85,10 +87,13 @@ function walkSeason(args: {
       currentDate,
       weekStart: localWeekKey(parseLocalDate(currentDate)),
       planTotalWeeks: carryBlockLength ? blockWeeks : undefined,
+      blockInputs: carryBlockLength ? blockInputs : undefined,
     });
     // `makeRunPlanRecord` (weekRollover.ts): `totalWeeks: carry.totalWeeks ?? v2.totalWeeks`
-    // — the block length is fixed at creation and carried thereafter.
+    // — the block length is fixed at creation and carried thereafter, and
+    // what the block is sized from with it (Run24 (1), (2), (8)).
     if (blockWeeks === undefined) blockWeeks = plan.totalWeeks;
+    blockInputs = plan.blockInputs;
 
     const week = plan.weeks[0] ?? [];
     out.push({
@@ -178,7 +183,16 @@ describe("the fallback is exactly the old behaviour", () => {
       carryBlockLength: false,
     });
     const preTaper = season.filter((w) => w.weeksOut >= 5);
-    const distinct = new Set(preTaper.map((w) => w.templateIds.join(",")));
+    // The base week holds its light session (Run24 (5)) until the weeks
+    // left make the block compressed, whose base holds an easy run there.
+    const distinct = new Set(
+      preTaper.map((w) =>
+        w.templateIds
+          .map((id) => (id === "fartlek_30" ? "easy_30" : id))
+          .sort()
+          .join(",")
+      )
+    );
     expect(distinct.size).toBe(1);
     expect([...distinct][0]).toContain("long_");
     expect([...distinct][0]).not.toContain("tempo");
@@ -200,12 +214,14 @@ describe("the fallback is exactly the old behaviour", () => {
       recentLayoff: "none" as const,
     };
     const fresh = generateRacePlanV2(args);
-    // Carried as the plan stores it: its block, and its lead-in week when
-    // it was made partway through one (this date is a Sunday).
+    // Carried as the plan stores it: its block, its lead-in week when it
+    // was made partway through one (this date is a Sunday), and what the
+    // block is sized from (Run24 (1), (2), (8)).
     const carried = generateRacePlanV2({
       ...args,
       planTotalWeeks: fresh.totalWeeks,
       leadInWeek: fresh.leadInWeek,
+      blockInputs: fresh.blockInputs,
     });
     expect(carried.weeks).toEqual(fresh.weeks);
     expect(carried.compressed).toBe(fresh.compressed);
