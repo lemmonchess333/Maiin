@@ -56,6 +56,10 @@ import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { resolveAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 import {
+  datedRuns,
+  RECENT_RUN_SCAN_LIMIT,
+} from "@/features/program/fetchRecentLayoff";
+import {
   layoffFromRuns,
   type DatedRun,
   type LayoffClass,
@@ -538,13 +542,7 @@ export class RunSide {
   /** The latest saved runs as `fetchRecentRunning` reads them, which the
    *  layoff comes from and a running starting point climbs from. */
   recentRuns(): DatedRun[] {
-    return this.saved.slice(0, 20).map((run) => ({
-      date: run.day,
-      distance: run.distance,
-      duration: run.duration,
-      isInvalid: run.isInvalid === true,
-      savedAnyway: run.savedAnyway === true,
-    }));
+    return datedRuns(this.saved.slice(0, RECENT_RUN_SCAN_LIMIT));
   }
 
   /** Home's claim map. */
