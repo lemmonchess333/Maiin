@@ -31,9 +31,11 @@ import {
   type RaceTarget,
 } from "./racePace";
 import {
+  segmentsFromEasyWithPickUps,
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromLongWithRacePaceBlocks,
   segmentsFromProgression,
   segmentsFromRunWalk,
   segmentsFromTempo,
@@ -746,7 +748,8 @@ function timedMinutes(tmpl: RunTemplate): number | undefined {
   if (
     tmpl.type === "easy" &&
     !tmpl.config.targetDistanceKm &&
-    !tmpl.config.strides
+    !tmpl.config.strides &&
+    !tmpl.config.pickUps
   ) {
     return tmpl.estimatedDuration;
   }
@@ -773,6 +776,7 @@ function templateToPrefill(
   const work = racePaceWork(tmpl, race);
   const tempoAtGoal = work?.kind === "tempo" ? work : null;
   const raceFinish = work?.kind === "finish" ? work : null;
+  const raceBlocks = work?.kind === "blocks" ? work : null;
   if (tmpl.config.targetDistanceKm) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
     // editing templates), but RunConfig.target.value is metres
@@ -874,6 +878,13 @@ function templateToPrefill(
       tmpl.config.strides,
       seed
     );
+  } else if (tmpl.config.pickUps) {
+    // Run24 (8): pick-ups by feel, no pace anywhere in them.
+    prefill.segments = segmentsFromEasyWithPickUps(
+      tmpl.estimatedDuration,
+      tmpl.config.pickUps,
+      seed
+    );
   } else if (tmpl.config.runWalk) {
     // Run20 (5): a timed target (above) and no pace anywhere in it.
     prefill.segments = segmentsFromRunWalk(tmpl.config.runWalk, seed);
@@ -889,6 +900,20 @@ function templateToPrefill(
         cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
       },
     ];
+  } else if (tmpl.config.racePaceBlocks && tmpl.config.targetDistanceKm) {
+    // Run24 (5): the blocks at the race's pace where the plan has one,
+    // else by effort.
+    prefill.segments = segmentsFromLongWithRacePaceBlocks(
+      tmpl.config.targetDistanceKm,
+      tmpl.config.racePaceBlocks,
+      unit,
+      raceBlocks
+        ? {
+            goalPaceS: raceBlocks.goalPaceS,
+            marathonBand: raceBlocks.source === "band",
+          }
+        : null
+    );
   } else if (raceFinish && tmpl.config.targetDistanceKm) {
     prefill.segments = segmentsFromLongWithRacePace(
       tmpl.config.targetDistanceKm,
