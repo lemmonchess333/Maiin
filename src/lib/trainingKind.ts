@@ -58,7 +58,7 @@ export type TrainingKindProfile = Partial<
 >;
 
 export type TrainingKindPlan = Partial<
-  Pick<ProgramState, "workouts" | "runDays">
+  Pick<ProgramState, "workouts" | "runDays" | "runPlan">
 >;
 
 /** The run modes that are a run plan, whichever week it is in. */
@@ -90,6 +90,9 @@ export function trainingKind(
     : layout.some((day) => day.type === "lift" || day.type === "both");
   const runPlan =
     RUN_PLAN_MODES.has(profile.runMode ?? "") ||
+    // A plan with no race date (Run24 (3)) keeps the profile on "freeform"
+    // and holds its mode on the plan (`runModeWithPlan`).
+    programState?.runPlan?.mode === "rolling" ||
     (programState?.runDays?.length ?? 0) > 0 ||
     layout.some((day) => day.type === "run" || day.type === "both");
   const freeRunning =

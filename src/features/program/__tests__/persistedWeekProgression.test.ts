@@ -33,6 +33,7 @@
 import { describe, it, expect } from "vitest";
 
 import { generateRacePlanV2 } from "../runScheduler";
+import { RACE_BLOCK_MAX_WEEKS } from "../runPlanTiming";
 import type { RaceBlockInputs } from "../programTypes";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -177,25 +178,34 @@ describe("the fallback is exactly the old behaviour", () => {
     // This is the pre-fix behaviour, preserved deliberately: a caller with no
     // carry genuinely IS at position 0. Asserting it keeps the fallback from
     // silently acquiring the fix and hiding a caller that forgot to thread.
+    // Run24 (3): a plan made more than its block's 20 weeks out opens on
+    // the rolling base's first week, so the old flat week is two: the
+    // base's opening while the race is past the block, then the block's.
     const season = walkSeason({
       distance: "marathon",
       startWeeksOut: 26,
       carryBlockLength: false,
     });
-    const preTaper = season.filter((w) => w.weeksOut >= 5);
     // The base week holds its light session (Run24 (5)) until the weeks
     // left make the block compressed, whose base holds an easy run there.
-    const distinct = new Set(
-      preTaper.map((w) =>
-        w.templateIds
-          .map((id) => (id === "fartlek_30" ? "easy_30" : id))
-          .sort()
-          .join(",")
-      )
-    );
-    expect(distinct.size).toBe(1);
-    expect([...distinct][0]).toContain("long_");
-    expect([...distinct][0]).not.toContain("tempo");
+    const shape = (w: { templateIds: string[] }) =>
+      w.templateIds
+        .map((id) =>
+          id === "fartlek_30" || id === "hills_6x30s" ? "easy_30" : id
+        )
+        .sort()
+        .join(",");
+    for (const weeks of [
+      season.filter((w) => w.weeksOut > RACE_BLOCK_MAX_WEEKS.marathon),
+      season.filter(
+        (w) => w.weeksOut >= 5 && w.weeksOut <= RACE_BLOCK_MAX_WEEKS.marathon
+      ),
+    ]) {
+      const distinct = new Set(weeks.map(shape));
+      expect(distinct.size).toBe(1);
+      expect([...distinct][0]).toContain("long_");
+      expect([...distinct][0]).not.toContain("tempo");
+    }
   });
 
   it("a fresh plan's first week is identical either way", () => {

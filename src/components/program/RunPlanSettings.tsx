@@ -31,6 +31,13 @@ import {
 } from "@/features/program/runTimeLimits";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
+import RollingGoalPicker from "@/components/run/RollingGoalPicker";
+import {
+  isRollingGoal,
+  ROLLING_GOAL_NAMES,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
+import { rollingGoalOf } from "@/features/program/programMaintenance";
 /**
  * RunPlanSettings — the focused, run-ONLY plan editor (Run-Split, 2026-07).
  *
@@ -129,7 +136,9 @@ import {
   type RunDifficultyPreset,
 } from "@/features/program/runScheduler";
 
-type RunMode = "freeform" | "race_prep" | "starter";
+/** `rolling`: a plan with no race date (Run24 (3)). The profile saves it
+ *  as free running, with the plan's goal on the programme. */
+type RunMode = "freeform" | "race_prep" | "starter" | "rolling";
 
 const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
 
@@ -227,6 +236,12 @@ function raceOrNotOptions(
       photo: PLAN_GOAL_PHOTOS.freeform,
       focus: "50% 40%",
     },
+    {
+      value: "rolling",
+      label: "Plan, no race",
+      fact: "Keep fit, 5K or 10K",
+      photo: PLAN_GOAL_PHOTOS.rolling,
+    },
     ...(starterOffered
       ? [
           {
@@ -250,11 +265,17 @@ function raceOrNotOptions(
 /**
  * The goal a Train or Done card asks for (Run9): `?goal=starter` opens on the
  * 30-minute goal, `?goal=5k` on a 5K, with its date and the race-or-own
- * question still to answer. Read once on mount, as the race deep link is.
+ * question still to answer, and a goal of a plan with no race date
+ * (`?goal=keep_fit`, Run24 (3)) on that plan. Read once on mount, as the
+ * race deep link is.
  */
-function parseGoalDeepLink(params: URLSearchParams): "starter" | "5k" | null {
+function parseGoalDeepLink(
+  params: URLSearchParams
+): "starter" | "5k" | RollingGoal | null {
   const goal = params.get("goal");
-  return goal === "starter" || goal === "5k" ? goal : null;
+  return goal === "starter" || goal === "5k" || isRollingGoal(goal)
+    ? goal
+    : null;
 }
 
 export default function RunPlanSettings({
@@ -266,11 +287,16 @@ export default function RunPlanSettings({
   isPro = true,
 }: RunPlanSettingsProps) {
   // ── Saved baseline (the dirty-check reference) ──────────────────────
+  /** The plan with no race date the programme holds (Run24 (3)). */
+  const savedRollingGoal = rollingGoalOf(programState, profile);
   const saved = useMemo(
     () => ({
       runMode: (profile.runMode === "race_prep" || profile.runMode === "starter"
         ? profile.runMode
-        : "freeform") as RunMode,
+        : savedRollingGoal
+          ? "rolling"
+          : "freeform") as RunMode,
+      rollingGoal: savedRollingGoal,
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
@@ -294,7 +320,7 @@ export default function RunPlanSettings({
       // Lift4 (10): never asked reads as no.
       raceLegTrim: profile.raceLegTrim === true,
     }),
-    [profile]
+    [profile, savedRollingGoal]
   );
 
   // Door 1 deep-link — read once on mount (URLSearchParams identity
@@ -331,13 +357,20 @@ export default function RunPlanSettings({
       ? "race_prep"
       : goalLink === "starter"
         ? "starter"
-        : (storedDraft?.runMode ?? saved.runMode)
+        : isRollingGoal(goalLink)
+          ? "rolling"
+          : (storedDraft?.runMode ?? saved.runMode)
+  );
+  const [rollingGoal, setRollingGoal] = useState<RollingGoal>(
+    isRollingGoal(goalLink)
+      ? goalLink
+      : (storedDraft?.rollingGoal ?? saved.rollingGoal ?? "keep_fit")
   );
   /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
      already on fewer keeps them (Pgm5: no silent rebuild), so its own count
      is its floor; anything new starts at two. */
   const minRunDays =
-    saved.runMode === "race_prep"
+    saved.runMode === "race_prep" || saved.runMode === "rolling"
       ? Math.min(MIN_RACE_RUN_DAYS, saved.weeklyRunDays)
       : MIN_RACE_RUN_DAYS;
   const [weeklyRunDays, setWeeklyRunDays] = useState<number>(() =>
@@ -471,6 +504,11 @@ export default function RunPlanSettings({
   const planChanged =
     runMode !== saved.runMode ||
     (runMode === "starter" && weeklyRunDays !== saved.weeklyRunDays) ||
+    (runMode === "rolling" &&
+      (rollingGoal !== saved.rollingGoal ||
+        weeklyRunDays !== saved.weeklyRunDays ||
+        runVolume !== saved.runVolume ||
+        runDifficulty !== saved.runDifficulty)) ||
     (runMode === "race_prep" &&
       (raceDistance !== saved.raceDistance ||
         raceTargetDate !== saved.raceTargetDate ||
@@ -528,11 +566,14 @@ export default function RunPlanSettings({
     programState?.runPlan?.mode === "starter"
       ? (programState.runPlan.stage ?? 1)
       : 1;
+  /** The run mode the save writes: a plan with no race date is free
+   *  running's (Run24 (3)). */
+  const savedRunMode = runMode === "rolling" ? "freeform" : runMode;
   const newRunnerUntil = profileNewRunnerUntil({
     ...profile,
     starterGoal: starterGoalAfterSave(
       profile.starterGoal,
-      runMode,
+      savedRunMode,
       starterStage,
       today
     ),
@@ -611,6 +652,7 @@ export default function RunPlanSettings({
         runningBaseline,
         nonRaceGoal,
         raceLegTrim,
+        rollingGoal,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -619,6 +661,7 @@ export default function RunPlanSettings({
     dirty,
     profile.uid,
     runMode,
+    rollingGoal,
     weeklyRunDays,
     raceDistance,
     raceTargetDate,
@@ -703,7 +746,9 @@ export default function RunPlanSettings({
           !profile.preferredSplit || profile.preferredSplit === "auto"
             ? "full_body"
             : profile.preferredSplit,
-        runMode,
+        runMode: savedRunMode,
+        // Run24 (3): null takes a plan with no race date away.
+        rollingGoal: runMode === "rolling" ? rollingGoal : null,
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
@@ -759,7 +804,7 @@ export default function RunPlanSettings({
         plan.profileUpdates.starterGoal =
           starterGoalAfterSave(
             profile.starterGoal,
-            runMode,
+            savedRunMode,
             starterStage,
             todayKey
           ) ?? undefined;
@@ -820,7 +865,9 @@ export default function RunPlanSettings({
           ? "Race plan saved"
           : runMode === "starter"
             ? "30-minute goal saved"
-            : "Running goal and settings saved",
+            : runMode === "rolling"
+              ? `${ROLLING_GOAL_NAMES[rollingGoal]} plan saved`
+              : "Running goal and settings saved",
         { id: "run-plan" }
       );
     } catch (e) {
@@ -968,6 +1015,24 @@ export default function RunPlanSettings({
         </div>
       )}
 
+      {/* ── Run24 (3): a plan with no race date, and its goal ─────────── */}
+      {runMode === "rolling" && (
+        <div className="space-y-2">
+          <SectionHeading size="compact">Plan goal</SectionHeading>
+          <p className="text-sm text-muted-foreground">
+            A plan that keeps going, a lighter week every fourth. Add a race any
+            time.
+          </p>
+          <RollingGoalPicker
+            value={rollingGoal}
+            onChange={(next) => {
+              haptic();
+              setRollingGoal(next);
+            }}
+          />
+        </div>
+      )}
+
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
         <div ref={raceGoalRef} className="space-y-2">
@@ -1038,8 +1103,9 @@ export default function RunPlanSettings({
         </div>
       )}
 
-      {/* ── Run days / week (race prep only — freeform has no schedule) ── */}
-      {runMode === "race_prep" && (
+      {/* ── Run days / week (race prep and a plan with no race date;
+          freeform has no schedule) ── */}
+      {(runMode === "race_prep" || runMode === "rolling") && (
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <SectionHeading size="compact">Run days / week</SectionHeading>
@@ -1051,11 +1117,12 @@ export default function RunPlanSettings({
                 run days, so some days hold both.
               </p>
             )}
-            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {raceRunDaysNote(raceDistance, weeklyRunDays)}
-              </p>
-            )}
+            {runMode === "race_prep" &&
+              raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                </p>
+              )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -1130,7 +1197,7 @@ export default function RunPlanSettings({
           from ProgrammeSettings' full variant (D14 dedupe): the focused
           run editor is the ONE place run-plan fields are edited. Bounded
           presets; `standard` is byte-identical to the untuned plan. */}
-      {runMode === "race_prep" && (
+      {(runMode === "race_prep" || runMode === "rolling") && (
         <>
           <div className="space-y-2">
             <div>
@@ -1172,7 +1239,7 @@ export default function RunPlanSettings({
           </div>
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable
               here for as long as the race runs. */}
-          {lifts && legTrimCut > 0 && (
+          {runMode === "race_prep" && lifts && legTrimCut > 0 && (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionHeading size="compact">

@@ -110,6 +110,16 @@ describe("trainingKind — run plans", () => {
     ).toEqual(BOTH);
   });
 
+  it("a plan with no race date runs, though the profile says free running", () => {
+    expect(
+      trainingKind(profile({ ...lifter, runMode: "freeform" }), {
+        ...LIFT_PROGRAMME,
+        runDays: [],
+        runPlan: { mode: "rolling" } as never,
+      })
+    ).toEqual(BOTH);
+  });
+
   it("the starter goal runs", () => {
     expect(
       trainingKind(profile({ ...lifter, runMode: "starter" }), LIFT_PROGRAMME)

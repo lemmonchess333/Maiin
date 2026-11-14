@@ -43,6 +43,8 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { Banner } from "@/components/ui/Banner";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
 
 interface RefreshRunScheduleOverrides {
   weekSchedule?: ScheduleDay[];
@@ -56,6 +58,9 @@ export interface ScheduleLayoutSheetProps {
   guided?: boolean;
   onSaved?: () => void;
   profile: UserProfile | null;
+  /** The programme: a plan with no race date (Run24 (3)) is refreshed with
+   *  the layout, as a race plan is. */
+  programState?: ProgramState | null;
   updateProfile: (
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
@@ -92,6 +97,7 @@ export default function ScheduleLayoutSheet(props: ScheduleLayoutSheetProps) {
 
 function ScheduleLayoutSheetBody({
   profile,
+  programState = null,
   updateProfile,
   refreshRunSchedule,
   regenerateProgram,
@@ -101,6 +107,7 @@ function ScheduleLayoutSheetBody({
 }: ScheduleLayoutSheetProps) {
   const editor = useProgrammeScheduleEditor({
     profile,
+    programState,
     updateProfile,
     refreshRunSchedule,
     regenerateProgram,
@@ -244,7 +251,7 @@ function ScheduleLayoutSheetBody({
                     description="Changing the number of lift days rebuilds your lift programme. You will confirm that separately before saving."
                   />
                 )}
-                {profile?.runMode && profile.runMode !== "freeform" && (
+                {runModeWithPlan(profile, programState) !== "freeform" && (
                   <p className="text-sm text-muted-foreground">
                     Future planned runs may be refreshed from this layout.
                   </p>
