@@ -1,5 +1,4 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
-import { recentPace } from "@/features/program/layoffDetection";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -439,6 +438,7 @@ export function getRaceGoalPlannerState(
       newRunnerUntil: input.newRunnerUntil,
       planTotalWeeks: continued?.totalWeeks,
       leadInWeek: continued?.leadInWeek,
+      blockInputs: continued?.blockInputs,
       recentRuns: input.recentRuns,
     });
   // The week the save plans (Run19): from today, over a continuing plan's
@@ -591,10 +591,11 @@ export function getRaceGoalPlannerState(
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
     /* Run24 (1): setup states the peak, in time too where a pace gives it:
-       the confirmed one, else the recent runs'. */
+       the confirmed one, else the recent runs' the block is sized at. The
+       conservative reading the block takes without either is no one's own
+       pace, so it gives no time. */
     const peakPace =
-      input.easyPaceSPerKm ??
-      (input.recentRuns ? recentPace(input.recentRuns, currentDate) : null);
+      input.easyPaceSPerKm ?? plan.blockInputs?.runsPaceSPerKm ?? null;
     const peak = longestBeforeRace(plan.weeks, peakPace, unit);
     const peakLine =
       peak && held.longestKm > 0

@@ -158,6 +158,9 @@ describe("confirmed running starting point", () => {
     expect(block.weeks.flat().filter((row) => row.type === "race")).toEqual(
       unrestricted.weeks.flat().filter((row) => row.type === "race")
     );
+    // Each rebuild carries the block and what it is sized from, as the
+    // rollover does (Run24 (1), (2), (8)).
+    let blockInputs = block.blockInputs;
     for (let i = 0; i < block.totalWeeks; i++) {
       const date = localDateString(
         addLocalDays(parseLocalDate(input.currentDate), 7 * i)
@@ -167,8 +170,10 @@ describe("confirmed running starting point", () => {
         currentDate: date,
         weekStart: date,
         planTotalWeeks: block.totalWeeks,
+        blockInputs,
       });
       expect(regenerated.weeks[0]).toEqual(block.weeks[i]);
+      blockInputs = regenerated.blockInputs;
     }
     // Run24 (2): 400 minutes a week and a 150-minute run are past where
     // this marathon's plan starts, so the plan starts from them: a longer
