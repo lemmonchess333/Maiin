@@ -27,7 +27,7 @@
  * entitlements the Sign in with Apple and HealthKit plugins need.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
@@ -685,5 +685,84 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // to create a secret for it.
     expect(guide).not.toContain("KEYCHAIN_PASSWORD");
     expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
+  });
+});
+
+/* ── The app's own native plugins ─────────────────────────────────── */
+
+/** Paths the App target's Sources phase compiles. */
+function compiledSourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const sourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+  )?.[1];
+  if (!sourcesId) throw new Error("App target has no Sources phase");
+  const phase = pbxproj.match(
+    new RegExp(
+      `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
+  );
+  if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+  return [
+    ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+  ].map(([, id]) => {
+    const fileRefId = pbxproj.match(
+      new RegExp(
+        `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+        "m"
+      )
+    )?.[1];
+    const path = pbxproj.match(
+      new RegExp(
+        `^\\s*${fileRefId} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+        "m"
+      )
+    )?.[1];
+    if (!path) throw new Error(`build file ${id} has no source path`);
+    return path;
+  });
+}
+
+describe("iOS project wiring — the app's own plugins", () => {
+  const appSwift = readdirSync(resolve(repoRoot, "ios/App/App")).filter((f) =>
+    f.endsWith(".swift")
+  );
+
+  it("compiles every Swift file in the app's folder into the app", () => {
+    // A file left out builds green and ships nothing: its plugin is then
+    // missing at run time, which the web side reads as an older shell.
+    expect(appSwift).toContain("MotionActivityPlugin.swift");
+    expect([...compiledSourcePaths()].sort()).toEqual([...appSwift].sort());
+  });
+
+  it("registers every app plugin with the bridge, under the name the web side asks for", () => {
+    // Capacitor's package scanner finds package plugins only; an app
+    // target's plugin exists only once TroposBridgeViewController adds it.
+    const bridge = read("ios/App/App/TroposBridgeViewController.swift");
+    const plugins = appSwift
+      .map((file) => read(`ios/App/App/${file}`))
+      .flatMap((source) => [
+        ...source.matchAll(
+          /final class (\w+): CAPPlugin, CAPBridgedPlugin[\s\S]*?let jsName = "(\w+)"/g
+        ),
+      ])
+      .map(([, cls, jsName]) => ({ cls, jsName }));
+    expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "MotionActivity",
+      "WatchRun",
+    ]);
+    for (const { cls, jsName } of plugins) {
+      expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
+      const callers = [
+        "src/lib/runMotionSource.ts",
+        "src/lib/watchRunBridge.ts",
+      ].filter((file) =>
+        new RegExp(`registerPlugin<\\w+>\\("${jsName}"\\)`).test(read(file))
+      );
+      expect(callers).toHaveLength(1);
+    }
   });
 });

@@ -46,6 +46,8 @@
 	<string>Tropos uses your location to record your runs and their distance, to show the weather before a run, to start a route you plan, and to place a privacy zone you add.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Tropos uses your location in the background so run tracking continues while your screen is locked.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Tropos uses motion and step data during a run with auto-pause on, to pause the clock when you stop and start it again as you set off. It is not stored or sent.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

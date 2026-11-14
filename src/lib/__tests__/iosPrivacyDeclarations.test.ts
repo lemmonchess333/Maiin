@@ -325,6 +325,18 @@ describe("Info.plist — purpose strings cover every use", () => {
       expect(location).toMatch(use);
   });
 
+  it("names auto-pause where iOS asks for motion, for as long as the app reads CoreMotion", () => {
+    // CoreMotion ends the app on its first call without this key
+    // (CMMotionActivityManager, CMPedometer).
+    const usesCoreMotion = readdirSync(resolve(repoRoot, "ios/App/App"))
+      .filter((f) => f.endsWith(".swift"))
+      .some((f) => /^import CoreMotion$/m.test(read(`ios/App/App/${f}`)));
+    expect(usesCoreMotion).toBe(true);
+    const motion = purpose("NSMotionUsageDescription");
+    expect(motion).toMatch(/auto-pause/);
+    expect(motion).toMatch(/not stored or sent/);
+  });
+
   it("asks for no tracking permission: Tropos does not track", () => {
     expect(info.NSUserTrackingUsageDescription).toBeUndefined();
   });

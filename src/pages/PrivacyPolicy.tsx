@@ -108,6 +108,15 @@ export default function PrivacyPolicy() {
                 it is saved or shared.
               </li>
               <li>
+                <strong className="text-foreground">
+                  Motion During Runs (iPhone):
+                </strong>{" "}
+                while a run with auto-pause on is recording, your phone’s motion
+                and step data, to pause the clock when you stop and start it
+                again as you set off. It is read on your phone and is not stored
+                or sent to Tropos.
+              </li>
+              <li>
                 <strong className="text-foreground">Nutrition Data:</strong>{" "}
                 food logs, barcode scans, food searches, and calorie and macro
                 tracking data.

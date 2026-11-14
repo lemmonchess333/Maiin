@@ -5004,6 +5004,51 @@ Unit and page tests drive it; no phone has shown it.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
 
+## Auto-pause reads the phone's motion as well as GPS (2026-11-14)
+
+Affects: when a run's clock stops and starts by itself on iPhone
+(`src/lib/runAutoPause.ts`, fed by the new `MotionActivity` plugin,
+`ios/App/App/MotionActivityPlugin.swift`, through
+`src/lib/runMotionSource.ts`), the Motion & Fitness prompt on the first
+outdoor run with auto-pause on (`NSMotionUsageDescription`), and the
+privacy policy's "Motion During Runs (iPhone)". The web keeps the GPS-only
+rule. The decision table is unit-tested and the page wiring is tested with
+the sensors stubbed; CI's `ios-native-compile` builds the plugin for the
+simulator, which has no motion sensors. Only a phone outside shows the
+rest. For each run, record Strava's moving time on the same run (Strava
+recording on the same phone or a second one) beside Tropos's duration.
+
+- [ ] **The prompt.** On a fresh install, start an outdoor run with
+      auto-pause on. Passing: iOS asks for Motion & Fitness with the
+      auto-pause reason while GPS is being found, after or beside the
+      location prompt, and the run starts either way. Refuse it on a
+      second install: the run auto-pauses on GPS as before, with no error.
+- [ ] **Crossings.** A city run of 5 km or more with at least four stops
+      at crossings, the phone in a pocket or armband. Passing: each stop
+      shows "Auto-paused" within about 4 s of standing still, with no
+      resume while standing even between tall buildings, and the clock
+      starts within a second of setting off. Tropos's duration is within
+      10 s of Strava's moving time.
+- [ ] **Jogging on the spot.** At one crossing, jog on the spot. Passing:
+      the clock keeps running, as Strava's does.
+- [ ] **A hill.** A run with a climb steep enough to slow to a walk or a
+      hike. Passing: no auto-pause on the climb; duration within 10 s of
+      Strava's moving time.
+- [ ] **A run-walk session.** Start a planned run-walk and stand still for
+      a whole walk once. Passing: no auto-pause in any walk, walking or
+      standing, and the next run's cue comes when the walk's time is up.
+      Stopping during a run segment still auto-pauses.
+- [ ] **Locked in a pocket.** A run of 3 km or more with the screen locked
+      and the phone in a pocket, with two stops. Passing: both stops pause
+      and resume (the Live Activity reads Paused, then the time moves
+      again), and the duration is within 10 s of Strava's moving time.
+- [ ] **A tunnel or a bag.** If a route has an underpass or tunnel, stop
+      once inside it; or run with the phone in a bag. Passing: the stop
+      pauses and setting off resumes with no GPS fix.
+- [ ] **With the Watch.** In the connected-training pilot, stop at a
+      crossing. Passing: the Watch shows Paused, and its Resume restarts
+      the clock.
+
 ## Apple Watch companion: device acceptance kit (2026-11-14)
 
 The last step before `WATCH_RUN_RELEASE_ENABLED` and
