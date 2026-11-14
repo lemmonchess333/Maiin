@@ -4,6 +4,10 @@
  * race-card anatomy (RACE chip, date + city), and the race filter chips
  * (2026-10-01; two selects before). The Feed's compact row, and the Q6
  * gate that kept races out of it, went the same day with the row.
+ *
+ * All of that with enough people training on Tropos. Below that (App1
+ * Q6), the directory draws only the Spaces the person joined, and nothing
+ * when they joined none.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -44,6 +48,13 @@ vi.mock("@/components/ui/BottomSheet", () => ({
     ) : null,
 }));
 
+const people = vi.hoisted(() => ({
+  enough: true as boolean | null,
+}));
+vi.mock("@/hooks/useEnoughPeople", () => ({
+  useEnoughPeople: () => people.enough,
+}));
+
 import SpacesDirectory from "../SpacesDirectory";
 
 const INTEREST: SpaceDirectoryEntry = {
@@ -82,6 +93,7 @@ const RACE: SpaceDirectoryEntry = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  people.enough = true;
   mockUseSpacesDirectory.mockReturnValue({
     entries: [INTEREST, RACE],
     upcomingRaces: [RACE.def],
@@ -242,4 +254,56 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   ).toBeInTheDocument();
   expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
+});
+
+describe("SpacesDirectory at small numbers", () => {
+  beforeEach(() => {
+    people.enough = false;
+  });
+
+  it("draws nothing when the person joined no Space", () => {
+    const { container } = renderDirectory();
+    // Anchor: the directory was asked for its Spaces, and had two to offer.
+    expect(mockUseSpacesDirectory).toHaveBeenCalled();
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("draws the Spaces the person joined, as theirs, with nothing to browse", () => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [
+        { ...INTEREST, joined: true },
+        RACE,
+        {
+          ...INTEREST,
+          def: { ...INTEREST.def, id: "lifters", name: "Lifters" },
+          memberCount: 40,
+        },
+      ],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(
+      screen.getByRole("heading", { name: "Your spaces" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Runners")).toBeInTheDocument();
+    // Neither the race nor a busy Space the person is not in is offered.
+    expect(screen.queryByText("Great North Run")).toBeNull();
+    expect(screen.queryByText("Lifters")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Races & events" })
+    ).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+  });
+
+  it("keeps a race the person joined", () => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [INTEREST, { ...RACE, joined: true }],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(screen.getByText("Great North Run")).toBeInTheDocument();
+    expect(screen.queryByText("Runners")).toBeNull();
+  });
 });

@@ -4,7 +4,9 @@ import { useAuth } from "@/lib/auth";
 import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { Button } from "@/components/ui/Button";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { roomShown } from "@/lib/enoughPeople";
 import { cn } from "@/lib/utils";
 import {
   endsLine,
@@ -33,14 +35,25 @@ import { useLeagueJoin } from "./useLeagueJoin";
  *                sessions against the plan ("3 of 4 sessions") and
  *                "Ends Sunday"; the card opens the league page
  *
+ * Someone who has not joined sees no card at all until Tropos has enough
+ * people to fill a league (App1 Q6, `roomShown`): before then it draws
+ * nothing, not a card saying leagues are coming. Someone who joined keeps
+ * theirs whatever the count.
+ *
  * Social may be loud (DESIGN_GUIDE §14l): the group's card wears its
  * tier's metal.
  */
 export default function LeagueCard({ uid }: { uid: string }) {
   const { profile } = useAuth();
-  const league = useLeague(uid);
+  const optedIn = profile?.leagueOptIn === true;
+  const enough = useEnoughPeople();
+  const shown = roomShown(optedIn, enough);
+  /* A league that is not offered is not read either. */
+  const league = useLeague(shown ? uid : null);
   const { isRestricted } = useRestrictedStatus(uid);
   const sharing = useLeagueJoin(league.reload);
+
+  if (!shown) return null;
 
   if (league.loading) {
     return (
@@ -71,7 +84,7 @@ export default function LeagueCard({ uid }: { uid: string }) {
 
   const state = leagueCardState({
     uid,
-    optedIn: profile?.leagueOptIn === true,
+    optedIn,
     status: league.status,
     member: league.member,
     standings: league.standings,

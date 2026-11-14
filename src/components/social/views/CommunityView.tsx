@@ -38,6 +38,10 @@ const LeagueCard = lazyRetry(() => import("@/features/league/LeagueCard"));
  * ChallengeList reads the challenges once and lays the sections out
  * around the parts that read their own data: the race hero, the Circles
  * section and the races and Spaces directory.
+ *
+ * Until Tropos has enough people training to fill them (App1 Q6,
+ * `src/lib/enoughPeople.ts`), the page offers no challenge, league or
+ * Space: it is the person's race, what they joined, and their Circles.
  */
 export interface CommunityViewProps {
   /** True when the Together tab is the active top-level tab. The view
