@@ -20,7 +20,11 @@ import { savedWorkoutDoc } from "@/test/sessionFixtures";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "runner" }));
+vi.mock("@/lib/auth", () => ({
+  useUid: () => "runner",
+  // No profile: no plan, so no rest days (App1 Q32).
+  useAuth: () => ({ profile: null }),
+}));
 vi.mock("@/hooks/useNutritionBadgeData", () => ({
   useNutritionBadgeData: () => ({
     macroTargetsByDay: new Map(),
@@ -57,8 +61,8 @@ const STREAKS = "users/runner/streaks/data";
 const day = (daysAgo: number) =>
   localDateString(addLocalDays(new Date(), -daysAgo));
 const workouts = (daysAgo: number[]) => ({
-  items: daysAgo.map(
-    (n) => parseSavedWorkout(`w${n}`, savedWorkoutDoc(day(n)))!
+  items: daysAgo.map((n) =>
+    parseSavedWorkout(`w${n}`, savedWorkoutDoc(day(n)))!
   ),
   loading: false,
   answered: true,

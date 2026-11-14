@@ -225,6 +225,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 ### streaks/
 
 - `useStreaks.tsx` — Streak calculation & management
+- `restDays.ts` — the plan's rest days, which keep the streak without a log (App1 Q32); a person with no plan has none
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
 - `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
