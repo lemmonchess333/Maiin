@@ -98,6 +98,11 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
   "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
+  /* Run24 (3): a plan with no race date, build to 10K on four runs. Its
+     long run climbs a 2 km rung at a time from the runner's own 8 km to
+     the goal's 12 (Run24 (6)'s ladder), each rung past the single-run
+     guard, as every race plan's are (`spike`). */
+  "build-10k-no-date": ["spike"],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each

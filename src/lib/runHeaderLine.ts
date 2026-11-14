@@ -32,6 +32,10 @@ import type { RaceGoal } from "@/features/program/runModeResolution";
 import type { UserProfile } from "@/lib/auth";
 import { STARTER_GOAL_NAME } from "@/features/program/starterProgress";
 import { STARTER_STAGES } from "@/features/program/starterPlan";
+import {
+  ROLLING_GOAL_NAMES,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
 
 export interface RunHeaderLineArgs {
   /**
@@ -66,6 +70,9 @@ export interface RunHeaderLineArgs {
   runsTarget: number;
   /** Plan-scoped: a starter plan's stage (Run9's starter goal). */
   starterStage?: number | null;
+  /** Plan-scoped: the goal of a plan with no race date (Run24 (3),
+   *  `rollingGoalOf`), whose week is `currentWeek`. */
+  rollingGoal?: RollingGoal | null;
 }
 
 export function runHeaderLine({
@@ -79,7 +86,13 @@ export function runHeaderLine({
   leadInWeek,
   runsTarget,
   starterStage,
+  rollingGoal,
 }: RunHeaderLineArgs): string {
+  // Run24 (3): a plan with no race date, on free running, by its goal and
+  // its week. It has no last week, so no "of N".
+  if (rollingGoal && (runMode === "freeform" || runMode === "structured")) {
+    return `${ROLLING_GOAL_NAMES[rollingGoal]} · Week ${(currentWeek ?? 0) + 1}`;
+  }
   if (runMode === "starter") {
     // In weeks of the nine, as the goal's card says; the end moves.
     return starterStage
