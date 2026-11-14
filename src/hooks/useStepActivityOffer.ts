@@ -47,7 +47,6 @@ function restorePatch(
     goalWeightKg: before.goalWeightKg,
     weeklyRateKg: before.weeklyRateKg,
     program: before.program,
-    tdeeBase: before.tdeeBase,
     targetCalories: before.targetCalories,
     targetProtein: before.targetProtein,
     targetCarbs: before.targetCarbs,
