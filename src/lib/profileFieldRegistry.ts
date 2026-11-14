@@ -265,6 +265,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "preferredSplit", sanitized: true },
   { field: "preferredWeightUnit", sanitized: true },
   { field: "primaryGoal", sanitized: true },
+  // App1 Q56: what Pro changed (the calorie target's moves, the paces a run
+  // moved), written beside each change and counted by the review's month
+  // card and the year recap (src/lib/proReport.ts).
+  { field: "proChanges", sanitized: false },
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
   { field: "raceLegTrim", sanitized: true },
@@ -273,6 +277,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // updateProfile; never sent to the plan callables. Value-gated in
   // firestore.rules (`racePlanFreeWeekUsedValid`), which keeps it once set.
   { field: "racePlanFreeWeekUsed", sanitized: false },
+  // The last RevenueCat snapshot (functions/lib/revenueCatEntitlement.js),
+  // server-written; the app reads when a yearly plan renews from it.
+  { field: "revenueCat", sanitized: false, serverOnly: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
   { field: "runDifficulty", sanitized: true },
   { field: "runFitness", sanitized: true },
@@ -346,6 +353,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "weeklyRunsTarget", sanitized: true },
   { field: "weeklyWorkoutsTarget", sanitized: true },
   { field: "weightKg", sanitized: true },
+  // App1 Q56: the renewal day whose "your year" recap was shown, so it
+  // shows once on every device.
+  { field: "yearRecapShownFor", sanitized: false },
 ];
 
 /**

@@ -151,6 +151,9 @@ export interface ShareCardRenderData {
   //    totals rather than a single session's) ──
   sessionsCount?: number;
   streakDays?: number;
+  /** The recap's heading: "This week" when absent, "This year" for the
+   *  year recap before a yearly Pro renewal (App1 Q56). */
+  recapTitle?: string;
 
   // ── ANNIVERSARY (App1 Q58; reuses headline, line and tone) ──
   /** The anniversary's display figure ("50", "1,000") and the word under
@@ -615,7 +618,7 @@ function RecapTemplate({
           color: "transparent",
         }}
       >
-        This week
+        {data.recapTitle ?? "This week"}
       </div>
       {show("sessions") && (
         <Hero

@@ -65,6 +65,7 @@ import {
 } from "@/lib/shareDefaults";
 import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
+import type { ProChange } from "@/lib/proChange";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
@@ -274,6 +275,37 @@ export interface UserProfileSubscription {
    *  null or absent once there is none. Not `trialExpiresAt`, the old
    *  onboarding free week. */
   subscriptionTrial?: SubscriptionTrial | null;
+  /** The last RevenueCat snapshot, as the server keeps it
+   *  (functions/lib/revenueCatEntitlement.js). Server-only: no client may
+   *  write it. The app reads when a yearly plan renews from it
+   *  (`yearRecapDue` in src/lib/proReport.ts). A record synced before
+   *  App1 Q56 lacks `period`, `willRenew` and `periodType`. */
+  revenueCat?: RevenueCatRecord | null;
+  /** The renewal day ("YYYY-MM-DD", local) whose "your year" recap has been
+   *  shown, so it shows once across devices (App1 Q56). */
+  yearRecapShownFor?: string | null;
+  /** What Pro changed for this person, newest last and capped
+   *  (`appendProChange`): the calorie target's moves and the paces a run
+   *  moved. The review's month card and the year recap count them (App1
+   *  Q56). Written by the app alongside the change itself. */
+  proChanges?: ProChange[] | null;
+}
+
+/** The RevenueCat snapshot the server stores on the account. */
+export interface RevenueCatRecord {
+  entitlementActive?: boolean;
+  productId?: string | null;
+  store?: string | null;
+  /** The entitlement's expiry: the period's end, when a renewal is due. */
+  expiresAt?: string | null;
+  sandbox?: boolean;
+  syncedAtMs?: number;
+  /** How often the product renews; null for one the server does not know. */
+  period?: "month" | "year" | null;
+  /** False once the person has turned renewal off. */
+  willRenew?: boolean | null;
+  /** RevenueCat's period type, lower case: "normal", "trial", "intro". */
+  periodType?: string | null;
 }
 
 /** A free trial that becomes a paid subscription unless it is cancelled
@@ -924,6 +956,7 @@ const PROTECTED_FIELDS = [
   "hasUsedTrial",
   "trialExpiresAt",
   "subscriptionTrial",
+  "revenueCat",
 ] as const;
 
 // The backend owns entitlement and billing state. Keep this small projection

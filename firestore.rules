@@ -746,6 +746,10 @@ service cloud.firestore {
         // profileSanitizer.js.
         'maxHeartRate',
         'trialExpiryPromptShown',
+        // App1 Q56: what Pro changed (written beside the calorie target and
+        // the paces), and the renewal whose "your year" recap was shown.
+        // Client-only, never through the sanitiser.
+        'proChanges', 'yearRecapShownFor',
         'appleOriginalTransactionId', 'subscriptionExpiresAt',
         // RETIRED (App1 Q24, 13 November 2026). Nothing reads these and no
         // build from that release on writes them; the registry marks each

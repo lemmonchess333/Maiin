@@ -79,6 +79,8 @@ export interface ShareCardSheetData {
   // RECAP (weekly summary — distanceKm/totalVolumeKg carry WEEK totals)
   sessionsCount?: number;
   streakDays?: number;
+  /** The recap's heading on the card; "This week" when absent. */
+  recapTitle?: string;
 }
 
 const STAT_LABELS: StatLabels = {
@@ -213,6 +215,7 @@ export function ShareCardSheet({
     fat: data.fat,
     sessionsCount: data.sessionsCount,
     streakDays: data.streakDays,
+    recapTitle: data.recapTitle,
   };
 
   const toggleKeys = TOGGLEABLE_STATS[data.template].filter((k) =>

@@ -49,6 +49,7 @@ import {
 import { useGuideWalkReady } from "@/hooks/useGuideWalkReady";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import NewBadgeRow from "@/components/home/NewBadgeRow";
+import YearRecapRow from "@/components/home/YearRecapRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
@@ -1557,6 +1558,12 @@ export default function Home() {
       {newBadge && !badgeOpen && (
         <NewBadgeRow name={newBadge.name} onOpen={() => setBadgeOpen(true)} />
       )}
+
+      {/* The week before a yearly Pro plan renews: the year, opened on tap
+          (App1 Q56). Renders nothing for anyone else. */}
+      <SectionErrorBoundary sectionName="year-recap">
+        <YearRecapRow />
+      </SectionErrorBoundary>
 
       {/* Email accounts verify after the plan; this asks, under today's
           session rather than above it. Renders nothing once verified. */}

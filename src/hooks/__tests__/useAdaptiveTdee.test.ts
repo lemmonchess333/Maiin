@@ -154,6 +154,15 @@ describe("useAdaptiveTdee — active assembly", () => {
         adaptiveCapState: expect.objectContaining({ lastApplied: 2350 }),
       })
     );
+    // And the move is kept for what Pro did (App1 Q56), in a write of its
+    // own after the target's: from the formula it started at.
+    await waitFor(() =>
+      expect(updateProfileMock).toHaveBeenCalledWith({
+        proChanges: [
+          expect.objectContaining({ kind: "calories", from: 2200, to: 2350 }),
+        ],
+      })
+    );
   });
 });
 

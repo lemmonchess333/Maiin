@@ -89,7 +89,13 @@ describe("readEntitlement", () => {
       purchaseAtMs: NOW - DAY,
       periodType: "normal",
       ownershipType: "PURCHASED",
+      willRenew: true,
     });
+  });
+
+  it("reads renewal as off once RevenueCat has seen it turned off", () => {
+    expect(snapshot({ unsubscribedAt: NOW - DAY }).willRenew).toBe(false);
+    expect(snapshot({ entitlement: false }).willRenew).toBeNull();
   });
 
   it("says when a subscription is shared from someone else in the family", () => {
@@ -228,8 +234,38 @@ describe("planEntitlementWrite", () => {
         expiresAt: iso(NOW + 30 * DAY),
         sandbox: false,
         syncedAtMs: NOW,
+        period: "month",
+        willRenew: true,
+        periodType: "normal",
       },
     });
+  });
+
+  it("records a yearly plan's period, a renewal turned off, and a trial", () => {
+    const yearly = rc.planEntitlementWrite(
+      FREE,
+      snapshot({ productId: "com.tropos.app.pro.yearly" })
+    );
+    expect(yearly.write.revenueCat).toMatchObject({
+      period: "year",
+      willRenew: true,
+      periodType: "normal",
+    });
+    const off = rc.planEntitlementWrite(
+      FREE,
+      snapshot({ unsubscribedAt: NOW - DAY })
+    );
+    expect(off.write.revenueCat.willRenew).toBe(false);
+    const trial = rc.planEntitlementWrite(
+      FREE,
+      snapshot({ periodType: "TRIAL" })
+    );
+    expect(trial.write.revenueCat.periodType).toBe("trial");
+    const unknown = rc.planEntitlementWrite(
+      FREE,
+      snapshot({ productId: "com.example.other" })
+    );
+    expect(unknown.write.revenueCat.period).toBeNull();
   });
 
   it("writes no expiry for a non-expiring entitlement", () => {
@@ -392,6 +428,9 @@ describe("planEntitlementWrite", () => {
             expiresAt: iso(NOW + 30 * DAY),
             sandbox: true,
             syncedAtMs: NOW,
+            period: "month",
+            willRenew: true,
+            periodType: "normal",
           },
         });
       }

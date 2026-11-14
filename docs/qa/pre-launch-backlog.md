@@ -5541,3 +5541,49 @@ Affects: every badge's award (`functions/lib/badgeAwards.js`, run by `onWorkoutC
 - [ ] **The streak badges.** Keep a streak to 3 days. Passing: `three_day` lands with `earnedBy: { kind: "streak", id: <the third day> }` after the app saves the streak (the streak is the app's certificate; a phone that never opens the app does not save one).
 - [ ] **A finished cycle.** On a plan with lighter weeks, finish every lift of week 4 and tap the week on. Passing: `programme_complete` lands with `earnedBy: { kind: "programme", id: "week-4" }`.
 - [ ] **Badges from before stay.** On the owner's account, open your profile's badges (See all) after the deploy. Passing: every badge earned before is still earned with its old date; none is revealed again.
+
+## Pro shows what it did (App1 Q56, 2026-11-14)
+
+Affects: the weekly review's month card for a Pro account on a month's
+first Monday ("Pro in October", `ProMonthCard`), the "Your year with Pro"
+row on Home in the week before a yearly Pro renewal and the recap it opens
+(`YearRecapRow`, `YearRecap`), the RevenueCat record's new `period`,
+`willRenew` and `periodType` (functions/lib/revenueCatEntitlement.js), and
+the `proChanges` record written beside the calorie target and accepted
+paces. Unit-tested with the reads stood in; no phone or console has seen
+any of it.
+
+- [ ] **The record carries the renewal (console).** After the next
+      functions deploy, buy or restore a yearly plan on a sandbox account.
+      Passing: `users/{uid}.revenueCat` holds `period: "year"`,
+      `willRenew: true` and `periodType: "normal"` (or `"trial"` during a
+      trial); turning renewal off in the App Store's sandbox settings turns
+      `willRenew` false within a minute (the webhook).
+- [ ] **The month card.** On a Pro account whose target has moved and which
+      has scanned meals, open the review on the first Monday of a month.
+      Passing: "Pro in <last month>" sits before the week ahead with the
+      moves and the scans in the account's own numbers; a free account's
+      review has no such card; a Pro account with nothing to count reads
+      "Pro made no changes for you in <month>."
+- [ ] **The calorie target's move is kept.** On a Pro account whose target
+      is due to move, open Home. Passing: `users/{uid}.proChanges` gains a
+      `calories` entry with the old and new target; the target itself saved
+      as before (`adaptiveCapState`).
+- [ ] **Faster paces are kept.** Accept faster paces after a run on a Pro
+      account. Passing: `proChanges` gains a `paces` entry from the old VDOT
+      to the new; slower paces on a free account add nothing.
+- [ ] **Your year, on the phone and on the web.** On a sandbox yearly plan
+      within 7 days of its renewal (a sandbox year renews in an hour, so
+      set `subscriptionExpiresAt` and the record's `expiresAt` by hand on a
+      test account), open Home on the phone. Passing: "Your year with Pro"
+      sits under the session; a tap opens the recap full screen with the
+      year's sessions, kilometres and bests, then what Pro did, the renewal
+      day and Manage Pro (the App Store's list on the phone, Account for a
+      plan bought on the website); after it has drawn, the row is gone on
+      the phone and on the web, and does not come back after a reload.
+- [ ] **Share your year.** From the recap's share button, export the card.
+      Passing: the card reads "This year" over the year's sessions, not
+      "This week".
+- [ ] **Larger text.** Open the month card and both recap cards at 320 px
+      with 1.35x and 2x text. Passing: nothing runs past the screen and each
+      card scrolls to its button.
