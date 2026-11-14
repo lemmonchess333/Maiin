@@ -65,8 +65,9 @@
  * not the implementation, is what is being measured.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { KalmanFilter, isValidReading, haversine } from "@/lib/gps";
+import { VelocityKalmanFilter, isValidReading, haversine } from "@/lib/gps";
 import type { GPSPoint } from "@/lib/gps";
+import { PositionOnlyFilter } from "@/test/gpsBench";
 
 const M_PER_DEG_LAT = 111_320;
 const START_LAT = 51.5;
@@ -115,7 +116,7 @@ function record(o: {
 }) {
   const rng = makeRng(o.seed ?? 1);
   const jitter = o.jitterM ?? 0;
-  const filter = new KalmanFilter();
+  const filter = new VelocityKalmanFilter();
   let last: GPSPoint | null = null;
   let distance = 0;
   let rejected = 0;
@@ -150,7 +151,7 @@ function record(o: {
     }
     streak = 0;
     accepted++;
-    const sm = filter.process(lat, lon, o.accuracy);
+    const sm = filter.process(lat, lon, o.accuracy, t0 + t * 1000);
     const point = {
       lat: sm.lat,
       lon: sm.lon,
@@ -194,17 +195,17 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
     }
   });
 
-  it("loses a little at the worst admissible accuracy — to the filter, not the gate", () => {
-    /* At 30 m the trace comes in at 94%, and the missing 6% is a DIFFERENT
-       effect worth separating from the one this file is about: distance is
-       summed between SMOOTHED points, and the filter's convergence lag (~50 m
-       at this accuracy) is never made back over the run. No fix is rejected —
-       the gate is doing its job — the smoother is simply cutting the corner it
-       is designed to cut. Pinned so a future reading of "94%" is not mistaken
-       for the cliff returning. */
+  it("loses nothing at the worst admissible accuracy — the filter no longer trails", () => {
+    /* At 30 m the trace came in at 94% with the position-only filter, and
+       the missing 6% was a DIFFERENT effect from the one this file is
+       about: distance is summed between SMOOTHED points, and that filter's
+       lag (~50 m at this accuracy) was never made back over the run. No fix
+       was rejected; the smoother cut the corner it was built to cut. The
+       velocity filter does not trail a steady runner, so the run now
+       reads whole. Pinned at 100 so the 6% coming back is seen. */
     const r = record({ accuracy: 30, speedMps: 3, seconds: 300 });
     expect(r.rejected).toBe(0);
-    expect(pct(r.ratio)).toBe(94);
+    expect(pct(r.ratio)).toBe(100);
   });
 
   it("holds up under per-fix jitter, which the old reference did not", () => {
@@ -239,8 +240,8 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
 
   it("still rejects a genuine teleport", () => {
     /* The guard's actual job, unchanged: 12 m/s is 43 km/h. */
-    const filter = new KalmanFilter();
-    const sm = filter.process(START_LAT, 0, 8);
+    const filter = new VelocityKalmanFilter();
+    const sm = filter.process(START_LAT, 0, 8, Date.now() - 1000);
     const last = {
       lat: sm.lat,
       lon: sm.lon,
@@ -267,8 +268,10 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
        distance from it. The implied speed therefore decays toward the runner's
        true speed and the next fix is admitted. Demonstrated on the OLD
        behaviour by driving the gate against the SMOOTHED reference by hand —
-       the current code cannot reproduce it, which is the point. */
-    const filter = new KalmanFilter();
+       the current code cannot reproduce it, which is the point. The
+       position-only filter it was found with is kept in the bench
+       (`PositionOnlyFilter`) for derivations like this one. */
+    const filter = new PositionOnlyFilter();
     const t0 = Date.now();
     // Seed the filter and let it fall behind a 3 m/s runner.
     let sm = { lat: START_LAT, lon: 0 };
@@ -290,11 +293,13 @@ describe("GPS speed gate — the filter's lag is out of the measurement", () => 
   });
 
   it("the lag that used to leak in is real, and is why raw-to-raw matters", () => {
-    /* Kept as the derivation: the filter genuinely does sit this far behind a
-       3 m/s runner. It is a correct property of a smoother — it simply has no
-       business inside a teleport check. */
+    /* Kept as the derivation: the position-only filter genuinely sat this
+       far behind a 3 m/s runner. It is a property of a smoother with no
+       velocity, and it had no business inside a teleport check. (It also
+       cut every turn by that much, which is why the trace is now smoothed
+       by `VelocityKalmanFilter`.) */
     const lagAt = (accuracy: number) => {
-      const f = new KalmanFilter();
+      const f = new PositionOnlyFilter();
       let lag = 0;
       for (let t = 0; t < 120; t++) {
         const trueLat = START_LAT + (3 * t) / M_PER_DEG_LAT;

@@ -19,7 +19,10 @@ import {
   estimateRunCalories,
   detectBestEfforts,
   isImpossibleStep,
-  KalmanFilter,
+  isTraceStep,
+  traceStepMetres,
+  RUN_FILTER_MAX_GAP_S,
+  VelocityKalmanFilter,
   toGPX,
   climbBySegment,
   movingClockMs,
@@ -31,6 +34,7 @@ import {
   type GPSPoint,
 } from "../gps";
 import { sampleRoute } from "../routeSegments";
+import { PositionOnlyFilter } from "@/test/gpsBench";
 
 // ── Helpers ──────────────────────────────────
 
@@ -877,63 +881,113 @@ describe("estimateRunCalories", () => {
   });
 });
 
-// ── KalmanFilter ─────────────────────────────
+// ── VelocityKalmanFilter ─────────────────────
 
-describe("KalmanFilter", () => {
+describe("VelocityKalmanFilter", () => {
+  const T = 1_700_000_000_000;
+
   it("returns the first reading unchanged", () => {
-    const kf = new KalmanFilter();
-    const result = kf.process(51.5, -0.1, 10);
+    const kf = new VelocityKalmanFilter();
+    const result = kf.process(51.5, -0.1, 10, T);
     expect(result.lat).toBe(51.5);
     expect(result.lon).toBe(-0.1);
   });
 
-  it("smooths subsequent noisy readings toward the previous estimate", () => {
-    const kf = new KalmanFilter();
-    kf.process(51.5, -0.1, 10);
-    // Second reading with some noise
-    const result = kf.process(51.6, -0.2, 10);
-    // Should be between the first and second reading (smoothed)
+  it("puts the next estimate between the prediction and the fix", () => {
+    const kf = new VelocityKalmanFilter();
+    kf.process(51.5, -0.1, 10, T);
+    const result = kf.process(51.5001, -0.1001, 10, T + 1000);
     expect(result.lat).toBeGreaterThan(51.5);
-    expect(result.lat).toBeLessThan(51.6);
-    expect(result.lon).toBeGreaterThan(-0.2);
+    expect(result.lat).toBeLessThan(51.5001);
+    expect(result.lon).toBeGreaterThan(-0.1001);
     expect(result.lon).toBeLessThan(-0.1);
   });
 
-  it("converges toward consistent readings", () => {
-    const kf = new KalmanFilter();
-    kf.process(51.5, -0.1, 10);
-    // Feed the same point multiple times
+  it("converges on a place the fixes keep reporting", () => {
+    const kf = new VelocityKalmanFilter();
+    kf.process(51.5, -0.1, 10, T);
     let result = { lat: 0, lon: 0 };
-    for (let i = 0; i < 20; i++) {
-      result = kf.process(51.6, -0.2, 10);
-    }
-    // Should converge close to 51.6, -0.2
-    expect(result.lat).toBeCloseTo(51.6, 2);
-    expect(result.lon).toBeCloseTo(-0.2, 2);
+    for (let i = 1; i <= 30; i++)
+      result = kf.process(51.5002, -0.1002, 10, T + i * 1000);
+    expect(haversine(result.lat, result.lon, 51.5002, -0.1002)).toBeLessThan(
+      0.5
+    );
   });
 
-  it("trusts high-accuracy readings more", () => {
-    const kf1 = new KalmanFilter();
-    kf1.process(51.5, -0.1, 10);
-    const highAccuracy = kf1.process(51.6, -0.2, 1); // very accurate
-
-    const kf2 = new KalmanFilter();
-    kf2.process(51.5, -0.1, 10);
-    const lowAccuracy = kf2.process(51.6, -0.2, 100); // very inaccurate
-
-    // High accuracy reading should pull the estimate closer to 51.6
-    expect(highAccuracy.lat).toBeGreaterThan(lowAccuracy.lat);
+  it("trusts a more accurate fix more", () => {
+    const sharp = new VelocityKalmanFilter();
+    sharp.process(51.5, -0.1, 10, T);
+    const near = sharp.process(51.5001, -0.1, 2, T + 1000);
+    const vague = new VelocityKalmanFilter();
+    vague.process(51.5, -0.1, 10, T);
+    const far = vague.process(51.5001, -0.1, 40, T + 1000);
+    expect(near.lat).toBeGreaterThan(far.lat);
   });
 
-  it("reset allows re-initialization", () => {
-    const kf = new KalmanFilter();
-    kf.process(51.5, -0.1, 10);
-    kf.process(51.6, -0.2, 10);
+  it("starts again from the next fix after a reset", () => {
+    const kf = new VelocityKalmanFilter();
+    kf.process(51.5, -0.1, 10, T);
+    kf.process(51.5001, -0.1001, 10, T + 1000);
     kf.reset();
-    // After reset, next reading should be returned as-is
-    const result = kf.process(52.0, 0.0, 10);
-    expect(result.lat).toBe(52.0);
-    expect(result.lon).toBe(0.0);
+    const result = kf.process(52.0, 0.0, 10, T + 2000);
+    expect(result).toEqual({ lat: 52.0, lon: 0.0 });
+  });
+
+  /* The defect it replaced: a filter with no velocity trails a moving
+     runner by (1 − gain) / gain fixes, more the worse the accuracy, and
+     distance is summed on the filtered positions. */
+  it("follows a steady runner without trailing, at any accuracy", () => {
+    for (const accuracy of [5, 10, 16, 30]) {
+      const kf = new VelocityKalmanFilter();
+      const old = new PositionOnlyFilter();
+      let lagNew = 0;
+      let lagOld = 0;
+      for (let t = 0; t <= 60; t++) {
+        const lat = (3 * t) / M_PER_DEG;
+        lagNew =
+          (lat - kf.process(lat, 0, accuracy, T + t * 1000).lat) * M_PER_DEG;
+        lagOld = (lat - old.process(lat, 0, accuracy).lat) * M_PER_DEG;
+      }
+      expect(Math.abs(lagNew), `±${accuracy} m`).toBeLessThan(0.5);
+      expect(lagOld, `±${accuracy} m`).toBeGreaterThan(6);
+    }
+  });
+
+  it("reaches the end of an out-and-back before turning with it", () => {
+    /* 60 m out at 3 m/s and back, noise free, at ±10 m. The trailing
+       filter turned 16 m short of the cone, which is 32 m off every
+       turnaround. */
+    const kf = new VelocityKalmanFilter();
+    const old = new PositionOnlyFilter();
+    let reachNew = 0;
+    let reachOld = 0;
+    for (let t = 0; t <= 40; t++) {
+      const m = t <= 20 ? 3 * t : 120 - 3 * t;
+      const lat = m / M_PER_DEG;
+      reachNew = Math.max(reachNew, kf.process(lat, 0, 10, T + t * 1000).lat);
+      reachOld = Math.max(reachOld, old.process(lat, 0, 10).lat);
+    }
+    expect(reachNew * M_PER_DEG).toBeGreaterThan(57);
+    expect(reachOld * M_PER_DEG).toBeLessThan(50);
+  });
+});
+
+/** Whether a point would join the trace: `isTraceStep`, measured on the
+ *  smoothed positions. */
+describe("traceStepMetres — when the smoothed position becomes a point", () => {
+  it("is half the reported accuracy, between 2 and 8 m", () => {
+    expect(traceStepMetres(3)).toBe(2);
+    expect(traceStepMetres(5)).toBe(2.5);
+    expect(traceStepMetres(10)).toBe(5);
+    expect(traceStepMetres(16)).toBe(8);
+    expect(traceStepMetres(35)).toBe(8);
+    expect(traceStepMetres(NaN)).toBe(8);
+  });
+
+  it("takes a step only once the position has moved it", () => {
+    const last = makePoint({ lat: 0, lon: 0 });
+    expect(isTraceStep(last, { lat: 4.9 / M_PER_DEG, lon: 0 }, 10)).toBe(false);
+    expect(isTraceStep(last, { lat: 5.1 / M_PER_DEG, lon: 0 }, 10)).toBe(true);
   });
 });
 
@@ -1229,27 +1283,24 @@ describe("detectBestEfforts — a step faster than any runner", () => {
   });
 });
 
-/* The jump the owner saw comes from the smoothing. A gap in the fixes
-   (signal lost, a phone in a pocket) leaves the smoothed position where
-   the runner was; weighed per fix, the first fix after the gap moved it a
+/* The jump the owner saw came from the smoothing. A gap in the fixes
+   (signal lost, a phone in a pocket) left the smoothed position where the
+   runner was; weighed per fix, the first fix after the gap moved it a
    sixth of the way and the next dozen dragged it the rest, at up to
-   90 m/s, carrying the gap's distance with none of its time. */
-describe("KalmanFilter — a gap in the fixes", () => {
+   90 m/s, carrying the gap's distance with none of its time. The filter
+   now starts again from the first fix after a gap longer than
+   `RUN_FILTER_MAX_GAP_S`, so the gap's distance is the straight line
+   across it, and lands in it. */
+describe("VelocityKalmanFilter — a gap in the fixes", () => {
   /** 1.6 m/s (10:25 /km), a fix a second at ±10 m, with `gapSec` without
    *  one after 1,100 s, through the filter as useGPS feeds it. */
-  function gapRun(gapSec: number, perSecond: boolean): GPSPoint[] {
-    const kf = new KalmanFilter();
+  function gapRun(gapSec: number): GPSPoint[] {
+    const kf = new VelocityKalmanFilter();
     const pts: GPSPoint[] = [];
-    let last: number | null = null;
     const fix = (t: number) => {
       const lat = (1.6 * t) / M_PER_DEG;
-      const c = kf.process(
-        lat,
-        0,
-        10,
-        perSecond && last !== null ? t - last : undefined
-      );
-      last = t;
+      const at = 1_700_000_000_000 + t * 1000;
+      const c = kf.process(lat, 0, 10, at);
       pts.push(
         makePoint({
           lat: c.lat,
@@ -1257,7 +1308,7 @@ describe("KalmanFilter — a gap in the fixes", () => {
           rawLat: lat,
           rawLon: 0,
           accuracy: 10,
-          timestamp: 1_700_000_000_000 + t * 1000,
+          timestamp: at,
         })
       );
     };
@@ -1268,7 +1319,7 @@ describe("KalmanFilter — a gap in the fixes", () => {
   const REAL_KM_S = 1000 / 1.6;
 
   it("puts a 7-minute gap's distance in the gap, so the kilometres stay true", () => {
-    const pts = gapRun(420, true);
+    const pts = gapRun(420);
     for (const split of calculateSplits(pts)) {
       expect(split.time).toBeGreaterThan(REAL_KM_S * 0.97);
       expect(split.time).toBeLessThan(REAL_KM_S * 1.03);
@@ -1279,26 +1330,29 @@ describe("KalmanFilter — a gap in the fixes", () => {
     expect(oneK!.time).toBeGreaterThan(REAL_KM_S * 0.97);
   });
 
-  it("weighed per fix, the same run read a 1K in half its time", () => {
-    // What the old weighting did, kept here so the numbers above mean
-    // something: kilometres of 14:51 and 5:59, from a steady 10:25 /km.
-    const splits = calculateSplits(gapRun(420, false));
-    expect(Math.min(...splits.map((s) => s.time))).toBeLessThan(
-      REAL_KM_S * 0.6
+  it("starts again at the first fix after a gap longer than the limit", () => {
+    const kf = new VelocityKalmanFilter();
+    for (let t = 0; t <= 30; t++)
+      kf.process((3 * t) / M_PER_DEG, 0, 10, 1_700_000_000_000 + t * 1000);
+    const after = kf.process(
+      0.5,
+      0.5,
+      10,
+      1_700_000_000_000 + (31 + RUN_FILTER_MAX_GAP_S) * 1000
     );
+    expect(after).toEqual({ lat: 0.5, lon: 0.5 });
   });
 
-  it("smooths a fix a second, or faster, exactly as before", () => {
-    const before = new KalmanFilter();
-    const aSecond = new KalmanFilter();
-    const faster = new KalmanFilter();
-    for (let i = 0; i < 30; i++) {
-      const lat = 51.5 + i * 0.00003 + (i % 3) * 0.00001;
-      const smoothed = before.process(lat, -0.1, 8);
-      expect(aSecond.process(lat, -0.1, 8, 1)).toEqual(smoothed);
-      // Faster than a fix a second is never counted as less than a second.
-      expect(faster.process(lat, -0.1, 8, 0.2)).toEqual(smoothed);
-    }
+  it("predicts across a gap shorter than the limit, so a straight stays straight", () => {
+    /* 3 m/s due north, no fix for 8 s: the first fix after it lands
+       where the runner is, and the filtered position is already there. */
+    const kf = new VelocityKalmanFilter();
+    let out = { lat: 0, lon: 0 };
+    for (let t = 0; t <= 30; t++)
+      kf.process((3 * t) / M_PER_DEG, 0, 10, 1_700_000_000_000 + t * 1000);
+    out = kf.process((3 * 38) / M_PER_DEG, 0, 10, 1_700_000_000_000 + 38_000);
+    expect(Math.abs(out.lat * M_PER_DEG - 3 * 38)).toBeLessThan(0.5);
+    expect(Math.abs(out.lon * M_PER_DEG)).toBeLessThan(0.01);
   });
 });
 

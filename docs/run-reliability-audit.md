@@ -33,6 +33,7 @@ Phase A is **audit only** — no edits. This document records what the code does
 - Treadmill is a derived condition: `runConfig?.activityType === 'treadmill'` (`Run.tsx:281, 399, 410`)
 
 `RunSummary.tsx`:
+
 - Receives a state payload from `navigate('/run-summary', { state: { points, distance, elapsed, splits, elevationGain, runConfig } })` (`Run.tsx:229`)
 - Tracks one local `saved: boolean` and a `showDiscardConfirm: boolean` (`RunSummary.tsx:47, 459`)
 - **No `saving` state distinct from `saved`** — the Save button toggles immediately to "Saved" on success
@@ -48,6 +49,7 @@ Phase A is **audit only** — no edits. This document records what the code does
   - Reject if implied speed > 12 m/s or distance < 1m
   - **Rejected fixes are silently dropped** — no consumer-facing signal that GPS dropped
 - Valid fixes feed Kalman filter (`gps.ts:13-41`) then accumulate `distanceRef.current` via Haversine (`useGPS.ts:118-120`)
+  - STATUS 2026-11-14: the position-only filter is replaced by a constant-velocity Kalman filter (`VelocityKalmanFilter` in `gps.ts`), and a fix becomes a point only once the smoothed position has moved half its reported accuracy, 2 to 8 m (`traceStepMetres`, `isTraceStep`). The position-only filter trailed a moving runner by 7 to 33 m and cut every turn by that much. On the synthetic bench (`src/test/gpsBench.ts`, `src/lib/__tests__/gpsDistanceBench.test.ts`) a 400 m track went from 3% to 16% short to within +1.9%, a street grid from 4% to 13% short to within +0.6%, straights and a park loop stayed within +1.5%, under the smooth error model at ±5, ±10 and ±16 m. Under the rough model at ±10 and ±16 m the new rule reads 2% to 5.5% long. The distance rule (`segmentMetres` on the points) is unchanged, so live distance, splits, best efforts, rolling pace and the saved run agree, and saved runs read as they were. Not built: Doppler speed in the distance, a clock that waits for the first good fix. Phone checks: `docs/qa/pre-launch-backlog.md`, "Run distance: the velocity filter".
 - `gps.start()` re-fired on resume (`Run.tsx:251`); `gps.stop()` clears the watch on pause/finish (`useGPS.ts:141-147`)
 - **A 15-second "Start without GPS" escape hatch exists** (`Run.tsx:375-382`) — appears in the acquiring phase and lets the user begin a run with zero GPS data
 
@@ -89,7 +91,7 @@ Phase A is **audit only** — no edits. This document records what the code does
 
 Ranked by severity:
 
-1. **0km / non-trivial-time runs land on a full summary with all four actions.** Root cause: no gate in `finishRun` (`Run.tsx:223`) and `RunSummary.tsx:253` only warns when *both* distance=0 AND elapsed<30. Fix surface: introduce an `isInvalidRun` derivation and gate Share / Export GPX / full-summary rendering behind it.
+1. **0km / non-trivial-time runs land on a full summary with all four actions.** Root cause: no gate in `finishRun` (`Run.tsx:223`) and `RunSummary.tsx:253` only warns when _both_ distance=0 AND elapsed<30. Fix surface: introduce an `isInvalidRun` derivation and gate Share / Export GPX / full-summary rendering behind it.
 
 2. **"Start without GPS" enables outdoor runs with no fixes.** `Run.tsx:375-382` lets the user begin after 15s of acquiring even if zero fixes have arrived. Combined with bug #1, this is the canonical 0.00km production path. Fix surface: redirect this CTA to a treadmill / manual-distance flow rather than starting an outdoor run that can never accumulate distance.
 
@@ -110,11 +112,13 @@ Ranked by severity:
 **Verdict: it fits. Adopt the derived-guards layer in P0; defer the full state-consolidation refactor.**
 
 What works without restructuring:
+
 - The proposed guards (`isOutdoorGpsRun`, `requiresGpsPreflight`, `canStartCleanly`, `requiresManualDistance`, `isInvalidRun`, `canShowFullSummary`, `canShowShare`, `canExportGpx`, `canShowRetrySave`) can all be derived from the **existing** state (`runConfig.activityType`, `phase`, `gps.points.length`, `gps.signalQuality`, `distance`, `elapsed`, `saved`, `saveError`).
 - They slot in as `const` declarations at the top of `Run.tsx` and `RunSummary.tsx` render bodies. No reducer, no context, no new hook required for v1.
 - Each conditional render that currently inlines a comparison (`activityType === 'treadmill'` etc.) becomes `{canShowShare && <ShareButton />}`. Pure substitution.
 
 What would require restructuring (and we should NOT do in P0):
+
 - Collapsing the 8 useState hooks into a `useReducer` — moderate-to-high blast radius, no reducer pattern elsewhere in the run flow today
 - Moving GPS / save state into context — the current local-state model works fine for one Run page mount
 - Adding a formal FSM — overkill for the 5 phases we have
@@ -142,6 +146,7 @@ canShowRetrySave({ saveError, saved }): boolean
 ```
 
 **Modify:** `Run.tsx:223 finishRun()` — branch on `isInvalidRun(...)`:
+
 - Invalid → open a focused "Run too short" sheet (new component) with two buttons: **Discard** (default) and **Save anyway**. No Share / Export GPX rendered.
 - Valid → existing `navigate('/run-summary', ...)` path unchanged.
 
@@ -156,6 +161,7 @@ If the user explicitly wants an indoor freeform option without GPS, that's a sep
 ### P0-3: Save flow — `saving` state + retry path
 
 **Modify:** `RunSummary.tsx:47, 83-201`:
+
 - Split `saved: boolean` into `{ status: 'idle' | 'saving' | 'saved' | 'error', error?: string }`.
 - On success → status='saved', navigate after delay (existing).
 - On failure → status='error', render an inline banner above the action row (NOT a toast). Banner has a Retry button and the error message.
@@ -199,6 +205,7 @@ npm run build           # production bundle clean
 ```
 
 Manual on a Capacitor iOS build (not just PWA preview):
+
 - Start outdoor run with airplane mode → after 15s see "Switch to treadmill", confirm switch lands in treadmill mode with manual entry
 - Start outdoor run, get GPS, finish at < 100m → confirm "Run too short" sheet, NOT full summary
 - Start outdoor run, valid distance → confirm full summary with Save / Share / Export GPX / Discard
