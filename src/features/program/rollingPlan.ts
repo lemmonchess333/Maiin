@@ -12,8 +12,9 @@
  *
  * Every number here is a Tropos heuristic in the RUN-EV-06 register: the
  * horizons sit at or under the race plans' own peaks for the distance (a
- * 5K plan's 8 km long run, a 10K's 12), and the rotations use the sessions
- * the race plans already hold.
+ * 5K plan's 8 km long run, a 10K's 12), and the rotations hold the session
+ * library a race block holds (Run24 (5)): its families for the goal's
+ * distance in turn, and a base week's light session.
  */
 
 /** The goals a plan with no race date can have. */
@@ -46,14 +47,17 @@ export const ROLLING_GOAL_NAMES: Record<RollingGoal, string> = {
 /** What each goal's weeks hold, in one line, from `ROLLING_SPECS`. */
 export const ROLLING_GOAL_LINES: Record<RollingGoal, string> = {
   keep_fit: "Easy weeks with a long run up to 10 km and a light session.",
-  build_5k: "Up to a long run of 8 km, with strides and a short tempo.",
+  build_5k: "Up to a long run of 8 km, with light sessions and a short tempo.",
   build_10k: "Up to a long run of 12 km, with tempo and intervals in turn.",
   faster_5k: "Intervals, tempo and short reps in turn, and a 5 km time trial.",
 };
 
-/** A quality slot in a rolling week: a session from one of the ladders, a
- *  week of strides alone, or the short reps (`8x400`). */
-export type RollingQuality = "tempo" | "intervals" | "reps" | "strides";
+/** A quality slot in a rolling week (Run24 (5)): a session from the tempo or
+ *  intervals ladders, in their families' turn; short reps at repetition
+ *  pace (8 to 12 × 200 m); or a base week's light session, a fartlek or
+ *  short hills in turn, where the week has a run besides the long run and
+ *  the medium-long, and strides where it has not. */
+export type RollingQuality = "tempo" | "intervals" | "reps" | "light";
 
 /**
  * What a rolling run climbs to and then holds: its soft horizon. A runner
@@ -74,13 +78,19 @@ export interface RollingHorizon {
 
 /**
  * What a rolling run asks of the generator: its horizon, the quality it
- * rotates through its build weeks, how far up each ladder that quality
- * climbs, and whether it holds time trials (Run24 (4)).
+ * rotates through its build weeks, the distance whose sessions it takes,
+ * how far up each ladder that quality climbs, and whether it holds time
+ * trials (Run24 (4)).
  */
 export interface RollingSpec {
   horizon: RollingHorizon;
-  /** The build weeks' quality, in turn. A step-back week holds strides. */
+  /** The build weeks' quality, in turn. The opening week holds a light
+   *  session, as a race block's base does, and a step-back week strides. */
   rotation: readonly RollingQuality[];
+  /** The race distance whose session families the tempo and intervals take
+   *  in turn (Run24 (5), `BUILD_FAMILIES`): the goal's, and a 10K's for a
+   *  goal that names none (keep fit). */
+  distance: "5k" | "10k" | "half" | "marathon";
   /** The tempo ladder's top, work minutes, and the 1 km reps' top. */
   qualityPeak: { tempoWorkMinutes: number; intervalReps: number };
   /** A 3 km trial in the second week without a benchmark, then a 5 km
@@ -92,11 +102,11 @@ export interface RollingSpec {
 
 /**
  * Each goal's run. Build to 5K climbs to a long run past the distance and
- * keeps its quality to strides and a short tempo; build to 10K climbs to
- * the 10K plan's 12 km peak; get faster at 5K holds a 10 km long run and
- * rotates the 1 km reps, a tempo and short reps, which is where a 5K's
+ * keeps its quality to light sessions and a short tempo; build to 10K
+ * climbs to the 10K plan's 12 km peak; get faster at 5K holds a 10 km long
+ * run and rotates intervals, a tempo and short reps, which is where a 5K's
  * speed comes from; keep fit holds a 10 km long run and an easy week with a
- * light tempo, strides and short reps in turn.
+ * light tempo, a light session and short reps in turn, a 10K's sessions.
  */
 export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
   build_5k: {
@@ -106,7 +116,8 @@ export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
       mediumLongMinutes: 40,
       weekMinutes: 150,
     },
-    rotation: ["strides", "strides", "tempo"],
+    rotation: ["light", "light", "tempo"],
+    distance: "5k",
     qualityPeak: { tempoWorkMinutes: 20, intervalReps: 4 },
     timeTrials: false,
     startLongKm: 6,
@@ -118,7 +129,8 @@ export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
       mediumLongMinutes: 60,
       weekMinutes: 240,
     },
-    rotation: ["tempo", "strides", "intervals"],
+    rotation: ["tempo", "light", "intervals"],
+    distance: "10k",
     qualityPeak: { tempoWorkMinutes: 30, intervalReps: 5 },
     timeTrials: true,
     startLongKm: 6,
@@ -131,6 +143,7 @@ export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
       weekMinutes: 240,
     },
     rotation: ["intervals", "tempo", "reps"],
+    distance: "5k",
     qualityPeak: { tempoWorkMinutes: 20, intervalReps: 6 },
     timeTrials: true,
     startLongKm: 6,
@@ -142,7 +155,8 @@ export const ROLLING_SPECS: Record<RollingGoal, RollingSpec> = {
       mediumLongMinutes: 50,
       weekMinutes: 180,
     },
-    rotation: ["tempo", "strides", "reps"],
+    rotation: ["tempo", "light", "reps"],
+    distance: "10k",
     qualityPeak: { tempoWorkMinutes: 20, intervalReps: 4 },
     timeTrials: true,
     startLongKm: 6,
@@ -167,8 +181,8 @@ const RACE_BASE_LONG_KM: Record<"5k" | "10k" | "half" | "marathon", number> = {
 /**
  * The rolling base before a race block (Run24 (3), D9): keep fit's run,
  * held at the long run for the race's distance and with a medium-long for
- * a half or a marathon. Its horizon is the block's opening: the block
- * starts from it.
+ * a half or a marathon, its sessions the race's (Run24 (5)). Its horizon is
+ * the block's opening: the block starts from it.
  */
 export function raceBaseRolling(
   distance: "5k" | "10k" | "half" | "marathon"
@@ -176,6 +190,7 @@ export function raceBaseRolling(
   const longer = distance === "half" || distance === "marathon";
   return {
     ...ROLLING_SPECS.keep_fit,
+    distance,
     horizon: {
       longKm: RACE_BASE_LONG_KM[distance],
       easyMinutes: 40,
