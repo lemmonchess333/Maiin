@@ -25,6 +25,7 @@ inside that type.
 | Flow                     | Where                                                                                        | States                                                                                                               |
 | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`)                                         | waiting, acquiring, countdown, active, paused, finished                                                              |
+| Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                | running, stopping (a stop window open), paused, setting off (GPS alone against a still phone, held 2 s)              |
 | Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                           | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`) |
 | Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                       | server-owned                                                                                                         |
 | Health export receipt    | `firestore.rules` (`healthWorkoutExports`), `src/lib/healthWorkoutExport.ts` (`ExportState`) | attempted, exported, pending-delete; the rules refuse any other move                                                 |
@@ -75,6 +76,13 @@ code can hold that it should not, and what would make it explicit.
   phase differing from the reducer's (synced by hand at six sites).
 - **This pass.** `useRunTimer`'s `pause` and `resume` no longer act twice, so
   a second pause cannot bank the same seconds again whatever the caller does.
+- **Since 14 November 2026.** Auto-pause is a pure step over its own state
+  (`src/lib/runAutoPause.ts`), fed GPS and, on iOS, the phone's motion
+  sensors (`src/lib/runMotionSource.ts`). `autoPaused` is now the rendered
+  copy of `AutoPauseState.paused`, held in a ref the step reads; a Resume
+  by hand resets both. What it can still hold: `paused` true while the
+  reducer is in `paused` (Pause pressed during an auto-pause), which Resume
+  clears.
 - **Explicit form.** The reducer's own header says its side effects move
   behind it in a follow-up. Candidate A3.
 
