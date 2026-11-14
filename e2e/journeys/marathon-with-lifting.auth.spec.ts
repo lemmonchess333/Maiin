@@ -50,6 +50,7 @@ import type {
 } from "../../src/features/program/programTypes";
 import { liftWeekLabel } from "../../src/lib/liftWeekLabel";
 import {
+  BASE_LIGHT_TEMPLATE_IDS,
   isTimeTrialTemplateId,
   RUN_TEMPLATES,
 } from "../../src/lib/workoutTemplates";
@@ -91,13 +92,15 @@ function planWeek(state: ProgramState, monday: string) {
             plan?.shortBase
           ),
     runs,
-    // A time trial (Run24 (4)) sets the paces, in base weeks too; it is
-    // not the build's quality.
+    // A time trial (Run24 (4)) sets the paces, in base weeks too, and a
+    // base week holds a fartlek or short hills (Run24 (5)); neither is the
+    // build's quality.
     quality: runs.some((run) => {
       const template = templateOf(run);
       return (
         (template.type === "tempo" || template.type === "intervals") &&
-        !isTimeTrialTemplateId(template.id)
+        !isTimeTrialTemplateId(template.id) &&
+        !(BASE_LIGHT_TEMPLATE_IDS as readonly string[]).includes(template.id)
       );
     }),
     longKm: long ? (templateOf(long).config.targetDistanceKm ?? 0) : null,

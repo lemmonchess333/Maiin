@@ -183,7 +183,16 @@ describe("the fallback is exactly the old behaviour", () => {
       carryBlockLength: false,
     });
     const preTaper = season.filter((w) => w.weeksOut >= 5);
-    const distinct = new Set(preTaper.map((w) => w.templateIds.join(",")));
+    // The base week holds its light session (Run24 (5)) until the weeks
+    // left make the block compressed, whose base holds an easy run there.
+    const distinct = new Set(
+      preTaper.map((w) =>
+        w.templateIds
+          .map((id) => (id === "fartlek_30" ? "easy_30" : id))
+          .sort()
+          .join(",")
+      )
+    );
     expect(distinct.size).toBe(1);
     expect([...distinct][0]).toContain("long_");
     expect([...distinct][0]).not.toContain("tempo");
