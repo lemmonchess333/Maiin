@@ -4895,3 +4895,11 @@ Affects: which sessions a race plan's base, build and taper weeks hold (`runSche
 - [ ] **A 5K build.** Set up a 5K 12 weeks out. Passing: the build weeks show 4×1 km, then a 5K-pace session ("4×800m at 5K pace") and later 200s; the week before race week shows "6×400m at 5K pace".
 - [ ] **A marathon taper.** Set up a marathon 18 weeks out with a confirmed benchmark and no goal time. Passing: each taper week shows "Sharpener 2×12 min", and Start plays its two 12-minute blocks at marathon pace.
 - [ ] **Two quality days.** As a "Regular runner" at setup, on five run days with no lifting on two of them. Passing: a build week holds two quality sessions, neither on a lifting day; the same runner with every run day a lifting day holds one.
+
+## A race block capped, with a rolling base before it (Run24 (3), 2026-11-13)
+
+Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
+
+- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
+- [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
+- [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
