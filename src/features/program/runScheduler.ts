@@ -2171,12 +2171,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               flavour === (planned.includes("tempo") ? "tempo" : planned[0])
             )
               continue;
-            // Run24 (5): the families take their turns by the block's
-            // weeks, so a new runner's first session is the one the plan
-            // holds that week, not always the first family's.
-            turns += 1;
-            // Run20 (5): a new runner's week held none.
+            // Run20 (5): a new runner's week held none. Run24 (5): nor
+            // took a family's turn, so a beginner's first session of each
+            // kind is its first family's, at its first rung (Run24 (8)).
             if (holdsNoQuality(k)) continue;
+            turns += 1;
             const id = qualityTemplateId({
               ...ladder,
               flavour,

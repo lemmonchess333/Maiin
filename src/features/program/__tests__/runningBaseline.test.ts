@@ -190,11 +190,15 @@ describe("confirmed running starting point", () => {
     expect(Math.max(...block.weeks.map(minutesOf))).toBeGreaterThan(
       Math.max(...unrestricted.weeks.map(minutesOf))
     );
+    // A build's quality: not a base week's light session (Run24 (5)).
     const quality = (weeks: ScheduledRunDay[][]) =>
       weeks
         .flat()
-        .filter((run) => run.type === "tempo" || run.type === "intervals")
-        .length;
+        .filter(
+          (run) =>
+            (run.type === "tempo" || run.type === "intervals") &&
+            !/^(fartlek_30|hills_6x30s)$/.test(run.templateId)
+        ).length;
     // One more: a regular runner above the base gets a shorter base, so its
     // build starts sooner (Run24 (2)).
     expect(block.shortBase).toBe(true);

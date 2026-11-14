@@ -668,11 +668,13 @@ describe("the taper's easy runs step down from what the last build week held (Ru
           // longer hold its last build week under the hold: the weeks
           // before it are longer with the base's light sessions.)
           (weeks === 29 && distance === "marathon"
-            ? {
-                "standard 5": "30 30 50 | 30 30 40",
-                "lighter 3": "40 | 30",
-                "lighter 4": "30 40 | 30 30",
-              }[`${volume} ${days}`]
+            ? (
+                {
+                  "standard 5": "30 30 50 | 30 30 40",
+                  "lighter 3": "40 | 30",
+                  "lighter 4": "30 40 | 30 30",
+                } as Record<string, string>
+              )[`${volume} ${days}`]
             : undefined) ?? easy
         );
     // A compressed marathon ten weeks out holds its last build week to 15%

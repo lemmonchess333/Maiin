@@ -355,6 +355,23 @@ describe("a new runner's runs after the run-walk weeks", () => {
             ).toBeLessThanOrEqual(minutes(own));
             return;
           }
+          // Run24 (5): a build's quality sessions take their families in
+          // turn from the runner's own first one, so a beginner's is the
+          // same kind of session as the plan's that week, its family their
+          // own, held to their minutes, or an easy run where nothing of its
+          // family is short enough.
+          if (
+            (own.type === "tempo" || own.type === "intervals") &&
+            i < weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance]
+          ) {
+            expect(
+              [own.type, "easy"],
+              `${distance} in ${weeks} weeks, week ${i + 1}`
+            ).toContain(run.type);
+            expect(run.date).toBe(own.date);
+            expect(minutes(run)).toBeLessThanOrEqual(Math.max(most, 30));
+            return;
+          }
           if (own.type === "race" || minutes(own) <= most)
             expect(run, `${distance} in ${weeks} weeks, week ${i + 1}`).toEqual(
               own
@@ -362,15 +379,19 @@ describe("a new runner's runs after the run-walk weeks", () => {
         });
       });
     }
-    // A 5K fourteen weeks out is the plan's own from week 11.
+    // A 5K fourteen weeks out is the plan's own from week 11, its quality
+    // sessions the same kinds in their own families' turns (Run24 (5)).
     const regular = plan("5k", 14, null, ranForty);
     plan("5k", 14, until, ranForty)
       .weeks.slice(10)
       .forEach((week, offset) => {
         for (const run of week) {
-          expect(run).toEqual(
-            regular.weeks[offset + 10].find((day) => day.date === run.date)
-          );
+          const own = regular.weeks[offset + 10].find(
+            (day) => day.date === run.date
+          )!;
+          if (run.type === "tempo" || run.type === "intervals")
+            expect(run.type).toBe(own.type);
+          else expect(run).toEqual(own);
         }
       });
   });
