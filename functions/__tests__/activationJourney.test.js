@@ -9,7 +9,6 @@ const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const { completeOnboarding } = require("../index");
-const activationCohort = require("../lib/activationCohort");
 
 const realIsRateLimited = rateLimiter.isRateLimited;
 const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
@@ -49,7 +48,6 @@ beforeEach(() => {
   });
   rateLimiter.isRateLimited = async () => false;
   accountDeletionLocks.assertCallableActorNotDeleting = async () => {};
-  activationCohort.resetCacheForTests();
 });
 
 afterEach(() => {
@@ -58,28 +56,42 @@ afterEach(() => {
   accountDeletionLocks.assertCallableActorNotDeleting = realActorLock;
 });
 
+/* App1 (whole-app grill Q27): every new account is stamped with the one
+   journey, 2, whatever its client sent. The comparison group, its share
+   and its switch are gone. */
 describe("completeOnboarding activation journey", () => {
-  it("puts the comparison group and a switched-off journey on the legacy journey", async () => {
-    // A uid the hash puts in the comparison group.
-    const uid = Array.from({ length: 200 }, (_, i) => `cohort-${i}`).find(
-      (candidate) => activationCohort.inComparisonGroup(candidate)
-    );
-    expect(
-      await completeOnboarding.run(request(2, "ios"), { auth: { uid } })
-    ).toEqual({ success: true, activationJourneyVersion: 1 });
-    expect(db.data.get(`users/${uid}`).activationJourneyVersion).toBe(1);
-    expect(db.data.get(`users/${uid}`).onboardingPlatform).toBe("ios");
-
-    db.data.set("system/config", { activationJourneyV2Enabled: false });
-    activationCohort.resetCacheForTests();
-    expect(await completeOnboarding.run(request(2, "web"), actor)).toEqual({
-      success: true,
-      activationJourneyVersion: 1,
+  it("stamps every new account 2, with no comparison group", async () => {
+    // Uids XB1's hash once put in the comparison group, and a config that
+    // once switched v2 off: neither decides anything now.
+    db.data.set("system/config", {
+      activationJourneyV2Enabled: false,
+      activationComparisonPercent: 100,
     });
-    expect(db.data.get(path).activationJourneyVersion).toBe(1);
+    for (const uid of ["cohort-0", "cohort-1", "cohort-2"]) {
+      expect(
+        await completeOnboarding.run(request(2, "ios"), { auth: { uid } })
+      ).toEqual({ success: true, activationJourneyVersion: 2 });
+      expect(db.data.get(`users/${uid}`).activationJourneyVersion).toBe(2);
+      expect(db.data.get(`users/${uid}`).onboardingPlatform).toBe("ios");
+    }
   });
 
-  it("accepts v2 once and keeps its original timestamp on a legacy retry", async () => {
+  it("stamps an older client that sends no version 2 as well, with its platform when given", async () => {
+    expect(await completeOnboarding.run(request(), actor)).toEqual({
+      success: true,
+      activationJourneyVersion: 2,
+    });
+    expect(db.data.get(path).activationJourneyVersion).toBe(2);
+    expect(db.data.get(path).onboardingPlatform).toBeUndefined();
+
+    const other = { auth: { uid: "activation-user-platform" } };
+    await completeOnboarding.run(request(undefined, "web"), other);
+    expect(
+      db.data.get("users/activation-user-platform").onboardingPlatform
+    ).toBe("web");
+  });
+
+  it("keeps the first setup's timestamp, sport and platform on a retry", async () => {
     expect(await completeOnboarding.run(request(2, "ios"), actor)).toEqual({
       success: true,
       activationJourneyVersion: 2,
@@ -90,7 +102,7 @@ describe("completeOnboarding activation journey", () => {
     expect(first.onboardingSport).toBe("runner");
     expect(first.onboardingCompletedAt).toMatch(/^SERVER_TS_/);
 
-    const retry = request();
+    const retry = request(undefined, "web");
     retry.profileData.athleteType = "Lifter";
     expect(await completeOnboarding.run(retry, actor)).toEqual({
       success: true,
@@ -104,21 +116,26 @@ describe("completeOnboarding activation journey", () => {
     expect(db.data.get(path).onboardingSport).toBe("runner");
   });
 
-  it("does not enroll a completed legacy profile on a v2 retry", async () => {
-    expect(await completeOnboarding.run(request(), actor)).toEqual({
-      success: true,
-      activationJourneyVersion: null,
-    });
-    const first = db.data.get(path);
-
-    expect(await completeOnboarding.run(request(2), actor)).toEqual({
-      success: true,
-      activationJourneyVersion: null,
-    });
-    expect(db.data.get(path).activationJourneyVersion).toBeUndefined();
-    expect(db.data.get(path).onboardingCompletedAt).toBe(
-      first.onboardingCompletedAt
-    );
+  it("does not restamp an account set up before, whatever it was stamped", async () => {
+    for (const [uid, stamped] of [
+      ["activation-user-comparison", 1],
+      ["activation-user-unstamped", undefined],
+    ]) {
+      db.data.set(`users/${uid}`, {
+        uid,
+        onboardingComplete: true,
+        onboardingCompletedAt: "SETUP_BEFORE",
+        ...(stamped === undefined ? {} : { activationJourneyVersion: stamped }),
+      });
+      // An app build from before App1 routes on the answer: 2 is Today.
+      expect(
+        await completeOnboarding.run(request(2, "ios"), { auth: { uid } })
+      ).toEqual({ success: true, activationJourneyVersion: 2 });
+      const after = db.data.get(`users/${uid}`);
+      expect(after.activationJourneyVersion).toBe(stamped);
+      expect(after.onboardingCompletedAt).toBe("SETUP_BEFORE");
+      expect(after.onboardingPlatform).toBeUndefined();
+    }
   });
 
   it("rejects unsupported versions and commits no profile", async () => {
@@ -128,13 +145,13 @@ describe("completeOnboarding activation journey", () => {
     expect(db.data.has(path)).toBe(false);
   });
 
-  it("rejects an invalid platform and never upgrades a completed legacy account", async () => {
+  it("rejects an invalid platform and commits no profile", async () => {
     await expect(
       completeOnboarding.run(request(2, "tablet"), actor)
     ).rejects.toMatchObject({ code: "invalid-argument" });
+    await expect(
+      completeOnboarding.run(request(undefined, "tablet"), actor)
+    ).rejects.toMatchObject({ code: "invalid-argument" });
     expect(db.data.has(path)).toBe(false);
-    await completeOnboarding.run(request(), actor);
-    await completeOnboarding.run(request(2, "ios"), actor);
-    expect(db.data.get(path).onboardingPlatform).toBeUndefined();
   });
 });

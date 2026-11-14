@@ -589,8 +589,8 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
-  FirstWeekCard (a new account's first seven days; for a v2 account one
-  or two rows, the first workout and the first run) → NewBadgeRow (a
+  FirstWeekCard (a new account's first seven days from setup; one or two
+  rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
   TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
@@ -600,27 +600,26 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
-- **First-visit guide (FV1, owner 2026-10-04; XB1 call 1, 2026-10-31):**
-  a new account on activation journey v2 (`isActivationJourneyV2`: the
-  `activationJourneyVersion: 2` that `completeOnboarding` stamps) goes
-  from setup straight to Home, with no Pro offer between, and its first
-  visit has no automatic walk. Home leads with today's session, and the
-  first-week card has one or two rows, "Finish your first workout" when
-  the plan has lifts and "Go for your first run" when the person runs
-  (`firstWeek.ts`, `trainingOnly`), each opening that session
-  (`firstWeekAction.ts`). `GuideHint` turns up once in each place it is
-  used (Train's order, the first set, Food's composer, the first run). A
-  legacy account keeps the earlier journey: setup's "Continue with Free"
-  lands on Home, where its first visit in its first seven days gets a
-  three-stop walk (`GuideWalk`: today's session, the first-week card,
-  Food) as the visit's one coordinator surface; its card also lists the
-  first meal and three weigh-ins, a row opens its step, and its hints
-  wait until the walk has been seen. Settings → Support & legal → Show me
-  around replays the walk for any account. The Tropos mark is the guide
-  (no character; the house voice holds). Rules and words are in
-  `firstGuide.ts`. It never shows under automation unless a capture spec
-  sets `tropos-guide-under-automation` to `on` in localStorage, so specs
-  that don't ask for it never meet it.
+- **First week and first-use guide (FV1, owner 2026-10-04; App1,
+  2026-11-13):** every account takes one first-week journey, XB1's v2
+  (App1, whole-app grill Q27, ended the comparison group and removed the
+  older journey). Setup goes straight to Home, with no Pro offer between
+  (whether one comes back is the open owner call Q72), and Home has no
+  walk. Home leads with today's session, and the first-week card counts
+  seven days from setup (`onboardingCompletedAt`) and has one or two
+  rows, "Finish your first workout" when the plan has lifts and "Go for
+  your first run" when the person runs (`firstWeek.ts`), each opening
+  that session (`firstWeekAction.ts`). `completeOnboarding` still stamps
+  `activationJourneyVersion: 2` on every new account, for the activation
+  report and app builds from before App1, but the app reads no account's
+  version (`oneFirstWeekJourney.test.ts`), so one stamped 1 or none gets
+  the same Home. `GuideHint` turns up once in each place it is used
+  (Train's order, the first set, Food's composer, the first run), with
+  nothing to meet first. The Tropos mark is the guide (no character; the
+  house voice holds). Rules and words are in `firstGuide.ts`. It never
+  shows under automation unless a capture spec sets
+  `tropos-guide-under-automation` to `on` in localStorage, so specs that
+  don't ask for it never meet it.
 - **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)

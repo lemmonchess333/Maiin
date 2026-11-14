@@ -555,7 +555,8 @@ suite("completeOnboarding — emulator integration", () => {
       },
       { auth: { uid: TEST_UID } }
     );
-    expect(result).toEqual({ success: true, activationJourneyVersion: null });
+    // Every account is stamped with the one journey (App1), marker or not.
+    expect(result).toEqual({ success: true, activationJourneyVersion: 2 });
 
     // Profile doc — should exist with ownership-forced fields.
     const userDoc = await getDocSettled(db.collection("users").doc(TEST_UID));
@@ -709,7 +710,7 @@ suite("completeOnboarding — emulator integration", () => {
     ).toBeLessThan(60_000);
   });
 
-  it("stamps version 2 only from the top-level request on the first commit", async () => {
+  it("stamps version 2 on the first commit, never from profileData", async () => {
     const userRef = db.collection("users").doc(TEST_UID);
     const signedUp = admin.firestore.Timestamp.fromMillis(
       Date.now() - 14 * 24 * 60 * 60 * 1000
@@ -784,22 +785,28 @@ suite("completeOnboarding — emulator integration", () => {
     );
     expect(afterRetry.activationJourneyVersion).toBe(2);
 
-    // Existing completed legacy users cannot be enrolled by a newer retry.
+    // An older client's first commit is stamped too (App1), and an
+    // account set up before, stamped 1 for the comparison group, is not
+    // restamped by a retry: the app reads neither.
     await clearTestUserState();
     expect(await completeOnboarding.run(request(), actor)).toEqual({
       success: true,
-      activationJourneyVersion: null,
+      activationJourneyVersion: 2,
     });
-    const legacy = (await getDocSettled(userRef)).data();
+    expect((await getDocSettled(userRef)).data().activationJourneyVersion).toBe(
+      2
+    );
+    await userRef.set({ activationJourneyVersion: 1 }, { merge: true });
+    const comparison = (await getDocSettled(userRef)).data();
     expect(await completeOnboarding.run(request(2), actor)).toEqual({
       success: true,
-      activationJourneyVersion: null,
+      activationJourneyVersion: 2,
     });
-    const legacyAfterRetry = (await getDocSettled(userRef)).data();
-    expect(legacyAfterRetry.onboardingCompletedAt.toMillis()).toBe(
-      legacy.onboardingCompletedAt.toMillis()
+    const comparisonAfterRetry = (await getDocSettled(userRef)).data();
+    expect(comparisonAfterRetry.onboardingCompletedAt.toMillis()).toBe(
+      comparison.onboardingCompletedAt.toMillis()
     );
-    expect(legacyAfterRetry.activationJourneyVersion).toBeUndefined();
+    expect(comparisonAfterRetry.activationJourneyVersion).toBe(1);
   });
 
   it("rejects unsupported journey versions before writing a profile", async () => {

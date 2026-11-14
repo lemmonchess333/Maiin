@@ -561,46 +561,43 @@ describe("todaySession — what a rest day offers", () => {
     );
   });
 
-  it("keeps a version 2 race-plan rest day and names the next run without starting one", () => {
+  it("keeps a race-plan rest day and names the next run without starting one", () => {
     const raceProfile = profileWith(
       { 5: "run" },
-      {
-        athleteType: "Runner",
-        runMode: "race_prep",
-        activationJourneyVersion: 2,
-      }
+      { athleteType: "Runner", runMode: "race_prep" }
     );
     const plan = programStateWith({ runDays: [runDay(FRIDAY)] });
-    const session = todaySession(
-      newAccount({ profile: raceProfile, programState: plan })
-    );
-    expect(session.rest).toEqual({
+    const expected = {
       kind: "rest",
       tomorrow: {
         label: "Easy 30",
         target: `/program?tab=run&rday=${FRIDAY}`,
         dateKey: FRIDAY,
       },
-    });
+    };
+    const session = todaySession(
+      newAccount({ profile: raceProfile, programState: plan })
+    );
+    expect(session.rest).toEqual(expected);
     expect(session.run).toBeNull();
-    expect(
-      todaySession(
-        newAccount({
-          profile: { ...raceProfile, activationJourneyVersion: undefined },
-          programState: plan,
-        })
-      ).rest
-    ).toEqual({ kind: "first-meal" });
+    // App1: whichever journey the account was stamped with, the rule is the
+    // same. An older account no longer gets the food prompt on that day.
+    for (const activationJourneyVersion of [1, 2] as const) {
+      expect(
+        todaySession(
+          newAccount({
+            profile: { ...raceProfile, activationJourneyVersion },
+            programState: plan,
+          })
+        ).rest
+      ).toEqual(expected);
+    }
   });
 
-  it("keeps a version 2 starter goal's rest day, as a race plan's (Run9)", () => {
+  it("keeps a starter goal's rest day, as a race plan's (Run9)", () => {
     const starterProfile = profileWith(
       { 5: "run" },
-      {
-        athleteType: "Runner",
-        runMode: "starter",
-        activationJourneyVersion: 2,
-      }
+      { athleteType: "Runner", runMode: "starter" }
     );
     const plan = programStateWith({
       runDays: [{ ...runDay(FRIDAY), templateId: "run_walk_1" }],

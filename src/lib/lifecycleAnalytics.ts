@@ -23,8 +23,7 @@
  * `onboarding_step_*` pair and `onboarding_completed` (Onboarding.tsx),
  * `onboarding_abandoned` (signing out of an unfinished setup),
  * `email_verified` (the app seeing an email account's address confirmed),
- * and the first-visit guide's `guide_*` events (Home's walk and the
- * hints, FV1).
+ * and the first-use guide's `guide_hint_viewed` (its hints, FV1).
  * The remaining events are declared for schema stability and wired as their
  * call sites are instrumented. Paywall conversion already lives in
  * `paywallAnalytics`.
@@ -76,12 +75,9 @@ export type LifecycleEvent =
   | "week_reset_viewed"
   | "week_reset_choice"
   | "week_reset_completed"
-  /** The first-visit guide (FV1): a walk began, showed a stop, was
-   *  finished from its last stop or skipped; a hint was shown. */
-  | "guide_started"
-  | "guide_step_viewed"
-  | "guide_finished"
-  | "guide_skipped"
+  /** The first-use guide (FV1): a hint was shown. Home's walk, and its
+   *  guide_started / guide_step_viewed / guide_finished / guide_skipped,
+   *  went with App1 (whole-app grill Q27). */
   | "guide_hint_viewed";
 
 export type SignupMethod = "email" | "google" | "apple";
@@ -161,8 +157,7 @@ export interface LifecycleEventMetadata {
    * completion_surfaces: dialogs plus toasts shown between the session
    * ending and the user reaching the page again. Exists to catch the
    * pile-up creeping back after it was collapsed to one screen, so it is
-   * read as a regression signal rather than as a metric. guide_started:
-   * how many stops the walk has.
+   * read as a regression signal rather than as a metric.
    */
   count?: number;
   /** return_surface_shown / return_choice: which surface was shown. */
@@ -176,14 +171,6 @@ export interface LifecycleEventMetadata {
   /** Guided review-to-plan handoff; the choice is never an automatic edit. */
   weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
   weekResetOutcome?: "applied" | "queued";
-  /**
-   * guide_*: which walk. Not `guide`: the redaction drops any key that
-   * contains "uid", and "guide" does.
-   */
-  walk?: "first-visit" | "replay" | "first-week-row";
-  /** guide_step_viewed / guide_finished / guide_skipped: the stop's id
-   *  ("today", "first-week", "food"). With `stepIndex`, its place. */
-  stop?: string;
   /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
   hint?: string;
 }

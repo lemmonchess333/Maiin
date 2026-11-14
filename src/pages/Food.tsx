@@ -9,10 +9,10 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
-import { guideRequest, hintDue } from "@/lib/firstGuide";
+import { hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth, useUid } from "@/lib/auth";
 import { beforeStart, startDayKey } from "@/lib/startDay";
@@ -204,9 +204,7 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
   const navigate = useNavigate();
-  const guideAsked = guideRequest(location.state);
   /* The food-box hint goes first on its visit (FV2): the Pro line under
      the box waits until the hint has been closed, so the first visit shows
      one thing at a time. */
@@ -215,7 +213,6 @@ export default function Food() {
   const proLineWaits = hintDue({
     allowed: composerHint.allowed,
     owed: composerHint.owed,
-    requested: guideAsked === "food-composer",
     closed: composerHintClosed,
   });
   const FOOD_TAP_BACK_DAYS = 90;
@@ -2257,21 +2254,11 @@ export default function Food() {
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
         />
-        {/* The guide's hint on a first visit (FV1), and the step the
-            first-week card's "Log your first meal" opens. The request
-            rides in the router state and is cleared when it closes. */}
+        {/* The guide's hint on a first visit (FV1). */}
         <GuideHint
           id="food-composer"
           when
-          requested={guideAsked === "food-composer"}
-          onClose={() => {
-            setComposerHintClosed(true);
-            if (guideAsked)
-              navigate(location.pathname + location.search, {
-                replace: true,
-                state: null,
-              });
-          }}
+          onClose={() => setComposerHintClosed(true)}
         />
       </motion.div>
       {usual && (

@@ -1,14 +1,18 @@
 /**
- * The first-visit guide on Home (FV1): the walk a new account meets on its
- * first visit, its replay from Settings, the first-week rows that open
- * their step, and the Health prompt waiting its turn.
+ * A new account's first visit to Home: the one first-week journey every
+ * account takes (App1, whole-app grill Q27), its first-week rows opening
+ * their session, Home waiting for what decides its hero, and the Health
+ * prompt waiting its turn.
+ *
+ * The older journey (a three-stop walk on the first visit, a first meal
+ * and three weigh-ins on the card, the Pro offer after setup) went with
+ * the comparison group, so an account stamped with it, or with no journey
+ * at all, gets this one too.
  *
  * Home is rendered for real with its data hooks replaced, as in
- * Home.dayAndWeek.test.tsx. jsdom lays nothing out, and the walk waits
- * for its first card to have a size (useGuideWalkReady), so the tests that
- * expect a walk give the page a phone's boxes (`layOut`). The account
- * begins "now", so the first week is derived from the clock rather than
- * pinned to a date some window has to contain.
+ * Home.dayAndWeek.test.tsx. The plan is set up "now", so the first week is
+ * derived from the clock rather than pinned to a date some window has to
+ * contain.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
@@ -21,7 +25,6 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { groupText } from "@/test/localeGrouping";
 
 const h = vi.hoisted(() => ({
   profile: null as any,
@@ -60,7 +63,7 @@ vi.mock("framer-motion", () => {
   };
   /* One component per tag, as framer's own `motion.div` is one component:
      a fresh function on every read would be a new component type on every
-     render, remounting the walk's card and dropping its focus. */
+     render, remounting what it draws. */
   const tags = new Map<string, (props: any) => any>();
   return {
     motion: new Proxy(
@@ -260,18 +263,21 @@ vi.mock("@/components/home/TrackSectionView", () => ({
 }));
 
 import Home from "../Home";
-import { WALK_SEEN_KEY } from "@/lib/firstGuide";
 
 const DAY_MS = 86_400_000;
 
-/** An account that began `daysAgo` days before now, on a rest-day
- *  schedule, with a programme of two workouts and no run plan. */
-function accountFrom(daysAgo: number) {
-  const began = Date.now() - daysAgo * DAY_MS;
+/** An account that signed up `signedUpDaysAgo` days before now and set up
+ *  its plan `setUpDaysAgo` days ago (null: before setup was stamped), on a
+ *  rest-day schedule, with a programme of two workouts and no run plan. */
+function accountFrom(signedUpDaysAgo: number, setUpDaysAgo: number | null) {
+  const began = Date.now() - signedUpDaysAgo * DAY_MS;
+  const setUp =
+    setUpDaysAgo === null ? null : Date.now() - setUpDaysAgo * DAY_MS - 1000;
   h.profile = {
     uid: "u1",
     displayName: "Test",
     createdAt: { toMillis: () => began },
+    ...(setUp !== null && { onboardingCompletedAt: { toMillis: () => setUp } }),
     weekSchedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, type: "rest" })),
     weeklyWorkoutsTarget: 3,
     athleteType: "Lifter",
@@ -296,7 +302,8 @@ function accountFrom(daysAgo: number) {
   };
 }
 
-/** A phone's boxes for everything on the page: jsdom draws no layout. */
+/** A phone's boxes for everything on the page: jsdom draws no layout, and
+ *  the walk Home once had waited for one. */
 let restoreLayout: (() => void) | null = null;
 function layOut() {
   const proto = Element.prototype;
@@ -328,40 +335,40 @@ function LocationProbe() {
   );
 }
 
-function homeAt(state?: unknown) {
+function homeAt() {
   return (
-    <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
+    <MemoryRouter initialEntries={["/"]}>
       <Home />
       <LocationProbe />
     </MemoryRouter>
   );
 }
 
-function renderHome(state?: unknown) {
-  return render(homeAt(state));
+function renderHome() {
+  return render(homeAt());
 }
 
-const walkSeen = () => localStorage.getItem(`u1:${WALK_SEEN_KEY}`);
-
-/** Presses one of the walk's buttons once its card is on screen: the card
- *  shows once its target holds still, with focus on its main button, and
- *  isn't tappable before that. The button keeps focus from stop to stop,
- *  so focus alone doesn't say the card can be seen. */
-async function press(name: "Next" | "Done" | "Skip" | "Got it") {
-  const main = name === "Skip" ? "Next" : name;
-  await waitFor(
-    () => {
-      const button = screen.getByRole("button", { name: main });
-      expect(button).toBeVisible();
-      expect(button).toHaveFocus();
-    },
-    { timeout: 3000 }
-  );
-  fireEvent.click(screen.getByRole("button", { name }));
+function setVisibility(state: DocumentVisibilityState) {
+  Object.defineProperty(document, "visibilityState", {
+    configurable: true,
+    get: () => state,
+  });
+  document.dispatchEvent(new Event("visibilitychange"));
 }
+
+/** The app is left and opened again: what Home held for the open of its
+ *  first visit (`usePriorHomeVisit`) is let go, whatever test ran before. */
+function reopenApp() {
+  act(() => setVisibility("hidden"));
+  act(() => setVisibility("visible"));
+}
+
+const cardViews = () =>
+  h.track.mock.calls.filter(([event]) => event === "first_week_card_viewed");
 
 beforeEach(() => {
   localStorage.clear();
+  reopenApp();
   h.track.mockClear();
   h.homeTrack.mockClear();
   h.workoutsFailed = false;
@@ -371,224 +378,87 @@ beforeEach(() => {
   h.homeDataLoading = false;
   h.steps = { status: "unavailable", primingShown: true, ready: true };
   window.scrollBy = vi.fn();
-  accountFrom(0);
+  // Signup can precede the plan by days: the card counts from the
+  // server's plan-completion stamp.
+  accountFrom(5, 0);
 });
 
 afterEach(() => {
   cleanup();
   restoreLayout?.();
   restoreLayout = null;
-  document.documentElement.classList.remove("guiding");
 });
 
-describe("the first-visit walk on Home", () => {
-  it("walks a new account through today's session, its first week and food, once", async () => {
-    layOut();
-    renderHome();
-    await screen.findByRole(
-      "dialog",
-      { name: "Your first workout" },
-      { timeout: 3000 }
-    );
-    // FV3: it names this person's session, as its card does.
-    expect(screen.getByRole("dialog")).toHaveTextContent(
-      /Full Body Circuit A: 1 exercise, about \d+ min, starting with Squat\./
-    );
-    await press("Next");
-    await screen.findByRole("dialog", { name: "Your first week" });
-    expect(screen.getByRole("dialog")).toHaveTextContent(
-      "Three things to do in your first seven days"
-    );
-    await press("Next");
-    await screen.findByRole("dialog", { name: "Food" });
-    // And today's target, as Home's food card shows it.
-    expect(screen.getByRole("dialog")).toHaveTextContent(
-      `Today’s target is ${groupText(2200)} kcal`
-    );
-    await press("Done");
+describe("one first-week journey, whatever journey the account was stamped with", () => {
+  it.each([
+    ["version 2", 2],
+    ["the comparison group's version 1", 1],
+    ["no version", undefined],
+  ])(
+    "an account with %s gets no walk, and only its training on the card",
+    async (_label, activationJourneyVersion) => {
+      h.profile.activationJourneyVersion = activationJourneyVersion;
+      // Boxes for everything, so a walk that waited for one would show.
+      layOut();
+      renderHome();
+      const card = screen.getByRole("region", { name: "Your first week" });
+      expect(card).toHaveTextContent("Day 1 of 7");
+      expect(card).toHaveTextContent("Finish your first workout");
+      expect(card).not.toHaveTextContent("Log your first meal");
+      expect(card).not.toHaveTextContent("Weigh in on three mornings");
+      expect(card).not.toHaveTextContent("weekly recap");
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 400));
+      });
+      expect(screen.queryByRole("dialog")).toBeNull();
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(walkSeen()).toBe("1");
-    expect(h.track).toHaveBeenCalledWith("guide_started", {
-      walk: "first-visit",
-      count: 3,
-    });
-    expect(h.track).toHaveBeenCalledWith("guide_finished", {
-      walk: "first-visit",
-      stop: "food",
-      stepIndex: 2,
-    });
+      // Its row opens the session, as Home's card would.
+      fireEvent.click(
+        screen.getByRole("button", { name: /Finish your first workout/ })
+      );
+      expect(screen.getByTestId("location")).toHaveTextContent(
+        "/program?day=0&start=1"
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+    }
+  );
 
-    // Once: a later visit doesn't bring it back.
-    cleanup();
-    renderHome();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 400));
-    });
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
-  it("isn't offered to an account past its first week", async () => {
-    accountFrom(10);
-    layOut();
-    renderHome();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 400));
-    });
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
-  it("Settings' Show me around plays it again, then forgets the request", async () => {
-    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
-    accountFrom(30);
-    layOut();
-    renderHome({ guide: "walk" });
-    // Past its first week the account has no first-week card, and its
-    // session card is a rest day's: the walk is the stops it can show.
-    await screen.findByRole(
-      "dialog",
-      { name: "A rest day" },
-      { timeout: 3000 }
-    );
-    await press("Next");
-    await screen.findByRole("dialog", { name: "Food" });
-    await press("Done");
-    await waitFor(() =>
-      expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/)
-    );
-  });
-
-  it("the Health steps prompt waits until the walk is over", async () => {
-    h.steps = { status: "unprompted", primingShown: false, ready: true };
-    layOut();
-    renderHome();
-    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
-    await screen.findByRole(
-      "dialog",
-      { name: "Your first workout" },
-      { timeout: 3000 }
-    );
-    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
-    await press("Skip");
-    await waitFor(() =>
-      expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
-    );
-  });
-
-  it("the Health steps prompt waits for the account's saved answer", async () => {
-    // Walk seen, past the first week: nothing else holds the prompt, so
-    // only the answer can. Until it loads, "not asked yet" is the hook's
-    // default, not this account's: someone who had already answered saw
-    // the prompt open and close again (FV2).
-    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
-    accountFrom(30);
-    h.steps = { status: "unprompted", primingShown: false, ready: false };
-    const view = renderHome();
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 400));
-    });
-    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
-
-    h.steps = { status: "unprompted", primingShown: false, ready: true };
-    view.rerender(homeAt());
-    await waitFor(() =>
-      expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
-    );
-  });
-
-  it("the calorie tip it replaced is gone", () => {
-    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
+  it("counts the week from the plan's setup, not from sign-up", () => {
+    accountFrom(20, 2);
     renderHome();
     expect(
-      screen.queryByText("Your activity is already in your target")
+      screen.getByRole("region", { name: "Your first week" })
+    ).toHaveTextContent("Day 3 of 7");
+  });
+
+  it("has no card for an account set up before setup was stamped", () => {
+    // Setup has been stamped since 12 October 2026: an account without the
+    // stamp is past its first week, whenever it signed up.
+    accountFrom(0, null);
+    renderHome();
+    expect(
+      screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
   });
-});
 
-describe("the first-week card's rows open their step", () => {
-  beforeEach(() => {
-    // These read the rows, not the walk.
-    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
-  });
-
-  it("the first meal opens Food with the composer pointed out", () => {
+  it("isn't shown past the first week", () => {
+    accountFrom(30, 10);
     renderHome();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Log your first meal/ })
-    );
-    expect(screen.getByTestId("location")).toHaveTextContent(
-      '/food {"guide":"food-composer"}'
-    );
-  });
-
-  it("the weigh-ins open the weigh-in sheet", async () => {
-    renderHome();
-    expect(screen.queryByText("Weigh-in sheet")).toBeNull();
-    /* The sheet is lazy, and Home fetches it once it has drawn; tap once
-       that has landed, as a person would. (A factory-mocked module asked
-       for again while its first import is still in flight never wakes a
-       suspended lazy() in vitest; a real module does.) */
-    await act(async () => {
-      await import("@/components/home/WeightLogSheet");
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: /Weigh in on three mornings/ })
-    );
-    expect(await screen.findByText("Weigh-in sheet")).toBeInTheDocument();
-  });
-
-  it("the first workout is pointed out on today's card", async () => {
-    layOut();
-    renderHome();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Finish your first workout/ })
-    );
-    const stop = await screen.findByRole("dialog", {
-      name: "Your first workout",
-    });
-    expect(stop).toHaveTextContent("ticked off on the card below");
-    await press("Got it");
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(h.track).toHaveBeenCalledWith("guide_finished", {
-      walk: "first-week-row",
-      stop: "today",
-      stepIndex: 0,
-    });
-  });
-});
-
-describe("the version 2 first-week journey", () => {
-  beforeEach(() => {
-    // Signup can precede the plan by days. The card counts from the server's
-    // plan-completion stamp, while the legacy tour stays off this route.
-    accountFrom(5);
-    h.profile.activationJourneyVersion = 2;
-    const completedAtMs = Date.now() - 1000;
-    h.profile.onboardingCompletedAt = { toMillis: () => completedAtMs };
+    expect(
+      screen.queryByRole("heading", { name: "Your first week" })
+    ).toBeNull();
   });
 
   it("records one card view per Home visit and a training row selection", async () => {
     const view = renderHome();
-    await waitFor(() =>
-      expect(
-        h.track.mock.calls.filter(
-          ([event]) => event === "first_week_card_viewed"
-        )
-      ).toHaveLength(1)
-    );
+    await waitFor(() => expect(cardViews()).toHaveLength(1));
     expect(h.track).toHaveBeenCalledWith("first_week_card_viewed", {
       sport: "lifter",
       firstWeekDay: 1,
     });
-    expect(
-      screen.queryByRole("button", { name: /Log your first meal/ })
-    ).toBeNull();
-    expect(screen.queryByRole("dialog")).toBeNull();
 
     view.rerender(homeAt());
-    expect(
-      h.track.mock.calls.filter(([event]) => event === "first_week_card_viewed")
-    ).toHaveLength(1);
+    expect(cardViews()).toHaveLength(1);
 
     fireEvent.click(
       screen.getByRole("button", { name: /Finish your first workout/ })
@@ -608,13 +478,7 @@ describe("the version 2 first-week journey", () => {
 
     cleanup();
     renderHome();
-    await waitFor(() =>
-      expect(
-        h.track.mock.calls.filter(
-          ([event]) => event === "first_week_card_viewed"
-        )
-      ).toHaveLength(2)
-    );
+    await waitFor(() => expect(cardViews()).toHaveLength(2));
   });
 
   it("shows the training task while meal and weight data are still loading", () => {
@@ -626,7 +490,16 @@ describe("the version 2 first-week journey", () => {
     ).toBeInTheDocument();
   });
 
-  it("defers native steps priming until the app is opened after the first Home visit", () => {
+  it("the calorie tip it replaced is gone", () => {
+    renderHome();
+    expect(
+      screen.queryByText("Your activity is already in your target")
+    ).toBeNull();
+  });
+});
+
+describe("the Health steps prompt waits its turn", () => {
+  it("not in the open of the app that held the first Home visit", () => {
     h.steps = { status: "unprompted", primingShown: false, ready: true };
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
@@ -636,19 +509,34 @@ describe("the version 2 first-week journey", () => {
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
     cleanup();
-    const visibility = (state: DocumentVisibilityState) => {
-      Object.defineProperty(document, "visibilityState", {
-        configurable: true,
-        get: () => state,
-      });
-      document.dispatchEvent(new Event("visibilitychange"));
-    };
-    act(() => visibility("hidden"));
-    act(() => visibility("visible"));
+    reopenApp();
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open");
   });
 
+  it("waits for the account's saved answer", async () => {
+    // Past its first visit: nothing else holds the prompt, so only the
+    // answer can. Until it loads, "not asked yet" is the hook's default,
+    // not this account's: someone who had already answered saw the prompt
+    // open and close again (FV2).
+    localStorage.setItem("tropos-home-visited:u1", "1");
+    accountFrom(30, 30);
+    h.steps = { status: "unprompted", primingShown: false, ready: false };
+    const view = renderHome();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
+
+    h.steps = { status: "unprompted", primingShown: false, ready: true };
+    view.rerender(homeAt());
+    await waitFor(() =>
+      expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
+    );
+  });
+});
+
+describe("Home waits for what decides its hero", () => {
   it("shows repair without a checklist or fabricated Start when the plan is missing", () => {
     h.programState = null;
     renderHome();

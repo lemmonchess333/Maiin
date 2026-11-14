@@ -87,7 +87,6 @@ describe("Home's tier-4 surface registry", () => {
     expect(regs.map((r) => r.id).sort()).toEqual(
       [
         "fell-behind",
-        "first-visit-guide",
         "goal-reached",
         "lift-return",
         "race-check",
@@ -148,16 +147,11 @@ describe("Home's tier-4 surface registry", () => {
     expect(byId["run-return"]).toBeGreaterThan(byId["goal-reached"]);
   });
 
-  it("lets a new account's first visit start with the walk", () => {
-    // FV1: the first-visit walk is the visit's one blocking surface. It
-    // only runs in an account's first week, when the others rarely have
-    // anything to say, and it outranks them so that when one does (a
-    // trial that ended in the first week) the new account still meets
-    // the app before it is asked anything.
-    const byId = Object.fromEntries(regs.map((r) => [r.id, r.priority]));
-    for (const r of regs)
-      if (r.id !== "first-visit-guide")
-        expect(byId["first-visit-guide"]).toBeGreaterThan(r.priority);
+  it("opens no walk on a new account's first visit", () => {
+    // FV1's first-visit walk (`first-visit-guide`, priority 45) went with
+    // the older first-week journey (App1, whole-app grill Q27): every
+    // account's first visit leads with today's session.
+    expect(regs.map((r) => r.id)).not.toContain("first-visit-guide");
   });
 
   it("never opens a badge over Home on its own", () => {

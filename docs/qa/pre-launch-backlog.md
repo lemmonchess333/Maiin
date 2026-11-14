@@ -1765,7 +1765,7 @@ The walk's stops, the hints' rules and the row actions are pinned by unit
 tests; jsdom draws no layout, so where the card sits and how the mark
 moves need a phone.
 
-- [ ] **The walk on a new account.** Sign up, finish setup, Continue with
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **The walk on a new account.** Sign up, finish setup, Continue with
       Free: Home opens and dims around the first card, and the mark lifts
       out of the header into the card. Next: the card disappears, the
       light moves, and the card fades in beside the next stop, never
@@ -1775,9 +1775,9 @@ moves need a phone.
 - [ ] **A small phone (SE).** No card hides under the tab bar or the
       Dynamic Island's status bar, and the Food hint turns above the
       composer rather than lie across the tab bar.
-- [ ] **VoiceOver** reads each stop's title and words as the walk moves
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **VoiceOver** reads each stop's title and words as the walk moves
       on, and focus starts on Next and stays there.
-- [ ] **Reduce Motion:** no flight, the cards fade.
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **Reduce Motion:** no flight, the cards fade.
 - [x] _(Proven 2026-10-18: e2e/screenshots/guide.capture.spec.ts 'a new account meets the guide: the walk, a first-week row and the hints' now goes on to /run on the same new account: "Your first run" shows over the run tiles; tapping a tile closes it and starts the run ("Acquiring GPS..."); the seen mark is stored; and it does not come back after Cancel or on a fresh visit to /run. 1 passed on the emulator rig, and a build that ignores the seen mark fails it on the revisit. The Food, Train and first-set hints were already asserted there, and GuideHint.test.tsx pins 'shows once' and the tap-through.)_ **The hints**, each once: Train's lift tab, the first set of the
       first workout (it sits above the workout screen), Food's composer,
       the run screen before a first run. Tapping the thing a hint points
@@ -4808,3 +4808,41 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## One first-week journey for every account (App1, whole-app grill Q27, 2026-11-13)
+
+Affects: `src/pages/Home.tsx` (no walk; the first-week card counts from
+setup and lists only the first workout and the first run, whatever journey
+the account was stamped with), `src/pages/Onboarding.tsx` (setup ends on
+Today for everyone), Settings → Support & legal (Show me around is gone),
+and `completeOnboarding` in `functions/index.js` (every new account is
+stamped `activationJourneyVersion: 2`; `functions/lib/activationCohort.js`
+is deleted). Unit-tested on both sides (`Home.firstVisitGuide.test.tsx`,
+`functions/__tests__/activationJourney.test.js`); no phone has run it.
+
+- [ ] **An older account's first open after this ships.** Use an account
+      still in its first seven days from setup that was in the comparison
+      group (`activationJourneyVersion: 1` in the console) or has no
+      version. Passing: Home opens with no dimming or walk; "Your first
+      week" counts its days from the day setup finished and lists only
+      "Finish your first workout" and, for a runner, "Go for your first
+      run" (no first meal, no weigh-ins); a row opens that session's Start,
+      or the plan; Food, Train, the first set and the first run each show
+      their hint once, though the walk was never seen.
+- [ ] **An established account's first open after this ships.** Passing:
+      Home looks as it did. A free account's Pro strip and (on the phone)
+      the Health steps prompt may hold off for that first visit, as they
+      do on a new account's; the strip is back on the next visit to Home
+      and the prompt on the next open of the app.
+- [ ] **A new account on the new build.** Passing: Start my plan lands on
+      Today with no Pro page between; Settings → Support & legal has no
+      Show me around.
+- [ ] **A new account on an older build** (a TestFlight build from before
+      this change), against the deployed server. Passing: the console
+      shows `activationJourneyVersion: 2` on the new profile, and setup
+      lands on Today with no Pro page.
+- [ ] **After Deploy production.** The deployed `completeOnboarding` source
+      (Cloud console, Functions → completeOnboarding → Source) has
+      `ONE_ACTIVATION_JOURNEY_VERSION` and no `activationCohort`. Then the
+      `activationJourneyV2Enabled` and `activationComparisonPercent` fields
+      on `system/config` can be deleted: nothing reads them.

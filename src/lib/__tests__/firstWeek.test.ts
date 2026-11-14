@@ -5,7 +5,7 @@ import {
   type FirstWeekInput,
 } from "../firstWeek";
 
-// Friday 2 October 2026; the first recap comes Monday 5 October.
+// Friday 2 October 2026, the day the plan was set up.
 const base: FirstWeekInput = {
   startKey: "2026-10-02",
   todayKey: "2026-10-02",
@@ -13,54 +13,35 @@ const base: FirstWeekInput = {
   runs: true,
   workoutCount: 0,
   runCount: 0,
-  mealCount: 0,
-  weighInCount: 0,
   dismissed: false,
 };
 
 describe("firstWeek", () => {
-  it("lists the first workout, run, meal and three weigh-ins on day one", () => {
+  it("lists the first workout and the first run on day one, and nothing else", () => {
     const w = firstWeek(base)!;
     expect(w.day).toBe(1);
-    expect(w.items.map((i) => i.key)).toEqual([
-      "workout",
-      "run",
-      "meal",
-      "weigh-in",
+    expect(w.items.map((i) => i.key)).toEqual(["workout", "run"]);
+    expect(w.items.map((i) => i.label)).toEqual([
+      "Finish your first workout",
+      "Go for your first run",
     ]);
     expect(w.items.every((i) => !i.done)).toBe(true);
-    expect(w.items[3].progress).toBe("0 of 3");
   });
 
   it("leaves out what the plan doesn't have", () => {
     const keys = firstWeek({ ...base, runs: false })!.items.map((i) => i.key);
-    expect(keys).toEqual(["workout", "meal", "weigh-in"]);
+    expect(keys).toEqual(["workout"]);
     const runner = firstWeek({ ...base, lifts: false })!.items.map(
       (i) => i.key
     );
-    expect(runner).toEqual(["run", "meal", "weigh-in"]);
+    expect(runner).toEqual(["run"]);
+    expect(firstWeek({ ...base, lifts: false, runs: false })).toBeNull();
   });
 
-  it("ticks items as they happen, the weigh-ins at three", () => {
-    const w = firstWeek({
-      ...base,
-      workoutCount: 1,
-      mealCount: 4,
-      weighInCount: 2,
-    })!;
+  it("ticks items as they happen", () => {
+    const w = firstWeek({ ...base, workoutCount: 1 })!;
     expect(w.items.find((i) => i.key === "workout")!.done).toBe(true);
-    expect(w.items.find((i) => i.key === "meal")!.done).toBe(true);
-    const weigh = w.items.find((i) => i.key === "weigh-in")!;
-    expect(weigh.done).toBe(false);
-    expect(weigh.progress).toBe("2 of 3");
-  });
-
-  it("names the first recap only once something is logged, and only before it", () => {
-    expect(firstWeek(base)!.recapKey).toBeNull();
-    expect(firstWeek({ ...base, mealCount: 1 })!.recapKey).toBe("2026-10-05");
-    expect(
-      firstWeek({ ...base, mealCount: 1, todayKey: "2026-10-05" })!.recapKey
-    ).toBeNull();
+    expect(w.items.find((i) => i.key === "run")!.done).toBe(false);
   });
 
   it("counts the days from the start, and goes after the seventh", () => {
@@ -69,15 +50,7 @@ describe("firstWeek", () => {
   });
 
   it("goes once every item is done, or once dismissed", () => {
-    expect(
-      firstWeek({
-        ...base,
-        workoutCount: 1,
-        runCount: 1,
-        mealCount: 1,
-        weighInCount: 3,
-      })
-    ).toBeNull();
+    expect(firstWeek({ ...base, workoutCount: 1, runCount: 1 })).toBeNull();
     expect(firstWeek({ ...base, dismissed: true })).toBeNull();
   });
 
@@ -93,33 +66,13 @@ describe("firstWeek", () => {
     ).toBe(3);
   });
 
-  it("uses training-only tasks and the supplied plan-completion day for version 2", () => {
-    const journey = {
-      ...base,
-      trainingOnly: true,
-      startKey: "2026-10-06",
-      todayKey: "2026-10-06",
-    };
-    const week = firstWeek(journey)!;
-    expect(week.day).toBe(1);
-    expect(week.items.map((item) => item.key)).toEqual(["workout", "run"]);
-    expect(week.recapKey).toBeNull();
-    expect(firstWeek({ ...journey, todayKey: "2026-10-12" })?.day).toBe(7);
-    expect(firstWeek({ ...journey, todayKey: "2026-10-13" })).toBeNull();
-    expect(firstWeek({ ...journey, startKey: null })).toBeNull();
-  });
-
   it("puts the only incomplete sport or resumable sport first", () => {
-    const journey = { ...base, trainingOnly: true };
     expect(
-      firstWeek({ ...journey, workoutCount: 1 })!.items.map((item) => item.key)
+      firstWeek({ ...base, workoutCount: 1 })!.items.map((item) => item.key)
     ).toEqual(["run", "workout"]);
     expect(
-      firstWeek({ ...journey, priorityTask: "run" })!.items.map(
-        (item) => item.key
-      )
+      firstWeek({ ...base, priorityTask: "run" })!.items.map((item) => item.key)
     ).toEqual(["run", "workout"]);
-    expect(firstWeek({ ...journey, workoutCount: 1, runCount: 1 })).toBeNull();
   });
 
   it("does not tick a workout for a session without performed work", () => {

@@ -602,19 +602,18 @@ behaviour.
     shape until DS7 (2026-11-11) and stays these two surfaces' shape; keep
     it scarce. The mark itself (the T, since DS7) has two owner-made
     places in the app, neither decoration: it signs Home's header before the date
-    (DS3, 2026-10-01), and it is the first-visit guide's face while the
-    guide is talking (FV1, 2026-10-04: the walk's card and the one-time
-    hints, `GuideMark`).
-- **The first-visit guide** (`src/components/guide/`, FV1): `GuideWalk`
-  dims the page around one card at a time, with the guide's card (the
-  mark, a bold title, one or two sentences, Skip and Next) placed beside
-  it; the first-visit walk starts with the mark lifting out of Home's
-  header. `GuideHint` is the one-time hint: the same card without the dim,
+    (DS3, 2026-10-01), and it is the first-use guide's face while the
+    guide is talking (FV1, 2026-10-04: the one-time hints, `GuideMark`).
+- **The first-use guide** (`src/components/guide/`, FV1): `GuideHint` is
+  the one-time hint, the guide's card (the mark, a bold title, one or two
+  sentences, Got it) placed beside the control it explains, with no dim,
   closed by Got it or any tap elsewhere. It finds its control by
   `data-guide-anchor` rather than wrapping it, because wrapping a control
   in a floating-ui reference replaces its own click handlers. The words
   live in `firstGuide.ts` and keep the house voice: the app never says
-  "I", and nothing ends in an exclamation mark.
+  "I", and nothing ends in an exclamation mark. Home's first-visit walk,
+  which dimmed the page around one card at a time, went with the older
+  first-week journey (App1, 2026-11-13).
   - This is the **only** empty-state component — every empty/no-data branch
     routes through it (the older square-icon `components/EmptyState.tsx` was
     retired once all surfaces migrated). Don't reintroduce a bespoke

@@ -25,9 +25,7 @@ describe("Home → offer page entries", () => {
     expect(start).toBeGreaterThan(0);
     const block = home.slice(start, home.indexOf("</button>", start));
     expect(block).toMatch(/navigate\("\/upgrade\?from=home_strip"\)/);
-    expect(home).toMatch(
-      /shouldShowHomeProStrip\(\{[\s\S]*hadFreeWeek: !!profile\?\.trialExpiresAt/
-    );
+    expect(home).toMatch(/shouldShowHomeProStrip\(\{[\s\S]*hadPriorHomeVisit,/);
   });
 
   it("nothing on Home reaches the offer page untagged", () => {

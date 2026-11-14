@@ -11,8 +11,6 @@ function week(overrides: Partial<Parameters<typeof firstWeek>[0]> = {}) {
     runs: true,
     workoutCount: 1,
     runCount: 0,
-    mealCount: 2,
-    weighInCount: 1,
     dismissed: false,
     ...overrides,
   });
@@ -33,35 +31,23 @@ describe("FirstWeekCard", () => {
       screen.getByRole("heading", { name: "Your first week" })
     ).toBeInTheDocument();
     // The day, and how many of the week's things are done (Mob2 call 1).
-    expect(dayLine()).toBe("Day 1 of 7 · 2 of 4 done");
+    expect(dayLine()).toBe("Day 1 of 7 · 1 of 2 done");
     expect(screen.getByText("Finish your first workout").textContent).toMatch(
       /, done$/
     );
     expect(screen.getByText("Go for your first run").textContent).not.toMatch(
       /done/
     );
-    expect(screen.getByText("1 of 3")).toBeInTheDocument();
   });
 
   it("counts what is done as it is done", () => {
     render(
       <FirstWeekCard
-        week={week({
-          todayKey: "2026-10-04",
-          runCount: 1,
-          mealCount: 3,
-        })}
+        week={week({ todayKey: "2026-10-04", workoutCount: 0 })}
         onDismiss={vi.fn()}
       />
     );
-    expect(dayLine()).toBe("Day 3 of 7 · 3 of 4 done");
-  });
-
-  it("names the day the first recap comes, in en-GB", () => {
-    render(<FirstWeekCard week={week()} onDismiss={vi.fn()} />);
-    expect(
-      screen.getByText("Your first weekly recap comes on Monday 5 October.")
-    ).toBeInTheDocument();
+    expect(dayLine()).toBe("Day 3 of 7 · 0 of 2 done");
   });
 
   it("closes from its button", () => {
@@ -73,18 +59,24 @@ describe("FirstWeekCard", () => {
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
-  /* FV1: an item still to do opens its step (Home decides what that is:
-     a session card pointed out, Food's composer, the weigh-in sheet). */
-  it("opens the step an item still to do names", () => {
+  /* An item still to do opens its session (Home decides where: its Start,
+     Resume, or the plan, `firstWeekAction`). */
+  it("opens the session an item still to do names", () => {
     const onOpen = vi.fn();
-    render(<FirstWeekCard week={week()} onDismiss={vi.fn()} onOpen={onOpen} />);
+    render(
+      <FirstWeekCard
+        week={week({ workoutCount: 0 })}
+        onDismiss={vi.fn()}
+        onOpen={onOpen}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Finish your first workout/ })
+    );
     fireEvent.click(
       screen.getByRole("button", { name: /Go for your first run/ })
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /Weigh in on three mornings/ })
-    );
-    expect(onOpen.mock.calls).toEqual([["run"], ["weigh-in"]]);
+    expect(onOpen.mock.calls).toEqual([["workout"], ["run"]]);
   });
 
   it("a ticked item is plain text, not a button", () => {

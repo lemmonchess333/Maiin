@@ -87,10 +87,6 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
-      {/* The legacy offer is handed where "Continue with Free" goes. */}
-      {(location.state as { next?: string } | null)?.next
-        ? ` → ${(location.state as { next: string }).next}`
-        : ""}
     </output>
   );
 }
@@ -217,20 +213,24 @@ describe("onboarding chapters and commit", () => {
     );
     builder.mockRestore();
   });
-  it("keeps the established offer when the server did not accept version 2", async () => {
-    saveOnboardingDraft("setup-test", draft);
-    complete.mockResolvedValue({
-      data: { success: true, activationJourneyVersion: null },
-    });
-    open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
-    await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
-    );
-    expect(complete.mock.calls[0][0].activationJourneyVersion).toBe(2);
-  });
+  /* App1 (whole-app grill Q27): setup ends on Today for every account.
+     The answer's journey version decides nothing, even one from a server
+     that still answered 1 or none for its comparison group. */
+  it.each([1, null, undefined])(
+    "lands on Today whatever journey version the server answers (%s)",
+    async (activationJourneyVersion) => {
+      saveOnboardingDraft("setup-test", draft);
+      complete.mockResolvedValue({
+        data: { success: true, activationJourneyVersion },
+      });
+      open();
+      fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+      await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      );
+    }
+  );
   it("shows a recoverable error and retains the intended answers after a failed commit", async () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });

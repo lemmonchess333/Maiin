@@ -32,7 +32,6 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
-const activationCohort = require("./lib/activationCohort");
 const weeklyRecap = require("./lib/weeklyRecap");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
@@ -747,6 +746,12 @@ function assertDisplayNameAllowed(displayName) {
   }
 }
 
+/* The first-week journey every account is stamped with (App1, whole-app
+   grill Q27). It was XB1's version 2 beside a comparison group stamped 1;
+   the group, its share and its switch went with App1, and every account,
+   older ones included, now takes this journey in the app. */
+const ONE_ACTIVATION_JOURNEY_VERSION = 2;
+
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -785,8 +790,10 @@ exports.completeOnboarding = functions
         activationJourneyVersion,
         onboardingPlatform,
       } = data;
-      // The cohort is chosen by this callable, never by a profile write.
-      // Omitted means an older client and keeps the legacy journey.
+      // Every account takes the one first-week journey (App1, whole-app
+      // grill Q27), so the journey is stamped below whatever a client
+      // sends. A client from before App1 sends 2 or nothing; anything else
+      // is refused, as it was while the journey was chosen here.
       if (
         activationJourneyVersion !== undefined &&
         activationJourneyVersion !== 2
@@ -798,8 +805,7 @@ exports.completeOnboarding = functions
       }
       if (
         onboardingPlatform !== undefined &&
-        (activationJourneyVersion !== 2 ||
-          !activationBilling.validOnboardingPlatform(onboardingPlatform))
+        !activationBilling.validOnboardingPlatform(onboardingPlatform)
       ) {
         throw new functions.https.HttpsError(
           "invalid-argument",
@@ -971,22 +977,17 @@ exports.completeOnboarding = functions
           "programState is too large."
         );
       }
-      // The server's cohort, not the client's (XB1 call 9): a comparison
-      // group and a switch that turns v2 off (lib/activationCohort.js).
-      const journey = await activationCohort.journeyFor(
-        db,
-        uid,
-        activationJourneyVersion
-      );
-      const acceptedVersion = await db.runTransaction(async (transaction) => {
+      await db.runTransaction(async (transaction) => {
         const existing = await transaction.get(userRef);
         const publicSnap = await transaction.get(publicRef);
         const existingData = existing.exists ? existing.data() : {};
         const nextProfileData = { ...profileData };
 
-        // The timestamp and cohort describe the first successful setup
+        // The timestamp and journey describe the first successful setup
         // commit. A retry, even from a newer client, must not move the
-        // activation window or enroll an existing account.
+        // activation window or restamp an account set up earlier. The
+        // journey stays stamped, always 2, for the activation report and
+        // for app builds from before App1, which read it.
         const alreadyCompleted = existingData.onboardingComplete === true;
         if (!alreadyCompleted) {
           nextProfileData.onboardingCompletedAt =
@@ -994,11 +995,10 @@ exports.completeOnboarding = functions
           nextProfileData.onboardingSport = activationSport(
             nextProfileData.athleteType
           );
-          if (journey !== null) {
-            nextProfileData.activationJourneyVersion = journey;
-            if (onboardingPlatform) {
-              nextProfileData.onboardingPlatform = onboardingPlatform;
-            }
+          nextProfileData.activationJourneyVersion =
+            ONE_ACTIVATION_JOURNEY_VERSION;
+          if (onboardingPlatform) {
+            nextProfileData.onboardingPlatform = onboardingPlatform;
           }
         }
         if (existing.exists) {
@@ -1069,16 +1069,13 @@ exports.completeOnboarding = functions
           { merge: true }
         );
         transaction.set(programRef, onbProgram.value);
-
-        return alreadyCompleted
-          ? existingData.activationJourneyVersion === 2 ||
-            existingData.activationJourneyVersion === 1
-            ? existingData.activationJourneyVersion
-            : null
-          : journey;
       });
 
-      return { success: true, activationJourneyVersion: acceptedVersion };
+      // App builds from before App1 route on this: 2 goes to Today.
+      return {
+        success: true,
+        activationJourneyVersion: ONE_ACTIVATION_JOURNEY_VERSION,
+      };
     } catch (err) {
       // Re-throw HttpsError as-is (validation errors, etc.)
       if (err instanceof functions.https.HttpsError) {

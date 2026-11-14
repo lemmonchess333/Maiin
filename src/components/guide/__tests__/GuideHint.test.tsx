@@ -11,21 +11,10 @@ import {
 import type { ReactNode } from "react";
 import GuideHint from "../GuideHint";
 import { AuthUidContext } from "@/lib/auth";
-import {
-  GUIDE_UNDER_AUTOMATION_KEY,
-  WALK_SEEN_KEY,
-  hintSeenKey,
-} from "@/lib/firstGuide";
+import { GUIDE_UNDER_AUTOMATION_KEY, hintSeenKey } from "@/lib/firstGuide";
 
-const { track, auth } = vi.hoisted(() => ({
-  track: vi.fn(),
-  auth: { profile: null as { activationJourneyVersion?: number } | null },
-}));
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track }));
-vi.mock("@/lib/auth", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/auth")>()),
-  useAuth: () => ({ profile: auth.profile }),
-}));
 
 const UID = "hint-user";
 const asAccount = ({ children }: { children: ReactNode }) => (
@@ -57,10 +46,6 @@ function anchor(onClick = vi.fn()) {
   return el;
 }
 
-function metTheGuide() {
-  localStorage.setItem(`${UID}:${WALK_SEEN_KEY}`, "1");
-}
-
 function renderHint(props: Partial<Parameters<typeof GuideHint>[0]> = {}) {
   return render(<GuideHint id="first-set" when {...props} />, {
     wrapper: asAccount,
@@ -77,7 +62,6 @@ async function settle() {
 beforeEach(() => {
   localStorage.clear();
   track.mockClear();
-  auth.profile = null;
 });
 
 afterEach(() => {
@@ -90,8 +74,9 @@ afterEach(() => {
 });
 
 describe("GuideHint", () => {
-  it("points at its control for an account that has met the guide", async () => {
-    metTheGuide();
+  /* App1: nothing has to be met first. Home's walk, which once gated the
+     hints for older accounts, is gone. */
+  it("points at its control for an account that hasn't seen it", async () => {
     anchor();
     renderHint();
     const hint = await screen.findByRole("dialog", { name: "Your first set" });
@@ -101,25 +86,7 @@ describe("GuideHint", () => {
     });
   });
 
-  it("stays away from an account that never met the guide", async () => {
-    anchor();
-    renderHint();
-    await settle();
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(track).not.toHaveBeenCalled();
-  });
-
-  it("shows the point-of-use hint for version 2 without an automatic Home walk", async () => {
-    auth.profile = { activationJourneyVersion: 2 };
-    anchor();
-    renderHint();
-    expect(
-      await screen.findByRole("dialog", { name: "Your first set" })
-    ).toBeInTheDocument();
-  });
-
   it("waits for the page to say its moment has come", async () => {
-    metTheGuide();
     anchor();
     renderHint({ when: false });
     await settle();
@@ -127,7 +94,6 @@ describe("GuideHint", () => {
   });
 
   it("shows once: Got it closes it for this account for good", async () => {
-    metTheGuide();
     anchor();
     const first = renderHint();
     fireEvent.click(await screen.findByRole("button", { name: "Got it" }));
@@ -141,8 +107,7 @@ describe("GuideHint", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("shows again when a first-week row asks for it", async () => {
-    metTheGuide();
+  it("shows again when its page's help asks for it", async () => {
     localStorage.setItem(`${UID}:${hintSeenKey("first-set")}`, "1");
     anchor();
     const onClose = vi.fn();
@@ -152,7 +117,6 @@ describe("GuideHint", () => {
   });
 
   it("a tap on the control closes it, and the control still works", async () => {
-    metTheGuide();
     const onClick = vi.fn();
     const el = anchor(onClick);
     renderHint();
@@ -167,7 +131,6 @@ describe("GuideHint", () => {
   });
 
   it("Escape closes it", async () => {
-    metTheGuide();
     anchor();
     renderHint();
     await screen.findByRole("dialog");
@@ -176,7 +139,6 @@ describe("GuideHint", () => {
   });
 
   it("taps inside it don't close it", async () => {
-    metTheGuide();
     anchor();
     renderHint();
     const hint = await screen.findByRole("dialog");
@@ -185,7 +147,6 @@ describe("GuideHint", () => {
   });
 
   it("uses the page's own words when it has better ones", async () => {
-    metTheGuide();
     anchor();
     renderHint({ body: "Tap the box when it’s done." });
     expect(await screen.findByRole("dialog")).toHaveTextContent(
@@ -198,7 +159,6 @@ describe("GuideHint", () => {
       value: true,
       configurable: true,
     });
-    metTheGuide();
     anchor();
     const off = renderHint();
     await settle();
@@ -211,7 +171,6 @@ describe("GuideHint", () => {
   });
 
   it("takes focus as it shows, so it is read and Got it is the next stop", async () => {
-    metTheGuide();
     anchor();
     renderHint();
     const hint = await screen.findByRole("dialog", { name: "Your first set" });
@@ -226,7 +185,6 @@ describe("GuideHint", () => {
   });
 
   it("gives focus back where it was when it closes", async () => {
-    metTheGuide();
     anchor();
     const was = document.createElement("button");
     was.textContent = "Start workout";
@@ -242,7 +200,6 @@ describe("GuideHint", () => {
   });
 
   it("closed with nothing focused before it, focus lands on what it explained", async () => {
-    metTheGuide();
     const el = anchor();
     renderHint();
     const hint = await screen.findByRole("dialog");
@@ -253,7 +210,6 @@ describe("GuideHint", () => {
   });
 
   it("leaves someone typing in their field", async () => {
-    metTheGuide();
     anchor();
     const field = document.createElement("input");
     document.body.appendChild(field);
@@ -266,7 +222,6 @@ describe("GuideHint", () => {
   });
 
   it("keeps each account's seen flag to itself", async () => {
-    metTheGuide();
     anchor();
     renderHint();
     fireEvent.click(await screen.findByRole("button", { name: "Got it" }));
@@ -277,7 +232,6 @@ describe("GuideHint", () => {
 
 describe("requested guidance", () => {
   it("can reopen a dismissed hint repeatedly without triggering the anchor", async () => {
-    metTheGuide();
     const activate = vi.fn();
     anchor(activate);
     const view = renderHint();
@@ -294,7 +248,6 @@ describe("requested guidance", () => {
   });
 
   it("closes guidance before opening existing exercise form help", async () => {
-    metTheGuide();
     const activate = vi.fn();
     const form = vi.fn();
     anchor(activate);

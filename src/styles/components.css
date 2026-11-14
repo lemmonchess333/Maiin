@@ -650,13 +650,6 @@ html.launching [data-brand-mark] {
   opacity: 0;
 }
 
-/* While the first-visit guide's mark is out of Home's header, leading the
-   walk (GuideWalk), the header shows none: the page has one mark, and it
-   is the one that is talking. */
-html.guiding [data-brand-mark] {
-  opacity: 0;
-}
-
 /* The white anatomical drawings keep their exact source palette. A small
    neutral edge shadow helps them read on light cards, including list-size
    cutouts; dark surfaces already provide the needed silhouette contrast. */

@@ -45,17 +45,15 @@ interface HomeDataState {
      on. null when we can't call a direction (profile-fallback / one
      log). */
   weightTrend: WeightTrendDirection;
-  /** The days with a logged weight, newest first (at most 30). */
-  weighInDates: string[];
   loading: boolean;
   error: string | null;
 }
 
 /** Weigh-ins Home reads. It keeps the newest 30 days, and uses the
- *  newest one, the last week's direction and a count of up to three; the
- *  chart and the adaptive targets read their own. Wider than 30 so a day
- *  weighed twice cannot crowd a distinct day out; the shared 400 would read
- *  a year's weigh-ins on every opening of the app. */
+ *  newest one and the last week's direction; the chart and the adaptive
+ *  targets read their own. Wider than 30 so a day weighed twice cannot
+ *  crowd a distinct day out; the shared 400 would read a year's weigh-ins
+ *  on every opening of the app. */
 const HOME_BODYWEIGHT_READ_LIMIT = 60;
 
 export function useHomeData(
@@ -96,7 +94,6 @@ export function useHomeData(
     lastRunAtMs: null,
     lastWeightInfo: null,
     weightTrend: null,
-    weighInDates: [],
     loading: true,
     error: null,
   });
@@ -174,7 +171,6 @@ export function useHomeData(
         let lastRunAtMs: number | null = null;
         let weightInfo: WeightInfo | null = null;
         let weightTrend: WeightTrendDirection = null;
-        let weighInDates: string[] = [];
 
         // Runs — read for the newest countable finish, which is the
         // post-workout nudge's only evidence a run happened. P0.5: skip
@@ -237,7 +233,6 @@ export function useHomeData(
                 { rawRows: snap.docs.length, uniqueDays: entries.length }
               );
             }
-            weighInDates = entries.map((e) => e.date);
             if (entries.length > 0) {
               const sorted = [...entries].sort(function (a, b) {
                 return a.date.localeCompare(b.date);
@@ -284,7 +279,6 @@ export function useHomeData(
           lastRunAtMs,
           lastWeightInfo: weightInfo,
           weightTrend,
-          weighInDates,
           loading: false,
           error: errors.length > 0 ? errors.join("; ") : null,
         });
@@ -419,9 +413,6 @@ export function useHomeData(
           : "Weight saved"
         : "",
     weightTrend: state.weightTrend,
-    // Days weighed, with this device's queued weigh-ins counted at once.
-    weighInCount: new Set([...state.weighInDates, ...pendingByDate.keys()])
-      .size,
     postWorkoutNudge,
     loading: state.loading,
     error: state.error,
