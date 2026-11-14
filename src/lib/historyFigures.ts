@@ -16,7 +16,7 @@ import {
   parseLocalDate,
   rollingWindowStart,
 } from "./dateHelpers";
-import { distanceLabel, paceMinSec } from "./runLabels";
+import { distanceLabel, finishTimeLabel, paceMinSec } from "./runLabels";
 import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 import { EXERCISES, getExerciseById } from "./exercises";
 import { bestSetPerExercise, type LiftRecord } from "./liftRecords";
@@ -39,6 +39,12 @@ import {
   type SummaryGranularity,
 } from "./periodSummary";
 import { runEvidenceDate } from "./runExecutionEvidence";
+import {
+  fastestEfforts,
+  type EffortRun,
+  type FastestEffort,
+} from "./runEfforts";
+import { FASTEST_EFFORT_METERS } from "./postMoments";
 import {
   isAllTimeRecord,
   selectRunRecords,
@@ -388,7 +394,9 @@ export function nutritionFigures(
 
 // ── Running records ──────────────────────────────────────────────────────
 
-type RecordRun = RunRecord & RunRecordCandidate & { id: string; date?: string };
+type RecordRun = RunRecord &
+  RunRecordCandidate &
+  EffortRun & { id: string; date?: string };
 
 /** A row on the PRs tab's running cards. */
 export interface RunRecordRow {
@@ -412,7 +420,7 @@ export interface RunRecordRows {
   indoor: RunRecordRow[];
   /** An outdoor run in the last 30 days. */
   hasAnyRecent: boolean;
-  /** An indoor run holds a record. */
+  /** An indoor run holds a record: its best pace, or its longest run. */
   hasAnyIndoor: boolean;
 }
 
@@ -420,13 +428,18 @@ function recordRows<R extends RecordRun>(
   records: RunRecords<R>,
   {
     includeLongest,
+    efforts = [],
     allTime,
+    allTimeEfforts = [],
     newSinceKey,
     unit,
   }: {
     includeLongest: boolean;
+    /** The pool's fastest 1K, 5K and 10K (`fastestEfforts`). */
+    efforts?: readonly FastestEffort<R>[];
     /** The records over every run, for a narrower pool. */
     allTime?: RunRecords<R>;
+    allTimeEfforts?: readonly FastestEffort<R>[];
     newSinceKey: string;
     unit: DistanceUnit;
   }
@@ -443,8 +456,7 @@ function recordRows<R extends RecordRun>(
      both read `avgPace`, the average over a whole run, from a pool with a
      distance floor. The value carries its unit, because a bare "5:32" is
      ambiguous between per-kilometre and per-mile wherever it sits. A true
-     fastest kilometre is a different figure, from the splits, and is the
-     Running page's. */
+     fastest kilometre is a different figure, the effort rows below. */
   const rows: RunRecordRow[] = [
     {
       label: "Best pace",
@@ -467,6 +479,24 @@ function recordRows<R extends RecordRun>(
       runId: bestSustainedPace.id,
     });
   }
+  /* The fastest 1K, 5K and 10K (App1 Q15): the times a finish screen
+     calls "your fastest yet", each a real stretch of one run
+     (`runEffortSeconds`), so the label names the distance it timed and
+     the value is that time. A distance no run has timed has no row. */
+  for (const effort of efforts) {
+    rows.push({
+      label: `Fastest ${EFFORT_NAMES[effort.meters] ?? distanceLabel(effort.meters, unit)}`,
+      value: finishTimeLabel(effort.seconds),
+      date: day(effort.run),
+      isNew:
+        runEvidenceDate(effort.run) >= newSinceKey &&
+        (!allTime ||
+          allTimeEfforts.some(
+            (held) => held.meters === effort.meters && held.run === effort.run
+          )),
+      runId: effort.run.id,
+    });
+  }
   if (includeLongest) {
     rows.push({
       label: "Longest run",
@@ -479,11 +509,24 @@ function recordRows<R extends RecordRun>(
   return rows;
 }
 
+/** The effort distances by the names the finish screen gives them. */
+const EFFORT_NAMES: Readonly<Record<number, string>> = {
+  1000: "1K",
+  5000: "5K",
+  10000: "10K",
+};
+
 /**
- * The PRs tab's running records from every run (`allRuns` is the read of
- * the whole collection, not the range's): outdoor records all-time and for
- * the last 30 days, and indoor records apart. Each pool takes its runs by
+ * Bests' running records from every run (`allRuns` is the read of the
+ * whole collection, not the range's): outdoor records all-time and for
+ * the last 30 days, and indoor ones apart. Each pool takes its runs by
  * the eligibility rules in `runStatsEligibility`.
+ *
+ * App1 Q15: every running record a finish screen celebrates has its row
+ * here, from the same figures. The fastest 1K, 5K and 10K are the runs'
+ * own times over them (`fastestEfforts`, which the post's moments read
+ * too). The longest run is kept on both cards, since a treadmill run can
+ * be the longest yet: its finish screen compares it with every run.
  */
 export function runRecordRows<R extends RecordRun>(
   allRuns: readonly R[],
@@ -496,21 +539,28 @@ export function runRecordRows<R extends RecordRun>(
     (r) => runEvidenceDate(r) >= range.recentSinceKey
   );
   const allTime = selectRunRecords(outdoor, { includeLongest: true });
+  const allTimeEfforts = fastestEfforts(outdoor, FASTEST_EFFORT_METERS);
   const indoor = selectRunRecords(
     completed.filter((r) => isIndoorPaceEligible(r)),
-    { includeLongest: false }
+    { includeLongest: true }
   );
   const shared = { newSinceKey: range.newSinceKey, unit };
   return {
-    lifetime: recordRows(allTime, { ...shared, includeLongest: true }),
+    lifetime: recordRows(allTime, {
+      ...shared,
+      includeLongest: true,
+      efforts: allTimeEfforts,
+    }),
     recent30d: recordRows(selectRunRecords(recent, { includeLongest: true }), {
       ...shared,
       includeLongest: true,
+      efforts: fastestEfforts(recent, FASTEST_EFFORT_METERS),
       allTime,
+      allTimeEfforts,
     }),
-    indoor: recordRows(indoor, { ...shared, includeLongest: false }),
+    indoor: recordRows(indoor, { ...shared, includeLongest: true }),
     hasAnyRecent: recent.length > 0,
-    hasAnyIndoor: indoor.bestPace !== null,
+    hasAnyIndoor: indoor.bestPace !== null || indoor.longest !== null,
   };
 }
 

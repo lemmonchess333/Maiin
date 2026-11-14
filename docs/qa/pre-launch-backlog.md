@@ -4950,3 +4950,11 @@ Affects: Settings › Run plan's Heart rate sensor (`HeartRateSensorSection`), t
 - [ ] **The Watch and a strap together (pilot build).** With Watch runs on and the strap paired, run outdoors. Passing: the HUD's heart rate follows the strap (compare with the strap's own app); take the strap off and the Watch's reading takes over within about 15 seconds; the summary names the source that covered most of the run.
 - [ ] **A reloaded web view.** Mid-run with the strap, force the web view to reload (Safari Web Inspector's reload on a development build), then finish. Passing: the summary's coverage includes the time before the reload (native kept the readings).
 - [ ] **App Review.** In the App Store submission notes, say the `bluetooth-central` background mode keeps a paired heart rate sensor's readings arriving while a run is recorded with the screen locked.
+
+## What comes after the 30-minute goal (Run24 (3), 2026-11-14)
+
+Affects: the starter goal's Done card on Home and Train (`StarterDoneCard`) and Run plan opened from it (`?goal=build_5k`, `?goal=keep_fit`, `?goal=5k`). Component tests and the starter journey drive it; no phone has shown it, and no capture was taken.
+
+- [ ] **The card.** Finish the 30-minute goal's last week. Passing: Home shows Done, "30 minutes without stopping", and three rows, Build to 5K, Keep fit and Train for a 5K, each with its line, then Not now; at 320 px and with large text the rows wrap and nothing is cut.
+- [ ] **Build to 5K.** Tap it. Passing: Run plan opens on Plan, no race with Build to 5K chosen; Save plans the week, Train reads "Build to 5K · Week 1", the Done card is gone on Home and Train, and no Pro offer appears.
+- [ ] **The 5K.** On another account at the same point, tap Train for a 5K. Passing: Run plan opens on Training for a race with 5K chosen and its date still to pick, as before.
