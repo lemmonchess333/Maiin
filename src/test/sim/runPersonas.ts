@@ -257,6 +257,31 @@ export const FREEFORM_RUNNER: LiftPersona = {
   },
 };
 
+/** A regular runner on a plan with no race date (Run24 (3), deep dive D7):
+ *  build to 10K, four runs a week, for twenty weeks. */
+export const BUILD_10K_NO_DATE: LiftPersona = {
+  name: "build-10k-no-date",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "freeform",
+    rollingGoal: "build_10k",
+    weeklyRunDays: 4,
+    experience: "intermediate",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: 40,
+      weeklyMinutes: 140,
+      runningWeeks: 60,
+      longestRunKm: 9,
+    },
+    runShare: 1,
+  },
+};
+
 /** A hybrid on three lifts and four runs, a half in sixteen weeks: with the
  *  leg trim, and without. */
 function hybrid34(trim: boolean): LiftPersona {
@@ -370,6 +395,7 @@ export const RUN_PERSONAS: readonly { persona: LiftPersona; weeks: number }[] =
     { persona: SICK_SIX_WEEKS, weeks: 25 },
     { persona: NEW_RUNNER_MARATHON, weeks: 27 },
     { persona: FREEFORM_RUNNER, weeks: 20 },
+    { persona: BUILD_10K_NO_DATE, weeks: 20 },
     { persona: YEAR_OUT_MARATHON, weeks: 59 },
     { persona: HYBRID_3_4_TRIM, weeks: 22 },
     { persona: HYBRID_3_4_NO_TRIM, weeks: 22 },
