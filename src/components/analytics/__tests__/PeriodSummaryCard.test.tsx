@@ -252,22 +252,26 @@ describe("PeriodSummaryCard", () => {
   });
 });
 
-describe("History feeds the plan from the profile, not a literal", () => {
+describe("History feeds the plan from this week's plan, not a literal", () => {
   /* The component tests cannot see this: passing `plannedThisWeek={5}`
      at the call site would bring back the flat five a week the rings
-     used to measure every user against, with every test above green. */
+     used to measure every user against, with every test above green.
+     Since App1 (grill Q14) the figure is the week Home counts
+     (`useWeekPulse`), not the days asked for at setup. */
   const history = readFileSync("src/pages/History.tsx", "utf8");
   const call = history.slice(
     history.indexOf("<PeriodSummaryCard"),
     history.indexOf("/>", history.indexOf("plannedThisWeek="))
   );
 
-  it("takes the lift days from the profile", () => {
-    expect(call).toMatch(/profile\?\.daysPerWeek \?\? 0/);
+  it("takes the lifts and runs the plan holds this week", () => {
+    expect(history).toContain("useWeekPulse()");
+    expect(call).toContain("plannedThisWeek={plannedThisWeek}");
   });
 
-  it("takes the runs through the canonical resolver", () => {
-    expect(call).toContain("getWeeklyRunTarget(profile)");
+  it("never reads the setup answer or the profile's run target", () => {
+    expect(history).not.toContain("daysPerWeek");
+    expect(history).not.toContain("getWeeklyRunTarget");
   });
 
   it("passes no numeric literal", () => {
