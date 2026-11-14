@@ -2,7 +2,7 @@
  * Settings pills cohesion (Set-cohesion PR series). Pins that the Profile
  * sex picker renders through the shared SegmentedControl primitive
  * (radiogroup a11y) — NOT the old bespoke purple-outline pill buttons — and
- * that selecting an option writes the right profile field. The date of
+ * that selecting an option writes the right profile field. The year of
  * birth that replaced the age range (App1, Q57) is pinned below it.
  *
  * These are render-level (jsdom) so they verify the migration without the
@@ -181,41 +181,41 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
   });
 });
 
-/* App1 (grill Q57, Q22): the date of birth replaces the age range, which
-   wrote `ageRange`, read by nothing. The age the calorie maths and the
-   heart-rate zones use is worked out from it, and a new one re-works the
-   stored targets, as the sex does. The dates come from the clock: 1 January
-   N years back is N on every day of this year. */
-describe("ProfileInfoSection — date of birth", () => {
+/* App1 (grill Q57, Q22; the owner chose a year of birth, 13 November
+   2026): the year of birth replaces the age range, which wrote `ageRange`,
+   read by nothing. The age the calorie maths and the heart-rate zones use
+   is worked out from it, and a new one re-works the stored targets, as the
+   sex does. The years come from the clock. */
+describe("ProfileInfoSection — year of birth", () => {
   beforeEach(() => vi.clearAllMocks());
   const year = Number(localDateString().slice(0, 4));
-  const bornYearsAgo = (years: number) => `${year - years}-01-01`;
-  const field = () => screen.getByLabelText("Date of birth") as HTMLInputElement;
+  const field = () =>
+    screen.getByRole("textbox", { name: "Year of birth" }) as HTMLInputElement;
   function enter(value: string) {
     fireEvent.change(field(), { target: { value } });
     fireEvent.blur(field());
   }
 
-  it("shows the stored date of birth, with what it is for", () => {
-    renderSection(makeProfile({ dateOfBirth: bornYearsAgo(30) }));
-    expect(field()).toHaveAttribute("type", "date");
-    expect(field().value).toBe(bornYearsAgo(30));
+  it("shows the stored year, what it is for, and that it is never shown", () => {
+    renderSection(makeProfile({ birthYear: year - 30 }));
+    expect(field()).toHaveAttribute("inputmode", "numeric");
+    expect(field().value).toBe(String(year - 30));
     expect(
-      screen.getByText(/calorie target and heart-rate zones are worked out/)
-    ).toBeInTheDocument();
+      screen.getByText(/heart-rate zones are worked out from it/)
+    ).toHaveTextContent("It’s never shown on your profile.");
   });
 
   it("an older account shows the field empty, and the age it uses until then", () => {
     const { updateProfile } = renderSection(makeProfile({ age: 30 }));
     expect(field().value).toBe("");
-    expect(screen.getByText(/Until you add it, they use an age of/)).toHaveTextContent(
-      "Until you add it, they use an age of 30."
-    );
+    expect(
+      screen.getByText(/heart-rate zones are worked out from it/)
+    ).toHaveTextContent("Until you add it, they use an age of 30.");
     fireEvent.blur(field());
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
-  it("writes the date and the targets re-worked with the new age", async () => {
+  it("writes the year and the targets re-worked with the new age", async () => {
     const profile = makeProfile({
       age: 30,
       sex: "male",
@@ -224,93 +224,102 @@ describe("ProfileInfoSection — date of birth", () => {
       weeklyRateKg: -0.5,
     });
     const { updateProfile } = renderSection(profile);
-    enter(bornYearsAgo(60));
+    enter(` ${year - 60} `);
     await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
     const patch = updateProfile.mock.calls[0][0];
-    expect(patch.dateOfBirth).toBe(bornYearsAgo(60));
-    // The one stored copy of the age is the date (Q21).
+    expect(patch.birthYear).toBe(year - 60);
+    // The one stored copy of the age is the year (Q21).
     expect(patch).not.toHaveProperty("age");
     expect(patch).not.toHaveProperty("ageRange");
-    const at60 = buildGoalWeightPersistPayload({
-      profile: { ...profile, age: 60 },
-      currentKg: 75,
-      targetKg: 70,
-      rateKgPerWeek: 0.5,
-    }).payload;
-    expect(patch).toMatchObject(at60);
+    const recipe = (p: Partial<UserProfile>) =>
+      buildGoalWeightPersistPayload({
+        profile: p,
+        currentKg: 75,
+        targetKg: 70,
+        rateKgPerWeek: 0.5,
+      }).payload;
+    expect(patch).toMatchObject(recipe({ ...profile, birthYear: year - 60 }));
     // Sixty burns less than thirty, so the target is lower.
-    const at30 = buildGoalWeightPersistPayload({
-      profile,
-      currentKg: 75,
-      targetKg: 70,
-      rateKgPerWeek: 0.5,
-    }).payload;
-    expect(patch.targetCalories).toBeLessThan(at30.targetCalories);
+    expect(patch.targetCalories).toBeLessThan(recipe(profile).targetCalories);
   });
 
-  it("with no goal weight, writes only the date and leaves the targets", async () => {
+  it("with no goal weight, writes only the year and leaves the targets", async () => {
     const { updateProfile } = renderSection(
       makeProfile({ goalWeightKg: undefined })
     );
-    enter(bornYearsAgo(40));
+    enter(String(year - 40));
     await waitFor(() =>
-      expect(updateProfile).toHaveBeenCalledWith({
-        dateOfBirth: bornYearsAgo(40),
-      })
+      expect(updateProfile).toHaveBeenCalledWith({ birthYear: year - 40 })
     );
   });
 
+  it("takes this year less 16, setup's limit", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ goalWeightKg: undefined })
+    );
+    enter(String(year - 16));
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ birthYear: year - 16 })
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it.each([
-    ["under 16", 10, "You need to be at least 16 to use Tropos."],
-    ["over 120", 130, "Check the year you were born."],
-    ["in the future", -1, "That date is in the future."],
+    [
+      "under 16",
+      String(year - 15),
+      "You need to be at least 16 to use Tropos.",
+    ],
+    ["over 120", String(year - 121), "Check the year you were born."],
+    ["in the future", String(year + 1), "Check the year you were born."],
+    ["not a year", "19", "Check the year you were born."],
   ])(
-    "refuses a date %s, says why and writes nothing",
-    async (_case, years, message) => {
+    "refuses a year %s, says why and writes nothing",
+    async (_case, typed, message) => {
       const { updateProfile } = renderSection(
-        makeProfile({ dateOfBirth: bornYearsAgo(30), goalWeightKg: 70 })
+        makeProfile({ birthYear: year - 30, goalWeightKg: 70 })
       );
-      enter(bornYearsAgo(years));
+      enter(typed);
       expect(await screen.findByRole("alert")).toHaveTextContent(message);
       expect(field()).toHaveAttribute("aria-invalid", "true");
       expect(updateProfile).not.toHaveBeenCalled();
-      // The field keeps what was entered, so it can be corrected, and the
+      // The field keeps what was typed, so it can be corrected, and the
       // message goes once it is.
-      expect(field().value).toBe(bornYearsAgo(years));
-      fireEvent.change(field(), { target: { value: bornYearsAgo(31) } });
+      expect(field().value).toBe(typed);
+      fireEvent.change(field(), { target: { value: String(year - 31) } });
       expect(screen.queryByRole("alert")).toBeNull();
     }
   );
 
-  it("writes nothing when the date is left as it was", () => {
+  it("writes nothing when the year is left as it was", () => {
     const { updateProfile } = renderSection(
-      makeProfile({ dateOfBirth: bornYearsAgo(30) })
+      makeProfile({ birthYear: year - 30 })
     );
     fireEvent.blur(field());
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
-  it("puts the saved date back when the field is cleared", () => {
+  it("puts the saved year back when the field is cleared", () => {
     const { updateProfile } = renderSection(
-      makeProfile({ dateOfBirth: bornYearsAgo(30) })
+      makeProfile({ birthYear: year - 30 })
     );
     enter("");
     expect(updateProfile).not.toHaveBeenCalled();
-    expect(field().value).toBe(bornYearsAgo(30));
+    expect(field().value).toBe(String(year - 30));
   });
 
-  it("puts the saved date back when the save fails", async () => {
+  it("puts the saved year back when the save fails", async () => {
     const { updateProfile } = renderSection(
-      makeProfile({ dateOfBirth: bornYearsAgo(30), goalWeightKg: undefined })
+      makeProfile({ birthYear: year - 30, goalWeightKg: undefined })
     );
     const pending = pendingProfileSave();
     updateProfile.mockReturnValueOnce(pending.promise);
-    enter(bornYearsAgo(40));
+    enter(String(year - 40));
     await act(async () => {
       pending.resolve({ ok: false, error: new Error("offline") });
       await pending.promise;
     });
-    expect(field().value).toBe(bornYearsAgo(30));
+    expect(field().value).toBe(String(year - 30));
   });
 });
 

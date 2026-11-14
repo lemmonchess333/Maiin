@@ -67,7 +67,7 @@ test("a marathon set up late in the week, from about 3 km a run", async ({
       weightKg: 75,
       heightCm: 178,
       sex: "Male",
-      age: "35–44",
+      birthYear: 1985,
     });
 
     const made = await programme(account.uid);

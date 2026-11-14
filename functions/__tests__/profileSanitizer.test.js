@@ -26,8 +26,7 @@ const {
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
-  cleanDateOfBirth,
-  yearsOn,
+  cleanBirthYear,
   PROFILE_ALLOWED_FIELDS,
   SERVER_MANAGED_PROFILE_FIELDS,
 } = require("../profileSanitizer");
@@ -312,64 +311,35 @@ describe("sanitizeProfileData — string fields", () => {
   });
 });
 
-/* App1 (grill Q57): the date of birth that replaced the age range. A real
-   day that makes the person 16 to 120, with a day's slack either side for
-   the person's own time zone (the server's day is UTC's). */
-describe("sanitizeProfileData — dateOfBirth", () => {
-  // Noon UTC on 13 November 2026: the server's day is 2026-11-13, and a
-  // person's own day can be the 12th to the 14th.
+/* App1 (grill Q57): the year of birth that replaced the age range. A whole
+   year from this year less 120 to this year less 16, with one year more at
+   the young end for a person whose own year is already the next one at New
+   Year (the server's year is UTC's). */
+describe("sanitizeProfileData — birthYear", () => {
   const NOW = new Date("2026-11-13T12:00:00Z");
-  const kept = (value) => cleanDateOfBirth(value, NOW);
+  const kept = (value) => cleanBirthYear(value, NOW);
 
-  it("counts whole years, a birthday reached on the day itself", () => {
-    expect(yearsOn("1990-11-14", "2026-11-13")).toBe(35);
-    expect(yearsOn("1990-11-13", "2026-11-13")).toBe(36);
-    // 29 February comes on 1 March in a year without one.
-    expect(yearsOn("2008-02-29", "2025-02-28")).toBe(16);
-    expect(yearsOn("2008-02-29", "2025-03-01")).toBe(17);
+  it("keeps a year from this year less 120 to this year less 16", () => {
+    expect(kept(1990)).toBe(1990);
+    expect(kept(2010)).toBe(2010);
+    expect(kept(1906)).toBe(1906);
   });
 
-  it("keeps a real day that makes someone 16 to 120", () => {
-    expect(kept("1990-06-15")).toBe("1990-06-15");
-    expect(kept("2008-02-29")).toBe("2008-02-29");
+  it("keeps one year more at the young end, for a time zone already in 2027", () => {
+    expect(kept(2011)).toBe(2011);
   });
 
-  it("drops a day that is not a real one", () => {
-    for (const value of [
-      "1990-02-30",
-      "1990-13-01",
-      "1990-6-15",
-      "15/06/1990",
-      "",
-      19900615,
-      null,
-    ])
+  it("drops a year past those, and anything not a whole year", () => {
+    for (const value of [2012, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
       expect(kept(value)).toBeUndefined();
   });
 
-  it("takes someone turning 16 on any time zone's today, and no earlier", () => {
-    // 16 on the 14th, which is today in Auckland.
-    expect(kept("2010-11-14")).toBe("2010-11-14");
-    // 16 on the 15th, which is no one's today yet.
-    expect(kept("2010-11-15")).toBeUndefined();
-    expect(kept("2015-01-01")).toBeUndefined();
-  });
-
-  it("drops a day in the future and someone over 120", () => {
-    expect(kept("2026-11-15")).toBeUndefined();
-    expect(kept("2030-01-01")).toBeUndefined();
-    // 121 on the 12th, which is no one's today any more.
-    expect(kept("1905-11-12")).toBeUndefined();
-    // 121 on the 13th: still 120 on Baker Island's 12th.
-    expect(kept("1905-11-13")).toBe("1905-11-13");
-  });
-
   it("is on the allow-list, read against the real clock", () => {
-    expect(PROFILE_ALLOWED_FIELDS).toContain("dateOfBirth");
-    expect(sanitizeProfileData({ dateOfBirth: "1990-06-15" })).toEqual({
-      dateOfBirth: "1990-06-15",
+    expect(PROFILE_ALLOWED_FIELDS).toContain("birthYear");
+    expect(sanitizeProfileData({ birthYear: 1990 })).toEqual({
+      birthYear: 1990,
     });
-    expect(sanitizeProfileData({ dateOfBirth: "1990-02-30" })).toEqual({});
+    expect(sanitizeProfileData({ birthYear: "1990" })).toEqual({});
   });
 });
 

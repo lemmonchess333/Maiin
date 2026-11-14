@@ -82,7 +82,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "activityLevel", sanitized: true },
   { field: "adaptiveCapState", sanitized: true },
   { field: "adjustCaloriesForTraining", sanitized: true },
-  // The age an account set up before `dateOfBirth` was given, read as its
+  // The age an account set up before `birthYear` was given, read as its
   // fallback (`profileAge`). `ageRange` is read and written by nothing now
   // and stays allow-listed for clients still running an older bundle.
   { field: "age", sanitized: true },
@@ -120,6 +120,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "autoPostWorkouts", sanitized: false },
   { field: "autoRestTimer", sanitized: true },
   { field: "barbellAtHome", sanitized: true },
+  // App1 (grill Q57): the year the person was born, which their age is
+  // worked out from (src/lib/age.ts). Sent by setup through
+  // completeOnboarding and written by Settings → Profile; value-gated in
+  // firestore.rules (`birthYearValid`).
+  { field: "birthYear", sanitized: true },
   { field: "createdAt", sanitized: false, serverGuarded: true },
   // LEGACY: crews retired 2026-07-20 — kept so existing docs pass the
   // allow-list; never read or written by live code.
@@ -127,11 +132,6 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "currentStreak", sanitized: true },
   { field: "customCalorieTarget", sanitized: true },
   { field: "darkMode", sanitized: true },
-  // App1 (grill Q57): the day the person was born, which their age is
-  // worked out from (src/lib/age.ts). Sent by setup through
-  // completeOnboarding and written by Settings → Profile; value-gated in
-  // firestore.rules (`dateOfBirthValid`).
-  { field: "dateOfBirth", sanitized: true },
   { field: "daysPerWeek", sanitized: true },
   { field: "defaultRestSeconds", sanitized: true },
   { field: "defaultVisibility", sanitized: false },

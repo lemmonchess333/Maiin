@@ -284,7 +284,8 @@ export default function DayActionSheet({
   // (then we just don't show the pill — the pace pill still stands alone).
   const selectedRunHr: string[] = (() => {
     if (!selectedRunTemplate) return [];
-    const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
+    const maxHr =
+      profile?.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedRunTemplate.type,
       maxHr,

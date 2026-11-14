@@ -856,15 +856,15 @@ exports.completeOnboarding = functions
       // is either an out-of-range value (which we want to reject) or
       // a malicious caller (who shouldn't get diagnostic detail).
       //
-      // The age comes as a date of birth (App1, grill Q57), from which it is
+      // The age comes as a year of birth (App1, grill Q57), from which it is
       // worked out when it is read, or as `age` from a client still running
-      // an older bundle. A date sent is the one asked for, so a date the
+      // an older bundle. A year sent is the one asked for, so a year the
       // sanitiser refused (under 16) fails here as itself. Nothing derived
-      // from it is stored: the date is the one copy of the fact (Q21).
+      // from it is stored: the year is the one copy of the fact (Q21).
       const requiredFields = [
         "weightKg",
         "heightCm",
-        rawProfileData.dateOfBirth != null ? "dateOfBirth" : "age",
+        rawProfileData.birthYear != null ? "birthYear" : "age",
         "sex",
         "activityLevel",
       ];

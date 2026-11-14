@@ -42,8 +42,8 @@ export default function SettingsNutrition() {
   // shown here is the training block's, as on Home.
   const { program } = useTrainingFuelData(user?.uid ?? null, localDateString());
 
-  // From the date of birth, else an older account's age (App1, Q57). Only
-  // an account with no date of birth edits it here.
+  // From the year of birth, else an older account's age (App1, Q57). Only
+  // an account with no year of birth edits it here.
   const [age, setAge] = useState(profileAge(profile) ?? 25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
     (profile?.activityLevel as ActivityLevel) ?? "moderate"

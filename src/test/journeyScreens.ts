@@ -46,7 +46,8 @@ export const SETUP = {
   weight: "Weight (kg)",
   height: "Height (cm)",
   sex: "Sex for calorie calculation",
-  age: "Age range",
+  /** App1 (Q57): the year of birth that replaced the age range. */
+  birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
 } as const;
@@ -71,7 +72,6 @@ export const SETUP_OPTIONS = {
   equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
-  ages: ["16–24", "25–34", "35–44", "45–54", "55+"],
 } as const;
 
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =

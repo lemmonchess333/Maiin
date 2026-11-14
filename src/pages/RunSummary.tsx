@@ -452,7 +452,7 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
-  // The age the zones' estimate reads: from the date of birth, else an
+  // The age the zones' estimate reads: from the year of birth, else an
   // older account's age (App1, Q57).
   const ageYears = profileAge(profile);
   useEffect(() => {

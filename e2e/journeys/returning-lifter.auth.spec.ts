@@ -65,7 +65,7 @@ test("a light trainer, three weeks away, eases back in", async ({ page }) => {
       weightKg: 64,
       heightCm: 168,
       sex: "Female",
-      age: "35–44",
+      birthYear: 1985,
     });
 
     // Three weeks, two sessions each: Monday on the workout screen,

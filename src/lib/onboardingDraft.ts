@@ -77,6 +77,8 @@ export const DRAFT_EXPERIENCE = [
   "advanced",
 ] as const;
 export const DRAFT_GENDERS = ["male", "female", "unspecified"] as const;
+/** LEGACY: the age ranges setup asked before the year of birth replaced
+ *  them (App1, Q57). Kept so a draft saved with one still resumes. */
 export const DRAFT_AGE_RANGES = [
   "under-16",
   "16-24",
@@ -143,7 +145,13 @@ export interface OnboardingDraft {
   raceEventName?: string;
   injuries: string[];
   gender: (typeof DRAFT_GENDERS)[number];
-  ageRange: (typeof DRAFT_AGE_RANGES)[number];
+  /** LEGACY: a draft saved before the year of birth replaced the age range
+   *  (App1, Q57) carries it. Read by nothing; such a draft is asked for the
+   *  year. */
+  ageRange?: (typeof DRAFT_AGE_RANGES)[number];
+  /** The year of birth as typed (App1, Q57): up to four digits. Additive:
+   *  older drafts have none. */
+  birthYearText?: string;
   heightCm: number;
   weightKg: number;
   heightUnit: (typeof DRAFT_UNITS_HEIGHT)[number];
@@ -159,6 +167,8 @@ export interface OnboardingDraft {
    *  resumed draft is never sent back through a screen it cleared. */
   equipmentConfirmed?: boolean;
   experienceConfirmed?: boolean;
+  /** LEGACY: whether the age range was answered. Read by nothing since the
+   *  year of birth replaced it; a draft may still carry it. */
   ageConfirmed?: boolean;
   bodyAnswered?: boolean;
   displayName?: string;
@@ -248,7 +258,10 @@ export function isValidDraft(
     Array.isArray(d.injuries) &&
     (d.injuries as unknown[]).every((i) => typeof i === "string") &&
     oneOf(DRAFT_GENDERS, d.gender) &&
-    oneOf(DRAFT_AGE_RANGES, d.ageRange) &&
+    (d.ageRange === undefined || oneOf(DRAFT_AGE_RANGES, d.ageRange)) &&
+    (d.birthYearText === undefined ||
+      (typeof d.birthYearText === "string" &&
+        /^\d{0,4}$/.test(d.birthYearText))) &&
     finiteInRange(d.heightCm, 100, 250) &&
     finiteInRange(d.weightKg, 30, 300) &&
     oneOf(DRAFT_UNITS_HEIGHT, d.heightUnit) &&

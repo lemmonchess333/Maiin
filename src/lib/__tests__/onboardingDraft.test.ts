@@ -43,7 +43,7 @@ function makeDraft(over: Partial<OnboardingDraft> = {}): OnboardingDraft {
     raceTargetDate: "2026-10-04",
     injuries: ["knee", "none"],
     gender: "female",
-    ageRange: "35-44",
+    birthYearText: "1988",
     heightCm: 168,
     weightKg: 62,
     heightUnit: "cm",
@@ -133,6 +133,26 @@ describe("expiry and versioning", () => {
   });
 });
 
+/* App1 (Q57): the year of birth replaced the age range. A draft saved
+   before then, with an age range and no year, still resumes. */
+describe("the year of birth that replaced the age range", () => {
+  it("keeps a year as typed, and part-typed", () => {
+    for (const birthYearText of ["", "19", "2010"]) {
+      saveOnboardingDraft(UID_A, makeDraft({ birthYearText }));
+      expect(loadOnboardingDraft(UID_A, MAX_STEP)).toMatchObject({
+        birthYearText,
+      });
+    }
+  });
+
+  it("resumes a draft saved with an age range and no year", () => {
+    const old = makeDraft({ ageRange: "35-44", ageConfirmed: true });
+    delete old.birthYearText;
+    saveOnboardingDraft(UID_A, old);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(old);
+  });
+});
+
 describe("strict validation — any bad field rejects the whole draft", () => {
   const rejects = (over: Record<string, unknown>) => {
     saveOnboardingDraft(UID_A, {
@@ -149,6 +169,12 @@ describe("strict validation — any bad field rejects the whole draft", () => {
     rejects({ ageRange: "9000+" });
     rejects({ runMode: "structured-race" });
     rejects({ raceDistance: "ultra" });
+  });
+
+  it("a year of birth that is not up to four digits", () => {
+    rejects({ birthYearText: "19880" });
+    rejects({ birthYearText: "19a8" });
+    rejects({ birthYearText: 1988 });
   });
 
   it("step out of range / non-integer", () => {

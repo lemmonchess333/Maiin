@@ -70,7 +70,7 @@ function saveDraftAtStep(step: number) {
     raceTargetDate: "",
     injuries: ["none"],
     gender: "male",
-    ageRange: "25-34",
+    birthYearText: "1995",
     heightCm: 175,
     weightKg: 81.5,
     heightUnit: "cm",

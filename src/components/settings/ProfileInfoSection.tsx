@@ -13,9 +13,9 @@ import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
 import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
 import {
-  DATE_OF_BIRTH_MESSAGES,
-  dateOfBirthBounds,
-  dateOfBirthProblem,
+  BIRTH_YEAR_MESSAGES,
+  birthYearProblem,
+  parseBirthYear,
 } from "@/lib/age";
 
 type Sex = "male" | "female";
@@ -83,10 +83,10 @@ export default function ProfileInfoSection({
   const nameRevision = useRef(0);
   const heightRevision = useRef(0);
   const whyRevision = useRef(0);
-  const dobRevision = useRef(0);
-  const pendingSaves = useRef({ name: 0, height: 0, why: 0, dob: 0 });
+  const yearRevision = useRef(0);
+  const pendingSaves = useRef({ name: 0, height: 0, why: 0, year: 0 });
   async function saveField(
-    field: "name" | "height" | "why" | "dob",
+    field: "name" | "height" | "why" | "year",
     data: Partial<UserProfile>
   ) {
     pendingSaves.current[field]++;
@@ -101,7 +101,7 @@ export default function ProfileInfoSection({
       nameRevision.current++;
       heightRevision.current++;
       whyRevision.current++;
-      dobRevision.current++;
+      yearRevision.current++;
     },
     []
   );
@@ -154,50 +154,56 @@ export default function ProfileInfoSection({
     await updateProfile({ ...payload, sex: next });
   }
 
-  /* The date of birth replaces the age range (App1, grill Q57), which
-     wrote a field nothing reads. The age the calorie maths and the
-     heart-rate zones use is worked out from it (`profileAge`), and a new
-     one changes the targets, which are stored, so they are worked out again
-     with it, as `saveSex` does above and for the same reason: an account
-     with no goal weight writes only the date. `age` and `ageRange` are
-     never written here (Q21). An account set up before the date was asked
-     shows the field empty, and its old `age` is used until it adds one. */
-  const savedDob = profile.dateOfBirth ?? "";
-  const [dob, setDob] = useState(savedDob);
-  const [dobError, setDobError] = useState<string | null>(null);
+  /* The year of birth replaces the age range (App1, grill Q57; the owner
+     chose the year over a full date, 13 November 2026), which wrote a
+     field nothing reads. The age the calorie maths and the heart-rate zones
+     use is worked out from it (`profileAge`), and a new one changes the
+     targets, which are stored, so they are worked out again with it, as
+     `saveSex` does above and for the same reason: an account with no goal
+     weight writes only the year. `age` and `ageRange` are never written
+     here (Q21). The limits are setup's: this year less 120 up to this
+     year less 16. An account set up before the year was asked shows the
+     field empty, and its old `age` is used until it adds one. */
+  const savedYear = profile.birthYear != null ? String(profile.birthYear) : "";
+  const [yearText, setYearText] = useState(savedYear);
+  const [yearError, setYearError] = useState<string | null>(null);
 
-  function dateOfBirthPatch(next: string): Partial<UserProfile> {
-    if (profile.goalWeightKg == null) return { dateOfBirth: next };
+  function birthYearPatch(next: number): Partial<UserProfile> {
+    if (profile.goalWeightKg == null) return { birthYear: next };
     const { payload } = buildGoalWeightPersistPayload({
-      profile: { ...profile, dateOfBirth: next },
+      profile: { ...profile, birthYear: next },
       currentKg: profile.weightKg || 70,
       targetKg: profile.goalWeightKg,
       rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
     });
-    return { ...payload, dateOfBirth: next };
+    return { ...payload, birthYear: next };
   }
 
-  async function commitDateOfBirth() {
-    const submitted = ++dobRevision.current;
-    // The profile stays on the last saved date while a save runs, so a
+  async function commitBirthYear() {
+    const submitted = ++yearRevision.current;
+    const typed = yearText.trim();
+    // The profile stays on the last saved year while a save runs, so a
     // return to it is another write, as for the height.
-    if (dob === savedDob && pendingSaves.current.dob === 0) return;
-    // A cleared or half-typed date reads as "": the saved one comes back.
-    if (dob === "") {
-      setDob(savedDob);
-      setDobError(null);
+    if (typed === savedYear && pendingSaves.current.year === 0) return;
+    // A cleared field puts the saved year back.
+    if (typed === "") {
+      setYearText(savedYear);
+      setYearError(null);
       return;
     }
-    const problem = dateOfBirthProblem(dob, localDateString());
-    if (problem) {
-      setDobError(DATE_OF_BIRTH_MESSAGES[problem]);
+    const year = parseBirthYear(typed);
+    const problem =
+      year === null ? "invalid" : birthYearProblem(year, localDateString());
+    if (year === null || problem) {
+      setYearError(BIRTH_YEAR_MESSAGES[problem ?? "invalid"]);
       return;
     }
-    setDobError(null);
-    const result = await saveField("dob", dateOfBirthPatch(dob));
-    if (!result.ok && dobRevision.current === submitted) setDob(savedDob);
+    setYearError(null);
+    setYearText(String(year));
+    const result = await saveField("year", birthYearPatch(year));
+    if (!result.ok && yearRevision.current === submitted)
+      setYearText(savedYear);
   }
-  const dobBounds = dateOfBirthBounds(localDateString());
 
   async function commitWeight() {
     const shown = weightText(savedKg, weightUnit);
@@ -448,44 +454,51 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <label htmlFor="profile-dob" className="text-xs text-muted-foreground">
-          Date of birth
+        <label
+          htmlFor="profile-birth-year"
+          className="text-xs text-muted-foreground"
+        >
+          Year of birth
         </label>
-        {/* The phone's own date picker, on iOS and on the web. */}
+        {/* Four digits on the phone's number pad: quicker than a wheel of
+            a hundred years, and one line wide at 320 px. */}
         <input
-          id="profile-dob"
-          type="date"
-          value={dob}
-          min={dobBounds.min}
-          max={dobBounds.max}
-          aria-invalid={dobError ? true : undefined}
+          id="profile-birth-year"
+          type="text"
+          inputMode="numeric"
+          autoComplete="bday-year"
+          maxLength={4}
+          value={yearText}
+          aria-invalid={yearError ? true : undefined}
           aria-describedby={
-            dobError ? "profile-dob-error profile-dob-why" : "profile-dob-why"
+            yearError
+              ? "profile-birth-year-error profile-birth-year-why"
+              : "profile-birth-year-why"
           }
           onChange={(e) => {
-            dobRevision.current++;
-            setDob(e.target.value);
-            setDobError(null);
+            yearRevision.current++;
+            setYearText(e.target.value);
+            setYearError(null);
           }}
-          onBlur={() => void commitDateOfBirth()}
-          className="ds-input mt-1 min-h-11 text-sm"
+          onBlur={() => void commitBirthYear()}
+          className="ds-input mt-1 text-sm font-mono tabular-nums"
         />
-        {dobError && (
+        {yearError && (
           <p
-            id="profile-dob-error"
+            id="profile-birth-year-error"
             role="alert"
             className="text-xs text-destructive-strong mt-1"
           >
-            {dobError}
+            {yearError}
           </p>
         )}
         <p
-          id="profile-dob-why"
+          id="profile-birth-year-why"
           className="mt-1.5 text-xs text-muted-foreground text-pretty"
         >
-          Your calorie target and heart-rate zones are worked out from your
-          age.
-          {!savedDob && profile.age != null && (
+          Your calorie target and heart-rate zones are worked out from it. It’s
+          never shown on your profile.
+          {!savedYear && profile.age != null && (
             <>
               {" "}
               Until you add it, they use an age of{" "}

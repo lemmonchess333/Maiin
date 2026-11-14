@@ -55,7 +55,7 @@ export function useHeartRate(
   const { profile } = useAuth();
 
   const measured = profile?.maxHeartRate ?? null;
-  // From the date of birth, else an older account's age (App1, Q57).
+  // From the year of birth, else an older account's age (App1, Q57).
   const age = profileAge(profile) ?? 0;
 
   const { maxHr, maxHrSource } = useMemo(() => {

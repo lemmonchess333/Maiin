@@ -312,7 +312,8 @@ export interface SetupAnswers {
   goalWeightKg?: number;
   heightCm: number;
   sex: SetupOption<"sexes">;
-  age: SetupOption<"ages">;
+  /** The year of birth (App1, Q57), e.g. 1995. */
+  birthYear: number;
 }
 
 function button(page: Page, name: string | RegExp) {
@@ -438,9 +439,8 @@ export async function setUpPlan(
     .getByRole("radio", { name: answers.sex, exact: true })
     .click();
   await page
-    .getByRole("radiogroup", { name: SETUP.age })
-    .getByRole("radio", { name: answers.age, exact: true })
-    .click();
+    .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+    .fill(String(answers.birthYear));
   if (answers.goalWeightKg !== undefined)
     await page
       .locator("#onboarding-goal-weight")

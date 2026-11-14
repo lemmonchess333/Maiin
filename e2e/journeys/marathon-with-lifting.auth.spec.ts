@@ -181,7 +181,7 @@ test("a marathon a year out, with lifting", async ({ page }) => {
       weightKg: 72,
       heightCm: 178,
       sex: "Male",
-      age: "35–44",
+      birthYear: 1985,
     });
     const profile =
       (await emulatorAdmin().db.doc(`users/${account.uid}`).get()).data() ?? {};

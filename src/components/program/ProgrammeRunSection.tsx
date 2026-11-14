@@ -979,7 +979,8 @@ export default function ProgrammeRunSection({
   // neither, so the card just shows pace/type as before.
   const selectedHrItems: string[] = (() => {
     if (!selectedTemplate) return [];
-    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
+    const maxHr =
+      profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedTemplate.type,
       maxHr,

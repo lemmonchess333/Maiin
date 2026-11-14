@@ -4,8 +4,7 @@ import { formatSigned, withSign } from "@/utils/formatters";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { AGE_YEARS, parseAgeYears } from "@/lib/bodyMetrics";
-import { ageOn, profileAge } from "@/lib/age";
-import { localDateString } from "@/lib/dateHelpers";
+import { profileAge } from "@/lib/age";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,7 +33,7 @@ import { LOW_CARB_G, restDaySplit } from "@/lib/phaseNutrition";
 interface NutritionSectionProps {
   profile: UserProfile;
   /** The age the calculator uses: `profileAge`, or the one being typed for
-   *  an account with no date of birth. */
+   *  an account with no year of birth. */
   age: number;
   setAge: (v: number) => void;
   activityLevel: ActivityLevel;
@@ -220,27 +219,23 @@ export default function NutritionSection({
         title="TDEE calculator"
         subtitle={`${formatCalories(tdee.targetCalories)} ${CALORIE_UNIT}/day target`}
       >
-        {/* An account with a date of birth has its age worked out from
+        {/* An account with a year of birth has its age worked out from
             it (App1, Q57), so the age is shown here and changed in
             Profile: two places to set one fact would disagree (Q21). An
-            account set up before the date was asked keeps this field. */}
-        {profile.dateOfBirth &&
-        ageOn(profile.dateOfBirth, localDateString()) !== null ? (
+            account set up before the year was asked keeps this field. */}
+        {profile.birthYear != null ? (
           <div>
             <p className="text-xs text-muted-foreground">Age</p>
             <p className="mt-1 text-sm font-mono tabular-nums text-foreground">
               {age}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              From your date of birth. Change it in Profile.
+              From your year of birth. Change it in Profile.
             </p>
           </div>
         ) : (
           <div>
-            <label
-              htmlFor="tdee-age"
-              className="text-xs text-muted-foreground"
-            >
+            <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
               Age
             </label>
             {/* The field holds what is typed while it is being edited, so a

@@ -39,10 +39,10 @@ import {
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
-  ageOn,
-  DATE_OF_BIRTH_MESSAGES,
-  dateOfBirthBounds,
-  dateOfBirthProblem,
+  ageFromBirthYear,
+  BIRTH_YEAR_MESSAGES,
+  birthYearProblem,
+  parseBirthYear,
 } from "@/lib/age";
 import {
   getRaceGoalPlannerState,
@@ -126,8 +126,8 @@ const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
 const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
-/* The age the calorie estimate shows before a date of birth is given; the
-   plan is never made with it, since the step waits for the date. */
+/* The age the calorie estimate shows before a year of birth is given; the
+   plan is never made with it, since the step waits for the year. */
 const AGE_BEFORE_ANSWER = 30;
 const STEP_META = [
   [
@@ -204,11 +204,14 @@ export default function Onboarding() {
   );
   const hasLifting = trainingActivity !== "running";
   const flow = onboardingFlow(trainingActivity);
-  /* A draft saved past About you before setup asked for a date of birth
+  /* A draft saved past About you before setup asked for a year of birth
      (App1, Q57) holds an age range instead, which the plan no longer uses:
-     it opens on About you for the date, and goes back to the review. */
-  const [askDateOfBirthAgain] = useState(
-    () => !!draft && draft.step > 5 && !draft.dateOfBirth
+     it opens on About you for the year, and goes back to the review. */
+  const [askBirthYearAgain] = useState(
+    () =>
+      !!draft &&
+      draft.step > 5 &&
+      parseBirthYear(draft.birthYearText ?? "") === null
   );
   const [step, setStep] = useState(() => {
     const storedStep =
@@ -217,7 +220,7 @@ export default function Onboarding() {
         : draft?.step === 2 && draft.runConfirmed === undefined
           ? 3
           : (draft?.step ?? 0);
-    if (askDateOfBirthAgain) return 5;
+    if (askBirthYearAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
   /* Which way the last step change went: forward on Continue, back on Back
@@ -229,7 +232,7 @@ export default function Onboarding() {
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
   const [returnToReview, setReturnToReview] = useState(
-    askDateOfBirthAgain || (draft?.returnToReview ?? false)
+    askBirthYearAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -264,7 +267,7 @@ export default function Onboarding() {
      second may become a personal input. Equipment, experience and the age
      range all arrived on a value and were written to the profile unread —
      equipment shapes the generated plan, experience sets the starting
-     loads, and the age feeds the calorie estimate. The date of birth that
+     loads, and the age feeds the calorie estimate. The year of birth that
      replaced the age range (App1, Q57) starts empty, so it is always the
      person's own answer. */
   const [equipmentConfirmed, setEquipmentConfirmed] = useState(
@@ -395,7 +398,11 @@ export default function Onboarding() {
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
   );
-  const [dateOfBirth, setDateOfBirth] = useState(draft?.dateOfBirth ?? "");
+  // App1 (Q57; the owner chose a year of birth, 13 November 2026): the
+  // year as typed.
+  const [birthYearText, setBirthYearText] = useState(
+    draft?.birthYearText ?? ""
+  );
   const [heightCm, setHeightCm] = useState(draft?.heightCm ?? 175);
   const [weightKg, setWeightKg] = useState(draft?.weightKg ?? 75);
   const [heightUnit, setHeightUnit] = useState<OnboardingDraft["heightUnit"]>(
@@ -416,6 +423,19 @@ export default function Onboarding() {
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
   const trainingWhy = draft?.trainingWhy ?? "";
   const currentDate = useLocalDateKey();
+  /* The year of birth, checked in the year's terms (src/lib/age.ts): this
+     year less 16 or earlier passes, and a later year is refused with the
+     age gate's line. */
+  const birthYear = parseBirthYear(birthYearText);
+  const birthYearIssue =
+    birthYear === null ? null : birthYearProblem(birthYear, currentDate);
+  // The age the calorie estimate uses, worked out as profileAge will.
+  const age = useMemo(() => {
+    const year = parseBirthYear(birthYearText);
+    return year !== null && birthYearProblem(year, currentDate) === null
+      ? ageFromBirthYear(year, currentDate)
+      : null;
+  }, [birthYearText, currentDate]);
   const answers = useMemo<OnboardingDraft>(
     () => ({
       step,
@@ -431,7 +451,7 @@ export default function Onboarding() {
       ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
       injuries,
       gender,
-      dateOfBirth,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -475,7 +495,7 @@ export default function Onboarding() {
       raceEventName,
       injuries,
       gender,
-      dateOfBirth,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -775,8 +795,8 @@ export default function Onboarding() {
     !(recentRace && "error" in recentRace) &&
     runningStartValid;
   const validBody =
-    dateOfBirth !== "" &&
-    dateOfBirthIssue === null &&
+    birthYear !== null &&
+    birthYearIssue === null &&
     bodyAnswered &&
     metricsValid &&
     !goalWeightInvalid &&
@@ -876,9 +896,9 @@ export default function Onboarding() {
               ? "Hybrid"
               : "Lifter",
         gender,
-        // App1 (Q57): the date of birth, the one stored copy of the age.
+        // App1 (Q57): the year of birth, the one stored copy of the age.
         // Neither `age` nor `ageRange` is sent (Q21).
-        dateOfBirth,
+        ...(birthYear !== null ? { birthYear } : {}),
         heightCm,
         weightKg,
         // Fast-start: the goal-weight step was deferred, so we persist the
@@ -2010,27 +2030,40 @@ export default function Onboarding() {
                 />
               </div>
               <div className="space-y-3">
-                <h2 className="text-base font-semibold">Age range</h2>
-                <SegmentedControl<OnboardingDraft["ageRange"] | "">
-                  ariaLabel="Age range"
-                  value={ageConfirmed ? ageRange : ""}
-                  onChange={(next) => {
-                    if (next === "") return;
-                    setAgeConfirmed(true);
-                    setAgeRange(next);
-                  }}
-                  layout="wrap"
-                  options={DRAFT_AGE_RANGES.map((value) => ({
-                    value,
-                    label:
-                      value === "under-16"
-                        ? "Under 16"
-                        : value.replace("-", "–"),
-                  }))}
+                <label
+                  htmlFor="onboarding-birth-year"
+                  className="block text-base font-semibold"
+                >
+                  Year of birth
+                </label>
+                {/* Four digits on the phone's number pad (App1, Q57). */}
+                <input
+                  id="onboarding-birth-year"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="bday-year"
+                  maxLength={4}
+                  className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
+                  value={birthYearText}
+                  aria-invalid={birthYearIssue !== null ? true : undefined}
+                  aria-describedby={
+                    birthYearIssue !== null
+                      ? "onboarding-birth-year-error"
+                      : undefined
+                  }
+                  onChange={(event) =>
+                    setBirthYearText(
+                      event.target.value.replace(/\D/g, "").slice(0, 4)
+                    )
+                  }
                 />
-                {ageRange === "under-16" && (
-                  <p role="alert" className="text-sm text-destructive-strong">
-                    You need to be at least 16 to use Tropos.
+                {birthYearIssue !== null && (
+                  <p
+                    id="onboarding-birth-year-error"
+                    role="alert"
+                    className="text-sm text-destructive-strong"
+                  >
+                    {BIRTH_YEAR_MESSAGES[birthYearIssue]}
                   </p>
                 )}
               </div>
@@ -2039,11 +2072,12 @@ export default function Onboarding() {
                   Why these details?
                 </summary>
                 <p>
-                  Height, weight and the midpoint of your age range estimate
-                  starting calories. The initial activity estimate uses planned
-                  lifting frequency; running is accounted for as you log it.
-                  “Prefer not to say” uses the male calculation. These are
-                  estimates you can adjust in Settings.
+                  Height, weight and your age estimate starting calories, and
+                  your age sets your heart-rate zones. Your year of birth is
+                  never shown on your profile. The initial activity estimate
+                  uses planned lifting frequency; running is accounted for as
+                  you log it. “Prefer not to say” uses the male calculation.
+                  These are estimates you can adjust in Settings.
                 </p>
               </details>
               <div className="space-y-3">
@@ -2251,7 +2285,7 @@ export default function Onboarding() {
                     },
                     {
                       label: "About you",
-                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · age ${ageRange}`,
+                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · ${birthYear !== null ? `born ${birthYear}` : "add your year of birth"}`,
                       target: 5,
                     },
                   ]

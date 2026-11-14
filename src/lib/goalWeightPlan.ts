@@ -99,8 +99,8 @@ export interface GoalWeightProfileInputs {
   weightKg?: number | null;
   heightCm?: number | null;
   /** The age is worked out from this when it is set (`profileAge`). */
-  dateOfBirth?: string | null;
-  /** An older account's age, read when there is no date of birth. */
+  birthYear?: number | null;
+  /** An older account's age, read when there is no year of birth. */
   age?: number | null;
   activityLevel?: ActivityLevel | null;
   sex?: "male" | "female" | null;
