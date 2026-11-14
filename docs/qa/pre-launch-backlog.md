@@ -4808,3 +4808,81 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.
+
+## The time trial in the plan (Run24 (4), 2026-11-13)
+
+Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`'s trial weeks), their segments on the run screen (`segmentsFromTimeTrial`), and the run summary reading the trial's work as a race (`benchmarkEffortOf`). Unit tests drive each piece; no phone has run a time trial.
+
+- [ ] **Week 2 without a benchmark.** Set up a half 16 weeks out with no race time. Passing: week 2 shows "3K time trial" on the strides day, with its words (a warm-up, 3 km as hard as you can hold evenly, a cool-down, a parkrun does the same job).
+- [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
+- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces, read from the 3 km only (not the warm-up and cool-down); on a Pro account one tap takes them, on a free account the card names Pro and nothing changes; with no paces before, the card reads "Your training paces, from this run".
+
+## A shorter base for a regular runner (Run24 (2), 2026-11-13)
+
+Affects: setup's race preview, the stored run plan's `shortBase`, and every surface that names a week's phase (the race card's rail, "Why this run" on Home, Train and the run screen, Train's lift label). Unit tests drive each reader from one stored plan; no phone has made or carried such a plan.
+
+- [ ] **Setup.** As a regular runner, give 330 minutes a week and a 120-minute longest run, and set a half 16 weeks out. Passing: the preview says "Your build starts in week 5, since you already run 330 minutes a week." A building runner with the same numbers sees no such line.
+- [ ] **Week 5.** On the plan's fifth Monday, open Train and Home. Passing: the race card's rail lights Build, the week's tempo is there, "Why this run" reads "Build · week 5 of 16", and the lift label ends "· Build".
+- [ ] **A plan made before this build.** On an account whose race plan was saved before this shipped, roll a week and change a run day in Settings. Passing: its phases stay where they were (Base until week 7 of a 16-week half); the plan gains no `shortBase`.
+
+## The session library on the run screen (Run24 (5), 2026-11-13)
+
+Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` with a style, `segmentsFromProgression`), their spoken cues, the setup's step preview, and their words on Home, Train and the launch card. Unit tests build each session from template to segments; no phone has run one. Open each from a run day's template picker (day sheet → Template) to try it before a plan holds it.
+
+- [ ] **Hills.** Start Hills 6×60s with a confirmed benchmark. Passing: a 15-minute warm-up, then "1 min uphill" headed "HARD · HILL 1/6" with no pace bar and no pace alerts, "Jog down" between, a spoken "Hill 1 of 6" at each climb.
+- [ ] **A fartlek.** Start Fartlek 30. Passing: six "1 min pick-up" steps headed "COMFORTABLY HARD", no pace anywhere, "Pick-up 1 of 6" spoken.
+- [ ] **Repeats at 5K pace.** With a confirmed benchmark, start 4×800m at 5K pace. Passing: each repeat shows its own pace (about the 5K pace the app predicts), headed "5K PACE · REP 1/4", and the in-run heading never swaps it for the interval band; a minute's rest between. Without a benchmark: "5K EFFORT", no pace.
+- [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
+- [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
+
+## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
+
+Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),
+which now reads `programState.runPlan.peakLongRunKm`, written whenever a race
+plan's week is built. Unit and season tests drive it; no stored plan has
+picked up the field yet.
+
+- [ ] **A stored plan picks up its peak.** On an account with a race plan
+      made before this shipped, open the app after its next Monday. Passing:
+      `users/{uid}/programState/current` has `runPlan.peakLongRunKm` (the
+      plan's longest long run in km), and until it does the sheet's race
+      register never opens.
+- [ ] **A slow marathoner in the taper.** A marathon plan whose long run
+      peaks under 21 km (setup says "Your longest run will be 20 km"), every
+      long run done, opened in a taper week. Passing: no "Your long runs and
+      your race" sheet.
+
+## A race plan's sizes kept on the plan (Run24 (1), (2), (8), 2026-11-14)
+
+Affects: the run plan document (`programState.runPlan.blockInputs`), written
+when a race plan is made and on every rebuild of its week, and read back on
+the next one. Unit tests and the simulator drive the generator and the
+rollover; no phone has written or read the field through Firestore.
+
+- [ ] **Setup writes it.** Set up a half or a marathon at setup with a
+      starting point and no race time. Passing: the Firestore console shows
+      `runPlan.blockInputs` with `runsPaceSPerKm: null`, the starting
+      point's figures and `heldLongKm` at the first week's long run.
+- [ ] **The first rollover keeps a pace.** Save two or three runs, then open
+      the app on the Monday after. Passing: `runsPaceSPerKm` holds the pace
+      of those runs, and opening the app again the next Monday after a
+      faster or slower run leaves it as it was.
+- [ ] **A plan from before.** On an account whose race plan was made before
+      this build, open the app. Passing: the week is the one it would have
+      been; `blockInputs` appears once a rebuild has read saved runs.

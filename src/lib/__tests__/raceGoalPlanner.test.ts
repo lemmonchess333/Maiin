@@ -121,6 +121,21 @@ describe("getRaceGoalPlannerState", () => {
     expect(tight.ctaLabel).toBe("Save mostly-easy plan");
   });
 
+  // A 5K is the shortest race there is: only a later one gives it time.
+  it("offers a 5K a later race, never a shorter one", () => {
+    const tight = getRaceGoalPlannerState({
+      ...base,
+      distance: "5k",
+      targetDate: "2026-06-05",
+      newRunnerUntil: newRunnerUntil("new", TODAY),
+    });
+    expect(tight.status).toBe("below-floor");
+    expect(tight.statusDescription).toMatch(
+      /^Too soon for a full 5K build\. A later race gives it time\. /
+    );
+    expect(tight.statusDescription).not.toMatch(/shorter/);
+  });
+
   // ── State E — below floor / finish safely ──────────────────────────
   it("State E: marathon 3 weeks out → below-floor, Save mostly-easy plan", () => {
     const s = getRaceGoalPlannerState({ ...base, targetDate: "2026-06-22" });

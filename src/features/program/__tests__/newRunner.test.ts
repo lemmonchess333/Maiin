@@ -291,11 +291,12 @@ describe("a new runner's runs after the run-walk weeks", () => {
     const regular = plan("10k", 14, null, ranForty);
     const fresh = plan("10k", 14, until, ranForty);
     // Run24 (6): the regular week's easy run gives way to hold the week to
-    // 15% over the last full week.
+    // 15% over the last full week; Run24 (4): a time trial in week 7 took a
+    // tempo, so this one is the ladder's next.
     expect(regular.weeks[8].map((r) => r.templateId)).toEqual([
       "long_10k",
-      "easy_30",
-      "tempo_30",
+      "easy_40",
+      "tempo_20",
     ]);
     expect(fresh.weeks[8].map((r) => r.templateId)).toEqual([
       "long_6k",
@@ -445,10 +446,11 @@ describe("a new runner's runs after the run-walk weeks", () => {
 
   it("are no one else's", () => {
     expect(newRunnerBuildMinutes("2026-10-26", null)).toBeNull();
+    // Week 7 holds a time trial in place of its tempo (Run24 (4)).
     expect(plan("half", 16, null).weeks[6].map((r) => r.templateId)).toEqual([
       "long_14k",
       "easy_50",
-      "tempo_20",
+      "time_trial_5k",
     ]);
   });
 });

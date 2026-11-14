@@ -72,10 +72,34 @@ export const TAPER_WEEKS_BY_DISTANCE: Record<
   marathon: 3,
 };
 
+/** Of a race block's weeks before its taper, the share that is base; the
+ *  rest is build. */
+export const BASE_SHARE = 0.4;
+
+/**
+ * Run24 (2), deep dive D3: the base share of a plan made for a regular
+ * runner whose own week is already above the plan's base (`RunPlan
+ * .shortBase`). A base week holds no tempo or intervals, and such a runner
+ * already runs the easy weeks a base builds, so the build starts sooner: a
+ * 16-week half's from its fifth week, not its seventh. Week 0 stays
+ * base in every plan. A Tropos heuristic, a quarter, about the foundation
+ * phase's share of Daniels' four-phase plan.
+ */
+export const SHORT_BASE_SHARE = 0.25;
+
+/**
+ * The phase of a week of a race block. `shortBase` is the plan's own
+ * (`RunPlan.shortBase`): every reader of a plan's phases passes it, so the
+ * label on screen, the session's words, the race-pace rules, the lifting's
+ * race weeks and the generator agree on where the build starts. The taper,
+ * race week and the step-back weeks (`isRunStepBackWeek`) do not depend on
+ * it.
+ */
 export function getPhaseForWeek(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: "5k" | "10k" | "half" | "marathon",
+  shortBase?: boolean | null
 ): "base" | "build" | "taper" | "race" {
   if (weekIndex >= totalWeeks - 1) return "race";
   const taperWeeks = TAPER_WEEKS_BY_DISTANCE[distance];
@@ -83,13 +107,27 @@ export function getPhaseForWeek(
      race week. For a 12-week marathon (taperWeeks=3): race=11,
      taper=8/9/10, build/base split the remainder. */
   if (weekIndex >= totalWeeks - 1 - taperWeeks) return "taper";
-  /* Base/build split on the remaining weeks. 0.4 of the remaining
-     pre-taper window goes to base, the rest is build. Keeps the
-     historical "longer plans get a proper base block" behaviour
-     without leaking into the now-distance-aware taper. */
+  /* Base/build split on the remaining weeks: `BASE_SHARE` of the
+     pre-taper window goes to base, the rest is build, so a longer plan
+     gets a longer base. */
   const preTaperWeeks = Math.max(1, totalWeeks - 1 - taperWeeks);
-  if (weekIndex < preTaperWeeks * 0.4) return "base";
+  const share = shortBase ? SHORT_BASE_SHARE : BASE_SHARE;
+  if (weekIndex < preTaperWeeks * share) return "base";
   return "build";
+}
+
+/** The block's first build week, from 0, by the plan's base share; null
+ *  when the block has none. */
+export function firstBuildWeek(
+  totalWeeks: number,
+  distance: "5k" | "10k" | "half" | "marathon",
+  shortBase?: boolean | null
+): number | null {
+  for (let w = 0; w < totalWeeks; w++) {
+    if (getPhaseForWeek(w, totalWeeks, distance, shortBase) === "build")
+      return w;
+  }
+  return null;
 }
 
 /** Every 4th week of a race block's ramp steps back: the long run and the
@@ -128,7 +166,8 @@ export function isRampStepBack(
  * Whether the run plan steps back in this week of its block: a step-back
  * week of the base or the build. The taper and race week cut the load their
  * own way, and a block with no room to ramp has no step-back weeks. The
- * lifting's lighter weeks fall on these with a race plan (Lift4 (9)).
+ * lifting's lighter weeks fall on these with a race plan (Lift4 (9)). Base
+ * and build alike, so a plan's shorter base (Run24 (2)) moves none of them.
  */
 export function isRunStepBackWeek(
   weekIndex: number,
@@ -253,9 +292,11 @@ export function clampPlanWeek(currentWeek: number, totalWeeks: number): number {
 export function getRacePhaseLabel(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: "5k" | "10k" | "half" | "marathon",
+  /** The plan's `RunPlan.shortBase` (Run24 (2)). */
+  shortBase?: boolean | null
 ): string {
-  const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
+  const phase = getPhaseForWeek(weekIndex, totalWeeks, distance, shortBase);
   return phase.charAt(0).toUpperCase() + phase.slice(1);
 }
 

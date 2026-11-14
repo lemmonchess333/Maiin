@@ -158,6 +158,9 @@ describe("confirmed running starting point", () => {
     expect(block.weeks.flat().filter((row) => row.type === "race")).toEqual(
       unrestricted.weeks.flat().filter((row) => row.type === "race")
     );
+    // Each rebuild carries the block and what it is sized from, as the
+    // rollover does (Run24 (1), (2), (8)).
+    let blockInputs = block.blockInputs;
     for (let i = 0; i < block.totalWeeks; i++) {
       const date = localDateString(
         addLocalDays(parseLocalDate(input.currentDate), 7 * i)
@@ -167,8 +170,12 @@ describe("confirmed running starting point", () => {
         currentDate: date,
         weekStart: date,
         planTotalWeeks: block.totalWeeks,
+        blockInputs,
+        // Run24 (2): the block's shorter base, carried as the record does.
+        shortBase: block.shortBase,
       });
       expect(regenerated.weeks[0]).toEqual(block.weeks[i]);
+      blockInputs = regenerated.blockInputs;
     }
     // Run24 (2): 400 minutes a week and a 150-minute run are past where
     // this marathon's plan starts, so the plan starts from them: a longer
@@ -193,7 +200,10 @@ describe("confirmed running starting point", () => {
         .flat()
         .filter((run) => run.type === "tempo" || run.type === "intervals")
         .length;
-    expect(quality(block.weeks)).toBe(quality(unrestricted.weeks));
+    // One more: a regular runner above the base gets a shorter base, so its
+    // build starts sooner (Run24 (2)).
+    expect(block.shortBase).toBe(true);
+    expect(quality(block.weeks)).toBe(quality(unrestricted.weeks) + 1);
   });
   it("does not delete days or disguise a floor that exceeds the report", () => {
     const week: ScheduledRunDay[] = [0, 1, 2].map((dayIndex) => ({
