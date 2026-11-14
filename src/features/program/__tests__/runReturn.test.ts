@@ -15,7 +15,6 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  assessRunReturn,
   returnGap,
   runningPlan,
   RETURN_RUN_TEMPLATE_ID,
@@ -26,6 +25,22 @@ import { WELCOME_BACK_DAYS } from "../liftLayoff";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "../programTypes";
+import { assessTrainingReturn } from "../trainingReturn";
+
+/** The running half of the one return check (App1 Q35), for a plan with
+ *  this running and no lifting. */
+const assessRunReturn = (input: {
+  plan: RunningPlan;
+  runs: DatedRun[] | null;
+  todayKey: string;
+}) =>
+  assessTrainingReturn({
+    workouts: [],
+    runs: input.runs,
+    todayKey: input.todayKey,
+    lifting: false,
+    running: input.plan,
+  }).run;
 
 const TODAY = "2026-09-07";
 /** `TODAY` minus n days, as a "YYYY-MM-DD" key. */
