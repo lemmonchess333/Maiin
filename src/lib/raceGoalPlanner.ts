@@ -591,9 +591,8 @@ export function getRaceGoalPlannerState(
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
     /* Run24 (1): setup states the peak, in time too where a pace gives it:
-       the confirmed one, else the recent runs' the block is sized at. The
-       conservative reading the block takes without either is no one's own
-       pace, so it gives no time. */
+       the confirmed one, else the recent runs' the block is sized at
+       (`RaceBlockInputs`). */
     const peakPace =
       input.easyPaceSPerKm ?? plan.blockInputs?.runsPaceSPerKm ?? null;
     const peak = longestBeforeRace(plan.weeks, peakPace, unit);

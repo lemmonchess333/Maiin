@@ -183,9 +183,10 @@ export function regenerateRacePlan({
      *  shorter than the time left and starts it again from this week. */
     leadInWeek?: string;
     /** Run24 (1), (2), (8): the block's inputs (`RunPlan.blockInputs`),
-     *  carried with `totalWeeks`: without them a rebuild reads the block's
-     *  pace from whichever runs it was given. */
-    blockInputs?: RaceBlockInputs;
+     *  carried with `totalWeeks`. A key every carry names, set or not: a
+     *  rebuild that left it out would size the block from whichever runs it
+     *  was given. */
+    blockInputs: RaceBlockInputs | undefined;
     completedRaces?: string[];
     /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
      *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
