@@ -5235,3 +5235,29 @@ card. Unit-tested; no phone has drawn it.
 - [ ] **The iOS permission sheet.** On a fresh install, connect Apple Health.
       Passing: the sheet's text says Tropos reads the daily step count to
       check the activity level the calorie target assumes.
+
+## The weekly review ends on the week ahead (App1 Q36, 2026-11-13)
+
+Affects: the review's last card (`WeekAheadEnding`): the week's seven days
+from the live plan, then any change offered for it (a realign from the
+weekly check or the race check, a lighter week, new paces), each taken in
+one tap through the command its own surface uses, then "Looks good", or
+"Keep my plan" while an offer is open. Unit-tested with the plan reader
+stood in; no phone has taken an offer from the review.
+
+- [ ] **Opened from Monday's notification, before Home.** Passing: the card
+      shows this week's days with their runs, not last week's plan or a week
+      with no runs, once the plan has rolled over.
+- [ ] **A lighter week, then Undo.** On an account Train offers a lighter week
+      to, take it from the review, then tap Undo. Passing: Train shows the
+      lighter week after taking it and the full plan after Undo.
+- [ ] **Realign.** On a race plan the weekly check flagged, tap Realign my
+      plan. Passing: the card says how many weeks were planned; Home does not
+      open the fell-behind sheet afterwards.
+- [ ] **Keep my plan.** With an offer open, tap Keep my plan. Passing: the
+      review closes after the offer is set aside (a short wait at most), and
+      neither Home nor Train asks the same thing again that week.
+- [ ] **Lift-only, run-only and both.** Open a review on each kind of
+      account, and a first review. Passing: every day reads Lift, a named
+      run with its distance or minutes, or Rest; the card scrolls to its
+      button at 320 px and with larger text.

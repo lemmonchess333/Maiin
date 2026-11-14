@@ -94,13 +94,6 @@ export interface ReviewPerfWeek {
   deloadRecommended: boolean;
 }
 
-export interface WeekAheadPlan {
-  lifts: number | null;
-  runs: number | null;
-  /** e.g. "Race prep — build week 3 of 6"; null when freeform. */
-  phaseNote: string | null;
-}
-
 /** One new best: the set, and the best it beat. */
 export interface WeekBest {
   /** The library id, for the drawing; null for a custom exercise. */
@@ -144,7 +137,6 @@ export interface WeeklyReviewData {
   hideWeightNumber: boolean;
   /** Any deliberate event exists BEFORE the reviewed week (quiet-week gate). */
   established: boolean;
-  weekAhead: WeekAheadPlan;
   /** The goal the user set, for the projection (`userGoalWeightKg`). */
   goalProfile:
     | {
@@ -201,7 +193,6 @@ export interface WeeklyReview {
     /** "on pace for goal by <date>" label; null when suppressed. */
     projectionDate: string | null;
   } | null;
-  weekAhead: WeekAheadPlan;
 }
 
 /* ── WeekPulse ("Your week so far" — Rev1 PR2) ────────────────── */
@@ -351,7 +342,6 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       training: null,
       nutrition: null,
       body: null,
-      weekAhead: data.weekAhead,
     };
   }
 
@@ -486,6 +476,5 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     training,
     nutrition,
     body,
-    weekAhead: data.weekAhead,
   };
 }

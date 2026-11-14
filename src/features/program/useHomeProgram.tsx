@@ -31,6 +31,8 @@ type Actions = Pick<
   | "dismissFellBehindPrompt"
   | "realignRacePlan"
   | "easeBackIn"
+  | "applyDeloadWeek"
+  | "revertDeloadWeek"
 >;
 
 export function useHomeProgram() {
@@ -245,5 +247,9 @@ export function useHomeProgram() {
     dismissFellBehindPrompt: action("dismissFellBehindPrompt"),
     realignRacePlan: action("realignRacePlan"),
     easeBackIn: action("easeBackIn"),
+    // The weekly review's lighter week and its undo (App1 Q36), Train's
+    // commands.
+    applyDeloadWeek: action("applyDeloadWeek"),
+    revertDeloadWeek: action("revertDeloadWeek"),
   };
 }

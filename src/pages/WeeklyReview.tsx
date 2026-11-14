@@ -10,7 +10,6 @@ import {
   formatWeekRange,
   type WeekBest,
   type WeeklyReview as Review,
-  type WeekAheadPlan,
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { retireReviewReminder } from "@/hooks/useReviewReminder";
@@ -24,7 +23,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { Spinner } from "@/components/ui/Spinner";
-import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
+import WeekAheadEnding from "@/components/review/WeekAheadEnding";
 import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { cn } from "@/lib/utils";
@@ -389,119 +388,16 @@ function BestMoment({
   );
 }
 
-function WeekAhead({
-  plan,
-  trainingWhy,
-  uid,
-  weekKey,
-  onDone,
-}: {
-  plan: WeekAheadPlan;
-  trainingWhy: string | undefined;
-  uid: string | null;
-  weekKey: string;
-  onDone: () => void;
-}) {
-  return (
-    <div className="flex flex-1 flex-col">
-      <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
-        The week ahead
-      </h2>
-      <WeekAheadBody
-        plan={plan}
-        trainingWhy={trainingWhy}
-        uid={uid}
-        weekKey={weekKey}
-        className="mt-6"
-      />
-      <div className="mt-auto pt-8">
-        <Button variant="neutral" fullWidth onClick={onDone}>
-          Done
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** The week ahead's plan, why the person trains and the momentum
- *  check-in: the recap's last card, and the page before a first review. */
-function WeekAheadBody({
-  plan,
-  trainingWhy,
-  uid,
-  weekKey,
-  className,
-}: {
-  plan: WeekAheadPlan;
-  trainingWhy: string | undefined;
-  uid: string | null;
-  weekKey: string;
-  className?: string;
-}) {
-  const { lifts, runs, phaseNote } = plan;
-  return (
-    <>
-      <div className={cn("space-y-6", className)}>
-        {/* The plan's week in the figures "Your week" counts the last one
-            in, so the card says it at the recap's size rather than as a
-            line over an empty page. */}
-        {lifts !== null || runs !== null ? (
-          <>
-            {lifts !== null && (
-              <StatRow
-                rule="bg-lifting"
-                value={lifts}
-                caption={`${plural(lifts, "lift", "lifts")} planned`}
-              />
-            )}
-            {runs !== null && (
-              <StatRow
-                rule="bg-running"
-                value={runs}
-                caption={`${plural(runs, "run", "runs")} planned`}
-              />
-            )}
-            {phaseNote && (
-              <p className="text-sm text-muted-foreground">{phaseNote}</p>
-            )}
-          </>
-        ) : (
-          <p className="text-base text-muted-foreground">
-            Train when it suits you — log it and it counts.
-          </p>
-        )}
-
-        {/* D16 — the personal "why", resurfaced in the user's own words. */}
-        {trainingWhy && (
-          <div className="space-y-1.5">
-            <SectionHeading size="compact">Why you train</SectionHeading>
-            <p className="text-lg font-semibold leading-snug text-foreground">
-              &ldquo;{trainingWhy}&rdquo;
-            </p>
-            <p className="text-sm text-muted-foreground">
-              You wrote this when you started.
-            </p>
-          </div>
-        )}
-
-        {/* CHECKIN-01 — disappears for the week once answered or dismissed. */}
-        {uid && <MomentumCheckinCard uid={uid} weekKey={weekKey} />}
-      </div>
-    </>
-  );
-}
-
 /**
- * Weekly Review (Rev1) — the Sunday recap, told as cards (DS3): the week
+ * Weekly Review (Rev1) — the Monday recap, told as cards (DS3): the week
  * in numbers, its best moment when a new best was set, and the week
- * ahead. All content rules live in weeklyReviewViewModel; this page is
- * layout only.
+ * ahead, where next week is agreed (App1 Q36, `WeekAheadEnding`). All
+ * content rules live in weeklyReviewViewModel; this page is layout only.
  */
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekAhead, weekKey, failed, retry } =
-    useWeeklyReview();
+  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -588,17 +484,16 @@ export default function WeeklyReview() {
             </p>
             {/* Until then the page shows the plan for the week under way,
                 not a sentence on an empty page. */}
-            {weekAhead && (
-              <div className="mt-8 space-y-3">
-                <SectionHeading size="compact">The week ahead</SectionHeading>
-                <WeekAheadBody
-                  plan={weekAhead}
-                  trainingWhy={trainingWhy}
-                  uid={user?.uid ?? null}
-                  weekKey={weekKey}
-                />
-              </div>
-            )}
+            <div className="mt-8 space-y-3">
+              <SectionHeading size="compact">The week ahead</SectionHeading>
+              <WeekAheadEnding
+                preview
+                reviewedWeekKey={weekKey}
+                trainingWhy={trainingWhy}
+                uid={user?.uid ?? null}
+                onClose={close}
+              />
+            </div>
             <div className="mt-auto pt-8">
               <Button variant="neutral" fullWidth onClick={close}>
                 Done
@@ -615,12 +510,11 @@ export default function WeeklyReview() {
       key: "ahead",
       label: "The week ahead",
       render: () => (
-        <WeekAhead
-          plan={review.weekAhead}
+        <WeekAheadEnding
+          reviewedWeekKey={weekKey}
           trainingWhy={trainingWhy}
           uid={user?.uid ?? null}
-          weekKey={weekKey}
-          onDone={close}
+          onClose={close}
         />
       ),
     };

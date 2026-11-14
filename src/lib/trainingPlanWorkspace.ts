@@ -3,7 +3,6 @@ import type {
   ScheduledRunDay,
   WorkoutDay,
 } from "@/features/program/programTypes";
-import { plannedIntervalPaceSPerKm } from "./intervalRest";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { UserProfile } from "./auth";
 import type { Workout } from "./savedWorkouts";
@@ -22,8 +21,7 @@ import {
   runTypeTitle,
 } from "./runLabels";
 import { resolveDistanceUnit } from "./distanceUnits";
-import { runDoseLine, runMinutesLine } from "./runDose";
-import { planningEasyPaceSPerKm } from "./runPaces";
+import { plannedRunDose } from "./runDose";
 import { formatDuration, formatShortWeekday } from "@/utils/formatters";
 import { workoutTitle } from "./workoutLabels";
 import { trainingWeek, type WeekCount } from "./trainingWeek";
@@ -190,24 +188,7 @@ export function buildTrainingPlanWorkspace({
       const dose = claimedRun
         ? distanceLabel(claimedRun.distance, unit)
         : day.run.template
-          ? day.run.template.config.targetDistanceKm
-            ? [
-                distanceLabel(
-                  day.run.template.config.targetDistanceKm * 1000,
-                  unit
-                ),
-                runMinutesLine(
-                  day.run.template,
-                  planningEasyPaceSPerKm(profile?.runFitness)
-                ),
-              ]
-                .filter(Boolean)
-                .join(" · ")
-            : runDoseLine(
-                day.run.template,
-                planningEasyPaceSPerKm(profile?.runFitness),
-                plannedIntervalPaceSPerKm(profile?.runFitness)
-              )
+          ? plannedRunDose(day.run.template, profile?.runFitness, unit)
           : null;
       activities.push({
         id: `planned-run:${planned.id ?? day.dateKey}`,

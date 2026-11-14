@@ -55,6 +55,18 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
    repo's one Firestore fake (ADR-0009). */
 vi.mock("firebase/firestore");
 
+/* The week ahead reads the plan live through Home's programme reader;
+   here it reads none, and the person's usual week (the profile's) shows. */
+vi.mock("@/features/program/useHomeProgram", () => ({
+  useHomeProgram: () => ({
+    programState: null,
+    loading: false,
+    recentLayoff: "none",
+    recentRuns: null,
+    controller: null,
+  }),
+}));
+
 vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
 }));
@@ -67,7 +79,6 @@ import WeeklyReview from "../WeeklyReview";
 const REVIEW = {
   kind: "normal",
   range: { start: "2026-06-29", end: "2026-07-05" },
-  weekAhead: { lifts: null, runs: null, phaseNote: null },
   training: {
     lifts: null,
     runs: { count: 3, km: 42.2, longestKm: 21.1, planned: null },

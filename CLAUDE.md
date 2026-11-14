@@ -99,7 +99,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
 | `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
-| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                             |
+| `WeeklyReview.tsx`                     | `/review`                          | Last week’s recap, ending where the week ahead is agreed (App1 Q36)             |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |

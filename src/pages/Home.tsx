@@ -14,7 +14,10 @@ import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useTrainingReturn } from "@/features/program/useTrainingReturn";
 import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
-import { raceLongRunCheck } from "@/features/program/raceLongRunCheck";
+import {
+  raceCheckDismissKey,
+  raceLongRunCheck,
+} from "@/features/program/raceLongRunCheck";
 import { APPLIED } from "@/features/program/programOutcome";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { useMeals } from "@/hooks/useMeals";
@@ -845,7 +848,7 @@ export default function Home() {
     [profile, programState, recentRuns, todayKey]
   );
   const { dismissed: raceCheckDismissed, dismiss: dismissRaceCheck } =
-    useDismissOnce(`tropos-race-check:${raceCheck?.weekKey ?? "none"}`);
+    useDismissOnce(raceCheckDismissKey(raceCheck?.weekKey ?? null));
   const raceCheckSurface = useSurface({
     id: "race-check",
     priority: 26,

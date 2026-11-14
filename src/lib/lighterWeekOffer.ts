@@ -78,6 +78,9 @@ export interface LighterWeekDoc {
 export interface LighterWeekOffer {
   /** The engine's reason, or null when the phone cannot tell which. */
   trigger: LighterWeekTrigger | null;
+  /** Why, on its own: the weekly review says what a lighter week does in
+   *  its own words (`reviewWeekOffers`). */
+  why: string;
   /** The banner's sentences: why, then what a lighter week does. */
   reason: string;
 }
@@ -243,8 +246,7 @@ export function lighterWeekOffer(input: {
     input.previous ?? null,
     input.before ?? null
   );
-  const reason = [whyLine(trigger, week), whatItDoes(input.plan)]
-    .filter(Boolean)
-    .join(" ");
-  return { trigger, reason };
+  const why = whyLine(trigger, week);
+  const reason = [why, whatItDoes(input.plan)].filter(Boolean).join(" ");
+  return { trigger, why, reason };
 }
