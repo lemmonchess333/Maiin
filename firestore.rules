@@ -2094,7 +2094,12 @@ service cloud.firestore {
     // H7: only the owner of the follow relationship can manage it
     // ========================================
     match /following/{uid}/users/{targetUid} {
-      allow read: if request.auth != null;
+      /* Whom a person follows is theirs to read, and theirs alone to
+         list. One follow is also the followed person's to read: it is
+         their follower. Everyone else reads how many
+         (followCounts/{uid}), never who. */
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == targetUid);
       // R1A-Deletion: freeze writes when either side is deleting.
       // Owner (uid) is the user managing their own follow list;
       // targetUid is the user being followed/unfollowed — both must
@@ -2127,7 +2132,11 @@ service cloud.firestore {
     }
 
     match /followers/{uid}/users/{followerUid} {
-      allow read: if request.auth != null;
+      /* Who follows a person is theirs to read, and theirs alone to list.
+         One follow is also the follower's to read: it is their own.
+         Everyone else reads how many (followCounts/{uid}), never who. */
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == followerUid);
       // Follower doc is written by the person doing the following.
       // R1A-Deletion: writer (followerUid) and recipient (uid) both
       // must be writable. A direct follow never carries `fromRequest`:
