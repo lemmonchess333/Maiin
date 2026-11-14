@@ -583,6 +583,35 @@ function librarySessionId(ladderId: string, family: LibraryFamily): string {
   return LIBRARY_LADDERS[family][Math.max(0, rung)];
 }
 
+/**
+ * Run24 (5): the families the tempo and intervals of a plan with no race
+ * block take in turn (a rolling run, the structured week), a race block's
+ * for the distance (`BUILD_FAMILIES`). Under a 20-minute threshold ceiling
+ * there are no cruise intervals, as a 5K's block holds none (3 × 8 minutes
+ * is 24 at threshold), and where the plan holds short reps in a turn of
+ * their own the intervals leave theirs to it, so 200s do not come round
+ * twice. A Tropos heuristic.
+ */
+function freeFamilies(input: {
+  distance: "5k" | "10k" | "half" | "marathon";
+  /** The plan's longest tempo, work minutes. */
+  tempoWorkMinutes: number;
+  /** Whether the plan holds short reps in a turn of their own. */
+  ownReps: boolean;
+}): { tempo: readonly LibraryFamily[]; intervals: readonly LibraryFamily[] } {
+  const block = BUILD_FAMILIES[input.distance];
+  return {
+    tempo: block.tempo.filter(
+      (family) =>
+        family !== "cruise" ||
+        input.tempoWorkMinutes >= TEMPO_TIERS[1].workMinutes
+    ),
+    intervals: block.intervals.filter(
+      (family) => family !== "repetition" || !input.ownReps
+    ),
+  };
+}
+
 /** How much a cutback week takes off the ramped distance. Which weeks are
  *  cutbacks is `isRampStepBack`'s: every 4th, never the peak. */
 const CUTBACK_FRACTION = 0.75;
@@ -1190,14 +1219,23 @@ export function scheduleStructuredWeekV2(
   );
 
   if (remaining.length > 0) {
-    // Quality session — tempo on even weeks, intervals on odd.
+    // Quality session — tempo on even weeks, intervals on odd. Run24 (5):
+    // each from the session library in its family's turn, a 10K's as a
+    // plan with no race distance takes (`freeFamilies`), on the rungs the
+    // week has always held, the tempo's first and 1 km repeats' second.
+    // The week climbs nothing, so its turn is its place among its kind.
     const isTempoWeek = input.weekNumber % 2 === 0;
     const qualityType = isTempoWeek ? "tempo" : "intervals";
-    const qualityTemplateId = isTempoWeek
-      ? "tempo_20"
-      : input.weekNumber % 4 < 2
-        ? "5x1k"
-        : "8x400";
+    const families = freeFamilies({
+      distance: "10k",
+      tempoWorkMinutes: TEMPO_TIERS[0].workMinutes,
+      ownReps: false,
+    })[qualityType];
+    const turn = Math.max(0, Math.floor((input.weekNumber - 1) / 2));
+    const qualityTemplateId = librarySessionId(
+      isTempoWeek ? TEMPO_TIERS[0].id : INTERVAL_TIERS[1].id,
+      families[turn % families.length]
+    );
     result.push(
       buildRunDayV2({
         dayIndex: remaining[0],
@@ -3139,9 +3177,13 @@ interface RollingLevel {
  * easy runs a tier every `ROLLING_WEEKS_PER_EASY_TIER`, then holds there.
  * A step-back week (`isStepBack`) comes a rung under the longest long run
  * so far, its easy runs a tier under the week before, no medium-long and
- * strides for its quality. The build weeks rotate the spec's quality, each
- * session a rung past the one before it on its ladder, up to the spec's
- * peak. Tropos heuristics, RUN-EV-06 register.
+ * strides for its quality. The build weeks rotate the spec's quality from
+ * the session library as a race block holds it (Run24 (5)): a tempo or
+ * intervals session in its family's turn for the spec's distance
+ * (`freeFamilies`), each a rung past the one before it on its ladder, up
+ * to the spec's peak; short reps on their own ladder; and in the opening
+ * week and the rotation's light turns a fartlek or short hills in turn, as
+ * a race block's base week holds. Tropos heuristics, RUN-EV-06 register.
  */
 function rollingRun(input: {
   spec: RollingSpec;
@@ -3155,12 +3197,14 @@ function rollingRun(input: {
   detrained: boolean;
   easyPaceSPerKm: number | null | undefined;
   ceiling: LongRunCeiling | null;
-  /** Week `k` holds no tempo or intervals: a new runner's weeks, a block
-   *  begun as one until they have run 40 minutes (Run24 (8)). */
+  /** Week `k` holds no tempo, intervals or light session, only strides: a
+   *  new runner's weeks, a block begun as one until they have run 40
+   *  minutes (Run24 (8)). */
   holdsNoQuality: (k: number) => boolean;
   gentler: boolean;
   /** Week `k` holds a time trial, which takes its quality session, so that
-   *  session climbs nothing (as `highestRungBefore` reads a block). */
+   *  session climbs nothing and takes no family's turn (as `ladderBefore`
+   *  reads a block). */
   holdsTrial: (k: number) => boolean;
 }) {
   const { spec, isStepBack } = input;
@@ -3237,11 +3281,20 @@ function rollingRun(input: {
   };
 
   /** Each week's quality before a time trial takes it, and its session: a
-   *  ladder's rung past the last of its kind, kept week by week. */
-  const sessions: Array<{ quality: RollingQuality; session: string | null }> =
-    [];
+   *  ladder's rung past the last of its kind, in its family's turn, kept
+   *  week by week. "strides" is a week with no session. */
+  type WeekQuality = RollingQuality | "strides";
+  const sessions: Array<{ quality: WeekQuality; session: string | null }> = [];
+  const families = freeFamilies({
+    distance: spec.distance,
+    tempoWorkMinutes: spec.qualityPeak.tempoWorkMinutes,
+    ownReps: spec.rotation.includes("reps"),
+  });
   let buildsSeen = 0;
-  const climbed = { tempo: 0, intervals: 0 };
+  /** How far up each ladder the run has climbed, and how many turns each
+   *  kind of session has taken. */
+  const climbed = { tempo: 0, intervals: 0, reps: 0 };
+  const turns = { tempo: 0, intervals: 0, light: 0 };
   const topOf = (quality: "tempo" | "intervals") => {
     const tiers = quality === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
     const peak =
@@ -3257,29 +3310,48 @@ function rollingRun(input: {
   };
   const sessionAt = (
     k: number
-  ): { quality: RollingQuality; session: string | null } => {
+  ): { quality: WeekQuality; session: string | null } => {
     while (sessions.length <= k) {
       const j = sessions.length;
-      // The opening week holds strides, as a block's base does: the first
-      // session of the rotation comes in the second week.
+      // The opening week is a base week, with a block's base's light
+      // session: the first session of the rotation comes in the second.
       const stepsBack = j > 0 && isStepBack(j);
-      let quality: RollingQuality = "strides";
+      let quality: WeekQuality = stepsBack ? "strides" : "light";
       if (!stepsBack && j > 0) {
         quality = spec.rotation[buildsSeen % spec.rotation.length];
         buildsSeen += 1;
       }
       if (input.detrained || input.holdsNoQuality(j)) quality = "strides";
-      if (input.gentler && (quality === "intervals" || quality === "reps"))
-        quality = "strides";
+      // Gentler keeps to the tempo ladder's first rung, as a block's does.
+      if (input.gentler && quality !== "tempo") quality = "strides";
+      // A trial takes the week's session, which then climbs nothing and
+      // takes no family's turn.
+      const counts = !input.holdsTrial(j);
       let session: string | null = null;
-      if (quality === "reps") session = "8x400";
-      else if (quality === "tempo" || quality === "intervals") {
+      if (quality === "light") {
+        // In turn whatever the week holds, as a block's base weeks are.
+        session = BASE_LIGHT_SESSIONS[turns.light % BASE_LIGHT_SESSIONS.length];
+        turns.light += 1;
+      } else if (quality === "reps") {
+        // Short reps at repetition pace climb their own ladder, as far as
+        // the spec's intervals do.
+        session =
+          LIBRARY_LADDERS.repetition[
+            Math.min(topOf("intervals"), climbed.reps)
+          ];
+        if (counts) climbed.reps += 1;
+      } else if (quality === "tempo" || quality === "intervals") {
         const tiers = quality === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
-        session = input.gentler
-          ? tiers[0].id
-          : tiers[Math.min(topOf(quality), climbed[quality])].id;
-        // A trial takes the session, which then climbs nothing.
-        if (!input.holdsTrial(j)) climbed[quality] += 1;
+        const kinds = families[quality];
+        session = librarySessionId(
+          tiers[input.gentler ? 0 : Math.min(topOf(quality), climbed[quality])]
+            .id,
+          kinds[turns[quality] % kinds.length]
+        );
+        if (counts) {
+          climbed[quality] += 1;
+          turns[quality] += 1;
+        }
       }
       sessions.push({ quality, session });
     }
@@ -3308,7 +3380,13 @@ function rollingRun(input: {
         weekStart,
       }),
     ];
-    const { quality, session } = sessionAt(k);
+    const planned = sessionAt(k);
+    // A light session needs a run besides the long run and the medium-long,
+    // as a block's base week does; without one the week holds strides.
+    const session =
+      planned.quality === "light" && remaining.length < 2
+        ? null
+        : planned.session;
     const qualityDays =
       session && remaining.length > 0
         ? chooseQualityRunSlots({
@@ -3323,7 +3401,7 @@ function rollingRun(input: {
         buildRunDayV2({
           dayIndex: qualityDays[0],
           templateId: session,
-          type: quality === "tempo" ? "tempo" : "intervals",
+          type: planned.quality === "tempo" ? "tempo" : "intervals",
           weekStart,
         })
       );
@@ -3397,7 +3475,9 @@ export interface RollingPlanInput {
  * a new runner's run-walk weeks, the time limits, and the climb from the
  * runner's starting point. Pgm6's knobs apply: a lighter or bigger long
  * run moves the horizon's long run, and gentler keeps the sessions to
- * strides and the first tempo. One week per entry, from `weekStart`.
+ * strides and the tempo ladder's first rung. Its sessions are the session
+ * library's (Run24 (5)), chosen as `rollingRun` says. One week per entry,
+ * from `weekStart`.
  * Tropos heuristics in the RUN-EV-06 register.
  */
 export function generateRollingPlan(

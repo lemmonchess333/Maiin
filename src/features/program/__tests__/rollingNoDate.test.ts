@@ -120,13 +120,27 @@ describe("the weeks of a plan with no race date (Run24 (3), D7)", () => {
       plan(goal, { pace })
         .flatMap(sessions)
         .map((run) => run.templateId);
-    // Build to 5K: a short tempo now and then, and no trials.
-    expect(ids("build_5k").every((id) => id === "tempo_20")).toBe(true);
-    expect(ids("build_5k").length).toBeGreaterThan(0);
-    // Get faster at 5K: the 1 km reps, a tempo and short reps.
+    // Build to 5K: light sessions, a short tempo now and then, and no
+    // trials. Run24 (5): the tempo is a 5K's in turn, the 20-minute tempo
+    // and a progression run, and its other build weeks hold a fartlek or
+    // short hills where they held strides alone.
+    const build5k = ids("build_5k");
+    expect(
+      build5k.every((id) =>
+        ["tempo_20", "progression_40", "fartlek_30", "hills_6x30s"].includes(id)
+      )
+    ).toBe(true);
+    expect(build5k).toContain("tempo_20");
+    expect(build5k).toContain("progression_40");
+    // Get faster at 5K: intervals, a tempo and short reps. Run24 (5): the
+    // intervals are a 5K's families in turn (1 km repeats, 5K pace, repeats
+    // by time), and its short reps 200s at repetition pace in place of
+    // 8 x 400 m.
     const faster = ids("faster_5k");
     expect(faster.some((id) => /^\dx1k$/.test(id))).toBe(true);
-    expect(faster).toContain("8x400");
+    expect(faster.some((id) => id.startsWith("5k_pace_"))).toBe(true);
+    expect(faster.some((id) => /^\d+x200$/.test(id))).toBe(true);
+    expect(faster).not.toContain("8x400");
     expect(faster.some((id) => id.startsWith("tempo_"))).toBe(true);
     // Without a benchmark, a 3 km trial in the second week, then 5 km ones.
     const noBenchmark = plan("faster_5k", { pace: null });
