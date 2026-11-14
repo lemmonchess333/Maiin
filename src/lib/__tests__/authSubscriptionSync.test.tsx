@@ -66,7 +66,7 @@ vi.mock("../nativeAuth", () => ({
 }));
 vi.mock("../revenuecat", () => ({
   isRevenueCatEnabled: () => true,
-  rcPurchase: async () => ({ success: true, isProActive: true }),
+  rcPurchase: async () => ({ kind: "bought" }),
   rcRestore: async () => ({ success: true, isProActive: true }),
   rcGetLocalizedPrices: async () => null,
 }));

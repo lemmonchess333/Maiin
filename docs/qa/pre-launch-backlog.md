@@ -5403,3 +5403,31 @@ on the Firestore fake; no phone has shown one or shared its card.
 - [ ] **An older account.** On an account with more than 100 sessions from
       before this build, save any session. Passing: no reveal, and the
       console shows `sessions50` and `sessions100` with `day: null`.
+
+## Finishing a lift and checkout as one state each (App1 Q20, 2026-11-13)
+
+Affects: the lift's finish screen (Save workout, Retry sync, the saved
+screen's status line) and the iPhone's Start Pro, which now checks that
+RevenueCat is the signed-in account before Apple's sheet opens
+(`docs/state-machines.md`, "What App1 Q20 changed"). Unit-tested; no phone
+has run either.
+
+- [ ] **A lift saved as before.** Finish and save a lift online, then one in
+      airplane mode and reconnect. Passing: Saved, then Waiting to sync and
+      Saved once back online, exactly as before; Edit workout is gone once
+      Save is tapped.
+- [ ] **A reopened save.** Finish a lift in airplane mode, force-quit before
+      it syncs, reopen online and tap Retry sync at once. Passing: the
+      screen ends on Saved with Done, never "Needs attention" under Done,
+      and no "Couldn’t save your workout" toast.
+- [ ] **Start Pro on TestFlight.** On a TestFlight build with RevenueCat,
+      tap Start Pro. Passing: Apple's sheet opens as before, and the boot
+      trace lists "RevenueCat: account check" before the sheet.
+- [ ] **Start Pro after a failed RevenueCat switch.** On one phone, sign
+      out and sign in as a second account, turn on airplane mode as soon
+      as sign-in finishes, and stay offline for more than six minutes so
+      RevenueCat's switch and its three retries fail. Reconnect and tap
+      Start Pro. Passing: the trace shows "switch account" before the
+      sheet, and the purchase reaches the second account (Settings →
+      Account shows Pro). Tapped while still offline, the paywall says
+      "Couldn’t start checkout. Try again." and no sheet opens.
