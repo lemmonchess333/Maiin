@@ -50,12 +50,17 @@ const trials = (weeks: { templateId: string }[][]) =>
   );
 
 describe("the plan's time trials", () => {
-  it("open a block with no benchmark with 3 km in week 2, in place of its strides run", () => {
+  it("open a block with no benchmark with 3 km in week 2, in place of its light session", () => {
     const out = plan("half", 16);
     expect(trials(out.weeks)[0]).toBe("2:time_trial_3k");
+    // A base week holds a fartlek or short hills (Run24 (5)); the trial
+    // takes it, and the week keeps its strides run.
+    expect(
+      out.weeks[1].some((run) => /^(fartlek|hills)_/.test(run.templateId))
+    ).toBe(false);
     expect(
       out.weeks[1].some((run) => run.templateId.endsWith("_strides"))
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("come about every five weeks of the build after that, in place of its quality", () => {
