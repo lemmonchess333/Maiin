@@ -64,6 +64,12 @@ const h = vi.hoisted(() => ({
   maxHeartRate: null as number | null,
   hrLive: false,
   bpm: null as number | null,
+  /** The max `useHeartRate` reads beats against: measured, else the age
+   *  estimate. */
+  hrMax: 0,
+  easyHeartRate: vi.fn(),
+  /** The run's clock; 1800 ends an easy 30's one step. */
+  elapsed: 1800,
   spoken: [] as string[],
 }));
 
@@ -158,7 +164,7 @@ vi.mock("@/hooks/useGPS", () => ({
 }));
 vi.mock("@/hooks/useRunTimer", () => ({
   useRunTimer: () => ({
-    elapsed: 1800,
+    elapsed: h.elapsed,
     isRunning: false,
     start: () => {},
     pause: () => {},
@@ -183,7 +189,7 @@ vi.mock("@/lib/heartRateSource", async (importOriginal) => ({
   }),
 }));
 vi.mock("@/hooks/useHeartRate", () => ({
-  useHeartRate: () => ({ bpm: h.bpm }),
+  useHeartRate: () => ({ bpm: h.bpm, maxHr: h.hrMax }),
 }));
 vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
@@ -193,6 +199,7 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkTimeCue: () => {},
     checkPaceAlert: () => {},
     checkEasyCeiling: () => {},
+    checkEasyHeartRate: h.easyHeartRate,
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),
@@ -356,6 +363,9 @@ beforeEach(() => {
   h.maxHeartRate = null;
   h.hrLive = false;
   h.bpm = null;
+  h.hrMax = 0;
+  h.easyHeartRate.mockReset();
+  h.elapsed = 1800;
   h.spoken = [];
 });
 afterEach(() => {
@@ -634,5 +644,57 @@ describe("a heart-rate ceiling, from a live source and a measured max", () => {
     expect(
       screen.getByText("Adjusted for heat: work at 5:38–5:45 /km.")
     ).toBeInTheDocument();
+  });
+});
+
+/* Run24 (12): an easy run's heart-rate cue and heat's ceiling never both
+   speak on one run. A run adjusted for heat is heat's to judge. */
+describe("an easy run on heart rate, on a hot day", () => {
+  beforeEach(() => {
+    h.runFitness = FITNESS;
+    h.bpm = 150;
+    h.hrMax = 190;
+    // Ten minutes into the easy 30, in its easy running.
+    h.elapsed = 600;
+  });
+
+  it("speaks heat's line, not the easy cue, under heat's ceiling", async () => {
+    h.hrLive = true;
+    h.maxHeartRate = 190;
+    planToday("easy_30");
+    h.weather = async () => HOT;
+    await open(HOME_EASY);
+    await tap("Adjust for heat");
+    // The top of the easy run's zone, Z2, at a measured 190.
+    expect(
+      screen.getByText("Adjusted for heat: keep your heart rate under 133 bpm.")
+    ).toBeInTheDocument();
+    await tap("The run's card");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await vi.waitFor(() =>
+      expect(h.spoken).toContain("Heart rate over 133. Ease off in the heat.")
+    );
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
+  });
+
+  it("leaves a run adjusted with no ceiling to heat's eased pace", async () => {
+    planToday("easy_30");
+    h.weather = async () => HOT;
+    await open(HOME_EASY);
+    await tap("Adjust for heat");
+    await tap("The run's card");
+    await finishOnTheTreadmill();
+    expect(screen.getByText(/hot day · adjusted/)).toBeInTheDocument();
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
+  });
+
+  it("holds an easy run not adjusted for heat to Zone 2 on heart rate", async () => {
+    planToday("easy_30");
+    h.weather = async () => HOT;
+    await open(HOME_EASY);
+    await tap("The run's card");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await vi.waitFor(() => expect(h.easyHeartRate).toHaveBeenCalled());
+    expect(h.easyHeartRate.mock.calls[0].slice(0, 2)).toEqual([150, 133]);
   });
 });

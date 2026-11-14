@@ -61,6 +61,7 @@ afterEach(() => {
 });
 
 import { useAudioCues } from "../useAudioCues";
+import { EASY_HR_MARGIN_BPM, EASY_HR_SUSTAIN_S } from "@/lib/hrZones";
 
 /* The cue hook now speaks in the listener's unit, which resolves from the
    auth profile — and `useAuth` throws outside an AuthProvider, which this
@@ -367,5 +368,116 @@ describe("useAudioCues — the easy cue", () => {
     // A fresh stretch: a new budget, after the first spacing.
     drive(result.current, 330, 125, 160);
     expect(spoken.length).toBe(2);
+  });
+});
+
+/* Run24 (12) with live heart rate: the same calm cue when heart rate stays
+   over the top of Zone 2 by more than 3 bpm for a minute. The tests feed a
+   reading a second, as a strap does. */
+describe("useAudioCues — the easy cue on heart rate", () => {
+  const CEILING = 131; // Zone 2's top for a max of 187
+  const OVER = CEILING + EASY_HR_MARGIN_BPM + 1;
+  const AT_MARGIN = CEILING + EASY_HR_MARGIN_BPM;
+
+  function beats(
+    api: ReturnType<typeof useAudioCues>,
+    bpm: number,
+    from: number,
+    to: number
+  ) {
+    for (let t = from; t <= to; t += 1) {
+      act(() => {
+        api.checkEasyHeartRate(bpm, CEILING, t);
+      });
+    }
+  }
+
+  it("says nothing just under the line, however long it holds", () => {
+    const { result } = mountCues();
+    beats(result.current, AT_MARGIN, 0, 900);
+    expect(spoken).toEqual([]);
+  });
+
+  it("speaks once just over the line has held a minute, and not a second before", () => {
+    const { result } = mountCues();
+    beats(result.current, OVER, 0, EASY_HR_SUSTAIN_S - 1);
+    expect(spoken).toEqual([]);
+    beats(result.current, OVER, EASY_HR_SUSTAIN_S, EASY_HR_SUSTAIN_S);
+    expect(spoken).toHaveLength(1);
+    expect(spoken[0]).toMatch(/easy/i);
+  });
+
+  it("says nothing for a spike: 45 seconds over, then back at easy", () => {
+    const { result } = mountCues();
+    for (let i = 0; i < 5; i += 1) {
+      const start = i * 120;
+      beats(result.current, OVER + 15, start, start + 44);
+      beats(result.current, 120, start + 45, start + 119);
+    }
+    expect(spoken).toEqual([]);
+  });
+
+  it("keeps the minute running through a short dip, and ends it after 15 seconds back at easy", () => {
+    const { result } = mountCues();
+    beats(result.current, OVER, 0, 40);
+    beats(result.current, 125, 41, 50); // a 10-second dip
+    beats(result.current, OVER, 51, 60);
+    expect(spoken).toHaveLength(1);
+
+    const fresh = mountCues();
+    beats(fresh.result.current, OVER, 0, 40);
+    beats(fresh.result.current, 125, 41, 56); // back at easy for 15 s
+    beats(fresh.result.current, OVER, 57, 100);
+    expect(spoken).toHaveLength(1); // the first hook's cue only
+  });
+
+  it("spaces the cues 60 then 120 seconds after the first, three at most", () => {
+    const { result } = mountCues();
+    beats(result.current, OVER, 0, 60);
+    expect(spoken).toHaveLength(1);
+    beats(result.current, OVER, 61, 120);
+    expect(spoken).toHaveLength(1);
+    beats(result.current, OVER, 121, 121);
+    expect(spoken).toHaveLength(2);
+    beats(result.current, OVER, 122, 241);
+    expect(spoken).toHaveLength(2);
+    beats(result.current, OVER, 242, 1_800);
+    expect(spoken).toHaveLength(3);
+  });
+
+  it("restarts the minute after a gap in readings", () => {
+    const { result } = mountCues();
+    beats(result.current, OVER, 0, 50);
+    // No reading from 51 to 80 s: a lost strap, then back.
+    beats(result.current, OVER, 81, 140);
+    expect(spoken).toEqual([]);
+    beats(result.current, OVER, 141, 141);
+    expect(spoken).toHaveLength(1);
+  });
+
+  it("shares one budget with the pace cue", () => {
+    const { result } = mountCues();
+    beats(result.current, OVER, 0, 60);
+    // Heart rate drops out; the pace cue carries on in the same stretch.
+    for (let t = 61; t <= 1_200; t += 5) {
+      act(() => {
+        result.current.checkEasyCeiling(330, 360, t);
+      });
+    }
+    expect(spoken).toHaveLength(3);
+  });
+
+  it("is quiet when pace alerts are off or the max is unknown", () => {
+    const off = renderHook(() =>
+      useAudioCues(true, "every_km", { paceAlerts: false })
+    );
+    beats(off.result.current, OVER, 0, 300);
+    const { result } = mountCues();
+    for (let t = 0; t <= 300; t += 1) {
+      act(() => {
+        result.current.checkEasyHeartRate(OVER, 0, t);
+      });
+    }
+    expect(spoken).toEqual([]);
   });
 });

@@ -212,7 +212,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/dataConfidence.ts:makeSuppressionBatch",
   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
   "src/lib/foodTrajectory.ts:computeTrajectory",
-  "src/lib/hrZones.ts:zoneDistribution",
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",

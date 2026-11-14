@@ -39,8 +39,9 @@ export interface HeartRateState {
  * (Tanaka via hrZones.maxHrFromAge). With neither, `maxHr` is 0 and zones are
  * empty — consumers should prompt for age/max rather than render bogus bands.
  *
- * Live streaming starts only for a named, opted-in run. Passing `live: false`
- * (the default) keeps the Settings zone preview independent of the Watch.
+ * Live streaming starts only for a named, opted-in run: one with the Watch
+ * on, or a Bluetooth sensor paired. Passing `live: false` (the default) keeps
+ * the Settings zone preview independent of both.
  */
 export function useHeartRate(
   opts: {
@@ -77,12 +78,12 @@ export function useHeartRate(
     if (!live || !enabled || !sessionId || !uid || !liveAvailable) return;
     let lastSampleAt = 0;
     subRef.current = source.subscribe(
-      (next, at, id) => {
+      (next, at, id, from = "apple-watch") => {
         appendHeartRateSample(uid, sessionId, {
           bpm: next,
           at,
           id,
-          source: "apple-watch",
+          source: from,
         });
         // A beat retransmitted after reconnect belongs in the summary, but
         // is not a live reading on the run HUD.

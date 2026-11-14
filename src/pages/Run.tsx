@@ -107,6 +107,8 @@ import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import { useHeartRate } from "../hooks/useHeartRate";
+import { useHeartRateSensor } from "@/hooks/useHeartRateSensor";
+import { easyHeartRateCeiling } from "@/lib/hrZones";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
 import { isWatchRunLocallyDisabled } from "@/lib/connectedTrainingPrefs";
@@ -506,9 +508,13 @@ export default function Run() {
     !snapshotWriteFailed &&
     !!runConfig &&
     isOutdoorGpsRun(runConfig);
+  // A paired Bluetooth sensor reads any run, outdoors or on a treadmill,
+  // with or without the Watch.
+  const sensorPaired = !!useHeartRateSensor().status.paired;
+  const heartRateEligible = watchEligible || (sensorPaired && !!runConfig);
   const hr = useHeartRate({
     live: true,
-    enabled: watchEligible,
+    enabled: heartRateEligible,
     sessionId: activeSessionId,
     uid: user?.uid,
   });
@@ -955,7 +961,9 @@ export default function Run() {
      source is live and the max is measured), and a swap. The eased run is
      the plan's own prefill built from the eased table, so its steps,
      labels and cues all carry the eased paces; nothing is stored. */
-  const hrLive = useMemo(() => getHeartRateSource().available, []);
+  // A sensor paired after the page opened counts too (`sensorPaired`).
+  const hrSourceAtOpen = useMemo(() => getHeartRateSource().available, []);
+  const hrLive = hrSourceAtOpen || sensorPaired;
   const measuredMaxHr = profile?.maxHeartRate ?? null;
   const heatOffer = useMemo(
     () =>
@@ -1748,18 +1756,34 @@ export default function Run() {
     }
 
     // Run24 (12), deep dive D17: an easy or a long run going faster than
-    // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
-    // in its easy running only (`judgesEasyNow`), never on a run-walk.
-    // A run adjusted for heat holds the eased easy limit, and one adjusted
-    // to effort only has none.
+    // easy, in its easy running only (`judgesEasyNow`), never on a run-walk.
+    // With a live heart rate and a max to read it against, heart rate
+    // judges it (`easyHeartRateCeiling`, the top of Zone 2); without one,
+    // pace does, for a runner with a confirmed benchmark (`paceTable`,
+    // RUN-EV-08). A run adjusted for heat is heat's to judge: its heart-rate
+    // ceiling while beats arrive (`hrGoverns`, the top of the same zone on
+    // an easy run, from a measured max only), else the eased easy pace, and
+    // none when adjusted to effort only. So the heat line and the easy
+    // heart-rate cue never both speak on one run.
+    const adjustedForHeat = !!runConfig?.heatAdjustment;
     const easyTable = runConfig?.heatAdjustment
       ? heatEasedPaceTable(paceTable, runConfig.heatAdjustment)
       : paceTable;
     const easyFastEdge = easyTable?.easy[0];
-    if (easyFastEdge && !hrGoverns && !runWalkSession && judgingEasy) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
-      if (currentPaceSec !== null) {
-        audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
+    const easyHrCeiling =
+      hr.bpm != null && !adjustedForHeat ? easyHeartRateCeiling(hr.maxHr) : 0;
+    if (!hrGoverns && !runWalkSession && judgingEasy) {
+      if (hr.bpm != null && easyHrCeiling > 0) {
+        audioCues.checkEasyHeartRate(hr.bpm, easyHrCeiling, timer.elapsed);
+      } else if (easyFastEdge) {
+        const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+        if (currentPaceSec !== null) {
+          audioCues.checkEasyCeiling(
+            currentPaceSec,
+            easyFastEdge,
+            timer.elapsed
+          );
+        }
       }
     }
 
@@ -1786,6 +1810,7 @@ export default function Run() {
     paceTable,
     judgingEasy,
     hr.bpm,
+    hr.maxHr,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1927,7 +1952,7 @@ export default function Run() {
   } | null>(null);
   useEffect(() => {
     const previous = heartClockRef.current;
-    if (!watchEligible || !activeSessionId || !user?.uid) {
+    if (!heartRateEligible || !activeSessionId || !user?.uid) {
       if (previous?.running)
         pauseMoving(previous.uid, previous.sessionId, Date.now());
       heartClockRef.current = null;
@@ -1947,7 +1972,7 @@ export default function Run() {
       sessionId: activeSessionId,
       running: clockRunning,
     };
-  }, [watchEligible, activeSessionId, user?.uid, clockRunning]);
+  }, [heartRateEligible, activeSessionId, user?.uid, clockRunning]);
   const watchPhase: WatchRunPhase | null =
     phase === "active"
       ? autoPaused
@@ -2138,7 +2163,7 @@ export default function Run() {
         "GPS never locked on — your time is saved, but there’s no route or distance for this one."
       );
     }
-    if (watchEligible && identityRef.current && user?.uid)
+    if (heartRateEligible && identityRef.current && user?.uid)
       finishMoving(user.uid, identityRef.current.sessionId, finishedAt);
     timer.pause();
     gps.stop();

@@ -4,6 +4,14 @@ const getPendingWatchHeartRateSamples = vi.fn();
 vi.mock("../watchRunBridge", () => ({
   getPendingWatchHeartRateSamples: () => getPendingWatchHeartRateSamples(),
 }));
+const getHeartRateSensorSessionSamples = vi.fn();
+const clearHeartRateSensorSessions = vi.fn();
+vi.mock("../heartRateSensorBridge", () => ({
+  getHeartRateSensorSessionSamples: (sessionId: string) =>
+    getHeartRateSensorSessionSamples(sessionId),
+  clearHeartRateSensorSessions: (sessionId?: string) =>
+    clearHeartRateSensorSessions(sessionId),
+}));
 
 import {
   appendHeartRateSample,
@@ -34,6 +42,10 @@ beforeEach(() => {
   vi.stubGlobal("localStorage", storage());
   getPendingWatchHeartRateSamples.mockReset();
   getPendingWatchHeartRateSamples.mockResolvedValue([]);
+  getHeartRateSensorSessionSamples.mockReset();
+  getHeartRateSensorSessionSamples.mockResolvedValue([]);
+  clearHeartRateSensorSessions.mockReset();
+  clearHeartRateSensorSessions.mockResolvedValue(undefined);
 });
 afterEach(() => {
   clearHeartRateSessionsForUser("u1");
@@ -105,5 +117,78 @@ describe("per-session Watch heart rate buffer", () => {
     clearHeartRateSessionsForUser("u1");
     expect(localStorage.length).toBe(1);
     expect(getHeartRateSession("u2", "a").samples).toEqual([]);
+  });
+});
+
+describe("per-session sensor heart rate", () => {
+  const strap = (id: string, at: number, bpm = 140) => ({
+    id,
+    at,
+    bpm,
+    source: "bluetooth" as const,
+  });
+
+  it("keeps a sensor's beats beside the Watch's, once each", () => {
+    beginMoving("u1", "run-1", 0);
+    appendHeartRateSample("u1", "run-1", strap("ble:1", 1_000));
+    appendHeartRateSample("u1", "run-1", strap("ble:1", 1_000));
+    appendHeartRateSample("u1", "run-1", {
+      id: "watch-1",
+      at: 2_000,
+      bpm: 150,
+      source: "apple-watch",
+    });
+    expect(
+      getHeartRateSession("u1", "run-1").samples.map((sample) => sample.id)
+    ).toEqual(["ble:1", "watch-1"]);
+  });
+
+  it("refuses a beat from a source it does not know", () => {
+    beginMoving("u1", "run-1", 0);
+    appendHeartRateSample("u1", "run-1", {
+      id: "x",
+      at: 1_000,
+      bpm: 140,
+      source: "phone" as never,
+    });
+    expect(getHeartRateSession("u1", "run-1").samples).toEqual([]);
+  });
+
+  it("writes the last reading's time at most every 5 seconds, not every beat", () => {
+    beginMoving("u1", "run-1", 0);
+    const stored = () =>
+      JSON.parse(localStorage.getItem(localStorage.key(0)!)!).lastObservedAt;
+    appendHeartRateSample("u1", "run-1", strap("ble:1", 1_000));
+    expect(stored()).toBe(1_000);
+    appendHeartRateSample("u1", "run-1", strap("ble:2", 2_000));
+    appendHeartRateSample("u1", "run-1", strap("ble:3", 5_999));
+    expect(stored()).toBe(1_000);
+    appendHeartRateSample("u1", "run-1", strap("ble:4", 6_000));
+    expect(stored()).toBe(6_000);
+    // Every beat is still kept for the summary.
+    expect(getHeartRateSession("u1", "run-1").samples).toHaveLength(4);
+  });
+
+  it("recovers the readings native kept for the run after a web view reload", async () => {
+    beginMoving("u1", "run-1", 0);
+    appendHeartRateSample("u1", "run-1", strap("ble:1", 1_000));
+    pauseMoving("u1", "run-1", 10_000);
+    getHeartRateSensorSessionSamples.mockResolvedValue([
+      strap("ble:1", 1_000),
+      strap("ble:2", 2_000, 142),
+    ]);
+    const recovered = await getRecoveredHeartRateSession("u1", "run-1");
+    expect(getHeartRateSensorSessionSamples).toHaveBeenCalledWith("run-1");
+    expect(recovered.samples).toEqual([
+      strap("ble:1", 1_000),
+      strap("ble:2", 2_000, 142),
+    ]);
+  });
+
+  it("drops native's kept readings with the run, and every run's on an account change", () => {
+    clearHeartRateSession("u1", "run-1");
+    expect(clearHeartRateSensorSessions).toHaveBeenCalledWith("run-1");
+    clearHeartRateSessionsForUser("u1");
+    expect(clearHeartRateSensorSessions).toHaveBeenLastCalledWith(undefined);
   });
 });

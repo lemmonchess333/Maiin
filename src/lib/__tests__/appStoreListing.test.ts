@@ -198,9 +198,11 @@ describe("App Store listing: claims the code can contradict", () => {
   });
 
   it("claims no feature the app doesn't have", () => {
-    // No heart-rate source exists (`heartRateSource.ts`), there is no
-    // watch app or Live Activity, and iPhone gets no push for social
-    // activity. Each would be a 2.3 rejection waiting for a reviewer.
+    // Heart rate (from the Watch, behind its release gate, or a Bluetooth
+    // sensor) waits for its device checks in docs/qa/pre-launch-backlog.md
+    // before the listing names it, there is no watch app or Live Activity,
+    // and iPhone gets no push for social activity. Each would be a 2.3
+    // rejection waiting for a reviewer.
     const forSale = [
       field("name"),
       field("subtitle"),

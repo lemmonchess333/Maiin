@@ -269,6 +269,14 @@ describe("Apple Health permissions and storage match the policy", () => {
       /<key>NSHealthUpdateUsageDescription<\/key>\s*<string>[^<]*The Watch saves no workout to Health/
     );
     expect(PRIVACY_PROSE).toMatch(/If you separately turn on workout export/);
+    // A Bluetooth heart rate sensor reads heart rate the same way, with no
+    // Watch: on the device until the run is saved, never to analytics.
+    expect(PRIVACY_PROSE).toMatch(
+      /If\s+you pair a Bluetooth heart rate sensor/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /Raw\s+readings are held on your device until you save or discard the\s+run/
+    );
     expect(PRIVACY_PROSE).toMatch(/without a GPS route/);
     // The pilot build, which carries Watch runs and workout export, says
     // so where iOS asks; a standard build asks for steps alone.

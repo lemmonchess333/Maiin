@@ -184,6 +184,12 @@ import {
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { localDateString } from "@/lib/dateHelpers";
 import {
+  appendHeartRateSample,
+  beginMoving,
+  clearHeartRateSessionsForUser,
+  pauseMoving,
+} from "@/lib/heartRateSession";
+import {
   readsAt,
   releaseAllReads,
   resetFirestore,
@@ -1465,5 +1471,50 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
     expect(h.paceEnabled.at(-1)).toBe(true);
+  });
+});
+
+/* Run24 (12): a paired Bluetooth sensor reads any run, so the summary reads
+   heart rate for a treadmill run too, where the Watch never ran. */
+describe("RunSummary — heart rate from a sensor on a treadmill run", () => {
+  const profile = h.auth.profile;
+  beforeEach(() => {
+    h.auth.profile = { ...profile, maxHeartRate: 190 } as typeof profile;
+  });
+  afterEach(() => {
+    h.auth.profile = profile;
+    clearHeartRateSessionsForUser("runner");
+  });
+
+  it("shows time in zone from the readings the run kept", async () => {
+    const startedAt = Date.now() - 1_600_000;
+    beginMoving("runner", "s-tread", startedAt);
+    for (let i = 0; i < 300; i += 1)
+      appendHeartRateSample("runner", "s-tread", {
+        id: `ble:${i}`,
+        at: startedAt + i * 5_000,
+        bpm: 140,
+        source: "bluetooth",
+      });
+    pauseMoving("runner", "s-tread", startedAt + 1_500_000);
+    renderSummary({
+      identity: {
+        sessionId: "s-tread",
+        runId: "run-1",
+        uid: "runner",
+        scheduledRunId: null,
+        startedAt,
+        startLocalDate: localDateString(),
+        originTimeZone: "UTC",
+      },
+      runConfig: { ...savedRun().runConfig, place: "treadmill" },
+    });
+    expect(
+      await screen.findByText(/Sensor covered 100% of moving time/)
+    ).toBeVisible();
+    // 140 of 190 is Zone 3, for the 25 moving minutes.
+    const zone3 = screen.getByText("Z3 · Steady");
+    expect(zone3).toBeVisible();
+    expect(zone3.parentElement).toHaveTextContent("25:00");
   });
 });

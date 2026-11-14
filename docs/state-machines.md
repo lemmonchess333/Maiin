@@ -41,6 +41,7 @@ inside that type.
 | A lift day               | `src/features/program/liftDayStatus.ts` (`LiftDayStatus`)                                    | today, upcoming, completed, skipped, missed                                                                          |
 | A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                   |
 | Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                   |
+| Heart rate sensor        | `src/lib/heartRateSensorBridge.ts` (`SensorConnection`, `SensorAuthorization`)               | idle, connecting, connected; Bluetooth not asked, allowed, denied, restricted; native owns the moves                 |
 | Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has

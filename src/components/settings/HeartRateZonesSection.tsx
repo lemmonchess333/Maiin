@@ -18,9 +18,9 @@ import type { UserProfile } from "@/lib/auth";
  * `null`/absent maxHeartRate → fall back to the Tanaka age estimate; with no
  * age either, we prompt for it rather than render bogus bands.
  *
- * The section says where the zones come from and nothing about live heart
- * rate: heartRateSource.ts has no source on any platform, so nothing
- * streams. Copy that names a live feature waits for the feature.
+ * The section says where the zones come from. Live heart rate is the
+ * sensor's section above it (`HeartRateSensorSection`) and the Watch's in
+ * Apple Health, each of which says what it streams and where.
  */
 export default function HeartRateZonesSection({
   updateProfile,

@@ -687,3 +687,107 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
   });
 });
+
+/* ── The heart rate sensor plugin ──────────────────────────────────── */
+
+/** Paths the App target's Sources phase compiles, read by structure. */
+function compiledSourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const sourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+  )?.[1];
+  if (!sourcesId) throw new Error("App target has no Sources phase");
+  const phase = pbxproj.match(
+    new RegExp(
+      `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
+  );
+  if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+  return [
+    ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+  ].map((m) => {
+    const buildFile = pbxproj.match(
+      new RegExp(
+        `^\\s*${m[1]} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+        "m"
+      )
+    );
+    if (!buildFile) throw new Error(`PBXBuildFile ${m[1]} has no fileRef`);
+    const fileRef = pbxproj.match(
+      new RegExp(
+        `^\\s*${buildFile[1]} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+        "m"
+      )
+    );
+    if (!fileRef) throw new Error(`file reference ${buildFile[1]} missing`);
+    return fileRef[1];
+  });
+}
+
+describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
+  const plugin = read("ios/App/App/HeartRateSensorPlugin.swift");
+  const bridge = read("src/lib/heartRateSensorBridge.ts");
+
+  it("compiles the plugin into the app", () => {
+    const sources = compiledSourcePaths();
+    // Anchor: the parse found the files that were already there.
+    expect(sources).toContain("WatchRunPlugin.swift");
+    expect(sources).toContain("HeartRateSensorPlugin.swift");
+  });
+
+  it("registers it before the web view loads, under the name the web asks for", () => {
+    // An app-target plugin is not found by Capacitor's package scan.
+    expect(read("ios/App/App/TroposBridgeViewController.swift")).toMatch(
+      /registerPluginInstance\(HeartRateSensorPlugin\(\)\)/
+    );
+    const jsName = plugin.match(/let jsName = "([^"]+)"/)?.[1];
+    expect(jsName).toBe("HeartRateSensor");
+    expect(bridge).toContain(
+      `registerPlugin<HeartRateSensorPlugin>("${jsName}")`
+    );
+  });
+
+  it("implements every method the web calls", () => {
+    const iface = bridge.match(
+      /interface HeartRateSensorPlugin \{([\s\S]*?)\n\}/
+    );
+    expect(iface).not.toBeNull();
+    const called = [...iface![1].matchAll(/^\s{2}(\w+)\(/gm)]
+      .map((m) => m[1])
+      .filter((name) => name !== "addListener");
+    expect(called.length).toBeGreaterThanOrEqual(10);
+    for (const name of called) {
+      expect(plugin).toContain(`CAPPluginMethod(name: "${name}"`);
+      expect(plugin).toMatch(
+        new RegExp(`@objc func ${name}\\(_ call: CAPPluginCall\\)`)
+      );
+    }
+  });
+
+  it("emits only the events the web listens for", () => {
+    const emitted = new Set(
+      [...plugin.matchAll(/notifyListeners\("(\w+)"/g)].map((m) => m[1])
+    );
+    expect([...emitted].sort()).toEqual([
+      "reading",
+      "sensorFound",
+      "statusChanged",
+    ]);
+    for (const event of emitted) expect(bridge).toContain(`"${event}"`);
+  });
+
+  it("asks for Bluetooth with a purpose string and keeps a run's sensor in the background", () => {
+    // Apple: the key "is required if your app uses the device's Bluetooth
+    // interface", and the bluetooth-central mode wakes the app for a
+    // connected peripheral's updated values.
+    expect(infoPlist).toMatch(
+      /<key>NSBluetoothAlwaysUsageDescription<\/key>\s*<string>[^<]*heart rate sensor[^<]*<\/string>/
+    );
+    expect(infoPlist).toMatch(
+      /<key>UIBackgroundModes<\/key>\s*<array>\s*<string>location<\/string>\s*<string>bluetooth-central<\/string>\s*<\/array>/
+    );
+  });
+});

@@ -1,8 +1,8 @@
 /**
  * Heart-rate zones — the pure math (no React/DOM/Firebase, mirror-ready).
  *
- * Live Watch HR and the Settings zone preview share this pure maths. The
- * connected training release flag gates native streaming; see
+ * Live heart rate (from the paired Watch or a Bluetooth chest strap or
+ * armband) and the Settings zone preview share this pure maths. See
  * `heartRateSource.ts` and docs/heart-rate-healthkit.md.
  *
  * Five-zone %HRmax model (the common coaching split):
@@ -143,48 +143,23 @@ export function zoneShortLabel(band: HrZone): string {
   return `Z${band.zone} ${band.minBpm}–${band.maxBpm} bpm`;
 }
 
-export interface ZoneShare {
-  zone: ZoneNumber;
-  name: string;
-  samples: number;
-  /** Fraction 0..1 of in-zone samples (excludes below-Z1). */
-  pct: number;
-}
-
 /**
- * Distribution of HR samples across zones (for the post-run breakdown).
- * Samples are equally weighted (assumes a roughly even sampling cadence).
- * Below-Z1 samples are excluded from the denominator so the bars reflect
- * "time training", not warm-up idling.
+ * Where a reading came from: the paired Apple Watch, or a Bluetooth sensor
+ * speaking the standard Heart Rate Service (a chest strap or an armband).
  */
-export function zoneDistribution(
-  bpmSamples: number[],
-  maxHr: number
-): ZoneShare[] {
-  const counts: Record<ZoneNumber, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  let total = 0;
-  if (maxHr > 0) {
-    for (const hr of bpmSamples) {
-      const z = zoneForHr(hr, maxHr);
-      if (z !== 0) {
-        counts[z] += 1;
-        total += 1;
-      }
-    }
-  }
-  return ([1, 2, 3, 4, 5] as ZoneNumber[]).map((z) => ({
-    zone: z,
-    name: ZONE_NAMES[z],
-    samples: counts[z],
-    pct: total > 0 ? counts[z] / total : 0,
-  }));
+export type HeartRateSourceKind = "apple-watch" | "bluetooth";
+
+export function isHeartRateSourceKind(
+  value: unknown
+): value is HeartRateSourceKind {
+  return value === "apple-watch" || value === "bluetooth";
 }
 
-/** A reading from the paired Watch. `at` is a Unix epoch in milliseconds. */
+/** One reading. `at` is a Unix epoch in milliseconds. */
 export interface HeartRateSample {
   bpm: number;
   at: number;
-  source: "apple-watch";
+  source: HeartRateSourceKind;
   /** Stable native sample identity; retransmissions must not count twice. */
   id?: string;
 }
@@ -207,10 +182,11 @@ export interface HeartRateSummary {
   zoneSeconds: [number, number, number, number, number];
   belowZoneSeconds: number;
   maxHr: number;
-  source: "apple-watch";
+  /** The source that covered the most of the run. */
+  source: HeartRateSourceKind;
 }
 
-/** A sample cannot stand in for a long gap or a disconnected Watch. */
+/** A sample cannot stand in for a long gap or a disconnected source. */
 export const MAX_HEART_RATE_SAMPLE_AGE_MS = 15_000;
 
 /** The share of moving time a summary must cover before it shows time in
@@ -232,11 +208,76 @@ export function heartRateCoverageBand(
 }
 
 /**
- * Summarize Watch readings over the phone's actual moving intervals. Samples
- * are held only until the next reading or 15 seconds, whichever comes first.
- * This excludes pauses, missing readings and retransmitted sample IDs. The
- * older `zoneDistribution` is deliberately left sample-weighted for legacy
- * callers and must not be labelled as elapsed time.
+ * One reading at a time when both sources are on: a Watch reading is set
+ * aside while a sensor reading is fresh (taken within the last 15 seconds).
+ * A chest strap reads the heart's electrical signal and agrees with an ECG
+ * more closely than a wrist's optical sensor during exercise (Gillinov et
+ * al. 2017, Med Sci Sports Exerc 49(8): the Polar H7 strap's agreement with
+ * ECG was about 0.99, the Apple Watch's 0.87, the best of the wrist
+ * devices), and a sensor is paired by the runner for this purpose. The
+ * Watch fills any gap the sensor leaves. The live source and the summary
+ * both ask this.
+ */
+export function watchReadingSetAside(
+  watchAt: number,
+  lastSensorAt: number | null
+): boolean {
+  return (
+    lastSensorAt != null &&
+    watchAt >= lastSensorAt &&
+    watchAt - lastSensorAt < MAX_HEART_RATE_SAMPLE_AGE_MS
+  );
+}
+
+/** `samples` sorted by time, without the Watch readings set aside. */
+function preferSensorReadings<T extends Pick<HeartRateSample, "at" | "source">>(
+  samples: readonly T[]
+): T[] {
+  let lastSensorAt: number | null = null;
+  const kept: T[] = [];
+  for (const sample of samples) {
+    if (sample.source === "bluetooth") {
+      lastSensorAt = sample.at;
+      kept.push(sample);
+    } else if (!watchReadingSetAside(sample.at, lastSensorAt)) {
+      kept.push(sample);
+    }
+  }
+  return kept;
+}
+
+/**
+ * Run24 (12) with live heart rate: an easy or a long run is held to the
+ * top of Zone 2 (Easy), the band Train's run card and the day's sheet
+ * already show for it ("Z2 112–130 bpm"), from the same max heart rate
+ * (measured, else the age estimate). 0 when the max is unknown, so the
+ * caller keeps to the pace cue.
+ */
+export function easyHeartRateCeiling(maxHr: number): number {
+  return hrZones(maxHr).find((band) => band.zone === 2)?.maxBpm ?? 0;
+}
+
+/** How far over the top of Zone 2 a reading goes before it counts as over:
+ *  3 bpm, about what the pace cue's 10 s /km margin is at an easy pace
+ *  (ACSM's running equation, with heart rate reserve following oxygen
+ *  uptake reserve: 2.2 to 3.3 bpm for runners from 5:30 to 7:30 /km).
+ *  A Tropos heuristic. */
+export const EASY_HR_MARGIN_BPM = 3;
+
+/** How long heart rate stays over before the easy cue speaks, s: long
+ *  enough that a short hill or a crossing's sprint says nothing, as heart
+ *  rate takes a minute or more to settle after a change of effort. A dip
+ *  back under that does not hold for `EASY_HR_DIP_HOLD_S` keeps the clock
+ *  running. Tropos heuristics. */
+export const EASY_HR_SUSTAIN_S = 60;
+export const EASY_HR_DIP_HOLD_S = 15;
+
+/**
+ * Summarize readings over the phone's actual moving intervals. Samples
+ * are held only until the next reading or 15 seconds, whichever comes first,
+ * so the zones are elapsed time whatever the cadence: a Watch reading every
+ * few seconds and a strap's every second count the same minute the same.
+ * This excludes pauses, missing readings and retransmitted sample IDs.
  */
 export function summarizeHeartRate(
   samples: readonly HeartRateSample[],
@@ -274,10 +315,10 @@ export function summarizeHeartRate(
   const zonesAvailable = Number.isFinite(maxHr) && maxHr > 0;
 
   const seen = new Set<string>();
-  const ordered = samples
+  const valid = samples
     .filter((sample) => {
       if (
-        sample.source !== "apple-watch" ||
+        !isHeartRateSourceKind(sample.source) ||
         !Number.isFinite(sample.bpm) ||
         sample.bpm < 30 ||
         sample.bpm > 250 ||
@@ -290,7 +331,14 @@ export function summarizeHeartRate(
       }
       return true;
     })
-    .sort((a, b) => a.at - b.at);
+    // A sensor reading at the same instant as a Watch one goes first, so
+    // the Watch's is the one set aside.
+    .sort(
+      (a, b) =>
+        a.at - b.at ||
+        Number(a.source !== "bluetooth") - Number(b.source !== "bluetooth")
+    );
+  const ordered = preferSensorReadings(valid);
   if (!ordered.length) return null;
 
   let coveredMs = 0;
@@ -298,6 +346,10 @@ export function summarizeHeartRate(
   let maxBpm = 0;
   let belowZoneMs = 0;
   const zoneMs = [0, 0, 0, 0, 0] as [number, number, number, number, number];
+  const sourceMs: Record<HeartRateSourceKind, number> = {
+    "apple-watch": 0,
+    bluetooth: 0,
+  };
 
   for (const interval of merged) {
     for (let i = 0; i < ordered.length; i += 1) {
@@ -314,6 +366,7 @@ export function summarizeHeartRate(
       if (to <= from) continue;
       const span = to - from;
       coveredMs += span;
+      sourceMs[sample.source] += span;
       weightedBpm += sample.bpm * span;
       maxBpm = Math.max(maxBpm, sample.bpm);
       if (zonesAvailable) {
@@ -335,6 +388,9 @@ export function summarizeHeartRate(
     ) as HeartRateSummary["zoneSeconds"],
     belowZoneSeconds: belowZoneMs / 1000,
     maxHr: zonesAvailable ? maxHr : 0,
-    source: "apple-watch",
+    source:
+      sourceMs.bluetooth > sourceMs["apple-watch"]
+        ? "bluetooth"
+        : "apple-watch",
   };
 }
