@@ -728,7 +728,14 @@ export default function RunSummary() {
         place: state.runConfig?.place,
         templateId: runTemplateIdOf(state.runConfig?.planMetadata),
       },
-      historyRead.runs
+      historyRead.runs,
+      /* "New best" only for a pace Bests lists (App1 Q15), and only
+         against the whole history, as the post's bests are claimed. */
+      {
+        records: historyRead.known
+          ? historyRead.runs.filter((run) => isPaceEligible(run))
+          : null,
+      }
     );
   }, [state, historyRead, uid]);
 

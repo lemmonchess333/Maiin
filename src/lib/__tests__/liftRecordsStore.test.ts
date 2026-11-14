@@ -90,10 +90,7 @@ describe("loadLiftRecords", () => {
           { weightKg: 60, reps: 5 },
         ]),
       });
-      const records = await loadLiftRecords(
-        "u1",
-        await fetchSavedWorkouts("u1", { latest: 50 })
-      );
+      const records = await loadLiftRecords("u1");
       expect(records.sessionCounts).toEqual({ "Bench Press": 1 });
       expect(benchBest(records)).toBe(60);
       expect(
@@ -130,7 +127,7 @@ describe("loadLiftRecords", () => {
         ],
       }),
     });
-    const records = await loadLiftRecords("u1", []);
+    const records = await loadLiftRecords("u1");
     expect(records.sessionCounts).toEqual({
       "Bench Press": 1,
       "Push-up": 1,
@@ -139,9 +136,9 @@ describe("loadLiftRecords", () => {
     });
   });
 
-  it("keeps a stored map rather than rebuilding it from the recent window", async () => {
-    // The window holds 85, the stored best is 100: a rebuild would let a
-    // 90 kg set be celebrated as a best.
+  it("keeps a stored map rather than rebuilding it from the history", async () => {
+    // The history read holds 85, the stored best is 100: a rebuild would
+    // let a 90 kg set be celebrated as a best.
     seedFirestore({
       [RECORDS]: {
         map: {
@@ -156,10 +153,7 @@ describe("loadLiftRecords", () => {
       "users/u1/workouts/w1": bench("2026-06-01", 85),
     });
 
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 50 })
-    );
+    const records = await loadLiftRecords("u1");
 
     expect(benchBest(records)).toBe(100);
     expect(records.sessionCounts).toEqual({ "Bench Press": 9 });
@@ -180,10 +174,7 @@ describe("loadLiftRecords", () => {
       "users/u1/workouts/w2": bench("2026-06-03", 87.5),
     });
 
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 50 })
-    );
+    const records = await loadLiftRecords("u1");
 
     expect(benchBest(records)).toBe(100);
     expect(records.sessionCounts).toEqual({ "Bench Press": 2 });
@@ -207,15 +198,65 @@ describe("loadLiftRecords", () => {
       "users/u1/workouts/new": bench("2026-06-01", 80),
     });
 
-    // A window that misses the old session: only the whole history has 120.
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 1 })
-    );
+    // The whole history, the old session included: 120, not the 200
+    // the stale map held.
+    const records = await loadLiftRecords("u1");
 
     expect(benchBest(records)).toBe(120);
     expect(records.sessionCounts).toEqual({ "Bench Press": 2 });
     expect(records.revision).toBe(4);
+  });
+
+  it("builds a missing map from the whole history, so it celebrates no lift Bests beats", async () => {
+    // App1 Q15. 51 sessions: the newest 50 hold 80 kg, the oldest 120 kg.
+    // Built from the newest 50, as it was, the map's best was 80 and a
+    // 90 kg set fired a new best that Bests, which reads every session,
+    // never listed.
+    const docs: Record<string, Record<string, unknown>> = {
+      "users/u1/workouts/old": bench("2025-01-01", 120),
+    };
+    for (let i = 0; i < 50; i++)
+      docs[`users/u1/workouts/w${i}`] = bench(
+        `2026-0${1 + Math.floor(i / 28)}-${String((i % 28) + 1).padStart(2, "0")}`,
+        80
+      );
+    seedFirestore(docs);
+
+    // The session's read of the newest 50 came back full, so it is not
+    // the whole history.
+    const records = await loadLiftRecords("u1", {
+      workouts: await fetchSavedWorkouts("u1", { latest: 50 }),
+      latest: 50,
+    });
+
+    expect(benchBest(records)).toBe(120);
+    expect(records.sessionCounts).toEqual({ "Bench Press": 51 });
+    expect(
+      checkSetPR("Bench Press", 90, 5, records.map, records.sessionCounts, 3)
+    ).toBeNull();
+    expect(
+      checkSetPR("Bench Press", 125, 5, records.map, records.sessionCounts, 3)
+    ).toMatchObject({ kind: "best" });
+  });
+
+  it("builds a missing map from a read short of its limit, which is every session", async () => {
+    // A new account: the newest 50 came back with 2, so they are the
+    // history, and nothing more is read. Held here by a window that is not
+    // the store's, which only a second read could correct.
+    seedFirestore({ "users/u1/workouts/stored": bench("2026-06-01", 140) });
+    const records = await loadLiftRecords("u1", {
+      workouts: (await fetchSavedWorkouts("u1", { latest: 50 })).map(
+        (workout) => ({
+          ...workout,
+          exercises: workout.exercises.map((ex) => ({
+            ...ex,
+            sets: ex.sets.map((set) => ({ ...set, weightKg: 70 })),
+          })),
+        })
+      ),
+      latest: 50,
+    });
+    expect(benchBest(records)).toBe(70);
   });
 
   it("rebuilds an old-format workout under its exercise and weight", async () => {
@@ -232,10 +273,7 @@ describe("loadLiftRecords", () => {
       "users/u1/workouts/new": bench("2026-06-01", 90),
     });
 
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 1 })
-    );
+    const records = await loadLiftRecords("u1");
 
     expect(benchBest(records)).toBe(100);
     expect(Object.keys(records.map)).toEqual(["Bench Press"]);
@@ -251,10 +289,7 @@ describe("loadLiftRecords", () => {
       ]),
     });
 
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 50 })
-    );
+    const records = await loadLiftRecords("u1");
 
     expect(records.volumeBest["Bench Press"]?.volume).toBe(500);
   });
@@ -322,14 +357,12 @@ describe("a records save that failed", () => {
       "users/u1/workouts/old": bench("2026-01-01", 120),
       "users/u1/workouts/failed-records": bench("2026-06-01", 130),
     });
-    const window = await fetchSavedWorkouts("u1", { latest: 1 });
-
     // Anchor: unmarked, the next session takes the stored map as it is.
-    expect(benchBest(await loadLiftRecords("u1", window))).toBe(120);
+    expect(benchBest(await loadLiftRecords("u1"))).toBe(120);
 
     await markLiftRecordsStale("u1");
 
-    const next = await loadLiftRecords("u1", window);
+    const next = await loadLiftRecords("u1");
     expect(benchBest(next)).toBe(130);
     expect(next.sessionCounts).toEqual({ "Bench Press": 2 });
     expect(next.revision).toBe(4);
@@ -374,10 +407,7 @@ describe("invalidating the map", () => {
 
     await deleteLoggedSession({ uid: "u1", kind: "workout", id: "mislogged" });
 
-    const records = await loadLiftRecords(
-      "u1",
-      await fetchSavedWorkouts("u1", { latest: 50 })
-    );
+    const records = await loadLiftRecords("u1");
     expect(benchBest(records)).toBe(100);
     expect(records.sessionCounts).toEqual({ "Bench Press": 1 });
     expect(records.volumeBest["Bench Press"]?.volume).toBe(500);
