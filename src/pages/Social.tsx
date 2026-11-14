@@ -52,10 +52,12 @@ export default function Social() {
      mutators are consumed by ActivityCard which calls useBlockedUsers
      itself. The module-level cache keeps the two instances in sync. */
   const { blocked: blockedUsers, ready: blockedReady } = useBlockedUsers();
-  // S4c: user-hidden activity IDs filter the feed alongside blocked
-  // users. Local-only (localStorage) per device; spec defers cross-
-  // device sync until demand emerges.
-  const { hidden: hiddenActivityIds } = useHiddenActivities();
+  // S4c: the posts the person hid filter the feed alongside blocked
+  // users. Kept in the account since App1 Q38 (Settings → Social &
+  // privacy → Hidden posts), so the feed waits for the list as it waits
+  // for the blocks: a hidden post must not flash in before it is known.
+  const { hidden: hiddenActivityIds, ready: hiddenReady } =
+    useHiddenActivities();
 
   // Soc5: top-level tab persisted via URL search param. Lets external
   // links (notifications, share cards, the bottom-nav re-tap pattern)
@@ -319,7 +321,12 @@ export default function Social() {
 
       <NotificationsSheet
         open={showNotifications}
-        onOpenChange={setShowNotifications}
+        onOpenChange={(open) => {
+          setShowNotifications(open);
+          /* A row that arrived while the tray was open has been seen
+             too: closing it leaves no dot on the Social tab (App1 Q34). */
+          if (!open) notifications.markAllSeen();
+        }}
         items={notifications.items}
         loading={notifications.loading}
         error={notifications.error}
@@ -338,7 +345,7 @@ export default function Social() {
         retryFollowingCount={refreshFollowing}
         followingFeedUnlocked={followingFeedUnlocked}
         blockedUsers={blockedUsers}
-        blockedReady={blockedReady}
+        blockedReady={blockedReady && hiddenReady}
         hiddenActivityIds={hiddenActivityIds}
         refreshRef={feedRefreshRef}
       />

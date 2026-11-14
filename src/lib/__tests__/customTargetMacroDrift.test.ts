@@ -54,18 +54,15 @@ function build(customCalorieTarget?: number) {
   });
 }
 
-const sum = (p: {
-  targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
-}) => p.targetProtein * 4 + p.targetCarbs * 4 + p.targetFat * 9;
+const sum = (p: { protein: number; carbs: number; fat: number }) =>
+  p.protein * 4 + p.carbs * 4 + p.fat * 9;
 
 describe("a manual calorie override", () => {
   it("is the target the macros are split from", () => {
-    const { payload } = build(1400);
+    const { payload, tdee } = build(1400);
     expect(payload.targetCalories).toBe(1400);
     // Per-gram rounding across three macros is the only slack allowed.
-    expect(Math.abs(sum(payload) - 1400)).toBeLessThanOrEqual(9);
+    expect(Math.abs(sum(tdee) - 1400)).toBeLessThanOrEqual(9);
   });
 
   it("is the target the display surface is handed", () => {
@@ -75,8 +72,10 @@ describe("a manual calorie override", () => {
     const { tdee, payload } = build(1400);
     expect(tdee.targetCalories).toBe(1400);
     expect(tdee.protein).toBe(payload.targetProtein);
-    expect(tdee.carbs).toBe(payload.targetCarbs);
-    expect(tdee.fat).toBe(payload.targetFat);
+    // Carbs and fat are not stored (App1 Q21): every surface splits the
+    // stored target itself, so there is no stored copy to fall behind.
+    expect(payload).not.toHaveProperty("targetCarbs");
+    expect(payload).not.toHaveProperty("targetFat");
   });
 
   it("restates the deficit against maintenance rather than leaving it stale", () => {
@@ -88,10 +87,11 @@ describe("a manual calorie override", () => {
     expect(tdee.tdee).toBe(plain.tdee);
   });
 
-  it("keeps tdeeBase on the FORMULA target, which the adaptive engine reads", () => {
+  it("keeps the FORMULA target as the baseline beside it, and stores none", () => {
+    // `tdeeBase` stored the formula target and nothing read it (App1 Q24).
     const { payload, formulaTdee } = build(1400);
-    expect(payload.tdeeBase).toBe(formulaTdee.targetCalories);
-    expect(payload.tdeeBase).not.toBe(1400);
+    expect(formulaTdee.targetCalories).not.toBe(1400);
+    expect(payload).not.toHaveProperty("tdeeBase");
   });
 
   it("reports the protein cap a low override forces", () => {
@@ -112,9 +112,7 @@ describe("a manual calorie override", () => {
     expect(tdee).toEqual(formulaTdee);
     expect(payload.targetCalories).toBe(formulaTdee.targetCalories);
     expect(payload.targetProtein).toBe(formulaTdee.protein);
-    expect(Math.abs(sum(payload) - payload.targetCalories)).toBeLessThanOrEqual(
-      9
-    );
+    expect(Math.abs(sum(tdee) - payload.targetCalories)).toBeLessThanOrEqual(9);
   });
 
   it("treats 0 as no override, matching the field's own clearing behaviour", () => {

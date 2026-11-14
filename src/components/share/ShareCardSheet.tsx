@@ -49,6 +49,10 @@ export interface ShareCardSheetData {
   template: ShareTemplate;
   handle: string;
   date: string;
+  /** The feed post this card is of, when the session has one (App1 Q51).
+   *  While the post is public, the card's words end with its own page
+   *  (`publicPostShareLink`); otherwise with the front door. */
+  postId?: string;
   // RUN
   points?: GPSPoint[];
   distanceKm?: number;
@@ -79,6 +83,8 @@ export interface ShareCardSheetData {
   // RECAP (weekly summary — distanceKm/totalVolumeKg carry WEEK totals)
   sessionsCount?: number;
   streakDays?: number;
+  /** The recap's heading on the card; "This week" when absent. */
+  recapTitle?: string;
 }
 
 const STAT_LABELS: StatLabels = {
@@ -137,6 +143,30 @@ export function ShareCardSheet({
   const [exporting, setExporting] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // A public post's card links to the post's own page (App1 Q51), read as
+  // the sheet opens. Until it is known, or for any other card, the words
+  // end with the front door.
+  const [postLink, setPostLink] = useState<{
+    postId: string;
+    link: string | undefined;
+  } | null>(null);
+  useEffect(() => {
+    const postId = data.postId;
+    if (!open || !postId) return;
+    let live = true;
+    void import("@/lib/postShareLink")
+      .then(({ publicPostShareLink }) => publicPostShareLink(postId))
+      .then((link) => {
+        if (live) setPostLink({ postId, link });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [open, data.postId]);
+  const link =
+    postLink && postLink.postId === data.postId ? postLink.link : undefined;
 
   // Photo background: read the picked image as a data URL. A same-origin
   // data: URI rasterises cleanly (no cross-origin canvas taint, unlike a
@@ -213,6 +243,7 @@ export function ShareCardSheet({
     fat: data.fat,
     sessionsCount: data.sessionsCount,
     streakDays: data.streakDays,
+    recapTitle: data.recapTitle,
   };
 
   const toggleKeys = TOGGLEABLE_STATS[data.template].filter((k) =>
@@ -271,7 +302,8 @@ export function ShareCardSheet({
       }
       const outcome = await shareImageFile(
         file,
-        `My ${data.template} on Tropos`
+        `My ${data.template} on Tropos`,
+        link
       );
       track("share_card_exported", {
         template: data.template,

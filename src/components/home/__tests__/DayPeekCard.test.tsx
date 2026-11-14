@@ -113,7 +113,6 @@ function makeProfile(weekSchedule: ScheduleDay[]): UserProfile {
   return {
     uid: "u-1",
     displayName: "Test",
-    email: "t@example.com",
     weekSchedule,
   } as UserProfile;
 }
@@ -125,7 +124,6 @@ function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

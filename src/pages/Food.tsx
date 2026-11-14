@@ -9,10 +9,10 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
-import { guideRequest, hintDue } from "@/lib/firstGuide";
+import { hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth, useUid } from "@/lib/auth";
 import { beforeStart, startDayKey } from "@/lib/startDay";
@@ -135,6 +135,7 @@ import {
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { sumMealTotals } from "@/lib/mealTotals";
+import { recoverySportOf } from "@/lib/recoveryFood";
 import type { DayBudget } from "@/lib/portionLeft";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
@@ -204,9 +205,9 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation();
+  /* The session a finish screen's "Log recovery food" came from, if any. */
+  const refuelSport = recoverySportOf(searchParams.get("context"));
   const navigate = useNavigate();
-  const guideAsked = guideRequest(location.state);
   /* The food-box hint goes first on its visit (FV2): the Pro line under
      the box waits until the hint has been closed, so the first visit shows
      one thing at a time. */
@@ -215,7 +216,6 @@ export default function Food() {
   const proLineWaits = hintDue({
     allowed: composerHint.allowed,
     owed: composerHint.owed,
-    requested: guideAsked === "food-composer",
     closed: composerHintClosed,
   });
   const FOOD_TAP_BACK_DAYS = 90;
@@ -2126,23 +2126,30 @@ export default function Food() {
             dailyTargets={dailyTargets}
             onOpenWeek={() => {
               setHeroSheetOpen(false);
-              navigate("/history?view=food");
+              navigate("/history?view=food&range=1W");
             }}
           />
         </Suspense>
       )}
 
-      {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
-          RunSummary's "Log recovery food" deep link (?context=post-run),
-          today, and until dismissed — a transient contextual chip, not a
-          new structural section (Food6 IA untouched). Frames the existing
-          composer with one calm data-derived line; no separate flow, no
-          prescription, finalTarget unchanged. */}
-      {searchParams.get("context") === "post-run" && isToday && (
+      {/* FOOD-02: the refuel handoff. Renders ONLY when arriving via a
+          finish screen's "Log recovery food" link (`recoveryFoodPath`: the
+          run's, and the lift's since App1 Q30), today, and until
+          dismissed — a transient contextual chip, not a new structural
+          section (Food6 IA untouched). Frames the existing composer with
+          one calm data-derived line in the session's colour; no separate
+          flow, no prescription, finalTarget unchanged. */}
+      {refuelSport && isToday && (
         <motion.div variants={pageItemVariant}>
-          <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
+          <div
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+              refuelSport === "run" ? "bg-running/10" : "bg-lifting/10"
+            }`}
+          >
             <p className="flex-1 text-sm text-foreground">
-              Nice run — refuel with carbs and protein.
+              {refuelSport === "run"
+                ? "Nice run. Refuel with carbs and protein."
+                : "Nice workout. Refuel with protein and carbs."}
               {(() => {
                 const proteinLeft = Math.max(
                   0,
@@ -2257,21 +2264,11 @@ export default function Food() {
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
         />
-        {/* The guide's hint on a first visit (FV1), and the step the
-            first-week card's "Log your first meal" opens. The request
-            rides in the router state and is cleared when it closes. */}
+        {/* The guide's hint on a first visit (FV1). */}
         <GuideHint
           id="food-composer"
           when
-          requested={guideAsked === "food-composer"}
-          onClose={() => {
-            setComposerHintClosed(true);
-            if (guideAsked)
-              navigate(location.pathname + location.search, {
-                replace: true,
-                state: null,
-              });
-          }}
+          onClose={() => setComposerHintClosed(true)}
         />
       </motion.div>
       {usual && (

@@ -29,6 +29,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/pushNotifications", () => ({
   isRemotePushOffered: () => false,
+  isPushSupported: async () => false,
   requestRemotePushPermission: vi.fn(),
   registerDeviceToken: vi.fn(),
   unregisterDeviceToken: vi.fn(),
@@ -77,8 +78,6 @@ function renderSection(
       streakReminder={{
         enabled: false,
         time: "20:00",
-        primingShown: true,
-        firstWeekNudgeDateKey: null,
       }}
       updateStreakReminder={vi.fn(async () => {})}
       reviewReminder={reviewReminder}

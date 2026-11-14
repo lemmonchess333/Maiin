@@ -338,7 +338,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Streak state and badge earn dates \u2014 derived from activity history",
+      "reason": "Streak state (client-written) and earned badges with early_bird's days (server-written only, App1 Q33: functions/lib/badgeAwards.js checks the deletion freeze before each award; the rules refuse a client change to them). The public copy (badgeSummary) lives on users/{uid}/public/profile and goes with that row.",
       "testCoverageKey": "smoke::userSubcollections::streaks",
       "testCoverageStatus": "planned"
     },

@@ -202,14 +202,15 @@ test.describe("onboarding screenshots", () => {
     await next(page);
 
     // Step 5 — about you. Nothing here arrives filled in: height, weight
-    // and the age range are the whole calorie estimate, so the step will
+    // and the year of birth are the whole calorie estimate, so the step will
     // not advance on figures nobody entered. The frame is shot in that
     // as-arrived state, which is what a new account actually sees.
     await shootBoth(page, "onboarding-5-about-you");
     await page.getByLabel("Weight (kg)", { exact: true }).fill("81.5");
     await page.getByLabel("Height (cm)", { exact: true }).fill("175");
-    // en dash in the rendered label, so match on the leading digits.
-    await page.getByRole("radio", { name: /^25/ }).click();
+    await page
+      .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+      .fill("1995");
     await next(page);
 
     // Step 7 — confirmation. Shot but NOT submitted (completeOnboarding

@@ -37,7 +37,6 @@ import {
 import type { ProgramState } from "../../src/features/program/programTypes";
 import {
   HOME,
-  OFFER,
   SETUP,
   TABS,
   type SetupOption,
@@ -312,7 +311,8 @@ export interface SetupAnswers {
   goalWeightKg?: number;
   heightCm: number;
   sex: SetupOption<"sexes">;
-  age: SetupOption<"ages">;
+  /** The year of birth (App1, Q57), e.g. 1995. */
+  birthYear: number;
 }
 
 function button(page: Page, name: string | RegExp) {
@@ -328,13 +328,12 @@ async function next(page: Page) {
 
 /**
  * Setup's screens, as a person answers them, then Start my plan (answered by
- * the real `completeOnboarding`). Leaves the page on Home. A legacy-client
- * test can expect the existing offer before Home instead.
+ * the real `completeOnboarding`). Leaves the page on Home, which setup ends
+ * on for every account (App1), with no offer or tour between.
  */
 export async function setUpPlan(
   page: Page,
-  answers: SetupAnswers,
-  { legacyClient = false }: { legacyClient?: boolean } = {}
+  answers: SetupAnswers
 ): Promise<void> {
   await button(page, new RegExp(`^${answers.aim}`)).click();
   await next(page);
@@ -438,9 +437,8 @@ export async function setUpPlan(
     .getByRole("radio", { name: answers.sex, exact: true })
     .click();
   await page
-    .getByRole("radiogroup", { name: SETUP.age })
-    .getByRole("radio", { name: answers.age, exact: true })
-    .click();
+    .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+    .fill(String(answers.birthYear));
   if (answers.goalWeightKg !== undefined)
     await page
       .locator("#onboarding-goal-weight")
@@ -452,24 +450,16 @@ export async function setUpPlan(
     .getByRole("textbox", { name: SETUP.name, exact: true })
     .fill("Journey tester");
   await button(page, SETUP.start).click();
-  if (legacyClient) {
-    await expect(
-      page.getByRole("heading", { name: OFFER.ready }),
-      "a client without the version 2 marker keeps the existing offer"
-    ).toBeVisible({ timeout: 30_000 });
-    await button(page, OFFER.free).click();
-  }
   await expect(
     page.getByRole("heading", { name: HOME.heading, level: 1 })
   ).toBeVisible({
     timeout: 30_000,
   });
   await expect(page).toHaveURL(/\/Maiin\/$/);
-  if (!legacyClient)
-    await expect(
-      page.getByRole("dialog"),
-      "version 2 setup does not open an automatic Home tour"
-    ).toHaveCount(0);
+  await expect(
+    page.getByRole("dialog"),
+    "setup does not open a Home tour"
+  ).toHaveCount(0);
 }
 
 /** The programme as stored. */

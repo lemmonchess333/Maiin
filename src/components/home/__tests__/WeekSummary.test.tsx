@@ -6,7 +6,7 @@ import WeekSummary from "../WeekSummary";
 function counts(
   lifts: [number, number | null],
   runs: [number, number | null],
-  foodDays: number
+  foodDays: number | null
 ) {
   return {
     lifts: { done: lifts[0], planned: lifts[1] },
@@ -84,6 +84,12 @@ describe("WeekSummary", () => {
   it("always lists food, the one every week has", () => {
     render(<WeekSummary counts={counts([0, null], [0, null], 0)} />);
     expect(parts()).toEqual(["Food logged 0 of 7 days"]);
+  });
+
+  it("leaves food out while the week's meals are not known", () => {
+    // Not "0 of 7": the meals are being read, or could not be.
+    render(<WeekSummary counts={counts([2, 4], [1, 3], null)} />);
+    expect(parts()).toEqual(["Lifts 2 of 4", "Runs 1 of 3"]);
   });
 
   it("draws no bars: the week's segments are the picture", () => {

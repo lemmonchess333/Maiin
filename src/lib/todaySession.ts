@@ -19,7 +19,7 @@ import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
-import { isActivationJourneyV2 } from "@/lib/activationJourney";
+import { trainingKind } from "@/lib/trainingKind";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { runDoseLine } from "@/lib/runDose";
@@ -91,8 +91,8 @@ export interface TodaySessionInput {
   claimMap: Map<string, ClaimState>;
   /** The saved lift sessions: each one's id and day. */
   workouts: readonly { id: string; date: string }[];
-  /** Valid saved workouts for version 2 first-action framing. If omitted,
-   *  legacy framing continues to count every workout document. */
+  /** The saved workouts that count toward a first workout
+   *  (`isFirstWeekWorkoutEligible`). Absent counts every one in `workouts`. */
   validWorkoutCount?: number;
   /** When the account began, or null until the server has written it. */
   createdAtMs: number | null;
@@ -207,7 +207,7 @@ export interface TodayRun {
 }
 
 /** Next session, as the rest-day card names it. `dateKey` appears only when
- *  a version 2 race plan looks beyond tomorrow. */
+ *  a race plan looks beyond tomorrow. */
 export interface TomorrowSession {
   label: string;
   /** Where it opens in Train. */
@@ -485,6 +485,8 @@ function restDayOffer(
   // The first workout still leads for someone who also lifts; after it, a
   // free runner's day offers a run. Free running has no planned days, so
   // "Rest day" was wrong for anyone who runs freely, a lifter included.
+  // Whether they run is the plan's to say (`trainingKind`, App1 Q23), so a
+  // lifter who took up running is offered one too.
   if (day.firstWorkout) {
     const index = nextUpIndex(programState);
     const workout = index >= 0 ? programState?.workouts?.[index] : undefined;
@@ -501,32 +503,35 @@ function restDayOffer(
   // A plan with no race date is a plan here, though the profile says free
   // running (Run24 (3)).
   const runMode = runModeWithPlan(profile, programState);
+  // Free running is the profile's own word (a missing run mode is not it),
+  // and a plan with no race date is not free running.
   if (
+    profile?.runMode === "freeform" &&
     runMode === "freeform" &&
-    (profile?.athleteType === "Runner" || profile?.athleteType === "Hybrid")
+    trainingKind(profile, programState).runs
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }
   // A race plan's rest day must stay rest, and so must the starter goal's
   // (Run9) and a plan with no race date's. It cannot lead with a food
   // prompt or offer an unscheduled run to satisfy activation.
-  const version2RaceRest =
-    isActivationJourneyV2(profile) &&
-    (runMode === "race_prep" || runMode === "starter" || runMode === "rolling");
-  if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
+  const raceRest =
+    runMode === "race_prep" || runMode === "starter" || runMode === "rolling";
+  if (day.firstMeal && !raceRest) return { kind: "first-meal" };
   return {
     kind: "rest",
     tomorrow: nextRestSession(
       input,
       day.currentWeekKey,
       day.homeLift,
-      version2RaceRest ? 7 : 1
+      raceRest ? 7 : 1
     ),
   };
 }
 
-/** Legacy cards inspect tomorrow. A version 2 race rest day can name the
- *  next planned session through the coming week without starting it. */
+/** A rest day's card names tomorrow's session. A race plan's rest day can
+ *  name the next planned session through the coming week without starting
+ *  it. */
 function nextRestSession(
   input: TodaySessionInput,
   currentWeekKey: string,

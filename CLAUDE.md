@@ -88,7 +88,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                        |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode                              |
-| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)   |
+| `History.tsx`                          | `/history`                         | Progress: an overview, with Lifting / Running / Body / Food pages (`?view=`)    |
 | `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                            |
@@ -99,7 +99,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                   |
 | `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                     |
 | `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                      |
-| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                             |
+| `WeeklyReview.tsx`                     | `/review`                          | Last week’s recap, ending where the week ahead is agreed (App1 Q36)             |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
@@ -118,8 +118,9 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
-| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                    |
-| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                              |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | One switch and time per reminder, badges, and a switch per activity (S3)        |
+| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, hidden posts, privacy zones                |
+| `settings/SettingsHiddenPosts.tsx`     | `/settings/hidden-posts`           | Hidden posts — the posts hidden from your feed, each with Unhide (App1 Q38)     |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                 |
 | `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                               |
 | `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
@@ -130,6 +131,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
+| `PublicPost.tsx`                       | `/activity/:activityId`            | Signed out, a public post's card, a run's map with its ends cut off (App1 Q51)  |
 
 Four Settings routes are redirects, kept for links already saved (Trim1,
 2026-11-11): `/settings/training` and `/settings/workout-prefs` open Lift
@@ -160,16 +162,20 @@ Support & legal.
 | `workoutTemplates.ts`   | Workout template library                                       |
 | `nlFoodParser.ts`       | Natural language food parsing                                  |
 | `socialApi.ts`          | Firestore social operations (feed, kudos, follow)              |
+| `enoughPeople.ts`       | Social at small numbers: when leagues, challenges, Spaces show |
 | `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `trainingWeek.ts`       | The week done and planned, which every week count reads        |
+| `foodDay.ts`            | A food day: 800 kcal or more, the one rule every count reads   |
+| `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
 | `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
 | `subscription.ts`       | Pro subscription handling                                      |
+| `proReport.ts`          | What Pro did: the review's month card, the yearly recap        |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
 | `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |
 | `api.ts`                | API client helpers                                             |
@@ -179,6 +185,7 @@ Support & legal.
 | `logger.ts`             | Structured logging                                             |
 | `notifications.ts`      | Local reminders (meal, workout, streak), scheduled on device   |
 | `pushNotifications.ts`  | Push: the device's token, web or native, and its binding       |
+| `reminderChoices.ts`    | A reminder's one switch and time, and whether phone or push    |
 | `types.ts`              | Shared TypeScript type definitions                             |
 | `performanceTypes.ts`   | Performance engine type definitions                            |
 | `macroConstants.ts`     | Macro/nutrition constants                                      |
@@ -223,8 +230,9 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 
 ### streaks/
 
-- `useStreaks.tsx` — Streak calculation & management
-- `badges.ts` — Badge earning logic
+- `useStreaks.tsx` — Streak calculation & management; reads the earned badges, writes none
+- `restDays.ts` — the plan's rest days, which keep the streak without a log (App1 Q32); a person with no plan has none
+- `badges.ts` — The badge catalogue (names, tiers, art); `badgeProgress.ts` draws a ring from `badgeEarning.ts`, the client copy of the server's rules
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
 - `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
 - `__tests__/badges.test.ts`
@@ -247,7 +255,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 `useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (runs on `useSavedSessions`, the one live engine for saved runs and workouts; `savedSessionsReaderGuard.test.ts` keeps their readers the only ones), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live)
+`useSocialFeed`, `useDiscoverFeed`, `useNotifications` (the tray, and the Social tab's dot: its unread, cleared when the tray is opened), `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live), `useEnoughPeople` (whether leagues, challenges and Spaces are offered yet)
 
 **Performance & Analytics:**
 `usePerformance`
@@ -290,10 +298,12 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/hiddenPosts` (the posts a person hid from their feed, owner-only, App1 Q38), `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
+- **Every badge is awarded by the server** (App1 Q33). The rules are `functions/lib/badgeRules.js` and the award is `functions/lib/badgeAwards.js`, one transaction per award that names the session that earned it (`earnedBy`), run by the triggers that see the facts: `onWorkoutCreated` and `onRunCreated` (the session badges, the hybrid windows, early_bird's day), `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten` (the food and water badges), `onStreakWritten` (the streak badges, from `streaks/data`'s certificate) and `onProgramStateWritten` (programme_complete). Earned badges stay where they always were, `users/{uid}/streaks/data.badges` and the public profile's `badgeSummary`, and the rules refuse a client change to either, or to `streaks/data.earlyLogDays`. The app's rings are pinned to the server's rules by `badgeRules.cross.test.ts`. A badge with `earnedBy` and earned within 14 days is revealed once per device (`pendingBadgeReveals.ts`), from Home's new-badge row, never over Home by itself; one earned before the server awarded them has no `earnedBy` and stays as it was.
 - **A league is opt-in and scored against your own plan** (Soc15 call 3). `users/{uid}.leagueOptIn` is set only by the `setLeagueSharing` callable, which a restricted account cannot use to join; leaving deletes the person's standing at once. `leagueMembers`, `leagueGroups` (+ `standings`), `users/{uid}/leagueResults`, `leagueWeeks` and `leagueStatus` are SERVER-written only: `weeklyLeagueTurn` (Monday 12:15 UTC) settles, forms groups of about 20 and writes the open/locked figure, and the session triggers recompute a standing from the sessions. Points are `round(100 × min(done, planned) / planned)`; the planned count is `functions/lib/leaguePlanned.js`, a server copy of `trainingWeek.ts` pinned by `leaguePlanned.cross.test.ts`, and the rules are `functions/lib/leagueRules.js`.
+- **Leagues, challenges and Spaces stay quiet at small numbers** (App1 Q6, owner 2026-11-13). To someone not in one, each is offered only once the server's counts say at least `GROUP_MIN` (10, the league's own number) people are training on Tropos: the largest of this month's and last month's community-goal `collectiveRunners` and `leagueStatus/current.joined` (`src/lib/enoughPeople.ts`, read by `useEnoughPeople`). Never a room's own count, which grows only from people who can see it. Below that a quiet surface draws nothing (Together's This week and Discover, the league card and page, the Spaces directory, the Feed's Spaces source, People's Browse spaces), and someone in one keeps their way to it: an opted-in league, a joined challenge, a joined Space. Circles, the Feed and follows are never held back.
 - **A plan group is a count, recounted** (Soc15). `raceCohorts/{spaceId}` = `{ count, updatedAt }`: how many race goals (`users/{uid}.raceGoal.eventSpaceId`) are bound to that race with their race day still ahead. SERVER-written only, from a count aggregation and never an increment (`functions/lib/raceCohorts.js`), by `onRaceGoalWritten` (any write to `users/{uid}` that sets, moves or clears a bound goal recounts the old race and the new one; it is a trigger because the goal has many writers, account deletion among them) and `dailyRaceCohortRecount` (04:30 UTC, every race ahead); any signed-in person reads it. It names no one, so it leaves no one out. Only someone whose own goal is bound to a race ahead sees it (`RaceHero`, Together's hero, and a line in the race space's hero), and under 3 neither shows a number.
 - **Social's live pulse counts everyone's sessions** (Soc15). `pulse/{YYYY-MM-DD}` = `{ sessions, updatedAt, expiresAt }`, read by anyone signed in and written only by the session create and delete triggers (`functions/lib/pulse.js`), each session once through `users/{uid}/pulseCredits` (server-only, swept with the account); both expire by TTL eight days after the day starts. The Feed reads the viewer's local today and draws nothing below 10.
 - **A block hides each person from the other** (S4, Polish3 call 1). `blocks/{blocker}/users/{blocked}` is the blocker's own list; `blockedBy/{blocked}/users/{blocker}` is its copy for the person blocked, SERVER-written by `onBlockWritten` (`functions/lib/blockMirror.js`) and read only by them. `useBlockedUsers().blocked` merges the two, and every social surface filters on it; `youBlocked` and `blockedYou` are for the profile's Unblock and its not-available state alone (`blockedBothWays.test.tsx`). The rules refuse a single read of a blocker's public profile, and of a post across a block either way; queries (Explore, search, a profile's posts) are filtered in the app.
@@ -303,8 +313,11 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins and Circle events, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
 - **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows. One exception (Soc15 call 4, 2026-11-04; narrowed by its STATUS of 2026-11-05): a new account that joins from someone's invite link or code is followed by them at once, written only by the `redeemInvite` callable (`functions/lib/inviteCodes.js`; edges carry `fromInvite`), since using their link counts as the new person accepting them. The new person follows the inviter at once only when the inviter has Approve followers off; otherwise `redeemInvite` writes their follow request, marked `fromInvite`, which the inviter accepts in one tap, so a code posted publicly reaches no followers-only post. A code is renewed (Soc15 STATUS 2026-11-10) by its owner at any time (`renewInviteCode`, People's New code) and by a block of someone who joined from it (`onBlockWritten` reads the `invitedBy` that `redeemInvite` stamps), and the old code stops working at once, so a person blocked cannot make a new account and join from it again.
 - **A follow count is the server's, recounted.** `followCounts/{uid}` = `{ followers, followersAt, following, followingAt }`: how many accounts follow one and how many it follows. SERVER-written only, by `onFollowerEdgeWritten` and `onFollowingEdgeWritten` (`functions/lib/followCounts.js`), each from a count aggregation over the list whose edge was made or removed and never an increment, and never for an account being deleted. A profile reads someone else's numbers from it (`getFollowCounts` in `socialApi.ts`), so no screen reads another person's lists; your own profile counts your own lists, which are right the moment you follow someone. Anyone signed in reads one, except someone its owner blocked, and nobody lists them. A side the server has not counted is absent: the app counts the list for it while the rules allow that, and reads it as 0 once they keep a list to its owner (Polish4 call 1; `functions/scripts/backfill-follow-counts.js` counts every account first, and stays as the repair).
-- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
+- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file. **Some rows also push** (App1 Q18): `onNotificationItemWritten` sends a push for a new comment, Space comment, follow request (both ways), invite joined or league result, under the same switch, once the account takes push, never across a block, from a restricted sender or for one's own act, and quietly (no sound) in the recipient's 22:00 to 08:00; props are gathered on `users/{uid}/settings/propsBundle` and `hourlyPropsBundle` sends one push a day at 19:00 local (`functions/lib/socialPush.js`). These are outside the budget below.
+- **A push not from a person has a budget** (App1 Q60): at most 1 a day and 5 in any 7 local days per account, claimed in a transaction on `users/{uid}/settings/pushBudget` (`functions/lib/pushBudget.js`). Every server push except the test push passes it; when two compete for a day the order is the evening streak reminder, Monday's review, a closing challenge, new challenges, a badge, and a push due earlier gives way while a higher one is still armed for later that day. **A reminder ignored three times running goes quiet** (App1 Q62): answered means the app was opened after it the same day, it was tapped, or what it asked was done; the server counts the streak and review pushes (`functions/lib/reminderAttention.js`), the phone counts the reminders it schedules (`src/lib/reminderFires.ts`), and both turn the reminder's one switch off and set `{kind}QuietAt` on `settings/reminders`, which `RemindersQuietCard` says once on Home. The rule and its fields are pinned by `reminderAttention.cross.test.ts`.
+- **A reminder has one switch and one time; the app picks how it goes** (App1 Q26). Training days and meals (`settings/workoutReminders`, `settings/mealReminders`) always go from the phone. The evening streak and the Monday review (`settings/reminders`: `streakEnabled`, `streakTime` as a whole hour 08:00 to 21:00, `reviewEnabled`) go by push when the account takes push (`settings/push.enabled`) and from the phone otherwise, never both: `reminderDelivery` in `src/lib/reminderChoices.ts` and its server copy (pinned by `reminderChoices.cross.test.ts`) give one answer, and `hourlyStreakNudge` sends at the chosen hour (the recap at 09:00). The old switches (`settings/streakReminder`, `settings/reviewReminder`, `push.streak`, `push.recap`) are read until the new fields are written, never written. Settings has no push switch: turning one of those two on where the device can take push sets push up (`pushTurnedOn`), with the push-only kinds (badges, monthly challenges) left off unless asked for.
 - **A copied name and photo follow the profile.** Posts, comments, Space and Circle memberships and challenge places copy the author's name and photo when written, and a notification its sender's name (`fromName`, and the sentence that starts with it); `onPublicProfileIdentityChanged` carries a new public name or photo to the last 90 days of them (`functions/lib/identityResync.js` has the bounds), never a name the word filter refuses, a restricted account's new name or photo, or into an account being deleted. A new copy of a name goes on its list.
+- **The five launch numbers are one event each, once per account** (App1 Q17). `onboarding_completed` is sent as setup saves. The other four are decided by the server and sent by the app: the session triggers keep `users/{uid}.launchMilestones` (the first counted session and the first on days 21 to 27, `functions/lib/launchMilestones.js`, stamped empty at the first setup so an older account gets none), the billing record keeps `activationBillingFirsts` (the first verified trial and paid period, App Store and website alike), and `src/lib/launchEvents.ts` claims each in `users/{uid}/settings/launchEvents` before sending `first_session_saved`, `week_4_returned`, `trial_started` or `subscription_started`, so a sale the app never saw finish still counts, once.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 
@@ -590,38 +603,42 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and what comes next
   offered once: Build to 5K, Keep fit or a 5K) →
-  FirstWeekCard (a new account's first seven days; for a v2 account one
-  or two rows, the first workout and the first run) → NewBadgeRow (a
+  FirstWeekCard (a new account's first seven days from setup; one or two
+  rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
-  themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  themselves) → YearRecapRow (the week before a yearly Pro renewal, the
+  year and what Pro did, opened on tap; App1 Q56) → VerifyEmailBanner (until the address is verified) →
+  RemindersQuietCard (once, when a reminder went quiet after 3 went
+  unopened, App1 Q62) → TodayEnergy → WaterCard → WeightTile. Home says the week once and
   carries no performance score (Trim1 call 1, 2026-11-11): the "This
   week" card that closed the page, with its Performance row, is gone,
-  and the score is on Analytics.
+  and the score is on Progress. Nor does it carry a steps count (App1
+  Q31, 2026-11-13): steps feed the activity level offer under Food's
+  wheel (`stepActivity.ts`, Pro, phone only), and Home asks to connect
+  Health only where they can change the target.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
-- **First-visit guide (FV1, owner 2026-10-04; XB1 call 1, 2026-10-31):**
-  a new account on activation journey v2 (`isActivationJourneyV2`: the
-  `activationJourneyVersion: 2` that `completeOnboarding` stamps) goes
-  from setup straight to Home, with no Pro offer between, and its first
-  visit has no automatic walk. Home leads with today's session, and the
-  first-week card has one or two rows, "Finish your first workout" when
-  the plan has lifts and "Go for your first run" when the person runs
-  (`firstWeek.ts`, `trainingOnly`), each opening that session
-  (`firstWeekAction.ts`). `GuideHint` turns up once in each place it is
-  used (Train's order, the first set, Food's composer, the first run). A
-  legacy account keeps the earlier journey: setup's "Continue with Free"
-  lands on Home, where its first visit in its first seven days gets a
-  three-stop walk (`GuideWalk`: today's session, the first-week card,
-  Food) as the visit's one coordinator surface; its card also lists the
-  first meal and three weigh-ins, a row opens its step, and its hints
-  wait until the walk has been seen. Settings → Support & legal → Show me
-  around replays the walk for any account. The Tropos mark is the guide
-  (no character; the house voice holds). Rules and words are in
-  `firstGuide.ts`. It never shows under automation unless a capture spec
-  sets `tropos-guide-under-automation` to `on` in localStorage, so specs
-  that don't ask for it never meet it.
+- **First week and first-use guide (FV1, owner 2026-10-04; App1,
+  2026-11-13):** every account takes one first-week journey, XB1's v2
+  (App1, whole-app grill Q27, ended the comparison group and removed the
+  older journey). Setup goes straight to Home, with no Pro offer between
+  (whether one comes back is the open owner call Q72), and Home has no
+  walk. Home leads with today's session, and the first-week card counts
+  seven days from setup (`onboardingCompletedAt`) and has one or two
+  rows, "Finish your first workout" when the plan has lifts and "Go for
+  your first run" when the person runs (`firstWeek.ts`), each opening
+  that session (`firstWeekAction.ts`). `completeOnboarding` still stamps
+  `activationJourneyVersion: 2` on every new account, for the activation
+  report and app builds from before App1, but the app reads no account's
+  version (`oneFirstWeekJourney.test.ts`), so one stamped 1 or none gets
+  the same Home. `GuideHint` turns up once in each place it is used
+  (Train's order, the first set, Food's composer, the first run), with
+  nothing to meet first. The Tropos mark is the guide (no character; the
+  house voice holds). Rules and words are in `firstGuide.ts`. It never
+  shows under automation unless a capture spec sets
+  `tropos-guide-under-automation` to `on` in localStorage, so specs that
+  don't ask for it never meet it.
 - **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)

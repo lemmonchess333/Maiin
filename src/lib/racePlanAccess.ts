@@ -11,6 +11,14 @@
  * weeks after it (anything that protects a person stays free, Q46). The
  * plan keeps moving week by week for a free account, so taking Pro lands
  * on the week the race needs.
+ *
+ * The free week is once per account. A new race goal makes a new plan that
+ * starts at week 0 again, so the first time a free account's plan passes
+ * its free week the app records it on the profile
+ * (`racePlanFreeWeekUsed`, written by `useRacePlanLocked`), and from then
+ * on a later half or full marathon plan's first week is past it too. The
+ * profile, not the programme document, holds it: a new race goal and setup
+ * both replace the programme document whole, and neither touches that field.
  */
 
 /** The race distances whose plans are Pro after week 1. */
@@ -34,6 +42,9 @@ export interface RacePlanLockInput {
   /** `profile.raceGoal.distance`, the canonical copy; the plan's own copy
    *  stands in when the profile has none. */
   raceDistance?: string | null;
+  /** `profile.racePlanFreeWeekUsed`: the account has had its free week of a
+   *  half or full marathon plan, so this plan's first week is past it. */
+  freeWeekUsed?: boolean;
 }
 
 /** Whether this account's race plan has passed the week it may use free. */
@@ -44,7 +55,15 @@ export function racePlanLocked(input: RacePlanLockInput): boolean {
   if (plan.phase === "recovery") return false;
   const distance = input.raceDistance ?? plan.raceGoal?.distance ?? null;
   if (!distance || !PRO_RACE_DISTANCES.has(distance)) return false;
+  if (input.freeWeekUsed) return true;
   return (plan.currentWeek ?? 0) >= 1;
+}
+
+/** Whether the account's free week is used up now and not yet recorded:
+ *  the plan is past its free week on its own, the moment
+ *  `racePlanLocked` is first true for it. */
+export function racePlanFreeWeekToRecord(input: RacePlanLockInput): boolean {
+  return !input.freeWeekUsed && racePlanLocked(input);
 }
 
 /** Whether a planned run on a locked plan still starts: the race itself

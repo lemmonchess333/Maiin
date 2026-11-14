@@ -91,7 +91,6 @@ function week(over: Partial<ProgramState> = {}): ProgramState {
     weekNumber: 5,
     splitType: "full_body",
     workouts: [day("A"), day("B"), day("C")],
-    fatigueScore: 0,
     updatedAt: 0,
     ...over,
   } as ProgramState;

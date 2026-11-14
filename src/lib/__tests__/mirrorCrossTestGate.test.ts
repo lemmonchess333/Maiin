@@ -114,6 +114,18 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // The streak and review reminders' one switch and time (App1 Q26). Both
+  // copies run: the app's schedules the phone's copy and draws the switch,
+  // the server's decides whether the push goes and at what hour. A basename
+  // pair with src/lib/reminderChoices.ts.
+  "functions/lib/reminderChoices.js":
+    "src/lib/__tests__/reminderChoices.cross.test.ts",
+  // A reminder ignored three times running goes quiet (App1 Q62). Both
+  // halves run: the server counts the streak and review pushes, the app
+  // writes the answers the server reads and reads the quiet marks the
+  // server writes. A basename pair with src/lib/reminderAttention.ts.
+  "functions/lib/reminderAttention.js":
+    "src/lib/__tests__/reminderAttention.cross.test.ts",
   // A post's photos (Soc15 call 2): the server's limit of four, its photo
   // id rule and its "this post's own upload" URL check are held to the
   // app's and the rules' by the paths cross-test. The rest of each module
@@ -197,6 +209,14 @@ const PINNED: Record<string, string> = {
   // date}`; the app reads `pulse/{its local today}` and its `sessions`.
   // A basename pair with src/lib/pulse.ts.
   "functions/lib/pulse.js": "src/lib/__tests__/pulse.cross.test.ts",
+  // A shared post's public page (App1 Q51): the server writes the post's
+  // figures and its cut route into the page, and src/lib/publicPost.ts
+  // reads them. A basename pair; the cross-test feeds the one to the other.
+  "functions/lib/publicPost.js": "src/lib/__tests__/publicPost.cross.test.ts",
+  // The page's map, cut on the server with copies of the app's haversine
+  // (src/lib/gps.ts) and isOutdoorGpsRun (src/lib/runGuards.ts), which the
+  // same cross-test holds to the app's.
+  "functions/lib/publicRoute.js": "src/lib/__tests__/publicPost.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",
@@ -333,7 +353,8 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
   "functions/lib/challengeDefs.js":
     "consolidated server-owned definitions; no client copy to drift against",
   "functions/lib/programStateSanitizer.js":
-    "server-only payload sanitiser, not a mirror of a client function",
+    "server-only payload sanitiser, not a mirror of a client function; its " +
+    "retired-key list is pinned to the client's by retiredProgramKeys.cross.test.ts",
   "functions/lib/pushConsent.js":
     "the client copy is deliberately SHAPE-only (types + defaults); the predicate " +
     "was deleted there on purpose after the tested copy turned out to be the dead " +

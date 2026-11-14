@@ -123,7 +123,8 @@ export default function RunCTACard({
   const line: HeroLine | null = locked
     ? {
         title: `Your ${planLocked?.raceName ?? "race"} plan continues with Pro`,
-        detail: "Week 2 on is part of Pro. Runs you record stay free.",
+        detail:
+          "After your free week, the plan is part of Pro. Runs you record stay free.",
         mark: "run",
       }
     : tmpl

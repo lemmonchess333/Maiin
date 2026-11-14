@@ -1,12 +1,12 @@
 /**
  * The early-bird badge's days: distinct local days with a log before 07:00.
  *
- * early_bird counts five such days over all time, and it is the one badge
- * rule that reaches past the streak's read window. So the days it has seen
- * are kept on `streaks/data` as `earlyLogDays`, up to the five the badge
- * needs, and merged with the window's on every load: the count can only
- * grow. A document without the field predates it and is seeded once from a
- * deeper read (`useStreaks`).
+ * early_bird counts five such days over all time, and the server awards it
+ * (App1 Q33): its award keeps the days it has seen on `streaks/data` as
+ * `earlyLogDays`, up to the five the badge needs (functions/lib/
+ * badgeRules.js, `earlyDayOf` and `keptEarlyDays`, pinned to these by
+ * `badgeRules.cross.test.ts`). The app merges them with its window's days
+ * for the progress ring only.
  */
 import { format } from "date-fns";
 import { EARLY_BIRD_DAYS } from "./badgeEarning";

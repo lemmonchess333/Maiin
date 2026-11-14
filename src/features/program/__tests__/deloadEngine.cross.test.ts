@@ -136,7 +136,6 @@ describe("no lighter week in the first week back (client ↔ server)", () => {
         currentPhase: "progression",
         weekNumber: 3,
         splitType: "full_body",
-        fatigueScore: 0,
         updatedAt: 0,
         workouts: [
           {
@@ -174,7 +173,6 @@ describe("applyDeloadWeek command → week rollover (D4)", () => {
     currentPhase: "progression",
     weekNumber: 1,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 0,
     workouts: [
       {
@@ -263,7 +261,6 @@ describe("deload run half — client planner → server reducer", () => {
       currentPhase: "progression",
       weekNumber: 1,
       splitType: "upper_lower",
-      fatigueScore: 0,
       updatedAt: 0,
       workouts: [
         {

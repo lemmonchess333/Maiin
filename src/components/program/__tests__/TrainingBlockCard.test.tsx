@@ -62,7 +62,6 @@ function activeBlock(
     durationWeeks: 12,
     startDate: localToday(),
     goalBefore: "hypertrophy",
-    amnestyWeeksLeft: 3,
     weeklyLiftTarget: 4,
     anchorExerciseIds: [],
     why: "",

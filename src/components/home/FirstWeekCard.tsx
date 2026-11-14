@@ -4,8 +4,6 @@ import MetaLine from "@/components/ui/MetaLine";
 import IconButton from "@/components/ui/IconButton";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
 import {
   FIRST_WEEK_DAYS,
   type FirstWeek,
@@ -37,26 +35,17 @@ function ItemRow({ item }: { item: FirstWeekItem }) {
           {item.label}
           <span className="sr-only">{item.done ? ", done" : ""}</span>
         </p>
-        {item.hint && !item.done && (
-          <p className="text-xs text-muted-foreground">{item.hint}</p>
-        )}
       </div>
-      {item.progress && !item.done && (
-        <span className="text-xs text-muted-foreground font-mono tabular-nums">
-          {item.progress}
-        </span>
-      )}
     </>
   );
 }
 
 /**
- * Home's card for a new account's first seven days (firstWeek.ts): what
- * to do first, ticked as it happens, and when the first recap comes.
+ * Home's card for a new account's first seven days (firstWeek.ts): the
+ * first workout and the first run, ticked as they happen.
  *
- * A version 2 training row goes to the matching session's safe Start,
- * Resume, or plan detail destination. Legacy rows retain their original
- * guide and Food destinations. A ticked item is plain text. Without
+ * A row still to do goes to the matching session's Start, Resume, or plan
+ * detail (`firstWeekAction`). A ticked item is plain text. Without
  * `onOpen` every row is plain, as the card was in FW1.
  */
 export default function FirstWeekCard({
@@ -126,12 +115,6 @@ export default function FirstWeekCard({
           </li>
         ))}
       </ul>
-      {week.recapKey && (
-        <p className="text-xs text-muted-foreground">
-          Your first weekly recap comes on{" "}
-          {formatWeekdayDayMonth(parseLocalDate(week.recapKey))}.
-        </p>
-      )}
     </Card>
   );
 }

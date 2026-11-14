@@ -13,6 +13,13 @@ describe("publicStreakAsOf", () => {
     expect(publicStreakAsOf(40, "2026-08-01", "2026-10-21")).toBe(0);
   });
 
+  it("shows a streak kept through rest days ahead (App1 Q32)", () => {
+    // Lifted Monday 19, rests to Thursday 22: kept through the 22nd.
+    expect(publicStreakAsOf(30, "2026-10-22", "2026-10-21")).toBe(30);
+    expect(publicStreakAsOf(30, "2026-10-22", "2026-10-24")).toBe(30);
+    expect(publicStreakAsOf(30, "2026-10-22", "2026-10-25")).toBe(0);
+  });
+
   it("keeps the stored count when the profile does not say the day", () => {
     expect(publicStreakAsOf(12, undefined, "2026-10-21")).toBe(12);
     expect(publicStreakAsOf(12, "not a day", "2026-10-21")).toBe(12);

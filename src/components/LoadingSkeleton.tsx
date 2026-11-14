@@ -343,8 +343,8 @@ function PillRowSkeleton({ count }: { count: number }) {
 }
 
 /**
- * Analytics while its page loads, block for block in the overview's own
- * order and rhythm (Pol1): PageShell's title, the Analytics / Bests
+ * Progress while its page loads, block for block in the overview's own
+ * order and rhythm (Pol1): PageShell's title, the Overview / Bests
  * switch, Performance under its heading, the range, and the range
  * card. In any other order the whole page reshuffles as it arrives. `historySkeleton
  * .test.tsx` holds the order to History's.

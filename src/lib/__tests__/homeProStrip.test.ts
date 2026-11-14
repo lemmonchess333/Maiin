@@ -13,90 +13,56 @@ const base = {
   isPro: false,
   isInTrial: false,
   snoozed: false,
-  hadFreeWeek: false,
-  createdAtMs: days(10),
+  createdAtMs: days(30),
+  onboardingCompletedAtMs: days(10),
+  hadPriorHomeVisit: true,
   nowMs: NOW,
 };
 
 describe("shouldShowHomeProStrip", () => {
-  it("shows to a free account a few days old", () => {
+  it("shows to a free account whose plan is a few days old", () => {
     expect(shouldShowHomeProStrip(base)).toBe(true);
     expect(
       shouldShowHomeProStrip({
         ...base,
-        createdAtMs: days(HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS),
+        onboardingCompletedAtMs: days(HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS),
       })
     ).toBe(true);
   });
 
-  it("holds off while the account is younger than the window — the offer page was the first screen", () => {
-    expect(shouldShowHomeProStrip({ ...base, createdAtMs: days(0) })).toBe(
-      false
-    );
+  it("counts the days from setup, not sign-up", () => {
+    const setUpToday = { ...base, onboardingCompletedAtMs: days(2) };
+    expect(shouldShowHomeProStrip(setUpToday)).toBe(false);
     expect(
       shouldShowHomeProStrip({
         ...base,
-        createdAtMs: days(HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS - 0.5),
+        onboardingCompletedAtMs: days(
+          HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS - 0.5
+        ),
       })
     ).toBe(false);
   });
 
-  it("shows straight away once the old free week has lapsed, whatever the account age", () => {
-    expect(
-      shouldShowHomeProStrip({
-        ...base,
-        hadFreeWeek: true,
-        createdAtMs: days(0),
-      })
-    ).toBe(true);
-    expect(
-      shouldShowHomeProStrip({ ...base, hadFreeWeek: true, createdAtMs: null })
-    ).toBe(true);
+  it("keeps the first Home visit clear, even when the plan is days old", () => {
+    expect(shouldShowHomeProStrip({ ...base, hadPriorHomeVisit: false })).toBe(
+      false
+    );
+  });
+
+  it("counts from sign-up for an account set up before setup was stamped", () => {
+    const unstamped = { ...base, onboardingCompletedAtMs: null };
+    expect(shouldShowHomeProStrip(unstamped)).toBe(true);
+    expect(shouldShowHomeProStrip({ ...unstamped, createdAtMs: days(1) })).toBe(
+      false
+    );
+    expect(shouldShowHomeProStrip({ ...unstamped, createdAtMs: null })).toBe(
+      false
+    );
   });
 
   it("never for Pro, never during a trial, never while snoozed", () => {
     expect(shouldShowHomeProStrip({ ...base, isPro: true })).toBe(false);
     expect(shouldShowHomeProStrip({ ...base, isInTrial: true })).toBe(false);
     expect(shouldShowHomeProStrip({ ...base, snoozed: true })).toBe(false);
-    expect(
-      shouldShowHomeProStrip({ ...base, hadFreeWeek: true, snoozed: true })
-    ).toBe(false);
-  });
-
-  it("waits for createdAt to resolve before counting days", () => {
-    expect(shouldShowHomeProStrip({ ...base, createdAtMs: null })).toBe(false);
-  });
-
-  it("keeps a version 2 first Home visit clear, even when the plan is days old", () => {
-    const v2 = {
-      ...base,
-      activationJourneyV2: true,
-      onboardingCompletedAtMs: days(10),
-      hadPriorHomeVisit: false,
-      hadFreeWeek: true,
-    };
-    expect(shouldShowHomeProStrip(v2)).toBe(false);
-    expect(shouldShowHomeProStrip({ ...v2, hadPriorHomeVisit: true })).toBe(
-      true
-    );
-  });
-
-  it("starts the version 2 offer delay at plan completion", () => {
-    const v2 = {
-      ...base,
-      activationJourneyV2: true,
-      hadPriorHomeVisit: true,
-      onboardingCompletedAtMs: days(2),
-    };
-    expect(shouldShowHomeProStrip(v2)).toBe(false);
-    expect(
-      shouldShowHomeProStrip({
-        ...v2,
-        onboardingCompletedAtMs: days(HOME_PRO_STRIP_MIN_ACCOUNT_AGE_DAYS),
-      })
-    ).toBe(true);
-    expect(
-      shouldShowHomeProStrip({ ...v2, onboardingCompletedAtMs: null })
-    ).toBe(false);
   });
 });

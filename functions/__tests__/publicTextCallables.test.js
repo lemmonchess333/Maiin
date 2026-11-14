@@ -177,7 +177,7 @@ describe("completeOnboarding — the display name", () => {
         { profileData: { ...BODY, displayName: "Sam" }, programState: {} },
         { auth: { uid: "u1" } }
       )
-    ).resolves.toEqual({ success: true, activationJourneyVersion: null });
+    ).resolves.toEqual({ success: true, activationJourneyVersion: 2 });
     expect(db.data.get("users/u1")).toMatchObject({
       displayName: "Sam",
       onboardingComplete: true,

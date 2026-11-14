@@ -38,7 +38,7 @@ test("a hybrid reaches Today and completes both first-week tasks", async ({
       weightKg: 75,
       heightCm: 175,
       sex: "Female",
-      age: "25–34",
+      birthYear: 1995,
     });
     const db = emulatorAdmin().db;
     const profile = (await db.doc(`users/${account.uid}`).get()).data();

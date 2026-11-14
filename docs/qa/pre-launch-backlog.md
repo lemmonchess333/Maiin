@@ -1089,8 +1089,9 @@ TestFlight script names each one.
       security, on an email account. Change the password, sign out and sign
       in with the new one. Then change the email and tap the link sent to the
       new address. Passing: only the new password works; the sign-in email
-      changes only once the link is tapped; after the app's next start,
-      Firestore `users/{uid}` shows the new `email`.
+      changes only once the link is tapped, and Settings → Account then
+      shows the new address. (The profile document keeps no copy of the
+      address since App1 Q24; Auth's is the only one.)
 - [ ] **The minimum-version gate.** Firestore console → `config/client` →
       string field `minSupportedVersion` = `"99.0.0"`. Open the app, then
       delete the field and reopen. Passing: an update screen first (the
@@ -1769,7 +1770,7 @@ The walk's stops, the hints' rules and the row actions are pinned by unit
 tests; jsdom draws no layout, so where the card sits and how the mark
 moves need a phone.
 
-- [ ] **The walk on a new account.** Sign up, finish setup, Continue with
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **The walk on a new account.** Sign up, finish setup, Continue with
       Free: Home opens and dims around the first card, and the mark lifts
       out of the header into the card. Next: the card disappears, the
       light moves, and the card fades in beside the next stop, never
@@ -1779,9 +1780,9 @@ moves need a phone.
 - [ ] **A small phone (SE).** No card hides under the tab bar or the
       Dynamic Island's status bar, and the Food hint turns above the
       composer rather than lie across the tab bar.
-- [ ] **VoiceOver** reads each stop's title and words as the walk moves
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **VoiceOver** reads each stop's title and words as the walk moves
       on, and focus starts on Next and stays there.
-- [ ] **Reduce Motion:** no flight, the cards fade.
+- [x] _(Retired 2026-11-13: Home's walk went with App1, whole-app grill Q27. See "One first-week journey for every account".)_ **Reduce Motion:** no flight, the cards fade.
 - [x] _(Proven 2026-10-18: e2e/screenshots/guide.capture.spec.ts 'a new account meets the guide: the walk, a first-week row and the hints' now goes on to /run on the same new account: "Your first run" shows over the run tiles; tapping a tile closes it and starts the run ("Acquiring GPS..."); the seen mark is stored; and it does not come back after Cancel or on a fresh visit to /run. 1 passed on the emulator rig, and a build that ignores the seen mark fails it on the revisit. The Food, Train and first-set hints were already asserted there, and GuideHint.test.tsx pins 'shows once' and the tap-through.)_ **The hints**, each once: Train's lift tab, the first set of the
       first workout (it sits above the workout screen), Food's composer,
       the run screen before a first run. Tapping the thing a hint points
@@ -5151,3 +5152,776 @@ Apple Health.
       HealthKit in both, and the archive verified with
       `--expected-connected-training YES`, including the Watch app's audio
       background mode and its two Health texts.
+
+## One lighter-week offer for both sports, in the words of its reason (Q11, 2026-11-13)
+
+Affects: Train's "Consider a lighter week" banner. It is offered whenever
+the engine recommends a lighter week and one can be taken, for a week of
+lifting, of running or of both (a lifting-only week was never offered one),
+and it now shows on the Run tab too, first among the week's notices (the
+ease-week nudge waits while it shows). Its words name the engine's reason
+(recovery score low, two high weeks running, or the plan's targets missed)
+and the sport furthest over its usual week, then what a lighter week does
+for the plan the person has. Unit-tested; no phone has drawn it.
+
+- [ ] **A lifting-only week.** Seed a lifter whose last 7 days the engine
+      flags. Passing: the Lift tab offers a lighter week, and its line starts
+      "You lifted" with a per cent and never says running.
+- [ ] **A running-only week, on the Run tab.** Passing: the offer leads the
+      Run tab's notices, says "You ran …", and "Take a lighter week" shortens
+      the runs left; it is gone from both tabs once taken, and dismissing it
+      on one tab dismisses it on the other.
+- [ ] **Each reason.** With weeks seeded for each: the recovery line ends
+      "and your recovery score is low", the sustained one reads "… two weeks
+      in a row", and the missed-targets one "… while missing your plan’s
+      targets".
+- [ ] **Race taper.** A runner in a race's taper or race week. Passing: no
+      offer on either tab.
+- [ ] **Larger text, 320 px.** Passing: the two sentences wrap inside the
+      banner with the button under them.
+
+## The day's fuel label on Food and Home (Q29, 2026-11-13)
+
+Affects: Food's wheel (a line under it, above Details) and Home's food card
+(a line under the macros, before a post-session note). Unit-tested; no phone
+has drawn it.
+
+- [ ] **The eve of a long run.** With a long run of 75 minutes or more
+      planned tomorrow and a rest or easy day today, open Food and Home.
+      Passing: both say "Long 20K tomorrow, fuel up today" (in miles for a
+      miles account) in the food orange, one line each; Food's other days
+      do not.
+- [ ] **Race week and a taper.** In a race's final days, and in its taper
+      week. Passing: both say "Race week, carb load", then "Taper week", for
+      a free account as for Pro.
+- [ ] **Any other day.** A hard lift day and a rest day. Passing: no label
+      on either screen; "Hard session" does not come back to the wheel.
+- [ ] **Room.** At 320 px and with larger text, on a label day. Passing: the
+      line wraps under the wheel without pushing Scan under the tab bar.
+
+## Hidden posts under Social & privacy (App1 Q38, 2026-11-13)
+
+Affects: the report form's Hide from my feed (it now writes
+`users/{uid}/hiddenPosts/{activityId}` in the account, not this device's
+local storage), the feed and the Social tab's unread count that leave hidden
+posts out, and the new Settings → Social & privacy → Hidden posts page
+(`/settings/hidden-posts`). Needs the rules deploy (Deploy production runs it
+before Hosting; the iOS build must not go out before the rules are live, or
+every hide is refused). Unit-tested on the Firestore fake; the rules tests
+ran on a local emulator. No phone has drawn it.
+
+- [ ] **Hide on the phone, see it gone on the web.** Report a post, keep Hide
+      from my feed on, submit. Passing: the post leaves the feed at once, also
+      in aeroplane mode, and is gone from the web build's feed signed in as
+      the same account.
+- [ ] **The list.** Open Settings → Social & privacy → Hidden posts. Passing:
+      the post shows with its author, its one line ("Easy run · 5.2 km ·
+      12 Nov") and Unhide; nothing runs past the screen at 320 px with large
+      text.
+- [ ] **Unhide.** Tap Unhide. Passing: the row goes, "Back in your feed"
+      offers Undo, and the post is back in the feed on both devices.
+- [ ] **An updated build keeps the old hides.** On a phone that hid a post
+      with a build from before this change, install the new one. Passing:
+      the post stays hidden, and it shows in Hidden posts.
+- [ ] **A block.** Block the author of a hidden post. Passing: the post
+      leaves the Hidden posts list (it stays hidden); unblock and it is back
+      in the list.
+
+## Settings asks the sex the calorie maths uses (App1, 2026-11-13)
+
+Affects: Settings → Profile. "Gender" (Male, Female, Prefer not to say),
+which wrote a field nothing read, is now "Sex for calorie calculation"
+(Male, Female), as setup asks it, with a line saying what it is for.
+Unit-tested; no phone has drawn it.
+
+- [ ] **The targets follow it.** An account with a goal weight changes
+      Male to Female in Profile. Passing: Food's and Home's calorie target
+      drops within a few seconds, and Settings → Nutrition shows the same
+      number.
+- [ ] **An older account.** An account set up before `sex` existed, with a
+      gender of Female. Passing: Profile shows Female selected; nothing is
+      written until it is tapped.
+
+## The year of birth replaces the age range (App1, 2026-11-13)
+
+Affects: setup's About you and Settings → Profile. Both ask "Year of birth"
+(four digits on the number pad) where they asked an age range; Settings →
+Nutrition shows the age worked out from it, read-only. The age the calorie
+target and the heart-rate zones use is worked out from the year. A year
+later than this year less 16 is refused with setup's under-16 line.
+Unit-tested; no phone has drawn it.
+
+- [ ] **The iOS field.** On an iPhone, at About you and in Profile. Passing:
+      tapping the field opens the number pad, autofill may offer the year,
+      four digits fit at 320 px with the text at double size, and leaving
+      the Profile field saves it (the targets change on Food within a few
+      seconds for an account with a goal weight).
+- [ ] **The under-16 line.** At About you, type this year less 15. Passing:
+      "You need to be at least 16 to use Tropos." shows at once and Continue
+      stays off; this year less 16 clears it.
+- [ ] **An older account.** An account set up with an age range, so with an
+      `age` and no `birthYear`. Passing: Profile's field is empty with "Until
+      you add it, they use an age of N."; Nutrition keeps its Age field;
+      adding a year in Profile turns Nutrition's Age read-only.
+- [ ] **A draft from before.** A setup draft saved at the review before this
+      shipped. Passing: setup opens on About you for the year, and Back to
+      review returns to the review.
+
+## The plan's retired fields are stripped (App1 Q24, 2026-11-13)
+
+Affects: `users/{uid}/programState/current`. Seven fields nothing reads are
+no longer written: `fatigueScore`, `plateauResponses`, the plan's own
+`templateId` (never a run day's), `recoveringMuscles`,
+`settings.microloading`, `trainingBlock.amnestyWeeksLeft` and
+`deloadSnapshot.fatigueScore`; `updatedAt` stays. The server deletes them
+silently on every programme command and never refuses a command or a plan
+save for one, so a stored plan, or an older app that still writes
+`fatigueScore`, keeps working. Tested against a fake and in the emulator
+suite. Run these after Deploy production has shipped the change (the
+functions go out before the web build; the iOS build comes later), from
+the repo root with the usual operator credentials. The script is
+`functions/scripts/stripRetiredProgramFields.js`.
+
+- [ ] **Dry run.** Run the script with `--project adaptive-fitness-af8bb`
+      and nothing else. Passing: a JSON report with `dryRun: true`, `plans`
+      about the number of accounts with a plan, and a count for each of the
+      seven fields (`fatigueScore` close to `plans`); nothing written.
+- [ ] **Strip.** The same command with `--apply` added. Passing: `stripped`
+      equals the dry run's `carrying`. If it stops partway (a plan deleted
+      mid-run), run it again, from the start or with `--after` and the last
+      printed `cursor`. A second dry run then shows `carrying: 0`, or only
+      plans an older app has written `fatigueScore` back to, which the
+      server deletes again on their next command. Nothing else is needed.
+- [ ] **Lighter week on a stripped plan.** On a phone, on a plan the strip
+      has run over, Apply lighter week, then Undo. Passing: both work and
+      the week's sets come back as they were.
+
+## The streak keeps the plan's rest days (Q32, 2026-11-13)
+
+Affects: Home's streak chip and the streak sheet (the plan's rest days are
+ringed as covered, with new words under the month), the evening streak
+reminder and its first-week nudge on the phone, the server's 19:00 streak
+push, and the streak other people see on a public profile. A rest day is a
+day the plan holds no session; a missed planned session is still the one
+forgiven day in seven, and a second within the week, or two missed sessions
+with nothing logged between, ends the streak. No plan, no rest days.
+Unit-tested; no phone has shown it.
+
+- [ ] **A rest day on a phone.** With a three-day lifting plan, lift on a
+      Monday and log nothing on Tuesday. Passing: Tuesday's flame shows one
+      more day than Monday's; the sheet rings Tuesday; no evening reminder or
+      streak push arrives on Tuesday.
+- [ ] **The training day after.** Log nothing on Wednesday, a lifting day,
+      until the evening. Passing: the streak still shows in the morning (not
+      0), and the 19:00 push or the local reminder arrives as before.
+- [ ] **Someone else's view.** From a second account, open the first
+      account's profile on its rest days without the first account opening
+      the app. Passing: its streak shows, and reads 0 two days after a
+      missed session.
+- [ ] **No plan.** On an account whose week holds no session, log on
+      alternate days. Passing: the sheet's words say one rest day in seven is
+      covered, and the streak behaves as before.
+
+## A finished lift gets what a finished run gets (Q30, 2026-11-13)
+
+Affects: the lift's finish screen once Save workout has worked (from Train, a
+saved routine and an empty workout), Food's refuel line, and the run's finish
+(its props prompt and recovery-food link are now the same components).
+Unit-tested; no phone has drawn it.
+
+- [ ] **Nothing before the save.** Finish a lift. Passing: the review shows
+      Save workout, with no Log recovery food, no props card and no Share.
+- [ ] **Log recovery food.** Save a lift from Train, then tap Log recovery
+      food. Passing: Food opens on today with "Nice workout. Refuel with
+      protein and carbs." in the lifting purple, the grams left after it, and
+      the cross takes it away. Back returns to Train with the session closed.
+      From a saved routine or an empty workout, Back does not start the
+      session again.
+- [ ] **The run's line.** Save a run and tap Log recovery food. Passing: "Nice
+      run. Refuel with carbs and protein." in the run's coral.
+- [ ] **Props.** With a followed account that trained today, save a lift.
+      Passing: the props card shows under the week, once that day, and Give
+      props gives them.
+- [ ] **Share to circle.** In a Circle, save a lift from Train and tap Share.
+      Passing: Share to circle sits under the card's Share; it closes the card
+      and opens the Circle sheet over the finish screen, dimming it, and sharing
+      posts "completed a session" with no numbers. A saved routine or an empty
+      workout offers no Share to circle there.
+
+## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
+
+Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of
+the accounts whose profile (`runMode`) or plan (`programState/current`
+`runPlan.mode`) still holds the structured run mode Run9 (3a) retired. The
+removal that follows it (the mode out of the types, the scheduler, the
+server's enums) merges only once this reads 0. Saved runs keep the mode as
+history; their line does not hold the removal back.
+
+- [ ] **The count, before the removal merges.** From the repo root, with a
+      service account that can read Firestore:
+      `GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json node functions/scripts/countStructuredRunMode.js adaptive-fitness-af8bb`.
+      Passing: `"holding": 0` and the line "No account holds the
+      structured run mode: the removal can merge." Above 0, add `--uids`
+      to see which accounts, and run it again once they have opened the
+      app (each moves to free running when it does).
+
+## One switch and one time per reminder; the app picks phone or push (App1 Q26, 2026-11-13)
+
+Affects: Settings → Notifications (no push switch; Streak's time is a whole
+hour, 08:00 to 21:00; Badges and challenges keep a switch each), the phone's
+evening and Monday reminders, and the server's `hourlyStreakNudge` (the
+streak push now goes at the chosen hour, not 19:00; the Monday recap at
+09:00, not 08:00). Training days and meals still go from the phone only.
+Unit-tested on both sides; no phone or deployed sender has shown it.
+
+- [ ] **Streak by push, once, at its time, app closed.** On an iPhone build
+      with push, turn Streak on with 18:00, log nothing that day and close
+      the app. Passing: one "An evening reminder" at 18:00 local, and
+      nothing from the phone itself (Settings shows "Arrives even with the
+      app closed." under it, not a Next time).
+- [ ] **Streak on the phone where push is off.** On a build without push
+      (or an account whose push is off), turn Streak on with 18:00, open
+      the app that morning without logging, then close it. Passing: one
+      notification at 18:00, and Settings showed "Next: in … hrs" for it.
+- [ ] **Weekly review, once, at 09:00 Monday.** An account with push on and
+      something logged last week, app closed on Monday morning. Passing: one
+      "Your week, reviewed" at 09:00 local (not 08:00), opening the review.
+- [ ] **Turning a reminder on sets push up quietly.** On an iPhone whose
+      account never had push, turn Weekly review on. Passing: one system
+      prompt at most (the notifications one), the Badge and challenge
+      switches stay off, and Streak does not turn itself on.
+- [ ] **Off is off on both channels.** Turn Streak off on an account with
+      push on. Passing: no evening push that day or the next, and no local
+      notification either.
+- [ ] **An account from before.** On an account that had the old "Push
+      notifications" and "Streak nudges" on and never touched the phone's
+      Streak switch, open Settings → Notifications. Passing: Streak reads
+      on at 20:00, and the push comes at 20:00 (it came at 19:00 before).
+- [ ] **Deployed sender.** After the functions deploy, read the deployed
+      source of `hourlyStreakNudge` in the console. Passing: it calls
+      `reminderChoices.streakReminderPushHour` and the recap
+      `reminderChoices.reviewReminderByPush`.
+
+## A dot on the Social tab for new activity (App1 Q34, 2026-11-13)
+
+Affects: the Social tab (`BottomNavigation`, fed by `Layout` from the
+notification tray's unread count in `useNotifications`) and Social's bell,
+which opens the tray. The dot used to mean new posts in the feed since
+Social was last tapped; it now means the tray holds something unread
+(props, a comment, a follow request, an invite joined, a league result),
+and it clears when the tray is opened or closed, not when the tab is
+tapped. Unit-tested; no phone has drawn it.
+
+- [ ] **A real notification.** From a second account, give props on a
+      post of yours. Passing: within a few seconds a small purple dot sits
+      on the Social tab's icon, on Home as well as on Social.
+- [ ] **VoiceOver.** With the dot showing, move to the Social tab. Passing:
+      it reads "Social, new activity"; with no dot it reads "Social".
+- [ ] **Cleared by the tray.** Tap Social, then the bell. Passing: the dot
+      stays after tapping the tab, and goes as the tray opens; it does not
+      come back after closing the tray or relaunching the app.
+
+## Steps offer a change to activity level; the steps tile leaves Home (Q31, 2026-11-13)
+
+Affects: Food (a card under the wheel, today only, for a Pro account on the
+formula's target, no manual target, not in a taper), Home (no Steps tile; the
+Weight tile stands alone beside Water; the Apple Health prompt asks only a Pro
+account on the formula's target), Settings → Apple Health (its words), and the
+Health permission text iOS shows. The web never reads steps and never shows the
+card. Unit-tested; no phone has drawn it.
+
+- [ ] **The offer.** On an iPhone with Apple Health holding at least 5 days of
+      steps last week, a Pro account whose stored activity level is far from
+      them (for example Light at about 11,000 a day). Passing: Food shows
+      "Your steps say Active" with last week's average, and "Active sets your
+      target to … kcal, up from … kcal", where the second number is the
+      wheel's.
+- [ ] **Use.** Tap Use Active. Passing: the card goes, the wheel shows the new
+      target, Settings → Nutrition shows Active selected with the same daily
+      target, and the toast's Undo puts the old level and target back.
+- [ ] **Keep.** Tap Keep Light. Passing: the card goes and does not come back
+      on this phone or another signed into the account for 30 days.
+- [ ] **A move down with a lift.** A week of few steps with one lift logged.
+      Passing: no offer to move down that week.
+- [ ] **Not offered.** A free account, a Pro account whose target has started
+      adapting, and one with a manual target. Passing: no card, and on Home
+      the Apple Health prompt does not ask a free account.
+- [ ] **Home.** Passing: no Steps tile on Home at 393 and 320 pt with larger
+      text; the Weight tile matches the Water tile's height and nothing runs
+      past it.
+- [ ] **The iOS permission sheet.** On a fresh install, connect Apple Health.
+      Passing: the sheet's text says Tropos reads the daily step count to
+      check the activity level the calorie target assumes.
+
+## The weekly review ends on the week ahead (App1 Q36, 2026-11-13)
+
+Affects: the review's last card (`WeekAheadEnding`): the week's seven days
+from the live plan, then any change offered for it (a realign from the
+weekly check or the race check, a lighter week, new paces), each taken in
+one tap through the command its own surface uses, then "Looks good", or
+"Keep my plan" while an offer is open. Unit-tested with the plan reader
+stood in; no phone has taken an offer from the review.
+
+- [ ] **Opened from Monday's notification, before Home.** Passing: the card
+      shows this week's days with their runs, not last week's plan or a week
+      with no runs, once the plan has rolled over.
+- [ ] **A lighter week, then Undo.** On an account Train offers a lighter week
+      to, take it from the review, then tap Undo. Passing: Train shows the
+      lighter week after taking it and the full plan after Undo.
+- [ ] **Realign.** On a race plan the weekly check flagged, tap Realign my
+      plan. Passing: the card says how many weeks were planned; Home does not
+      open the fell-behind sheet afterwards.
+- [ ] **Keep my plan.** With an offer open, tap Keep my plan. Passing: the
+      review closes after the offer is set aside (a short wait at most), and
+      neither Home nor Train asks the same thing again that week.
+- [ ] **Lift-only, run-only and both.** Open a review on each kind of
+      account, and a first review. Passing: every day reads Lift, a named
+      run with its distance or minutes, or Rest; the card scrolls to its
+      button at 320 px and with larger text.
+
+## The profile's dead fields: stop, strip, then refuse (App1 Q24, 2026-11-13)
+
+Affects: the profile document `users/{uid}`. No build from this release on
+writes `adjustCaloriesForTraining`, `aiCalorieAdjustment`, `appleProductId`,
+`autoPostBadges`, `autoPostRuns`, `autoPostWorkouts`, `crewId`,
+`currentStreak`, `defaultVisibility`, `email`, `enableRolloverCalories`,
+`goal`, `lastLogDate`, `longestStreak`, `macroTargets`, `targetCarbs`,
+`targetFat`, `targetFiber`, `targetSodium`, `targetSugar`, `tdeeBase`,
+`updatedAt`, or `program.startWeight`; nothing read them. The rules still
+allow them (an older build's sign-up sends several, and the create checks
+every key), the callables drop them without a warning, and
+`functions/scripts/stripRetiredProfileFields.js` removes the stored copies.
+Unit-tested against the fake; the strip has not run on the real project.
+
+In this order:
+
+- [ ] **Ship a version older builds do not share.** The minimum-version
+      gate compares `package.json`'s `version` (1.2.0 when this merged, and
+      every build before it says 1.2.0 too). Raise it for the first release
+      that carries this change, then merge, let Deploy production finish,
+      and put that build on TestFlight and the App Store. Passing: Settings →
+      Support & legal shows the new version on the phone.
+- [ ] **Dry run.** From the repo root, with `npm ci` done in `functions/`
+      and gcloud application-default credentials for the project:
+      `node functions/scripts/stripRetiredProfileFields.js --project adaptive-fitness-af8bb`.
+      Passing: it writes nothing and prints how many profiles hold each
+      field (`lastLogDate` should be about every account: sign-up stored
+      it as null).
+- [ ] **Strip.** The same command with `--apply`. It prints a checkpoint
+      after each page of 200; if it stops, run it again with
+      `--after <the last checkpoint's cursor>`, or from the start. Passing: a
+      second dry run reports `holding: 0`, and one profile in the Firestore
+      console has none of the fields above (and `program` has no
+      `startWeight`). Each profile written fires `onRaceGoalWritten` once,
+      which returns without reading anything.
+- [ ] **Raise the minimum version.** Once the new build has been out long
+      enough for people to update: Firestore console → `config/client` →
+      `minSupportedVersion` = the version from the first step. Passing: an
+      older build shows the update screen; the new one opens as normal.
+- [ ] **Dry run again.** An older build used before the raise may have
+      written a field back. Passing: `holding: 0`, or `--apply` once more
+      and then `holding: 0`.
+- [ ] **Then merge the follow-up** that deletes the RETIRED block from
+      `allowedUserFields()` in `firestore.rules` (and the Apple product id
+      from the two billing guards), the registry's `retired` entries, and
+      `RETIRED_PROFILE_FIELDS` in `functions/profileSanitizer.js`. Passing:
+      a sign-up on the current build (email, and Google or Apple) still
+      reaches setup.
+- [ ] **This build, on a phone.** Sign up with email, finish setup, log a
+      weigh-in and undo it, and log something that moves the streak.
+      Passing: setup finishes; the weigh-in's undo puts the weight back;
+      the streak shows on Home and the profile badge; and in the console
+      the new `users/{uid}` holds none of the fields above.
+
+## Leagues, challenges and Spaces quiet at small numbers (App1 Q6, 2026-11-14)
+
+Affects: Together (This week, Discover, the league card), the league page,
+the Spaces directory, the Feed's Spaces source and People's empty state,
+all gated by `useEnoughPeople` (`src/lib/enoughPeople.ts`): offered to
+someone not in them only once the server's counts say 10 or more people
+are training. Unit tests drive each surface on the Firestore fake; no phone
+or populated database has shown either side of the line.
+
+- [ ] **A quiet Tropos.** On the production database while fewer than 10
+      people are training (the Firestore console: this month's and last
+      month's `challenges/group-goal-YYYY-MM-01.collectiveRunners` and
+      `leagueStatus/current.joined` all under 10), sign in on a phone with
+      an account that joined nothing. Passing: Together shows the race hero
+      (if bound) and Circles only, with no This week, no Discover, no league
+      card and no "coming soon" line; the Feed has two sources, Following
+      and Explore; People's "No suggestions yet" offers no Browse spaces;
+      opening `/league` lands on Together. Check in light and dark.
+- [ ] **What a person is in stays.** On the same quiet database, an account
+      that joined a challenge, a Space and the league. Passing: This week
+      shows the joined challenge with its progress and the league's waiting
+      card; "Your spaces" shows the joined Space; the Feed keeps its Spaces
+      source.
+- [ ] **It opens on its own.** On a populated database (the emulator rig
+      seeded with 10 or more runners in this month's community goal is
+      enough), the same account that joined nothing. Passing: Together's
+      This week offers the weekly challenge, the league card offers Join,
+      Discover shows races, Spaces, the community goal and the challenges,
+      and the Feed has its Spaces source, with no reload beyond reopening
+      Social.
+- [ ] **The 1st of a month.** On the first morning of a month on a
+      populated database, with this month's community goal still under 10
+      runners and last month's over. Passing: Together still offers its
+      challenges and Spaces.
+
+## One free week of a half or full marathon plan per account (Q85, 2026-11-13)
+
+Affects: the same surfaces as Q85's rows above, and the profile field
+`racePlanFreeWeekUsed` (value-gated in `firestore.rules`: `true`, or `null`
+where never set, and kept once `true`). The first time a free account's half
+or full marathon plan passes its free week, the app writes it on the profile
+(`useRacePlanLocked`, from Home, Train's Run tab or the Run page); from then
+on a new half or full marathon plan is Pro from its first week. The race
+itself, recovery weeks, 5K and 10K plans and Pro or trial accounts are
+unaffected. Unit-tested; the rules suite (`firestore.profile.rules.test.ts`)
+has not been run against the emulator, and no phone has drawn it.
+
+- [ ] **The record is written.** After the release, in the Firebase
+      console, open a free test account's `users/{uid}` once its plan is in
+      week 2. Passing: `racePlanFreeWeekUsed: true` is there, and no "Couldn’t
+      save" toast showed on the phone.
+- [ ] **A new race goal after the free week.** The same free account changes
+      its race in Settings → Run plan to another half or full marathon.
+      Passing: the note reads "Half and full marathon plans are part of Pro,
+      and you’ve had your free week."; after saving, Home's run card and
+      Train's Start offer Pro in the new plan's first week, with "After your
+      free week, the plan is part of Pro."
+- [ ] **A new race goal inside the free week.** A fresh free account sets up a
+      marathon, then changes to a half marathon before its second week.
+      Passing: the new plan's first week starts as usual (nothing was
+      recorded yet), and it locks in its second week.
+- [ ] **Race day, recovery, 5K and 10K.** On the account that has used its
+      free week: Start race works on race day, recovery weeks start as usual,
+      and a 5K or 10K plan starts every week.
+- [ ] **Pro and trial.** An account that took Pro or a trial before its plan
+      reached week 2 has no `racePlanFreeWeekUsed`; Start works throughout.
+
+## Earned anniversaries (App1 Q58, 2026-11-14)
+
+Affects: both finish screens, which now read
+`users/{uid}/stats/anniversaries` after a save and show a full-screen
+reveal for a 50th or 100th session, a year of Tropos or 1,000 km run, with
+Share. Unit and component tests drive the rules, the marks and the reveal
+on the Firestore fake; no phone has shown one or shared its card.
+
+- [ ] **The 50th session on a phone.** On an account with 49 saved sessions,
+      save a lift on the iPhone app. Passing: the reveal covers the finish
+      screen edge to edge (safe areas kept, no tab bar under it), Share
+      opens the share sheet with a square card that reads "Your 50th
+      session", and the Firestore console shows `sessions50` with
+      `shown: true`.
+- [ ] **Once per account.** Open that finish again (Train's history, or
+      the same session on the web build). Passing: no reveal.
+- [ ] **An older account.** On an account with more than 100 sessions from
+      before this build, save any session. Passing: no reveal, and the
+      console shows `sessions50` and `sessions100` with `day: null`.
+
+## Finishing a lift and checkout as one state each (App1 Q20, 2026-11-13)
+
+Affects: the lift's finish screen (Save workout, Retry sync, the saved
+screen's status line) and the iPhone's Start Pro, which now checks that
+RevenueCat is the signed-in account before Apple's sheet opens
+(`docs/state-machines.md`, "What App1 Q20 changed"). Unit-tested; no phone
+has run either.
+
+- [ ] **A lift saved as before.** Finish and save a lift online, then one in
+      airplane mode and reconnect. Passing: Saved, then Waiting to sync and
+      Saved once back online, exactly as before; Edit workout is gone once
+      Save is tapped.
+- [ ] **A reopened save.** Finish a lift in airplane mode, force-quit before
+      it syncs, reopen online and tap Retry sync at once. Passing: the
+      screen ends on Saved with Done, never "Needs attention" under Done,
+      and no "Couldn’t save your workout" toast.
+- [ ] **Start Pro on TestFlight.** On a TestFlight build with RevenueCat,
+      tap Start Pro. Passing: Apple's sheet opens as before, and the boot
+      trace lists "RevenueCat: account check" before the sheet.
+- [ ] **Start Pro after a failed RevenueCat switch.** On one phone, sign
+      out and sign in as a second account, turn on airplane mode as soon
+      as sign-in finishes, and stay offline for more than six minutes so
+      RevenueCat's switch and its three retries fail. Reconnect and tap
+      Start Pro. Passing: the trace shows "switch account" before the
+      sheet, and the purchase reaches the second account (Settings →
+      Account shows Pro). Tapped while still offline, the paywall says
+      "Couldn’t start checkout. Try again." and no sheet opens.
+
+## One push a day, and a reminder nobody answers goes quiet (App1 Q60 and Q62, 2026-11-14)
+
+Affects: every server push not from a person (`hourlyStreakNudge`'s
+streak, first-week, recap and badge pushes; `hourlyChallengeAnnouncements`),
+now at most 1 a day and 5 in any 7 local days per account
+(`users/{uid}/settings/pushBudget`), the evening reminder first, then the
+review, a closing challenge, new challenges, a badge (from 10:00 local).
+Monday's review no longer silences that evening's streak reminder: on a day
+the evening reminder may still go, the review push waits for it. And every
+reminder, push or phone, goes quiet after 3 ignored running, said once on
+Home (`RemindersQuietCard`). "Answered" is the app opened after it the same
+day, a tap on it, a log that day (streak) or the review read (review).
+Unit-tested on both sides; nothing has been seen on a phone or a deployed
+sender.
+
+- [ ] **One a day, by the order.** An account with push, the evening
+      reminder on at 20:00, a streak of 2 or more, and a new badge earned
+      that morning. Log nothing. Passing: no badge push in the day, one
+      "An evening reminder" at 20:00, nothing else that day. The next day,
+      with nothing else due, the badge push from 10:00 if it is under 2
+      days old.
+- [ ] **Monday with the evening reminder on.** Monday, push on, a review
+      waiting, the evening reminder on with a streak a log would keep.
+      Passing: no 09:00 "Your week, reviewed"; the evening reminder at its
+      hour if nothing is logged. Turn the evening reminder off and the next
+      Monday the review push comes at 09:00.
+- [ ] **Five in seven days.** In the console, seed
+      `users/{uid}/settings/pushBudget.sent` with five entries for the last
+      six local days. Passing: no push from any non-social sender today;
+      the sixth day after the oldest entry, one can go again.
+- [ ] **Quiet hours.** Nothing from these senders between 22:00 and 08:00
+      local, and no badge before 10:00, on an account in a time zone well
+      away from UTC (Auckland or Los Angeles).
+- [ ] **The opened signal, push.** Tap an evening reminder push from the lock
+      screen. Passing: `users/{uid}/settings/reminders.streakAnsweredAt` is
+      written within seconds. Then on a second evening, ignore the push but
+      open Tropos from its icon that evening. Passing: `streakAnsweredAt`
+      is written again (the same-day open counts).
+- [ ] **Three ignored push reminders.** Let three evening reminder pushes
+      go by without opening the app or logging (or set `streakIgnored: 2`
+      and a `streakSentAt` from yesterday in the console). Passing: no
+      fourth push; `streakEnabled` false and `streakQuietAt` set; on the
+      next open Home shows "Streak reminders are off" once, Settings →
+      Notifications shows Streak off, and turning it on there sends again.
+- [ ] **Three ignored phone reminders.** On an iPhone with meal reminders on
+      and push off, do not open Tropos for 3 days, then open it. Passing:
+      Home says "Meal reminders are off" once, Settings shows Meals off,
+      and no meal notification comes the next day.
+- [ ] **A tap on a phone reminder.** Tap a workout reminder from the
+      notification centre the morning after it fired (after midnight).
+      Passing: it counts as answered (no quiet after it and two more
+      unopened days).
+- [ ] **Deployed senders.** After the functions deploy, read the deployed
+      source of `hourlyStreakNudge` and `hourlyChallengeAnnouncements`.
+      Passing: both reach `pushBudget.claimPushBudget`, and the streak and
+      recap senders call `settleReminderBeforeSend`.
+
+## Pushes from people, and props once a day (App1 Q18, 2026-11-14)
+
+Affects: `onNotificationItemWritten` (a new Firestore trigger on
+`notifications/{uid}/items`) and `hourlyPropsBundle` (a new hourly
+schedule), the collection-group index on `settings.propsBundleDueAt`
+(firestore.indexes.json), both service workers' tap routes, and
+`nativePushRoute`. Comments (sessions and Space posts), follow requests and
+their answers, an invite joined and a league result push as their tray row
+is written; props come as one push at 19:00 local. Unit-tested; nothing has
+been seen on a phone or a deployed function.
+
+- [ ] **The index is built.** After the Firestore deploy, the console shows
+      the `settings` collection-group index on `propsBundleDueAt` as
+      enabled. Passing: `hourlyPropsBundle`'s run log has no
+      FAILED_PRECONDITION and its job record reads succeeded.
+- [ ] **A comment arrives.** Account B comments on A's run while A's app is
+      closed. Passing: one push on A's iPhone, "New comment" / "B commented
+      on your activity", within a minute; tapping it opens the run with its
+      comments. The comment's own words are not on the lock screen.
+- [ ] **Follow request, invite, league.** A follow request to an account
+      with Approve followers on, an account joining from a code, and a
+      Monday league result: one push each, opening the asker's profile, the
+      new person's profile and the league.
+- [ ] **Props once a day.** Two accounts give props to A's run in the
+      morning. Passing: nothing at the time; one push at 19:00 local, "2
+      people gave props to your run", opening the run; nothing more that
+      day for later props, which come the next day at 19:00.
+- [ ] **Quiet hours.** A comment at 23:00 local. Passing: no sound and no
+      lit screen; the push is in Notification Centre in the morning. The
+      same on the web (a silent notification).
+- [ ] **Never across a block, never restricted.** B blocks A, then A
+      comments on B's older post through a stale screen (or seed a row in
+      the console). Passing: no push to B. The same with B restricted.
+- [ ] **The switches.** Turn Comments off under Settings → Notifications →
+      Activity. Passing: no row and no push for a new comment. Turn Props
+      off: no 19:00 push.
+- [ ] **Deployed functions.** After the functions deploy, the console shows
+      `onNotificationItemWritten` with retries on and `hourlyPropsBundle`
+      with one instance and 540 s; the deploy's read-back passed for both.
+
+## Every badge awarded by the server (App1 Q33, 2026-11-14)
+
+Affects: every badge's award (`functions/lib/badgeAwards.js`, run by `onWorkoutCreated`, `onRunCreated` and the five new triggers `onMealWritten`, `onWaterLogWritten`, `onDailyNutritionWritten`, `onStreakWritten`, `onProgramStateWritten`), the rules that now refuse a client change to `streaks/data.badges`, `streaks/data.earlyLogDays` and the public `badgeSummary`, and the reveal, now fed by the server's record (`pendingBadgeReveals.ts`). Unit tests drive the rules and the award against the memory Firestore; the rules suites were updated but not run (no emulator in the build session); no deployed trigger or phone has awarded one.
+
+- [ ] **The five triggers deployed.** After the Deploy production run, open each of the five new functions' source in the Cloud console (the dedup gotcha, `docs/agents/functions-deploy.md`). Passing: each shows `badgeAwards.awardFor…`, and `onWorkoutCreated` shows the `"badges"` step.
+- [ ] **A first workout's badges.** On a new account, finish a first workout with a 60 kg squat. Passing: within a few seconds `users/{uid}/streaks/data.badges` holds `first_step` and `plate_club`, each with `earnedBy: { kind: "workout", id: <the workout id> }`, the public profile's `badgeSummary.count` is 2, and the seal opens on the finish screen if it is still open, or from Home's new-badge row if not.
+- [ ] **A badge earned offline, then synced.** On the iPhone with flight mode on, finish a run of 5 km or more, close the app, turn flight mode off and open the app again. Passing: once the run syncs, `first_5k` is in the record with the run's id, and Home shows the new-badge row for it once (dismissing it, then reopening the app, does not bring it back).
+- [ ] **Two devices.** Signed in on the iPhone and the web, earn a badge on the iPhone (a 10K run) with the web app closed. Passing: the web app shows the new-badge row for it the next time it opens, and the badge is in the record once, with one `earnedAt`.
+- [ ] **An old app can no longer award.** With a TestFlight build from before this change, log the first meal of a new account. Passing: the old build logs a refused write and nothing else (no toast); `first_step` arrives from the server, with `earnedBy`.
+- [ ] **The streak badges.** Keep a streak to 3 days. Passing: `three_day` lands with `earnedBy: { kind: "streak", id: <the third day> }` after the app saves the streak (the streak is the app's certificate; a phone that never opens the app does not save one).
+- [ ] **A finished cycle.** On a plan with lighter weeks, finish every lift of week 4 and tap the week on. Passing: `programme_complete` lands with `earnedBy: { kind: "programme", id: "week-4" }`.
+- [ ] **Badges from before stay.** On the owner's account, open your profile's badges (See all) after the deploy. Passing: every badge earned before is still earned with its old date; none is revealed again.
+
+## Pro shows what it did (App1 Q56, 2026-11-14)
+
+Affects: the weekly review's month card for a Pro account on a month's
+first Monday ("Pro in October", `ProMonthCard`), the "Your year with Pro"
+row on Home in the week before a yearly Pro renewal and the recap it opens
+(`YearRecapRow`, `YearRecap`), the RevenueCat record's new `period`,
+`willRenew` and `periodType` (functions/lib/revenueCatEntitlement.js), and
+the `proChanges` record written beside the calorie target and accepted
+paces. Unit-tested with the reads stood in; no phone or console has seen
+any of it.
+
+- [ ] **The record carries the renewal (console).** After the next
+      functions deploy, buy or restore a yearly plan on a sandbox account.
+      Passing: `users/{uid}.revenueCat` holds `period: "year"`,
+      `willRenew: true` and `periodType: "normal"` (or `"trial"` during a
+      trial); turning renewal off in the App Store's sandbox settings turns
+      `willRenew` false within a minute (the webhook).
+- [ ] **The month card.** On a Pro account whose target has moved and which
+      has scanned meals, open the review on the first Monday of a month.
+      Passing: "Pro in <last month>" sits before the week ahead with the
+      moves and the scans in the account's own numbers; a free account's
+      review has no such card; a Pro account with nothing to count reads
+      "Pro made no changes for you in <month>."
+- [ ] **The calorie target's move is kept.** On a Pro account whose target
+      is due to move, open Home. Passing: `users/{uid}.proChanges` gains a
+      `calories` entry with the old and new target; the target itself saved
+      as before (`adaptiveCapState`).
+- [ ] **Faster paces are kept.** Accept faster paces after a run on a Pro
+      account. Passing: `proChanges` gains a `paces` entry from the old VDOT
+      to the new; slower paces on a free account add nothing.
+- [ ] **Your year, on the phone and on the web.** On a sandbox yearly plan
+      within 7 days of its renewal (a sandbox year renews in an hour, so
+      set `subscriptionExpiresAt` and the record's `expiresAt` by hand on a
+      test account), open Home on the phone. Passing: "Your year with Pro"
+      sits under the session; a tap opens the recap full screen with the
+      year's sessions, kilometres and bests, then what Pro did, the renewal
+      day and Manage Pro (the App Store's list on the phone, Account for a
+      plan bought on the website); after it has drawn, the row is gone on
+      the phone and on the web, and does not come back after a reload.
+- [ ] **Share your year.** From the recap's share button, export the card.
+      Passing: the card reads "This year" over the year's sessions, not
+      "This week".
+- [ ] **Larger text.** Open the month card and both recap cards at 320 px
+      with 1.35x and 2x text. Passing: nothing runs past the screen and each
+      card scrolls to its button.
+
+## The fifth tab is Progress (App1 Q4, 2026-11-13)
+
+Affects: the tab bar's fifth label (`Layout.tsx`), the page's title and its
+first tab, now Overview (`History.tsx`), the way back from All sessions
+(`TrainingHistory.tsx`) and the lines that send people there (Food's day
+sheet, Reset programme, a performance insight). The route stays `/history`
+and its `?tab=` and `?view=` values are unchanged, so saved links still
+land. Older rows above that say Analytics mean this tab. Unit-tested; no
+phone has drawn it.
+
+- [ ] **The label fits.** On an iPhone SE (320 pt) with the largest text
+      size, look at the tab bar. Passing: "Progress" sits on one line under
+      its icon and no tab is pushed off the bar.
+- [ ] **VoiceOver.** With VoiceOver on, move to the fifth tab. Passing: it
+      reads "Progress", and the page's heading reads "Progress".
+- [ ] **A saved link.** Open `/history?tab=analytics&view=running` from a
+      note or bookmark. Passing: Progress opens on its Running page.
+
+## A shared post's public page (App1 Q51, 2026-11-14)
+
+Affects: the link at the end of a shared card's words (`publicPostUrl`, `ShareCardSheet`), the signed-out page at `/activity/:id` (`PublicPost.tsx`), the function behind Hosting's `/activity/**` rewrite (`publicPostPage`, `functions/lib/publicPost.js`), the run's map it cuts (`functions/lib/publicRoute.js`, drawn by `RunMap`) and the universal-links file (`scripts/ios/universal-links.ts`). Unit tests drive the function with a synthetic request and feed its page and its answer to the page's reader; nothing has been deployed, no map has been drawn in a browser, and no phone or messaging app has opened a link.
+
+- [ ] **The rewrite is live.** After Deploy production, open `https://troposfit.com/activity/<a public post's id>` in a private window. Passing: the page shows the post's card, its author's name and photo, and Get Tropos; View Source shows `og:title` "<Name>’s run on Tropos" (or workout) and a `tropos-public-post` data block; the response carries `Strict-Transport-Security` and `X-Frame-Options: DENY`.
+- [ ] **Previews.** Paste the same address into Messages, WhatsApp and Slack. Passing: each preview names the person and the session ("Sam’s run on Tropos") with its figures under it and the app icon; a followers-only post's address previews as Tropos itself and names nobody.
+- [ ] **Not shown, never said why.** In a private window open the address of a followers-only post, a private post, a deleted post and a post by a restricted account. Passing: all four show "This post isn’t available" and Get Tropos, and no page says which it was.
+- [ ] **Get Tropos.** Tap it on an iPhone in Safari. Passing: the App Store opens on Tropos (Apple ID 6762416918). Before the app is released Apple shows it as not available; check again on release day.
+- [ ] **The link in a shared card.** Share a public run from its finish screen, and a followers-only workout from Train's history. Passing: the run's words end with `https://troposfit.com/activity/<id>`, the workout's with `https://troposfit.com`.
+- [ ] **To do later (owner, 14 November 2026): troposfit.com links open the app.** The owner sets `IOS_APP_ID_PREFIX` on the Firebase Hosting build to the app's 10-character application-identifier prefix, normally the Apple Team ID (Apple Developer account, Membership details; check it against the released app's `application-identifier` entitlement, since a legacy account's prefix can differ), then deploys, as `docs/ios-invite-links.md` steps 1 to 5 describe (Associated Domains on the bundle ID and fresh profiles first). Until then shared posts' and invite links open in the browser, as the public post page and the web sign-up. Passing: `https://troposfit.com/apple-app-site-association` answers HTTP 200 JSON naming `<prefix>.com.tropos.app` with `/activity/*` and the invite link; on an iPhone with a build signed after it, tapping a shared post's or an invite's troposfit.com link in Messages opens Tropos, not Safari.
+- [ ] **The universal link opens the app.** Once the association is served with this build's `/activity/*` entry (the Hosting build needs `IOS_APP_ID_PREFIX`, `docs/ios-invite-links.md`) and a build with this change is installed, tap a post's address in Messages. Passing: Tropos opens on the post (signed in), or opens and shows it after sign-in; Safari does not open. Long-press the link and choose Open in Safari: the public page shows, with Safari's Tropos banner at the top, and the banner's Open opens the post in the app.
+- [ ] **A run from home, inside a privacy zone.** On a phone, add a privacy zone round home, run 5 km or more starting and finishing there, and share it publicly. Open its address in a private window on the deployed site. Passing: a map sits under the card, a still street map with the coral line and the tiles' (i) credit in its corner, "Start and finish hidden" under it, and no start or finish dot; the line stops well short of home at both ends (the zone and 400 m more along the route) and nowhere enters the zone; View Source shows `route` points and no `routePreview`, `timestamp` or `rawLat`.
+- [ ] **A run from home, no zone.** With no privacy zone (or one elsewhere), run 5 km or more from home and share it publicly. Passing: the line starts and ends about 400 m along the route from home, never at the door; a loop that passes the door mid-run shows that pass (only a zone hides it), which is the case to show the owner if it looks wrong.
+- [ ] **No map when too little is left.** Share publicly a run under 2 km from home, a treadmill run and a workout. Passing: each page shows the card with no map and no gap where one would be; the short run's page has no `route` in View Source.
+- [ ] **Map and first paint.** On a phone over mobile data, open a public run's address. Passing: the card and Get Tropos show first and the map fills in under them; in both themes the map's colours match the page (dark signed out); at 320 px and at the largest text size the map keeps its shape and nothing runs off the screen.
+- [ ] **A post page right after a web deploy.** Within a minute of Deploy production finishing, open a public post's address. Passing: the page draws (the function keeps its copy of the app's page for 5 seconds, so a copy naming the old build's files is gone by the next visit).
+
+## The five launch numbers (App1 Q17, 2026-11-14)
+
+Affects: what reaches Firebase Analytics, and two server writes. Setup
+sends `onboarding_completed` as before. The session triggers now keep
+`users/{uid}.launchMilestones` (stamped empty by `completeOnboarding` on a
+first setup), the RevenueCat sync now keeps a web trial or payment
+(`rc_billing`, `paddle`) in `activationBillingFirsts` as it did the App
+Store's, and `src/lib/launchEvents.ts` sends `first_session_saved`,
+`week_4_returned`, `trial_started` and `subscription_started` once per
+account, claimed in `users/{uid}/settings/launchEvents`. Unit-tested; no
+console or purchase has shown any of it. A sandbox purchase is never kept
+(`activationBilling.revenueCatObservation`), so the money pair needs a real
+purchase.
+
+- [ ] **The four new events are in the console.** On a new account set up
+      after the release, save a lift. Passing: Firebase Console → Analytics
+      → DebugView (or Events after a day) shows `first_session_saved` with
+      `kind` and `daysSinceSetup` 0, the account's
+      `settings/launchEvents` document reads `first_session_saved: true`,
+      and a second saved session sends nothing.
+- [ ] **Register the parameters.** In Analytics → Custom definitions, add
+      event-scoped dimensions `kind` and `purchasePlatform` and the metric
+      `daysSinceSetup`, or the funnel cannot be cut at 7 days. Passing: the
+      three appear in an Exploration.
+- [ ] **One account, two devices, one event.** With the same account open
+      on the iPhone and in a browser, save its first session. Passing:
+      `first_session_saved` arrives once in total, from one of the two.
+- [ ] **A real App Store trial.** On a production build, start the 7-day
+      trial with a real Apple ID and cancel it at once. Passing:
+      `activationBillingFirsts.trial` is written with `ios_iap`, and
+      `trial_started` with `purchasePlatform` `ios` arrives once.
+- [ ] **The app closed after Apple's sheet.** Buy, then swipe the app away
+      as the sheet closes, and open it a minute later. Passing:
+      `trial_started` still arrives, once.
+- [ ] **A real website trial.** Start Pro on troposfit.com through the
+      Purchase Link with a real card (production token), then cancel in
+      the customer portal. Passing: `activationBillingFirsts.trial` reads
+      `stripe`, `trial_started` arrives once with `purchasePlatform` `web`,
+      and opening the iPhone app afterwards sends nothing more. If RevenueCat
+      reports a web trial with a `period_type` other than `trial`, it is
+      kept as paid instead: note it here.
+- [ ] **A trial that turns paid.** Let one real trial convert. Passing:
+      `subscription_started` arrives once, from the next device opened,
+      with the conversion day's `daysSinceSetup`.
+- [ ] **Week 4.** Hard to stage: a test account whose
+      `onboardingCompletedAt` is set back 22 days in the console, then a
+      saved session. Passing: `launchMilestones.week4Return` is written and
+      `week_4_returned` arrives once.
+
+## One first-week journey for every account (App1, whole-app grill Q27, 2026-11-13)
+
+Affects: `src/pages/Home.tsx` (no walk; the first-week card counts from
+setup and lists only the first workout and the first run, whatever journey
+the account was stamped with), `src/pages/Onboarding.tsx` (setup ends on
+Today for everyone), Settings → Support & legal (Show me around is gone),
+and `completeOnboarding` in `functions/index.js` (every new account is
+stamped `activationJourneyVersion: 2`; `functions/lib/activationCohort.js`
+is deleted). Unit-tested on both sides (`Home.firstVisitGuide.test.tsx`,
+`functions/__tests__/activationJourney.test.js`); no phone has run it.
+
+- [ ] **An older account's first open after this ships.** Use an account
+      still in its first seven days from setup that was in the comparison
+      group (`activationJourneyVersion: 1` in the console) or has no
+      version. Passing: Home opens with no dimming or walk; "Your first
+      week" counts its days from the day setup finished and lists only
+      "Finish your first workout" and, for a runner, "Go for your first
+      run" (no first meal, no weigh-ins); a row opens that session's Start,
+      or the plan; Food, Train, the first set and the first run each show
+      their hint once, though the walk was never seen.
+- [ ] **An established account's first open after this ships.** Passing:
+      Home looks as it did. A free account's Pro strip and (on the phone)
+      the Health steps prompt may hold off for that first visit, as they
+      do on a new account's; the strip is back on the next visit to Home
+      and the prompt on the next open of the app.
+- [ ] **A new account on the new build.** Passing: Start my plan lands on
+      Today with no Pro page between; Settings → Support & legal has no
+      Show me around.
+- [ ] **A new account on an older build** (a TestFlight build from before
+      this change), against the deployed server. Passing: the console
+      shows `activationJourneyVersion: 2` on the new profile, and setup
+      lands on Today with no Pro page.
+- [ ] **After Deploy production.** The deployed `completeOnboarding` source
+      (Cloud console, Functions → completeOnboarding → Source) has
+      `ONE_ACTIVATION_JOURNEY_VERSION` and no `activationCohort`. Then the
+      `activationJourneyV2Enabled` and `activationComparisonPercent` fields
+      on `system/config` can be deleted: nothing reads them.

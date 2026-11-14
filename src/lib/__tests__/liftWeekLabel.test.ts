@@ -26,7 +26,6 @@ const block: ActiveTrainingBlock = {
   durationWeeks: 8,
   startDate: "2026-08-30",
   goalBefore: "general",
-  amnestyWeeksLeft: 1,
   weeklyLiftTarget: 4,
   anchorExerciseIds: [],
   why: "",

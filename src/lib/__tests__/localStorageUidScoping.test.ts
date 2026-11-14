@@ -76,6 +76,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "a developer's switch that shows the iPhone-only step list (StepDetails) on the web preview too; a device's setting for the preview loop, about no account, and the app only reads it",
   "tropos.pendingInvite":
     "an invite link's code, kept from the signed-out welcome screen through sign-up and setup, before there is an account to scope it to; it expires after the 14 days an account may use one and is cleared once used or refused",
+  "tropos.reminderFires.v1":
+    "the reminders this phone has handed to the system and when they fired (App1 Q62): they are the phone's alarms, which belong to whoever is signed in on it, and sign-out cancels them and clears this record with them (cancelAllNotifications)",
 };
 
 /**

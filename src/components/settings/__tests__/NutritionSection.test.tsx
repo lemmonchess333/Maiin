@@ -98,14 +98,14 @@ describe("NutritionSection — editing the calorie override", () => {
       })
     );
     const patch = updateProfile.mock.calls[0][0] as Partial<UserProfile>;
-    expect(
-      Math.abs(
-        patch.targetProtein! * 4 +
-          patch.targetCarbs! * 4 +
-          patch.targetFat! * 9 -
-          2400
-      )
-    ).toBeLessThanOrEqual(10);
+    // The stored targets only: the day's carbs and fat are worked out from
+    // the calorie target wherever they are shown, never stored (App1 Q21).
+    expect(Object.keys(patch).sort()).toEqual([
+      "customCalorieTarget",
+      "targetCalories",
+      "targetProtein",
+    ]);
+    expect(patch.targetProtein! * 4).toBeLessThan(2400);
   });
 
   it("clears a stored override on blur", async () => {
@@ -132,8 +132,8 @@ describe("NutritionSection — editing the calorie override", () => {
     expect(patch.customCalorieTarget).toBe(0);
     expect(patch.targetCalories).toBeGreaterThan(0);
     expect(patch.targetProtein).toBeGreaterThan(0);
-    expect(patch.targetCarbs).toBeGreaterThan(0);
-    expect(patch.targetFat).toBeGreaterThan(0);
+    expect(patch).not.toHaveProperty("targetCarbs");
+    expect(patch).not.toHaveProperty("targetFat");
     rerender(
       <NutritionSection {...props} profile={{ ...props.profile, ...patch }} />
     );
@@ -235,7 +235,6 @@ function renderSection(
         {
           uid: "u-1",
           displayName: "T",
-          email: "t@e.com",
           customCalorieTarget: body.customCalorieTarget,
         } as UserProfile
       }
@@ -390,7 +389,7 @@ describe("NutritionSection — the grams Home shows", () => {
         uid: "u-1",
         targetCalories: LEAN_BULK_70.targetCalories,
         weightKg: 70,
-        program: { goal: "lean bulk", startWeight: 70, currentPhase: "base" },
+        program: { goal: "lean bulk", currentPhase: "base" },
       } as UserProfile,
       "rest"
     );
@@ -459,7 +458,6 @@ describe("NutritionSection — sub-floor override notice", () => {
     ({
       uid: "u-1",
       displayName: "T",
-      email: "t@e.com",
       customCalorieTarget,
     }) as UserProfile;
 
@@ -541,7 +539,6 @@ describe("NutritionSection — target drift notice", () => {
           {
             uid: "u-1",
             displayName: "T",
-            email: "t@e.com",
             targetCalories: HELD,
             weeklyRateKg: -0.5,
             ...over,
@@ -620,7 +617,6 @@ describe("NutritionSection — target drift notice", () => {
           {
             uid: "u-1",
             displayName: "T",
-            email: "t@e.com",
             targetCalories: HELD,
             weeklyRateKg: -0.5,
           } as UserProfile
@@ -893,9 +889,11 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
 describe("NutritionSection — the age field", () => {
   function AgeHarness({
     profileAge,
+    birthYear,
     updateProfile,
   }: {
     profileAge: number;
+    birthYear?: number;
     updateProfile: (d: Partial<UserProfile>) => Promise<UpdateProfileResult>;
   }) {
     const [age, setAge] = useState(profileAge);
@@ -903,7 +901,7 @@ describe("NutritionSection — the age field", () => {
       <>
         <output data-testid="age-in-use">{age}</output>
         <NutritionSection
-          profile={{ uid: "u-1", age: profileAge } as UserProfile}
+          profile={{ uid: "u-1", age: profileAge, birthYear } as UserProfile}
           age={age}
           setAge={setAge}
           activityLevel={"moderate" as ActivityLevel}
@@ -948,6 +946,28 @@ describe("NutritionSection — the age field", () => {
     expect(inUse()).toBe("34");
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ age: 34 });
+  });
+
+  /* App1 (Q57, Q21): an account with a year of birth has its age worked
+     out from it, so the age is set in one place, Profile. */
+  it("with a year of birth, shows the age and sends the change to Profile", () => {
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(
+      <AgeHarness
+        profileAge={30}
+        birthYear={1990}
+        updateProfile={updateProfile}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TDEE calculator/ }));
+    expect(screen.queryByLabelText("Age")).toBeNull();
+    expect(
+      screen.getByText("From your year of birth. Change it in Profile.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Age").nextElementSibling).toHaveTextContent("30");
   });
 
   it.each(["300", "0", "-5", "15", ""])(

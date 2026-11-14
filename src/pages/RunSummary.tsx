@@ -1,4 +1,7 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
+import OptionalSummaryBoundary from "@/components/OptionalSummaryBoundary";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
 import {
@@ -8,8 +11,6 @@ import {
   useRef,
   useSyncExternalStore,
   Suspense,
-  Component,
-  type ReactNode,
 } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -34,7 +35,7 @@ import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
-import type { SessionShareAction } from "../lib/sessionPost";
+import { postedActivityId, type SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -113,7 +114,10 @@ import {
   runPostName,
 } from "@/lib/runName";
 import { racePaceWorkFor } from "@/lib/racePace";
-import { isPaceEligible } from "../lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "../lib/runStatsEligibility";
+import { startDayKey } from "@/lib/startDay";
+import type { FinishedSession } from "@/lib/anniversaries";
+import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
@@ -126,6 +130,7 @@ import {
   maxHrFromAge,
   summarizeHeartRate,
 } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
@@ -220,27 +225,10 @@ function RetryBanner({
 const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"), {
   reloadOnChunkError: false,
 });
-const SavedRunKudos = lazyRetry(
-  () => import("@/components/social/SavedRunKudos"),
+const SavedSessionKudos = lazyRetry(
+  () => import("@/components/social/SavedSessionKudos"),
   { reloadOnChunkError: false }
 );
-
-// Optional panels may disappear, but a failed import/render must never lose
-// the saved receipt or Done action. Lazy rejects are cached, so no dead Retry.
-class OptionalSummaryBoundary extends Component<
-  { children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 interface InvalidRunReviewProps {
   unit: DistanceUnit;
@@ -457,6 +445,9 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // The age the zones' estimate reads: from the year of birth, else an
+  // older account's age (App1, Q57).
+  const ageYears = profileAge(profile);
   useEffect(() => {
     if (
       !user?.uid ||
@@ -472,7 +463,7 @@ export default function RunSummary() {
         if (!active) return;
         const measuredMax = profile?.maxHeartRate ?? 0;
         const maxHr =
-          measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+          measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
         const summary = summarizeHeartRate(
           samples,
           activeIntervals,
@@ -494,7 +485,7 @@ export default function RunSummary() {
     state?.elapsed,
     state?.runConfig,
     profile?.maxHeartRate,
-    profile?.age,
+    ageYears,
   ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
@@ -537,6 +528,10 @@ export default function RunSummary() {
     streak: StreakChange | null;
     firstSession: boolean;
   } | null>(null);
+  /* The run as an anniversary reads it (App1 Q58), once it is saved. */
+  const [anniversaryRun, setAnniversaryRun] = useState<FinishedSession | null>(
+    null
+  );
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -1256,7 +1251,7 @@ export default function RunSummary() {
           }
           const measuredMax = profile?.maxHeartRate ?? 0;
           const maxHr =
-            measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+            measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
           heartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,
@@ -1457,6 +1452,17 @@ export default function RunSummary() {
         ),
         history: finishedRun.moments?.history ?? null,
         firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+      });
+      setAnniversaryRun({
+        id: saveRunId,
+        sport: "run",
+        day: runDay(finishedRun),
+        counts: isVolumeEligible({
+          distance,
+          duration: elapsed,
+          isInvalid,
+        }),
+        metres: distance,
       });
       setSaveStatus("saved");
       setSaveError(null);
@@ -1764,9 +1770,10 @@ export default function RunSummary() {
           {saved && (
             <OptionalSummaryBoundary>
               <Suspense fallback={null}>
-                <SavedRunKudos
+                <SavedSessionKudos
                   uid={user?.uid}
                   fromName={profile?.displayName}
+                  className="mx-4 mb-4"
                 />
               </Suspense>
             </OptionalSummaryBoundary>
@@ -2290,22 +2297,12 @@ export default function RunSummary() {
             )}
 
             {doneShown && (
-              /* FOOD-02: post-run → Food handoff, at the moment the runner
-                 has refuel intent. Secondary and skippable — routes into
-                 the EXISTING composer flow with a narrow context param
-                 (Food renders a dismissible refuel line); no separate
-                 recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. Logging
-                 food is the food orange on any page, tinted here because
-                 it is the skippable step and Done is the run's coral one
-                 (DESIGN_GUIDE §14i). */
-              <Button
-                variant="nutrition-tinted"
-                fullWidth
-                onClick={() => navigate("/food?context=post-run")}
-              >
-                Log recovery food
-              </Button>
+              /* FOOD-02: post-run → Food handoff, the same link the lift's
+                 finish has (App1 Q30). Only rendered in the valid-run path
+                 (this whole stack is), post-save. */
+              <RecoveryFoodButton
+                onClick={() => navigate(recoveryFoodPath("run"))}
+              />
             )}
 
             {canShowDiscard({ saveStatus }) && (
@@ -2403,6 +2400,23 @@ export default function RunSummary() {
         />
       )}
 
+      {/* The 50th or 100th session, a year of Tropos or 1,000 km, full
+          screen over the saved finish (App1 Q58). It counts from the
+          runs this screen already read, when it read them all. */}
+      {user && (
+        <AnniversaryGate
+          uid={user.uid}
+          session={anniversaryRun}
+          startDay={startDayKey(profile?.createdAt)}
+          runs={
+            historyRead?.known && historyRead.uid === user.uid
+              ? historyRead.runs
+              : null
+          }
+          held={shareOpen}
+        />
+      )}
+
       {/* S1 share-card system — customization sheet + new renderer */}
       <ShareCardSheet
         open={shareOpen}
@@ -2411,6 +2425,8 @@ export default function RunSummary() {
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",
+          // Posted to the feed: the card links to the post while public.
+          postId: postedActivityId(shareAction),
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
           line: finishLine

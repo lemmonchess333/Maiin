@@ -258,7 +258,7 @@ export default function TrainingHistory() {
           className="inline-flex min-h-[44px] items-center gap-1 -ml-2 px-2"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          {backTo.startsWith("/program") ? "Your plan" : "Analytics"}
+          {backTo.startsWith("/program") ? "Your plan" : "Progress"}
         </Link>
       }
     >

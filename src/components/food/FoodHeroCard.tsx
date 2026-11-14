@@ -21,6 +21,7 @@ import { LOG_MOMENT_MS, WHEEL_GROW_MS } from "./logMoment";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 import { PersonalTargetOffer } from "./PersonalTargetCard";
+import { StepActivityOffer } from "./StepActivityOfferCard";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
@@ -338,6 +339,19 @@ export default function FoodHeroCard({
           />
         )}
 
+        {/* The day's fuel label (App1 Q29), one line under the wheel:
+            race week's carb load, a taper week, or the eve of a long run
+            ("Long 20K tomorrow, fuel up today"). Today only, since it
+            speaks of today and tomorrow. The day type ("Hard session")
+            stays off the wheel, as the owner took it off (Food11); Details
+            under it says why the grams move. Home's food card says the
+            same line (`TodayEnergy`). */}
+        {isToday && !beforeJoined && dailyTargets.fuelLabel && (
+          <p className="relative mt-1 px-2 text-center text-xs font-medium text-nutrition-strong">
+            {dailyTargets.fuelLabel}
+          </p>
+        )}
+
         {/* Food6 a2: the drill-down, under the wheel. "Details" and a
             chevron open the breakdown sheet. Its own 44px target, clear
             of the wheel's mode toggle. It sat in the card's bottom right
@@ -376,6 +390,10 @@ export default function FoodHeroCard({
           currentTarget={dailyTargets.finalTarget}
         />
       )}
+      {/* Last week's steps against the activity level the target assumes
+          (whole-app grill Q31): an offer of the level they fall in, beside
+          the target it changes. Phone and Pro only; never on the web. */}
+      {isToday && <StepActivityOffer targets={dailyTargets} />}
 
       {/* Only actionable setup guidance belongs here; the wheel and the
           macros under it already show the day's numbers. */}
@@ -398,14 +416,6 @@ export default function FoodHeroCard({
           {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
         </p>
       )}
-
-      {/* Wave3 G — the training-aware day annotation (the free→premium
-        conversion hook: "Hard training day" / "Race week — carb load")
-        moved INTO the hero caption above as one merged line. It no longer
-        renders here as a separate, container-less line below the macro
-        tiles (audit: duplicate day-labels, the lower one orphaned). The
-        rationale text + its all-users visibility + today-only gating are
-        unchanged — only the render location moved. */}
 
       {/* S2: goal-hit macro-day share card (nutrition template) */}
       <ShareCardSheet

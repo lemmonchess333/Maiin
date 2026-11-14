@@ -7,6 +7,11 @@
  * a kind that is off, so a switch here stops the notification itself, not
  * just its row in the list. This replaced a list of every type under
  * "Individual controls are not available yet".
+ *
+ * The same switches decide the pushes from people (App1 Q18,
+ * functions/lib/socialPush.js): a comment, a follow request, an invite
+ * joined and a league result also come to the phone when the account takes
+ * push, and props once a day at 19:00, as the footer says.
  */
 import { useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -92,7 +97,7 @@ export default function ActivityNotificationsGroup() {
   return (
     <SettingsGroup
       title="Activity"
-      footer="These show under the bell on Social, not as phone notifications."
+      footer="These show under the bell on Social. With notifications on, comments, follow requests, invites and league results also come to your phone, and props once a day at 19:00."
     >
       {ROWS.map((row) => (
         <SettingsRow

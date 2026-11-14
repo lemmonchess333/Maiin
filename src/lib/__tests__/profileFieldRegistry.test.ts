@@ -8,6 +8,7 @@ import {
   CLIENT_WRITABLE_PROFILE_FIELDS,
   SANITIZED_PROFILE_FIELDS,
   TYPED_PROFILE_FIELDS,
+  RETIRED_PROFILE_FIELDS,
 } from "../profileFieldRegistry";
 
 /**
@@ -43,6 +44,9 @@ const { PROFILE_ALLOWED_FIELDS } = require(
 const { SERVER_MANAGED_PROFILE_FIELDS } = require(
   resolve(repoRoot, "functions/profileSanitizer.js")
 ) as { SERVER_MANAGED_PROFILE_FIELDS: string[] };
+const { RETIRED_PROFILE_FIELDS: SANITIZER_RETIRED } = require(
+  resolve(repoRoot, "functions/profileSanitizer.js")
+) as { RETIRED_PROFILE_FIELDS: string[] };
 
 const asSet = (a: readonly string[]) => new Set(a);
 const sorted = (a: readonly string[]) => [...a].sort();
@@ -102,6 +106,27 @@ describe("profile field registry — D1 allow-list parity", () => {
       (e) => e.serverGuarded && e.sanitized
     ).map((e) => e.field);
     expect(offenders).toEqual([]);
+  });
+
+  it("registry-where-retired ≡ profileSanitizer RETIRED_PROFILE_FIELDS", () => {
+    // One list of what was retired (App1 Q24): the sanitiser drops these
+    // without a warning and the strip script deletes them from stored
+    // profiles, so a field retired here and not there is either warned
+    // about forever or left on every document.
+    expect(sorted(SANITIZER_RETIRED)).toEqual(sorted(RETIRED_PROFILE_FIELDS));
+  });
+
+  it("a retired field is still in the rules allow-list, and nothing else", () => {
+    // An older build may still send one, and sign-up's create checks every
+    // key with hasOnly(): a retired field leaves the rules only once
+    // config/client.minSupportedVersion is past the release that stopped
+    // writing it, and leaves this registry in the same change.
+    const rules = asSet(rulesAllowList());
+    expect(RETIRED_PROFILE_FIELDS.filter((f) => !rules.has(f))).toEqual([]);
+    const confused = PROFILE_FIELD_REGISTRY.filter(
+      (e) => e.retired && (e.sanitized || e.serverOnly || e.undeclared)
+    ).map((e) => e.field);
+    expect(confused).toEqual([]);
   });
 
   it("registry is sorted (stable diffs when fields are added)", () => {
@@ -181,7 +206,7 @@ describe("profile field registry — UserProfile type parity", () => {
 
   it("every registry field is declared on the type, or flagged undeclared", () => {
     const missing = PROFILE_FIELD_REGISTRY.filter(
-      (e) => !e.undeclared && !declared.has(e.field)
+      (e) => !e.undeclared && !e.retired && !declared.has(e.field)
     ).map((e) => e.field);
     expect(
       missing,
@@ -200,6 +225,17 @@ describe("profile field registry — UserProfile type parity", () => {
     expect(
       stale,
       `These now HAVE a type — drop the \`undeclared\` flag from the registry.`
+    ).toEqual([]);
+  });
+
+  it("a retired field is off the type, so no new code can write it", () => {
+    const typed = PROFILE_FIELD_REGISTRY.filter(
+      (e) => e.retired && declared.has(e.field)
+    ).map((e) => `${e.field} (declared in ${declared.get(e.field)})`);
+    expect(
+      typed,
+      `Retired (App1 Q24), yet still on the UserProfile type. Take it off ` +
+        `the type, or drop the \`retired\` note if it has a reader again.`
     ).toEqual([]);
   });
 

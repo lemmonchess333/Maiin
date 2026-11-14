@@ -95,7 +95,6 @@ async function lifterOnWednesday(
         weekNumber: 1,
         splitType: "upper_lower",
         workouts,
-        fatigueScore: 0,
         updatedAt: wednesday.getTime(),
         liftWeekKey: localWeekKey(wednesday),
         programSchemaVersion: 3,
@@ -107,7 +106,6 @@ async function lifterOnWednesday(
     await userRef.set({
       ...seedProfile.data(),
       uid: user.uid,
-      email: user.email,
       darkMode: true,
       weekScheduleVersion: 1,
       // Lifts on Monday (day 1) and Wednesday (day 3), rest otherwise.

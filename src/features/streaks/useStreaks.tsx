@@ -7,7 +7,7 @@ import {
 import {
   pendingBadgeIds,
   subscribePendingBadges,
-  queueBadgeReveals,
+  queueServerAwards,
   dismissBadgeReveal,
 } from "./pendingBadgeReveals";
 import {
@@ -18,6 +18,7 @@ import {
   useCallback,
   useMemo,
   createContext,
+  memo,
   use,
   type ReactNode,
 } from "react";
@@ -27,33 +28,41 @@ import {
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
   where,
   writeBatch,
   limit,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useUid } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
+import { startDayKey } from "@/lib/startDay";
+import type { ProgramState } from "@/features/program/programTypes";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
 import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
-import { setDocGuarded } from "@/lib/firestoreWrite";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
-import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
+import { earnedBadgeCount } from "./badgeEarning";
 import { useNutritionBadgeData } from "@/hooks/useNutritionBadgeData";
 import {
   computeNutritionBadgeDays,
   type DayMacros,
 } from "@/lib/nutritionBadgeDays";
 import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
+import { isFoodDay } from "@/lib/foodDay";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
 import { STREAK_NOTIFICATION_ID } from "@/hooks/streakNotificationId";
 import { earlyDaysOf, keptEarlyDays, storedEarlyDays } from "./earlyLogDays";
+import {
+  isPlannedRestDay,
+  keptThroughAfter,
+  planHoldsSessions,
+  plannedRestDays,
+  type StreakPlan,
+} from "./restDays";
 
 export interface StreakData {
   /** The streak as shown: the today/yesterday rule, 0 when neither is active. */
@@ -70,6 +79,15 @@ export interface StreakData {
    */
   anchorStreak?: number;
   anchorDate?: string;
+  /**
+   * The last day the streak is kept through without another log: the day
+   * its span ends on, then the plan's rest days straight after it (App1
+   * Q32, `keptThroughAfter`). A forecast from the plan as it stood when it
+   * was saved, for the readers that cannot read a plan: the server's evening
+   * nudge, and, as the public profile's `lastActiveDate`, other people.
+   * Absent on documents written before 13 November 2026.
+   */
+  keptThrough?: string;
   /**
    * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
    * active-date set built from the subscriptions' window
@@ -88,11 +106,13 @@ export interface StreakData {
    */
   totalActiveDays: number;
   /**
-   * Up to five distinct days with a log before 07:00 (`earlyLogDays.ts`),
-   * so early_bird's count outlives the window. Absent on a document that
-   * predates it, which is seeded once from a deeper read.
+   * Up to five distinct days with a log before 07:00, kept by the server's
+   * award (functions/lib/badgeAwards.js) so early_bird's count outlives the
+   * window. Read here for its progress ring only.
    */
   earlyLogDays?: string[];
+  /** Every badge, earned or not. Earned ones are the server's (App1 Q33):
+   *  this hook reads them and writes none. */
   badges: EarnedBadge[];
 }
 
@@ -111,8 +131,8 @@ const DEFAULT_STREAKS: StreakData = {
 // so a backfilled meal is read whatever its date. A long streak outlives
 // the window through the persisted anchor (computeStreakSpanAnchored): the
 // window only has to reach the last save plus grace, and every active day
-// saves. Earned badges stay earned, and the one rule that counts over all
-// time, early_bird, keeps its days on the streak document (earlyLogDays).
+// saves. Badges are the server's (App1 Q33): earned ones stay earned, and
+// early_bird's days are kept on the streak document by its award.
 // The caps are a backstop for a heavy logger, not the bound.
 // totalActiveDays remains windowed, not truly lifetime (D13 — the
 // saturation is a DELIBERATE accepted limit, documented on the
@@ -175,47 +195,13 @@ interface MealRow {
 // ── Pure helpers ─────────────────────────────────────────────────────────
 
 /**
- * Coerce a value to an ISO 8601 string for badgeSummary mirror writes.
- *
- * Defensive across multiple shapes even though the current EarnedBadge.earnedAt
- * is typed and written as `string | null` — an older or future write path
- * could produce a Date / Timestamp / epoch number. Any path beyond `string`
- * indicates schema drift; log on hit so we notice.
- */
-function toIsoString(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value instanceof Date) {
-    logger.warn(
-      "[Streaks] toIsoString: Date received (expected ISO string)",
-      value
-    );
-    return value.toISOString();
-  }
-  if (typeof value === "number") {
-    logger.warn(
-      "[Streaks] toIsoString: number received (expected ISO string)",
-      value
-    );
-    return new Date(value).toISOString();
-  }
-  if (value && typeof (value as { toDate?: unknown }).toDate === "function") {
-    logger.warn(
-      "[Streaks] toIsoString: Timestamp received (expected ISO string)",
-      value
-    );
-    return (value as { toDate: () => Date }).toDate().toISOString();
-  }
-  logger.warn("[Streaks] toIsoString: unexpected value", value);
-  return new Date().toISOString();
-}
-
-/**
  * Hydrate a stored `streaks/data.badges` array against the catalogue: every
  * definition, in catalogue order, with the stored `earnedAt` (or null).
- * Stored entries may be full EarnedBadge objects (client writes) or the
- * minimal `{ id, earnedAt }` pairs the server appends — this is what makes
- * the two shapes interchangeable, and it auto-backfills new definitions as
- * unearned for existing users with no migration.
+ * Stored entries may be full EarnedBadge objects (what the app wrote when
+ * it awarded badges itself, before App1 Q33) or the `{ id, earnedAt,
+ * earnedBy }` entries the server's award writes — this is what makes the
+ * shapes interchangeable, and it backfills new definitions as unearned for
+ * existing users with no migration.
  */
 function mergeWithCatalogue(
   stored: readonly { id: string; earnedAt?: string | null }[] | undefined
@@ -300,7 +286,7 @@ function yesterdayKey(now: Date): string {
 }
 
 export interface StreakSpan {
-  /** Streak length including any bridged grace days. */
+  /** Streak length including any bridged grace days and covered rest days. */
   streak: number;
   /**
    * The non-active dates (YYYY-MM-DD) that grace bridged inside the current
@@ -310,12 +296,34 @@ export interface StreakSpan {
    */
   bridgedDates: string[];
   /**
-   * The day the streak ends on: today when today is active, else yesterday.
-   * Null when the streak is 0. The persisted pair stores this with the
-   * count, so the pair always names the span it counts.
+   * The plan's rest days the span counts (App1 Q32, `restDays.ts`),
+   * newest-first. Each is a day of the streak without a log, as a forgiven
+   * day is, but the plan's own, so it spends no grace.
+   */
+  restDates: string[];
+  /**
+   * The day the streak ends on: today when today is logged or a rest day,
+   * else yesterday. Null when the streak is 0.
    */
   endDate: string | null;
+  /**
+   * The newest logged day in the span: `endDate`, or before it when the
+   * days after it are rest days. Null when the streak is 0. The stored
+   * certificate ends here, so the day it names is always a logged one.
+   */
+  lastActiveDate: string | null;
 }
+
+/** No rest days: a person with no plan, and every walk before App1 Q32. */
+const NO_REST_DAYS: ReadonlySet<string> = new Set();
+
+const ZERO_SPAN: StreakSpan = {
+  streak: 0,
+  bridgedDates: [],
+  restDates: [],
+  endDate: null,
+  lastActiveDate: null,
+};
 
 /**
  * The persisted streak state, used to extend the walk past the read window.
@@ -330,15 +338,20 @@ export interface StreakAnchor {
 }
 
 /**
- * Walk the streak once and return its length, the grace days it bridged and
- * the day it ends on.
+ * Walk the streak once and return its length, the grace days it bridged,
+ * the rest days it covered and the day it ends on.
  *
  * Today/yesterday rule — the streak does NOT drop to zero at midnight.
- * - If today is active: streak ends on today (live).
- * - Else if yesterday is active: streak ends on yesterday (at risk).
+ * - If today is active or a rest day: streak ends on today (live).
+ * - Else if yesterday is: streak ends on yesterday (at risk).
  * - Else: streak = 0 (broken).
  * Walks backwards from the ending date, incrementing while days are in the
- * set, bridging isolated non-active days per the grace rule above.
+ * set, covering the plan's rest days (`restDays`, App1 Q32) and bridging
+ * isolated non-active days per the grace rule above. A rest day spends no
+ * grace and is still a calendar day, so the grace's spacing counts it; a
+ * second forgiven day also needs a logged day since the first. Like
+ * a bridged day, a rest day waits for an older active day to confirm it: a
+ * streak never starts on rest.
  *
  * `now` is injectable for deterministic tests; production callers omit it.
  *
@@ -355,49 +368,97 @@ export interface StreakAnchor {
  * visit) until the spacing no longer binds, and credits the rest of the
  * count only then. Crediting at once let every-other-day logging, with the
  * pair written back each day, add two days a day: day 20 read 21 where the
- * rule allows 3.
+ * rule allows 3. Rest days inside the anchored span are walked as days of
+ * it, so they count toward what has been walked.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakSpan(
   activeDates: Set<string>,
   now: Date = new Date(),
-  anchor?: StreakAnchor
+  anchor?: StreakAnchor,
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakSpan {
-  if (activeDates.size === 0)
-    return { streak: 0, bridgedDates: [], endDate: null };
+  if (activeDates.size === 0) return ZERO_SPAN;
 
   const today = format(now, "yyyy-MM-dd");
   const yesterday = yesterdayKey(now);
+  const kept = (key: string) => activeDates.has(key) || restDays.has(key);
 
   let endKey: string;
-  if (activeDates.has(today)) {
+  if (kept(today)) {
     endKey = today;
-  } else if (activeDates.has(yesterday)) {
+  } else if (kept(yesterday)) {
     endKey = yesterday;
   } else {
-    return { streak: 0, bridgedDates: [], endDate: null };
+    return ZERO_SPAN;
   }
   const endDate = new Date(endKey + "T12:00:00");
 
   let streak = 0;
-  // Grace days tentatively bridged, awaiting a confirming older active day.
-  let pendingGrace = 0;
+  // Grace and rest days tentatively counted, awaiting a confirming older
+  // active day.
+  let pending = 0;
   // Calendar days walked since the last grace was spent (Infinity = none yet).
   let stepsSinceGrace = Infinity;
-  // Confirmed + pending bridged dates (newest-first by walk order).
+  // Whether a logged day has been walked since the last grace. Without rest
+  // days the spacing alone ensures it; with them, a plan of one session a
+  // week could miss it every week, each a week apart, and grow a streak
+  // with no log at all. "Never miss twice" means two missed sessions.
+  let loggedSinceGrace = true;
+  // Confirmed + pending bridged and rest dates (newest-first by walk order).
   const bridged: string[] = [];
   let pendingBridged: string[] = [];
+  const rested: string[] = [];
+  let pendingRested: string[] = [];
+  let lastActive: string | null = null;
+
+  const confirmPending = () => {
+    streak += pending;
+    pending = 0;
+    bridged.push(...pendingBridged);
+    pendingBridged = [];
+    rested.push(...pendingRested);
+    pendingRested = [];
+  };
+  const span = (count: number): StreakSpan =>
+    count > 0
+      ? {
+          streak: count,
+          bridgedDates: bridged,
+          restDates: rested,
+          endDate: endKey,
+          lastActiveDate: lastActive,
+        }
+      : ZERO_SPAN;
 
   // Days of the anchored span walked one by one, while its credit waits for
   // this walk's last grace to fall a full spacing behind (see above). Null
   // when the walk is not inside the anchored span.
   let anchoredDaysWalked: number | null = null;
   let anchorLeft = anchor;
+  /** Inside the anchored span, once the next step back is a week from this
+   *  walk's grace: the rest of the anchored count, credited. Null to walk on. */
+  const creditAnchoredRest = (): StreakSpan | null => {
+    if (!anchorLeft || anchoredDaysWalked === null) return null;
+    anchoredDaysWalked++;
+    if (stepsSinceGrace + 1 < GRACE_MIN_SPACING_DAYS) return null;
+    const remaining = anchorLeft.streak - anchoredDaysWalked;
+    if (remaining > 0) {
+      // The anchored span certifies the rest days walked inside it.
+      confirmPending();
+      return span(streak + remaining);
+    }
+    // A stale-low anchor this walk has already outrun: walk on plain.
+    anchorLeft = undefined;
+    anchoredDaysWalked = null;
+    return null;
+  };
 
   const cursor = new Date(endDate);
   while (true) {
     const cursorKey = format(cursor, "yyyy-MM-dd");
     if (activeDates.has(cursorKey)) {
+      lastActive ??= cursorKey;
       if (anchorLeft && cursorKey === anchorLeft.lastActiveDate) {
         // Anchor day reached with the chain unbroken and no grace near it:
         // everything older is already certified — credit the anchored count
@@ -405,49 +466,40 @@ export function computeStreakSpan(
         // streak survive a meal window that only covers ~167 days of
         // documents.
         if (stepsSinceGrace >= GRACE_MIN_SPACING_DAYS) {
-          streak += pendingGrace + anchorLeft.streak;
-          if (pendingBridged.length > 0) bridged.push(...pendingBridged);
-          return { streak, bridgedDates: bridged, endDate: endKey };
+          confirmPending();
+          return span(streak + anchorLeft.streak);
         }
         anchoredDaysWalked = 0;
       }
-      // An active day confirms any pending grace bridge before it.
-      streak += pendingGrace + 1;
-      pendingGrace = 0;
-      if (pendingBridged.length > 0) {
-        bridged.push(...pendingBridged);
-        pendingBridged = [];
-      }
-      if (anchorLeft && anchoredDaysWalked !== null) {
-        anchoredDaysWalked++;
-        // From the next step back a missed day is a week from this walk's
-        // grace, so the anchored span's own forgiving holds: credit the rest.
-        if (stepsSinceGrace + 1 >= GRACE_MIN_SPACING_DAYS) {
-          const rest = anchorLeft.streak - anchoredDaysWalked;
-          if (rest > 0) {
-            return {
-              streak: streak + rest,
-              bridgedDates: bridged,
-              endDate: endKey,
-            };
-          }
-          // A stale-low anchor this walk has already outrun: walk on plain.
-          anchorLeft = undefined;
-          anchoredDaysWalked = null;
-        }
-      }
+      // An active day confirms any pending grace or rest day before it.
+      confirmPending();
+      streak += 1;
+      loggedSinceGrace = true;
+      // From the next step back a missed day is a week from this walk's
+      // grace, so the anchored span's own forgiving holds: credit the rest.
+      const credited = creditAnchoredRest();
+      if (credited) return credited;
+    } else if (restDays.has(cursorKey)) {
+      // The plan's rest day: counted once an older active day confirms it.
+      pending++;
+      pendingRested.push(cursorKey);
+      const credited = creditAnchoredRest();
+      if (credited) return credited;
     } else {
-      // Non-active day — bridge it only if far enough from the last grace.
-      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS) break;
-      pendingGrace++;
-      pendingBridged.push(format(cursor, "yyyy-MM-dd"));
+      // Non-active day — bridge it only if far enough from the last grace,
+      // with a logged day between.
+      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS || !loggedSinceGrace) break;
+      pending++;
+      pendingBridged.push(cursorKey);
       stepsSinceGrace = 0;
+      loggedSinceGrace = false;
     }
     cursor.setDate(cursor.getDate() - 1);
     stepsSinceGrace++;
   }
-  // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
-  return { streak, bridgedDates: bridged, endDate: endKey };
+  // Any unconfirmed pending grace or rest (a trailing gap into pre-history)
+  // is dropped.
+  return span(streak);
 }
 
 /**
@@ -500,9 +552,10 @@ function attestedAnchor(
 export function computeStreakSpanAnchored(
   activeDates: Set<string>,
   anchor: StreakAnchor | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakSpan {
-  const pure = computeStreakSpan(activeDates, now);
+  const pure = computeStreakSpan(activeDates, now, undefined, restDays);
   if (!anchor) return pure;
   if (!Number.isFinite(anchor.streak) || anchor.streak <= 0) return pure;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor.lastActiveDate)) return pure;
@@ -512,27 +565,60 @@ export function computeStreakSpanAnchored(
   // so an unattested anchor can never alter the result — skipping the
   // second walk here just saves the work of proving that.
   if (!attested) return pure;
-  const anchored = computeStreakSpan(activeDates, now, attested);
-  return anchored.streak >= pure.streak ? anchored : pure;
+  const anchored = computeStreakSpan(activeDates, now, attested, restDays);
+  if (anchored.streak < pure.streak) return pure;
+  // The anchored walk stops at the stored pair, which once saved is today
+  // or yesterday, so on its own it names no covered day. The plain walk
+  // takes the same steps over the days it can see, so its days are the
+  // streak's: the sheet's covered days and its line of reassurance stay
+  // after the save.
+  return {
+    ...anchored,
+    bridgedDates: newestFirst(anchored.bridgedDates, pure.bridgedDates),
+    restDates: newestFirst(anchored.restDates, pure.restDates),
+  };
+}
+
+/** Two lists of day keys as one, without repeats, newest first. */
+function newestFirst(a: readonly string[], b: readonly string[]): string[] {
+  return [...new Set([...a, ...b])].sort().reverse();
 }
 
 export interface StreakState {
   /** The streak shown now: the today/yesterday rule, 0 when neither day is
-   *  active. */
+   *  logged or a rest day. */
   live: StreakSpan;
   /**
    * The streak logging today keeps. `live` while it is alive; on the morning
-   * after a rest day, when `live` is 0, the streak through the day before
+   * after a day off, when `live` is 0, the streak through the day before
    * yesterday, which logging today saves with yesterday as its forgiven day.
    * 0 when nothing is left to save. The evening reminders read this: they
    * exist for exactly that morning-after.
    */
   savable: number;
   /**
-   * The pair to persist: the streak through its last active day, with that
+   * The pair to persist: the streak through its last logged day, with that
    * day. Null leaves the stored pair as it is (a streak already broken).
+   * Rest days after the last logged day are not in it: they are walked again
+   * from the plan, so the pair always ends on a day with a log.
    */
   anchor: StreakAnchor | null;
+  /**
+   * The day the counted span ends on (`live`'s, or the held span's on the
+   * morning after a day off), rest days included. Null with `anchor`.
+   */
+  endDate: string | null;
+}
+
+/** The pair a span stores: its count through its last logged day. Every
+ *  day after that one is a rest day or a forgiven one the span counts. */
+function anchorOf(span: StreakSpan): StreakAnchor | null {
+  if (span.streak <= 0 || !span.lastActiveDate) return null;
+  const last = span.lastActiveDate;
+  const after = [...span.restDates, ...span.bridgedDates].filter(
+    (d) => d > last
+  ).length;
+  return { streak: span.streak - after, lastActiveDate: last };
 }
 
 /**
@@ -545,33 +631,46 @@ export interface StreakState {
  * saving it replaced a 100-day certificate with 0, so the evening's log
  * read only what the window could see; and a backfilled yesterday saved 101
  * against the day before, so the next day read 103 for 102.
+ *
+ * `restDays` are the plan's rest days over the days read (App1 Q32,
+ * `restDays.ts`); none for a person with no plan.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakState(
   activeDates: Set<string>,
   stored: StreakAnchor | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakState {
-  const live = computeStreakSpanAnchored(activeDates, stored, now);
-  if (live.streak > 0 && live.endDate) {
+  const live = computeStreakSpanAnchored(activeDates, stored, now, restDays);
+  const liveAnchor = anchorOf(live);
+  if (liveAnchor) {
     return {
       live,
       savable: live.streak,
-      anchor: { streak: live.streak, lastActiveDate: live.endDate },
+      anchor: liveAnchor,
+      endDate: live.endDate,
     };
   }
   // Today and yesterday are both empty: the walk as of yesterday is the
   // streak through the day before it, which today's log would still keep.
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const held = computeStreakSpanAnchored(activeDates, stored, yesterday);
-  return held.streak > 0 && held.endDate
+  const held = computeStreakSpanAnchored(
+    activeDates,
+    stored,
+    yesterday,
+    restDays
+  );
+  const heldAnchor = anchorOf(held);
+  return heldAnchor
     ? {
         live,
         savable: held.streak,
-        anchor: { streak: held.streak, lastActiveDate: held.endDate },
+        anchor: heldAnchor,
+        endDate: held.endDate,
       }
-    : { live, savable: 0, anchor: null };
+    : { live, savable: 0, anchor: null, endDate: null };
 }
 
 /**
@@ -580,21 +679,30 @@ export function computeStreakState(
  * logging today keeps, not 0) and as it stands with `day` active. Equal
  * when the day is already active, or too far back to reach the streak.
  * A post names the milestone the session reached from it (Soc15,
- * `streakMoment`), through the same walk, grace and anchor as the streak
- * shown everywhere else.
+ * `streakMoment`), through the same walk, grace, rest days and anchor as
+ * the streak shown everywhere else.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function streakAcross(
   activeDates: ReadonlySet<string>,
   stored: StreakAnchor | null | undefined,
   day: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): { before: number; after: number } {
-  const before = computeStreakState(new Set(activeDates), stored, now).savable;
+  const before = computeStreakState(
+    new Set(activeDates),
+    stored,
+    now,
+    restDays
+  ).savable;
   if (activeDates.has(day)) return { before, after: before };
   const withDay = new Set(activeDates);
   withDay.add(day);
-  return { before, after: computeStreakState(withDay, stored, now).savable };
+  return {
+    before,
+    after: computeStreakState(withDay, stored, now, restDays).savable,
+  };
 }
 
 /** The certificate a stored document carries: its anchor fields, or the
@@ -617,7 +725,7 @@ function storedAnchorOf(
 // directly, each spinning up 4 Firestore subscriptions. Now <StreaksProvider>
 // runs it once near the authenticated root, and consumers read from context.
 
-function useStreaksInternal() {
+function useStreaksInternal(planProfile: PlanProfile | null) {
   const todayKey = useLocalDateKey();
   const uid = useUid();
 
@@ -626,6 +734,9 @@ function useStreaksInternal() {
 
   // Source streams
   const [meals, setMeals] = useState<MealRow[]>([]);
+  // The programme, for its run days and race: with the profile's schedule
+  // they say which days are the plan's rest days (App1 Q32).
+  const [program, setProgram] = useState<ProgramState | null>(null);
 
   /* Runs come through the one saved-run reader: one parse, the Lift3 day,
      and runs saved on this phone but not yet synced, so an offline run
@@ -676,16 +787,19 @@ function useStreaksInternal() {
     [savedRuns.runs]
   );
 
-  // Loading gates — 4 independent flags. We wait for all 4 to flip before
-  // computing or persisting anything, so silent backfill can't double-award
-  // badges that already have an earnedAt set in Firestore.
+  // Loading gates — 5 independent flags. We wait for all 5 to flip before
+  // computing or persisting anything.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
+  const [programLoaded, setProgramLoaded] = useState(false);
   // A failed read settles its loaded flag (below) so nothing hangs, but
   // what it left behind is the defaults, not the data: the streak counted
   // from it must not be saved over the stored one.
   const [streaksDocFailed, setStreaksDocFailed] = useState(false);
   const [mealsFailed, setMealsFailed] = useState(false);
+  // Without the programme the plan's rest days are partly unknown, and a
+  // streak walked without them is shorter than the person's.
+  const [programFailed, setProgramFailed] = useState(false);
   // Bumped by retryLoad: Firestore ends a listener that fails, so trying
   // again means opening the two below afresh.
   const [streamsAttempt, setStreamsAttempt] = useState(0);
@@ -695,9 +809,9 @@ function useStreaksInternal() {
   // — sign-out, or A → B with no signed-out render between — drops all of
   // it in the same render that sees the new uid. From an effect the reset
   // would land a commit late: that commit would render the previous
-  // account's streak, and with its loaded flags still true the badge and
-  // persist effects would run against A's rows under B's uid. Cleared
-  // here, the flags hold both effects off until the new account's four
+  // account's streak, and with its loaded flags still true the persist
+  // effect would run against A's rows under B's uid. Cleared
+  // here, the flags hold it off until the new account's four
   // streams have landed. The refs are reset in the subscription effect's
   // signed-out branch: a ref can't be written while rendering.
   const [streamsUid, setStreamsUid] = useState(uid);
@@ -705,19 +819,17 @@ function useStreaksInternal() {
     setStreamsUid(uid);
     setStreakData(DEFAULT_STREAKS);
     setMeals([]);
+    setProgram(null);
     setStreaksDocLoaded(false);
     setMealsLoaded(false);
+    setProgramLoaded(false);
     setStreaksDocFailed(false);
     setMealsFailed(false);
+    setProgramFailed(false);
   }
 
-  // Reveal only confirmed awards from this account. Intent may be queued
-  // before the write resolves, so reloads retain it without announcing a failed save.
-  const [confirmedRevealBadges, setConfirmedRevealBadges] = useState<{
-    uid: string;
-    badges: EarnedBadge[];
-  } | null>(null);
-  // New-badge queue — multiple badges awarded in one pass show one at a time.
+  // The reveal queue: the server's awards this device has not revealed
+  // (pendingBadgeReveals.ts), one at a time, each once it is in the record.
   const pendingIds = useSyncExternalStore(
     subscribePendingBadges,
     () => pendingBadgeIds(uid),
@@ -725,38 +837,13 @@ function useStreaksInternal() {
   );
   const newBadge =
     pendingIds
-      .map((id) =>
-        confirmedRevealBadges?.uid === uid
-          ? confirmedRevealBadges.badges.find((b) => b.id === id && b.earnedAt)
-          : undefined
-      )
+      .map((id) => streakData.badges.find((b) => b.id === id && b.earnedAt))
       .find(Boolean) ?? null;
 
   // Refs — track state across renders without triggering re-runs
   // What the last streak save wrote (its fields, as JSON), so a recompute
   // that changes nothing writes nothing.
   const lastWrittenStreakRef = useRef<string | null>(null);
-  const hasLoadedRef = useRef(false);
-  // Badge ids with an award write currently in flight — prevents the
-  // check effect from firing duplicate concurrent commits for the same
-  // badge before the first resolves.
-  const awardInFlightRef = useRef<Set<string>>(new Set());
-  // Awards run one after another, never concurrently. Each is a transaction
-  // that reads streaks/data live, so a second award always sees the first
-  // one's commit — two calls in the same tick can no longer overwrite each
-  // other's earnedAt (the pre-transaction code built the whole badges array
-  // from a stale closure and wrote it back, so the later write reverted
-  // the earlier award until the next snapshot re-derived it). Real
-  // Firestore would also retry a contended transaction; the chain means
-  // correctness does not depend on that.
-  const awardChainRef = useRef<Promise<void>>(Promise.resolve());
-  // Earned-badge ids already accounted for, so an earnedAt that NEWLY appears
-  // in a streaks/data snapshot can be detected as an EXTERNAL (server-side)
-  // award and celebrated. null until the first snapshot seeds the baseline
-  // (so historical badges don't all pop the reveal on app open). Local awards
-  // add themselves here before their own write, so the returning snapshot
-  // doesn't double-queue them.
-  const seenEarnedRef = useRef<Set<string> | null>(null);
 
   // ── Subscribe to all 4 streams ─────────────────────────────────────────
 
@@ -767,8 +854,6 @@ function useStreaksInternal() {
       // are this effect's to clear, so the next account starts from a
       // clean baseline.
       lastWrittenStreakRef.current = null;
-      hasLoadedRef.current = false;
-      seenEarnedRef.current = null;
       return;
     }
 
@@ -798,8 +883,6 @@ function useStreaksInternal() {
           // Merge badge definitions with saved earned dates — this auto-backfills
           // new badges as earnedAt: null for existing users. No migration needed.
           const merged = mergeWithCatalogue(data.badges);
-          if (!snap.metadata?.hasPendingWrites)
-            setConfirmedRevealBadges({ uid, badges: merged });
           // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
           // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
           // into state — that previously caused `Math.max(n, undefined) === NaN`
@@ -847,6 +930,11 @@ function useStreaksInternal() {
             /^\d{4}-\d{2}-\d{2}$/.test(data.anchorDate)
               ? data.anchorDate
               : undefined;
+          const keptThrough =
+            typeof data.keptThrough === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(data.keptThrough)
+              ? data.keptThrough
+              : undefined;
           setStreakData({
             ...DEFAULT_STREAKS,
             ...data,
@@ -855,31 +943,14 @@ function useStreaksInternal() {
             totalActiveDays: sanitizedTotal,
             anchorStreak,
             anchorDate,
+            keptThrough,
             earlyLogDays: storedEarlyDays(data.earlyLogDays),
             badges: merged,
           });
 
-          // Celebrate badges awarded EXTERNALLY — i.e. server-side milestone
-          // awarding (onRunCreated) — that this client didn't award itself.
-          // The first snapshot seeds the baseline silently; thereafter any
-          // badge whose earnedAt newly appears (and wasn't a local award,
-          // which registers itself in seenEarnedRef before its own write) is
-          // queued for the reveal modal.
-          const earnedNow = merged.filter((b) => b.earnedAt);
-          if (seenEarnedRef.current === null) {
-            seenEarnedRef.current = new Set(earnedNow.map((b) => b.id));
-          } else {
-            const fresh = earnedNow.filter(
-              (b) => !seenEarnedRef.current!.has(b.id)
-            );
-            if (fresh.length > 0) {
-              for (const b of fresh) seenEarnedRef.current!.add(b.id);
-              queueBadgeReveals(
-                uid,
-                fresh.map((b) => b.id)
-              );
-            }
-          }
+          // The server's awards this device has not revealed yet, earned
+          // while it watched or while it was away (pendingBadgeReveals).
+          queueServerAwards(uid, data.badges);
         } else {
           setStreakData(DEFAULT_STREAKS);
         }
@@ -938,19 +1009,54 @@ function useStreaksInternal() {
       onSubscriptionError("meals", setMealsLoaded, setMealsFailed)
     );
 
+    // The programme's run days and race, for the plan's rest days. Read
+    // only: the programme's upkeep belongs to useProgram.
+    const unsubProgram = onSnapshot(
+      doc(db, "users", uid, "programState", "current"),
+      (snap) => {
+        setProgram(snap.exists() ? (snap.data() as ProgramState) : null);
+        setProgramLoaded(true);
+      },
+      onSubscriptionError("programme", setProgramLoaded, setProgramFailed)
+    );
+
     return () => {
       unsubStreaks();
       unsubMeals();
+      unsubProgram();
     };
   }, [uid, streamsAttempt, windowStart]);
 
   const allLoaded =
-    streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
+    streaksDocLoaded &&
+    workoutsLoaded &&
+    runsLoaded &&
+    mealsLoaded &&
+    programLoaded;
   // Any stream that settled by failing. The saved-session readers report
   // `failed` only when they hold no rows for this account; rows already
   // read stay the evidence they were.
   const readFailed =
-    streaksDocFailed || mealsFailed || savedWorkouts.failed || savedRuns.failed;
+    streaksDocFailed ||
+    mealsFailed ||
+    programFailed ||
+    savedWorkouts.failed ||
+    savedRuns.failed;
+
+  // The plan the streak's rest days are read from (App1 Q32), and those
+  // days over the window the streak reads. A person with no plan has none.
+  const plan = useMemo<StreakPlan>(
+    () => ({
+      profile: planProfile?.schedule ?? null,
+      startKey: planProfile?.startKey ?? null,
+      programState: program,
+    }),
+    [planProfile, program]
+  );
+  const restDays = useMemo(
+    () => plannedRestDays(plan, windowStart, todayKey, todayKey),
+    [plan, windowStart, todayKey]
+  );
 
   // Per-day macro-target snapshots + water docs for the nutrition badges
   // (its own two listeners, owned here so they're singular per session).
@@ -963,6 +1069,7 @@ function useStreaksInternal() {
     lastActiveDate: storedLastActive,
     anchorStreak: storedAnchorStreak,
     anchorDate: storedAnchorDate,
+    keptThrough: storedKeptThrough,
   } = streakData;
   const storedAnchor = useMemo(
     () =>
@@ -980,8 +1087,10 @@ function useStreaksInternal() {
     currentStreak,
     savableStreak,
     anchorToStore,
+    keptThrough,
     totalActiveDays,
     bridgedDates,
+    restDates,
   } = useMemo(() => {
     if (!allLoaded) {
       return {
@@ -989,8 +1098,10 @@ function useStreaksInternal() {
         currentStreak: 0,
         savableStreak: 0,
         anchorToStore: null as StreakAnchor | null,
+        keptThrough: null as string | null,
         totalActiveDays: 0,
         bridgedDates: [] as string[],
+        restDates: [] as string[],
       };
     }
     const set = computeActiveDateSet(workouts, runs, meals);
@@ -1006,18 +1117,33 @@ function useStreaksInternal() {
     const state = computeStreakState(
       set,
       storedAnchor,
-      parseLocalDate(todayKey)
+      parseLocalDate(todayKey),
+      restDays
     );
     return {
       activeDateSet: set,
       currentStreak: state.live.streak,
       savableStreak: state.savable,
       anchorToStore: state.anchor,
-      // Grace days never inflate the honest "days you showed up" count.
+      keptThrough: state.endDate
+        ? keptThroughAfter(state.endDate, plan, todayKey)
+        : null,
+      // Grace and rest days never inflate the honest "days you showed up"
+      // count.
       totalActiveDays: set.size,
       bridgedDates: state.live.bridgedDates,
+      restDates: state.live.restDates,
     };
-  }, [todayKey, allLoaded, workouts, runs, meals, storedAnchor]);
+  }, [
+    todayKey,
+    allLoaded,
+    workouts,
+    runs,
+    meals,
+    storedAnchor,
+    restDays,
+    plan,
+  ]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
@@ -1031,27 +1157,29 @@ function useStreaksInternal() {
             activeDateSet,
             storedAnchor,
             day,
-            parseLocalDate(todayKey)
+            parseLocalDate(todayKey),
+            restDays
           )
         : null,
-    [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey]
+    [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey, restDays]
   );
 
-  // Distinct dates with ≥1 logged meal item — feeds meal_prep_master (same
-  // "non-empty meal" rule computeActiveDateSet uses for the active-day set).
-  const mealDates = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          meals
-            .filter(
-              (m) => typeof m.date === "string" && m.date && m.items.length > 0
-            )
-            .map((m) => m.date)
-        )
-      ),
-    [meals]
-  );
+  // The food days (`foodDay.ts`): dates whose logged meals reach 800 kcal,
+  // the days every screen counts. Feeds meal_prep_master, "Log all meals
+  // for 14 days straight", which a day of a coffee and nothing else is
+  // not. The active-day set (computeActiveDateSet) still takes any
+  // non-empty meal: logging something keeps a streak.
+  const mealDates = useMemo(() => {
+    const byDay = new Map<string, number>();
+    for (const m of meals) {
+      if (typeof m.date !== "string" || !m.date || m.items.length === 0)
+        continue;
+      byDay.set(m.date, (byDay.get(m.date) ?? 0) + (m.totalCalories ?? 0));
+    }
+    return [...byDay]
+      .filter(([, calories]) => isFoodDay(calories))
+      .map(([date]) => date);
+  }, [meals]);
 
   // Distinct dates with a log before 7am LOCAL in the window. Uses the
   // best per-source timestamp: run completedAt (event time), workout + meal
@@ -1066,78 +1194,14 @@ function useStreaksInternal() {
     ]);
   }, [allLoaded, workouts, runs, meals]);
 
-  // early_bird's days: the window's, with the ones kept on the streak
-  // document and, for a document that predates them, the seed's. The
-  // badge counts over all time, so a day that ages out of the window stays
-  // counted.
-  const earlyBirdEarned = streakData.badges.some(
-    (b) => b.id === "early_bird" && !!b.earnedAt
-  );
+  // early_bird's days for its progress ring: the ones the server's award
+  // keeps on the streak document (the count outlives the window there),
+  // with the window's.
   const storedEarly = streakData.earlyLogDays;
-  const [seededEarly, setSeededEarly] = useState<{
-    uid: string;
-    days: string[];
-  } | null>(null);
-  const seededDays = seededEarly?.uid === uid ? seededEarly.days : null;
   const earlyLogDays = useMemo(
-    () =>
-      allLoaded ? keptEarlyDays(storedEarly, seededDays, windowEarlyDays) : [],
-    [allLoaded, storedEarly, seededDays, windowEarlyDays]
+    () => (allLoaded ? keptEarlyDays(storedEarly, windowEarlyDays) : []),
+    [allLoaded, storedEarly, windowEarlyDays]
   );
-
-  // The seed: a document without the field gets one deeper read, so early
-  // days older than the window are kept. Once per account and mount; a
-  // failed read writes nothing, and the next load tries again.
-  const seedTriedForRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!allLoaded || !uid || readFailed) return;
-    if (storedEarly !== undefined || earlyBirdEarned) return;
-    if (seedTriedForRef.current === uid) return;
-    seedTriedForRef.current = uid;
-    void (async () => {
-      try {
-        const { readSeedEarlyDays } = await import("./earlyBirdSeed");
-        const days = await readSeedEarlyDays(uid, {
-          meals: MEAL_CAP,
-          workouts: WORKOUT_CAP,
-          runs: RUN_CAP,
-        });
-        setSeededEarly({ uid, days });
-      } catch (err) {
-        logger.error("[useStreaks] early-bird seed read failed", err);
-      }
-    })();
-  }, [allLoaded, uid, readFailed, storedEarly, earlyBirdEarned]);
-
-  // Keep the days on the streak document when they grow, or once the seed
-  // has counted a document that had none. Never with a read failed: the
-  // window's days would be missing, not absent.
-  const lastWrittenEarlyRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!allLoaded || !uid || readFailed || earlyBirdEarned) return;
-    if (storedEarly === undefined && seededDays === null) return;
-    if (storedEarly !== undefined && earlyLogDays.length <= storedEarly.length)
-      return;
-    const signature = `${uid}:${earlyLogDays.join(",")}`;
-    if (signature === lastWrittenEarlyRef.current) return;
-    lastWrittenEarlyRef.current = signature;
-    setDocGuarded(
-      doc(db, "users", uid, "streaks", "data"),
-      { earlyLogDays },
-      { merge: true }
-    ).catch((err) => {
-      lastWrittenEarlyRef.current = null;
-      logger.error("[useStreaks] early-bird days save failed", err);
-    });
-  }, [
-    allLoaded,
-    uid,
-    readFailed,
-    earlyBirdEarned,
-    storedEarly,
-    seededDays,
-    earlyLogDays,
-  ]);
 
   // Earned badge count (excl. ultimate_athlete itself) — drives the
   // ultimate_athlete progress ring; the earning pass derives the same number
@@ -1193,6 +1257,21 @@ function useStreaksInternal() {
     return activeDateSet.has(todayKey);
   }, [allLoaded, activeDateSet, todayKey]);
 
+  // Today is one of the plan's rest days (App1 Q32): the streak asks for
+  // nothing today, so nothing reminds the person to keep it. Tomorrow too,
+  // for the reminder armed today for tomorrow evening.
+  const restToday = allLoaded && restDays.has(todayKey);
+  const restTomorrow = useMemo(
+    () =>
+      allLoaded &&
+      isPlannedRestDay(
+        localDateString(addLocalDays(parseLocalDate(todayKey), 1)),
+        plan,
+        todayKey
+      ),
+    [allLoaded, plan, todayKey]
+  );
+
   // Gentle after-the-fact reassurance trigger (Streak1 visibility): true only
   // when the user is active TODAY *and* yesterday was a missed day that grace
   // bridged. One-day relevance window — the moment is "you took yesterday off
@@ -1220,224 +1299,56 @@ function useStreaksInternal() {
     augmented.add(yesterday);
     // Through the stored pair, as the streak itself is: the window alone
     // offered a 300-day streaker the ~167 days it can see.
-    const restored = computeStreakSpanAnchored(augmented, storedAnchor).streak;
+    const restored = computeStreakSpanAnchored(
+      augmented,
+      storedAnchor,
+      new Date(),
+      restDays
+    ).streak;
     return restored >= 3 ? restored : 0;
-  }, [allLoaded, currentStreak, activeDateSet, storedAnchor]);
+  }, [allLoaded, currentStreak, activeDateSet, storedAnchor, restDays]);
 
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
   // no-op alias — but explicit is clearer for consumers like BadgeGrid).
   const allBadges = streakData.badges;
 
-  // Stable signature over earnedAt values — lets us depend on badge state
-  // changes without triggering re-runs on every snapshot reflow.
-  const badgesSignature = useMemo(
-    () => streakData.badges.map((b) => `${b.id}:${b.earnedAt ?? ""}`).join("|"),
-    [streakData.badges]
-  );
-
-  // ── Badge award helper ─────────────────────────────────────────────────
-
-  /**
-   * Award badges in ONE transaction on streaks/data.
-   *
-   * Transactional because the server awards too (onWorkoutCreated writes
-   * Plate-Club and run milestones into the same array): whichever side
-   * lands second reads the other's earnedAt and leaves it alone. The old
-   * batch write rebuilt the whole array from local state, so a
-   * server-awarded badge that had not reached this client yet was
-   * silently reverted to unearned.
-   *
-   * Only ids this call actually SETS are registered in seenEarnedRef.
-   * That placement is load-bearing: registering a candidate before the
-   * transaction has decided would mark a server-awarded badge as already
-   * seen, and the snapshot's external-award path would then skip its
-   * celebration.
-   *
-   * The reveal queue moved inside for tidiness, NOT correctness — hoisting
-   * it back out was measured against `awardBadges.test.tsx` and changes
-   * nothing, because `queueBadgeReveals` is a dedupe set and the snapshot
-   * path queues the same id anyway. Queuing before the commit is
-   * deliberate either way (inherited): a reveal is INTENT, and `newBadge`
-   * only fires once a snapshot confirms an earnedAt, so intent recorded
-   * for a write that then failed never reveals anything.
-   */
-  const awardBadgeIds = useCallback(
-    async (ids: readonly string[], silent: boolean) => {
-      if (!uid) return;
-
-      // Cheap local pre-filter: unknown ids, ids already earned as far as
-      // this client knows, and ids with a write in flight. The transaction
-      // below is the authority; this just avoids pointless round-trips.
-      const candidates = [...new Set(ids)].filter((id) => {
-        const badge = streakData.badges.find((b) => b.id === id);
-        return !!badge && !badge.earnedAt && !awardInFlightRef.current.has(id);
-      });
-      if (candidates.length === 0) return;
-      for (const id of candidates) awardInFlightRef.current.add(id);
-
-      const run = async () => {
-        const streaksRef = doc(db, "users", uid, "streaks", "data");
-        const publicProfileRef = doc(db, "users", uid, "public", "profile");
-        let setNow: string[] = [];
-        try {
-          const next = await runTransaction(db, async (tx) => {
-            const snap = await tx.get(streaksRef);
-            const stored = snap.exists()
-              ? (snap.data() as { badges?: unknown }).badges
-              : undefined;
-            const badges: EarnedBadge[] = Array.isArray(stored)
-              ? [...(stored as EarnedBadge[])]
-              : [];
-            const now = new Date().toISOString();
-            setNow = [];
-            for (const id of candidates) {
-              const idx = badges.findIndex((b) => b && b.id === id);
-              if (idx === -1) {
-                const def = BADGE_DEFINITIONS.find((d) => d.id === id);
-                if (!def) continue;
-                badges.push({ ...def, earnedAt: now });
-                setNow.push(id);
-              } else if (!badges[idx].earnedAt) {
-                badges[idx] = { ...badges[idx], earnedAt: now };
-                setNow.push(id);
-              }
-            }
-            if (setNow.length === 0) return null;
-
-            // Register before the write so the echo snapshot isn't
-            // re-detected as an external award; persist reveal intent
-            // before the ack so a killed app still reveals once the next
-            // snapshot confirms. Both are idempotent, so a transaction
-            // retry re-running this body is harmless.
-            for (const id of setNow) seenEarnedRef.current?.add(id);
-            if (!silent) queueBadgeReveals(uid, setNow);
-
-            // Public mirror: ids + earnedAt only, from the LIVE array — so
-            // a server-earned badge this client had not seen is counted.
-            const earnedMap: Record<string, string> = {};
-            for (const b of badges) {
-              if (!b.earnedAt) continue;
-              earnedMap[b.id] = toIsoString(b.earnedAt);
-            }
-            tx.set(streaksRef, { badges }, { merge: true });
-            tx.set(
-              publicProfileRef,
-              {
-                badgeSummary: {
-                  earnedMap,
-                  count: Object.keys(earnedMap).length,
-                },
-              },
-              { merge: true }
-            );
-            return badges;
-          });
-          if (next) {
-            setConfirmedRevealBadges({ uid, badges: mergeWithCatalogue(next) });
-          }
-        } catch (error) {
-          // Un-register what this call claimed, so a later server award of
-          // the same id is still celebrated as new. Badge awards are
-          // background reconciliation, not a user action — log, no toast
-          // (this used to produce stacked "Failed to save badge" errors).
-          for (const id of setNow) seenEarnedRef.current?.delete(id);
-          logger.error("[Streaks] Badge save failed:", error);
-        } finally {
-          for (const id of candidates) awardInFlightRef.current.delete(id);
-        }
-      };
-      const chained = awardChainRef.current.then(run, run);
-      awardChainRef.current = chained;
-      await chained;
-    },
-    [uid, streakData.badges]
-  );
-
-  const awardBadge = useCallback(
-    (badgeId: string, silent: boolean) => awardBadgeIds([badgeId], silent),
-    [awardBadgeIds]
-  );
-
-  // ── Badge check logic — runs after every snapshot change once loaded ─
-
-  useEffect(() => {
-    if (!allLoaded) return;
-
-    const silent = !hasLoadedRef.current;
-
-    // The pure earning decision (streak thresholds + rolling-window balanced)
-    // lives in ./badgeEarning; the hook just awards what it returns.
-    const toAward = badgesToAward(streakData.badges, {
-      currentStreak,
-      workouts,
-      runs,
-      mealDates,
-      earlyLogDays,
-      macroMasterDays,
-      proteinHitDays,
-      waterHitDays,
-      today: new Date(),
-    });
-    void (async () => {
-      for (const id of toAward) await awardBadge(id, silent);
-    })();
-
-    // Flip to loud mode after the first pass completes.
-    if (!hasLoadedRef.current) {
-      hasLoadedRef.current = true;
-    }
-    // badgesSignature is included so we re-evaluate after an earned badge
-    // lands in the snapshot — this lets multi-threshold crossings award in
-    // sequence without infinite loops (already-earned badges short-circuit).
-  }, [
-    allLoaded,
-    currentStreak,
-    workouts,
-    runs,
-    mealDates,
-    earlyLogDays,
-    macroMasterDays,
-    proteinHitDays,
-    waterHitDays,
-    badgesSignature,
-    streakData.badges,
-    awardBadge,
-  ]);
-
   // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
   //
-  // Atomic batch writes three docs in one commit:
+  // Atomic batch writes two docs in one commit:
   //   1. users/{uid}/streaks/data           — full detail (source of truth;
   //                                           owner-only).
-  //   2. users/{uid}                        — mirrored currentStreak +
-  //                                           longestStreak on the main
-  //                                           user doc (owner-only read for
-  //                                           now; kept for Home's existing
-  //                                           hydration path).
-  //   3. users/{uid}/public/profile         — cross-user-readable projection
+  //   2. users/{uid}/public/profile         — cross-user-readable projection
   //                                           (see match rule in
   //                                           firestore.rules). Only the
   //                                           allowlisted fields land here.
   //
-  // Mirror-write contract: streaks/data carries the full state (badges,
-  // lastActiveDate, totalActiveDays); users/{uid} + public/profile carry
-  // only the two summary numbers we denormalise for cross-surface reads.
+  // Mirror-write contract: streaks/data carries the full state
+  // (lastActiveDate, totalActiveDays; its badges are the server's);
+  // public/profile carries only the summary other people read. The profile
+  // document (users/{uid}) kept a third copy of the two numbers that
+  // nothing read, and no longer does (App1 Q21, Q24).
 
   useEffect(() => {
     // A failed read is not an empty one: with the streaks document unread,
     // longestStreak and the last active day are the defaults, and saving
-    // would write them over the stored record and both mirrors.
+    // would write them over the stored record and the public copy.
     if (!allLoaded || !uid || readFailed) return;
     const today = format(new Date(), "yyyy-MM-dd");
     // The certificate after this write: the streak through its last active
     // day, or the stored one where the streak is already broken. Never the
     // morning-after 0, which threw a long streak's certificate away.
     const anchor = anchorToStore ?? storedAnchor;
-    // The last active day is the day the counted span ends on. It was
+    // The last active day is the counted span's newest logged day. It was
     // "today if active, else the stored day", so a backfilled yesterday
     // saved 101 against the day before.
     const lastActiveDate = anchorToStore?.lastActiveDate ?? storedLastActive;
+    // The day the streak is kept through without another log (rest days
+    // ahead included), saved with the certificate it extends; a broken
+    // streak leaves the stored pair, and this, as they are.
+    const keptThroughToStore = anchorToStore
+      ? (keptThrough ?? anchorToStore.lastActiveDate)
+      : (storedKeptThrough ?? null);
     const nextLongest = Math.max(
       currentStreak,
       anchor.streak,
@@ -1448,6 +1359,7 @@ function useStreaksInternal() {
       lastActiveDate,
       anchorStreak: anchor.streak,
       anchorDate: anchor.lastActiveDate,
+      keptThrough: keptThroughToStore,
       longestStreak: nextLongest,
     };
     const signature = JSON.stringify(next);
@@ -1461,6 +1373,7 @@ function useStreaksInternal() {
       (anchor.streak <= 0 ||
         (anchor.streak === storedAnchorStreak &&
           anchor.lastActiveDate === storedAnchorDate)) &&
+      keptThroughToStore === (storedKeptThrough ?? null) &&
       nextLongest === streakData.longestStreak
     ) {
       lastWrittenStreakRef.current = signature;
@@ -1468,7 +1381,6 @@ function useStreaksInternal() {
     }
 
     const streaksRef = doc(db, "users", uid, "streaks", "data");
-    const userRef = doc(db, "users", uid);
     const publicProfileRef = doc(db, "users", uid, "public", "profile");
 
     const batch = writeBatch(db);
@@ -1482,30 +1394,28 @@ function useStreaksInternal() {
         ...(anchor.streak > 0
           ? { anchorStreak: anchor.streak, anchorDate: anchor.lastActiveDate }
           : {}),
-      },
-      { merge: true }
-    );
-    batch.set(
-      userRef,
-      {
-        currentStreak,
-        longestStreak: nextLongest,
+        ...(keptThroughToStore ? { keptThrough: keptThroughToStore } : {}),
       },
       { merge: true }
     );
     // Mirror onto the cross-user-readable public profile doc.
     // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
-    // With the day it last counted, so a reader can tell a streak that has
-    // lapsed since this device last wrote it (publicStreakAsOf).
+    // With the day it is kept through, so a reader can tell a streak that
+    // has lapsed since this device last wrote it (publicStreakAsOf). The
+    // field keeps its name, `lastActiveDate`, so the rules and every reader
+    // stand as they are: it is the last logged day for a person with no
+    // plan, and runs on over the plan's rest days after it for one with a
+    // plan, which keep the streak (App1 Q32).
+    const publicThrough = keptThroughToStore ?? lastActiveDate;
     batch.set(
       publicProfileRef,
       {
         uid,
         currentStreak,
         longestStreak: nextLongest,
-        ...(typeof lastActiveDate === "string" &&
-        /^\d{4}-\d{2}-\d{2}$/.test(lastActiveDate)
-          ? { lastActiveDate }
+        ...(typeof publicThrough === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(publicThrough)
+          ? { lastActiveDate: publicThrough }
           : {}),
       },
       { merge: true }
@@ -1541,11 +1451,13 @@ function useStreaksInternal() {
     readFailed,
     currentStreak,
     anchorToStore,
+    keptThrough,
     storedAnchor,
     storedCurrent,
     storedLastActive,
     storedAnchorStreak,
     storedAnchorDate,
+    storedKeptThrough,
     totalActiveDays,
     activeDateSet,
     streakData.longestStreak,
@@ -1560,8 +1472,9 @@ function useStreaksInternal() {
   const earnedBadges = streakData.badges.filter((b) => b.earnedAt);
   const lockedBadges = streakData.badges.filter((b) => !b.earnedAt);
 
-  // Inputs for badgeProgress() — same shape as the earning context, so the
-  // grid's rings + "next badge" nudge are computed from exactly what awards.
+  // Inputs for badgeProgress(): the facts this device can see, read by the
+  // client copy of the server's rules (badgeRules.cross.test.ts), so a ring
+  // fills when the server would award.
   const badgeProgressCtx = useMemo(
     () => ({
       currentStreak,
@@ -1588,27 +1501,8 @@ function useStreaksInternal() {
     ]
   );
 
-  // Imperatively award an EVENT-based badge (first_pr, programme_complete)
-  // from feature code at the moment the event fires — these can't be derived
-  // from the windowed snapshots the badge pass reads. Idempotent (awardBadge
-  // no-ops if already earned / a write is in flight) and non-silent, so it pops
-  // the standard celebration via the same queue as every other award.
-  const awardEventBadges = useCallback(
-    (badgeIds: readonly string[]) => {
-      void awardBadgeIds(badgeIds, false);
-    },
-    [awardBadgeIds]
-  );
-  const awardEventBadge = useCallback(
-    (badgeId: string) => awardEventBadges([badgeId]),
-    [awardEventBadges]
-  );
-
-  // Open all four streams again after a failure. The pass after it is a
-  // first load, as on opening the app: badges found then are backfilled
-  // quietly rather than celebrated one by one.
+  // Open all four streams again after a failure.
   const retryLoad = () => {
-    hasLoadedRef.current = false;
     setStreaksDocFailed(false);
     setMealsFailed(false);
     setStreaksDocLoaded(false);
@@ -1629,6 +1523,15 @@ function useStreaksInternal() {
     activeDates: activeDateSet,
     /** The days grace covered inside the current streak, newest first. */
     bridgedDates,
+    /** The plan's rest days the current streak counts, newest first. */
+    restDates,
+    /** Today is one of the plan's rest days, which keep the streak. */
+    restToday,
+    /** Tomorrow is one of them. */
+    restTomorrow,
+    /** The person has a plan, so its rest days keep the streak; with no
+     *  plan every day asks for a log. */
+    coversRestDays: allLoaded && planHoldsSessions(plan),
     streakWithDay,
     hasLoggedToday,
     forgivenYesterday,
@@ -1641,8 +1544,6 @@ function useStreaksInternal() {
     lockedBadges,
     allBadges,
     badgeProgressCtx,
-    awardEventBadge,
-    awardEventBadges,
     newBadge,
     dismissNewBadge,
     // Per-day target snapshots (date → calories + macros as they stood on that
@@ -1665,11 +1566,67 @@ type StreaksValue = ReturnType<typeof useStreaksInternal>;
 
 const StreaksContext = createContext<StreaksValue | null>(null);
 
-export function StreaksProvider({ children }: { children: ReactNode }) {
-  const value = useStreaksInternal();
+/**
+ * The profile's fields the plan's rest days are read from, held by value:
+ * the provider below reads the profile only for them, so a profile write
+ * that changes none of them (the streak's own mirror among them) does not
+ * render every streak reader again.
+ */
+interface PlanProfile {
+  schedule: NonNullable<StreakPlan["profile"]>;
+  startKey: string | null;
+}
+
+function usePlanProfile(): PlanProfile | null {
+  const { profile } = useAuth();
+  const key = profile
+    ? JSON.stringify([
+        profile.weekSchedule ?? null,
+        profile.weeklyWorkoutsTarget ?? null,
+        profile.weeklyRunDaysTarget ?? null,
+        profile.weeklyRunsTarget ?? null,
+        startDayKey(profile.createdAt),
+      ])
+    : null;
+  return useMemo(() => {
+    if (key === null) return null;
+    const [weekSchedule, workouts, runDays, runs, startKey] = JSON.parse(
+      key
+    ) as [
+      NonNullable<StreakPlan["profile"]>["weekSchedule"] | null,
+      number | null,
+      number | null,
+      number | null,
+      string | null,
+    ];
+    return {
+      schedule: {
+        weekSchedule: weekSchedule ?? undefined,
+        weeklyWorkoutsTarget: workouts ?? undefined,
+        weeklyRunDaysTarget: runDays ?? undefined,
+        weeklyRunsTarget: runs ?? undefined,
+      },
+      startKey,
+    };
+  }, [key]);
+}
+
+const StreaksState = memo(function StreaksState({
+  planProfile,
+  children,
+}: {
+  planProfile: PlanProfile | null;
+  children: ReactNode;
+}) {
+  const value = useStreaksInternal(planProfile);
   return (
     <StreaksContext.Provider value={value}>{children}</StreaksContext.Provider>
   );
+});
+
+export function StreaksProvider({ children }: { children: ReactNode }) {
+  const planProfile = usePlanProfile();
+  return <StreaksState planProfile={planProfile}>{children}</StreaksState>;
 }
 
 /**

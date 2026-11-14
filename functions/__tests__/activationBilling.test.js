@@ -85,6 +85,42 @@ describe("provider-verified activation billing facts", () => {
     ).toBeNull();
   });
 
+  it("counts the website's checkouts as the web's source (App1 Q17)", () => {
+    const granted = { result: "granted", conflict: false };
+    const web = {
+      active: true,
+      sandbox: false,
+      syncedAtMs: AT,
+      purchaseAtMs: AT - 1000,
+      periodType: "normal",
+      trial: null,
+    };
+    for (const store of ["rc_billing", "paddle", "stripe"]) {
+      expect(billing.revenueCatObservation({ ...web, store }, granted)).toEqual(
+        { kind: "paid", source: "stripe", atMs: AT - 1000 }
+      );
+      expect(
+        billing.revenueCatObservation(
+          {
+            ...web,
+            store,
+            periodType: "trial",
+            trial: { startedAtMs: AT - 2000 },
+          },
+          granted
+        )
+      ).toEqual({ kind: "trial", source: "stripe", atMs: AT - 2000 });
+      // A sandbox checkout on the website is a test, not a launch number.
+      expect(
+        billing.revenueCatObservation({ ...web, store, sandbox: true }, granted)
+      ).toBeNull();
+    }
+    for (const store of ["play_store", "promotional", "amazon", null])
+      expect(
+        billing.revenueCatObservation({ ...web, store }, granted)
+      ).toBeNull();
+  });
+
   it("requires a signed paid checkout or a positive paid invoice for Stripe", () => {
     const checkout = {
       type: "checkout.session.completed",

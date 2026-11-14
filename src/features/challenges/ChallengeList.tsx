@@ -14,6 +14,8 @@ import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { toast } from "@/lib/toast";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useAuth } from "@/lib/auth";
+import { roomShown } from "@/lib/enoughPeople";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import {
   getTimeRemaining,
   useChallenges,
@@ -64,6 +66,12 @@ const LIST_CARD = cardClasses({
  * are. The page keeps one filled button, neutral: the weekly challenge's
  * action, or, while there is no Circle (`weeklyLeads` false), the
  * start-or-join card's Start a circle.
+ *
+ * Until Tropos has enough people to fill them (App1 Q6, `roomShown`), a
+ * challenge the person has not joined, the community goal and Discover are
+ * not drawn at all, and the league shows only to someone in it: what is
+ * left is the person's own (their challenges and their league, their
+ * Circles, their Spaces). A section with nothing in it has no heading.
  */
 export function ChallengeList({
   refreshRef,
@@ -89,7 +97,8 @@ export function ChallengeList({
    *  page's one filled button and the weekly action steps down. */
   weeklyLeads?: boolean;
 }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const enough = useEnoughPeople();
   const {
     challenges,
     myChallenges,
@@ -147,6 +156,19 @@ export function ChallengeList({
     ? (challenges.find((c) => c.id === openId) ?? null)
     : null;
 
+  /* Nothing is offered until the count of people is known, so a quiet
+     Tropos never flashes a Join it then takes away. */
+  const pageLoading = loading || enough === null;
+  const weeklyJoined = !!(weeklyCh && myProgress[weeklyCh.id]);
+  const weeklyShown = roomShown(weeklyJoined, enough);
+  const leagueShown =
+    !!league && roomShown(profile?.leagueOptIn === true, enough);
+  const thisWeekShown =
+    weeklyShown ||
+    joined.length > 0 ||
+    myEndedChallenges.length > 0 ||
+    leagueShown;
+
   const skeleton = (height: string) => (
     <div
       className={`${height} rounded-2xl bg-muted motion-safe:animate-pulse`}
@@ -158,54 +180,58 @@ export function ChallengeList({
     <div className="space-y-8">
       {hero}
 
-      <section aria-labelledby={weekId} className="space-y-3">
-        <SectionHeading id={weekId}>This week</SectionHeading>
-        {/* A restricted account can follow its challenges and leave them,
-            but not join one (S4e). Said once, above the first Join. */}
-        {restricted && availableChallenges.length > 0 && <RestrictedNotice />}
-        {loading ? (
-          skeleton("h-32")
-        ) : (
-          <WeeklyChallengeCard
-            weekly={weeklyCh}
-            joined={!!(weeklyCh && myProgress[weeklyCh.id])}
-            progress={weeklyCh ? myProgress[weeklyCh.id] : undefined}
-            leaderboard={weeklyCh ? leaderboards[weeklyCh.id] : undefined}
-            hasChallenges={challenges.length > 0}
-            leads={weeklyLeads}
-            onJoin={join}
-            onLeave={async (ch) => {
-              await leaveChallenge(ch.id);
-            }}
-          />
-        )}
-        {!loading && joined.length > 0 && (
-          <ul aria-label="Your challenges" className={LIST_CARD}>
-            {joined.map((ch) => (
-              <JoinedChallengeRow
-                key={ch.id}
-                challenge={ch}
-                progress={myProgress[ch.id]}
-                onOpen={() => setOpenId(ch.id)}
-                showTimeLeft={joinedTimeLeft.has(ch.id)}
-              />
-            ))}
-          </ul>
-        )}
-        {/* Challenges the person took part in that ended within the last
-            7 days. Closure for the effort; dismiss-once per id. */}
-        {!loading &&
-          myEndedChallenges.map((ch) => (
-            <ChallengeFinaleCard
-              key={ch.id}
-              challenge={ch}
-              myProgress={myProgress[ch.id]}
-              leaderboard={leaderboards[ch.id]}
-              selfUid={user?.uid}
-            />
-          ))}
-        {league}
-      </section>
+      {pageLoading
+        ? skeleton("h-32")
+        : thisWeekShown && (
+            <section aria-labelledby={weekId} className="space-y-3">
+              <SectionHeading id={weekId}>This week</SectionHeading>
+              {/* A restricted account can follow its challenges and leave
+                  them, but not join one (S4e). Said once, above the first
+                  Join, and only while there is a Join to make. */}
+              {restricted && enough && availableChallenges.length > 0 && (
+                <RestrictedNotice />
+              )}
+              {weeklyShown && (
+                <WeeklyChallengeCard
+                  weekly={weeklyCh}
+                  joined={weeklyJoined}
+                  progress={weeklyCh ? myProgress[weeklyCh.id] : undefined}
+                  leaderboard={weeklyCh ? leaderboards[weeklyCh.id] : undefined}
+                  hasChallenges={challenges.length > 0}
+                  leads={weeklyLeads}
+                  onJoin={join}
+                  onLeave={async (ch) => {
+                    await leaveChallenge(ch.id);
+                  }}
+                />
+              )}
+              {joined.length > 0 && (
+                <ul aria-label="Your challenges" className={LIST_CARD}>
+                  {joined.map((ch) => (
+                    <JoinedChallengeRow
+                      key={ch.id}
+                      challenge={ch}
+                      progress={myProgress[ch.id]}
+                      onOpen={() => setOpenId(ch.id)}
+                      showTimeLeft={joinedTimeLeft.has(ch.id)}
+                    />
+                  ))}
+                </ul>
+              )}
+              {/* Challenges the person took part in that ended within the
+                  last 7 days. Closure for the effort; dismiss-once per id. */}
+              {myEndedChallenges.map((ch) => (
+                <ChallengeFinaleCard
+                  key={ch.id}
+                  challenge={ch}
+                  myProgress={myProgress[ch.id]}
+                  leaderboard={leaderboards[ch.id]}
+                  selfUid={user?.uid}
+                />
+              ))}
+              {leagueShown && league}
+            </section>
+          )}
 
       {circles && (
         <section aria-labelledby={circlesId} className="space-y-3">
@@ -214,42 +240,48 @@ export function ChallengeList({
         </section>
       )}
 
-      <section aria-labelledby={discoverId} className="space-y-5">
-        <SectionHeading id={discoverId}>Discover</SectionHeading>
-        {spaces}
-        {loading
-          ? skeleton("h-16")
-          : (discover.length > 0 || collectiveCh) && (
-              <div className="space-y-2">
-                {discover.length > 0 && (
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                    <SectionHeading as="h3" size="compact">
-                      Challenges
-                    </SectionHeading>
-                    {discoverMonthLeft && (
-                      <p className="text-xs text-muted-foreground">
-                        {discoverMonthLeft}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {/* The community goal: drawn once someone has added to it. */}
-                {collectiveCh && <CollectivePulse challenge={collectiveCh} />}
-                {discover.length > 0 && (
-                  <ul aria-label="Challenges to join" className={LIST_CARD}>
-                    {discover.map((ch) => (
-                      <ChallengeRow
-                        key={ch.id}
-                        challenge={ch}
-                        onOpen={() => setOpenId(ch.id)}
-                        showTimeLeft={discoverTimeLeft.has(ch.id)}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-      </section>
+      {/* Quiet, Discover offers nothing: the Spaces directory still draws
+          the Spaces the person joined, under its own heading. */}
+      {pageLoading ? (
+        skeleton("h-16")
+      ) : !enough ? (
+        spaces
+      ) : (
+        <section aria-labelledby={discoverId} className="space-y-5">
+          <SectionHeading id={discoverId}>Discover</SectionHeading>
+          {spaces}
+          {(discover.length > 0 || collectiveCh) && (
+            <div className="space-y-2">
+              {discover.length > 0 && (
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <SectionHeading as="h3" size="compact">
+                    Challenges
+                  </SectionHeading>
+                  {discoverMonthLeft && (
+                    <p className="text-xs text-muted-foreground">
+                      {discoverMonthLeft}
+                    </p>
+                  )}
+                </div>
+              )}
+              {/* The community goal: drawn once someone has added to it. */}
+              {collectiveCh && <CollectivePulse challenge={collectiveCh} />}
+              {discover.length > 0 && (
+                <ul aria-label="Challenges to join" className={LIST_CARD}>
+                  {discover.map((ch) => (
+                    <ChallengeRow
+                      key={ch.id}
+                      challenge={ch}
+                      onOpen={() => setOpenId(ch.id)}
+                      showTimeLeft={discoverTimeLeft.has(ch.id)}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* The challenge a row opened: its picture, goal, board, and Join or
           Leave. */}

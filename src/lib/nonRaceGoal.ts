@@ -1,5 +1,6 @@
 import { localDateString, localWeekKey } from "./dateHelpers";
-import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
+import type { RunRecord } from "./runStatsEligibility";
+import { weekRunsThatCount } from "./weekRuns";
 import { runEvidenceDate } from "./runExecutionEvidence";
 
 export type NonRaceGoal = { kind: "runs" | "minutes"; target: number };
@@ -22,31 +23,37 @@ export function isNonRaceGoal(value: unknown): value is NonRaceGoal {
   );
 }
 
+/**
+ * This week's runs against a weekly goal: the runs that count, Monday to
+ * Sunday, as every week counts them (`weekRunsThatCount`, weekRuns.ts),
+ * each on the day it began. A run is read once however often it is
+ * listed, and one not yet finished, or with no finite time, is not read.
+ */
 export function nonRaceGoalProgress(
   goal: NonRaceGoal,
   runs: readonly GoalRun[],
   now: Date
 ) {
-  const start = localWeekKey(now);
+  const today = localDateString(now);
+  const finished = runs.filter(
+    (run) =>
+      Number.isFinite(run.completedAt.getTime()) &&
+      run.completedAt <= now &&
+      Number.isFinite(run.duration) &&
+      run.duration > 0
+  );
   const seen = new Set<string>();
-  const eligible = runs.filter((run) => {
-    if (
-      seen.has(run.id) ||
-      !isVolumeEligible(run) ||
-      !Number.isFinite(run.completedAt.getTime()) ||
-      run.completedAt > now ||
-      !Number.isFinite(run.duration) ||
-      run.duration <= 0 ||
-      runEvidenceDate(run) < start ||
-      runEvidenceDate(run) > localDateString(now)
-    )
-      return false;
+  const counted = weekRunsThatCount(
+    localWeekKey(now),
+    finished.map((run) => ({ ...run, day: runEvidenceDate(run) }))
+  ).filter((run) => {
+    if (run.day > today || seen.has(run.id)) return false;
     seen.add(run.id);
     return true;
   });
   const current =
     goal.kind === "runs"
-      ? eligible.length
-      : Math.floor(eligible.reduce((sum, run) => sum + run.duration / 60, 0));
+      ? counted.length
+      : Math.floor(counted.reduce((sum, run) => sum + run.duration / 60, 0));
   return { current, target: goal.target, complete: current >= goal.target };
 }

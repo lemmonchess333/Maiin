@@ -35,7 +35,7 @@ import {
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { computeDataConfidence } from "@/lib/dataConfidence";
-import { ADAPTIVE_TDEE_DEFAULTS } from "@/lib/adaptiveTdee";
+import { isFoodDay } from "@/lib/foodDay";
 import type { TrainingWeek } from "@/lib/trainingWeek";
 import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 
@@ -94,13 +94,6 @@ export interface ReviewPerfWeek {
   deloadRecommended: boolean;
 }
 
-export interface WeekAheadPlan {
-  lifts: number | null;
-  runs: number | null;
-  /** e.g. "Race prep — build week 3 of 6"; null when freeform. */
-  phaseNote: string | null;
-}
-
 /** One new best: the set, and the best it beat. */
 export interface WeekBest {
   /** The library id, for the drawing; null for a custom exercise. */
@@ -144,7 +137,6 @@ export interface WeeklyReviewData {
   hideWeightNumber: boolean;
   /** Any deliberate event exists BEFORE the reviewed week (quiet-week gate). */
   established: boolean;
-  weekAhead: WeekAheadPlan;
   /** The goal the user set, for the projection (`userGoalWeightKg`). */
   goalProfile:
     | {
@@ -201,7 +193,6 @@ export interface WeeklyReview {
     /** "on pace for goal by <date>" label; null when suppressed. */
     projectionDate: string | null;
   } | null;
-  weekAhead: WeekAheadPlan;
 }
 
 /* ── WeekPulse ("Your week so far" — Rev1 PR2) ────────────────── */
@@ -351,7 +342,6 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       training: null,
       nutrition: null,
       body: null,
-      weekAhead: data.weekAhead,
     };
   }
 
@@ -419,13 +409,11 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       : null;
 
   /* Nutrition — adherence-neutral: days logged + average, never a
-     per-day judgement. A day counts once its food reaches the adaptive
-     estimator's floor: a coffee on a rest day is not a day's eating, and
+     per-day judgement. The days are food days (`foodDay.ts`), as every
+     screen counts them: a coffee on a rest day is not a day's eating, and
      averaged in it read 2,000 a day as 1,736. The count and the average are
      over the same days. Collapses when no day was logged in full. */
-  const fullFoodDays = mealDays.filter(
-    (m) => m.calories >= ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal
-  );
+  const fullFoodDays = mealDays.filter((m) => isFoodDay(m.calories));
   const nutrition =
     fullFoodDays.length > 0
       ? {
@@ -486,6 +474,5 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     training,
     nutrition,
     body,
-    weekAhead: data.weekAhead,
   };
 }

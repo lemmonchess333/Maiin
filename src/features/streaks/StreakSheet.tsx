@@ -35,6 +35,9 @@ const DAY_CLASSES: Record<StreakDayState, string> = {
  * covered, and the way to the badges. Streak1's register holds: no
  * freezes, shields or tokens, and nothing about a streak at risk. The
  * month goes back as far as the streak reads (`STREAK_WINDOW_DAYS`).
+ * Covered is a day grace forgave or one of the plan's rest days the
+ * streak counts (App1 Q32); the line of reassurance is for the first
+ * alone, since a rest day is the plan's and needs none.
  */
 export default function StreakSheet({
   open,
@@ -47,7 +50,13 @@ export default function StreakSheet({
    *  their profile (`badgeShelfPath`). The sheet's host knows whose. */
   badgesTo: string;
 }) {
-  const { currentStreak, activeDates, bridgedDates } = useStreaks();
+  const {
+    currentStreak,
+    activeDates,
+    bridgedDates,
+    restDates,
+    coversRestDays,
+  } = useStreaks();
   const todayKey = useLocalDateKey();
   const current = monthOf(todayKey);
   const earliest = earliestStreakMonth(todayKey, STREAK_WINDOW_DAYS);
@@ -60,7 +69,7 @@ export default function StreakSheet({
   const month = streakMonth(
     new Date(current.getFullYear(), current.getMonth() - shownBack, 1),
     activeDates,
-    bridgedDates,
+    [...bridgedDates, ...restDates],
     todayKey,
     streakReadFrom(todayKey, STREAK_WINDOW_DAYS)
   );
@@ -168,8 +177,9 @@ export default function StreakSheet({
           </li>
         </ul>
         <p className="text-sm text-muted-foreground">
-          A workout, a run or a meal logged keeps the streak going. One rest day
-          in any seven is covered.
+          {coversRestDays
+            ? "A workout, a run or a meal logged keeps the streak going, and so do your plan’s rest days. One other day off in any seven is covered."
+            : "A workout, a run or a meal logged keeps the streak going. One rest day in any seven is covered."}
         </p>
 
         <Link

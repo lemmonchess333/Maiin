@@ -7,7 +7,7 @@
  * email or password". The new address is noted here when the change is
  * asked for (accountSecurity.requestEmailChange), so Login can say what
  * happened and fill it in; a sign-in, or the boot that sees the change
- * land, clears it.
+ * land (`emailChangeLanded`), clears it.
  *
  * Its own module, with nothing but storage: Login is the first screen a
  * signed-out person sees, and accountSecurity brings the Functions SDK.
@@ -32,6 +32,21 @@ export function pendingEmailChange(now = Date.now()): string | null {
   )
     return null;
   return note.email;
+}
+
+/** True once Auth carries the address this device noted: the change has
+ *  landed (a boot on this device sees it), so the note can go. Auth's
+ *  address is the only copy; the profile keeps none. */
+export function emailChangeLanded(
+  authEmail: string | null | undefined,
+  now = Date.now()
+): boolean {
+  const pending = pendingEmailChange(now);
+  return (
+    !!pending &&
+    typeof authEmail === "string" &&
+    pending.trim().toLowerCase() === authEmail.trim().toLowerCase()
+  );
 }
 
 export function clearEmailChange(): void {

@@ -48,18 +48,18 @@ describe("analyticsClient.emit", () => {
   });
 
   it("redacts PII out of the provider payload but leaves the dev logger raw", () => {
-    emit("food", "first_food_logged", {
+    emit("food", "food_log_saved", {
       mealText: "two eggs",
       source: "manual",
     });
 
     // Dev logger keeps the raw metadata (local-only, dev-gated).
-    expect(logger.log).toHaveBeenCalledWith("[food] first_food_logged", {
+    expect(logger.log).toHaveBeenCalledWith("[food] food_log_saved", {
       mealText: "two eggs",
       source: "manual",
     });
     // Provider never sees the PII key.
-    expect(logAnalyticsEvent).toHaveBeenCalledWith("first_food_logged", {
+    expect(logAnalyticsEvent).toHaveBeenCalledWith("food_log_saved", {
       source: "manual",
       surface: "food",
     });

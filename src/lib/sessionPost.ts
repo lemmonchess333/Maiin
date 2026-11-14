@@ -74,6 +74,15 @@ export function liveSessionPost(
   return live.get(keyOf(action.uid, action.source));
 }
 
+/** The id of this session's post once it is on the feed (not while it
+ *  waits offline): the share card links to it (App1 Q51). */
+export function postedActivityId(
+  action: Pick<SessionShareAction, "uid" | "source"> | undefined
+): string | undefined {
+  const outcome = action ? liveSessionPost(action) : undefined;
+  return outcome?.status === "posted" ? outcome.activityId : undefined;
+}
+
 export function createSessionShare({
   uid,
   type,

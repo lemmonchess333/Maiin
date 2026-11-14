@@ -60,6 +60,29 @@ let deliver: DeliverFn | null = null;
 let initStarted = false;
 let status: AnalyticsStatus = "uninitialised";
 
+/* Settles once init has an answer: true when delivering, false when this
+   build or browser has nowhere to send. */
+let settle: (active: boolean) => void = () => {};
+const settled = new Promise<boolean>((resolve) => {
+  settle = resolve;
+});
+
+/** Record init's answer and settle `analyticsSettled`. */
+function finish(next: Exclude<AnalyticsStatus, "uninitialised" | "pending">) {
+  status = next;
+  settle(next === "active");
+}
+
+/**
+ * Resolves once analytics knows whether it delivers: true when a provider is
+ * live, false when unconfigured, unsupported or failed. For an event sent
+ * once per account (`launchEvents.ts`), which must not be claimed by a
+ * device whose events go nowhere, or sent before the provider can take it.
+ */
+export function analyticsSettled(): Promise<boolean> {
+  return settled;
+}
+
 /**
  * Begin analytics initialisation for the given Firebase app. Idempotent —
  * repeat calls are no-ops. Returns immediately; the provider resolves
@@ -81,7 +104,7 @@ export function initAnalytics(app: FirebaseApp): void {
 function initWeb(app: FirebaseApp): void {
   const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
   if (!measurementId) {
-    status = "unconfigured";
+    finish("unconfigured");
     if (!import.meta.env.DEV) {
       logger.warn(
         "[Analytics] VITE_FIREBASE_MEASUREMENT_ID not set — web events are not delivered. Configure to enable analytics."
@@ -95,7 +118,7 @@ function initWeb(app: FirebaseApp): void {
       const { initializeAnalytics, isSupported, logEvent } =
         await import("firebase/analytics");
       if (!(await isSupported())) {
-        status = "unsupported";
+        finish("unsupported");
         logger.log(
           "[Analytics] isSupported() false — no delivery in this environment."
         );
@@ -108,10 +131,10 @@ function initWeb(app: FirebaseApp): void {
       });
       deliver = (event, params) =>
         logEvent(handle, event, { ...params, ...redactedPage() });
-      status = "active";
+      finish("active");
       logger.log("[Analytics] Firebase Analytics (web) initialised.");
     } catch (err) {
-      status = "error";
+      finish("error");
       logger.warn("[Analytics] web init failed:", err);
     }
   })();
@@ -142,10 +165,10 @@ function initNative(): void {
       deliver = (event, params) => {
         void FirebaseAnalytics.logEvent({ name: event, params });
       };
-      status = "active";
+      finish("active");
       logger.log("[Analytics] Firebase Analytics (native) initialised.");
     } catch (err) {
-      status = "error";
+      finish("error");
       logger.warn(
         "[Analytics] native init failed (is GoogleService-Info.plist present and the plugin synced?):",
         err

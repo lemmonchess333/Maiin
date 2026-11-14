@@ -72,6 +72,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // here so a user's saved routes don't orphan when the account is deleted.
   "savedRoutes",
   "savedRoutines",
+  // The posts the person hid from their feed (users/{uid}/hiddenPosts,
+  // App1 Q38): owner-only, a post id, a time and its author's id each.
+  "hiddenPosts",
   "shoes",
   // GPS privacy zones — the circles a user draws around home and work so
   // routes are trimmed before sharing. The most sensitive thing in the

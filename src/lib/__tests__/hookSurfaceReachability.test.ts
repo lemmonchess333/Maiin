@@ -96,14 +96,6 @@ const PINNED_HOOK_PROPERTIES = [
   // readable-model cost, not a cleanup; held for a deliberate call.
   "src/hooks/useEffectiveTargets.ts:baseTarget",
   "src/hooks/useEffectiveTargets.ts:isRunDay",
-
-  // Hiding is one-way today: `hide` is wired from the report modal, and no
-  // surface anywhere offers to unhide — the hook carries the inverse but
-  // nothing calls it. That is a product gap (a mis-tap hides a post from
-  // this device for good), not a cleanup: deleting `unhide` would make the
-  // gap permanent by construction, and building the surface is a product
-  // call. Held, and flagged, until that call is made.
-  "src/hooks/useHiddenActivities.ts:unhide",
 ];
 
 interface HookProp {

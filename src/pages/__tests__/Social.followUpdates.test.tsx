@@ -27,7 +27,7 @@ import {
 } from "@/test/firestoreHarness";
 import { __resetFollowStatesForTests } from "@/hooks/useFollowState";
 vi.mock("@/hooks/useHiddenActivities", () => ({
-  useHiddenActivities: () => ({ hidden: new Set() }),
+  useHiddenActivities: () => ({ hidden: new Set(), ready: true }),
 }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), ready: true }),

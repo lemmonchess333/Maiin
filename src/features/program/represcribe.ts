@@ -20,8 +20,8 @@
  *
  * So this maps over the stored workouts and writes six fields. Everything
  * that carries adaptive or durable state is structurally out of reach:
- * `weekNumber`, `currentPhase`, `weekHistory`, `fatigueScore`,
- * `deloadSnapshot`, `sets`/`baseSets`, `performanceHistory`,
+ * `weekNumber`, `currentPhase`, `weekHistory`, `deloadSnapshot`,
+ * `sets`/`baseSets`, `performanceHistory`,
  * `lastPerformance`, `lastSuccessfulWeight`, `preDeloadWeight`,
  * `exerciseId`, `instanceId`, `movementCategory`, `isAccessory`, the split
  * and the day count. No history-death mode is reachable from here, because
@@ -535,14 +535,3 @@ export function blockReleaseLine(input: {
       : `${lead}, at the weights you lift now.`) + fullFirst
   );
 }
-
-/**
- * Weeks of plateau-RESPONSE amnesty a block opens with when it changes the
- * focus or eases the pace.
- *
- * Three, because `resolveAdjustment` needs two consecutive stalled weeks to
- * escalate past a volume cut, and the third covers the bodyweight residue
- * `scaleLoadForReps` cannot reach: a pull-up has no load to shed, so its
- * target walks down one rep per two misses instead.
- */
-export const BLOCK_AMNESTY_WEEKS = 3;

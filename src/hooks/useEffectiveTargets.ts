@@ -13,6 +13,8 @@ import {
 } from "@/lib/dayIntensity";
 import { resolveTaper } from "@/lib/taperNutrition";
 import { applyEveFuelFloor, eveOfLongRun } from "@/lib/fueling";
+import { runTemplateName } from "@/lib/runLabels";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { trainingSignalsForNutrition } from "@/lib/trainingSignals";
 import { useSubscription } from "@/lib/subscription";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
@@ -115,6 +117,12 @@ export interface EffectiveTargets {
   fat: number;
   /** Human-readable annotation (e.g. "Hard day — carbs up, fat down"). */
   annotation: string;
+  /** The day's fuel label, said on Food's hero and Home's food card (App1
+   *  Q29): race week's carb load or a taper week, else, on a quiet day,
+   *  the eve of a long run ("Long 20K tomorrow, fuel up today"). Null on
+   *  any other day: a session's own intensity is not a fuel label. Shown
+   *  to every account, since it never claims the macros moved. */
+  fuelLabel: string | null;
   /** Structured caption for the Food hero card. Null on rest days. */
   caption: DailyTargetsCaption | null;
   /** The cut is too aggressive to fit bodyweight protein + essential fat —
@@ -413,15 +421,27 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     // The eve label only claims the quiet days (REST/EASY) — a day with its
     // own hard training keeps its own label.
     const signals = trainingSignalsForNutrition(programForNutrition);
+    // The long run in the reader's unit, as the plan names it.
+    const eveLabel =
+      eve && (intensity === "REST" || intensity === "EASY")
+        ? `${runTemplateName(
+            eve.templateName,
+            resolveDistanceUnit(profile?.preferredDistanceUnit)
+          )} tomorrow, fuel up today`
+        : null;
     const annotation = taper
       ? taper.annotation
       : signals.isDeload
         ? "Lighter week"
-        : eve && (intensity === "REST" || intensity === "EASY")
-          ? `${eve.templateName} tomorrow — fuel up today`
+        : eveLabel
+          ? eveLabel
           : intensity === "REST"
             ? ""
             : describeDayIntensity(intensity);
+    // The fuel label is the annotation's fuelling part. A lighter week
+    // does not hide the eve of a long run here: the eve's fuel floor
+    // applies in one too.
+    const fuelLabel = taper ? taper.annotation : eveLabel;
 
     return {
       baseTarget: planned.baseTarget,
@@ -442,6 +462,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       carbs,
       fat,
       annotation,
+      fuelLabel,
       caption: planned.caption,
       targetTooAggressive: aggressive,
       targetInfeasible: infeasible,

@@ -89,7 +89,7 @@ describe.skipIf(!enabled)("trusted state with the Firestore emulator", () => {
       weeklyWorkoutsTarget: 3,
       weeklyRunDaysTarget: 3,
       weekScheduleVersion: 1,
-      program: { goal: "recomp", currentPhase: "base", startWeight: 80 },
+      program: { goal: "recomp", currentPhase: "base" },
       weightKg: 80,
     } as UserProfile;
     const fresh = generateRacePlanV2({
@@ -126,7 +126,6 @@ describe.skipIf(!enabled)("trusted state with the Firestore emulator", () => {
           exercises: [],
         },
       ],
-      fatigueScore: 7,
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       updatedAt: 1,

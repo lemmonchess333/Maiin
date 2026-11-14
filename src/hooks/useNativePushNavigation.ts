@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { listenForNativePushActions } from "@/lib/nativePush";
 import { nativePushRoute } from "@/lib/nativePushRoute";
 import { logger } from "@/lib/logger";
+import { pushReminderKind } from "@/lib/reminderAttention";
 
 /** Hold a cold-start tap until Auth and the router are ready. */
 export function useNativePushNavigation(
@@ -17,6 +18,18 @@ export function useNativePushNavigation(
     pending.current = null;
     const route = nativePushRoute(data, uid);
     if (route) void navigate(route);
+    // Opened from a reminder's push: its answer (App1 Q62), for this
+    // account's own pushes only. Loaded on the tap, so a first visit's
+    // code still starts no Firestore.
+    const kind = route
+      ? pushReminderKind((data as { type?: unknown }).type)
+      : null;
+    if (kind)
+      void import("@/lib/reminderAnswers")
+        .then(({ markReminderAnswered }) => markReminderAnswered(uid, kind))
+        .catch((error) => {
+          logger.warn("[push] saving the reminder's answer failed", error);
+        });
   }, [uid, ready, navigate]);
 
   useEffect(() => {

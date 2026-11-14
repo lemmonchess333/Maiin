@@ -60,6 +60,7 @@ const TERMS_PROSE = TERMS.replace(/\s+/g, " ");
 const STORE = read("../foodPhotoStore.ts");
 const HEALTH_KIT = read("../healthKit.ts");
 const STEPS_HOOK = read("../../hooks/useSteps.ts");
+const STEP_OFFER_HOOK = read("../../hooks/useStepActivityOffer.ts");
 const ANALYTICS_REDACTION = read("../analyticsRedaction.ts");
 const SHARE_DEFAULTS_ROW = read(
   "../../components/settings/ShareDefaultsRow.tsx"
@@ -328,6 +329,18 @@ describe("Apple Health permissions and storage match the policy", () => {
     expect(keys.sort()).toEqual(["connected", "primingShown"]);
     expect(STEPS_HOOK.match(/setDocGuarded\(/g)).toHaveLength(1);
     expect(STEPS_HOOK).toMatch(/setDocGuarded\(ref, merged,/);
+  });
+
+  it("the activity level offer keeps when Keep was tapped, never a step count", () => {
+    // Whole-app grill Q31: a week of steps is read on the phone and
+    // compared there; the policy says the count is not stored or sent,
+    // and the one write the offer makes is the time of a "Keep".
+    expect(PRIVACY_PROSE).toMatch(
+      /With Pro, it compares last week’s average with the activity level your calorie target assumes/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(/to show it on Home/);
+    expect(STEP_OFFER_HOOK.match(/setDocGuarded\(/g)).toHaveLength(1);
+    expect(STEP_OFFER_HOOK).toMatch(/\{ dismissedAt: Date\.now\(\) \}/);
   });
 });
 

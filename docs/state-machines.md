@@ -41,6 +41,11 @@ inside that type.
 | A lift day               | `src/features/program/liftDayStatus.ts` (`LiftDayStatus`)                                    | today, upcoming, completed, skipped, missed                                                                          |
 | A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                   |
 | Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                   |
+| A reminder's delivery    | `src/lib/reminderChoices.ts` (`ReminderDelivery`), and the server's copy (App1 Q26)          | off, local, push: the phone or the server sends it, never both                                                       |
+| A week-ahead offer       | `src/components/review/WeekAheadEnding.tsx` (`OfferStatus`)                                  | open, busy, done, undoing; one offer under way at a time                                                             |
+| Finishing a lift         | `src/lib/liftFinish.ts` (`LiftFinish`), since App1 Q20                                       | logging, review, saving, queued, synced, needs attention; `src/components/WorkoutSession.tsx` draws `liftFinishView` |
+| Checkout                 | `src/lib/checkoutFlow.ts` (`CheckoutState`, `PurchaseOutcome`), since App1 Q20               | idle, sign-in needed, buying, waiting, failed; a purchase comes to bought, redirected, cancelled, pending or failed  |
+| A reminder's attention   | `src/lib/reminderAttention.ts` (`AttentionCount`), and the server's half (App1 Q62)          | on with 0, 1 or 2 ignored running; quiet (off, `{kind}QuietAt`); said on Home (`{kind}QuietShown`); on again from 0  |
 | Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
@@ -51,22 +56,7 @@ four outcomes, and "missing" and "failed" are different ones.
 Each row: where the state lives, the states it really has, a combination the
 code can hold that it should not, and what would make it explicit.
 
-### 1. The lift session's finish and save. Risk: a lost or stuck session.
-
-- **Where.** `src/components/WorkoutSession.tsx`: `sessionComplete`,
-  `completing`, `saved`, `saveStatus` (three values or undefined),
-  `completionPending` as both a ref and state, `savedWorkoutId` (around lines
-  582-587 and 924-947), driven from `handleFinish` and the queue's outcome.
-- **States.** Logging, complete and unsaved, saving, saved and synced, saved
-  and queued, needs attention, resumed with a save pending.
-- **Can hold.** `saved` true with `saveStatus === "needs-attention"`; the ref
-  and the state copy of `completionPending` disagreeing.
-- **Explicit form.** The run side already has it: one `SaveStatus`, with
-  "synced" derived from the durable queue (`src/pages/RunSummary.tsx`). The
-  lift finish should read its status the same way. Candidate A5 in the
-  architecture report.
-
-### 2. What runs beside the run phase reducer. Risk: a wrong duration, GPS left on.
+### 1. What runs beside the run phase reducer. Risk: a wrong duration, GPS left on.
 
 - **Where.** `src/pages/Run.tsx`: `autoPaused`, the timer's `isRunning`, GPS
   tracking and hold, `watchPhaseRef`, `finishedRef`, `resumedRef`, `arrival`
@@ -78,7 +68,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** The reducer's own header says its side effects move
   behind it in a follow-up. Candidate A3.
 
-### 3. A queued write. Risk: a record that never syncs.
+### 2. A queued write. Risk: a record that never syncs.
 
 - **Where.** `src/lib/offlineQueue.ts` (`QueuedWrite`): `durable`, `encoded`,
   `merge`, `failed`, `refused`, optional `workoutCompletion` and `docId`.
@@ -90,7 +80,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** A union of entry kinds (best-effort, durable document,
   workout completion) in place of five optional flags.
 
-### 4. Setup's steps. Risk: a stuck last step.
+### 3. Setup's steps. Risk: a stuck last step.
 
 - **Where.** `src/pages/Onboarding.tsx`: `step` (sparse ids shared by five
   tables), `returnToReview`, `saving`, a `pending` ref, six `*Confirmed`
@@ -100,7 +90,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** One reducer over `OnboardingDraft` and a pure module for
   validity and the payload. Candidate A4.
 
-### 5. A food scan. Risk: a stale verdict or a meal logged twice.
+### 4. A food scan. Risk: a stale verdict or a meal logged twice.
 
 - **Where.** `src/components/FoodAnalyzer.tsx` (about 14 flags: `scanLocked`,
   `scanFailure`, `capturedBase64`, `barcodeLoading`, `barcodeError`,
@@ -114,19 +104,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** One `ScanStage` union held by a reducer; the flags become
   fields of the stage that needs them.
 
-### 6. Checkout and who RevenueCat thinks you are. Risk: money.
-
-- **Where.** `src/lib/purchaseProvider.ts`, `src/lib/revenuecat.ts` (a module
-  boolean `configured`), `src/hooks/useRevenueCatIdentity.ts` (a ref and timed
-  retries), `src/hooks/useProCheckout.ts` (`loading`, `error`).
-- **Can hold.** A purchase sheet opening while RevenueCat is still anonymous;
-  a completed purchase without the entitlement reported as "failed".
-- **Explicit form.** A purchase outcome union (bought, cancelled, bought and
-  not yet entitled, failed) and an identity check before the sheet opens.
-  This changes behaviour on the money path, so it is an owner call. Candidate
-  A7.
-
-### 7. Email verification. Risk: low.
+### 5. Email verification. Risk: low.
 
 - **Where.** `src/hooks/useEmailVerificationGate.ts`: each caller holds its own
   `check`, beside `user.emailVerified` (changed in place by `reload`) and the
@@ -134,7 +112,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** One shared store for the check, as `awaitingVerification`
   already is for the count.
 
-### 8. The programme's readiness. Risk: a corrupted plan (it has happened).
+### 6. The programme's readiness. Risk: a corrupted plan (it has happened).
 
 - **Where.** `src/features/program/useProgram.ts`: `loading`, `mirrorReady`,
   `loadFailed` projected to `readiness`, and a `programState` that is
@@ -143,7 +121,7 @@ code can hold that it should not, and what would make it explicit.
 - **Explicit form.** A read model exposing `stored` and `view` from one
   subscription. Candidate A6.
 
-### 9. Crowded screens. Risk: low; they are slow to change safely.
+### 7. Crowded screens. Risk: low; they are slow to change safely.
 
 `src/pages/Food.tsx` (40 `useState`, 15 of them booleans),
 `src/components/social/CirclesSection.tsx` (26 and 10),
@@ -163,3 +141,42 @@ null` used to mean both "this account has no profile yet" and "the profile
   the copy the device already has, or shows a retry screen when it has none.
 - **The run timer** refuses a second pause and a resume while running.
 - **Queued writes** retry on return to the foreground.
+
+## What App1 Q20 changed (13 November 2026)
+
+The grill's Q20 fixed the two riskiest flows first. Both were rows here, the
+lift's finish first and checkout sixth, and both are now in the table above.
+
+- **Finishing a lift.** `src/components/WorkoutSession.tsx` held six pieces:
+  `sessionComplete`, `completing`, `saved`, `saveStatus`, `completionPending`
+  as a ref and as state, and `savedWorkoutId`. They are one `LiftFinish`
+  now, moved only by `liftFinishTransition`, and the screen reads what it
+  draws from `liftFinishView`. The handlers read the same value through a
+  ref that the one writer keeps level, so the two copies cannot disagree.
+  The combination was reachable: a session reopened with its save pending
+  reads the server while the person taps Retry sync; the read found the
+  workout and marked it saved, while the retry still showed "Saving
+  workout…" under Done; the retry then failed and marked it "needs
+  attention" under Done, with no retry offered and an error toast. A
+  server acknowledgement now wins over anything after it, and the toast is
+  said only when the session does need attention
+  (`WorkoutSessionCompletion.test.tsx`, "App1 Q20"). One more change: a
+  save whose answer came back to another account (the account changed
+  under it) now waits on Retry sync instead of on "Not saved yet" with
+  editing locked; the screen is going as the account changes either way.
+- **Checkout.** A purchase came back as four flags and the paywall held
+  three more. `purchase()` (`src/lib/purchaseProvider.ts`) now returns one
+  `PurchaseOutcome` and `rcPurchase` (`src/lib/revenuecat.ts`) one
+  `RcPurchaseOutcome`, so a purchase the store has is `bought` or
+  `pending` and cannot also be `failed`; `src/hooks/useProCheckout.ts`
+  holds one `CheckoutState`, moved by `checkoutTransition`, which also
+  makes it one purchase at a time however fast the taps, and the sign-in
+  message can no longer stand beside a purchase's note. The identity check
+  is in `rcPurchase`: before the sheet opens it reads RevenueCat's App User
+  ID and logs it in as the account when it is anyone else, and when that
+  fails the purchase comes back `failed` ("Couldn’t start checkout. Try
+  again.") and the sheet never opens. RevenueCat's set-up is shared while
+  under way, so the identity hook and a purchase never set it up twice.
+- **Still flags.** A restore and Manage subscription keep their
+  `PurchaseResult`; `src/hooks/useRevenueCatIdentity.ts` keeps its ref and
+  timed retries, which a purchase no longer depends on.

@@ -3,6 +3,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { suggestionReason } from "@/components/social/suggestionReason";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import RestrictedNotice from "../RestrictedNotice";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -62,6 +63,10 @@ export default function PeopleView({
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
   );
+  /* App1 Q6: while Tropos is too quiet for Spaces, none is offered here
+     either, to someone who joined none. */
+  const enough = useEnoughPeople();
+  const offersSpaces = enough !== false || joinedSpaceIds.length > 0;
 
   const {
     people: suggestedPeople,
@@ -370,14 +375,17 @@ export default function PeopleView({
                 sub={
                   /* Someone already in a space has done what the first
                      line asks; tell them where suggestions come from. */
-                  joinedSpaceIds.length > 0
-                    ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
-                    : "Follow people or join a space to start seeing suggestions."
+                  !offersSpaces
+                    ? "Follow people to start seeing suggestions."
+                    : joinedSpaceIds.length > 0
+                      ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+                      : "Follow people or join a space to start seeing suggestions."
                 }
-                action={{
-                  label: "Browse spaces",
-                  onClick: openTogether,
-                }}
+                action={
+                  offersSpaces
+                    ? { label: "Browse spaces", onClick: openTogether }
+                    : undefined
+                }
               />
             </div>
           ) : (

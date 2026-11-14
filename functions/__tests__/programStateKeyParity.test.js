@@ -32,7 +32,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const require = createRequire(import.meta.url);
-const { PROGRAM_STATE_KEYS } = require("../lib/programStateSanitizer");
+const {
+  PROGRAM_STATE_KEYS,
+  RETIRED_PROGRAM_STATE_KEYS,
+} = require("../lib/programStateSanitizer");
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -94,6 +97,20 @@ describe("programState key parity (interface ↔ sanitiser)", () => {
         `affected user), while configurePlan only warns and drops (so the field ` +
         `silently vanishes on every settings save). Add each to ` +
         `functions/lib/programStateSanitizer.js.`
+    ).toEqual([]);
+  });
+
+  it("a retired key is neither declared nor allow-listed (App1 Q24)", () => {
+    // Retired means nothing reads or writes it: declared again, a writer
+    // could come back; allow-listed as well, the sanitiser would keep it.
+    const revived = [...RETIRED_PROGRAM_STATE_KEYS]
+      .filter((k) => declared.includes(k) || PROGRAM_STATE_KEYS.has(k))
+      .sort();
+    expect(
+      revived,
+      `These are on RETIRED_PROGRAM_STATE_KEYS and also declared on ` +
+        `ProgramState or listed in PROGRAM_STATE_KEYS. A key is one or the ` +
+        `other: take it off the retired list to bring it back.`
     ).toEqual([]);
   });
 

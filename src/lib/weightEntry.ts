@@ -35,6 +35,11 @@ interface WeightReceipt {
   targetCalories: number | null;
   goal: string | null;
 }
+/** A receipt written by an older build also mirrored the day's carbs and
+ *  fat to the profile. Both are retired (App1 Q24) and may already be
+ *  stripped, so an undo neither compares nor restores them. */
+const RETIRED_MIRROR_KEYS = ["targetCarbs", "targetFat"];
+
 /** The retry receipt is bounded: retain the previous row, without nesting
  * its own receipt. An uncertain response can then recover the original undo. */
 export async function saveWeightEntry(
@@ -128,21 +133,22 @@ export async function restoreWeightEntry(
     if (receipt.before) tx.set(ref, receipt.before);
     else tx.delete(ref);
     const current = profile.data() ?? {};
-    if (
-      receipt.mirror &&
-      Object.entries(receipt.mirror).every(([k, v]) => current[k] === v)
-    ) {
+    const mirror = receipt.mirror
+      ? Object.entries(receipt.mirror).filter(
+          ([k]) => !RETIRED_MIRROR_KEYS.includes(k)
+        )
+      : [];
+    if (mirror.length > 0 && mirror.every(([k, v]) => current[k] === v)) {
       const restore: Record<string, unknown> = {};
-      for (const k of Object.keys(receipt.mirror))
+      for (const [k] of mirror)
         restore[k] = receipt.profileBefore[k] ?? deleteField();
       // If nutrition settings changed, restore the anchor but recompute its
-      // dependent macros using today's settings rather than an old split.
+      // dependent protein using today's settings rather than an old split.
       if (
         (current.targetCalories ?? null) !== receipt.targetCalories ||
         (current.program?.goal ?? null) !== receipt.goal
       ) {
-        for (const k of ["targetProtein", "targetCarbs", "targetFat"])
-          delete restore[k];
+        delete restore.targetProtein;
         if (typeof receipt.profileBefore.weightKg === "number")
           Object.assign(
             restore,

@@ -645,7 +645,6 @@ function baseState() {
     currentPhase: "progression",
     weekNumber: 5,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 1000,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -729,6 +728,15 @@ function dayPre(overrides) {
 // OUTCOME depends on the user document (it resolves the recovery exit from the
 // transaction-current raceGoal). Defaults to {} so every existing call is
 // unchanged.
+/** Paths in `value` that hold `undefined`, which the Admin SDK refuses. */
+function undefinedPaths(value, path = "") {
+  if (value === undefined) return [path];
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value).flatMap(([key, child]) =>
+    undefinedPaths(child, path ? `${path}.${key}` : key)
+  );
+}
+
 function apply(command, state, profile) {
   return applyProgramCommand({
     state: state || baseState(),
@@ -1020,30 +1028,21 @@ describe("training block start/release (Blk2)", () => {
     );
   });
 
-  it("grants amnesty when the focus CHANGES", () => {
-    const seeded = baseState();
-    seeded.primaryGoal = "hypertrophy";
-    const { state } = apply(START, seeded, {});
-    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
+  it("writes no amnesty counter, whatever the focus or pace (App1 Q24)", () => {
+    // Nothing read it: the adjustment rule it held back is retired.
+    for (const [command, goal] of [
+      [START, "hypertrophy"],
+      [START, "strength"],
+      [{ ...START, pace: "easing" }, "strength"],
+    ]) {
+      const seeded = baseState();
+      seeded.primaryGoal = goal;
+      const { state } = apply(command, seeded, { primaryGoal: goal });
+      expect("amnestyWeeksLeft" in state.trainingBlock).toBe(false);
+    }
   });
 
-  it("grants NO amnesty when the focus is unchanged at full pace", () => {
-    const seeded = baseState();
-    seeded.primaryGoal = "strength";
-    const { state } = apply(START, seeded, { primaryGoal: "strength" });
-    expect(state.trainingBlock.amnestyWeeksLeft).toBe(0);
-  });
-
-  it("grants amnesty for an easing pace even when the focus is unchanged", () => {
-    const seeded = baseState();
-    seeded.primaryGoal = "strength";
-    const { state } = apply({ ...START, pace: "easing" }, seeded, {
-      primaryGoal: "strength",
-    });
-    expect(state.trainingBlock.amnestyWeeksLeft).toBeGreaterThan(0);
-  });
-
-  it("a client cannot grant itself amnesty or a fake goalBefore", () => {
+  it("a client cannot set the retired counter or a fake goalBefore", () => {
     // Neither field is on the command surface at all — the validator rejects
     // them, which is what keeps the reducer's derivation authoritative.
     expectRejected({ ...START, commandId: CMD_ID, amnestyWeeksLeft: 99 });
@@ -2689,23 +2688,48 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     }
   });
 
-  it("sets currentPhase deload, clears fatigue, stamps updatedAt", () => {
-    const input = baseState();
-    input.fatigueScore = 7;
-    const { state } = apply(applyCmd(), input);
+  it("sets currentPhase deload and stamps updatedAt", () => {
+    const { state } = apply(applyCmd(), baseState());
     expect(state.currentPhase).toBe("deload");
-    expect(state.fatigueScore).toBe(0);
     expect(state.updatedAt).toBe(NOW);
   });
 
+  it("neither reads nor writes the retired fatigueScore (App1 Q24)", () => {
+    // A plan with none, as every plan is once the strip has run: nothing in
+    // the result may be `undefined`, which the Admin SDK refuses to write.
+    const { state } = apply(applyCmd(), baseState());
+    expect("fatigueScore" in state).toBe(false);
+    expect("fatigueScore" in state.deloadSnapshot).toBe(false);
+    expect(undefinedPaths(state)).toEqual([]);
+    const { state: reverted } = apply(revertCmd(), state);
+    expect("fatigueScore" in reverted).toBe(false);
+    expect(undefinedPaths(reverted)).toEqual([]);
+  });
+
+  it("an old snapshot that holds fatigueScore still reverts cleanly", () => {
+    // Taken by the deload before App1 Q24, which copied the score in.
+    const { state: deloaded } = apply(applyCmd(), baseState());
+    const old = {
+      ...deloaded,
+      fatigueScore: 0,
+      deloadSnapshot: { ...deloaded.deloadSnapshot, fatigueScore: 7 },
+    };
+    const { state: reverted } = apply(revertCmd(), old);
+    expect(reverted.workouts).toEqual(baseState().workouts);
+    expect(reverted.currentPhase).toBe("progression");
+    expect("deloadSnapshot" in reverted).toBe(false);
+    // The plan's own stored copy rides along in the reducer's spread; the
+    // transaction's sanitiser deletes it before the write
+    // (programCommandRetiredKeys.test.js).
+    expect(reverted.fatigueScore).toBe(0);
+    expect(undefinedPaths(reverted)).toEqual([]);
+  });
+
   it("stashes the pre-deload snapshot for undo", () => {
-    const input = baseState();
-    input.fatigueScore = 7;
-    const { state } = apply(applyCmd(), input);
+    const { state } = apply(applyCmd(), baseState());
     expect(state.deloadSnapshot).toMatchObject({
       weekNumber: 5,
       currentPhase: "progression",
-      fatigueScore: 7,
       appliedAt: NOW,
     });
     expect(state.deloadSnapshot.workouts).toEqual(baseState().workouts);
@@ -2947,13 +2971,10 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
   });
 
   it("revert restores the stash exactly and removes it", () => {
-    const input = baseState();
-    input.fatigueScore = 7;
-    const { state: deloaded } = apply(applyCmd(), input);
+    const { state: deloaded } = apply(applyCmd(), baseState());
     const { state: reverted } = apply(revertCmd(), deloaded);
     expect(reverted.workouts).toEqual(baseState().workouts);
     expect(reverted.currentPhase).toBe("progression");
-    expect(reverted.fatigueScore).toBe(7);
     expect("deloadSnapshot" in reverted).toBe(false);
   });
 
@@ -3078,7 +3099,6 @@ describe("easier week commands (RUN-EASE-01)", () => {
     const { state } = apply(easeCmd(), withRuns([planned()]));
     expect(state.workouts).toEqual(before.workouts);
     expect(state.currentPhase).toBe(before.currentPhase);
-    expect(state.fatigueScore).toBe(before.fatigueScore);
   });
 
   it("REFUSES to swap a race, and refuses the week if that was all there was", () => {

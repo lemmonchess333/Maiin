@@ -149,7 +149,7 @@ test("a runner with no benchmark, through every surface that explains a planned 
       weightKg: 70,
       heightCm: 175,
       sex: "Male",
-      age: "25–34",
+      birthYear: 1995,
     });
     const profile = await programme(account.uid);
     // The first week's long run. Setup's default week gives it a weekend

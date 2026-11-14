@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -10,10 +10,10 @@ import {
   formatWeekRange,
   type WeekBest,
   type WeeklyReview as Review,
-  type WeekAheadPlan,
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { retireReviewReminder } from "@/hooks/useReviewReminder";
+import { markReminderAnswered } from "@/lib/reminderAnswers";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
@@ -24,10 +24,12 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { Spinner } from "@/components/ui/Spinner";
-import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
+import WeekAheadEnding from "@/components/review/WeekAheadEnding";
 import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
+import StatRow from "@/components/review/StatRow";
+import ProMonthCard from "@/components/review/ProMonthCard";
+import { useProMonthReport } from "@/hooks/useProReport";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import {
@@ -40,46 +42,6 @@ import {
 /** How long the recap's counts take: the Food ring's count, not the
  *  counter's slower default, so they land before the eye moves on. */
 const COUNT_SECONDS = 0.6;
-
-/** One of the week's numbers, big, over the words that say what it is,
- *  with a rule in the colour of its job (DS3's recap card). */
-function StatRow({
-  rule,
-  value,
-  caption,
-  numeral = true,
-  children,
-}: {
-  /** A background utility for the rule: `bg-lifting`, `bg-running`… */
-  rule: string;
-  /** The figure, or its count-up (`AnimatedNumber`). */
-  value: ReactNode;
-  caption: string;
-  /** False for a word ("Steady"), which does not take the numeral face. */
-  numeral?: boolean;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex gap-3">
-      <span
-        aria-hidden="true"
-        className={cn("w-1 shrink-0 rounded-full", rule)}
-      />
-      <div className="min-w-0 py-0.5">
-        <p
-          className={cn(
-            "text-display font-extrabold leading-none text-foreground",
-            numeral && "font-figure tabular-nums"
-          )}
-        >
-          {value}
-        </p>
-        <p className="mt-1.5 text-sm text-muted-foreground">{caption}</p>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
@@ -327,11 +289,13 @@ function BestMoment({
   best,
   count,
   next,
+  nextLabel,
 }: {
   best: WeekBest;
   /** The week's new bests, one per exercise and rep range, this one included. */
   count: number;
   next: () => void;
+  nextLabel: string;
 }) {
   const more = Math.max(0, count - 1);
   const liftUnit = useLiftUnit();
@@ -382,126 +346,30 @@ function BestMoment({
       </div>
       <div className="mt-auto pt-8">
         <Button fullWidth onClick={next}>
-          The week ahead
+          {nextLabel}
         </Button>
       </div>
     </div>
-  );
-}
-
-function WeekAhead({
-  plan,
-  trainingWhy,
-  uid,
-  weekKey,
-  onDone,
-}: {
-  plan: WeekAheadPlan;
-  trainingWhy: string | undefined;
-  uid: string | null;
-  weekKey: string;
-  onDone: () => void;
-}) {
-  return (
-    <div className="flex flex-1 flex-col">
-      <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">
-        The week ahead
-      </h2>
-      <WeekAheadBody
-        plan={plan}
-        trainingWhy={trainingWhy}
-        uid={uid}
-        weekKey={weekKey}
-        className="mt-6"
-      />
-      <div className="mt-auto pt-8">
-        <Button variant="neutral" fullWidth onClick={onDone}>
-          Done
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** The week ahead's plan, why the person trains and the momentum
- *  check-in: the recap's last card, and the page before a first review. */
-function WeekAheadBody({
-  plan,
-  trainingWhy,
-  uid,
-  weekKey,
-  className,
-}: {
-  plan: WeekAheadPlan;
-  trainingWhy: string | undefined;
-  uid: string | null;
-  weekKey: string;
-  className?: string;
-}) {
-  const { lifts, runs, phaseNote } = plan;
-  return (
-    <>
-      <div className={cn("space-y-6", className)}>
-        {/* The plan's week in the figures "Your week" counts the last one
-            in, so the card says it at the recap's size rather than as a
-            line over an empty page. */}
-        {lifts !== null || runs !== null ? (
-          <>
-            {lifts !== null && (
-              <StatRow
-                rule="bg-lifting"
-                value={lifts}
-                caption={`${plural(lifts, "lift", "lifts")} planned`}
-              />
-            )}
-            {runs !== null && (
-              <StatRow
-                rule="bg-running"
-                value={runs}
-                caption={`${plural(runs, "run", "runs")} planned`}
-              />
-            )}
-            {phaseNote && (
-              <p className="text-sm text-muted-foreground">{phaseNote}</p>
-            )}
-          </>
-        ) : (
-          <p className="text-base text-muted-foreground">
-            Train when it suits you — log it and it counts.
-          </p>
-        )}
-
-        {/* D16 — the personal "why", resurfaced in the user's own words. */}
-        {trainingWhy && (
-          <div className="space-y-1.5">
-            <SectionHeading size="compact">Why you train</SectionHeading>
-            <p className="text-lg font-semibold leading-snug text-foreground">
-              &ldquo;{trainingWhy}&rdquo;
-            </p>
-            <p className="text-sm text-muted-foreground">
-              You wrote this when you started.
-            </p>
-          </div>
-        )}
-
-        {/* CHECKIN-01 — disappears for the week once answered or dismissed. */}
-        {uid && <MomentumCheckinCard uid={uid} weekKey={weekKey} />}
-      </div>
-    </>
   );
 }
 
 /**
- * Weekly Review (Rev1) — the Sunday recap, told as cards (DS3): the week
- * in numbers, its best moment when a new best was set, and the week
- * ahead. All content rules live in weeklyReviewViewModel; this page is
- * layout only.
+ * Weekly Review (Rev1) — the Monday recap, told as cards (DS3): the week
+ * in numbers, its best moment when a new best was set, on a month's first
+ * Monday what Pro did in the month before (App1 Q56, `ProMonthCard`), and
+ * the week ahead, where next week is agreed (App1 Q36, `WeekAheadEnding`).
+ * All content rules live in weeklyReviewViewModel and proReport; this page
+ * is layout only.
  */
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekAhead, weekKey, failed, retry } =
-    useWeeklyReview();
+  const weekly = useWeeklyReview();
+  const { review, weekKey, failed, retry } = weekly;
+  /* Read with the week, so the cards are whole when they first show: a
+     card arriving later would move the one the person is reading. */
+  const proMonth = useProMonthReport(weekKey);
+  const loading = weekly.loading || proMonth.loading;
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -515,8 +383,11 @@ export default function WeeklyReview() {
     if (loading || failed || viewedRef.current) return;
     viewedRef.current = true;
     dismiss();
-    // Monday's notification for this week has nothing left to say.
+    // Monday's notification for this week has nothing left to say, and a
+    // review read answers Monday's push (App1 Q62).
     if (review) void retireReviewReminder(weekKey).catch(() => {});
+    if (review && user)
+      void markReminderAnswered(user.uid, "review").catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
   }, [loading, failed]);
 
@@ -588,17 +459,16 @@ export default function WeeklyReview() {
             </p>
             {/* Until then the page shows the plan for the week under way,
                 not a sentence on an empty page. */}
-            {weekAhead && (
-              <div className="mt-8 space-y-3">
-                <SectionHeading size="compact">The week ahead</SectionHeading>
-                <WeekAheadBody
-                  plan={weekAhead}
-                  trainingWhy={trainingWhy}
-                  uid={user?.uid ?? null}
-                  weekKey={weekKey}
-                />
-              </div>
-            )}
+            <div className="mt-8 space-y-3">
+              <SectionHeading size="compact">The week ahead</SectionHeading>
+              <WeekAheadEnding
+                preview
+                reviewedWeekKey={weekKey}
+                trainingWhy={trainingWhy}
+                uid={user?.uid ?? null}
+                onClose={close}
+              />
+            </div>
             <div className="mt-auto pt-8">
               <Button variant="neutral" fullWidth onClick={close}>
                 Done
@@ -611,16 +481,33 @@ export default function WeeklyReview() {
   } else {
     const best =
       review.kind === "normal" ? (review.training?.best ?? null) : null;
+    const pro = proMonth.report;
+    const proSlides: RecapSlide[] = pro
+      ? [
+          {
+            key: "pro",
+            label: `Pro in ${pro.month.name}`,
+            render: (next) => (
+              <ProMonthCard
+                monthName={pro.month.name}
+                lines={pro.lines}
+                next={next}
+              />
+            ),
+          },
+        ]
+      : [];
+    /* What the card before the week ahead's button names. */
+    const toAhead = pro ? `Pro in ${pro.month.name}` : "The week ahead";
     const ahead: RecapSlide = {
       key: "ahead",
       label: "The week ahead",
       render: () => (
-        <WeekAhead
-          plan={review.weekAhead}
+        <WeekAheadEnding
+          reviewedWeekKey={weekKey}
           trainingWhy={trainingWhy}
           uid={user?.uid ?? null}
-          weekKey={weekKey}
-          onDone={close}
+          onClose={close}
         />
       ),
     };
@@ -640,12 +527,13 @@ export default function WeeklyReview() {
               </p>
               <div className="mt-auto pt-8">
                 <Button variant="secondary" fullWidth onClick={next}>
-                  The week ahead
+                  {toAhead}
                 </Button>
               </div>
             </div>
           ),
         },
+        ...proSlides,
         ahead,
       ];
     } else {
@@ -657,7 +545,7 @@ export default function WeeklyReview() {
             <YourWeek
               review={review}
               next={next}
-              nextLabel={best ? "Your best moment" : "The week ahead"}
+              nextLabel={best ? "Your best moment" : toAhead}
               onOpenPhotos={user ? () => navigate("/history?view=body") : null}
               onShare={
                 review.training &&
@@ -678,11 +566,13 @@ export default function WeeklyReview() {
                     best={best}
                     count={review.training?.prsHit ?? 1}
                     next={next}
+                    nextLabel={toAhead}
                   />
                 ),
               },
             ]
           : []),
+        ...proSlides,
         ahead,
       ];
     }

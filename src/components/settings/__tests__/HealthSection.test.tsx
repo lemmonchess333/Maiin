@@ -286,7 +286,9 @@ describe("HealthSection", () => {
     };
     render(<HealthSection />);
     expect(screen.getByText("Apple Health connected")).toBeInTheDocument();
-    expect(screen.getByText("Daily step count on Home")).toBeInTheDocument();
+    expect(
+      screen.getByText("Steps for your activity level")
+    ).toBeInTheDocument();
     expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.queryByText("Apple Watch runs")).toBeNull();
     expect(screen.queryByText("Save workouts")).toBeNull();

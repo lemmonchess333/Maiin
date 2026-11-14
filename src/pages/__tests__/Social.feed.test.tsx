@@ -9,6 +9,7 @@
  *   the live follow count that the line over the feed reads.
  * - The Spaces source: pulling the page down reads the joined spaces' posts
  *   again.
+ * - The posts the viewer hid: the feed waits for them, then leaves them out.
  */
 import { vi, expect, it, describe, afterEach, beforeEach } from "vitest";
 import {
@@ -30,8 +31,14 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => "me",
   useAuth: () => ({ user: { uid: "me" }, profile: { displayName: "Me" } }),
 }));
+/* The posts the viewer hid (App1 Q38): read from the account, so the
+   feed waits for them. Each test starts with none hidden, already read. */
+const hiddenPosts = vi.hoisted(() => ({
+  hidden: new Set<string>(),
+  ready: true,
+}));
 vi.mock("@/hooks/useHiddenActivities", () => ({
-  useHiddenActivities: () => ({ hidden: new Set() }),
+  useHiddenActivities: () => hiddenPosts,
 }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({
@@ -90,7 +97,9 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 import Social from "@/pages/Social";
 import { Timestamp } from "firebase/firestore";
 import {
+  flushSnapshots,
   readDoc,
+  readLog,
   resetFirestore,
   seedFirestore,
 } from "@/test/firestoreHarness";
@@ -153,7 +162,38 @@ beforeEach(() => {
   localStorage.clear();
   // The follow state is a session cache; each test is a session.
   __resetFollowStatesForTests();
+  hiddenPosts.hidden = new Set();
+  hiddenPosts.ready = true;
   seedBeasPosts();
+});
+
+describe("Posts the viewer hid (App1 Q38)", () => {
+  it("Explore waits for the hidden posts, then leaves a hidden one out", async () => {
+    hiddenPosts.ready = false;
+    const view = (
+      <MemoryRouter initialEntries={["/social?tab=feed&feed=explore"]}>
+        <Social />
+      </MemoryRouter>
+    );
+    const { rerender } = render(view);
+    // Anchored on the Feed having drawn: its own section is there.
+    expect(
+      await screen.findByRole("region", { name: "Activity feed" })
+    ).toBeInTheDocument();
+    await flushSnapshots();
+    expect(readLog().filter((r) => r.path.startsWith("activities"))).toEqual(
+      []
+    );
+
+    hiddenPosts.hidden = new Set(["bea-1"]);
+    hiddenPosts.ready = true;
+    rerender(
+      <MemoryRouter initialEntries={["/social?tab=feed&feed=explore"]}>
+        <Social key="read" />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(followLinks()).toHaveLength(1));
+  });
 });
 
 describe("Follow from a post on Explore, chosen as the source", () => {

@@ -6,7 +6,7 @@ import {
 } from "./universal-links";
 
 describe("iPhone invite association", () => {
-  it("names only the verified app and root invite URLs", () => {
+  it("names only the verified app, root invite URLs and shared posts", () => {
     expect(appleAppSiteAssociation("A2B3C4D5E6")).toEqual({
       applinks: {
         details: [
@@ -18,6 +18,8 @@ describe("iPhone invite association", () => {
                 "?": { invite: "????????" },
                 comment: expect.any(String),
               },
+              // A shared post (App1 Q51): the app's own /activity/:id.
+              { "/": "/activity/*", comment: expect.any(String) },
             ],
           },
         ],

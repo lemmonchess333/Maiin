@@ -1,7 +1,7 @@
 /**
  * Food — the Pro line waits for the guide's food-box hint (FV2).
  *
- * A free account's first visit to Food after the walk had two things
+ * A free account's first visit to Food had two things
  * under the food box at once: the guide's hint pointing at the box, and
  * the "Photo logging is part of Pro" line beside it. The line now waits
  * until the hint has been closed, so the visit shows one thing at a time.
@@ -39,14 +39,8 @@ vi.mock("@/hooks/useGuideHint", () => ({
   }),
 }));
 vi.mock("@/components/guide/GuideHint", () => ({
-  default: ({
-    requested,
-    onClose,
-  }: {
-    requested?: boolean;
-    onClose?: () => void;
-  }) =>
-    requested || hint.owed ? (
+  default: ({ onClose }: { onClose?: () => void }) =>
+    hint.owed ? (
       <button type="button" onClick={() => onClose?.()}>
         Got it
       </button>
@@ -113,9 +107,9 @@ import Food from "../Food";
 
 const PRO_LINE = "Photo logging is part of Pro";
 
-function renderFood(state?: unknown) {
+function renderFood() {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: "/food", state }]}>
+    <MemoryRouter initialEntries={["/food"]}>
       <Food />
     </MemoryRouter>
   );
@@ -140,15 +134,6 @@ describe("Food — the Pro line and the guide's food-box hint", () => {
     hint.owed = true;
     renderFood();
     // Anchor: the hint is drawn in the same pass as the line would be.
-    const gotIt = await screen.findByRole("button", { name: "Got it" });
-    expect(screen.queryByText(PRO_LINE)).toBeNull();
-
-    fireEvent.click(gotIt);
-    expect(await screen.findByText(PRO_LINE)).toBeInTheDocument();
-  });
-
-  it("holds it too when the first-week card's row asked for the hint", async () => {
-    renderFood({ guide: "food-composer" });
     const gotIt = await screen.findByRole("button", { name: "Got it" });
     expect(screen.queryByText(PRO_LINE)).toBeNull();
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { trainingWeek, weekDays, type WeekRun } from "../trainingWeek";
+import {
+  trainingWeek,
+  weekDays,
+  weekDone,
+  weekRunsThatCount,
+  type WeekRun,
+} from "../trainingWeek";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
 /**
@@ -266,6 +272,44 @@ describe("kilometres", () => {
       ],
     });
     expect(counts.runs.km).toBe(15.7);
+  });
+});
+
+describe("weekDone: the same count, for a screen that shows only what was done", () => {
+  it("counts exactly what trainingWeek counts done", () => {
+    const programState = {
+      runDays: [runDay(TUE), runDay(THU)],
+      manualCompletions: { [`day-${THU}`]: { completedAt: NOW } },
+    };
+    const workouts = [{ date: MON }, { date: SAT }, { date: "2026-09-21" }];
+    const runs = [
+      run(TUE),
+      run(WED, { isInvalid: true }),
+      run(SUN, { distance: 7300 }),
+    ];
+    const full = week({ programState, workouts, runs });
+    const done = weekDone({
+      weekKey: WEEK,
+      programState,
+      workouts,
+      runs,
+      now: NOW,
+    });
+    expect(done.lifts).toBe(full.lifts.done);
+    expect(done.runs).toBe(full.runs.done);
+    expect(done.metres / 1000).toBe(full.runs.km);
+    expect(done).toEqual({ lifts: 2, runs: 3, metres: 12300 });
+  });
+
+  it("counts what was recorded when it is given no plan", () => {
+    expect(
+      weekDone({ weekKey: WEEK, workouts: [{ date: MON }], runs: [run(TUE)] })
+    ).toEqual({ lifts: 1, runs: 1, metres: 5000 });
+  });
+
+  it("names the week's runs that count, for a figure made of them", () => {
+    const runs = [run(MON), run(TUE, { savedAnyway: true }), run("2026-09-21")];
+    expect(weekRunsThatCount(WEEK, runs).map((r) => r.day)).toEqual([MON]);
   });
 });
 

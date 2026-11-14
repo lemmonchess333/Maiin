@@ -44,6 +44,12 @@ import {
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  ageFromBirthYear,
+  BIRTH_YEAR_MESSAGES,
+  birthYearProblem,
+  parseBirthYear,
+} from "@/lib/age";
+import {
   getRaceGoalPlannerState,
   MIN_RACE_RUN_DAYS,
   raceRunDaysNote,
@@ -53,7 +59,6 @@ import {
   saveOnboardingDraft,
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
-  DRAFT_AGE_RANGES,
   DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
@@ -100,7 +105,6 @@ import {
   type RaceGoalEntry,
 } from "@/lib/raceGoalEntry";
 import { signInMethodOf } from "@/lib/signInMethod";
-import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
 import { normaliseInviteCode } from "@/lib/inviteCode";
@@ -126,14 +130,9 @@ const SetupRacePicker = lazyRetry(loadSetupRacePicker);
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
 const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
-const AGE_MIDPOINTS = {
-  "under-16": 14,
-  "16-24": 20,
-  "25-34": 30,
-  "35-44": 40,
-  "45-54": 50,
-  "55+": 60,
-};
+/* The age the calorie estimate shows before a year of birth is given; the
+   plan is never made with it, since the step waits for the year. */
+const AGE_BEFORE_ANSWER = 30;
 const STEP_META = [
   [
     "What would you like to work towards?",
@@ -209,6 +208,15 @@ export default function Onboarding() {
   );
   const hasLifting = trainingActivity !== "running";
   const flow = onboardingFlow(trainingActivity);
+  /* A draft saved past About you before setup asked for a year of birth
+     (App1, Q57) holds an age range instead, which the plan no longer uses:
+     it opens on About you for the year, and goes back to the review. */
+  const [askBirthYearAgain] = useState(
+    () =>
+      !!draft &&
+      draft.step > 5 &&
+      parseBirthYear(draft.birthYearText ?? "") === null
+  );
   const [step, setStep] = useState(() => {
     const storedStep =
       draft?.step === 6
@@ -216,6 +224,7 @@ export default function Onboarding() {
         : draft?.step === 2 && draft.runConfirmed === undefined
           ? 3
           : (draft?.step ?? 0);
+    if (askBirthYearAgain) return 5;
     return flow.includes(storedStep) ? storedStep : 1;
   });
   /* Which way the last step change went: forward on Continue, back on Back
@@ -227,7 +236,7 @@ export default function Onboarding() {
   const onboardingCompletedRef = useRef(false);
   const [saveError, setSaveError] = useState("");
   const [returnToReview, setReturnToReview] = useState(
-    draft?.returnToReview ?? false
+    askBirthYearAgain || (draft?.returnToReview ?? false)
   );
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
@@ -259,18 +268,17 @@ export default function Onboarding() {
   );
   /* The same shape as goalConfirmed above: the VALUE a control sits on and
      the fact that the user chose it are two different things, and only the
-     second may become a personal input. Equipment, experience and age range
-     all arrived on a value and were written to the profile unread —
+     second may become a personal input. Equipment, experience and the age
+     range all arrived on a value and were written to the profile unread —
      equipment shapes the generated plan, experience sets the starting
-     loads, and the age range's midpoint feeds the calorie estimate. */
+     loads, and the age feeds the calorie estimate. The year of birth that
+     replaced the age range (App1, Q57) starts empty, so it is always the
+     person's own answer. */
   const [equipmentConfirmed, setEquipmentConfirmed] = useState(
     draft?.equipmentConfirmed ?? Boolean(draft && draft.step > 2)
   );
   const [experienceConfirmed, setExperienceConfirmed] = useState(
     draft?.experienceConfirmed ?? Boolean(draft && draft.step > 2)
-  );
-  const [ageConfirmed, setAgeConfirmed] = useState(
-    draft?.ageConfirmed ?? Boolean(draft && draft.step > 5)
   );
   /* Height and weight keep their numbers — a spin dial has to point
      somewhere, and the plan preview on the steps BEFORE this one needs a
@@ -405,8 +413,10 @@ export default function Onboarding() {
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
   );
-  const [ageRange, setAgeRange] = useState<OnboardingDraft["ageRange"]>(
-    draft?.ageRange ?? "25-34"
+  // App1 (Q57; the owner chose a year of birth, 13 November 2026): the
+  // year as typed.
+  const [birthYearText, setBirthYearText] = useState(
+    draft?.birthYearText ?? ""
   );
   const [heightCm, setHeightCm] = useState(draft?.heightCm ?? 175);
   const [weightKg, setWeightKg] = useState(draft?.weightKg ?? 75);
@@ -428,6 +438,19 @@ export default function Onboarding() {
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
   const trainingWhy = draft?.trainingWhy ?? "";
   const currentDate = useLocalDateKey();
+  /* The year of birth, checked in the year's terms (src/lib/age.ts): this
+     year less 16 or earlier passes, and a later year is refused with the
+     age gate's line. */
+  const birthYear = parseBirthYear(birthYearText);
+  const birthYearIssue =
+    birthYear === null ? null : birthYearProblem(birthYear, currentDate);
+  // The age the calorie estimate uses, worked out as profileAge will.
+  const age = useMemo(() => {
+    const year = parseBirthYear(birthYearText);
+    return year !== null && birthYearProblem(year, currentDate) === null
+      ? ageFromBirthYear(year, currentDate)
+      : null;
+  }, [birthYearText, currentDate]);
   const answers = useMemo<OnboardingDraft>(
     () => ({
       step,
@@ -444,7 +467,7 @@ export default function Onboarding() {
       ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
       injuries,
       gender,
-      ageRange,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -455,7 +478,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -490,7 +512,7 @@ export default function Onboarding() {
       raceEventName,
       injuries,
       gender,
-      ageRange,
+      birthYearText,
       heightCm,
       weightKg,
       heightUnit,
@@ -501,7 +523,6 @@ export default function Onboarding() {
       runConfirmed,
       equipmentConfirmed,
       experienceConfirmed,
-      ageConfirmed,
       bodyAnswered,
       displayName,
       weightDisplayUnit,
@@ -595,13 +616,13 @@ export default function Onboarding() {
       calculateTDEE(
         weightKg,
         heightCm,
-        AGE_MIDPOINTS[ageRange],
+        age ?? AGE_BEFORE_ANSWER,
         activityLevel,
         goalPlan.fitnessGoal,
         gender === "female" ? "female" : "male",
         goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
+    [weightKg, heightCm, age, activityLevel, goalPlan, gender]
   );
   /* Asked of someone who runs already: a new runner has no recent race to
      give. Typed as minutes and seconds, because a phone's number pad has no
@@ -803,9 +824,9 @@ export default function Onboarding() {
     !(recentRace && "error" in recentRace) &&
     runningStartValid;
   const validBody =
-    ageConfirmed &&
+    birthYear !== null &&
+    birthYearIssue === null &&
     bodyAnswered &&
-    ageRange !== "under-16" &&
     metricsValid &&
     !goalWeightInvalid &&
     !goalWeightMissing &&
@@ -887,10 +908,6 @@ export default function Onboarding() {
     try {
       const profileData: Record<string, unknown> = {
         displayName: displayNameValidation.trimmed,
-        email: user.email || "",
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLogDate: null,
         // Dark is the app default (see public/init.js + auth.tsx).
         darkMode: true,
         weeklyWorkoutsTarget: daysPerWeek,
@@ -904,7 +921,9 @@ export default function Onboarding() {
               ? "Hybrid"
               : "Lifter",
         gender,
-        ageRange,
+        // App1 (Q57): the year of birth, the one stored copy of the age.
+        // Neither `age` nor `ageRange` is sent (Q21).
+        ...(birthYear !== null ? { birthYear } : {}),
         heightCm,
         weightKg,
         // Fast-start: the goal-weight step was deferred, so we persist the
@@ -965,20 +984,16 @@ export default function Onboarding() {
           : {}),
         onboardingComplete: true,
         // TDEE targets
-        age: AGE_MIDPOINTS[ageRange],
         sex: gender === "female" ? "female" : "male",
         activityLevel,
-        tdeeBase: tdee.targetCalories,
-        aiCalorieAdjustment: 0,
+        // The day's carbs and fat are worked out from these two, never
+        // stored (App1 Q21).
         targetCalories: tdee.targetCalories,
         targetProtein: tdee.protein,
-        targetCarbs: tdee.carbs,
-        targetFat: tdee.fat,
         program: {
           // Nutrition phase comes from the goal-weight plan (target weight
           // owns direction), not goalToFitnessGoal(primaryGoal).
           goal: goalPlan.fitnessGoal,
-          startWeight: weightKg,
           currentPhase: "base",
         },
       };
@@ -994,7 +1009,7 @@ export default function Onboarding() {
       // counts above so the values match the actual generated plan.
       // planBuilder's `program` carries only the nutrition phase (`goal`),
       // so it is merged into the map above rather than assigned over it:
-      // a shallow assign dropped startWeight and currentPhase.
+      // a shallow assign dropped currentPhase.
       const { program: planProgram, ...planShape } = plan.profileUpdates;
       Object.assign(profileData, planShape);
       // buildPlan's race goal carries no race-or-own answer (Run9) and no
@@ -1017,29 +1032,28 @@ export default function Onboarding() {
       // first invocation after idle spins up a cold instance that can exceed the
       // client SDK's default wait window and surface as functions/internal even
       // though the warm instance will handle the second call fine.
-      const completeOnboarding = httpsCallable<
-        unknown,
-        { success: boolean; activationJourneyVersion?: 1 | 2 | null }
-      >(functions, "completeOnboarding");
+      const completeOnboarding = httpsCallable<unknown, { success: boolean }>(
+        functions,
+        "completeOnboarding"
+      );
       // P0-5: payload now includes weekSchedule as an explicit
       // top-level field. validatePlanPayload reads either the
       // top-level field or profileData.weekSchedule; sending both
       // keeps the contract explicit on the wire.
+      // The server stamps every new account's journey as 2 whatever is
+      // sent (App1). `activationJourneyVersion: 2` stays on the wire for a
+      // server from before App1, which records the platform only beside
+      // it.
       const callCF = () =>
         completeOnboarding({
           profileData,
           programState,
           weekSchedule: plan.weekSchedule,
-          ...(ACTIVATION_JOURNEY_V2_ENABLED
-            ? {
-                activationJourneyVersion: 2,
-                onboardingPlatform: Capacitor.getPlatform(),
-              }
-            : {}),
+          activationJourneyVersion: 2,
+          onboardingPlatform: Capacitor.getPlatform(),
         });
-      let commitResult;
       try {
-        commitResult = await callCF();
+        await callCF();
       } catch (err) {
         const code = (err as { code?: string })?.code;
         const msg = (err as { message?: string })?.message || "";
@@ -1060,7 +1074,7 @@ export default function Onboarding() {
           msg.toUpperCase().includes("INTERNAL");
         if (!isTransient) throw err;
         await new Promise((r) => setTimeout(r, 1200));
-        commitResult = await callCF();
+        await callCF();
       }
 
       onboardingCompletedRef.current = true;
@@ -1154,20 +1168,9 @@ export default function Onboarding() {
         runMode: effectiveRunMode,
       });
 
-      // Route from the accepted, persisted server version, not the stale
-      // React profile captured before refreshProfile(). An older callable
-      // that returns no version keeps the established offer route.
-      if (
-        ACTIVATION_JOURNEY_V2_ENABLED &&
-        commitResult.data.activationJourneyVersion === 2
-      ) {
-        navigate("/", { replace: true });
-      } else {
-        navigate("/upgrade?from=onboarding", {
-          replace: true,
-          state: { next: "/" },
-        });
-      }
+      // Setup ends on Today, for every account (App1, whole-app grill
+      // Q27): the plan and what to do next, with no offer between.
+      navigate("/", { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -1636,6 +1639,7 @@ export default function Onboarding() {
                       <RacePlanProNote
                         distance={raceDistance}
                         isPro={onboardingIsPro}
+                        freeWeekUsed={profile?.racePlanFreeWeekUsed === true}
                       />
                       <div className="space-y-2">
                         <p className="text-sm">Race or on your own</p>
@@ -2076,27 +2080,40 @@ export default function Onboarding() {
                 />
               </div>
               <div className="space-y-3">
-                <h2 className="text-base font-semibold">Age range</h2>
-                <SegmentedControl<OnboardingDraft["ageRange"] | "">
-                  ariaLabel="Age range"
-                  value={ageConfirmed ? ageRange : ""}
-                  onChange={(next) => {
-                    if (next === "") return;
-                    setAgeConfirmed(true);
-                    setAgeRange(next);
-                  }}
-                  layout="wrap"
-                  options={DRAFT_AGE_RANGES.map((value) => ({
-                    value,
-                    label:
-                      value === "under-16"
-                        ? "Under 16"
-                        : value.replace("-", "–"),
-                  }))}
+                <label
+                  htmlFor="onboarding-birth-year"
+                  className="block text-base font-semibold"
+                >
+                  Year of birth
+                </label>
+                {/* Four digits on the phone's number pad (App1, Q57). */}
+                <input
+                  id="onboarding-birth-year"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="bday-year"
+                  maxLength={4}
+                  className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
+                  value={birthYearText}
+                  aria-invalid={birthYearIssue !== null ? true : undefined}
+                  aria-describedby={
+                    birthYearIssue !== null
+                      ? "onboarding-birth-year-error"
+                      : undefined
+                  }
+                  onChange={(event) =>
+                    setBirthYearText(
+                      event.target.value.replace(/\D/g, "").slice(0, 4)
+                    )
+                  }
                 />
-                {ageRange === "under-16" && (
-                  <p role="alert" className="text-sm text-destructive-strong">
-                    You need to be at least 16 to use Tropos.
+                {birthYearIssue !== null && (
+                  <p
+                    id="onboarding-birth-year-error"
+                    role="alert"
+                    className="text-sm text-destructive-strong"
+                  >
+                    {BIRTH_YEAR_MESSAGES[birthYearIssue]}
                   </p>
                 )}
               </div>
@@ -2105,11 +2122,12 @@ export default function Onboarding() {
                   Why these details?
                 </summary>
                 <p>
-                  Height, weight and the midpoint of your age range estimate
-                  starting calories. The initial activity estimate uses planned
-                  lifting frequency; running is accounted for as you log it.
-                  “Prefer not to say” uses the male calculation. These are
-                  estimates you can adjust in Settings.
+                  Height, weight and your age estimate starting calories, and
+                  your age sets your heart-rate zones. Your year of birth is
+                  never shown on your profile. The initial activity estimate
+                  uses planned lifting frequency; running is accounted for as
+                  you log it. “Prefer not to say” uses the male calculation.
+                  These are estimates you can adjust in Settings.
                 </p>
               </details>
               <div className="space-y-3">
@@ -2319,7 +2337,7 @@ export default function Onboarding() {
                     },
                     {
                       label: "About you",
-                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · age ${ageRange}`,
+                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · ${birthYear !== null ? `born ${birthYear}` : "add your year of birth"}`,
                       target: 5,
                     },
                   ]
@@ -2424,7 +2442,7 @@ export default function Onboarding() {
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
       <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-        {step === 7 && ACTIVATION_JOURNEY_V2_ENABLED && (
+        {step === 7 && (
           <p className="text-sm text-muted-foreground">
             Today shows your plan and what to do next. Start when you’re ready.
           </p>
@@ -2466,10 +2484,7 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try again"
-                  : // One label for both journeys: where it goes is the
-                    // server's answer (the comparison group and a switched-off
-                    // v2 go to the Pro offer), which no label can know first.
-                    "Start my plan"
+                  : "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

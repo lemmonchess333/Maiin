@@ -345,7 +345,6 @@ describe("a resumed app brings the plan up to today", () => {
             exercises: [],
           },
         ],
-        fatigueScore: 0,
         updatedAt: Date.now(),
         settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],

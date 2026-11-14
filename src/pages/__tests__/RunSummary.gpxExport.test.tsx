@@ -88,7 +88,9 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
 vi.mock("@/components/WeekPulseView", () => ({ default: () => null }));
-vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
+vi.mock("@/components/social/SavedSessionKudos", () => ({
+  default: () => null,
+}));
 
 import RunSummary from "../RunSummary";
 import { resetFirestore } from "@/test/firestoreHarness";

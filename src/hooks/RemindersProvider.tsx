@@ -7,6 +7,8 @@ import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
 import { useTrialReminderInternal } from "@/hooks/useTrialReminder";
 import { useTrialPriceReport } from "@/hooks/useTrialPriceReport";
 import { useReviewReminderInternal } from "@/hooks/useReviewReminder";
+import { useReminderAttention } from "@/hooks/useReminderAttention";
+import { useUid } from "@/lib/auth";
 
 /**
  * Reminders (meal / workout / streak) share three characteristics that
@@ -35,39 +37,67 @@ type MealValue = ReturnType<typeof useMealRemindersInternal>;
 type WorkoutValue = ReturnType<typeof useWorkoutRemindersInternal>;
 type StreakValue = ReturnType<typeof useStreakReminderInternal>;
 type ReviewValue = ReturnType<typeof useReviewReminderInternal>;
+type AttentionValue = ReturnType<typeof useReminderAttention>;
 
 interface RemindersValue {
   meal: MealValue;
   workout: WorkoutValue;
   streak: StreakValue;
   review: ReviewValue;
+  attention: AttentionValue;
 }
 
 const RemindersContext = createContext<RemindersValue | null>(null);
 
 export function RemindersProvider({ children }: { children: ReactNode }) {
-  const { activity, pushOwns, recapPushOwns, refreshKey } =
-    useReminderActivity();
+  // `push`: the stored push settings, which say whether push carries the
+  // streak and review reminders (App1 Q26, `lib/reminderChoices.ts`).
+  const { activity, push, refreshKey } = useReminderActivity();
   const meal = useMealRemindersInternal(activity);
   // A lift day's reminder names the programme's next workout.
   const liftName = useNextLiftName();
   const workout = useWorkoutRemindersInternal(activity, liftName);
-  const streak = useStreakReminderInternal(pushOwns, refreshKey);
+  const streak = useStreakReminderInternal(push, refreshKey);
   // Monday's "Your week, reviewed", when a review will be waiting. A first
   // log is what makes a new account's first review, so today's logging
   // runs it again.
   const review = useReviewReminderInternal(
-    recapPushOwns,
+    push,
     refreshKey,
     `${activity.dateKey}:${activity.workout}:${activity.meals.length}`
   );
+  // App1 Q62: a reminder ignored three times running goes quiet, and Home
+  // says so once. Counted each time the app comes back to the front.
+  const uid = useUid();
+  const attention = useReminderAttention(uid, refreshKey, {
+    meals: {
+      ready: !meal.loading && !meal.failed,
+      on: meal.reminders.enabled,
+      turnOff: () => meal.updateReminders({ enabled: false }),
+    },
+    training: {
+      ready: !workout.loading && !workout.failed,
+      on: workout.reminders.enabled,
+      turnOff: () => workout.updateReminders({ enabled: false }),
+    },
+    streak: {
+      ready: !streak.loading,
+      on: streak.prefs.enabled,
+      turnOff: () => streak.updatePrefs({ enabled: false }),
+    },
+    review: {
+      ready: !review.loading,
+      on: review.prefs.enabled,
+      turnOff: () => review.updatePrefs({ enabled: false }),
+    },
+  });
   // One-shot, no prefs, no consumer: it only needs to run once per session.
   useTrialReminderInternal();
   // The trial reminder email's price, when the purchase's own sync missed it.
   useTrialPriceReport();
   const value = useMemo(
-    () => ({ meal, workout, streak, review }),
-    [meal, workout, streak, review]
+    () => ({ meal, workout, streak, review, attention }),
+    [meal, workout, streak, review, attention]
   );
   return (
     <RemindersContext.Provider value={value}>
@@ -104,4 +134,11 @@ export function useStreakReminder(): StreakValue {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useReviewReminder(): ReviewValue {
   return useRemindersContext().review;
+}
+
+/** The reminders that went quiet and Home has not said so (App1 Q62), or
+ *  null outside the provider, where Home says nothing. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useRemindersQuiet(): AttentionValue | null {
+  return use(RemindersContext)?.attention ?? null;
 }

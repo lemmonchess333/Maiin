@@ -57,8 +57,9 @@ const meal = (daysAgo: number, calories: number) =>
     totalCalories: calories,
   }) as Meal;
 /** `n` distinct PAST days carrying one meal each, 1..n days ago — never
- *  today, which the card excludes and the gate therefore never counts. */
-const loggedPast = (n: number, calories = 210) =>
+ *  today, which the card excludes and the gate therefore never counts.
+ *  Each is a food day (`foodDay.ts`): 800 kcal or more. */
+const loggedPast = (n: number, calories = 1200) =>
   Array.from({ length: n }, (_, i) => meal(i + 1, calories));
 /** The card's own minimum, imported rather than written as a 3 here, so
  *  moving the constant moves the boundary these tests probe. */
@@ -143,7 +144,7 @@ describe("the chart draws only once there are bars to compare", () => {
     render(<CalorieBalanceChart meals={loggedPast(2)} />);
     expect(screen.getByText("2 / 13")).toBeInTheDocument();
     expect(screen.getByText("Average logged-day gap")).toBeInTheDocument();
-    expect(screen.getByText("Past days with entries")).toBeInTheDocument();
+    expect(screen.getByText("Past days logged")).toBeInTheDocument();
     expect(
       screen.getByText(/does not predict weight change/)
     ).toBeInTheDocument();
@@ -235,7 +236,9 @@ describe("nutrition evidence limits", () => {
       screen.getByRole("button", { name: "How calorie balance is measured" })
     );
     expect(screen.getByText(/Estimated maintenance/)).toBeInTheDocument();
-    expect(screen.getByText(/day with no food logged/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/day with less than 800 kcal logged/)
+    ).toBeInTheDocument();
   });
 
   it("keeps the weight-change caveat visible without a tap", () => {
@@ -243,6 +246,20 @@ describe("nutrition evidence limits", () => {
     expect(
       screen.getByText(/does not predict weight change/)
     ).toBeInTheDocument();
+  });
+
+  it("charts a past day short of 800 kcal as a gap, not a deficit", () => {
+    /* A coffee and nothing else is not a day of eating (`foodDay.ts`):
+       charted, it read as a 2,000 kcal deficit. */
+    render(
+      <CalorieBalanceChart
+        meals={[...loggedPast(ENOUGH), meal(ENOUGH + 1, 799)]}
+      />
+    );
+    expect(points().filter((point) => point.balance !== null)).toHaveLength(
+      ENOUGH
+    );
+    expect(screen.getByText(`${ENOUGH} / 13`)).toBeInTheDocument();
   });
 
   it("counts only past days with entries and discloses incomplete logs", () => {
@@ -280,10 +297,10 @@ describe("calorie balance footer", () => {
     screen.getByText(/kcal$/, { selector: "p.font-mono" }).textContent!;
 
   it("groups the thousands in the average gap", () => {
-    // Default profile → maintenance ≈ 2,556, so one 210 kcal day is a
+    // Default profile → maintenance ≈ 2,556, so one 1,000 kcal day is a
     // four-digit gap. The regex pins the SEPARATOR, not the value: it
     // does not re-derive the number through the code under test.
-    render(<CalorieBalanceChart meals={[meal(1, 210)]} />);
+    render(<CalorieBalanceChart meals={[meal(1, 1000)]} />);
     expect(gap()).toMatch(new RegExp(`^\\+\\d{1,3}${SEP_RE}\\d{3} kcal$`));
   });
 
