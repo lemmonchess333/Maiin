@@ -367,7 +367,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "AI photo food logging, up to 100 scans a day",
       "A calorie target that adapts to you",
       "Macros that shift with your training",
-      "Running paces that update from your races and tempo runs",
+      "Running paces that speed up as your races and sessions show you’re fitter",
       "Readiness from your sleep and heart rate in Apple Health",
       "Charts older than 3 months, your training load and your score’s details",
       "Half and full marathon plans, after their first week",

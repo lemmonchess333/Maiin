@@ -138,8 +138,11 @@ describe("runSessionAbout", () => {
         expect(shared, `${t.id} with race pace`).toEqual([]);
       }
     }
-    // So has a tempo at the goal pace, in the build and in the taper.
-    for (const t of RUN_TEMPLATES.filter((x) => x.type === "tempo")) {
+    // So has a tempo at the goal pace, in the build and in the taper. A
+    // progression run never is (Run24 (5), `racePaceWork`).
+    for (const t of RUN_TEMPLATES.filter(
+      (x) => x.type === "tempo" && x.config.tempo
+    )) {
       const lines = runSessionAbout(t, { racePace: TEMPO });
       for (const currentWeek of [9, 13]) {
         const why = runSessionExplainer({

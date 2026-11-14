@@ -17,7 +17,7 @@
  * data: profile snapshot, programState (or its absence), URL params.
  */
 
-import { intervalRestSeconds } from "./intervalRest";
+import { intervalRestSeconds, plannedRepeatPace } from "./intervalRest";
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
@@ -34,8 +34,10 @@ import {
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromProgression,
   segmentsFromRunWalk,
   segmentsFromTempo,
+  segmentsFromTimeTrial,
   type SessionSegment,
 } from "./runSegments";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
@@ -49,7 +51,13 @@ import {
 
 /** A saved run's snapshot of `profile.runMode`. `starter`: Run9's starter
  *  goal, whose planned days are matched as any plan's are. */
-export type PlanMode = "freeform" | "structured" | "race_prep" | "starter";
+export type PlanMode =
+  | "freeform"
+  | "structured"
+  | "race_prep"
+  | "starter"
+  /** Run24 (3): a plan with no race date (`runModeWithPlan`). */
+  | "rolling";
 
 export type PlanSource =
   "today_plan" | "url_template" | "manual" | "rest_day" | "completed_day";
@@ -799,15 +807,24 @@ function templateToPrefill(
   if (tmpl.config.intervals) {
     // Adaptive Paces: personalize the interval work pace (VO₂max) from the
     // user's fitness; falls through to undefined (PaceZoneBar's own fallback)
-    // when there's no benchmark.
-    const workPace = resolveSessionPaces(tmpl.type, paceTable ?? null).workPace;
+    // when there's no benchmark. Run24 (5): repeats at repetition pace or a
+    // race's take theirs from it, and repeats by feel none
+    // (`plannedRepeatPace`).
+    const workPace = plannedRepeatPace(
+      tmpl,
+      resolveSessionPaces("intervals", paceTable ?? null).workPace
+    );
     // Deep dive D15: with the rep pace known, the rest is a share of the
     // rep's own time (`intervalRestSeconds`).
     prefill.intervals = workPace
       ? {
           ...tmpl.config.intervals,
           workPace,
-          restDuration: intervalRestSeconds(tmpl.config.intervals, workPace),
+          restDuration: intervalRestSeconds(
+            tmpl.config.intervals,
+            workPace,
+            tmpl.config.repeatsAt
+          ),
         }
       : tmpl.config.intervals;
   }
@@ -825,8 +842,22 @@ function templateToPrefill(
   // derive from the (personalized) interval config; tempo from the promoted
   // structure with the resolved target pace; strides from the easy variant.
   // A2 adds the build-phase long run closing at goal race pace.
-  if (prefill.intervals) {
-    prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed);
+  if (tmpl.config.timeTrial) {
+    // Run24 (4): no pace on a time trial; the run is how it is found.
+    delete prefill.target;
+    prefill.segments = segmentsFromTimeTrial(tmpl.config.timeTrial, seed);
+  } else if (prefill.intervals) {
+    prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed, {
+      repeatsAt: tmpl.config.repeatsAt,
+      uphill: tmpl.config.uphill,
+    });
+  } else if (tmpl.config.progression) {
+    // Run24 (5): the finish at the threshold pace a benchmark gives.
+    prefill.segments = segmentsFromProgression(
+      tmpl.config.progression,
+      unit,
+      prefill.target?.type === "pace" ? prefill.target.value : undefined
+    );
   } else if (tmpl.config.tempo) {
     prefill.segments = segmentsFromTempo(
       tmpl.config.tempo,
