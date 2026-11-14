@@ -752,7 +752,7 @@ export default function Run() {
     return {
       metadata: result.metadata,
       prefill: result.prefill as Partial<RunConfig>,
-      strip: deriveStrip(result.metadata, programState?.runPlan, unit),
+      strip: deriveStrip(result.metadata, programState?.runPlan),
     };
   }, [
     runPlanLocked,

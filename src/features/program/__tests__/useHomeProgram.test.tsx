@@ -396,7 +396,7 @@ describe("Home, left open into a new week", () => {
   });
 
   it("reads the runner's recent running again for the new day", async () => {
-    h.profile = { ...h.profile, runMode: "structured" };
+    h.profile = { ...h.profile, runMode: "starter" };
     emit(h.state as ProgramState);
     render(<Harness />);
     await waitFor(() => expect(h.layoff).toHaveBeenCalledWith("alice", SUNDAY));

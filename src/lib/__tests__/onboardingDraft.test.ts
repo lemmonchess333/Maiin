@@ -148,6 +148,8 @@ describe("strict validation — any bad field rejects the whole draft", () => {
     rejects({ gender: 42 });
     rejects({ ageRange: "9000+" });
     rejects({ runMode: "structured-race" });
+    // The retired structured mode (App1 Q25): no setup offers it.
+    rejects({ runMode: "structured" });
     rejects({ raceDistance: "ultra" });
   });
 

@@ -71,7 +71,7 @@ function validProgramState(overrides = {}) {
         status: "planned",
       },
     ],
-    runPlan: { mode: "structured" },
+    runPlan: { mode: "starter", stage: 1, stageWeekKey: "2026-05-11" },
     ...overrides,
   };
 }
@@ -83,7 +83,7 @@ function validProfileUpdates(overrides = {}) {
     weeklyWorkoutsTarget: 3,
     weeklyRunDaysTarget: 2,
     weeklyRunsTarget: 2,
-    runMode: "structured",
+    runMode: "starter",
     primaryGoal: "hypertrophy",
     ...overrides,
   };

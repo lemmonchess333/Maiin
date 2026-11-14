@@ -289,7 +289,7 @@ describe("the run's post", () => {
     ): FinishedRun["runConfig"] =>
       ({
         activityType,
-        planMetadata: { ...freeformPlanMetadata("structured"), ...plan },
+        planMetadata: { ...freeformPlanMetadata("starter"), ...plan },
       }) as FinishedRun["runConfig"];
     const at = (hour: number, minute = 0) => {
       const d = new Date(START);

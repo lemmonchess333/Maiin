@@ -60,7 +60,7 @@ describe("RunSetupModal — the Start button's name", () => {
   it("names it from the plan's own prefill, as the Run page passes it", () => {
     const { metadata, prefill } = computePlanMetadata({
       displayUnit: "km",
-      profileRunMode: "structured",
+      profileRunMode: "starter",
       todayDayIndex: 3,
       todayDate: "2027-03-03",
       runPlan: undefined,

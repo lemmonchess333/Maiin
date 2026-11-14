@@ -4,7 +4,6 @@ import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  planWeekFromToday,
   raceWeekFromToday,
 } from "./racePlanContinuation";
 /**
@@ -108,14 +107,13 @@ import {
 import { heldForInjury } from "./injurySubstitutions";
 import {
   generateRacePlanV2,
-  scheduleStructuredWeekV2,
   DEFAULT_RUN_TUNING,
   type RunTuning,
 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
-export type RunMode = "freeform" | "structured" | "race_prep" | "starter";
+export type RunMode = "freeform" | "race_prep" | "starter";
 
 export interface PlanBuilderInput {
   /** Training-focus enum (hypertrophy / strength / etc.). Drives
@@ -832,9 +830,8 @@ function raceFinalWeekNow(
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
  *  injected currentDate, not wall clock). Uses the V2 scheduler API
- *  (P0-3) — both `scheduleStructuredWeekV2` and `generateRacePlanV2`
- *  drive from `weekSchedule` directly and emit native v2-shaped
- *  runDays. No post-processing bridge needed here anymore. */
+ *  (P0-3) — `generateRacePlanV2` drives from `weekSchedule` directly and
+ *  emits native v2-shaped runDays. Free running has neither. */
 function buildRunPlan(
   input: PlanBuilderInput,
   weekSchedule: ScheduleDay[]
@@ -842,10 +839,6 @@ function buildRunPlan(
   // The week containing `currentDate` is the plan's week 0. Use
   // localWeekKey to find its first day (Monday — see WEEK_STARTS_ON).
   const weekStart = localWeekKey(parseLocalDate(input.currentDate));
-
-  if (input.runMode === "freeform") {
-    return { runDays: [], runPlan: undefined };
-  }
 
   // Run9's starter goal: a change of layout or lifts keeps its stage, and
   // its week is laid again on the new run days from today. A plan with no
@@ -935,18 +928,8 @@ function buildRunPlan(
     };
   }
 
-  // structured
-  return {
-    runDays: planWeekFromToday(
-      scheduleStructuredWeekV2({
-        weekSchedule,
-        weekNumber: input.existingState?.weekNumber ?? 1,
-        weekStart,
-      }),
-      input.currentDate
-    ),
-    runPlan: { mode: "structured" },
-  };
+  // Free running: no plan and no planned runs.
+  return { runDays: [], runPlan: undefined };
 }
 
 /** Collates the profile-side patch that callers must persist

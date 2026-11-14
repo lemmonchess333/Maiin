@@ -622,8 +622,9 @@ export interface ScheduledRunDay {
 
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
-   *  at each stage (`starterPlan.ts`). */
-  mode: "structured" | "race_prep" | "starter";
+   *  at each stage (`starterPlan.ts`). A stored "structured" plan (retired,
+   *  App1 Q25) is dropped as it is read (`migrateProgramState`). */
+  mode: "race_prep" | "starter";
   /** A starter plan's stage, 1 to 9: the session every run in its week
    *  takes. It moves on only once its week was done. */
   stage?: number;

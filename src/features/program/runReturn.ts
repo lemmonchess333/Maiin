@@ -96,8 +96,7 @@ export function runningPlan(
   }
   if (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
     return "free";
-  if (profile.runMode === "race_prep" || profile.runMode === "structured")
-    return "free";
+  if (profile.runMode === "race_prep") return "free";
   const runDay = (profile.weekSchedule ?? []).some(
     (day) => day?.type === "run" || day?.type === "both"
   );

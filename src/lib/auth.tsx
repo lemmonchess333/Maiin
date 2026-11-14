@@ -71,6 +71,7 @@ import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+import { isRetiredRunMode } from "@/features/program/runModeResolution";
 import {
   PROFILE_REFRESH_ATTEMPTS,
   PROFILE_REFRESH_WAIT_MS,
@@ -475,7 +476,9 @@ export interface UserProfileSocial {
 
 /** Run and schedule configuration */
 export interface UserProfileRunning {
-  runMode?: "freeform" | "structured" | "race_prep" | "starter";
+  /** Stored "structured" (retired, App1 Q25) reads as "freeform"
+   *  (`hydrateProfile`). */
+  runMode?: "freeform" | "race_prep" | "starter";
   /** Run9's reopening: the goal of 30 minutes without stopping. The record
    *  stays once it is over (`StarterGoal`); `runMode` is "starter" only
    *  while it runs (`deriveRunMode`). Its stage is on the run plan. */
@@ -798,6 +801,10 @@ function hydrateProfile(
       (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
     runFitness: (data.runFitness as UserProfile["runFitness"]) ?? null,
     maxHeartRate: (data.maxHeartRate as number | undefined) ?? null,
+    // The retired structured run mode (App1 Q25) is free running, which is
+    // what Run9 (3a) moved every account it met to. The boot reconciliation
+    // writes it back as free running.
+    ...(isRetiredRunMode(data.runMode) && { runMode: "freeform" as const }),
     // This device's answers that have not moved to the account yet apply
     // on the same terms as the move, so waiting never makes one less
     // private.
@@ -1425,6 +1432,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 );
                 // The change has landed; Login has nothing left to explain.
                 clearEmailChange();
+              }
+              // The retired structured run mode (App1 Q25), read as free
+              // running above, is stored as it too, so a later write that
+              // compares the profile against the store finds them alike.
+              // Same fire-and-forget shape as the timezone capture above.
+              if (isRetiredRunMode(data.runMode)) {
+                updateDocGuarded(doc(db, "users", firebaseUser.uid), {
+                  runMode: "freeform",
+                }).catch((err) =>
+                  logger.warn("[AuthProvider] run mode repair failed", err)
+                );
               }
               // Share answers this device saved before they were kept on
               // the account. Fire-and-forget; a failed move leaves them on

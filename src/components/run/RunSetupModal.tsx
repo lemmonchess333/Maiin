@@ -167,9 +167,6 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
-    case "structured_today":
-      line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
-      break;
     case "rest_day":
       line1 = "Rest day in your plan.";
       break;
@@ -336,10 +333,10 @@ export default function RunSetupModal({
         </div>
 
         {/* Programme context strip — Phase B1. Renders only when the
-            user is on a structured/race_prep plan AND today resolves
-            to one of the four documented states (today's plan, rest
-            day, completed day, elapsed race-prep). Freeform users get
-            no strip — the surface stays clean. */}
+            user is on a plan AND today resolves to one of the four
+            documented states (race prep's today, rest day, completed
+            day, elapsed race-prep). Freeform users get no strip — the
+            surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
 
         {routeSection}

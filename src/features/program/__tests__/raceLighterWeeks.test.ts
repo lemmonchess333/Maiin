@@ -85,7 +85,7 @@ describe("raceBlockWeek — the race block a plan's lighter weeks follow", () =>
 
   it("is null without a race block to follow", () => {
     expect(raceBlockWeek(undefined)).toBeNull();
-    expect(raceBlockWeek(racePlan({ mode: "structured" }))).toBeNull();
+    expect(raceBlockWeek(racePlan({ mode: "starter" }))).toBeNull();
     // The recovery after the race has no block left.
     expect(raceBlockWeek(racePlan({ phase: "recovery" }))).toBeNull();
     expect(raceBlockWeek(racePlan({ raceGoal: undefined }))).toBeNull();
