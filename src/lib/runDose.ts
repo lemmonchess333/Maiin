@@ -34,6 +34,22 @@ export function runMinutesLine(
   return `about ${Math.round((km * easyPaceSPerKm) / 60 / 5) * 5} min`;
 }
 
+/**
+ * The minutes a session with no distance takes, as its cards state them
+ * (`runMinutesLine`): an interval session's at the runner's own interval
+ * pace when a confirmed benchmark gives one, otherwise the template's.
+ * What a hot day's swap offers as an easy run (heatAdjustment.ts), so the
+ * easy run lasts as long as the session the card named.
+ */
+export function plannedSessionMinutes(
+  template: DoseTemplate,
+  intervalPaceSPerKm?: number | null
+): number {
+  return (
+    intervalMinutes(template, intervalPaceSPerKm) ?? template.estimatedDuration
+  );
+}
+
 /** An interval session's minutes at the runner's interval pace, its
  *  repeats at their own pace (`plannedRepeatPace`, Run24 (5)), rounded to
  *  5; null without intervals or a pace, and for repeats run by feel, whose

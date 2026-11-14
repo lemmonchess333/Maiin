@@ -106,7 +106,8 @@ function savedOutdoorRun() {
     points: [0, 1, 2, 3].map((i) => ({
       lat: 51.5,
       lon: -0.1 + i * 0.0014,
-      rawLat: 51.5,
+      // The fix as taken, a few metres from the smoothed point.
+      rawLat: 51.50003,
       rawLon: -0.1 + i * 0.0014,
       timestamp: start + i * 30_000,
       altitude: 12,
@@ -160,6 +161,9 @@ describe("RunSummary — Export GPX", () => {
     const gpx = await file.text();
     expect(gpx).toContain("<name>Tropos Run ");
     expect(gpx.match(/<trkpt /g)).toHaveLength(4);
+    // The raw fixes, which another app expects to clean up itself.
+    expect(gpx.match(/<trkpt lat="51.50003"/g)).toHaveLength(4);
+    expect(gpx).not.toContain('lat="51.5" ');
   });
 
   it("confirms a download, as RunDetail does", async () => {
