@@ -3,7 +3,7 @@
  * Seed for the LiftReturnSheet capture.
  *
  * Provisions a lifter whose last logged session is old enough for
- * `assessLiftReturn` to classify `detrained`, so the welcome-back sheet is
+ * the one return check (`trainingReturn.ts`) to classify `detrained`, so the welcome-back sheet is
  * reachable on Home:
  *
  *   1. A lift-only profile + programState built by the REAL planBuilder —

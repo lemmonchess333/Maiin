@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6945167,
+  "total": 6958245,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -206,7 +206,7 @@
     "ios": 648,
     "isPlainObject": 12176,
     "KeepSwapSheet": 1343,
-    "layoffDetection": 4325,
+    "layoffDetection": 17403,
     "Layout": 24195,
     "league": 3702,
     "League": 7247,

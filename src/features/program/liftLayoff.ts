@@ -12,19 +12,17 @@
  * the classic mirror drift: two numbers meaning the same thing, only one of
  * them tested, diverging the first time someone tuned one.
  *
- * ONE exported function, deliberately. The first draft exported the three
- * pieces separately and the caller composed them, which walked the workout
- * list twice and left one export reachable only from its own test — the
- * reachability gate refused it, correctly. A single assessment is also the
- * honest API: every caller wants all three answers together.
+ * Since App1 Q35 the measuring is the one return check's
+ * (`trainingReturn.ts`), which reads both sports' sessions and measures
+ * each by one rule (`absenceFromDays`). This module says what that
+ * measurement means for the Welcome back sheet (`liftReturnFrom`).
  *
  * This module REPORTS. It prescribes nothing: it says whether the Welcome
  * back sheet is offered and what its "Ease back in" would take off, and
  * the plan changes only when the person chooses it there (Lift4 (11),
  * `easeBackIn`).
  */
-import { parseLocalDate } from "@/lib/dateHelpers";
-import { classifyLayoff, type LayoffClass } from "./layoffDetection";
+import type { LayoffClass, SportAbsence } from "./layoffDetection";
 
 /** Days away from which the Welcome back sheet is offered: two weeks
  *  (Lift4 (11)). A week away is a missed week, not a break. */
@@ -55,7 +53,7 @@ export interface LiftReturnAssessment {
    * `null` is NOT a layoff — a brand-new account has no history to be away
    * from, and treating it as one would greet every first-time lifter with
    * "welcome back" on the day they signed up. Same trap the run side
-   * documents for `daysSinceLastRun`.
+   * documents for `absenceFromDays`.
    */
   daysAway: number | null;
   /** The gap under the shared policy. `none` for a null `daysAway`. */
@@ -94,18 +92,20 @@ function isTrainedSession(workout: DatedWorkout): boolean {
   return (workout.exercises ?? []).some((ex) => (ex?.sets?.length ?? 0) > 0);
 }
 
-/** Everything the return surface needs, from one pass over the history. */
-export function assessLiftReturn(
-  workouts: readonly DatedWorkout[],
-  todayKey: string
-): LiftReturnAssessment {
-  let latest: string | null = null;
+/** The days a session with work in it was logged on, one per session: the
+ *  lifting half of the one return check (`trainingReturn.ts`). */
+export function liftSessionDays(workouts: readonly DatedWorkout[]): string[] {
+  const days: string[] = [];
   for (const workout of workouts ?? []) {
-    if (!workout?.date || !isTrainedSession(workout)) continue;
-    // Lexicographic max is safe and cheap for "YYYY-MM-DD".
-    if (latest === null || workout.date > latest) latest = workout.date;
+    if (workout?.date && isTrainedSession(workout)) days.push(workout.date);
   }
-  if (latest === null) {
+  return days;
+}
+
+/** What the Welcome back sheet makes of the time since the last lift. */
+export function liftReturnFrom(absence: SportAbsence): LiftReturnAssessment {
+  const { daysAway, lastDay, layoff } = absence;
+  if (daysAway === null) {
     return {
       daysAway: null,
       layoff: "none",
@@ -115,18 +115,10 @@ export function assessLiftReturn(
       easeBackShare: EASE_BACK_SHARE,
     };
   }
-
-  const last = parseLocalDate(latest).getTime();
-  const today = parseLocalDate(todayKey).getTime();
-  // A session dated in the future (clock skew, a back-filled entry) is not a
-  // layoff. Clamp at 0 rather than reporting negative days away.
-  const daysAway = Math.max(0, Math.round((today - last) / 86_400_000));
-
-  const layoff = classifyLayoff(daysAway);
   return {
     daysAway,
     layoff,
-    dismissKey: latest,
+    dismissKey: lastDay,
     welcomeBack: daysAway >= WELCOME_BACK_DAYS,
     easeBackFirst: layoff === "detrained",
     easeBackShare:
