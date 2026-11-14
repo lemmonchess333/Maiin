@@ -1,6 +1,10 @@
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { ZONE_NAMES, type HeartRateSummary } from "@/lib/hrZones";
+import {
+  ZONE_COVERAGE_MIN,
+  ZONE_NAMES,
+  type HeartRateSummary,
+} from "@/lib/hrZones";
 
 function savedSummary(value: unknown): HeartRateSummary | null {
   if (!value || typeof value !== "object") return null;
@@ -44,7 +48,7 @@ export default function HeartRateSummaryCard({
   const summary = savedSummary(value);
   if (!summary) return null;
   const coveragePercent = Math.round(summary.coverage * 100);
-  const enoughCoverage = summary.coverage >= 0.5;
+  const enoughCoverage = summary.coverage >= ZONE_COVERAGE_MIN;
   const zonesAvailable = summary.maxHr > 0;
   return (
     <Card className="space-y-3">

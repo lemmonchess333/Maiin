@@ -82,7 +82,10 @@ export type LifecycleEvent =
   | "guide_step_viewed"
   | "guide_finished"
   | "guide_skipped"
-  | "guide_hint_viewed";
+  | "guide_hint_viewed"
+  /** The Watch companion (connected-training proposal, acceptance
+   *  matrix): each wrist command the phone answered, applied or not. */
+  | "watch_command_answered";
 
 export type SignupMethod = "email" | "google" | "apple";
 
@@ -186,6 +189,20 @@ export interface LifecycleEventMetadata {
   stop?: string;
   /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
   hint?: string;
+  /** run_completed: the Watch companion joined the run. Absent otherwise. */
+  watchCompanion?: boolean;
+  /** run_completed, a Watch run: how much of its moving time the heart rate
+   *  covered (`heartRateCoverageBand`). A band, never a reading. */
+  heartRateCoverage?: "none" | "partial" | "full";
+  /** watch_command_answered: what the wrist asked for. */
+  watchAction?: "pause" | "resume" | "end";
+  /** watch_command_answered: whether the phone applied it. */
+  accepted?: boolean;
+  /** watch_command_answered: why not (`WatchRunCommandRejection`). */
+  rejection?: string;
+  /** watch_command_answered: a retransmission, answered with the first
+   *  answer and applied no second time. */
+  repeated?: boolean;
 }
 
 export function track(
