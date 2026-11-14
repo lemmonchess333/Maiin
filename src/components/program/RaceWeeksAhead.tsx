@@ -12,18 +12,15 @@
  */
 import { useMemo, useState } from "react";
 import PurposeDisclosure from "@/components/ui/PurposeDisclosure";
-import InlineNumerals from "@/components/ui/InlineNumerals";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import type { UserProfile } from "@/lib/auth";
-import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { ProgramState } from "@/features/program/programTypes";
 import {
   hasRaceWeeksAhead,
   raceWeeksAhead,
-  type WeekHolds,
 } from "@/features/program/raceWeeksAhead";
+import WeekAheadRows from "./WeekAheadRows";
 
 interface RaceWeeksAheadProps {
   profile: UserProfile;
@@ -35,18 +32,6 @@ interface RaceWeeksAheadProps {
   recentRuns?: readonly DatedRun[] | null;
   /** Local "YYYY-MM-DD". */
   today: string;
-}
-
-/** A week's line: the race, else its long run and quality sessions, else
- *  what kind of running it holds. */
-function weekLine(holds: WeekHolds): string {
-  if (holds.race) return holds.race.name;
-  const named = [holds.long, ...holds.quality].flatMap((run) =>
-    run ? [run.name] : []
-  );
-  if (named.length > 0) return named.join(" · ");
-  if (holds.runWalk) return holds.runWalk.name;
-  return holds.runCount > 0 ? "Easy runs" : "No runs planned";
 }
 
 function WeeksAheadList({
@@ -67,24 +52,7 @@ function WeeksAheadList({
       }),
     [profile, programState, recentLayoff, recentRuns, today]
   );
-  return (
-    <ol aria-label="The weeks ahead" className="mt-2 divide-y divide-border">
-      {weeks.map((week) => (
-        <li key={week.weekKey} className="py-2">
-          <p className="text-xs text-muted-foreground">
-            <InlineNumerals>
-              {`Week of ${formatDayMonth(parseLocalDate(week.weekKey))}${
-                week.lighter ? " · Lighter week" : ""
-              }`}
-            </InlineNumerals>
-          </p>
-          <p className="text-sm text-foreground">
-            <InlineNumerals>{weekLine(week.holds)}</InlineNumerals>
-          </p>
-        </li>
-      ))}
-    </ol>
-  );
+  return <WeekAheadRows weeks={weeks} />;
 }
 
 export default function RaceWeeksAhead(props: RaceWeeksAheadProps) {

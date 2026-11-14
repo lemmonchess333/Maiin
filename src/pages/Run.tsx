@@ -145,6 +145,8 @@ import { computeRouteQuality } from "../lib/routeQuality";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { useBackDismiss } from "../lib/backDismiss";
 import { useProgram } from "../features/program/useProgram";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
 import {
   computePlanMetadata,
@@ -310,7 +312,12 @@ export default function Run() {
   // Nothing here completes a planned day: a saved run completes the day it
   // matches through the claims (useClaimMapForProgram). We only read programState +
   // loading here to drive the prefill memo.
-  const { programState, loading: programLoading } = useProgram();
+  const {
+    programState,
+    loading: programLoading,
+    recentLayoff,
+    recentRuns,
+  } = useProgram();
   // Q85: past a half or full marathon plan's free first week, a planned
   // training run opens as a free run (the race itself still starts).
   const runPlanLocked = useRacePlanLocked(programState?.runPlan);
@@ -925,6 +932,25 @@ export default function Run() {
     const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
     return weekHoldsQuality(programState?.runDays, day?.weekKey);
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Run24 (3): a plan with no race date's weeks, for the pinned run's
+  // reason in the plan's terms.
+  const launchToday = useLocalDateKey();
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: launchToday,
+  });
+  const launchRolling = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return day?.weekKey ? (rollingContexts?.get(day.weekKey) ?? null) : null;
+  }, [
+    planDecision.metadata.scheduledRunId,
+    programState?.runDays,
+    rollingContexts,
+  ]);
   // Whether the pinned run is one of the recovery's, after race day.
   const launchInRecovery = useMemo(() => {
     const id = planDecision.metadata.scheduledRunId;
@@ -2528,6 +2554,7 @@ export default function Run() {
                   weekHasQuality: launchWeekHasQuality,
                   racePace: launchRacePace?.kind,
                   inRecovery: launchInRecovery,
+                  rolling: launchRolling,
                 }).purpose
               }
               prefill={planDecision.prefill}

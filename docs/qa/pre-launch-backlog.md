@@ -5151,3 +5151,12 @@ Apple Health.
       HealthKit in both, and the archive verified with
       `--expected-connected-training YES`, including the Watch app's audio
       background mode and its two Health texts.
+
+## The weeks ahead and "Why this run" for a plan with no race date (Run24 (3), 2026-11-14)
+
+Affects: Train's run tab (`RollingPlanCard`, `RollingWeeksAhead`) and "Why this run" on Home's day peek, Train's day card, the day's sheet and the run's launch card (`rollingSessionContexts`). Unit and component tests drive them against the generator and the rollover; no phone has shown them, and no capture was taken.
+
+- [ ] **The card.** On a Build to 10K plan in its first week, open Train's run tab. Passing: under the day's card, "Plan, no race", "Build to 10K" and its line; "The weeks ahead" opens on twelve weeks, "Lighter week" on the third, seventh and eleventh rows, long runs that climb to "Long 12K", and a last line naming the week the long run holds from. At 320 px and with large text, nothing runs off the card.
+- [ ] **A plan past its climb.** On a plan some months in, open the weeks ahead. Passing: the last line reads "The long run holds at 12 km, with a lighter week every fourth."; on a miles account, in miles.
+- [ ] **Why this run on Home.** Tap a planned long run on Home's week strip, then "Why this run". Passing: "Why it’s in your week" says the long run climbs a step at a time to the plan's longest, or holds there; in a lighter week it says so; a time trial says it finds your paces. The day's sheet, Train's day card and the run's launch card say the same.
+- [ ] **No flash on Home.** Open Home cold on such a plan. Passing: Home draws as before, with nothing on it waiting for the plan's weeks.

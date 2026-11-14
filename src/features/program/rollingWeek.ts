@@ -2,7 +2,7 @@ import type { UserProfile } from "@/lib/auth";
 import { wholeWeeksBetween } from "@/lib/dateHelpers";
 import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget, type ScheduleDay } from "@/lib/scheduleUtils";
 import type { DatedRun, LayoffClass } from "./layoffDetection";
 import { profileNewRunnerUntil } from "./newRunner";
 import type {
@@ -59,6 +59,59 @@ export function rollingRunnerOf(
     runTimeLimits: profile.runTimeLimits ?? null,
     newRunnerUntil: profileNewRunnerUntil(profile),
   };
+}
+
+/** The week a plan's runs are laid on, as the profile has it: its days and
+ *  how many of them run. The rollover (`nextRunWeek`) and the weeks ahead
+ *  (`rollingWeeksFrom`) both read it here, so they build the same weeks. */
+export function rollingLayoutOf(profile: UserProfile): {
+  weekSchedule: ScheduleDay[];
+  weeklyRunDays: number;
+} {
+  return {
+    weekSchedule: profile.weekSchedule ?? [],
+    weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+  };
+}
+
+/**
+ * A plan's coming weeks, as the rollover will build each one when the
+ * calendar reaches it (`nextRunWeek`): one pass of the generator from week
+ * `planWeek`, the week starting `weekStart`, `count` weeks. The generator
+ * builds a plan from its first week every time, so one pass and a week at
+ * a time give the same weeks for weeks after today
+ * (`rollingWeeksAhead.test.ts` holds them to the rollover's). Their runs
+ * are not done yet, so a running starting point climbs them by the
+ * calendar, from the runs read on `recentRunsAsOf`.
+ */
+export function rollingWeeksFrom(input: {
+  profile: UserProfile;
+  goal: RollingGoal;
+  planWeek: number;
+  /** A Monday after `recentRunsAsOf`'s week. */
+  weekStart: string;
+  count: number;
+  recentLayoff: LayoffClass;
+  recentRuns: readonly DatedRun[] | null;
+  recentRunsAsOf: string;
+}): ScheduledRunDay[][] {
+  const runner = rollingRunnerOf(input.profile);
+  return generateRollingPlan({
+    goal: input.goal,
+    ...rollingLayoutOf(input.profile),
+    currentDate: input.weekStart,
+    weekStart: input.weekStart,
+    planWeek: input.planWeek,
+    weeks: input.count,
+    recentLayoff: input.recentLayoff,
+    tuning: runner.tuning,
+    easyPaceSPerKm: runner.easyPaceSPerKm,
+    runningBaseline: runner.runningBaseline,
+    runTimeLimits: runner.runTimeLimits,
+    newRunnerUntil: runner.newRunnerUntil,
+    recentRuns: input.recentRuns,
+    recentRunsAsOf: input.recentRunsAsOf,
+  });
 }
 
 /**

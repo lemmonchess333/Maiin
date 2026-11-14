@@ -2142,6 +2142,20 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
     expect(
       screen.getByRole("tablist", { name: "Run week" })
     ).toBeInTheDocument();
+    // Its card, where a race plan has its own, with the weeks ahead.
+    const card = screen.getByRole("region", { name: "Run plan" });
+    expect(card).toHaveTextContent("Plan, no race");
+    expect(
+      within(card).getByRole("heading", { name: "Keep fit" })
+    ).toBeInTheDocument();
+    expect(within(card).getByText("The weeks ahead")).toBeInTheDocument();
+    // No race plan's card, and the footer's Edit run plan stays the way in.
+    expect(
+      screen.queryByRole("region", { name: "Race plan" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Edit run plan/ })
+    ).toBeInTheDocument();
   });
 
   it("does NOT render for a race_prep user (freeform block hidden)", () => {
