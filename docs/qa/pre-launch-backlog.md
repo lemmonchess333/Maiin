@@ -4915,3 +4915,23 @@ Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picke
 - [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
 - [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
 - [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
+## Coming back after a break is one check for both sports (Q35, 2026-11-13)
+
+Affects: Home's Welcome back for the weights (`LiftReturnSheet`, whose line
+now reads "It’s been about N weeks since your last lift"), Home's run return
+and the race plan's re-entry weeks, all measured by one rule over both
+sports' sessions (`trainingReturn.ts`). A break from a sport is time away
+from that sport; a sport the plan does not hold is never greeted. The easing
+amounts are unchanged. Unit-tested; no phone has shown it.
+
+- [ ] **Stopped lifting, kept running.** On a hybrid plan, run as usual and
+      log no lift for three weeks. Passing: Home offers Welcome back for the
+      weights with Ease back in first, and its line names the last lift; the
+      run plan carries on, with no run greeting.
+- [ ] **Stopped running, kept lifting.** On a race plan, lift as usual and
+      log no run for three weeks. Passing: Home opens the race plan's
+      welcome back, and a rebuild plans the re-entry weeks; no Welcome back
+      for the weights.
+- [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
+      running-only plan. Passing: no Welcome back for the weights.
