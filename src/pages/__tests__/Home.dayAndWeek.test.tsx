@@ -168,6 +168,8 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     currentStreak: h.streak,
     activeDates: new Set<string>(),
     bridgedDates: [],
+    restDates: [],
+    coversRestDays: false,
     newBadge: null,
     dismissNewBadge: vi.fn(),
   }),

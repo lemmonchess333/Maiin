@@ -3480,6 +3480,9 @@ async function maybeSendStreakNudge(uid, now, profile) {
     lastActiveDate: streak.lastActiveDate,
     anchorStreak: streak.anchorStreak,
     anchorDate: streak.anchorDate,
+    // The day the streak is kept through, rest days ahead included (App1
+    // Q32): the app's forecast from the plan, so no plan is read here.
+    keptThrough: streak.keptThrough,
     remindersOptedIn: true,
     timezone,
     activeDateKeys,

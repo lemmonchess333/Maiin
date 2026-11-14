@@ -4808,3 +4808,29 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## The streak keeps the plan's rest days (Q32, 2026-11-13)
+
+Affects: Home's streak chip and the streak sheet (the plan's rest days are
+ringed as covered, with new words under the month), the evening streak
+reminder and its first-week nudge on the phone, the server's 19:00 streak
+push, and the streak other people see on a public profile. A rest day is a
+day the plan holds no session; a missed planned session is still the one
+forgiven day in seven, and a second within the week, or two missed sessions
+with nothing logged between, ends the streak. No plan, no rest days.
+Unit-tested; no phone has shown it.
+
+- [ ] **A rest day on a phone.** With a three-day lifting plan, lift on a
+      Monday and log nothing on Tuesday. Passing: Tuesday's flame shows one
+      more day than Monday's; the sheet rings Tuesday; no evening reminder or
+      streak push arrives on Tuesday.
+- [ ] **The training day after.** Log nothing on Wednesday, a lifting day,
+      until the evening. Passing: the streak still shows in the morning (not
+      0), and the 19:00 push or the local reminder arrives as before.
+- [ ] **Someone else's view.** From a second account, open the first
+      account's profile on its rest days without the first account opening
+      the app. Passing: its streak shows, and reads 0 two days after a
+      missed session.
+- [ ] **No plan.** On an account whose week holds no session, log on
+      alternate days. Passing: the sheet's words say one rest day in seven is
+      covered, and the streak behaves as before.

@@ -19,7 +19,11 @@ import {
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "early" }));
+vi.mock("@/lib/auth", () => ({
+  useUid: () => "early",
+  // No profile: no plan, so no rest days (App1 Q32).
+  useAuth: () => ({ profile: null }),
+}));
 vi.mock("@/hooks/useNutritionBadgeData", () => ({
   useNutritionBadgeData: () => ({
     macroTargetsByDay: new Map(),
@@ -50,8 +54,7 @@ const meal = (date: string, loggedAt: Date) => ({
 const earned = (id: string) =>
   (
     readDoc(STREAKS)?.badges as
-      | { id: string; earnedAt: string | null }[]
-      | undefined
+      { id: string; earnedAt: string | null }[] | undefined
   )?.find((b) => b.id === id)?.earnedAt ?? null;
 
 beforeEach(() => {

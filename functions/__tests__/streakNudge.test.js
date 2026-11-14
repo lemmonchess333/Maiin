@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   savableStreak,
+  keptToday,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,
@@ -151,6 +152,71 @@ describe("the streak a log today keeps", () => {
   });
 });
 
+describe("the plan's rest days keep the streak (App1 Q32)", () => {
+  /* The app saves `keptThrough` with the certificate: the day the streak's
+     span ends, then the plan's rest days straight after it. The server reads
+     no plan; a rest day is a day the stored streak is kept through. NOW is
+     Monday 1 June in London. */
+  it("today is a rest day: kept, and neither nudge asks for a log", () => {
+    // Lifted Saturday 30 May; Sunday and Monday are the plan's rest.
+    const input = base({
+      anchorStreak: 9,
+      anchorDate: "2026-05-30",
+      keptThrough: "2026-06-01",
+    });
+    expect(keptToday(input, NOW)).toBe(true);
+    expect(savableStreak(input, NOW)).toBe(9);
+    expect(shouldSendStreakNudge(input, NOW)).toBe(false);
+    expect(
+      shouldSendFirstWeekNudge(
+        {
+          ...fwBase(),
+          anchorStreak: 1,
+          anchorDate: "2026-05-31",
+          keptThrough: "2026-06-02",
+        },
+        NOW
+      )
+    ).toBe(false);
+  });
+
+  it("the training day after a rest weekend: kept through yesterday, so sent", () => {
+    // Lifted Friday 29 May; Saturday and Sunday rested; Monday lifts.
+    const input = base({
+      anchorStreak: 12,
+      anchorDate: "2026-05-29",
+      keptThrough: "2026-05-31",
+    });
+    expect(keptToday(input, NOW)).toBe(false);
+    expect(savableStreak(input, NOW)).toBe(12);
+    expect(shouldSendStreakNudge(input, NOW)).toBe(true);
+    // Without the rest days the same certificate is three days gone.
+    const { keptThrough: _ignored, ...withoutRest } = input;
+    expect(savableStreak(withoutRest, NOW)).toBe(0);
+  });
+
+  it("a forecast older than the certificate is ignored", () => {
+    // An older app saved a newer certificate and left the forecast behind.
+    const input = base({
+      anchorStreak: 4,
+      anchorDate: "2026-05-31",
+      keptThrough: "2026-05-20",
+    });
+    expect(savableStreak(input, NOW)).toBe(4);
+    expect(keptToday(input, NOW)).toBe(false);
+  });
+
+  it("a malformed forecast is ignored", () => {
+    const input = base({
+      anchorStreak: 4,
+      anchorDate: "2026-05-31",
+      keptThrough: "soon",
+    });
+    expect(keptToday(input, NOW)).toBe(false);
+    expect(shouldSendStreakNudge(input, NOW)).toBe(true);
+  });
+});
+
 describe("the cron hands the certificate to the predicate", () => {
   // No test runs maybeSendStreakNudge; without the two fields the predicate
   // falls back to the shown streak and the morning-after evening is skipped.
@@ -162,6 +228,7 @@ describe("the cron hands the certificate to the predicate", () => {
       "lastActiveDate: streak.lastActiveDate",
       "anchorStreak: streak.anchorStreak",
       "anchorDate: streak.anchorDate",
+      "keptThrough: streak.keptThrough",
     ]) {
       expect(fn).toContain(field);
     }

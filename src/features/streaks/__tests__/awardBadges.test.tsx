@@ -30,7 +30,11 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 const h = vi.hoisted(() => ({ uid: "u1" }));
-vi.mock("@/lib/auth", () => ({ useUid: () => h.uid }));
+vi.mock("@/lib/auth", () => ({
+  useUid: () => h.uid,
+  // No profile: no plan, so no rest days (App1 Q32).
+  useAuth: () => ({ profile: null }),
+}));
 vi.mock("@/hooks/useNutritionBadgeData", () => ({
   useNutritionBadgeData: () => ({
     macroTargetsByDay: new Map(),

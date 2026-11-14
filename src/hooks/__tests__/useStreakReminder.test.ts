@@ -67,6 +67,15 @@ describe("shouldScheduleStreakReminder", () => {
       shouldScheduleStreakReminder({ ...base, hasLoggedToday: true })
     ).toBe(false);
   });
+
+  it("does not schedule on one of the plan's rest days, which keep the streak (App1 Q32)", () => {
+    expect(shouldScheduleStreakReminder({ ...base, restToday: true })).toBe(
+      false
+    );
+    expect(shouldScheduleStreakReminder({ ...base, restToday: false })).toBe(
+      true
+    );
+  });
 });
 
 // First-week (day-2) return nudge — D-1 fix. Day 1: the user just logged
@@ -98,6 +107,15 @@ describe("firstWeekNudgeAction", () => {
   it("only fires in the streak-1 window — at ≥ 2 the daily reminder owns the surface", () => {
     expect(firstWeekNudgeAction({ ...fwBase, currentStreak: 2 })).toBe("none");
     expect(firstWeekNudgeAction({ ...fwBase, currentStreak: 0 })).toBe("none");
+  });
+
+  it("does not arm for a rest day tomorrow: a log would not be what keeps it (App1 Q32)", () => {
+    expect(firstWeekNudgeAction({ ...fwBase, restTomorrow: true })).toBe(
+      "none"
+    );
+    expect(firstWeekNudgeAction({ ...fwBase, restTomorrow: false })).toBe(
+      "schedule"
+    );
   });
 
   it("requires a log today — the nudge anchors to the log day, not app-open", () => {
