@@ -4867,3 +4867,22 @@ picked up the field yet.
       peaks under 21 km (setup says "Your longest run will be 20 km"), every
       long run done, opened in a taper week. Passing: no "Your long runs and
       your race" sheet.
+
+## A race plan's sizes kept on the plan (Run24 (1), (2), (8), 2026-11-14)
+
+Affects: the run plan document (`programState.runPlan.blockInputs`), written
+when a race plan is made and on every rebuild of its week, and read back on
+the next one. Unit tests and the simulator drive the generator and the
+rollover; no phone has written or read the field through Firestore.
+
+- [ ] **Setup writes it.** Set up a half or a marathon at setup with a
+      starting point and no race time. Passing: the Firestore console shows
+      `runPlan.blockInputs` with `runsPaceSPerKm: null`, the starting
+      point's figures and `heldLongKm` at the first week's long run.
+- [ ] **The first rollover keeps a pace.** Save two or three runs, then open
+      the app on the Monday after. Passing: `runsPaceSPerKm` holds the pace
+      of those runs, and opening the app again the next Monday after a
+      faster or slower run leaves it as it was.
+- [ ] **A plan from before.** On an account whose race plan was made before
+      this build, open the app. Passing: the week is the one it would have
+      been; `blockInputs` appears once a rebuild has read saved runs.
