@@ -66,7 +66,11 @@ import {
 } from "./starterPlan";
 import { starterRunPlan, starterWeekFrom } from "./starterWeek";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
-import { regenerateRollingPlan, rollingRunnerOf } from "./rollingWeek";
+import {
+  regenerateRollingPlan,
+  rollingLayoutOf,
+  rollingRunnerOf,
+} from "./rollingWeek";
 
 /**
  * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
@@ -453,8 +457,8 @@ export function nextRunWeek(
       runner: rollingRunnerOf(profile),
       goal: rollingGoal,
       planWeek: (runPlan?.currentWeek ?? 0) + 1,
-      weekSchedule,
-      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+      // As the weeks ahead read it (`rollingWeeksFrom`).
+      ...rollingLayoutOf(profile),
       currentDate: next.date,
       weekStart: next.weekStart,
       recentLayoff,

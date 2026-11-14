@@ -227,6 +227,18 @@ export function runTemplateName(text: string, unit: DistanceUnit): string {
 }
 
 /**
+ * A long run's distance in the reader's unit, as its name gives it: whole
+ * kilometres for a rung ("12 km"), a mile to one place ("7.5 mi"). For
+ * sentences about a plan's long run (Run24 (3)), where "Long 12K" is a
+ * session's name and not a distance.
+ */
+export function longRunDistanceLabel(km: number, unit: DistanceUnit): string {
+  if (unit !== "mi")
+    return `${Number.isInteger(km) ? km : km.toFixed(1)} ${distanceUnitLabel(unit)}`;
+  return `${distanceValue(km * 1000, unit)} ${distanceUnitLabel(unit)}`;
+}
+
+/**
  * A planned run's name (Run21 (2)): the template's, and a run with work at
  * the goal race pace says so. A long run that finishes at it is "Long 18K
  * with race pace", running-evidence Appendix B's "Long run with race pace";

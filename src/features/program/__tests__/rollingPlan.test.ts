@@ -122,8 +122,12 @@ describe("the race block cap (Run24 (3), D9)", () => {
     expect(before).toBe(32);
     const base = plan.weeks.slice(0, before);
     const block = plan.weeks.slice(before);
-    // The base is not easy running only: it rotates a light tempo, short
-    // reps and the time trials.
+    // The base is not easy running only: it rotates a light tempo, a light
+    // session, short reps and the time trials. Run24 (5): from the session
+    // library, a marathon's tempos in turn under the base's 20-minute
+    // ceiling (the 20-minute tempo and a progression run), a fartlek or
+    // short hills where the week held strides alone, and 200s at
+    // repetition pace in place of 8 x 400 m.
     expect(base.filter((week) => hard(week).length > 0).length).toBeGreaterThan(
       before / 2
     );
@@ -133,9 +137,16 @@ describe("the race block cap (Run24 (3), D9)", () => {
         .every(
           (run) =>
             isTrial(run) ||
-            ["tempo_20", "8x400", "4x1k"].includes(run.templateId)
+            [
+              "tempo_20",
+              "progression_40",
+              "8x200",
+              ...BASE_LIGHT_TEMPLATE_IDS,
+            ].includes(run.templateId)
         )
     ).toBe(true);
+    for (const id of ["tempo_20", "progression_40", "8x200", "fartlek_30"])
+      expect(base.flat().map((run) => run.templateId)).toContain(id);
     // Its long run climbs from the block's opening, 14 km, to 18 and
     // holds there, and steps back every fourth week.
     const baseLongs = base.map(longKm);
