@@ -318,6 +318,7 @@ describe("the stored plan", () => {
           currentWeek: week5.runPlan?.currentWeek,
           totalWeeks: week5.runPlan?.totalWeeks,
           leadInWeek: week5.runPlan?.leadInWeek,
+          blockInputs: week5.runPlan?.blockInputs,
           shortBase: week5.runPlan?.shortBase,
         },
       })

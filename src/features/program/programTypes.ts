@@ -620,6 +620,34 @@ export interface ScheduledRunDay {
   clashesWithLift?: boolean;
 }
 
+/**
+ * Run24 (1), (2) and (8): what a race block's sizes are read from, worked
+ * out when the block is made and kept on its plan, so every rebuild of a
+ * week reads the same whichever runs it was given, or none
+ * (`generateRacePlanV2`). Read again from each rollover's runs, a failed
+ * read or a few seconds' drift in the month's pace moved the long run a
+ * rung, and a race in the month lifted a marathon's ceiling until it left
+ * the window. The block's shorter base (`RunPlan.shortBase`) is decided
+ * and kept the same way, beside these, and carried by the same rebuilds.
+ */
+export interface RaceBlockInputs {
+  /** The starting point the pace was read with
+   *  (`raceBlockStartingPoint`), null with none: a new one, the runner
+   *  telling the plan how they run now, reads the pace again. */
+  startingPoint: string | null;
+  /** The pace of the recent runs when they were read, seconds a km: what
+   *  the block's distances are sized at without a confirmed benchmark.
+   *  Null while none has been read: the template minutes size the block,
+   *  and the first rebuild that reads a pace keeps it. */
+  runsPaceSPerKm: number | null;
+  /** The longest long run the block has held so far, km: a marathon's
+   *  ceiling never comes under it. */
+  heldLongKm: number;
+  /** A beginner's block: the first week that may hold quality, a week key,
+   *  once the runs have shown it (`beginnerQualityWeek`). */
+  qualityFrom?: string;
+}
+
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
    *  at each stage (`starterPlan.ts`). */
@@ -687,6 +715,11 @@ export interface RunPlan {
    *  rollover into the plan's first week drops it, and that week is
    *  `currentWeek` 0. */
   leadInWeek?: string;
+  /** A race plan's block inputs (`RaceBlockInputs`), carried with
+   *  `totalWeeks` into every rebuild of its weeks. Absent on a plan made
+   *  before they were kept: it reads them from the runs it is given, and
+   *  keeps them from the first rebuild that reads runs. */
+  blockInputs?: RaceBlockInputs;
   /** Run24 (2), deep dive D3: the plan was made for a regular runner whose
    *  own week was above the plan's base, so its base is a shorter share of
    *  the weeks before the taper (`SHORT_BASE_SHARE`). Decided when the block
