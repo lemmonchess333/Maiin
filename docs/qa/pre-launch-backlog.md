@@ -5622,3 +5622,52 @@ Affects: the link at the end of a shared card's words (`publicPostUrl`, `ShareCa
 - [ ] **No map when too little is left.** Share publicly a run under 2 km from home, a treadmill run and a workout. Passing: each page shows the card with no map and no gap where one would be; the short run's page has no `route` in View Source.
 - [ ] **Map and first paint.** On a phone over mobile data, open a public run's address. Passing: the card and Get Tropos show first and the map fills in under them; in both themes the map's colours match the page (dark signed out); at 320 px and at the largest text size the map keeps its shape and nothing runs off the screen.
 - [ ] **A post page right after a web deploy.** Within a minute of Deploy production finishing, open a public post's address. Passing: the page draws (the function keeps its copy of the app's page for 5 seconds, so a copy naming the old build's files is gone by the next visit).
+
+## The five launch numbers (App1 Q17, 2026-11-14)
+
+Affects: what reaches Firebase Analytics, and two server writes. Setup
+sends `onboarding_completed` as before. The session triggers now keep
+`users/{uid}.launchMilestones` (stamped empty by `completeOnboarding` on a
+first setup), the RevenueCat sync now keeps a web trial or payment
+(`rc_billing`, `paddle`) in `activationBillingFirsts` as it did the App
+Store's, and `src/lib/launchEvents.ts` sends `first_session_saved`,
+`week_4_returned`, `trial_started` and `subscription_started` once per
+account, claimed in `users/{uid}/settings/launchEvents`. Unit-tested; no
+console or purchase has shown any of it. A sandbox purchase is never kept
+(`activationBilling.revenueCatObservation`), so the money pair needs a real
+purchase.
+
+- [ ] **The four new events are in the console.** On a new account set up
+      after the release, save a lift. Passing: Firebase Console → Analytics
+      → DebugView (or Events after a day) shows `first_session_saved` with
+      `kind` and `daysSinceSetup` 0, the account's
+      `settings/launchEvents` document reads `first_session_saved: true`,
+      and a second saved session sends nothing.
+- [ ] **Register the parameters.** In Analytics → Custom definitions, add
+      event-scoped dimensions `kind` and `purchasePlatform` and the metric
+      `daysSinceSetup`, or the funnel cannot be cut at 7 days. Passing: the
+      three appear in an Exploration.
+- [ ] **One account, two devices, one event.** With the same account open
+      on the iPhone and in a browser, save its first session. Passing:
+      `first_session_saved` arrives once in total, from one of the two.
+- [ ] **A real App Store trial.** On a production build, start the 7-day
+      trial with a real Apple ID and cancel it at once. Passing:
+      `activationBillingFirsts.trial` is written with `ios_iap`, and
+      `trial_started` with `purchasePlatform` `ios` arrives once.
+- [ ] **The app closed after Apple's sheet.** Buy, then swipe the app away
+      as the sheet closes, and open it a minute later. Passing:
+      `trial_started` still arrives, once.
+- [ ] **A real website trial.** Start Pro on troposfit.com through the
+      Purchase Link with a real card (production token), then cancel in
+      the customer portal. Passing: `activationBillingFirsts.trial` reads
+      `stripe`, `trial_started` arrives once with `purchasePlatform` `web`,
+      and opening the iPhone app afterwards sends nothing more. If RevenueCat
+      reports a web trial with a `period_type` other than `trial`, it is
+      kept as paid instead: note it here.
+- [ ] **A trial that turns paid.** Let one real trial convert. Passing:
+      `subscription_started` arrives once, from the next device opened,
+      with the conversion day's `daysSinceSetup`.
+- [ ] **Week 4.** Hard to stage: a test account whose
+      `onboardingCompletedAt` is set back 22 days in the console, then a
+      saved session. Passing: `launchMilestones.week4Return` is written and
+      `week_4_returned` arrives once.

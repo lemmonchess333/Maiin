@@ -184,11 +184,29 @@ export interface UserProfileCore {
   onboardingPlatform?: "ios" | "web" | "android";
   /** Training type at the first completed setup, before later plan edits. */
   onboardingSport?: "runner" | "lifter" | "hybrid" | "other";
-  /** First provider-verified trial and payment times. Server-owned. */
+  /** First provider-verified trial and payment times. Server-owned.
+   *  `stripe` is the website's checkout, whatever takes the payment. */
   activationBillingFirsts?: {
     trial?: { atMs: number; source: "ios_iap" | "stripe" };
     paid?: { atMs: number; source: "ios_iap" | "stripe" };
   };
+  /** App1 Q17: the first counted session and the first in the account's
+   *  fourth week, by the session's create time. Server-owned
+   *  (functions/lib/launchMilestones.js), stamped empty at the first setup
+   *  and absent on an account set up before it; `launchEvents.ts` sends
+   *  each to analytics once. */
+  launchMilestones?: {
+    firstSession?: LaunchMilestone;
+    week4Return?: LaunchMilestone;
+  };
+}
+
+/** One launch milestone: when, which sport, and how many whole days after
+ *  setup (setup's day is day 0). */
+export interface LaunchMilestone {
+  atMs: number;
+  kind: "lift" | "run";
+  daysSinceSetup: number;
 }
 
 /** Physical attributes and fitness metrics */

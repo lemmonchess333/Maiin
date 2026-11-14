@@ -37,6 +37,8 @@ const weeklyRecap = require("./lib/weeklyRecap");
 const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
+// App1 Q17: the first session and week-4 return, kept once per account.
+const launchMilestones = require("./lib/launchMilestones");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
@@ -1009,6 +1011,11 @@ exports.completeOnboarding = functions
           nextProfileData.onboardingSport = activationSport(
             nextProfileData.athleteType
           );
+          // App1 Q17: an account set up from here on has its launch
+          // numbers kept (lib/launchMilestones). Empty until its first
+          // counted session; an older account never gets one, so its next
+          // session is not taken for its first.
+          nextProfileData.launchMilestones = {};
           if (journey !== null) {
             nextProfileData.activationJourneyVersion = journey;
             if (onboardingPlatform) {
@@ -5828,6 +5835,18 @@ exports.onWorkoutCreated = functions
       })
     );
 
+    // App1 Q17: the account's first session and its week-4 return, by the
+    // workout's create time (lib/launchMilestones; once each, so a retry
+    // writes nothing).
+    await steps.run("launch milestones", () =>
+      launchMilestones.recordSessionMilestones(db, {
+        uid,
+        kind: "lift",
+        data,
+        atMs: snap.createTime?.toMillis?.() ?? eventTimeMs(context),
+      })
+    );
+
     steps.settle();
 
     // PI1a: skip recompute when the workout falls outside the rolling
@@ -6029,6 +6048,16 @@ exports.onRunCreated = functions
           sourceRef: snap.ref,
           fieldValue: admin.firestore.FieldValue,
           nowMs: eventTimeMs(context),
+        })
+      );
+      // App1 Q17: the account's first session and its week-4 return, by
+      // the run's create time (lib/launchMilestones; once each).
+      await steps.run("launch milestones", () =>
+        launchMilestones.recordSessionMilestones(db, {
+          uid,
+          kind: "run",
+          data,
+          atMs: snap.createTime?.toMillis?.() ?? eventTimeMs(context),
         })
       );
     } else {
