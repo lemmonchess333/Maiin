@@ -81,6 +81,10 @@ function run(
     place?: string;
     nextDay?: boolean;
     savedAnyway?: boolean;
+    /** Its saved best efforts, metres and seconds. */
+    bestEfforts?: { distance: number; time: number }[];
+    /** Each whole kilometre's seconds. */
+    kmSplitSeconds?: number[];
   }
 ) {
   const day = addLocalDays(NOW, -daysAgo);
@@ -101,6 +105,8 @@ function run(
     activityType: type,
     ...(extra.place ? { place: extra.place } : {}),
     ...(extra.savedAnyway ? { savedAnyway: true } : {}),
+    ...(extra.bestEfforts ? { bestEfforts: extra.bestEfforts } : {}),
+    ...(extra.kmSplitSeconds ? { kmSplitSeconds: extra.kmSplitSeconds } : {}),
   };
 }
 
@@ -482,12 +488,130 @@ describe("runRecordRows", () => {
     expect(row(records.indoor, "Best pace")?.runId).toBe("belt");
   });
 
-  it("has no indoor card for indoor runs that hold no record", () => {
-    // Under a kilometre, a whole-run pace is not a record.
+  it("holds an indoor run under a kilometre as the longest, not a pace", () => {
+    // Under a kilometre, a whole-run pace is not a record; the longest
+    // indoor run is one, since its finish screen can call it the longest
+    // run yet (App1 Q15).
     const records = rows([
       run("warm-up", { daysAgo: 3, km: 0.8, pace: 330, type: "treadmill" }),
     ]);
+    expect(records.hasAnyIndoor).toBe(true);
+    expect(row(records.indoor, "Best pace")?.value).toBe("--");
+    expect(row(records.indoor, "Longest run")?.runId).toBe("warm-up");
+  });
+
+  it("has no indoor card without an indoor run that counts", () => {
+    const records = rows([
+      run("road", { daysAgo: 3, km: 5, pace: 320 }),
+      run("flagged", {
+        daysAgo: 4,
+        km: 8,
+        pace: 300,
+        type: "treadmill",
+        savedAnyway: true,
+      }),
+    ]);
     expect(records.hasAnyIndoor).toBe(false);
+  });
+
+  it("keeps the longest treadmill run on the indoor card (App1 Q15)", () => {
+    // A treadmill half is the longest run yet on its finish screen, which
+    // compares it with every run; the outdoor card keeps its own.
+    const records = rows([
+      run("road", { daysAgo: 9, km: 12, pace: 320 }),
+      run("belt", { daysAgo: 2, km: 21.1, pace: 330, type: "treadmill" }),
+    ]);
+    expect(row(records.lifetime, "Longest run")?.runId).toBe("road");
+    expect(row(records.indoor, "Longest run")).toMatchObject({
+      runId: "belt",
+      value: "21.1 km",
+      isNew: true,
+    });
+  });
+
+  it("lists the fastest 1K, 5K and 10K, from saved efforts or splits (App1 Q15)", () => {
+    const records = rows([
+      // Saved before best efforts were kept: its splits stand in.
+      run("old", {
+        daysAgo: 40,
+        km: 10,
+        pace: 300,
+        kmSplitSeconds: Array.from({ length: 10 }, () => 300),
+      }),
+      run("recent", {
+        daysAgo: 3,
+        km: 6,
+        pace: 290,
+        bestEfforts: [
+          { distance: 1000, time: 270 },
+          { distance: 5000, time: 1450 },
+        ],
+        kmSplitSeconds: [290, 290, 290, 290, 290, 290],
+      }),
+    ]);
+    expect(
+      records.lifetime.filter((r) => r.label.startsWith("Fastest"))
+    ).toEqual([
+      {
+        label: "Fastest 1K",
+        value: "4:30",
+        date: formatDayMonth(parseLocalDate(key(3))),
+        isNew: true,
+        runId: "recent",
+      },
+      {
+        label: "Fastest 5K",
+        value: "24:10",
+        date: formatDayMonth(parseLocalDate(key(3))),
+        isNew: true,
+        runId: "recent",
+      },
+      {
+        label: "Fastest 10K",
+        value: "50:00",
+        date: formatDayMonth(parseLocalDate(key(40))),
+        isNew: false,
+        runId: "old",
+      },
+    ]);
+    // The last 30 days hold no 10K, so no row for one.
+    expect(
+      records.recent30d
+        .filter((r) => r.label.startsWith("Fastest"))
+        .map((r) => [r.label, r.runId])
+    ).toEqual([
+      ["Fastest 1K", "recent"],
+      ["Fastest 5K", "recent"],
+    ]);
+    // Treadmill runs time nothing.
+    expect(records.indoor.some((r) => r.label.startsWith("Fastest"))).toBe(
+      false
+    );
+  });
+
+  it("says New on a recent fastest time only when it is the fastest ever", () => {
+    const records = rows([
+      run("fast", {
+        daysAgo: 40,
+        km: 5,
+        pace: 290,
+        bestEfforts: [{ distance: 5000, time: 1400 }],
+      }),
+      run("recent", {
+        daysAgo: 2,
+        km: 5,
+        pace: 300,
+        bestEfforts: [{ distance: 5000, time: 1480 }],
+      }),
+    ]);
+    expect(row(records.recent30d, "Fastest 5K")).toMatchObject({
+      runId: "recent",
+      isNew: false,
+    });
+    expect(row(records.lifetime, "Fastest 5K")).toMatchObject({
+      runId: "fast",
+      value: "23:20",
+    });
   });
 
   it("knows when no outdoor run falls in the last 30 days", () => {

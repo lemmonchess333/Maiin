@@ -1345,8 +1345,10 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
   });
 
   it("gives a typed pace no trend against outdoor runs", async () => {
-    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is a PR outdoors,
-    // and nothing on the treadmill, whatever the run's type.
+    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is faster than
+    // all of them outdoors, and nothing on the treadmill, whatever the
+    // run's type. Offline, as this block is, the whole history is not
+    // known, so the chip claims no New best (App1 Q15) and says Faster.
     seedFirestore(
       Object.fromEntries(
         Array.from({ length: 8 }, (_, i) => [
@@ -1364,7 +1366,8 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       )
     );
     const outdoors = renderTreadmillRun(true);
-    expect(await screen.findByText("New best")).toBeInTheDocument();
+    expect(await screen.findByText("Faster")).toBeInTheDocument();
+    expect(screen.queryByText("New best")).toBeNull();
     outdoors.unmount();
 
     renderTreadmillRun();
@@ -1376,6 +1379,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("Faster")).toBeNull();
     expect(screen.queryByText("New best")).toBeNull();
   });
 

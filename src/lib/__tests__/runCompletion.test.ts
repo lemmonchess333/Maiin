@@ -451,6 +451,8 @@ describe("moments on a run's post (Soc15)", () => {
       distance,
       duration: 1800,
       avgPace: 300,
+      // Every saved run is read with a type (`parseSavedRun`'s default).
+      activityType: "freerun",
       isInvalid: false,
       savedAnyway: false,
       ...extra,

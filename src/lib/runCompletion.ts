@@ -30,7 +30,7 @@ import {
   type RunHistory,
   type RunMomentContext,
 } from "@/lib/postMoments";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { SavedRun } from "@/lib/savedRuns";
 import type { GPSPoint, Split } from "@/lib/gps";
 import type { RouteQuality } from "@/lib/routeQuality";
@@ -125,15 +125,18 @@ export function runDay(run: FinishedRun, now: Date = new Date()): string {
  * The earlier runs a run's moments compare it with: every saved run that
  * counts (`isVolumeEligible`: not invalid, not saved anyway), less the run
  * itself, once saved. Read from the history the finish screen already
- * holds.
+ * holds. The fastest times are compared across the outdoor runs Bests
+ * takes its fastest 1K, 5K and 10K from (`isPaceEligible`), so a run
+ * called the fastest yet holds that row on Bests (App1 Q15).
  */
 export function earlierRunHistory(
   runs: readonly SavedRun[],
   runId: string | null | undefined
 ): RunHistory {
-  return runHistoryOf(
-    runs.filter((run) => run.id !== runId && isVolumeEligible(run))
+  const counted = runs.filter(
+    (run) => run.id !== runId && isVolumeEligible(run)
   );
+  return runHistoryOf(counted, counted.filter(isPaceEligible));
 }
 
 /** The saved run, as `users/{uid}/runs/{id}` holds it. */
