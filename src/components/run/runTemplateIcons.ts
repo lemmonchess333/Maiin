@@ -1,10 +1,13 @@
 import {
   Flag,
   Footprints,
+  Gauge,
+  Mountain,
   PersonStanding,
   RefreshCw,
   Route,
   Timer,
+  TrendingUp,
   Wind,
   Zap,
   type LucideIcon,
@@ -27,6 +30,10 @@ export const RUN_TEMPLATE_ICONS: Readonly<Record<string, LucideIcon>> = {
   flag: Flag,
   // Run24 (4): the time trial, the plan's benchmark session.
   timer: Timer,
+  // Run24 (5): hill repeats, a progression run, repeats at a race's pace.
+  mountain: Mountain,
+  "trending-up": TrendingUp,
+  gauge: Gauge,
 };
 
 /** The glyph for a run template's icon key; a plain run's footprints when

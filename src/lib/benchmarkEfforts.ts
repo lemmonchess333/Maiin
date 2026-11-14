@@ -24,6 +24,9 @@
  *   tempo, so it sets nothing. Nor does a goal-pace tempo: its blocks were
  *   run at the race goal the plan pinned (A2), not at the runner's threshold.
  *   `vdotFromTempoPace` reads the work as threshold pace.
+ * - Repeats are read only at the interval band (Run24 (5)): a session's
+ *   short reps at repetition pace, repeats at a race's pace, hill repeats
+ *   and a fartlek's pick-ups are not.
  * - Every effort is first an outdoor GPS run with valid figures
  *   (`isPaceEligible`): a typed treadmill distance never sets a benchmark.
  *
@@ -33,7 +36,7 @@
  */
 import type { BenchmarkEffort } from "./runPaces";
 import { isPaceEligible } from "./runStatsEligibility";
-import { isTimeTrialTemplateId } from "./workoutTemplates";
+import { isTimeTrialTemplateId, RUN_TEMPLATES } from "./workoutTemplates";
 
 /** The shortest race read as a benchmark, metres: the 2 km floor the derive
  *  has always had. Under it, a race-equivalent VDOT means little. */
@@ -120,8 +123,14 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     };
   }
   // Run24 (4), deep dive D4: an interval session by its repeats, read as
-  // repeats at interval pace (`vdotFromIntervalPace`).
-  if (run.activityType === "intervals" && !run.workPacePinned) {
+  // repeats at interval pace (`vdotFromIntervalPace`). Run24 (5): not
+  // repeats run at anything else, repetition pace, a race's or by feel up a
+  // hill or in a fartlek, which say nothing about the interval band.
+  if (
+    run.activityType === "intervals" &&
+    !run.workPacePinned &&
+    !RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config.repeatsAt
+  ) {
     const work = run.workPortion;
     if (
       !work ||
