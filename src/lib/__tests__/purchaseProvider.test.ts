@@ -118,7 +118,7 @@ describe("canSellInThisBuild — whether a paywall may show a price", () => {
     expect(canSellInThisBuild()).toBe(false);
     // The pair this guards: what the paywall would have offered.
     expect(await purchase("yearly", "u1", "a@b.c")).toMatchObject({
-      success: false,
+      kind: "failed",
     });
   });
 
@@ -141,21 +141,21 @@ describe("on an iPad in the iOS app", () => {
   beforeEach(() => onDevice("ios", IPAD_UA));
 
   it("a purchase goes to the App Store, not Stripe", async () => {
-    rcPurchase.mockResolvedValue({ success: true, isProActive: true });
+    rcPurchase.mockResolvedValue({ kind: "bought" });
 
     const result = await purchase("yearly", "uid-1", "a@example.com", {
       withTrial: true,
     });
 
-    expect(result).toEqual({ success: true });
-    expect(rcPurchase).toHaveBeenCalledWith(APPLE_PRODUCT_IDS.yearly);
+    expect(result).toEqual({ kind: "bought" });
+    // As this account: RevenueCat is bound to it before the sheet opens.
+    expect(rcPurchase).toHaveBeenCalledWith(APPLE_PRODUCT_IDS.yearly, "uid-1");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("sends the price Apple showed to the sync, for the trial reminder's email", async () => {
     rcPurchase.mockResolvedValue({
-      success: true,
-      isProActive: true,
+      kind: "bought",
       price: { priceString: "£34.99", price: 34.99, currencyCode: "GBP" },
     });
     await purchase("yearly", "uid-1", "a@example.com");
@@ -169,15 +169,14 @@ describe("on an iPad in the iOS app", () => {
     });
 
     syncEntitlement.mockClear();
-    rcPurchase.mockResolvedValue({ success: true, isProActive: true });
+    rcPurchase.mockResolvedValue({ kind: "bought" });
     await purchase("yearly", "uid-1", "a@example.com");
     expect(syncEntitlement).toHaveBeenCalledWith({});
   });
 
   it("a purchase the store took without Pro yet is pending, and the server is asked", async () => {
     rcPurchase.mockResolvedValue({
-      success: false,
-      isProActive: false,
+      kind: "pending",
       pending: "entitlement",
       price: { priceString: "£34.99", price: 34.99, currencyCode: "GBP" },
     });
@@ -185,7 +184,7 @@ describe("on an iPad in the iOS app", () => {
     const result = await purchase("yearly", "uid-1", "a@example.com");
 
     // Not an error and not a cancel: the paywall says what is awaited.
-    expect(result).toEqual({ success: false, pending: "entitlement" });
+    expect(result).toEqual({ kind: "pending", pending: "entitlement" });
     expect(syncEntitlement).toHaveBeenCalledWith({
       price: {
         productId: APPLE_PRODUCT_IDS.yearly,
@@ -197,15 +196,26 @@ describe("on an iPad in the iOS app", () => {
   });
 
   it("a payment held for approval is pending, with nothing to ask the server yet", async () => {
-    rcPurchase.mockResolvedValue({
-      success: false,
-      isProActive: false,
-      pending: "approval",
-    });
+    rcPurchase.mockResolvedValue({ kind: "pending", pending: "approval" });
 
     const result = await purchase("yearly", "uid-1", "a@example.com");
 
-    expect(result).toEqual({ success: false, pending: "approval" });
+    expect(result).toEqual({ kind: "pending", pending: "approval" });
+    expect(syncEntitlement).not.toHaveBeenCalled();
+  });
+
+  it("a cancel and a failure pass through as they came, with nothing synced", async () => {
+    rcPurchase.mockResolvedValueOnce({ kind: "cancelled" });
+    expect(await purchase("yearly", "uid-1", "a@example.com")).toEqual({
+      kind: "cancelled",
+    });
+    const failed = {
+      kind: "failed",
+      message: "Couldn’t start checkout. Try again.",
+      detail: "RevenueCat is not signed in as this account",
+    };
+    rcPurchase.mockResolvedValueOnce(failed);
+    expect(await purchase("yearly", "uid-1", "a@example.com")).toEqual(failed);
     expect(syncEntitlement).not.toHaveBeenCalled();
   });
 
@@ -262,7 +272,7 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     const expected =
       "https://pay.rev.cat/tok_prod/uid%2F1?package_id=%24rc_annual&email=a%40example.com";
-    expect(result).toEqual({ success: true, redirectUrl: expected });
+    expect(result).toEqual({ kind: "redirected", url: expected });
     expect(window.location.href).toBe(expected);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(rcPurchase).not.toHaveBeenCalled();
@@ -273,8 +283,8 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
 
     expect(canSellInThisBuild()).toBe(false);
     expect(await purchase("monthly", "uid-1", "a@example.com")).toEqual({
-      success: false,
-      error: "Purchases aren’t available in this build.",
+      kind: "failed",
+      message: "Purchases aren’t available in this build.",
     });
   });
 

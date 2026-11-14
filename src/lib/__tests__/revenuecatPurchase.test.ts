@@ -12,6 +12,7 @@ import { capacitorPlugin } from "@/test/capacitorPlugin";
  */
 const mockPurchases = {
   configure: vi.fn(),
+  getAppUserID: vi.fn(),
   logIn: vi.fn(),
   logOut: vi.fn(),
   getOfferings: vi.fn(),
@@ -28,6 +29,8 @@ vi.mock("@capacitor/core", () => ({
 }));
 
 const PID = "com.tropos.app.pro.monthly";
+/** The signed-in account, as RevenueCat's App User ID (ADR-0006). */
+const UID = "u1";
 
 function offeringsWith(packages: unknown[]) {
   return { current: { availablePackages: packages } };
@@ -44,6 +47,8 @@ async function loadModule() {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("VITE_REVENUECAT_IOS_KEY", "appl_test_key");
+  // RevenueCat is this account unless a test says otherwise.
+  mockPurchases.getAppUserID.mockResolvedValue({ appUserID: UID });
 });
 
 describe("rcPurchase", () => {
@@ -65,11 +70,10 @@ describe("rcPurchase", () => {
     });
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
+    const outcome = await rcPurchase(PID, UID);
     // The price goes to the server for the trial reminder's email.
     expect(outcome).toEqual({
-      success: true,
-      isProActive: true,
+      kind: "bought",
       price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
     });
     expect(mockPurchases.purchasePackage).toHaveBeenCalledWith({
@@ -86,9 +90,7 @@ describe("rcPurchase", () => {
     mockPurchases.purchasePackage.mockRejectedValue({ userCancelled: true });
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.userCancelled).toBe(true);
-    expect(outcome.success).toBe(false);
+    expect(await rcPurchase(PID, UID)).toEqual({ kind: "cancelled" });
   });
 
   it("a failed purchase says so in the app's words, and keeps the SDK's for the log", async () => {
@@ -100,18 +102,22 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
-    expect(outcome.detail).toBe("There was a problem with the App Store.");
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "failed",
+      message: "Couldn’t complete the purchase. Try again.",
+      detail: "There was a problem with the App Store.",
+    });
   });
 
   it("fails plainly when the product is missing from the current offering", async () => {
     mockPurchases.getOfferings.mockResolvedValue(offeringsWith([]));
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.success).toBe(false);
-    expect(outcome.error).toBeTruthy();
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome).toEqual({
+      kind: "failed",
+      message: "This plan isn’t available right now. Try again later.",
+    });
     expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
   });
 
@@ -136,10 +142,9 @@ describe("rcPurchase", () => {
     // No `error`: "Couldn't complete the purchase. Try again." would ask the person to
     // pay for something the store already has. The price still goes out,
     // for the sync that asks RevenueCat again.
-    const outcome = await rcPurchase(PID);
+    const outcome = await rcPurchase(PID, UID);
     expect(outcome).toEqual({
-      success: false,
-      isProActive: false,
+      kind: "pending",
       pending: "entitlement",
       price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
     });
@@ -155,12 +160,8 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome).toEqual({
-      success: false,
-      isProActive: false,
-      pending: "approval",
-    });
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome).toEqual({ kind: "pending", pending: "approval" });
   });
 
   it("reads the pending code the SDK really uses", async () => {
@@ -179,7 +180,10 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    expect((await rcPurchase(PID)).pending).toBe("approval");
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "pending",
+      pending: "approval",
+    });
   });
 
   it("any other store error is still a failure", async () => {
@@ -193,9 +197,10 @@ describe("rcPurchase", () => {
     );
     const { rcPurchase } = await loadModule();
 
-    const outcome = await rcPurchase(PID);
-    expect(outcome.pending).toBeUndefined();
-    expect(outcome.error).toBe("Couldn’t complete the purchase. Try again.");
+    expect(await rcPurchase(PID, UID)).toMatchObject({
+      kind: "failed",
+      message: "Couldn’t complete the purchase. Try again.",
+    });
   });
 
   it("is a guarded no-op without the public key", async () => {
@@ -203,9 +208,87 @@ describe("rcPurchase", () => {
     const { rcPurchase, isRevenueCatEnabled } = await loadModule();
 
     expect(isRevenueCatEnabled()).toBe(false);
-    const outcome = await rcPurchase(PID);
-    expect(outcome.success).toBe(false);
+    const outcome = await rcPurchase(PID, UID);
+    expect(outcome.kind).toBe("failed");
     expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * App1 Q20: the sheet opens only once RevenueCat is the account buying.
+ * A failed log-in at sign-in left it on an anonymous id, and a purchase
+ * made then did not reach the account (`docs/state-machines.md`).
+ */
+describe("rcPurchase — the account before the sheet", () => {
+  const ANONYMOUS = "$RCAnonymousID:1234";
+
+  beforeEach(() => {
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+    );
+    mockPurchases.purchasePackage.mockResolvedValue({
+      customerInfo: proActiveInfo,
+    });
+  });
+
+  it("buys at once when RevenueCat is already this account", async () => {
+    const { rcPurchase } = await loadModule();
+    expect((await rcPurchase(PID, UID)).kind).toBe("bought");
+    expect(mockPurchases.logIn).not.toHaveBeenCalled();
+  });
+
+  it("sets RevenueCat up as this account when it never was", async () => {
+    const { rcPurchase } = await loadModule();
+    await rcPurchase(PID, UID);
+    expect(mockPurchases.configure).toHaveBeenCalledExactlyOnceWith({
+      apiKey: "appl_test_key",
+      appUserID: UID,
+    });
+  });
+
+  it("logs an anonymous RevenueCat in as this account first, then buys", async () => {
+    mockPurchases.getAppUserID
+      .mockResolvedValueOnce({ appUserID: ANONYMOUS })
+      .mockResolvedValueOnce({ appUserID: UID });
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("bought");
+    expect(mockPurchases.logIn).toHaveBeenCalledExactlyOnceWith({
+      appUserID: UID,
+    });
+    expect(mockPurchases.logIn.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPurchases.purchasePackage.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("never opens the sheet while RevenueCat stays anonymous", async () => {
+    mockPurchases.getAppUserID.mockResolvedValue({ appUserID: ANONYMOUS });
+    const { rcPurchase } = await loadModule();
+
+    expect(await rcPurchase(PID, UID)).toEqual({
+      kind: "failed",
+      message: "Couldn’t start checkout. Try again.",
+      detail: "RevenueCat is not signed in as this account",
+    });
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
+  });
+
+  it("never opens the sheet when the log-in fails", async () => {
+    mockPurchases.getAppUserID.mockResolvedValue({ appUserID: "someone-else" });
+    mockPurchases.logIn.mockRejectedValueOnce(new Error("offline"));
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("failed");
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
+  });
+
+  it("never opens the sheet when RevenueCat could not be set up", async () => {
+    mockPurchases.configure.mockRejectedValueOnce(new Error("SDK unavailable"));
+    const { rcPurchase } = await loadModule();
+
+    expect((await rcPurchase(PID, UID)).kind).toBe("failed");
+    expect(mockPurchases.purchasePackage).not.toHaveBeenCalled();
   });
 });
 
