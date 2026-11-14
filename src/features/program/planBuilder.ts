@@ -902,6 +902,7 @@ function buildRunPlan(
           newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
           leadInWeek: continued?.leadInWeek,
+          shortBase: continued?.shortBase,
           recentRuns: input.recentRuns,
         }),
       { currentDate: input.currentDate, weekStart },
@@ -914,7 +915,11 @@ function buildRunPlan(
         : undefined
     );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
-    const { leadInWeek: _keptLeadIn, ...kept } = continued ?? {};
+    const {
+      leadInWeek: _keptLeadIn,
+      shortBase: _keptShortBase,
+      ...kept
+    } = continued ?? {};
     return {
       runDays,
       runPlan: {
@@ -934,6 +939,9 @@ function buildRunPlan(
         belowFloor: racePlan.belowFloor,
         // Run24 (11): what the plan builds to, for the weekly race check.
         peakLongRunKm: peakPlannedLongRunKm(racePlan.weeks),
+        // Run24 (2): the block's shorter base, as the generator kept or
+        // decided it.
+        ...(racePlan.shortBase ? { shortBase: true } : {}),
       },
     };
   }

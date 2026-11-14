@@ -1419,7 +1419,8 @@ export function simulateLiftSeason(
               ? getPhaseForWeek(
                   plan.currentWeek,
                   plan.totalWeeks,
-                  distance as "5k" | "10k" | "half" | "marathon"
+                  distance as "5k" | "10k" | "half" | "marathon",
+                  plan.shortBase
                 )
               : null,
         offered: runsOffered,
