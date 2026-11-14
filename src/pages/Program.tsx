@@ -156,6 +156,7 @@ import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import { useRunFitnessAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
+import { useRacePredictionCapture } from "@/hooks/useRacePredictionLog";
 
 import {
   DndContext,
@@ -268,6 +269,9 @@ function ProgramInner() {
   // time trial or tempo when the user hasn't set one (the "derive" half of
   // the capture decision, narrowed to efforts by Pgm8 R1).
   useRunFitnessAutoDerive();
+  // The goal race's prediction, recorded as the plan runs so the race can
+  // be judged against it (`racePrediction.ts`).
+  useRacePredictionCapture(programState);
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
   // server-side performance rollup; the `deloadRecommended` flag on
   // the current week is the spec's banner trigger. Lazy — at most 2

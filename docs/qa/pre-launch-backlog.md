@@ -4999,3 +4999,14 @@ Unit and page tests drive it; no phone has shown it.
       every 90 seconds, and with the strap off the eased paces apply.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
+
+## A goal race against what Tropos predicted (real outcomes, 2026-11-14)
+
+Affects: the goal race's prediction log (`users/{uid}/programState/racePrediction`, written from Home and Train by `useRacePredictionCapture`), the run summary and the saved run's page (`RacePredictionResult`), the race run's `racePrediction` record, and the operator report. Unit, hook, page and cross tests drive it; no phone has shown it, and the report has run only on fixtures.
+
+- [ ] **Plan made.** Set up a 10K race plan with a recent 5K time. Open Home. Passing: in the Firebase console, `users/{uid}/programState/racePrediction` holds one snapshot, reason `first`, `weeksDone` 0, its `predictedS` the 10K time Analytics shows for that benchmark.
+- [ ] **A pace update.** Accept faster paces after a time trial or a tempo, then open Train. Passing: the log has a second snapshot, reason `changed`, with the new time.
+- [ ] **Race week.** Move the device date into the six days before the race and open Home. Passing: the log has a `race-week` snapshot; opening Home again that day adds nothing.
+- [ ] **The race.** On race day, run the race (or start a plain run on the start line) over at least 95% of the distance, and open the summary. Passing: under the race's time, "Tropos predicted … You ran …, … faster" (or slower), and "First predicted … in week 1 of N." when the prediction moved; after Save, the run document carries `racePrediction` with the snapshots; the saved run's page shows the same line. A warm-up jog that morning shows nothing.
+- [ ] **Offline at the finish.** Finish the race with the phone offline, having opened the app earlier that week. Passing: the line still shows (the log is read from the device's copy), and the run saves with it.
+- [ ] **The report.** With application-default credentials for the project (`gcloud auth application-default login`), run `node functions/scripts/report-race-predictions.js --project=adaptive-fitness-af8bb` (add `--since=YYYY-MM-DD`, `--until=YYYY-MM-DD` for races in a date range, `--json` for JSON). Passing: it prints the goal races counted, then the error by distance and by weeks of the plan done, with no user ID; the race above is counted.

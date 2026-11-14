@@ -113,6 +113,9 @@ import {
   runPostName,
 } from "@/lib/runName";
 import { racePaceWorkFor } from "@/lib/racePace";
+import { goalRaceRecord, isGoalRaceRun } from "@/lib/racePrediction";
+import { useRacePredictionLog } from "@/hooks/useRacePredictionLog";
+import RacePredictionResult from "@/components/run/RacePredictionResult";
 import { isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
@@ -845,6 +848,29 @@ export default function RunSummary() {
     };
   }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
+  /* The goal race (`isGoalRaceRun`, the server's rule for a race run): on
+     its date, valid, and at least 95% of its distance, however it was
+     started. Only then is the prediction log read, to compare the race
+     with what Tropos predicted and keep that on the saved run. */
+  const goalRace =
+    pendingWeekRun && profile
+      ? resolveRunPlan(
+          profile,
+          programState,
+          pendingWeekRun.date ?? localDateString()
+        ).raceGoal
+      : null;
+  const isGoalRace =
+    !!goalRace &&
+    !!pendingWeekRun &&
+    isGoalRaceRun(
+      {
+        ...pendingWeekRun,
+        date: pendingWeekRun.date ?? localDateString(),
+      },
+      goalRace
+    );
+  const raceLog = useRacePredictionLog(user?.uid, isGoalRace);
 
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
@@ -872,6 +898,13 @@ export default function RunSummary() {
      reads from this so the edit propagates cleanly without
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
+  /* The goal race's record: the predictions made before it started. None
+     until the log has been read, so a race saved before then keeps none
+     rather than one that says Tropos predicted nothing. */
+  const raceRecord =
+    isGoalRace && goalRace && raceLog.loaded
+      ? goalRaceRecord(raceLog.log, goalRace, startedAt ?? null)
+      : null;
   /* Mile laps are recomputed from the trace rather than converted — a mile
      split is a different CUT of the run. They and the best efforts read
      the full trace: privacy zones hide where the run went, not how far
@@ -1316,6 +1349,7 @@ export default function RunSummary() {
         shoeId: effectiveShoeId,
         bestEfforts,
         name: nameToSave,
+        racePrediction: raceRecord,
       };
       /* What the run's post says happened (Soc15): the earlier runs this
          screen read, the streak and whether it is the first session. A
@@ -1951,6 +1985,13 @@ export default function RunSummary() {
               </p>
             </div>
           )}
+
+          {/* The goal race against what Tropos predicted for it. */}
+          <RacePredictionResult
+            record={raceRecord}
+            actualS={elapsed}
+            className="mx-4 mb-3"
+          />
 
           {/* Stats (DS3): time, pace, calories and climb in one card of
               four, the distance having moved up to the headline. Each
