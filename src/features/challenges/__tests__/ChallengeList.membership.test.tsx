@@ -52,6 +52,9 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
+  // Twelve people in the league trained lately: enough for challenges to
+  // be offered (App1 Q6). The quiet Tropos has its own tests.
+  seedFirestore({ "leagueStatus/current": { joined: 12 } });
   h.toastError.mockClear();
   h.toastSuccess.mockClear();
   seedFirestore({
@@ -492,5 +495,116 @@ describe("the section has no standing intro", () => {
     await openList();
     expect(screen.queryByText(/refresh on the 1st/)).toBeNull();
     expect(screen.queryByText(/Join each new edition/)).toBeNull();
+  });
+});
+
+/* App1 Q6: below ten people training on Tropos, Together offers no
+   challenge, no community goal and no Discover; what the person joined
+   stays, under This week. The Spaces slot stands for the directory, which
+   draws the person's own Spaces itself; it is drawn once the page knows
+   which Tropos it is on, so it anchors each test. */
+describe("at small numbers", () => {
+  const MONTH = {
+    type: "monthly",
+    startDate: Timestamp.fromDate(new Date("2026-09-01T00:00:00Z")),
+    endDate: Timestamp.fromDate(new Date("2026-10-01T00:00:00Z")),
+    participantCount: 1,
+  };
+
+  beforeEach(() => {
+    seedFirestore({
+      "leagueStatus/current": { joined: 3 },
+      "challenges/monthly-2026-09-01": {
+        ...MONTH,
+        name: "September Mileage",
+        description: "Every run adds up",
+        metric: "total_km",
+        icon: "footprints",
+        tiers: { bronze: 10, silver: 25, gold: 50 },
+      },
+      "challenges/group-goal-2026-09-01": {
+        ...MONTH,
+        name: "Together: 1,000 km",
+        description: "Every run from everyone this month adds up.",
+        metric: "total_km",
+        icon: "footprints",
+        collectiveTarget: 1000,
+        collectiveMeters: 42_000,
+        collectiveRunners: 6,
+        tiers: { bronze: 1000, silver: 1000, gold: 1000 },
+      },
+    });
+  });
+
+  function openQuiet() {
+    render(
+      <MemoryRouter>
+        <ChallengeList spaces={<p>Your spaces slot</p>} />
+      </MemoryRouter>
+    );
+    return screen.findByText("Your spaces slot");
+  }
+
+  it("offers nothing to someone in nothing: no This week, no Discover, no Join", async () => {
+    await openQuiet();
+    expect(screen.queryByRole("heading", { name: "This week" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Discover" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Join weekly challenge" })
+    ).toBeNull();
+    expect(
+      screen.queryByRole("list", { name: "Challenges to join" })
+    ).toBeNull();
+    expect(screen.queryByText("Together: 1,000 km")).toBeNull();
+    expect(screen.queryByText(/No active challenges/)).toBeNull();
+  });
+
+  it("keeps what the person joined, under This week", async () => {
+    seedFirestore({
+      [PATH]: {
+        currentValue: 1,
+        tierAchieved: null,
+        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
+        displayName: "Test member",
+      },
+      "challenges/monthly-2026-09-01/participants/weekly-member": {
+        currentValue: 4,
+        tierAchieved: null,
+        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
+        displayName: "Test member",
+      },
+    });
+    await openQuiet();
+    expect(
+      await screen.findByRole("heading", { name: "This week" })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Leave weekly challenge" })
+    ).toBeInTheDocument();
+    const yours = screen.getByRole("list", { name: "Your challenges" });
+    expect(within(yours).getByText("September Mileage")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Discover" })).toBeNull();
+    expect(screen.queryByText("Together: 1,000 km")).toBeNull();
+  });
+
+  it("offers them all once ten people are training", async () => {
+    seedFirestore({ "leagueStatus/current": { joined: 10 } });
+    render(
+      <MemoryRouter>
+        <ChallengeList spaces={<p>Your spaces slot</p>} />
+      </MemoryRouter>
+    );
+    expect(
+      await screen.findByRole("button", { name: "Join weekly challenge" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Discover" })
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("list", { name: "Challenges to join" })
+      ).getByText("September Mileage")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Together: 1,000 km")).toBeInTheDocument();
   });
 });

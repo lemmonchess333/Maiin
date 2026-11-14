@@ -4895,3 +4895,38 @@ Affects: which sessions a race plan's base, build and taper weeks hold (`runSche
 - [ ] **A 5K build.** Set up a 5K 12 weeks out. Passing: the build weeks show 4×1 km, then a 5K-pace session ("4×800m at 5K pace") and later 200s; the week before race week shows "6×400m at 5K pace".
 - [ ] **A marathon taper.** Set up a marathon 18 weeks out with a confirmed benchmark and no goal time. Passing: each taper week shows "Sharpener 2×12 min", and Start plays its two 12-minute blocks at marathon pace.
 - [ ] **Two quality days.** As a "Regular runner" at setup, on five run days with no lifting on two of them. Passing: a build week holds two quality sessions, neither on a lifting day; the same runner with every run day a lifting day holds one.
+
+## Leagues, challenges and Spaces quiet at small numbers (App1 Q6, 2026-11-14)
+
+Affects: Together (This week, Discover, the league card), the league page,
+the Spaces directory, the Feed's Spaces source and People's empty state,
+all gated by `useEnoughPeople` (`src/lib/enoughPeople.ts`): offered to
+someone not in them only once the server's counts say 10 or more people
+are training. Unit tests drive each surface on the Firestore fake; no phone
+or populated database has shown either side of the line.
+
+- [ ] **A quiet Tropos.** On the production database while fewer than 10
+      people are training (the Firestore console: this month's and last
+      month's `challenges/group-goal-YYYY-MM-01.collectiveRunners` and
+      `leagueStatus/current.joined` all under 10), sign in on a phone with
+      an account that joined nothing. Passing: Together shows the race hero
+      (if bound) and Circles only, with no This week, no Discover, no league
+      card and no "coming soon" line; the Feed has two sources, Following
+      and Explore; People's "No suggestions yet" offers no Browse spaces;
+      opening `/league` lands on Together. Check in light and dark.
+- [ ] **What a person is in stays.** On the same quiet database, an account
+      that joined a challenge, a Space and the league. Passing: This week
+      shows the joined challenge with its progress and the league's waiting
+      card; "Your spaces" shows the joined Space; the Feed keeps its Spaces
+      source.
+- [ ] **It opens on its own.** On a populated database (the emulator rig
+      seeded with 10 or more runners in this month's community goal is
+      enough), the same account that joined nothing. Passing: Together's
+      This week offers the weekly challenge, the league card offers Join,
+      Discover shows races, Spaces, the community goal and the challenges,
+      and the Feed has its Spaces source, with no reload beyond reopening
+      Social.
+- [ ] **The 1st of a month.** On the first morning of a month on a
+      populated database, with this month's community goal still under 10
+      runners and last month's over. Passing: Together still offers its
+      challenges and Spaces.

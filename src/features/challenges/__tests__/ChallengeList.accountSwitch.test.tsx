@@ -58,6 +58,9 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
+  // Twelve people in the league trained lately: enough for challenges to
+  // be offered (App1 Q6). The quiet Tropos has its own tests.
+  seedFirestore({ "leagueStatus/current": { joined: 12 } });
   h.user = { uid: "acct-a" };
   const joinedAt = Timestamp.fromDate(new Date("2026-09-07T08:00:00Z"));
   seedFirestore({
