@@ -118,8 +118,6 @@ vi.mock("@/hooks/useStoreTrialEligibility", async (importOriginal) => ({
 }));
 
 import Upgrade from "../Upgrade";
-// The E2E journeys end setup on these two (src/test/journeyScreens.ts).
-import { OFFER } from "@/test/journeyScreens";
 import { PRO_PLANS, localizePlans, type ProPlan } from "@/lib/proPlans";
 
 function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
@@ -581,7 +579,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
   it("from onboarding, the offer is headed by the plan just made", () => {
     renderPage("/upgrade?from=onboarding");
     expect(
-      screen.getByRole("heading", { name: OFFER.ready })
+      screen.getByRole("heading", { name: "Your plan is ready" })
     ).toBeInTheDocument();
     expect(
       screen.getByText(/^Pro logs your meals from a photo/)
@@ -744,7 +742,7 @@ describe("Upgrade — where 'not now' goes", () => {
 
   it("from onboarding, 'Continue with Free' lands where it was sent, at the top", () => {
     renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
-    fireEvent.click(screen.getByRole("button", { name: OFFER.free }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent(
       "/program?tab=run"
     );

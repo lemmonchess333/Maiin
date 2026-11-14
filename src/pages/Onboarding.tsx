@@ -105,7 +105,6 @@ import {
   type RaceGoalEntry,
 } from "@/lib/raceGoalEntry";
 import { signInMethodOf } from "@/lib/signInMethod";
-import { ACTIVATION_JOURNEY_V2_ENABLED } from "@/lib/activationJourney";
 import { Capacitor } from "@capacitor/core";
 import InviteCodeField from "@/components/onboarding/InviteCodeField";
 import { normaliseInviteCode } from "@/lib/inviteCode";
@@ -1033,29 +1032,28 @@ export default function Onboarding() {
       // first invocation after idle spins up a cold instance that can exceed the
       // client SDK's default wait window and surface as functions/internal even
       // though the warm instance will handle the second call fine.
-      const completeOnboarding = httpsCallable<
-        unknown,
-        { success: boolean; activationJourneyVersion?: 1 | 2 | null }
-      >(functions, "completeOnboarding");
+      const completeOnboarding = httpsCallable<unknown, { success: boolean }>(
+        functions,
+        "completeOnboarding"
+      );
       // P0-5: payload now includes weekSchedule as an explicit
       // top-level field. validatePlanPayload reads either the
       // top-level field or profileData.weekSchedule; sending both
       // keeps the contract explicit on the wire.
+      // The server stamps every new account's journey as 2 whatever is
+      // sent (App1). `activationJourneyVersion: 2` stays on the wire for a
+      // server from before App1, which records the platform only beside
+      // it.
       const callCF = () =>
         completeOnboarding({
           profileData,
           programState,
           weekSchedule: plan.weekSchedule,
-          ...(ACTIVATION_JOURNEY_V2_ENABLED
-            ? {
-                activationJourneyVersion: 2,
-                onboardingPlatform: Capacitor.getPlatform(),
-              }
-            : {}),
+          activationJourneyVersion: 2,
+          onboardingPlatform: Capacitor.getPlatform(),
         });
-      let commitResult;
       try {
-        commitResult = await callCF();
+        await callCF();
       } catch (err) {
         const code = (err as { code?: string })?.code;
         const msg = (err as { message?: string })?.message || "";
@@ -1076,7 +1074,7 @@ export default function Onboarding() {
           msg.toUpperCase().includes("INTERNAL");
         if (!isTransient) throw err;
         await new Promise((r) => setTimeout(r, 1200));
-        commitResult = await callCF();
+        await callCF();
       }
 
       onboardingCompletedRef.current = true;
@@ -1170,20 +1168,9 @@ export default function Onboarding() {
         runMode: effectiveRunMode,
       });
 
-      // Route from the accepted, persisted server version, not the stale
-      // React profile captured before refreshProfile(). An older callable
-      // that returns no version keeps the established offer route.
-      if (
-        ACTIVATION_JOURNEY_V2_ENABLED &&
-        commitResult.data.activationJourneyVersion === 2
-      ) {
-        navigate("/", { replace: true });
-      } else {
-        navigate("/upgrade?from=onboarding", {
-          replace: true,
-          state: { next: "/" },
-        });
-      }
+      // Setup ends on Today, for every account (App1, whole-app grill
+      // Q27): the plan and what to do next, with no offer between.
+      navigate("/", { replace: true });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
@@ -2455,7 +2442,7 @@ export default function Onboarding() {
           cannot wrap: the main button goes on top, Back under it, each the
           full width. Wide-first. */}
       <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
-        {step === 7 && ACTIVATION_JOURNEY_V2_ENABLED && (
+        {step === 7 && (
           <p className="text-sm text-muted-foreground">
             Today shows your plan and what to do next. Start when you’re ready.
           </p>
@@ -2497,10 +2484,7 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try again"
-                  : // One label for both journeys: where it goes is the
-                    // server's answer (the comparison group and a switched-off
-                    // v2 go to the Pro offer), which no label can know first.
-                    "Start my plan"
+                  : "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

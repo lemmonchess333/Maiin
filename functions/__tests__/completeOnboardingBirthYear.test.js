@@ -19,7 +19,6 @@ const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const { completeOnboarding } = require("../index");
-const activationCohort = require("../lib/activationCohort");
 
 const realIsRateLimited = rateLimiter.isRateLimited;
 const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
@@ -61,7 +60,6 @@ beforeEach(() => {
   });
   rateLimiter.isRateLimited = async () => false;
   accountDeletionLocks.assertCallableActorNotDeleting = async () => {};
-  activationCohort.resetCacheForTests();
 });
 
 afterEach(() => {

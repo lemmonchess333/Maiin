@@ -37,9 +37,8 @@ const ARC_UP = 0.6;
  * How far along a move is at `t` (0 to 1 of its duration), on a critically
  * damped spring: Apple's spring with no bounce. It starts at once, but
  * from standstill, and slows into its target instead of stopping on it.
- * An ease-in-out (GuideWalk's) idles for its first tenth, which at launch
- * reads as the app hesitating just as it is ready. Scaled to end on
- * exactly 1.
+ * An ease-in-out idles for its first tenth, which at launch reads as the
+ * app hesitating just as it is ready. Scaled to end on exactly 1.
  */
 export function springOut(t: number): number {
   const w = 2 * Math.PI;

@@ -271,3 +271,20 @@ without a word.
   greet the same runner first, and asked once a week (`useDismissOnce`,
   keyed by the week).
 
+## Amendment 2026-11-13 — the first-visit walk is gone (App1)
+
+The whole-app grill (Q27, locked as App1) ended XB1's activation comparison
+group and removed the older first-week journey, so every account takes the
+journey XB1's v2 gave: no walk on Home.
+
+- **`first-visit-guide` is no longer registered.** Home's tier-4 order is
+  now Trial (40), FellBehind (30), LiftReturn (28), RunReturn (27),
+  RaceCheck (26), GoalReached (25). `GuideWalk`, `useGuideWalkReady` and
+  Settings' "Show me around" are deleted, and nothing renders a walk
+  directly either: a first-week row opens its session.
+- **The Health steps prompt no longer waits for a walk.** It still waits
+  out the open of the app that held the account's first Home visit.
+- **The hints stay tier 3**, through the education lane at priority 35, and
+  turn up for every account with nothing to meet first.
+
+`homeSurfaceRegistry.test.ts` pins that Home registers no walk.

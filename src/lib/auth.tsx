@@ -174,13 +174,16 @@ export interface UserProfileCore {
    */
   onboardingCompletedAt?: Timestamp | FieldValue;
   /**
-   * Server-stamped at the first successful onboarding commit from a client
-   * that offers version 2: 2, or 1 for the comparison group and while the
-   * server's switch is off (functions/lib/activationCohort.js). Absent on
-   * accounts made before v2 and on older clients.
+   * Server-stamped at the first successful onboarding commit: 2 on every
+   * account set up since App1 (whole-app grill Q27). Before then, 1 marked
+   * XB1's comparison group (and setup while its switch was off), and an
+   * account set up before v2 or from an older client has none. The app
+   * reads none of it, as every account takes the one first-week journey:
+   * it stays for the activation report and for app builds from before
+   * App1, which still route on it.
    */
   activationJourneyVersion?: 1 | 2;
-  /** First completed setup's platform, stamped by the server for v2. */
+  /** First completed setup's platform, stamped by the server. */
   onboardingPlatform?: "ios" | "web" | "android";
   /** Training type at the first completed setup, before later plan edits. */
   onboardingSport?: "runner" | "lifter" | "hybrid" | "other";

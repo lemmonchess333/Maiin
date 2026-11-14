@@ -234,6 +234,12 @@ describe("CLAUDE.md — retired features", () => {
       // The one mention is the Visual Identity line saying it is gone.
       allowedMentions: 1,
     },
+    {
+      name: "GuideWalk",
+      probe: "src/components/guide/GuideWalk.tsx",
+      retiredIn: "App1 (whole-app grill Q27: one first-week journey)",
+      allowedMentions: 0,
+    },
   ];
 
   for (const entry of RETIRED) {

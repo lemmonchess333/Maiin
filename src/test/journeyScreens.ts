@@ -5,7 +5,6 @@
  * journey in CI.
  *
  * - Setup's names: `Onboarding.test.tsx` walks setup by them.
- * - The offer after setup: `Upgrade.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -77,12 +76,6 @@ export const SETUP_OPTIONS = {
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =
   (typeof SETUP_OPTIONS)[Question][number];
 
-/** The offer setup ends on (`Upgrade`). */
-export const OFFER = {
-  ready: "Your plan is ready",
-  free: "Continue with Free",
-} as const;
-
 /** The workout screen (`WorkoutSession`), from Train's Start workout. */
 export const WORKOUT = {
   start: "Start workout",
@@ -149,7 +142,7 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where a saved version 2 plan lands (`Home`'s page h1: for screen
+/** Home, where a saved plan lands (`Home`'s page h1: for screen
  *  readers only since DS4, where the hero names the screen). */
 export const HOME = {
   heading: "Today",
