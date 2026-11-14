@@ -27,6 +27,7 @@ import { isNativePlatform } from "./platform";
 import { subscribeWatchHeartRateSamples } from "./watchRunBridge";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import {
+  isHeartRateSensorPaired,
   startHeartRateSensorSession,
   stopHeartRateSensorSession,
   subscribeHeartRateSensorReadings,
@@ -160,7 +161,11 @@ function combinedHeartRateSource(
   watch: HeartRateSource | null
 ): HeartRateSource {
   return {
-    available: true,
+    // A source that can stream now: the Watch where it is released, or a
+    // paired sensor. Read each time, since pairing changes it.
+    get available() {
+      return watch !== null || isHeartRateSensorPaired();
+    },
     subscribe(onSample, onError, sessionId) {
       let lastSensorAt: number | null = null;
       const subscriptions = [
@@ -202,9 +207,14 @@ const sensorOnlySource = combinedHeartRateSource(sensorHeartRateSource, null);
 /**
  * Resolve the HR source for the current platform.
  *
- * The iOS shell always has the sensor; it adds the Watch's samples through
- * the WatchRun bridge when connected training is released. Web keeps the
- * inert fallback. The hook subscribes only for an opted-in active run.
+ * The iOS shell always has the sensor's half; it adds the Watch's samples
+ * through the WatchRun bridge when connected training is released. Web keeps
+ * the inert fallback. The hook subscribes only for an opted-in active run.
+ *
+ * `available` means a source can stream on this device now: the Watch where
+ * it is released, or a paired sensor (as last heard from native). The hot-day
+ * heart-rate ceiling reads it (`heatAdjustment.ts`), so it must not be true
+ * for an iPhone with neither.
  */
 export function getHeartRateSource(): HeartRateSource {
   if (!isNativePlatform()) return webHeartRateSource;

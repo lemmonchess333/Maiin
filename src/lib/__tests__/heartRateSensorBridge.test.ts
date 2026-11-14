@@ -65,6 +65,7 @@ import {
   subscribeHeartRateSensorReadings,
   subscribeHeartRateSensorStatus,
   UNAVAILABLE_SENSOR_STATUS,
+  isHeartRateSensorPaired,
 } from "../heartRateSensorBridge";
 
 beforeEach(() => {
@@ -110,6 +111,25 @@ describe("heartRateSensorBridge on the iPhone", () => {
       connection: 3,
     };
     expect(await getHeartRateSensorStatus()).toEqual(UNAVAILABLE_SENSOR_STATUS);
+  });
+
+  it("remembers whether a sensor was paired at the last status heard", async () => {
+    H.status = {
+      available: true,
+      paired: { id: "UUID-1", name: "Polar H10 1A2B" },
+    };
+    await getHeartRateSensorStatus();
+    expect(isHeartRateSensorPaired()).toBe(true);
+    H.status = { available: true };
+    expect(await forgetHeartRateSensor()).toMatchObject({ paired: null });
+    expect(isHeartRateSensorPaired()).toBe(false);
+    const statuses = vi.fn();
+    await subscribeHeartRateSensorStatus(statuses);
+    H.listeners.get("statusChanged")?.({
+      available: true,
+      paired: { id: "UUID-2", name: "HRM-Pro" },
+    });
+    expect(isHeartRateSensorPaired()).toBe(true);
   });
 
   it("names an unnamed sensor rather than showing nothing", async () => {

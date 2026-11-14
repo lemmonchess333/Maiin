@@ -960,7 +960,9 @@ export default function Run() {
      source is live and the max is measured), and a swap. The eased run is
      the plan's own prefill built from the eased table, so its steps,
      labels and cues all carry the eased paces; nothing is stored. */
-  const hrLive = useMemo(() => getHeartRateSource().available, []);
+  // A sensor paired after the page opened counts too (`sensorPaired`).
+  const hrSourceAtOpen = useMemo(() => getHeartRateSource().available, []);
+  const hrLive = hrSourceAtOpen || sensorPaired;
   const measuredMaxHr = profile?.maxHeartRate ?? null;
   const heatOffer = useMemo(
     () =>

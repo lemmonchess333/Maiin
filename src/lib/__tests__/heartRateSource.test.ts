@@ -17,6 +17,7 @@ vi.mock("../connectedTrainingRelease", () => ({
   CONNECTED_TRAINING_RELEASED: true,
 }));
 const sensor = vi.hoisted(() => ({
+  paired: false,
   deliver: (_sample: unknown) => {},
   remove: vi.fn(),
   start: vi.fn(async (_sessionId: string) => true),
@@ -27,6 +28,7 @@ vi.mock("../heartRateSensorBridge", () => ({
     sensor.deliver = handler;
     return Promise.resolve(sensor.remove);
   },
+  isHeartRateSensorPaired: () => sensor.paired,
   startHeartRateSensorSession: (sessionId: string) => sensor.start(sessionId),
   stopHeartRateSensorSession: () => sensor.stop(),
 }));
@@ -40,6 +42,7 @@ import {
 beforeEach(() => {
   isNativePlatform.mockReset();
   subscribeWatchHeartRateSamples.mockReset();
+  sensor.paired = false;
   sensor.deliver = () => {};
   sensor.remove.mockReset();
   sensor.start.mockClear();
@@ -171,6 +174,11 @@ describe("getHeartRateSource — a sensor without the Watch", () => {
     }));
     isNativePlatform.mockReturnValue(true);
     const { getHeartRateSource: resolve } = await import("../heartRateSource");
+    // The hot-day ceiling reads this: no Watch and no sensor paired is no
+    // source, and pairing one makes it one.
+    expect(resolve().available).toBe(false);
+    sensor.paired = true;
+    expect(resolve().available).toBe(true);
     const onSample = vi.fn();
     const subscription = resolve().subscribe(onSample, undefined, "run-B");
     await Promise.resolve();

@@ -152,11 +152,25 @@ function readSensorStatus(value: unknown): HeartRateSensorStatus {
   };
 }
 
+/** Whether a sensor was paired at the last status this app heard, so the
+ *  heart rate seam can say whether a source can stream without a native
+ *  round trip (`heartRateSource.ts`). False until the first answer. */
+let pairedAtLastStatus = false;
+
+function heard(status: HeartRateSensorStatus): HeartRateSensorStatus {
+  pairedAtLastStatus = status.available && status.paired !== null;
+  return status;
+}
+
+export function isHeartRateSensorPaired(): boolean {
+  return pairedAtLastStatus;
+}
+
 export async function getHeartRateSensorStatus(): Promise<HeartRateSensorStatus> {
   const native = nativePlugin();
   if (!native) return UNAVAILABLE_SENSOR_STATUS;
   try {
-    return readSensorStatus(await native.getStatus());
+    return heard(readSensorStatus(await native.getStatus()));
   } catch {
     return UNAVAILABLE_SENSOR_STATUS;
   }
@@ -181,7 +195,9 @@ async function listen(
 export function subscribeHeartRateSensorStatus(
   handler: (status: HeartRateSensorStatus) => void
 ): Promise<() => void> {
-  return listen("statusChanged", (event) => handler(readSensorStatus(event)));
+  return listen("statusChanged", (event) =>
+    handler(heard(readSensorStatus(event)))
+  );
 }
 
 /**
@@ -217,7 +233,7 @@ export async function pairHeartRateSensor(
   const native = nativePlugin();
   if (!native || !id) return null;
   try {
-    return readSensorStatus(await native.pair({ id }));
+    return heard(readSensorStatus(await native.pair({ id })));
   } catch {
     return null;
   }
@@ -227,7 +243,7 @@ export async function forgetHeartRateSensor(): Promise<HeartRateSensorStatus | n
   const native = nativePlugin();
   if (!native) return null;
   try {
-    return readSensorStatus(await native.forget());
+    return heard(readSensorStatus(await native.forget()));
   } catch {
     return null;
   }
