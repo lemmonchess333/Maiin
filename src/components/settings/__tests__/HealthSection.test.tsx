@@ -80,6 +80,8 @@ vi.mock("@/lib/healthWorkoutExport", () => ({
   pendingHealthWorkoutExports: () => exports.pending,
   reconcilePendingHealthExports: (uid: string) => exports.reconcile(uid),
 }));
+const analytics = vi.hoisted(() => ({ track: vi.fn() }));
+vi.mock("@/lib/settingsAnalytics", () => ({ track: analytics.track }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn() } }));
 vi.mock("@/components/AccordionSection", () => ({
@@ -158,6 +160,95 @@ describe("HealthSection", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it.each([
+    [
+      "Not available here",
+      {
+        available: false,
+        paired: false,
+        installed: false,
+        reachable: false,
+        enabled: false,
+      },
+      false,
+    ],
+    [
+      "No paired Apple Watch",
+      {
+        available: true,
+        paired: false,
+        installed: false,
+        reachable: false,
+        enabled: false,
+      },
+      false,
+    ],
+    [
+      "Watch app not installed",
+      {
+        available: true,
+        paired: true,
+        installed: false,
+        reachable: false,
+        enabled: false,
+      },
+      true,
+    ],
+    [
+      "Off",
+      {
+        available: true,
+        paired: true,
+        installed: true,
+        reachable: true,
+        enabled: false,
+      },
+      false,
+    ],
+    [
+      "Connection lost",
+      {
+        available: true,
+        paired: true,
+        installed: true,
+        reachable: false,
+        enabled: true,
+      },
+      true,
+    ],
+    [
+      "Ready",
+      {
+        available: true,
+        paired: true,
+        installed: true,
+        reachable: true,
+        enabled: true,
+      },
+      true,
+    ],
+    [
+      "Active run",
+      {
+        available: true,
+        paired: true,
+        installed: true,
+        reachable: true,
+        enabled: true,
+        activeSessionId: "run-1",
+      },
+      true,
+    ],
+  ])("names the Watch's state: %s", async (label, status, useWatchForRuns) => {
+    // The proposal's connection states, each from what native reports.
+    prefs.value.prefs.useWatchForRuns = useWatchForRuns;
+    watch.status = status;
+    render(<HealthSection />);
+    expect(screen.getByText("Connecting")).toBeInTheDocument();
+    expect(await screen.findByText(label)).toBeInTheDocument();
+    expect(screen.queryByText("Connecting")).toBeNull();
+  });
+
   it("shows unavailable Watch and export choices truthfully on web", async () => {
     // The web preview of a build with the gate on keeps both rows visible.
     health.available = false;
@@ -233,6 +324,40 @@ describe("HealthSection", () => {
     expect(watch.setEnabled).toHaveBeenCalledWith(true);
     expect(prefs.value.update.mock.invocationCallOrder[0]).toBeLessThan(
       watch.setEnabled.mock.invocationCallOrder[0]
+    );
+    // Counted as a connection, for the release's measurement.
+    await waitFor(() =>
+      expect(analytics.track).toHaveBeenCalledWith("settings_toggle_changed", {
+        toggle: "watch_runs",
+        value: "on",
+      })
+    );
+  });
+
+  it("counts a Watch that could not be switched on as a failed attempt", async () => {
+    watch.status = {
+      available: true,
+      paired: true,
+      installed: true,
+      reachable: true,
+      enabled: false,
+    };
+    watch.setEnabled.mockImplementation(async () => false);
+    render(<HealthSection />);
+    const toggle = await screen.findByRole("switch", {
+      name: "Use Watch for runs",
+    });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(analytics.track).toHaveBeenCalledWith("settings_toggle_changed", {
+        toggle: "watch_runs",
+        value: "on:failed",
+      })
+    );
+    expect(analytics.track).not.toHaveBeenCalledWith(
+      "settings_toggle_changed",
+      { toggle: "watch_runs", value: "on" }
     );
   });
 
