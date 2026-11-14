@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { logger } from "@/lib/logger";
 import { homeProgramSnapshot } from "./homeProgramSnapshot";
+import { runModeWithPlan } from "./programMaintenance";
 import { fetchRecentRuns } from "./fetchRecentLayoff";
 import type { DatedRun, LayoffClass } from "./layoffDetection";
 import type { ProgramState } from "./programTypes";
@@ -184,8 +185,14 @@ export function useHomeProgram() {
     // On a new day the listener starts again, and its first snapshot asks
     // the question on that day.
   }, [uid, profile, prepare, today]);
+  // Run24 (3): free running holding a plan with no race date is a plan
+  // here, whose weeks are read with the runs (a run's "Why this run").
+  const runMode = runModeWithPlan(
+    profile,
+    snapshot && snapshot.uid === uid ? snapshot.programState : null
+  );
   useEffect(() => {
-    if (!uid || !profile?.runMode || profile.runMode === "freeform") return;
+    if (!uid || runMode === "freeform") return;
     let active = true;
     // Read again for each new day, as the engine reads it: the fell-behind
     // sheet's words have to match what its button will build.
@@ -195,7 +202,7 @@ export function useHomeProgram() {
     return () => {
       active = false;
     };
-  }, [uid, profile?.runMode, today]);
+  }, [uid, runMode, today]);
 
   function action<K extends keyof Actions>(name: K) {
     return async (

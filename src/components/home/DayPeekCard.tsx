@@ -29,6 +29,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { liftOnDate } from "@/lib/homeLift";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -178,6 +180,7 @@ export default function DayPeekCard({
   workouts,
   dailyTotals,
   sessionsLoading = false,
+  rollingContexts = null,
   onClose,
   onManage,
 }: {
@@ -208,6 +211,10 @@ export default function DayPeekCard({
    *  cold start a returning person who tapped a day before the reads
    *  landed was told they had done nothing. */
   sessionsLoading?: boolean;
+  /** A plan with no race date's weeks, by their Mondays
+   *  (`useRollingSessionContexts`, Run24 (3)): a run's reason in the plan's
+   *  terms. Home passes them; without them such a run has no reason. */
+  rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null;
   workouts: {
     /** Firestore doc id — the /workout/:id destination for the lift row.
      *  Optional because callers historically passed a projection; a row
@@ -372,8 +379,10 @@ export default function DayPeekCard({
         { racePace: runRacePace }
       )
     : null;
+  // Read through the programme as well as the profile: a plan with no
+  // race date keeps the profile on free running (Run24 (3)).
   const runPurpose =
-    runTemplate && profile?.runMode !== "freeform"
+    runTemplate && runModeWithPlan(profile, programState) !== "freeform"
       ? runSessionPresentation({
           type: runTemplate.type,
           templateId: runTemplate.id,
@@ -392,6 +401,9 @@ export default function DayPeekCard({
             programState?.runPlan,
             resolved.run.runDay?.date
           ),
+          rolling: resolved.run.runDay?.weekKey
+            ? rollingContexts?.get(resolved.run.runDay.weekKey)
+            : null,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
