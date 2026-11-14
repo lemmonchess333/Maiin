@@ -623,7 +623,16 @@ export interface ScheduledRunDay {
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
    *  at each stage (`starterPlan.ts`). */
-  mode: "structured" | "race_prep" | "starter";
+  mode: "structured" | "race_prep" | "starter" | "rolling";
+  /** `rolling` (Run24 (3), deep dive D7): a plan with no race date, on a
+   *  four-week cycle that climbs to its goal's horizon and holds there
+   *  (`generateRollingPlan`). Its goal, and its week, `currentWeek` from
+   *  0. The profile stays on free running (no race goal, no starter
+   *  goal); the plan is the programme's alone (`rollingGoalOf`). */
+  rollingGoal?: import("./rollingPlan").RollingGoal;
+  /** A rolling plan's week: the Monday key of the week `currentWeek` is
+   *  for, which the rollover moves on from when the week holds no run. */
+  rollingWeekKey?: string;
   /** A starter plan's stage, 1 to 9: the session every run in its week
    *  takes. It moves on only once its week was done. */
   stage?: number;

@@ -47,8 +47,10 @@ import {
 } from "./runTimeLimits";
 import {
   raceBaseRolling,
+  ROLLING_SPECS,
   ROLLING_WEEKS_PER_EASY_TIER,
   ROLLING_WEEKS_PER_LONG_RUNG,
+  type RollingGoal,
   type RollingQuality,
   type RollingSpec,
 } from "./rollingPlan";
@@ -3063,4 +3065,223 @@ function rollingRun(input: {
   };
 
   return { levelAt, weekRuns };
+}
+
+/** What a plan with no race date is built from (Run24 (3), deep dive D7).
+ *  The same runner inputs as a race plan's (`RacePlanV2Input`), read off
+ *  the profile the same way (`regenerateRollingPlan`). */
+export interface RollingPlanInput {
+  goal: RollingGoal;
+  weekSchedule: ScheduleDay[];
+  weeklyRunDays: number;
+  /** Local "YYYY-MM-DD": the day the plan is built on, which the recent
+   *  runs are read up to when `recentRunsAsOf` is absent. */
+  currentDate: string;
+  /** The first day (Monday) of the first week built. */
+  weekStart: string;
+  /** The plan's week that `weekStart` is: 0 for its first. A rolling plan
+   *  is built from its first week every time, so the same plan, profile
+   *  and week give the same runs. */
+  planWeek: number;
+  /** Run15: how long the runner has been away; required for the reason
+   *  it is required on `RacePlanV2Input`. A detrained runner's plan holds
+   *  at its opening and runs no quality. */
+  recentLayoff: LayoffClass;
+  tuning?: RunTuning;
+  easyPaceSPerKm?: number | null;
+  runningBaseline?: RunningBaseline | null;
+  runTimeLimits?: RunTimeLimits | null;
+  newRunnerUntil?: string | null;
+  recentRuns?: readonly DatedRun[] | null;
+  recentRunsAsOf?: string;
+  /** How many weeks to build from `weekStart`: 1 when absent. */
+  weeks?: number;
+}
+
+/**
+ * A plan with no race date (Run24 (3), deep dive D7): the goal's rolling
+ * run (`rollingRun`, `ROLLING_SPECS`) on its four-week cycle, held week to
+ * week to 15% over the last week that did not step back (Run24 (6)), with
+ * the goal's time trials (Run24 (4)) and every fit a race plan's weeks take:
+ * a new runner's run-walk weeks, the time limits, and the climb from the
+ * runner's starting point. Pgm6's knobs apply: a lighter or bigger long
+ * run moves the horizon's long run, and gentler keeps the sessions to
+ * strides and the first tempo. One week per entry, from `weekStart`.
+ * Tropos heuristics in the RUN-EV-06 register.
+ */
+export function generateRollingPlan(
+  input: RollingPlanInput
+): ScheduledRunDay[][] {
+  const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
+  const goalSpec = ROLLING_SPECS[input.goal];
+  const spec: RollingSpec = {
+    ...goalSpec,
+    horizon: {
+      ...goalSpec.horizon,
+      longKm: Math.max(
+        goalSpec.startLongKm,
+        effectivePeakKm(goalSpec.horizon.longKm, tuning.volume)
+      ),
+    },
+  };
+  const count = Math.max(1, Math.trunc(input.weeks ?? 1));
+  const weekStartDate = startOfLocalWeek(parseLocalDate(input.weekStart));
+  const planWeek = Math.max(0, Math.trunc(input.planWeek));
+  const thisWeekKey = localWeekKey(weekStartDate);
+  /** The Monday of week `k` of the plan. */
+  const weekStartOf = (k: number) =>
+    addLocalDays(weekStartDate, (k - planWeek) * 7);
+  const weekKeyOf = (k: number) => localDateString(weekStartOf(k));
+  const availableRunSlots = input.weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  if (availableRunSlots.length === 0)
+    return Array.from({ length: count }, () => []);
+  const detrained = input.recentLayoff === "detrained";
+  /* Run20 (5) and Run24 (8), as a race block reads them: a new runner's
+     first weeks, and a plan begun as one, hold no tempo or intervals until
+     the runner has run 40 minutes in one go, and keep the spaced days. */
+  const beginnerPlan =
+    !!input.newRunnerUntil && weekKeyOf(0) < input.newRunnerUntil;
+  const beginnerQualityFrom = beginnerPlan
+    ? beginnerQualityWeek(input.recentRuns)
+    : null;
+  const holdsNoQuality = (k: number) =>
+    (!!input.newRunnerUntil && weekKeyOf(k) < input.newRunnerUntil) ||
+    (beginnerPlan &&
+      (beginnerQualityFrom === null || weekKeyOf(k) < beginnerQualityFrom));
+  const runSlots = beginnerPlan
+    ? starterRunSlots(input.weekSchedule)
+    : availableRunSlots;
+  const runsReadOn = input.recentRunsAsOf ?? input.currentDate;
+  const baseline = isRunningBaseline(input.runningBaseline)
+    ? input.runningBaseline
+    : null;
+  const own =
+    detrained || beginnerPlan
+      ? null
+      : ownWeekOf({
+          baseline,
+          paceSPerKm:
+            input.easyPaceSPerKm ??
+            (input.recentRuns
+              ? recentPace(input.recentRuns, runsReadOn)
+              : null),
+          weeklyRunDays: input.weeklyRunDays,
+          runSlots: availableRunSlots.length,
+          openingLongKm: spec.startLongKm,
+        });
+  const stepsBack = (k: number) => k >= 0 && isRollingStepBack(k);
+  /* The time trials, as a race block holds them: without a benchmark a
+     3 km one in the second week, then a 5 km one every five weeks, a week
+     earlier where that week steps back; never in a week with no quality. */
+  const noBenchmark = !input.easyPaceSPerKm;
+  const trialFits = (k: number) =>
+    spec.timeTrials && !detrained && k >= 0 && !holdsNoQuality(k);
+  const onTrialBeat = (k: number) => k > 1 && (k - 1) % TRIAL_EVERY_WEEKS === 0;
+  const holdsTrial = (k: number) =>
+    trialFits(k) &&
+    ((noBenchmark && k === 1) ||
+      (onTrialBeat(k) && !stepsBack(k)) ||
+      (onTrialBeat(k + 1) && stepsBack(k + 1)));
+  const rolling = rollingRun({
+    spec,
+    isStepBack: stepsBack,
+    own,
+    ownWeekMinutes: own && baseline ? baseline.weeklyMinutes : undefined,
+    detrained,
+    easyPaceSPerKm: input.easyPaceSPerKm,
+    ceiling: null,
+    holdsNoQuality,
+    gentler: tuning.difficulty === "gentler",
+    holdsTrial,
+  });
+  const held = new Map<number, ScheduledRunDay[]>();
+  /** Week `k` as planned, held to 15% over the last week that did not
+   *  step back (Run24 (6)). */
+  const heldWeek = (k: number): ScheduledRunDay[] => {
+    const cached = held.get(k);
+    if (cached) return cached;
+    let week = rolling.weekRuns(
+      k,
+      weekStartOf(k),
+      runSlots,
+      input.weekSchedule
+    );
+    let previous = k - 1;
+    while (previous >= 0 && stepsBack(previous)) previous -= 1;
+    if (previous >= 0)
+      week = easeEasyRunsUnder(
+        week,
+        plannedWeekMinutes(heldWeek(previous), input.easyPaceSPerKm) *
+          WEEK_RISE_CAP,
+        input.easyPaceSPerKm
+      );
+    held.set(k, week);
+    return week;
+  };
+  const bothDays = new Set(
+    input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
+  );
+  const climbPace =
+    input.easyPaceSPerKm ??
+    (input.recentRuns && recentPace(input.recentRuns, runsReadOn));
+  /** Week `k` with its trial and every fit, as `fittedWeek` fits a race
+   *  block's. */
+  const fittedWeek = (k: number): ScheduledRunDay[] => {
+    const planned = holdsTrial(k)
+      ? withTimeTrial(
+          heldWeek(k),
+          noBenchmark && k === 1 ? "time_trial_3k" : "time_trial_5k",
+          true
+        )
+      : heldWeek(k);
+    const walked = planned.map((row) => {
+      const next = newRunnerTemplate(
+        row.templateId,
+        row.weekKey ?? "",
+        input.newRunnerUntil,
+        input.easyPaceSPerKm
+      );
+      return next ? { ...row, templateId: next.id, type: next.type } : row;
+    });
+    const limited = walked.map((row) =>
+      fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
+    );
+    const weekKey = planned[0]?.weekKey;
+    const fitted = fitWeekToRunningBaseline(
+      limited,
+      baseline,
+      baseline && weekKey
+        ? runningClimb(baseline, weekKey, {
+            easyPaceSPerKm: climbPace,
+            isStepBack: (key) =>
+              stepsBack(wholeWeeksBetween(weekKeyOf(0), key)),
+            done:
+              input.recentRuns &&
+              weekKey === thisWeekKey &&
+              weekKey <= runsReadOn
+                ? recentRunning(
+                    input.recentRuns,
+                    weekKey,
+                    Math.min(input.weeklyRunDays, availableRunSlots.length)
+                  )
+                : null,
+          })
+        : null,
+      climbPace
+    );
+    return fitted.map((row, index) => {
+      const rd =
+        row === planned[index]
+          ? row
+          : { ...row, id: generateScheduledRunId(row, row.weekKey!) };
+      return HARD_RUN_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
+        ? { ...rd, clashesWithLift: true }
+        : rd;
+    });
+  };
+  return Array.from({ length: count }, (_, offset) =>
+    fittedWeek(planWeek + offset)
+  );
 }

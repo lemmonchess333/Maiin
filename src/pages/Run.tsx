@@ -187,6 +187,7 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { formatDuration } from "@/utils/formatters";
 import { goBackOr } from "@/lib/backNavigation";
 import { RESUME_PARAM } from "@/lib/resumeParam";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
 
 function sessionSegmentsFor(
   config: RunConfig | null,
@@ -276,7 +277,9 @@ export default function Run() {
   // Q85: past a half or full marathon plan's free first week, a planned
   // training run opens as a free run (the race itself still starts).
   const runPlanLocked = useRacePlanLocked(programState?.runPlan);
-  const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
+  // A plan with no race date is a plan here, though the profile says free
+  // running (Run24 (3)).
+  const profileRunMode: PlanMode = runModeWithPlan(profile, programState);
   const isFreeformUser = profileRunMode === "freeform";
   const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
   // The guide's first-run hint (FV1). Knowing there are no runs means
