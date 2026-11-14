@@ -734,10 +734,8 @@ function SignedInRoutes({
                           }
                         />
                         {/* Set1.1: nested-page Settings IA. /settings is the index;
-              each section gets its own route. Every section has now
-              migrated (SettingsIndex marks all rows migrated), so the
-              legacy flat page is retired — /settings/legacy redirects
-              to the index for any stale bookmark/deep link. */}
+              each section gets its own route. The old flat page and its
+              /settings/legacy redirect are gone (App1, grill Q28). */}
                         <Route
                           path="/settings"
                           element={
@@ -745,10 +743,6 @@ function SignedInRoutes({
                               <SettingsIndex />
                             </RouteErrorBoundary>
                           }
-                        />
-                        <Route
-                          path="/settings/legacy"
-                          element={<Navigate to="/settings" replace />}
                         />
                         <Route
                           path="/settings/profile"
@@ -762,7 +756,9 @@ function SignedInRoutes({
                             land on the editor that took its reset. */}
                         <Route
                           path="/settings/training"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/run-plan"
@@ -791,7 +787,9 @@ function SignedInRoutes({
                         {/* Trim1 call 7: the rest timer is on Lift plan. */}
                         <Route
                           path="/settings/workout-prefs"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/units-appearance"
@@ -1048,10 +1046,6 @@ function SignedInRoutes({
                             <AdminModeration />
                           </RouteErrorBoundary>
                         }
-                      />
-                      <Route
-                        path="/log"
-                        element={<Navigate to="/food" replace />}
                       />
                       {/* Dev/test-only brand bake-off — absent from production
                       builds (BrandBakeoff is null there). Standalone (no

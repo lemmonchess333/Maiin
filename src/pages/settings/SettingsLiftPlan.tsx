@@ -150,6 +150,7 @@ export default function SettingsLiftPlan() {
         open={editLayoutOpen}
         onClose={() => setEditLayoutOpen(false)}
         profile={profile}
+        programState={programState}
         updateProfile={updateProfile}
         refreshRunSchedule={refreshRunSchedule}
         regenerateProgram={regenerateProgram}

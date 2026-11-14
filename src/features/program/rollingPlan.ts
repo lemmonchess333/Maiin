@@ -26,6 +26,31 @@ export const ROLLING_GOALS: readonly RollingGoal[] = [
   "faster_5k",
 ];
 
+/** Whether a stored value is one of the goals: a plan written by another
+ *  build, or edited by hand, may hold anything. */
+export function isRollingGoal(value: unknown): value is RollingGoal {
+  return (
+    typeof value === "string" &&
+    (ROLLING_GOALS as readonly string[]).includes(value)
+  );
+}
+
+/** Each goal's name, as setup, the run plan editor and Train say it. */
+export const ROLLING_GOAL_NAMES: Record<RollingGoal, string> = {
+  keep_fit: "Keep fit",
+  build_5k: "Build to 5K",
+  build_10k: "Build to 10K",
+  faster_5k: "Get faster at 5K",
+};
+
+/** What each goal's weeks hold, in one line, from `ROLLING_SPECS`. */
+export const ROLLING_GOAL_LINES: Record<RollingGoal, string> = {
+  keep_fit: "Easy weeks with a long run up to 10 km and a light session.",
+  build_5k: "Up to a long run of 8 km, with strides and a short tempo.",
+  build_10k: "Up to a long run of 12 km, with tempo and intervals in turn.",
+  faster_5k: "Intervals, tempo and short reps in turn, and a 5 km time trial.",
+};
+
 /** A quality slot in a rolling week: a session from one of the ladders, a
  *  week of strides alone, or the short reps (`8x400`). */
 export type RollingQuality = "tempo" | "intervals" | "reps" | "strides";
