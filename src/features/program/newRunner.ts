@@ -241,9 +241,15 @@ export function newRunnerTemplate(
       rungs !== null
         ? rungs.includes(t.id)
         : t.type === original.type &&
-          Boolean(t.config.strides) === Boolean(original.config.strides)
+          Boolean(t.config.strides) === Boolean(original.config.strides) &&
+          // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+          Boolean(t.config.pickUps) === Boolean(original.config.pickUps) &&
+          // Run24 (5): nor does a plain long run gain race-pace blocks.
+          !t.config.racePaceBlocks
     ) ??
-    fitting.find((t) => t.type === "easy" && !t.config.strides) ??
+    fitting.find(
+      (t) => t.type === "easy" && !t.config.strides && !t.config.pickUps
+    ) ??
     null
   );
 }
