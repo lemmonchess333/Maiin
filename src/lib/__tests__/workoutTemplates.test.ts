@@ -16,6 +16,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  BASE_LIGHT_TEMPLATE_IDS,
   RUN_TEMPLATES,
   isRaceTemplateId,
   isScheduledRaceRunDay,
@@ -70,8 +71,10 @@ describe("RUN_TEMPLATES", () => {
   });
 
   it("interval templates have interval config", () => {
+    // Run24 (4): a time trial is an interval-type session with its own
+    // shape, one distance at one effort.
     const intervalTemplates = RUN_TEMPLATES.filter(
-      (t) => t.type === "intervals"
+      (t) => t.type === "intervals" && !t.config.timeTrial
     );
     expect(intervalTemplates.length).toBeGreaterThan(0);
     for (const t of intervalTemplates) {
@@ -81,15 +84,85 @@ describe("RUN_TEMPLATES", () => {
     }
   });
 
+  it("time trials carry their distance and no repeats (Run24 (4))", () => {
+    for (const id of ["time_trial_3k", "time_trial_5k"]) {
+      const t = RUN_TEMPLATES.find((template) => template.id === id)!;
+      expect(t.type).toBe("intervals");
+      expect(t.config.timeTrial?.distanceKm).toBeGreaterThan(0);
+      expect(t.config.intervals).toBeUndefined();
+    }
+  });
+
   /* Run20 (1): a fixed 4:30 /km was faster than a 25:00 5K runner's race
      pace. A tempo's pace is the runner's own, given when the plan is
      personalised; the template carries the blocks. */
   it("tempo templates carry their blocks and no fixed pace", () => {
-    const tempoTemplates = RUN_TEMPLATES.filter((t) => t.type === "tempo");
+    // Run24 (5): a progression run is a tempo-type session with an easy
+    // start and a comfortably hard finish in place of blocks.
+    const tempoTemplates = RUN_TEMPLATES.filter(
+      (t) => t.type === "tempo" && !t.config.progression
+    );
     expect(tempoTemplates.length).toBeGreaterThan(0);
     for (const t of tempoTemplates) {
       expect(t.config.targetPace).toBeUndefined();
       expect(t.config.tempo?.workSecs.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("a progression run's start and finish make its minutes (Run24 (5))", () => {
+    const progressions = RUN_TEMPLATES.filter((t) => t.config.progression);
+    expect(progressions.map((t) => t.id)).toEqual([
+      "progression_40",
+      "progression_50",
+      "progression_60",
+    ]);
+    for (const t of progressions) {
+      expect(t.type).toBe("tempo");
+      expect(t.config.targetPace).toBeUndefined();
+      expect(t.config.tempo).toBeUndefined();
+      const { easySec, finishSec } = t.config.progression!;
+      expect(easySec + finishSec, t.id).toBe(t.estimatedDuration * 60);
+      expect(finishSec, t.id).toBeLessThan(easySec);
+    }
+  });
+
+  /* Run24 (5), deep dive D5: repeats by feel carry no pace, and up a hill
+     they are only ever by feel; repeats at a band other than the interval
+     band are interval-type sessions with repeats. */
+  it("says what each session's repeats are run at", () => {
+    const at = (id: string) =>
+      RUN_TEMPLATES.find((t) => t.id === id)!.config.repeatsAt;
+    expect(at("5x1k")).toBeUndefined();
+    expect(at("4x4min")).toBeUndefined();
+    expect(at("8x200")).toBe("repetition");
+    expect(at("5k_pace_5x800")).toBe("5k");
+    expect(at("sharpener_5k")).toBe("5k");
+    expect(at("10k_pace_3x2k")).toBe("10k");
+    expect(at("sharpener_10k")).toBe("10k");
+    expect(at("hills_8x60s")).toBe("feel");
+    expect(at("fartlek_30")).toBe("feel");
+    for (const t of RUN_TEMPLATES) {
+      if (t.config.uphill) expect(t.config.repeatsAt, t.id).toBe("feel");
+      if (t.config.repeatsAt) {
+        expect(t.type, t.id).toBe("intervals");
+        expect(t.config.intervals?.reps, t.id).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("times repeats by time to their minutes, within the half minute (Run24 (5))", () => {
+    for (const t of RUN_TEMPLATES) {
+      const iv = t.config.intervals;
+      if (!iv?.workDuration) continue;
+      const seconds =
+        (iv.warmupDuration ?? 0) +
+        (iv.cooldownDuration ?? 0) +
+        iv.reps * iv.workDuration +
+        (iv.reps - 1) * iv.restDuration;
+      expect(
+        Math.abs(seconds - t.estimatedDuration * 60),
+        t.id
+      ).toBeLessThanOrEqual(30);
     }
   });
 
@@ -172,6 +245,16 @@ describe("descriptions in plain words (Run21 (2))", () => {
       expect(t.description, t.id).not.toMatch(
         /aerobic|threshold|economy|VO2|lactate/i
       );
+    }
+  });
+});
+
+describe("the base's light sessions (Run24 (5))", () => {
+  it("names templates that exist, each a quality session", () => {
+    for (const id of BASE_LIGHT_TEMPLATE_IDS) {
+      const template = RUN_TEMPLATES.find((t) => t.id === id);
+      expect(template, id).toBeDefined();
+      expect(["tempo", "intervals"]).toContain(template!.type);
     }
   });
 });

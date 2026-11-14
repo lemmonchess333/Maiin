@@ -40,9 +40,10 @@ const VALID_RUN_STATUSES = new Set([
 ]);
 
 // The retired "structured" mode (App1 Q25) is refused, on the profile and
-// on the plan: free running has no plan.
+// on the plan. Free running holds a plan only with no race date
+// (`rolling`, Run24 (3)).
 const VALID_RUN_MODES = new Set(["freeform", "race_prep", "starter"]);
-const VALID_RUN_PLAN_MODES = new Set(["race_prep", "starter"]);
+const VALID_RUN_PLAN_MODES = new Set(["race_prep", "starter", "rolling"]);
 
 /** A starter plan's stages (Run9's starter goal: STARTER_STAGES in
  *  src/features/program/starterPlan.ts). */

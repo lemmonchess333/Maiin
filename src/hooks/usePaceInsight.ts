@@ -5,7 +5,12 @@ import { auth } from "@/lib/firebase";
 import { useSubscription } from "@/lib/subscription";
 import { useRunningStats } from "./useRunningStats";
 import { benchmarkEfforts, type EffortRun } from "@/lib/benchmarkEfforts";
-import { resolvePaceInsight, type PaceInsight } from "@/lib/runPaces";
+import {
+  resolveFirstPaces,
+  resolvePaceInsight,
+  type PaceInsight,
+} from "@/lib/runPaces";
+import { paceUpdateLocked } from "@/lib/paceUpdateAccess";
 import { logger } from "@/lib/logger";
 
 /**
@@ -17,10 +22,12 @@ import { logger } from "@/lib/logger";
  * Since Pgm8 R1 the efforts are a race, a time trial or a tempo's work, read
  * by `benchmarkEfforts` as for the benchmark the app derives.
  *
- * The run summary offers it to every account (Run24 (4), deep dive D4):
- * a plan on stale paces is a correctness problem, not a premium feature.
- * The continuous form, `usePaceInsight` on Settings, stays Pro (§10), and
- * there free users get `insight: null`.
+ * The run summary works it out for every account (Run24 (4), deep dive
+ * D4). Slower paces are every account's to take; faster ones are Pro
+ * (owner, 13 November 2026: `paceUpdateLocked`), so a free account sees a
+ * faster offer as `locked` and cannot accept it. The continuous form,
+ * `usePaceInsight` on Settings, stays Pro (§10), and there free users get
+ * `insight: null`.
  *
  * `usePaceInsightFromRuns` is the reusable controller — it consumes an
  * already-loaded run list so a caller (RunSummary) that already queried the
@@ -36,6 +43,8 @@ export interface PaceInsightRun extends EffortRun {
 
 export interface PaceInsightController {
   insight: PaceInsight | null;
+  /** The insight is faster paces on a free account: shown, Pro to take. */
+  locked: boolean;
   accept: () => Promise<PaceInsightAcceptResult>;
   dismiss: () => void;
 }
@@ -99,12 +108,17 @@ export function usePaceInsightFromRuns(
   const runFitness = profile?.runFitness ?? null;
 
   const insight = useMemo<PaceInsight | null>(() => {
+    // Run24 (4): the run summary offers a runner with no confirmed paces
+    // their first, after the plan's time trial or another effort; taking
+    // them is Pro's (`paceUpdateLocked`).
+    const firstPaces =
+      everyAccount && (!runFitness || runFitness.pendingConfirmation === true);
     if (
       !enabled ||
       !(isPro || everyAccount) ||
       loading ||
       !profileIsCurrent ||
-      !runFitness
+      (!runFitness && !firstPaces)
     ) {
       return null;
     }
@@ -121,7 +135,9 @@ export function usePaceInsightFromRuns(
       )
     );
 
-    const next = resolvePaceInsight(runFitness, efforts);
+    const next = firstPaces
+      ? resolveFirstPaces(runFitness, efforts)
+      : resolvePaceInsight(runFitness, efforts);
     if (!next) return null;
     return dismissedVdot !== null &&
       Math.round(next.suggestedVdot) === Math.round(dismissedVdot)
@@ -139,8 +155,10 @@ export function usePaceInsightFromRuns(
     mountedAtMs,
   ]);
 
+  const locked = insight !== null && paceUpdateLocked(insight.direction, isPro);
+
   const accept = useCallback(async (): Promise<PaceInsightAcceptResult> => {
-    if (!insight || !user) return "failure";
+    if (!insight || !user || locked) return "failure";
     const writeUid = user.uid;
     const { benchmark, vdot, sourceRunId, sourceRunAt } = insight.suggested;
 
@@ -173,7 +191,7 @@ export function usePaceInsightFromRuns(
       logger.error("[usePaceInsight] accept failed", error);
       return "failure";
     }
-  }, [insight, updateProfile, user]);
+  }, [insight, locked, updateProfile, user]);
 
   const dismiss = useCallback(() => {
     if (!insight || !user) return;
@@ -182,7 +200,7 @@ export function usePaceInsightFromRuns(
     writeString(dismissKey(user.uid), String(insight.suggestedVdot));
   }, [insight, user]);
 
-  return { insight, accept, dismiss };
+  return { insight, locked, accept, dismiss };
 }
 
 export function usePaceInsight(): PaceInsightController {

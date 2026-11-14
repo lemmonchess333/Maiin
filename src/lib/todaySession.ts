@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/lib/auth";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
 import { plannedIntervalPaceSPerKm } from "./intervalRest";
 import type {
   ProgramState,
@@ -497,18 +498,21 @@ function restDayOffer(
         muscleGroups: muscleGroupsOf(workout),
       };
   }
+  // A plan with no race date is a plan here, though the profile says free
+  // running (Run24 (3)).
+  const runMode = runModeWithPlan(profile, programState);
   if (
-    profile?.runMode === "freeform" &&
-    (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
+    runMode === "freeform" &&
+    (profile?.athleteType === "Runner" || profile?.athleteType === "Hybrid")
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }
   // A race plan's rest day must stay rest, and so must the starter goal's
-  // (Run9). It cannot lead with a food prompt or offer an unscheduled run
-  // to satisfy activation.
+  // (Run9) and a plan with no race date's. It cannot lead with a food
+  // prompt or offer an unscheduled run to satisfy activation.
   const version2RaceRest =
     isActivationJourneyV2(profile) &&
-    (profile?.runMode === "race_prep" || profile?.runMode === "starter");
+    (runMode === "race_prep" || runMode === "starter" || runMode === "rolling");
   if (day.firstMeal && !version2RaceRest) return { kind: "first-meal" };
   return {
     kind: "rest",

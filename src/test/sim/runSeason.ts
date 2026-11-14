@@ -317,6 +317,7 @@ export function runnerStartingPoint(
     answers: {
       runFrequency?: string;
       runMode?: string;
+      rollingGoal?: string | null;
     };
     running?: RunHabits;
   },
@@ -324,9 +325,10 @@ export function runnerStartingPoint(
 ): RunningBaseline | null {
   const runner = persona.running?.runner;
   const frequency = persona.answers.runFrequency;
+  // Setup asks it with a race, and with a plan with no race date (Run24 (3)).
   if (
     !runner ||
-    persona.answers.runMode !== "race_prep" ||
+    (persona.answers.runMode !== "race_prep" && !persona.answers.rollingGoal) ||
     (frequency !== "occasional" && frequency !== "regular")
   )
     return null;

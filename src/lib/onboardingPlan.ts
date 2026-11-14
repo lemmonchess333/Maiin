@@ -29,6 +29,7 @@ export function buildOnboardingPlan(
     | "raceDistance"
     | "raceTargetDate"
     | "raceEventName"
+    | "rollingGoal"
     | "injuries"
     | "weightKg"
     | "sessionMinutes"
@@ -53,10 +54,16 @@ export function buildOnboardingPlan(
       draft.raceTargetDate && draft.raceTargetDate >= currentDate
     ),
   });
-  // A race plan needs at least two run days a week (Pgm7 A7); the starter
-  // goal takes two or three (Run9).
+  // Run24 (3): free running may hold a plan with no race date; someone who
+  // does not run has none.
+  const rollingGoal =
+    runMode === "freeform" && draft.runFrequency !== "none"
+      ? (draft.rollingGoal ?? null)
+      : null;
+  // A race plan, and a plan with no race date, need at least two run days
+  // a week (Pgm7 A7); the starter goal takes two or three (Run9).
   const weeklyRunDays =
-    runMode === "freeform"
+    runMode === "freeform" && !rollingGoal
       ? 0
       : runMode === "starter"
         ? Math.min(STARTER_MOST_RUNS_A_WEEK, Math.max(2, draft.weeklyRunDays))
@@ -82,6 +89,7 @@ export function buildOnboardingPlan(
       : {}),
     preferredSplit: "auto",
     runMode,
+    rollingGoal,
     weeklyRunDays,
     runningBaseline: runningPreferences?.runningBaseline,
     runTimeLimits: runningPreferences?.runTimeLimits,

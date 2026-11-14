@@ -250,7 +250,6 @@ const routes = [
   ["settings_support_legal", "/settings/support-legal", false],
   ["settings_account", "/settings/account", false],
   ["settings_recently_deleted", "/settings/recently-deleted-meals", false],
-  ["settings_legacy", "/settings/legacy", false],
   ["upgrade", "/upgrade", false],
   ["admin_moderation", "/admin/moderation", false],
   ["run", "/run", false],

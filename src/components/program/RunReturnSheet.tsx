@@ -1,6 +1,6 @@
 /**
  * The free runner's welcome back, offered from two weeks away
- * (`assessRunReturn`). A race plan's welcome back is the fell-behind sheet
+ * (`runReturnFrom`, the running half of the one return check). A race plan's welcome back is the fell-behind sheet
  * in its welcome-back register, which can rebuild the plan; free running
  * has no plan to change, so this offers the one thing that helps, an easy
  * first run, and nothing else.

@@ -14,7 +14,7 @@ export const PRO_INCLUDES: readonly string[] = [
   `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,
   "A calorie target that adapts to you",
   "Macros that shift with your training",
-  "Running paces that update from your races and tempo runs",
+  "Running paces that speed up as your races and sessions show you’re fitter",
   "Readiness from your sleep and heart rate in Apple Health",
   "Charts older than 3 months, your training load and your score’s details",
   "Half and full marathon plans, after their first week",

@@ -11,6 +11,7 @@ import {
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
+import { shorteningRank } from "@/lib/planDeloadWeek";
 import { firstFullWeekKey } from "./runPlanTiming";
 import { plannedRunMinutes } from "./runTimeLimits";
 import type { ScheduledRunDay } from "./programTypes";
@@ -231,7 +232,7 @@ const RECENT_REPORT_WEEKS = 4;
 
 /** How much of a rung's minutes a run has to take to have done it: 95%, a
  *  Tropos heuristic for a pace's day-to-day spread. */
-const DONE_RUNG_SHARE = 0.95;
+export const DONE_RUNG_SHARE = 0.95;
 
 /**
  * Fit a week of generated runs to how far the person's running has climbed
@@ -325,12 +326,23 @@ export function fitWeekToRunningBaseline(
         t.type !== "race" &&
         !isRunWalkTemplateId(t.id) &&
         !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
+        // A time trial is fitted to a shorter trial, never to an interval
+        // session, nor an interval session to a trial (Run24 (4)).
+        Boolean(t.config?.timeTrial) === Boolean(original.config?.timeTrial) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides
-          : t.type === original.type &&
+          : shorteningRank(original, t) !== null &&
             Boolean(t.config?.strides) === Boolean(original.config?.strides))
-    ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
+    ).sort(
+      (a, b) =>
+        // Run24 (5): the same kind of work, its own ladder first.
+        (onlyEasy
+          ? 0
+          : shorteningRank(original, b)! - shorteningRank(original, a)!) ||
+        minutes(b) - minutes(a) ||
+        a.id.localeCompare(b.id)
+    );
     return (
       fitting[0] ??
       RUN_TEMPLATES.filter(

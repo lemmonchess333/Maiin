@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 /**
- * The run return's read: what Home asks for, and when it may answer.
+ * The one return check's read (App1 Q35): what Home asks for, and when it
+ * may answer.
  *
- * The rule is `runReturn.test.ts`'s. What this pins is the read around it,
+ * The rules are `runReturn.test.ts`'s, `liftLayoff.test.ts`'s and
+ * `trainingReturn.test.ts`'s. What this pins is the read around them,
  * against the one Firestore fake (ADR-0009):
  *   - a lift-only plan reads no runs at all;
  *   - a runner's last run is read through the saved-run reader, the same
@@ -33,7 +35,8 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
 
-import { useRunReturn } from "../useRunReturn";
+import { useTrainingReturn } from "../useTrainingReturn";
+import type { DatedWorkout } from "../liftLayoff";
 
 const RUNS = "users/u1/runs";
 
@@ -63,21 +66,26 @@ const lifter = {
   weekSchedule: [{ day: 1, type: "lift" }],
 } as UserProfile;
 
+const NO_LIFTS: DatedWorkout[] = [];
+
+/** The run side of the check, as Home reads it. */
 function render(profile: UserProfile, programLoading = false) {
-  return renderHook(() =>
-    useRunReturn({
-      profile,
-      programState: null,
-      programLoading,
-      todayKey: localDateString(new Date()),
-    })
+  return renderHook(
+    () =>
+      useTrainingReturn({
+        profile,
+        programState: null,
+        programLoading,
+        todayKey: localDateString(new Date()),
+        workouts: NO_LIFTS,
+      }).run
   );
 }
 
 const runReads = () =>
   readLog().filter((r) => r.op === "onSnapshot" && r.path === RUNS).length;
 
-describe("useRunReturn", () => {
+describe("useTrainingReturn — the run side", () => {
   beforeEach(() => resetFirestore());
 
   it("offers a free runner the easy run, keyed on their last run", async () => {
@@ -130,17 +138,73 @@ describe("useRunReturn", () => {
     seedRunDaysAgo("last", 30);
     const { result, rerender } = renderHook(
       ({ loading }) =>
-        useRunReturn({
+        useTrainingReturn({
           profile: runner,
           programState: null,
           programLoading: loading,
           todayKey: localDateString(new Date()),
-        }),
+          workouts: NO_LIFTS,
+        }).run,
       { initialProps: { loading: true } }
     );
     await waitFor(() => expect(runReads()).toBe(1));
     expect(result.current.offer).toBeNull();
     rerender({ loading: false });
     await waitFor(() => expect(result.current.offer).toBe("easy-run"));
+  });
+});
+
+describe("useTrainingReturn — both sports from one read", () => {
+  beforeEach(() => resetFirestore());
+
+  const liftedDaysAgo = (n: number): DatedWorkout => ({
+    date: dayBefore(n),
+    exercises: [{ sets: [{}, {}, {}] }],
+  });
+  /** A seven-day week with these days, the rest rest. */
+  const week = (days: Record<number, "lift" | "run">) =>
+    Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: days[day] ?? "rest",
+    })) as UserProfile["weekSchedule"];
+  const hybrid = {
+    athleteType: "Hybrid",
+    runMode: "freeform",
+    weekSchedule: week({ 1: "lift", 3: "run" }),
+  } as UserProfile;
+
+  it("a hybrid who stopped lifting but kept running: the weights, not the running", async () => {
+    seedRunDaysAgo("last", 2);
+    const lifts = [liftedDaysAgo(20)];
+    const { result } = renderHook(() =>
+      useTrainingReturn({
+        profile: hybrid,
+        programState: null,
+        programLoading: false,
+        todayKey: localDateString(new Date()),
+        workouts: lifts,
+      })
+    );
+    await waitFor(() => expect(result.current.run.daysAway).toBe(2));
+    expect(result.current.run.offer).toBeNull();
+    expect(result.current.lift.welcomeBack).toBe(true);
+    expect(result.current.lift.daysAway).toBe(20);
+  });
+
+  it("a plan with no lifting is never offered the weights, however old the last lift", async () => {
+    seedRunDaysAgo("last", 2);
+    const lifts = [liftedDaysAgo(60)];
+    const { result } = renderHook(() =>
+      useTrainingReturn({
+        profile: { ...runner, weekSchedule: week({ 3: "run" }) },
+        programState: null,
+        programLoading: false,
+        todayKey: localDateString(new Date()),
+        workouts: lifts,
+      })
+    );
+    await waitFor(() => expect(result.current.run.daysAway).toBe(2));
+    expect(result.current.lift.welcomeBack).toBe(false);
+    expect(result.current.lift.daysAway).toBeNull();
   });
 });

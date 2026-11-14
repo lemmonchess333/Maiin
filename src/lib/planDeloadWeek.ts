@@ -1,5 +1,5 @@
 import type { ScheduledRunDay } from "@/features/program/programTypes";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -54,6 +54,17 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
   ["easy_30_strides", "easy_40_strides", "easy_50_strides"],
   ["tempo_20", "tempo_30", "tempo_40"],
   ["4x1k", "5x1k", "6x1k"],
+  // Run24 (5): the session library's families, each a smaller dose of
+  // itself. The base's light sessions, the taper's sharpeners and the time
+  // trials are single sessions with no rung under them, so they are in no
+  // ladder.
+  ["cruise_3x8", "cruise_3x10"],
+  ["progression_40", "progression_50", "progression_60"],
+  ["6x2min", "5x3min", "4x4min"],
+  ["8x200", "10x200", "12x200"],
+  ["5k_pace_4x800", "5k_pace_5x800", "5k_pace_6x800"],
+  ["10k_pace_3x2k", "10k_pace_4x2k"],
+  ["hills_6x60s", "hills_8x60s", "hills_10x60s"],
   [
     "long_6k",
     "long_8k",
@@ -73,6 +84,69 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
     "long_32k",
   ],
 ];
+
+/**
+ * Run24 (5): a tempo or interval session's ladder, for a new runner's
+ * minutes (`newRunnerTemplate`): its own family's rungs, so a shorter
+ * session is a smaller dose of the same one. A quality session in no ladder
+ * is its own only rung, with nothing under it. Null for any other run.
+ */
+export function qualityRungsFor(
+  template: Pick<RunTemplate, "id" | "type">
+): readonly string[] | null {
+  if (template.type !== "tempo" && template.type !== "intervals") return null;
+  return (
+    DELOAD_LADDERS.find((ladder) => ladder.includes(template.id)) ?? [
+      template.id,
+    ]
+  );
+}
+
+/**
+ * Run24 (5): what a quality session's work is, for the fits that shorten
+ * one (a time limit, the running starting point): threshold blocks (a
+ * tempo, cruise intervals), a progression run, repeats at the interval
+ * band, at repetition pace or a race's, hills, a fartlek, a taper's
+ * sharpener, or a time trial. Null for a run that is not a tempo or
+ * intervals.
+ */
+function workKindOf(
+  template: Pick<RunTemplate, "id" | "type" | "config">
+): string | null {
+  if (template.type !== "tempo" && template.type !== "intervals") return null;
+  const { config } = template;
+  // A time trial is fitted to a shorter trial (Run24 (4)).
+  if (config.timeTrial) return "trial";
+  if (config.taper)
+    return `taper:${config.tempo ? "threshold" : config.repeatsAt}`;
+  if (config.progression) return "progression";
+  if (config.tempo) return "threshold";
+  if (config.uphill) return "hills";
+  if (config.repeatsAt) return `repeats:${config.repeatsAt}`;
+  return config.intervals ? "interval" : `other:${template.id}`;
+}
+
+/**
+ * Run24 (5): whether a fit may shorten `original` to `candidate`, and how
+ * much it would rather: 1 for a rung of the session's own ladder, 0 for
+ * another session of the same kind of work (4 × 4 minutes cut to 8 ×
+ * 400 m, both repeats at the interval band; cruise intervals to a tempo),
+ * null for anything else. So no fit turns a hill session into repeats at a
+ * pace, a progression run into a tempo, or cruise intervals into a time
+ * trial, nor a taper's sharpener into a build session or back; a session
+ * with nothing of its own kind short enough is given an easy run. A run
+ * that is not a tempo or intervals keeps its type's rule.
+ */
+export function shorteningRank(
+  original: Pick<RunTemplate, "id" | "type" | "config">,
+  candidate: Pick<RunTemplate, "id" | "type" | "config">
+): 0 | 1 | null {
+  if (candidate.type !== original.type) return null;
+  const kind = workKindOf(original);
+  if (kind === null) return 0;
+  if (workKindOf(candidate) !== kind) return null;
+  return qualityRungsFor(original)!.includes(candidate.id) ? 1 : 0;
+}
 
 /** One planned change: this run day drops from one template to the next
  *  rung down. Shaped like `EasySwap` (adjustWeek.ts) so both feed

@@ -1,4 +1,4 @@
-import { intervalRestSeconds } from "./intervalRest";
+import { intervalRestSeconds, plannedRepeatPace } from "./intervalRest";
 import type { RunTemplate } from "./workoutTemplates";
 
 type DoseTemplate = Pick<RunTemplate, "type" | "estimatedDuration" | "config">;
@@ -34,13 +34,16 @@ export function runMinutesLine(
   return `about ${Math.round((km * easyPaceSPerKm) / 60 / 5) * 5} min`;
 }
 
-/** An interval session's minutes at `paceSPerKm`, rounded to 5; null
- *  without intervals or a pace. */
+/** An interval session's minutes at the runner's interval pace, its
+ *  repeats at their own pace (`plannedRepeatPace`, Run24 (5)), rounded to
+ *  5; null without intervals or a pace, and for repeats run by feel, whose
+ *  minutes are the template's. */
 function intervalMinutes(
   template: DoseTemplate,
-  paceSPerKm: number | null | undefined
+  intervalPaceSPerKm: number | null | undefined
 ): number | null {
   const iv = template.config.intervals;
+  const paceSPerKm = plannedRepeatPace(template, intervalPaceSPerKm);
   if (!iv || !paceSPerKm || !(paceSPerKm > 0)) return null;
   const rep =
     iv.workDuration ??
@@ -50,7 +53,8 @@ function intervalMinutes(
     (iv.warmupDuration ?? 0) +
     (iv.cooldownDuration ?? 0) +
     iv.reps * rep +
-    Math.max(0, iv.reps - 1) * intervalRestSeconds(iv, paceSPerKm);
+    Math.max(0, iv.reps - 1) *
+      intervalRestSeconds(iv, paceSPerKm, template.config.repeatsAt);
   return Math.round(seconds / 60 / 5) * 5;
 }
 

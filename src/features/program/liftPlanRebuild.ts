@@ -6,6 +6,7 @@
  * build a plan from different readings of the same setup.
  */
 
+import { rollingGoalOf } from "./programMaintenance";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import {
@@ -132,8 +133,12 @@ export function liftPlanInput({
   recentRuns: readonly DatedRun[] | null;
   rebuildLiftDays?: boolean;
 }): PlanBuilderInput {
+  // Free running has no run days, unless it holds a plan with no race date
+  // (Run24 (3)), which buildPlan keeps through a lifting save.
   const effectiveRunDays =
-    saved.runMode === "freeform" ? 0 : saved.weeklyRunDays;
+    saved.runMode === "freeform" && !rollingGoalOf(programState, profile)
+      ? 0
+      : saved.weeklyRunDays;
   return {
     // Blk2 / H2: the STANDING focus, never a block's; `buildPlan` pins
     // `programState.primaryGoal` from a carried block itself.

@@ -339,7 +339,8 @@ const STEPPED_TAPER: PlanVariant = {
       const phase = getPhaseForWeek(
         plan.currentWeek,
         plan.totalWeeks,
-        distance
+        distance,
+        plan.shortBase
       );
       const runs = state.runDays ?? [];
       const weekKey = runs[0]?.weekKey;

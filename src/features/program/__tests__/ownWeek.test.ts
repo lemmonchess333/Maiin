@@ -84,8 +84,12 @@ describe("a regular runner on 330 minutes a week, a half 16 weeks out", () => {
 
   it("starts from their own long run and weekday runs", () => {
     expect(longKm(own.weeks[0])).toBe(20);
-    expect(easyMinutes(own.weeks[0])).toEqual([50, 50, 50, 50]);
-    expect(minutes(own.weeks[0], 330)).toBeGreaterThanOrEqual(0.9 * 330);
+    // Its fifth run is the base's light session (Run24 (5)).
+    expect(easyMinutes(own.weeks[0])).toEqual([50, 50, 50]);
+    expect(own.weeks[0].map((run) => run.templateId)).toContain("fartlek_30");
+    // 0.85, not 0.9: the half-hour light session holds a run of 50 minutes'
+    // place (Run24 (5)), 290 of their 330.
+    expect(minutes(own.weeks[0], 330)).toBeGreaterThanOrEqual(0.85 * 330);
     expect(longKm(plain.weeks[0])).toBe(10);
   });
 
@@ -105,13 +109,36 @@ describe("a regular runner on 330 minutes a week, a half 16 weeks out", () => {
     }
   });
 
-  it("keeps the race and the plan's quality sessions", () => {
-    const quality = (weeks: ScheduledRunDay[][]) =>
-      weeks
-        .flat()
-        .filter((run) => run.type === "tempo" || run.type === "intervals")
-        .map((run) => run.templateId);
-    expect(quality(own.weeks)).toEqual(quality(plain.weeks));
+  it("keeps the race, and its quality sessions start two weeks sooner", () => {
+    // A build's quality: not the base's light sessions (Run24 (5)).
+    const qualityIn = (week: ScheduledRunDay[]) =>
+      week.filter(
+        (run) =>
+          (run.type === "tempo" || run.type === "intervals") &&
+          !/^(fartlek_30|hills_6x30s)$/.test(run.templateId)
+      );
+    const firstQuality = (weeks: ScheduledRunDay[][]) =>
+      weeks.findIndex((week) => qualityIn(week).length > 0);
+    // Run24 (2): a regular runner above the plan's base gets a shorter
+    // base, so the build, and its first tempo, is week 5 (was week 7).
+    expect(own.shortBase).toBe(true);
+    expect(plain.shortBase).toBe(false);
+    expect(firstQuality(own.weeks)).toBe(4);
+    expect(firstQuality(plain.weeks)).toBe(6);
+    // From there every week keeps its quality, and a regular runner on five
+    // run days holds a second session in the build (Run24 (5)), which the
+    // plan without a starting point does not know to.
+    own.weeks.forEach((week, i) =>
+      expect(qualityIn(week).length, `week ${i + 1}`).toBeGreaterThanOrEqual(
+        qualityIn(plain.weeks[i]).length
+      )
+    );
+    expect(
+      own.weeks.some(
+        (week, i) =>
+          qualityIn(week).length === 2 && qualityIn(plain.weeks[i]).length === 1
+      )
+    ).toBe(true);
     expect(own.weeks.at(-1)!.find((run) => run.type === "race")).toEqual(
       plain.weeks.at(-1)!.find((run) => run.type === "race")
     );

@@ -1,5 +1,4 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
-import { recentPace } from "@/features/program/layoffDetection";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -46,6 +45,7 @@ import {
   parseLocalDate,
 } from "./dateHelpers";
 import {
+  firstBuildWeek,
   getRaceMinWeeks,
   getRaceFloorWeeks,
   getRacePhaseLabel,
@@ -439,6 +439,8 @@ export function getRaceGoalPlannerState(
       newRunnerUntil: input.newRunnerUntil,
       planTotalWeeks: continued?.totalWeeks,
       leadInWeek: continued?.leadInWeek,
+      blockInputs: continued?.blockInputs,
+      shortBase: continued?.shortBase,
       recentRuns: input.recentRuns,
     });
   // The week the save plans (Run19): from today, over a continuing plan's
@@ -511,17 +513,25 @@ export function getRaceGoalPlannerState(
   const firstWeekPhase = getRacePhaseLabel(
     blockWeeks - plan.totalWeeks,
     blockWeeks,
-    distance
+    distance,
+    plan.shortBase
   );
 
-  const lower = distanceLabel.toLowerCase();
+  // In a sentence: "5K", never "5k".
+  const lower = RACE_IN_A_SENTENCE[distance];
+  /* Run24 (7): what gives the plan time. A 5K is the shortest race there
+     is, so only a later one. */
+  const givesItTime =
+    distance === "5k"
+      ? "A later race gives it time."
+      : "A later race or a shorter one gives it time.";
   let statusTitle: string;
   let statusDescription: string;
   let ctaLabel: string;
   // C: the weeks are only half of the runway; the other half is where the
   // long run starts from.
   const shortLine = shortOfRace
-    ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. A later race or a shorter one gives it time.`
+    ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. ${givesItTime}`
     : null;
   // D8: a plan without the weeks to build says what its weeks hold, and,
   // when the race is out of its reach, that first.
@@ -577,7 +587,7 @@ export function getRaceGoalPlannerState(
       ? "No tempo or intervals."
       : "Fewer quality sessions than a full plan.";
   const far = outOfReach
-    ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. A later race or a shorter one gives it time.`
+    ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. ${givesItTime}`
     : null;
   const longest = distanceWords(held.longestKm, unit);
   const holdLine =
@@ -591,18 +601,27 @@ export function getRaceGoalPlannerState(
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
     /* Run24 (1): setup states the peak, in time too where a pace gives it:
-       the confirmed one, else the recent runs'. */
+       the confirmed one, else the recent runs' the block is sized at
+       (`RaceBlockInputs`). */
     const peakPace =
-      input.easyPaceSPerKm ??
-      (input.recentRuns ? recentPace(input.recentRuns, currentDate) : null);
+      input.easyPaceSPerKm ?? plan.blockInputs?.runsPaceSPerKm ?? null;
     const peak = longestBeforeRace(plan.weeks, peakPace, unit);
     const peakLine =
       peak && held.longestKm > 0
         ? ` Your longest run will be ${peak.reads}${peakPace ? `, about ${aboutTime(peak.minutes)}` : ""}.`
         : "";
+    /* Run24 (2): a regular runner above the plan's base gets a shorter
+       base, and setup says where the build starts and why. */
+    const buildFrom = plan.shortBase
+      ? firstBuildWeek(blockWeeks, distance, true)
+      : null;
+    const shortBaseLine =
+      buildFrom !== null && input.runningBaseline
+        ? ` Your build starts in week ${buildFrom + 1}, since you already run ${input.runningBaseline.weeklyMinutes} minutes a week.`
+        : "";
     statusDescription =
       shortLine ??
-      `Full Base → Build → Taper → Race progression for your ${lower}.${peakLine}`;
+      `Full Base → Build → Taper → Race progression for your ${lower}.${shortBaseLine}${peakLine}`;
     ctaLabel = "Save race plan";
   } else if (status === "compressed") {
     statusTitle = "Short runway";
@@ -621,7 +640,7 @@ export function getRaceGoalPlannerState(
     statusDescription = far
       ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
       : // Run24 (7): the honest sentence and the alternatives first.
-        `Too soon for a full ${lower} build. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
+        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 

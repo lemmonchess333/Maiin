@@ -11,7 +11,11 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
-import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  isTimeTrialTemplateId,
+  RUN_TEMPLATES,
+} from "@/lib/workoutTemplates";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export interface SessionExplainerInput {
@@ -24,6 +28,9 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)), so the
+   *  phase the words and the week label name is the plan's own. */
+  shortBase?: boolean | null;
   /** Whether the run's week holds a tempo or intervals session
    *  (`weekHoldsQuality`). The build's easy day and long run name the
    *  quality sessions only when it does: a returning runner's weeks hold none
@@ -110,7 +117,8 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   const phase = getPhaseForWeek(
     input.currentWeek,
     input.totalWeeks,
-    input.distance as "5k" | "10k" | "half" | "marathon"
+    input.distance as "5k" | "10k" | "half" | "marathon",
+    input.shortBase
   );
   return {
     purpose,
@@ -149,7 +157,12 @@ export function runSessionExplainer(
   ) {
     return null;
   }
-  const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);
+  const phase = getPhaseForWeek(
+    currentWeek,
+    totalWeeks,
+    distance,
+    input.shortBase
+  );
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 
@@ -194,6 +207,27 @@ export function runSessionExplainer(
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
 
+  // Run24 (4): the plan's benchmark session.
+  if (isTimeTrialTemplateId(input.templateId)) {
+    return "It finds your paces from what you can run now, and Tropos offers them after it.";
+  }
+  // Run24 (5): the session library's own reasons, where the type's would
+  // say something the session isn't.
+  const config = RUN_TEMPLATES.find((t) => t.id === templateId)?.config;
+  if (config?.progression) {
+    return "It finishes faster than it starts: the easy minutes build endurance, and the finish teaches you to run strong on tired legs.";
+  }
+  if (config?.uphill) {
+    return phase === "base"
+      ? "Short hills build strength and a quicker stride, a light start on faster running before the harder sessions."
+      : "Hill repeats build strength and power for running. The jog back down is part of the session.";
+  }
+  if (config?.repeatsAt === "feel") {
+    return "A light fartlek wakes up faster running by feel, at little cost, before the harder sessions start.";
+  }
+  if (config?.repeatsAt === "5k" || config?.repeatsAt === "10k") {
+    return "It teaches your legs what race pace feels like, so it’s familiar when it counts.";
+  }
   // Base / build.
   if (type === "long") {
     if (phase === "base") {

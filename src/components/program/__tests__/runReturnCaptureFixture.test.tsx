@@ -16,7 +16,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import RunReturnSheet from "../RunReturnSheet";
-import { assessRunReturn } from "@/features/program/runReturn";
+import { assessTrainingReturn } from "@/features/program/trainingReturn";
 import { localDateString } from "@/lib/dateHelpers";
 
 const ROOT = process.cwd();
@@ -64,11 +64,13 @@ describe("run-return capture fixture", () => {
 
   for (const daysAway of [staged, staged + 1]) {
     it(`is greeted with the easy run at ${daysAway} days away`, () => {
-      const assessment = assessRunReturn({
-        plan: "free",
+      const assessment = assessTrainingReturn({
+        workouts: [],
         runs: [{ date: daysAgoKey(daysAway), distance: 5000, duration: 1725 }],
         todayKey: localDateString(),
-      });
+        lifting: false,
+        running: "free",
+      }).run;
       expect(assessment.offer).toBe("easy-run");
       expect(assessment.daysAway).toBe(daysAway);
     });

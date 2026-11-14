@@ -27,7 +27,7 @@ import {
 } from "./layoffDetection";
 
 /** How many recent runs to inspect. See "why the cap is safe" above. Home's
- *  run return reads the same window (`useRunReturn`), so the welcome back
+ *  return check reads the same window (`useTrainingReturn`), so the welcome back
  *  it shows and the re-entry plan a rebuild makes measure the same runs. */
 export const RECENT_RUN_SCAN_LIMIT = 20;
 

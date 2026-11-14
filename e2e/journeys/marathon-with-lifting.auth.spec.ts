@@ -3,9 +3,12 @@
  *
  * One person sets up a marathon 52 weeks away with three lift days at the
  * experienced level, then does every planned run and every lift as the
- * weeks come. The journey reads Train where a race block turns:
+ * weeks come. The race block is the plan's last 20 weeks (Run24 (3), D9);
+ * the weeks before it are a rolling base with a light session most weeks.
+ * The journey reads Train where a race block turns:
  *
- * - the first build week, the first to hold a quality session;
+ * - the first build week, the first of the block to hold a quality
+ *   session, the rolling base before the block having held some;
  * - a step-back week, whose long run is shorter than the week before's and
  *   where the lifts take their lighter week (Lift4 (9));
  * - the taper, with less running than the block's biggest week;
@@ -42,14 +45,21 @@ import { emulatorAdmin } from "../helpers/realCallables";
 import { resetNodeClock } from "../helpers/nodeClock";
 import { serverOnRunCreated } from "../helpers/serverSteps";
 import { nextUpIndex } from "../../src/features/program/nextUpCursor";
-import { getPhaseForWeek } from "../../src/features/program/runPlanTiming";
+import {
+  getPhaseForWeek,
+  raceBlockStart,
+} from "../../src/features/program/runPlanTiming";
 import type {
   Experience,
   ProgramState,
   ScheduledRunDay,
 } from "../../src/features/program/programTypes";
 import { liftWeekLabel } from "../../src/lib/liftWeekLabel";
-import { RUN_TEMPLATES } from "../../src/lib/workoutTemplates";
+import {
+  BASE_LIGHT_TEMPLATE_IDS,
+  isTimeTrialTemplateId,
+  RUN_TEMPLATES,
+} from "../../src/lib/workoutTemplates";
 import {
   LIFT_WEEK_BANNER,
   RUN_RECOVERY,
@@ -76,19 +86,34 @@ function planWeek(state: ProgramState, monday: string) {
   const runs = (state.runDays ?? []).filter(
     (run) => run.date && run.date >= monday && run.date <= plusDays(monday, 6)
   );
-  const types = runs.map((run) => templateOf(run).type);
   const long = runs.find((run) => templateOf(run).type === "long");
   return {
+    // Run24 (3): a week of the rolling base before the race block.
+    rollingBase:
+      plan?.phase !== "recovery" &&
+      (plan?.currentWeek ?? 0) <
+        raceBlockStart(plan?.totalWeeks ?? 1, "marathon"),
     phase:
       plan?.phase === "recovery"
         ? ("after" as const)
         : getPhaseForWeek(
             plan?.currentWeek ?? 0,
             plan?.totalWeeks ?? 1,
-            "marathon"
+            "marathon",
+            plan?.shortBase
           ),
     runs,
-    quality: types.some((type) => type === "tempo" || type === "intervals"),
+    // A time trial (Run24 (4)) sets the paces, in base weeks too, and a
+    // base week holds a fartlek or short hills (Run24 (5)); neither is the
+    // build's quality.
+    quality: runs.some((run) => {
+      const template = templateOf(run);
+      return (
+        (template.type === "tempo" || template.type === "intervals") &&
+        !isTimeTrialTemplateId(template.id) &&
+        !(BASE_LIGHT_TEMPLATE_IDS as readonly string[]).includes(template.id)
+      );
+    }),
     longKm: long ? (templateOf(long).config.targetDistanceKm ?? 0) : null,
     minutes: runs.reduce((sum, run) => sum + plannedSize(run).minutes, 0),
     mainSets: state.workouts[0]?.exercises[0]?.sets ?? 0,
@@ -192,7 +217,11 @@ test("a marathon a year out, with lifting", async ({ page }) => {
     }[];
 
     let previous: ReturnType<typeof planWeek> | null = null;
-    let sawQuality = false;
+    // Run24 (3), D9: the rolling base before the block rotates a light
+    // tempo, strides and short reps, so quality before the build is the
+    // base's; the block's own base weeks hold none, as a block always has.
+    let sawBaseQuality = false;
+    let sawBlockBaseQuality = false;
     let peakMinutes = 0;
     const seen = { build: false, stepBack: false, taper: false, race: false };
     let weekOff = false;
@@ -209,7 +238,14 @@ test("a marathon a year out, with lifting", async ({ page }) => {
 
       if (week.phase === "build" && !seen.build) {
         seen.build = true;
-        expect(sawQuality, "no quality session before the build").toBe(false);
+        expect(
+          sawBaseQuality,
+          "the rolling base before the block holds sessions"
+        ).toBe(true);
+        expect(
+          sawBlockBaseQuality,
+          "no quality session in the block before its build"
+        ).toBe(false);
         expect(week.quality, "the first build week holds one").toBe(true);
         await expectTrainWeek(page, state, monday, experience, "Build");
         await expectRunWeek(page, week.runs, monday);
@@ -285,7 +321,8 @@ test("a marathon a year out, with lifting", async ({ page }) => {
         await expect(page.getByText(RUN_RECOVERY)).toBeVisible();
         break;
       }
-      sawQuality ||= week.quality;
+      if (week.rollingBase) sawBaseQuality ||= week.quality;
+      else if (!seen.build) sawBlockBaseQuality ||= week.quality;
       if (week.phase === "build")
         peakMinutes = Math.max(peakMinutes, week.minutes);
 

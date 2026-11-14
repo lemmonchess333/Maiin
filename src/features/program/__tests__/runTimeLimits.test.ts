@@ -26,6 +26,21 @@ const input: RacePlanV2Input = {
 const template = (id: string) =>
   RUN_TEMPLATES.find((candidate) => candidate.id === id)!;
 
+describe("a time trial is never a shorter interval session (Run24 (4))", () => {
+  it.each([
+    ["5x1k", 38],
+    ["6x1k", 45],
+    ["6x1k", 39],
+  ])("%s under a %i-minute limit stays a repeats session", (id, minutes) => {
+    const fitted = fitRunToTimeLimit(
+      { dayIndex: 2, templateId: id, type: "intervals" },
+      { sessionMinutes: minutes, longRunMinutes: null }
+    );
+    expect(template(fitted.templateId).config.timeTrial).toBeUndefined();
+    expect(fitted.type).toBe("intervals");
+  });
+});
+
 describe("recurring run availability", () => {
   it("keeps legacy plans identical when no limit is chosen", () => {
     expect(

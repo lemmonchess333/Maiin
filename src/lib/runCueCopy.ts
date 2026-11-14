@@ -380,6 +380,78 @@ export function walkBackCue(variant: number): string {
   return pick(WALK_BACK, variant);
 }
 
+/* Run24 (5): hill repeats and a fartlek's pick-ups, run by feel. Pools
+ * sized past the longest session's count (10 hills), as REP_MIDDLE's are. */
+const HILL = [
+  "Strong up the hill, short quick steps.",
+  "Drive the arms, stay tall.",
+  "Lean into the hill, quick feet.",
+  "Hard but in control to the top.",
+  "Eyes up the hill, run tall.",
+  "Short steps, strong push.",
+  "Same effort as the last one.",
+  "Keep the effort, let the pace go.",
+  "Relax the shoulders and climb.",
+];
+
+/** `Hill 3 of 8. Drive the arms, stay tall.` */
+export function hillRepCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Hill ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Strong to the top.`;
+  return `${head} ${pick(HILL, variant)}`;
+}
+
+const HILL_DOWN = [
+  "Jog back down. Easy and loose.",
+  "Turn and jog down. Let the breathing settle.",
+  "Easy jog down. Full recovery.",
+  "Back down gently, ready for the next one.",
+  "Walk or jog down. No hurry.",
+];
+
+/** The jog back down between hill repeats. */
+export function hillDownCue(variant: number): string {
+  return pick(HILL_DOWN, variant);
+}
+
+const PICK_UP = [
+  "Comfortably hard, by feel.",
+  "Pick it up, smooth and strong.",
+  "Lift the pace. No watch needed.",
+  "Strong and relaxed.",
+  "Quicker, but in control.",
+  "A few words at a time. That’s the effort.",
+  "Run by feel. Comfortably hard.",
+];
+
+/** `Pick-up 2 of 6. Pick it up, smooth and strong.` */
+export function pickUpCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Pick-up ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Strong to the end.`;
+  return `${head} ${pick(PICK_UP, variant)}`;
+}
+
+const PICK_UP_EASE = [
+  "Ease back to easy.",
+  "Back to easy. Let it settle.",
+  "Easy now until the next one.",
+  "Float it. Easy running.",
+  "Easy. Shake the arms out.",
+];
+
+/** The easy running between a fartlek's pick-ups. */
+export function pickUpEaseCue(variant: number): string {
+  return pick(PICK_UP_EASE, variant);
+}
+
 const FLOAT = [
   "Float. Easy running until the next block.",
   "Float it. Keep the legs turning over.",

@@ -1773,6 +1773,7 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   ) {
     failedPrecondition("This is your first week back.");
   }
+  const hasRunDays = Array.isArray(state.runDays);
   return {
     ...state,
     deloadSnapshot: {
@@ -1786,13 +1787,19 @@ function applyDeloadWeekCommand(state, profile, command, now) {
       // Stored unconditionally, even for a lift-only user: a snapshot
       // that exists only sometimes is a second shape for revert to
       // branch on, and `runDays` is ~1 KB beside the workouts array this
-      // object already carries (ceiling is 900 KB).
-      runDays: state.runDays,
+      // object already carries (ceiling is 900 KB). A plan stored with no
+      // `runDays` at all snapshots [] rather than undefined, which the Admin
+      // SDK refuses to write (the whole deload failed for such a plan).
+      runDays: hasRunDays ? state.runDays : [],
       currentPhase: state.currentPhase,
       fatigueScore: state.fatigueScore,
       appliedAt: now,
     },
-    runDays: applyDeloadRunSwaps(state, command.runSwaps),
+    // Written only for a plan that has runs: `applyDeloadRunSwaps` passes a
+    // missing array through as undefined.
+    ...(hasRunDays
+      ? { runDays: applyDeloadRunSwaps(state, command.runSwaps) }
+      : {}),
     // One recipe for everyone (Lift4 (9)), from the plan's own sets, so
     // the next week's reset restores it whatever the snapshot's state.
     workouts: applyDeloadToWorkouts(state.workouts),
@@ -1874,7 +1881,12 @@ function revertDeloadWeekCommand(state, command) {
   // looking. Guarded on presence so a snapshot written before the run
   // half shipped still reverts its lift side cleanly instead of wiping
   // runDays to undefined.
-  if (Array.isArray(snap.runDays)) {
+  // A plan that had no runDays when it was deloaded snapshots [], and gets
+  // none back: undo leaves the document's shape as it found it.
+  if (
+    Array.isArray(snap.runDays) &&
+    (Array.isArray(state.runDays) || snap.runDays.length > 0)
+  ) {
     next.runDays = restoreRunDays(state.runDays, snap.runDays);
   }
   delete next.deloadSnapshot;

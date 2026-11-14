@@ -2839,6 +2839,35 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
       expect(state.workouts[0].exercises[0].sets).toBe(2);
     });
 
+    it("deloads and reverts a plan stored with no runDays, writing no undefined value", () => {
+      // A lift-only plan created when none was stored has no runDays key.
+      // The snapshot and the swapped week both wrote undefined, which the
+      // Admin SDK refuses, so the whole deload failed for that plan.
+      const undefinedPaths = (value, path = "") => {
+        if (value === undefined) return [path];
+        if (Array.isArray(value)) {
+          return value.flatMap((v, i) => undefinedPaths(v, `${path}[${i}]`));
+        }
+        if (value && typeof value === "object") {
+          return Object.entries(value).flatMap(([k, v]) =>
+            undefinedPaths(v, path ? `${path}.${k}` : k)
+          );
+        }
+        return [];
+      };
+      const input = baseState();
+      delete input.runDays;
+      const { state: deloaded } = apply(applyCmd(), input);
+      expect(undefinedPaths(deloaded)).toEqual([]);
+      expect("runDays" in deloaded).toBe(false);
+      expect(deloaded.deloadSnapshot.runDays).toEqual([]);
+      expect(deloaded.currentPhase).toBe("deload");
+      const { state: reverted } = apply(revertCmd(), deloaded);
+      expect(undefinedPaths(reverted)).toEqual([]);
+      expect("runDays" in reverted).toBe(false);
+      expect(reverted.workouts).toEqual(input.workouts);
+    });
+
     it("reverts cleanly from a snapshot written before the run half shipped", () => {
       // Backward compatibility for a deload applied by the previous
       // version: its snapshot has no runDays, and revert must restore the

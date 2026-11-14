@@ -4,6 +4,10 @@ import {
 } from "@/features/program/runningBaseline";
 import type { NonRaceGoal } from "@/lib/nonRaceGoal";
 import {
+  isRollingGoal,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
+import {
   isRunTimeLimits,
   type RunTimeLimits,
 } from "@/features/program/runTimeLimits";
@@ -60,7 +64,8 @@ export const RUN_PLAN_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const KEY_BASE = "tropos.runPlan.draft";
 const keyFor = (uid: string) => scopedKey(KEY_BASE, uid);
 
-const RUN_MODES = ["freeform", "race_prep", "starter"] as const;
+/** `rolling`: a plan with no race date (Run24 (3)), its goal beside it. */
+const RUN_MODES = ["freeform", "race_prep", "starter", "rolling"] as const;
 /* Restated from `runScheduler`'s unions rather than imported as values,
    because those are TYPE-only and carry no runtime array. The satisfies
    clauses below are what keep the two honest: adding a preset there
@@ -97,6 +102,8 @@ export interface RunPlanDraft {
   /** Run9: a race entered or run on your own; null
    *  while unanswered. Additive in v1. */
   raceEntry?: "race" | "own" | null;
+  /** Run24 (3): the goal of a plan with no race date. Additive in v1. */
+  rollingGoal?: RollingGoal;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -175,6 +182,7 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
         !Number.isFinite(e.nonRaceGoal.target))) ||
     (e.runTimeLimits !== undefined && !isRunTimeLimits(e.runTimeLimits)) ||
     (e.raceLegTrim !== undefined && typeof e.raceLegTrim !== "boolean") ||
+    (e.rollingGoal !== undefined && !isRollingGoal(e.rollingGoal)) ||
     !isOneOf(RUN_MODES, e.runMode) ||
     !isOneOf(VALID_RACE_DISTANCE, e.raceDistance) ||
     !isOneOf(VOLUMES, e.runVolume) ||
@@ -211,6 +219,7 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
       ? {}
       : { runTimeLimits: e.runTimeLimits }),
     ...(e.raceLegTrim === undefined ? {} : { raceLegTrim: e.raceLegTrim }),
+    ...(e.rollingGoal === undefined ? {} : { rollingGoal: e.rollingGoal }),
     ...(e.raceEntry === "race" || e.raceEntry === "own" || e.raceEntry === null
       ? { raceEntry: e.raceEntry }
       : {}),

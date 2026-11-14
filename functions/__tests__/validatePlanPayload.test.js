@@ -363,6 +363,18 @@ describe("validatePlanPayload — runMode + raceGoal consistency", () => {
     );
   });
 
+  it("accepts a plan with no race date on free running (Run24 (3))", () => {
+    const p = validPayload();
+    p.profileData.runMode = "freeform";
+    p.programState.runPlan = {
+      mode: "rolling",
+      rollingGoal: "keep_fit",
+      currentWeek: 0,
+      rollingWeekKey: "2026-05-11",
+    };
+    expect(validatePlanPayload(p)).toEqual([]);
+  });
+
   it("refuses a plan of a kind it does not know, and one that is not an object", () => {
     for (const runPlan of [{ mode: "base" }, {}, "race_prep"]) {
       const p = validPayload();

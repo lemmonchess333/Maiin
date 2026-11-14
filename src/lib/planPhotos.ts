@@ -18,6 +18,8 @@ export const PLAN_GOAL_PHOTOS = {
   freeform: noRace,
   starter,
   race_prep: race,
+  // Run24 (3): a plan with no race date, built towards 5K and 10K.
+  rolling: tenK,
 } as const;
 
 export const PLAN_DISTANCE_PHOTOS: Record<RaceDistance, string> = {

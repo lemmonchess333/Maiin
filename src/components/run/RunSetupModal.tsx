@@ -167,6 +167,9 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
         ? `Target ${formatDayMonthYear(parseLocalDate(ctx.targetDate))}`
         : null;
       break;
+    case "rolling_today":
+      line1 = `This week’s plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ""}`;
+      break;
     case "rest_day":
       line1 = "Rest day in your plan.";
       break;
@@ -237,6 +240,13 @@ export default function RunSetupModal({
      below the run type. It never touches `activityType`, so a planned run
      done on the treadmill is still the planned run. */
   const onTreadmill = isTreadmillRun(config);
+  /* Run24 (4): an interval-type session the plan gave its own shape and no
+     repeats, the time trial, runs as planned: its structure shows, and no
+     default repeats are stamped on it. */
+  const fixedSession =
+    config.activityType === "intervals" &&
+    !config.intervals &&
+    (config.segments?.length ?? 0) > 0;
   const intervalConfig = config.intervals ?? {
     reps: 5,
     workDistance: 1000,
@@ -333,10 +343,10 @@ export default function RunSetupModal({
         </div>
 
         {/* Programme context strip — Phase B1. Renders only when the
-            user is on a plan AND today resolves to one of the four
-            documented states (race prep's today, rest day, completed
-            day, elapsed race-prep). Freeform users get no strip — the
-            surface stays clean. */}
+            user is on a plan AND today resolves to one of the five
+            documented states (race prep's or a rolling plan's today,
+            rest day, completed day, elapsed race-prep). Freeform users
+            get no strip — the surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
 
         {routeSection}
@@ -528,22 +538,32 @@ export default function RunSetupModal({
         {/* STRUCT-SESS-01: prefilled structure for non-interval sessions
             (tempo warmup/blocks/cooldown, easy + strides). The interval
             branch below owns its own preview. */}
-        {config.activityType !== "intervals" &&
+        {(config.activityType !== "intervals" || fixedSession) &&
           (config.segments?.length ?? 0) > 0 && (
             <SessionStructureView segments={config.segments!} />
           )}
 
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
-          {config.activityType === "intervals" && (
+          {config.activityType === "intervals" && !fixedSession && (
             <motion.div
               initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
               exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
+              {/* The planned session's own steps while its repeats are
+                  as planned (Run24 (5): a hill or fartlek session's words,
+                  a time trial's one effort); built from the repeats once
+                  they are customised. */}
               <SessionStructureView
-                segments={segmentsFromIntervals(intervalConfig, unit)}
+                segments={
+                  config.segments?.length &&
+                  JSON.stringify(config.intervals) ===
+                    JSON.stringify(savedPreferences?.intervals)
+                    ? config.segments
+                    : segmentsFromIntervals(intervalConfig, unit)
+                }
               />
               <button
                 type="button"
@@ -1222,7 +1242,7 @@ export default function RunSetupModal({
               onClick={() => {
                 if (!targetError)
                   onStart(
-                    config.activityType === "intervals"
+                    config.activityType === "intervals" && !fixedSession
                       ? { ...config, intervals: intervalConfig }
                       : config
                   );

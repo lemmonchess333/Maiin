@@ -99,54 +99,45 @@ export interface DatedRun extends RunRecord {
 }
 
 /**
- * The day of the runner's most recent VOLUME-ELIGIBLE run, or `null` when
- * they have never logged one.
+ * The days a run that counts was saved on, one per run, in no order: the
+ * running half of the one return check (`trainingReturn.ts`, App1 Q35).
  *
  * Eligibility routes through the shared `isVolumeEligible` rather than a local
  * predicate, so an invalid / saved-anyway / sub-threshold run cannot read as
  * "still training" here while being excluded from every other volume surface.
  * That predicate has a server mirror (`isVolumeEligibleRun`); a second private
  * copy here is exactly the drift CLAUDE.md's tested-copy rule warns about.
- *
- * Exported for Home's run return (`runReturn.ts`), which keys its dismissal
- * on this day: the same run the re-entry policy measures from.
  */
-export function lastRunDay(runs: readonly DatedRun[]): string | null {
-  let latest: string | null = null;
+export function runSessionDays(runs: readonly DatedRun[]): string[] {
+  const days: string[] = [];
   for (const run of runs ?? []) {
-    if (!run?.date || !isVolumeEligible(run)) continue;
-    // Lexicographic max is safe and cheap for "YYYY-MM-DD".
-    if (latest === null || run.date > latest) latest = run.date;
+    if (run?.date && isVolumeEligible(run)) days.push(run.date);
   }
+  return days;
+}
+
+/** The latest of some "YYYY-MM-DD" days, or null with none.
+ *  Lexicographic max is safe and cheap for the format. */
+function lastDayOf(days: readonly string[]): string | null {
+  let latest: string | null = null;
+  for (const day of days) if (latest === null || day > latest) latest = day;
   return latest;
 }
 
-/**
- * Whole days since the runner's most recent volume-eligible run
- * (`lastRunDay`), or `null` when they have never logged one.
- *
- * `null` — never run — is NOT zero and NOT infinity. A brand-new user has not
- * lapsed; they have not started. `classifyLayoff` maps it to `none`, because a
- * fresh plan for a fresh runner is already the right plan.
- */
-export function daysSinceLastRun(
-  runs: readonly DatedRun[],
-  todayKey: string
-): number | null {
-  const latest = lastRunDay(runs);
-  if (latest === null) return null;
-
-  const last = parseLocalDate(latest).getTime();
+/** Whole days from `fromKey` to `todayKey`, never below 0: a session dated
+ *  ahead of today (clock skew, a back-filled entry) is not a layoff. */
+function wholeDaysTo(fromKey: string, todayKey: string): number {
+  const from = parseLocalDate(fromKey).getTime();
   const today = parseLocalDate(todayKey).getTime();
-  // A run dated in the future (clock skew, a back-filled manual entry) is not
-  // a layoff. Clamp at 0 rather than reporting negative days away.
-  return Math.max(0, Math.round((today - last) / 86_400_000));
+  return Math.max(0, Math.round((today - from) / 86_400_000));
 }
 
 /**
  * Map days-away onto the policy classes above.
  *
- * `null` (never run) is `none`, not `detrained` — see `daysSinceLastRun`.
+ * `null` (never trained) is `none`, not `detrained`: a brand-new user has
+ * not lapsed, they have not started, and a fresh plan for a fresh runner is
+ * already the right plan.
  * Treating it as a layoff would hand every first-time race-prep user a
  * re-entry plan on the day they created their goal.
  */
@@ -161,7 +152,8 @@ export function classifyLayoff(daysAway: number | null): LayoffClass {
  * Is the runner INSIDE a re-entry window — i.e. did a detraining-length gap
  * end recently enough that they are still rebuilding?
  *
- * Looks for two consecutive eligible runs separated by
+ * Looks for two consecutive sessions of the sport (eligible runs, or lifts
+ * with work in them) separated by
  * {@link LAYOFF_DETRAINED_DAYS} or more, where the LATER of the two (their
  * first run back) falls within {@link LAYOFF_REENTRY_DAYS} of today.
  *
@@ -175,15 +167,8 @@ export function classifyLayoff(daysAway: number | null): LayoffClass {
  * a volume-density test would have caught them, which is why this keys on
  * gaps rather than on how much they run.
  */
-function isInReentryWindow(
-  runs: readonly DatedRun[],
-  todayKey: string
-): boolean {
-  const dates = (runs ?? [])
-    .filter((r) => r?.date && isVolumeEligible(r))
-    .map((r) => r.date as string)
-    .sort()
-    .reverse();
+function isInReentryWindow(days: readonly string[], todayKey: string): boolean {
+  const dates = [...days].sort().reverse();
   const today = parseLocalDate(todayKey).getTime();
 
   for (let i = 0; i < dates.length - 1; i++) {
@@ -200,20 +185,48 @@ function isInReentryWindow(
   return false;
 }
 
+/** How long one sport has gone untrained, under the one rule both sports
+ *  share (App1 Q35, `trainingReturn.ts`). */
+export interface SportAbsence {
+  /** The last day the sport was trained; null when it never has been. */
+  lastDay: string | null;
+  /** Whole days since then; null when never. Never is not a layoff. */
+  daysAway: number | null;
+  /** The gap under the shared policy, re-entry window included. */
+  layoff: LayoffClass;
+}
+
 /**
- * The runner's layoff class from their run history.
+ * The one return rule, for either sport, from the days it was trained.
  *
  * Two ways to be `detrained`: currently away past the threshold, or back but
  * still inside the re-entry window. The second is what makes this a policy
  * rather than a one-week pause — see {@link LAYOFF_REENTRY_DAYS}.
  */
+export function absenceFromDays(
+  days: readonly string[],
+  todayKey: string
+): SportAbsence {
+  const lastDay = lastDayOf(days);
+  const daysAway = lastDay === null ? null : wholeDaysTo(lastDay, todayKey);
+  const byRecency = classifyLayoff(daysAway);
+  const layoff =
+    byRecency === "detrained" || isInReentryWindow(days, todayKey)
+      ? "detrained"
+      : byRecency;
+  return { lastDay, daysAway, layoff };
+}
+
+/**
+ * The runner's layoff class from their run history: the running half of
+ * the one return check, by its one rule (`absenceFromDays`). The race
+ * plan's re-entry reads it, and Home's run return reads the same rule.
+ */
 export function layoffFromRuns(
   runs: readonly DatedRun[],
   todayKey: string
 ): LayoffClass {
-  const byRecency = classifyLayoff(daysSinceLastRun(runs, todayKey));
-  if (byRecency === "detrained") return byRecency;
-  return isInReentryWindow(runs, todayKey) ? "detrained" : byRecency;
+  return absenceFromDays(runSessionDays(runs), todayKey).layoff;
 }
 
 /**

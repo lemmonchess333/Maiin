@@ -8,8 +8,10 @@
  * pages/Run.tsx until 2026-09; moved here so the branching is unit-tested
  * and the page stays a page (ADR-0001).
  */
+import { RUN_TEMPLATES } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
-import { formatRaceDistance } from "./runLabels";
+import type { DistanceUnit } from "./distanceUnits";
+import { formatRaceDistance, runTemplateName } from "./runLabels";
 import type { RunPlanMetadata } from "./runPlanMetadata";
 
 /**
@@ -18,21 +20,30 @@ import type { RunPlanMetadata } from "./runPlanMetadata";
  * selected-run card. Null = no strip (freeform user, or programme
  * has no opinion on today).
  *
- * Five visible states:
+ * Six visible states:
  *   - race_prep today_plan         → "Race prep · Week N of M · {distance}"
+ *   - rolling today_plan           → "This week’s plan · {todayLabel}"
  *   - a plan's rest_day            → "Rest day in your plan."
  *   - a plan's completed_day       → completed-day copy
  *   - race_prep elapsed            → "Race prep ended" + Settings link
  *   - freeform / no plan           → strip not rendered (null)
  */
 export interface ProgramContextStrip {
-  kind: "race_prep_today" | "rest_day" | "completed_day" | "race_prep_elapsed";
+  kind:
+    | "race_prep_today"
+    | "rolling_today"
+    | "rest_day"
+    | "completed_day"
+    | "race_prep_elapsed";
   /** For race_prep today: "Week 3 of 8" */
   weekLabel?: string;
   /** For race_prep today: "10K" / "Half Marathon" etc. */
   distanceLabel?: string;
   /** For race_prep today: ISO target date, rendered as a secondary line. */
   targetDate?: string;
+  /** For a rolling plan's today: "Tempo Run" / "Easy 30" — the day's
+   *  template name. */
+  todayLabel?: string;
 }
 
 /**
@@ -50,12 +61,14 @@ export function deriveStrip(
   metadata: RunPlanMetadata,
   runPlan:
     | {
-        mode: "race_prep" | "starter";
+        mode: "race_prep" | "starter" | "rolling";
         raceGoal?: { distance: string; targetDate: string };
         totalWeeks?: number;
         currentWeek?: number;
       }
-    | undefined
+    | undefined,
+  /** The reader's unit: today's long run is named in it. */
+  unit: DistanceUnit
 ): ProgramContextStrip | null {
   // Freeform / fallback cases get no strip.
   if (metadata.planMode === "freeform") return null;
@@ -89,7 +102,7 @@ export function deriveStrip(
   ) {
     // For URL-template overrides on a freeform user, no strip
     // (no plan context to surface). For URL-template on a
-    // race_prep user with a planned day, fall through
+    // race_prep or rolling user with a planned day, fall through
     // to the planned-day strip — the user is overriding their plan
     // and we still surface the plan context.
     if (metadata.planMode === "race_prep") {
@@ -109,6 +122,22 @@ export function deriveStrip(
             : "",
         distanceLabel: formatRaceDistance(runPlan?.raceGoal?.distance),
         targetDate: runPlan?.raceGoal?.targetDate,
+      };
+    }
+    // A plan with no race date names today's run (Run24 (3)).
+    if (metadata.planMode === "rolling") {
+      if (
+        metadata.plannedRunDayIndex === null &&
+        metadata.planSource === "url_template"
+      ) {
+        return null;
+      }
+      const todayTemplate = RUN_TEMPLATES.find(
+        (t) => t.id === metadata.plannedTemplateId
+      );
+      return {
+        kind: "rolling_today",
+        todayLabel: todayTemplate && runTemplateName(todayTemplate.name, unit),
       };
     }
   }
