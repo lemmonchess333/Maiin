@@ -1,3 +1,4 @@
+import { isFoodDay } from "@/lib/foodDay";
 import { beforeStart } from "@/lib/startDay";
 import {
   weekDays,
@@ -12,8 +13,9 @@ import {
  * every screen counts (`trainingWeek`), so the card agrees with the finish
  * screens' "Your week so far" and with the recap:
  *
- *   food   days this week with at least one meal logged, out of the
- *          week's days since the account began (7 after the first week)
+ *   food   the week's food days (`foodDay.ts`: 800 kcal or more, today
+ *          once it gets there), out of the week's days since the account
+ *          began (7 after the first week)
  *
  * Days before the account began are not counted: a week someone joined on
  * a Friday plans the Friday onward (startDay.ts).
@@ -21,7 +23,8 @@ import {
 export interface WeekSummaryCounts {
   lifts: WeekCount;
   runs: WeekCount;
-  foodDays: number;
+  /** Null while the week's meals are not known: read, or not readable. */
+  foodDays: number | null;
   /** The days food could have been logged on: 7, or fewer in the week
    *  the account began. */
   foodDayTotal: number;
@@ -29,13 +32,13 @@ export interface WeekSummaryCounts {
 
 export function summariseWeek({
   training,
-  mealsByDate,
+  caloriesByDate,
   startKey = null,
 }: {
   /** The week's lifts and runs. */
   training: Pick<TrainingWeek, "weekKey" | "lifts" | "runs">;
-  /** Meals logged per date. */
-  mealsByDate: ReadonlyMap<string, { meals: number }>;
+  /** Calories logged per date, or null while the meals are not known. */
+  caloriesByDate: ReadonlyMap<string, number> | null;
   /** The day the account began; earlier days are not counted. */
   startKey?: string | null;
 }): WeekSummaryCounts {
@@ -43,12 +46,12 @@ export function summariseWeek({
   let foodDayTotal = 0;
   for (const day of weekDays(training.weekKey)) {
     if (!beforeStart(day, startKey)) foodDayTotal++;
-    if ((mealsByDate.get(day)?.meals ?? 0) > 0) foodDays++;
+    if (isFoodDay(caloriesByDate?.get(day))) foodDays++;
   }
   return {
     lifts: training.lifts,
     runs: { done: training.runs.done, planned: training.runs.planned },
-    foodDays,
+    foodDays: caloriesByDate ? foodDays : null,
     foodDayTotal,
   };
 }

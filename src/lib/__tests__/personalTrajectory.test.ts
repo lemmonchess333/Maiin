@@ -219,4 +219,32 @@ describe("getPersonalTrajectory", () => {
     const result = await getPersonalTrajectory("user1");
     expect(result.thisWeek.kg).toBe(500);
   });
+  it("counts a planned run marked done by hand, as Home's week does", async () => {
+    /* `weekDone` (trainingWeek.ts): a planned run ticked off on a day with
+       no recorded run is a session done. Last week's was ticked on its
+       Thursday, after the to-date slice ends (Tuesday 14:00). */
+    const ticked = (iso: string) => ({ completedAt: new Date(iso) });
+    seedFirestore({
+      "users/user1/programState/current": {
+        runDays: [
+          { id: "rd_now", date: "2026-04-27", dayIndex: 1, templateId: "easy" },
+          {
+            id: "rd_then",
+            date: "2026-04-23",
+            dayIndex: 4,
+            templateId: "easy",
+          },
+        ],
+        manualCompletions: {
+          rd_now: ticked("2026-04-27T19:00:00"),
+          rd_then: ticked("2026-04-23T19:00:00"),
+        },
+      },
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.thisWeek.sessions).toBe(1);
+    expect(result.lastWeek.sessions).toBe(1);
+    expect(result.lastWeekToDate.sessions).toBe(0);
+    expect(result.delta).toBe(1);
+  });
 });

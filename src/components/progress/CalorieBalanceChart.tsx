@@ -6,8 +6,7 @@ import UITooltip from "@/components/ui/Tooltip";
 /* The metric's definition and the gaps legend, moved off the surface.
    The caveat that follows the chart stays visible — see the title row
    for why the two halves of that paragraph parted company. */
-const CALORIE_BALANCE_EXPLAINER =
-  "Estimated maintenance − logged food, with today excluded. A gap in the chart is a day with no food logged.";
+const CALORIE_BALANCE_EXPLAINER = `Estimated maintenance − logged food, with today excluded. A gap in the chart is a day with less than ${FOOD_DAY_KCAL} ${CALORIE_UNIT} logged, short of a day’s eating.`;
 import { Info } from "lucide-react";
 import type { Meal } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
@@ -26,6 +25,7 @@ import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
 import { profileAge } from "@/lib/age";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { FOOD_DAY_KCAL, isFoodDay } from "@/lib/foodDay";
 import { formatDayMonthYear, withSign } from "@/utils/formatters";
 import { computeDataConfidence, T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 import { AnimatePresence, motion } from "framer-motion";
@@ -84,9 +84,11 @@ export default function CalorieBalanceChart({
       );
       return {
         ...point,
-        // No entry is unknown, not zero intake. Today is still in progress.
-        // Even past days are estimates: a meal entry does not prove a full log.
-        balance: entries.length > 0 && dateStr !== today ? point.balance : null,
+        // A day short of a food day (`foodDay.ts`) is unknown intake, not a
+        // deficit. Today is still in progress. Even a food day is an
+        // estimate: 800 kcal logged does not prove a full log.
+        balance:
+          isFoodDay(consumed) && dateStr !== today ? point.balance : null,
       };
     });
   }, [meals, maintenance, today]);
@@ -300,9 +302,7 @@ export default function CalorieBalanceChart({
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            Past days with entries
-          </p>
+          <p className="text-xs text-muted-foreground">Past days logged</p>
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {loggedDays.length} / {PAST_DAYS}
           </p>

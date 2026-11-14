@@ -61,6 +61,7 @@ import { createRequire } from "node:module";
 import { scorePerformance as scoreTs } from "../performanceEngine";
 import type { WeeklyAggregates, Baseline } from "../performanceTypes";
 import { ADAPTIVE_TDEE_DEFAULTS } from "../adaptiveTdee";
+import { FOOD_DAY_KCAL } from "../foodDay";
 
 const require = createRequire(import.meta.url);
 const js = require("../../../functions/lib/perfScoring");
@@ -291,11 +292,11 @@ describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", (
 });
 
 describe("the food-day floor", () => {
-  it("the server's FULL_FOOD_DAY_KCAL is the adaptive estimator's floor", () => {
-    // The PI's calorie average and the learned TDEE exclude the same days, and
-    // the weekly review reads the client constant directly.
-    expect(js.FULL_FOOD_DAY_KCAL).toBe(
-      ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal
-    );
+  it("the server's FULL_FOOD_DAY_KCAL is the app's food day", () => {
+    // A food day is one rule (App1 Q14, `foodDay.ts`): the PI's food days
+    // and calorie average, the learned TDEE's trusted days, Home's week,
+    // the weekly review and Analytics all count the same days.
+    expect(js.FULL_FOOD_DAY_KCAL).toBe(FOOD_DAY_KCAL);
+    expect(ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal).toBe(FOOD_DAY_KCAL);
   });
 });

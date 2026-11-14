@@ -1,6 +1,6 @@
 /**
- * The daily logs read reaches back only as far as its widest slice: the
- * earlier of this week's Monday and this month's first day.
+ * The daily logs read reaches back only as far as its one slice: this
+ * week's Monday.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
@@ -52,10 +52,11 @@ afterEach(() => {
 });
 
 describe("dailyLogsFrom", () => {
-  it("is the month's first day, or the week's Monday when that is earlier", () => {
-    expect(dailyLogsFrom("2026-10-15")).toBe("2026-10-01");
+  it("is the week's Monday", () => {
+    expect(dailyLogsFrom("2026-10-15")).toBe("2026-10-12");
     expect(dailyLogsFrom("2026-10-02")).toBe("2026-09-28");
-    expect(dailyLogsFrom("2026-10-05")).toBe("2026-10-01");
+    expect(dailyLogsFrom("2026-10-05")).toBe("2026-10-05");
+    expect(dailyLogsFrom("2026-10-11")).toBe("2026-10-05");
   });
 });
 
@@ -117,7 +118,7 @@ describe("DailyLogsProvider", () => {
     expect(result.current.week.get(date)?.meals).toBe(0);
   });
 
-  it("reads this month and this week, and nothing older", async () => {
+  it("reads this week, and nothing older", async () => {
     // Local noon, so no timezone moves the day.
     vi.setSystemTime(new Date(2026, 9, 15, 12));
     seedFirestore({
@@ -132,7 +133,6 @@ describe("DailyLogsProvider", () => {
     await flushSnapshots();
     expect(result.current.daily.logs.map((l) => l.date)).toEqual([
       "2026-10-13",
-      "2026-10-02",
     ]);
     expect(result.current.week.get("2026-10-13")?.meals).toBe(1);
   });

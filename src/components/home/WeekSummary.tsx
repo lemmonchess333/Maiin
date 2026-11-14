@@ -27,8 +27,9 @@ interface Part {
  * always has Runs (Home4 (1)): on a free-run plan nothing is planned, and
  * it would otherwise appear only after the week's first run.
  *
- * Food is always listed. It is the one every week has, and nothing else
- * on Home counts its days.
+ * Food is listed once the week's meals are known. It is the one every
+ * week has, and nothing else on Home counts its days. Its days are food
+ * days (`foodDay.ts`: 800 kcal or more), as every screen counts them.
  */
 export default function WeekSummary({
   counts,
@@ -55,13 +56,17 @@ export default function WeekSummary({
     });
   const parts: Part[] = [
     ...(training.length > 1 ? training : []),
-    {
-      key: "food",
-      label: "Food logged",
-      done: counts.foodDays,
-      of: counts.foodDayTotal,
-      unit: "days",
-    },
+    ...(counts.foodDays !== null
+      ? [
+          {
+            key: "food",
+            label: "Food logged",
+            done: counts.foodDays,
+            of: counts.foodDayTotal,
+            unit: "days",
+          },
+        ]
+      : []),
   ];
 
   return (

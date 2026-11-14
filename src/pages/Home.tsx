@@ -78,7 +78,6 @@ import {
 } from "@/lib/homeHero";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import type { RunWindow } from "@/lib/savedRuns";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
@@ -380,22 +379,22 @@ export default function Home() {
   );
 
   // DS3 "This week": lifts and runs as every screen counts the week
-  // (`trainingWeek`), and the days with food logged.
+  // (`trainingWeek`), and the week's food days (`foodDay.ts`).
   const weekCounts = useMemo(
     function () {
-      /* A day counts as logged when it has a meal, and the loaded meals
-         are the record of that. The daily log holds the count Food last
-         saved; another device can change the diary since then. It
-         stands in only while the meals are loading or could not be read. */
+      /* A food day is decided by its calories, and the loaded meals are
+         the record of them. While they are read, or could not be, the
+         week has no food count: the daily log keeps how many meals a day
+         had, not their calories, so it cannot say. */
       const mealsKnown = !mealsLoading && !mealsError;
-      const mealsByDate = new Map<string, { meals: number }>();
-      for (const day of weekDays(currentWeekKey)) {
-        mealsByDate.set(day, {
-          meals: mealsKnown
-            ? getDailyTotals(day).mealCount
-            : (weeklyDayMap.get(day)?.meals ?? 0),
-        });
-      }
+      const caloriesByDate = mealsKnown
+        ? new Map(
+            weekDays(currentWeekKey).map((day) => [
+              day,
+              getDailyTotals(day).calories,
+            ])
+          )
+        : null;
       return summariseWeek({
         training: trainingWeek({
           weekKey: currentWeekKey,
@@ -405,7 +404,7 @@ export default function Home() {
           runs: savedRuns,
           now: today,
         }),
-        mealsByDate,
+        caloriesByDate,
         startKey,
       });
     },
@@ -417,7 +416,6 @@ export default function Home() {
       programState,
       workouts,
       savedRuns,
-      weeklyDayMap,
       getDailyTotals,
       mealsLoading,
       mealsError,
@@ -680,9 +678,7 @@ export default function Home() {
             runs:
               freeRunRead.loading || freeRunRead.failed
                 ? null
-                : freeRunRead.runs
-                    .filter((r) => isVolumeEligible(r))
-                    .map((r) => ({ day: r.day, distance: r.distance })),
+                : freeRunRead.runs,
             todayKey,
             unit: resolveDistanceUnit(profile?.preferredDistanceUnit),
             first:

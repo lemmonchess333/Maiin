@@ -215,13 +215,17 @@ afterEach(() => {
 });
 
 describe("Food — the breakdown's way to the week", () => {
-  it("This week closes the breakdown and opens Analytics on Food", async () => {
+  it("Last 7 days closes the breakdown and opens Analytics' Food on them", async () => {
     api.meals = [meal("m1", "Oats", 300)];
     renderFood();
     fireEvent.click(screen.getByRole("button", { name: "Open breakdown" }));
-    fireEvent.click(await screen.findByRole("button", { name: /^This week/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^Last 7 days/ })
+    );
     await waitFor(() =>
-      expect(screen.getByTestId("where").textContent).toBe("/history?view=food")
+      expect(screen.getByTestId("where").textContent).toBe(
+        "/history?view=food&range=1W"
+      )
     );
   });
 });

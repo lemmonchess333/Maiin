@@ -52,6 +52,7 @@ import {
   type DayMacros,
 } from "@/lib/nutritionBadgeDays";
 import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
+import { isFoodDay } from "@/lib/foodDay";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
@@ -1250,21 +1251,22 @@ function useStreaksInternal(planProfile: PlanProfile | null) {
     [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey, restDays]
   );
 
-  // Distinct dates with ≥1 logged meal item — feeds meal_prep_master (same
-  // "non-empty meal" rule computeActiveDateSet uses for the active-day set).
-  const mealDates = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          meals
-            .filter(
-              (m) => typeof m.date === "string" && m.date && m.items.length > 0
-            )
-            .map((m) => m.date)
-        )
-      ),
-    [meals]
-  );
+  // The food days (`foodDay.ts`): dates whose logged meals reach 800 kcal,
+  // the days every screen counts. Feeds meal_prep_master, "Log all meals
+  // for 14 days straight", which a day of a coffee and nothing else is
+  // not. The active-day set (computeActiveDateSet) still takes any
+  // non-empty meal: logging something keeps a streak.
+  const mealDates = useMemo(() => {
+    const byDay = new Map<string, number>();
+    for (const m of meals) {
+      if (typeof m.date !== "string" || !m.date || m.items.length === 0)
+        continue;
+      byDay.set(m.date, (byDay.get(m.date) ?? 0) + (m.totalCalories ?? 0));
+    }
+    return [...byDay]
+      .filter(([, calories]) => isFoodDay(calories))
+      .map(([date]) => date);
+  }, [meals]);
 
   // Distinct dates with a log before 7am LOCAL in the window. Uses the
   // best per-source timestamp: run completedAt (event time), workout + meal
