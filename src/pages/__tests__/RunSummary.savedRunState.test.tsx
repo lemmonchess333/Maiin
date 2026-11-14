@@ -592,10 +592,14 @@ describe("RunSummary — grade-adjusted pace", () => {
 
 describe("RunSummary — Save", () => {
   /** The same run, finished and not yet saved: no receipt. */
-  function renderUnsaved() {
+  function renderUnsaved(extra: Record<string, unknown> = {}) {
     const { savedRun: _receipt, ...run } = savedRun();
     return render(
-      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state: run }]}>
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/run-summary", state: { ...run, ...extra } },
+        ]}
+      >
         <Routes>
           <Route path="/run-summary" element={<RunSummary />} />
         </Routes>
@@ -633,6 +637,34 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("counts a Watch run as one, with how much of it the heart rate covered", async () => {
+    // The connected-training proposal's measurement of paired runs and
+    // coverage: a band, never a reading, and no run or session id.
+    const startedAt = Date.now() - 1_600_000;
+    renderUnsaved({
+      watchCompanionUsed: true,
+      finishedAt: Date.now() - 10_000,
+      identity: {
+        uid: "runner",
+        sessionId: "watch-run",
+        runId: "watch-run",
+        scheduledRunId: "rd-1",
+        startedAt,
+        startLocalDate: localDateString(new Date(startedAt)),
+        originTimeZone: "UTC",
+      },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(h.track).toHaveBeenCalledWith("run_completed", {
+      watchCompanion: true,
+      // No Watch readings reached this phone.
+      heartRateCoverage: "none",
+    });
   });
 
   it("recovers a finished review after reload and saves under the start-time ID", async () => {
@@ -1341,8 +1373,10 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
   });
 
   it("gives a typed pace no trend against outdoor runs", async () => {
-    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is a PR outdoors,
-    // and nothing on the treadmill, whatever the run's type.
+    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is faster than
+    // all of them outdoors, and nothing on the treadmill, whatever the
+    // run's type. Offline, as this block is, the whole history is not
+    // known, so the chip claims no New best (App1 Q15) and says Faster.
     seedFirestore(
       Object.fromEntries(
         Array.from({ length: 8 }, (_, i) => [
@@ -1360,7 +1394,8 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
       )
     );
     const outdoors = renderTreadmillRun(true);
-    expect(await screen.findByText("New best")).toBeInTheDocument();
+    expect(await screen.findByText("Faster")).toBeInTheDocument();
+    expect(screen.queryByText("New best")).toBeNull();
     outdoors.unmount();
 
     renderTreadmillRun();
@@ -1372,6 +1407,7 @@ describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
     ).toBeInTheDocument();
     // The history has been read and judged by the time the insight settles.
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("Faster")).toBeNull();
     expect(screen.queryByText("New best")).toBeNull();
   });
 

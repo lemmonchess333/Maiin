@@ -351,3 +351,63 @@ describe("a run-walk and the trend", () => {
     ).toBe("pr");
   });
 });
+
+/* App1 Q15: whatever is celebrated is visible in Bests. "New best" on the
+   finish screen is a claim about a pace, and Bests lists two: the best
+   pace over any run of a kilometre or more, and over 5 km or more. */
+describe("New best is a pace record on Bests", () => {
+  const outdoor = (pace: number, distance: number, daysAgo: number) => ({
+    ...makeRun(pace, distance, daysAgo),
+    activityType: "easy",
+    duration: (distance / 1000) * pace,
+  });
+  const comparable = generateRuns(10, 300, 5000, 1).map((r) => ({
+    ...r,
+    activityType: "easy",
+    duration: 5 * 300,
+  }));
+
+  it("says New best for a run that holds Best pace", () => {
+    const current = outdoor(280, 5000, 0);
+    const result = calculatePaceTrend(current, comparable, {
+      records: comparable,
+    });
+    expect(result.trend).toBe("pr");
+  });
+
+  it("says Faster for the fastest of its distance that holds no pace record", () => {
+    // A 10 km at 4:40 /km holds both records; this 5 km at 4:50 beats
+    // every 5 km and is no row on Bests.
+    const tenK = outdoor(280, 10000, 30);
+    const current = outdoor(290, 5000, 0);
+    const all = [...comparable, tenK];
+    expect(calculatePaceTrend(current, all).trend).toBe("pr");
+    const result = calculatePaceTrend(current, all, { records: all });
+    expect(result.trend).toBe("improving");
+    expect(result.label).toBe("Faster");
+  });
+
+  it("says New best for the best pace over 5 km, though a shorter run is faster", () => {
+    const blast = outdoor(260, 1200, 30);
+    const current = outdoor(290, 5000, 0);
+    const all = [...comparable, blast];
+    expect(calculatePaceTrend(current, all, { records: all }).trend).toBe("pr");
+  });
+
+  it("claims no New best while the whole history is not known", () => {
+    const current = outdoor(280, 5000, 0);
+    expect(
+      calculatePaceTrend(current, comparable, { records: null }).trend
+    ).toBe("improving");
+  });
+
+  it("does not hold the run against its own saved copy", () => {
+    const current = { ...outdoor(280, 5000, 0), id: "this-run" };
+    const saved = {
+      ...current,
+      completedAt: new Date(current.completedAt.getTime() - 5000),
+    };
+    const all = [...comparable, saved];
+    expect(calculatePaceTrend(current, all, { records: all }).trend).toBe("pr");
+  });
+});

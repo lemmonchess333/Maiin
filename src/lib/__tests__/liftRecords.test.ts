@@ -100,6 +100,38 @@ describe("bestSetPerExercise", () => {
     });
   });
 
+  it("ranks a bodyweight set with added load above any without (App1 Q15)", () => {
+    // The workout screen celebrates loaded sets only (`checkSetPR`), so
+    // +10 kg × 5, a new best there, is the record here too, though 20
+    // unweighted reps would outscore its estimate (11.7).
+    const records = bestSetPerExercise(
+      [
+        session("2026-09-01", [
+          { exerciseName: "Pull-Ups", sets: [{ weightKg: 0, reps: 20 }] },
+        ]),
+        session("2026-09-10", [
+          {
+            exerciseName: "Pull-Ups",
+            sets: [
+              { weightKg: 10, reps: 5 },
+              { weightKg: 0, reps: 22 },
+            ],
+          },
+        ]),
+      ],
+      { newSinceKey: NEW_SINCE }
+    );
+    expect(records).toEqual([
+      {
+        name: "Pull-Ups",
+        weight: 10,
+        reps: 5,
+        date: "2026-09-10",
+        isNew: false,
+      },
+    ]);
+  });
+
   it("skips a weighted exercise's set with no load, and a set with no reps", () => {
     const records = bestSetPerExercise(
       [

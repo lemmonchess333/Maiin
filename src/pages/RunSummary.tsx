@@ -732,7 +732,14 @@ export default function RunSummary() {
         place: state.runConfig?.place,
         templateId: runTemplateIdOf(state.runConfig?.planMetadata),
       },
-      historyRead.runs
+      historyRead.runs,
+      /* "New best" only for a pace Bests lists (App1 Q15), and only
+         against the whole history, as the post's bests are claimed. */
+      {
+        records: historyRead.known
+          ? historyRead.runs.filter((run) => isPaceEligible(run))
+          : null,
+      }
     );
   }, [state, historyRead, uid]);
 
@@ -1398,16 +1405,16 @@ export default function RunSummary() {
 
       // Activation funnel: a real saved run, once a run (a resumed save
       // has fired it). A run saved anyway is not one.
-      if (!isInvalid && !completion.resumed)
-        trackLifecycle(
-          "run_completed",
-          state.watchCompanionUsed
-            ? {
-                watchCompanion: true,
-                heartRateCoverage: heartRateCoverageBand(heartRate),
-              }
-            : {}
-        );
+      // A Watch run also says how much of it the heart rate covered, as a
+      // band: the release's measurement of paired runs and coverage.
+      if (!isInvalid && !completion.resumed) {
+        if (state.watchCompanionUsed)
+          trackLifecycle("run_completed", {
+            watchCompanion: true,
+            heartRateCoverage: heartRateCoverageBand(heartRate),
+          });
+        else trackLifecycle("run_completed");
+      }
 
       // Sharing happens on the finish screen once the run is saved:
       // automatically when the user has said so, or from its share button.
