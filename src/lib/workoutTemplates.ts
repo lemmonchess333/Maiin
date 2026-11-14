@@ -40,6 +40,15 @@ export interface RunTemplate {
       walkSecs: number[];
       cooldownWalkSec: number;
     };
+    /** Run24 (4), deep dive D4: a time trial, the plan's benchmark session.
+     *  An easy warm-up, the distance as hard as the runner can hold it
+     *  evenly, an easy cool-down; no pace, since it is how the pace is
+     *  found. Its work is read as a race (`benchmarkEffortOf`). */
+    timeTrial?: {
+      distanceKm: number;
+      warmupSec: number;
+      cooldownSec: number;
+    };
   };
 }
 
@@ -91,6 +100,12 @@ export function isRunWalkTemplateId(id: string | null | undefined): boolean {
     (RUN_WALK_TEMPLATE_IDS as readonly string[]).includes(key) ||
     (STARTER_NONSTOP_TEMPLATE_IDS as readonly string[]).includes(key)
   );
+}
+
+/** Run24 (4): whether a template is a time trial, the plan's benchmark
+ *  session. */
+export function isTimeTrialTemplateId(id: string | null | undefined): boolean {
+  return !!RUN_TEMPLATES.find((t) => t.id === id)?.config.timeTrial;
 }
 
 /** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
@@ -314,6 +329,28 @@ export const RUN_TEMPLATES: RunTemplate[] = [
         warmupDuration: 600,
         cooldownDuration: 300,
       },
+    },
+  },
+  {
+    id: "time_trial_3k",
+    name: "3K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "3 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 35,
+    config: {
+      timeTrial: { distanceKm: 3, warmupSec: 900, cooldownSec: 600 },
+    },
+  },
+  {
+    id: "time_trial_5k",
+    name: "5K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "5 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 45,
+    config: {
+      timeTrial: { distanceKm: 5, warmupSec: 900, cooldownSec: 600 },
     },
   },
   {

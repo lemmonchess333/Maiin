@@ -79,6 +79,10 @@ export function fitRunToTimeLimit(
       template.type === original.type &&
       !isRunWalkTemplateId(template.id) &&
       !RETIRED_RUN_TEMPLATE_IDS.has(template.id) &&
+      // A time trial is fitted to a shorter trial, never to an interval
+      // session, nor an interval session to a trial (Run24 (4)).
+      Boolean(template.config.timeTrial) ===
+        Boolean(original.config.timeTrial) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <

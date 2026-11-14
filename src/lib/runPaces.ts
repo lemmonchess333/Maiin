@@ -470,7 +470,33 @@ export interface PaceInsight {
   suggestedVdot: number;
   /** What accepting it stores: the best effort's benchmark. */
   suggested: DerivedFitness;
-  direction: "faster" | "slower";
+  /** "first": a runner with no confirmed paces, offered their first from
+   *  an effort (Run24 (4)); `currentVdot` is then 0 or the unconfirmed
+   *  derived one. */
+  direction: "faster" | "slower" | "first";
+}
+
+/**
+ * Run24 (4), deep dive D4: the run summary's one tap for a runner with no
+ * confirmed paces (no benchmark, or one the app derived and they haven't
+ * accepted): their best recent effort, whatever its distance from the
+ * unconfirmed one, so the plan's week-2 time trial gives them paces. Null
+ * with no effort. Accepting still writes the paces (RUN-EV-08).
+ */
+export function resolveFirstPaces(
+  fitness: RunFitnessInput | null | undefined,
+  efforts: readonly BenchmarkEffort[]
+): PaceInsight | null {
+  if (fitness && fitness.pendingConfirmation !== true) return null;
+  const best = bestEffort(efforts);
+  if (!best) return null;
+  const suggested = derivedFitness(best);
+  return {
+    currentVdot: Math.round((fitness?.vdot ?? 0) * 10) / 10,
+    suggestedVdot: suggested.vdot,
+    suggested,
+    direction: "first",
+  };
 }
 
 export function resolvePaceInsight(

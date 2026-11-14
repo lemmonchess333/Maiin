@@ -299,6 +299,9 @@ const EASY_RUN_TIERS: ReadonlyArray<{ id: string; minutes: number }> = [
   { id: "easy_90", minutes: 90 },
 ];
 const EASY_BASE_MINUTES = 30;
+/** Run24 (4): how often a build holds a time trial, inside the lock's 4 to
+ *  6 weeks. A Tropos heuristic. */
+const TRIAL_EVERY_WEEKS = 5;
 /** Run24 (2), deep dive D3: how far above a runner's own week the plan
  *  builds them, the middle of the lock's 20 to 30%. A Tropos heuristic. */
 const OWN_PEAK_SHARE = 1.25;
@@ -2112,6 +2115,13 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               skipQuality: rules.skipQuality || holdsNoQuality(k),
             });
             if (!held.includes(flavour)) continue;
+            // Run24 (4): a week's time trial takes its tempo, or its one
+            // quality session, which then climbs nothing.
+            if (
+              trialWeeks.has(k) &&
+              flavour === (held.includes("tempo") ? "tempo" : held[0])
+            )
+              continue;
             const id = qualityTemplateId({
               ...ladder,
               flavour,
@@ -2322,6 +2332,80 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 
     return week.sort(
       (a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex)
+    );
+  };
+
+  /* Run24 (4), deep dive D4: a time trial sets the runner's paces from what
+     they can run now. A block with no confirmed benchmark holds a 3 km one
+     in its second week; every block then holds a 5 km one about every five
+     weeks, in place of the week's tempo or its quality session, or in a
+     base week its strides run; the week before a step-back where one lands
+     on it, and never in the ramp's last week. Not in a week that holds no
+     quality (a new runner's, one back from a gap), nor a detrained
+     runner's block, nor below the taper-safe floor. */
+  const lastRampWeek = lastRampWeekOf(
+    blockWeeks,
+    TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance]
+  );
+  const noBenchmark = !input.easyPaceSPerKm;
+  const trialWeeks = new Set<number>();
+  if (!belowFloor && !detrained) {
+    const fits = (w: number) =>
+      w >= 0 &&
+      w < lastRampWeek &&
+      !holdsNoQuality(w) &&
+      getPhaseForWeek(w, blockWeeks, input.raceGoal.distance) !== "taper";
+    if (noBenchmark && fits(1)) trialWeeks.add(1);
+    for (
+      let w = 1 + TRIAL_EVERY_WEEKS;
+      w < lastRampWeek;
+      w += TRIAL_EVERY_WEEKS
+    ) {
+      const at = isRunStepBackWeek(w, blockWeeks, input.raceGoal.distance)
+        ? w - 1
+        : w;
+      if (fits(at)) trialWeeks.add(at);
+    }
+  }
+  /** A week as the plan holds it before its fits: the ramp, the floor,
+   *  the weekly hold, then its time trial, which the hold does not see. */
+  const blockWeekRunsWithTrial = (w: number): ScheduledRunDay[] => {
+    const week = blockWeekRuns(w);
+    if (!trialWeeks.has(w)) return week;
+    const trialId = noBenchmark && w === 1 ? "time_trial_3k" : "time_trial_5k";
+    // The week's tempo, else its quality session (`highestRungBefore`
+    // skips the one taken). A base week takes its strides run where it has
+    // a day between it and the long run; a week with neither holds no
+    // trial.
+    const tempo = week.findIndex((run) => run.type === "tempo");
+    const quality =
+      tempo >= 0 ? tempo : week.findIndex((run) => run.type === "intervals");
+    const longDays = week
+      .filter((run) => run.type === "long")
+      .map((run) => run.dayIndex);
+    const easyCandidates = week
+      .map((run, i) => ({ run, i }))
+      .filter(
+        ({ run }) =>
+          run.type === "easy" &&
+          run.templateId.endsWith("_strides") &&
+          clearOf(run.dayIndex, longDays) &&
+          getPhaseForWeek(w, blockWeeks, input.raceGoal.distance) === "base"
+      );
+    const slot = quality >= 0 ? quality : (easyCandidates[0]?.i ?? -1);
+    if (slot < 0) return week;
+    return week.map((run, i) =>
+      i === slot
+        ? {
+            ...run,
+            templateId: trialId,
+            type: "intervals",
+            id: generateScheduledRunId(
+              { dayIndex: run.dayIndex, templateId: trialId },
+              run.weekKey!
+            ),
+          }
+        : run
     );
   };
 
@@ -2604,7 +2688,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             heldQuality: false,
           };
     for (let k = 0; k < firstTaperWeek; k++) {
-      const planned = blockWeekRuns(k);
+      const planned = blockWeekRunsWithTrial(k);
       const week = fittedWeek(planned);
       held.heldQuality ||= week.some(
         (run) => run.type === "tempo" || run.type === "intervals"
@@ -2653,7 +2737,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // One week per calendar week from this one: the lead-in first, when this
   // week is one, then the plan's.
   const weeks = Array.from({ length: calendarWeeks }, (_, offset) =>
-    fittedWeek(blockWeekRuns(startIndex + offset))
+    fittedWeek(blockWeekRunsWithTrial(startIndex + offset))
   );
   return {
     totalWeeks,

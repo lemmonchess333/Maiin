@@ -44,7 +44,10 @@ import { resetNodeClock } from "../helpers/nodeClock";
 import type { ScheduledRunDay } from "../../src/features/program/programTypes";
 import { runDoseLine } from "../../src/lib/runDose";
 import { runSessionAbout, runSessionName } from "../../src/lib/runSessionAbout";
-import { RUN_TEMPLATES } from "../../src/lib/workoutTemplates";
+import {
+  isTimeTrialTemplateId,
+  RUN_TEMPLATES,
+} from "../../src/lib/workoutTemplates";
 import {
   RUN_ABOUT,
   TABS,
@@ -61,8 +64,11 @@ function templateOf(run: ScheduledRunDay) {
   return template;
 }
 
+/** A tempo or interval session; the week-2 time trial (Run24 (4)) sets
+ *  the paces and is not the build's quality. */
 const isQuality = (run: ScheduledRunDay) =>
-  ["tempo", "intervals"].includes(templateOf(run).type);
+  ["tempo", "intervals"].includes(templateOf(run).type) &&
+  !isTimeTrialTemplateId(templateOf(run).id);
 
 /** Any pace on screen: "5:20 /km", "8:35 /mi". */
 const PACE = /\d+:\d\d\s?\/(km|mi)/;
