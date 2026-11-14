@@ -153,6 +153,40 @@ describe("the race block cap (Run24 (3), D9)", () => {
     expect(Math.max(...block.map(longKm))).toBeGreaterThanOrEqual(26);
   });
 
+  it("keeps the block's own base free of sessions: quality before the build is the rolling base's (the marathon journey's plan)", () => {
+    // e2e/journeys/marathon-with-lifting: a marathon on the Sunday 52 weeks
+    // on from a Monday, three lift days and four runs, no benchmark.
+    const plan = generateRacePlanV2({
+      recentLayoff: "none",
+      weekSchedule: generateSchedule(3, 4),
+      weeklyRunDays: 4,
+      raceGoal: {
+        distance: "marathon",
+        targetDate: localDateString(
+          addLocalDays(parseLocalDate(START), 52 * 7 + 6)
+        ),
+      },
+      currentDate: START,
+      weekStart: START,
+    });
+    const total = plan.totalWeeks;
+    const before = raceBlockStart(total, "marathon");
+    const session = (week: ScheduledRunDay[]) =>
+      hard(week).some((run) => !isTrial(run));
+    const phases = plan.weeks.map((_, w) =>
+      getPhaseForWeek(w, total, "marathon")
+    );
+    const firstBuild = phases.indexOf("build");
+    expect(firstBuild).toBeGreaterThan(before);
+    // The rolling base rotates its light sessions (D9: never months of easy
+    // running only)...
+    expect(plan.weeks.slice(0, before).some(session)).toBe(true);
+    // ...the block's own base holds none, as a block always has...
+    expect(plan.weeks.slice(before, firstBuild).some(session)).toBe(false);
+    // ...and its first build week holds one.
+    expect(session(plan.weeks[firstBuild])).toBe(true);
+  });
+
   it("holds the weeks across the base and into the block to 15% over the last week that was not a step-back", () => {
     for (const [distance, weeks] of [
       ["marathon", 34],
