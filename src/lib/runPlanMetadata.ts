@@ -51,7 +51,13 @@ import {
 
 /** A saved run's snapshot of `profile.runMode`. `starter`: Run9's starter
  *  goal, whose planned days are matched as any plan's are. */
-export type PlanMode = "freeform" | "structured" | "race_prep" | "starter";
+export type PlanMode =
+  | "freeform"
+  | "structured"
+  | "race_prep"
+  | "starter"
+  /** Run24 (3): a plan with no race date (`runModeWithPlan`). */
+  | "rolling";
 
 export type PlanSource =
   "today_plan" | "url_template" | "manual" | "rest_day" | "completed_day";

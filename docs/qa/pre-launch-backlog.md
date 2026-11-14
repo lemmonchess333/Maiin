@@ -4904,6 +4904,18 @@ Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out
 - [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
 - [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
 
+## Plans with no race date, and what comes after a race (Run24 (3), 2026-11-14)
+
+Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picker (`RollingGoalPicker`), a plan stored as `runPlan.mode` "rolling" on a free running profile (`rollingGoalOf`, `runModeWithPlan`), its weekly rollover (`nextRunWeek`, `generateRollingPlan`), Train's run tab and header, Home's rest day, and the recovery-complete banner. Unit tests and the simulator's `build-10k-no-date` trace drive it; no phone has shown it, and setup and Run plan save it through `completeOnboarding` and `configurePlan` as they stand.
+
+- [ ] **Setup.** As a regular runner who also lifts, choose Plan, no race, then Build to 10K and 4 runs a week, and finish setup. Passing: Home leads with the first planned run; Train's run tab reads "Build to 10K · Week 1" and shows the week's runs; no Pro offer on any of them.
+- [ ] **The next Monday.** Move the device date to the next Monday. Passing: Train reads "Week 2" and the week holds new runs, a session among them by the second week; the lift week moved with it.
+- [ ] **Run plan.** Open Settings, Run plan. Passing: Plan, no race is chosen with Build to 10K; changing it to Keep fit and saving keeps the run days and starts Keep fit at Week 1; choosing No race and saving leaves no planned runs.
+- [ ] **A planned run.** Start today's planned tempo from Home. Passing: the run screen shows its warm-up, work and cool-down, and the run summary counts it against the plan.
+- [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
+- [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
+- [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
 ## One lighter-week offer for both sports, in the words of its reason (Q11, 2026-11-13)
 
 Affects: Train's "Consider a lighter week" banner. It is offered whenever

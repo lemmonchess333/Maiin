@@ -184,6 +184,7 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { lighterWeekOffer } from "@/lib/lighterWeekOffer";
 import { runHeaderLine } from "@/lib/runHeaderLine";
+import { rollingGoalOf } from "@/features/program/programMaintenance";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
@@ -1227,6 +1228,7 @@ function ProgramInner() {
       programState?.runPlan?.mode === "starter"
         ? programState.runPlan.stage
         : null,
+    rollingGoal: rollingGoalOf(programState, profile),
   });
 
   const handleAdvanceWeek = async () => {
@@ -2553,6 +2555,7 @@ function ProgramInner() {
         open={editLayoutOpen}
         onClose={() => setEditLayoutOpen(false)}
         profile={profile}
+        programState={programState}
         updateProfile={updateProfile}
         refreshRunSchedule={refreshRunSchedule}
         regenerateProgram={regenerateProgram}
