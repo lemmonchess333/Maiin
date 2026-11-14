@@ -633,6 +633,15 @@ export default function Onboarding() {
   );
   const runningStartValid =
     runningStart === null || isRunningBaseline(runningStart);
+  /* What the save builds the run plan from, which the race preview reads
+     too, so the longest run setup states is the plan's: the typed race over
+     the stored benchmark, and the starting point typed here over the stored
+     one. */
+  const planRunFitness = recentRaceBenchmark ?? profile?.runFitness;
+  const planRunningBaseline =
+    runningStart && runningStartValid
+      ? runningStart
+      : (profile?.runningBaseline ?? null);
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -659,12 +668,9 @@ export default function Onboarding() {
         goalPlan.fitnessGoal,
         currentDate,
         {
-          runningBaseline:
-            runningStart && runningStartValid
-              ? runningStart
-              : (profile?.runningBaseline ?? null),
+          runningBaseline: planRunningBaseline,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: recentRaceBenchmark ?? profile?.runFitness,
+          runFitness: planRunFitness,
         }
       ),
     [
@@ -688,12 +694,9 @@ export default function Onboarding() {
       weightDisplayUnit,
       goalPlan.fitnessGoal,
       currentDate,
-      profile?.runningBaseline,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
       profile?.runTimeLimits,
-      recentRaceBenchmark,
-      profile?.runFitness,
+      planRunFitness,
     ]
   );
   const dailyTarget = {
@@ -717,9 +720,13 @@ export default function Onboarding() {
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
-  // plan itself uses.
-  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
-  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(profile?.runFitness);
+  // plan itself uses: a race typed here is the benchmark the save keeps.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(planRunFitness);
+  const intervalPaceSPerKm = plannedIntervalPaceSPerKm(planRunFitness);
+  /* Deep dive D8, Run24 (1): the preview runs the plan the save builds,
+     with its easy pace, time limits and starting point; without the easy
+     pace a runner who typed a slow race was told the longest run of a plan
+     built at no pace at all (32 km for a marathon the plan takes to 20). */
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -729,7 +736,9 @@ export default function Onboarding() {
         liftDays: daysPerWeek,
         weeklyRunDays,
         newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
-        runningBaseline: runningStartValid ? runningStart : null,
+        runningBaseline: planRunningBaseline,
+        runTimeLimits: profile?.runTimeLimits,
+        easyPaceSPerKm,
       }),
     [
       raceDistance,
@@ -738,8 +747,9 @@ export default function Onboarding() {
       daysPerWeek,
       weeklyRunDays,
       runFrequency,
-      runningStart,
-      runningStartValid,
+      planRunningBaseline,
+      profile?.runTimeLimits,
+      easyPaceSPerKm,
     ]
   );
   /* The name step is the last; the word filter loads from the first, and

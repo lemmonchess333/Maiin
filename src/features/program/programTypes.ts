@@ -682,6 +682,14 @@ export interface RunPlan {
    *  instead of silently shortening. `belowFloor` implies `compressed`.
    *  Source: generateRacePlanV2's `belowFloor` output. */
   belowFloor?: boolean;
+  /** Run24 (11): the longest long run the plan builds to from the week it
+   *  was built for, in km, by what the plan put on each long run's day
+   *  before fitting it to the running done (`plannedLongRunKm`). The weekly
+   *  race check holds the runner's reach to it where it is under half the
+   *  race, as a plan at the long run's time ceiling or a short block peaks.
+   *  Written whenever a race plan's week is built; absent on a record built
+   *  before the plan carried it, until its next build. */
+  peakLongRunKm?: number;
   /** PR-D / PR-E: post-race recovery phase. Entered automatically
    *  when the race-day runDay transitions to completed_* (per
    *  `completeRunDay`). All template generation during this phase

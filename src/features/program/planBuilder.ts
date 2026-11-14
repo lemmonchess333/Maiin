@@ -73,6 +73,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import { firstFullWeekKey } from "./runPlanTiming";
+import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
   generateProgram,
@@ -941,6 +942,8 @@ function buildRunPlan(
         // floor is finish-safely — carry the marker so the UI names the risk.
         belowFloor: racePlan.belowFloor,
         ...(racePlan.blockInputs ? { blockInputs: racePlan.blockInputs } : {}),
+        // Run24 (11): what the plan builds to, for the weekly race check.
+        peakLongRunKm: peakPlannedLongRunKm(racePlan.weeks),
         // Run24 (2): the block's shorter base, as the generator kept or
         // decided it.
         ...(racePlan.shortBase ? { shortBase: true } : {}),
