@@ -203,6 +203,11 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
 import {
+  rollingGoalOf,
+  runModeWithPlan,
+} from "@/features/program/programMaintenance";
+import { ROLLING_GOAL_NAMES } from "@/features/program/rollingPlan";
+import {
   goalDayName,
   goalDayQuestion,
   raceGoalEntry,
@@ -274,6 +279,10 @@ interface ProgrammeRunSectionProps {
  *  one line, each the row's width once they do not (a small phone, or
  *  larger text), rather than a label broken over two lines in a pill. */
 const ACTION_PAIR = "flex-auto";
+
+/** Run plan opened on a plan with no race date, Keep fit chosen (Run24
+ *  (3)): what follows a race, and what free running is offered. */
+const AFTER_RACE_PLAN_PATH = "/settings/run-plan?goal=keep_fit";
 
 export default function ProgrammeRunSection({
   profile,
@@ -398,7 +407,10 @@ export default function ProgrammeRunSection({
     writeString(raceElapsedDismissKey, "1");
   }
 
-  const currentMode = profile.runMode ?? "freeform";
+  // Run24 (3): free running holding a plan with no race date draws as a
+  // plan, its week and its Start, as the retired structured week did.
+  const currentMode = runModeWithPlan(profile, programState);
+  const rollingGoal = rollingGoalOf(programState, profile);
   /* R4 — read the run plan through the resolver, not the mirror.
    *
    * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
@@ -610,6 +622,9 @@ export default function ProgrammeRunSection({
     profile.runFrequency === "new" &&
     !profile.starterGoal &&
     !starterOfferDismissed;
+  // Run24 (3): a plan with no race date, offered on free running.
+  const { dismissed: rollingOfferDismissed, dismiss: dismissRollingOffer } =
+    useDismissOnce("tropos-rolling-plan-offer");
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
@@ -640,6 +655,7 @@ export default function ProgrammeRunSection({
         raceGoal,
         currentWeek: programState?.runPlan?.currentWeek,
         totalWeeks: programState?.runPlan?.totalWeeks,
+        shortBase: programState?.runPlan?.shortBase,
         compressed: raceCompressed,
         belowFloor: raceBelowFloor,
         todayKey: todayKeyDerivation,
@@ -648,6 +664,7 @@ export default function ProgrammeRunSection({
       raceGoal,
       programState?.runPlan?.currentWeek,
       programState?.runPlan?.totalWeeks,
+      programState?.runPlan?.shortBase,
       raceCompressed,
       raceBelowFloor,
       todayKeyDerivation,
@@ -929,6 +946,7 @@ export default function ProgrammeRunSection({
           templateId: selectedTemplate.id,
           currentWeek: programState?.runPlan?.currentWeek,
           totalWeeks: programState?.runPlan?.totalWeeks,
+          shortBase: programState?.runPlan?.shortBase,
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
@@ -1063,13 +1081,15 @@ export default function ProgrammeRunSection({
   );
 
   const modeLabel =
-    currentMode === "race_prep"
-      ? "Race prep"
-      : currentMode === "structured"
-        ? "Structured"
-        : currentMode === "starter"
-          ? "30-minute goal"
-          : "Freeform";
+    currentMode === "rolling" && rollingGoal
+      ? ROLLING_GOAL_NAMES[rollingGoal]
+      : currentMode === "race_prep"
+        ? "Race prep"
+        : currentMode === "structured"
+          ? "Structured"
+          : currentMode === "starter"
+            ? "30-minute goal"
+            : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1225,7 +1245,9 @@ export default function ProgrammeRunSection({
           description={
             currentMode === "starter"
               ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
-              : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+              : currentMode === "rolling"
+                ? "Your plan has no run days yet. Open Configure plan to add two or more."
+                : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
           }
           action={
             <Button
@@ -1249,15 +1271,28 @@ export default function ProgrammeRunSection({
           actually does post-Run9 — resolveRecoveryExit returns the
           user to freeform (the locked two-state model has no
           structured mode to switch to). */}
+      {/* Run24 (3), deep dive D7: the plan offers what comes next rather
+          than stopping: a plan with no race date (Run plan opens on it,
+          Keep fit chosen), the next race, or no plan for now. */}
       {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
           title="Recovery complete"
-          description="What’s next?"
+          description="Keep your running going with a plan, or set your next race."
           action={
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="sport"
+                className={ACTION_PAIR}
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+              >
+                Choose a plan
+              </Button>
+              <Button
+                variant="secondary"
                 className={ACTION_PAIR}
                 onClick={() => {
                   haptic();
@@ -1267,11 +1302,11 @@ export default function ProgrammeRunSection({
                 Set next race
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
                 className={ACTION_PAIR}
                 onClick={handleSkipRecoveryEarly}
               >
-                Back to freeform
+                No plan for now
               </Button>
             </div>
           }
@@ -1543,6 +1578,49 @@ export default function ProgrammeRunSection({
                   dismissStarterOffer();
                 }}
                 aria-label="Dismiss the 30-minute goal"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </Card>
+          )}
+
+          {/* Run24 (3), deep dive D7: a plan with no race date, offered to a
+              free runner until dismissed (per account on this device). It
+              waits while the 30-minute goal is offered, and while the
+              starter goal's Done shows, which offer their own next goal. */}
+          {!rollingOfferDismissed && !starterOffered && !starterDoneShowing && (
+            <Card size="compact" className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-running-strong">
+                    Plan, no race
+                  </p>
+                  <p className="text-base font-bold text-foreground">
+                    Keep your running going
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Keep fit, build to 5K or 10K, or get faster at 5K. A lighter
+                    week every fourth.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissRollingOffer();
+                }}
+                aria-label="Dismiss the plan with no race date"
                 className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
               >
                 <X className="size-4" />

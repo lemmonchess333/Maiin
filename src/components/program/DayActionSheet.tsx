@@ -304,6 +304,7 @@ export default function DayActionSheet({
       templateId: selectedRunTemplate.id,
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
+      shortBase: rp?.shortBase,
       distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
         "5k" | "10k" | "half" | "marathon" | undefined,
       weekHasQuality: weekHoldsQuality(

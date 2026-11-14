@@ -275,6 +275,9 @@ export function buildRaceCockpitViewModel(args: {
     | undefined;
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)), which the
+   *  phase rail's label reads. */
+  shortBase?: boolean | null;
   compressed: boolean;
   /** Optional so existing callers compile; absent reads as false, which is
    *  the correct degenerate answer — a caller that does not know cannot claim
@@ -286,6 +289,7 @@ export function buildRaceCockpitViewModel(args: {
     raceGoal,
     currentWeek,
     totalWeeks,
+    shortBase,
     compressed,
     belowFloor = false,
     todayKey,
@@ -307,7 +311,7 @@ export function buildRaceCockpitViewModel(args: {
 
   const hasProgress = currentWeek != null && totalWeeks != null;
   const phaseLabel = hasProgress
-    ? getRacePhaseLabel(currentWeek!, totalWeeks!, distance)
+    ? getRacePhaseLabel(currentWeek!, totalWeeks!, distance, shortBase)
     : null;
 
   return {

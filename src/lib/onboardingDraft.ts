@@ -33,6 +33,10 @@
  *     swallowed: the draft is an enhancement, never a gate.
  */
 
+import {
+  isRollingGoal,
+  type RollingGoal,
+} from "@/features/program/rollingPlan";
 import { logger } from "@/lib/logger";
 import { readString, remove, writeJson } from "@/lib/localStore";
 import {
@@ -143,6 +147,9 @@ export interface OnboardingDraft {
    *  goal run on your own. Additive: older drafts have neither. */
   raceEventSpaceId?: string;
   raceEventName?: string;
+  /** Run24 (3): free running's plan with no race date, or none. Additive:
+   *  older drafts have none. */
+  rollingGoal?: RollingGoal | null;
   injuries: string[];
   gender: (typeof DRAFT_GENDERS)[number];
   /** LEGACY: a draft saved before the year of birth replaced the age range
@@ -255,6 +262,9 @@ export function isValidDraft(
         d.raceEventSpaceId.length <= 120)) &&
     (d.raceEventName === undefined ||
       (typeof d.raceEventName === "string" && d.raceEventName.length <= 60)) &&
+    (d.rollingGoal === undefined ||
+      d.rollingGoal === null ||
+      isRollingGoal(d.rollingGoal)) &&
     Array.isArray(d.injuries) &&
     (d.injuries as unknown[]).every((i) => typeof i === "string") &&
     oneOf(DRAFT_GENDERS, d.gender) &&

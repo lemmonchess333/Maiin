@@ -1324,6 +1324,46 @@ describe("a recent race at setup", () => {
   });
 });
 
+/* Deep dive D8, Run24 (1): the longest run setup states is the saved
+   plan's. The preview ran without the easy pace the save plans with, so a
+   runner who typed a slow race was told the longest run of a plan at no
+   pace at all: 32 km for a marathon their plan takes to 20. */
+describe("the longest run setup states", () => {
+  it("is the saved plan's, at the pace of the race typed", async () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceDistance: "marathon",
+      // About five months out, from the clock.
+      raceTargetDate: localDateString(addLocalDays(new Date(), 22 * 7 + 6)),
+      raceEntry: "own",
+      runningWeekMinutes: "150",
+      runningLongestMinutes: "60",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    const peak = () => screen.getByText(/Your longest run will be/);
+    expect(peak()).toHaveTextContent(/Your longest run will be 32 km\.$/);
+    // A 10K in 68:00, as a 2:30 half: easy about 8:25 /km, where the
+    // marathon's 180 minutes reach 20 km.
+    const recentRace = screen.getByRole("region", { name: "Recent race" });
+    fireEvent.click(within(recentRace).getByRole("radio", { name: "10K" }));
+    fireEvent.change(
+      within(recentRace).getByRole("textbox", { name: "Minutes" }),
+      { target: { value: "68" } }
+    );
+    expect(peak()).toHaveTextContent(
+      /Your longest run will be 20 km, about 2 h 50 min\.$/
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].programState.runPlan.peakLongRunKm).toBe(
+      20
+    );
+  });
+});
+
 /* DS3: each choice shows a drawing of what it leads to. The drawings are
    decorative, so the exact names below prove they add nothing to what a
    screen reader hears, and the e2e selectors that find these cards by
