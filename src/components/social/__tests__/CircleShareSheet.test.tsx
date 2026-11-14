@@ -89,7 +89,7 @@ function hookValue(overrides: Record<string, unknown> = {}) {
     createCircle: vi.fn(),
     joinCircle: vi.fn(),
     leaveCircle: vi.fn(),
-    loadDetail: vi.fn(async () => ({ members: [], events: [] })),
+    loadDetail: vi.fn(async () => ({ members: [], events: [], meetups: [] })),
     publishEvent: vi.fn(async () => true),
     setWeeklyFocus: vi.fn(),
     backCheckIn: vi.fn(),

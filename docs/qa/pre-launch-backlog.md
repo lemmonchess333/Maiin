@@ -594,6 +594,33 @@ only a deploy can confirm the callables run it.
       week before the deploy shows "This code has expired." and Make a new
       code, and everyone already in it still opens it.
 
+## Meet-ups in a Circle (Run26 call 4, 2026-11-14)
+
+A Circle member plans a run or a lift with a day, a time and a place; the
+others say they're in, and the organiser or the owner calls it off. The
+`circleMeetup` callable writes every meet-up, the rules let only members
+read them, and two collection-group indexes (`meetups.organiserUid`,
+`meetups.going`) serve the account-deletion sweep. The unit suites hold
+both sides and the rules test runs on CI's emulator; only a deploy and two
+real accounts can confirm the callable, the notices and the indexes in
+production.
+
+- [ ] **Plan, answer, call off.** After Deploy production has shipped (the
+      Firestore step waits for the two `meetups` indexes to be READY), on
+      account A open a Circle with account B in it and tap Plan a meet-up.
+      Passing: the sheet takes Run or Lift, a name, a day, a time and a
+      place; after Plan it the Circle's row on Together reads the meet-up's
+      name and "Sat 21 Nov · 08:00" style time, and B's tray has "A planned
+      a group run", which opens Together. On B, I'm in turns the line into
+      "You and A are going". On A, Call it off asks first, then B's tray
+      has "A called off a group run".
+- [ ] **Two time zones.** With B's phone set to another time zone
+      (Settings → General → Date & Time), open the same Circle on B.
+      Passing: B sees the start in B's own time (a London 08:00 reads as
+      03:00 in New York), and A still sees 08:00.
+- [ ] **Leaving takes your part.** B leaves the Circle. Passing: A's sheet
+      no longer names B as going, and a meet-up B planned is gone.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,

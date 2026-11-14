@@ -523,6 +523,12 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Run26 call 4: a Circle's meet-ups (plan, in, out, call off).
+  circleMeetup: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onGoalSpaceEventCreated: {
     kind: "event",
     maxInstances: 50,

@@ -72,6 +72,10 @@ const CATEGORY_BY_TYPE = Object.freeze({
   circle_needs_support: "circles",
   circle_joined: "circles",
   circle_routine_shared: "circles",
+  // Run26 call 4: a meet-up planned in your Circle, or one you were in for
+  // called off. News from a Circle, so the Circles switch carries it.
+  circle_meetup: "circles",
+  circle_meetup_cancelled: "circles",
   space_post_like: "spaces",
   space_post_comment: "spaces",
   invite_joined: "invites",

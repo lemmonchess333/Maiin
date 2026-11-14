@@ -272,6 +272,13 @@ const PINNED: Record<string, string> = {
   // the client schema contract (goalSpaceTypes.ts).
   "functions/lib/goalSpaceCheckIn.js":
     "src/features/goalSpace/__tests__/weeklyFocus.cross.test.ts",
+  // Run26 call 4: a Circle's meet-ups. The sports, the three lengths, the
+  // windows and the cap the plan sheet holds are the server's, and each
+  // server refusal reads in words. The rest of each module (the server's
+  // writes and sweeps, the client's reading of who is going) has no
+  // counterpart on the other side.
+  "functions/lib/circleMeetups.js":
+    "src/features/goalSpace/__tests__/circleMeetups.cross.test.ts",
   // Milestone-badge award ids/thresholds mirror the client catalogue's
   // ids + description prose (BADGE_DEFINITIONS renders ONLY known ids —
   // an unknown award is silently invisible).

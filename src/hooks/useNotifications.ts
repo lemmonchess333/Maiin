@@ -56,6 +56,11 @@ export const TRAY_NOTIFICATION_TYPES = [
   "circle_needs_support",
   "circle_joined",
   "circle_routine_shared",
+  // Run26 call 4 — a co-member planned a meet-up in the recipient's
+  // Circle, or called off one the recipient said they were in for. Named;
+  // the row opens Together, where the Circle shows it.
+  "circle_meetup",
+  "circle_meetup_cancelled",
   // SOC-P2g — Space-post engagement: props / a comment on the
   // recipient's space post. Rows open the post (the Space when the row
   // carries no post id), not the actor's profile.
