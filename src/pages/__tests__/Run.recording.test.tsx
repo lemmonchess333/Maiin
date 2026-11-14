@@ -55,6 +55,9 @@ const h = vi.hoisted(() => ({
   timerPause: vi.fn(),
   timerResume: vi.fn(),
   timerStart: vi.fn(),
+  /** The phone's motion sensors' reading; null is the web's none. */
+  motion: null as import("@/lib/runAutoPause").MotionReading | null,
+  motionSessions: [] as (string | null)[],
   distanceCue: vi.fn(),
   timeCue: vi.fn(),
   speak: vi.fn(),
@@ -124,6 +127,12 @@ vi.mock("@/hooks/useRunTimer", () => ({
     formatTime: () => "10:00",
     getAccumulatedSeconds: () => h.timer.elapsed,
   }),
+}));
+vi.mock("@/hooks/useRunMotion", () => ({
+  useRunMotion: (sessionId: string | null) => {
+    h.motionSessions.push(sessionId);
+    return sessionId ? h.motion : null;
+  },
 }));
 vi.mock("@/hooks/useWakeLock", () => ({
   useWakeLock: () => ({ request: vi.fn(), release: vi.fn() }),
@@ -324,6 +333,8 @@ beforeEach(() => {
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
   h.timer.elapsed = 600;
+  h.motion = null;
+  h.motionSessions.length = 0;
   h.unit = "mi";
   h.timerPause.mockReset().mockImplementation(() => {
     h.timer.isRunning = false;
@@ -978,6 +989,135 @@ describe("the trace's clock follows the run's", () => {
     fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
     expect(h.timerResume).toHaveBeenCalledTimes(1);
     expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
+  });
+});
+
+describe("auto-pause with the phone's motion sensors", () => {
+  const still = (at: number): import("@/lib/runAutoPause").MotionReading => ({
+    available: true,
+    steps: 400,
+    stepAt: at - 10_000,
+    stepEvent: { at, moving: false },
+    risesSincePause: 0,
+    activity: { at, kind: "stationary" },
+  });
+
+  it("runs the sensors for an outdoor run with auto-pause on, and not with it off", async () => {
+    await resumeFromSnapshot("active");
+    expect(h.motionSessions.at(-1)).toEqual(expect.any(String));
+    cleanup();
+    h.motionSessions.length = 0;
+    await resumeFromSnapshot("active", { autoPause: false });
+    expect(h.motionSessions.every((id) => id === null)).toBe(true);
+  });
+
+  it("stops the clock 2 s after a still phone at a crossing, through GPS drift, and starts it at the first step", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    h.gpsCalls.length = 0;
+    act(() => vi.advanceTimersByTime(1000));
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      // Drift: 1.4 m/s, which GPS alone reads as moving.
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+    expect(h.gpsCalls).toEqual(["pause"]);
+    expect(
+      screen.getByText(/Auto-paused · start moving to resume/)
+    ).toBeInTheDocument();
+
+    // More drift restarts nothing.
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.8 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerResume).not.toHaveBeenCalled();
+
+    // The pedometer's resume event, before GPS has caught up.
+    h.motion = {
+      ...h.motion!,
+      stepEvent: { at: Date.now(), moving: true },
+    };
+    h.gps.currentPoint = { ...point(3, Date.now()), speed: 0.2 };
+    view.rerender(tree());
+    expect(h.timerResume).toHaveBeenCalledTimes(1);
+    expect(h.gpsCalls.slice(-1)).toEqual(["resume"]);
+    expect(screen.queryByText(/Auto-paused/)).toBeNull();
+  });
+
+  it("a Resume by hand while still standing is not undone by the stop it ended", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    act(() => vi.advanceTimersByTime(1000));
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+
+    // The phone's Pause then Carry on; the Watch's Resume during an
+    // auto-pause ends in the same handler.
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    expect(h.timerResume).toHaveBeenCalledTimes(1);
+    // The same still reading: from before the Resume, so not a new stop.
+    for (let second = 0; second < 6; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+    // A new stop after it pauses again.
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(2);
+  });
+
+  it("never stops the clock while the plan has the runner in a recovery", async () => {
+    const { view } = await resumeFromSnapshot("active", {
+      segments: [
+        {
+          type: "recovery",
+          label: "Walk",
+          instruction: "Brisk walk, let your breathing settle",
+          target: { kind: "duration", seconds: 1200 },
+        },
+      ],
+    });
+    for (let second = 0; second < 8; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).not.toHaveBeenCalled();
+    expect(h.timer.isRunning).toBe(true);
+  });
+
+  it("stops it as before when the same standing is in a run segment", async () => {
+    const { view } = await resumeFromSnapshot("active", {
+      segments: [
+        {
+          type: "easy",
+          label: "Run",
+          instruction: "Easy, slow enough to talk",
+          target: { kind: "duration", seconds: 1200 },
+        },
+      ],
+    });
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
   });
 });
 

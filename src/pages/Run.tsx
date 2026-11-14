@@ -128,7 +128,12 @@ import { clearWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
-import { runMotionState } from "@/lib/runAutoPause";
+import {
+  AUTO_PAUSE_IDLE,
+  stepAutoPause,
+  type AutoPauseState,
+} from "@/lib/runAutoPause";
+import { useRunMotion } from "@/hooks/useRunMotion";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
@@ -1525,65 +1530,88 @@ export default function Run() {
     []
   );
 
-  const pauseIfStillStationary = useEffectEvent(() => {
-    // Re-read the latest accepted fix when the timer fires. A single low
-    // speed followed by GPS loss must not stop the run's moving clock.
-    if (runMotionState(gps.currentPoint, Date.now()) !== "stationary") return;
-    timerRef.current.pause();
-    setAutoPaused(true);
-  });
+  /* Auto-pause (runAutoPause.ts): GPS and, on iOS, the phone's motion
+     sensors decide when the clock stops by itself and starts again. The
+     sensors run from Start to the finish of an outdoor run with
+     auto-pause on, so Motion & Fitness is asked for beside location,
+     while GPS is still being found. */
+  const motionSessionId =
+    activeSessionId &&
+    runConfig?.autoPause &&
+    isOutdoorGpsRun(runConfig) &&
+    (phase === "acquiring" ||
+      phase === "countdown" ||
+      phase === "active" ||
+      phase === "paused")
+      ? activeSessionId
+      : null;
+  const runMotion = useRunMotion(motionSessionId);
+  const inRecovery = phase === "active" && player.current?.type === "recovery";
+  // The truth for the next step, read synchronously; `autoPaused` is its
+  // copy for rendering.
+  const autoPauseRef = useRef<AutoPauseState>(AUTO_PAUSE_IDLE);
+  // Bumped when a pending window is due, to step again with nothing new.
+  const [autoPauseRecheck, setAutoPauseRecheck] = useState(0);
 
-  useEffect(() => {
+  const evaluateAutoPause = useEffectEvent(() => {
+    if (autoPauseTimer.current) {
+      clearTimeout(autoPauseTimer.current);
+      autoPauseTimer.current = null;
+    }
     const eligible =
       phase === "active" &&
       !!runConfig?.autoPause &&
       !requiresManualDistance(runConfig);
     if (!eligible) {
-      // Left the auto-pause-eligible state (paused, finished, config off) —
-      // cancel any pending pause.
-      if (autoPauseTimer.current) {
-        clearTimeout(autoPauseTimer.current);
-        autoPauseTimer.current = null;
-      }
+      /* Out of play (paused by hand, finished, auto-pause off): no window
+         stays open, and the next Go or Resume arms it afresh. An
+         auto-pause in force is Resume's to end. */
+      autoPauseRef.current = {
+        ...AUTO_PAUSE_IDLE,
+        paused: autoPauseRef.current.paused,
+      };
       return;
     }
-    const motion = runMotionState(gps.currentPoint, Date.now());
-    const stationary = motion === "stationary";
-    const moving = motion === "moving";
-
-    if (stationary && !autoPaused) {
-      // Arm the 5s stationary timer ONCE. This effect re-runs on every GPS fix
-      // (~1s); previously the cleanup cleared and re-armed the timeout each
-      // time, so it never reached 5 continuous seconds and auto-pause never
-      // fired. Only arm when nothing is pending; never clear-on-rerun.
-      if (!autoPauseTimer.current) {
-        autoPauseTimer.current = setTimeout(() => {
-          autoPauseTimer.current = null;
-          pauseIfStillStationary();
-        }, 5000);
-      }
-    } else {
-      // Moving again (or a brief non-stationary blip) — cancel a pending pause
-      // so a moving run isn't paused, and resume if we were auto-paused.
-      if (autoPauseTimer.current) {
-        clearTimeout(autoPauseTimer.current);
-        autoPauseTimer.current = null;
-      }
-      if (moving && autoPaused) {
-        timerRef.current.resume();
-        // Fixes arrive as state; resuming on the one that shows movement
-        // is this effect's job, and it settles in one extra render.
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-        setAutoPaused(false);
-      }
+    const step = stepAutoPause(autoPauseRef.current, {
+      now: Date.now(),
+      gps: gps.currentPoint,
+      motion: runMotion,
+      inRecovery,
+    });
+    autoPauseRef.current = step.state;
+    if (step.change === "pause") {
+      timerRef.current.pause();
+      setAutoPaused(true);
+    } else if (step.change === "resume") {
+      timerRef.current.resume();
+      setAutoPaused(false);
     }
-    // No cleanup here: React runs effect cleanup before EVERY re-run, so
-    // clearing the pending timeout in a cleanup is exactly what broke auto-pause
-    // (reset every ~1s). Teardown on unmount is handled by the effect below.
-  }, [gps.currentPoint, phase, autoPaused, runConfig]);
+    /* A window closes on time even when nothing new arrives: the
+       evidence is read again then, so a fix that went stale meanwhile
+       (a low speed, then GPS lost) stops nothing. Re-armed on every
+       step, as each one measures from when the evidence began, not from
+       when the timer was set. */
+    if (step.recheckAt !== null) {
+      autoPauseTimer.current = setTimeout(
+        () => setAutoPauseRecheck((n) => n + 1),
+        Math.max(0, step.recheckAt - Date.now())
+      );
+    }
+  });
 
-  // Unmount-only teardown for the auto-pause timer (the main effect above
-  // deliberately has no per-run cleanup).
+  useEffect(() => {
+    evaluateAutoPause();
+  }, [
+    gps.currentPoint,
+    runMotion,
+    phase,
+    autoPaused,
+    runConfig,
+    inRecovery,
+    autoPauseRecheck,
+  ]);
+
+  // Unmount-only teardown for the auto-pause recheck.
   useEffect(() => {
     return () => {
       if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
@@ -1871,6 +1899,7 @@ export default function Run() {
        run under an "Auto-paused" banner with the trace still held, until
        the runner moved; cleared, auto-pause re-arms as normal if they are
        still standing. */
+    autoPauseRef.current = AUTO_PAUSE_IDLE;
     setAutoPaused(false);
     dispatch({ type: "RESUME" });
   };

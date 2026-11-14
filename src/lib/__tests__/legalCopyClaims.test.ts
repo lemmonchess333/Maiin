@@ -323,6 +323,27 @@ describe("Apple Health permissions and storage match the policy", () => {
   });
 });
 
+describe("motion during runs matches the policy", () => {
+  const SOURCE = read("../runMotionSource.ts");
+  const AUTO_PAUSE = read("../runAutoPause.ts");
+  const HOOK = read("../../hooks/useRunMotion.ts");
+
+  it("discloses that motion is read on the phone and not stored or sent", () => {
+    expect(PRIVACY_PROSE).toMatch(/Motion During Runs \(iPhone\)/);
+    expect(PRIVACY_PROSE).toMatch(
+      /It is read on your phone and is not stored or sent to Tropos/
+    );
+  });
+
+  it("keeps the readings in memory: no storage, network or analytics in their path", () => {
+    for (const source of [SOURCE, AUTO_PAUSE, HOOK]) {
+      expect(source).not.toMatch(
+        /localStore|firestoreWrite|offlineQueue|analytics|fetch\(|logEvent|trackLifecycleEvent/
+      );
+    }
+  });
+});
+
 describe("what the policy says about analytics, sharing and deletion holds", () => {
   it("analytics never receives what the policy says it never receives", () => {
     // "Analytics never receives your email address, your name, GPS routes,
