@@ -231,7 +231,7 @@ const RECENT_REPORT_WEEKS = 4;
 
 /** How much of a rung's minutes a run has to take to have done it: 95%, a
  *  Tropos heuristic for a pace's day-to-day spread. */
-const DONE_RUNG_SHARE = 0.95;
+export const DONE_RUNG_SHARE = 0.95;
 
 /**
  * Fit a week of generated runs to how far the person's running has climbed

@@ -4808,3 +4808,20 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
+
+Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),
+which now reads `programState.runPlan.peakLongRunKm`, written whenever a race
+plan's week is built. Unit and season tests drive it; no stored plan has
+picked up the field yet.
+
+- [ ] **A stored plan picks up its peak.** On an account with a race plan
+      made before this shipped, open the app after its next Monday. Passing:
+      `users/{uid}/programState/current` has `runPlan.peakLongRunKm` (the
+      plan's longest long run in km), and until it does the sheet's race
+      register never opens.
+- [ ] **A slow marathoner in the taper.** A marathon plan whose long run
+      peaks under 21 km (setup says "Your longest run will be 20 km"), every
+      long run done, opened in a taper week. Passing: no "Your long runs and
+      your race" sheet.
