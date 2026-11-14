@@ -157,9 +157,39 @@ async function ensureProfile(uid: string): Promise<void> {
   console.log(`[seed-e2e-user] Profile written for ${uid}`);
 }
 
+/**
+ * Enough people training on Tropos (App1 Q6): the league, challenges and
+ * Spaces stay quiet for someone not in one until the server's counts reach
+ * GROUP_MIN (10, `src/lib/enoughPeople.ts`). The rig runs no Functions, so
+ * nothing counts anyone, and the surfaces the captures and specs measure
+ * (the league card, the Spaces directory) would draw nothing. Written as
+ * Monday's league turn writes it (`weeklyLeagueTurn`, functions/lib/
+ * leagues.js): 12 people in, groups formed, this week's Monday as the key.
+ * A spec that wants the quiet state deletes it.
+ */
+async function ensureEnoughPeople() {
+  const now = new Date();
+  const back = (now.getUTCDay() + 6) % 7;
+  const monday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - back)
+  );
+  await db
+    .collection("leagueStatus")
+    .doc("current")
+    .set({
+      joined: 12,
+      needed: 10,
+      open: true,
+      weekKey: monday.toISOString().slice(0, 10),
+      updatedAt: now,
+    });
+  console.log("[seed-e2e-user] League status written: 12 people training");
+}
+
 async function main() {
   const uid = await ensureUser();
   await ensureProfile(uid);
+  await ensureEnoughPeople();
   console.log(
     `[seed-e2e-user] Done. Login as ${TEST_USER.email} with the shared E2E password.`
   );
