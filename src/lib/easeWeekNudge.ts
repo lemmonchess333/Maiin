@@ -67,7 +67,10 @@ export const SHORT_TARGET_RATIO = 0.7;
 export const EXECUTION_POLICY_VERSION = "run-execution-v1";
 
 export type RelativeEffort = "easier" | "matched" | "harder" | null;
-export type PaceVerdictTone = "on" | "fast" | "easy-too-fast" | "slow";
+/** "heat" is a hot day's run that ran slower than its pace, or one run by
+ *  effort only (heatAdjustment.ts): not judged slow, so it counts neither
+ *  as a miss nor as on target. */
+export type PaceVerdictTone = "on" | "fast" | "easy-too-fast" | "slow" | "heat";
 
 export interface EaseWeekNudgeRun {
   id?: string;
@@ -345,10 +348,7 @@ export function evaluateEaseWeekNudge(
  * early miss followed by an on-target repeat resolves to "recovered".
  */
 export type PostEaseBounce =
-  | "recovered"
-  | "still_missing"
-  | "above_window"
-  | null;
+  "recovered" | "still_missing" | "above_window" | null;
 
 export function evaluatePostEaseBounce(input: {
   /** Monday weekKey the athlete applied an easier week in, or null. */
