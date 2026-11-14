@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6901199,
+  "total": 6903891,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -510,7 +510,7 @@
     "useSnoozeDismiss": 836,
     "useSpacePostLikes": 13297,
     "useSteps": 2384,
-    "useStreaks": 19006,
+    "useStreaks": 21698,
     "useTrialReminder": 1529,
     "useWaterLog": 3064,
     "useWeeklyReview": 5457,
