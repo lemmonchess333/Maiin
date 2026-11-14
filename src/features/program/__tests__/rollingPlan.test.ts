@@ -18,7 +18,7 @@ import type { RunningBaseline } from "../runningBaseline";
 import type { ScheduledRunDay } from "../programTypes";
 import { plannedRunMinutes } from "../runTimeLimits";
 import { generateSchedule } from "@/lib/scheduleUtils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { BASE_LIGHT_TEMPLATE_IDS, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   addLocalDays,
   localDateString,
@@ -171,8 +171,16 @@ describe("the race block cap (Run24 (3), D9)", () => {
     });
     const total = plan.totalWeeks;
     const before = raceBlockStart(total, "marathon");
+    // A block's base holds a fartlek or short hills (Run24 (5)); neither is
+    // the build's quality, as the journey reads it.
     const session = (week: ScheduledRunDay[]) =>
-      hard(week).some((run) => !isTrial(run));
+      hard(week).some(
+        (run) =>
+          !isTrial(run) &&
+          !(BASE_LIGHT_TEMPLATE_IDS as readonly string[]).includes(
+            run.templateId
+          )
+      );
     const phases = plan.weeks.map((_, w) =>
       getPhaseForWeek(w, total, "marathon")
     );
@@ -181,7 +189,8 @@ describe("the race block cap (Run24 (3), D9)", () => {
     // The rolling base rotates its light sessions (D9: never months of easy
     // running only)...
     expect(plan.weeks.slice(0, before).some(session)).toBe(true);
-    // ...the block's own base holds none, as a block always has...
+    // ...the block's own base holds none of the build's, only its light
+    // sessions...
     expect(plan.weeks.slice(before, firstBuild).some(session)).toBe(false);
     // ...and its first build week holds one.
     expect(session(plan.weeks[firstBuild])).toBe(true);

@@ -81,8 +81,11 @@ function onDay<T>(day: string, run: () => T): T {
   }
 }
 
+/** A build's quality session: a base week's light session, a fartlek or
+ *  short hills (Run24 (5)), is not one. */
 const isQuality = (run: ScheduledRunDay) =>
-  run.type === "tempo" || run.type === "intervals";
+  (run.type === "tempo" || run.type === "intervals") &&
+  !/^(fartlek_30|hills_6x30s)$/.test(run.templateId);
 const firstQualityWeek = (weeks: ScheduledRunDay[][]) =>
   weeks.findIndex((week) => week.some(isQuality));
 
@@ -155,8 +158,10 @@ describe("who gets a shorter base", () => {
     const own = made(start("regular"));
     expect(own.shortBase).toBe(true);
     expect(firstQualityWeek(own.weeks)).toBe(4);
+    // With 4 x 1 km beside it: a regular runner on five run days holds a
+    // second quality session (Run24 (5)).
     expect(own.weeks[4].filter(isQuality).map((run) => run.templateId)).toEqual(
-      ["tempo_20"]
+      ["tempo_20", "4x1k"]
     );
   });
 
