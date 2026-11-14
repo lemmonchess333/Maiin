@@ -1,5 +1,9 @@
 import type { ScheduledRunDay } from "@/features/program/programTypes";
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import {
+  RACE_PACE_LONG_LADDERS,
+  RUN_TEMPLATES,
+  type RunTemplate,
+} from "@/lib/workoutTemplates";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -52,6 +56,8 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
   // easy — strides kept separate so a strides session stays a strides
   // session (the strides ARE the point; dropping them is a family change).
   ["easy_30_strides", "easy_40_strides", "easy_50_strides"],
+  // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+  ["easy_30_pickups", "easy_40_pickups", "easy_50_pickups"],
   ["tempo_20", "tempo_30", "tempo_40"],
   ["4x1k", "5x1k", "6x1k"],
   // Run24 (5): the session library's families, each a smaller dose of
@@ -83,6 +89,10 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
     "long_30k",
     "long_32k",
   ],
+  // Run24 (5): a long run with race-pace blocks steps down to a shorter
+  // one of its own race, and its first rung has nowhere to go.
+  RACE_PACE_LONG_LADDERS.marathon,
+  RACE_PACE_LONG_LADDERS.half,
 ];
 
 /**
@@ -142,6 +152,15 @@ export function shorteningRank(
   candidate: Pick<RunTemplate, "id" | "type" | "config">
 ): 0 | 1 | null {
   if (candidate.type !== original.type) return null;
+  // Run24 (5): a plain long run is never shortened to one with race-pace
+  // blocks; one with them to a shorter one of its own race first, else to
+  // a plain long run.
+  if (original.type === "long") {
+    const from = original.config.racePaceBlocks?.race ?? null;
+    const to = candidate.config.racePaceBlocks?.race ?? null;
+    if (to === null) return 0;
+    return to === from ? 1 : null;
+  }
   const kind = workKindOf(original);
   if (kind === null) return 0;
   if (workKindOf(candidate) !== kind) return null;
