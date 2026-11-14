@@ -4833,6 +4833,14 @@ Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`
 - [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
 - [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces, read from the 3 km only (not the warm-up and cool-down); on a Pro account one tap takes them, on a free account the card names Pro and nothing changes; with no paces before, the card reads "Your training paces, from this run".
 
+## A shorter base for a regular runner (Run24 (2), 2026-11-13)
+
+Affects: setup's race preview, the stored run plan's `shortBase`, and every surface that names a week's phase (the race card's rail, "Why this run" on Home, Train and the run screen, Train's lift label). Unit tests drive each reader from one stored plan; no phone has made or carried such a plan.
+
+- [ ] **Setup.** As a regular runner, give 330 minutes a week and a 120-minute longest run, and set a half 16 weeks out. Passing: the preview says "Your build starts in week 5, since you already run 330 minutes a week." A building runner with the same numbers sees no such line.
+- [ ] **Week 5.** On the plan's fifth Monday, open Train and Home. Passing: the race card's rail lights Build, the week's tempo is there, "Why this run" reads "Build · week 5 of 16", and the lift label ends "· Build".
+- [ ] **A plan made before this build.** On an account whose race plan was saved before this shipped, roll a week and change a run day in Settings. Passing: its phases stay where they were (Base until week 7 of a 16-week half); the plan gains no `shortBase`.
+
 ## The session library on the run screen (Run24 (5), 2026-11-13)
 
 Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` with a style, `segmentsFromProgression`), their spoken cues, the setup's step preview, and their words on Home, Train and the launch card. Unit tests build each session from template to segments; no phone has run one. Open each from a run day's template picker (day sheet → Template) to try it before a plan holds it.
@@ -4842,7 +4850,6 @@ Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` w
 - [ ] **Repeats at 5K pace.** With a confirmed benchmark, start 4×800m at 5K pace. Passing: each repeat shows its own pace (about the 5K pace the app predicts), headed "5K PACE · REP 1/4", and the in-run heading never swaps it for the interval band; a minute's rest between. Without a benchmark: "5K EFFORT", no pace.
 - [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
 - [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
-
 
 ## The session library in the plan (Run24 (5), 2026-11-13)
 

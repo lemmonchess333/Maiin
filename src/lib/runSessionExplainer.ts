@@ -28,6 +28,9 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
+  /** The plan's shorter base (`RunPlan.shortBase`, Run24 (2)), so the
+   *  phase the words and the week label name is the plan's own. */
+  shortBase?: boolean | null;
   /** Whether the run's week holds a tempo or intervals session
    *  (`weekHoldsQuality`). The build's easy day and long run name the
    *  quality sessions only when it does: a returning runner's weeks hold none
@@ -114,7 +117,8 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   const phase = getPhaseForWeek(
     input.currentWeek,
     input.totalWeeks,
-    input.distance as "5k" | "10k" | "half" | "marathon"
+    input.distance as "5k" | "10k" | "half" | "marathon",
+    input.shortBase
   );
   return {
     purpose,
@@ -153,7 +157,12 @@ export function runSessionExplainer(
   ) {
     return null;
   }
-  const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);
+  const phase = getPhaseForWeek(
+    currentWeek,
+    totalWeeks,
+    distance,
+    input.shortBase
+  );
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 

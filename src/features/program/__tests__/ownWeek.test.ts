@@ -109,21 +109,34 @@ describe("a regular runner on 330 minutes a week, a half 16 weeks out", () => {
     }
   });
 
-  it("keeps the race and the plan's quality sessions", () => {
-    const quality = (week: ScheduledRunDay[]) =>
-      week.filter((run) => run.type === "tempo" || run.type === "intervals");
-    // Every week keeps its quality; a regular runner on five run days holds
-    // a second session in the build (Run24 (5)), which the plan without a
-    // starting point does not know to.
+  it("keeps the race, and its quality sessions start two weeks sooner", () => {
+    // A build's quality: not the base's light sessions (Run24 (5)).
+    const qualityIn = (week: ScheduledRunDay[]) =>
+      week.filter(
+        (run) =>
+          (run.type === "tempo" || run.type === "intervals") &&
+          !/^(fartlek_30|hills_6x30s)$/.test(run.templateId)
+      );
+    const firstQuality = (weeks: ScheduledRunDay[][]) =>
+      weeks.findIndex((week) => qualityIn(week).length > 0);
+    // Run24 (2): a regular runner above the plan's base gets a shorter
+    // base, so the build, and its first tempo, is week 5 (was week 7).
+    expect(own.shortBase).toBe(true);
+    expect(plain.shortBase).toBe(false);
+    expect(firstQuality(own.weeks)).toBe(4);
+    expect(firstQuality(plain.weeks)).toBe(6);
+    // From there every week keeps its quality, and a regular runner on five
+    // run days holds a second session in the build (Run24 (5)), which the
+    // plan without a starting point does not know to.
     own.weeks.forEach((week, i) =>
-      expect(quality(week).length, `week ${i + 1}`).toBeGreaterThanOrEqual(
-        quality(plain.weeks[i]).length
+      expect(qualityIn(week).length, `week ${i + 1}`).toBeGreaterThanOrEqual(
+        qualityIn(plain.weeks[i]).length
       )
     );
     expect(
       own.weeks.some(
         (week, i) =>
-          quality(week).length === 2 && quality(plain.weeks[i]).length === 1
+          qualityIn(week).length === 2 && qualityIn(plain.weeks[i]).length === 1
       )
     ).toBe(true);
     expect(own.weeks.at(-1)!.find((run) => run.type === "race")).toEqual(

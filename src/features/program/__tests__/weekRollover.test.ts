@@ -389,6 +389,7 @@ describe("a race week built mid-week (Run19, R21)", () => {
         carry: {
           currentWeek: plan.state.runPlan?.currentWeek,
           totalWeeks: plan.state.runPlan?.totalWeeks,
+          shortBase: plan.state.runPlan?.shortBase,
         },
         ...extra,
       })

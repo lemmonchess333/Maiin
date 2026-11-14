@@ -55,8 +55,13 @@ function plan(
 const template = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
 const isQuality = (id: string) =>
   ["tempo", "intervals"].includes(template(id).type);
-const phaseOf = (distance: Distance, weeks: number, w: number) =>
-  getPhaseForWeek(w, weeks, distance);
+/** A plan's phase for a week, with the base it was made with (Run24 (2)). */
+const phaseOf = (
+  out: ReturnType<typeof plan>,
+  distance: Distance,
+  weeks: number,
+  w: number
+) => getPhaseForWeek(w, weeks, distance, out.shortBase);
 const idsIn = (
   out: ReturnType<typeof plan>,
   distance: Distance,
@@ -64,7 +69,7 @@ const idsIn = (
   phase: string
 ) =>
   out.weeks.flatMap((week, w) =>
-    phaseOf(distance, weeks, w) === phase
+    phaseOf(out, distance, weeks, w) === phase
       ? week.map((run) => run.templateId)
       : []
   );
@@ -127,8 +132,9 @@ describe("a build's quality sessions, by race distance (Run24 (5))", () => {
     ] as const) {
       const out = sixDays(distance, weeks);
       const highest = new Map<"tempo" | "intervals", number>();
+      // Every session on a ladder, the build's whichever weeks it holds:
+      // the base's light sessions, trials and sharpeners are on none.
       out.weeks.forEach((week, w) => {
-        if (phaseOf(distance, weeks, w) !== "build") return;
         for (const run of week) {
           if (run.type !== "tempo" && run.type !== "intervals") continue;
           const ladder = LADDERS.find((l) => l.includes(run.templateId));
@@ -155,7 +161,7 @@ describe("a base week's light quality (Run24 (5))", () => {
       const weeks = distance === "marathon" ? 18 : 14;
       const out = plan(distance, weeks, 4);
       const baseWeeks = out.weeks.filter(
-        (_, w) => phaseOf(distance, weeks, w) === "base"
+        (_, w) => phaseOf(out, distance, weeks, w) === "base"
       );
       expect(baseWeeks.length).toBeGreaterThan(0);
       for (const week of baseWeeks) {
