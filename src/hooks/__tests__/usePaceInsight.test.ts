@@ -44,6 +44,14 @@ vi.mock("@/lib/runPaces", () => ({
     H.engineRuns = runs;
     return runs.length ? H.engineInsight : null;
   },
+  resolveFirstPaces: (fitness: unknown, runs: { id?: string }[]) =>
+    runs.length
+      ? {
+          ...H.engineInsight!,
+          currentVdot: (fitness as { vdot?: number } | null)?.vdot ?? 0,
+          direction: "first",
+        }
+      : null,
   vdotFromRace: () => 45,
 }));
 
@@ -93,6 +101,30 @@ describe("usePaceInsightFromRuns — gating", () => {
       usePaceInsightFromRuns([run()], { everyAccount: true })
     );
     expect(result.current.insight).toEqual(INSIGHT);
+  });
+
+  it("offers a runner with no confirmed paces their first on the run summary (Run24 (4))", () => {
+    H.isPro = false;
+    authState.profile = { uid: "A", runFitness: null };
+    const none = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(none.result.current.insight?.direction).toBe("first");
+    // First paces are the adaptive part, as faster ones are: Pro's to take.
+    expect(none.result.current.locked).toBe(true);
+    authState.profile = {
+      uid: "A",
+      runFitness: { vdot: 45, pendingConfirmation: true },
+    };
+    const pending = renderHook(() =>
+      usePaceInsightFromRuns([run()], { everyAccount: true })
+    );
+    expect(pending.result.current.insight?.direction).toBe("first");
+    // Settings' continuous form keeps its own rule.
+    authState.profile = { uid: "A", runFitness: null };
+    H.isPro = true;
+    const settings = renderHook(() => usePaceInsightFromRuns([run()]));
+    expect(settings.result.current.insight).toBeNull();
   });
 
   it("faster paces on a free account are shown locked and cannot be taken", async () => {

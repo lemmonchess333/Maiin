@@ -33,6 +33,7 @@
  */
 import type { BenchmarkEffort } from "./runPaces";
 import { isPaceEligible } from "./runStatsEligibility";
+import { isTimeTrialTemplateId } from "./workoutTemplates";
 
 /** The shortest race read as a benchmark, metres: the 2 km floor the derive
  *  has always had. Under it, a race-equivalent VDOT means little. */
@@ -68,6 +69,9 @@ export interface EffortRun {
   completedAt?: Date | null;
   workPortion?: { seconds: number; meters: number } | null;
   workPacePinned?: boolean;
+  /** What was run, as the saved run names it: a time trial is read by its
+   *  work as a race (Run24 (4)). */
+  templateId?: string;
 }
 
 /** The effort a run was, or null when it was none. */
@@ -77,6 +81,20 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     ...(run.id ? { id: run.id } : {}),
     ...(run.completedAt ? { completedAt: run.completedAt } : {}),
   };
+  // Run24 (4), deep dive D4: the plan's time trial, read by its one work
+  // segment as a race over that distance; the warm-up and cool-down around
+  // it are not the effort.
+  if (isTimeTrialTemplateId(run.templateId)) {
+    const work = run.workPortion;
+    if (!work || !(work.meters >= MIN_RACE_METERS) || !(work.seconds > 0))
+      return null;
+    return {
+      kind: "race",
+      distanceM: work.meters,
+      timeS: work.seconds,
+      ...source,
+    };
+  }
   if (run.activityType === "race") {
     if (!(run.distance >= MIN_RACE_METERS) || !(run.duration > 0)) return null;
     return {

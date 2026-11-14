@@ -12,6 +12,7 @@ import {
   effortVdot,
   vdotFromTempoPace,
   parseRaceTimeToSeconds,
+  resolveFirstPaces,
   resolvePaceInsight,
   raceDistanceKeyFromKm,
   predictedRaceTimesFromFitness,
@@ -383,6 +384,36 @@ describe("benchmarkFromRaceTime and manualRunFitness", () => {
       updatedAt: "2026-10-08T07:00:00.000Z",
       pendingConfirmation: false,
     });
+  });
+});
+
+describe("resolveFirstPaces (Run24 (4))", () => {
+  const trial = { kind: "race" as const, distanceM: 3000, timeS: 780 };
+
+  it("gives a runner with no paces their first, from the best effort", () => {
+    const first = resolveFirstPaces(null, [trial]);
+    expect(first?.direction).toBe("first");
+    expect(first?.suggested.benchmark).toEqual({ distanceM: 3000, timeS: 780 });
+    expect(first?.currentVdot).toBe(0);
+  });
+
+  it("offers an unconfirmed derived benchmark however close the effort is", () => {
+    const pending = {
+      benchmark: { distanceM: 3000, timeS: 780 },
+      vdot: 42,
+      pendingConfirmation: true,
+    };
+    expect(resolveFirstPaces(pending, [trial])?.direction).toBe("first");
+  });
+
+  it("leaves confirmed paces to resolvePaceInsight, and needs an effort", () => {
+    const confirmed = {
+      benchmark: { distanceM: 5000, timeS: 1500 },
+      vdot: null,
+      pendingConfirmation: false,
+    };
+    expect(resolveFirstPaces(confirmed, [trial])).toBeNull();
+    expect(resolveFirstPaces(null, [])).toBeNull();
   });
 });
 
