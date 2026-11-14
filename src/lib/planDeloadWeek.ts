@@ -107,14 +107,16 @@ export function qualityRungsFor(
  * one (a time limit, the running starting point): threshold blocks (a
  * tempo, cruise intervals), a progression run, repeats at the interval
  * band, at repetition pace or a race's, hills, a fartlek, a taper's
- * sharpener, or one time trial alone. Null for a run that is not a tempo or intervals.
+ * sharpener, or a time trial. Null for a run that is not a tempo or
+ * intervals.
  */
 function workKindOf(
   template: Pick<RunTemplate, "id" | "type" | "config">
 ): string | null {
   if (template.type !== "tempo" && template.type !== "intervals") return null;
   const { config } = template;
-  if (config.timeTrial) return `trial:${template.id}`;
+  // A time trial is fitted to a shorter trial (Run24 (4)).
+  if (config.timeTrial) return "trial";
   if (config.taper)
     return `taper:${config.tempo ? "threshold" : config.repeatsAt}`;
   if (config.progression) return "progression";

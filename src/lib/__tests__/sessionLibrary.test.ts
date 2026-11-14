@@ -411,7 +411,7 @@ describe("a shorter session is a smaller dose of the same one", () => {
   it("never turns one kind of session into another, at any limit", () => {
     const kind = (t: RunTemplate) =>
       t.config.timeTrial
-        ? `trial ${t.id}`
+        ? "trial"
         : t.config.taper
           ? `taper ${t.config.tempo ? "blocks" : t.config.repeatsAt}`
           : t.config.progression
@@ -448,7 +448,9 @@ describe("a shorter session is a smaller dose of the same one", () => {
     expect(fitTo("fartlek_30", 30)).toBe("fartlek_30");
     expect(fitTo("sharpener_marathon", 40)).toBe("sharpener_half");
     expect(fitTo("sharpener_half", 30)).toBe("easy_30");
-    expect(fitTo("time_trial_5k", 40)).toBe("easy_30");
+    // A time trial is fitted to a shorter trial (Run24 (4)), else run easy.
+    expect(fitTo("time_trial_5k", 40)).toBe("time_trial_3k");
+    expect(fitTo("time_trial_3k", 30)).toBe("easy_30");
   });
 
   it("is held to its own rungs by a new runner's minutes", () => {
