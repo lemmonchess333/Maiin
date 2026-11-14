@@ -197,6 +197,14 @@ const PINNED: Record<string, string> = {
   // date}`; the app reads `pulse/{its local today}` and its `sessions`.
   // A basename pair with src/lib/pulse.ts.
   "functions/lib/pulse.js": "src/lib/__tests__/pulse.cross.test.ts",
+  // A shared post's public page (App1 Q51): the server writes the post's
+  // figures and its cut route into the page, and src/lib/publicPost.ts
+  // reads them. A basename pair; the cross-test feeds the one to the other.
+  "functions/lib/publicPost.js": "src/lib/__tests__/publicPost.cross.test.ts",
+  // The page's map, cut on the server with copies of the app's haversine
+  // (src/lib/gps.ts) and isOutdoorGpsRun (src/lib/runGuards.ts), which the
+  // same cross-test holds to the app's.
+  "functions/lib/publicRoute.js": "src/lib/__tests__/publicPost.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",

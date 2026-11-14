@@ -8,6 +8,11 @@
  * block's id, the origin), the page would draw "This post isn’t available"
  * for every post, which looks exactly like the privacy rule working. So the
  * server's own output is fed to the page's reader here.
+ *
+ * The run's map is cut on the server (functions/lib/publicRoute.js), which
+ * measures with its own copy of the app's haversine and asks its own copy
+ * of `isOutdoorGpsRun` whether a run had GPS. Both are held to the app's
+ * here, and the cut line is read back by the page as it was sent.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
@@ -21,9 +26,12 @@ import {
   PUBLIC_APP_ORIGIN,
   publicPostUrl,
 } from "@/lib/publicLinks";
+import { haversine } from "@/lib/gps";
+import { isOutdoorGpsRun } from "@/lib/runGuards";
 
 const require = createRequire(import.meta.url);
 const server = require("../../../functions/lib/publicPost.js");
+const route = require("../../../functions/lib/publicRoute.js");
 const {
   memoryFirestore,
 } = require("../../../functions/__tests__/helpers/memoryFirestore.cjs");
@@ -186,5 +194,81 @@ describe("the page reads what the server writes", () => {
       vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) }))
     );
     await expect(loadPublicPost("run1")).rejects.toThrow("503");
+  });
+});
+
+/** Degrees of latitude in a metre, on the haversine's earth. */
+const DEG_PER_M = 180 / (Math.PI * 6371000);
+
+describe("the run's map", () => {
+  it("is read by the page as the server cut it", async () => {
+    const points = Array.from({ length: 101 }, (_, i) => ({
+      lat: 51.5 + i * 50 * DEG_PER_M,
+      lon: -0.12,
+      timestamp: 1_762_931_400_000 + i * 15_000,
+    }));
+    const firestore = memoryFirestore({
+      "users/sam": {},
+      "users/sam/public/profile": { displayName: "Sam" },
+      "users/sam/privacyZones/home": {
+        lat: 51.5,
+        lon: -0.12,
+        radiusMeters: 200,
+      },
+      "users/sam/runs/r1": { sharedActivityId: "run1", points, place: null },
+      "activities/run1": {
+        authorId: "sam",
+        type: "run",
+        visibility: "public",
+        distance: 5000,
+        duration: 1500,
+        routePreview: [points[10], points[90]],
+      },
+    });
+    const answer = (await serve(firestore, { format: "json" })) as {
+      post: { route: { lat: number; lon: number }[] };
+    };
+    expect(answer.post.route.length).toBeGreaterThan(10);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => answer }))
+    );
+    const post = await loadPublicPost("run1");
+    expect(post?.route).toEqual(answer.post.route);
+    // Neither end of the run, nor the zone, reaches the page.
+    for (const p of post!.route!) {
+      expect(haversine(p.lat, p.lon, 51.5, -0.12)).toBeGreaterThan(599);
+      const last = points[points.length - 1];
+      expect(haversine(p.lat, p.lon, last.lat, last.lon)).toBeGreaterThan(399);
+    }
+  });
+
+  it("measures with the app's haversine", () => {
+    const pairs: [number, number, number, number][] = [
+      [51.5, -0.12, 51.5036, -0.12],
+      [51.5, -0.12, 51.5, -0.1],
+      [-33.86, 151.21, -33.87, 151.2],
+      [64.1, -21.9, 64.2, -21.7],
+      [0, 179.999, 0, -179.999],
+    ];
+    for (const [a, b, c, d] of pairs) {
+      expect(route.haversine(a, b, c, d)).toBeCloseTo(haversine(a, b, c, d), 9);
+    }
+  });
+
+  it("asks whether a run had GPS as the app does", () => {
+    const runs = [
+      {},
+      { place: null, activityType: "easy" },
+      { place: "treadmill" },
+      { place: "treadmill", activityType: "long" },
+      { activityType: "treadmill" },
+      { activityType: "manual" },
+      { activityType: "freerun", place: null },
+      { activityType: null, place: null },
+    ];
+    for (const run of runs) {
+      expect(route.isOutdoorGpsRun(run)).toBe(isOutdoorGpsRun(run));
+    }
   });
 });

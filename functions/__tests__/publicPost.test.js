@@ -20,6 +20,8 @@ const {
   shellLoader,
 } = require("../lib/publicPost");
 
+const { haversine } = require("../lib/publicRoute");
+
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const SHELL = `<!doctype html>
@@ -147,7 +149,7 @@ describe("who a public post is shown to", () => {
     });
   });
 
-  it("never hands out the route, the caption, the counts or the author's id", async () => {
+  it("never hands out the post's own route, its map, the caption, the counts or the author's id", async () => {
     const res = await answer(memoryFirestore(seed()), "run1");
     const out = JSON.stringify(res.body);
     for (const field of [
@@ -203,6 +205,184 @@ describe("who a public post is shown to", () => {
     db.failures.set("get:activities/run1", new Error("unavailable"));
     const res = await answer(db, "run1");
     expect(res.statusCode).toBe(503);
+  });
+});
+
+/** Degrees of latitude in a metre, on the haversine's earth. */
+const DEG_PER_M = 180 / (Math.PI * 6371000);
+
+/** Sam's saved run: 5 km due north from home, a fix every 50 m, as the
+ *  phone saves one (its time, accuracy and raw fix with each point). */
+function savedRun(overrides = {}) {
+  return {
+    sharedActivityId: "run1",
+    place: null,
+    activityType: "easy",
+    distance: 5000,
+    points: Array.from({ length: 101 }, (_, i) => ({
+      lat: 51.5 + i * 50 * DEG_PER_M,
+      lon: -0.12,
+      rawLat: 51.5 + i * 50 * DEG_PER_M,
+      rawLon: -0.12,
+      timestamp: 1_762_931_400_000 + i * 15_000,
+      accuracy: 5,
+      altitude: 20,
+      speed: 3.3,
+    })),
+    ...overrides,
+  };
+}
+
+function withRoute(extra = {}) {
+  return seed({
+    "activities/run1": run({
+      distance: 5000,
+      routePreview: [
+        { lat: 51.504, lon: -0.12 },
+        { lat: 51.54, lon: -0.12 },
+      ],
+    }),
+    "users/sam/runs/r1": savedRun(),
+    ...extra,
+  });
+}
+
+describe("a run's map", () => {
+  it("is the run's own line with its first and last 400 m cut off on the server", async () => {
+    const res = await answer(memoryFirestore(withRoute()), "run1");
+    const route = res.body.post.route;
+    expect(route.length).toBeGreaterThan(50);
+    const points = savedRun().points;
+    const first = points[0];
+    const last = points[points.length - 1];
+    for (const p of route) {
+      expect(Object.keys(p).sort()).toEqual(["lat", "lon"]);
+      expect(haversine(p.lat, p.lon, first.lat, first.lon)).toBeGreaterThan(
+        399
+      );
+      expect(haversine(p.lat, p.lon, last.lat, last.lon)).toBeGreaterThan(399);
+    }
+    // Neither original end, exact or rounded, is anywhere in the answer.
+    const out = JSON.stringify(res.body);
+    for (const end of [first, last]) {
+      for (const lat of [end.lat, Math.round(end.lat * 1e5) / 1e5]) {
+        expect(out).not.toContain(`"lat":${lat},`);
+      }
+    }
+    for (const field of ["rawLat", "timestamp", "accuracy", "routePreview"]) {
+      expect(out).not.toContain(field);
+    }
+  });
+
+  it("is the same line in the page's data block", async () => {
+    const json = await answer(memoryFirestore(withRoute()), "run1");
+    const page = await ask(memoryFirestore(withRoute()), "/activity/run1");
+    expect(dataBlock(page.body).post.route).toEqual(json.body.post.route);
+    // The preview stays the icon and the figures: no map image.
+    expect(page.body).toContain(
+      `<meta property="og:image" content="${PUBLIC_ORIGIN}/icons/icon-512x512.png" />`
+    );
+  });
+
+  it("leaves out what is inside the author's privacy zones", async () => {
+    const res = await answer(
+      memoryFirestore(
+        withRoute({
+          "users/sam/privacyZones/home": {
+            name: "Home",
+            lat: 51.5,
+            lon: -0.12,
+            radiusMeters: 300,
+          },
+        })
+      ),
+      "run1"
+    );
+    for (const p of res.body.post.route) {
+      expect(haversine(p.lat, p.lon, 51.5, -0.12)).toBeGreaterThan(699);
+    }
+  });
+
+  it.each([
+    [
+      "a treadmill run",
+      { "users/sam/runs/r1": savedRun({ place: "treadmill" }) },
+    ],
+    [
+      "a run entered by hand",
+      { "users/sam/runs/r1": savedRun({ activityType: "manual" }) },
+    ],
+    [
+      "a post whose route was withheld",
+      { "activities/run1": run({ routePreview: [] }) },
+    ],
+    ["a run that cannot be found", { "users/sam/runs/r1": undefined }],
+    [
+      "a run too short to cut",
+      {
+        "users/sam/runs/r1": savedRun({
+          points: savedRun().points.slice(0, 30),
+        }),
+      },
+    ],
+  ])("is not drawn for %s, and the post still shows", async (_case, extra) => {
+    const data = withRoute();
+    for (const [path, value] of Object.entries(extra)) {
+      if (value === undefined) delete data[path];
+      else data[path] = value;
+    }
+    const res = await answer(memoryFirestore(data), "run1");
+    expect(res.body.available).toBe(true);
+    expect(res.body.post.route).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain("lat");
+  });
+
+  it.each([["query:users/sam/runs"], ["query:users/sam/privacyZones"]])(
+    "is not drawn when %s fails, and the post still shows",
+    async (failure) => {
+      const db = memoryFirestore(withRoute());
+      db.failures.set(failure, new Error("unavailable"));
+      const warn = vi.fn();
+      const res = makeRes();
+      await servePublicPost(
+        { method: "GET", path: "/activity/run1", query: { format: "json" } },
+        res,
+        { db, loadShell: async () => SHELL, logger: { warn } }
+      );
+      expect(res.body.available).toBe(true);
+      expect(res.body.post.route).toBeUndefined();
+      expect(warn).toHaveBeenCalledWith(
+        "publicPost.route_read_failed",
+        expect.objectContaining({ activityId: "run1" })
+      );
+    }
+  );
+
+  it("reads no run for a workout", async () => {
+    const db = memoryFirestore(
+      seed({
+        "activities/lift1": {
+          authorId: "sam",
+          type: "workout",
+          visibility: "public",
+          workoutName: "Push A",
+          totalVolume: 4200,
+        },
+      })
+    );
+    // A read of either would fail, and say so.
+    db.failures.set("query:users/sam/runs", new Error("must not be read"));
+    db.failures.set("query:users/sam/privacyZones", new Error("nor this"));
+    const warn = vi.fn();
+    const res = makeRes();
+    await servePublicPost(
+      { method: "GET", path: "/activity/lift1", query: { format: "json" } },
+      res,
+      { db, loadShell: async () => SHELL, logger: { warn } }
+    );
+    expect(res.body.post).toMatchObject({ type: "workout", title: "Push A" });
+    expect(res.body.post.route).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
   });
 });
 
@@ -342,7 +522,9 @@ describe("the page Hosting serves", () => {
 });
 
 describe("the app's page, fetched from Hosting", () => {
-  it("is kept for a minute, and the last copy used when a fetch fails", async () => {
+  it("is kept for a few seconds, and the last copy used when a fetch fails", async () => {
+    // After a deploy the old page names files Hosting no longer serves.
+    expect(SHELL_TTL_MS).toBe(5000);
     let now = 0;
     const fetchImpl = vi
       .fn()

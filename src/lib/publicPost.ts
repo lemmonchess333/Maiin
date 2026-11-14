@@ -10,10 +10,16 @@
  * visitor who signed out on the page) asks the same function for the
  * figures alone. `publicPost.cross.test.ts` holds this reader to what the
  * server writes.
+ *
+ * A run's route comes cut: its start and finish, and whatever lies in
+ * its author's privacy zones, are taken off on the server
+ * (functions/lib/publicRoute.js), and a route with too little left comes
+ * as none. The page draws what it is given and cuts nothing itself.
  */
 import type { ShareCardRenderData } from "@/components/share/ShareCardRenderer";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { LiftUnit } from "@/lib/liftLoad";
+import type { RouteCoordinate } from "@/lib/routeSegments";
 import { publicPostUrl } from "@/lib/publicLinks";
 import { formatDayMonthYear } from "@/utils/formatters";
 
@@ -42,6 +48,9 @@ export interface PublicPostView {
   exerciseCount?: number;
   prCount?: number;
   prExercise?: string;
+  /** A run's route with its ends cut off, for the map under the card;
+   *  absent when there is no map to draw. */
+  route?: RouteCoordinate[];
 }
 
 function num(value: unknown): number | undefined {
@@ -52,6 +61,35 @@ function num(value: unknown): number | undefined {
 
 function str(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
+}
+
+/** The route as the server sends it, or undefined when it is not one: a
+ *  line of two or more points, each a latitude and a longitude. A route
+ *  with a point it cannot read is not drawn at all rather than drawn
+ *  across the point. */
+function route(value: unknown): RouteCoordinate[] | undefined {
+  if (!Array.isArray(value) || value.length < 2) return undefined;
+  const points: RouteCoordinate[] = [];
+  for (const raw of value) {
+    const p = (raw ?? {}) as Record<string, unknown>;
+    const { lat, lon } = p;
+    if (
+      typeof lat !== "number" ||
+      typeof lon !== "number" ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lon) > 180
+    ) {
+      return undefined;
+    }
+    points.push(
+      p.breakBefore === true && points.length > 0
+        ? { lat, lon, breakBefore: true }
+        : { lat, lon }
+    );
+  }
+  return points;
 }
 
 /**
@@ -102,6 +140,8 @@ function readAnswer(
     const value = num(p[key]);
     if (value !== undefined) view[key] = value;
   }
+  const line = type === "run" ? route(p.route) : undefined;
+  if (line) view.route = line;
   return view;
 }
 
@@ -142,7 +182,8 @@ export async function loadPublicPost(
 }
 
 /** The share card's drawing of the post (`ShareCardRenderer`), square, on
- *  the brand's stage. No route: the page draws the figures only. */
+ *  the brand's stage. The figures only: a run's route is the map under
+ *  the card, not a line on it. */
 export function publicPostCard(post: PublicPostView): ShareCardRenderData {
   return {
     unit: post.unit,

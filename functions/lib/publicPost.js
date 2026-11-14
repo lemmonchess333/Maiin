@@ -5,11 +5,11 @@
 
    A shared card's words end with https://troposfit.com/activity/<id>
    when the card is of a public post. On a phone with Tropos that address
-   opens the app (the universal-links file, scripts/ios/universal-links.ts).
-   Anywhere else Firebase Hosting hands it to `publicPostPage`
-   (firebase.json), which answers with the web app's own page, its head
-   naming the post so a pasted link gets a preview of its own, and the
-   post's public figures in a data block the page reads
+   opens the app (the universal-links file, `appleAppSiteAssociation` in
+   scripts/ios). Anywhere else Firebase Hosting hands it to
+   `publicPostPage` (firebase.json), which answers with the web app's own
+   page, its head naming the post so a pasted link gets a preview of its
+   own, and the post's public figures in a data block the page reads
    (src/lib/publicPost.ts). `?format=json` answers the same figures alone,
    for a page that arrived without the block (the GitHub Pages preview, a
    visitor who signed out on the page).
@@ -17,18 +17,26 @@
    Why a function and not the rules: Firestore lets no signed-out visitor
    read a post, and opening `activities` to everyone would hand out every
    field of every public post, its route among them. This reads with the
-   Admin SDK and hands out only what the card draws.
+   Admin SDK and hands out only what the card draws, and a run's route
+   with its ends cut off.
 
    Who is shown: only a post whose own visibility is public, which no
    moderation flag holds back, by an account that is not restricted, not
    being deleted and not gone. Anything else gets the answer a post that
-   never existed gets, so the page never says why. Never a route or a map,
-   whatever the author's privacy zones: the card's figures only.
+   never existed gets, so the page never says why.
+
+   A run's route (the owner, 14 November 2026): the page draws a map of
+   it with its start and finish cut off, as Strava does. The line is cut
+   here, from the run the post was shared from and its author's privacy
+   zones (publicRoute.js), so the points cut off never leave the server.
+   A run with too little left after the cut, a treadmill or manual run, a
+   lift, and a run whose route or zones cannot be read get no map.
    ───────────────────────────────────────────── */
 
 const { isRestricted } = require("./restriction");
 const { isAccountDeleting, isTombstoned } = require("./accountDeletionStatus");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { publicRoute } = require("./publicRoute");
 
 /** The production web app, as src/lib/publicLinks.ts names it. */
 const PUBLIC_ORIGIN = "https://troposfit.com";
@@ -42,9 +50,11 @@ const DATA_ELEMENT_ID = "tropos-public-post";
 const POST_PATH = /^\/activity\/([A-Za-z0-9_-]{1,64})\/?$/;
 
 /** How long one copy of the web app's page is used before it is fetched
- *  again. A deploy replaces the page's asset names, so a copy kept long
- *  would point at files that are gone. */
-const SHELL_TTL_MS = 60 * 1000;
+ *  again: a few seconds. After a web deploy the old page names script and
+ *  style files Hosting no longer serves, so a post's page served from it
+ *  draws nothing until the copy is fetched again. Kept a minute, that
+ *  could break every post's page for a minute after each deploy. */
+const SHELL_TTL_MS = 5 * 1000;
 
 /** The preview's picture: the app icon, an absolute address as previews
  *  need. A picture of the card itself would need a renderer here. */
@@ -105,14 +115,46 @@ function timeMs(value) {
 }
 
 /**
+ * What a run post's map is cut from: the run it was shared from (the run
+ * names its post as `sharedActivityId`) and its author's privacy zones.
+ * Nulls when either cannot be read, which draws no map: a map that cannot
+ * be had does not cost the post its page.
+ */
+async function readRouteSource(userRef, activityId, logger) {
+  try {
+    const [runs, zones] = await Promise.all([
+      userRef
+        .collection("runs")
+        .where("sharedActivityId", "==", activityId)
+        .limit(1)
+        .get(),
+      userRef.collection("privacyZones").get(),
+    ]);
+    return {
+      run: runs.empty ? null : runs.docs[0].data() || null,
+      zones: zones.docs.map((doc) => doc.data() || {}),
+    };
+  } catch (err) {
+    if (logger) {
+      logger.warn("publicPost.route_read_failed", {
+        activityId,
+        err: String(err),
+      });
+    }
+    return { run: null, zones: null };
+  }
+}
+
+/**
  * The post as its public page draws it, or null when it is not to be
  * shown. Throws when a read fails, so the caller can tell "not shown"
  * from "could not tell".
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} activityId
+ * @param {{ warn: Function }} [logger]
  */
-async function readPublicPost(db, activityId) {
+async function readPublicPost(db, activityId, logger) {
   const snap = await db.collection("activities").doc(activityId).get();
   if (!snap.exists) return null;
   const post = snap.data() || {};
@@ -122,14 +164,18 @@ async function readPublicPost(db, activityId) {
   if (!authorId) return null;
 
   const userRef = db.collection("users").doc(authorId);
-  const [user, profile, restricted, deleting, gone] = await Promise.all([
-    userRef.get(),
-    userRef.collection("public").doc("profile").get(),
-    // Fails closed: a read it cannot make reads as restricted.
-    isRestricted(db, authorId),
-    isAccountDeleting(db, authorId),
-    isTombstoned(db, authorId),
-  ]);
+  const [user, profile, restricted, deleting, gone, routeSource] =
+    await Promise.all([
+      userRef.get(),
+      userRef.collection("public").doc("profile").get(),
+      // Fails closed: a read it cannot make reads as restricted.
+      isRestricted(db, authorId),
+      isAccountDeleting(db, authorId),
+      isTombstoned(db, authorId),
+      post.type === "run"
+        ? readRouteSource(userRef, activityId, logger)
+        : { run: null, zones: null },
+    ]);
   if (!user.exists || restricted || deleting || gone) return null;
 
   const account = user.data() || {};
@@ -166,6 +212,9 @@ async function readPublicPost(db, activityId) {
     if (pace) view.paceSecPerKm = Math.round(pace);
     const elevationM = figure(post.elevationGain, 20000);
     if (elevationM !== undefined) view.elevationM = elevationM;
+    // Cut here, so what is cut off never leaves the server.
+    const route = publicRoute({ post, ...routeSource });
+    if (route) view.route = route;
   } else {
     const volume = figure(post.totalVolume, 1000000);
     if (volume !== undefined) view.totalVolumeKg = volume;
@@ -338,8 +387,9 @@ function fallbackPage(activityId, view) {
 }
 
 /**
- * The web app's page, fetched from Hosting and kept for a minute. When a
- * fetch fails, the last copy is used; with none, it throws.
+ * The web app's page, fetched from Hosting and kept for a few seconds
+ * (`SHELL_TTL_MS`). When a fetch fails, the last copy is used; with none,
+ * it throws.
  */
 function shellLoader({
   fetchImpl = (...args) => fetch(...args),
@@ -402,10 +452,11 @@ async function servePublicPost(req, res, { db, loadShell, logger }) {
   let view = null;
   if (activityId) {
     try {
-      view = await readPublicPost(db, activityId);
+      view = await readPublicPost(db, activityId, logger);
     } catch (err) {
       view = undefined;
-      if (logger) logger.warn("publicPost.read_failed", { activityId, err: String(err) });
+      if (logger)
+        logger.warn("publicPost.read_failed", { activityId, err: String(err) });
     }
   }
 

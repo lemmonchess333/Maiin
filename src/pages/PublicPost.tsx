@@ -12,8 +12,17 @@
  * Only a public post is shown. A followers-only or private post, one that
  * is gone, or one by an account that is restricted or deleted all get one
  * page, "This post isn’t available", which never says why: the server
- * answers them alike (functions/lib/publicPost.js). No map, whatever the
- * author shared: the card's figures only.
+ * answers them alike (functions/lib/publicPost.js).
+ *
+ * A run's map sits under the card (the owner, 14 November 2026: its start
+ * and finish cut off, as Strava does, so a stranger can't see where
+ * someone lives). The server cuts the line before it is sent
+ * (functions/lib/publicRoute.js); a run with too little left, and every
+ * treadmill, manual or lift post, comes with no route and gets no map.
+ * The map is the app's own (RunMap: MapLibre on OpenFreeMap's tiles, the
+ * tiles' credit in its corner), still and without its start and finish
+ * dots, fetched once there is a route to draw so the card paints without
+ * waiting for it. A browser that cannot draw it shows the card alone.
  *
  * Signed-out screens are dark and sit on the plain page in one phone-wide
  * column under the lockup, as the welcome and sign-in do (DESIGN_GUIDE
@@ -21,13 +30,25 @@
  * `--safe-bottom`. The card is the hero; Get Tropos is the brand's filled
  * button, as Get started is.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  Component,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useParams } from "react-router-dom";
 import AuthLockup from "@/components/auth/AuthLockup";
 import Avatar from "@/components/Avatar";
 import ShareCardRenderer from "@/components/share/ShareCardRenderer";
 import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
+import type { GPSPoint } from "@/lib/gps";
+import { lazyRetry } from "@/lib/lazyRetry";
 import { logger } from "@/lib/logger";
 import { APP_STORE_URL } from "@/lib/publicLinks";
 import {
@@ -35,7 +56,15 @@ import {
   publicPostCard,
   type PublicPostView,
 } from "@/lib/publicPost";
+import type { RouteCoordinate } from "@/lib/routeSegments";
 import { formatDayMonthYear } from "@/utils/formatters";
+
+/* The map's code (MapLibre) is fetched only for a post with a route, after
+   the card has painted. A failed fetch leaves the card alone: a reload
+   would not bring a map a browser cannot draw. */
+const RunMap = lazyRetry(() => import("@/components/run/RunMap"), {
+  reloadOnChunkError: false,
+});
 
 type Read =
   | { status: "loading" }
@@ -80,6 +109,7 @@ function PublicPostPage({ activityId }: { activityId: string }) {
           <>
             <PostHeader post={read.post} />
             <PostCard post={read.post} />
+            {read.post.route && <RouteMap route={read.post.route} />}
             <AboutTropos />
           </>
         ) : read.status === "unavailable" ? (
@@ -194,6 +224,82 @@ function PostCard({ post }: { post: PublicPostView }) {
         <ShareCardRenderer data={publicPostCard(post)} offscreen={false} />
       </div>
     </div>
+  );
+}
+
+/** The map gives way to nothing when it cannot be drawn (no WebGL, the
+ *  chunk failed): the card above it says the run. */
+class MapGivesWay extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    logger.warn("[public-post] map not drawn", error);
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+/** The route as the map draws a finished one. It has no times, as a
+ *  planned route has none (savedRoutes' `coordsToPoints`). */
+function mapPoints(route: RouteCoordinate[]): GPSPoint[] {
+  return route.map((p) => ({
+    ...(p.breakBefore ? { breakBefore: true } : {}),
+    lat: p.lat,
+    lon: p.lon,
+    altitude: null,
+    accuracy: 0,
+    speed: null,
+    timestamp: 0,
+    rawLat: p.lat,
+    rawLon: p.lon,
+  }));
+}
+
+/**
+ * The run's map, under the card: the line the server sent, which is the
+ * route less its start and finish, on the basemap in the page's theme.
+ * Still (no pan or zoom) and with no dots at its ends, which are not
+ * where the run began or finished; the caption says so.
+ */
+function RouteMap({ route }: { route: RouteCoordinate[] }) {
+  const dark = useIsDarkTheme();
+  const points = useMemo(() => mapPoints(route), [route]);
+  return (
+    <MapGivesWay>
+      <figure>
+        {/* Sized from the column's width, as the card is, not the text. */}
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl card-shadow">
+          <div className="absolute inset-0">
+            <Suspense
+              fallback={
+                <div className="h-full w-full bg-muted motion-safe:animate-pulse" />
+              }
+            >
+              <RunMap
+                points={points}
+                currentPoint={null}
+                interactive={false}
+                height="h-full"
+                darkMode={dark}
+                endMarkers={false}
+              />
+            </Suspense>
+          </div>
+        </div>
+        <figcaption className="mt-2 text-xs text-muted-foreground">
+          Start and finish hidden
+        </figcaption>
+      </figure>
+    </MapGivesWay>
   );
 }
 
