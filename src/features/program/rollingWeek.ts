@@ -71,15 +71,20 @@ export function rollingRunnerOf(
  * With `plannedFrom` (a plan made, changed or caught up partway through a
  * week), no run is planned before that day and this week's days already
  * gone stay as `prior` has them; a week with none of its run days left
- * starts on next week's instead, one week on in the plan (Run19, as
- * `raceWeekFromToday`). Without it, the whole week is built, and a done or
- * moved run in `prior` keeps its status by date.
+ * starts on next week's instead (Run19, as `raceWeekFromToday`): one week
+ * on in a plan already running, and at its first week in a plan made now
+ * (`fresh`), whose empty week was never one of its weeks. Without it, the
+ * whole week is built, and a done or moved run in `prior` keeps its status
+ * by date.
  */
 export function regenerateRollingPlan(input: {
   runner: RollingRunner;
   goal: RollingGoal;
   /** The plan's week `weekStart` is: 0 for a plan made now. */
   planWeek: number;
+  /** A plan made now: when this week has no run day left, the plan's first
+   *  week is next week's, still `planWeek`. */
+  fresh?: boolean;
   weekSchedule: ScheduleDay[];
   weeklyRunDays: number;
   currentDate: string;
@@ -100,6 +105,11 @@ export function regenerateRollingPlan(input: {
   manualCompletions?: Record<string, ManualCompletion>;
 } {
   const { runner } = input;
+  /** The plan's week of the Monday `from`: one week on for each week
+   *  moved, except in a plan made now, which starts where it is built. */
+  const planWeekOf = (from: string) =>
+    input.planWeek +
+    (input.fresh ? 0 : wholeWeeksBetween(input.weekStart, from));
   const generate = (from: { currentDate: string; weekStart: string }) => ({
     weeks: generateRollingPlan({
       goal: input.goal,
@@ -107,8 +117,7 @@ export function regenerateRollingPlan(input: {
       weeklyRunDays: input.weeklyRunDays,
       currentDate: from.currentDate,
       weekStart: from.weekStart,
-      planWeek:
-        input.planWeek + wholeWeeksBetween(input.weekStart, from.weekStart),
+      planWeek: planWeekOf(from.weekStart),
       recentLayoff: input.recentLayoff,
       tuning: runner.tuning,
       easyPaceSPerKm: runner.easyPaceSPerKm,
@@ -153,11 +162,7 @@ export function regenerateRollingPlan(input: {
   }
   return {
     runDays,
-    runPlan: rollingRunPlan(
-      input.goal,
-      input.planWeek + wholeWeeksBetween(input.weekStart, weekStart),
-      weekStart
-    ),
+    runPlan: rollingRunPlan(input.goal, planWeekOf(weekStart), weekStart),
     ...(manualCompletions ? { manualCompletions } : {}),
   };
 }

@@ -206,8 +206,36 @@ describe("a plan's week from today (Run19, as a race plan's)", () => {
     expect(thursday.runDays.every((run) => run.date! >= day(3))).toBe(true);
     expect(thursday.runDays.length).toBeGreaterThan(0);
     expect(thursday.runPlan).toEqual(rollingRunPlan("keep_fit", 0, START));
-    // Sunday after the week's long run: next week's runs, as week 0... of
-    // the plan one week on.
+    // Made on the Sunday after the week's last run day: the plan starts on
+    // next week's runs, at its first week (the empty week was never one of
+    // its weeks)...
+    const sundaySchedule = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "run" },
+      { day: 2, type: "run" },
+      { day: 3, type: "rest" },
+      { day: 4, type: "run" },
+      { day: 5, type: "rest" },
+      { day: 6, type: "run" },
+    ] as const;
+    const madeSunday = regenerateRollingPlan({
+      runner: { ...runner },
+      goal: "keep_fit",
+      planWeek: 0,
+      fresh: true,
+      weekSchedule: [...sundaySchedule],
+      weeklyRunDays: 4,
+      currentDate: day(6),
+      weekStart: START,
+      recentLayoff: "none",
+      recentRuns: null,
+      plannedFrom: day(6),
+    });
+    expect(madeSunday.runPlan).toEqual(rollingRunPlan("keep_fit", 0, day(7)));
+    expect(madeSunday.runDays.every((run) => run.weekKey === day(7))).toBe(
+      true
+    );
+    // ...while a plan already running moves on a week with the calendar.
     const lateSunday = regenerateRollingPlan({
       runner: { ...runner },
       goal: "keep_fit",
@@ -278,6 +306,28 @@ describe("a plan with no race date in the programme", () => {
     expect(
       racePlanLocked({ isPro: false, runPlan: { ...out.programState.runPlan } })
     ).toBe(false);
+  });
+
+  it("made on a Sunday after the week's last run day, starts next week at its first week", () => {
+    // In any time zone: Kiritimati's Sunday 00:22 is UTC's Saturday.
+    const out = buildPlan(
+      makeInput({
+        rollingGoal: "keep_fit",
+        currentDate: day(6),
+        weekSchedule: [
+          { day: 0, type: "rest" },
+          { day: 1, type: "run" },
+          { day: 2, type: "run" },
+          { day: 3, type: "rest" },
+          { day: 4, type: "run" },
+          { day: 5, type: "rest" },
+          { day: 6, type: "run" },
+        ],
+      })
+    );
+    expect(out.programState.runPlan).toEqual(
+      rollingRunPlan("keep_fit", 0, day(7))
+    );
   });
 
   it("is kept by a lifting save that says nothing of it, and taken away by null", () => {

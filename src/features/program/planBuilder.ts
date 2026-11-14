@@ -923,6 +923,7 @@ function buildRunPlan(
       recentLayoff: input.recentLayoff ?? "none",
       recentRuns: input.recentRuns ?? null,
       plannedFrom: input.currentDate,
+      fresh: !continuing,
       ...(continuing
         ? {
             prior: {
