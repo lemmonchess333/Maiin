@@ -13,7 +13,6 @@ import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
-import BoardSharingRow from "@/components/settings/BoardSharingRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AI_SWITCH_DESCRIPTION } from "@/lib/aiConsent";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
@@ -31,7 +30,6 @@ interface PrivacySectionProps {
     | "approveFollowers"
     | "hideSharedRouteEnds"
     | "shareDefaults"
-    | "showWeekOnBoard"
   > | null;
   updateProfile: (
     data: Partial<UserProfile>,
@@ -39,9 +37,6 @@ interface PrivacySectionProps {
   ) => Promise<UpdateProfileResult>;
   /** Saves the Sharing row's answers on the account (AuthProvider). */
   updateShareDefaults: (answers: ShareDefaults) => Promise<UpdateProfileResult>;
-  /** Reads the profile again once the server has stored an answer only it
-   *  writes (the friends board's). */
-  refreshProfile: () => Promise<void>;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -57,7 +52,6 @@ export default function PrivacySection({
   profile,
   updateProfile,
   updateShareDefaults,
-  refreshProfile,
   privacyZones,
   addZone,
   removeZone,
@@ -124,11 +118,6 @@ export default function PrivacySection({
           />
         </div>
 
-        <BoardSharingRow
-          shared={profile?.showWeekOnBoard}
-          refreshProfile={refreshProfile}
-        />
-
         {/* AI food analysis — permission before food goes to Google (App
             Review 5.1.2(i); the rule is in src/lib/aiConsent.ts). On only
             once the person has said yes: undefined means not asked yet,
@@ -168,8 +157,8 @@ export default function PrivacySection({
               Hide route start &amp; end on shared runs
             </p>
             <p className="text-xs text-muted-foreground">
-              Followers don&apos;t see the first and last 200 m. Your own map
-              keeps the whole route.
+              Followers don’t see the first and last 200 m. Your own map keeps
+              the whole route.
             </p>
           </div>
           <Toggle
@@ -197,7 +186,7 @@ export default function PrivacySection({
                 Privacy zones
               </p>
               <p className="text-xs text-muted-foreground">
-                Hide route start/end near saved locations
+                Hide where a route starts and ends near saved locations
               </p>
             </div>
           </div>
@@ -275,7 +264,7 @@ export default function PrivacySection({
                 setNewZoneName("");
                 toast.success("Privacy zone added");
               } catch {
-                toast.error("Could not get your location");
+                toast.error("Couldn’t get your location");
               }
             }}
           >
@@ -295,7 +284,7 @@ export default function PrivacySection({
                   Blocked users
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Manage users you&apos;ve blocked
+                  Manage users you’ve blocked
                 </p>
               </div>
             </div>
@@ -338,7 +327,7 @@ export default function PrivacySection({
                     setBlockedUsersList(users);
                     setBlockedUsersLoaded(true);
                   } catch {
-                    toast.error("Couldn't load your blocked users. Try again.");
+                    toast.error("Couldn’t load your blocked users. Try again.");
                   } finally {
                     setBlockedUsersLoading(false);
                   }
@@ -351,7 +340,7 @@ export default function PrivacySection({
           {blockedUsersLoaded &&
             (blockedUsersList.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-2">
-                You haven&apos;t blocked anyone
+                You haven’t blocked anyone
               </p>
             ) : (
               <div className="space-y-2">
@@ -417,7 +406,7 @@ export default function PrivacySection({
             await removeZone(zone.id);
             toast.success("Privacy zone removed");
           } catch {
-            toast.error("Couldn't remove the privacy zone. Try again.");
+            toast.error("Couldn’t remove the privacy zone. Try again.");
           }
         }}
         onCancel={() => setPendingZoneRemoval(null)}

@@ -460,12 +460,12 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   deadlift: {
     src: "form-art/deadlift.webp",
     width: 480,
-    height: 355,
-    keyed: true,
+    height: 416,
+    keyed: false,
     source: "form-frames/deadlift/1.webp",
     sourceSha256:
       "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
-    sha256: "4682b99cc6b207ebeb0186d460758601270d229bce4e22bf9b1182465e9dcfa8",
+    sha256: "24c6c8eb7ee19f491485f6634938bf8e769ecb9d480bb9a89e76b25edd3a9d0a",
   },
   "decline-bench": {
     src: "form-art/decline-bench.webp",

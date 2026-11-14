@@ -33,7 +33,7 @@ export default function KeepSwapSheet({
     {
       id: "keep",
       label: one ? "Keep it in my plan" : "Keep them in my plan",
-      sublabel: "From your next session, starting from today's sets",
+      sublabel: "From your next session, starting from today’s sets",
       pendingLabel: "Saving…",
       variant: "primary",
       onSelect: () => onDecide(true),
@@ -56,20 +56,20 @@ export default function KeepSwapSheet({
       title={
         one ? `Keep ${one.today} in your plan?` : "Keep these in your plan?"
       }
-      description="Today's swaps"
+      description="Today’s swaps"
       hideHeader
       choices={choices}
       logTag="keepSwap"
     >
       <div>
-        <SectionLabel>{one ? "Today's swap" : "Today's swaps"}</SectionLabel>
+        <SectionLabel>{one ? "Today’s swap" : "Today’s swaps"}</SectionLabel>
         <p className="text-base font-semibold text-foreground mt-0.5">
           {one ? `Keep ${one.today} in your plan?` : "Keep these in your plan?"}
         </p>
       </div>
       {one ? (
         <p className="text-sm text-muted-foreground">
-          {`It would take ${one.planned}'s place from your next session.`}
+          {`It would take ${one.planned}’s place from your next session.`}
         </p>
       ) : (
         <ul className="text-sm text-muted-foreground space-y-1">

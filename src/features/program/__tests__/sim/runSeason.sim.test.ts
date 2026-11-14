@@ -58,8 +58,8 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  * a race or a tempo's work, never easy runs, and at seed 1 lands within a
  * VDOT of the runner, so the run summary stopped telling them to slow down.
  *
- * - F15 `under-dose`: setup never asks how much someone runs, so the plan
- *   starts a runner on 175–280 minutes a week at 57–75% of it.
+ * - F15 `under-dose` is gone: since Run24 (2) a plan starts from the
+ *   runner's own week where it is above the plan's base.
  * - F18, the plan's shape (running-engine-audit §7): long runs that step
  *   past the single-run guard (`spike`), weeks that jump (`volume-jump`),
  *   long runs over half the week (`long-share`), demanding days back to
@@ -67,18 +67,24 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   still cuts over half in one step (`taper-cut`). A new runner's
  *   run-walk weeks, the stepped taper with its long run, the spacing and
  *   two run days for a race took out the rest, and the climb from what was
- *   done took the hybrids' `back-to-back` and the 10K's `taper-cut`.
+ *   done took the hybrids' `back-to-back`. Run24 (2), starting the plan
+ *   from the runner's own week, took the year-out marathon's and the
+ *   half's `long-share`, the 2–3-day hybrids' `taper-cut` and sub-3:30's
+ *   `volume-jump`, and gave the 3–4-day hybrids `back-to-back` again:
+ *   their own week takes Tuesday's medium-long past the hour beside
+ *   Wednesday's quality, and their Tuesday-to-Sunday days leave none
+ *   clear (D16 holds it under the hour only beside two quality sessions).
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": ["spike", "volume-jump"],
-  "half-3-days": ["long-share", "spike", "under-dose", "volume-jump"],
-  "sub-3-30": ["spike", "under-dose", "volume-jump"],
-  "sick-six-weeks": ["spike", "under-dose", "volume-jump"],
+  "half-3-days": ["spike", "volume-jump"],
+  "sub-3-30": ["spike"],
+  "sick-six-weeks": ["spike", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
-  "hybrid-3-4-trim": ["spike", "volume-jump"],
-  "hybrid-3-4-no-trim": ["spike", "volume-jump"],
+  "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
+  "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
   "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
   /* The owner's own set-up (R5): six run days and six lift days, a

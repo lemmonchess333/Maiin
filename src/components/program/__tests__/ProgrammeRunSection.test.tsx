@@ -770,7 +770,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
     // Run9 R2-1: a descriptive cadence headline leads (1 run in the window).
     expect(
-      screen.getByText(/You've run 1× in the last 4 weeks/i)
+      screen.getByText(/You’ve run 1× in the last 4 weeks/i)
     ).toBeInTheDocument();
   });
 
@@ -1048,7 +1048,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(why).toHaveTextContent(
       /What it is.*finishing at your goal race pace/
     );
-    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    expect(why).toHaveTextContent(/Why it’s in your week.*rehearses race day/);
     withTime.unmount();
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
@@ -1095,7 +1095,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(document.body.textContent).toContain("5:00 /km");
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /Why it's in your week.*what race pace feels like/
+      /Why it’s in your week.*what race pace feels like/
     );
     expect(why).not.toHaveTextContent(/comes from your fitness/);
     withTime.unmount();
@@ -1159,7 +1159,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(
-      /What it is.*How it should feel.*Comfortably hard.*Why it's in your week.*If it feels wrong/
+      /What it is.*How it should feel.*Comfortably hard.*Why it’s in your week.*If it feels wrong/
     );
   });
 
@@ -1784,7 +1784,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
       screen.getByRole("button", { name: /^Log it$/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /I didn't race/i })
+      screen.getByRole("button", { name: /I didn’t race/i })
     ).toBeInTheDocument();
     // The elapsed race slot must NOT surface as a "Next · Pending" nag, and
     // the race-elapsed banner is suppressed for this state.
@@ -1808,7 +1808,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     expect(screen.getByText("Ran your 10K?")).toBeInTheDocument();
     expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "I didn't run it" })
+      screen.getByRole("button", { name: "I didn’t run it" })
     ).toBeInTheDocument();
   });
 
@@ -1827,7 +1827,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     );
   });
 
-  it("I didn't race dismisses the prompt + persists via localStorage (no status write)", () => {
+  it("I didn’t race dismisses the prompt + persists via localStorage (no status write)", () => {
     const { profile, programState } = raceRecentState();
     const props = commonProps();
     const { unmount } = renderWith(
@@ -1837,7 +1837,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
         programState={programState}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /I didn't race/i }));
+    fireEvent.click(screen.getByRole("button", { name: /I didn’t race/i }));
     // Hidden after dismiss; a calm toast confirms; NO skip/complete writer fired
     // (PR-L — the client never writes race_no_show; the server owns the flip).
     expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
@@ -2548,7 +2548,7 @@ describe("ProgrammeRunSection — the starter goal (Run9)", () => {
     expect(
       screen.getByRole("button", { name: "Train for a 5K" })
     ).toBeInTheDocument();
-    expect(screen.getByText("You've done it.")).toBeInTheDocument();
+    expect(screen.getByText("You’ve done it.")).toBeInTheDocument();
   });
 
   it("still says Done once the rollover has finished the goal", () => {

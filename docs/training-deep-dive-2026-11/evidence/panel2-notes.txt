@@ -1,0 +1,14 @@
+5 days, 75 min, beginner, hypertrophy: Push A ends at 58 of 75 min, its list and its sets used up
+5 days, 75 min, beginner, hypertrophy: Pull A ends at 59 of 75 min, its list and its sets used up
+5 days, 75 min, beginner, general: Push A ends at 58 of 75 min, its list and its sets used up
+5 days, 75 min, beginner, general: Pull A ends at 59 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, hypertrophy: Push A ends at 58 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, hypertrophy: Pull A ends at 59 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, hypertrophy: Push B ends at 57 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, hypertrophy: Pull B ends at 56 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, general: Push A ends at 58 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, general: Pull A ends at 59 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, general: Push B ends at 57 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, general: Pull B ends at 56 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, strength: Push B ends at 59 of 75 min, its list and its sets used up
+6 days, 75 min, beginner, strength: Pull B ends at 59 of 75 min, its list and its sets used up

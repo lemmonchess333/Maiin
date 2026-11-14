@@ -17,7 +17,7 @@
  */
 
 const functions = require("firebase-functions/v1");
-const admin = require("firebase-admin");
+const admin = require("./adminSdk");
 const programCommands = require("./programCommands");
 const accountDeletionStatus = require("./accountDeletionStatus");
 const accountDeletionLocks = require("./accountDeletionLocks");

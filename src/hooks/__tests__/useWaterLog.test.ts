@@ -378,7 +378,7 @@ it("retry restores a failed live read", async () => {
   failNextFirestore("onSnapshot");
   const { result } = renderHook(() => useWaterLog());
   await waitFor(() =>
-    expect(result.current.syncStatus).toContain("Couldn't sync")
+    expect(result.current.syncStatus).toContain("Couldn’t sync")
   );
   act(() => result.current.retry());
   await waitFor(() => expect(result.current.ml).toBe(750));

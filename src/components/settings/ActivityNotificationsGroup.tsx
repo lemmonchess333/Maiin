@@ -54,7 +54,7 @@ const ROWS: {
   {
     category: "leagues",
     label: "Leagues",
-    description: "Your result each Monday, if you've joined",
+    description: "Your result each Monday, if you’ve joined",
   },
 ];
 

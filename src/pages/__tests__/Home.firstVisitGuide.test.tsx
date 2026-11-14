@@ -251,9 +251,6 @@ vi.mock("@/components/home/TodayEnergy", () => ({
 }));
 vi.mock("@/components/home/VerifyEmailBanner", () => ({ default: () => null }));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
-vi.mock("@/components/home/PerformanceHeroCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/home/ContextualTipBanner", () => ({
   default: ({ title, visible }: { title: string; visible: boolean }) =>
     visible ? <p>{title}</p> : null,
@@ -655,7 +652,7 @@ describe("the version 2 first-week journey", () => {
   it("shows repair without a checklist or fabricated Start when the plan is missing", () => {
     h.programState = null;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
@@ -668,14 +665,14 @@ describe("the version 2 first-week journey", () => {
     h.programState = null;
     h.workoutsLoading = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
   });
 
   it("waits rather than showing a false incomplete task when workout evidence failed", () => {
     h.workoutsFailed = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
@@ -690,7 +687,7 @@ describe("the version 2 first-week journey", () => {
     h.workoutsLoading = false;
     h.workoutsFailed = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(screen.queryByText("Your first workout")).toBeNull();
   });
 
@@ -708,18 +705,18 @@ describe("the version 2 first-week journey", () => {
   it("waits, with no error, while a race plan's week is being built", () => {
     racePlanToBuild();
     renderHome();
-    expect(screen.queryByText("Training isn't ready")).toBeNull();
+    expect(screen.queryByText("Training isn’t ready")).toBeNull();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
     expect(
       screen.queryByRole("heading", { name: "Your first week" })
     ).toBeNull();
   });
 
-  it("says training isn't ready only when building a race plan's week failed", () => {
+  it("says training isn’t ready only when building a race plan’s week failed", () => {
     racePlanToBuild();
     h.maintenanceFailed = true;
     renderHome();
-    expect(screen.getByText("Training isn't ready")).toBeInTheDocument();
+    expect(screen.getByText("Training isn’t ready")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
   });
 });

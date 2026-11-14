@@ -57,6 +57,9 @@ interface NutritionSectionProps {
   /** The programme Home's targets read, for the protein the training block
    *  sets. Absent, protein follows the goal's phase alone. */
   program?: ProgramState | null;
+  /** Pro or in a trial: the target adapts. A free account's status line
+   *  says what it gets instead (Q87). Absent reads as Pro. */
+  isPro?: boolean;
   inline?: boolean;
 }
 
@@ -76,6 +79,7 @@ export default function NutritionSection({
   updateProfile,
   onRecalculate,
   program,
+  isPro = true,
   inline = false,
 }: NutritionSectionProps) {
   /** The age as typed, while the field is being edited. */
@@ -470,7 +474,8 @@ export default function NutritionSection({
                 adaptiveStatus,
                 // The learned value, so the line can't claim the formula
                 // figure above it is the adapted one.
-                profile?.adaptiveCapState?.lastApplied
+                profile?.adaptiveCapState?.lastApplied,
+                isPro
               )}
             </p>
             {showDrift && drift && (
@@ -565,8 +570,8 @@ export default function NutritionSection({
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
           <p className="text-micro text-muted-foreground leading-snug pt-2">
-            Protein follows your training block. Carbs and fat are a rest
-            day&apos;s; training days move some fat to carbs.
+            Protein follows your training block. Carbs and fat are a rest day’s;
+            training days move some fat to carbs.
           </p>
 
           {split.aggressive && !split.infeasible && (
@@ -652,7 +657,7 @@ export default function NutritionSection({
             </p>
             <p className="text-xs text-muted-foreground">
               Your daily calorie target already accounts for your training, so
-              there's no need to eat back exercise calories. Big training days
+              there’s no need to eat back exercise calories. Big training days
               shift more carbs for fuel.
             </p>
           </div>

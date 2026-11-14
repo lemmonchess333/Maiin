@@ -4,10 +4,9 @@
  * The copy is the load-bearing part, not the button, so that is what these
  * pin. ADR-0012 is explicit that deleting a session can lower the user's
  * standing in a live challenge, that this is correct for a mis-log, and
- * that "the copy should not pretend otherwise". It also leaves three
- * things standing on purpose — partner streaks, milestone badges and
- * `fastest_effort` bests — which a user reading the word "delete" would
- * reasonably assume are coming back.
+ * that "the copy should not pretend otherwise". It also leaves milestone
+ * badges standing on purpose, which a user reading the word "delete"
+ * would reasonably assume are coming back.
  *
  * The other property here is that a cancelled confirmation deletes
  * nothing. That reads as trivially true and is exactly the kind of thing
@@ -82,7 +81,7 @@ describe("DeleteSessionAction", () => {
     ).toBeInTheDocument();
   });
 
-  it("warns that challenge standing can drop, and that streaks and badges stay", async () => {
+  it("warns that challenge standing can drop, and that badges stay", async () => {
     renderAction();
     fireEvent.click(
       screen.getByRole("button", { name: /delete this workout/i })
@@ -92,11 +91,15 @@ describe("DeleteSessionAction", () => {
     // The consequence ADR-0012 says the copy must not hide.
     expect(dialog).toHaveTextContent(/challenge progress and lifetime totals/i);
     expect(dialog).toHaveTextContent(/can go down/i);
-    // And the three things that deliberately do NOT come back.
-    expect(dialog).toHaveTextContent(/streaks and badges .* stay/i);
+    // And what deliberately does NOT come back.
+    expect(dialog).toHaveTextContent(/Badges you’ve already earned stay\./);
+    /* Nothing is promised about a streak. The streaks this sentence once
+       named were partner streaks (gone, Trim1 call 3(b)); a person's own
+       streak can get shorter when a day's only log is deleted. */
+    expect(dialog).not.toHaveTextContent(/streak/i);
   });
 
-  it("says the feed post goes when the session was shared, and stays when it wasn't", async () => {
+  it("says the feed post goes when the session was shared, and stays when it wasn’t", async () => {
     const { unmount } = renderAction({ sharedActivityId: "act-1" });
     fireEvent.click(
       screen.getByRole("button", { name: /delete this workout/i })

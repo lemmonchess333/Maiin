@@ -216,7 +216,7 @@ describe("when the session started", () => {
       target: { value: "13" },
     });
     expect(within(sheet).getByRole("alert")).toHaveTextContent(
-      "That's later than now."
+      "That’s later than now."
     );
     expect(
       within(sheet).getByRole("button", { name: "Save start time" })

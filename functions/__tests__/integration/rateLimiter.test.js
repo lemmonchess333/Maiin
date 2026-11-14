@@ -18,11 +18,11 @@
  *     'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 GCLOUD_PROJECT=demo-tropos npm test --prefix functions'
  */
 
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const admin = require("firebase-admin");
+const admin = require("../../lib/adminSdk");
 const { isRateLimited } = require("../../rateLimiter");
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
@@ -95,23 +95,18 @@ suite("rateLimiter — emulator integration", () => {
   });
 
   it("rate limit clears after the window expires", async () => {
-    // Control only the policy clock. Real emulator RPCs can take longer
-    // than 50ms; wall-clock sleeps made this check expire while filling.
-    // Keep transport timers real so the transaction path is still exercised.
-    const clock = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
-    try {
-      for (let i = 0; i < 3; i++) {
-        expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(
-          false
-        );
-      }
-      clock.mockReturnValue(1_800_000_000_049);
-      expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(true);
-      clock.mockReturnValue(1_800_000_000_050);
-      expect(await isRateLimited(db, "user-d", "askGemini", 3, 50)).toBe(false);
-    } finally {
-      clock.mockRestore();
+    // The window is measured on the clock handed in, so the 50 ms it is
+    // long cannot pass while the emulator answers. The global clock stays
+    // real: the client times each call on it, and a pinned Date.now puts
+    // every deadline in the past.
+    const start = 1_800_000_000_000;
+    const at = (now) =>
+      isRateLimited(db, "user-d", "askGemini", 3, 50, { now });
+    for (let i = 0; i < 3; i++) {
+      expect(await at(start)).toBe(false);
     }
+    expect(await at(start + 49)).toBe(true);
+    expect(await at(start + 50)).toBe(false);
   });
 
   it("rate limit keys are scoped per (uid, action) pair", async () => {

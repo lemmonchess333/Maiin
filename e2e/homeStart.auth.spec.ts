@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { initializeApp, deleteApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -43,85 +43,105 @@ function exercise(name: string, exerciseId: string, i: number) {
   };
 }
 
+/** A new account whose Home, on a Wednesday, offers Session 1 (see above),
+ *  signed in. The returned function deletes it. */
+async function lifterOnWednesday(
+  page: Page,
+  appName: string
+): Promise<() => Promise<void>> {
+  const app = initializeApp({ projectId: "demo-tropos" }, appName);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const user = await auth.createUser({
+    email: `${appName}-${Date.now()}@tropos.test`,
+    password: TEST_USER.password,
+  });
+  const userRef = db.collection("users").doc(user.uid);
+  const cleanup = async () => {
+    await page.close();
+    await db.recursiveDelete(userRef);
+    await auth.deleteUser(user.uid);
+    await deleteApp(app);
+  };
+  try {
+    const wednesday = new Date();
+    wednesday.setUTCDate(
+      wednesday.getUTCDate() + ((3 - wednesday.getUTCDay() + 7) % 7)
+    );
+    wednesday.setUTCHours(12, 0, 0, 0);
+    // Session 1 (Monday's) is still open, so Train's cursor sits on it.
+    const workouts: WorkoutDay[] = [
+      {
+        dayName: "Session 1",
+        dayType: "push",
+        completed: false,
+        skipped: false,
+        exercises: [exercise("Bench Press", "bench_press", 0)],
+      },
+      {
+        dayName: "Session 2",
+        dayType: "legs",
+        completed: false,
+        skipped: false,
+        exercises: [exercise("Squat", "squat", 1)],
+      },
+    ] as WorkoutDay[];
+    await userRef
+      .collection("programState")
+      .doc("current")
+      .set({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 1,
+        splitType: "upper_lower",
+        workouts,
+        fatigueScore: 0,
+        updatedAt: wednesday.getTime(),
+        liftWeekKey: localWeekKey(wednesday),
+        programSchemaVersion: 3,
+        settings: { autoProgression: true, smallPlates: false },
+        weekHistory: [],
+      } satisfies ProgramState);
+    const seedUser = await auth.getUserByEmail(TEST_USER.email);
+    const seedProfile = await db.collection("users").doc(seedUser.uid).get();
+    await userRef.set({
+      ...seedProfile.data(),
+      uid: user.uid,
+      email: user.email,
+      darkMode: true,
+      weekScheduleVersion: 1,
+      // Lifts on Monday (day 1) and Wednesday (day 3), rest otherwise.
+      // Wednesday is the week's second lift day, but Session 1 is still
+      // open, so Home shows Session 1, as Train does (ADR-0002).
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: day === 1 || day === 3 ? "lift" : "rest",
+      })),
+    });
+    await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+    await page.clock.setFixedTime(wednesday);
+    await signInAsTestUser(page, {
+      email: user.email!,
+      password: TEST_USER.password,
+    });
+  } catch (error) {
+    await cleanup();
+    throw error;
+  }
+  return cleanup;
+}
+
 test.describe("Home's Today card", () => {
   test.skip(!emulatorActive, "Requires the local Firebase emulators.");
 
   test("Start opens the session the card shows; the card itself only previews it", async ({
     page,
   }, testInfo) => {
-    const app = initializeApp(
-      { projectId: "demo-tropos" },
+    const cleanup = await lifterOnWednesday(
+      page,
       `home-start-${testInfo.retry}`
     );
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const user = await auth.createUser({
-      email: `home-start-${Date.now()}@tropos.test`,
-      password: TEST_USER.password,
-    });
-    const userRef = db.collection("users").doc(user.uid);
     try {
-      const wednesday = new Date();
-      wednesday.setUTCDate(
-        wednesday.getUTCDate() + ((3 - wednesday.getUTCDay() + 7) % 7)
-      );
-      wednesday.setUTCHours(12, 0, 0, 0);
-      // Session 1 (Monday's) is still open, so Train's cursor sits on it.
-      const workouts: WorkoutDay[] = [
-        {
-          dayName: "Session 1",
-          dayType: "push",
-          completed: false,
-          skipped: false,
-          exercises: [exercise("Bench Press", "bench_press", 0)],
-        },
-        {
-          dayName: "Session 2",
-          dayType: "legs",
-          completed: false,
-          skipped: false,
-          exercises: [exercise("Squat", "squat", 1)],
-        },
-      ] as WorkoutDay[];
-      await userRef
-        .collection("programState")
-        .doc("current")
-        .set({
-          goal: "recomp",
-          currentPhase: "base",
-          weekNumber: 1,
-          splitType: "upper_lower",
-          workouts,
-          fatigueScore: 0,
-          updatedAt: wednesday.getTime(),
-          liftWeekKey: localWeekKey(wednesday),
-          programSchemaVersion: 3,
-          settings: { autoProgression: true, smallPlates: false },
-          weekHistory: [],
-        } satisfies ProgramState);
-      const seedUser = await auth.getUserByEmail(TEST_USER.email);
-      const seedProfile = await db.collection("users").doc(seedUser.uid).get();
-      await userRef.set({
-        ...seedProfile.data(),
-        uid: user.uid,
-        email: user.email,
-        darkMode: true,
-        weekScheduleVersion: 1,
-        // Lifts on Monday (day 1) and Wednesday (day 3), rest otherwise.
-        // Wednesday is the week's second lift day, but Session 1 is still
-        // open, so Home shows Session 1, as Train does (ADR-0002).
-        weekSchedule: Array.from({ length: 7 }, (_, day) => ({
-          day,
-          type: day === 1 || day === 3 ? "lift" : "rest",
-        })),
-      });
-      await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
-      await page.clock.setFixedTime(wednesday);
-      await signInAsTestUser(page, {
-        email: user.email!,
-        password: TEST_USER.password,
-      });
-
       const training = page.getByLabel("Today’s training", { exact: true });
       await expect(training).toContainText("Session 1", { timeout: 20_000 });
 
@@ -145,6 +165,10 @@ test.describe("Home's Today card", () => {
       // "Bench Press" anywhere on screen would pass whichever day the session
       // had opened.
       await expect(close.locator("../..")).toContainText("Session 1");
+      // The full session: a warm-up set, then the bench's 3 planned sets.
+      await expect(
+        page.getByRole("button", { name: "Mark set complete" })
+      ).toHaveCount(4);
       // The link is consumed, so a refresh or Back lands on the day.
       await expect(page).toHaveURL(/\/program\?day=0$/);
 
@@ -155,10 +179,48 @@ test.describe("Home's Today card", () => {
       ).toBeVisible({ timeout: 15_000 });
       await expect(page.getByLabel("Close workout")).toHaveCount(0);
     } finally {
-      await page.close();
-      await db.recursiveDelete(userRef);
-      await auth.deleteUser(user.uid);
-      await deleteApp(app);
+      await cleanup();
+    }
+  });
+
+  test("Tired offers the easier session, and Train starts it", async ({
+    page,
+  }, testInfo) => {
+    const cleanup = await lifterOnWednesday(
+      page,
+      `home-easier-${testInfo.retry}`
+    );
+    try {
+      const training = page.getByLabel("Today’s training", { exact: true });
+      await expect(training).toContainText("Session 1", { timeout: 20_000 });
+      // Readiness (whole-app grill Q41): with nothing known, Home asks how
+      // you feel above Start, and claims no word of its own.
+      const ask = training.getByRole("group", {
+        name: "How do you feel today?",
+      });
+      await expect(ask).toBeVisible();
+      await expect(training).not.toContainText("Ready");
+      await ask.getByRole("button", { name: "Tired" }).click();
+      // Tired is Steady, and offers the easier session; Start stays.
+      await expect(training).toContainText("Steady");
+      await expect(
+        training.getByRole("button", { name: "Start workout" })
+      ).toBeVisible();
+      await training
+        .getByRole("button", { name: /^Go easier today · / })
+        .click();
+      const close = page.getByLabel("Close workout");
+      await expect(close).toBeVisible({ timeout: 15_000 });
+      await expect(close.locator("../..")).toContainText("Session 1");
+      // Easier: the bench's 3 planned work sets are 2, after its warm-up
+      // set (the full session above has 4 rows).
+      await expect(
+        page.getByRole("button", { name: "Mark set complete" })
+      ).toHaveCount(3);
+      // Both parts of the link are consumed.
+      await expect(page).toHaveURL(/\/program\?day=0$/);
+    } finally {
+      await cleanup();
     }
   });
 });

@@ -83,7 +83,7 @@ export default function SavedRoutinesSection() {
       haptic("light");
     } catch (err) {
       logger.error("[SavedRoutines] restore failed", err);
-      toast.error("Couldn't restore the routine. Try again.");
+      toast.error("Couldn’t restore the routine. Try again.");
     }
   };
 
@@ -105,7 +105,7 @@ export default function SavedRoutinesSection() {
         },
       });
     } catch {
-      toast.error("Couldn't delete. Try again.");
+      toast.error("Couldn’t delete. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -124,7 +124,7 @@ export default function SavedRoutinesSection() {
 
       {loadFailed && routines.length === 0 ? (
         <ErrorState
-          title="Couldn't load your saved routines"
+          title="Couldn’t load your saved routines"
           description="Check your connection and try again."
           retry={{
             onClick: () => {

@@ -135,6 +135,17 @@ describe("RaceCockpitCard", () => {
     );
   });
 
+  /* Deep dive D8: a compressed block with no build (a marathon four weeks
+     out) has no long-run build to pack, so the card says it tapers. */
+  it("says a block with no build tapers to race day", () => {
+    renderCard({ compressed: true, noBuild: true, totalWeeks: 4 });
+    expect(
+      screen.getByText(/no weeks for a build at this distance/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/packed into fewer weeks/i)).toBeNull();
+    expect(screen.queryByText(/bigger jumps/i)).toBeNull();
+  });
+
   /**
    * A below-floor plan ALWAYS also has `compressed: true`, so before
    * 2026-08-04 it fell into the compressed branch and permanently told the
@@ -245,5 +256,34 @@ describe("RaceCockpitCard", () => {
     expect(
       screen.queryByRole("button", { name: /Race community/i })
     ).not.toBeInTheDocument();
+  });
+
+  /* Owner, 2026-11-13 (prototype (a)): a race bound to its Space opens
+     on its place, a band across the top with the race's name on it. */
+  it("opens a bound race on its place, with its name on the band", () => {
+    const { container } = renderCard({
+      raceSpaceId: "london-marathon",
+      eventName: "London Marathon",
+    });
+    const photo = container.querySelector("img");
+    expect(photo?.getAttribute("src")).toMatch(/space-london-marathon/);
+    // Decorative: the heading says which race it is.
+    expect(photo).toHaveAttribute("alt", "");
+    expect(photo).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.getByRole("heading", { name: "London Marathon" })
+    ).toBeInTheDocument();
+    // One heading, one "Race plan": the band's, not the plain card's too.
+    expect(screen.getAllByRole("heading")).toHaveLength(1);
+    expect(screen.getAllByText("Race plan")).toHaveLength(1);
+  });
+
+  it("keeps the plain card for a race with no Space, or an interest Space", () => {
+    for (const raceSpaceId of [undefined, "not-a-real-space", "runners"]) {
+      const { container } = renderCard({ raceSpaceId });
+      expect(container.querySelector("img")).toBeNull();
+      expect(screen.getByText("Race plan")).toBeInTheDocument();
+      cleanup();
+    }
   });
 });

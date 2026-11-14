@@ -97,12 +97,18 @@ export interface EffectiveTargets {
   /** The learned maintenance behind a learned `finalTarget`; null while the
    *  formula wins. */
   learnedMaintenance: number | null;
-  /** Nutr2 #981 — render the "personalizing" warmup bar (Pro/trial, pre-gate). */
+  /** Nutr2 #981 — render the "personalizing" warmup bar (pre-gate; free
+   *  accounts too since Q87, without a manual target). */
   showWarmup: boolean;
   /** 0..1 warmup bar fill (latched). */
   warmupFraction: number;
   /** Warmup has slipped behind the rolling window → show the keep-logging nudge. */
   adaptiveStalled: boolean;
+  /** The personal target a FREE account is told once its estimate is
+   *  ready (whole-app grill Q49, Q87). Null before the gate clears, with a
+   *  manual target, and for Pro/trial, whose `finalTarget` already moves
+   *  toward it. */
+  personalTarget: number | null;
   /** Macro targets for the planned day type (net-neutral carb periodization). */
   protein: number;
   carbs: number;
@@ -220,18 +226,24 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   const today = useLocalDateKey();
   const { user, profile } = useAuth();
 
-  // Nutr2 (#981 + #982) — adaptive-TDEE resolution. Inactive (formula, no
-  // reads) for free / manual-override users; for Pro/trial it resolves the
-  // learned target + the warmup state. This hook is the single place the
-  // adaptive layer is consumed, so every surface stays consistent.
+  // Nutr2 (#981 + #982) — adaptive-TDEE resolution. No reads with a manual
+  // override; for Pro/trial it resolves the learned target + the warmup
+  // state, and for a free account the warmup and the personal target it is
+  // told (Q49, Q87) while the formula stays its target. This hook is the
+  // single place the adaptive layer is consumed, so every surface stays
+  // consistent.
   const {
+    active: adaptiveActive,
     source: adaptiveSource,
     value: adaptiveValue,
     showWarmup,
     warmupFraction,
     stalled: adaptiveStalled,
     maintenance: learnedMaintenance,
+    personalTarget: estimatePersonalTarget,
   } = useAdaptiveTdee();
+  // Applied for Pro, so only a free account is told it.
+  const personalTarget = adaptiveActive ? null : estimatePersonalTarget;
 
   // The training-aware macro MOVEMENT (fat↔carb shift + taper) is a Pro/trial
   // feature — gated here the same way the learned-TDEE layer is. Free users
@@ -425,6 +437,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       showWarmup,
       warmupFraction,
       adaptiveStalled,
+      personalTarget,
       protein,
       carbs,
       fat,
@@ -450,6 +463,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     showWarmup,
     warmupFraction,
     adaptiveStalled,
+    personalTarget,
     program,
     isPro,
   ]);

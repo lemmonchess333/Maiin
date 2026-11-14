@@ -129,7 +129,7 @@ describe("WorkoutDetail", () => {
      since stale data reads as data rather than as an error. */
   it.each([
     ["missing", "Workout not found"],
-    ["failed", "Couldn't load this workout"],
+    ["failed", "Couldn’t load this workout"],
   ])(
     "clears the previous workout when the next record is %s",
     async (state, headline) => {
@@ -413,7 +413,7 @@ describe("WorkoutDetail — the sets that were new bests", () => {
     });
     renderAt("w1");
     await screen.findByText("Barbell Bench Press");
-    await waitFor(() => expect(screen.getAllByText("PR")).toHaveLength(1));
+    await waitFor(() => expect(screen.getAllByText("Best")).toHaveLength(1));
     expect(screen.getByText("Set 2: 62.5 kg, 8 reps, a new best")).toBeTruthy();
     expect(screen.getByText("Set 1: 60 kg, 8 reps")).toBeTruthy();
   });
@@ -452,6 +452,6 @@ describe("WorkoutDetail — the sets that were new bests", () => {
     );
     // The fly has one session behind it: far past it, still no best.
     expect(screen.getByText("Set 1: 30 kg, 12 reps")).toBeTruthy();
-    expect(screen.getAllByText("PR")).toHaveLength(1);
+    expect(screen.getAllByText("Best")).toHaveLength(1);
   });
 });

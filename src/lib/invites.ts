@@ -109,7 +109,7 @@ export const NOT_A_CODE =
 
 /** What a failed fetch of the person's own code says on a tap. */
 export const INVITE_CODE_UNAVAILABLE =
-  "Couldn't get your invite code. Check your connection and try again.";
+  "Couldn’t get your invite code. Check your connection and try again.";
 
 /** The one line a redemption gets: both ways at once, or, when the inviter
  *  approves followers, their follow now and the person's request waiting. */
@@ -138,18 +138,18 @@ export const ENTER_CODE_LATER =
 /** Every reason the server refuses with, in words. */
 export const INVITE_REFUSAL_WORDS: Record<string, string> = {
   "code-not-found":
-    "We couldn't find that invite code. Check it with your friend.",
-  "own-code": "That's your own invite code. Send it to a friend instead.",
-  "already-invited": "You've already joined from an invite.",
-  "account-not-new": `Invite codes work in an account's first ${INVITE_WINDOW_DAYS} days. Search for your friend instead.`,
+    "Couldn’t find that invite code. Check it with your friend.",
+  "own-code": "That’s your own invite code. Send it to a friend instead.",
+  "already-invited": "You’ve already joined from an invite.",
+  "account-not-new": `Invite codes work in an account’s first ${INVITE_WINDOW_DAYS} days. Search for your friend instead.`,
   "invite-limit": "That code has been used a lot today. Try again tomorrow.",
   "setup-unfinished": "Finish setting up first, then use the code.",
-  "account-unavailable": "Invites aren't available on this account right now.",
+  "account-unavailable": "Invites aren’t available on this account right now.",
 };
 
 /** The fallback: the code was not used, and nothing more is known. */
 export const INVITE_FAILED_FALLBACK =
-  "Couldn't use the invite code. Check your connection and try again.";
+  "Couldn’t use the invite code. Check your connection and try again.";
 
 function reasonOf(err: unknown): string | null {
   const details = (err as { details?: unknown })?.details;

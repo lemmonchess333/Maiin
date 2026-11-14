@@ -207,8 +207,8 @@ service cloud.firestore {
        `resolveReport` with `restrictUser` writes globalRestrictedUids/{uid}
        and nothing else does. A restriction refuses everything that reaches
        another person and nothing else: publishing, editing or widening a
-       post, follows, joining a Space or a challenge, Circle events and
-       partner bonds are refused; private logging, the person's own
+       post, follows, joining a Space or a challenge and Circle events
+       are refused; private logging, the person's own
        profile, reading, blocking, unfollowing, leaving and deleting their
        own things stay open. The callables (props, comments, likes,
        reactions, Circles) hold the same line in functions/lib/restriction.js.
@@ -744,7 +744,7 @@ service cloud.firestore {
       // Admin SDK (deleteMyAccount), and nothing in the app deletes this
       // document. A delete followed by a fresh create would wipe the
       // fields only the server writes (hasUsedTrial, subscriptionTrial,
-      // stripeCustomerId, activationJourneyVersion, showWeekOnBoard), and
+      // stripeCustomerId, activationJourneyVersion, leagueOptIn), and
       // a trial is decided from hasUsedTrial.
       allow delete: if false;
     }
@@ -2180,8 +2180,8 @@ service cloud.firestore {
     /* A follow waiting to be accepted (Polish2 call 4): who asked
        (requesterUid) and who was asked (uid). Its own collection, so every
        reader of followers/ and following/ (feeds, followers-only posts,
-       props and comments, partner bonds, counts) still reads only follows
-       that were accepted. Seen only by the two people. */
+       props and comments, counts) still reads only follows that were
+       accepted. Seen only by the two people. */
     match /followRequests/{uid}/users/{requesterUid} {
       allow read: if request.auth != null
         && (request.auth.uid == uid || request.auth.uid == requesterUid);
@@ -2200,22 +2200,11 @@ service cloud.firestore {
         && (request.auth.uid == uid || request.auth.uid == requesterUid);
     }
 
-    /* A person's week on friends' boards (Polish2 call 5): sessions,
-       distance and volume, kept by the server (functions/lib/
-       friendsBoard.js) only for someone who said yes. Read by them and by
-       their followers, who are people they accepted, never across a block
-       either way, as followers-only posts are read. */
-    match /friendsBoard/{uid} {
-      allow read: if request.auth != null
-        && (
-          request.auth.uid == uid
-          || (
-            exists(/databases/$(database)/documents/followers/$(uid)/users/$(request.auth.uid))
-            && !blockExistsBetween(uid, request.auth.uid)
-          )
-        );
-      allow write: if false;
-    }
+    /* friendsBoard/{uid} has no rule, so nobody reads or writes it. It
+       held a person's week for their followers' friends boards (Polish2
+       call 5) until the board went on 12 November 2026 (Trim1 call 3(a)).
+       A week stored before then is deleted with its account, and by
+       functions/scripts/purgeFriendsBoardDocs.js. */
 
     /* How many people follow an account and how many it follows, counted
        by the server from the two lists (functions/lib/followCounts.js), so
@@ -2297,72 +2286,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ========================================
-    // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
-    // tracks a shared streak (days both logged a session). Only the two
-    // members may read or write their bond.
-    //
-    //   - READ: either member. And a pair with no bond yet reads as no
-    //     document for either of the two its id names: the app reads the
-    //     pair's id to learn whether to offer one (getBond), and a
-    //     refused read there settled every pair as not eligible, so a
-    //     streak was never offered. Nobody else learns whether two other
-    //     people have a bond.
-    //   - CREATE: SERVER-ONLY (`if false`). Each person holds at most five
-    //     bonds, and rules cannot count documents, so the
-    //     startPartnerStreak callable makes every bond in a transaction
-    //     that counts both people's (functions/lib/partnerBonds.js). It
-    //     holds what this rule held: two distinct members at the pair's
-    //     sorted id, a mutual follow, no block either way, neither account
-    //     mid-deletion, the starter not restricted, and the cold initial
-    //     state the engine reads.
-    //   - UPDATE: SERVER-ONLY (`if false`). Streak state is materialized by
-    //     the Cloud Function persist path (applyPartnerActivity on
-    //     onWorkoutCreated / onRunCreated, via the Admin SDK which bypasses
-    //     rules) — the engine runs server-side (Soc7). Pre-Soc7 this allowed
-    //     either member to write streak fields; once the engine moved
-    //     server-side that client path became BOTH unused AND a cheat vector
-    //     (a member could hand-edit their own shared streak). `if false`
-    //     removes it and the client/server double-writer race.
-    //   - DELETE: either member may dissolve the bond. It is the one
-    //     client write left.
-    //
-    // R1A-Deletion: bonds the deleted user is a member of are tombstoned
-    // by the account-deletion executor (added to accountDeletionInventory).
-    // ========================================
-    match /partnerBonds/{bondId} {
-      function bondMember() {
-        return request.auth != null
-          && request.auth.uid in resource.data.members;
-      }
-      /* The caller is one of the two people the id names. A pair's id is
-         its two uids, sorted and joined with "__" (bondId in
-         partnerStreakApi.ts, bondIdFor in functions/lib/partnerBonds.js),
-         and a uid Firebase Auth makes is letters and digits only. */
-      function namedInBondId() {
-        let ids = bondId.split('__');
-        return request.auth != null
-          && ids.size() == 2
-          && request.auth.uid in ids;
-      }
-      /* `resource` is null for a document that does not exist, and
-         `resource.data` on it is an error that refuses the read: so a
-         missing bond is asked about by name, and an existing one by its
-         members, the stored list a server wrote. */
-      allow get: if (resource == null && namedInBondId())
-        || (resource != null && bondMember());
-      allow list: if bondMember();
-      // Server-only: a create here could not count the bonds either person
-      // already holds (see the header). The startPartnerStreak callable is
-      // the one writer.
-      allow create: if false;
-      // Soc7: streak state is server-written (Admin SDK). No client update.
-      allow update: if false;
-      // A frozen/tombstoned member cannot dissolve the bond client-side;
-      // the account-deletion executor sweeps their bonds (Admin SDK).
-      allow delete: if bondMember()
-        && !isWriteFrozen(request.auth.uid);
-    }
+    /* partnerBonds/{bondId} has no rule, so nobody reads or writes it. It
+       held a partner streak, a 1:1 bond between two people who follow
+       each other (SOCIAL S3), until partner streaks went on 12 November
+       2026 (Trim1 call 3(b)). A bond stored before then is deleted with
+       either member's account, and by
+       functions/scripts/purgePartnerBondDocs.js. */
 
     // ========================================
     // Social: Notifications — owner-only read; writes are server-only.

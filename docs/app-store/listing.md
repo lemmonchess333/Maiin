@@ -78,7 +78,7 @@ Lifting
 
 Running
 • GPS runs with pace, splits, elevation and a route map coloured by pace.
-• Easy runs, tempo runs, intervals, long runs and guided runs, with spoken splits and pace alerts.
+• Easy runs, tempo runs, intervals and long runs, with spoken splits and pace alerts.
 • Race plans for 5K, 10K, half marathon and marathon, built back from race day through base, build and taper. Choose a race from the directory or enter your own date.
 • Adjust a week when you're unwell or busy, and keep the race date.
 • Plan routes, run them again against your last time, and hide the start and end of the runs you share.
@@ -87,7 +87,7 @@ Running
 
 Food
 • Type a meal the way you'd say it, search the food database, or scan a barcode.
-• Log your usual breakfast in one tap, or copy yesterday's meals.
+• Log your usual breakfast in one tap.
 • A daily calorie target from your weight, height, age and goal, with protein, carbs and fat.
 • Water and weight on Home, with your weight trend rather than the day-to-day swings.
 
@@ -99,8 +99,8 @@ Progress
 
 With other people
 • Share sessions with the people who follow you, give props and comment.
-• Join Spaces for races and interests, start a Circle of up to 8 people, and keep a shared streak with a training partner.
-• Weekly, monthly and seasonal challenges, and a weekly leaderboard with the people you follow.
+• Join Spaces for races and interests, and start a Circle of up to 8 people.
+• Weekly, monthly and seasonal challenges.
 • Choose who sees each session, and report or block anyone.
 
 Tropos Pro
@@ -259,7 +259,7 @@ The demo account has finished setup and has several weeks of workouts, runs and 
 Where to find things
 - Today's session: the card at the top of Home. Start opens the workout.
 - Food logging: the Food tab. Type a meal, or tap the orange camera button to scan a meal photo (Pro) or a barcode (free).
-- Pro: the offer shown after setup, any "Try Pro free" button, or Settings > Subscription. Restore is on the same screen.
+- Pro: the offer shown after setup, any "Try Pro free" button, or the plan card at the top of Settings > Account. Restore is on the Pro screen each of them opens.
 - Settings: tap the photo or initials at the top right of Home.
 - Account deletion: Settings > Account > Delete account.
 - Reporting and blocking: "More options" on a post (Report activity, Block user), "Post options" on a Space post (Report post, Block user), the "More options" button beside someone else's comment (Report comment, Block user) and "More options" on a profile (Report user, Block user). Blocked people are listed in Settings > Social & privacy.

@@ -10,10 +10,12 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import TrialEndingStrip from "@/components/home/TrialEndingStrip";
 import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
+import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useRunReturn } from "@/features/program/useRunReturn";
 import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
+import { raceLongRunCheck } from "@/features/program/raceLongRunCheck";
 import { APPLIED } from "@/features/program/programOutcome";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { useMeals } from "@/hooks/useMeals";
@@ -95,7 +97,6 @@ import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
-import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
 import WeekSessions from "@/components/home/WeekSessions";
 import InlineNumerals from "@/components/ui/InlineNumerals";
@@ -104,29 +105,34 @@ import DayPeekCard from "@/components/home/DayPeekCard";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import { useTodayReadiness } from "@/hooks/useTodayReadiness";
+import { useBodySignals } from "@/hooks/useBodySignals";
+import {
+  buildEasierSession,
+  summarizeEasier,
+} from "@/features/program/easierToday";
 import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
 import WeekSummary from "@/components/home/WeekSummary";
-import Card from "@/components/ui/Card";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import TrialEndedDialog from "@/components/home/TrialEndedDialog";
+import { targetHasAdapted } from "@/hooks/useTrialReminder";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
+import { racePlanLocked } from "@/lib/racePlanAccess";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { usePriorHomeVisit } from "@/hooks/usePriorHomeVisit";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
@@ -221,6 +227,7 @@ export default function Home() {
     realignRacePlan,
     easeBackIn,
     recentLayoff,
+    recentRuns,
     controller: programController,
   } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -458,20 +465,6 @@ export default function Home() {
     { key: todayKey, protein: todayIntake.protein }
   );
 
-  // Performance data for the hero card: this week's score, and the week
-  // before it for the delta chip. The documents are daily, so "the one
-  // before" is yesterday's rolling week; the hook steps back a whole week
-  // (performanceSeries.ts). The raw document count feeds the
-  // baseline-establishing gate.
-  const {
-    currentWeek: perfWeek,
-    previousWeek: perfPrevWeek,
-    docsAvailable: perfDocsAvailable,
-    loading: perfLoading,
-    failed: perfFailed,
-    refresh: refreshPerformance,
-  } = usePerformanceWeeks(2);
-
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
   // that detail lives in the Food tab.
@@ -504,13 +497,33 @@ export default function Home() {
   // Home's Pro strip for a free account (homeProStrip.ts). Trial
   // eligibility decides the copy: a first-timer is offered the trial,
   // an account that has had one is offered the plans, and so is anyone
-  // the App Store says has had it under another account.
+  // the App Store says has had it under another account. The trial is
+  // offered once the personal target is ready (whole-app grill Q71, Q87),
+  // so the 7 days start on it; before then the strip offers the plans.
   const storeTrialEligibility = useStoreTrialEligibility();
   const proStripTrialEligible = offersTrial(
     isCheckoutTrialEligible(profile),
     storeTrialEligibility,
     DEFAULT_PLAN
   );
+  // A half or full marathon plan past its free first week (whole-app grill
+  // Q85): today's planned run offers Pro; the race itself still starts.
+  const raceDistance =
+    profile?.raceGoal?.distance ??
+    programState?.runPlan?.raceGoal?.distance ??
+    null;
+  const runPlanLocked = racePlanLocked({
+    isPro,
+    runPlan: programState?.runPlan,
+    raceDistance,
+  })
+    ? {
+        cta: proStripTrialEligible ? "Try Pro free" : "See Pro",
+        raceName: raceDistance === "half" ? "half marathon" : "marathon",
+      }
+    : null;
+  const proStripOffersTrial =
+    proStripTrialEligible && effectiveTargets.personalTarget != null;
   const showProStrip = shouldShowHomeProStrip({
     isPro,
     isInTrial,
@@ -580,6 +593,46 @@ export default function Home() {
       routinesInFlight,
     ]
   );
+  // Readiness above the lift hero's Start (whole-app grill Q41): the
+  // morning question, or a word and its fact, and the easier session on a
+  // Steady or Go easy day. Free; sleep and heart from Apple Health join it
+  // for Pro on the phone once Health is asked (Q76, as recommended).
+  const heroLift = session.lift;
+  const bodySignals = useBodySignals(isPro);
+  const todayReadiness = useTodayReadiness(
+    heroLift?.workout ?? undefined,
+    bodySignals.signals
+  );
+  const liftReadiness = useMemo(() => {
+    const day = heroLift?.workout;
+    if (
+      !heroLift ||
+      !day ||
+      !heroLift.isStartable ||
+      heroLift.inProgress ||
+      !heroLift.startTarget.includes("start=1")
+    ) {
+      return null;
+    }
+    return {
+      today: todayReadiness,
+      connectBody: bodySignals.canConnect ? bodySignals.connect : null,
+      easierTarget: `${heroLift.startTarget}&easier=1`,
+      easierSummary: summarizeEasier(
+        buildEasierSession(day, session.restContext, {
+          smallPlates: programState?.settings?.smallPlates === true,
+          loadUnit: programState?.settings?.loadUnit,
+        })
+      ),
+    };
+  }, [
+    heroLift,
+    todayReadiness,
+    bodySignals.canConnect,
+    bodySignals.connect,
+    session.restContext,
+    programState,
+  ]);
   // The hero's words around the session (homeHero.ts): the kicker beside
   // the date, the week's count and the next session beside the segments.
   const heroPositionLabel = useMemo(
@@ -772,6 +825,36 @@ export default function Home() {
     dismissRunReturn();
     runReturnSurface.dismiss();
   };
+  /**
+   * Run24 (11), deep dive D14: the weekly check of a race against the long
+   * runs actually done (`raceLongRunCheck`). It opens the fell-behind sheet
+   * in its race register once a week, below the weekly check's own sheet
+   * and the run return, which greet the same runner first.
+   */
+  const raceCheck = useMemo(
+    () =>
+      raceLongRunCheck({ profile, programState, recentRuns, today: todayKey }),
+    [profile, programState, recentRuns, todayKey]
+  );
+  const { dismissed: raceCheckDismissed, dismiss: dismissRaceCheck } =
+    useDismissOnce(`tropos-race-check:${raceCheck?.weekKey ?? "none"}`);
+  const raceCheckSurface = useSurface({
+    id: "race-check",
+    priority: 26,
+    eligible: raceCheck !== null && !raceCheckDismissed,
+    suppressedBy: ["fell-behind", "run-return"],
+  });
+  const closeRaceCheck = () => {
+    dismissRaceCheck();
+    raceCheckSurface.dismiss();
+  };
+  /** Run15 (deep dive D11): what the welcome-back sheets read a race's
+   *  reach from (`FellBehindSheet`'s `raceReach`). */
+  const raceReach = useMemo(
+    () =>
+      profile ? { profile, programState, recentRuns, today: todayKey } : null,
+    [profile, programState, recentRuns, todayKey]
+  );
   /** Re-plan the race from today, and say what was built. A refusal or a
    *  failed save has already been said by the writer. Whether it landed. */
   const realignAndSay = async (): Promise<boolean> => {
@@ -1280,12 +1363,14 @@ export default function Home() {
               className="size-4 text-primary shrink-0"
             />
             <span className="text-xs font-medium text-foreground flex-1 text-pretty">
-              {proStripTrialEligible
-                ? "Log meals from a photo — try Pro free for 7 days"
-                : "Upgrade to Pro"}
+              {proStripOffersTrial
+                ? "Your personal target is ready: try Pro free for 7 days"
+                : proStripTrialEligible
+                  ? "Log meals from a photo with Pro"
+                  : "Upgrade to Pro"}
             </span>
             <span className="text-micro font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
-              {proStripTrialEligible ? "Start trial" : "See plans"}
+              {proStripOffersTrial ? "Start trial" : "See plans"}
             </span>
           </button>
           <IconButton
@@ -1322,8 +1407,8 @@ export default function Home() {
         ) : v2TrainingUnavailable ? (
           <Banner
             variant="neutral"
-            title="Training isn't ready"
-            description="We couldn't load today's training yet. Open your training plan to try again."
+            title="Training isn’t ready"
+            description="Couldn’t load today’s training. Open your plan to try again."
             action={
               <Button variant="secondary" onClick={() => navigate("/program")}>
                 Open training plan
@@ -1335,9 +1420,11 @@ export default function Home() {
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
                 session={session}
+                liftReadiness={liftReadiness}
                 unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
                 freeRunLine={freeRunLine}
+                runPlanLocked={runPlanLocked}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
@@ -1370,7 +1457,7 @@ export default function Home() {
               className={cardClasses({
                 size: "compact",
                 padded: false,
-                className: "space-y-2 px-4 pt-3.5 pb-1.5",
+                className: "space-y-2 px-4 pt-3.5 pb-3",
               })}
             >
               <WeekSessions
@@ -1390,6 +1477,23 @@ export default function Home() {
                 extraRunDates={extraRunDates}
                 startKey={startKey}
               />
+              {/* What the count above is made of, and the way into the
+                  Weekly Review while one waits (Trim1 call 1). Both were
+                  a "This week" card at the foot of Home, which read the
+                  same counts as the line above the segments. */}
+              <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border pt-2.5">
+                <SectionErrorBoundary sectionName="week-summary">
+                  <WeekSummary
+                    counts={weekCounts}
+                    runner={
+                      !!profile?.runFrequency && profile.runFrequency !== "none"
+                    }
+                  />
+                </SectionErrorBoundary>
+                <SectionErrorBoundary sectionName="weekly-review-entry">
+                  <WeeklyReviewEntry />
+                </SectionErrorBoundary>
+              </div>
             </div>
             <AnimatePresence>
               {peekDate && (
@@ -1530,61 +1634,6 @@ export default function Home() {
         </SectionErrorBoundary>
       </motion.div>
 
-      {/* This week: the week so far and its Performance Index, with the
-          Weekly Review link on the heading while a review is waiting. The
-          performance row keeps the ring, verdict and delta chip that made
-          it the week's verdict (PI1 + PI4); it opens Analytics. */}
-      <section aria-label="This week" className="space-y-2">
-        <SectionHeading
-          className="px-1"
-          action={
-            <SectionErrorBoundary sectionName="weekly-review-entry">
-              <WeeklyReviewEntry />
-            </SectionErrorBoundary>
-          }
-        >
-          This week
-        </SectionHeading>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <Card className="space-y-4 rounded-xl">
-            <SectionErrorBoundary sectionName="week-summary">
-              <WeekSummary
-                counts={weekCounts}
-                runner={
-                  !!profile?.runFrequency && profile.runFrequency !== "none"
-                }
-              />
-            </SectionErrorBoundary>
-            <div className="border-t border-border pt-3">
-              <TrackSectionView section="hero">
-                <SectionErrorBoundary sectionName="performance-hero">
-                  <PerformanceHeroCard
-                    currentWeek={perfWeek ?? null}
-                    previousWeek={perfPrevWeek}
-                    weeksAvailable={perfDocsAvailable}
-                    loading={perfLoading}
-                    failed={perfFailed}
-                    onRetry={refreshPerformance}
-                    /* The perf doc is written by the server, so "no doc" is
-                       not "no session" — this keeps the row from telling
-                       someone who has just logged their first workout that
-                       they logged nothing. */
-                    hasLoggedSession={
-                      workouts.length > 0 || lifetimeRunCount > 0
-                    }
-                  />
-                </SectionErrorBoundary>
-              </TrackSectionView>
-            </div>
-          </Card>
-        </motion.div>
-      </section>
-
       <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
@@ -1600,7 +1649,7 @@ export default function Home() {
               title={recal.title}
               description={recal.description}
               ctaLabel="Edit plan"
-              ctaHref="/settings/training"
+              ctaHref="/settings/lift-plan"
               visible={true}
             />
           ) : null;
@@ -1626,6 +1675,12 @@ export default function Home() {
           <StreakSheet
             open={streakSheet}
             onOpenChange={(open) => setStreakSheet(open)}
+            /* The badges are on the profile, above the medals (Trim1
+               call 3(c)); Analytics' Badges tab still redirects there for
+               the moment before the account is known. */
+            badgesTo={
+              user?.uid ? badgeShelfPath(user.uid) : "/history?tab=badges"
+            }
           />
         </Suspense>
       )}
@@ -1711,7 +1766,7 @@ export default function Home() {
             }}
             onEaseBack={async () => {
               if (!(await easeBackIn(liftReturn.easeBackShare))) {
-                throw new Error("The plan wasn't eased back");
+                throw new Error("The plan wasn’t eased back");
               }
             }}
             daysAway={liftReturn.daysAway}
@@ -1747,6 +1802,7 @@ export default function Home() {
               profile?.runMode === "race_prep" && !!profile.raceGoal
             }
             recentLayoff={recentLayoff}
+            raceReach={raceReach}
           />
         )}
       </Suspense>
@@ -1783,7 +1839,7 @@ export default function Home() {
               // A rebuild that didn't land keeps the sheet open to try
               // again, as the weekly prompt's flag would stay set.
               if (!(await realignAndSay()))
-                throw new Error("The plan wasn't rebuilt");
+                throw new Error("The plan wasn’t rebuilt");
             }}
             onRaceMoved={() => {
               closeRunReturn();
@@ -1793,6 +1849,31 @@ export default function Home() {
             // The offer is made from the detrained line, so this is the
             // layoff a rebuild plans from.
             recentLayoff="detrained"
+            raceReach={raceReach}
+          />
+        )}
+        {raceCheck && profile?.raceGoal && (
+          <FellBehindSheet
+            open={raceCheckSurface.active}
+            onClose={closeRaceCheck}
+            surface="race-check"
+            // No weekly prompt to clear: "Not now" settles this week's check.
+            dismissFellBehindPrompt={async () => APPLIED}
+            realignRacePlan={async () => {
+              if (!(await realignAndSay()))
+                throw new Error("The plan wasn’t realigned");
+            }}
+            onRaceMoved={() => {
+              closeRaceCheck();
+              navigate("/settings/run-plan");
+            }}
+            raceModeActive
+            recentLayoff="none"
+            raceCheck={{
+              ...raceCheck,
+              distance: profile.raceGoal.distance,
+              unit: resolveDistanceUnit(profile.preferredDistanceUnit),
+            }}
           />
         )}
       </Suspense>
@@ -1836,6 +1917,7 @@ export default function Home() {
       <AnimatePresence>
         {trialSurface.active && (
           <TrialEndedDialog
+            targetAdapted={targetHasAdapted(profile?.adaptiveCapState)}
             onDismiss={function () {
               trialSurface.dismiss();
               updateProfile({ trialExpiryPromptShown: true });

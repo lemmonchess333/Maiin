@@ -330,7 +330,7 @@ describe("A6 — evaluatePostEaseBounce", () => {
     paceVerdictTone: tone,
   });
 
-  it("null without an eased week, or when the eased week wasn't last week", () => {
+  it("null without an eased week, or when the eased week wasn’t last week", () => {
     expect(
       evaluatePostEaseBounce({ easedWeekKey: null, today: TODAY, runs: [] })
     ).toBeNull();

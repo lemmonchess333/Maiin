@@ -185,7 +185,7 @@ export default function Routine() {
     return (
       <div className="p-6 space-y-3 text-center">
         <ErrorState
-          title="Couldn't load this routine"
+          title="Couldn’t load this routine"
           description="Check your connection and try again."
           retry={{
             onClick: () => {
@@ -200,7 +200,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );
@@ -217,7 +217,7 @@ export default function Routine() {
           onClick={() => navigate("/program")}
           className="text-xs font-medium text-lifting-strong"
         >
-          Back to program
+          Back to programme
         </button>
       </div>
     );

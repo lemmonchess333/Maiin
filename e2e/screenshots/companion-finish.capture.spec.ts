@@ -275,7 +275,7 @@ for (const budget of [null, 30] as const) {
     for (const name of [
       "Share with followers",
       "Share publicly",
-      "Don't share",
+      "Don’t share",
     ]) {
       await expect(
         page.getByRole("button", { name, exact: true })

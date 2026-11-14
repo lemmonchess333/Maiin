@@ -149,7 +149,7 @@ export default function ProfileInfoSection({
     } catch (err) {
       setWeight(shown);
       toast.error(
-        err instanceof Error ? err.message : "Couldn't save your weight."
+        err instanceof Error ? err.message : "Couldn’t save your weight."
       );
     }
   }
@@ -239,7 +239,7 @@ export default function ProfileInfoSection({
             // that draft, and this one would overwrite it.
             if (nameRevision.current !== submitted) return;
             if (!wordFilter) {
-              setNameError("Couldn't check the name. Try again.");
+              setNameError("Couldn’t check the name. Try again.");
               return;
             }
             const check = validateDisplayName(name, wordFilter);
@@ -404,7 +404,7 @@ export default function ProfileInfoSection({
             if (!result.ok) setWhy(prev);
             else setWhy(next);
           }}
-          placeholder="What's driving you?"
+          placeholder="What’s driving you?"
           className="ds-input mt-1 text-sm"
         />
         <p className="text-xs text-muted-foreground mt-1">

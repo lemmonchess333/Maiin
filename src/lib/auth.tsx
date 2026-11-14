@@ -431,10 +431,6 @@ export interface UserProfileSocial {
    *  Privacy → Approve followers. Absent means yes, the default the rules
    *  apply too (`approvesFollowers` in firestore.rules). */
   approveFollowers?: boolean;
-  /** Whether this person's week shows on their followers' boards (Polish2):
-   *  absent = not asked yet (their own board row offers "Show my week"),
-   *  false = no. Server-written by setBoardSharing, never by the client. */
-  showWeekOnBoard?: boolean;
   /** Whether this person is in the weekly leagues (Soc15 call 3): absent
    *  = never joined, false = left. Server-written by setLeagueSharing,
    *  never by the client. */
@@ -1281,7 +1277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setWatchAccountCleanup(null);
       const watchOwner = watchAccountRef.current;
       if (watchOwner !== uid && isNativePlatform()) {
-        traceBoot("Clearing the last account's Watch run");
+        traceBoot("Clearing the last account’s Watch run");
         for (;;) {
           try {
             await clearOutgoingWatchAccount(uid, watchOwner, isCurrent);
@@ -1904,7 +1900,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onLateFailure: () => {
             if (auth.currentUser?.uid !== writeUid) return;
             toast.error(
-              "A change you made offline couldn't be saved. Check your settings.",
+              "A change you made offline couldn’t be saved. Check your settings.",
               { id: "update-profile-error" }
             );
           },
@@ -1939,7 +1935,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error("[auth] updateProfile failed", err);
         // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
         // a single visible message.
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };
@@ -2008,7 +2004,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return reverted ? { ...prev, shareDefaults: next } : prev;
         });
         logger.error("[auth] updateShareDefaults failed", err);
-        toast.error("Couldn't save your settings. Try again.", {
+        toast.error("Couldn’t save your settings. Try again.", {
           id: "update-profile-error",
         });
         return { ok: false, error: err };

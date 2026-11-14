@@ -48,7 +48,7 @@ export function postMomentLines(
   switch (moment.kind) {
     case "pr":
       return {
-        headline: "New PR",
+        headline: "New best",
         detail: {
           text: moment.exercise,
           figure: keepTogether(

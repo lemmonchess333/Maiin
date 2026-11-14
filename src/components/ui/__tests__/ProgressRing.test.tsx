@@ -111,3 +111,42 @@ describe("ProgressRing, cut into its card", () => {
     expect(track.getAttribute("stroke")).toBe("transparent");
   });
 });
+
+describe("ProgressRing, sized with the reader's text", () => {
+  function box(scaleWithText: boolean) {
+    const { container } = render(
+      <ProgressRing
+        value={0.5}
+        size={96}
+        stroke={8}
+        color="currentColor"
+        scaleWithText={scaleWithText}
+      >
+        <span>92</span>
+      </ProgressRing>
+    );
+    return {
+      wrap: container.firstElementChild as HTMLElement,
+      svg: container.querySelector("svg") as SVGSVGElement,
+    };
+  }
+
+  it("is a fixed number of pixels unless asked", () => {
+    const { wrap, svg } = box(false);
+    expect(wrap.style.width).toBe("96px");
+    expect(wrap.style.height).toBe("96px");
+    expect(svg.getAttribute("width")).toBe("96");
+  });
+
+  it("grows with the text, so a figure inside it still fits at larger sizes", () => {
+    /* A figure set in rem doubles at 200% text while a ring set in
+       pixels does not, and the figure runs past it. In rem the two grow
+       together; the drawing inside is the viewBox's, so its geometry is
+       the same. */
+    const { wrap, svg } = box(true);
+    expect(wrap.style.width).toBe("6rem");
+    expect(wrap.style.height).toBe("6rem");
+    expect(svg.getAttribute("width")).toBe("100%");
+    expect(svg.getAttribute("viewBox")).toBe("0 0 96 96");
+  });
+});

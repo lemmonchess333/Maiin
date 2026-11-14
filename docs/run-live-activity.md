@@ -28,13 +28,45 @@ device check is in `docs/qa/pre-launch-backlog.md`.
 
 ## What ships on the lock screen
 
-While an outdoor GPS run records: a dark card (surface `#1A1A1F`) with a
-coral running glyph + state line ("Recording" / "Paused") and three
-stat columns — DISTANCE / PACE / TIME. Dynamic Island: compact = run
-glyph + distance; expanded = distance / pace / time + state line;
-minimal = run glyph. All values arrive pre-formatted from the app
-(unit-aware `distanceLabel` / `paceLabel`, the run timer's formatter),
-so the lock screen and the in-app HUD can never disagree.
+While an outdoor GPS run records, drawn the way Wid2 decided (2026-11-12,
+design C: the picture leads):
+
+- **The Lock Screen card.** The runner's drawing on the left, in one soft
+  light of the run's coral in that corner of a dark card. Beside it: the
+  session's name in small capitals ("EASY 30", "TEMPO RUN"; "PAUSED" while
+  paused), the distance as the
+  card's one large figure with its unit small beside it, and one line with
+  the pace and the time ("5:12 /km · 23:41").
+- **The Dynamic Island.** Compact: the run glyph and the distance.
+  Minimal: the distance alone, since Apple asks for something live in the
+  smallest size. Expanded: the glyph on the left of the camera, the time
+  on its right, and under them the drawing with the session's name, the
+  distance and "Pace 5:12 /km".
+- **The name is the session's.** The one the run was started as, as the
+  setup's Start button named it ("Easy 30", "Long 18 km with race pace"),
+  or the run type's name once it is another type or no plan's session
+  ("Tempo run", "Free run"): `runInProgressName` in `runPlanMetadata.ts`.
+  It is on one line, cut short if it runs past the card.
+- **The drawing changes pose.** A Live Activity plays no clip, so the card
+  shows one pose of the runner and takes the next on every second update,
+  about every four seconds. Paused, it holds its pose at 45%.
+
+The drawing is four frames of Home's own flipbook for the runner
+(`public/form-art/motion/run-easy.webp`), cut by `npm run art:live-activity`
+into `ios/App/LiveActivities/Assets.xcassets` at 96 pt tall. The card names
+a pose in its data (`src/lib/liveActivityArt.ts`) and the plugin draws the
+bundled image of that name, so there is no Swift of ours. ActivityKit
+refuses a card whose image is larger than the card, so the height stays
+inside the card's 160 pt; `liveActivityArt.test.ts` holds the sizes, the
+names and the catalog's place in the extension's bundle.
+
+One thing in the mockup is not in this card. Its figure is the system's
+bold face: the plugin draws only the system's fonts, and Archivo needs our
+own views.
+
+All values arrive pre-formatted from the app (unit-aware `distanceLabel` /
+`paceLabel`, the run timer's formatter), so the lock screen and the in-app
+HUD can never disagree.
 
 Updates are data-only (the layout binds `{{placeholders}}` once at
 start), throttled to one OS call per 2s and deduped — inside
@@ -127,14 +159,16 @@ and exported with no change to the workflow. Apple's side needs, once:
 
 | #   | Check                                                                                | Result | Notes |
 | --- | ------------------------------------------------------------------------------------ | ------ | ----- |
-| 1   | Start outdoor run → card appears on lock screen with live distance/pace/time         | ⬜     |       |
+| 1   | Start outdoor run → card appears on lock screen with the runner, distance, pace/time | ⬜     |       |
 | 2   | Stats keep updating with screen locked (rides the background-GPS foreground service) | ⬜     |       |
-| 3   | Pause run → card state line flips to "Paused"; resume flips back                     | ⬜     |       |
+| 3   | Pause run → the name reads "PAUSED" and the runner dims; resume brings the name back | ⬜     |       |
 | 4   | Finish run → card dismisses (no stale card after save)                               | ⬜     |       |
 | 5   | Discard run → card dismisses                                                         | ⬜     |       |
-| 6   | Dynamic Island (14 Pro+): compact distance, expanded three stats                     | ⬜     |       |
+| 6   | Dynamic Island (14 Pro+): compact distance; expanded the runner, distance and pace   | ⬜     |       |
 | 7   | Kill the app mid-run, reopen, resume → one card; the one left from before is gone    | ⬜     |       |
 | 8   | Treadmill/manual run → NO Live Activity (outdoor-GPS-only gate)                      | ⬜     |       |
+| 9   | The runner is drawn, not a grey photo icon, and changes pose about every 4 s         | ⬜     |       |
+| 10  | The card is dark to its corners, with a coral light behind the runner                | ⬜     |       |
 
 Legend: ⬜ not yet run · ✅ pass · ❌ fail (add a note).
 

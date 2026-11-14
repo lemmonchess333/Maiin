@@ -126,7 +126,7 @@ type Programme = {
 /** Race prep as a person picks it now: the mode, then whether it is a
  *  race they have entered, which the plan asks before it saves (Run9
  *  STATUS 2026-11-01). */
-function pickRacePrep(entry: string = "A race I've entered") {
+function pickRacePrep(entry: string = "A race I’ve entered") {
   fireEvent.click(screen.getByRole("radio", { name: /Training for a race/i }));
   fireEvent.click(screen.getByRole("radio", { name: entry }));
 }
@@ -137,7 +137,6 @@ function renderPage(
   programme: Programme = {}
 ) {
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
-  const onOpenFullSettings = vi.fn();
   const page = ({ readiness = "ready", programState = null }: Programme) => (
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
@@ -145,14 +144,12 @@ function renderPage(
         programState={programState}
         readiness={readiness}
         refreshProfile={refreshProfile}
-        onOpenFullSettings={onOpenFullSettings}
       />
     </MemoryRouter>
   );
   const { unmount, rerender } = render(page(programme));
   return {
     refreshProfile,
-    onOpenFullSettings,
     unmount,
     /** The programme arrives, as `useProgram` re-renders the page with it. */
     load: (next: Programme) => rerender(page(next)),
@@ -197,7 +194,7 @@ function openPickerFor(race: ReturnType<typeof firstUpcomingRace>) {
     "5k": "5K",
     "10k": "10K",
     half: "Half",
-    marathon: "Full",
+    marathon: "Marathon",
   }[race.event!.distance as "5k" | "10k" | "half" | "marathon"];
   fireEvent.click(
     within(screen.getByRole("radiogroup", { name: "Race distance" })).getByRole(
@@ -390,7 +387,7 @@ describe("RunPlanSettings", () => {
         target: { value: RACE_TARGET_DATE },
       });
       fireEvent.click(
-        screen.getByRole("radio", { name: "A race I've entered" })
+        screen.getByRole("radio", { name: "A race I’ve entered" })
       );
     };
 
@@ -440,7 +437,7 @@ describe("RunPlanSettings", () => {
       expect(screen.getByLabelText("Longest run, min")).toHaveValue(null);
       // A new runner starts from setup's "New to running", not from here.
       expect(
-        screen.queryByRole("button", { name: "I'm new to running" })
+        screen.queryByRole("button", { name: /^I['’]m new to running$/ })
       ).toBeNull();
       fireEvent.change(screen.getByLabelText("Minutes a week"), {
         target: { value: "60" },
@@ -502,18 +499,46 @@ describe("RunPlanSettings", () => {
      is a race, on the same coral segmented control as Distance, where two
      cards named the stored modes ("Freeform", "Race prep") and the chosen
      one wore a hand-mixed coral wash. */
-  it("asks whether there is a race on a coral segmented control", () => {
+  /* Owner, 2026-11-13: the goal and the distance are photograph cards,
+     as Runna draws them; the chosen card has the running colour's edge. */
+  it("asks whether there is a race on photograph cards", () => {
     renderPage(baseProfile);
     const group = screen.getByRole("radiogroup", { name: "Running goal" });
     const noRace = screen.getByRole("radio", { name: "No race" });
     expect(group).toContainElement(noRace);
     expect(noRace).toHaveAttribute("aria-checked", "true");
-    expect(noRace.className).toContain("bg-running-fill");
+    expect(noRace.className).toContain("outline-running");
+    // The fact is the card's description, not part of its name.
+    expect(noRace).toHaveAccessibleDescription("Run when you like");
+    for (const card of within(group).getAllByRole("radio"))
+      expect(card.querySelector("img")).toHaveAttribute("alt", "");
     expect(screen.queryByText("Freeform")).not.toBeInTheDocument();
     expect(screen.queryByText("Race prep")).not.toBeInTheDocument();
   });
 
-  it("draws the plan's two knobs in the running colour, as Distance is", () => {
+  it("names the race on its card, over the race's own place", () => {
+    renderPage({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "marathon",
+        targetDate: localDateString(addLocalDays(new Date(), 140)),
+        eventName: "London Marathon",
+        eventSpaceId: "london-marathon",
+        entry: "race",
+      },
+    } as UserProfile);
+    const race = screen.getByRole("radio", { name: "Training for a race" });
+    expect(race).toHaveAccessibleDescription("London Marathon");
+    expect(race.querySelector("img")?.getAttribute("src")).toMatch(
+      /space-london-marathon/
+    );
+    const distance = screen.getByRole("radio", { name: "Marathon" });
+    expect(distance).toHaveAttribute("aria-checked", "true");
+    expect(distance).toHaveAccessibleDescription(/^42\.2 km · \d+\+ weeks$/);
+  });
+
+  it("draws the plan's two knobs in the running colour", () => {
     renderPage(baseProfile);
     pickRacePrep();
     for (const name of ["Long-run volume", "Plan intensity"]) {
@@ -561,11 +586,81 @@ describe("RunPlanSettings", () => {
       "Your recent running. The plan climbs from it each week.",
       "How long your longest runs get.",
       "How much tempo and interval work each week has.",
-      "A third fewer leg sets, at the same weights.",
     ]) {
       expect(screen.getByText(line)).toBeInTheDocument();
       expect(line.length).toBeLessThanOrEqual(60);
     }
+    // The leg trim says the sets it takes, which the plan decides.
+    const trim = screen.getByText(
+      /^\d+ fewer leg sets? a week, at the same weights\.$/
+    );
+    expect(trim.textContent!.length).toBeLessThanOrEqual(60);
+  });
+
+  /** A week whose one leg lift has `sets` sets, and an upper lift. */
+  const legWeek = (sets: number) =>
+    ({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 2,
+      splitType: "full_body",
+      fatigueScore: 0,
+      updatedAt: 1,
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      workouts: [
+        {
+          dayName: "Full Body A",
+          dayType: "full_body",
+          completed: false,
+          exercises: [
+            {
+              name: "Barbell Squat",
+              exerciseId: "squat",
+              movementCategory: "knee_dominant",
+              sets,
+              reps: 8,
+              weight: 80,
+            },
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              movementCategory: "horizontal_push",
+              sets: 3,
+              reps: 8,
+              weight: 60,
+            },
+          ],
+        },
+      ],
+    }) as unknown as ProgramState;
+
+  it("training deep dive: offers the leg trim only where it takes a set, and says how many", () => {
+    renderPage(baseProfile, "/settings/run-plan", {
+      programState: legWeek(4),
+    });
+    pickRacePrep();
+    expect(
+      screen.getByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("1 fewer leg set a week, at the same weights.")
+    ).toBeInTheDocument();
+  });
+
+  it("training deep dive: does not offer the leg trim to a plan it would not change", () => {
+    // A lift keeps two sets, so two-set leg lifts lose none.
+    renderPage(baseProfile, "/settings/run-plan", {
+      programState: legWeek(2),
+    });
+    pickRacePrep();
+    expect(
+      screen.queryByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeNull();
   });
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
@@ -931,7 +1026,7 @@ describe("RunPlanSettings", () => {
       ["5K", "24:30"],
       ["10K", "50:00"],
       ["Half", "1:50:00"],
-      ["Full", "3:59:00"],
+      ["Marathon", "3:59:00"],
     ]) {
       fireEvent.click(screen.getByRole("radio", { name: distance }));
       expect(time).toHaveAttribute("placeholder", `e.g. ${example}`);
@@ -1067,7 +1162,7 @@ describe("RunPlanSettings", () => {
       setWeeklyGoal();
 
       const line = screen.getByText(
-        "Couldn't load your programme. Reopen this page to try again."
+        "Couldn’t load your programme. Reopen this page to try again."
       );
       const save = screen.getByRole("button", { name: "Save run plan" });
       expect(save).toHaveAccessibleDescription(line.textContent ?? "");
@@ -1234,7 +1329,7 @@ describe("RunPlanSettings", () => {
       fireEvent.click(
         screen.getByRole("radio", { name: /Training for a race/i })
       );
-      for (const name of ["A race I've entered", "On my own"])
+      for (const name of ["A race I’ve entered", "On my own"])
         expect(screen.getByRole("radio", { name })).toHaveAttribute(
           "aria-checked",
           "false"
@@ -1274,7 +1369,7 @@ describe("RunPlanSettings", () => {
         raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
       });
       expect(
-        screen.getByRole("radio", { name: "A race I've entered" })
+        screen.getByRole("radio", { name: "A race I’ve entered" })
       ).toHaveAttribute("aria-checked", "true");
     });
   });

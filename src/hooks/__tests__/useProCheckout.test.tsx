@@ -51,7 +51,7 @@ describe("useProCheckout", () => {
     expect(H.toastError).not.toHaveBeenCalled();
     expect(result.current.error).toBeNull();
     expect(result.current.notice).toBe(
-      "The App Store has your purchase. Pro switches on once it's confirmed. If it hasn't in a few minutes, tap Restore."
+      "The App Store has your purchase. Pro switches on once it’s confirmed. If it hasn’t in a few minutes, tap Restore."
     );
     expect(events()).toEqual(["checkout_started", "checkout_pending"]);
     expect(H.track.mock.calls[1][1]).toMatchObject({ pending: "entitlement" });
@@ -64,7 +64,7 @@ describe("useProCheckout", () => {
     expect(H.toastError).not.toHaveBeenCalled();
     expect(result.current.error).toBeNull();
     expect(result.current.notice).toBe(
-      "Your purchase is waiting for approval. Pro switches on once it's approved."
+      "Your purchase is waiting for approval. Pro switches on once it’s approved."
     );
     expect(events()).toEqual(["checkout_started", "checkout_pending"]);
   });
@@ -75,17 +75,27 @@ describe("useProCheckout", () => {
     await act(() => result.current.startCheckout("yearly"));
     expect(result.current.notice).not.toBeNull();
 
-    H.result = { success: false, error: "Purchase failed. Try again." };
+    H.result = {
+      success: false,
+      error: "Couldn’t complete the purchase. Try again.",
+    };
     await act(() => result.current.startCheckout("yearly"));
     expect(result.current.notice).toBeNull();
-    expect(result.current.error).toBe("Purchase failed. Try again.");
+    expect(result.current.error).toBe(
+      "Couldn’t complete the purchase. Try again."
+    );
   });
 
   it("still shows and tracks a real failure", async () => {
-    H.result = { success: false, error: "Purchase failed. Try again." };
+    H.result = {
+      success: false,
+      error: "Couldn’t complete the purchase. Try again.",
+    };
     const { result } = renderHook(() => useProCheckout(), { wrapper });
     await act(() => result.current.startCheckout("yearly"));
-    expect(H.toastError).toHaveBeenCalledWith("Purchase failed. Try again.");
+    expect(H.toastError).toHaveBeenCalledWith(
+      "Couldn’t complete the purchase. Try again."
+    );
     expect(events()).toEqual(["checkout_started", "checkout_failed"]);
   });
 });

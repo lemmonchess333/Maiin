@@ -10,6 +10,7 @@
 import { describe, it, expect } from "vitest";
 import {
   isWorkSegment,
+  judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
   pinnedWorkPace,
@@ -30,7 +31,7 @@ import {
   STARTER_NONSTOP_TEMPLATE_IDS,
   type RunTemplate,
 } from "../workoutTemplates";
-import { GUIDED_WORKOUTS } from "../guidedRun";
+import type { GuidedRunWorkout } from "../guidedRun";
 
 describe("segmentsFromIntervals", () => {
   it("orders warmup → (work, rest)×N → cooldown, no trailing rest", () => {
@@ -319,8 +320,39 @@ describe("step headings in Run21's effort words (E1)", () => {
 });
 
 describe("segmentsFromGuided", () => {
-  it("is an identity mapping over the catalogue's segments", () => {
-    const w = GUIDED_WORKOUTS[0];
+  /* The three fixed workouts left the app in Trim1 call 8. A run saved or
+     in flight from one still carries its workout, in this shape. */
+  const stored: GuidedRunWorkout = {
+    id: "easy-30",
+    name: "Easy 30",
+    description: "A gentle 30-minute run to build your endurance",
+    totalMinutes: 30,
+    difficulty: "easy",
+    color: "#22b558",
+    segments: [
+      {
+        type: "warmup",
+        durationSeconds: 300,
+        label: "Warm Up",
+        instruction: "Start with a brisk walk or easy jog",
+      },
+      {
+        type: "easy",
+        durationSeconds: 1200,
+        label: "Easy Run",
+        instruction: "Settle into a pace you could hold a conversation at",
+      },
+      {
+        type: "cooldown",
+        durationSeconds: 300,
+        label: "Cool Down",
+        instruction: "Ease back to a walk",
+      },
+    ],
+  };
+
+  it("is an identity mapping over a stored workout's segments", () => {
+    const w = stored;
     const segs = segmentsFromGuided(w);
     expect(segs).toHaveLength(w.segments.length);
     segs.forEach((s, i) => {
@@ -659,5 +691,41 @@ describe("segmentTargetLabel", () => {
     expect(label(330)).toBe("5 min 30 s");
     expect(label(1200)).toBe("20 min");
     expect(segmentTargetLabel({ kind: "distance", meters: 1000 })).toBe("1K");
+  });
+});
+
+/* Run24 (12), deep dive D17: the easy cue judges an easy or a long run in
+   its easy running only. */
+describe("judgesEasyNow — where the Run screen holds easy running to easy", () => {
+  const strides = segmentsFromEasyWithStrides(30, {
+    reps: 4,
+    workSeconds: 20,
+  });
+  const raceFinish = segmentsFromLongWithRacePace(20, 6, 300, "km");
+
+  it("judges an easy or a long run with no steps throughout", () => {
+    expect(judgesEasyNow("easy", [], null)).toBe(true);
+    expect(judgesEasyNow("long", [], null)).toBe(true);
+  });
+
+  it("leaves the strides and a race-pace finish alone", () => {
+    expect(
+      strides
+        .filter((s) => judgesEasyNow("easy", strides, s))
+        .map((s) => s.type)
+    ).toEqual(strides.filter((s) => s.type === "easy").map((s) => s.type));
+    expect(
+      strides.some(
+        (s) => s.type !== "easy" && judgesEasyNow("easy", strides, s)
+      )
+    ).toBe(false);
+    expect(raceFinish.map((s) => judgesEasyNow("long", raceFinish, s))).toEqual(
+      [true, false]
+    );
+  });
+
+  it("never judges a tempo, intervals or a race", () => {
+    for (const type of ["tempo", "intervals", "race", undefined])
+      expect(judgesEasyNow(type, [], null)).toBe(false);
   });
 });

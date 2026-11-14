@@ -27,13 +27,13 @@ const dayLabel = (date: string) => formatDayMonthYear(parseLocalDate(date));
  *  written to be shown; the SDK's are not. */
 function uploadErrorMessage(err: unknown): string {
   if (err && typeof err === "object" && "code" in err) {
-    return "Couldn't upload the photo. Try again.";
+    return "Couldn’t upload the photo. Try again.";
   }
   if (err instanceof Error && err.message === "Upload timed out") {
     return "The upload timed out. Check your connection and try again.";
   }
   if (err instanceof Error && err.message) return err.message;
-  return "Couldn't upload the photo. Try again.";
+  return "Couldn’t upload the photo. Try again.";
 }
 
 /**
@@ -127,7 +127,7 @@ export default function ProgressPhotoDaySheet({
       await remove(confirming);
       setConfirming(null);
     } catch {
-      setError({ message: "Couldn't delete the photo. Try again." });
+      setError({ message: "Couldn’t delete the photo. Try again." });
     } finally {
       setDeleting(false);
     }
@@ -151,7 +151,7 @@ export default function ProgressPhotoDaySheet({
       onDateChange(draftDate);
       setDraftDate(null);
     } catch {
-      setError({ message: "Couldn't change the date. Try again." });
+      setError({ message: "Couldn’t change the date. Try again." });
     } finally {
       setMoving(false);
     }
@@ -320,7 +320,7 @@ export default function ProgressPhotoDaySheet({
           <div className="space-y-3 rounded-xl bg-destructive/10 p-3">
             <p className="text-sm text-foreground">
               Delete the {POSE_LABELS[confirming.pose].toLowerCase()} photo from{" "}
-              {dayLabel(confirming.date)}? It can't be recovered.
+              {dayLabel(confirming.date)}? It can’t be recovered.
             </p>
             <div className="flex gap-2">
               <Button

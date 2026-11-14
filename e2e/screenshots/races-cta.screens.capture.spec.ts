@@ -85,10 +85,10 @@ test.describe("race event header + door-2 picker screenshots", () => {
     await page.getByRole("radio", { name: /training for a race/i }).click();
     // The picker browses at the goal's distance (it has no Distance
     // filter of its own), and the draft's may have no catalogue matches
-    // (e.g. 5K). Set the goal to the full marathon first.
+    // (e.g. 5K). Set the goal to the marathon first.
     await page
       .getByRole("radiogroup", { name: "Race distance", exact: true })
-      .getByRole("radio", { name: "Full", exact: true })
+      .getByRole("radio", { name: "Marathon", exact: true })
       .click();
     await page
       .getByRole("button", { name: /choose an upcoming race/i })

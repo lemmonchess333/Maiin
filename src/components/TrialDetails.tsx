@@ -38,7 +38,7 @@ export default function TrialDetails({ trial }: { trial: SubscriptionTrial }) {
   if (!trial.willRenew) {
     return (
       <p className="text-sm text-muted-foreground">
-        You&apos;ve turned off renewal, so nothing will be charged. Pro stays on
+        You’ve turned off renewal, so nothing will be charged. Pro stays on
         until {endDay}.
       </p>
     );
@@ -83,7 +83,7 @@ function PhoneReminderOffer({ trial }: { trial: SubscriptionTrial }) {
   if (permission === "granted") {
     return (
       <p className="text-xs text-muted-foreground">
-        You&apos;ll get a reminder on this phone at{" "}
+        You’ll get a reminder on this phone at{" "}
         {formatTimeOfDay(reminder.fireAt)} on{" "}
         {formatWeekdayDayMonth(reminder.fireAt)}.
       </p>

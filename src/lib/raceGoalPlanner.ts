@@ -1,4 +1,5 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import { recentPace } from "@/features/program/layoffDetection";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -48,6 +49,7 @@ import {
   getRaceMinWeeks,
   getRaceFloorWeeks,
   getRacePhaseLabel,
+  raceOutOfReach,
 } from "@/features/program/runPlanTiming";
 import {
   generateRacePlanV2,
@@ -202,6 +204,43 @@ function longestBeforeRace(
     reads: km
       ? `${Math.round(distanceIn(km * 1000, unit))} ${distanceUnitLabel(unit)}`
       : `${Math.round(minutes)} min`,
+  };
+}
+
+/** A distance in the reader's unit, to one decimal where it has one. */
+function distanceWords(km: number, unit: DistanceUnit): string {
+  const n = Math.round(distanceIn(km * 1000, unit) * 10) / 10;
+  return `${Number.isInteger(n) ? n : n.toFixed(1)} ${distanceUnitLabel(unit)}`;
+}
+
+/**
+ * What a race plan's weeks before race week hold (deep dive D8), for the
+ * status line to say in place of what a compressed plan does in general:
+ * "the long runs build in fewer weeks, with bigger jumps" was said of a
+ * marathon plan that held no long run at all. The longest long run (0 with
+ * none), whether the long run climbs to it (a long run longer than the
+ * first), and how many tempo and interval sessions.
+ */
+function weeksHold(weeks: readonly ScheduledRunDay[][]): {
+  longestKm: number;
+  climbs: boolean;
+  quality: number;
+} {
+  const before = weeks.slice(0, -1).flat();
+  const longKm = before
+    .filter((run) => run.type === "long")
+    .map(
+      (run) =>
+        RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config
+          ?.targetDistanceKm ?? 0
+    )
+    .filter((km) => km > 0);
+  return {
+    longestKm: longKm.length > 0 ? Math.max(...longKm) : 0,
+    climbs: longKm.some((km) => km > longKm[0]),
+    quality: before.filter(
+      (run) => run.type === "tempo" || run.type === "intervals"
+    ).length,
   };
 }
 
@@ -484,15 +523,93 @@ export function getRaceGoalPlannerState(
   const shortLine = shortOfRace
     ? `Starting from your running now, the long run builds to about ${shortOfRace.reaches} before race week, where a ${RACE_IN_A_SENTENCE[distance]} plan with these weeks builds to ${shortOfRace.raceNeeds}. A later race or a shorter one gives it time.`
     : null;
+  // D8: a plan without the weeks to build says what its weeks hold, and,
+  // when the race is out of its reach, that first.
+  const unit = input.distanceUnit ?? "km";
+  const held = weeksHold(plan.weeks);
+  const raceKm = DISTANCE_METERS[distance] / 1000;
+  /* The person's own longest run in distance, when a starting point and a
+     pace give it. A race they already run as far as is in reach however
+     close, as the welcome-back sheet holds (`raceOutOfReach`). */
+  const ownLongestKm =
+    input.runningBaseline && input.easyPaceSPerKm && input.easyPaceSPerKm > 0
+      ? (input.runningBaseline.longestRunMinutes * 60) / input.easyPaceSPerKm
+      : null;
+  const outOfReach =
+    status !== "healthy" &&
+    !input.newRunnerUntil &&
+    (ownLongestKm ?? 0) < raceKm &&
+    raceOutOfReach({
+      // The farther of the plan's long run and the person's own: a long run
+      // they already run counts, as the welcome-back sheet holds.
+      longestKm: Math.max(held.longestKm, ownLongestKm ?? 0),
+      raceKm,
+      // What the same plan builds for this runner with a full block's weeks.
+      fullKm: Math.max(
+        held.longestKm,
+        weeksHold(
+          generateRacePlanV2({
+            recentLayoff: input.recentLayoff ?? "none",
+            weekSchedule,
+            raceGoal: {
+              distance,
+              targetDate: localDateString(
+                addLocalDays(
+                  parseLocalDate(localWeekKey(now)),
+                  (idealWeeks + 2) * 7 + 6
+                )
+              ),
+            },
+            weeklyRunDays,
+            currentDate,
+            weekStart: localWeekKey(now),
+            tuning: input.tuning,
+            runningBaseline: input.runningBaseline,
+            runTimeLimits: input.runTimeLimits,
+            easyPaceSPerKm: input.easyPaceSPerKm,
+            recentRuns: input.recentRuns,
+          }).weeks
+        ).longestKm
+      ),
+    });
+  const qualityLine =
+    held.quality === 0
+      ? "No tempo or intervals."
+      : "Fewer quality sessions than a full plan.";
+  const far = outOfReach
+    ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. A later race or a shorter one gives it time.`
+    : null;
+  const longest = distanceWords(held.longestKm, unit);
+  const holdLine =
+    held.longestKm > 0
+      ? held.climbs
+        ? `The long run builds to ${longest} before race week in fewer weeks than a full plan, with bigger jumps between them. ${qualityLine}`
+        : `The longest run before race week is ${longest}. ${qualityLine}`
+      : held.quality === 0
+        ? "There’s no time for a long run before race day, only easy runs up to the race."
+        : `There’s no time for a long run before race day. ${qualityLine}`;
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
+    /* Run24 (1): setup states the peak, in time too where a pace gives it:
+       the confirmed one, else the recent runs'. */
+    const peakPace =
+      input.easyPaceSPerKm ??
+      (input.recentRuns ? recentPace(input.recentRuns, currentDate) : null);
+    const peak = longestBeforeRace(plan.weeks, peakPace, unit);
+    const peakLine =
+      peak && held.longestKm > 0
+        ? ` Your longest run will be ${peak.reads}${peakPace ? `, about ${aboutTime(peak.minutes)}` : ""}.`
+        : "";
     statusDescription =
       shortLine ??
-      `Full Base → Build → Taper → Race progression for your ${lower}.`;
+      `Full Base → Build → Taper → Race progression for your ${lower}.${peakLine}`;
     ctaLabel = "Save race plan";
   } else if (status === "compressed") {
     statusTitle = "Short runway";
-    statusDescription = `Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them.${shortLine ? ` ${shortLine}` : ""}`;
+    // C's line first where it holds (the owner's, 1 November 2026), else
+    // the race out of reach.
+    const lead = shortLine ?? far;
+    statusDescription = lead ? `${lead} ${qualityLine}` : holdLine;
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
@@ -501,7 +618,10 @@ export function getRaceGoalPlannerState(
        "finish-safely" label implied a safety promise the product cannot
        make (the internal `finish_safely` state keys are unchanged;
        renaming persisted vocabulary buys no user value). */
-    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no quality sessions.`;
+    statusDescription = far
+      ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
+      : // Run24 (7): the honest sentence and the alternatives first.
+        `Too soon for a full ${lower} build. A later race or a shorter one gives it time. Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 

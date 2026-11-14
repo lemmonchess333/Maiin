@@ -230,7 +230,7 @@ export async function rcPurchase(
       return {
         success: false,
         isProActive: false,
-        error: "This plan isn't available right now. Try again later.",
+        error: "This plan isn’t available right now. Try again later.",
       };
     }
     const result = await step("Apple purchase sheet", () =>
@@ -262,7 +262,7 @@ export async function rcPurchase(
     return {
       success: false,
       isProActive: false,
-      error: "Purchase failed. Try again.",
+      error: "Couldn’t complete the purchase. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -294,7 +294,7 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     return {
       success: false,
       isProActive: false,
-      error: "Failed to restore purchases.",
+      error: "Couldn’t restore your purchases.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }

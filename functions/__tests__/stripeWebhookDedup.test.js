@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
 // firebase-functions/v1 refuses to construct triggers without a project id.
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const { stripeWebhook } = require("../index");
 

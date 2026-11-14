@@ -121,8 +121,67 @@ const HIGH_REP_EXERCISE_IDS = Object.freeze([
   "weighted-plank",
 ]);
 
+/**
+ * Mirror of roleTable.ts hasSixRepFloor: the dumbbell and kettlebell lifts
+ * and the one-leg lifts, never prescribed under six reps (training deep
+ * dive, D5). Derived from the catalogue on the client; the cross test pins
+ * this list to it.
+ */
+const SIX_REP_FLOOR_IDS = Object.freeze([
+  "arnold-press",
+  "barbell-step-ups",
+  "bulgarian-split",
+  "chest-supported-db-row",
+  "concentration-curl",
+  "cross-body-hammer-curl",
+  "cuban-press",
+  "db-bench",
+  "db-curl",
+  "db-flyes",
+  "db-rdl",
+  "db-row",
+  "db-shoulder-press",
+  "decline-db-press",
+  "farmers-carry",
+  "front-raise",
+  "goblet-squat",
+  "hammer-curl",
+  "incline-db-curl",
+  "incline-db-press",
+  "kettlebell-swing",
+  "lateral-raise",
+  "lu-raise",
+  "lunges",
+  "man-maker",
+  "overhead-extension",
+  "reverse-flyes",
+  "shrugs",
+  "spider-db-curl",
+  "tricep-kickback",
+  "turkish-get-up",
+  "walking-dumbbell-lunges",
+  "zottman-curl",
+]);
+
+/** Mirror of roleTable.ts SIX_REP_FLOOR. */
+const SIX_REP_FLOOR = 6;
+
 const ISOLATION_SET = new Set(ISOLATION_EXERCISE_IDS);
 const HIGH_REP_SET = new Set(HIGH_REP_EXERCISE_IDS);
+const SIX_REP_FLOOR_SET = new Set(SIX_REP_FLOOR_IDS);
+
+/** Mirror of roleTable.ts hasSixRepFloor. */
+function hasSixRepFloor(exerciseId) {
+  return SIX_REP_FLOOR_SET.has(exerciseId);
+}
+
+/** Mirror of roleTable.ts atLeast. */
+function atLeast(row, floor) {
+  if (row.bottom >= floor) return row;
+  return row.top === undefined
+    ? { ...row, bottom: floor }
+    : { ...row, bottom: floor, top: Math.max(row.top, floor + 2) };
+}
 
 /** Mirror of roleTable.ts ROLE_TABLE. */
 const ROLE_TABLE = Object.freeze({
@@ -194,20 +253,40 @@ function roleReps(goal, role, experience, highRepIsolation) {
   return { sets, ...reps };
 }
 
+/** Mirror of roleTable.ts FLOOR_DEADLIFT_IDS. */
+const FLOOR_DEADLIFT_IDS = ["deadlift", "sumo-deadlift", "trap-bar-deadlift"];
+
+/** Mirror of roleTable.ts isFloorDeadlift. */
+function isFloorDeadlift(exerciseId) {
+  return FLOOR_DEADLIFT_IDS.includes(exerciseId);
+}
+
 /** Mirror of roleTable.ts roleRepsFor. */
 function roleRepsFor(goal, exercise, experience) {
-  return roleReps(
+  const floor = isFloorDeadlift(exercise && exercise.exerciseId);
+  const row = roleReps(
     goal,
-    exerciseRole(exercise),
+    floor ? "main" : exerciseRole(exercise),
     experience,
     HIGH_REP_SET.has(exercise && exercise.exerciseId)
   );
+  const floored = hasSixRepFloor(exercise && exercise.exerciseId)
+    ? atLeast(row, SIX_REP_FLOOR)
+    : row;
+  if (!floor || toExperience(experience) === "beginner") return floored;
+  return floored.top === undefined
+    ? { ...floored, sets: Math.min(floored.sets, 3) }
+    : { sets: Math.min(floored.sets, 3), bottom: 5, top: 8 };
 }
 
 module.exports = {
+  FLOOR_DEADLIFT_IDS,
   HIGH_REP_EXERCISE_IDS,
   ISOLATION_EXERCISE_IDS,
+  SIX_REP_FLOOR,
+  SIX_REP_FLOOR_IDS,
   exerciseRole,
+  hasSixRepFloor,
   roleReps,
   roleRepsFor,
   toExperience,

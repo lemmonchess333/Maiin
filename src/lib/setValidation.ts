@@ -148,7 +148,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return {
       ok: false,
       severity: "block",
-      message: timed ? "Seconds can't be negative." : "Reps can't be negative.",
+      message: timed ? "Seconds can’t be negative." : "Reps can’t be negative.",
     };
   }
   if (!Number.isInteger(reps)) {
@@ -205,7 +205,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return {
       ok: false,
       severity: "block",
-      message: "Weight can't be negative.",
+      message: "Weight can’t be negative.",
     };
   }
   if (weight > WEIGHT_MAX_KG) {
@@ -232,7 +232,7 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
           severity: "warn",
           kind: "past-plan",
           title: `${formatLoad(weight, unit)}?`,
-          message: `Today's plan is ${formatLoad(planned, unit)}.`,
+          message: `Today’s plan is ${formatLoad(planned, unit)}.`,
           confirmLabel: `Log ${formatLoad(weight, unit)}`,
           fromKg: planned,
           toKg: weight,

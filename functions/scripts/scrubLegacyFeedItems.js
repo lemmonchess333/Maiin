@@ -94,7 +94,7 @@ async function scrubLegacyFeedItems({
     .orderBy(FieldPath.documentId())
     .limit(PAGE_SIZE);
   let cursor = after ? firestore.doc(after) : null;
-  for (; report.pages < maxPages; ) {
+  for (; report.pages < maxPages;) {
     const page = await (cursor ? query.startAfter(cursor) : query).get();
     if (page.docs.length === 0) break;
     for (const doc of page.docs) {
@@ -190,7 +190,7 @@ if (require.main === module) {
   Promise.resolve()
     .then(async () => {
       const options = parseArgs(process.argv.slice(2));
-      const admin = require("firebase-admin");
+      const admin = require("../lib/adminSdk");
       admin.initializeApp({ projectId: options.projectId });
       const report = await scrubLegacyFeedItems({
         ...options,

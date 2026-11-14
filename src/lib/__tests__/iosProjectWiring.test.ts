@@ -191,13 +191,13 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
   });
 
   it("declares HealthKit usage strings for as long as the plugin is a dependency", () => {
-    // useSteps().connect → requestHealthPermissions → HKHealthStore
+    // useSteps().connect → requestAuthorization → HKHealthStore
     // .requestAuthorization, reached from Settings → Health and from the
     // Home steps priming sheet, which auto-opens. Without
     // NSHealthShareUsageDescription the OS terminates the app on that tap.
     // The strings come from build settings (see the pilot test below), so
     // both kinds of build are read as they resolve, not as typed.
-    const usesHealthKit = "capacitor-health" in pkg.dependencies;
+    const usesHealthKit = "@capgo/capacitor-health" in pkg.dependencies;
     expect(usesHealthKit).toBe(true);
     for (const gate of ["NO", "YES"]) {
       for (const key of [
@@ -212,11 +212,13 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     }
   });
 
-  it("asks Health for steps alone in a standard build, and for heart rate and workout export only in the pilot", () => {
-    // A standard build reads steps and nothing else, so its Health prompt
-    // says that. The pilot's expanded text names the Watch's heart rate and
-    // the workout export it adds. One switch, WATCH_RUN_RELEASE_ENABLED,
-    // picks the text, the Watch app and the native gate together.
+  it("asks Health for steps and readiness's sleep and heart in a standard build, and for Watch heart rate and workout export only in the pilot", () => {
+    // A standard build reads steps, and sleep and heart for readiness once
+    // a Pro account adds them (whole-app grill Q39-Q43), so its Health
+    // prompt says that and nothing more. The pilot's expanded text names
+    // the Watch's heart rate and the workout export it adds. One switch,
+    // WATCH_RUN_RELEASE_ENABLED, picks the text, the Watch app and the
+    // native gate together.
     for (const configuration of ["Debug", "Release"]) {
       const standardShare = appInfoPlistString(
         "NSHealthShareUsageDescription",
@@ -229,7 +231,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
         configuration
       );
       expect(standardShare).toBe(
-        "Tropos reads your step count from Health to show today's steps on Home."
+        "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
       );
       expect(standardUpdate).toBe(
         "Tropos does not add workouts or any other data to Health."
@@ -562,7 +564,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
     // HKHealthStore refuses an app that does not carry the entitlement.
     expect(keys.includes("com.apple.developer.healthkit")).toBe(
-      "capacitor-health" in pkg.dependencies
+      "@capgo/capacitor-health" in pkg.dependencies
     );
     // The native App Check provider attests with App Attest.
     expect(

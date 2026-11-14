@@ -101,10 +101,37 @@ What A changes from candidate B:
 B and C read as a stack of layers more than as a lift, and C would have put
 two colours into every use of the mark.
 
+## Decision 5 — the mark is a T whose stem rises (owner, 2026-11-11)
+
+The owner asked for a logo redesign from the top apps' logos. Read from 44
+launch and welcome screens: half show the name alone, a symbol that stands
+alone is nearly always a letter of the name, and almost none nests a shape
+inside a shape. The hexagon and chevron were simple and held at 29 px, but
+said nothing of the name and sat three shapes deep (tile, hexagon,
+chevron).
+
+Three directions were drawn as the app icon in iOS's default, dark and
+tinted modes, at 60, 40 and 29 px, in Home's header and beside the name:
+Tau (a bar and a stem that turns), Turn (a T whose stem takes the corner
+into its bar) and Rise (decision 4's chevron, cut where a T's stem meets
+its bar). **The owner chose Rise**, "for now".
+
+What it changes:
+
+- The mark is two filled shapes straight on the field, a notched bar and a
+  pointed stem, with the chevron as the gap between them. No shape holds
+  it.
+- It needs no cut in a page colour: the gap shows whatever is behind it.
+- The launch image is the bar alone, and the launch animation raises the
+  stem into it.
+- The hexagon stays where the owner kept it on 8 November: badges and
+  empty states.
+
 ## Principle this settles
 
-**Circles carry Tropos's data; the hexagon signs its name** (icon + empty
-states + badges). Numerals move to Archivo; text stays Plus Jakarta Sans.
+**Circles carry Tropos's data; the mark signs its name.** Until decision
+5 the mark was the hexagon (icon + empty states + badges); since then the
+T signs the name and the hexagon keeps badges and empty states. Numerals move to Archivo; text stays Plus Jakarta Sans.
 
 ## Evidence
 

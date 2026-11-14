@@ -35,7 +35,7 @@
      onward.
    ───────────────────────────────────────────── */
 
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -45,7 +45,8 @@ const db = admin.firestore();
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
-const SINGLE_USER = args.find((a) => a.startsWith("--user-id="))?.split("=")[1] || null;
+const SINGLE_USER =
+  args.find((a) => a.startsWith("--user-id="))?.split("=")[1] || null;
 
 const MAX_PARALLEL_USERS = 5;
 const MAX_PARALLEL_WRITES = 10;
@@ -66,9 +67,10 @@ function deriveSignalsFromLegacyDoc(doc) {
   // baseline.weeksUsed (if present) gives us lifetimeWeeks-ish.
   // Legacy docs computed this against prior 4 weeks, so the value
   // is roughly correct for "established baseline" detection.
-  const weeksUsed = doc.baseline && typeof doc.baseline.weeksUsed === "number"
-    ? doc.baseline.weeksUsed
-    : 0;
+  const weeksUsed =
+    doc.baseline && typeof doc.baseline.weeksUsed === "number"
+      ? doc.baseline.weeksUsed
+      : 0;
 
   return {
     bothLoadsStrong: liftLoadScore >= 70 && runLoadScore >= 70,
@@ -108,7 +110,13 @@ async function backfillUser(uid) {
   });
 
   if (DRY_RUN) {
-    return { uid, processed: snap.size, written: 0, skipped, wouldWrite: docsToWrite.length };
+    return {
+      uid,
+      processed: snap.size,
+      written: 0,
+      skipped,
+      wouldWrite: docsToWrite.length,
+    };
   }
 
   // Batched writes per user
@@ -121,7 +129,10 @@ async function backfillUser(uid) {
           await perfCol.doc(id).set({ signals }, { merge: true });
           written++;
         } catch (err) {
-          console.error(`backfill: write failed for ${uid}/${id}:`, err.message);
+          console.error(
+            `backfill: write failed for ${uid}/${id}:`,
+            err.message
+          );
         }
       })
     );
@@ -131,7 +142,9 @@ async function backfillUser(uid) {
 }
 
 async function main() {
-  console.log(`backfillPerformanceSignals: starting${DRY_RUN ? " (DRY RUN)" : ""}`);
+  console.log(
+    `backfillPerformanceSignals: starting${DRY_RUN ? " (DRY RUN)" : ""}`
+  );
 
   let uids;
   if (SINGLE_USER) {
@@ -155,7 +168,13 @@ async function main() {
           return await backfillUser(uid);
         } catch (err) {
           console.error(`backfill: user ${uid} failed:`, err.message);
-          return { uid, processed: 0, written: 0, skipped: 0, error: err.message };
+          return {
+            uid,
+            processed: 0,
+            written: 0,
+            skipped: 0,
+            error: err.message,
+          };
         }
       })
     );
@@ -172,13 +191,17 @@ async function main() {
       );
     });
 
-    console.log(`Batch ${Math.floor(i / MAX_PARALLEL_USERS) + 1} done (${i + batch.length}/${uids.length})`);
+    console.log(
+      `Batch ${Math.floor(i / MAX_PARALLEL_USERS) + 1} done (${i + batch.length}/${uids.length})`
+    );
   }
 
   console.log("\nSummary:");
   console.log(`  Users processed: ${uids.length}`);
   console.log(`  Docs processed:  ${totalProcessed}`);
-  console.log(`  Docs written:    ${totalWritten}${DRY_RUN ? " (DRY RUN — no writes)" : ""}`);
+  console.log(
+    `  Docs written:    ${totalWritten}${DRY_RUN ? " (DRY RUN — no writes)" : ""}`
+  );
   console.log(`  Docs skipped:    ${totalSkipped} (already had signals)`);
 }
 

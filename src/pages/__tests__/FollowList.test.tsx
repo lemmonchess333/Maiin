@@ -156,7 +156,7 @@ describe("who you follow", () => {
     resetFirestore();
     renderAt("/following");
     expect(
-      await screen.findByText("You don't follow anyone yet")
+      await screen.findByText("You don’t follow anyone yet")
     ).toBeVisible();
   });
 });

@@ -55,6 +55,8 @@ import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { readRunHistory, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
+import { PACE_UPDATE_UPGRADE_PATH } from "@/lib/paceUpdateAccess";
+import { track as trackPaywall } from "@/lib/paywallAnalytics";
 import {
   usePaceInsightFromRuns,
   type PaceInsightRun,
@@ -123,7 +125,6 @@ import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
-import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -162,7 +163,7 @@ import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
  *  (offline before they had loaded, or the read refused). Shown in the
  *  Retry banner, under "Couldn't save your run". */
 const PRIVACY_ZONES_UNCHECKED =
-  "Privacy zones are cut from the route before it's saved, and they couldn't be checked. Try again when you're online.";
+  "Privacy zones are cut from the route before it’s saved, and they couldn’t be checked. Try again when you’re online.";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -187,10 +188,10 @@ function RetryBanner({
       />
       <div className="flex-1 text-xs text-foreground/80">
         <p className="font-medium text-running-strong">
-          Couldn&apos;t save your run
+          Couldn’t save your run
         </p>
         <p className="mt-0.5 text-muted-foreground">
-          {error || "We couldn't save this run."}
+          {error || "Couldn’t save this run."}
         </p>
       </div>
       <Button variant="sport" className="shrink-0" onClick={onRetry}>
@@ -776,6 +777,10 @@ export default function RunSummary() {
       currentPaceCandidate !== null &&
       isPaceEligible(currentPaceCandidate),
     loading: paceHistoryLoading,
+    // Run24 (4): worked out for every account. Slower paces are one tap
+    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
+    // account sees them `locked` with the Pro page one tap away.
+    everyAccount: true,
   });
 
   /* Fun distance comparison. Two constraints shape this.
@@ -953,7 +958,7 @@ export default function RunSummary() {
       toast.success("Changes saved");
     } catch (err) {
       logger.error("[RunSummary] field update failed", err);
-      toast.error("Couldn't save your changes. Try again.");
+      toast.error("Couldn’t save your changes. Try again.");
     } finally {
       setUpdating(false);
     }
@@ -1460,13 +1465,13 @@ export default function RunSummary() {
       logger.error("[RunSave] Failed:", error);
       // The privacy-zone and storage sentences are the app's own; an
       // SDK error's text is not copy.
-      const message = appErrorMessage(error, "Failed to save run");
+      const message = appErrorMessage(error, "Couldn’t save this run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
-      toast.error("Failed to save run. Tap Retry below.");
+      toast.error("Couldn’t save this run. Try again below.");
     } finally {
       savingRef.current = false;
     }
@@ -1478,7 +1483,7 @@ export default function RunSummary() {
 
   const handleExportGPX = () => {
     if (privacyZonesLoading || privacyZonesError) {
-      toast.error("Couldn't check your privacy settings. Try again");
+      toast.error("Couldn’t check your privacy settings. Try again");
       return;
     }
     // Track name travels into other apps with the export — a stable
@@ -1714,7 +1719,7 @@ export default function RunSummary() {
               <WifiOff size={20} className="text-warning-strong" />
               <div>
                 <p className="font-medium text-warning-strong text-xs">
-                  You're offline
+                  You’re offline
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
@@ -1796,7 +1801,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
+                      {`This didn’t match today’s ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -2163,7 +2168,7 @@ export default function RunSummary() {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any notes about this run..."
+              placeholder="Any notes about this run…"
               aria-label="Run notes"
               rows={3}
               className="ds-input resize-none text-sm"
@@ -2188,14 +2193,20 @@ export default function RunSummary() {
                 />
               )}
 
-            {/* Pace insight (Pro) — surfaced at the post-run decision moment,
+            {/* Pace insight — surfaced at the post-run decision moment,
                 before navigation. Only in this valid-run post-save stack;
-                explicit approve/dismiss, never a silent benchmark change. */}
+                explicit approve/dismiss, never a silent benchmark change.
+                Faster paces on a free account offer Pro instead. */}
             {saved && paceInsight.insight && (
               <PaceInsightCard
                 insight={paceInsight.insight}
                 onAccept={paceInsight.accept}
                 onDismiss={paceInsight.dismiss}
+                locked={paceInsight.locked}
+                onUpgrade={() => {
+                  trackPaywall("paywall_cta_clicked", { source: "paces" });
+                  navigate(PACE_UPDATE_UPGRADE_PATH);
+                }}
               />
             )}
 
@@ -2230,13 +2241,7 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
-            {saved && (
-              <CompletionExtras
-                share={shareAction}
-                kind="run"
-                activationJourneyV2={isActivationJourneyV2(profile)}
-              />
-            )}
+            {saved && <CompletionExtras share={shareAction} kind="run" />}
 
             {/* The save action the post-save fields never had. It appears
                 only once they differ from what was written, so a user who
@@ -2402,7 +2407,7 @@ export default function RunSummary() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

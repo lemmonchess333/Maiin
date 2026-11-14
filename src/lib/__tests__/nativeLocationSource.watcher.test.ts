@@ -165,6 +165,54 @@ describe("getCurrent — the pre-warm", () => {
   });
 });
 
+describe("getCurrent — its timeout", () => {
+  /* The run screen polls a one-off fix every 3 s while the watch is still
+     acquiring, with a 10 s timeout, as the Web's getCurrentPosition takes
+     it. A native one-off that ignored it lived until a fix came: indoors,
+     or on a phone with no cached location, one more watcher every poll,
+     and still there, location on, after the run screen had gone. */
+  const after = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("gives up at its timeout, as the Web's does, and removes its watcher", async () => {
+    const onFix = vi.fn();
+    const onError = vi.fn();
+    nativeLocationSource.getCurrent({ timeout: 20 }, onFix, onError);
+    await settle();
+    fake.resolveId[0]("p-3");
+    await after(40);
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError.mock.calls[0][0].code).toBe(3); // TIMEOUT
+    expect(fake.removeWatcher).toHaveBeenCalledWith({ id: "p-3" });
+    // A fix after it gave up changes nothing.
+    fake.callbacks[0](FIX);
+    expect(onFix).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a watcher whose id comes back after the timeout", async () => {
+    nativeLocationSource.getCurrent({ timeout: 10 }, vi.fn(), vi.fn());
+    await after(30);
+    expect(fake.removeWatcher).not.toHaveBeenCalled();
+    fake.resolveId[0]("p-4");
+    await settle();
+    expect(fake.removeWatcher).toHaveBeenCalledWith({ id: "p-4" });
+  });
+
+  it("does not time out a fix that came in time", async () => {
+    const onFix = vi.fn();
+    const onError = vi.fn();
+    nativeLocationSource.getCurrent({ timeout: 20 }, onFix, onError);
+    await settle();
+    fake.resolveId[0]("p-5");
+    await settle();
+    fake.callbacks[0](FIX);
+    await after(40);
+    expect(onFix).toHaveBeenCalledTimes(1);
+    expect(onError).not.toHaveBeenCalled();
+    expect(fake.removeWatcher).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("off the phone", () => {
   it("starts no watcher at all", async () => {
     native.value = false;

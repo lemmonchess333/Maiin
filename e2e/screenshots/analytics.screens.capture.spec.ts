@@ -21,6 +21,7 @@ import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
+import { setTestUserTier } from "../helpers/testUserTier";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -323,7 +324,9 @@ test.describe("analytics tab screenshots", () => {
     ).toBeVisible({ timeout: 30_000 });
 
     // The tab strip is a SegmentedControl, so its options are radios.
-    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
+    await page
+      .getByRole("radio", { name: /^Bests$/ })
+      .click({ timeout: 10_000 });
 
     await expect(page.getByText("Best pace · 5K+").first()).toBeVisible({
       timeout: 15_000,
@@ -362,7 +365,16 @@ test.describe("analytics tab screenshots", () => {
      performance docs. */
   test("with a full history", async ({ page }) => {
     test.setTimeout(180_000);
+    // The score's details are Pro (whole-app grill Q84); this films them.
+    await setTestUserTier("pro");
+    try {
+      await filmFullHistory(page);
+    } finally {
+      await setTestUserTier("free");
+    }
+  });
 
+  async function filmFullHistory(page: Page) {
     await signInAsTestUser(page);
     await page.goto("/Maiin/history");
     await page.waitForLoadState("domcontentloaded");
@@ -374,8 +386,8 @@ test.describe("analytics tab screenshots", () => {
     });
 
     /* The overview's cards (DS3): the week's index, the range's summary,
-       the trends and the muscles. The rich seed carries all four; a
-       cold-start account has none of them. */
+         the trends and the muscles. The rich seed carries all four; a
+         cold-start account has none of them. */
     await expect(
       page.getByRole("heading", { name: "Performance", exact: true })
     ).toBeVisible();
@@ -392,9 +404,11 @@ test.describe("analytics tab screenshots", () => {
     await settleFullPageHeight(page);
     await shootBoth(page, "analytics-rich");
 
-    /* The index's gauge, chart and training load moved to the
-       Performance page, one tap from the overview's card. */
-    await page.getByRole("button", { name: "Details", exact: true }).click();
+    /* What the score is made of opens in place under its card (Trim1
+         call 5): the index's chart and the training load among it. */
+    await page
+      .getByRole("button", { name: "Score details", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Performance Index" })
     ).toBeVisible({ timeout: 15_000 });
@@ -403,13 +417,13 @@ test.describe("analytics tab screenshots", () => {
     ).toBeVisible();
 
     /* Clipping is VISUAL, so the DOM cannot see it: the tick text is
-       present whether or not it is painted, and `getByText("100")`
-       passes either way. Compare boxes — but against the SVG, not the
-       card, which is the correction this assertion needed. Measured:
-       the card's border box starts at x=16 and its CONTENT box at x=32,
-       the chart's `<svg>` starts at 32, and the clipped "100" is drawn
-       at x=23.6 — inside the card, outside the svg, and it is the svg
-       that clips. An assertion against the card passes on the defect. */
+         present whether or not it is painted, and `getByText("100")`
+         passes either way. Compare boxes — but against the SVG, not the
+         card, which is the correction this assertion needed. Measured:
+         the card's border box starts at x=16 and its CONTENT box at x=32,
+         the chart's `<svg>` starts at 32, and the clipped "100" is drawn
+         at x=23.6 — inside the card, outside the svg, and it is the svg
+         that clips. An assertion against the card passes on the defect. */
     const card = page
       .locator("div.bg-card")
       .filter({ has: page.getByRole("heading", { name: "Performance Index" }) })
@@ -432,24 +446,30 @@ test.describe("analytics tab screenshots", () => {
 
     await settleFullPageHeight(page);
     await shootBoth(page, "analytics-performance");
-    await page.getByRole("button", { name: "Overview", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Score details", exact: true })
+      .click();
 
     /* The PRs tab's STEADY state, which nothing filmed either.
-       "PRs tab states its units" above signs up a fresh account and
-       seeds it one run and one workout of one exercise — and that
-       cold-start look is exactly what hid a record reading "Fastest 1K"
-       over a whole run's average pace, because with a single run the
-       label's claim and its value are the same number. Seeing this
-       account's records is what showed the two pace rows printing the
-       same figure AND the same date, one pool containing the other.
+         "PRs tab states its units" above signs up a fresh account and
+         seeds it one run and one workout of one exercise — and that
+         cold-start look is exactly what hid a record reading "Fastest 1K"
+         over a whole run's average pace, because with a single run the
+         label's claim and its value are the same number. Seeing this
+         account's records is what showed the two pace rows printing the
+         same figure AND the same date, one pool containing the other.
 
-       The assertion is a floor on richness, not a fixture transcript:
-       each lift record carries a "~68–84 kg 1RM" estimate line, so
-       three of them cannot come from the one-exercise account the
-       other test uses — which is what stops this quietly becoming a
-       second cold-start capture if the sign-in ever changes. */
-    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
-    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 15_000 });
+         The assertion is a floor on richness, not a fixture transcript:
+         each lift record carries a "~68–84 kg 1RM" estimate line, so
+         three of them cannot come from the one-exercise account the
+         other test uses — which is what stops this quietly becoming a
+         second cold-start capture if the sign-in ever changes. */
+    await page
+      .getByRole("radio", { name: /^Bests$/ })
+      .click({ timeout: 10_000 });
+    await expect(page.getByText("Lifting bests")).toBeVisible({
+      timeout: 15_000,
+    });
     const oneRepMaxLines = page.getByText(/1RM$/);
     expect(
       await oneRepMaxLines.count(),
@@ -458,5 +478,5 @@ test.describe("analytics tab screenshots", () => {
     ).toBeGreaterThanOrEqual(3);
 
     await shootBoth(page, "prs-rich");
-  });
+  }
 });

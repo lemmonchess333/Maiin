@@ -123,7 +123,7 @@ describe("setup's invite field", () => {
     open();
     expect(codeField()).toHaveValue("K7P4-9M2H");
     expect(
-      screen.getByText("They'll follow you once your plan is made.")
+      screen.getByText("They’ll follow you once your plan is made.")
     ).toBeInTheDocument();
 
     await goToToday();
@@ -168,7 +168,7 @@ describe("setup's invite field", () => {
     await goToToday();
     await waitFor(() =>
       expect(h.toast.error).toHaveBeenCalledWith(
-        "That invite code didn't look right. You can enter it again in Social, under Find people."
+        "That invite code didn’t look right. You can enter it again in Social, under Find people."
       )
     );
     expect(h.redeem).not.toHaveBeenCalled();

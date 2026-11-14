@@ -467,7 +467,7 @@ function ScheduleLayoutSheetBody({
           closeOnBackdrop={!saving}
           closeOnEscape={!saving}
           title="Restructure programme?"
-          description="Changing your training days will restructure your programme. Your workout history won't be affected, but your programme will be rebuilt. This cannot be undone."
+          description="Changing your training days will restructure your programme. Your workout history won’t be affected, but your programme will be rebuilt. This cannot be undone."
           role="alertdialog"
           overlayClassName="z-[60]"
           className="z-[70]"
@@ -503,7 +503,7 @@ function ScheduleLayoutSheetBody({
                     variant="current"
                     label="Rebuilding programme"
                   />
-                  Rebuilding...
+                  Rebuilding…
                 </>
               ) : (
                 "Confirm"

@@ -56,7 +56,7 @@ export default function PhotoDetailField({
   const submit = async () => {
     if (!detail || refining || disabled) return;
     if (!navigator.onLine) {
-      toast.error("You're offline. The first result is still here.", {
+      toast.error("You’re offline. The first result is still here.", {
         id: "food-detail-offline",
       });
       return;
@@ -71,7 +71,7 @@ export default function PhotoDetailField({
         toast.error(
           data
             ? "No food found with that detail. The first result is still here."
-            : `${errorMessage ?? "Couldn't analyse this photo."} The first result is still here.`,
+            : `${errorMessage ?? "Couldn’t analyse this photo."} The first result is still here.`,
           { id: "food-detail-error" }
         );
       }

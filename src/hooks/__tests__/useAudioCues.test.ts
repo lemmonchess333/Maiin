@@ -319,3 +319,53 @@ describe("per-run variant seed", () => {
     expect(first).toBeTruthy();
   });
 });
+
+/* Run24 (12), deep dive D17: an easy or a long run going faster than easy
+   hears so, spaced and capped like the pace alert, in one direction only and
+   with no close-out. */
+describe("useAudioCues — the easy cue", () => {
+  const EASY_FAST_EDGE = 360; // 6:00 /km, the fast end of easy
+
+  function drive(
+    api: ReturnType<typeof useAudioCues>,
+    pace: number,
+    from: number,
+    to: number,
+    step = 5
+  ) {
+    for (let t = from; t <= to; t += step) {
+      act(() => {
+        api.checkEasyCeiling(pace, EASY_FAST_EDGE, t);
+      });
+    }
+  }
+
+  it("says nothing at easy, or within the margin past its fast end", () => {
+    const { result } = mountCues();
+    drive(result.current, 400, 0, 600);
+    drive(result.current, EASY_FAST_EDGE - 10, 605, 900);
+    expect(spoken).toEqual([]);
+  });
+
+  it("speaks when faster than easy, spaced 30, 60 and 120 seconds, three at most", () => {
+    const { result } = mountCues();
+    drive(result.current, 330, 0, 30);
+    expect(spoken.length).toBe(0);
+    drive(result.current, 330, 35, 95);
+    expect(spoken.length).toBe(1);
+    expect(spoken[0]).toMatch(/easy/i);
+    drive(result.current, 330, 100, 900);
+    expect(spoken.length).toBe(3);
+  });
+
+  it("ends a stretch quietly once back at easy for 15 seconds", () => {
+    const { result } = mountCues();
+    drive(result.current, 330, 0, 40);
+    expect(spoken.length).toBe(1);
+    drive(result.current, 400, 45, 120);
+    expect(spoken.length).toBe(1);
+    // A fresh stretch: a new budget, after the first spacing.
+    drive(result.current, 330, 125, 160);
+    expect(spoken.length).toBe(2);
+  });
+});

@@ -88,7 +88,7 @@ describe("run-return capture fixture", () => {
         screen.getByText(
           (_, el) =>
             el?.tagName === "P" &&
-            el.textContent === `It's been about 2 weeks ${anchor}`
+            el.textContent === `It’s been about 2 weeks ${anchor}`
         )
       ).toBeInTheDocument();
       cleanup();

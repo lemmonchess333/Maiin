@@ -236,7 +236,7 @@ describe("the post a notice opens", () => {
   it("with no one to fall back to, says the post is unavailable", async () => {
     renderAt("/activity/gone");
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("post")).toBeNull();
   });
@@ -249,7 +249,7 @@ describe("the post a notice opens", () => {
     });
     renderAt("/activity/a1", { fallbackUserId: "alex" });
     expect(
-      await screen.findByText("Couldn't load this post")
+      await screen.findByText("Couldn’t load this post")
     ).toBeInTheDocument();
     expect(screen.queryByText("profile page")).toBeNull();
     screen.getByRole("button", { name: /try again/i }).click();
@@ -261,7 +261,7 @@ describe("the post a notice opens", () => {
     blocks.blocked = new Set(["blocker"]);
     renderAt("/activity/a1");
     expect(
-      await screen.findByText("This post isn't available")
+      await screen.findByText("This post isn’t available")
     ).toBeInTheDocument();
     expect(screen.queryByTestId("post")).toBeNull();
   });

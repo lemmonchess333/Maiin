@@ -94,7 +94,7 @@ def source_targets():
                           "lib/deletionTransactionGuard.js",
                           "lib/accountDeletionStatus.js", "lib/triggerRetry.js"]
     league_paths = ["index.js", "package-lock.json"] + league_lib + [
-                    "lib/friendsBoard.js", "lib/deletionTransactionGuard.js",
+                    "lib/weekTally.js", "lib/deletionTransactionGuard.js",
                     "lib/accountDeletionStatus.js", "lib/restriction.js",
                     "lib/accountDeletionLocks.js"]
     return {
@@ -132,11 +132,6 @@ def source_targets():
         # A Circle's invite code expires, and its owner replaces it.
         "joinGoalSpace": circle_paths,
         "renewGoalSpaceInviteCode": circle_paths,
-        # The one writer of partner bonds: the limit for both people, counted
-        # in the transaction that makes the bond. The rules refuse a client's.
-        "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
-                               "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
-                               "lib/restriction.js", "lib/accountDeletionLocks.js"],
         # Soc15 invites: the one writer of follows both ways from a code, and
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],

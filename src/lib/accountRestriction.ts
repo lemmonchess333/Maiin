@@ -25,7 +25,7 @@ export const RESTRICTED_LINE = "Your account is restricted";
 
 /** For a tap refused on the spot: props, a like, a reaction, a follow. */
 export const RESTRICTED_TOAST =
-  "Your account is restricted, so you can't do this for now.";
+  "Your account is restricted, so you can’t do this for now.";
 
 /** A mail to support that says what it is about. */
 export function restrictedSupportHref(): string {
@@ -33,7 +33,7 @@ export function restrictedSupportHref(): string {
     typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const subject = "My Tropos account is restricted";
   const body = [
-    "Tell us what happened and we'll take a look:",
+    "Tell us what happened and we’ll take a look:",
     "",
     "",
     "---",

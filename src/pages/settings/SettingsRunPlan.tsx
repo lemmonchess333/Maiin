@@ -5,47 +5,35 @@
  * card, or at the tab's foot for a free runner) and its "Set a race goal"
  * entry. Renders RunPlanSettings (running only: the race, its runway and
  * the run days) so editing the run plan does not drop the user into the
- * full onboarding-style ProgrammeSettings editor. The Programme page (the
- * setup and the reset) stays one tap away through the in-page "Programme"
- * row.
+ * full onboarding-style ProgrammeSettings editor. It is a row on the
+ * Settings list since Trim1 call 2; it sat under a Programme page before.
+ * Voice cues for runs, from Settings → Workouts, are here too (call 7).
  *
  * Adjust this week (Run13) is not here: it adjusts the race plan's week,
  * so its one entry is the race card on Train's Run tab, where that week
  * is on screen.
  */
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import SettingsSection from "@/components/settings/SettingsSection";
 import RunPlanSettings from "@/components/program/RunPlanSettings";
 import RunFitnessSection from "@/components/settings/RunFitnessSection";
 import HeartRateZonesSection from "@/components/settings/HeartRateZonesSection";
+import VoiceCuesPref from "@/components/settings/VoiceCuesPref";
 
 export default function SettingsRunPlan() {
-  const navigate = useNavigate();
   const { profile, updateProfile, refreshProfile } = useAuth();
+  const { isPro } = useSubscription();
   const { programState, readiness, recentLayoff } = useProgram();
 
   if (!profile) {
     // Brief auth-resolution window; route guards keep signed-out users out.
-    return (
-      <SettingsSection
-        title="Run plan"
-        backTo="/settings/training"
-        backLabel="Programme"
-      />
-    );
+    return <SettingsSection title="Run plan" />;
   }
 
   return (
-    // Under Programme, which opens it, so back goes there: Run plan is not
-    // a row on the Settings list.
-    <SettingsSection
-      title="Run plan"
-      subtitle="Your goal, run days and zones"
-      backTo="/settings/training"
-      backLabel="Programme"
-    >
+    <SettingsSection title="Run plan" subtitle="Your goal, run days and zones">
       <RunPlanSettings
         key={profile.uid}
         profile={profile}
@@ -53,7 +41,12 @@ export default function SettingsRunPlan() {
         readiness={readiness}
         recentLayoff={recentLayoff}
         refreshProfile={refreshProfile}
-        onOpenFullSettings={() => navigate("/settings/training")}
+        isPro={isPro}
+      />
+      <VoiceCuesPref
+        key={`cues-${profile.uid}`}
+        profile={profile}
+        updateProfile={updateProfile}
       />
 
       {/*
@@ -66,9 +59,8 @@ export default function SettingsRunPlan() {
         in writing by `PaceInsightCard`'s own header ("Used both in
         Settings (RunFitnessSection) and post-run (RunSummary)").
 
-        Here rather than /settings/training because this page is the
-        running-only destination and both are running physiology; the
-        full programme editor stays one tap away above.
+        Here because this page is the running-only destination and both
+        are running physiology.
       */}
       <RunFitnessSection profile={profile} updateProfile={updateProfile} />
       <HeartRateZonesSection updateProfile={updateProfile} />

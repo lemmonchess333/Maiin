@@ -102,12 +102,26 @@ export function lastRampWeekOf(totalWeeks: number, taperWeeks: number): number {
   return Math.max(0, totalWeeks - 1 - taperWeeks - 1);
 }
 
-/** Whether a week of the ramp steps back: every 4th, never the peak. */
+/** Run24 (6), deep dive D2: a block shorter than this has no step-back
+ *  in the week before its peak, which put the cutback and the peak side by
+ *  side and the long run, medium-long and quality all jumping into the
+ *  peak together. A Tropos heuristic. */
+export const SHORT_BLOCK_WEEKS = 10;
+
+/** Whether a week of the ramp steps back: every 4th, never the peak, nor
+ *  the week before it in a block under `SHORT_BLOCK_WEEKS` (Run24 (6)). */
 export function isRampStepBack(
   weekIndex: number,
-  lastRampWeek: number
+  lastRampWeek: number,
+  totalWeeks?: number
 ): boolean {
-  return (weekIndex + 1) % STEP_BACK_EVERY === 0 && weekIndex !== lastRampWeek;
+  if ((weekIndex + 1) % STEP_BACK_EVERY !== 0) return false;
+  if (weekIndex === lastRampWeek) return false;
+  return !(
+    totalWeeks !== undefined &&
+    totalWeeks < SHORT_BLOCK_WEEKS &&
+    weekIndex === lastRampWeek - 1
+  );
 }
 
 /**
@@ -124,7 +138,7 @@ export function isRunStepBackWeek(
   const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
   if (phase !== "base" && phase !== "build") return false;
   const last = lastRampWeekOf(totalWeeks, TAPER_WEEKS_BY_DISTANCE[distance]);
-  return last > 0 && isRampStepBack(weekIndex, last);
+  return last > 0 && isRampStepBack(weekIndex, last, totalWeeks);
 }
 
 /** Run9 phase-3 (Slice B) — the taper-safe FLOOR, in weeks, per distance.
@@ -290,4 +304,37 @@ export function isCurrentWeekInRaceWindDown(
   if (currentWeek == null || totalWeeks == null || !distance) return false;
   const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);
   return phase === "taper" || phase === "race";
+}
+
+/** A race against the long run a plan builds before it (deep dive D11,
+ *  `raceLongRunReach`). */
+export interface RaceLongRunReach {
+  /** The longest long run the plan builds before the race. */
+  longestKm: number;
+  /** The race's distance. */
+  raceKm: number;
+  /** The longest the same plan builds for this runner when it has the
+   *  weeks a full block takes (`getRaceMinWeeks`, and two more). */
+  fullKm: number;
+}
+
+/** Of the long run a full block builds, the share a return has to reach
+ *  before its race for the welcome-back sheet to offer the rebuild first
+ *  (deep dive D11) and the race planner to lead with it (D8). A Tropos heuristic in the RUN-EV-06 register, not a
+ *  source rule: a half plan that peaks at 20 km is in reach from 15. */
+export const RACE_REACH_SHARE = 0.75;
+
+/**
+ * Whether a race is out of the plan's reach (deep dive D11): its long run
+ * gets neither to the race's distance nor to `RACE_REACH_SHARE` of what a
+ * full block builds. A 5K the plan already runs past is in reach however
+ * close; a marathon whose long run gets to the plan's own peak is in reach
+ * though the peak is well short of 42.2 km.
+ */
+export function raceOutOfReach(reach: RaceLongRunReach | null): boolean {
+  return (
+    !!reach &&
+    reach.longestKm < reach.raceKm &&
+    reach.longestKm < RACE_REACH_SHARE * reach.fullKm
+  );
 }

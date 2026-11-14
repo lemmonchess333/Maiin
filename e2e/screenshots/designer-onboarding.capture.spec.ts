@@ -148,7 +148,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   await page
     .getByRole("button", { name: "Start my plan", exact: true })
     .click();
-  await expect(page.getByText(/We couldn’t save your plan/)).toBeVisible();
+  await expect(page.getByText(/Couldn’t save your plan/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
   expect(requests).toBe(1);
   await capture(page, "save-retry");
@@ -211,14 +211,15 @@ test("Home leads with today's task and puts the week's verdict below it, task ab
   expect(
     (await training.getByRole("button").first().boundingBox())!.y
   ).toBeLessThan(760);
-  const progress = page.locator('a[href$="/history#performance"]').first();
+  const progress = page.getByRole("list", { name: "This week so far" });
   const task = page.getByLabel("Today’s training");
   // Reading order and the first viewport are captured even for a rest-day fixture.
   await expect(progress).toBeAttached();
   await expect(task).toBeVisible();
-  // Today's action leads; the week's verdict follows it. The first thing on
-  // the scroll should be something to do today rather than a score for the
-  // week just gone — a rest day especially should not open on a verdict.
+  // Today's action leads; the week's count follows it. The first thing on
+  // the scroll should be something to do today rather than a tally of the
+  // week. (The tally was the Performance row until Trim1 call 1 took the
+  // score off Home.)
   expect((await task.boundingBox())!.y).toBeLessThan(
     (await progress.boundingBox())!.y
   );

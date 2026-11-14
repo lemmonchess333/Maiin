@@ -3,14 +3,15 @@
  * to correct or remove.
  *
  * F2d locked a "Settings → My pantry" screen; until it existed a saved
- * food could only be removed by long-pressing its Quick add row, and a
+ * food could only be removed by long-pressing its Log again row, and a
  * wrong figure on one could not be fixed at all, short of logging it
  * right and waiting for the pantry to take the new numbers. It sits
  * under Nutrition, beside the targets the foods are counted against.
  *
  * The pantry is `users/{uid}/foodFavourites` (`useFoodFavourites`): every
  * manual, barcode, search and typed log files its food there, and the
- * ones logged twice or more show in Quick add. This page lists all of
+ * ones logged twice or more show under Log again on Food (the heading
+ * read "Quick add" until Trim1 call 4). This page lists all of
  * them, by name.
  */
 import { useState } from "react";
@@ -194,7 +195,7 @@ function PantryFoodSheet({
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          The figures are for one serving, as Quick add logs it.
+          The figures are for one serving, which is what a tap logs.
         </p>
         <Button
           variant="destructive"
@@ -254,7 +255,7 @@ export default function SettingsPantry() {
     setHidden((prev) => new Set(prev).add(food.id));
     if (!(await removeFavourite(food.id))) {
       showAgain(food.id);
-      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      toast.error("Couldn’t remove. Try again.", { id: "pantry-remove-error" });
       return;
     }
     toast(`Removed ${food.name}`, {
@@ -265,7 +266,7 @@ export default function SettingsPantry() {
         onClick: async () => {
           if (await restoreFavourite(food)) showAgain(food.id);
           else
-            toast.error("Couldn't undo. The food stays removed.", {
+            toast.error("Couldn’t undo. The food stays removed.", {
               id: "pantry-undo-error",
             });
         },
@@ -285,7 +286,7 @@ export default function SettingsPantry() {
       return false;
     }
     if (result === "failed") {
-      toast.error("Couldn't save. Try again.", { id: "pantry-save-error" });
+      toast.error("Couldn’t save. Try again.", { id: "pantry-save-error" });
       return false;
     }
     toast.success(`Saved ${changes.name}`, { id: `pantry-saved-${food.id}` });
@@ -294,8 +295,8 @@ export default function SettingsPantry() {
 
   return (
     <SettingsSection
-      title="My pantry"
-      subtitle="Foods you've logged, which Quick add offers"
+      title="Your pantry"
+      subtitle="Foods you’ve logged, offered under Log again on Food"
       backTo="/settings/nutrition"
       backLabel="Nutrition"
     >
@@ -309,13 +310,13 @@ export default function SettingsPantry() {
             compact
             icon={Refrigerator}
             headline="Nothing in your pantry yet"
-            sub="Foods you log are kept here. Log one twice and it shows in Quick add."
+            sub="Foods you log are kept here. Log one twice and it shows under Log again on Food."
           />
         </Card>
       ) : (
         <SettingsGroup
           title={`${shown.length} ${shown.length === 1 ? "food" : "foods"}`}
-          footer="Quick add shows the foods you log most, at the time you usually eat them."
+          footer="Log again shows the ones you log most, at the time you usually eat them."
         >
           {shown.map((food) => (
             <SettingsRow

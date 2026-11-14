@@ -20,7 +20,8 @@
  *
  * Entry points, read from `?from=`: onboarding's save lands here with
  * `state.next` = Home (FV1; it was the first activity), and "Continue
- * with Free" goes there; the Food page's photo-logging strip sends `from=food`; every
+ * with Free" goes there; the Food page's photo-logging strip sends `from=food`,
+ * and its personal-target card `from=personal_target` (Q71); every
  * other caller (Settings, Home's trial strip, the AI-usage section)
  * gets the plain page and "Not now" goes back. The source rides into
  * every paywall event so the funnel can be read per entry.
@@ -64,6 +65,7 @@ import {
 import {
   canSellInThisBuild,
   isNativeIOS,
+  syncAfterWebPurchase,
   manageSubscription,
 } from "@/lib/purchaseProvider";
 import ProNotOnSale from "@/components/paywall/ProNotOnSale";
@@ -100,6 +102,10 @@ function sourceFromParam(from: string | null): PaywallSource {
   if (from === "trial_end") return "trial_end";
   if (from === "trial_strip") return "trial_strip";
   if (from === "home_strip") return "home_strip";
+  if (from === "history") return "history";
+  if (from === "personal_target") return "personal_target";
+  if (from === "race_plan") return "race_plan";
+  if (from === "paces") return "paces";
   if (from === "settings") return "settings";
   return "upgrade_page";
 }
@@ -213,7 +219,7 @@ export default function Upgrade() {
     track("paywall_viewed", { source, platform });
   }, [source, platform]);
 
-  // Checkout round-trip status. Stripe redirects back here with
+  // Checkout round-trip status. The web checkout returns here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
   // the analytics event, and clear the query so a reload doesn't
   // double-fire the banner / toast.
@@ -222,6 +228,9 @@ export default function Upgrade() {
     if (!checkoutStatus) return;
     if (checkoutStatus === "success") {
       track("checkout_success_returned", { source: "upgrade_page", platform });
+      // Back from RevenueCat's web checkout: read the new entitlement now
+      // rather than wait for the webhook, so Pro is on as the page shows.
+      void syncAfterWebPurchase();
     } else if (checkoutStatus === "cancelled") {
       track("checkout_cancelled_returned", {
         source: "upgrade_page",
@@ -404,12 +413,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member via the App Store
+              You’re a Pro member via the App Store
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription in your Apple Account. Apple doesn&apos;t
-            let us cancel or refund App Store subscriptions on your behalf.
+            Manage your subscription in your Apple Account. Apple doesn’t let us
+            cancel or refund App Store subscriptions on your behalf.
           </p>
           {storeTrial && <TrialDetails trial={storeTrial} />}
           <a
@@ -436,12 +445,12 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re a Pro member on the web
+              You’re a Pro member on the web
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at troposfit.com — Apple&apos;s App Store
-            isn&apos;t the billing platform for this account.
+            Manage your subscription at troposfit.com — Apple’s App Store isn’t
+            the billing platform for this account.
           </p>
         </div>
       )}
@@ -452,7 +461,7 @@ export default function Upgrade() {
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re on Pro
+              You’re on Pro
             </p>
           </div>
           <p className="text-sm text-muted-foreground">

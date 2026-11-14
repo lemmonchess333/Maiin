@@ -43,10 +43,17 @@ import {
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
+  rangedReps,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
 import { exerciseRole } from "./exerciseRole";
-import { roleReps, roleRepsFor } from "./roleTable";
+import {
+  injurySwapReps,
+  isFloorDeadlift,
+  roleReps,
+  roleRepsFor,
+} from "./roleTable";
+import { heldForInjury } from "./injurySubstitutions";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
   ActiveTrainingBlock,
@@ -138,11 +145,14 @@ export function represcribeWorkouts(
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
-      const reps = Math.min(
-        prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), row.bottom + delta)
+      const { reps, rangeMax } = rangedReps(
+        ex,
+        Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(repFloorFor(ex), row.bottom + delta)
+        ),
+        span
       );
-      const rangeMax = repRangeMaxFor(ex, reps, span);
 
       const out: ProgramExercise = {
         ...ex,
@@ -252,17 +262,22 @@ export function withRoleNumbers(
 /**
  * A lift an equipment or injury swap brings into a plan the person already
  * has takes its own role's numbers (Lift4 (5)): the reps, range and
- * progression its role gives on that day, its load moved to those reps, and
- * no more sets than its role's (the plan's time fit may have left fewer).
+ * progression its role gives on that day, and its load moved to those reps.
  * A glute bridge in a deadlift's place climbs an isolation's range, not the
- * deadlift's. Slots the swap left alone keep everything.
+ * deadlift's. The sets are the slot's (Lift21: they belong to the lift's
+ * place in its day), so a lift that comes back when the injury or the kit
+ * does finds the sets it left; a deadlift from the floor takes its row's at
+ * most. Slots the swap left alone keep everything.
  */
 export function represcribeSwapped(
   before: readonly WorkoutDay[],
   after: readonly WorkoutDay[],
   goal: PrimaryGoal,
   experience: Experience | undefined,
-  unit: LiftUnit = "kg"
+  unit: LiftUnit = "kg",
+  /** The person's injuries: a lift swapped in for one takes 8 to 12
+   *  (`injurySwapReps`, training deep dive D2). */
+  injuries: readonly string[] = []
 ): WorkoutDay[] {
   const fresh = represcribeWorkouts(after, goal, experience, unit);
   return after.map((day, d) => ({
@@ -270,9 +285,31 @@ export function represcribeSwapped(
     exercises: day.exercises.map((ex, e) => {
       if (before[d]?.exercises[e]?.exerciseId === ex.exerciseId) return ex;
       if (ex.repUnit === "seconds") return ex;
-      const sets = Math.min(ex.sets, roleRepsFor(goal, ex, experience).sets);
+      const sets = isFloorDeadlift(ex.exerciseId)
+        ? Math.min(ex.sets, roleRepsFor(goal, ex, experience).sets)
+        : ex.sets;
+      const numbered = fresh[d].exercises[e];
+      const held = heldForInjury(ex, injuries)
+        ? injurySwapReps(goal, ex, experience)
+        : null;
+      const rangeMax =
+        held?.top === undefined
+          ? undefined
+          : repRangeMaxFor(ex, held.bottom, held.top - held.bottom);
+      const { repRangeMax: _numberedMax, ...numberedRest } = numbered;
       return {
-        ...fresh[d].exercises[e],
+        ...(held
+          ? {
+              ...numberedRest,
+              reps: held.bottom,
+              baseReps: held.bottom,
+              progressionType:
+                held.top === undefined
+                  ? ("linear" as const)
+                  : ("double" as const),
+              ...(rangeMax !== undefined ? { repRangeMax: rangeMax } : {}),
+            }
+          : numbered),
         sets,
         ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
       };
@@ -430,7 +467,7 @@ export function blockConsequence(input: {
     // Build muscle → Get stronger, the first two entries in the picker and
     // the likeliest change anyone makes, which lowers every target.
     const loadDrops = targetsRise(currentFocus, focus, experience);
-    const aiming = changes ? " — only what you're aiming for changes." : ".";
+    const aiming = changes ? " — only what you’re aiming for changes." : ".";
     const tail =
       pace === "easing"
         ? ` ${hold}`

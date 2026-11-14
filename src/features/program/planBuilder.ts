@@ -53,6 +53,7 @@ import type {
   PrimaryGoal,
   ProgramExercise,
   ProgramState,
+  ProgramSettings,
   ScheduledRunDay,
   RunPlan,
   SplitType,
@@ -64,11 +65,16 @@ import {
   DEFAULT_PROGRAM_SETTINGS,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+  wholeWeeksBetween,
+} from "@/lib/dateHelpers";
 import { firstFullWeekKey } from "./runPlanTiming";
 import {
   applyDeload,
-  balanceWeekVolume,
   generateProgram,
   expectedDayCount,
   refitSessionsASaveOverran,
@@ -81,6 +87,7 @@ import {
   firstWeekBack,
   isRaceBuildWeek,
   raceBlockWeek,
+  raceLiftWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
 import { starterWeekFrom } from "./starterWeek";
@@ -98,7 +105,7 @@ import {
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
-import { contraindicatedFor } from "./injurySubstitutions";
+import { heldForInjury } from "./injurySubstitutions";
 import {
   generateRacePlanV2,
   scheduleStructuredWeekV2,
@@ -242,6 +249,13 @@ export interface PlanBuilderInput {
    *  `updatedAt` semantics from `existingState`. Onboarding passes
    *  false; Configure Plan passes true. */
   preserveHistory?: boolean;
+
+  /** Builds the lift days again from the setup when their number has not
+   *  changed, as a change in their number does: Train's "Rebuild for N
+   *  min", for a plan whose days have outgrown their time (slice 4). Each
+   *  lift keeps its weight where a new day holds it. Without it, a plan
+   *  that keeps its number of days keeps its days (Pgm5 Q3). */
+  rebuildLiftDays?: boolean;
 }
 
 export interface PlanBuilderOutput {
@@ -335,10 +349,7 @@ function keepInjurySwaps(
     ...day,
     exercises: day.exercises.map((ex, e) => {
       const was = before[d]?.exercises[e];
-      const held =
-        was?.swappedFrom !== undefined &&
-        contraindicatedFor(was.swappedFrom.exerciseId, injuries).length > 0;
-      return held ? { ...was } : ex;
+      return was && heldForInjury(was, injuries) ? { ...was } : ex;
     }),
   }));
 }
@@ -377,6 +388,7 @@ type LiftProgramInput = Pick<
   | "injuries"
   | "existingState"
   | "preserveHistory"
+  | "rebuildLiftDays"
   | "loadUnit"
 >;
 
@@ -404,7 +416,8 @@ function buildLiftProgram(input: LiftProgramInput): {
   // It sets how the main lifts progress (below); the rest of the level
   // reaches the plan through what reads it — whether lighter weeks come and
   // the RPE row now, the exercises a plan built later picks.
-  const preserve = sameDayCount && !!input.existingState;
+  const preserve =
+    sameDayCount && !!input.existingState && input.rebuildLiftDays !== true;
 
   const base =
     preserve && input.existingState
@@ -509,7 +522,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     ),
     input.primaryGoal,
     toExperience(input.experience),
-    input.existingState?.settings?.loadUnit ?? input.loadUnit
+    input.existingState?.settings?.loadUnit ?? input.loadUnit,
+    input.injuries
   );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
@@ -520,9 +534,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     input.previousSessionMinutes !== undefined &&
     input.sessionMinutes !== input.previousSessionMinutes;
   const fitted = refit
-    ? refitWeek(
+    ? refitSessionsToTime(
         equipmentSafe,
-        input.primaryGoal,
         toExperience(input.experience),
         sessionMinutesFor(input.sessionMinutes)
       )
@@ -569,6 +582,7 @@ function buildLiftProgram(input: LiftProgramInput): {
     mainRepAnchor(input.primaryGoal, toExperience(input.experience)),
     {
       unloadedOnly: !loadCtx,
+      injuries: input.injuries,
       // Pgm8 L15, as generateProgram built the week, or this pass would put
       // a lift it started at the bar back under it. The week is fitted, so
       // nothing new is built here. A save that keeps the week builds
@@ -605,19 +619,80 @@ function buildLiftProgram(input: LiftProgramInput): {
       ? refitSessionsASaveOverran(
           existing,
           workouts,
-          input.primaryGoal,
           toExperience(input.experience),
           sessionMinutesFor(sessionMinutes)
         )
       : workouts;
+  const weekBuilt =
+    !preserve || refit ? keepWeekLighter(input, workouts) : keptLength;
   return {
     splitType: base.splitType,
     // New days or a new session length build the week's sets afresh, so a
-    // week made lighter goes lighter again (`keepWeekLighter`).
+    // week made lighter goes lighter again (`keepWeekLighter`). Days built
+    // again in place keep what this week already holds (slice 4).
     workouts:
-      !preserve || refit ? keepWeekLighter(input, workouts) : keptLength,
+      input.rebuildLiftDays === true && sameDayCount && existing
+        ? keepWeekProgress(existing, weekBuilt)
+        : weekBuilt,
     ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
   };
+}
+
+/**
+ * A week's lift days built again in place keep what the week holds: a day
+ * done or skipped stays done or skipped, with the session it was saved as,
+ * so Train's next day and the week's count stand after a rebuild (slice
+ * 4). Each old day's state goes to the new day of its name, else to the
+ * day in its place, else to the first day left, so none is lost when a
+ * day was renamed or moved.
+ */
+export function keepWeekProgress(
+  before: readonly WorkoutDay[],
+  after: readonly WorkoutDay[]
+): WorkoutDay[] {
+  const days = after.map((day) => ({
+    ...day,
+    completed: false,
+    skipped: undefined as boolean | undefined,
+    completedWorkoutId: undefined as string | undefined,
+  }));
+  const taken = new Set<number>();
+  const marked = before
+    .map((day, index) => ({ day, index }))
+    .filter(({ day }) => day.completed || day.skipped === true);
+  const claim = (i: number) => {
+    taken.add(i);
+    return i;
+  };
+  // Names first, over every marked day, so a day matched by place never
+  // takes the one another day is named for.
+  const target = new Map<number, number>();
+  for (const { day, index } of marked) {
+    const named = days.findIndex(
+      (d, i) => !taken.has(i) && d.dayName === day.dayName
+    );
+    if (named >= 0) target.set(index, claim(named));
+  }
+  for (const { index } of marked) {
+    if (target.has(index)) continue;
+    const placed =
+      index < days.length && !taken.has(index)
+        ? index
+        : days.findIndex((_, i) => !taken.has(i));
+    if (placed >= 0) target.set(index, claim(placed));
+  }
+  for (const { day, index } of marked) {
+    const i = target.get(index);
+    if (i === undefined) continue;
+    days[i].completed = day.completed;
+    days[i].skipped = day.skipped;
+    days[i].completedWorkoutId = day.completedWorkoutId;
+  }
+  return days.map(({ skipped, completedWorkoutId, ...day }) => ({
+    ...day,
+    ...(skipped !== undefined ? { skipped } : {}),
+    ...(completedWorkoutId !== undefined ? { completedWorkoutId } : {}),
+  }));
 }
 
 /** The answers a first plan's lift week is built from (`freshLiftWeek`). */
@@ -676,25 +751,6 @@ function keepWeekLighter(
   return firstWeekBack(kept) ? oneSetFewer(workouts) : workouts;
 }
 
-/** A re-fitted week, balanced as a new plan's is, with its volume anchor
- *  (`baseSets`) moved to the sets it now has. */
-function refitWeek(
-  workouts: WorkoutDay[],
-  goal: PrimaryGoal,
-  experience: ReturnType<typeof toExperience>,
-  minutes: number
-): WorkoutDay[] {
-  return balanceWeekVolume(
-    refitSessionsToTime(workouts, goal, experience, minutes),
-    goal,
-    experience,
-    minutes
-  ).map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),
-  }));
-}
-
 /**
  * The race build's leg trim on the week a plan is saved in (Lift4 (10)):
  * a yes at race setup trims the leg lifts at once in a build week, where
@@ -722,6 +778,56 @@ function raceLegTrimNow(
   if (raceWeek === "build" && kept?.currentPhase !== "deload")
     return { workouts: withRaceLegTrim(workouts, false), raceWeek: undefined };
   return { workouts, raceWeek };
+}
+
+/**
+ * The race's final weeks on the week a plan is made or a race is added
+ * (Lift4 (10)). Only the rollover applied them, so a race 6 to 20 days out
+ * left the week's lifting whole: squats 4 × 3 three days before a 10K, and
+ * a full week after it (training deep dive, hybrid-week defect 4). Now the
+ * days still to do take the taper's lighter sets, race week's one short
+ * session is the first of them, and the week is the race's, so the week
+ * after it is lighter too.
+ *
+ * The race's week is read for the lift week (`firstLiftWeekKey`), which is
+ * not always the run plan's current week: a plan made from a Thursday on
+ * starts its runs on the Monday after (`leadInWeek`, or a week with no run
+ * day left), and an existing plan's lifts can be in this week then.
+ */
+function raceFinalWeekNow(
+  input: PlanBuilderInput,
+  workouts: WorkoutDay[],
+  run: { runPlan: RunPlan | undefined; runDays: readonly ScheduledRunDay[] },
+  settings: Pick<ProgramSettings, "smallPlates" | "loadUnit">
+): { workouts: WorkoutDay[]; raceWeek?: "taper" | "race" } {
+  const current = raceBlockWeek(run.runPlan);
+  if (current === null) return { workouts };
+  const thisWeek = localWeekKey(parseLocalDate(input.currentDate));
+  const leadIn = run.runPlan?.leadInWeek;
+  const currentKey = leadIn
+    ? localDateString(addLocalDays(parseLocalDate(leadIn), 7))
+    : (run.runDays.find((day) => day.weekKey)?.weekKey ?? thisWeek);
+  const weekIndex =
+    current.weekIndex + wholeWeeksBetween(currentKey, firstLiftWeekKey(input));
+  // A lift week past the race is the week after it, which the rollover
+  // gives from the race week it leaves.
+  if (weekIndex >= current.totalWeeks) return { workouts };
+  const raceWeek = raceLiftWeek({ ...current, weekIndex }, undefined);
+  if (raceWeek === null || raceWeek === "after") return { workouts };
+  const lighter = workouts.map((day) =>
+    day.completed || day.skipped === true ? day : applyDeload([day])[0]
+  );
+  return {
+    workouts:
+      raceWeek === "race"
+        ? raceWeekSession(
+            lighter,
+            settings.smallPlates === true,
+            settings.loadUnit ?? "kg"
+          )
+        : lighter,
+    raceWeek,
+  };
 }
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
@@ -987,11 +1093,28 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
   const weekSchedule = buildWeekSchedule(input);
   const { splitType, workouts, sessionMinutes } = buildLiftProgram(input);
   const { runDays, runPlan } = buildRunPlan(input, weekSchedule);
-  const { workouts: weekWorkouts, raceWeek } = raceLegTrimNow(
+  const { workouts: trimmedWorkouts, raceWeek: trimWeek } = raceLegTrimNow(
     input,
     workouts,
     runPlan
   );
+  // A plan the person has keeps its settings; a new one takes "I have small
+  // plates" from the "what do you have?" list (Lift4 (11)).
+  const settings: ProgramSettings = input.existingState?.settings ?? {
+    ...DEFAULT_PROGRAM_SETTINGS,
+    ...(input.smallPlates !== undefined
+      ? { smallPlates: input.smallPlates }
+      : {}),
+    ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
+  };
+  const raceFinal = raceFinalWeekNow(
+    input,
+    trimmedWorkouts,
+    { runPlan, runDays },
+    settings
+  );
+  const weekWorkouts = raceFinal.workouts;
+  const raceWeek = raceFinal.raceWeek ?? trimWeek;
   const profileUpdates = buildProfileUpdates(input, weekSchedule);
 
   // Blk2. This literal spreads nothing from `existingState`, so every
@@ -1016,8 +1139,9 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
        from primaryGoal at the display layer (Home) and from
        trainingSignals for nutrition; currentPhase encodes lifecycle
        only. */
-    currentPhase:
-      input.preserveHistory && input.existingState
+    currentPhase: raceFinal.raceWeek
+      ? "deload"
+      : input.preserveHistory && input.existingState
         ? input.existingState.currentPhase
         : "progression",
     weekNumber:
@@ -1031,15 +1155,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         ? input.existingState.fatigueScore
         : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
-    // A new plan takes "I have small plates" from the "what do you have?"
-    // list (Lift4 (11)); a plan the person has keeps its settings.
-    settings: input.existingState?.settings ?? {
-      ...DEFAULT_PROGRAM_SETTINGS,
-      ...(input.smallPlates !== undefined
-        ? { smallPlates: input.smallPlates }
-        : {}),
-      ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
-    },
+    settings,
     weekHistory:
       input.preserveHistory && input.existingState
         ? (input.existingState.weekHistory ?? [])

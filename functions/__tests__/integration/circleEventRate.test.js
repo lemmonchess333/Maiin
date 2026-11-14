@@ -28,7 +28,7 @@ const MEMBER = "circle-rate-member";
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   ({ onGoalSpaceEventCreated } = require("../../index"));
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

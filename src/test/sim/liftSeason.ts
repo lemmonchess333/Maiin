@@ -86,7 +86,10 @@ import {
   sessionPrescription,
   toSessionProgression,
 } from "@/features/program/sessionCompletion";
-import { sessionMinutesFor } from "@/features/program/sessionFit";
+import {
+  FIT_TOLERANCE,
+  sessionMinutesFor,
+} from "@/features/program/sessionFit";
 import { followedWeight } from "@/features/program/sessionSets";
 import { startingSetRows } from "@/features/program/setStartValues";
 import {
@@ -1090,7 +1093,7 @@ export function simulateLiftSeason(
             fail(
               "run-day-card",
               date,
-              `${hidden.userOverride || hidden.templateId} is planned today, and Home's card is a ${card.type} day's`
+              `${hidden.userOverride || hidden.templateId} is planned today, and Home's card is a ${card.type} day’s`
             );
           const fromTrain =
             hidden && !offeredRun && persona.actions?.longRunOn !== undefined
@@ -1506,8 +1509,9 @@ export function simulateLiftSeason(
         dayIdentity: workoutCompletionDayIdentity(stored) ?? "",
         trainingBlockId: before.trainingBlock?.id,
       };
+      // Over its length by more than the fit allows (`FIT_TOLERANCE`).
       const minutes = estimateSessionMinutes(prescription.exercises, rest);
-      if (minutes > season.sessionMinutes)
+      if (minutes > season.sessionMinutes * (1 + FIT_TOLERANCE))
         fail(
           "over-time",
           date,

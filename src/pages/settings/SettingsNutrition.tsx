@@ -11,6 +11,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
 import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
@@ -27,6 +28,7 @@ import { Refrigerator } from "lucide-react";
 
 export default function SettingsNutrition() {
   const { user, profile, updateProfile } = useAuth();
+  const { isPro } = useSubscription();
   const navigate = useNavigate();
   // `|| 70`, not `?? 70`: a legacy weightKg of 0 must read as the same
   // fallback every other consumer uses (phaseNutrition's `|| 70`), or the
@@ -144,14 +146,15 @@ export default function SettingsNutrition() {
         updateProfile={updateProfile}
         onRecalculate={() => updateProfile(payload)}
         program={program}
+        isPro={isPro}
       />
-      {/* The saved foods Quick add offers, to correct or remove (F2d's
+      {/* The saved foods Log again offers, to correct or remove (F2d's
           "Settings → My pantry"). */}
       <SettingsGroup title="Your foods">
         <SettingsRow
           icon={Refrigerator}
-          label="My pantry"
-          description="Edit or remove the foods you've logged"
+          label="Your pantry"
+          description="Edit or remove the foods you’ve logged"
           onClick={() => navigate("/settings/pantry")}
         />
       </SettingsGroup>

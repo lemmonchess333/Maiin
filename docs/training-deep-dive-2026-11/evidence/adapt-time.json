@@ -1,0 +1,748 @@
+{
+ "minutes": [
+  {
+   "to": 30,
+   "keptTotal": 40,
+   "freshTotal": 26,
+   "kept": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 43,
+     "sets": 8,
+     "ex": [
+      "Bench Press 2x4-8 @57.5 [M]",
+      "Barbell Row 2x4-8 @55 [M]",
+      "Overhead Press 2x4-8 @37.5 [M]",
+      "Lateral Raise 2x10-18 @10"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 48,
+     "sets": 10,
+     "ex": [
+      "Barbell Squat 2x4-8 @90 [M]",
+      "Deadlift 2x4-8 @105 [M]",
+      "Hack Squat 2x6-10 @80",
+      "Cable Crunch 2x10-18 @37.5",
+      "Standing Calf Raise 2x10-18 @27.5"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 47,
+     "sets": 12,
+     "ex": [
+      "Overhead Press 2x8-12 @37.5 [M]",
+      "Pull-Ups 2x8-12 @0 [M]",
+      "Dumbbell Bench Press 2x10-14 @20",
+      "Dumbbell Curl 2x12-17 @6",
+      "Rope Tricep Pushdown 2x12-17 @15",
+      "Lateral Raise 2x14-20 @10"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 45,
+     "sets": 10,
+     "ex": [
+      "Deadlift 2x6-10 @105 [M]",
+      "Hack Squat 2x10-14 @80",
+      "Seated Leg Curl 2x12-17 @27.5",
+      "Cable Crunch 2x14-20 @37.5",
+      "Seated Calf Raise 2x14-20 @27.5"
+     ]
+    }
+   ],
+   "fresh": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 37,
+     "sets": 6,
+     "ex": [
+      "Bench Press 2x4-8 @57.5 [M]",
+      "Barbell Row 2x4-8 @55 [M]",
+      "Overhead Press 2x4-8 @37.5 [M]"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 33,
+     "sets": 6,
+     "ex": [
+      "Barbell Squat 2x4-8 @90 [M]",
+      "Deadlift 2x4-8 @105 [M]",
+      "Hack Squat 2x6-10 @80"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 32,
+     "sets": 8,
+     "ex": [
+      "Overhead Press 2x8-12 @37.5 [M]",
+      "Pull-Ups 2x8-12 @0 [M]",
+      "Dumbbell Curl 2x12-17 @6",
+      "Rope Tricep Pushdown 2x12-17 @15"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 28,
+     "sets": 6,
+     "ex": [
+      "Deadlift 2x6-10 @105 [M]",
+      "Seated Leg Curl 2x12-17 @27.5",
+      "Cable Crunch 2x14-20 @37.5"
+     ]
+    }
+   ]
+  },
+  {
+   "to": 45,
+   "keptTotal": 40,
+   "freshTotal": 36,
+   "kept": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 43,
+     "sets": 8,
+     "ex": [
+      "Bench Press 2x4-8 @57.5 [M]",
+      "Barbell Row 2x4-8 @55 [M]",
+      "Overhead Press 2x4-8 @37.5 [M]",
+      "Lateral Raise 2x10-18 @10"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 48,
+     "sets": 10,
+     "ex": [
+      "Barbell Squat 2x4-8 @90 [M]",
+      "Deadlift 2x4-8 @105 [M]",
+      "Hack Squat 2x6-10 @80",
+      "Cable Crunch 2x10-18 @37.5",
+      "Standing Calf Raise 2x10-18 @27.5"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 47,
+     "sets": 12,
+     "ex": [
+      "Overhead Press 2x8-12 @37.5 [M]",
+      "Pull-Ups 2x8-12 @0 [M]",
+      "Dumbbell Bench Press 2x10-14 @20",
+      "Dumbbell Curl 2x12-17 @6",
+      "Rope Tricep Pushdown 2x12-17 @15",
+      "Lateral Raise 2x14-20 @10"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 45,
+     "sets": 10,
+     "ex": [
+      "Deadlift 2x6-10 @105 [M]",
+      "Hack Squat 2x10-14 @80",
+      "Seated Leg Curl 2x12-17 @27.5",
+      "Cable Crunch 2x14-20 @37.5",
+      "Seated Calf Raise 2x14-20 @27.5"
+     ]
+    }
+   ],
+   "fresh": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 43,
+     "sets": 8,
+     "ex": [
+      "Bench Press 2x4-8 @57.5 [M]",
+      "Barbell Row 2x4-8 @55 [M]",
+      "Overhead Press 2x4-8 @37.5 [M]",
+      "Lateral Raise 2x10-18 @10"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 41,
+     "sets": 8,
+     "ex": [
+      "Barbell Squat 2x4-8 @90 [M]",
+      "Deadlift 2x4-8 @105 [M]",
+      "Hack Squat 2x6-10 @80",
+      "Cable Crunch 2x10-18 @37.5"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 38,
+     "sets": 10,
+     "ex": [
+      "Overhead Press 2x8-12 @37.5 [M]",
+      "Pull-Ups 2x8-12 @0 [M]",
+      "Dumbbell Curl 2x12-17 @6",
+      "Rope Tricep Pushdown 2x12-17 @15",
+      "Lateral Raise 2x14-20 @10"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 45,
+     "sets": 10,
+     "ex": [
+      "Deadlift 2x6-10 @105 [M]",
+      "Hack Squat 2x10-14 @80",
+      "Seated Leg Curl 2x12-17 @27.5",
+      "Cable Crunch 2x14-20 @37.5",
+      "Seated Calf Raise 2x14-20 @27.5"
+     ]
+    }
+   ]
+  },
+  {
+   "to": 75,
+   "keptTotal": 60,
+   "freshTotal": 66,
+   "kept": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 56,
+     "sets": 12,
+     "ex": [
+      "Bench Press 3x4-8 @57.5 [M]",
+      "Barbell Row 3x4-8 @55 [M]",
+      "Overhead Press 3x4-8 @37.5 [M]",
+      "Lateral Raise 3x10-18 @10"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 62,
+     "sets": 15,
+     "ex": [
+      "Barbell Squat 3x4-8 @90 [M]",
+      "Deadlift 3x4-8 @105 [M]",
+      "Hack Squat 3x6-10 @80",
+      "Cable Crunch 3x10-18 @37.5",
+      "Standing Calf Raise 3x10-18 @27.5"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 62,
+     "sets": 18,
+     "ex": [
+      "Overhead Press 3x8-12 @37.5 [M]",
+      "Pull-Ups 3x8-12 @0 [M]",
+      "Dumbbell Bench Press 3x10-14 @20",
+      "Dumbbell Curl 3x12-17 @6",
+      "Rope Tricep Pushdown 3x12-17 @15",
+      "Lateral Raise 3x14-20 @10"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 57,
+     "sets": 15,
+     "ex": [
+      "Deadlift 3x6-10 @105 [M]",
+      "Hack Squat 3x10-14 @80",
+      "Seated Leg Curl 3x12-17 @27.5",
+      "Cable Crunch 3x14-20 @37.5",
+      "Seated Calf Raise 3x14-20 @27.5"
+     ]
+    }
+   ],
+   "fresh": [
+    {
+     "name": "Upper — Chest & Back",
+     "minutes": 75,
+     "sets": 18,
+     "ex": [
+      "Bench Press 3x4-8 @57.5 [M]",
+      "Barbell Row 3x4-8 @55 [M]",
+      "Overhead Press 3x4-8 @37.5 [M]",
+      "Dumbbell Curl 3x8-13 @6",
+      "Rope Tricep Pushdown 3x8-13 @15",
+      "Lateral Raise 3x10-18 @10"
+     ]
+    },
+    {
+     "name": "Lower — Squat Focus",
+     "minutes": 62,
+     "sets": 15,
+     "ex": [
+      "Barbell Squat 3x4-8 @90 [M]",
+      "Deadlift 3x4-8 @105 [M]",
+      "Hack Squat 3x6-10 @80",
+      "Cable Crunch 3x10-18 @37.5",
+      "Standing Calf Raise 3x10-18 @27.5"
+     ]
+    },
+    {
+     "name": "Upper — Shoulders & Arms",
+     "minutes": 62,
+     "sets": 18,
+     "ex": [
+      "Overhead Press 3x8-12 @37.5 [M]",
+      "Pull-Ups 3x8-12 @0 [M]",
+      "Dumbbell Bench Press 3x10-14 @20",
+      "Dumbbell Curl 3x12-17 @6",
+      "Rope Tricep Pushdown 3x12-17 @15",
+      "Lateral Raise 3x14-20 @10"
+     ]
+    },
+    {
+     "name": "Lower — Deadlift Focus",
+     "minutes": 57,
+     "sets": 15,
+     "ex": [
+      "Deadlift 3x6-10 @105 [M]",
+      "Hack Squat 3x10-14 @80",
+      "Seated Leg Curl 3x12-17 @27.5",
+      "Cable Crunch 3x14-20 @37.5",
+      "Seated Calf Raise 3x14-20 @27.5"
+     ]
+    }
+   ]
+  }
+ ],
+ "roundTrip": {
+  "start": 56,
+  "at30": 40,
+  "back60": 57,
+  "back": [
+   {
+    "name": "Upper — Chest & Back",
+    "minutes": 56,
+    "sets": 12,
+    "ex": [
+     "Bench Press 3x4-8 @57.5 [M]",
+     "Barbell Row 3x4-8 @55 [M]",
+     "Overhead Press 3x4-8 @37.5 [M]",
+     "Lateral Raise 3x10-18 @10"
+    ]
+   },
+   {
+    "name": "Lower — Squat Focus",
+    "minutes": 58,
+    "sets": 13,
+    "ex": [
+     "Barbell Squat 3x4-8 @90 [M]",
+     "Deadlift 3x4-8 @105 [M]",
+     "Hack Squat 3x6-10 @80",
+     "Cable Crunch 2x10-18 @37.5",
+     "Standing Calf Raise 2x10-18 @27.5"
+    ]
+   },
+   {
+    "name": "Upper — Shoulders & Arms",
+    "minutes": 60,
+    "sets": 17,
+    "ex": [
+     "Overhead Press 3x8-12 @37.5 [M]",
+     "Pull-Ups 3x8-12 @0 [M]",
+     "Dumbbell Bench Press 3x10-14 @20",
+     "Dumbbell Curl 3x12-17 @6",
+     "Rope Tricep Pushdown 3x12-17 @15",
+     "Lateral Raise 2x14-20 @10"
+    ]
+   },
+   {
+    "name": "Lower — Deadlift Focus",
+    "minutes": 57,
+    "sets": 15,
+    "ex": [
+     "Deadlift 3x6-10 @105 [M]",
+     "Hack Squat 3x10-14 @80",
+     "Seated Leg Curl 3x12-17 @27.5",
+     "Cable Crunch 3x14-20 @37.5",
+     "Seated Calf Raise 3x14-20 @27.5"
+    ]
+   }
+  ]
+ },
+ "goalStrengthRepresc": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 54,
+   "sets": 11,
+   "ex": [
+    "Bench Press 3x3 @60 [M]",
+    "Barbell Row 3x3 @57.5 [M]",
+    "Overhead Press 3x3 @37.5 [M]",
+    "Lateral Raise 2x6-10 @12.5"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 60,
+   "sets": 13,
+   "ex": [
+    "Barbell Squat 3x3 @92.5 [M]",
+    "Deadlift 3x3 @107.5 [M]",
+    "Hack Squat 3x6-10 @82.5",
+    "Cable Crunch 2x6-10 @37.5",
+    "Standing Calf Raise 2x6-10 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "minutes": 60,
+   "sets": 17,
+   "ex": [
+    "Overhead Press 3x7 @37.5 [M]",
+    "Pull-Ups 3x7 @0 [M]",
+    "Dumbbell Bench Press 3x8-12 @20",
+    "Dumbbell Curl 3x10-14 @7",
+    "Rope Tricep Pushdown 3x10-14 @17.5",
+    "Lateral Raise 2x10-14 @12.5"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "minutes": 57,
+   "sets": 15,
+   "ex": [
+    "Deadlift 3x5 @107.5 [M]",
+    "Hack Squat 3x8-12 @82.5",
+    "Seated Leg Curl 3x10-14 @27.5",
+    "Cable Crunch 3x10-14 @37.5",
+    "Seated Calf Raise 3x10-14 @27.5"
+   ]
+  }
+ ],
+ "goalStrengthFresh": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 52,
+   "sets": 10,
+   "ex": [
+    "Bench Press 4x3 @60 [M]",
+    "Barbell Row 4x3 @57.5 [M]",
+    "Overhead Press 2x3 @37.5 [M]"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 58,
+   "sets": 12,
+   "ex": [
+    "Barbell Squat 4x3 @92.5 [M]",
+    "Deadlift 2x3 @107.5 [M]",
+    "Hack Squat 2x6-10 @82.5",
+    "Cable Crunch 2x6-10 @37.5",
+    "Standing Calf Raise 2x6-10 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "minutes": 60,
+   "sets": 16,
+   "ex": [
+    "Overhead Press 4x7 @37.5 [M]",
+    "Pull-Ups 4x7 @0 [M]",
+    "Dumbbell Bench Press 2x8-12 @20",
+    "Dumbbell Curl 2x10-14 @7",
+    "Rope Tricep Pushdown 2x10-14 @17.5",
+    "Lateral Raise 2x10-14 @12.5"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "minutes": 59,
+   "sets": 15,
+   "ex": [
+    "Deadlift 4x5 @107.5 [M]",
+    "Hack Squat 3x8-12 @82.5",
+    "Seated Leg Curl 3x10-14 @27.5",
+    "Cable Crunch 3x10-14 @37.5",
+    "Seated Calf Raise 2x10-14 @27.5"
+   ]
+  }
+ ],
+ "goalRunningRepresc": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 54,
+   "sets": 11,
+   "ex": [
+    "Bench Press 3x3 @60 [M]",
+    "Barbell Row 3x3 @57.5 [M]",
+    "Overhead Press 3x3 @37.5 [M]",
+    "Lateral Raise 2x6-10 @12.5"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 60,
+   "sets": 13,
+   "ex": [
+    "Barbell Squat 3x3 @92.5 [M]",
+    "Deadlift 3x3 @107.5 [M]",
+    "Hack Squat 3x6-10 @82.5",
+    "Cable Crunch 2x6-10 @37.5",
+    "Standing Calf Raise 2x6-10 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "minutes": 60,
+   "sets": 17,
+   "ex": [
+    "Overhead Press 3x7 @37.5 [M]",
+    "Pull-Ups 3x7 @0 [M]",
+    "Dumbbell Bench Press 3x8-12 @20",
+    "Dumbbell Curl 3x10-14 @7",
+    "Rope Tricep Pushdown 3x10-14 @17.5",
+    "Lateral Raise 2x10-14 @12.5"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "minutes": 57,
+   "sets": 15,
+   "ex": [
+    "Deadlift 3x5 @107.5 [M]",
+    "Hack Squat 3x8-12 @82.5",
+    "Seated Leg Curl 3x10-14 @27.5",
+    "Cable Crunch 3x10-14 @37.5",
+    "Seated Calf Raise 3x10-14 @27.5"
+   ]
+  }
+ ],
+ "deload": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 41,
+   "sets": 7,
+   "ex": [
+    "Bench Press 2x4-8 @57.5 [M]",
+    "Barbell Row 2x4-8 @55 [M]",
+    "Overhead Press 2x4-8 @37.5 [M]",
+    "Lateral Raise 1x10-18 @10"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 44,
+   "sets": 8,
+   "ex": [
+    "Barbell Squat 2x4-8 @90 [M]",
+    "Deadlift 2x4-8 @105 [M]",
+    "Hack Squat 2x6-10 @80",
+    "Cable Crunch 1x10-18 @37.5",
+    "Standing Calf Raise 1x10-18 @27.5"
+   ]
+  },
+  {
+   "name": "Upper — Shoulders & Arms",
+   "minutes": 45,
+   "sets": 11,
+   "ex": [
+    "Overhead Press 2x8-12 @37.5 [M]",
+    "Pull-Ups 2x8-12 @0 [M]",
+    "Dumbbell Bench Press 2x10-14 @20",
+    "Dumbbell Curl 2x12-17 @6",
+    "Rope Tricep Pushdown 2x12-17 @15",
+    "Lateral Raise 1x14-20 @10"
+   ]
+  },
+  {
+   "name": "Lower — Deadlift Focus",
+   "minutes": 45,
+   "sets": 10,
+   "ex": [
+    "Deadlift 2x6-10 @105 [M]",
+    "Hack Squat 2x10-14 @80",
+    "Seated Leg Curl 2x12-17 @27.5",
+    "Cable Crunch 2x14-20 @37.5",
+    "Seated Calf Raise 2x14-20 @27.5"
+   ]
+  }
+ ],
+ "phases": [
+  "into week 2: progression, 56 sets",
+  "into week 3: progression, 56 sets",
+  "into week 4: deload, 36 sets",
+  "into week 5: progression, 56 sets",
+  "into week 6: progression, 56 sets",
+  "into week 7: progression, 56 sets",
+  "into week 8: deload, 36 sets",
+  "into week 9: progression, 56 sets",
+  "into week 10: progression, 56 sets"
+ ],
+ "phases:beginner-4d": [
+  "2:progression:48",
+  "3:progression:48",
+  "4:progression:48",
+  "5:progression:48",
+  "6:progression:48",
+  "7:progression:48",
+  "8:progression:48",
+  "9:progression:48"
+ ],
+ "phases:intermediate-2d": [
+  "2:progression:26",
+  "3:progression:26",
+  "4:progression:26",
+  "5:progression:26",
+  "6:progression:26",
+  "7:progression:26",
+  "8:progression:26",
+  "9:progression:26"
+ ],
+ "phases:advanced-6d": [
+  "2:progression:70",
+  "3:progression:70",
+  "4:deload:44",
+  "5:progression:70",
+  "6:progression:70",
+  "7:progression:70",
+  "8:deload:44",
+  "9:progression:70"
+ ],
+ "easeBack10": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 41,
+   "sets": 7,
+   "ex": [
+    "Bench Press 2x4-8 @52.5 [M]",
+    "Barbell Row 2x4-8 @50 [M]",
+    "Overhead Press 2x4-8 @32.5 [M]",
+    "Lateral Raise 1x10-18 @9"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 44,
+   "sets": 8,
+   "ex": [
+    "Barbell Squat 2x4-8 @80 [M]",
+    "Deadlift 2x4-8 @95 [M]",
+    "Hack Squat 2x6-10 @72.5",
+    "Cable Crunch 1x10-18 @32.5",
+    "Standing Calf Raise 1x10-18 @25"
+   ]
+  }
+ ],
+ "easeBack20": [
+  {
+   "name": "Upper — Chest & Back",
+   "minutes": 38,
+   "sets": 7,
+   "ex": [
+    "Bench Press 2x4-8 @45 [M]",
+    "Barbell Row 2x4-8 @45 [M]",
+    "Overhead Press 2x4-8 @30 [M]",
+    "Lateral Raise 1x10-18 @8"
+   ]
+  },
+  {
+   "name": "Lower — Squat Focus",
+   "minutes": 44,
+   "sets": 8,
+   "ex": [
+    "Barbell Squat 2x4-8 @72.5 [M]",
+    "Deadlift 2x4-8 @85 [M]",
+    "Hack Squat 2x6-10 @65",
+    "Cable Crunch 1x10-18 @30",
+    "Standing Calf Raise 1x10-18 @22.5"
+   ]
+  }
+ ],
+ "day": {
+  "name": "Upper — Shoulders & Arms",
+  "minutes": 60,
+  "sets": 17,
+  "ex": [
+   "Overhead Press 3x8-12 @37.5 [M]",
+   "Pull-Ups 3x8-12 @0 [M]",
+   "Dumbbell Bench Press 3x10-14 @20",
+   "Dumbbell Curl 3x12-17 @6",
+   "Rope Tricep Pushdown 3x12-17 @15",
+   "Lateral Raise 2x14-20 @10"
+  ]
+ },
+ "expressChoices": [
+  "full",
+  "express30"
+ ],
+ "express45": {
+  "est": 60,
+  "trim": {
+   "droppedExercises": [],
+   "reducedSets": []
+  },
+  "ex": [
+   "Overhead Press 3x8-12 @37.5 [M]",
+   "Pull-Ups 3x8-12 @0 [M]",
+   "Dumbbell Bench Press 3x10-14 @20",
+   "Dumbbell Curl 3x12-17 @6",
+   "Rope Tricep Pushdown 3x12-17 @15",
+   "Lateral Raise 2x14-20 @10"
+  ]
+ },
+ "express30": {
+  "est": 45,
+  "trim": {
+   "droppedExercises": [
+    "Rope Tricep Pushdown",
+    "Lateral Raise"
+   ],
+   "reducedSets": []
+  },
+  "ex": [
+   "Overhead Press 3x8-12 @37.5 [M]",
+   "Pull-Ups 3x8-12 @0 [M]",
+   "Dumbbell Bench Press 3x10-14 @20",
+   "Dumbbell Curl 3x12-17 @6"
+  ]
+ },
+ "easier": {
+  "ex": [
+   "Overhead Press 2x8-12 @32.5 [M]",
+   "Pull-Ups 2x8-12 @0 [M]",
+   "Dumbbell Bench Press 2x10-14 @17.5",
+   "Dumbbell Curl 2x12-17 @5",
+   "Rope Tricep Pushdown 2x12-17 @12.5",
+   "Lateral Raise 1x14-20 @8"
+  ],
+  "est": 44
+ },
+ "budget30": {
+  "est": 24,
+  "trim": {
+   "droppedExercises": [
+    "Dumbbell Bench Press",
+    "Dumbbell Curl",
+    "Rope Tricep Pushdown",
+    "Lateral Raise"
+   ],
+   "reducedSets": []
+  },
+  "ex": [
+   "Overhead Press 3x8-12 @37.5 [M]",
+   "Pull-Ups 3x8-12 @0 [M]"
+  ]
+ },
+ "budget45": {
+  "est": 45,
+  "trim": {
+   "droppedExercises": [
+    "Rope Tricep Pushdown",
+    "Lateral Raise"
+   ],
+   "reducedSets": []
+  },
+  "ex": [
+   "Overhead Press 3x8-12 @37.5 [M]",
+   "Pull-Ups 3x8-12 @0 [M]",
+   "Dumbbell Bench Press 3x10-14 @20",
+   "Dumbbell Curl 3x12-17 @6"
+  ]
+ }
+}

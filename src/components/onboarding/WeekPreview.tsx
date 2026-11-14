@@ -26,6 +26,7 @@ export default function WeekPreview({
   draft = false,
   freeRunning = false,
   easyPaceSPerKm = null,
+  intervalPaceSPerKm = null,
 }: {
   schedule: ScheduleDay[];
   workouts?: WorkoutDay[];
@@ -34,6 +35,9 @@ export default function WeekPreview({
   freeRunning?: boolean;
   /** A confirmed easy pace, for a long run's minutes (Run21 (5)). */
   easyPaceSPerKm?: number | null;
+  /** The confirmed interval pace (`plannedIntervalPaceSPerKm`): an interval
+   *  session's minutes at it. */
+  intervalPaceSPerKm?: number | null;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   // `schedule` arrives in getDay() order (Sunday first). The week the
@@ -71,7 +75,7 @@ export default function WeekPreview({
   // The name says a long run's distance ("Long 6K"); its minutes are the
   // runner's own, when a confirmed pace gives them.
   const runMinutes = runTemplate
-    ? runMinutesLine(runTemplate, easyPaceSPerKm)
+    ? runMinutesLine(runTemplate, easyPaceSPerKm, intervalPaceSPerKm)
     : null;
   /* The lifts the week holds, in the order they come (FV3): what the days
      and minutes just chosen built, named as Train will name them. */

@@ -137,7 +137,7 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
           [postId]: (prev[postId] ?? 0) + (wasLiked ? 1 : -1),
         }));
         if (isRestrictedRefusal(err)) showRestrictedToast();
-        else toast.error("Couldn't update. Try again.");
+        else toast.error("Couldn’t update. Try again.");
       } finally {
         busyRef.current.delete(postId);
       }

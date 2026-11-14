@@ -1,0 +1,168 @@
+{
+  "updatedOn": "2026-11-12",
+  "notes": "Social's interest Space covers, 2026-11-12. With Unsplash+ licensed for the welcome (DS9), the owner asked to improve the Social covers where an Unsplash+ photograph is clearly better, leaving the race covers as they are. Twenty-one candidates were drawn as directory cards and Space headers beside the current covers; the owner took five, and Triathlon & Multisport the same day as a sixth. Trail Running and Destination Races keep theirs. Each is the full source width cut to 24:13 around the faces, original colour, no retouching; four are 1200 px wide under 120 KB, and space-runners is 1000 px at about 152 KB, as its leaves only reach 120 KB at a quality that blotches (the 2026-11-10 audit kept seven dense covers over 120 KB for the same reason).",
+  "images": [
+    {
+      "asset": "space-new-to-tropos.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-posing-for-a-picture-xhly9sl7XV8",
+      "unsplashId": "xhly9sl7XV8",
+      "photographer": "Leire Cavia",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "Six friends of mixed ages and backgrounds in training kit, leaning in and laughing at the camera under a bright sky. Licensed editorial photograph; not Tropos members.",
+      "replaces": "An overhead shot of runners' silhouettes on a red track: nobody's face, for the Space that says \"say hi\".",
+      "markCheck": "No marks on any top, crop or shorts at 3x brightness.",
+      "sourceSize": [6000, 4000],
+      "crop": {
+        "rect": [0, 100, 6000, 3350],
+        "rule": "Full width, cut to 24:13 so the faces sit inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 39908
+      },
+      "sourceSha256": "c4e2b3dc2791270d1474acf3bf8c9a93e79c3fcdd2409d43090b1987ce97d371",
+      "outputSha256": "f6685b2beb73dbc6ea8afc9146afa05fff5be3e67c0fea245264a852e7c2dcc3",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-runners.webp",
+      "sourceUrl": "https://unsplash.com/photos/group-of-young-athletes-running-in-green-sunny-summer-park-zRUgAMCnxMs",
+      "unsplashId": "zRUgAMCnxMs",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "A mixed group of four running towards the camera along a path in a green, sunny park. Licensed editorial photograph; not Tropos members.",
+      "replaces": "Five people in hoodies jogging across a bridge: casual, not athletic.",
+      "markCheck": "A tiny same-colour shape by the collar of the pink top, about 2 px on the directory card; the shoes and the teal tee are plain. Kept, as the 2026-10-17 covers keep incidental marks that cannot be read.",
+      "sourceSize": [5283, 3596],
+      "crop": {
+        "rect": [0, 396, 5283, 3258],
+        "rule": "Full width, cut to 24:13 so the faces sit inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1000, 542],
+        "format": "WebP",
+        "quality": 64,
+        "method": 6,
+        "bytes": 155672
+      },
+      "sourceSha256": "3cfa661eaf7230506b123c6ecd127c20dc1b221545112a787b040ed07879c56d",
+      "outputSha256": "7795751b21a10ae1bb458b1ed92c20ff9466a0fcc6dab0b0008ed2bb56c1910d",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-womens-running.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-three-women-running-down-a-street-W2ywnCzoB4o",
+      "unsplashId": "W2ywnCzoB4o",
+      "photographer": "Natalia Blauth",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "Three women running together and smiling, mountains behind, their faces large in both the card and the header. Licensed editorial photograph; not Tropos members.",
+      "replaces": "Two women on a path, one in a hoodie: casual.",
+      "markCheck": "No marks on the tops or shorts at 3x brightness.",
+      "sourceSize": [7000, 4669],
+      "crop": {
+        "rect": [0, 350, 7000, 4142],
+        "rule": "Full width, cut to 24:13 so the faces sit inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 46218
+      },
+      "sourceSha256": "85088a6c173e8472876976d63be1ba24ef94686812eb76b7a06b4722d9829e9c",
+      "outputSha256": "b38e14164d38b0dbf6aa201621ceb9978f891a7dd691ffd353c19de9430fb7ad",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-lifters.webp",
+      "sourceUrl": "https://unsplash.com/photos/people-lifting-barbells-in-gym-oHKCR1C_RgY",
+      "unsplashId": "oHKCR1C_RgY",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "A class holding barbells in the front rack in a bright gym, in colour, the nearest woman sharp. Licensed editorial photograph; not Tropos members.",
+      "replaces": "A black-and-white squat class (2026-11-10 cover audit).",
+      "markCheck": "The plates read \"15\", their weight, not a maker's mark; no marks on the clothing at 3x brightness.",
+      "sourceSize": [7241, 4241],
+      "crop": {
+        "rect": [0, 121, 7241, 4043],
+        "rule": "Full width, cut to 24:13 so the faces sit inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 42290
+      },
+      "sourceSha256": "65cc5ba685c4344131a5e11d0511abedae01eceb927f263d52ec9868495e7141",
+      "outputSha256": "2b81011553c972bbd4af7d2fbaa441371a0633466165981a6771b6c6753c6e59",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-hybrid-training.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-man-and-a-woman-playing-with-a-ball-NhdlgAkl_Ec",
+      "unsplashId": "NhdlgAkl_Ec",
+      "photographer": "Leire Cavia",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "A man and a woman passing a medicine ball against a sunlit concrete wall: a partner workout, two faces. Licensed editorial photograph; not Tropos members.",
+      "replaces": "One man on battle ropes under a concrete overpass.",
+      "markCheck": "The ball carries an embossed number, its weight, not a maker's mark; the waistbands are plain.",
+      "sourceSize": [6001, 4000],
+      "crop": {
+        "rect": [0, 200, 6001, 3451],
+        "rule": "Full width, cut to 24:13 so the faces sit inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 43440
+      },
+      "sourceSha256": "12d441f9397c1e2c82c80f2cb0c4496d62905e0ae0ca972b332bcfe149c25a65",
+      "outputSha256": "a5fb9d36eb4bf1c912a6101089500388dcef7bd2483c4d94736559db899e0d9f",
+      "retouching": "none"
+    },
+    {
+      "asset": "space-triathlon-multisport.webp",
+      "sourceUrl": "https://unsplash.com/photos/two-athletes-competing-in-a-open-water-swimming-race--BP0Mps0XyQ",
+      "unsplashId": "-BP0Mps0XyQ",
+      "photographer": "Getty Images",
+      "license": "Unsplash+ License",
+      "licenseUrl": "https://unsplash.com/plus/license",
+      "download": "Registered through the Unsplash API's download endpoint on 2026-11-12, while the owner's Unsplash+ subscription was active.",
+      "content": "An open-water swimmer at eye level in a red cap and wetsuit, mid-stroke in sun and spray, a second swimmer behind. Licensed editorial photograph; not Tropos members.",
+      "replaces": "Two open-water swimmers seen from above (the 2026-09-14 refresh).",
+      "markCheck": "No marks on the cap, goggles or wetsuit at 3x brightness.",
+      "sourceSize": [5615, 3747],
+      "crop": {
+        "rect": [0, 468, 5615, 3509],
+        "rule": "Full width, cut to 24:13 so the swimmer sits inside both the 236 x 148 directory card and the 393 x 176 Space header (both object-fit: cover, centred)."
+      },
+      "output": {
+        "size": [1200, 650],
+        "format": "WebP",
+        "quality": 74,
+        "method": 6,
+        "bytes": 48398
+      },
+      "sourceSha256": "12e1e40da4d0e43d5ab9fa86cae5c999e546f55ff01617c1ea728aac1698987f",
+      "outputSha256": "0deedde6145f497472dd3a6f04255ffc60820c73d93586b1d3337383ec546125",
+      "retouching": "none"
+    }
+  ]
+}

@@ -551,7 +551,7 @@ export default function WeeklyReview() {
     slides = [
       {
         key: "failed",
-        label: "Couldn't load",
+        label: "Couldn’t load",
         render: () => (
           <div className="flex flex-1 flex-col" role="alert">
             <h2 className="text-h1 font-extrabold leading-tight tracking-tight text-foreground">

@@ -1,0 +1,72 @@
+// Scratch, not committed: what Train's Add and Replace give (numbers and first weight), by the client's own transforms.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { exerciseAddedToday } from "../sessionAdd";
+import { weightAfterExerciseSwap, loadContextFrom, addedExerciseWeight } from "../startingLoads";
+import { exerciseRole } from "../exerciseRole";
+import { getExerciseById } from "@/lib/exercises";
+
+const BASE: PlanBuilderInput = {
+  primaryGoal: "hypertrophy",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  preferredSplit: "auto" as never,
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: "2026-11-09",
+  preserveHistory: false,
+};
+
+it("add and replace", () => {
+  const out: Record<string, unknown> = {};
+  const people = [
+    { label: "80kg intermediate man", weightKg: 80, experience: "intermediate", sex: "male" },
+    { label: "60kg beginner woman", weightKg: 60, experience: "beginner", sex: "female" },
+    { label: "no bodyweight", weightKg: undefined, experience: "intermediate", sex: "male" },
+  ];
+  const ADDS = [
+    "lateral-raise", "cable-lateral-raise", "face-pulls", "reverse-flyes", "db-flyes", "cable-fly", "pec-deck",
+    "leg-extension", "seated-leg-curl", "lunges", "walking-dumbbell-lunges", "hip-abduction-machine",
+    "cable-glute-kickback", "front-raise", "kettlebell-swing", "turkish-get-up", "db-curl", "hammer-curl",
+    "rope-tricep-pushdown", "shrugs", "leg-press", "calf-raise", "cable-crunch", "decline-db-press", "glute-ham-raise",
+  ];
+  for (const p of people) {
+    const ctx = loadContextFrom({ weightKg: p.weightKg, experience: p.experience, sex: p.sex } as never);
+    out[`add:${p.label}`] = ADDS.map((id) => {
+      const ex = exerciseAddedToday(id, {
+        instanceId: "x",
+        goal: "hypertrophy",
+        experience: p.experience as never,
+        loadContext: ctx,
+      });
+      return `${ex.name}: ${ex.sets}x${ex.reps}${ex.repRangeMax ? "-" + ex.repRangeMax : ""} @${ex.weight} kg (${getExerciseById(id)?.equipment}, role ${exerciseRole(ex)}, isAccessory=${ex.isAccessory}; raw seed ${addedExerciseWeight(id, ctx)})`;
+    });
+  }
+  // Replace: from the plan's own lifts.
+  const plan = buildPlan(BASE).programState;
+  const ctx = loadContextFrom({ weightKg: 80, experience: "intermediate", sex: "male" } as never);
+  const find = (id: string) => plan.workouts.flatMap((d) => d.exercises).find((e) => e.exerciseId === id)!;
+  const SWAPS: Array<[string, string]> = [
+    ["bench-press", "cable-fly"], ["bench-press", "pec-deck"], ["bench-press", "db-flyes"], ["bench-press", "incline-db-press"],
+    ["bench-press", "push-ups"], ["bench-press", "chest-press-machine"],
+    ["squat", "leg-extension"], ["squat", "lunges"], ["squat", "leg-press"], ["squat", "goblet-squat"],
+    ["overhead-press", "lateral-raise"], ["overhead-press", "db-shoulder-press"],
+    ["barbell-row", "face-pulls"], ["barbell-row", "seated-row"], ["barbell-row", "reverse-flyes"],
+    ["deadlift", "romanian-deadlift"], ["deadlift", "hip-thrust"], ["deadlift", "seated-leg-curl"], ["deadlift", "kettlebell-swing"],
+    ["db-curl", "barbell-curl"], ["db-curl", "cable-curl"], ["lateral-raise", "cable-lateral-raise"], ["lateral-raise", "front-raise"],
+    ["hack-squat", "leg-extension"], ["seated-leg-curl", "glute-ham-raise"],
+  ];
+  out.replace = SWAPS.map(([from, to]) => {
+    const old = find(from);
+    const cal = weightAfterExerciseSwap(old, to, ctx);
+    return `${old.name} ${old.sets}x${old.reps}-${old.repRangeMax ?? ""} @${old.weight} -> ${getExerciseById(to)?.name} @${cal.weight} kg (${cal.movementCategory}; old cat ${old.movementCategory})`;
+  });
+  writeFileSync("/tmp/work/train/adapt-addreplace.json", JSON.stringify(out, null, 1));
+});

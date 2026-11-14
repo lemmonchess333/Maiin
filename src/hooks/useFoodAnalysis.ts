@@ -96,7 +96,7 @@ function friendlyFoodAnalysisError(
     return "Too many photos analysed. Wait a moment and try again.";
   if (status >= 500)
     return "Food analysis is temporarily unavailable. Try again.";
-  return "Couldn't analyse this photo. Try again.";
+  return "Couldn’t analyse this photo. Try again.";
 }
 
 export interface FoodItem {
@@ -208,10 +208,10 @@ export function useFoodAnalysis() {
         err instanceof DOMException && err.name === "AbortError"
           ? "This is taking too long. Check your signal and try again."
           : err instanceof TypeError
-            ? "Couldn't reach the server. Check your connection and try again."
+            ? "Couldn’t reach the server. Check your connection and try again."
             : err instanceof Error
               ? err.message
-              : "Couldn't analyse this photo. Try again.";
+              : "Couldn’t analyse this photo. Try again.";
       if (!keepResult) setError(message);
       return { data: null, errorMessage: message };
     } finally {

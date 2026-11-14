@@ -105,17 +105,19 @@ async function capturePass(browser, dark) {
   p.setDefaultTimeout(20000);
   await p.goto(BASE);
   await settle(p);
-  // A first visit opens on the welcome screen, whose "I have an account"
+  // A first visit opens on the welcome screen, whose "Sign in"
   // leads to the form.
   const haveAccount = p.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   await haveAccount
     .or(p.locator("#login-email"))
     .first()
     .waitFor({ state: "visible" });
-  if (await haveAccount.isVisible()) await haveAccount.click();
+  // The form's submit is "Sign in" too: the email field says which screen is open.
+  if (!(await p.locator("#login-email").isVisible()))
+    await haveAccount.first().click();
   await p.locator("#login-email").waitFor({ state: "visible" });
   await p.fill("#login-email", CREDS.email);
   await p.fill("#login-password", CREDS.password);

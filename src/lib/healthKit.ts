@@ -1,6 +1,7 @@
 /**
- * HealthKit bridges: capacitor-health reads daily steps for Home, while the
- * app's WatchRun plugin writes opted-in, server-confirmed run workouts.
+ * HealthKit bridges: `@capgo/capacitor-health` reads daily steps for Home,
+ * while the app's WatchRun plugin writes opted-in, server-confirmed run
+ * workouts and opens the app's page in Settings.
  *
  * Web never reads steps or writes workouts: every native call guards on
  * `isNativePlatform()` and returns unavailable on web. The plugins load via
@@ -8,21 +9,27 @@
  * are no top-level side effects (lazy-init like `nativeLocationSource`'s
  * `getPlugin()`).
  *
- * Plugin: `capacitor-health` (peer `@capacitor/core >=8`, so Capacitor-8
- * compatible). Unlike `@capacitor-community/background-geolocation` it DOES
- * ship a JS entry that `registerPlugin`s the `Health` bridge, so we import it
- * — but lazily, inside `getPlugin()`.
+ * Plugin: `@capgo/capacitor-health` (peer `@capacitor/core >=8`), which
+ * replaced `capacitor-health` on 13 November 2026 (the owner, whole-app
+ * grill Q75) because it can also read sleep, resting heart rate and heart
+ * rate variability; the old one read none of them. It ships a JS entry that
+ * `registerPlugin`s the `Health` bridge, so we import it, lazily, inside
+ * `getPlugin()`. It has no iOS settings link, so `openHealthSettings` goes
+ * through WatchRun's `openAppSettings`, which opens the same page the old
+ * plugin did.
  *
  * HealthKit STEP READ permission quirk (the plugin's own docs confirm it): on iOS
  * the OS NEVER tells an app whether the user granted or denied a READ scope —
- * `requestHealthPermissions` resolves identically either way, and a denied
+ * `requestAuthorization` resolves identically either way, and a denied
  * read simply returns zero samples. So we never invent a "denied" signal the
  * OS won't give: a completed request is treated as "granted" (the assumption
  * the plugin documents), and the connected-but-zero case is surfaced upstream
  * as the *ambiguous* state, not an error.
  */
 import { isNativePlatform } from "./platform";
-import type { HealthPlugin } from "capacitor-health";
+import { localDateString } from "./dateHelpers";
+import type { DailyValue, SleepSampleLike } from "./bodySignals";
+import type { HealthPlugin } from "@capgo/capacitor-health";
 import type { Plugin } from "@capacitor/core";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 
@@ -54,6 +61,8 @@ export interface NativeWorkoutExportPlugin extends Plugin {
   deleteWorkout(options: {
     runId: string;
   }): Promise<{ status: "deleted" | "absent" }>;
+  /** The app's own page in iOS Settings, where Health access is reached. */
+  openAppSettings(): Promise<void>;
 }
 
 /* Plugins are held, never resolved with: a Capacitor plugin is a Proxy that
@@ -64,7 +73,7 @@ export interface NativeWorkoutExportPlugin extends Plugin {
 let workoutPluginPromise: Promise<{
   plugin: NativeWorkoutExportPlugin;
 }> | null = null;
-/** The workout writer is the app's WatchRun plugin, not capacitor-health. */
+/** The workout writer is the app's WatchRun plugin, not the Health plugin. */
 export async function getNativeWorkoutExportPlugin(): Promise<{
   plugin: NativeWorkoutExportPlugin;
 } | null> {
@@ -135,7 +144,7 @@ export async function getWorkoutWriteAuthorization(): Promise<
 let pluginPromise: Promise<{ plugin: HealthPlugin }> | null = null;
 async function getPlugin(): Promise<{ plugin: HealthPlugin }> {
   if (!pluginPromise) {
-    pluginPromise = import("capacitor-health").then((m) => ({
+    pluginPromise = import("@capgo/capacitor-health").then((m) => ({
       plugin: m.Health,
     }));
   }
@@ -146,7 +155,7 @@ async function getPlugin(): Promise<{ plugin: HealthPlugin }> {
 export async function isHealthAvailable(): Promise<boolean> {
   if (!isNativePlatform()) return false;
   try {
-    const { available } = await (await getPlugin()).plugin.isHealthAvailable();
+    const { available } = await (await getPlugin()).plugin.isAvailable();
     return available;
   } catch {
     return false;
@@ -154,7 +163,7 @@ export async function isHealthAvailable(): Promise<boolean> {
 }
 
 /**
- * Request the `READ_STEPS` scope only. Returns "granted" on any completed
+ * Request reading steps only. Returns "granted" on any completed
  * request (see the read-permission quirk above — iOS won't reveal a denial),
  * "denied" only when the request itself throws or we're not native.
  */
@@ -163,14 +172,102 @@ export async function requestStepsReadPermission(): Promise<
 > {
   if (!isNativePlatform()) return "denied";
   try {
-    await (
-      await getPlugin()
-    ).plugin.requestHealthPermissions({
-      permissions: ["READ_STEPS"],
-    });
+    await (await getPlugin()).plugin.requestAuthorization({ read: ["steps"] });
     return "granted";
   } catch {
     return "denied";
+  }
+}
+
+/** What readiness reads from Health for a Pro account (whole-app grill
+ *  Q39-Q43): sleep, resting heart rate and heart rate variability. Read
+ *  on the phone each time and never stored or sent (`bodySignals.ts`). */
+export const BODY_SIGNAL_TYPES = [
+  "sleep",
+  "restingHeartRate",
+  "heartRateVariability",
+] as const;
+
+/**
+ * Ask to read sleep and heart. As with steps, iOS never says whether a read
+ * was refused, so a request that completes is "granted"; a refused read
+ * simply returns nothing, and readiness then says nothing about sleep or
+ * heart.
+ */
+export async function requestBodySignalsReadPermission(): Promise<
+  "granted" | "denied"
+> {
+  if (!isNativePlatform()) return "denied";
+  try {
+    await (
+      await getPlugin()
+    ).plugin.requestAuthorization({ read: [...BODY_SIGNAL_TYPES] });
+    return "granted";
+  } catch {
+    return "denied";
+  }
+}
+
+/** Every sleep sample between two instants, oldest first. Null on the web
+ *  or when the read fails. */
+export async function readSleepSamples(
+  start: Date,
+  end: Date
+): Promise<SleepSampleLike[] | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    const { samples } = await (
+      await getPlugin()
+    ).plugin.readSamples({
+      dataType: "sleep",
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      limit: 5000,
+      ascending: true,
+    });
+    return (samples ?? []).map((s) => ({
+      startDate: s.startDate,
+      endDate: s.endDate,
+      sleepState: s.sleepState,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/** The local day a day bucket starts on. The plugin gives an instant
+ *  ("2026-11-11T23:00:00.000Z" for a local midnight an hour ahead of UTC),
+ *  read as local time; a bare "YYYY-MM-DD" is already the day, and parsing
+ *  it as an instant would make it UTC midnight, the day before for anyone
+ *  west of Greenwich. */
+function bucketDayKey(startDate: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return startDate;
+  return localDateString(new Date(Date.parse(startDate)));
+}
+
+/** One value a day (the day's average) for a daily reading, keyed by the
+ *  LOCAL day its bucket starts on. Null on the web or when the read fails. */
+export async function readDailyAverages(
+  dataType: "restingHeartRate" | "heartRateVariability",
+  start: Date,
+  end: Date
+): Promise<DailyValue[] | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    const { samples } = await (
+      await getPlugin()
+    ).plugin.queryAggregated({
+      dataType,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      bucket: "day",
+      aggregation: "average",
+    });
+    return (samples ?? [])
+      .filter((s) => Number.isFinite(s.value) && s.value > 0)
+      .map((s) => ({ dateKey: bucketDayKey(s.startDate), value: s.value }));
+  } catch {
+    return null;
   }
 }
 
@@ -194,8 +291,9 @@ export async function getTodayStepTotal(): Promise<number | null> {
       endDate: end.toISOString(),
       dataType: "steps",
       bucket: "day",
+      aggregation: "sum",
     });
-    const total = (res.aggregatedData ?? []).reduce(
+    const total = (res.samples ?? []).reduce(
       (sum, sample) => sum + (sample.value ?? 0),
       0
     );
@@ -207,14 +305,17 @@ export async function getTodayStepTotal(): Promise<number | null> {
 
 /**
  * Deep-link to the OS settings for the app so the user can grant Health data
- * access. The plugin can only open the app's own settings page (iOS gives no
+ * access. Only the app's own settings page can be opened (iOS gives no
  * direct link to Settings → Health → Data Access & Devices → Tropos), so the
- * recovery banner spells out the manual path. No-op on web.
+ * recovery banner spells out the manual path. The Health plugin has no iOS
+ * settings link, so this goes through the app's own WatchRun plugin, which
+ * is registered in every build. No-op on web.
  */
 export async function openHealthSettings(): Promise<void> {
-  if (!isNativePlatform()) return;
   try {
-    await (await getPlugin()).plugin.openAppleHealthSettings();
+    const held = await getNativeWorkoutCleanupPlugin();
+    if (!held) return;
+    await held.plugin.openAppSettings();
   } catch {
     /* best-effort — nothing actionable if the bridge rejects */
   }

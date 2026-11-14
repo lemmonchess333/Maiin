@@ -251,8 +251,6 @@ describe("D15 · DS invariant — numbers take one of the two number tiers", () 
   const SMALL = /^text-(?:xs|sm|base|caption|micro|small|body)$/;
   const LARGE = /^text-(?:xl|[2-9]xl|h1|h2|h3|display)$/;
   const SMALL_FIGURES = new Map([
-    // The Performance Index inside Home's progress ring.
-    ["src/components/home/PerformanceHeroCard.tsx", 2],
     // The average day's calories inside Analytics' macro donut.
     ["src/components/analytics/MacroDistribution.tsx", 1],
   ]);
@@ -399,6 +397,9 @@ describe("DS ratchets — surface-level drift", () => {
   // pressable cards, rows, chips and day-cells are legitimately bare.
   // 291 → 292: the "Ended circles" fold under the Circles list (Soc16), a
   // full-width row that opens the list's ended rows.
+  // 292 → 294: Food's meal chip and the rows of its menu (Food11 call 3).
+  // 294 → 292: the chip and its menu went again (11 November 2026): the
+  // field asks for no meal.
   const RAW_BUTTON_BASELINE = 292;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
@@ -598,12 +599,12 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
   });
 
-  /* Capitals with letter-spacing are one register with two places, both
-     named in DESIGN_GUIDE §4: a table's column headers (the workout's set
-     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs) and
-     the brand name set as a wordmark beside the mark on the welcome and
-     sign-in screens. Every other label, caption, eyebrow, pill and control
-     caption is written in sentence case, the run screen's included.
+  /* Capitals with letter-spacing are one register with one place, named
+     in DESIGN_GUIDE §4: a table's column headers (the workout's set
+     table, "SET  PREVIOUS  KG  REPS", as Hevy and Strong set theirs). The
+     brand name is not one: it is title case beside the mark (DS8). Every
+     other label, caption, eyebrow, pill and control caption is written
+     in sentence case, the run screen's included.
      An exact list, not a ratchet: a new site is a design decision, and it
      goes into the guide and this list together. Counted: any string
      literal carrying `uppercase` and a wide `tracking-*` utility (so a
@@ -613,10 +614,9 @@ describe("DS ratchets — surface-level drift", () => {
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
   const CAPS_REGISTER: Record<string, number> = {
     "src/components/WorkoutSession.tsx": 1,
-    "src/pages/Login.tsx": 2,
   };
   const CAPS_EXEMPT = new Set(["src/components/share/ShareCardRenderer.tsx"]);
-  it("capitals with letter-spacing appear only in the two documented places", () => {
+  it("capitals with letter-spacing appear only in the one documented place", () => {
     const caps = (lit: string) =>
       /\buppercase\b/.test(lit) &&
       /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(lit);
@@ -885,9 +885,11 @@ describe("type tiers", () => {
    (src/styles/components.css) is that box: radius, its resting edge and
    fill (tokens.css), the inset and a floor above 44px. Selects render through the
    `Select` primitive, which puts a native <select> on that field (so iOS
-   keeps its picker) and owns the tapped-select focus fix. Floors are 0
-   for selects and textareas; typed inputs off the field are a named list,
-   each with its reason, and the list only shrinks. */
+   keeps its picker) and owns the tapped-select focus fix. The floor is 0
+   for selects. A textarea is on the field, or is the text inside a field
+   that holds other controls too and draws the primitive's box as a layer
+   (a named list); typed inputs off the field are a named list as well.
+   Each entry has its reason, and the lists only shrink. */
 describe("form controls share the field primitive", () => {
   const SELECT_PRIMITIVE = "src/components/ui/Select.tsx";
 
@@ -951,14 +953,33 @@ describe("form controls share the field primitive", () => {
     ).toEqual([]);
   });
 
-  it("every <textarea> is on .ds-input", () => {
+  /* The text boxes that share the field with other controls. Such a box
+     draws no edge or fill of its own: the field is `.ds-input-box`, the
+     primitive's box as a layer under everything the field holds
+     (src/styles/components.css keeps its values with `.ds-input`'s). The
+     counts are exact and each has its reason, as for the typed inputs
+     below, and a file is only excused while it draws that layer. */
+  const TEXTAREAS_IN_A_FIELD_BOX: Record<
+    string,
+    { count: number; why: string }
+  > = {
+    "src/components/food/FoodComposerCard.tsx": {
+      count: 1,
+      why: "Food's composer: one field holding the pencil, the text and the camera (Food11 call 3)",
+    },
+  };
+
+  it("every <textarea> is on .ds-input, or inside the field's box where a field holds more than text", () => {
     const offenders: string[] = [];
+    const inABox = new Map<string, number>();
     scan((src, rel) => {
       const body = code(src);
       for (const m of body.matchAll(/<textarea\b/g)) {
         const tag = openingTag(body, m.index!);
-        if (!onField(tag, body))
-          offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+        if (onField(tag, body)) continue;
+        if (rel in TEXTAREAS_IN_A_FIELD_BOX && /\bds-input-box\b/.test(body))
+          inABox.set(rel, (inABox.get(rel) ?? 0) + 1);
+        else offenders.push(`${rel}:${lineOf(body, m.index!)}`);
       }
       return 0;
     });
@@ -968,6 +989,44 @@ describe("form controls share the field primitive", () => {
         `keep only its own type size, rows and resize.\n  ` +
         offenders.join("\n  ")
     ).toEqual([]);
+    expect(
+      Object.fromEntries(inABox),
+      `Text boxes inside a \`.ds-input-box\` field, by file. When one ` +
+        `moves onto \`ds-input\`, take it off TEXTAREAS_IN_A_FIELD_BOX.`
+    ).toEqual(
+      Object.fromEntries(
+        Object.entries(TEXTAREAS_IN_A_FIELD_BOX).map(([f, e]) => [f, e.count])
+      )
+    );
+  });
+
+  it("the field's box is the field primitive's (positive pin)", () => {
+    // The exception above is only safe while `.ds-input-box` is the same
+    // box as `.ds-input`: its radius, edge, fill and shadow.
+    const css = readFileSync(
+      resolve(repoRoot, "src/styles/components.css"),
+      "utf8"
+    );
+    const rule = (selector: RegExp) => {
+      const at = css.search(selector);
+      expect(at, `no rule for ${selector}`).toBeGreaterThan(-1);
+      return css.slice(at, css.indexOf("}", at));
+    };
+    const field = rule(
+      /^input\.ds-input,\ntextarea\.ds-input,\nselect\.ds-input \{/m
+    );
+    const box = rule(/^\.ds-input-box \{/m);
+    for (const property of [
+      "border-radius",
+      "border",
+      "background",
+      "box-shadow",
+    ]) {
+      const value = (block: string) =>
+        new RegExp(`^\\s*${property}:\\s*([^;]+);`, "m").exec(block)?.[1];
+      expect(value(box), `.ds-input-box has no ${property}`).toBeDefined();
+      expect(value(box), property).toBe(value(field));
+    }
   });
 
   /* The typed inputs that are deliberately their own control. The counts
@@ -1260,7 +1319,6 @@ describe("an action takes its domain's colour wherever it appears", () => {
       "src/components/nutrition/ServingSizeDrawer.tsx Log food",
       "src/components/ManualFoodLogger.tsx Log meal",
       "src/components/food/QuickMealPortionSheet.tsx Log this portion",
-      "src/components/food/CopyMealsSheet.tsx Log selected meals",
       "src/components/FoodAnalyzer.tsx Log to",
       "src/pages/RunSummary.tsx Log recovery food",
       "src/pages/Food.tsx Log",

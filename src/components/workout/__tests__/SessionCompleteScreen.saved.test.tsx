@@ -27,6 +27,9 @@ vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 vi.mock("@/components/workout/SessionShareRow", () => ({
   default: () => null,
 }));
+vi.mock("@/components/workout/ReminderOffer", () => ({
+  default: () => <p>Remind you before your next session?</p>,
+}));
 vi.mock("@/hooks/RemindersProvider", () => ({
   useStreakReminder: () => ({
     prefs: { enabled: false },
@@ -198,11 +201,9 @@ describe("SessionCompleteScreen — saved (Pol1)", () => {
     expect(
       follows(
         badge,
-        await screen.findByRole(
-          "switch",
-          {
-            name: "Evening reminder if you haven't logged",
-          },
+        await screen.findByText(
+          "Remind you before your next session?",
+          {},
           { timeout: 5_000 }
         )
       )
@@ -425,7 +426,7 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
       "lifting"
     );
     expect(line()).toHaveTextContent(
-      "You've trained 7 days in a row. 14 is next."
+      "You’ve trained 7 days in a row. 14 is next."
     );
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(confetti).not.toHaveBeenCalled();

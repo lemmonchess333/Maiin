@@ -105,7 +105,7 @@ describe("validateSet — bodyweight exercises", () => {
     expect(validateSet({ reps: 5, weight: -5, isBodyweight: true })).toEqual({
       ok: false,
       severity: "block",
-      message: "Weight can't be negative.",
+      message: "Weight can’t be negative.",
     });
     expect(validateSet({ reps: 5, weight: 600, isBodyweight: true }).ok).toBe(
       false
@@ -210,7 +210,7 @@ describe("validateSet — past today's plan (Lift16)", () => {
       expect(r.warn).toMatchObject({
         kind: "past-plan",
         title: "125 kg?",
-        message: "Today's plan is 12.5 kg.",
+        message: "Today’s plan is 12.5 kg.",
         confirmLabel: "Log 125 kg",
         fromKg: 12.5,
         toKg: 125,
@@ -261,7 +261,7 @@ describe("validateSet — the lifter's unit (Lift18)", () => {
     if (r.ok)
       expect(r.warn).toMatchObject({
         title: "300 lb?",
-        message: "Today's plan is 135 lb.",
+        message: "Today’s plan is 135 lb.",
         confirmLabel: "Log 300 lb",
         fromKg: 61.235,
         toKg: 136.08,

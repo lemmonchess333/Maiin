@@ -18,7 +18,7 @@ const require = createRequire(import.meta.url);
 
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const restriction = require("../lib/restriction");
@@ -37,7 +37,6 @@ const {
 const goalSpaceMembership = require("../lib/goalSpaceMembership");
 const goalSpaceCheckIn = require("../lib/goalSpaceCheckIn");
 const goalSpaceLifecycle = require("../lib/goalSpaceLifecycle");
-const partnerBonds = require("../lib/partnerBonds");
 const reportTargets = require("../lib/reportTargets");
 
 const realIsRateLimited = rateLimiter.isRateLimited;
@@ -374,16 +373,4 @@ describe("the Circle callables' ids", () => {
       expect(firestore.operations).toEqual([]);
     }
   );
-
-  it("a partner streak refuses a partner id that cannot name a document", async () => {
-    const firestore = memoryFirestore();
-    for (const partnerUid of [".", "..", "a/b", "__u__"]) {
-      const err = await partnerBonds
-        .startPartnerBond({ firestore, uid: "me", partnerUid, createdAt: 1 })
-        .catch((e) => e);
-      expect(err).toBeInstanceOf(partnerBonds.PartnerBondError);
-      expect(err.code).toBe("invalid-argument");
-    }
-    expect(firestore.operations).toEqual([]);
-  });
 });

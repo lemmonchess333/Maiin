@@ -15,7 +15,7 @@ import { useGuideHint } from "@/hooks/useGuideHint";
 import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth, useUid } from "@/lib/auth";
-import { startDayKey } from "@/lib/startDay";
+import { beforeStart, startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -29,7 +29,6 @@ import {
   deleteAfterUndoWindow,
   MEAL_UNDO_WINDOW_MS,
 } from "@/lib/mealDeleteCommit";
-import { joinHumanList } from "@/lib/listFormat";
 
 const ManualFoodLogger = lazyRetry(() =>
   import("@/components/ManualFoodLogger").then((m) => ({
@@ -47,14 +46,13 @@ import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
-import { Pencil, RotateCcw, X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 /* The sheets a tap opens load with the tap, not with the page: Food's
    chunk is the page's first paint. They are fetched once the page has
    drawn (below), so the first tap does not wait on the network. */
 const loadCopyEntrySheet = () => import("@/components/food/CopyEntrySheet");
-const loadCopyMealsSheet = () => import("@/components/food/CopyMealsSheet");
 const loadQuickMealPortionSheet = () =>
   import("@/components/food/QuickMealPortionSheet");
 const loadHeroDrillDownSheet = () =>
@@ -64,7 +62,6 @@ const loadServingSizeDrawer = () =>
     default: m.ServingSizeDrawer,
   }));
 const CopyEntrySheet = lazyRetry(loadCopyEntrySheet);
-const CopyMealsSheet = lazyRetry(loadCopyMealsSheet);
 const QuickMealPortionSheet = lazyRetry(loadQuickMealPortionSheet);
 const HeroDrillDownSheet = lazyRetry(loadHeroDrillDownSheet);
 const ServingSizeDrawer = lazyRetry(loadServingSizeDrawer);
@@ -79,6 +76,7 @@ import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
+  compareQuickAddTallies,
   orderQuickAddItems,
   pickRepresentativeMeal,
   type QuickAddItem,
@@ -92,14 +90,20 @@ import { useAiConsent } from "@/hooks/useAiConsent";
 import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
+import FoodMacroRow from "@/components/food/FoodMacroRow";
+import FoodLogFlight from "@/components/food/FoodLogFlight";
+import { useFoodLogFlight } from "@/hooks/useFoodLogFlight";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
+import FoodTargetsLink from "@/components/food/FoodTargetsLink";
 import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { useLocalHour } from "@/hooks/useLocalHour";
 import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
@@ -118,16 +122,15 @@ import FoodComposerCard from "@/components/food/FoodComposerCard";
 import ScanGrow from "@/components/food/ScanGrow";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import FoodProHint from "@/components/food/FoodProHint";
-import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type {
   PantrySuggestion,
   QuickAddSection,
 } from "@/components/food/FoodSuggestionsDropdown";
 import {
-  MEAL_ORDER,
   MEAL_LABELS,
   inferMostLikelyMealSlot,
+  typicalHourForMeal,
   type MealKey,
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
@@ -157,14 +160,15 @@ const DEFAULT_QUICK_MEALS = [
 // parse as natural language. The first prompt makes both modes
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
-// Each must fit the composer's field on one line at 375px, where the
-// Scan button beside it leaves the field about 180px for text.
+// The first two name the two modes between them. Each must fit the
+// composer's field on one line beside the pencil and the camera, which
+// leave the text 196px on a 320px phone.
 const NL_EXAMPLE_PROMPTS = [
-  "Search or describe a meal",
+  "Search a food",
+  "Describe a meal",
   "Eggs",
-  "200g chicken & rice",
-  "Large coffee, no sugar",
-  "Greek yoghurt & berries",
+  "200g chicken",
+  "2 eggs on toast",
 ];
 
 // Meal slot ordering + labels live in components/food/mealConstants
@@ -281,12 +285,17 @@ export default function Food() {
   // kind of string the NL parser understands without needing a help doc.
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
-  // Default the logging destination to the meal a user is most likely
-  // trying to log right now. They can still tap the selected pill to
-  // clear it, but the common case stops requiring a breakfast/lunch/
-  // snacks/dinner decision before every save.
-  const [targetMeal, setTargetMeal] = useState<MealKey | null>(() =>
-    inferMostLikelyMealSlot(new Date().getHours())
+  /* The meal a log goes to is the one the clock says, while the diary
+     is on today: nothing on the page asks for it (the owner, 11 November
+     2026), and the sheet a diary row opens moves a food to another
+     meal. On another day there is none, as there was none when the
+     meal chip stood in the field and a change of day cleared it; that
+     log's meal is read from when it was written (`mealSlotFor`). */
+  const clockHour = useLocalHour();
+  const targetMeal = useMemo<MealKey | null>(
+    () =>
+      selectedDate === todayStr ? inferMostLikelyMealSlot(clockHour) : null,
+    [selectedDate, todayStr, clockHour]
   );
   // Food6 a2: tap-on-hero opens a detailed nutrition-breakdown sheet
   // (calories + macros + activity-burn adjustment). Read-only — the
@@ -300,7 +309,6 @@ export default function Food() {
         loadHeroDrillDownSheet,
         loadServingSizeDrawer,
         loadQuickMealPortionSheet,
-        loadCopyMealsSheet,
         loadCopyEntrySheet,
       ])
         void load().catch(() => {});
@@ -321,8 +329,7 @@ export default function Food() {
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused). Stops the moment the user engages so the placeholder
-  // doesn't shift mid-typing. A targeted meal no longer pauses it: the
-  // pills above the field say where a log goes, so the field is free
+  // doesn't shift mid-typing. The field names no meal, so it is free
   // to show what a log can look like.
   useEffect(() => {
     if (nlInput.trim() || inputFocused) return;
@@ -344,9 +351,6 @@ export default function Food() {
     () => new Set()
   );
 
-  // Copy-from-yesterday: the trigger stays disabled while the selected
-  // entries are accepted by the durable local queue.
-  const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const {
     addFavourite,
@@ -374,13 +378,13 @@ export default function Food() {
   const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(
     () => new Set()
   );
-  /* Stable per-date order cache. The frequency map underneath
-     would otherwise reshuffle chips on every log (each new entry
-     bumps a count and shifts ties). Snapshot the order ONCE per
-     selectedDate and apply it on every render until the date
-     changes — vanished items drop, new items append at the end
-     via `orderQuickAddItems` rather than rebuilding the whole
-     cache and reintroducing the reshuffle bug. */
+  /* Stable order cache, one entry a day and a meal (`quickOrderKey`).
+     The frequency map underneath would otherwise reshuffle chips on
+     every log (each new entry bumps a count and shifts ties).
+     Snapshot the order ONCE per day and chosen meal and apply it on
+     every render until either changes — vanished items drop, new
+     items append at the end via `orderQuickAddItems` rather than
+     rebuilding the whole cache and reintroducing the reshuffle bug. */
   const [quickAddOrderCache, setQuickAddOrderCache] = useState<
     Map<string, string[]>
   >(() => new Map());
@@ -427,6 +431,11 @@ export default function Food() {
     void selectedDate;
     return new Date().getHours();
   }, [selectedDate]);
+  /* The pantry's time of day follows the meal being added to (Food11
+     call 7): breakfast offers the morning's foods at any hour it is
+     logged. Snacks, and no meal chosen, have no hour of their own and
+     keep the clock's, pinned as above. */
+  const favouritesHour = typicalHourForMeal(targetMeal) ?? timeRelevantHour;
 
   /* Suspicious-value confirm state for the NL parse path. The
      pending save closure is captured at validation time and
@@ -513,7 +522,7 @@ export default function Food() {
             return next;
           }),
         report: (name) =>
-          toast.error(`Couldn't delete ${name}. Try again.`, {
+          toast.error(`Couldn’t delete ${name}. Try again.`, {
             id: "food-delete-error",
           }),
       }),
@@ -584,7 +593,6 @@ export default function Food() {
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
     if (heroDrawIn) setHeroDrawIn(false);
-    if (targetMeal) setTargetMeal(null);
     // Clear any in-flight typed text on date change. Without this,
     // typing "2 eggs" for today, then tapping yesterday on the date
     // bar, would silently submit "2 eggs" against yesterday — a
@@ -592,17 +600,6 @@ export default function Food() {
     // shift and the user can't see why.
     if (nlInput) setNlInput("");
   }
-
-  /* joinHumanList moved to `@/lib/listFormat` so the Tropos
-     enumeration style (`a & b` / `a, b & c`) can be reused on
-     other toast / caption surfaces without copy-pasting the
-     three-branch ladder. */
-
-  /* Slot derivation (explicit meal field first, else local log hour)
-     lives in `@/lib/mealSlots` since the timeline migration — the
-     timeline derives each row's slot chip from the same function, so
-     the diary display and the copy-from-yesterday segmentation below
-     can't drift. */
 
   // Visible meals = all of today's meals minus any that are pending delete.
   // Used for meal sections, hero card totals, and the food row list so the
@@ -674,83 +671,6 @@ export default function Food() {
     ]
   );
 
-  const mealSegmentedMeals = useMemo(() => {
-    const segments: Record<string, typeof visibleTodaysMeals> = {
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-    };
-    for (const meal of visibleTodaysMeals) {
-      const cat = mealSlotFor(meal);
-      segments[cat].push(meal);
-    }
-    return segments;
-  }, [visibleTodaysMeals]);
-
-  // Yesterday's meals for "Copy from yesterday" feature
-  const yesterdayDate = useMemo(
-    () =>
-      format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"),
-    [selectedDate]
-  );
-  const yesterdayMeals = getMealsForDate(yesterdayDate);
-  const yesterdaySegmented = useMemo(() => {
-    const segments: Record<string, typeof yesterdayMeals> = {
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-    };
-    for (const meal of yesterdayMeals) {
-      const cat = mealSlotFor(meal);
-      segments[cat].push(meal);
-    }
-    return segments;
-  }, [yesterdayMeals]);
-
-  /**
-   * Slots that yesterday has and today doesn't. Drives both the bottom
-   * "Copy yesterday's …" button visibility + label and the copy handler
-   * so the two can't drift on what's about to happen vs what happens.
-   */
-  const slotsToCopyFromYesterday = useMemo(() => {
-    return MEAL_ORDER.filter((mealKey) => {
-      const yHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
-      const tHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
-      return yHas && !tHas;
-    });
-  }, [yesterdaySegmented, mealSegmentedMeals]);
-
-  const handleCopySelectedFromYesterday = async (
-    selections: readonly MealCopySelection[]
-  ) => {
-    if (copyingMealKey || !uid)
-      return { created: [], error: new Error("Sign in again to log food.") };
-    setCopyingMealKey("__all__");
-    try {
-      const result = await copySelectedMeals(uid, selectedDate, selections);
-      if (result.created.length > 0) {
-        const slots = MEAL_ORDER.filter((slot) =>
-          result.created.some((entry) => entry.slot === slot)
-        );
-        const count = result.created.length;
-        haptic(15);
-        notifyMealsLogged(
-          uid,
-          result.created.map((entry) => entry.id),
-          `Copied ${count} item${count === 1 ? "" : "s"} into ${joinHumanList(slots.map((slot) => MEAL_LABELS[slot]))}`,
-          { path: "copy" }
-        );
-      }
-      if (result.error !== null)
-        logger.error("[copy-selected] Failed:", result.error);
-      return result;
-    } finally {
-      setCopyingMealKey(null);
-    }
-  };
-
   useEffect(() => {
     const mealCount = todaysMeals.length;
     if (mealsLoading || mealsError) return;
@@ -770,7 +690,7 @@ export default function Food() {
       meals: mealCount,
     }).catch((err) => {
       logger.error("[Food] daily log save failed", err);
-      toast.error("Couldn't update today's log", { id: "food-save-error" });
+      toast.error("Couldn’t update today’s log", { id: "food-save-error" });
     });
   }, [
     todaysMeals.length,
@@ -797,6 +717,40 @@ export default function Food() {
   };
 
   const isToday = selectedDate === todayStr;
+
+  /* A food logged today flies to the calorie wheel (Food11 call 6):
+     `nextFlight` has when, `FoodLogFlight` draws it, and the hero holds
+     the wheel's old calories until it lands. The picture is our drawing
+     of the food, as its diary row has until a photo of its own has been
+     read from the device. */
+  const visibleMealIds = useMemo(
+    () => visibleTodaysMeals.map((meal) => meal.id),
+    [visibleTodaysMeals]
+  );
+  const logFlight = useFoodLogFlight({
+    day: selectedDate,
+    isToday,
+    ready: !mealsLoading,
+    ids: visibleMealIds,
+    calories: dailyTotals.calories,
+    reducedMotion,
+  });
+  const flyingMeal = logFlight.flight
+    ? visibleTodaysMeals.find((meal) => meal.id === logFlight.flight?.mealId)
+    : undefined;
+  const foodFlight = logFlight.flight
+    ? {
+        key: logFlight.flight.mealId,
+        src: foodArtUrl(
+          foodArtKindFor([
+            flyingMeal?.foodName ?? "",
+            ...(flyingMeal?.items ?? []).map((item) => item.name ?? ""),
+          ])
+        ),
+        fromCalories: logFlight.flight.fromCalories,
+        target: dailyTargets.finalTarget,
+      }
+    : null;
   const canGoBack = selectedDate > minDateStr;
   const canGoForward = selectedDate < todayStr;
 
@@ -940,7 +894,7 @@ export default function Food() {
            fallback action so the user has somewhere to go. */
         setOffResults([]);
         setOffEmpty(false);
-        toast.error("Couldn't search foods.", {
+        toast.error("Couldn’t search foods.", {
           id: "food-off-error",
           // Retry re-runs the fetch (bumps the nonce in the effect deps);
           // Log manually is the fallback. sonner allows one action + one
@@ -1033,7 +987,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Couldn't save. Try again.", {
+      toast.error("Couldn’t save. Try again.", {
         id: "food-save-error",
       });
     }
@@ -1095,7 +1049,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Couldn't read that. Try rewording it, or add it manually.", {
+      toast.error("Couldn’t read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
         action: { label: "Log manually", onClick: () => setManualOpen(true) },
       });
@@ -1110,7 +1064,7 @@ export default function Food() {
           return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
         });
         toast.warning(
-          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             duration: 10000,
@@ -1135,7 +1089,7 @@ export default function Food() {
       const unresolved = items.filter((i) => i.unrecognized);
       if (unresolved.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          `Couldn’t find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
           {
             id: "food-nl-warning",
             action: {
@@ -1266,7 +1220,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Couldn't save. Try again.", {
+        toast.error("Couldn’t save. Try again.", {
           id: "food-save-error",
         });
       }
@@ -1385,7 +1339,7 @@ export default function Food() {
         );
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
-        toast.error("Could not save changes");
+        toast.error("Couldn’t save your changes");
         // Keep the editor open and do not change servings or announce success
         // after any of the existing entries failed to update.
         return;
@@ -1485,7 +1439,7 @@ export default function Food() {
           `Added ${createdIds.length} servings; the remaining servings could not be saved`
         );
       } else {
-        toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+        toast.error("Couldn’t update. Try again.", { id: "food-edit-error" });
       }
     }
   };
@@ -1540,39 +1494,20 @@ export default function Food() {
     });
   };
 
-  const handleTargetMeal = (mealKey: MealKey) => {
-    haptic();
-    // Toggle off if same meal tapped again
-    if (targetMeal === mealKey) {
-      setTargetMeal(null);
-      return;
-    }
-    setTargetMeal(mealKey);
-    trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
-    // Scroll input into view then focus
-    setTimeout(() => {
-      /* No `behavior` — the default follows the computed
-         `scroll-behavior`, which is smooth normally and `auto` under
-         Reduce Motion. Naming "smooth" here overrides that by spec and
-         animates for a reader who asked it not to. */
-      inputRef.current?.scrollIntoView({ block: "center" });
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }, 50);
-  };
-
-  // Merged Quick Add source.
+  // Merged Quick Add source, for the meal being added to (Food11 call 7).
   //
   // Three layers, in priority order:
   //   1. Time-relevant favourites — foods the user has explicitly
   //      starred, filtered by time-of-day. Favourites are the
-  //      strongest user signal (explicit), so they go first.
-  //   2. Frequency-ranked history (last 30 days) — the foods the user
-  //      actually relies on day-to-day. Was previously sorted by
-  //      simple recency (chronological), which let a one-off meal
-  //      (e.g. takeaway pizza last night) bubble above habitual
-  //      foods like daily Greek yoghurt. Frequency over a rolling
-  //      window better matches the "Quick Add" promise: surface the
-  //      foods I quick-add the most. Tie-broken by last-logged so
+  //      strongest user signal (explicit), so they go first. The time
+  //      of day is the chosen meal's (breakfast is morning, whenever
+  //      it is logged); snacks, and no meal chosen, keep the clock's.
+  //   2. History over the last 30 days, ranked for the chosen meal
+  //      (`compareQuickAddTallies`): the foods logged at that meal
+  //      first, most often first, then the rest by how often they
+  //      are logged at all. Frequency rather than recency, so a
+  //      one-off (takeaway pizza last night) does not rise above a
+  //      habit like daily Greek yoghurt. Tie-broken by last-logged so
   //      ties favour the more recent of two equally-frequent items
   //      (handles "I switched from oats to yoghurt" gracefully).
   //   3. Seeded defaults — first-time users with no history still
@@ -1610,7 +1545,7 @@ export default function Food() {
     //    selectedDate) — see that block's comment for why a fresh
     //    `new Date().getHours()` here would re-introduce the F2 escape
     //    hatch the F4 audit identified.
-    for (const f of getTimeRelevant(timeRelevantHour, 10)) {
+    for (const f of getTimeRelevant(favouritesHour, 10)) {
       // Optimistic hide for in-flight long-press removals — skip
       // chips whose favourite is pending delete so the row updates
       // immediately on user action without waiting for the snapshot.
@@ -1630,7 +1565,7 @@ export default function Food() {
       });
     }
 
-    // 2. Frequency-ranked history over the last 30 days.
+    // 2. History over the last 30 days, ranked for the chosen meal.
     //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
@@ -1639,20 +1574,33 @@ export default function Food() {
     // portion (below) instead of whichever version was logged last.
     const byFood = new Map<
       string,
-      { count: number; lastLogged: string; logs: (typeof meals)[number][] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        logs: (typeof meals)[number][];
+      }
     >();
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
       // A nameless Quick add entry is a number, not a food to repeat.
       if (!key || isQuickAddName(key)) continue;
+      const atMeal =
+        targetMeal !== null && mealSlotFor(meal) === targetMeal ? 1 : 0;
       const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;
+        existing.atMeal += atMeal;
         existing.logs.push(meal);
         if (meal.date > existing.lastLogged) existing.lastLogged = meal.date;
       } else {
-        byFood.set(key, { count: 1, lastLogged: meal.date, logs: [meal] });
+        byFood.set(key, {
+          count: 1,
+          atMeal,
+          lastLogged: meal.date,
+          logs: [meal],
+        });
       }
     }
     // FOOD-03: the chip's macros come from the user's MOST FREQUENT
@@ -1662,20 +1610,22 @@ export default function Food() {
     // represents the food changed.
     const freq = new Map<
       string,
-      { count: number; lastLogged: string; meal: (typeof meals)[number] }
+      {
+        count: number;
+        atMeal: number;
+        lastLogged: string;
+        meal: (typeof meals)[number];
+      }
     >();
     for (const [key, group] of byFood) {
       freq.set(key, {
         count: group.count,
+        atMeal: group.atMeal,
         lastLogged: group.lastLogged,
         meal: pickRepresentativeMeal(group.logs, (m) => m.date),
       });
     }
-    const ranked = Array.from(freq.values()).sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      // tie → most recent wins
-      return b.lastLogged.localeCompare(a.lastLogged);
-    });
+    const ranked = Array.from(freq.values()).sort(compareQuickAddTallies);
     for (const entry of ranked) {
       /* Smart display label for multi-item meals.
          AI-detected meals from photo scans return verbose foodNames
@@ -1731,16 +1681,30 @@ export default function Food() {
     }
 
     return current;
-    /* The day reaches this list through `timeRelevantHour`, which is
-       keyed on selectedDate: the body never reads the date itself, so
-       listing it too only recomputed an identical list. */
-  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds, todayStr]);
+    /* The day reaches this list through `timeRelevantHour` (inside
+       `favouritesHour`), which is keyed on selectedDate: the body never
+       reads the date itself, so listing it too only recomputed an
+       identical list. */
+  }, [
+    meals,
+    getTimeRelevant,
+    favouritesHour,
+    targetMeal,
+    pendingRemovalIds,
+    todayStr,
+  ]);
 
-  const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
+  /* One stable order a day AND a meal. Choosing another meal is asking
+     for another list, so it ranks afresh; a log, which only moves the
+     counts under the list on screen, still reshuffles nothing. Each
+     day's meals keep their own order, so going back to one restores
+     it. */
+  const quickOrderKey = `${selectedDate}|${targetMeal ?? ""}`;
+  const cachedQuickOrder = quickAddOrderCache.get(quickOrderKey);
   if (!cachedQuickOrder) {
     setQuickAddOrderCache(
       new Map(quickAddOrderCache).set(
-        selectedDate,
+        quickOrderKey,
         Array.from(quickMealCandidates.keys())
       )
     );
@@ -1779,7 +1743,7 @@ export default function Food() {
   }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
-  /* The day the Quick add list's More row was opened on. Another day
+  /* The day the Log again list's More row was opened on. Another day
      opens on five again. */
   const [moreRecentsDate, setMoreRecentsDate] = useState<string | null>(null);
   const moreRecentsOpen = moreRecentsDate === selectedDate;
@@ -1815,7 +1779,7 @@ export default function Food() {
         next.delete(favouriteId);
         return next;
       });
-      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      toast.error("Couldn’t remove. Try again.", { id: "pantry-remove-error" });
       return;
     }
 
@@ -1839,7 +1803,7 @@ export default function Food() {
               return next;
             });
           } else {
-            toast.error("Couldn't undo. The item stays removed.", {
+            toast.error("Couldn’t undo. The item stays removed.", {
               id: "pantry-undo-error",
             });
           }
@@ -1848,15 +1812,13 @@ export default function Food() {
     });
   };
 
-  const usualSlot =
-    targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
+  const usualSlot = targetMeal ?? inferMostLikelyMealSlot(clockHour);
   const usual = useMemo(
     () => usualMeal(meals, usualSlot, selectedDate),
     [meals, usualSlot, selectedDate]
   );
   const usualHeadingId = useId();
   const usualPortion = usual && usualMealPortion(usual);
-  const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
   const handleQuickMealAdd = async (
     meal: QuickAddItem,
@@ -1882,12 +1844,11 @@ export default function Food() {
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
       const undo = await saveQuickMeal(uid, meal, selectedDate, slot);
-      if (slot) setTargetMeal(slot);
       let undoing = false;
       toast.success(
         navigator.onLine
           ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
-          : "Saved on this phone — syncs when you're back online",
+          : "Saved on this phone — syncs when you’re back online",
         {
           duration: 5000,
           action: {
@@ -1900,7 +1861,7 @@ export default function Food() {
                 toast.success("Meal entry undone");
               } catch (err) {
                 logger.error("[Food] meal undo failed", err);
-                toast.error(appErrorMessage(err, "Couldn't undo meal."));
+                toast.error(appErrorMessage(err, "Couldn’t undo meal."));
                 undoing = false;
               }
             },
@@ -1912,7 +1873,7 @@ export default function Food() {
       toast.error(
         appErrorMessage(
           err,
-          "Couldn't save. Check your connection and retry this meal."
+          "Couldn’t save. Check your connection and retry this meal."
         ),
         { id: "food-save-error" }
       );
@@ -2032,7 +1993,7 @@ export default function Food() {
       role="alert"
       className="ds-card flex items-center justify-between gap-3 p-4"
     >
-      <p className="text-sm">Couldn't load your food diary.</p>
+      <p className="text-sm">Couldn’t load your food diary.</p>
       <Button
         variant="secondary"
         className="min-h-[44px]"
@@ -2056,7 +2017,9 @@ export default function Food() {
       <PageShell
         {...pullBindProps}
         title="Food"
-        actions={dateBar}
+        titleHidden
+        lead={dateBar}
+        actions={<FoodTargetsLink />}
         banner={<FoodOfflineBanner />}
         style={{ paddingBottom: "var(--page-bottom-pad)" }}
       >
@@ -2069,14 +2032,17 @@ export default function Food() {
     <PageShell
       {...pullBindProps}
       title="Food"
-      /* The date switcher shares the title row (the shell's action
-         slot) instead of taking a sticky row of its own beneath it —
-         two header rows were 90px spent before the day's number. */
-      actions={dateBar}
+      /* No large title (Food11 call 1; DESIGN_GUIDE §14m rule 2): the
+         wheel names the screen, so the title is for screen readers and
+         the date switcher takes its place. One header row: the day, and
+         the targets gear at its other end. */
+      titleHidden
+      lead={dateBar}
+      actions={<FoodTargetsLink />}
       banner={<FoodOfflineBanner />}
       /* Bottom padding hooks into the canonical --page-bottom-pad token
          (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
-         meal section / Copy yesterday button clears the home indicator on
+         meal section clears the home indicator on
          notched iPhones. A hardcoded pb ignores the inset. */
       style={{ paddingBottom: "var(--page-bottom-pad)" }}
     >
@@ -2087,17 +2053,14 @@ export default function Food() {
       />
       {readError}
 
-      <motion.div variants={pageItemVariant}>
-        {/* Isolated as Home's strip is: a bad day's data costs the strip,
-            not the diary under it. */}
-        <SectionErrorBoundary sectionName="food-week-strip">
-          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
-        </SectionErrorBoundary>
-      </motion.div>
-      <motion.div variants={pageItemVariant}>
+      {/* The wheel, then the week it belongs to, then the macros (Food11
+          call 4), 8px apart as one group. The week strip sat above the
+          calorie card until then, a section of its own. */}
+      <motion.div variants={pageItemVariant} className="space-y-2">
         <FoodHeroCard
           key={selectedDate}
           drawIn={heroDrawIn}
+          holdWheel={logFlight.holdWheel}
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -2112,7 +2075,36 @@ export default function Food() {
             setHeroSheetOpen(true);
           }}
         />
+        {/* Isolated as Home's strip is: a bad day's data costs the strip,
+            not the diary under it. Not inside the hero: that is remounted
+            on every day change, which would drop the focus from the day
+            just tapped. */}
+        <SectionErrorBoundary sectionName="food-week-strip">
+          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+        </SectionErrorBoundary>
+        {/* No macros on a day before the account began with nothing
+            logged on it (Food10 (3)), as the hero draws no wheel for it. */}
+        {!(
+          beforeStart(selectedDate, accountStartKey) &&
+          dailyTotals.calories === 0
+        ) && (
+          <FoodMacroRow
+            key={selectedDate}
+            drawIn={heroDrawIn}
+            dailyTargets={dailyTargets}
+            dailyTotals={{
+              protein: dailyTotals.protein,
+              carbs: dailyTotals.carbs,
+              fat: dailyTotals.fat,
+            }}
+          />
+        )}
       </motion.div>
+      <FoodLogFlight
+        flight={foodFlight}
+        onArrive={logFlight.arrive}
+        onDone={logFlight.finish}
+      />
       {/* Mounted from the first open on, so it closes with its animation
           and its queued Pro sheet opens after it has gone. */}
       {heroSheetUsed && (
@@ -2250,8 +2242,6 @@ export default function Food() {
           }
           onParse={handleNLParse}
           inputRef={inputRef}
-          targetMeal={targetMeal}
-          onTargetMeal={handleTargetMeal}
           showSuggestions={showSuggestions || showQuickAdd}
           suggestions={suggestions}
           offResults={offResults}
@@ -2293,10 +2283,11 @@ export default function Food() {
            truncated first. Edit is the pencil the Quick Add rows already
            use for the same sheet. Both controls stay 44px.
 
-           Log is the food orange, not brand purple (owner call): every
-           other food control on the page is orange, the meal pills and
-           the Scan button included. Purple stays for Pro ("Try Pro
-           free"). CLAUDE.md's Button mapping records the exception;
+           Log is the food orange, not brand purple (owner call): it
+           is in Food's colour, as the camera and the send arrow in the
+           composer's field are, and since Food11 it is the page's one
+           filled control. Purple stays for Pro ("Try Pro free").
+           CLAUDE.md's Button mapping records the exception;
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two
@@ -2350,18 +2341,6 @@ export default function Food() {
           </div>
         </Card>
       )}
-      {copyPreviewOpen && (
-        <Suspense fallback={null}>
-          <CopyMealsSheet
-            key={`${uid}:${selectedDate}`}
-            sources={slotsToCopyFromYesterday.flatMap(
-              (slot) => yesterdaySegmented[slot] ?? []
-            )}
-            onClose={() => setCopyPreviewOpen(false)}
-            onSave={handleCopySelectedFromYesterday}
-          />
-        </Suspense>
-      )}
       {copyingEntries && (
         <Suspense fallback={null}>
           <CopyEntrySheet
@@ -2385,7 +2364,7 @@ export default function Food() {
         <Suspense
           fallback={
             <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-              Loading scanner...
+              Loading scanner…
             </div>
           }
         >
@@ -2492,44 +2471,6 @@ export default function Food() {
             <FoodWaterRow date={selectedDate} />
           </Suspense>
         </SectionErrorBoundary>
-
-        {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
-            commitment + derived progress; the only social affordance
-            is the opt-in constant status line once MET. It follows the
-            diary: a prompt to set one, or a progress row, is about the
-            week, and it sat between the composer and the day's
-            meals — three cards of not-food on an empty day before the
-            empty state (owner call, Food options page, 6). */}
-        {uid && <FoodConsistencyCard uid={uid} />}
-
-        {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
-            has slots today is missing. Label is intentionally short:
-            a single missing slot names it (`Copy yesterday's lunch`),
-            two or more collapses to the generic `Copy yesterday's meals`
-            — listing every slot was verbose and the user can read the
-            toast after tapping to see what was copied where. */}
-        {slotsToCopyFromYesterday.length > 0 &&
-          (() => {
-            const inFlight = copyingMealKey === "__all__";
-            const label =
-              slotsToCopyFromYesterday.length === 1
-                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-                : "Copy yesterday's meals";
-            return (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setCopyPreviewOpen(true)}
-                  disabled={inFlight}
-                  aria-label={label}
-                  leftIcon={<RotateCcw className="size-3.5" />}
-                  className="text-muted-foreground"
-                >
-                  {label}
-                </Button>
-              </div>
-            );
-          })()}
       </motion.div>
 
       <Suspense fallback={null}>

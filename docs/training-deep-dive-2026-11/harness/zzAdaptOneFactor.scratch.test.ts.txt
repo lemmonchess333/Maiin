@@ -1,0 +1,93 @@
+// Scratch, not committed: one-factor variations of the lift week from a baseline.
+import { it } from "vitest";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { freshLiftWeek, type FreshLiftAnswers } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+import { weeklyVolumeByJudgementMuscle } from "../volumeModel";
+
+type Ex = Record<string, unknown> & {
+  name: string;
+  exerciseId: string;
+  sets: number;
+  reps: number;
+};
+type Day = Record<string, unknown> & { exercises: Ex[] };
+
+const BASE = {
+  primaryGoal: "hypertrophy",
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  equipment: "full_gym",
+  injuries: [] as string[],
+};
+
+function dump(label: string, over: Record<string, unknown>) {
+  const input = { ...BASE, ...over } as unknown as FreshLiftAnswers;
+  try {
+    const days = freshLiftWeek(input) as unknown as Day[];
+    return {
+      label,
+      input: { ...BASE, ...over },
+      volume: weeklyVolumeByJudgementMuscle(days as never),
+      days: days.map((d) => ({
+        name: d.dayName,
+        type: d.dayType,
+        role: d.dayRole,
+        minutes: estimateSessionMinutes(d.exercises as never),
+        ex: d.exercises.map((e) => ({
+          name: e.name,
+          id: e.exerciseId,
+          cat: e.movementCategory,
+          sets: e.sets,
+          reps: e.reps,
+          max: e.repRangeMax,
+          unit: e.repUnit,
+          w: e.weight,
+          acc: e.isAccessory === true,
+          prog: e.progressionType,
+          from: (e.swappedFrom as { exerciseId: string } | undefined)
+            ?.exerciseId,
+          notes: e.notes,
+          rest: e.restSeconds,
+        })),
+      })),
+    };
+  } catch (err) {
+    return { label, input: { ...BASE, ...over }, error: String(err).slice(0, 400) };
+  }
+}
+
+it("dumps one-factor variations", () => {
+  mkdirSync("/tmp/work/train", { recursive: true });
+  const out: unknown[] = [];
+  out.push(dump("baseline", {}));
+  for (const experience of ["beginner", "intermediate", "advanced"])
+    out.push(dump(`experience=${experience}`, { experience }));
+  for (const sessionMinutes of [30, 45, 60, 75, 90])
+    out.push(dump(`minutes=${sessionMinutes}`, { sessionMinutes }));
+  for (const liftDays of [1, 2, 3, 4, 5, 6, 7])
+    out.push(dump(`liftDays=${liftDays}`, { liftDays }));
+  for (const equipment of ["full_gym", "home_gym", "minimal"])
+    for (const barbellAtHome of [false, true])
+      out.push(
+        dump(`equipment=${equipment},barbell=${barbellAtHome}`, {
+          equipment,
+          barbellAtHome,
+        })
+      );
+  for (const inj of ["lower_back", "shoulder", "knee", "elbow", "wrist"])
+    out.push(dump(`injury=${inj}`, { injuries: [inj] }));
+  out.push(dump("injury=none-literal", { injuries: ["none"] }));
+  out.push(dump("injury=knee+lower_back", { injuries: ["knee", "lower_back"] }));
+  out.push(dump("injury=shoulder+elbow+wrist", { injuries: ["shoulder", "elbow", "wrist"] }));
+  out.push(dump("injury=all5", { injuries: ["lower_back", "shoulder", "knee", "elbow", "wrist"] }));
+  for (const primaryGoal of ["hypertrophy", "strength", "fat_loss", "general", "running"])
+    out.push(dump(`goal=${primaryGoal}`, { primaryGoal }));
+  for (const sex of ["male", "female", "other", undefined])
+    for (const bodyweightKg of [50, 65, 80, 110, undefined])
+      out.push(dump(`sex=${sex},bw=${bodyweightKg}`, { sex, bodyweightKg }));
+  writeFileSync("/tmp/work/train/adapt-onefactor.json", JSON.stringify(out));
+});

@@ -318,7 +318,7 @@ export default function TrainingHistory() {
       </section>
       {failed && (
         <ErrorState
-          title={`${sourceName} history couldn't load`}
+          title={`${sourceName} history couldn’t load`}
           description={
             sessions.length
               ? "Available sessions are shown below. Retry to load the rest."
@@ -455,7 +455,7 @@ export default function TrainingHistory() {
                                   bests.ids.has(session.id) &&
                                   session.kind === "lift" && (
                                     <span className="ml-2 text-micro font-semibold text-achievement-strong">
-                                      PR
+                                      Best
                                     </span>
                                   )}
                               </span>
@@ -495,7 +495,7 @@ export default function TrainingHistory() {
           </>
         ) : !pending && !failed && !complete ? (
           <EmptyState
-            headline="This period isn't fully loaded"
+            headline="This period isn’t fully loaded"
             sub="No matching sessions are available on this device yet. Connect and retry to check the full period."
             action={{ label: "Try again", onClick: retry }}
           />
@@ -508,7 +508,7 @@ export default function TrainingHistory() {
             }
             sub={
               filters.search.trim()
-                ? "Try another name or clear the search to see this period's sessions."
+                ? "Try another name or clear the search to see this period’s sessions."
                 : "Choose another date range to look through older training."
             }
             action={

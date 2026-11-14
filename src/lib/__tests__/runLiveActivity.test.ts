@@ -41,6 +41,8 @@ import {
   startRunActivity,
   updateRunActivity,
   endRunActivity,
+  mixHex,
+  runCardData,
   __resetRunActivityForTests,
   type RunActivityData,
 } from "@/lib/runLiveActivity";
@@ -50,9 +52,9 @@ const setNative = (v: boolean) =>
 
 const DATA: RunActivityData = {
   distance: "1.2 km",
-  pace: "5:12/km",
+  pace: "5:12 /km",
   elapsed: "6:14",
-  label: "Recording",
+  label: "Easy 30",
 };
 
 beforeEach(() => {
@@ -101,20 +103,70 @@ describe("start", () => {
       dynamicIslandLayout: unknown;
       data: Record<string, string>;
     };
-    expect(opts.data).toEqual(DATA);
+    expect(opts.data).toEqual(runCardData(DATA, 0));
     const layoutJson = JSON.stringify(opts.layout);
     for (const binding of [
-      "{{distance}}",
-      "{{pace}}",
-      "{{elapsed}}",
-      "{{label}}",
+      "{{pose}}",
+      "{{poseOpacity}}",
+      "{{kicker}}",
+      "{{distanceValue}}",
+      "{{distanceUnit}}",
+      "{{line}}",
     ]) {
       expect(layoutJson).toContain(binding);
     }
-    // Dynamic Island carries the compact + minimal states too.
+    // Every binding either layout names is in the data it starts with: a
+    // placeholder with no value draws nothing, or the fallback photo icon.
     const diJson = JSON.stringify(opts.dynamicIslandLayout);
-    expect(diJson).toContain("compactLeading");
-    expect(diJson).toContain("{{distance}}");
+    const bindings = [...(layoutJson + diJson).matchAll(/\{\{(\w+)\}\}/g)].map(
+      (m) => m[1]
+    );
+    expect(bindings.length).toBeGreaterThan(8);
+    for (const key of bindings) expect(opts.data).toHaveProperty(key);
+  });
+
+  it("leads with the runner's drawing, held in the widget by name (Wid2 call 1)", async () => {
+    await startRunActivity(DATA);
+    const opts = startActivity.mock.calls[0][0] as {
+      layout: { children: { type: string; properties: object[] }[] };
+      dynamicIslandLayout: {
+        expanded: { bottom: { children: { type: string }[] } };
+        compactTrailing: { properties: object[] };
+        minimal: { type: string; properties: object[] };
+      };
+      data: Record<string, string>;
+      behavior: Record<string, string>;
+    };
+    // The card and the expanded island both open on the drawing.
+    expect(opts.layout.children[0].type).toBe("image");
+    expect(opts.layout.children[0].properties).toContainEqual({
+      asset: "{{pose}}",
+    });
+    expect(opts.dynamicIslandLayout.expanded.bottom.children[0].type).toBe(
+      "image"
+    );
+    expect(opts.data.pose).toBe("run-easy-pose-1");
+    // The session's name sits with the drawing, under the camera, on one
+    // line: beside the camera there is room for about a dozen letters.
+    const expanded = opts.dynamicIslandLayout.expanded as unknown as {
+      leading: { type: string };
+      bottom: { children: { children?: { properties: object[] }[] }[] };
+    };
+    expect(expanded.leading.type).toBe("image");
+    const words = expanded.bottom.children[1].children!;
+    expect(words[0].properties).toContainEqual({ text: "{{kicker}}" });
+    expect(words[0].properties).toContainEqual({ lineLimit: 1 });
+    // The smallest size shows the distance, not an icon: Apple asks for
+    // something live there.
+    expect(opts.dynamicIslandLayout.minimal.type).toBe("text");
+    expect(opts.dynamicIslandLayout.minimal.properties).toContainEqual({
+      text: "{{distanceValue}}",
+    });
+    // The card is dark to its corners, with the run's light in one of them.
+    expect(opts.behavior.backgroundTint).toBe("#17171B");
+    expect(JSON.stringify(opts.layout)).toContain(
+      mixHex("#17171B", "#D4637A", 0.22)
+    );
   });
 
   it("is idempotent — a second start while one is live is a no-op", async () => {
@@ -144,13 +196,85 @@ describe("update throttle + dedup", () => {
     expect(updateActivity).toHaveBeenCalledTimes(1);
     expect(updateActivity.mock.calls[0][0]).toEqual({
       activityId: "act-1",
-      data: { ...DATA, elapsed: "6:16" },
+      data: runCardData({ ...DATA, elapsed: "6:16" }, 0),
     });
 
     // Another window later but IDENTICAL payload: deduped.
     vi.advanceTimersByTime(3000);
     await updateRunActivity({ ...DATA, elapsed: "6:16" });
     expect(updateActivity).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the drawing's pose", () => {
+  const sendAt = async (
+    elapsed: string,
+    extra: Partial<RunActivityData> = {}
+  ) => {
+    vi.advanceTimersByTime(2500);
+    await updateRunActivity({ ...DATA, elapsed, ...extra });
+    return (
+      updateActivity.mock.calls.at(-1)![0] as { data: Record<string, string> }
+    ).data;
+  };
+
+  it("takes its next pose on every second update, and comes round to the first", async () => {
+    await startRunActivity(DATA);
+    const poses: string[] = [];
+    for (let i = 0; i < 9; i++) poses.push((await sendAt(`7:0${i}`)).pose);
+    expect(poses).toEqual([
+      "run-easy-pose-1",
+      "run-easy-pose-2",
+      "run-easy-pose-2",
+      "run-easy-pose-3",
+      "run-easy-pose-3",
+      "run-easy-pose-4",
+      "run-easy-pose-4",
+      "run-easy-pose-1",
+      "run-easy-pose-1",
+    ]);
+  });
+
+  it("holds its pose, dimmed, while the run is paused", async () => {
+    await startRunActivity(DATA);
+    const moving = await sendAt("7:00");
+    expect(moving.poseOpacity).toBe("1");
+    const paused = await sendAt("7:02", { label: "Paused", paused: true });
+    const still = await sendAt("7:03", { label: "Paused", paused: true });
+    expect(paused.kicker).toBe("PAUSED");
+    expect(paused.poseOpacity).toBe("0.45");
+    expect(still.pose).toBe(paused.pose);
+    expect(paused.pose).toBe(moving.pose);
+  });
+});
+
+describe("what the card says", () => {
+  it("splits the distance into its figure and its unit", () => {
+    expect(runCardData(DATA, 0)).toMatchObject({
+      kicker: "EASY 30",
+      distanceValue: "1.2",
+      distanceUnit: "km",
+      line: "5:12 /km · 6:14",
+      paceLine: "Pace 5:12 /km",
+      elapsed: "6:14",
+    });
+    expect(runCardData({ ...DATA, distance: "0.7 mi" }, 0)).toMatchObject({
+      distanceValue: "0.7",
+      distanceUnit: "mi",
+    });
+  });
+
+  it("shows the dash alone before the run has a distance", () => {
+    expect(runCardData({ ...DATA, distance: "—" }, 0)).toMatchObject({
+      distanceValue: "—",
+      distanceUnit: "",
+    });
+  });
+
+  it("mixes the light as one opaque colour, since the gradient takes no alpha", () => {
+    expect(mixHex("#000000", "#FFFFFF", 0.5)).toBe("#808080");
+    expect(mixHex("#17171B", "#D4637A", 0)).toBe("#17171B");
+    expect(mixHex("#17171B", "#D4637A", 1)).toBe("#D4637A");
   });
 });
 
@@ -161,7 +285,7 @@ describe("end", () => {
     await endRunActivity(final);
     expect(endActivity).toHaveBeenCalledWith({
       activityId: "act-1",
-      data: final,
+      data: runCardData(final, 0),
       behavior: { dismissalPolicy: "immediate" },
     });
     // After end: updates are no-ops and a second end doesn't call again.

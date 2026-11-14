@@ -406,14 +406,16 @@ describe("race plans — the block is the calendar weeks from this week through 
         .map((r) => `${r.date}:${r.templateId}`);
     expect(ahead(sunday)).toEqual(ahead(monday));
     expect(new Set(ahead(sunday).map((k) => k.split(":")[1]))).toEqual(
-      new Set(["easy_30", "marathon_race"])
+      // Race week's shake-outs are 20 minutes (Run24 (10)).
+      new Set(["easy_30", "easy_20", "marathon_race"])
     );
   });
 });
 
 describe("race plans — the long run climbs one rung a week (Run23)", () => {
   it.each([
-    { distance: "marathon" as const, weeksOut: 6, from: 12, to: 15 },
+    // Run24 (6): the marathon's 14 km base is a rung of the 2 km ladder.
+    { distance: "marathon" as const, weeksOut: 6, from: 14, to: 16 },
     { distance: "half" as const, weeksOut: 5, from: 10, to: 12 },
     { distance: "10k" as const, weeksOut: 4, from: 6, to: 8 },
   ])(
@@ -429,7 +431,8 @@ describe("race plans — the long run climbs one rung a week (Run23)", () => {
   );
 
   it("no long run is more than one rung above the longest before it", () => {
-    const rungs = [6, 8, 10, 12, 15, 20, 25, 30];
+    // Run24 (6): a rung every 2 km.
+    const rungs = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32];
     for (const distance of RACE_DISTANCES)
       for (let weeksOut = 2; weeksOut <= 30; weeksOut++)
         for (const easyPaceSPerKm of [undefined, 300, 420])
@@ -466,52 +469,49 @@ describe("race plans — the long run climbs one rung a week (Run23)", () => {
 
   it("a full-length plan ramps in ordinary steps, with down weeks", () => {
     /* The contrast case, pinned so Run23 is not read as "the ramp is too
-       steep". 25-33% long-run steps are standard progression and stay; the
-       doubling was the outlier. A full-length plan already climbed a rung
-       at a time, so Run23 leaves it as it was. */
+       steep". The doubling was the outlier; a full-length plan already
+       climbed a rung at a time. Run24 (6) made the rungs 2 km, so a step
+       is 2 km over the longest before it, and the week after a cutback
+       returns to the climb rather than jumping past it. */
     const { out } = plan({ distance: "marathon", weeksOut: 20 });
     expect(out.compressed).toBe(false);
     const longs = longRuns(out.weeks).filter((k) => k > 0);
-    // Run17: the curve now aims at the schedulable ceiling (25 km on the
-    // nominal table, plus the 10% hold) instead of the 32 km config peak,
-    // so the block spends three weeks at 25 km rather than five, and the
-    // early weeks climb from base more gradually. Run22: the taper keeps a
-    // long run three and two weeks before race week, 75% and 60% of the
-    // 25 km in the plan's own sizes at most that share — 15 km both times.
+    // Run24 (1): the marathon's 180 minutes take the nominal table to its
+    // 32 km, climbed a rung a week (Run23), a rung every 2 km (Run24 (6)).
+    // Run22: the taper keeps a long run three and two weeks before race
+    // week, 75% and 60% of the 32 km in the plan's own sizes at most that
+    // share — 24 km and 18 km.
     expect(longs).toEqual([
-      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25, 15, 15,
+      14, 14, 16, 14, 18, 20, 20, 16, 22, 24, 26, 20, 28, 28, 30, 32, 24, 18,
     ]);
-    // No step past a third, and the sequence genuinely steps back down.
-    for (let i = 1; i < longs.length; i++) {
-      if (longs[i] > longs[i - 1]) {
-        expect((longs[i] - longs[i - 1]) / longs[i - 1]).toBeLessThanOrEqual(
-          1 / 3 + 0.001
-        );
-      }
-    }
+    // No long run more than 2 km past the longest before it, and the
+    // sequence genuinely steps back down.
+    for (let i = 1; i < longs.length; i++)
+      expect(longs[i] - Math.max(...longs.slice(0, i))).toBeLessThanOrEqual(2);
     expect(longs.some((k, i) => i > 0 && k < longs[i - 1])).toBe(true);
   });
 });
 
-describe("race plans — the 32 km marathon peak is registry-only, by design", () => {
-  it("never prescribes past the 150-minute long-run ceiling", () => {
-    /* `RACE_CONFIGS.marathon.peakLongKm` is 32 and the generator tops out at
-       25 km. Not drift: `long_30k` is 170 minutes and `LONG_RUN_MAX_MINUTES`
-       is 150, so the tier is pickable in the day sheet and never scheduled.
-       Pinned here because it reads as a discrepancy and costs a re-derivation
-       every time someone notices it. */
+describe("race plans — the 32 km marathon peak (Run24 (1))", () => {
+  it("is the marathon's alone, under its 180 minutes; the rest stop at the 150", () => {
+    /* `RACE_CONFIGS.marathon.peakLongKm` is 32. The marathon's ceiling is
+       180 minutes (Run24 (1)), so on the nominal table its block climbs to
+       32 km; 5K to half keep the 150 minutes, whose nominal top is 26 km
+       on the 2 km ladder (Run24 (6)). */
     for (const distance of RACE_DISTANCES) {
       for (const weeksOut of [12, 20, 30]) {
         const { out } = plan({ distance, weeksOut, runDays: 5 });
         const peak = Math.max(
           ...out.weeks.flat().map((r) => longKmOf(r.templateId))
         );
-        expect(peak, `${distance} @ ${weeksOut}w`).toBeLessThanOrEqual(25);
+        expect(peak, `${distance} @ ${weeksOut}w`).toBeLessThanOrEqual(
+          distance === "marathon" ? 32 : 26
+        );
       }
     }
     const { out } = plan({ distance: "marathon", weeksOut: 30, runDays: 5 });
-    expect(out.weeks.flat().some((r) => r.templateId === "long_30k")).toBe(
-      false
+    expect(out.weeks.flat().some((r) => r.templateId === "long_32k")).toBe(
+      true
     );
   });
 });

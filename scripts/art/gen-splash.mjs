@@ -1,16 +1,16 @@
 /**
  * Render the iOS launch image from the canonical brand mark.
  *
- * The launch image is the mark's hexagon alone, without its chevron: the
- * app's launch animation (src/components/LaunchSplash.tsx) starts from
- * this exact frame and raises the chevron into the hexagon, so the native
- * image hands over to the web layer without a jump.
+ * The launch image is the mark's bar alone, without its stem: the app's
+ * launch animation (src/components/LaunchSplash.tsx) starts from this
+ * exact frame and raises the stem into the bar, so the native image hands
+ * over to the web layer without a jump.
  *
  * Two things are DERIVED here rather than re-typed, because both had
  * already drifted once:
  *
- *   1. The hexagon is read out of `src/assets/brand/app-icon.svg` by its
- *      id (`scripts/art/brand-mark.mjs`), the file every icon is rendered
+ *   1. The bar is read out of `src/assets/brand/app-icon.svg` by its id
+ *      (`scripts/art/brand-mark.mjs`), the file every icon is rendered
  *      from.
  *   2. The ground colour is read out of the `.dark { --background }`
  *      token in `src/index.css`. The launch image's whole job is to hand
@@ -26,8 +26,8 @@
  * MARK_SHARE is set against the DEVICE CROP, not the square. The
  * storyboard image view is `scaleAspectFill`, so a 2732 square on a
  * 1179x2556 phone is scaled 0.9356 and centre-cropped to the middle
- * ~46% of its width; the hexagon is 53.8% of its own box. At 0.22 that
- * lands the hexagon at ~26% of phone screen width — the usual launch-mark
+ * ~46% of its width; the mark is 51.2% of its own box. At 0.22 that
+ * lands the mark at ~24% of phone screen width — the usual launch-mark
  * register. The app is iPhone-only (TARGETED_DEVICE_FAMILY = 1), so an
  * iPad shows it in an iPhone-sized window, not across its own screen.
  * LAUNCH_MARK_SHARE in src/lib/brandMark.ts is the same arithmetic for the
@@ -84,15 +84,14 @@ if (!bgToken)
   throw new Error("src/index.css: could not read .dark --background");
 const GROUND = hslTokenToHex(bgToken);
 
-const { hexagon, corner } = readMark(root);
+const { bar } = readMark(root);
 
 const mark = Math.round(SIZE * MARK_SHARE);
-/* The hexagon alone, rounded the way the icon rounds it: a round-joined
-   stroke of its own colour around the corner-inset polygon. */
+/* The bar alone, where the icon draws it in the mark's 1024 box. */
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
   <rect width="${SIZE}" height="${SIZE}" fill="${GROUND}"/>
   <g transform="translate(${(SIZE - mark) / 2}, ${(SIZE - mark) / 2}) scale(${mark / 1024})">
-    <polygon points="${hexagon}" fill="#7B72E9" stroke="#7B72E9" stroke-width="${corner}" stroke-linejoin="round"/>
+    <path d="${bar}" fill="#7B72E9"/>
   </g>
 </svg>`;
 

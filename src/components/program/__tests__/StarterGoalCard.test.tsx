@@ -36,7 +36,9 @@ describe("StarterGoalCard", () => {
   it("says once, plainly, that a week repeats", () => {
     render(<StarterGoalCard progress={progress({ repeated: true })} />);
     expect(
-      screen.getByText("This stage again: 2 more runs on separate days to move on.")
+      screen.getByText(
+        "This stage again: 2 more runs on separate days to move on."
+      )
     ).toBeInTheDocument();
   });
 
@@ -60,6 +62,6 @@ describe("StarterGoalCard", () => {
         })}
       />
     );
-    expect(screen.getByText("You've done it.")).toBeInTheDocument();
+    expect(screen.getByText("You’ve done it.")).toBeInTheDocument();
   });
 });

@@ -20,6 +20,7 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { signInAsTestUser } from "../helpers/auth";
+import { setTestUserTier } from "../helpers/testUserTier";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -66,6 +67,9 @@ const PAGES: {
     anchor: (page) => page.getByText("kg lifted").first(),
   },
   {
+    // The overview with the score's details open: the page Performance
+    // had until Trim1 call 5. Its old address is used on purpose, so
+    // this also holds that a saved link still lands on the details.
     name: "performance",
     path: "/Maiin/history?view=performance",
     anchor: (page) => page.getByRole("heading", { name: "Performance Index" }),
@@ -125,6 +129,16 @@ test.describe("analytics — a season of training", () => {
 
   test("every page, with sixteen weeks behind it", async ({ page }) => {
     test.setTimeout(300_000);
+    // The score's details are Pro (whole-app grill Q84); this films them.
+    await setTestUserTier("pro", SEASON.email);
+    try {
+      await filmSeason(page);
+    } finally {
+      await setTestUserTier("free", SEASON.email);
+    }
+  });
+
+  async function filmSeason(page: Page) {
     await signInAsTestUser(page, SEASON);
 
     for (const { name, path, anchor } of PAGES) {
@@ -142,19 +156,23 @@ test.describe("analytics — a season of training", () => {
        scoped pool left as "--" for anything older than the range. The
        race is weeks old, so its row only fills from the lifetime read. */
     await page.goto("/Maiin/history?tab=prs");
-    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Lifting bests")).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByText("Longest run").first()).toBeVisible();
     await settleImages(page);
     await settleFullPageHeight(page);
     await shootBoth(page, "season-prs");
 
-    /* Home's Performance row, whose change is now against last week. */
+    /* Home's week card, which says a season's week once: the count, the
+       seven days and what the count is made of. (The Performance row
+       closed this capture until Trim1 call 1 took the score off Home.) */
     await page.goto("/Maiin/");
     await expect(
-      page.getByRole("link", { name: /Performance Index \d+/ })
+      page.getByRole("list", { name: "This week so far" })
     ).toBeVisible({ timeout: 30_000 });
     await settleImages(page);
     await settleFullPageHeight(page);
     await shootBoth(page, "season-home");
-  });
+  }
 });

@@ -281,8 +281,8 @@ export default function ShareComposerSheet() {
             leftIcon={<EyeOff className="size-4 shrink-0" aria-hidden="true" />}
           >
             {remember
-              ? `Don't share future ${state.type === "workout" ? "workouts" : "runs"}`
-              : "Don't share this one"}
+              ? `Don’t share future ${state.type === "workout" ? "workouts" : "runs"}`
+              : "Don’t share this one"}
           </Button>
         </div>
 
@@ -306,8 +306,8 @@ export default function ShareComposerSheet() {
 
         {!isOnline && (
           <p className="text-caption text-muted-foreground text-center">
-            You&apos;re offline — your post will be queued and shared when
-            you&apos;re back online.
+            You’re offline — your post will be queued and shared when you’re
+            back online.
           </p>
         )}
       </div>

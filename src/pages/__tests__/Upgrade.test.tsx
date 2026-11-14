@@ -59,7 +59,9 @@ const manageSubscriptionMock = vi.fn();
 const isNativeIOSMock = vi.fn();
 const canSellMock = vi.fn();
 
+const syncAfterWebPurchaseMock = vi.fn(async () => {});
 vi.mock("@/lib/purchaseProvider", () => ({
+  syncAfterWebPurchase: () => syncAfterWebPurchaseMock(),
   purchase: (...args: unknown[]) => purchaseMock(...args),
   restorePurchases: vi.fn(),
   manageSubscription: (...args: unknown[]) => manageSubscriptionMock(...args),
@@ -367,9 +369,13 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "AI photo food logging, up to 100 scans a day",
       "A calorie target that adapts to you",
       "Macros that shift with your training",
+      "Running paces that update from your races and tempo runs",
+      "Readiness from your sleep and heart rate in Apple Health",
+      "Charts older than 3 months, your training load and your score’s details",
+      "Half and full marathon plans, after their first week",
     ]);
     const freeKeeps = screen.getByText(
-      "Free keeps your training plan, run tracking, and typed and barcode food logging."
+      "Free keeps your training plan, 5K and 10K race plans, run tracking, and typed and barcode food logging."
     );
     const cta = screen.getByRole("button", { name: "Continue" });
     for (const el of [list, freeKeeps]) {
@@ -401,7 +407,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       within(screen.getByRole("list", { name: "What Pro includes" }))
         .getAllByRole("listitem")
         .map((li) => li.textContent)
-    ).toHaveLength(3);
+    ).toHaveLength(7);
     expect(screen.queryByText(/^Free keeps/)).toBeNull();
   });
 
@@ -621,7 +627,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     canSellMock.mockReturnValue(false);
     renderPage();
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn't on sale in this version of the app yet."
+      "Pro isn’t on sale in this version of the app yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
@@ -817,9 +823,12 @@ describe("Upgrade — checkout return banner", () => {
   }
 
   it("?checkout=success shows the success status banner", () => {
+    syncAfterWebPurchaseMock.mockClear();
     renderWithQuery("?checkout=success");
     const banner = screen.getByRole("status");
     expect(banner.textContent).toContain("Payment received");
+    // Back from RevenueCat's web checkout: Pro is read now, not later.
+    expect(syncAfterWebPurchaseMock).toHaveBeenCalledOnce();
   });
 
   it("?checkout=cancelled shows the cancelled status banner", () => {

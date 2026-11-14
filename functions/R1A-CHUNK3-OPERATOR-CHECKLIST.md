@@ -115,12 +115,12 @@ These tests in `firestore.collectionGroup.test.ts` map to the
 executor's planned cleanup queries. Each test name and the inventory
 keys it proves feasible:
 
-| Test name (in `firestore.collectionGroup.test.ts`) | Inventory keys proven |
-|---|---|
-| `collectionGroup('users') + documentId == uid returns kudos+blocks+follows leaves; pathFilter discriminates` | `kudosByMe` AND `blocksReverse` (combined test — both must pass together) |
-| `collectionGroup('members') + documentId == uid (crewMemberships)` | `crewMemberships` |
-| `collectionGroup('items') + where(authorId == uid) + pathFilter (feedFanout)` | `feedFanout` AND `notificationsFromMe` (same query shape, different fields — combined proof) |
-| `collectionGroup('participants') + documentId == uid (challengeParticipations)` | `challengeParticipations` |
+| Test name (in `firestore.collectionGroup.test.ts`)                                                           | Inventory keys proven                                                                        |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `collectionGroup('users') + documentId == uid returns kudos+blocks+follows leaves; pathFilter discriminates` | `kudosByMe` AND `blocksReverse` (combined test — both must pass together)                    |
+| `collectionGroup('members') + documentId == uid (crewMemberships)`                                           | `crewMemberships`                                                                            |
+| `collectionGroup('items') + where(authorId == uid) + pathFilter (feedFanout)`                                | `feedFanout` AND `notificationsFromMe` (same query shape, different fields — combined proof) |
+| `collectionGroup('participants') + documentId == uid (challengeParticipations)`                              | `challengeParticipations`                                                                    |
 
 ### Failure scenarios per collectionGroup query
 
@@ -132,7 +132,7 @@ those specific keys.
 **Test 1 fails (kudosByMe AND blocksReverse infeasible):**
 
 - Most likely cause: Firestore rejects `where(FieldPath.documentId(),
-  '==', uid)` on collectionGroup queries, OR rejects the path-filter
+'==', uid)` on collectionGroup queries, OR rejects the path-filter
   in-memory discrimination.
 - Activate fallback for BOTH `kudosByMe` and `blocksReverse`. Add
   denormalised `userId` and `blockedUid` fields per
@@ -155,7 +155,7 @@ those specific keys.
   `__name__`. Failure here usually means a missing composite index
   rather than a fundamental query shape issue.
 - First check the emulator stderr for `FAILED_PRECONDITION: The
-  query requires an index`. If present, the fix is Gate 2 (index
+query requires an index`. If present, the fix is Gate 2 (index
   deploy) — not the fallback plan.
 - If the test fails for any OTHER reason, activate the fallback
   plan: denormalise the path on each fanout doc (e.g. add a
@@ -232,12 +232,12 @@ millions of comments already) can take minutes-to-hours.
 
 Four new indexes added in Chunk 2.C (see `firestore.indexes.json`):
 
-| Collection / scope | Fields | Used by |
-|---|---|---|
-| `items` (collectionGroup) | `authorId ASC, __name__ ASC` | feedFanout cleanup |
-| `items` (collectionGroup) | `fromUserId ASC, __name__ ASC` | notificationsFromMe cleanup |
-| `reports` (collection) | `reporterId ASC, __name__ ASC` | reportsByMe minimisation |
-| `reports` (collection) | `targetIdHash ASC, __name__ ASC` | reportsAboutMe minimisation |
+| Collection / scope        | Fields                           | Used by                     |
+| ------------------------- | -------------------------------- | --------------------------- |
+| `items` (collectionGroup) | `authorId ASC, __name__ ASC`     | feedFanout cleanup          |
+| `items` (collectionGroup) | `fromUserId ASC, __name__ ASC`   | notificationsFromMe cleanup |
+| `reports` (collection)    | `reporterId ASC, __name__ ASC`   | reportsByMe minimisation    |
+| `reports` (collection)    | `targetIdHash ASC, __name__ ASC` | reportsAboutMe minimisation |
 
 Plus the pre-existing `activities` composite which is unchanged.
 
@@ -254,6 +254,7 @@ Plus the pre-existing `activities` composite which is unchanged.
    in the repo; the location reference is for audit trail only).
 
 **Suggested screenshot path conventions:**
+
 - Local: `~/Desktop/r1a-gate-2-indexes-enabled.png`
 - Shared drive: anywhere accessible to the team
 
@@ -330,7 +331,7 @@ behaviour. Suggested structure:
 
 ```js
 // audit-r1a-historical.js (operator-local, not committed)
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk"); // run from functions/
 const serviceAccount = require("./service-account.json");
 
 admin.initializeApp({
@@ -347,7 +348,8 @@ async function auditOrphans() {
   let checked = 0;
   for (const doc of userDocs.docs) {
     checked += 1;
-    if (checked % 100 === 0) console.error(`checked ${checked}/${userDocs.size}`);
+    if (checked % 100 === 0)
+      console.error(`checked ${checked}/${userDocs.size}`);
     try {
       await auth.getUser(doc.id);
     } catch (err) {
@@ -362,7 +364,8 @@ async function auditBillingTombstones() {
   // Step 3b: tombstone format histogram
   const billingSnap = await db.collection("deletedBillingIdentities").get();
   const formatGuess = (id) => {
-    if (/^[0-9a-f]{64}$/.test(id)) return "64-hex (plain-SHA-256 or HMAC-SHA256)";
+    if (/^[0-9a-f]{64}$/.test(id))
+      return "64-hex (plain-SHA-256 or HMAC-SHA256)";
     if (/^[0-9a-f]{40}$/.test(id)) return "40-hex (SHA-1)";
     return "unknown format";
   };
@@ -553,6 +556,7 @@ until gates 1–3 return clean. No further local implementation work
 should begin until the report-back lands here.
 
 Last verification on `f9e1db1`:
+
 - `npm run lint` — PASS
 - `npx tsc --noEmit` — PASS
 - `npx tsc --build --force` — PASS (gate 4-of-Chunk-2.D)

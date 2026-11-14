@@ -309,7 +309,7 @@ test.describe("axe", () => {
     await check(page, "settings", found);
     for (const section of [
       "profile",
-      "training",
+      "lift-plan",
       "nutrition",
       "notifications",
       "privacy",
@@ -471,7 +471,7 @@ test.describe("axe", () => {
     await open(
       page,
       "space/womens-running/post/no-such-post",
-      page.getByText("This post isn't available")
+      page.getByText("This post isn’t available")
     );
     await check(page, "space-post-unavailable", found);
 

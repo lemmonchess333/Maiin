@@ -1,0 +1,261 @@
+# Build plan: the lifting session, built to its minutes
+
+11 November 2026. What follows Lift21 (#3190) and Pgm9 (#3189). Each slice is
+one PR or a short run of them, and each PR that changes what is built carries
+its printed panel.
+
+## What the owner sees, and when
+
+| After   | On his phone                                                                                                           |
+| ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Slice 2 | Settings, Programme, Reset gives the new week. On the web build at once; in the iOS app with the next TestFlight build |
+| Slice 4 | Train says when a day runs far past its length and offers the rebuild itself. His 12-lift Pull A is the first case     |
+| Slice 5 | The minutes on each day match what his saved sessions took                                                             |
+
+## Slices
+
+### 1. Prove the rules on every split, in prints
+
+STATUS 2026-11-11: done. `panel-2-every-split.md` holds the result: all 96
+setups pass, and six refinements to the rules came out of reading the prints.
+
+A pure module that sizes a day from an ordered list (`Lift21` calls 1 to 5),
+with no production caller, and a harness that prints the panel: 3, 4, 5 and 6
+days; 30, 45, 60 and 75 minutes; beginner and intermediate; Build muscle,
+General fitness and Get stronger. Beside each print, what main builds.
+
+Done when every print meets these, checked in the harness:
+
+- no day over its time on the engine's clock (45-minute leg days excepted
+  until slice 5, at no more than 4 minutes over);
+- no day under 85% of its time while its list has lifts left;
+- no lift under 3 sets for a non-beginner outside a 30-minute day;
+- paired days within one lift of each other;
+- each kind of day holds what call 4 says.
+
+### 2. The builder makes those weeks
+
+- Day lists in `programEngine.ts` rewritten as ordered slots with a place
+  (main, second, support), for full body, upper/lower, push/pull/legs and the
+  five-day mix.
+- `roleTable.ts`: 4 sets on the main lift from 60 minutes.
+- `sessionFit.ts`: lifts come off the end before sets are cut; the old order
+  goes, with its tests.
+- `volumeModel.ts`: `SECONDARY_SET_WEIGHT` to 0.5; the ceiling drops
+  (`extraPastCeiling`, `accessoriesPastCeiling`, the hinge drop) leave the
+  builder. A new ADR records it over ADR-0010.
+- Day roles apply only to a lift that is a main lift twice in the week.
+- The golden sweep is replaced by the panel's prints, with an under check
+  beside the over check. A six-day lifter joins the simulator's personas.
+- STATUS lines on Lift4, Lift9, Lift10, Lift11, Lift12 and Lift17; the lifting
+  handoff and `GLOSSARY.md` updated.
+- New plans only. A plan a person has is untouched.
+
+Risks: the simulator's ratchets were fitted to the old volumes and will move;
+each move is explained in the PR or the change is wrong. Injury and kit swaps
+must still leave no contraindicated lift (8,640 plans in the sweep).
+
+### 3. The defects that need no decision
+
+From the README's step 1, as small PRs beside slice 2: an added lift's first
+weight, the lower-back swaps, the bodyweight cap, one-rep ranges, the lifting
+taper in the week a plan is made, lift order chosen last, and one weight for a
+lift held on two days.
+
+STATUS 2026-11-12, #2 (the lower back): the rack pull and the kettlebell
+swing are off the lower-back lists; crunches, the cable crunch, the decline
+sit-up and the hanging leg raise are ruled out for a sore lower back, with the
+dead bug, the Pallof press and the planks in their place; a lift swapped in for
+an injury starts at 70% of its seed (`INJURY_SWAP_LOAD_SHARE`); and a swap
+across units (a hold for a lift counted in reps) takes numbers in its own unit.
+Over 2,700 lower-back plans the heaviest hinge went from 102% of the deadlift
+the same person would get to 71% (`lowerBackPlans.test.ts`). The 8-12 range for
+an injury swap goes with #5, which sets rep floors by lift type in the same
+place.
+
+STATUS 2026-11-12, #1 (an added lift's first weight): every loaded catalogue
+lift the bank does not list has its own factor and category
+(`catalogueLoads.ts`, 70 rows), so Add exercise, Replace and a session's add or
+swap start it at its own weight: for an 80 kg intermediate man a 10 kg lateral
+raise (was 32.5), a 25 kg leg extension (85), a 10 kg cable fly (62.5), a 20 kg
+kettlebell swing (100), and conditioning at no weight (a treadmill was 35 kg).
+A built plan's accessories keep the 0.3 they had, except the reverse flyes,
+which go from 16 kg a hand to 5. `catalogueLoads.test.ts` walks the catalogue,
+so a lift added later without a row fails. An added lift still counts as a
+main lift (`isAccessory` unset); setting it from the lift's role crosses the
+command boundary and is its own change.
+
+STATUS 2026-11-12, #3 (first weights uncapped by bodyweight): a first weight
+is scaled from no more than 90 kg of bodyweight, 70 kg for a woman
+(`SEED_BODYWEIGHT_CAP_KG`). A 150 kg beginner man's first squat goes from 105 kg
+to 62.5. No floor: a light lifter's light start corrects itself, and the plan
+follows the weight lifted from the first session. Building pull-ups as a lat
+pulldown above a bodyweight line is left for the level and kit work it belongs
+with.
+
+STATUS 2026-11-12, #13 ("Lighten leg sessions" where it changes nothing): setup
+and Run plan offer the switch only where a yes takes a set, and say how many: "4
+fewer leg sets a week, at the same weights" (`raceLegTrimCut`), where they said
+"a third fewer" of plans whose two-set leg lifts lose none. The stored answer is
+kept either way.
+
+STATUS 2026-11-12, #5 (swaps keep barbell rep numbers): a dumbbell,
+kettlebell or one-leg lift is never prescribed under six reps (`hasSixRepFloor`,
+`SIX_REP_FLOOR`, mirrored in `functions/lib/roleTable.js` and held through a
+heavy day's shift by `repFloorFor`), and a lift held for an injury asks 8 to 12
+where its slot asked fewer (`injurySwapReps`), for its first plan: a training
+block's start or end gives it the slot's numbers again. A floor deadlift keeps
+its own row. Over 2,700 plans, dumbbell and one-leg slots under six went from
+3,168 to none, and a sore knee's split squat from the squat's fixed five to 8
+to 12 (780 slots). The owner left the call to the session ("you figure it
+out"). Easy bodyweight lifts under eight (2,212 slots, pull-ups excluded) are
+the No equipment work's, #12, whose PR #3107 holds that floor. One-rep ranges:
+a new plan makes none, and an older plan's lighter day made 616 in a block's
+new numbers (a bodyweight 12-15 shifted to "14-15" against the 15-rep
+ceiling); the range now starts lower and keeps its width (`rangedReps`, both
+copies), so none. The owner's "12-13" pushdown was not reproduced, and like
+#14 it needs the stored plan.
+
+STATUS 2026-11-12, #14 (one lift, two weights): parked, not built. One
+strength per lift (a session moves every day that holds the lift, each day's
+weight from its own rep target) loops when the lift is truly weaker on one
+day: the owner's squat is 85 kg × 10 on Pull A and 60 kg × 6 on Legs A, after
+deadlifts, so each day's session would pull the other up and down. Two weights
+can be right; what is unexplained is Legs A's fall to 47.5 kg, below the 60 kg
+lifted there, which needs the stored plan (`README.md` 2.1, item 3).
+
+STATUS 2026-11-12, #7 (the lift order chosen too early): tried, not shipped.
+Moving `orderForAdjacency` after the time fit breaks the six-day rotation
+(Pull, Push, Legs, Push, Pull, Legs, where `programEngine.test.ts` holds the
+two halves equal) and moves the simulator's coaching findings both ways: the
+owner's marathon loses its chest-coverage finding and gains a barbell row
+stall, the advanced man gains overhead press misses, the hybrid lighter week
+trades its deadlift and RDL stalls for a leg curl stall. It changes what is
+built, so it goes to the owner as a printed panel, perhaps with the order
+limited to rotations of the builders' week.
+
+STATUS 2026-11-12, #11 (a reorder costs sets at the rollover): the cause has
+moved. Lift22 pairs a 30 or 45 minute plan's last lifts, and moving one of a
+pair to the front breaks the pair, so the day prices the two apart and the
+rollover read that as warm-ups that grew: over 256 plans and every single
+move, 10 moves took a set for good (a 45 minute Pull day's curl moved first,
+13 sets to 12). The rollover now judges and re-fits each day with its pairs
+together (`withPairsTogether`), so none; a day its weights outgrew is cut as
+before. The warm-up case the deep dive found (a 60 minute day's lateral raise
+first) no longer cuts at all since #1 gave the raise its own weight.
+
+STATUS 2026-11-12, #6 (no lifting taper in the week a plan is made): a plan
+made, or a race added, inside the race's final weeks now gets them at once,
+not from the next rollover (`raceFinalWeekNow` in `planBuilder.ts`). The days
+still to do take the lighter week's half sets, race week is one short session
+on the first of them with the leg lifts at half weight, a lift already done
+stays as it was, and the week is stamped as the race's, so the week after is
+lighter too. The race's week is read for the week the lifts are in: a plan
+made from a Thursday on has its runs, and its lifts' long first week, from the
+Monday after. On the deep dive's probe, a 10K added 5, 12 and 19 days out now
+gives race, lighter and lighter weeks (`raceWeekAtBuild.test.ts`), where all
+three kept full sets.
+
+STATUS 2026-11-13, #8 (a race the plan cannot prepare for, in words that are
+not true): a compressed block's taper now takes its shares from the runner's
+own running when its build is shorter than that or there is none. A marathon
+four weeks out, made by a runner with a 20 km long run behind them, was twelve
+easy 30s; it is now a 15 km and a 12 km long run three and two weeks out, with
+the other runs at the same shares of their week, then the easy week and the
+race (`raceTaperFromStart.test.ts`). With no running starting point, for a new
+runner and for a detrained one, the weeks are as they were. The planner says
+what the weeks hold in place of what a compressed plan does in general, and
+when the race is out of the plan's reach (the welcome-back sheet's rule) it
+says that first, as distances: "Your longest run now is about 12 km. By race
+day the plan's long run gets to 6 km, and a marathon is 42.2 km. A later race
+or a shorter one gives it time." The race card on Train says a block with no
+build tapers to race day.
+
+STATUS 2026-11-12, #9 (an easy 30 the day after a marathon): a recovery is
+graded from the race by its distance (`RECOVERY_STEPS` in `runScheduler.ts`):
+days off after it (a 5K one, a 10K two, a half four, a marathon seven), then at
+most three 20-minute runs a week on days apart, then 30 minutes on every run
+day, then 40 for a half or a marathon. A Sunday marathon's runner G had six
+easy 30s the week after it and every week for four; now none, then three 20s
+and a 30, then five 30s and a 40, then 40s (`raceRecovery.test.ts`). A week
+with no run keeps its key (`emptyRunWeekKey`) so the rollover moves on. The
+simulator's jump check no longer counts the recovery's climb back. PR-E's
+STATUS line (#3238) records the change.
+
+STATUS 2026-11-12, #10 (the first week back is the full base week): a race
+plan reads the week a runner came back in after a gap of 21 days or more from
+the runs it already reads (`returnWeekKey`), and that week opens a rung under
+the base long run with 20-minute easy runs, about 60% of the last week trained;
+each week after climbs one rung and ten minutes, never past the plan's own
+ramp. On the deep dive's half (five weeks trained, three off) the week back
+goes from three 30s and 10 km (158 minutes against 179) to three 20s and 8 km
+(105), then 10 and 12 km, where it held 10 km for three weeks
+(`runReentryClimb.test.ts`). Without the runs to see the gap in, a detrained
+runner's long run ramps toward base as before. The second half of the fix,
+leading the return prompt with moving the race when the long run cannot reach
+it, contradicts Run15's voice call ("it never says that"), so it is the
+owner's. Run15's STATUS line records the change.
+
+STATUS 2026-11-12, #10, second half (leading with moving the race): the owner
+left it to us, and it is built as a fact rather than a verdict. When the race
+is out of the plan's reach, the welcome-back sheet says how far the long run
+gets by race day and how far the race is ("By race day your long run gets to
+12 km. A half marathon is 21.1 km."), puts "Move my race" first and keeps
+"Rebuild my plan" one tap below. Out of reach is measured on the weeks the
+rollover will build (`raceLongRunReach`): the long run gets neither to the
+race's distance nor to three quarters of what the same plan builds with a
+full block's weeks (`raceOutOfReach`). The 1.5x of the race that the fix first
+named was dropped on measurement: the long-run ladder tops out at 25 km, so
+every marathon would have been told to move however far off it was. Measured
+on the deep dive's returning runner: a half five weeks out reaches 12 km of
+the plan's 20 and leads with moving it; six weeks out reaches 15 and does not;
+a marathon reaches 15 km of 25 up to six weeks out and the plan's full 25
+from eight; a 5K is in reach whenever the long run already runs past it
+(`raceLongRunReach.test.ts`). The climb back catches the ramp within a few
+weeks, so what decides it is the weeks left, not the length of the gap.
+
+### 4. A kept plan that has outgrown its time
+
+When a day prices at more than 125% of the session length, Train shows one
+line with the day's real minutes and two choices: rebuild the plan for the
+length, or keep the day as it is. A mockup comes first (DESIGN_GUIDE, pictures
+before code). This is the deep dive's decision 5, taken as "ask".
+
+STATUS 2026-11-12: built. The owner chose B from three mockups
+(`docs/visual-audit/lift-day-outgrown-2026-11-12/options-a-b-c.webp`): a
+notice under the day's card, not a row at the top of the list (A hid Start
+workout) or a line inside the card (C). It shows on a day still to train,
+in a plan fitted to a length, once the day prices past 125% of it
+(`outgrownDay.ts`). "Rebuild for 45 min" asks first, then builds the lift
+days again from the saved setup (`rebuildLiftDays` in `planBuilder.ts`) and
+saves through `configurePlan` as the lift plan editor does
+(`liftPlanRebuild.ts`, now shared by both). The week number, the history,
+the lighter week and each day done or skipped this week stay
+(`keepWeekProgress`), and a lift the person has trained keeps its weight
+where the new day holds it. "Keep this day" is remembered on the device
+for that day as it stands (`keptLongDays.ts`): adding a lift, or a new
+length, brings the notice back. A plan from before plans were fitted to a
+length still trims at Start and gets no notice.
+
+### 5. The clock
+
+Compare the estimator with saved sessions' durations and set its constants
+from them (45 s a set, 60 s a warm-up set, 90 s a lift, the rests). Until then
+no set is cut for a few minutes on leg days.
+
+### 6. Running
+
+Not part of Lift21. The marathon long run (decision 9) and starting from the
+runner's own week (decision 10) come to the owner as printed seasons for his
+own race, beside what main plans, before either changes.
+
+## Lift22: supersets in short plans
+
+STATUS 2026-11-12: built after panel 3 (`panel-3-supersets.md`) and the
+owner's two calls the same day: calls 2 and 3 widened, and Train draws a
+pair as its own block (B). New plans only.
+
+## Not in this plan
+
+Sets that rise through a block, a priority muscle, the split as a choice, the combined week (hybrid) and the watch.
+Each is in the README's steps 2 to 5 and waits for its own decision.

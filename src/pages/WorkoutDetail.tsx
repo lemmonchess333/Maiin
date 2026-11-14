@@ -196,7 +196,7 @@ function ExerciseRecord({
                     aria-hidden="true"
                     className="ml-auto text-caption font-semibold text-achievement-strong"
                   >
-                    PR
+                    Best
                   </span>
                 )}
               </li>
@@ -293,7 +293,7 @@ function WorkoutDetailContent() {
         loadingLabel="Loading workout"
         missingHeadline="Workout not found"
         missingSub="It may have been deleted, or the link belongs to another account."
-        failedHeadline="Couldn't load this workout"
+        failedHeadline="Couldn’t load this workout"
         failedSub="Check your connection and try again. Nothing has been changed."
         onRetry={retry}
         backHref={historyReturnTo ?? "/history"}

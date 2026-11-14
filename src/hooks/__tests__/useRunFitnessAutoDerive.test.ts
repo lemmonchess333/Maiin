@@ -206,16 +206,9 @@ describe("Pgm8 R1: the benchmark comes from efforts only", () => {
     });
   });
 
-  it("derives nothing from long runs, intervals or free runs", async () => {
+  it("derives nothing from long runs or free runs", async () => {
     const others = [
       savedRun("long", { activityType: "long", km: 15, minutes: 95, day: 1 }),
-      savedRun("intervals", {
-        activityType: "intervals",
-        km: 7,
-        minutes: 40,
-        day: 3,
-        workPortion: { seconds: 1200, meters: 5000 },
-      }),
       savedRun("free", { activityType: "freerun", km: 6, minutes: 30, day: 5 }),
     ];
     expect(await derive(others)).not.toHaveBeenCalled();

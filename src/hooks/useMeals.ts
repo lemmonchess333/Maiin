@@ -210,7 +210,7 @@ export function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
   };
 }
 
-/** Food supplies the window needed by the selected day, Copy yesterday and
+/** Food supplies the window needed by the selected day, its week and
  * recent suggestions. History callers can keep the existing paged query. */
 export function useMeals(dateWindow?: { from: string; to: string }) {
   const uid = useUid();
@@ -297,7 +297,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
           meals: prev?.scope === scope ? prev.meals : [],
           lastDoc: null,
           hasMore: false,
-          error: "Couldn't load your food diary.",
+          error: "Couldn’t load your food diary.",
           serverConfirmed: false,
         }));
         finish();

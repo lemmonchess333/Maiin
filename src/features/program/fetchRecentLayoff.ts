@@ -60,9 +60,16 @@ export interface RecentRuns {
 }
 
 /**
- * The recent runs (`RECENT_RUN_SCAN_LIMIT` of them), read once. A failed
- * read settles as no layoff and no runs known, never as an error (see
- * `fetchRecentLayoff` for why "none" is the safe direction).
+ * The recent runs (`RECENT_RUN_SCAN_LIMIT` of them), read once, and the
+ * runner's layoff class from them.
+ *
+ * Every failure settles as no layoff and no runs known, never as an error:
+ * no uid, an empty collection, a read error. That is deliberate and it is
+ * the SAFE direction — `"none"` is the behaviour the app had before Run15,
+ * so a failed read leaves the user exactly where they were rather than
+ * dropping them into a re-entry plan they did not earn. The opposite default
+ * would let one offline read rewrite a trained runner's week down to easy
+ * running.
  */
 export async function fetchRecentRuns(
   uid: string | null | undefined,
@@ -80,21 +87,4 @@ export async function fetchRecentRuns(
     logger.warn("[layoff] recent-run read failed; treating as no layoff", err);
     return { layoff: "none", runs: null };
   }
-}
-
-/**
- * Resolve the runner's layoff class, or `"none"` if it cannot be determined.
- *
- * Every failure mode returns `"none"`: no uid, an empty collection, a read
- * error. That is deliberate and it is the SAFE direction — `"none"` is the
- * behaviour the app had before Run15, so a failed read leaves the user
- * exactly where they were rather than dropping them into a re-entry plan they
- * did not earn. The opposite default would let one offline read rewrite a
- * trained runner's week down to easy running.
- */
-export async function fetchRecentLayoff(
-  uid: string | null | undefined,
-  todayKey: string
-): Promise<LayoffClass> {
-  return (await fetchRecentRuns(uid, todayKey)).layoff;
 }

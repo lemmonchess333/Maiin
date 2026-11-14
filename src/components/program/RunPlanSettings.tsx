@@ -66,7 +66,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, Minus, Plus, SlidersHorizontal } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -76,6 +76,12 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
+import RacePlanProNote from "./RacePlanProNote";
+import PhotoChoiceCards, {
+  type PhotoChoice,
+} from "@/components/program/PhotoChoiceCards";
+import { PLAN_GOAL_PHOTOS } from "@/lib/planPhotos";
+import { spaceEditorialImage } from "@/lib/editorialImages";
 import {
   getRaceGoalPlannerState,
   MIN_RACE_RUN_DAYS,
@@ -86,7 +92,7 @@ import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { buildPlan } from "@/features/program/planBuilder";
+import { buildPlan, freshLiftWeek } from "@/features/program/planBuilder";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
@@ -108,10 +114,14 @@ import {
 } from "@/features/spaces/raceEventOverrides";
 import type { UserProfile } from "@/lib/auth";
 import type {
+  PrimaryGoal,
   ProgramState,
   RaceDistance,
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import { raceLegTrimCut } from "@/features/program/programEngine";
+import { sessionLengthOption } from "@/features/program/sessionFit";
+import { legTrimEffect } from "@/lib/legTrimEffect";
 import {
   runTuningFromProfile,
   type RunVolumePreset,
@@ -187,8 +197,10 @@ interface RunPlanSettingsProps {
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
   refreshProfile: () => Promise<void>;
-  /** Deep-link to the full programme editor (goal/nutrition/lift/…). */
-  onOpenFullSettings: () => void;
+  /** Pro or in a trial. A free account is told that half and full
+   *  marathon plans are Pro after their first week (Q85). Absent reads as
+   *  Pro, so nothing is said. */
+  isPro?: boolean;
 }
 
 /** Seconds → the string the goal-time input round-trips ("24:30",
@@ -198,15 +210,39 @@ const formatRaceTime = formatClock;
 /** Whether the runner is training for a race. The stored mode follows from
  *  the answer (Run9a); the words never name it. Run9's starter goal sits
  *  between the two for those it is offered to (`starterOffered`). */
+/** The running goal's cards (DESIGN_GUIDE §14m rule 26): each a photograph with
+ *  one fact. "Training for a race" shows the race's own place once the
+ *  goal is bound to one, and says which race. */
 function raceOrNotOptions(
-  starterOffered: boolean
-): { value: RunMode; label: string }[] {
+  starterOffered: boolean,
+  race: { spaceId: string; name: string }
+): PhotoChoice<RunMode>[] {
+  const racePlace = race.spaceId ? spaceEditorialImage(race.spaceId) : null;
   return [
-    { value: "freeform", label: "No race" },
+    {
+      value: "freeform",
+      label: "No race",
+      fact: "Run when you like",
+      photo: PLAN_GOAL_PHOTOS.freeform,
+      focus: "50% 40%",
+    },
     ...(starterOffered
-      ? [{ value: "starter" as const, label: STARTER_GOAL_NAME }]
+      ? [
+          {
+            value: "starter" as const,
+            label: STARTER_GOAL_NAME,
+            fact: "About nine weeks",
+            photo: PLAN_GOAL_PHOTOS.starter,
+            focus: "50% 25%",
+          },
+        ]
       : []),
-    { value: "race_prep", label: "Training for a race" },
+    {
+      value: "race_prep",
+      label: "Training for a race",
+      fact: (racePlace && race.name) || "A plan to race day",
+      photo: racePlace ?? PLAN_GOAL_PHOTOS.race_prep,
+    },
   ];
 }
 
@@ -226,7 +262,7 @@ export default function RunPlanSettings({
   programState,
   readiness,
   refreshProfile,
-  onOpenFullSettings,
+  isPro = true,
 }: RunPlanSettingsProps) {
   // ── Saved baseline (the dirty-check reference) ──────────────────────
   const saved = useMemo(
@@ -373,6 +409,32 @@ export default function RunPlanSettings({
   );
   /* The leg trim is a lifting question: asked only of someone who lifts. */
   const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
+  // The switch is offered only where a yes changes something: a plan whose
+  // leg lifts have two sets each loses none (training deep dive). With no
+  // programme yet, the save builds the first one, so it is that week.
+  const legTrimCut = useMemo(
+    () =>
+      raceLegTrimCut(
+        programState?.workouts?.length
+          ? programState.workouts
+          : lifts
+            ? freshLiftWeek({
+                primaryGoal: (profile.primaryGoal ?? "general") as PrimaryGoal,
+                experience: profile.experience ?? "beginner",
+                sessionMinutes: sessionLengthOption(
+                  profile.liftTimeBudgetMinutes
+                ),
+                bodyweightKg: profile.weightKg,
+                sex: profile.sex,
+                liftDays: profile.weeklyWorkoutsTarget ?? 0,
+                equipment: profile.equipment ?? "full_gym",
+                barbellAtHome: profile.barbellAtHome === true,
+                injuries: profile.injuries ?? [],
+              })
+            : []
+      ),
+    [programState, lifts, profile]
+  );
   const today = useLocalDateKey();
 
   /* R5: a race plan set up or changed with no starting point starts from
@@ -773,7 +835,7 @@ export default function RunPlanSettings({
               "Your programme changed. Reopen settings to review the latest plan before saving.")
           : isRateLimitedRejection(e)
             ? PLAN_SAVES_TOO_OFTEN
-            : "Couldn't save your run plan. Try again.",
+            : "Couldn’t save your run plan. Try again.",
         {
           id: "run-plan",
         }
@@ -849,15 +911,17 @@ export default function RunPlanSettings({
     <div className="space-y-4 pb-6">
       {/* ── Race or not ───────────────────────────────────────────────
           Run9a: the plan is a race goal or nothing, so the question is
-          whether there is a race. The same control as the race's
-          Distance, in the running colour. */}
+          whether there is a race. Photograph cards, as the race's
+          Distance below (DESIGN_GUIDE §14m rule 26). */}
       <div className="space-y-2">
         <SectionHeading size="compact">Running goal</SectionHeading>
-        <SegmentedControl
+        <PhotoChoiceCards<RunMode>
           ariaLabel="Running goal"
-          tone="running"
-          options={raceOrNotOptions(starterOffered)}
-          layout={starterOffered ? "wrap" : undefined}
+          tall
+          options={raceOrNotOptions(starterOffered, {
+            spaceId: raceEventSpaceId,
+            name: raceEventName.trim(),
+          })}
           value={runMode}
           onChange={(next) => {
             haptic();
@@ -878,7 +942,7 @@ export default function RunPlanSettings({
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Run {STARTER_GOAL_NAME} in about nine weeks. It starts with short
-            runs and walks between them, and a week repeats until you've done
+            runs and walks between them, and a week repeats until you’ve done
             it.
           </p>
           <div className="space-y-2">
@@ -902,7 +966,8 @@ export default function RunPlanSettings({
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
-        <div ref={raceGoalRef}>
+        <div ref={raceGoalRef} className="space-y-2">
+          <RacePlanProNote distance={raceDistance} isPro={isPro} />
           <RaceGoalPlanner
             distance={raceDistance}
             targetDate={raceTargetDate}
@@ -997,7 +1062,9 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
               disabled={weeklyRunDays <= minRunDays}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+              /* px, not rem: a control keeps its size with larger text,
+                 so the heading beside it keeps the row (largeText). */
+              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -1012,7 +1079,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.min(7, n + 1));
               }}
               disabled={weeklyRunDays >= 7}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-[44px] rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>
@@ -1101,14 +1168,14 @@ export default function RunPlanSettings({
           </div>
           {/* Lift4 (10): the race-setup answer on the leg trim, changeable
               here for as long as the race runs. */}
-          {lifts && (
+          {lifts && legTrimCut > 0 && (
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <SectionHeading size="compact">
                   Lighten leg sessions while your runs build
                 </SectionHeading>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  A third fewer leg sets, at the same weights.
+                  {`${legTrimEffect(legTrimCut)}.`}
                 </p>
               </div>
               <Toggle
@@ -1121,42 +1188,6 @@ export default function RunPlanSettings({
         </>
       )}
 
-      {/* ── The way back to the Programme page ───────────────────────── */}
-      {/* The container is a wrapper, not the button: a query against the
-          button itself did not apply reliably to its children. */}
-      <div className="@container">
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            onOpenFullSettings();
-          }}
-          className="w-full text-left rounded-2xl bg-card border border-border/40 px-[14px] py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
-        >
-          {/* Icon container + trailing chevron, i.e. the row shape every
-            other drill-in in Settings uses (`SettingsIndex.tsx`). Without
-            them this was the only cross-page navigation row in Settings
-            with neither affordance, so the one escape hatch out to
-            /settings/training read as a static description card. */}
-          {/* Under 12em (larger text on the phone) the icon gives way so
-            "Programme" keeps room, and a word wider than the row still
-            hyphenates rather than running out of it. Wide-first. */}
-          <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 @max-[10em]:hidden">
-            <SlidersHorizontal className="size-4 text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0 break-words hyphens-auto">
-            <p className="text-sm font-medium text-foreground">Programme</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Your setup, lift plan, reset
-            </p>
-          </div>
-          <ChevronRight
-            className="size-4 text-muted-foreground shrink-0"
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (
         <div
@@ -1168,7 +1199,7 @@ export default function RunPlanSettings({
               id="run-plan-load-failed"
               className="mb-2 text-center text-xs text-muted-foreground"
             >
-              Couldn't load your programme. Reopen this page to try again.
+              Couldn’t load your programme. Reopen this page to try again.
             </p>
           )}
           <Button

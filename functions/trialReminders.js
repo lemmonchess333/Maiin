@@ -12,7 +12,7 @@
 // 1st-gen, like every export here: firebase-functions/v1.
 const functions = require("firebase-functions/v1");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 const { SCHEDULED_CAP } = require("./lib/runtimeCaps");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const trialReminder = require("./lib/trialReminder");
@@ -20,6 +20,7 @@ const { buildTrialReminderEmail } = require("./lib/trialReminderEmail");
 const { sendViaResend } = require("./email/accountEmails");
 const { syncUser } = require("./revenueCat");
 const jobRuns = require("./lib/jobRuns");
+const helpers = require("./helpers");
 
 // Both are already provisioned and bound elsewhere (email/accountEmails.js,
 // revenueCat.js); defineSecret registers by name.
@@ -72,7 +73,11 @@ async function remindOne(uid, deps) {
 
   const to = await deps.getEmail(uid);
   if (!to) return "no-email";
-  const message = buildTrialReminderEmail({ trial, timeZone: data.timezone });
+  const message = buildTrialReminderEmail({
+    trial,
+    timeZone: data.timezone,
+    manageUrl: deps.manageUrl,
+  });
   await deps.sendEmail({ to, ...message });
 
   // Marked only while it is still the trial that was reminded about.
@@ -154,6 +159,8 @@ function productionDeps(nowMs) {
       }),
     getEmail: authEmail,
     sendEmail: sendViaResend,
+    // Where a web trial is cancelled: the web app's Settings, Account.
+    manageUrl: `${helpers.getStripeReturnBaseUrl()}settings/account`,
   };
 }
 

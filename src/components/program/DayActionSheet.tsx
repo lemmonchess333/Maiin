@@ -1,4 +1,5 @@
 import { liftDayNameIn } from "@/lib/liftDayLabel";
+import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 /**
@@ -271,7 +272,8 @@ export default function DayActionSheet({
         // Run21 (5): a long run's minutes at the runner's own pace.
         runDoseLine(
           selectedRunTemplate,
-          planningEasyPaceSPerKm(profile?.runFitness)
+          planningEasyPaceSPerKm(profile?.runFitness),
+          plannedIntervalPaceSPerKm(profile?.runFitness)
         ),
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
@@ -385,7 +387,7 @@ export default function DayActionSheet({
               className="size-3.5 mt-0.5 shrink-0"
               aria-hidden="true"
             />
-            Quality run and a lift share this day — if recovery's tight, go
+            Quality run and a lift share this day — if recovery’s tight, go
             easier on one of them.
           </p>
         )}
@@ -422,7 +424,13 @@ export default function DayActionSheet({
                 )}
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
-                  template={selectedRunTemplate}
+                  template={
+                    selectedRunTemplate &&
+                    withPlannedRest(
+                      selectedRunTemplate,
+                      plannedIntervalPaceSPerKm(profile?.runFitness)
+                    )
+                  }
                   racePace={selectedRacePace}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
@@ -621,7 +629,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNF — Started but didn&apos;t finish
+                          DNF — Started but didn’t finish
                         </button>
                         <button
                           type="button"
@@ -633,7 +641,7 @@ export default function DayActionSheet({
                           }}
                           className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                         >
-                          DNS — Didn&apos;t start
+                          DNS — Didn’t start
                         </button>
                       </>
                     )}

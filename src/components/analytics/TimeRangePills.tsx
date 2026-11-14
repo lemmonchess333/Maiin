@@ -1,9 +1,13 @@
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import RangeLabel from "./RangeLabel";
 
 interface TimeRangePillsProps {
   options?: string[];
   selected: string;
   onChange: (value: string) => void;
+  /** Ranges that are Pro for this account (Q84): drawn with a lock, and
+   *  still passed to `onChange`, which decides what a tap on one does. */
+  locked?: readonly string[];
 }
 
 /**
@@ -18,6 +22,7 @@ export default function TimeRangePills({
   options = ["1W", "1M", "3M", "6M", "1Y"],
   selected,
   onChange,
+  locked = [],
 }: TimeRangePillsProps) {
   return (
     <SegmentedControl
@@ -27,7 +32,10 @@ export default function TimeRangePills({
       /* The 36pt track every History control row takes (§14m rule 18),
          each option still 44pt to tap. */
       size="sm"
-      options={options.map((opt) => ({ value: opt, label: opt }))}
+      options={options.map((opt) => ({
+        value: opt,
+        label: <RangeLabel range={opt} locked={locked.includes(opt)} />,
+      }))}
     />
   );
 }

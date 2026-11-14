@@ -7,6 +7,7 @@ import {
 } from "@/lib/dateHelpers";
 import {
   isRunWalkTemplateId,
+  RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
@@ -77,7 +78,7 @@ interface ClimbRung {
 function longRunRungs(easyPaceSPerKm?: number | null): ClimbRung[] {
   const rungs = RUN_TEMPLATES.filter(
     (t) =>
-      t.type === "long" ||
+      (t.type === "long" && !RETIRED_RUN_TEMPLATE_IDS.has(t.id)) ||
       (t.type === "easy" && !t.config?.strides && !isRunWalkTemplateId(t.id))
   )
     .map((t): ClimbRung => ({
@@ -242,11 +243,18 @@ const DONE_RUNG_SHARE = 0.95;
  * while the climb still holds their week under the plan's; once it doesn't,
  * the plan's own sessions stand.
  */
+/** The shortest run a taper or race week's fit cuts to (deep dive D13). */
+const CUTTING_FLOOR_MINUTES = 20;
+
 export function fitWeekToRunningBaseline(
   week: ScheduledRunDay[],
   baseline: RunningBaseline | null | undefined,
   climb: RunningClimbWeek | null,
-  easyPaceSPerKm?: number | null
+  easyPaceSPerKm?: number | null,
+  /** A taper or race week (deep dive D13): its weekday runs keep only
+   *  their own minutes, not the long run's as well, so the week cuts its
+   *  running rather than moving the long run's minutes onto the weekdays. */
+  cutting = false
 ): ScheduledRunDay[] {
   if (!isRunningBaseline(baseline) || !climb) return week;
   const templateOf = (id: string) => RUN_TEMPLATES.find((t) => t.id === id);
@@ -269,13 +277,16 @@ export function fitWeekToRunningBaseline(
   const isLongRow = (row: ScheduledRunDay) =>
     templateOf(row.trainingBasis?.originalTemplateId ?? row.templateId)
       ?.type === "long";
-  // A week with no long run (a lead-in, a taper's last weeks) gives its
-  // runs the long run's minutes too.
+  // A week with no long run gives its runs the long run's minutes too: a
+  // lead-in. A taper or race week does not (`cutting`): there the five
+  // 30-minute runs after a build of five 20s were the long run's minutes
+  // moved onto the weekdays.
+  const noLongRun = !week.some((row) => fitted(row) && isLongRow(row));
+  /** A taper or race week with no long run: its weekday runs keep their
+   *  own minutes, cut to no shorter than `CUTTING_FLOOR_MINUTES`. */
+  const cutsWeekdays = cutting && noLongRun;
   const otherMinutes =
-    climb.otherMinutes +
-    (week.some((row) => fitted(row) && isLongRow(row))
-      ? 0
-      : climb.longestMinutes);
+    climb.otherMinutes + (noLongRun && !cutting ? climb.longestMinutes : 0);
   // Still building towards the plan: the climb holds a run or the rest of
   // the week under what the plan asks for.
   const building =
@@ -313,6 +324,7 @@ export function fitWeekToRunningBaseline(
       (t) =>
         t.type !== "race" &&
         !isRunWalkTemplateId(t.id) &&
+        !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides
@@ -353,6 +365,10 @@ export function fitWeekToRunningBaseline(
         const original = templateFor(row);
         if (!fitted(row) || !original || isLongRow(row)) return [];
         const next = choices(original, minutes(original) - 0.01);
+        // A taper or race week with no long run cuts to 20 minutes and no
+        // further: the weekday runs it keeps are runs, not 10-minute jogs.
+        if (cutsWeekdays && next && minutes(next) < CUTTING_FLOOR_MINUTES)
+          return [];
         return next ? [{ index, next, duration: minutes(original) }] : [];
       })
       .sort((a, b) => b.duration - a.duration || b.index - a.index);

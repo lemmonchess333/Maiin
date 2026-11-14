@@ -33,7 +33,7 @@ describe("the New chip is gold, the colour kept for new bests", () => {
        retired; the fill-step rule above held its contrast, and the rule it
        now follows is the colour's meaning. Small text takes the -strong
        step, as the finish screen's and the workout's gold does. */
-    render(<PRCard title="Running PRs" prs={prs} />);
+    render(<PRCard title="Running bests" prs={prs} />);
     const chip = screen.getByText("New");
     expect(chip).toHaveClass("text-achievement-strong");
     expect(chip.className).toMatch(/\bbg-achievement\/\d+/);
@@ -46,7 +46,7 @@ describe("the New chip is gold, the colour kept for new bests", () => {
     // entirely, `getByText` would throw rather than pass — but a suite
     // that only ever renders `isNew` rows would not notice the flag
     // being ignored in the other direction.
-    render(<PRCard title="Running PRs" prs={[prs[1]]} />);
+    render(<PRCard title="Running bests" prs={[prs[1]]} />);
     expect(screen.queryByText("New")).toBeNull();
   });
 });

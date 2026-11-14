@@ -22,7 +22,7 @@ const require = createRequire(import.meta.url);
 
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 
-const admin = require("firebase-admin");
+const admin = require("../lib/adminSdk");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const aiConsent = require("../lib/aiConsent");
 const { analyzeFood, analyzeFoodText } = require("../index");

@@ -40,7 +40,6 @@ function renderWith(aiAnalysisEnabled: boolean | undefined) {
       profile={{ aiAnalysisEnabled, hideSharedRouteEnds: false }}
       updateProfile={updateProfile}
       updateShareDefaults={vi.fn().mockResolvedValue({ ok: true })}
-      refreshProfile={vi.fn().mockResolvedValue(undefined)}
       privacyZones={[]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={vi.fn().mockResolvedValue(undefined)}
@@ -70,7 +69,7 @@ describe("PrivacySection — the AI food analysis switch", () => {
     renderWith(undefined);
     expect(
       screen.getByText(
-        /Sends your meal photos and typed meals to Google's Gemini AI/
+        /Sends your meal photos and typed meals to Google’s Gemini AI/
       )
     ).toBeTruthy();
   });

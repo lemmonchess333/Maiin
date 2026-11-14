@@ -74,7 +74,17 @@ def _body(error):
         return b""
 
 
-def make_client(token):
+# A read Google did not answer, or answered 408, 429 or 5xx, is tried again,
+# as verify_deployed_rules.py's are: one such read otherwise fails the release.
+# Both calls only read (getIamPolicy is a POST that changes nothing), so a
+# second try is safe. A refusal fails at once; no wait changes it.
+READ_PAUSES_S = (5, 15)
+TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
+
+
+def make_client(token, sleep=None):
+    # Looked up when called, so a test that patches time.sleep reaches it.
+    sleep = sleep or (lambda seconds: time.sleep(seconds))
     opener = urllib.request.build_opener(NoRedirect())
 
     def call(resource, body=None):
@@ -90,22 +100,27 @@ def make_client(token):
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             method="GET" if body is None else "POST",
         )
-        try:
-            with opener.open(request, timeout=30) as response:
-                data = json.load(response)
-        except urllib.error.HTTPError as error:
-            # A disabled API and a missing permission are both 403s and need
-            # different fixes. Google marks the first with this fixed reason
-            # code; only the code is looked for, and the body is never printed.
-            if error.code == 403 and b"SERVICE_DISABLED" in _body(error):
-                raise VerificationError("api-disabled") from None
-            raise VerificationError(f"http-{error.code}") from None
-        except (OSError, http.client.HTTPException):
-            # No connection, a timeout, or the connection lost while the body
-            # was being read (a reset, or a body cut short).
-            raise VerificationError("network-unavailable") from None
-        except (ValueError, UnicodeError):
-            raise VerificationError("invalid-json") from None
+        for pause in (*READ_PAUSES_S, None):
+            try:
+                with opener.open(request, timeout=30) as response:
+                    data = json.load(response)
+                break
+            except urllib.error.HTTPError as error:
+                # A disabled API and a missing permission are both 403s and need
+                # different fixes. Google marks the first with this fixed reason
+                # code; only the code is looked for, and the body is never printed.
+                if error.code == 403 and b"SERVICE_DISABLED" in _body(error):
+                    raise VerificationError("api-disabled") from None
+                if error.code not in TRANSIENT_STATUS or pause is None:
+                    raise VerificationError(f"http-{error.code}") from None
+            except (OSError, http.client.HTTPException):
+                # No connection, a timeout, or the connection lost while the body
+                # was being read (a reset, or a body cut short).
+                if pause is None:
+                    raise VerificationError("network-unavailable") from None
+            except (ValueError, UnicodeError):
+                raise VerificationError("invalid-json") from None
+            sleep(pause)
         if not isinstance(data, dict):
             raise VerificationError("invalid-response")
         return data

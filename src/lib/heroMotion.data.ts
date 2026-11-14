@@ -123,10 +123,10 @@ export const HERO_MOTION: Readonly<Record<string, HeroMotionSheet>> = {
     still: "form-art/deadlift.webp",
     frames: 34,
     fps: 12,
-    frameWidth: 480,
-    frameHeight: 476,
+    frameWidth: 441,
+    frameHeight: 480,
     cols: 6,
-    sha256: "eb85eae41416895077f5bc37e5d13f968cc8476de40a579cb0259798488d5655",
+    sha256: "411c0f903277b86380d3185b7516dc25fd3038ddd35e9376b2efded07c1daeb4",
   },
   "form-art/glute-bridge.webp": {
     src: "form-art/motion/glute-bridge.webp",

@@ -50,7 +50,10 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("../fetchRecentLayoff", () => ({
-  fetchRecentLayoff: (uid: string, day: string) => h.layoff(uid, day),
+  fetchRecentRuns: async (uid: string, day: string) => ({
+    layoff: await h.layoff(uid, day),
+    runs: [],
+  }),
 }));
 vi.mock("../HomeProgramController", () => {
   h.controllerImports++;
@@ -347,7 +350,7 @@ describe("Home acts on the server's copy of the plan", () => {
     await waitFor(() => expect(h.controllerMounts).toBe(1));
     act(() => h.publish!(published("failed")));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't load your programme. Try again."
+      "Couldn’t load your programme. Try again."
     );
     expect(h.skip).not.toHaveBeenCalled();
   });

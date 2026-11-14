@@ -138,6 +138,7 @@ week) are under "The person's actions" below.
 | holidays              | intermediate, 4 days, Build muscle                      | a week away twice (weeks 8 and 17), app closed          |
 | cutting               | intermediate, 3 days, Lose fat, a cut                   | 90%; loads what he knows                                |
 | over-55               | over 55, new to lifting, 3 days; starts in July         | 90%                                                     |
+| six-days-general      | bench 90, squat 120, 6 days of 45 minutes, general      | 90%; loads what he knows                                |
 
 ## The checks
 

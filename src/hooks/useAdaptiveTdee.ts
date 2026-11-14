@@ -7,7 +7,7 @@ import { useAdaptiveEvidence } from "./useAdaptiveEvidence";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import {
   resolveAdaptiveTarget,
-  isAdaptiveActive,
+  isPersonalTargetWorkedOut,
   type AdaptiveTdeeView,
 } from "@/lib/adaptiveTarget";
 import {
@@ -51,10 +51,13 @@ function goalCalorieOffset(profile: UserProfile | null): number {
  * view assembly — lives in the pure `resolveAdaptiveTarget` engine
  * (`src/lib/adaptiveTarget.ts`), which is where the behaviour is table-tested.
  *
- * Active ONLY for Pro/trial users without a manual calorie override (Q4 lock
- * A) — everyone else gets `active: false`, `source: "formula"`, and ZERO extra
- * Firestore reads. `useEffectiveTargets` consumes this and is the single
- * source of truth that surfaces it everywhere.
+ * Applied ONLY for Pro/trial users without a manual calorie override (Q4 lock
+ * A). Since the whole-app grill's Q49 and Q87 the estimate is worked out for
+ * a free account too (the same reads, shared with Home and Food through
+ * `useAdaptiveEvidence`), so it can be told its personal target; its view is
+ * `active: false` with the formula as `value`. A manual override, or no
+ * account, reads nothing. `useEffectiveTargets` consumes this and is the
+ * single source of truth that surfaces it everywhere.
  */
 export type { AdaptiveTdeeView } from "@/lib/adaptiveTarget";
 
@@ -68,12 +71,15 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
   // estimate so the adaptive target preserves the deficit/surplus.
   const goalOffset = goalCalorieOffset(profile);
   const isManualOverride = !!profile?.customCalorieTarget;
-  const active = isAdaptiveActive({ hasUser: !!user, isPro, isManualOverride });
+  const workedOut = isPersonalTargetWorkedOut({
+    hasUser: !!user,
+    isManualOverride,
+  });
   const capPrev = profile?.adaptiveCapState ?? null;
 
   const today = useLocalDateKey();
   const { intakeByDay, weighIns, loaded } = useAdaptiveEvidence(
-    active ? (user?.uid ?? null) : null,
+    workedOut ? (user?.uid ?? null) : null,
     today
   );
   const now = useMemo(() => parseLocalDate(today), [today]);

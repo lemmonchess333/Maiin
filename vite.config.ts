@@ -127,6 +127,16 @@ export default defineConfig(({ mode }) => ({
   base: isCapacitor || isFirebaseHosting ? "/" : "/Maiin/",
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version || "1.1.0"),
+    // The e2e build sells, as production does, so the specs see the paywall
+    // with its prices and buttons: a build without the website's RevenueCat
+    // token shows neither (canSellInThisBuild). A placeholder, never a real
+    // token; an e2e bundle is refused by the hosting deploy.
+    ...(mode === "test" && !process.env.VITE_REVENUECAT_WEB_PURCHASE_TOKEN
+      ? {
+          "import.meta.env.VITE_REVENUECAT_WEB_PURCHASE_TOKEN":
+            JSON.stringify("e2e-placeholder"),
+        }
+      : {}),
   },
   plugins: [
     releaseDebugTokenGuard(),

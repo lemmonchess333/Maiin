@@ -19,7 +19,7 @@ describe.skipIf(!enabled)(
       db.doc(`users/${uid}/settings/challengeAnnouncement-2048-11`);
     beforeAll(() => {
       require("../../index");
-      admin = require("firebase-admin");
+      admin = require("../../lib/adminSdk");
       db = admin.firestore();
     });
     const timestamp = () => admin.firestore.FieldValue.serverTimestamp();

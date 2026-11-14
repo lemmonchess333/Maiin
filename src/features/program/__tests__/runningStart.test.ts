@@ -66,8 +66,8 @@ describe("the starting point is where the plan starts, and it climbs (R5, R6)", 
     const weeks = [0, 1, 2, 3, 4, 5, 6].map(
       (n) => runningClimb(start, shift("2026-11-02", n * 7)).longestMinutes
     );
-    // easy 20, easy 30, then the long runs' ladder: 6, 8, 10, 12 and 15 km.
-    expect(weeks).toEqual([20, 30, 35, 45, 55, 65, 80]);
+    // easy 20, easy 30, then the long runs' ladder: 6, 8, 10, 12 and 14 km.
+    expect(weeks).toEqual([20, 30, 35, 45, 55, 65, 75]);
     // The rest of the week starts at what was reported beside that run,
     // and climbs ten minutes a week.
     expect(
@@ -97,13 +97,13 @@ describe("the starting point is where the plan starts, and it climbs (R5, R6)", 
   it("starts the owner's marathon from their own running, never past the race's plan", () => {
     const withStart = ownerPlan(OWNER);
     const without = ownerPlan(null);
-    // Not a 12 km long run in the first week: the first long run is a
+    // Not a 14 km long run in the first week: the first long run is a
     // 20-minute run, on the next weekend.
     const firstWeek = withStart.weeks[1];
     expect(firstWeek.find((run) => run.date === "2026-11-08")?.templateId).toBe(
       "easy_20"
     );
-    expect(without.weeks[1].some((run) => run.templateId === "long_12k")).toBe(
+    expect(without.weeks[1].some((run) => run.templateId === "long_14k")).toBe(
       true
     );
     // The race's plan stays the upper bound: no run, any day, is longer.
@@ -116,7 +116,10 @@ describe("the starting point is where the plan starts, and it climbs (R5, R6)", 
       );
     // The long run climbs a rung a week at most, by the ladder the climb
     // uses, and reaches the race plan's peak before the taper.
-    const ladder = [10, 20, 30, 35, 45, 55, 65, 80, 110, 140, 170];
+    const ladder = [
+      10, 20, 30, 35, 45, 55, 65, 75, 85, 100, 110, 120, 135, 145, 160, 170,
+      180,
+    ];
     const longest = withStart.weeks
       .slice(1, -1)
       .map((week) => Math.max(...week.map((run) => minutesOf(run.templateId))));
@@ -127,7 +130,7 @@ describe("the starting point is where the plan starts, and it climbs (R5, R6)", 
       highest = Math.max(highest, rung);
     }
     expect(
-      withStart.weeks.flat().some((run) => run.templateId === "long_25k")
+      withStart.weeks.flat().some((run) => run.templateId === "long_32k")
     ).toBe(true);
   });
 
@@ -614,8 +617,14 @@ describe("the climb from what was done, at the runner's own pace", () => {
       planTotalWeeks: 25,
       recentRuns: fast,
     });
-    // The weeks ahead, which go by the calendar, are the same either way.
-    expect(withRuns.weeks.slice(1)).toEqual(plan.weeks.slice(1));
+    // The weeks ahead, which go by the calendar, run the same either way.
+    // (The plan's own record of the long run it climbs to, under the fit,
+    // follows this week's runs, as Run23's climb does.)
+    const runs = (p: typeof plan) =>
+      p.weeks
+        .slice(1)
+        .map((week) => week.map((r) => `${r.date} ${r.templateId}`));
+    expect(runs(withRuns)).toEqual(runs(plan));
     expect(sized).toBe(48);
   });
 });

@@ -178,14 +178,6 @@ export default function Social() {
   // progress prompt gives way to the standard empty-state treatment.
   const followingFeedUnlocked = shouldShowFollowingFeed(followingCount ?? 0);
 
-  /* FullLeaderboard overlay state lives in FeedView (which owns the
-     lazy chunk + leaderboard slot); the shell only mirrors "overlay
-     open" so it can suppress the tab bar + tab sections the way the
-     old inline `!showFullLeaderboard && <>` gate did. FeedView calls
-     onOverlayChange from the same event handlers that flip its local
-     state, so both updates land in one batched render — no
-     intermediate frame where overlay and tab bar coexist. */
-  const [chromeHidden, setChromeHidden] = useState(false);
   // In-app social notification tray (kudos / comment / follow). Closes the
   // engagement loop — the server already writes these; this surfaces them.
   const [showNotifications, setShowNotifications] = useState(false);
@@ -244,24 +236,21 @@ export default function Social() {
       /* Together's hero (the person's race, or the weekly challenge) names
          the screen, so no large title sits above it (DS4, Soc16): the
          title is for screen readers, and the Together/Feed switch takes
-         its place beside search and notifications, one row of chrome. It
-         is hidden while FeedView's full board overlays the page. */
+         its place beside search and notifications, one row of chrome. */
       titleHidden
       lead={
-        chromeHidden ? undefined : (
-          <SegmentedControl
-            ariaLabel="Social section"
-            size="sm"
-            value={tab}
-            onChange={setTab}
-            options={[
-              /* Together leads (SOCIAL-HOME-01). Legacy ?tab=crews still
-                 resolves to Together; ?tab=find opens the People overlay. */
-              { value: "together", label: "Together" },
-              { value: "feed", label: "Feed" },
-            ]}
-          />
-        )
+        <SegmentedControl
+          ariaLabel="Social section"
+          size="sm"
+          value={tab}
+          onChange={setTab}
+          options={[
+            /* Together leads (SOCIAL-HOME-01). Legacy ?tab=crews still
+               resolves to Together; ?tab=find opens the People overlay. */
+            { value: "together", label: "Together" },
+            { value: "feed", label: "Feed" },
+          ]}
+        />
       }
       /* The canonical --page-bottom-pad token (tab-bar height + the home
          indicator's inset + 1rem), as Food pins it, so the last card on
@@ -309,13 +298,12 @@ export default function Social() {
       {/* A new medal's reveal (Soc15), once per medal and tier, on the
           next visit to Social and never over Home. A blocking surface in
           the coordinator, so it never opens over another sheet; it waits
-          while the page's own overlays (notifications, People, the full
-          board) are open. */}
+          while the page's own overlays (notifications, People) are open. */}
       {uid && (
         <MedalRevealGate
           key={uid}
           uid={uid}
-          held={showNotifications || peopleOpen || chromeHidden}
+          held={showNotifications || peopleOpen}
         />
       )}
       {/* A league week's result (Soc15 call 3), once per result on this
@@ -325,7 +313,7 @@ export default function Social() {
         <LeagueResultGate
           key={uid}
           uid={uid}
-          held={showNotifications || peopleOpen || chromeHidden}
+          held={showNotifications || peopleOpen}
         />
       )}
 
@@ -353,7 +341,6 @@ export default function Social() {
         blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}
         refreshRef={feedRefreshRef}
-        onOverlayChange={setChromeHidden}
       />
 
       {/* ========== TOGETHER TAB ==========
@@ -363,8 +350,6 @@ export default function Social() {
           2026-07-20, see docs/proposals/crews-retirement.md.) */}
       <CommunityView
         active={tab === "together"}
-        openPeople={openPeople}
-        chromeHidden={chromeHidden}
         uid={uid ?? undefined}
         refreshRef={communityRefreshRef}
       />
@@ -389,7 +374,6 @@ export default function Social() {
             </div>
             <PeopleView
               active={peopleOpen}
-              chromeHidden={false}
               blockedUsers={blockedUsers}
               blockedReady={blockedReady}
               openTogether={() => {

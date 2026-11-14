@@ -228,7 +228,7 @@ describe("the build names the quality sessions only in a week that holds one", (
     for (const holds of [false, undefined]) {
       expect(easy(holds)).toMatch(/^Easy day — /);
       expect(easy(holds)).not.toMatch(/quality|hard days/);
-      expect(long(holds)).toMatch(/^The week's anchor run — /);
+      expect(long(holds)).toMatch(/^The week’s anchor run — /);
       expect(long(holds)).not.toMatch(/quality/);
     }
   });
@@ -385,7 +385,7 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
 
   it("keeps the anchor run's reason without one", () => {
     expect(runSessionExplainer({ ...long, currentWeek: 5 })).toMatch(
-      /^The week's anchor run/
+      /^The week’s anchor run/
     );
   });
 });
@@ -408,7 +408,7 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
       racePace: "tempo",
     });
     expect(why).toBe(
-      "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts."
+      "It teaches your legs and breathing what race pace feels like, so it’s familiar when it counts."
     );
   });
 

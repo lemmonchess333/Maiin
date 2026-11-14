@@ -217,12 +217,12 @@ describe("the AI question and the policy say the same things", () => {
   const SHEET = AI_CONSENT_COPY.body;
 
   it("both name Google's Gemini as where the food goes", () => {
-    expect(SHEET).toMatch(/Google's Gemini/);
-    expect(PRIVACY_PROSE).toMatch(/Google&apos;s Gemini on Vertex AI/);
+    expect(SHEET).toMatch(/Google’s Gemini/);
+    expect(PRIVACY_PROSE).toMatch(/Google’s Gemini on Vertex AI/);
   });
 
   it("both say Google does not train on it", () => {
-    expect(SHEET).toMatch(/Google doesn't use it to train its models/);
+    expect(SHEET).toMatch(/Google doesn’t use it to train its models/);
     expect(PRIVACY_PROSE).toMatch(/Google does not use it to train its models/);
   });
 
@@ -245,6 +245,14 @@ describe("Apple Health permissions and storage match the policy", () => {
   it("discloses the separate steps, run heart rate and workout export choices", () => {
     expect(PRIVACY_PROSE).toMatch(
       /The step count is not stored or sent to Tropos/
+    );
+    // Readiness's sleep and heart (whole-app grill Q39-Q44): read on the
+    // phone, never stored or sent, and the policy says so.
+    expect(PRIVACY_PROSE).toMatch(
+      /your sleep, resting heart rate and heart rate variability for the last four weeks/
+    );
+    expect(PRIVACY_PROSE).toMatch(
+      /They are read on your phone each time and are not stored or sent to Tropos/
     );
     expect(PRIVACY_PROSE).toMatch(
       /If you use Apple Watch runs, Tropos reads heart rate/
@@ -269,21 +277,34 @@ describe("Apple Health permissions and storage match the policy", () => {
     const share = appInfoPlistString("NSHealthShareUsageDescription", "NO");
     const update = appInfoPlistString("NSHealthUpdateUsageDescription", "NO");
     expect(share).toMatch(/step count/);
-    expect(share).not.toMatch(/heart rate|workout/);
+    // Readiness reads sleep, resting heart rate and HRV (Pro, when added);
+    // a standard build reads no workouts and no heart rate during a run.
+    expect(share).toMatch(
+      /your sleep, resting heart rate and heart rate variability/
+    );
+    expect(share).not.toMatch(/workout|during Apple Watch runs/);
     expect(update).toMatch(/does not add workouts/);
   });
 
   it("the existing steps bridge still asks only for steps", () => {
     // Run heart rate and workout export use the native Watch bridge. They
     // must not broaden the steps tile's request for Health permissions.
-    const asked = HEALTH_KIT.match(/permissions:\s*\[([^\]]*)\]/g);
-    expect(asked).toEqual(['permissions: ["READ_STEPS"]']);
-    expect(HEALTH_KIT).not.toMatch(/WRITE_/);
-    // No other module should reach for capacitor-health around this seam.
+    const asked = HEALTH_KIT.match(/requestAuthorization\(\{[^}]*\}\)/g);
+    // Steps alone for the tile; readiness asks separately, for exactly
+    // what the policy names (BODY_SIGNAL_TYPES).
+    expect(asked).toEqual([
+      'requestAuthorization({ read: ["steps"] })',
+      "requestAuthorization({ read: [...BODY_SIGNAL_TYPES] })",
+    ]);
+    expect(HEALTH_KIT).toMatch(
+      /BODY_SIGNAL_TYPES = \[\s*"sleep",\s*"restingHeartRate",\s*"heartRateVariability",\s*\] as const/
+    );
+    expect(HEALTH_KIT).not.toMatch(/\bwrite:/);
+    // No other module should reach for the Health plugin around this seam.
     const others = sourceFiles("src").filter(
       (f) =>
         !f.endsWith("lib/healthKit.ts") &&
-        /from\s+["']capacitor-health["']|import\(\s*["']capacitor-health["']\s*\)/.test(
+        /from\s+["']@capgo\/capacitor-health["']|import\(\s*["']@capgo\/capacitor-health["']\s*\)/.test(
           readFileSync(f, "utf8")
         )
     );

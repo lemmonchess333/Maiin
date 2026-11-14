@@ -82,7 +82,7 @@ export function postPhotoAlt(
   kind: "run" | "workout"
 ): string {
   const name = authorName.trim();
-  const whose = name ? `${name}'s ${kind}` : `this ${kind}`;
+  const whose = name ? `${name}’s ${kind}` : `this ${kind}`;
   return `Photo ${index + 1} of ${count} from ${whose}`;
 }
 

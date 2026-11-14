@@ -107,17 +107,19 @@ async function signIn() {
   results.push(cur);
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await settle(800);
-  // A first visit opens on the welcome screen, whose "I have an account"
+  // A first visit opens on the welcome screen, whose "Sign in"
   // leads to the form.
   const haveAccount = page.getByRole("button", {
-    name: "I have an account",
+    name: "Sign in",
     exact: true,
   });
   await haveAccount
     .or(page.locator("#login-email"))
     .first()
     .waitFor({ state: "visible", timeout: 20000 });
-  if (await haveAccount.isVisible()) await haveAccount.click();
+  // The form's submit is "Sign in" too: the email field says which screen is open.
+  if (!(await page.locator("#login-email").isVisible()))
+    await haveAccount.first().click();
   await page
     .locator("#login-email")
     .waitFor({ state: "visible", timeout: 20000 });

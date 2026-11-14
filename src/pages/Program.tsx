@@ -82,9 +82,14 @@ import {
 } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import OutgrownDayNotice from "@/components/program/OutgrownDayNotice";
+import { hasOutgrown, outgrownDayKey } from "@/features/program/outgrownDay";
+import { isLongDayKept, keepLongDay } from "@/lib/keptLongDays";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import SupersetBlock from "@/components/program/SupersetBlock";
+import { pairRuns } from "@/features/program/pairSlot";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
@@ -109,6 +114,7 @@ import {
   type SessionVariant,
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
+import type { ProgramExercise } from "@/features/program/programTypes";
 import {
   buildEasierSession,
   pickLighterDay,
@@ -147,6 +153,7 @@ import {
 } from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import { useRunFitnessAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 
@@ -240,8 +247,9 @@ function ProgramInner() {
     adoptLegacyTrainingBlock,
     releaseTrainingBlock,
     keepTrainingBlockFocus,
+    readiness,
   } = useProgram();
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   const { awardEventBadge } = useStreaks();
   // Today, from the shared day key: it moves at midnight and when the app
   // comes back, so a screen left open overnight names the new day.
@@ -273,7 +281,7 @@ function ProgramInner() {
     const ok = await applyDeloadWeek();
     if (!ok) {
       toast.error(
-        "Couldn't take a lighter week. Check your connection and try again."
+        "Couldn’t take a lighter week. Check your connection and try again."
       );
       return false;
     }
@@ -289,7 +297,7 @@ function ProgramInner() {
               });
               toast.success("Back to the full plan this week");
             } else {
-              toast.error("Couldn't undo the lighter week.");
+              toast.error("Couldn’t undo the lighter week.");
             }
           });
         },
@@ -413,6 +421,10 @@ function ProgramInner() {
   );
   const [sessionBudgetMinutes, setSessionBudgetMinutes] = useState<number>(60);
   const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
+  // A long day kept on this visit ("Keep this day"), so the notice goes at
+  // once; the device keeps it after (`keptLongDays`).
+  const [keptDay, setKeptDay] = useState<string | null>(null);
+  const [rebuildingDays, setRebuildingDays] = useState(false);
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -750,12 +762,17 @@ function ProgramInner() {
     if (day && !day.completed && !day.skipped) setExpressChooserDay(urlDay);
   }, [expressRequested, programState, urlDay, setSearchParams]);
   const startRequested = searchParams.get("start") === "1";
+  /* Home's readiness link adds `easier=1` (whole-app grill Q40): the same
+     start, as Train's own "Go easier today" (one set less per lift,
+     lighter loads). It is offered there, never chosen for the person. */
+  const easierRequested = searchParams.get("easier") === "1";
   useEffect(() => {
     if (!startRequested || !programState) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete("start");
+        next.delete("easier");
         return next;
       },
       { replace: true }
@@ -763,20 +780,26 @@ function ProgramInner() {
     if (viewingHistoryIndex !== null || urlDay === null) return;
     const day = programState.workouts[urlDay];
     if (!day || day.completed || day.skipped) return;
-    // A plan built to fit the person's time (Lift4 (5)) starts in full; one
-    // built before that still trims to their usual time at Start.
-    const budget = usualLiftBudget(
-      programState,
-      profile?.liftTimeBudgetMinutes
-    );
     /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
        to the deep link, consumed above so it cannot repeat */
-    setSessionBudgetMinutes(budget ?? 60);
-    setSessionVariant(budget === null ? "full" : "time_budget");
+    if (easierRequested) {
+      // Train's own Easier today, as its row starts it.
+      setSessionVariant("easier_today");
+    } else {
+      // A plan built to fit the person's time (Lift4 (5)) starts in full;
+      // one built before that still trims to their usual time at Start.
+      const budget = usualLiftBudget(
+        programState,
+        profile?.liftTimeBudgetMinutes
+      );
+      setSessionBudgetMinutes(budget ?? 60);
+      setSessionVariant(budget === null ? "full" : "time_budget");
+    }
     setSessionDayIndex(urlDay);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [
     startRequested,
+    easierRequested,
     programState,
     viewingHistoryIndex,
     urlDay,
@@ -845,7 +868,7 @@ function ProgramInner() {
   if (!programState || !prescription) {
     return (
       <ErrorState
-        title="Couldn't load your programme"
+        title="Couldn’t load your programme"
         description="Something went wrong fetching your training plan. Check your connection and try again."
         retry={{ label: "Retry", onClick: () => window.location.reload() }}
       />
@@ -990,6 +1013,69 @@ function ProgramInner() {
   const estimatedMinutes =
     usualPlan?.estimatedMinutes ??
     estimateSessionMinutes(selectedWorkout?.exercises ?? [], restContext);
+  // A day still to train that runs well past the length its plan is fitted
+  // to (slice 4): said under the day's card, with the rebuild one tap away,
+  // unless the person chose to keep this day as it is. A plan from before
+  // plans were fitted to a length trims at Start instead (`usualPlan`).
+  const fittedLength = programState?.sessionMinutes;
+  const outgrownKey =
+    selectedWorkout && fittedLength !== undefined
+      ? outgrownDayKey(selectedWorkout, fittedLength)
+      : null;
+  const showOutgrown =
+    outgrownKey !== null &&
+    fittedLength !== undefined &&
+    (status === "today" || status === "upcoming") &&
+    hasOutgrown(estimatedMinutes, fittedLength) &&
+    !isLongDayKept(user?.uid, outgrownKey) &&
+    keptDay !== outgrownKey;
+
+  /** "Rebuild for N min": the lift days built again for the length, saved
+   *  through configurePlan as the lift plan editor saves, then the profile
+   *  read back so Train shows the new days. Not before the programme has
+   *  loaded, as the editor waits. The builder loads with the tap. */
+  async function rebuildForLength(length: number) {
+    if (rebuildingDays || readiness !== "ready") return;
+    if (!profile || !programState) return;
+    setRebuildingDays(true);
+    try {
+      const { rebuildLiftDaysFor } =
+        await import("@/features/program/liftPlanRebuild");
+      await rebuildLiftDaysFor(length, {
+        profile,
+        programState,
+        recentLayoff,
+        recentRuns,
+      });
+      try {
+        await refreshProfile();
+      } catch (refreshErr) {
+        // Saved on the server already: say so and reload, as the editor
+        // does, rather than invite a second rebuild.
+        logger.warn("[Program] rebuilt but profile refresh failed", refreshErr);
+        toast.success(`Lift days rebuilt for ${String(length)} min`);
+        window.location.reload();
+        return;
+      }
+      toast.success(`Lift days rebuilt for ${String(length)} min`);
+    } catch (err) {
+      logger.error("[Program] rebuild for length failed:", err);
+      const { planSaveRejection } =
+        await import("@/features/program/liftPlanRebuild");
+      const rejection = planSaveRejection(
+        err,
+        "Your plan changed. Check it and try again."
+      );
+      if (rejection.refresh) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      }
+      toast.error(rejection.message);
+    } finally {
+      setRebuildingDays(false);
+    }
+  }
 
   /* The session card's words and picture (DS3). A generated day is titled
      with its name in the week ("Pull B", Lift19) under the day's status. A
@@ -1637,6 +1723,31 @@ function ProgramInner() {
                       {/* The reason sits behind a tap, as "Why this run"
                           does on the Run tab, and on the same days: one
                           still to train this week. */}
+                      {/* Gives way to the week-level notice, as the level
+                          suggestion does (`programNotices`): one notice
+                          under the day at a time. */}
+                      {showOutgrown &&
+                        fittedLength !== undefined &&
+                        liftAdvice !== "deload" && (
+                          <div className="px-3">
+                            <OutgrownDayNotice
+                              dayName={
+                                weekDayNames[idx] ?? selectedWorkout.dayName
+                              }
+                              minutes={estimatedMinutes}
+                              length={fittedLength}
+                              rebuilding={rebuildingDays}
+                              onRebuild={() =>
+                                void rebuildForLength(fittedLength)
+                              }
+                              onKeep={() => {
+                                haptic("light");
+                                keepLongDay(user?.uid, outgrownKey);
+                                setKeptDay(outgrownKey);
+                              }}
+                            />
+                          </div>
+                        )}
                       {(status === "today" || status === "upcoming") && (
                         <LiftPurpose
                           programme={programState}
@@ -1798,116 +1909,129 @@ function ProgramInner() {
                              and still has the "…" that opens that menu
                              visibly. */
                           <div className="rounded-xl bg-card card-shadow overflow-hidden divide-y divide-border">
-                            {selectedWorkout.exercises.map((ex, i) => (
-                              <div
-                                key={rowId(ex, idx, i)}
-                                data-swipe-card="true"
-                              >
-                                <SortableExerciseRow
-                                  id={rowId(ex, idx, i)}
-                                  label={ex.name}
-                                  showHandle={false}
-                                  onDelete={() => removeExFromDay(idx, i)}
+                            {pairRuns(selectedWorkout.exercises).map((run) => {
+                              const row = (ex: ProgramExercise, i: number) => (
+                                <div
+                                  key={rowId(ex, idx, i)}
+                                  data-swipe-card="true"
                                 >
-                                  {/* Owner request 2026-09-02: removing an
-                                    exercise was reachable only by swipe or
-                                    long-press. The "…" opens the same
-                                    manage menu (Replace / Remove / Move)
-                                    visibly; swipe and long-press stay. */}
-                                  <div className="@container/exrow flex items-center">
-                                    {/* Its own button, before the row's: a
-                                      button cannot hold another. It gives
-                                      way to the name where the summary's
-                                      own drawing did, at 10em of summary
-                                      (14.5em of row at the designed text
-                                      size). */}
-                                    <button
-                                      type="button"
-                                      aria-label={`How to do ${ex.name}`}
-                                      onClick={() => {
-                                        haptic("light");
-                                        setFormGuide({
-                                          name: ex.name,
-                                          open: true,
-                                        });
-                                      }}
-                                      className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
-                                    >
-                                      <ExerciseThumb
-                                        exerciseId={ex.exerciseId}
+                                  <SortableExerciseRow
+                                    id={rowId(ex, idx, i)}
+                                    label={ex.name}
+                                    showHandle={false}
+                                    onDelete={() => removeExFromDay(idx, i)}
+                                  >
+                                    {/* Owner request 2026-09-02: removing an
+                                      exercise was reachable only by swipe or
+                                      long-press. The "…" opens the same
+                                      manage menu (Replace / Remove / Move)
+                                      visibly; swipe and long-press stay. */}
+                                    <div className="@container/exrow flex items-center">
+                                      {/* Its own button, before the row's: a
+                                        button cannot hold another. It gives
+                                        way to the name where the summary's
+                                        own drawing did, at 10em of summary
+                                        (14.5em of row at the designed text
+                                        size). */}
+                                      <button
+                                        type="button"
+                                        aria-label={`How to do ${ex.name}`}
+                                        onClick={() => {
+                                          haptic("light");
+                                          setFormGuide({
+                                            name: ex.name,
+                                            open: true,
+                                          });
+                                        }}
+                                        className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
+                                      >
+                                        <ExerciseThumb
+                                          exerciseId={ex.exerciseId}
+                                        />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (exercisePress.swallowClick())
+                                            return;
+                                          navigate(
+                                            `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                            { state: { initialTab: "form" } }
+                                          );
+                                        }}
+                                        className="flex-1 min-w-0 flex items-center p-3 text-left transition-colors active:bg-muted"
+                                        onTouchStart={(e) => {
+                                          if (reorderMode) return;
+                                          exercisePress.start(e, {
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                          });
+                                        }}
+                                        onTouchMove={exercisePress.move}
+                                        onTouchEnd={exercisePress.end}
+                                        onTouchCancel={exercisePress.end}
+                                        onContextMenu={(e) => {
+                                          // D-LIFT-17: long-press is touch-only —
+                                          // right-click is its pointer/desktop
+                                          // equivalent for the same manage menu.
+                                          e.preventDefault();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: e.clientX,
+                                            y: e.clientY,
+                                          });
+                                        }}
+                                      >
+                                        <ExerciseRowSummary
+                                          exercise={ex}
+                                          lastSets={lastSetsOf(ex)}
+                                          showNotes
+                                          showThumb={false}
+                                        />
+                                      </button>
+                                      <IconButton
+                                        aria-label={`More options for ${ex.name}`}
+                                        aria-haspopup="menu"
+                                        aria-expanded={
+                                          contextMenu?.dayIndex === idx &&
+                                          contextMenu?.exIndex === i
+                                        }
+                                        icon={
+                                          <MoreHorizontal className="size-5" />
+                                        }
+                                        variant="ghost"
+                                        size="md"
+                                        className="mr-1 text-muted-foreground"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const r = (
+                                            e.currentTarget as HTMLElement
+                                          ).getBoundingClientRect();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: r.left + r.width / 2,
+                                            y: r.bottom + 4,
+                                          });
+                                        }}
                                       />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (exercisePress.swallowClick())
-                                          return;
-                                        navigate(
-                                          `/history/exercise/${encodeURIComponent(ex.name)}`,
-                                          { state: { initialTab: "form" } }
-                                        );
-                                      }}
-                                      className="flex-1 min-w-0 flex items-center p-3 text-left transition-colors active:bg-muted"
-                                      onTouchStart={(e) => {
-                                        if (reorderMode) return;
-                                        exercisePress.start(e, {
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                        });
-                                      }}
-                                      onTouchMove={exercisePress.move}
-                                      onTouchEnd={exercisePress.end}
-                                      onTouchCancel={exercisePress.end}
-                                      onContextMenu={(e) => {
-                                        // D-LIFT-17: long-press is touch-only —
-                                        // right-click is its pointer/desktop
-                                        // equivalent for the same manage menu.
-                                        e.preventDefault();
-                                        setContextMenu({
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                          x: e.clientX,
-                                          y: e.clientY,
-                                        });
-                                      }}
-                                    >
-                                      <ExerciseRowSummary
-                                        exercise={ex}
-                                        lastSets={lastSetsOf(ex)}
-                                        showNotes
-                                        showThumb={false}
-                                      />
-                                    </button>
-                                    <IconButton
-                                      aria-label={`More options for ${ex.name}`}
-                                      aria-haspopup="menu"
-                                      aria-expanded={
-                                        contextMenu?.dayIndex === idx &&
-                                        contextMenu?.exIndex === i
-                                      }
-                                      icon={
-                                        <MoreHorizontal className="size-5" />
-                                      }
-                                      variant="ghost"
-                                      size="md"
-                                      className="mr-1 text-muted-foreground"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        const r = (
-                                          e.currentTarget as HTMLElement
-                                        ).getBoundingClientRect();
-                                        setContextMenu({
-                                          dayIndex: idx,
-                                          exIndex: i,
-                                          x: r.left + r.width / 2,
-                                          y: r.bottom + 4,
-                                        });
-                                      }}
-                                    />
-                                  </div>
-                                </SortableExerciseRow>
-                              </div>
-                            ))}
+                                    </div>
+                                  </SortableExerciseRow>
+                                </div>
+                              );
+                              /* Lift22: a pair the plan wrote stands in its own
+                                 block, which says once what a superset is. */
+                              return run.length === 2 ? (
+                                <SupersetBlock
+                                  key={rowId(run[0].ex, idx, run[0].i)}
+                                >
+                                  {run.map(({ ex, i }) => row(ex, i))}
+                                </SupersetBlock>
+                              ) : (
+                                row(run[0].ex, run[0].i)
+                              );
+                            })}
                           </div>
                         )}
 
@@ -2491,7 +2615,7 @@ function ProgramInner() {
                           Reorder exercises
                         </span>
                         <span className="block text-xs text-muted-foreground">
-                          Drag to change today&apos;s order
+                          Drag to change today’s order
                         </span>
                       </span>
                     </button>
@@ -2544,12 +2668,10 @@ function ProgramInner() {
                     </span>
                   </span>
                 </button>
-                {/* Pgm4: single free "Edit programme" entry. The three
-                    previous items (Configure wizard / Programme settings /
-                    Reset) and their Pro gate were consolidated into the
-                    unified ProgrammeSettings editor at /settings/training —
-                    goal, nutrition phase, lifting, running, equipment,
-                    injuries, toggles and reset all live there now. */}
+                {/* One edit entry, to the editor of the tab in view. Pgm4
+                    made it a single free entry; until Trim1 call 2 the Run
+                    tab's went to a Programme page that edited nothing and
+                    linked on to Run plan. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -2557,7 +2679,7 @@ function ProgramInner() {
                     navigate(
                       activeTab === "lift"
                         ? "/settings/lift-plan"
-                        : "/settings/training"
+                        : "/settings/run-plan"
                     );
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
@@ -2568,12 +2690,12 @@ function ProgramInner() {
                     <span className="block text-sm font-medium text-foreground">
                       {activeTab === "lift"
                         ? "Edit lift plan"
-                        : "Edit programme"}
+                        : "Edit run plan"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       {activeTab === "lift"
                         ? "Focus, lift days, equipment, injuries, weekly volume"
-                        : "Goal, nutrition, lifting, running, equipment, injuries"}
+                        : "Race or no race, run days, long runs, zones"}
                     </span>
                   </span>
                 </button>

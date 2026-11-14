@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import PerformanceOverviewCard from "../PerformanceOverviewCard";
 import PerformanceSection from "../PerformanceSection";
-import PerformanceTab from "../PerformanceTab";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
+import PerformanceDetails from "../PerformanceDetails";
 
 const mock = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -27,26 +25,8 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
 }));
 
 const surfaces = [
-  [
-    "overview",
-    () => <PerformanceOverviewCard hasLoggedSession onOpenDetails={() => {}} />,
-  ],
   ["section", () => <PerformanceSection hasLoggedSession />],
-  ["tab", () => <PerformanceTab />],
-  [
-    "home",
-    () => (
-      <PerformanceHeroCard
-        currentWeek={null}
-        previousWeek={null}
-        weeksAvailable={0}
-        loading={mock.loading}
-        failed={mock.failed}
-        onRetry={mock.refresh}
-        hasLoggedSession
-      />
-    ),
-  ],
+  ["details", () => <PerformanceDetails />],
 ] as const;
 
 beforeEach(() => {
@@ -69,7 +49,7 @@ describe.each(surfaces)("%s performance read failure", (_, surface) => {
       "Performance could not load"
     );
     expect(
-      screen.queryByText(/Log workouts|No sessions|No performance weeks/)
+      screen.queryByText(/Log a workout|No sessions|your first weekly score/)
     ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(mock.refresh).toHaveBeenCalledOnce();

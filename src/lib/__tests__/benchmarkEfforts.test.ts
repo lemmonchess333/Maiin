@@ -10,6 +10,7 @@ import {
   type EffortRun,
 } from "../benchmarkEfforts";
 import { parseSavedRun, withQueuedRuns } from "../savedRuns";
+import { effortVdot, trainingBands } from "../runPaces";
 import { queueDurableWrite } from "../offlineQueue";
 
 const at = new Date("2026-10-01T08:00:00Z");
@@ -76,14 +77,8 @@ describe("benchmarkEffortOf", () => {
     ).not.toBeNull();
   });
 
-  it("never reads an easy, long, interval, free or guided run, work segments or not", () => {
-    for (const activityType of [
-      "easy",
-      "long",
-      "intervals",
-      "freerun",
-      "guided",
-    ]) {
+  it("never reads an easy, long, free or guided run, work segments or not", () => {
+    for (const activityType of ["easy", "long", "freerun", "guided"]) {
       expect(
         benchmarkEffortOf(
           run({
@@ -94,6 +89,43 @@ describe("benchmarkEffortOf", () => {
       ).toBeNull();
     }
     expect(benchmarkEffortOf(run())).not.toBeNull();
+  });
+
+  // Run24 (4), deep dive D4: an interval session by its repeats.
+  it("reads an interval session by its repeats, at interval pace", () => {
+    const reps = (workPortion: { seconds: number; meters: number }) =>
+      benchmarkEffortOf(run({ activityType: "intervals", workPortion }));
+    expect(reps({ seconds: 960, meters: 4000 })).toMatchObject({
+      kind: "intervals",
+      distanceM: 4000,
+      timeS: 960,
+    });
+    // Under twelve minutes of repeats reads as nothing.
+    expect(reps({ seconds: 600, meters: 2500 })).toBeNull();
+    expect(
+      benchmarkEffortOf(
+        run({
+          activityType: "intervals",
+          workPortion: { seconds: 960, meters: 4000 },
+          workPacePinned: true,
+        })
+      )
+    ).toBeNull();
+  });
+
+  it("gives repeats at a VDOT's interval pace that VDOT back", () => {
+    const pace = (vdot: number) => {
+      const band = trainingBands(vdot).interval;
+      return (band[0] + band[1]) / 2;
+    };
+    for (const vdot of [35, 45, 55])
+      expect(
+        effortVdot({
+          kind: "intervals",
+          distanceM: 4000,
+          timeS: 4 * pace(vdot),
+        })
+      ).toBeCloseTo(vdot, 0);
   });
 
   it("reads nothing the figures can't vouch for: a typed distance, an invalid run", () => {

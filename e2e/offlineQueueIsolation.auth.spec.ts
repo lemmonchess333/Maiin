@@ -468,7 +468,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       page.getByText("Saved locally — will sync when online.", { exact: true })
     ).toBeVisible();
     await expect(
-      page.getByText("We've kept this run on your account.", { exact: true })
+      page.getByText("We’ve kept this run on your account.", { exact: true })
     ).toHaveCount(0);
     const queued = (await readQueue(page)).filter(
       (entry) => entry.collectionPath === `users/${uid}/runs`
@@ -611,7 +611,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       .getByRole("button", { name: "Share with followers", exact: true })
       .click({ timeout: 15_000 });
     await expect(
-      page.getByText("Will share with your followers when you're back online", {
+      page.getByText("Will share with your followers when you’re back online", {
         exact: true,
       })
     ).toBeVisible({ timeout: 10_000 });
@@ -649,7 +649,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // the real list by settingsAccountRowSelector.test.tsx.
     await clickPastCelebration(
       page,
-      page.getByRole("button", { name: /email, password, sign out/i })
+      page.getByRole("button", { name: /plan, sign-in, your data/i })
     );
     await signOutViaUI(page);
 

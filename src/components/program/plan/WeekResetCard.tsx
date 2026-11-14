@@ -131,7 +131,7 @@ export default function WeekResetCard({
       <div className="mt-4 space-y-2">
         {feel !== "too_light" && expressTarget && (
           <Option onClick={() => onOpen(expressTarget)}>
-            Use this week&apos;s Express session
+            Use this week’s Express session
           </Option>
         )}
         {feel === "a_bit_much" && runPlan !== "none" && (

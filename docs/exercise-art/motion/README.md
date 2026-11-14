@@ -24,6 +24,16 @@ hip-thrust, arnold-press, kettlebell-swing). Re-run the sweep when
 templates, swaps or the lead rule change. A lead with no flipbook shows its
 still, as before.
 
+**The deadlift's flipbook is drawn from the front (2026-11-12).** Its card
+was redrawn from the front that day at the owner's request (the form guide
+keeps its frames from behind), so its flipbook was made again from the
+front drawings instead of form frames: the card's drawing to the front
+lockout and back, 9:16, 3 s each, as in "How one is made":
+`docs/exercise-art/pilots/redraw-20261112/deadlift-front/start.png` and
+`lockout.png` (`docs/exercise-art/sources/deadlift/2026-11-12/build.py`).
+For a few hours it had none: the first video call answered 402 until the
+Gemini project's prepaid credits were topped up.
+
 A day with no compound primary is pictured by its first compound movement
 before an isolation (owner, 2026-11-10: a primary mover leads). The
 straight-arm pulldown led 640 of the builds that way, a beginner's home

@@ -1,0 +1,36 @@
+// Scratch, not committed: is the lift order still the best one by its own
+// measure once the week is finished being built?
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { orderForAdjacency } from "../overlapModel";
+import { addLocalDays, localDateString, parseLocalDate } from "@/lib/dateHelpers";
+
+const START = "2026-11-09";
+const plusDays = (d: string, n: number) => localDateString(addLocalDays(parseLocalDate(d), n));
+const base: PlanBuilderInput = {
+  primaryGoal: "general", nutritionPhase: "recomp" as never, experience: "intermediate",
+  sessionMinutes: 60, bodyweightKg: 80, sex: "male", liftDays: 3, preferredSplit: "auto",
+  runMode: "race_prep", weeklyRunDays: 3,
+  raceGoal: { distance: "half", targetDate: plusDays(START, 7 * 11 + 6) },
+  equipment: "full_gym", injuries: [], currentDate: START, preserveHistory: false,
+};
+
+it("re-order the finished week", { timeout: 120000 }, () => {
+  const rows: unknown[] = [];
+  for (const primaryGoal of ["general", "running", "hypertrophy", "strength", "fat_loss"] as const)
+    for (const experience of ["beginner", "intermediate", "advanced"] as const)
+      for (const sessionMinutes of [45, 60, 75])
+        for (const liftDays of [2, 3, 4, 5, 6])
+          for (const weeklyRunDays of [2, 3, 4, 5]) {
+            const plan = buildPlan({ ...base, primaryGoal, experience, sessionMinutes, liftDays, weeklyRunDays });
+            const built = plan.programState.workouts;
+            const again = orderForAdjacency(built, plan.weekSchedule);
+            rows.push({
+              primaryGoal, experience, sessionMinutes, liftDays, weeklyRunDays,
+              built: built.map((d) => d.dayName),
+              better: again === built ? null : again.map((d) => d.dayName),
+            });
+          }
+  writeFileSync("/tmp/work/train/hybrid-probe3.json", JSON.stringify(rows));
+});

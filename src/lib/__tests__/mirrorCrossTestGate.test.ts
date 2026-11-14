@@ -217,8 +217,6 @@ const PINNED: Record<string, string> = {
     "src/lib/__tests__/leaguePlanned.cross.test.ts",
   "functions/lib/leagueRules.js":
     "src/features/league/__tests__/leagueRules.cross.test.ts",
-  "functions/lib/partnerStreakEngine.js":
-    "src/features/partnerStreak/__tests__/engineMirror.test.ts",
   // Packet 18 — CF programme reducer mirrors the client run-day transition
   // table + status helpers (programTypes.ts LEGAL_TRANSITIONS /
   // scheduledRunStatus.ts). Pinned by the cross-test below.

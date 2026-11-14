@@ -3,7 +3,7 @@
  *
  * Quick add takes calories and macros and needs no name ("about 400 kcal
  * at the café"). Such an entry is a number, not a food: it never goes
- * into the pantry, and Quick add's recents and Your usual skip it, since
+ * into the pantry, and the Log again list and Your usual skip it, since
  * offering "Quick add, 400 kcal" back as a food to repeat would read as
  * the control that opens the form.
  */

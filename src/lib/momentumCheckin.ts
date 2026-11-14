@@ -111,9 +111,9 @@ export function nextActionForFeel(feel: PlanFeel): NextAction {
     case "a_bit_much":
       return { label: "Make this week fit", to: "/program/plan?reset=1" };
     case "too_light":
-      return { label: "Review this week's plan", to: "/program/plan?reset=1" };
+      return { label: "Review this week’s plan", to: "/program/plan?reset=1" };
     case "good_fit":
-      return { label: "See this week's plan", to: "/program/plan" };
+      return { label: "See this week’s plan", to: "/program/plan" };
   }
 }
 

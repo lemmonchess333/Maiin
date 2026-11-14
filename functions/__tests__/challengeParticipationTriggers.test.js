@@ -3,10 +3,24 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
+const admin = require("../lib/adminSdk");
+const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
 const projection = require("../lib/challengeParticipationProgress");
 const deletion = require("../lib/accountDeletionLocks");
-const board = require("../lib/friendsBoard");
 const leagues = require("../lib/leagues");
+
+// index.js takes its `db` as it loads, so the in-memory one has to be in
+// place first. With the real client, every step these tests do not stand
+// in (the Health tombstone, the reversals) tried to reach Firestore, failed
+// on credentials inside its step, and from firebase-admin 14 the client
+// also rejects a promise nobody holds, which fails the run.
+const { FieldValue, Timestamp, FieldPath } = admin.firestore;
+const memoryDb = memoryFirestore({});
+Object.defineProperty(admin, "firestore", {
+  configurable: true,
+  get: () =>
+    Object.assign(() => memoryDb, { FieldValue, Timestamp, FieldPath }),
+});
 const fns = require("../index");
 const source = { date: "2027-01-10", durationMinutes: 30 };
 const snap = { data: () => source };
@@ -16,17 +30,12 @@ const context = {
 
 afterEach(() => vi.restoreAllMocks());
 
-/** The friends board's refresh reads the user's profile, and the league
- *  standing's the membership; these tests run without Firestore, so both
- *  are stood in (and pinned below). */
+/** The league standing's refresh reads the membership; these tests run
+ *  without Firestore, so it is stood in (and pinned below). */
 const standInLeague = () =>
   vi
     .spyOn(leagues, "refreshLeagueStanding")
     .mockResolvedValue({ written: false });
-const standInBoard = () => {
-  standInLeague();
-  return vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
-};
 
 describe("participation projection trigger reliability", () => {
   it.each([
@@ -52,7 +61,7 @@ describe("participation projection trigger reliability", () => {
     "%s handles duration/date changes even without a correction revision",
     async (name) => {
       vi.spyOn(deletion, "shouldSystemWriteProceed").mockResolvedValue(true);
-      const refresh = standInBoard();
+      standInLeague();
       const reconcile = vi
         .spyOn(projection, "reconcileParticipationChallenges")
         .mockResolvedValue(undefined);
@@ -68,13 +77,7 @@ describe("participation projection trigger reliability", () => {
         context.params.uid,
         ["2027-01-10", "2027-02-01"]
       );
-      // Polish2: the board's week gets the same days, old and new.
-      expect(refresh).toHaveBeenCalledWith(
-        expect.anything(),
-        context.params.uid,
-        ["2027-01-10", "2027-02-01"]
-      );
-      // Soc15 call 3: and so does the league standing.
+      // Soc15 call 3: the league standing gets the same days, old and new.
       expect(leagues.refreshLeagueStanding).toHaveBeenCalledWith(
         expect.anything(),
         context.params.uid,
@@ -96,7 +99,6 @@ describe("participation projection trigger reliability", () => {
         projection,
         "reconcileParticipationChallenges"
       ).mockResolvedValue(undefined);
-      vi.spyOn(board, "refreshBoardWeek").mockResolvedValue(undefined);
       const league = vi
         .spyOn(leagues, "refreshLeagueStanding")
         .mockRejectedValue(new Error("standing unavailable"));
@@ -111,24 +113,6 @@ describe("participation projection trigger reliability", () => {
       );
     }
   );
-
-  it.each([
-    "onWorkoutCreated",
-    "onRunCreated",
-    "onWorkoutDeleted",
-    "onRunDeleted",
-  ])("%s propagates a board refresh failure for retry", async (name) => {
-    vi.spyOn(deletion, "shouldSystemWriteProceed").mockResolvedValue(true);
-    vi.spyOn(projection, "reconcileParticipationChallenges").mockResolvedValue(
-      undefined
-    );
-    vi.spyOn(board, "refreshBoardWeek").mockRejectedValue(
-      new Error("tally unavailable")
-    );
-    await expect(fns[name].run(snap, context)).rejects.toThrow(
-      "tally unavailable"
-    );
-  });
 
   it("run updates honour the account deletion guard", async () => {
     const guard = vi

@@ -104,7 +104,7 @@ describe("LiftReturnSheet — what it offers", () => {
 describe("LiftReturnSheet — what it says", () => {
   it("rounds the gap to weeks, where days invite arithmetic", () => {
     setup({ daysAway: 24 });
-    expect(screen.getByText("It's been about 3 weeks")).toBeInTheDocument();
+    expect(screen.getByText("It’s been about 3 weeks")).toBeInTheDocument();
   });
 
   it("says what easing back does before it does it", () => {
@@ -150,7 +150,7 @@ describe("LiftReturnSheet — what it says", () => {
         /streak/i,
         /\blost\b/i,
         /\bmissed\b/i,
-        /don't break/i,
+        /don’t break/i,
         /at risk/i,
         /fall(en)? behind/i,
       ]) {

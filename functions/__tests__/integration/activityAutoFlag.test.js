@@ -31,7 +31,7 @@ const POST_IDS = [
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   onActivityCreated = require("../../index").onActivityCreated;
-  db = require("firebase-admin").firestore();
+  db = require("../../lib/adminSdk").firestore();
 });
 
 async function wipe() {

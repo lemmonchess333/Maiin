@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
   runEvidenceDate,
@@ -172,6 +173,10 @@ import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
+import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
+import { useProCtaLabel } from "@/hooks/useProCtaLabel";
+import { RACE_PLAN_UPGRADE_PATH } from "@/lib/racePlanAccess";
+import { track as trackPaywall } from "@/lib/paywallAnalytics";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
@@ -410,6 +415,10 @@ export default function ProgrammeRunSection({
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);
+  // Q85: a half or full marathon plan past its free first week. Today's
+  // planned session offers Pro; the race itself and free runs still start.
+  const planLocked = useRacePlanLocked(programState?.runPlan);
+  const proCtaLabel = useProCtaLabel();
   const raceCompressed = !!programState?.runPlan?.compressed;
   /* `belowFloor` is persisted on runPlan (programTypes.ts). This read was
      added to carry it to the cockpit — but the JSX prop was never passed, so
@@ -987,7 +996,11 @@ export default function ProgrammeRunSection({
     const meta: string[] = [];
     // Run21 (5): a long run's minutes at the runner's own pace.
     meta.push(
-      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
+      runDoseLine(
+        selectedTemplate,
+        planningEasyPaceSPerKm(profile.runFitness),
+        plannedIntervalPaceSPerKm(profile.runFitness)
+      )
     );
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
     meta.push(...selectedHrItems);
@@ -998,6 +1011,10 @@ export default function ProgrammeRunSection({
   // Suppress the selected-day card when a race state-overlay hero already
   // owns today's slot AND today is what's selected — avoids a double CTA.
   const selectedIsToday = selectedDateKey === todayKeyDerivation;
+  /* Today's planned session on a locked plan offers Pro (Q85). Another
+     day's still opens to be looked over; the race itself still starts. */
+  const selectedLocked =
+    planLocked && selectedIsToday && !!selectedTemplate && !selectedIsRace;
   const heroOwnsSelectedToday =
     selectedIsToday &&
     (heroState === "race-today" || heroState === "race-recent");
@@ -1206,7 +1223,7 @@ export default function ProgrammeRunSection({
           description={
             currentMode === "starter"
               ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
-              : `You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+              : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
           }
           action={
             <Button
@@ -1234,7 +1251,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title="Recovery complete"
-          description="What's next?"
+          description="What’s next?"
           action={
             <div className="flex flex-wrap gap-2">
               <Button
@@ -1267,7 +1284,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "fell-behind" && raceGoal && (
         <Banner
           variant="info"
-          title="Last week didn't go to plan"
+          title="Last week didn’t go to plan"
           description="Realign keeps your race date and re-plans the remaining weeks from today."
           action={
             <div className="flex flex-col gap-2">
@@ -1414,13 +1431,13 @@ export default function ProgrammeRunSection({
             <p className="text-xs text-muted-foreground">
               Your last run was {freeformCadence.lastRunDaysAgo} day
               {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago — pick it
-              back up whenever you're ready.
+              back up whenever you’re ready.
             </p>
           ) : (
             <Card className="space-y-3 rounded-xl">
               {/* R2-1 descriptive cadence headline (not a target). */}
               <p className="text-sm font-semibold text-foreground">
-                You've run {freeformCadence.count}× in the last{" "}
+                You’ve run {freeformCadence.count}× in the last{" "}
                 {freeformCadence.weeks} weeks
               </p>
               {/* DS3: the week as three plain numbers, where one grey line
@@ -1558,7 +1575,7 @@ export default function ProgrammeRunSection({
                     Training for a race?
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Pick a distance and date — we'll build the plan.
+                    Pick a distance and date — we’ll build the plan.
                   </p>
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground shrink-0" />
@@ -1611,7 +1628,7 @@ export default function ProgrammeRunSection({
                 {raceDistanceLabel(raceGoal.distance)} · Today
               </p>
               <p className="text-micro text-muted-foreground">
-                This is the one you've been training for. Good luck out there.
+                This is the one you’ve been training for. Good luck out there.
               </p>
             </div>
             {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
@@ -1706,7 +1723,7 @@ export default function ProgrammeRunSection({
                 dismissRaceRecent();
               }}
             >
-              {ownGoal ? "I didn't run it" : "I didn't race"}
+              {ownGoal ? "I didn’t run it" : "I didn’t race"}
             </Button>
           </div>
         </div>
@@ -1765,11 +1782,13 @@ export default function ProgrammeRunSection({
                   /* Run21 (2): the session's one feel line. Its shape
                      is "What it is", in "Why this run" below. */
                   description={
-                    selectedTemplate
-                      ? runSessionAbout(selectedTemplate, {
-                          racePace: selectedRacePace,
-                        }).feel
-                      : undefined
+                    selectedLocked
+                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      : selectedTemplate
+                        ? runSessionAbout(selectedTemplate, {
+                            racePace: selectedRacePace,
+                          }).feel
+                        : undefined
                   }
                   /* No plan position ("Base · week 1 of 10"): the page
                      header, the race card's date line and its rail say
@@ -1780,16 +1799,25 @@ export default function ProgrammeRunSection({
                      Start does (`startOnArrival`). Another day's opens the
                      run's own card to look it over. */
                   primaryActionLabel={
-                    selectedIsToday
-                      ? selectedIsRace
-                        ? "Start race"
-                        : "Start run"
-                      : selectedIsRace
-                        ? "View race"
-                        : "View run"
+                    selectedLocked
+                      ? proCtaLabel
+                      : selectedIsToday
+                        ? selectedIsRace
+                          ? "Start race"
+                          : "Start run"
+                        : selectedIsRace
+                          ? "View race"
+                          : "View run"
                   }
                   onPrimaryAction={() => {
                     haptic();
+                    if (selectedLocked) {
+                      trackPaywall("paywall_cta_clicked", {
+                        source: "race_plan",
+                      });
+                      navigate(RACE_PLAN_UPGRADE_PATH);
+                      return;
+                    }
                     // startUrl carries ?template=&scheduledRunId= so the run
                     // fulfils this exact planned slot (claim-map binding).
                     const url = selectedRun.startUrl ?? FREE_RUN_URL;
@@ -1802,7 +1830,13 @@ export default function ProgrammeRunSection({
                 />
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
-                  template={selectedTemplate}
+                  template={
+                    selectedTemplate &&
+                    withPlannedRest(
+                      selectedTemplate,
+                      plannedIntervalPaceSPerKm(profile.runFitness)
+                    )
+                  }
                   racePace={selectedRacePace}
                   run={selectedRun.runDay}
                   runDays={runDays}
@@ -1926,6 +1960,7 @@ export default function ProgrammeRunSection({
                    hop was missing, so the card fell through to the compressed
                    branch and described training the plan does not contain. */
               belowFloor={raceCockpitVM.belowFloor}
+              noBuild={raceCockpitVM.noBuild}
               /* PR4 cross-link — the PROFILE copy is canonical for the
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */

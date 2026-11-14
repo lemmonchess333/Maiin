@@ -61,7 +61,12 @@ export function adaptiveCalorieStatus(
  */
 export function adaptiveCalorieStatusLabel(
   s: AdaptiveCalorieStatus,
-  appliedTarget?: number | null
+  appliedTarget?: number | null,
+  /** A free account's formula line says what it gets: Food tells it its
+   *  personal target, which Pro applies (whole-app grill Q49, Q87). The
+   *  old line promised a free account a target that adapts, which never
+   *  happened for it. Omitted, the Pro wording stands. */
+  isPro: boolean = true
 ): string {
   switch (s.kind) {
     case "manual":
@@ -71,12 +76,14 @@ export function adaptiveCalorieStatusLabel(
         s.retunedDaysAgo === 0 ? "today" : `${s.retunedDaysAgo}d ago`;
       const base = `Adapting — retuned ${when} from your real intake + weight.`;
       return typeof appliedTarget === "number" && Number.isFinite(appliedTarget)
-        ? `${base} This is your baseline; today's target is ${Math.round(
+        ? `${base} This is your baseline; today’s target is ${Math.round(
             appliedTarget
           ).toLocaleString()} ${CALORIE_UNIT}.`
         : base;
     }
     case "formula":
-      return "Formula estimate — adapts to your real expenditure once you track for a while.";
+      return isPro
+        ? "Formula estimate — adapts to your real expenditure once you track for a while."
+        : "Formula estimate. After about two weeks of meals and weigh-ins, Food shows your personal target, and Pro uses it.";
   }
 }

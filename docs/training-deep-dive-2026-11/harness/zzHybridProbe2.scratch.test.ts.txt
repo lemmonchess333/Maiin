@@ -1,0 +1,39 @@
+// Scratch, not committed.
+import { it, vi } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { addLocalDays, localDateString, parseLocalDate } from "@/lib/dateHelpers";
+
+const START = "2026-11-09";
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const plusDays = (d: string, n: number) => localDateString(addLocalDays(parseLocalDate(d), n));
+const mk = (types: string[]): ScheduleDay[] =>
+  Array.from({ length: 7 }, (_, day) => ({ day, type: types[(day + 6) % 7] as ScheduleDay["type"] }));
+const fmt = (s: ScheduleDay[]) =>
+  [...s].sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7)).map((d) => `${DOW[d.day]}:${d.type}`).join(" ");
+
+const base: PlanBuilderInput = {
+  primaryGoal: "general", nutritionPhase: "recomp" as never, experience: "intermediate",
+  sessionMinutes: 60, bodyweightKg: 80, sex: "male", liftDays: 3, preferredSplit: "auto",
+  runMode: "race_prep", weeklyRunDays: 3,
+  raceGoal: { distance: "half", targetDate: plusDays(START, 7 * 11 + 6) },
+  equipment: "full_gym", injuries: [], currentDate: START, preserveHistory: false,
+};
+
+it("one more lift day through settings", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${START}T12:00:00`));
+  const own = mk(["lift", "run", "lift", "run", "lift", "rest", "run"]);
+  const first = buildPlan({ ...base, weekSchedule: own });
+  const more = buildPlan({
+    ...base, liftDays: 4, weekSchedule: first.weekSchedule,
+    existingState: first.programState, preserveHistory: true, previousExperience: "intermediate",
+  });
+  const runsOn = (p: typeof first) => (p.programState.runDays ?? []).map((r) => `${DOW[parseLocalDate(r.date!).getDay()]} ${r.templateId}`);
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-probe2.json", JSON.stringify({
+    theirs: fmt(own), keptAtFirstBuild: fmt(first.weekSchedule), runsFirst: runsOn(first),
+    afterAddingALiftDay: fmt(more.weekSchedule), runsAfter: runsOn(more),
+  }, null, 1));
+});

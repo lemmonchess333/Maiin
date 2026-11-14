@@ -203,7 +203,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 
 ### A restriction stops what reaches other people
 
-- [ ] With two test accounts, report the second from the first. Then, as an admin, tap Restrict user on /admin/moderation. On the second account, without signing out: posting, commenting, props, likes, reactions, Follow, joining a Space, challenge or Circle, a Circle check-in and a partner streak should each say 'Your account is restricted'. Unfollowing, removing props and leaving should still work.
+- [ ] With two test accounts, report the second from the first. Then, as an admin, tap Restrict user on /admin/moderation. On the second account, without signing out: posting, commenting, props, likes, reactions, Follow, joining a Space, challenge or Circle and a Circle check-in should each say 'Your account is restricted'. Unfollowing, removing props and leaving should still work.
 - [ ] On /admin/moderation → Restricted accounts, tap Lift for the second account. Within a minute, without signing out, everything on that account should work again. The report in the Firebase console should show restrictionLiftedBy.
 
 ### The lifting system, Lift4
@@ -219,7 +219,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 ### Credits, weather, push and exports for the App Store
 
 - [ ] In both light and dark theme, open a live run, a saved run, the finish screen and the route planner. The map draws each time. The OpenFreeMap credit shows and shrinks to an (i) after 5 seconds; tapping (i) shows it again, and its links open outside the app. On the live run the credit sits top-right, clear of the GPS pill and the sheet. On a saved run it sits bottom-left, clear of Replay.
-- [ ] On the iPhone app, open Settings > Your data > Export workouts. The share sheet opens. Save to Files, open the .csv in Numbers, and the 'Workouts exported' toast shows. Closing the sheet shows nothing. Export GPX on the run finish screen and on a saved run opens the sheet with a .gpx file.
+- [ ] On the iPhone app, open Settings > Account > Export workouts. The share sheet opens. Save to Files, open the .csv in Numbers, and the 'Workouts exported' toast shows. Closing the sheet shows nothing. Export GPX on the run finish screen and on a saved run opens the sheet with a .gpx file.
 
 ### Push on the iPhone
 
@@ -319,10 +319,6 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 ### Blocking is now server-enforced
 
 - [ ] With two test accounts that have not blocked each other (web or iPhone), give props to the other account's post and leave a comment. Expect the props count to go up, the comment to appear, and the other account to get a tray row for each.
-
-### Partner-streak server persist
-
-- [ ] Use two test accounts that follow each other. Open the other person's profile and start a partner streak. Log a workout on account A, then one on account B the same day. Expect the partner streak card to show a 1-day streak on both profiles.
 
 ### Social context arc — coach prompts + space engagement
 

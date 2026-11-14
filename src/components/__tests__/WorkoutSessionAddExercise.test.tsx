@@ -652,7 +652,7 @@ describe("Remove from workout (Mob2 call 11)", () => {
     const ask = await screen.findByRole("alertdialog", {
       name: "Remove Lateral Raise?",
     });
-    expect(ask).toHaveTextContent("The set you've done on it won't be saved.");
+    expect(ask).toHaveTextContent("The set you’ve done on it won’t be saved.");
     await choose("Keep it");
     expect(heading()).toBe("Lateral Raise");
 
@@ -713,7 +713,7 @@ describe("a removal keeps the bests of the exercises after it", () => {
       );
       await act(async () => {});
     }
-    expect(screen.getByText("PR")).toBeInTheDocument();
+    expect(screen.getByText("Best")).toBeInTheDocument();
 
     fireEvent.click(
       screen.getAllByRole("button", { name: "Lateral Raise" })[0]
@@ -727,6 +727,6 @@ describe("a removal keeps the bests of the exercises after it", () => {
       screen.getAllByRole("button", { name: "Lateral Raise" })
     ).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Lateral Raise" }));
-    expect(screen.getByText("PR")).toBeInTheDocument();
+    expect(screen.getByText("Best")).toBeInTheDocument();
   });
 });

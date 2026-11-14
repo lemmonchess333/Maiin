@@ -1,13 +1,13 @@
 /**
- * The brand mark (DS3): the app icon's rounded hexagon with its chevron
- * cut out, small enough for Home's date line. Decorative, in the brand
- * purple, and the chevron in the page's own colour so it reads as a cut.
+ * The brand mark (DS3, DS7): the app icon's T, its stem rising into its
+ * bar, small enough for Home's date line. Decorative, in the brand purple.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import BrandMark from "../BrandMark";
+import { MARK_VIEWBOX } from "@/lib/brandMark";
 
 afterEach(cleanup);
 
@@ -25,43 +25,35 @@ describe("BrandMark", () => {
       "utf8"
     );
     const { container } = render(<BrandMark />);
-    const hexagon = container.querySelector("polygon")!;
-    const chevron = container.querySelector("polyline")!;
+    const [bar, stem] = [...container.querySelectorAll("path")];
     // The icon declares each shape by id; the generators read them so.
     const declared = (id: string) =>
-      new RegExp(`<(?:polygon|polyline) id="${id}"([^>]*)>`).exec(icon)?.[1];
-    expect(declared("hexagon")).toContain(
-      `points="${hexagon.getAttribute("points")}"`
-    );
-    // The corners are rounded by the hexagon's own round-joined stroke.
-    expect(declared("hexagon")).toContain(
-      `stroke-width="${hexagon.getAttribute("stroke-width")}"`
-    );
-    expect(hexagon).toHaveAttribute("stroke-linejoin", "round");
-    expect(declared("chevron")).toContain(
-      `points="${chevron.getAttribute("points")}"`
-    );
-    expect(declared("chevron")).toContain(
-      `stroke-width="${chevron.getAttribute("stroke-width")}"`
-    );
+      new RegExp(`<path id="${id}"([^>]*)>`).exec(icon)?.[1];
+    expect(declared("bar")).toContain(`d="${bar.getAttribute("d")}"`);
+    expect(declared("stem")).toContain(`d="${stem.getAttribute("d")}"`);
+    expect(container.querySelectorAll("path")).toHaveLength(2);
   });
 
-  it("fills in the brand purple and cuts the chevron in the page colour", () => {
+  it("fits its box: the two shapes fill the viewBox edge to edge", () => {
+    const [x, y, w, h] = MARK_VIEWBOX.split(" ").map(Number);
+    const { container } = render(<BrandMark />);
+    const numbers = [...container.querySelectorAll("path")]
+      .map((p) => p.getAttribute("d")!)
+      .join(" ");
+    // The bar starts at the box's top and spans its width; the stem ends
+    // on its bottom edge.
+    expect(numbers).toContain(`M${x + 20} ${y} H${x + w - 20}`);
+    expect(numbers).toContain(`V${y + h - 20}`);
+  });
+
+  it("fills both shapes in the brand purple, with no cut in a page colour", () => {
     const { container } = render(<BrandMark />);
     expect(container.querySelector("svg")).toHaveClass("text-lifting");
-    expect(container.querySelector("polygon")).toHaveAttribute(
-      "fill",
-      "currentColor"
-    );
-    expect(container.querySelector("polygon")).toHaveAttribute(
-      "stroke",
-      "currentColor"
-    );
-    // A class, never a var() in the stroke attribute: WKWebView does not
-    // substitute var() in SVG presentation attributes reliably.
-    const chevron = container.querySelector("polyline")!;
-    expect(chevron).toHaveClass("stroke-background");
-    expect(chevron.getAttribute("stroke") ?? "").not.toMatch(/var\(/);
+    for (const path of container.querySelectorAll("path")) {
+      expect(path).toHaveAttribute("fill", "currentColor");
+      // The gap between the shapes shows the surface behind the mark.
+      expect(path).not.toHaveAttribute("stroke");
+    }
   });
 
   it("takes a size from its caller", () => {

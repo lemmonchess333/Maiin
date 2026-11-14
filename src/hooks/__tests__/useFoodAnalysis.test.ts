@@ -220,7 +220,7 @@ describe("useFoodAnalysis — the outcome contract", () => {
     await act(async () => {
       outcome = await result.current.analyzeFood("QUJD");
     });
-    expect(outcome.errorMessage).toMatch(/couldn't reach the server/i);
+    expect(outcome.errorMessage).toMatch(/couldn’t reach the server/i);
     expect(outcome.errorMessage).not.toMatch(/failed to fetch/i);
     // The browser's own words do reach the step list, which only the
     // iPhone's Details shows: they are what a screenshot needs. Only this

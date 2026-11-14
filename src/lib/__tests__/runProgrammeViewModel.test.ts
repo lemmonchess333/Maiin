@@ -241,6 +241,23 @@ describe("buildRaceCockpitViewModel", () => {
     expect(vm.phaseLabel).toBe("Base");
   });
 
+  it("marks a compressed block with no build (deep dive D8)", () => {
+    const vm = (distance: string, totalWeeks: number, compressed = true) =>
+      buildRaceCockpitViewModel({
+        raceGoal: { distance, targetDate: "2026-06-21" },
+        currentWeek: 0,
+        totalWeeks,
+        compressed,
+        todayKey: "2026-05-30",
+      })!.noBuild;
+    // A marathon's taper is three weeks: four weeks is all taper and race.
+    expect(vm("marathon", 4)).toBe(true);
+    expect(vm("marathon", 5)).toBe(false);
+    expect(vm("half", 3)).toBe(true);
+    expect(vm("half", 4)).toBe(false);
+    expect(vm("marathon", 4, false)).toBe(false);
+  });
+
   it("never returns a negative countdown for a past race", () => {
     const vm = buildRaceCockpitViewModel({
       raceGoal: { distance: "10k", targetDate: "2026-05-01" },

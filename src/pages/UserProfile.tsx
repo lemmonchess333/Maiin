@@ -1,13 +1,17 @@
 import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
-import { useMemo, useState, type ReactNode } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useParams,
+  useNavigate,
+  useSearchParams,
+  Link,
+} from "react-router-dom";
 import { blockUser, unblockUser } from "../lib/socialApi";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
 import FollowRequestBanner from "../components/social/FollowRequestBanner";
 import TrainingForChip from "@/features/spaces/TrainingForChip";
-import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
 import { ActivityCardSkeleton, Skeleton } from "../components/LoadingSkeleton";
 import { Button } from "../components/ui/Button";
@@ -19,8 +23,8 @@ import SectionLabel from "../components/ui/SectionLabel";
 import StatFigure from "../components/ui/StatFigure";
 import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
-import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
-import { BadgeHex } from "../features/streaks/BadgeHex";
+import BadgeShelf from "../features/streaks/BadgeShelf";
+import { BADGES_ALL, BADGES_PARAM } from "@/lib/badgeShelfLink";
 import TrophyCase from "@/features/challenges/TrophyCase";
 import {
   Flame,
@@ -28,7 +32,6 @@ import {
   Ban,
   Flag,
   ChevronLeft,
-  Trophy,
   UserX,
   Users,
   WifiOff,
@@ -82,7 +85,7 @@ function ProfileUnavailable({ back }: { back: ReactNode }) {
       {back}
       <EmptyState
         icon={UserX}
-        headline="This profile isn't available"
+        headline="This profile isn’t available"
         sub="The account may have been deleted, or the link is out of date."
         action={{
           label: "Go back",
@@ -160,6 +163,7 @@ function ProfileContent({
     countsFailed,
     badges,
     badgesFailed,
+    badgesReady,
     medals,
     posts,
     postsLoading,
@@ -169,6 +173,27 @@ function ProfileContent({
     adjustFollowing,
   } = useUserProfileData(uid, viewerUid);
   const week = useMemo(() => profileWeek(posts), [posts]);
+  /* `?badges=all`: your own profile with the whole badge collection
+     open. In the address so the streak sheet's "See your badges" and a
+     saved link to the old Analytics tab land on it, and a refresh keeps
+     it. A replace: opening a fold is not a place to go back to. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const badgesOpen =
+    isOwnProfile && searchParams.get(BADGES_PARAM) === BADGES_ALL;
+  const setBadgesOpen = useCallback(
+    (open: boolean) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (open) updated.set(BADGES_PARAM, BADGES_ALL);
+          else updated.delete(BADGES_PARAM);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const {
     open: menuOpen,
     close: closeMenu,
@@ -202,7 +227,7 @@ function ProfileContent({
         {back}
         <EmptyState
           icon={WifiOff}
-          headline="Couldn't load this profile"
+          headline="Couldn’t load this profile"
           sub="Check your connection and try again."
           action={{ label: "Try again", onClick: retry }}
         />
@@ -223,7 +248,7 @@ function ProfileContent({
       toast.success(`Blocked ${name}`);
       navigate(-1);
     } catch {
-      toast.error("Couldn't block user. Try again.");
+      toast.error("Couldn’t block user. Try again.");
     }
   };
 
@@ -236,7 +261,7 @@ function ProfileContent({
       removeBlocked(uid);
       toast.success(`Unblocked ${name}`);
     } catch {
-      toast.error("Couldn't unblock. Try again.");
+      toast.error("Couldn’t unblock. Try again.");
     }
   };
 
@@ -265,7 +290,7 @@ function ProfileContent({
           </h1>
           {countsFailed ? (
             <p className="mt-1 text-small text-muted-foreground">
-              Couldn't load follower counts.
+              Couldn’t load follower counts.
             </p>
           ) : followers === null || followingCount === null ? (
             <Skeleton className="mt-1.5 h-4 w-36 rounded" />
@@ -426,12 +451,6 @@ function ProfileContent({
         />
       ) : (
         <>
-          {/* Partner-streak entry (SOCIAL S3) — renders only for another
-          user you mutually follow; null otherwise. */}
-          {!isOwnProfile && (
-            <PartnerStreakCard partnerUid={uid} partnerName={name} />
-          )}
-
           {/* This week, from what they shared: all a profile can read, and
           the label says so. Replaced two lifetime-looking pills that
           summed the last ten shared posts. */}
@@ -452,7 +471,7 @@ function ProfileContent({
               <Skeleton className="mt-3 h-12 w-full rounded-lg" />
             ) : postsFailed ? (
               <p className="mt-2 text-small text-muted-foreground">
-                Couldn't load this week's sessions.
+                Couldn’t load this week’s sessions.
               </p>
             ) : week.sessions > 0 ? (
               <div className="mt-3 grid grid-cols-3 divide-x divide-border">
@@ -478,29 +497,19 @@ function ProfileContent({
             )}
           </Card>
 
-          {badgesFailed && (
-            <p className="text-small text-muted-foreground">
-              Couldn't load badges.
-            </p>
-          )}
-          {badges.length > 0 && (
-            <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
-              {badges.map((badge) => (
-                <li key={badge.id} className="flex flex-col items-center gap-1">
-                  <BadgeHex
-                    Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
-                    tier={badge.tier}
-                    earned
-                    size={56}
-                    imageSrc={BADGE_ART[badge.id]}
-                  />
-                  <span className="text-xs text-muted-foreground text-center leading-tight">
-                    {badge.name}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* The shelf (Trim1 call 3(c)): badges, then medals. On your
+              own profile "See all" opens the whole badge collection in
+              place; it was a tab under Analytics. */}
+          <BadgeShelf
+            badges={badges}
+            failed={badgesFailed}
+            ready={badgesReady}
+            isOwn={isOwnProfile}
+            open={badgesOpen}
+            onToggle={setBadgesOpen}
+            // The week card above changes height when the sessions arrive.
+            settled={!postsLoading}
+          />
 
           {/* The trophy case (Soc15): a medal for every challenge
               edition they reached a tier in. Drawn once the public
@@ -518,7 +527,7 @@ function ProfileContent({
               </>
             ) : postsFailed ? (
               <ErrorState
-                title="Couldn't load sessions"
+                title="Couldn’t load sessions"
                 description="Check your connection and try again."
                 retry={{ onClick: retry }}
               />
@@ -530,7 +539,7 @@ function ProfileContent({
               <EmptyState
                 icon={Users}
                 headline="Nothing shared yet"
-                sub="Sessions you share show here and in your followers' feeds."
+                sub="Sessions you share show here and in your followers’ feeds."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             ) : (

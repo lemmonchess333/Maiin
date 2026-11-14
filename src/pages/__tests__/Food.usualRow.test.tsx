@@ -94,9 +94,6 @@ vi.mock("@/components/food/FoodHeroCard", () => ({ default: () => null }));
 vi.mock("@/components/food/HeroDrillDownSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/components/food/FoodConsistencyCard", () => ({
-  default: () => null,
-}));
 vi.mock("@/components/food/FoodTimeline", () => ({ default: () => null }));
 vi.mock("@/components/ManualFoodLogger", () => ({
   ManualFoodLogger: () => null,
@@ -155,10 +152,9 @@ describe("Food — the usual row", () => {
         <Food />
       </MemoryRouter>
     );
-    // Back-filling yesterday: changing day clears the selected slot.
+    // Back-filling yesterday: on another day no meal is set for a log,
+    // so the row's own slot is the one it has to carry.
     fireEvent.click(screen.getByRole("button", { name: "Previous day" }));
-    const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
-    expect(within(slots).queryByRole("radio", { checked: true })).toBeNull();
 
     const row = screen.getByRole("group", {
       name: "Your usual at snack time",

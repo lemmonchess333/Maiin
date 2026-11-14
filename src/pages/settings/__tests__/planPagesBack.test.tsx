@@ -1,10 +1,10 @@
 /**
- * Lift plan and Run plan go back to Programme.
+ * Lift plan and Run plan go back to Settings.
  *
- * Neither is a row on the Settings list any more: Programme opens them
- * (and Train does). A back button that went to the list skipped the page
- * the person came from. The editors themselves are mocked; this is about
- * the page chrome.
+ * Both are rows on the Settings list (Trim1 call 2). They sat under a
+ * Programme page before, and went back to it; that page is gone, so a
+ * back button still pointing at it would land on a redirect. The editors
+ * themselves are mocked; this is about the page chrome.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
@@ -39,6 +39,9 @@ vi.mock("@/components/settings/HeartRateZonesSection", () => ({
 vi.mock("@/components/program/AdjustWeekSheet", () => ({
   default: () => null,
 }));
+vi.mock("@/components/settings/VoiceCuesPref", () => ({
+  default: () => null,
+}));
 
 import SettingsLiftPlan from "../SettingsLiftPlan";
 import SettingsRunPlan from "../SettingsRunPlan";
@@ -49,7 +52,7 @@ function Where() {
 
 afterEach(cleanup);
 
-describe("plan pages go back to Programme", () => {
+describe("plan pages go back to Settings", () => {
   it.each([
     ["/settings/lift-plan", <SettingsLiftPlan key="lift" />],
     ["/settings/run-plan", <SettingsRunPlan key="run" />],
@@ -63,7 +66,8 @@ describe("plan pages go back to Programme", () => {
         <Where />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole("button", { name: "Back to programme" }));
-    expect(screen.getByTestId("where")).toHaveTextContent("/settings/training");
+    fireEvent.click(screen.getByRole("button", { name: "Back to settings" }));
+    expect(screen.getByTestId("where")).toHaveTextContent("/settings");
+    expect(screen.getByTestId("where")).not.toHaveTextContent("/settings/");
   });
 });

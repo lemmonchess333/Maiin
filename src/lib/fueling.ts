@@ -47,7 +47,7 @@ export function sessionFuelingLine(
   if (durationMin < FUELING_LONG_MINUTES) {
     return "Past ~75 minutes, standard sports-nutrition guidance is 30–60g of carbs per hour. Practise it on training runs — never for the first time on race day.";
   }
-  return "For efforts past ~2½ hours, standard guidance steps up to 60–90g of carbs per hour — but only at rates you've practised on training runs.";
+  return "For efforts past ~2½ hours, standard guidance steps up to 60–90g of carbs per hour — but only at rates you’ve practised on training runs.";
 }
 
 export interface EveOfLongRun {

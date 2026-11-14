@@ -12,7 +12,7 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "./firebase";
 
 export const PHOTO_REFUSED_MESSAGE =
-  "This photo can't be used. Photos with nudity aren't allowed.";
+  "This photo can’t be used. Photos with nudity aren’t allowed.";
 
 /** The photo was refused as nudity; its file is gone. */
 export class PhotoRefusedError extends Error {

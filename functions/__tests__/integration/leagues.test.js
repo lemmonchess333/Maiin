@@ -23,7 +23,7 @@ let db;
 let idx;
 let admin;
 const leagues = require("../../lib/leagues");
-const { currentWeek } = require("../../lib/friendsBoard");
+const { currentWeek } = require("../../lib/weekTally");
 
 const DAY = 86400000;
 const PREFIX = "league-it-";
@@ -53,7 +53,7 @@ const lift = (date) => ({
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   idx = require("../../index");
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

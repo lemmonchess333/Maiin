@@ -107,11 +107,6 @@ confirmed present — you're confirming behaviour, not wiring.
       ≥95% planned distance logs `recovery-entry written for {uid}`;
       `runPlan.phase` flips to `"recovery"` with the race-day id in
       `completedRaces[]`; the saved run carries top-level `date:"YYYY-MM-DD"`.
-- [ ] **Partner-streak server persist** — two mutually-following accounts with
-      a bond: log on the same local day as A then B → `partnerBonds/<id>`
-      flips `streak 0→1`, `lastSharedDay` today, no `applyPartnerActivity:
-error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
-      `isInvalid`/`savedAnyway`/sub-threshold run does NOT update `lastActive`.
       Freeze ledger uses Monday-anchored week keys.
 - [ ] **Global hybrid challenge + `hybrid_score`** — after 00:05 UTC
       `rolloverChallenges`, `challenges/global-monthly-<YYYY-MM-01>` exists
@@ -153,7 +148,7 @@ error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
 - **One real iOS device + a sandbox Apple ID:** Apple uniqueness, App Check iOS
   verified-rate, tooltip/coachmark device checks, RunSummary `date` field.
 - **Two test accounts on one device:** offline/share queue isolation,
-  partner-streak persist, public-profile uid binding, cross-user profile.
+  public-profile uid binding, cross-user profile.
 - **stripe-cli + a test Stripe account:** webhook dedup (incl. forced crash).
 - **Production observation (passive, over 1–2 weeks):** all the scheduled /
   trigger reconciliation items — just watch Cloud Functions logs for the

@@ -1,0 +1,65 @@
+// Scratch: price a hand-written draft of the owner's Push A and Pull A on the
+// engine's own clock, beside what the builder gives today.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+import { EXERCISES } from "@/lib/exercises";
+
+type Ex = { name: string; exerciseId: string; sets: number; reps: number; repRangeMax?: number; weight?: number; isAccessory?: boolean };
+
+it("draft", () => {
+  // Real exercise objects from built plans, by name, so loads and ids are the engine's.
+  const seen = new Map<string, Ex>();
+  for (const primaryGoal of ["general", "hypertrophy"])
+    for (const liftDays of [3, 4, 5, 6])
+      for (const sessionMinutes of [60, 75]) {
+        const plan = buildPlan({
+          primaryGoal, nutritionPhase: "recomp", experience: "intermediate", sessionMinutes, bodyweightKg: 80, sex: "male",
+          liftDays, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09",
+        } as unknown as PlanBuilderInput) as unknown as { programState: { workouts: Array<{ exercises: Ex[] }> } };
+        for (const d of plan.programState.workouts) for (const e of d.exercises) if (!seen.has(e.name) || primaryGoal === "general") seen.set(e.name, e);
+      }
+  const cat = (name: string): Ex => {
+    const hit = seen.get(name);
+    if (hit) return hit;
+    const c = (EXERCISES as Array<{ id: string; name: string }>).find((x) => x.name === name);
+    if (!c) throw new Error("no exercise " + name);
+    return { name, exerciseId: c.id, sets: 3, reps: 12, weight: 10, isAccessory: true };
+  };
+  const mk = (name: string, sets: number, reps: number, max: number, main = false, weight?: number): Ex =>
+    ({ ...cat(name), sets, reps, repRangeMax: max, isAccessory: !main, ...(weight !== undefined ? { weight } : {}) });
+  const days: Record<string, Ex[]> = {
+    "Pull A (draft)": [
+      mk("Pull-Ups", 4, 6, 10, true), mk("Barbell Row", 3, 8, 12), mk("Lat Pulldown", 3, 10, 14),
+      mk("Face Pulls", 3, 12, 17, false, 15), mk("Dumbbell Curl", 3, 10, 15), mk("Hammer Curl", 2, 12, 17, false, 8),
+    ],
+    "Pull A (draft, 5 lifts)": [
+      mk("Pull-Ups", 4, 6, 10, true), mk("Barbell Row", 3, 8, 12), mk("Lat Pulldown", 3, 10, 14),
+      mk("Face Pulls", 3, 12, 17, false, 15), mk("Dumbbell Curl", 3, 10, 15),
+    ],
+    "Push A (draft, 5 lifts)": [
+      mk("Bench Press", 4, 6, 10, true), mk("Dumbbell Shoulder Press", 3, 8, 12), mk("Dumbbell Bench Press", 3, 8, 12),
+      mk("Lateral Raise", 3, 12, 17), mk("Rope Tricep Pushdown", 3, 10, 15),
+    ],
+    "Legs A (draft, 5 lifts)": [
+      mk("Barbell Squat", 4, 6, 10, true), mk("Romanian Deadlift", 3, 8, 12, false, 60), mk("Hack Squat", 3, 10, 14),
+      mk("Seated Leg Curl", 3, 10, 15), mk("Standing Calf Raise", 3, 10, 15),
+    ],
+    "Push A (draft)": [
+      mk("Bench Press", 4, 6, 10, true), mk("Dumbbell Shoulder Press", 3, 8, 12), mk("Dumbbell Bench Press", 3, 8, 12),
+      mk("Lateral Raise", 3, 12, 17), mk("Rope Tricep Pushdown", 3, 10, 15), mk("Overhead Tricep Extension", 2, 12, 17),
+    ],
+    "Legs A (draft)": [
+      mk("Barbell Squat", 4, 6, 10, true), mk("Romanian Deadlift", 3, 8, 12, false, 60), mk("Hack Squat", 3, 10, 14),
+      mk("Seated Leg Curl", 3, 10, 15), mk("Standing Calf Raise", 3, 10, 15), mk("Cable Crunch", 2, 12, 17),
+    ],
+  };
+  const out: string[] = [];
+  for (const [name, ex] of Object.entries(days)) {
+    const sets = ex.reduce((t, e) => t + e.sets, 0);
+    out.push(`${name} | ${ex.length} lifts | ${sets} sets | ${estimateSessionMinutes(ex as never, { sessionMinutes: 60 })} min on the engine's clock | ` +
+      ex.map((e) => `${e.name} ${e.sets}x${e.reps}-${e.repRangeMax}${e.isAccessory ? "" : "*"} @${e.weight ?? "?"} (${e.exerciseId})`).join(", "));
+  }
+  writeFileSync("/tmp/work/train/draft-days.txt", out.join("\n"));
+});

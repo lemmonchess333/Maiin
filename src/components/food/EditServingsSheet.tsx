@@ -569,9 +569,11 @@ function EditServingsSheet({
           )}
         </div>
 
-        {/* F5a meal-slot picker — the same solid SegmentedControl as the
-            composer's "Add to" row, so the picked slot reads as one orange
-            across the Food surface. Hidden when source.currentMeal is null AND the
+        {/* F5a meal-slot picker — the four meals on the neutral track
+            (Food11 call 3: Food's colour is on the wheel, the bars and
+            the composer chip's dot, not on a filled control). Four parts
+            here, where the composer has one chip, because the sheet is
+            opened to change this. Hidden when source.currentMeal is null AND the
             picker hasn't been touched — that covers groups spanning multiple
             slots, where snapping all docs to one slot via this picker IS the
             intended outcome but the section label here would be
@@ -579,8 +581,6 @@ function EditServingsSheet({
         <div className="@container space-y-2">
           <SectionLabel className="text-center">Meal slot</SectionLabel>
           <SegmentedControl
-            emphasis="solid"
-            tone="nutrition"
             ariaLabel="Meal slot"
             className={MEAL_PICKER_LAYOUT}
             options={MEAL_ORDER.map((slot) => ({

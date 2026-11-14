@@ -369,6 +369,21 @@ function runDaysOf(runs: readonly DatedRun[]): string[] {
 }
 
 /**
+ * A recovery week's run plan: a week off after a race plans no run, and the
+ * rollover moves a race plan on from its runs' week (`runWeekKeyOf`), so an
+ * empty week keeps its key on the plan as an empty race week does
+ * (`emptyRunWeekKey`); a week with runs needs none.
+ */
+export function withRecoveryWeekKey(
+  runPlan: RunPlan,
+  runDays: readonly ScheduledRunDay[],
+  weekKey: string
+): RunPlan {
+  const { emptyRunWeekKey: _stale, ...plan } = runPlan;
+  return runDays.length === 0 ? { ...plan, emptyRunWeekKey: weekKey } : plan;
+}
+
+/**
  * The run side of moving the programme into the next week, shared by the
  * Monday rollover and "Start next week". `current` is the programme in the
  * week being left, of which only the run plan and its days are read; `next`
@@ -413,13 +428,15 @@ export function nextRunWeek(
     // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
     // recovery exit is a deliberate decision (resolveRecoveryExit), not a
     // rollover side effect.
+    const recoveryDays = scheduleRecoveryWeekV2({
+      weekSchedule,
+      weekStart: next.weekStart,
+      newRunnerUntil: profileNewRunnerUntil(profile),
+      race: runPlan.raceGoal,
+    });
     return {
-      runDays: scheduleRecoveryWeekV2({
-        weekSchedule,
-        weekStart: next.weekStart,
-        newRunnerUntil: profileNewRunnerUntil(profile),
-      }),
-      runPlan: { ...runPlan },
+      runDays: recoveryDays,
+      runPlan: withRecoveryWeekKey(runPlan, recoveryDays, next.weekStart),
       raceBlock: raceBlockWeek(runPlan),
     };
   }

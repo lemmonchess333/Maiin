@@ -21,6 +21,10 @@ import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { useSubscription } from "@/lib/subscription";
+import { track } from "@/lib/paywallAnalytics";
+import { HISTORY_UPGRADE_PATH, isRangeOpen } from "@/lib/historyAccess";
+import RangeLabel from "@/components/analytics/RangeLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import {
@@ -111,6 +115,9 @@ export default function ExerciseHistory() {
 
   const [timeRange, setTimeRange] =
     useState<(typeof RANGE_ORDER)[number]>("3M");
+  // Charts older than 3 months are Pro (whole-app grill Q84); the
+  // all-time bests above the chart stay free.
+  const { isPro } = useSubscription();
   const [metric, setMetric] = useState<Metric>("1RM");
   // Top-level tab: "progress" (chart + sessions) or "form" (muscle
   // diagrams + instructions). Default depends on entry point — opening
@@ -194,7 +201,7 @@ export default function ExerciseHistory() {
     return out;
   }, [workouts, decodedName, isTimed]);
 
-  // Personal bests by reps — heaviest weight ever lifted at exactly that rep
+  // Bests by reps — heaviest weight ever lifted at exactly that rep
   // count. For bodyweight exercises this is the heaviest ADDED weight
   // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
   // pure BW sessions store `weightKg = 0` and just show "BW" with the
@@ -363,7 +370,7 @@ export default function ExerciseHistory() {
     return (
       <div className="pt-2">
         <ErrorState
-          title="Couldn't load your sessions"
+          title="Couldn’t load your sessions"
           retry={{ onClick: retryWorkouts }}
         />
       </div>
@@ -380,7 +387,7 @@ export default function ExerciseHistory() {
         icon={Search}
         accent={THEME.lifting}
         headline="Exercise not found"
-        sub={`"${decodedName}" isn't in your logs or the exercise database.`}
+        sub={`"${decodedName}" isn’t in your logs or the exercise database.`}
         action={{ label: "Browse exercises", onClick: goBack }}
       />
     );
@@ -515,7 +522,7 @@ export default function ExerciseHistory() {
         />
       ) : (
         <>
-          {/* ── Personal bests by reps ───────────────────────────────── */}
+          {/* ── Bests by reps ───────────────────────────────── */}
           {!isTimed && (
             <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
@@ -527,7 +534,7 @@ export default function ExerciseHistory() {
                     wording already existed three characters away, on the
                     bodyweight side of this same ternary. */}
                 <h3 className="text-base font-bold text-foreground">
-                  Personal bests by reps
+                  Bests by reps
                 </h3>
               </div>
               {/* The columns are the rep counts THIS lifter trains, so
@@ -572,9 +579,17 @@ export default function ExerciseHistory() {
             value={timeRange}
             onChange={(value) => {
               haptic("light");
+              if (!isRangeOpen(value, isPro)) {
+                track("paywall_cta_clicked", { source: "history" });
+                navigate(HISTORY_UPGRADE_PATH);
+                return;
+              }
               setTimeRange(value);
             }}
-            options={RANGE_ORDER.map((r) => ({ value: r, label: r }))}
+            options={RANGE_ORDER.map((r) => ({
+              value: r,
+              label: <RangeLabel range={r} locked={!isRangeOpen(r, isPro)} />,
+            }))}
           />
 
           {/* ── Chart with metric toggle ────────────────────────────── */}
@@ -661,7 +676,7 @@ export default function ExerciseHistory() {
                               the food orange measured 2.76:1. */}
                           {isPR && (
                             <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
-                              PR
+                              Best
                             </span>
                           )}
                         </div>

@@ -46,6 +46,22 @@ export const TRIAL_REMINDER_HOUR = 10;
 export const TRIAL_REMINDER_TITLE = "Your Pro trial ends in 2 days";
 export const TRIAL_REMINDER_BODY =
   "Photo logging pauses and your calorie target stops adapting after that. Nothing is charged unless you subscribe.";
+/** For someone whose target never started adapting. The adaptive target
+ *  needs 14 days of weigh-ins (adaptiveTdee.ts), so most of a 7-day trial
+ *  never sees it; telling them it "stops adapting" names a loss they never
+ *  had (owner, Q67, 13 Nov 2026). */
+export const TRIAL_REMINDER_BODY_SCANS_ONLY =
+  "Photo logging pauses after that. Nothing is charged unless you subscribe.";
+
+/** Whether the adaptive calorie target ever set a number for this person:
+ *  only then did the trial give them one to lose. */
+export function targetHasAdapted(
+  capState: { lastAppliedAt?: string | null } | null | undefined
+): boolean {
+  return (
+    typeof capState?.lastAppliedAt === "string" && capState.lastAppliedAt !== ""
+  );
+}
 
 /**
  * When the reminder fires, or null when there is nothing to remind
@@ -72,6 +88,7 @@ export function useTrialReminderInternal(): void {
   const { profile, loading } = useAuth();
   const { isInTrial } = useSubscription();
   const trialExpiresAt = profile?.trialExpiresAt ?? null;
+  const adapted = targetHasAdapted(profile?.adaptiveCapState);
   // The record as a string: a fresh profile object with the same trial
   // must not reschedule, and a changed one (a cancel) must.
   const storeTrial = JSON.stringify(profile?.subscriptionTrial ?? null);
@@ -104,7 +121,7 @@ export function useTrialReminderInternal(): void {
       await scheduleNotification({
         id: TRIAL_NOTIFICATION_ID,
         title: TRIAL_REMINDER_TITLE,
-        body: TRIAL_REMINDER_BODY,
+        body: adapted ? TRIAL_REMINDER_BODY : TRIAL_REMINDER_BODY_SCANS_ONLY,
         scheduleAt: fireAt,
       });
     };
@@ -112,5 +129,5 @@ export function useTrialReminderInternal(): void {
     return () => {
       cancelled = true;
     };
-  }, [loading, isInTrial, trialExpiresAt, storeTrial]);
+  }, [loading, isInTrial, trialExpiresAt, storeTrial, adapted]);
 }

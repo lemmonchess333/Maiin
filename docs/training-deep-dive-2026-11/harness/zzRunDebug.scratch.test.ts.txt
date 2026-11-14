@@ -1,0 +1,57 @@
+import { describe, expect, it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+
+const START = "2026-03-09";
+const baseline = (weeklyMinutes: number, longestRunMinutes: number) => ({
+  version: 1 as const,
+  experience: "regular" as const,
+  weeklyMinutes,
+  longestRunMinutes,
+  confirmedAt: START,
+  source: "self_reported" as const,
+});
+
+describe("zz planner copy", () => {
+  it("prints", () => {
+    const cases: Record<string, Parameters<typeof getRaceGoalPlannerState>[0]> = {
+      "first marathon 18w, easy 6:55 (plan F)": {
+        distance: "marathon", targetDate: "2026-07-12", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(170, 83), easyPaceSPerKm: 416,
+      },
+      "slow marathon 18w, easy 7:54 (plan I, benchmarked)": {
+        distance: "marathon", targetDate: "2026-07-12", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(180, 95), easyPaceSPerKm: 474,
+      },
+      "exp marathon 16w, 6 runs, easy 5:23 (plan G)": {
+        distance: "marathon", targetDate: "2026-06-28", currentDate: START, liftDays: 0, weeklyRunDays: 6,
+        runningBaseline: baseline(330, 129), easyPaceSPerKm: 323,
+      },
+      "marathon in 4 weeks (plan K)": {
+        distance: "marathon", targetDate: "2026-04-05", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(170, 83), easyPaceSPerKm: 416,
+      },
+      "marathon in 6 weeks (plan K)": {
+        distance: "marathon", targetDate: "2026-04-19", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(170, 83), easyPaceSPerKm: 416,
+      },
+      "marathon in 3 weeks": {
+        distance: "marathon", targetDate: "2026-03-29", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(170, 83), easyPaceSPerKm: 416,
+      },
+      "half in 8 weeks, no baseline": {
+        distance: "half", targetDate: "2026-05-03", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+      },
+      "marathon in 40 weeks": {
+        distance: "marathon", targetDate: "2026-12-13", currentDate: START, liftDays: 0, weeklyRunDays: 4,
+        runningBaseline: baseline(170, 83), easyPaceSPerKm: 416,
+      },
+    };
+    const out = Object.entries(cases).map(([name, input]) => {
+      const s = getRaceGoalPlannerState(input);
+      return `${name}\n   status=${s.status} | title="${s.statusTitle}" | "${s.statusDescription}" | cta="${s.ctaLabel}" | firstWeekMinutes=${String(Math.round(s.firstWeekMinutes))} | shortOfRace=${JSON.stringify(s.shortOfRace)}`;
+    });
+    writeFileSync("/tmp/work/train/direct/planner-copy.txt", out.join("\n"));
+    expect(out.length).toBeGreaterThan(0);
+  });
+});

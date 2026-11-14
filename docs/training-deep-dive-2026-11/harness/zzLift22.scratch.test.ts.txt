@@ -1,0 +1,220 @@
+// Scratch: Lift22's printed weeks. 30 and 45 minute plans, with the day's
+// last lifts paired, beside Lift21's. No production caller: the session
+// clock is wrapped so a pair is priced as the workout screen runs it (one
+// rest a round, after its second lift), and the builder's own sizer then
+// spends the time saved on the lifts it had given up, in the day's order.
+import { it, vi } from "vitest";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { EXERCISES } from "@/lib/exercises";
+
+const state = { pairing: false, mode: (process.env.L22_MODE ?? "iso") as "iso" | "mixed" | "any" | "antag" };
+
+type Ex = {
+  name: string;
+  exerciseId: string;
+  sets: number;
+  reps?: number;
+  repRangeMax?: number;
+  isAccessory?: boolean;
+  repUnit?: string;
+  movementCategory?: string;
+};
+
+const EQUIP = new Map(
+  (EXERCISES as Array<{ id: string; equipment: string }>).map((e) => [e.id, e.equipment])
+);
+const barbell = (ex: Ex) => /barbell/i.test(EQUIP.get(ex.exerciseId) ?? "");
+const PUSH = new Set(["horizontal_push", "vertical_push"]);
+const PULL = new Set(["horizontal_pull", "vertical_pull"]);
+const MUSCLE = new Map(
+  (EXERCISES as Array<{ id: string; muscleGroup: string }>).map((e) => [e.id, e.muscleGroup])
+);
+
+export function bucket(exerciseId: string): string {
+  const m = (MUSCLE.get(exerciseId) ?? "").toLowerCase();
+  if (/rear/.test(m)) return "rear delts";
+  if (/lateral|side|medial/.test(m)) return "side delts";
+  if (/front|anterior|shoulder|delt/.test(m)) return "shoulders";
+  if (/pector|chest/.test(m)) return "chest";
+  if (/bicep|brachi|forearm/.test(m)) return "biceps";
+  if (/tricep/.test(m)) return "triceps";
+  if (/quad/.test(m)) return "quads";
+  if (/hamstring/.test(m)) return "hamstrings";
+  if (/glute|hip/.test(m)) return "glutes";
+  if (/calf|calves|gastro|soleus/.test(m)) return "calves";
+  if (/ab|core|oblique/.test(m)) return "abs";
+  if (/lat|back|trap|rhomb/.test(m)) return "back";
+  return m || "?";
+}
+
+let roleOf: (ex: Ex) => string = () => "?";
+let restOf: (ex: Ex, minutes: number) => number = () => 0;
+
+/** The pairs a day writes (Lift22 calls 2 and 3): only isolation lifts in
+ *  the run of them that ends the day, never the main lift, never two for
+ *  the same muscle; from the end, as many as the run gives. */
+export function pairsOf(exercises: readonly Ex[]): Array<[number, number]> {
+  const iso = (ex: Ex) => roleOf(ex) === "isolation";
+  const isPairable = (ex: Ex) =>
+    ex.isAccessory === true && ex.repUnit !== "seconds" && (state.mode !== "iso" || iso(ex));
+  const lower = new Set(["quads", "hamstrings", "glutes"]);
+  const antag = (a: Ex, b: Ex) =>
+    (PUSH.has(a.movementCategory ?? "") && PULL.has(b.movementCategory ?? "")) ||
+    (PULL.has(a.movementCategory ?? "") && PUSH.has(b.movementCategory ?? ""));
+  const canPair = (a: Ex, b: Ex) =>
+    bucket(a.exerciseId) !== bucket(b.exerciseId) &&
+    (state.mode === "any" || state.mode === "iso" || !(barbell(a) || barbell(b))) &&
+    (state.mode !== "mixed" || iso(a) || iso(b)) &&
+    (state.mode !== "antag" || iso(a) || iso(b) || antag(a, b)) &&
+    !(!iso(a) && !iso(b) && lower.has(bucket(a.exerciseId)) && lower.has(bucket(b.exerciseId)));
+  let start = exercises.length;
+  while (start > 0 && isPairable(exercises[start - 1])) start--;
+  const pairs: Array<[number, number]> = [];
+  let k = exercises.length - 1;
+  while (k - 1 >= start) {
+    const a = exercises[k - 1];
+    const b = exercises[k];
+    if (canPair(a, b)) {
+      pairs.unshift([k - 1, k]);
+      k -= 2;
+    } else k -= 1;
+  }
+  return pairs;
+}
+
+function pairSaving(exercises: readonly Ex[], minutes: number): number {
+  let saved = 0;
+  for (const [i, j] of pairsOf(exercises)) {
+    const a = exercises[i];
+    const b = exercises[j];
+    const ra = restOf(a, minutes);
+    const rb = restOf(b, minutes);
+    saved += a.sets * ra + b.sets * rb - Math.max(a.sets, b.sets) * rb;
+  }
+  return saved;
+}
+
+vi.mock("../expressSession", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../expressSession")>();
+  return {
+    ...real,
+    estimateSessionSeconds: (exercises: Ex[], rest: { sessionMinutes?: number } = {}) => {
+      const base = real.estimateSessionSeconds(exercises as never, rest);
+      const m = rest.sessionMinutes;
+      if (!state.pairing || (m !== 30 && m !== 45)) return base;
+      return base - pairSaving(exercises, m);
+    },
+  };
+});
+
+it("lift22 panel", async () => {
+  const { buildPlan } = await import("../planBuilder");
+  const { exerciseRole } = await import("../exerciseRole");
+  const { restSecondsFor } = await import("../restTime");
+  const { estimateSessionSeconds } = await import("../expressSession");
+  roleOf = (ex) => exerciseRole(ex as never);
+  restOf = (ex, minutes) =>
+    restSecondsFor({ ...ex, exerciseId: ex.exerciseId, reps: ex.reps ?? 8 } as never, { sessionMinutes: minutes });
+
+  type Day = { name: string; exercises: Ex[] };
+  const build = (liftDays: number, minutes: number, level: string, goal: string, pairing: boolean): Day[] => {
+    state.pairing = pairing;
+    try {
+      const plan = buildPlan({
+        primaryGoal: goal, nutritionPhase: "recomp", experience: level, sessionMinutes: minutes, bodyweightKg: 80, sex: "male",
+        liftDays, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09",
+      } as never) as unknown as { programState: { workouts: Day[] } };
+      return plan.programState.workouts;
+    } finally {
+      state.pairing = false;
+    }
+  };
+  // Priced without pairs, as Lift21's clock does; with them, as Lift22's.
+  const secs = (ex: Ex[], minutes: number, pairing: boolean) => {
+    state.pairing = pairing;
+    try {
+      return estimateSessionSeconds(ex as never, { sessionMinutes: minutes });
+    } finally {
+      state.pairing = false;
+    }
+  };
+  const fmt = (e: Ex) =>
+    `${e.name} ${e.sets}x${e.reps}${e.repRangeMax && e.repRangeMax !== e.reps ? "-" + e.repRangeMax : ""}${e.isAccessory ? "" : "*"}`;
+  const line = (d: Day, minutes: number, pairing: boolean) => {
+    const ex = d.exercises;
+    const pairs = pairing ? pairsOf(ex) : [];
+    const inPair = new Map<number, number>();
+    pairs.forEach(([a, b], p) => { inPair.set(a, p); inPair.set(b, p); });
+    const parts: string[] = [];
+    for (let i = 0; i < ex.length; i++) {
+      const p = inPair.get(i);
+      if (p !== undefined && pairs[p][0] === i) parts.push(`[${fmt(ex[i])} + ${fmt(ex[i + 1])}]`);
+      else if (p === undefined) parts.push(fmt(ex[i]));
+    }
+    const sets = ex.reduce((s, e) => s + e.sets, 0);
+    const priced = Math.round(secs(ex, minutes, pairing) / 60);
+    const straight = Math.round(secs(ex, minutes, false) / 60);
+    const clock = pairing && pairs.length ? `${priced} min (${straight} straight)` : `${priced} min`;
+    return `  ${(d as unknown as { dayName: string }).dayName} | ${ex.length} lifts | ${sets} sets | ${clock} | ${parts.join(", ")}`;
+  };
+  const SMALL = new Set(["biceps", "triceps", "side delts", "rear delts", "calves", "abs"]);
+  const smallOf = (d: Day) => [...new Set(d.exercises.filter((e) => e.isAccessory && roleOf(e) === "isolation").map((e) => bucket(e.exerciseId)).filter((b) => SMALL.has(b)))];
+
+  const full: string[] = [];
+  const problems: string[] = [];
+  const muscles = new Map<string, Set<string>>();
+  type Agg = { days: number; lifts: number; sets: number; small: number; withPair: number; gained: number };
+  const agg = new Map<string, { l21: Agg; l22: Agg }>();
+  const blank = (): Agg => ({ days: 0, lifts: 0, sets: 0, small: 0, withPair: 0, gained: 0 });
+
+  for (const liftDays of [3, 4, 5, 6])
+    for (const minutes of [30, 45])
+      for (const level of ["beginner", "intermediate"])
+        for (const goal of ["hypertrophy", "general", "strength"]) {
+          const l21 = build(liftDays, minutes, level, goal, false);
+          const l22 = build(liftDays, minutes, level, goal, true);
+          full.push(`\n== ${liftDays} days, ${minutes} min, ${level}, ${goal}`);
+          full.push("Lift21:");
+          for (const d of l21) full.push(line(d, minutes, false));
+          full.push("Lift22:");
+          for (const d of l22) full.push(line(d, minutes, true));
+          const key = `${minutes} min, ${level}`;
+          const a = agg.get(key) ?? { l21: blank(), l22: blank() };
+          agg.set(key, a);
+          l21.forEach((d, i) => {
+            const n = l22[i];
+            a.l21.days++; a.l21.lifts += d.exercises.length; a.l21.sets += d.exercises.reduce((s, e) => s + e.sets, 0); a.l21.small += smallOf(d).length;
+            a.l22.days++; a.l22.lifts += n.exercises.length; a.l22.sets += n.exercises.reduce((s, e) => s + e.sets, 0); a.l22.small += smallOf(n).length;
+            const pairs = pairsOf(n.exercises);
+            if (pairs.length) a.l22.withPair++;
+            if (n.exercises.length > d.exercises.length) a.l22.gained++;
+            const tag = `${liftDays}d ${minutes}m ${level} ${goal} ${(n as unknown as { dayName: string }).dayName}`;
+            const priced = secs(n.exercises, minutes, true);
+            if (priced > minutes * 60 * 1.05) problems.push(`${tag}: ${Math.round(priced / 60)} min, over ${minutes}`);
+            if (n.exercises.length < d.exercises.length) problems.push(`${tag}: fewer lifts than Lift21 (${n.exercises.length} vs ${d.exercises.length})`);
+            const lost = d.exercises.filter((e) => !n.exercises.some((x) => x.exerciseId === e.exerciseId));
+            if (lost.length) problems.push(`${tag}: loses ${lost.map((e) => e.name).join(", ")}`);
+            for (const [x, y] of pairs) {
+              const ex = n.exercises[x], ey = n.exercises[y];
+              if (!ex.isAccessory || !ey.isAccessory) problems.push(`${tag}: a pair holds the main lift`);
+              if (bucket(ex.exerciseId) === bucket(ey.exerciseId)) problems.push(`${tag}: pair on one muscle`);
+              for (const e of [ex, ey]) {
+                const s = muscles.get(bucket(e.exerciseId)) ?? new Set();
+                s.add(`${e.name} (${MUSCLE.get(e.exerciseId)})`);
+                muscles.set(bucket(e.exerciseId), s);
+              }
+            }
+          });
+        }
+
+  const summary: string[] = ["| Setup | Lifts a day, Lift21 → Lift22 | Sets a day | Small muscles a day* | Days with a pair | Days that gain a lift |", "| --- | --- | --- | --- | --- | --- |"];
+  const r1 = (x: number) => (Math.round(x * 10) / 10).toFixed(1);
+  for (const [key, { l21, l22 }] of agg)
+    summary.push(`| ${key} | ${r1(l21.lifts / l21.days)} → ${r1(l22.lifts / l22.days)} | ${r1(l21.sets / l21.days)} → ${r1(l22.sets / l22.days)} | ${r1(l21.small / l21.days)} → ${r1(l22.small / l22.days)} | ${l22.withPair} of ${l22.days} | ${l22.gained} of ${l22.days} |`);
+  const out = `/tmp/work/lift22/${state.mode}`;
+  mkdirSync(out, { recursive: true });
+  writeFileSync(`${out}/panel-full.txt`, full.join("\n"));
+  writeFileSync(`${out}/panel-summary.md`, summary.join("\n"));
+  writeFileSync(`${out}/problems.txt`, problems.join("\n") || "none");
+  writeFileSync(`${out}/muscles.txt`, [...muscles].map(([k, v]) => `${k}: ${[...v].join("; ")}`).join("\n"));
+}, 600_000);

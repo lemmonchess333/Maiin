@@ -7,19 +7,21 @@
  * the only thing that can, per CLAUDE.md's D15 lesson: no visual churn
  * without screenshots.
  *
- * Three pages:
+ * Two pages:
  *   run-plan      RunFitnessSection + HeartRateZonesSection, the two
  *                 running-fitness inputs, below the plan they feed.
- *   data          DataExportSection, on Your data above Recently deleted.
- *   subscription  AiUsageSection, under the plan row.
+ *   account       AiUsageSection under the plan row, and
+ *                 DataExportSection above Recently deleted. Both were on
+ *                 pages of their own (Subscription, Your data) until
+ *                 Trim1 call 7 folded those into Account.
  *
  * 375px rather than the 393 the other capture specs use. Narrow is the
  * stress case for these: the HR editor puts a label, a mono value and a
  * Button on one row, and an export row holds an icon, its label and, while
  * it runs, "Exporting…". If they hold at 375 they hold everywhere.
  *
- * Light AND dark, because two of the three lean on `bg-card` + border
- * treatments that read very differently between themes, and dark is the
+ * Light AND dark, because both lean on `bg-card` + border treatments
+ * that read very differently between themes, and dark is the
  * default new users see.
  */
 import { test } from "@playwright/test";
@@ -36,12 +38,7 @@ test.use({
 /** Pages under capture: route slug, heading to settle on, file stem. */
 const PAGES = [
   { slug: "settings/run-plan", heading: /run plan/i, stem: "run-plan" },
-  { slug: "settings/data", heading: /your data/i, stem: "data" },
-  {
-    slug: "settings/subscription",
-    heading: /subscription/i,
-    stem: "subscription",
-  },
+  { slug: "settings/account", heading: /account/i, stem: "account" },
 ] as const;
 
 test.describe("restored settings sections", () => {

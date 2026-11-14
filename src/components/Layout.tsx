@@ -146,7 +146,7 @@ export default function Layout() {
     try {
       await discardRefusedSaves(uid);
     } catch {
-      toast.error("Couldn't discard on this phone. Try again.");
+      toast.error("Couldn’t discard on this phone. Try again.");
     }
   }
 
@@ -245,8 +245,8 @@ export default function Layout() {
                 <span className="min-w-0 flex-1 basis-40 break-words">
                   <InlineNumerals>
                     {queueCount > 0
-                      ? `${isOnline ? "" : "You're offline · "}${pendingText}`
-                      : "You're offline"}
+                      ? `${isOnline ? "" : "You’re offline · "}${pendingText}`
+                      : "You’re offline"}
                   </InlineNumerals>
                 </span>
                 {isOnline && failedCount > 0 && (
@@ -265,7 +265,7 @@ export default function Layout() {
                     variant="ghost"
                     className="shrink-0 px-2 text-xs text-warning-strong"
                     onClick={() => setConfirmingDiscard(true)}
-                    aria-label="Discard changes that won't save"
+                    aria-label="Discard changes that won’t save"
                   >
                     Discard
                   </Button>
@@ -300,10 +300,10 @@ export default function Layout() {
         open={confirmingDiscard}
         title={
           refused === 1
-            ? "Discard the change that won't save?"
-            : `Discard the ${refused} changes that won't save?`
+            ? "Discard the change that won’t save?"
+            : `Discard the ${refused} changes that won’t save?`
         }
-        description={`Retrying won't save ${refused === 1 ? "it" : "them"}. Discarding removes ${refused === 1 ? "it" : "them"} from this phone, and ${refused === 1 ? "it" : "they"} can't be brought back.`}
+        description={`Retrying won’t save ${refused === 1 ? "it" : "them"}. Discarding removes ${refused === 1 ? "it" : "them"} from this phone, and ${refused === 1 ? "it" : "they"} can’t be brought back.`}
         confirmLabel="Discard"
         destructive
         onConfirm={discardRefused}

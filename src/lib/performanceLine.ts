@@ -26,11 +26,7 @@ import type { LoadBand, PerformanceSignals } from "./performanceTypes";
 
 /** Verb-state — categorical state the card communicates. */
 export type VerbState =
-  | "recovering"
-  | "building"
-  | "cruising"
-  | "sharpening"
-  | "backing-off";
+  "recovering" | "building" | "cruising" | "sharpening" | "backing-off";
 
 /** Human-facing verb strings (English; i18n later). */
 export const VERB_LABEL: Record<VerbState, string> = {
@@ -95,8 +91,10 @@ const runningAbove = (s: PerformanceSignals) =>
  * line in `getLine` compares the week with "your usual week", the average
  * of the weeks before it, and a new account has none, so "Fewer sessions
  * than usual" on day three and "97% above your usual week" on day seven
- * compared a first week with nothing. The Performance page already says
- * "Early read" here; Home and the overview now say the same thing.
+ * compared a first week with nothing. The card says "Early read" in the
+ * verb's place here (`PerformanceSection`), as the Performance page's
+ * gauge did before Trim1 call 5 made the card the one place the score
+ * is shown.
  */
 export function getEstablishingLine(signals: PerformanceSignals): string {
   if (signals.daysSinceLastTraining > 7)
@@ -149,7 +147,7 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
     case "recovering":
       // Recently active recovery vs lapsed/sick gap
       if (signals.daysSinceLastTraining > 7)
-        return "Quiet week. Log when you're back";
+        return "Quiet week. Log when you’re back";
       return "Light week. Take it easy";
   }
 }

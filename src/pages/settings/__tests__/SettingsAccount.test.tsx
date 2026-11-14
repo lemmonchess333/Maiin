@@ -17,10 +17,10 @@
  * the user actually ends up looking at. That is the only level at which
  * "rendered twice" is even expressible.
  *
- * Since the Settings pass the exports live on Your data (/settings/data),
- * with recently deleted meals: Set1 put both in Data & Storage. So the
- * count is pinned there, and Account is pinned to carry none, beside the
- * two rows it does carry.
+ * The exports have moved twice since. The Settings pass put them on a
+ * Your data page with recently deleted meals; Trim1 call 7 folded that
+ * page, and Subscription's one button, into Account. So the count is
+ * pinned here again: three exports, once each, on the composed page.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -37,9 +37,28 @@ const USER = {
   providerData: [{ providerId: "password" }],
 } as unknown as User;
 
-vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: USER, signOut: vi.fn() }),
+const auth = vi.hoisted(() => ({
+  profile: { uid: "u1", onboardingComplete: true } as Record<string, unknown>,
 }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({ user: USER, profile: auth.profile, signOut: vi.fn() }),
+}));
+vi.mock("@/lib/subscription", () => ({
+  useSubscription: () => ({ tier: "free", isInTrial: false, trialDaysLeft: 0 }),
+}));
+vi.mock("@/hooks/useScanUsage", () => ({
+  useScanUsage: () => ({
+    loading: false,
+    isPro: false,
+    used: 0,
+    limit: 0,
+    resetDate: new Date(2026, 10, 12, 0, 0),
+  }),
+}));
+vi.mock("@/hooks/useAccountDeletionStatus", () => ({
+  useAccountDeletionStatus: () => ({ pending: false, completed: false }),
+}));
+vi.mock("@/lib/settingsAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: vi.fn().mockResolvedValue(""),
   exportMealsCSV: vi.fn().mockResolvedValue(""),
@@ -52,22 +71,21 @@ vi.mock("@/lib/toast", () => ({
 }));
 
 import SettingsAccount from "../SettingsAccount";
-import SettingsData from "../SettingsData";
 
-function renderPage(page: "account" | "data" = "account") {
+function renderPage(duringSetup = false) {
   render(
     <MemoryRouter>
-      {page === "account" ? <SettingsAccount /> : <SettingsData />}
+      <SettingsAccount duringSetup={duringSetup} />
     </MemoryRouter>
   );
 }
 
 const EXPORTS = [/^export workouts/i, /^export meals/i, /^export bodyweight/i];
 
-describe("SettingsData composition", () => {
+describe("SettingsAccount composition", () => {
   it("renders each export exactly ONCE", () => {
     // The regression. Six rows shipped; three is correct.
-    renderPage("data");
+    renderPage();
     for (const label of EXPORTS) {
       expect(screen.getAllByRole("button", { name: label })).toHaveLength(1);
     }
@@ -77,7 +95,7 @@ describe("SettingsData composition", () => {
     // The control. Without it, "exactly once" is satisfied by a page that
     // dropped export entirely — which is the other way to get this wrong,
     // and the one that silently removes a user right.
-    renderPage("data");
+    renderPage();
     expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
       3
     );
@@ -85,15 +103,30 @@ describe("SettingsData composition", () => {
       screen.getByRole("button", { name: /recently deleted meals/i })
     ).toBeInTheDocument();
   });
-});
 
-describe("SettingsAccount composition", () => {
-  it("signs out and deletes, once each, and exports nothing", () => {
-    renderPage("account");
+  it("signs out and deletes, once each", () => {
+    renderPage();
     expect(screen.getAllByRole("button", { name: "Sign out" })).toHaveLength(1);
     expect(
       screen.getAllByRole("button", { name: "Delete account" })
     ).toHaveLength(1);
+  });
+
+  it("carries the plan, opening the Pro page, above the sign-in", () => {
+    // Subscription's page was this one button (Trim1 call 7).
+    renderPage();
+    const plan = screen.getByRole("button", { name: /upgrade to pro/i });
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    expect(
+      plan.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("is the sign-in and the way out alone during setup", () => {
+    // Setup has no plan to show and nothing logged to export.
+    renderPage(true);
     expect(screen.queryAllByRole("button", { name: /^export /i })).toEqual([]);
+    expect(screen.queryByRole("button", { name: /upgrade to pro/i })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Sign out" })).toHaveLength(1);
   });
 });

@@ -11,6 +11,34 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Unsplash+ Space covers — 2026-11-12
+
+With Unsplash+ licensed for the welcome (DS9), the owner asked for the
+Social covers to be improved where an Unsplash+ photograph is clearly
+better, and for the race covers to stay. Twenty-one candidates were drawn
+as directory cards and Space headers beside the current covers, and he
+took five, then Triathlon & Multisport as a sixth. Trail Running and
+Destination Races keep theirs.
+
+| Asset                        | Photographer   | Was                                  | Now                                               |
+| ---------------------------- | -------------- | ------------------------------------ | ------------------------------------------------- |
+| `space-new-to-tropos`        | Leire Cavia    | Silhouettes on a red track           | Six friends in kit laughing at the camera         |
+| `space-runners`              | Getty Images   | Five people in hoodies on a bridge   | A mixed group running at you through a green park |
+| `space-womens-running`       | Natalia Blauth | Two women on a path, one in a hoodie | Three women running together, mountains behind    |
+| `space-lifters`              | Getty Images   | A black-and-white squat class        | A class in the front rack, bright gym, in colour  |
+| `space-hybrid-training`      | Leire Cavia    | One man on battle ropes              | A man and a woman passing a medicine ball         |
+| `space-triathlon-multisport` | Getty Images   | Two swimmers seen from above         | A swimmer at eye level, red cap, sun and spray    |
+
+Each is the full source width cut to 24:13, so the faces sit inside both
+the directory card and the 393 × 176 header, original colour, no
+retouching. Five are 1200 px wide and under 120 KB. `space-runners` is
+1000 px at about 152 KB: its leaves reach 120 KB only at a quality that
+blotches, the reason the audit below kept seven dense covers over budget.
+Unsplash+ photographs carry model releases; the downloads were registered
+through the Unsplash API. Sources, crops, hashes and each file's mark
+check are in
+[`sources-2026-11-12-social-covers.json`](./sources-2026-11-12-social-covers.json).
+
 ### Provenance found for the unrecorded covers — 2026-11-10
 
 Twelve covers shipped with no source record (first committed in #1631 and
@@ -119,6 +147,9 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 ## Drop-in contract
 
+The welcome's photographs of athletes are not here: they live in
+`src/assets/welcome/` with their own rules.
+
 Photographs here are for places and communities only (Soc16): a race shows
 its real place, a Space its cover. A challenge carries no photograph; its
 picture is its own medal (`MedalArt`), as Strava's, Nike Run Club's and
@@ -129,12 +160,13 @@ not a `space-` stem. Their manifests below stay as history.
 Add files with this stem (any of `.webp .avif .jpg .jpeg .png`; prefer WebP
 ≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                   | Used for                                     |
-| ---------------------- | -------------------------------------------- |
-| `space-<spaceId>.webp` | Community Space and race cards (directory,   |
-|                        | header, Together's race hero): one per id in |
-|                        | `spaceDefs.ts` SPACE_DEFS, e.g.              |
-|                        | `space-trail-running.webp`                   |
+| File                   | Used for                                    |
+| ---------------------- | ------------------------------------------- |
+| `space-<spaceId>.webp` | Community Space and race cards (directory,  |
+|                        | header, Together's race hero, and each race |
+|                        | in the run plan's race list): one per id in |
+|                        | `spaceDefs.ts` SPACE_DEFS, e.g.             |
+|                        | `space-trail-running.webp`                  |
 
 **No two files may be the same photo**: `editorialImages.test.ts` fails on
 a byte-identical pair. Until 2026-10 several race cards shared a city view;

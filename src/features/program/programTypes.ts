@@ -145,6 +145,19 @@ export interface ProgramExercise {
    */
   baseSets?: number;
   /**
+   * Build-time only (Lift21): the lift's place in the order its day gives
+   * lifts up when the day is sized to its time. The lower, the longer it is
+   * kept. `generateProgram` removes it before a plan leaves the builder, so
+   * no stored plan holds one.
+   */
+  keepRank?: number;
+  /**
+   * Lift22: done as a superset with the lift after it, whose `instanceId`
+   * this is. Written by a 30 or 45 minute plan (`planSupersets.ts`), and a
+   * pair only while the two stand together. Absent on every other lift.
+   */
+  supersetWith?: string;
+  /**
    * Load stored on entering an automatic deload week and restored
    * (max(live, stored)) on meso exit, then removed. Absent outside a
    * deload cycle.
@@ -1144,6 +1157,7 @@ export function normalizeExercise(
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
     ...(ex.stretched !== undefined ? { stretched: ex.stretched } : {}),
     ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
+    ...(ex.supersetWith !== undefined ? { supersetWith: ex.supersetWith } : {}),
   };
 }
 

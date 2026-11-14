@@ -14,11 +14,16 @@
  * sessions. Pure + mirror-ready.
  */
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
+import { catalogueLoadFor } from "./catalogueLoads";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BAR_KG, barWeight } from "./warmupRamp";
 import type { LiftUnit } from "@/lib/liftLoad";
 import { equipmentGridFor, loadGridFor } from "./loadSteps";
-import { contraindicatedFor } from "./injurySubstitutions";
+import {
+  contraindicatedFor,
+  heldForInjury,
+  INJURY_SWAP_LOAD_SHARE,
+} from "./injurySubstitutions";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
 
 import type {
@@ -87,6 +92,25 @@ function sexFactor(sex: string | undefined): number {
 }
 
 /**
+ * The most bodyweight a first weight is scaled from (training deep dive,
+ * D8). The multiples above are a lean lifter's; past these, more bodyweight
+ * says less about strength, and a 150 kg man who called himself a beginner
+ * was given a 105 kg squat and a 127.5 kg deadlift for his first session. A
+ * heavier lifter who is stronger than this lifts more, and the plan follows
+ * the weight lifted from the first session.
+ */
+export const SEED_BODYWEIGHT_CAP_KG = { female: 70, other: 90 } as const;
+
+function seedBodyweight(bodyweightKg: number, sex: string | undefined) {
+  return Math.min(
+    bodyweightKg,
+    sex === "female"
+      ? SEED_BODYWEIGHT_CAP_KG.female
+      : SEED_BODYWEIGHT_CAP_KG.other
+  );
+}
+
+/**
  * Build a StartingLoadContext from a profile-like object, or `undefined` when
  * there's no usable bodyweight (→ generateProgram skips seeding and keeps the
  * hardcoded fallbacks). Centralises the experience coercion + the bodyweight
@@ -126,8 +150,8 @@ export function startingWeightForCategory(
   category: MovementCategory,
   ctx: StartingLoadContext
 ): number {
-  const bw = ctx.bodyweightKg;
-  if (!Number.isFinite(bw) || bw <= 0) return 0;
+  if (!Number.isFinite(ctx.bodyweightKg) || ctx.bodyweightKg <= 0) return 0;
+  const bw = seedBodyweight(ctx.bodyweightKg, ctx.sex);
   const mult = BW_MULTIPLE[category]?.[ctx.experience] ?? 0;
   if (mult <= 0) return 0;
   const raw = bw * mult * sexFactor(ctx.sex);
@@ -257,14 +281,22 @@ export function startingWeightForExercise(
   // curl at the SQUAT's 85 kg instead of 25 kg. The bank is where the load
   // metadata lives, so it is the authority on which category to scale from.
   const bankCategory = movementCategoryForExerciseId(exerciseId);
-  const seedCategory = bankCategory ?? category;
+  // A catalogue lift the bank does not list has its own row (training deep
+  // dive, D1): without it, an added lateral raise took the overhead press's
+  // whole seed.
+  const listed =
+    bankCategory === undefined ? catalogueLoadFor(exerciseId) : undefined;
+  if (listed?.factor === 0) return 0;
+  const seedCategory = bankCategory ?? listed?.category ?? category;
   const base = startingWeightForCategory(seedCategory, ctx);
   if (base <= 0) return 0;
 
-  // Unknown to the bank AND flagged as assistance → no load metadata exists,
-  // so scale down rather than hand it the compound's multiple.
-  const factor =
-    bankCategory === undefined && isAccessory === true
+  // Unknown to the bank and the catalogue AND flagged as assistance → no
+  // load metadata exists, so scale down rather than hand it the compound's
+  // multiple.
+  const factor = listed
+    ? listed.factor
+    : bankCategory === undefined && isAccessory === true
       ? UNKNOWN_ACCESSORY_FACTOR
       : loadFactorFor(exerciseId, seedCategory);
 
@@ -432,10 +464,14 @@ export function seedStartingLoads(
   {
     unloadedOnly = false,
     building,
+    injuries = [],
   }: {
     /** Seed only lifts at 0 kg: a plan the person already has keeps the
      *  loads it shows, and only a lift with none gets a first guess. */
     unloadedOnly?: boolean;
+    /** The person's injuries: a lift swapped in for one of them starts at
+     *  `INJURY_SWAP_LOAD_SHARE` of its seed (training deep dive, D2). */
+    injuries?: readonly string[];
     /** Set when the generator builds the week, from nothing or for new
      *  lift days: the lifts it builds start at the bar or over it
      *  (`noneUnderTheBar`). Unset, as for a settings save that keeps the
@@ -479,15 +515,14 @@ export function seedStartingLoads(
             // One anchor for the whole PROGRAMME — not `ex.reps`, and not a
             // per-slot main/accessory split.
             //
-            // Two things force this. Seeding runs after `applyDayRoles`, so
-            // `ex.reps` is the undulated per-DAY target (heavy -2, pump +2) with
-            // `baseReps` overwritten to match; and some builders prescribe
-            // accessory reps on slots they do not flag `isAccessory`, so
-            // `bench-press` is a main on one hypertrophy/3d day and an accessory
-            // on another. Either input gives the same lift two different loads in
-            // one week, which `generatorAudit`'s "prescribes ONE load per lift
-            // across the week" catches — rightly, since a lifter has one working
-            // weight per lift and the rep target is what makes a day hard or easy.
+            // Two things force this. A plan that keeps day roles holds
+            // `ex.reps` as a per-DAY target (heavy -2, pump +2) with `baseReps`
+            // to match; and one lift can be the main lift on one day and a
+            // supporting one on another, in different rep bands. Either input
+            // gives the same lift two different loads in one week, which
+            // `generatorAudit`'s "prescribes ONE load per lift across the week"
+            // catches — rightly, since a lifter has one working weight per lift
+            // and the rep target is what makes a day hard or easy.
             //
             // The mains carry the goal's intensity claim (and are what the
             // running-economy evidence is about), so they set the anchor and
@@ -499,11 +534,17 @@ export function seedStartingLoads(
             ex.repUnit
           );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
+      const first =
+        !fromTheBar && heldForInjury(ex, injuries)
+          ? loadGridFor(ex.exerciseId, false, ctx?.unit ?? "kg").nearest(
+              seed * INJURY_SWAP_LOAD_SHARE
+            )
+          : seed;
       return {
         ...ex,
-        weight: seed,
-        lastSuccessfulWeight: seed,
-        lastAttemptedWeight: seed,
+        weight: first,
+        lastSuccessfulWeight: first,
+        lastAttemptedWeight: first,
       };
     }),
   }));

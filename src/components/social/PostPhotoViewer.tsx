@@ -354,7 +354,7 @@ export default function PostPhotoViewer({
   if (!photo) return null;
   const name = authorName.trim();
   const title = name
-    ? `Photos from ${name}'s ${kind}`
+    ? `Photos from ${name}’s ${kind}`
     : `Photos from this ${kind}`;
   const slides = [index - 1, index, index + 1].filter(
     (i) => i >= 0 && i < count

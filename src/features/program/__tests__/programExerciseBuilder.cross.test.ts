@@ -65,6 +65,8 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
       },
       // Lift4 (11): the lift a swap replaced, for the way back.
       { swappedFrom: { exerciseId: "squat" } },
+      // Lift22: the lift after this one, done with it as a superset.
+      { supersetWith: "fixed-inst-2" },
       // Pgm7 A3: a target stretched past its range, for its one line.
       {
         stretched: {

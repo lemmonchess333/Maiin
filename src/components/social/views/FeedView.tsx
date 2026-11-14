@@ -12,7 +12,6 @@ import {
   useMemo,
   useRef,
   useState,
-  Suspense,
 } from "react";
 import type { MutableRefObject } from "react";
 import {
@@ -27,18 +26,8 @@ import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
 import PulseLine from "@/components/social/PulseLine";
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import LeaderboardCard from "@/components/social/LeaderboardCard";
 import TrajectoryCard from "@/components/social/TrajectoryCard";
 import { ActivityCardSkeleton } from "@/components/LoadingSkeleton";
-/* Soc5 item 10: FullLeaderboard lazy-loaded so the Social entry chunk
-   stays lean. FullLeaderboard only loads when the overlay is
-   requested from a leaderboard card. lazyRetry gives the same
-   stale-chunk recovery the page-level lazy loads use. (ChallengeList
-   gets the same treatment in CommunityView.) */
-import { lazyRetry } from "@/lib/lazyRetry";
-const FullLeaderboard = lazyRetry(
-  () => import("@/components/social/FullLeaderboard")
-);
 import { Users, Globe } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -91,12 +80,6 @@ export interface FeedViewProps {
    *  view publishes it into this ref so refresh keeps working without
    *  lifting the feed hooks out of the view. */
   refreshRef: MutableRefObject<(() => Promise<void>) | null>;
-  /** The tab bar (and the rest of the shell chrome gate) is hidden
-   *  while the FullLeaderboard overlay shows. The overlay state lives
-   *  here; this callback mirrors it up to the shell. Called from the
-   *  same event handlers that flip the local state so both updates
-   *  land in one batched render — no intermediate frame. */
-  onOverlayChange: (open: boolean) => void;
 }
 
 export default function FeedView({
@@ -113,7 +96,6 @@ export default function FeedView({
   openPeople,
   openTogether,
   refreshRef,
-  onOverlayChange,
 }: FeedViewProps) {
   // uid scopes the per-sub-tab freshness pointers (SOCIAL-ATTENTION-01)
   // so a shared browser doesn't leak account A's "seen" dots to B.
@@ -264,15 +246,16 @@ export default function FeedView({
   /* SOC-P1c — the points card's data. FeedView owns the
      getPersonalTrajectory fetch (lifted out of TrajectoryCard — same
      one-shot bounded read), fired under exactly the conditions the card
-     renders: Following, with one follow (at two, the friends'
-     leaderboard takes the slot; at none, Following is its empty state).
+     renders: Following, for anyone who follows someone (at none,
+     Following is its empty state). Until 11 November 2026 the friends'
+     board took the slot from the second follow; it went (Trim1 call
+     3(a)), and the slot is the person's own week for everyone.
      The card sits under the third post, not above the feed. */
   const trajectoryEnabled =
     active &&
     feedSubTab === "following" &&
     followingCount !== null &&
-    followingCount >= 1 &&
-    followingCount < 2;
+    followingCount >= 1;
   const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
   const [trajectoryLoading, setTrajectoryLoading] = useState(true);
   /* The read below restarts whenever the slot turns on or the account
@@ -302,27 +285,13 @@ export default function FeedView({
       cancelled = true;
     };
   }, [trajectoryEnabled, uid]);
-  /* The week is "open" (no sessions yet) only once the data says so —
-     never while loading, and never for leaderboard-tier users whose
-     slot doesn't fetch trajectory at all. */
+  /* The week is "open" (no sessions yet) only once the data says so,
+     never while loading. */
   const weekOpen =
     trajectoryEnabled &&
     !trajectoryLoading &&
     trajectory !== null &&
     trajectory.thisWeek.sessions === 0;
-
-  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
-  /* Overlay open/close flip the local state AND mirror it to the
-     shell (chrome hide) inside the same event handler, so React
-     batches both updates into a single render. */
-  const openFullLeaderboard = () => {
-    setShowFullLeaderboard(true);
-    onOverlayChange(true);
-  };
-  const closeFullLeaderboard = () => {
-    setShowFullLeaderboard(false);
-    onOverlayChange(false);
-  };
 
   // SOC-P1b — the following ACTIVITY feed renders from the FIRST follow.
   // The old ≥3-follow hard gate hid real activity from a user's first
@@ -376,15 +345,12 @@ export default function FeedView({
   );
   const peopleSlot = peopleRowActive ? Math.min(2, activeFeed.items.length) : 0;
 
-  /* The week card. With two or more follows it is the friends' board
-     (this week's sessions); with one, your own week against last week,
-     unless the week has nothing in it yet (a card of zeros says nothing).
-     `followingCount === null` is still loading: render nothing rather
-     than the wrong card. */
+  /* The week card: your own week against last week, unless the week has
+     nothing in it yet (a card of zeros says nothing). `followingCount ===
+     null` is still loading: render nothing rather than a card that then
+     goes. */
   const pointsCard =
-    followingCount === null ? null : followingCount >= 2 ? (
-      <LeaderboardCard onViewFull={openFullLeaderboard} />
-    ) : weekOpen ? null : (
+    followingCount === null || weekOpen ? null : (
       <TrajectoryCard data={trajectory} loading={trajectoryLoading} />
     );
 
@@ -418,22 +384,8 @@ export default function FeedView({
 
   return (
     <>
-      {/* Full Leaderboard overlay — Suspense wraps the lazy chunk
-          load (Soc5 item 10). Fallback is a small inline spinner;
-          the overlay is full-screen so a centred spinner reads. */}
-      {showFullLeaderboard && (
-        <Suspense
-          fallback={
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80">
-              <Spinner />
-            </div>
-          }
-        >
-          <FullLeaderboard onBack={closeFullLeaderboard} />
-        </Suspense>
-      )}
 
-      {active && !showFullLeaderboard && (
+      {active && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
             {/* All three sources stay visible. The shared control supplies
@@ -541,7 +493,7 @@ export default function FeedView({
             {feedSubTab === "following" && followingCount === 0 && (
               <HexEmptyState
                 icon={Users}
-                headline="You don't follow anyone yet"
+                headline="You don’t follow anyone yet"
                 sub="Follow people to see their sessions here."
                 accent={THEME.brand}
                 action={{ label: "Find people", onClick: openPeople }}
@@ -560,7 +512,7 @@ export default function FeedView({
                 sentence for the person. */}
             {feedSubTab === "following" && followingFeed.error && (
               <ErrorState
-                title="Couldn't load your feed"
+                title="Couldn’t load your feed"
                 description="Check your connection and try again."
                 retry={{ label: "Retry", onClick: followingFeed.refresh }}
               />
@@ -579,7 +531,7 @@ export default function FeedView({
               exploreFeed.items.length === 0 &&
               !exploreFeed.loading && (
                 <ErrorState
-                  title="Couldn't load the community feed"
+                  title="Couldn’t load the community feed"
                   description="Check your connection and try again."
                   retry={{ label: "Retry", onClick: exploreFeed.refresh }}
                 />
@@ -758,7 +710,7 @@ export default function FeedView({
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Your circles don't need a crowd"
+                      sub="Your circles don’t need a crowd"
                       accent={THEME.brand}
                       action={{
                         label: "Open Together",

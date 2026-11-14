@@ -54,6 +54,18 @@ export type PaywallSource =
   | "trial_strip"
   /** Home's Pro strip for a free account. */
   | "home_strip"
+  /** Analytics or an exercise's chart: a range older than 3 months, or the
+   *  score's details (whole-app grill Q84). */
+  | "history"
+  /** Food's card telling a free account its personal target is ready
+   *  (whole-app grill Q49, Q71, Q87). */
+  | "personal_target"
+  /** A half or full marathon plan past its free first week: Home's run
+   *  card or Train's (whole-app grill Q85). */
+  | "race_plan"
+  /** The run summary's offer of faster paces to a free account (owner,
+   *  13 November 2026). */
+  | "paces"
   | "unknown";
 
 export interface PaywallEventMetadata {

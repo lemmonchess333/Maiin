@@ -1,6 +1,13 @@
-import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import {
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  Suspense,
+} from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
@@ -17,6 +24,14 @@ import { focusLabel } from "@/features/program/trainingBlock";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
+import { useSubscription } from "@/lib/subscription";
+import { track } from "@/lib/paywallAnalytics";
+import {
+  HISTORY_UPGRADE_PATH,
+  isRangeOpen,
+  lockedRanges,
+} from "@/lib/historyAccess";
+import { badgeShelfPath } from "@/lib/badgeShelfLink";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
@@ -31,7 +46,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import PeriodSummaryCard, {
   type SummaryFigure,
 } from "@/components/analytics/PeriodSummaryCard";
-import PerformanceOverviewCard from "@/components/analytics/PerformanceOverviewCard";
+import PerformanceSection from "@/components/analytics/PerformanceSection";
 import AnalyticsTrends from "@/components/analytics/AnalyticsTrends";
 import AnalyticsMuscles from "@/components/analytics/AnalyticsMuscles";
 import TrainingWeeksCard from "@/components/analytics/TrainingWeeksCard";
@@ -151,21 +166,10 @@ const MacroDistribution = lazyRetry(
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
 );
-/* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
-   PerformanceSection (the inline accordion's expanded body), not
-   rendered as a top-level tab. The dedicated `performance` tab was
-   removed; deep-links to /history#performance route to the section
-   anchor inside Analytics. */
-const PerformanceSection = lazyRetry(
-  () => import("@/components/analytics/PerformanceSection")
-);
 import Card from "@/components/ui/Card";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
-const BadgeGrid = lazyRetry(() =>
-  import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
-);
 const TrendWeight = lazyRetry(() =>
   import("@/components/progress/TrendWeight").then((m) => ({
     default: m.TrendWeight,
@@ -178,59 +182,52 @@ const ProgressPhotos = lazyRetry(
   () => import("@/components/progress/ProgressPhotos")
 );
 
-/* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
-   Performance fold (PR 6) + PRs tab introduction (PR 7a).
-   Sport-filtered tabs were dropped in PR 5a; the Performance tab
-   folded into Analytics in PR 6. "All" was renamed "analytics" to
-   match the page's frame commitment (Hist5a).
+/* Two tabs: Analytics and Bests (Trim1 calls 3(c) and 6, 11 November
+   2026).
 
-   Tabs are Analytics + PRs + Badges. The third slot briefly held a
-   MILESTONES chronology; do not bring it back. Its dominant entry
-   kind was `lift-pr`, which the PRs tab already shows as a
-   current-bests table and `ExerciseHistory` — one tap down the
-   chevron on every PR row — already shows as a per-lift
-   progression chart, and the PRs tab carries "Recent bests · Last
-   30 days" on top of that. A third, flatter projection of the same
-   lifts is not a third role.
+   Hist5b consolidated six tabs to three after the Performance fold and
+   the PRs tab: Analytics, PRs and Badges. It called the Badges tab an
+   interim place and said badges would move to the profile. They have:
+   the profile shows a person's badges above their medals, and on your
+   own "See all" opens the collection this tab held
+   (`features/streaks/BadgeShelf.tsx`). A link that named the tab lands
+   there (`BADGE_TAB_NAMES`, below).
 
-   Its shape also failed in both directions: on day one every first
-   log is a "first logged best", so it floods with rows mirroring
-   the PR list, and in steady state new PRs get rare and it thins
-   to a few rows a month.
+   The third slot briefly held a MILESTONES chronology; do not bring it
+   back. Its dominant entry kind was `lift-pr`, which the PRs tab already
+   shows as a current-bests table and `ExerciseHistory`, one tap down the
+   chevron on every PR row, already shows as a per-lift progression
+   chart, and the PRs tab carries "Recent bests · Last 30 days" on top of
+   that. A third, flatter projection of the same lifts is not a third
+   role. */
+type FilterTab = "analytics" | "prs";
 
-   Nothing was orphaned — every non-PR entry kind already has a
-   badge (`first-workout` → `first_step`, `block-complete` →
-   `programme_complete`, `race-complete` → the distance badges),
-   and its `badge` entries were badges listed twice on one screen,
-   once in the chronology and again in the grid below it. */
-type FilterTab = "analytics" | "prs" | "badges";
+const VALID_TABS: FilterTab[] = ["analytics", "prs"];
 
-const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
+/* What the Badges tab was called, in `?tab=`, a `#` anchor or the
+   `history-tab` hint: "badges", then "milestones" while the third slot
+   was the chronology, then "badges" again. Each opens the badge
+   collection on the person's own profile now. */
+const BADGE_TAB_NAMES = new Set(["badges", "milestones"]);
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
    work. The four sport-filtered values + the old "all" value all
    redirect to "analytics" (the unified scroll page). Performance
-   redirects too — PR 6 folded it into Analytics with a hash anchor
-   target (`#performance`); the reconciliation effect promotes the
-   hash alongside the tab rewrite for direct deep-link continuity. */
+   redirects too: it is the overview's first section, and the
+   reconciliation effect opens its details for a link that named it. */
 const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   all: "analytics",
   running: "analytics",
   lifting: "analytics",
   nutrition: "analytics",
   performance: "analytics",
-  /* "badges" is the live tab again, so the redirect points the other way
-     now: bookmarks saved while the third tab was the Milestones
-     chronology land on the badge collection. Both values have been the
-     canonical one at some point, which is exactly why the map has to keep
-     an entry rather than silently 404 one of them. */
-  milestones: "badges",
 };
 
-/* The section anchors Performance used to be scrolled to. Home's
-   Performance row still links to `#performance`, and so do older
-   bookmarks; each now opens the Performance page. */
+/* The section anchors Performance used to be scrolled to. Older
+   bookmarks and the links Home's Performance row made still carry
+   `#performance`; each opens the overview with the score's details
+   open. */
 const PERFORMANCE_ANCHORS = new Set([
   "performance",
   "performance-expanded",
@@ -241,17 +238,19 @@ const PERFORMANCE_ANCHORS = new Set([
 /* DS3: the Analytics tab is a short overview with pages behind it,
    chosen by `?view=`. Absent or unknown is the overview. Four pages hold
    one discipline's charts each, which used to stack into a single scroll
-   about 4,700 px tall on a phone; the fifth, Performance, holds the
-   index's gauge, chart, insights and training load, opened from the
-   overview's Performance card and from Home. */
-type AnalyticsView = "overview" | AnalyticsPage | "performance";
-const ANALYTICS_VIEWS: AnalyticsView[] = [
-  "lifting",
-  "running",
-  "body",
-  "food",
-  "performance",
-];
+   about 4,700 px tall on a phone. There was a fifth, Performance, until
+   Trim1 call 5 (11 November 2026): the score is shown once, on the
+   overview, and what it is made of opens there in place. */
+type AnalyticsView = "overview" | AnalyticsPage;
+const ANALYTICS_VIEWS: AnalyticsView[] = ["lifting", "running", "body", "food"];
+
+/* `?score=details`: the overview's Performance card with "Score details"
+   open. In the URL so a refresh, a shared link and the links that used to
+   open the Performance page all land on it. */
+const SCORE_PARAM = "score";
+const SCORE_DETAILS = "details";
+/** The retired page's `?view=` value; it opens the details now. */
+const RETIRED_PERFORMANCE_VIEW = "performance";
 
 /* Pre-Hist5 `?tab=` values that named a discipline land on its page now,
    rather than on the top of one long scroll. */
@@ -259,7 +258,6 @@ const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsView>> = {
   running: "running",
   lifting: "lifting",
   nutrition: "food",
-  performance: "performance",
 };
 
 // Module-level so the useCallback consuming it has a stable
@@ -290,7 +288,7 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+        label: f === "analytics" ? "Analytics" : "Bests",
       }))}
     />
   );
@@ -340,6 +338,22 @@ export default function History() {
   //      mount)
   //   4. "all"
   const tabFromUrl = searchParams.get("tab");
+  /* A link to the Badges tab this page had. Read here, on this render,
+     so the page is never drawn for a frame before the person is sent to
+     their badges. The anchor and the stored hint are one-shot entry
+     points the reconciliation below clears, so they are read once. */
+  const [hintNamedBadges] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (BADGE_TAB_NAMES.has(window.location.hash.replace(/^#/, "")))
+      return true;
+    try {
+      return BADGE_TAB_NAMES.has(sessionStorage.getItem("history-tab") ?? "");
+    } catch {
+      return false; // private mode: nothing to read
+    }
+  });
+  const linkNamesBadges =
+    hintNamedBadges || (!!tabFromUrl && BADGE_TAB_NAMES.has(tabFromUrl));
   /* Resolve filter from URL with legacy-redirect awareness: legacy
      `?tab=running|lifting|nutrition|all` values map to "analytics"
      (the unified scroll page). The actual URL rewrite happens in
@@ -372,18 +386,52 @@ export default function History() {
      page on this very render, before the reconciliation below rewrites
      the URL, so the overview never flashes first. */
   const viewFromUrl = searchParams.get("view");
-  /* Read here rather than after the reconciliation below rewrites it, so
-     a `#performance` link opens on the Performance page, not on the
-     overview for a frame. */
-  const hashOpensPerformance =
-    typeof window !== "undefined" &&
-    PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, ""));
   const view: AnalyticsView = ANALYTICS_VIEWS.includes(
     viewFromUrl as AnalyticsView
   )
     ? (viewFromUrl as AnalyticsView)
-    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ??
-      (hashOpensPerformance ? "performance" : "overview"));
+    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ?? "overview");
+  /* Whether the score's details are open. A link to the retired
+     Performance page (`?view=performance`, `?tab=performance`, a
+     `#performance` anchor) is read here, on this very render, rather than
+     after the reconciliation below rewrites it, so it never shows the
+     closed card for a frame. */
+  const linkNamesPerformance =
+    viewFromUrl === RETIRED_PERFORMANCE_VIEW ||
+    tabFromUrl === RETIRED_PERFORMANCE_VIEW ||
+    (typeof window !== "undefined" &&
+      PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, "")));
+  /* Q84: the score's details (the training load among them) and the
+     ranges older than 3 months are Pro. A free account's link to either
+     lands on what it has: the headline score, 3 months. */
+  const { isPro } = useSubscription();
+  const navigate = useNavigate();
+  const openHistoryPro = useCallback(() => {
+    track("paywall_cta_clicked", { source: "history" });
+    navigate(HISTORY_UPGRADE_PATH);
+  }, [navigate]);
+  const scoreOpen =
+    isPro &&
+    (searchParams.get(SCORE_PARAM) === SCORE_DETAILS || linkNamesPerformance);
+  /* A replace, not a push: opening a fold is not a place to go back to. */
+  const setScoreOpen = useCallback(
+    (open: boolean) => {
+      if (open && !isPro) {
+        openHistoryPro();
+        return;
+      }
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (open) updated.set(SCORE_PARAM, SCORE_DETAILS);
+          else updated.delete(SCORE_PARAM);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams, isPro, openHistoryPro]
+  );
   /* A push, not a replace: the back gesture on a page returns to the
      overview, the way a pushed screen would. */
   const setView = useCallback(
@@ -419,22 +467,34 @@ export default function History() {
     if (reconciledRef.current) return;
     reconciledRef.current = true;
 
+    /* On the way to the profile's badges: nothing here to reconcile, and
+       the stored hint has done its job. */
+    if (linkNamesBadges) {
+      try {
+        sessionStorage.removeItem("history-tab");
+      } catch {
+        /* private mode */
+      }
+      return;
+    }
+
     /* Hist5c pin 11 — rewrite any legacy `?tab=` value to the
        canonical Hist5 value on first mount. Share-cards / push
        notifications / bookmarks from before the tab consolidation
        still land on the right surface; the URL bar reflects the
-       new contract once they arrive. A value that named a page —
-       a discipline, or Performance — opens that page. */
+       new contract once they arrive. A value that named a discipline
+       opens its page, and Performance opens the score's details. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
       const legacyView = LEGACY_TAB_TO_VIEW[tabFromUrl];
-      if (legacyView) {
+      if (legacyView || tabFromUrl === RETIRED_PERFORMANCE_VIEW) {
         // One update: two setSearchParams calls in a tick overwrite
         // each other.
         setSearchParams(
           (params) => {
             const updated = new URLSearchParams(params);
             updated.delete("tab");
-            updated.set("view", legacyView);
+            if (legacyView) updated.set("view", legacyView);
+            else updated.set(SCORE_PARAM, SCORE_DETAILS);
             return updated;
           },
           { replace: true }
@@ -480,36 +540,40 @@ export default function History() {
     } catch {
       /* private mode */
     }
-    if (typeof window !== "undefined" && window.location.hash) {
-      /* `#performance` (Home's Performance row, PR #635) and the other
-         Performance anchors named a section of one long scroll; the
-         section is a page now. The render above already opened it; this
-         moves that into the URL, which drops the hash. Skipped when a
-         legacy `?tab=` rewrite is in flight: two updates in one tick
-         overwrite each other, and that rewrite names its own page.
-         Every other hash was a one-shot tab hint, and is stripped. */
-      const currentHash = window.location.hash.replace(/^#/, "");
-      const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
-      if (
-        PERFORMANCE_ANCHORS.has(currentHash) &&
-        !viewFromUrl &&
-        !legacyRewrite
-      ) {
-        setSearchParams(
-          (params) => {
-            const updated = new URLSearchParams(params);
-            updated.set("view", "performance");
-            return updated;
-          },
-          { replace: true }
-        );
-      } else {
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search
-        );
-      }
+    /* The retired Performance page. `?view=performance` and the
+       `#performance` anchors (Home's row, PR #635, and older bookmarks)
+       named a page, and before that a section of one long scroll; the
+       score's details open on the overview now. The render above already
+       opened them; this moves that into the URL, which drops the hash and
+       the dead `view`. Skipped when a legacy `?tab=` rewrite is in
+       flight: two updates in one tick overwrite each other, and that
+       rewrite says where it lands. Every other hash was a one-shot tab
+       hint, and is stripped. */
+    const currentHash =
+      typeof window !== "undefined"
+        ? window.location.hash.replace(/^#/, "")
+        : "";
+    const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
+    const retiredView = viewFromUrl === RETIRED_PERFORMANCE_VIEW;
+    if (
+      !legacyRewrite &&
+      (retiredView || (PERFORMANCE_ANCHORS.has(currentHash) && !viewFromUrl))
+    ) {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (retiredView) updated.delete("view");
+          updated.set(SCORE_PARAM, SCORE_DETAILS);
+          return updated;
+        },
+        { replace: true }
+      );
+    } else if (currentHash) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search
+      );
     }
     // Intentionally only on mount — the ref guard ensures this
     // runs once per page load even if React renders the effect
@@ -523,16 +587,23 @@ export default function History() {
   // we strip the param so /history reads cleanly. Matches the
   // pattern landed for Food6 ci5 (`?date=`) and Soc5 (`?tab=`).
   const rangeFromUrl = searchParams.get("range");
-  const timeRange: ValidRange = (VALID_RANGES as readonly string[]).includes(
+  const urlRange: ValidRange = (VALID_RANGES as readonly string[]).includes(
     rangeFromUrl ?? ""
   )
     ? (rangeFromUrl as ValidRange)
     : "1M";
+  // A free account's link to a Pro range shows 3 months (Q84).
+  const timeRange: ValidRange = isRangeOpen(urlRange, isPro) ? urlRange : "3M";
+  const lockedTimeRanges = lockedRanges(VALID_RANGES, isPro);
   const setTimeRange = useCallback(
     (next: string) => {
       // Defensive: TimeRangePills passes a string. Reject unknown
       // values rather than letting them silently land in the URL.
       if (!(VALID_RANGES as readonly string[]).includes(next)) return;
+      if (!isRangeOpen(next, isPro)) {
+        openHistoryPro();
+        return;
+      }
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
@@ -547,7 +618,7 @@ export default function History() {
         rangeType: "pill",
       });
     },
-    [setSearchParams]
+    [setSearchParams, isPro, openHistoryPro]
   );
   const rangeDays =
     timeRange === "1W"
@@ -573,9 +644,9 @@ export default function History() {
   });
   // Training-load curve feed — self-fetching (needs warmup history beyond
   // the visible range, so it can't reuse the range-scoped runs above), and
-  // only while the Performance page that draws it is open.
+  // only while the score's details, which draw it, are open.
   const trainingLoad = useTrainingLoadSeries(rangeDays, {
-    enabled: filter === "analytics" && view === "performance",
+    enabled: filter === "analytics" && view === "overview" && scoreOpen,
   });
   const uid = useUid();
   const {
@@ -1122,6 +1193,12 @@ export default function History() {
   const isAnalyticsColdStart =
     !showRunningSection && !showLiftingSection && !showNutritionSection;
 
+  /* The Badges tab is on the profile now: a link that named it goes to
+     the person's own badge collection. */
+  if (linkNamesBadges && uid) {
+    return <Navigate to={badgeShelfPath(uid)} replace />;
+  }
+
   return (
     <PageShell
       {...pullBindProps}
@@ -1171,21 +1248,11 @@ export default function History() {
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics...
+            Loading analytics…
           </div>
         }
       >
-        {filter === "badges" ? (
-          <SectionErrorBoundary sectionName="badges-tab">
-            {/* The grid alone. It answers what the chronology above it could
-                not: what is still in PROGRESS and how close it is. That was
-                the one thing the Milestones arrangement got right, and it
-                was an argument for the grid rather than for the list on top
-                of it — a list of things that already happened is
-                structurally incapable of showing the next one. */}
-            <BadgeGrid />
-          </SectionErrorBoundary>
-        ) : filter === "prs" ? (
+        {filter === "prs" ? (
           <SectionErrorBoundary sectionName="prs-tab">
             <PRsTab
               runningPRs={runningPRs}
@@ -1197,14 +1264,6 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
-            {/* Hist6 — Performance pinned to the top, range-independent
-              ("this week"). The TimeRange control below scopes only the
-              history under it, so changing the range never moves the
-              index — the two mental models (current form vs adjustable
-              history) are separated spatially. Suppressed in cold-start:
-              the "Your first week starts here" card below stands in until the first
-              session is logged. `/history#performance` opens the
-              Performance page. */}
             {/* A deeper page's one control row: the way back to the
                 overview, and beside it the range that scopes the page.
                 The range keeps 15em; where the row cannot give it that
@@ -1212,69 +1271,68 @@ export default function History() {
             {filter === "analytics" && view !== "overview" && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <AnalyticsBackRow onBack={() => setView("overview")} />
-                {/* The Body page's weight chart keeps its own range, and
-                    the Performance page's sits in its training load card. */}
-                {view !== "body" && view !== "performance" && (
+                {/* The Body page's weight chart keeps its own range. */}
+                {view !== "body" && (
                   <div className="min-w-[min(100%,15em)] flex-1">
                     <TimeRangePills
                       selected={timeRange}
                       onChange={setTimeRange}
+                      locked={lockedTimeRanges}
                     />
                   </div>
                 )}
               </div>
             )}
 
-            {/* The week's index, range-independent, above the range
-                pills (Hist6): the pills scope everything below them. The
-                overview shows the card; its Details open the page. */}
+            {/* Hist6: Performance pinned to the top, range-independent
+                ("this week"). The range below scopes only the history
+                under it, so changing it never moves the index. Trim1
+                call 5: this is the one place the score is shown, and
+                what it is made of opens in place under "Score details",
+                the training load among it, which carries the range in
+                its own card as it did on the Performance page.
+                Suppressed in cold-start: the "Your first week starts
+                here" card below stands in until the first session is
+                logged. */}
             {filter === "analytics" &&
               view === "overview" &&
               !isAnalyticsColdStart && (
                 <SectionErrorBoundary sectionName="performance-section">
-                  <PerformanceOverviewCard
+                  <PerformanceSection
+                    /* A meal alone clears the cold-start gate, so this can
+                       render for someone with no session at all, and the
+                       score is server-written, so someone who has just
+                       logged their first workout reaches it too. */
                     hasLoggedSession={
                       workouts.length > 0 || lifetimeRuns.runCount > 0
                     }
-                    onOpenDetails={() => setView("performance")}
-                  />
+                    distanceUnit={unit}
+                    detailsOpen={scoreOpen}
+                    onToggleDetails={setScoreOpen}
+                    detailsLocked={!isPro}
+                  >
+                    <SectionErrorBoundary sectionName="training-load">
+                      <TrainingLoadCard
+                        points={trainingLoad.points}
+                        loading={trainingLoad.loading}
+                        failed={trainingLoad.failed}
+                        onRetry={trainingLoad.refresh}
+                        guardrails={trainingLoad.guardrails}
+                        range={{ selected: timeRange, onChange: setTimeRange }}
+                      />
+                    </SectionErrorBoundary>
+                  </PerformanceSection>
                 </SectionErrorBoundary>
               )}
-            {filter === "analytics" && view === "performance" && (
-              <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection
-                  /* A meal alone clears the cold-start gate, so this can
-                     render for someone with no session at all — and the
-                     perf doc is server-written, so a user who has just
-                     logged their first workout reaches it too. */
-                  hasLoggedSession={
-                    workouts.length > 0 || lifetimeRuns.runCount > 0
-                  }
-                  distanceUnit={unit}
-                />
-              </SectionErrorBoundary>
-            )}
 
             {/* The range scopes the history below it. On a page it shares
                 the way back's row, above. */}
             {view === "overview" && (
-              <TimeRangePills selected={timeRange} onChange={setTimeRange} />
-            )}
-
-            {/* Fitness, fatigue and form across lifting and running: the
-                load behind the index, so it sits on the Performance page,
-                under the range it follows. */}
-            {filter === "analytics" && view === "performance" && (
-              <SectionErrorBoundary sectionName="training-load">
-                <TrainingLoadCard
-                  points={trainingLoad.points}
-                  loading={trainingLoad.loading}
-                  failed={trainingLoad.failed}
-                  onRetry={trainingLoad.refresh}
-                  guardrails={trainingLoad.guardrails}
-                  range={{ selected: timeRange, onChange: setTimeRange }}
-                />
-              </SectionErrorBoundary>
+              <TimeRangePills
+                selected={timeRange}
+                onChange={setTimeRange}
+                locked={lockedTimeRanges}
+              />
             )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
@@ -1453,7 +1511,7 @@ export default function History() {
                      network or a wedged stream) clears on a second go. */
                   <div className="p-4 rounded-2xl bg-card space-y-2 card-shadow">
                     <p className="text-sm font-semibold text-foreground">
-                      Couldn&apos;t load your runs
+                      Couldn’t load your runs
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Your runs are safe — this was a problem reading them, not

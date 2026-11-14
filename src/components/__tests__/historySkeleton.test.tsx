@@ -5,8 +5,9 @@
  * three tiles and a card while the page had become a title, the Analytics
  * / PRs / Badges switch, Performance, the range and the range card, so the
  * whole page reshuffled as it arrived; and Performance's own placeholder
- * was shorter than its card and had no Details, so the score landing
- * dropped everything under it about 70 px.
+ * was shorter than its card, so the score landing dropped everything
+ * under it about 70 px. (The card has had a row under it, "Score
+ * details", since Trim1 call 5; the placeholders hold its place too.)
  *
  * The page's order is read from History.tsx's SOURCE, as the History
  * tests beside this one do: History mounts charts and several Firestore
@@ -33,10 +34,11 @@ const history = stripComments(
 const PAGE_BLOCKS: Record<string, string> = {
   title: 'title="Analytics"',
   tabs: "<FilterPills",
-  performance: "<PerformanceOverviewCard",
+  performance: "<PerformanceSection",
   /* The overview's range, under Performance. A page draws its own, beside
-     the way back, written over several lines higher in the file. */
-  range: "<TimeRangePills selected={timeRange} onChange={setTimeRange} />",
+     the way back, higher in the file and indented deeper, which is what
+     tells the two apart: both now name the Pro ranges (Q84). */
+  range: "<TimeRangePills\n                selected={timeRange}",
   "period-summary": "<PeriodSummaryCard",
 };
 

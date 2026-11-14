@@ -99,7 +99,7 @@ describe("CirclesSection while the list loads", () => {
     expect(placeholder!.querySelectorAll(".h-\\[44px\\]")).toHaveLength(2);
     // Something is loading, so no state is claimed yet.
     expect(screen.queryByText("Train with a few friends")).toBeNull();
-    expect(screen.queryByText("Couldn't load your circles.")).toBeNull();
+    expect(screen.queryByText("Couldn’t load your circles.")).toBeNull();
   });
 
   it("shows the empty card as soon as an empty list lands, without the word filter", () => {

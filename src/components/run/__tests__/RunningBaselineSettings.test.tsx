@@ -90,7 +90,7 @@ describe("the running starting point, for someone new to running", () => {
             "Starting from your running: about 20 min a week, longest run 10 min."
       )
     ).toBeInTheDocument();
-    expect(screen.queryByText(/won't increase on its own/)).toBeNull();
+    expect(screen.queryByText(/won['’]t increase on its own/)).toBeNull();
     expect(screen.queryByText(/needs a review/)).toBeNull();
   });
 });

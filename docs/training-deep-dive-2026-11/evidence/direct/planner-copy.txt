@@ -1,0 +1,16 @@
+first marathon 18w, easy 6:55 (plan F)
+   status=healthy | title="Good runway" | "Full Base → Build → Taper → Race progression for your marathon." | cta="Save race plan" | firstWeekMinutes=159 | shortOfRace=null
+slow marathon 18w, easy 7:54 (plan I, benchmarked)
+   status=healthy | title="Good runway" | "Full Base → Build → Taper → Race progression for your marathon." | cta="Save race plan" | firstWeekMinutes=175 | shortOfRace=null
+exp marathon 16w, 6 runs, easy 5:23 (plan G)
+   status=healthy | title="Good runway" | "Full Base → Build → Taper → Race progression for your marathon." | cta="Save race plan" | firstWeekMinutes=215 | shortOfRace=null
+marathon in 4 weeks (plan K)
+   status=compressed | title="Short runway" | "Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them." | cta="Save compressed plan" | firstWeekMinutes=120 | shortOfRace=null
+marathon in 6 weeks (plan K)
+   status=compressed | title="Short runway" | "Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them. Starting from your running now, the long run builds to about 12 km before race week, where a marathon plan with these weeks builds to 15 km. A later race or a shorter one gives it time." | cta="Save compressed plan" | firstWeekMinutes=159 | shortOfRace={"reaches":"12 km","raceNeeds":"15 km"}
+marathon in 3 weeks
+   status=below-floor | title="Very tight" | "Too soon for a full marathon build. Tropos can create a mostly-easy plan — easy running only, no quality sessions." | cta="Save mostly-easy plan" | firstWeekMinutes=120 | shortOfRace=null
+half in 8 weeks, no baseline
+   status=healthy | title="Good runway" | "Full Base → Build → Taper → Race progression for your half marathon." | cta="Save race plan" | firstWeekMinutes=145 | shortOfRace=null
+marathon in 40 weeks
+   status=healthy | title="Good runway" | "Full Base → Build → Taper → Race progression for your marathon." | cta="Save race plan" | firstWeekMinutes=159 | shortOfRace=null

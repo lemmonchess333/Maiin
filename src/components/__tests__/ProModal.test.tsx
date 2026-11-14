@@ -373,7 +373,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
       name: "How your free trial works",
     });
     expect(timeline.textContent).toContain(
-      "Day 7 — Your subscription starts at £34.99 a year unless you've cancelled."
+      "Day 7 — Your subscription starts at £34.99 a year unless you’ve cancelled."
     );
   });
 
@@ -487,7 +487,7 @@ describe("ProModal — restore purchases visibility", () => {
     const onClose = vi.fn();
     renderModal({ onClose });
     expect(screen.getByRole("note")).toHaveTextContent(
-      "Pro isn't on sale in this version of the app yet."
+      "Pro isn’t on sale in this version of the app yet."
     );
     expect(screen.queryByText(/£/)).toBeNull();
     expect(screen.queryByRole("button", { name: /Start/ })).toBeNull();

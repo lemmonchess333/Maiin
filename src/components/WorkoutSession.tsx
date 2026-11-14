@@ -158,7 +158,6 @@ import {
   draftLayout,
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
-import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
@@ -900,7 +899,7 @@ export default function WorkoutSession({
     };
   }, [sessionUid]);
 
-  // Rest timer: the rest fixed in Settings → Workout preferences, or the
+  // Rest timer: the rest fixed in Settings → Lift plan, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30
   // minutes (`restSecondsFor`, Lift4 (5)).
   const fixedRest =
@@ -2105,7 +2104,7 @@ export default function WorkoutSession({
       logger.error("[WorkoutSession] finish failed:", error);
       setSaveStatus("needs-attention");
       toast.error(
-        "Couldn't save your workout. Your completed session is still here, so try again."
+        "Couldn’t save your workout. Your completed session is still here, so try again."
       );
     } finally {
       finishPending.current = false;
@@ -2208,7 +2207,6 @@ export default function WorkoutSession({
           sessionVariant={sessionVariant}
           completing={completing}
           saved={saved}
-          activationJourneyV2={isActivationJourneyV2(profile)}
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}
@@ -3385,8 +3383,8 @@ export default function WorkoutSession({
         title={`Remove ${removing?.name ?? ""}?`}
         description={
           removing?.sets === 1
-            ? "The set you've done on it won't be saved."
-            : `The ${removing?.sets ?? 0} sets you've done on it won't be saved.`
+            ? "The set you’ve done on it won’t be saved."
+            : `The ${removing?.sets ?? 0} sets you’ve done on it won’t be saved.`
         }
         confirmLabel="Remove"
         cancelLabel="Keep it"

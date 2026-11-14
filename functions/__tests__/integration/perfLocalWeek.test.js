@@ -38,7 +38,7 @@ beforeAll(() => {
   // index.js owns initializeApp; the engine only consumes the default app.
   require("../../index");
   engine = require("../../performanceEngine");
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

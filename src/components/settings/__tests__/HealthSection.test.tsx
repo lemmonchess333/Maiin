@@ -209,7 +209,7 @@ describe("HealthSection", () => {
     render(<HealthSection />);
     expect(screen.getByText("Steps")).toBeInTheDocument();
     expect(
-      screen.queryByText("Couldn't load your connected training choices.")
+      screen.queryByText("Couldn’t load your connected training choices.")
     ).toBeNull();
   });
 

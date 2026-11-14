@@ -10,7 +10,7 @@
  *   where the lifts take their lighter week (Lift4 (9));
  * - the taper, with less running than the block's biggest week;
  * - race week (Lift4 (10)), the race on its day;
- * - the week after, the race's recovery.
+ * - the week after, the race's recovery: a week off, then short easy runs.
  *
  * Each week Train shows the week's label, `liftWeekLabel` on the plan the
  * store holds, and every run of the week under its short name
@@ -195,6 +195,7 @@ test("a marathon a year out, with lifting", async ({ page }) => {
     let sawQuality = false;
     let peakMinutes = 0;
     const seen = { build: false, stepBack: false, taper: false, race: false };
+    let weekOff = false;
     let monday = start;
     for (let w = 0; ; w++) {
       expect(w, "the race and its recovery came").toBeLessThan(
@@ -249,25 +250,37 @@ test("a marathon a year out, with lifting", async ({ page }) => {
           page.getByRole("region", { name: LIFT_WEEK_BANNER.race })
         ).toBeVisible();
         await expectRunWeek(page, week.runs, monday);
-      } else if (week.phase === "after") {
+      } else if (week.phase === "after" && !weekOff) {
         expect(seen, "every turn of the block on the way").toEqual({
           build: true,
           stepBack: true,
           taper: true,
           race: true,
         });
+        // A marathon's recovery starts with a week off (deep dive D10).
+        weekOff = true;
+        expect(week.runs, "no run the week after the marathon").toEqual([]);
+        await expectTrainWeek(page, state, monday, experience, "Recovery");
+        await expect(
+          page.getByRole("region", { name: LIFT_WEEK_BANNER.recovery })
+        ).toBeVisible();
+        await expectRunWeek(page, week.runs, monday);
+        await expect(page.getByText(RUN_RECOVERY)).toBeVisible();
+      } else if (week.phase === "after") {
+        // Then the runs come back short and easy: the week off did not stop
+        // the plan's weeks moving on.
         expect(
           week.runs.length,
           "the runs go on through recovery"
         ).toBeGreaterThan(0);
         expect(
-          week.runs.every((run) => templateOf(run).id === "easy_30"),
-          "every run an easy 30 minutes"
+          week.runs.every((run) => templateOf(run).type === "easy"),
+          "every run an easy one"
         ).toBe(true);
-        await expectTrainWeek(page, state, monday, experience, "Recovery");
-        await expect(
-          page.getByRole("region", { name: LIFT_WEEK_BANNER.recovery })
-        ).toBeVisible();
+        expect(
+          week.runs.filter((run) => templateOf(run).id === "easy_20").length,
+          "no more than three short runs"
+        ).toBeLessThanOrEqual(3);
         await expectRunWeek(page, week.runs, monday);
         await expect(page.getByText(RUN_RECOVERY)).toBeVisible();
         break;

@@ -6,12 +6,13 @@
      .ds-input             Every form field: typed inputs, textareas,
                            and the Select primitive's select.
      .ds-status-banner     Global online/offline + app-state banners.
-     .ds-auth-shell        Full-page login/signup shell only.
-     .ds-auth-card         Login/signup elevated card surface only.
-     .ds-auth-logo         Auth-only brand mark container.
+     .ds-auth-shell        The signed-out screens' page (welcome,
+                           sign-in, sign-up) only.
+     .ds-auth-page         Their one phone-wide column.
+     .ds-wordmark          The name beside the mark on those screens.
      .launch-splash        The launch overlay (index.html's #boot-splash
                            and LaunchSplash): the iOS launch image's
-                           hexagon, at its size and place.
+                           bar, at its size and place.
      .ds-safe-top-occluder Fixed iOS safe-area cover for app shell only.
 
    These exist to keep app-shell, auth, and feature cards on a
@@ -207,6 +208,22 @@ select.ds-input {
     background var(--ds-transition-fast);
 }
 
+/* The field primitive's box on its own: its edge, fill, radius and
+   shadow, for a layer under a field that holds controls inside its edge
+   (Food's composer: the pencil, the text box and the camera; the text
+   box draws no box itself). The values are `.ds-input`'s, so the two cannot
+   drift apart by hand: change them together. */
+.ds-input-box {
+  border-radius: 0.875rem;
+  border: 1px solid var(--ds-color-input-border-rest);
+  background: var(--ds-color-input-fill-rest);
+  box-shadow: var(--ds-shadow-input-rest);
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast),
+    background var(--ds-transition-fast);
+}
+
 /* The field's width and inset are defaults, in the components layer:
    under the utilities, so a field that sets its own (`w-auto` beside a
    label in a settings row, `px-1` on the weight readout, `pl-10` beside
@@ -303,88 +320,226 @@ select.ds-input:focus {
   border-bottom: 1px solid hsl(var(--success) / 0.14);
 }
 
-/* `min-height` is layered for mobile Safari:
-     - 100vh   fallback for older browsers
-     - 100svh  small viewport (URL bar visible) — never overshoots
-     - 100dvh  dynamic viewport — follows the URL bar's collapsing
-   `overflow-y: auto` so when the on-screen keyboard opens and
-   compresses the viewport, the legal-links row at the bottom stays
-   reachable rather than getting clipped.
-   Padding uses `calc(safe-area + 1rem)` instead of
-   `max(1rem, safe-area)` so devices with a notch get extra
-   breathing room above the card, not just the bare safe-area inset.
+/* The signed-out screens (DS8): the welcome, sign-in and sign-up sit on
+   the page itself, left-aligned, in one column a phone wide. No card:
+   frosted glass is for what floats (§14o), and the page is plain, so the
+   one light on it is the one behind the screen's picture.
 
-   Ambient gradient is intentionally local to the auth shell only —
-   the global body canvas is plain (see comment above body{} in
-   index.css). Opacities are deliberately small
-   (0.045 / 0.025 light; 0.10 / 0.055 dark) so the gradient adds a
-   hint of warmth around the auth card without staining the
-   page. If this still reads muddy in practice, drop the gradient
-   layers entirely and fall back to plain hsl(var(--background)). */
+   `min-height` is layered for mobile Safari:
+     - 100vh   fallback for older browsers
+     - 100svh  small viewport (URL bar visible), which never overshoots
+     - 100dvh  dynamic viewport, which follows the URL bar's collapsing
+   It is a minimum and not a height, so a screen taller than the phone
+   (the form with the keyboard up, double text) scrolls the page and its
+   last row stays reachable.
+   Padding is the safe area plus 16px, so a notch gets room above the
+   lockup and not the bare inset. Side margins are px, as iOS keeps its
+   layout margins at every text size: in rem, double text spent 64px of a
+   320pt screen on them. */
 .ds-auth-shell {
   min-height: 100vh;
   min-height: 100svh;
   min-height: 100dvh;
-  overflow-y: auto;
-  background:
-    radial-gradient(
-      circle at 18% 0%,
-      rgba(123, 114, 233, 0.045),
-      transparent 36%
-    ),
-    radial-gradient(
-      circle at 92% 8%,
-      rgba(217, 136, 78, 0.025),
-      transparent 32%
-    ),
-    hsl(var(--background));
+  background: hsl(var(--background));
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Side margins in px, as iOS keeps its layout margins at every text
-     size: in rem, double text spent 64px of a 320pt screen on them. */
-  padding: calc(var(--safe-top) + 1rem) 16px calc(var(--safe-bottom) + 1rem);
+  padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
 }
 
-.dark .ds-auth-shell {
-  background:
-    radial-gradient(
-      circle at 18% 0%,
-      rgba(123, 114, 233, 0.1),
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 92% 8%,
-      rgba(212, 99, 122, 0.055),
-      transparent 34%
-    ),
-    hsl(var(--background));
+/* The column fills a phone from the lockup to the last row, which is
+   what lets the welcome keep its name at the top and its words at the
+   foot. On a window taller than a phone it stops at 50rem and the shell
+   centres it (the welcome's shell sets it at the foot). `--auth-column`
+   is the column's own width, for the lifter to measure itself by: the
+   shell's two 16px margins off
+   the screen, up to the column's limit. It is written from the screen
+   and not asked of a container, because container units arrived in iOS
+   16 and the app runs on 15.4. */
+.ds-auth-page {
+  --auth-column: min(100vw - 32px, 24rem);
+  --auth-fill: calc(100vh - var(--safe-top) - var(--safe-bottom) - 32px);
+  width: 100%;
+  max-width: 24rem;
+  min-height: min(var(--auth-fill), 50rem);
+  display: flex;
+  flex-direction: column;
 }
-
-/* On short viewports (keyboard open on iPhone SE, landscape, etc.)
-   anchor the card to the top so its top edge stays visible — pure
-   `align-items: center` clips the top off when content is taller
-   than the viewport. */
-@media (max-height: 680px) {
-  .ds-auth-shell {
-    align-items: flex-start;
+@supports (height: 100dvh) {
+  .ds-auth-page {
+    --auth-fill: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 32px);
   }
 }
 
-.ds-auth-card {
-  width: 100%;
-  max-width: 24rem;
-  /* px for the same reason as the shell's margins: the designed 20–28px
-     at every text size. */
-  padding: clamp(20px, 5vw, 28px);
-  border-radius: 1.75rem;
-  background: hsl(var(--card) / 0.92);
-  border: 1px solid hsl(var(--border) / 0.72);
-  box-shadow: var(--ds-shadow-elevated);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* The name beside the mark (DS8 call 3): a logo, so it is the figure
+   face at its heaviest and a fixed size, like the mark it sits by. */
+.ds-wordmark {
+  font-family: var(--font-figure);
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
+/* ─── THE WELCOME'S PHOTOGRAPHS (WelcomePhotos, owner 2026-11-12) ──
+   Five photographs fill the screen behind the welcome's words and fade
+   from one to the next, as Strava's, Nike's and Tonal's welcomes do
+   (src/assets/welcome/README.md). The layer fills the shell, safe area
+   included, and on a window wider than a phone it stops at a phone's
+   width in the middle, as the column does. Each photograph is 9:19.5,
+   a full-screen iPhone; on a shorter screen `object-position` (each
+   photo's focus, set by WelcomePhotos) chooses which part of the height
+   is kept, so the face stays between the name and the headline.
+
+   A crossfade is opacity alone, so it runs on the compositor. The first
+   photograph fades in as it arrives rather than appearing a line at a
+   time. Under Reduce Motion nothing fades: one photograph, there at once. */
+.welcome-shell {
+  position: relative;
+  justify-content: flex-end;
+  /* The stage's ground, fixed dark in both themes, behind photographs
+     that have not arrived yet and either side of them on a wide window. */
+  background: hsl(var(--stage));
+  color-scheme: dark;
+}
+.welcome-photos {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: min(100%, 30rem);
+  translate: -50% 0;
+  overflow: hidden;
+  background: hsl(var(--stage));
+}
+.welcome-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.welcome-photo[data-shown="true"][data-ready="true"] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-photo {
+    transition: none;
+  }
+}
+/* The top darkens a little under the status bar and the name, wherever
+   the photograph is bright there (a studio wall, a sky). */
+.welcome-photos::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.4) 0,
+    rgb(0 0 0 / 0) calc(var(--safe-top) + 100px)
+  );
+}
+
+/* The column: the name at the top, the words at the foot. */
+.welcome-page {
+  position: relative;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* The words sit on their own dark ground, which starts 120px above the
+   headline and darkens to the foot of the screen, so the photograph
+   shows through above the words and never fights them, on a tall phone
+   or a short one, at any text size. It is drawn from the words and not
+   from the screen, because the headline sits at about two thirds of a
+   tall phone and at half of a short one. It is as wide as the
+   photographs and reaches past the bottom of the column to the screen's
+   edge (the shell's 16px and the safe area). */
+.welcome-copy {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.welcome-copy::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -120px;
+  bottom: calc(-16px - var(--safe-bottom));
+  left: 50%;
+  width: min(100vw, 30rem);
+  translate: -50% 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.42) 120px,
+    rgb(0 0 0 / 0.72) 230px,
+    rgb(0 0 0 / 0.86) 100%
+  );
+  pointer-events: none;
+}
+/* A soft shadow under the words, for the brightest part of a photograph
+   (a white studio wall, a cloud) that the ground has not yet darkened. */
+.welcome-copy h1 {
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.45);
+}
+.welcome-copy h1 + p {
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.5);
+}
+
+/* ─── THE LIFTER ON SIGN-IN (SignInFigure, DS8 call 2) ────────
+   The head of the form: the lockup, then the heading at the foot of a
+   drawn lifter who stands to its right in the screen's one light. The
+   heading runs under the bar and stops short of the body
+   (`--signin-clear`), so "Welcome back" keeps one line on a 375pt
+   phone. Under 14rem of column (double text, or 1.35x on a 320pt phone)
+   the lifter gives way and the words take the row: beside it "Welcome"
+   no longer fits on a line. `--signin-room` is that switch without a
+   container query (iOS 15.4): nothing under 14rem, and more than any
+   length here above it, so `min()` with it keeps a length or drops it
+   to nothing. */
+.signin-head {
+  /* The lifter's box is 121px wide and its body the middle 55px: half
+     the box, half the body and a gap. */
+  --signin-clear: 100px;
+  --signin-room: max(0px, calc((var(--auth-column) - 14rem) * 9999));
+}
+.signin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+.signin-row > .signin-figure {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.signin-row > .signin-heading {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-self: end;
+  padding-right: min(var(--signin-clear), var(--signin-room));
+}
+.signin-figure {
+  position: relative;
+  height: min(176px, var(--signin-room));
+  display: flex;
+  justify-content: center;
+}
+/* The light is as wide as the lifter plus the page's margin each side,
+   so it ends at the screen's edge and nothing reaches past it, and half
+   as tall again as the lifter: a tall oval, as the figure is tall. */
+.signin-light {
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  top: -18%;
+  bottom: -18%;
+  border-radius: 50%;
+}
 /* Fixed iOS safe-area cover. Sits behind the iOS status bar /
    Dynamic Island and hides scrolling content from showing behind the
    clock. Implemented as a soft gradient scrim (see below) so it never
@@ -427,21 +582,6 @@ select.ds-input:focus {
   transform: translateZ(0);
 }
 
-.ds-auth-logo {
-  width: 4.25rem;
-  height: 4.25rem;
-  border-radius: 1.35rem;
-  display: grid;
-  place-items: center;
-  color: hsl(var(--primary-foreground));
-  background: linear-gradient(
-    135deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--primary-strong)) 100%
-  );
-  box-shadow: var(--ds-shadow-purple-glow);
-}
-
 /* The launch overlay. index.html paints #boot-splash with these classes
    while the bundle loads, but only once public/init.js has marked the
    document `booting` (never under automation, never without JS, so the
@@ -475,17 +615,16 @@ html.booting #boot-splash {
 .launch-splash-mark {
   position: relative;
   display: block;
-  height: calc(max(100vw, 100vh) * 0.134);
+  height: calc(max(100vw, 100vh) * 0.111);
   width: auto;
   color: hsl(var(--lifting));
 }
 /* The mark's moving parts (LaunchSplash), each a layer of its own that
    only transform and opacity move, so the browser can run the motion off
    the main thread while the app starts underneath: the flight (and the
-   lift) on the outer layer, the breath inside it, and the rising chevron
-   over the hexagon. The chevron starts transparent, so the first frame is
-   the hexagon alone, and is painted in the launch colour, which on the
-   launch ground reads as the hole it becomes. */
+   lift) on the outer layer, the breath inside it, and the rising stem
+   under the bar. The stem starts transparent, so the first frame is the
+   bar alone. */
 .launch-splash-flight {
   position: relative;
   will-change: transform;
@@ -493,18 +632,14 @@ html.booting #boot-splash {
 .launch-splash-body {
   position: relative;
 }
-.launch-splash-cut {
-  position: absolute;
-  inset: 0;
-}
-.launch-splash-chevron {
+.launch-splash-stem {
   position: absolute;
   inset: 0;
   opacity: 0;
-  color: hsl(var(--launch));
+  color: hsl(var(--lifting));
   will-change: transform, opacity;
 }
-.launch-splash-chevron > svg {
+.launch-splash-stem > svg {
   display: block;
   width: 100%;
   height: 100%;
@@ -654,24 +789,29 @@ html.guiding [data-brand-mark] {
   --glow-c: 0.045;
 }
 
-/* Food's calorie card (owner, 7 November 2026): a faint glow of the food
-   orange behind the ring, fading into the card (DS4, §14m rule 13). It
-   replaced a wash from orange into the brand purple, the only two-hue
-   gradient on an everyday screen in 178 measured, which made dark 2.5x
-   louder than light. Weak enough to count as colour in neither theme. */
+/* Food's calorie wheel: a faint light of the food orange behind it, one
+   hue fading into the page (DS4, §14m rule 13; §14o's one soft light for
+   a hero). The owner's call of 7 November 2026 put it behind the ring in
+   its card, in place of a wash from orange into the brand purple, the
+   only two-hue gradient on an everyday screen in 178 measured, which made
+   dark 2.5x louder than light. Since Food11 the wheel is on the page and
+   the light is a circle 340px across round it, at the strengths the
+   picked board was measured with: a fixed size, drawn at the centre of a
+   box as wide as the screen, so nothing is laid out past a narrow one.
+   Weak enough to count as colour in neither theme. */
 .food-hero-glow {
   background: radial-gradient(
-    closest-side,
-    hsl(var(--nutrition) / 0.2),
-    hsl(var(--nutrition) / 0.09) 50%,
+    circle 170px at center,
+    hsl(var(--nutrition) / 0.14),
+    hsl(var(--nutrition) / 0.05) 58%,
     transparent
   );
 }
 .dark .food-hero-glow {
   background: radial-gradient(
-    closest-side,
-    hsl(var(--nutrition) / 0.13),
-    hsl(var(--nutrition) / 0.05) 50%,
+    circle 170px at center,
+    hsl(var(--nutrition) / 0.12),
+    hsl(var(--nutrition) / 0.04) 58%,
     transparent
   );
 }
@@ -688,4 +828,36 @@ html.guiding [data-brand-mark] {
   .bottom-nav-frost {
     transition: none;
   }
+}
+
+/* ─── A RACE'S PLACE IN THE RACE PICKER (RaceGoalPlanner) ──────
+   Each upcoming race is a card with its cover on the right, fading into
+   the card under the words, as Runna's race list draws it: a race is
+   known by its place faster than by its name in a list of sixty (Soc16
+   allows a race's real place). The fade is the card's own colour, so the
+   words sit on the card in either theme and the photograph never sits
+   under them. */
+.race-pick-fade {
+  background: linear-gradient(
+    to right,
+    hsl(var(--card)) 36%,
+    hsl(var(--card) / 0.82) 50%,
+    hsl(var(--card) / 0) 82%
+  );
+}
+
+/* Run plan's photograph cards (PhotoChoiceCards) and Train's race band
+   (RaceCockpitCard): the scrim under white words on a photograph, darkest
+   at the foot where the words sit. Fixed stops, the same in both themes,
+   as the words on it are. */
+.photo-choice-scrim,
+.race-band-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.74) 0%,
+    rgb(0 0 0 / 0.46) 55%,
+    rgb(0 0 0 / 0.16) 100%
+  );
 }

@@ -70,9 +70,6 @@ vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), ready: true }),
 }));
 vi.mock("@/components/social/FollowsYouBadge", () => ({ default: () => null }));
-vi.mock("@/components/social/PartnerReadyBadge", () => ({
-  default: () => null,
-}));
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
 const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: toasts }));
@@ -99,7 +96,6 @@ function renderPeople(blockedReady: boolean) {
     <MemoryRouter>
       <PeopleView
         active
-        chromeHidden={false}
         blockedUsers={new Set()}
         blockedReady={blockedReady}
         openTogether={vi.fn()}
@@ -189,7 +185,7 @@ it("says so when the invite link can't be copied", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() =>
     expect(toasts.error).toHaveBeenCalledWith(
-      "Couldn't copy the invite link. Try again."
+      "Couldn’t copy the invite link. Try again."
     )
   );
   expect(toasts.success).not.toHaveBeenCalled();
@@ -263,7 +259,7 @@ it("says what an invite makes, by whether the person approves followers", () => 
   const { unmount } = renderPeople(true);
   expect(
     screen.getByText(
-      "When they join with your link or code, you'll follow them and they'll ask to follow you."
+      "When they join with your link or code, you’ll follow them and they’ll ask to follow you."
     )
   ).toBeInTheDocument();
   unmount();
@@ -289,7 +285,7 @@ it("says so when the code can't be had, and shares nothing", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
   await waitFor(() =>
     expect(toasts.error).toHaveBeenCalledWith(
-      "Couldn't get your invite code. Check your connection and try again."
+      "Couldn’t get your invite code. Check your connection and try again."
     )
   );
   expect(share).not.toHaveBeenCalled();

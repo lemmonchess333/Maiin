@@ -180,7 +180,7 @@ describe("FoodAnalyzer — closing the scanner mid-scan", () => {
   it("drops a failure too, so the page shows no error card for it", async () => {
     const answer = await startThenClose("stub-capture");
     await answer({ ok: false, status: 500, json: async () => ({}) });
-    expect(screen.queryByText("Couldn't identify food.")).toBeNull();
+    expect(screen.queryByText("Couldn’t identify food.")).toBeNull();
   });
 
   it("drops a barcode product that lands after the scanner closed", async () => {
@@ -195,6 +195,6 @@ describe("FoodAnalyzer — closing the scanner mid-scan", () => {
     const answer = await startThenClose("stub-barcode");
     await answer({ ok: true, status: 200, json: async () => ({ status: 0 }) });
     expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
-    expect(screen.queryByText("Couldn't identify food.")).toBeNull();
+    expect(screen.queryByText("Couldn’t identify food.")).toBeNull();
   });
 });

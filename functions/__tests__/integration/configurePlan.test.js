@@ -103,7 +103,7 @@ beforeAll(() => {
   const idx = require("../../index");
   configurePlan = idx.configurePlan;
   completeOnboarding = idx.completeOnboarding;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 }, 30_000);
 

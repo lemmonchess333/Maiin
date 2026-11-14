@@ -89,6 +89,26 @@ export function judgesPaceNow(
 }
 
 /**
+ * Run24 (12), deep dive D17: whether the run screen judges an easy or a long
+ * run against the top of easy now: in an easy segment, or any time on a run
+ * with none. Strides, a race-pace finish and a run-walk's walks are not easy
+ * running to hold back.
+ */
+export function judgesEasyNow(
+  activityType: string | undefined,
+  segments: readonly Pick<SessionSegment, "type">[],
+  current: Pick<SessionSegment, "type"> | null
+): boolean {
+  if (activityType !== "easy" && activityType !== "long") return false;
+  return segments.length === 0 || current?.type === "easy";
+}
+
+/** How far past the fast end of the easy band a run goes before the easy
+ *  cue speaks, s/km (Run24 (12)): GPS wanders by about this much. A
+ *  Tropos heuristic. */
+export const EASY_CEILING_MARGIN_S = 10;
+
+/**
  * The pace the Run screen's live bar judges against: an interval session's
  * work pace, or a pace target. Null when the run has no pace to judge, as a
  * tempo or an interval session has none until a benchmark gives one
@@ -108,8 +128,7 @@ export function livePaceTarget(config: {
 }
 
 export type SegmentTarget =
-  | { kind: "duration"; seconds: number }
-  | { kind: "distance"; meters: number };
+  { kind: "duration"; seconds: number } | { kind: "distance"; meters: number };
 
 export interface SessionSegment {
   /** Visual/coaching class — reuses the guided-run vocabulary so
@@ -304,6 +323,9 @@ export function segmentsFromTempo(
      *  race prep), not a fitness-derived threshold — cues say so and
      *  the pace is pinned against band re-suffixing. */
     atGoalPace?: boolean;
+    /** Run24 (9): the race pace is a marathon's band, with no goal time
+     *  typed, so the words say "marathon pace". */
+    marathonBand?: boolean;
   },
   /** Same cross-run rotation contract as segmentsFromIntervals. */
   seed: number = 0
@@ -333,13 +355,16 @@ export function segmentsFromTempo(
     }
     const atGoal = opts?.atGoalPace && paceTarget;
     const blockEffort = atGoal ? "RACE PACE" : EFFORT_EYEBROW.comfortablyHard;
+    const named = opts?.marathonBand ? "marathon pace" : "goal pace";
     out.push({
       type: "moderate",
       label: atGoal
-        ? `${min(seconds)} min goal pace${pace}`
+        ? `${min(seconds)} min ${named}${pace}`
         : `${min(seconds)} min tempo${pace}`,
       instruction: atGoal
-        ? "Your goal race pace — hold the rhythm"
+        ? opts?.marathonBand
+          ? "Marathon pace — hold the rhythm"
+          : "Your goal race pace — hold the rhythm"
         : "Comfortably hard — hold the rhythm",
       target: { kind: "duration", seconds },
       ...(paceTarget ? { paceTarget } : {}),
@@ -348,7 +373,7 @@ export function segmentsFromTempo(
         ? { rep: i + 1, totalReps: shape.workSecs.length }
         : {}),
       effort: atGoal
-        ? `${min(seconds)} min @ goal pace`
+        ? `${min(seconds)} min @ ${named}`
         : `${min(seconds)} min tempo`,
       eyebrow:
         shape.workSecs.length > 1
@@ -356,8 +381,10 @@ export function segmentsFromTempo(
           : blockEffort,
       cue: atGoal
         ? shape.workSecs.length > 1
-          ? `Block ${i + 1} of ${shape.workSecs.length} at goal race pace. Settle into your race rhythm.`
-          : "Goal race pace. Settle into your race rhythm."
+          ? `Block ${i + 1} of ${shape.workSecs.length} at ${opts?.marathonBand ? "marathon pace" : "goal race pace"}. Settle into your race rhythm.`
+          : opts?.marathonBand
+            ? "Marathon pace. Settle into your race rhythm."
+            : "Goal race pace. Settle into your race rhythm."
         : shape.workSecs.length > 1
           ? `Tempo block ${i + 1} of ${shape.workSecs.length}. Comfortably hard — settle into the rhythm.`
           : "Tempo. Comfortably hard — settle into the rhythm.",
@@ -440,9 +467,12 @@ export function segmentsFromLongWithRacePace(
   totalKm: number,
   blockKm: number,
   goalPaceS: number,
-  unit: DistanceUnit
+  unit: DistanceUnit,
+  /** Run24 (9): the pace is a marathon's band, with no goal time typed. */
+  marathonBand = false
 ): SessionSegment[] {
   const easyKm = Math.max(0, totalKm - blockKm);
+  const named = marathonBand ? "marathon pace" : "goal pace";
   const paceLabel = paceMinSec(Math.round(goalPaceS), unit);
   /* The block lengths are PLAN data in kilometres; only their labels move.
      The distance TARGETS below stay in metres either way, so a converted
@@ -470,13 +500,15 @@ export function segmentsFromLongWithRacePace(
     {
       type: "moderate",
       label: `${blockLabel} ${u} @ ${paceLabel} ${paceUnitLabel(unit)}`,
-      instruction: "Your goal race pace — strong to the finish",
+      instruction: marathonBand
+        ? "Marathon pace — strong to the finish"
+        : "Your goal race pace — strong to the finish",
       target: { kind: "distance", meters: Math.round(blockKm * 1000) },
       paceTarget: goalPaceS,
       pacePinned: true,
-      effort: `${blockKm}K @ goal pace`,
+      effort: `${blockKm}K @ ${named}`,
       eyebrow: "RACE PACE",
-      cue: `Race-pace block. ${blockKm} kilometres at your goal pace — strong to the finish.`,
+      cue: `Race-pace block. ${blockKm} kilometres at ${marathonBand ? "marathon pace" : "your goal pace"} — strong to the finish.`,
     },
   ];
 }

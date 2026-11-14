@@ -17,11 +17,18 @@ import { deleteLoggedSession, type SessionKind } from "@/lib/sessionDelete";
  * them — the copy is the load-bearing part here, not the button. ADR-0012
  * is explicit that deleting a session can lower the user's standing in a
  * live challenge, that this is the correct behaviour for a mis-log, and
- * that "the copy should not pretend otherwise". It also leaves two
- * things standing on purpose (partner streaks, milestone badges), which
- * a user reading "delete" would reasonably assume are coming back; a
- * `fastest_effort` best is rebuilt server-side when its driving run is
- * the one deleted (ADR-0012, third amendment).
+ * that "the copy should not pretend otherwise". It also leaves milestone
+ * badges standing on purpose, which a user reading "delete" would
+ * reasonably assume are coming back; a `fastest_effort` best is rebuilt
+ * server-side when its driving run is the one deleted (ADR-0012, third
+ * amendment).
+ *
+ * The copy said "Streaks and badges you've already earned stay" until 12
+ * November 2026. The streaks it meant were partner streaks, which went
+ * with Trim1 call 3(b). A person's own streak counts the days they logged
+ * something and gets shorter when a day's only log is deleted
+ * (`attestedAnchor` in useStreaks), so the sentence now names badges
+ * alone and promises nothing about a streak.
  *
  * Placed at the bottom of the page, low-emphasis, behind a confirmation:
  * it is a records correction for a mis-log, not a primary action, and it
@@ -71,11 +78,11 @@ export default function DeleteSessionAction({
         open={confirming}
         title={`Delete this ${noun}?`}
         description={[
-          `This can't be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
-          "Streaks and badges you've already earned stay.",
+          `This can’t be undone. Your challenge progress and lifetime totals will drop by what this ${noun} contributed, so your standing in a live challenge can go down.`,
+          "Badges you’ve already earned stay.",
           sharedActivityId
             ? "Its post is removed from your feed too."
-            : `Any post you've already shared about this ${noun} stays on your feed.`,
+            : `Any post you’ve already shared about this ${noun} stays on your feed.`,
         ].join(" ")}
         confirmLabel="Delete"
         destructive
@@ -97,7 +104,7 @@ export default function DeleteSessionAction({
             else navigate(historyReturnTo ?? "/history", { replace: true });
           } catch {
             setBusy(false);
-            toast.error(`Couldn't delete this ${noun}. Try again.`);
+            toast.error(`Couldn’t delete this ${noun}. Try again.`);
           }
         }}
       />

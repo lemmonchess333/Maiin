@@ -524,7 +524,7 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
  *
  * One misattribution stays pinned: 7.26:1 was once published as the base's
  * ratio (calling it AAA). That figure belongs to `Run.tsx:142`'s
- * "Acquiring GPS..." label — `text-warning-strong/90` on the DARK page.
+ * "Acquiring GPS…" label — `text-warning-strong/90` on the DARK page.
  * The assertion computing it keeps either number from being quoted for the
  * other again.
  */
@@ -819,15 +819,17 @@ describe("small secondary text on a tint", () => {
 });
 
 describe("medal ranks — the numeral is text, the metal is a marker", () => {
-  it.each([
-    "src/components/social/LeaderboardRow.tsx",
-    "src/features/challenges/WeeklyChallengeCard.tsx",
-  ])("%s never colours the rank numeral with a medal", (path) => {
-    const src = readFile(path);
-    // Gold is 1.40:1 and silver 1.82:1 as text on the white card.
-    expect(src).not.toMatch(/color:\s*[^;]{0,60}RANK_COLORS/);
-    expect(src).toMatch(/inset 0 0 0 2px \$\{RANK_COLORS/);
-  });
+  // The weekly challenge card draws its leaders with this row since
+  // Trim1 call 3(a); its own copy of the markup, pinned here too, went.
+  it.each(["src/components/social/LeaderboardRow.tsx"])(
+    "%s never colours the rank numeral with a medal",
+    (path) => {
+      const src = readFile(path);
+      // Gold is 1.40:1 and silver 1.82:1 as text on the white card.
+      expect(src).not.toMatch(/color:\s*[^;]{0,60}RANK_COLORS/);
+      expect(src).toMatch(/inset 0 0 0 2px \$\{RANK_COLORS/);
+    }
+  );
 
   it.each([
     "src/features/challenges/ChallengeCard.tsx",

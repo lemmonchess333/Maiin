@@ -41,8 +41,9 @@ async function shoot(page: Page, name: string) {
 
 /** Routes the setup callable into its real exported handler. */
 async function realCompleteOnboarding(page: Page) {
-  const admin = require("firebase-admin");
-  if (!admin.apps.length) admin.initializeApp({ projectId: "demo-tropos" });
+  const { getApps, initializeApp } = require("firebase-admin/app");
+  const { getAuth } = require("firebase-admin/auth");
+  if (!getApps().length) initializeApp({ projectId: "demo-tropos" });
   const { completeOnboarding } = require("../../functions/index.js");
   await page.route(
     "**/demo-tropos/us-central1/completeOnboarding",
@@ -57,7 +58,7 @@ async function realCompleteOnboarding(page: Page) {
         });
         return;
       }
-      const token = await admin.auth().verifyIdToken(
+      const token = await getAuth().verifyIdToken(
         route
           .request()
           .headers()
@@ -246,7 +247,7 @@ test("a new account can start training before replaying the guide", async ({
   const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
   await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
   await expect(firstRun).toHaveCount(0);
-  await expect(page.getByText("Acquiring GPS...")).toBeVisible({
+  await expect(page.getByText("Acquiring GPS…")).toBeVisible({
     timeout: 10_000,
   });
   await expect(startsRun).toHaveCount(0);

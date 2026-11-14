@@ -89,7 +89,7 @@ describe("FoodCameraModal — the capture", () => {
     fireEvent.click(await shutter());
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
-        "Couldn't take the photo. Try again."
+        "Couldn’t take the photo. Try again."
       )
     );
     expect(p.onCaptureBase64).not.toHaveBeenCalled();

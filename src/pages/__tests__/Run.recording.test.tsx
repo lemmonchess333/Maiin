@@ -138,6 +138,7 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkDistanceCue: h.distanceCue,
     checkTimeCue: h.timeCue,
     checkPaceAlert: () => {},
+    checkEasyCeiling: () => {},
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),
@@ -512,7 +513,7 @@ describe("recovering coaching and checkpoint durability", () => {
       h.gps.points = seed.points;
       render(tree());
       expect(
-        screen.getByText(/Session guidance couldn't be restored/)
+        screen.getByText(/Session guidance couldn’t be restored/)
       ).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Resume run" })).toBeNull();
       await act(async () =>
@@ -612,7 +613,7 @@ describe("recovering coaching and checkpoint durability", () => {
         h.timer.elapsed = 900;
         view.rerender(tree());
         const notice = screen.getByText(
-          /Latest progress couldn't be saved for recovery/
+          /Latest progress couldn’t be saved for recovery/
         );
         expect(notice.closest('[role="status"]')).not.toBeNull();
         if (locked)
@@ -628,7 +629,7 @@ describe("recovering coaching and checkpoint durability", () => {
         h.timer.elapsed = 901;
         view.rerender(tree());
         expect(
-          screen.queryByText(/Latest progress couldn't be saved for recovery/)
+          screen.queryByText(/Latest progress couldn’t be saved for recovery/)
         ).toBeNull();
         expect(readStoredRun("recording-test")?.accumulatedSeconds).toBe(901);
         if (locked) {
@@ -1182,7 +1183,7 @@ describe("interrupted manual distance entry", () => {
         "1.25"
       );
       expect(
-        screen.getByText(/Latest progress couldn't be saved for recovery/)
+        screen.getByText(/Latest progress couldn’t be saved for recovery/)
       ).toBeInTheDocument();
       expect(refused.mock.calls.length).toBeLessThan(10);
       refused.mockRestore();
@@ -1191,7 +1192,7 @@ describe("interrupted manual distance entry", () => {
         "2.51"
       );
       expect(
-        screen.queryByText(/Latest progress couldn't be saved for recovery/)
+        screen.queryByText(/Latest progress couldn’t be saved for recovery/)
       ).toBeNull();
       h.unit = "km";
       view.rerender(tree());

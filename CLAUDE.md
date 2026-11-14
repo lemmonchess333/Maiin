@@ -26,7 +26,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Animation:** Framer Motion 12
 - **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
 - **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
-- **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
+- **Payments:** RevenueCat for both: native IAP (`@revenuecat/purchases-capacitor`, ADR-0006) and the website's checkout, RevenueCat Billing on Tropos's own Stripe account through a hosted Web Purchase Link (App1, 13 Nov 2026; `docs/iap/revenuecat-setup.md` Part W). The older Stripe Checkout functions are dormant until that has worked, then retired — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
@@ -49,7 +49,6 @@ src/
 │   ├── challenges/     # Challenge system
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
-│   ├── partnerStreak/  # Partner bonds + shared-day streaks
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
 │   ├── run/            # Run-surface feature modules
 │   ├── spaces/         # Space definitions (incl. race spaces)
@@ -104,28 +103,24 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                       |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                        |
 | `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)         |
-| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts            |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: the week's sessions, badges and medals (yours: all), posts  |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
-| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                           |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                     |
-| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                      |
-| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)           |
-| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                             |
-| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into My pantry              |
-| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | My pantry — edit or remove the saved foods Quick add offers (F2d)               |
-| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                    |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, with the rest timer and Reset programme at its foot           |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Run-plan editor, with voice cues (Train's Run tab deep-links here)              |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE, the way into Your pantry            |
+| `settings/SettingsPantry.tsx`          | `/settings/pantry`                 | Your pantry — edit or remove the saved foods Food offers again (F2d)            |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                   |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                         |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                   |
 | `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                    |
 | `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                              |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                 |
-| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                              |
 | `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                               |
 | `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks      |
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
@@ -135,6 +130,13 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |
+
+Four Settings routes are redirects, kept for links already saved (Trim1,
+2026-11-11): `/settings/training` and `/settings/workout-prefs` open Lift
+plan, and `/settings/subscription` and `/settings/data` open Account. The
+Settings list has ten rows: Lift plan, Run plan, Nutrition, Shoes;
+Notifications, Units & appearance, Social & privacy, Apple Health; Account,
+Support & legal.
 
 ## Key Business Logic (src/lib/)
 
@@ -147,7 +149,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `savedWorkouts.ts`      | The one saved-workout reader: query, parse, day, queued ones   |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `guidedRun.ts`          | A run step's kinds and colours, and a stored guided workout    |
 | `weather.ts`            | Weather API integration for runs                               |
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
@@ -192,17 +194,17 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 
 ## Feature Modules (src/features/)
 
-### goalSpace/ · spaces/ · partnerStreak/ · run/
+### goalSpace/ · spaces/ · run/
 
 `goalSpace/` owns Goal Spaces (Circles) — membership,
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
-`partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
-the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md` —
-and makes every bond: the `startPartnerStreak` callable counts both people's
-bonds against `MAX_PARTNERS` in the transaction that creates one, and the
-rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
-both sides). `run/` holds run-surface feature modules.
+`run/` holds run-surface feature modules. Partner streaks (`partnerStreak/`,
+a 1:1 bond and a shared-day streak) went on 12 November 2026 (Trim1 call
+3(b)): two people who train together use a Circle, which keeps no streak.
+Nothing writes or reads `partnerBonds/{bondId}`, the rules refuse it, and a
+bond stored before then is deleted with either member's account and by
+`functions/scripts/purgePartnerBondDocs.js`.
 
 ### league/
 
@@ -224,6 +226,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `useStreaks.tsx` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
+- `BadgeShelf.tsx` — a profile's badges, above its medals (`TrophyCase`): the newest few on anyone's, and on your own "See all" opens `BadgeGrid` in place (`?badges=all`, spelled by `src/lib/badgeShelfLink.ts`). It was a tab under Analytics until Trim1 call 3(c)
 - `__tests__/badges.test.ts`
 
 ### program/
@@ -287,7 +290,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (a person's week on their followers' boards, SERVER-written and only for someone who chose Show my week, `users/{uid}.showWeekOnBoard`, set through the `setBoardSharing` callable)
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only), `friendsBoard/{uid}` (retired with the friends board, Trim1 call 3(a), 12 November 2026: nothing writes or reads it, the rules refuse it, and a week stored before then is deleted with its account and by `functions/scripts/purgeFriendsBoardDocs.js`)
 - **The community goal counts everyone** (Soc14). A `group-goal-*` challenge carries server-written `collectiveMeters` (whole metres) and `collectiveRunners`: every eligible run saved in its month adds to them, joined or not, and deleting the run takes exactly its credit back off (`functions/lib/communityGoal.js`; the per-run credits live in `users/{uid}/communityGoal`, server-only, swept with the account). The app reads that total, never a sum of the loaded board.
 - **A medal is kept per challenge edition** (Soc15). `users/{uid}/medals/{challengeId}` (owner-read) and the public profile's `medalSummary` (the trophy case, newest 40) are written ONLY by `onChallengeParticipantWritten` (`functions/lib/medals.js`), derived from the participant document, never by the several writers of `tierAchieved`; the rules refuse a client write of either. A medal follows the participant until 48 hours after the challenge ends, then is frozen. A community goal awards none. Reveals are on Social only, once per medal and tier per device.
 - **A league is opt-in and scored against your own plan** (Soc15 call 3). `users/{uid}.leagueOptIn` is set only by the `setLeagueSharing` callable, which a restricted account cannot use to join; leaving deletes the person's standing at once. `leagueMembers`, `leagueGroups` (+ `standings`), `users/{uid}/leagueResults`, `leagueWeeks` and `leagueStatus` are SERVER-written only: `weeklyLeagueTurn` (Monday 12:15 UTC) settles, forms groups of about 20 and writes the open/locked figure, and the session triggers recompute a standing from the sessions. Points are `round(100 × min(done, planned) / planned)`; the planned count is `functions/lib/leaguePlanned.js`, a server copy of `trainingWeek.ts` pinned by `leaguePlanned.cross.test.ts`, and the rules are `functions/lib/leagueRules.js`.
@@ -297,7 +300,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
-- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
+- **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins and Circle events, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email (only once verified, so a borrowed address restricts no one) and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
 - **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows. One exception (Soc15 call 4, 2026-11-04; narrowed by its STATUS of 2026-11-05): a new account that joins from someone's invite link or code is followed by them at once, written only by the `redeemInvite` callable (`functions/lib/inviteCodes.js`; edges carry `fromInvite`), since using their link counts as the new person accepting them. The new person follows the inviter at once only when the inviter has Approve followers off; otherwise `redeemInvite` writes their follow request, marked `fromInvite`, which the inviter accepts in one tap, so a code posted publicly reaches no followers-only post. A code is renewed (Soc15 STATUS 2026-11-10) by its owner at any time (`renewInviteCode`, People's New code) and by a block of someone who joined from it (`onBlockWritten` reads the `invitedBy` that `redeemInvite` stamps), and the old code stops working at once, so a person blocked cannot make a new account and join from it again.
 - **A follow count is the server's, recounted.** `followCounts/{uid}` = `{ followers, followersAt, following, followingAt }`: how many accounts follow one and how many it follows. SERVER-written only, by `onFollowerEdgeWritten` and `onFollowingEdgeWritten` (`functions/lib/followCounts.js`), each from a count aggregation over the list whose edge was made or removed and never an increment, and never for an account being deleted. A profile reads someone else's numbers from it (`getFollowCounts` in `socialApi.ts`), so no screen reads another person's lists; your own profile counts your own lists, which are right the moment you follow someone. Anyone signed in reads one, except someone its owner blocked, and nobody lists them. A side the server has not counted is absent: the app counts the list for it while the rules allow that, and reads it as 0 once they keep a list to its owner (Polish4 call 1; `functions/scripts/backfill-follow-counts.js` counts every account first, and stays as the repair).
 - **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
@@ -332,7 +335,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   option) and AM/PM in copy are banned by
   `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
   "5:18 /km") are not times of day.
-- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal", and a pace "5:34 /km"
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 kcal", and a pace "5:34 /km"
   (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km and a pace glued to its unit, including
   the `${x}kg` template form). Two named exceptions: grams on the food
   surface stay unspaced ("128g" — MacroColumn's documented house style), and
@@ -569,7 +572,7 @@ gstack (`.claude/skills/gstack`, a git submodule) is checked out only in local s
 
 ## Tropos Design System
 
-Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Since DS4 (2026-11-07) its rules are measured from the apps people come back to (§14m, evidence in `docs/design-rules-2026-11/`): one hero per screen holding its largest text, colour on the person's data within a budget, our own art as the pictures, full-screen rewards for firsts, bests, streaks and finished plans, and a full day 1. CODING_STANDARDS' house voice carries the measured words rules. §14n (DS5, 2026-11-10) adds eleven rules for what a flow does, counted from 168 screens of 51 apps (`rules-engagement.md`): the streak's page, missed days, asking for notifications, setup, logging, the week and the paywall; Tropos met nine of them already, so most are floors not to go below. §14o (DS6, 2026-11-10) is where a surface's definition comes from: dark cards, tiles, chips and pills take a lit edge through the shadow tokens, glass is allowed on what floats over scrolling content (tab bar, sheets, toasts, the workout's docked cards) and never on a card of the person's data, a hero may stand in one soft light of its session's colour, and neon stays out. A visual change starts as a mockup with before-and-after captures; a pass that only removes things has not done the job. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
+Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the accessibility floors, and §14 the owner's dated design decisions, the training-plan primitives and the button-variant mapping. Since DS4 (2026-11-07) its rules are measured from the apps people come back to (§14m, evidence in `docs/design-rules-2026-11/`): one hero per screen holding its largest text, colour on the person's data within a budget, our own art as the pictures, full-screen rewards for firsts, bests, streaks and finished plans, and a full day 1. CODING_STANDARDS' house voice carries the measured words rules. §14n (DS5, 2026-11-10) adds eleven rules for what a flow does, counted from 168 screens of 51 apps (`rules-engagement.md`): the streak's page, missed days, asking for notifications, setup, logging, the week and the paywall; Tropos met nine of them already, so most are floors not to go below. §14o (DS6, 2026-11-10) is where a surface's definition comes from: dark cards, tiles, chips and pills take a lit edge through the shadow tokens, glass is allowed on what floats over scrolling content (tab bar, sheets, toasts, the workout's docked cards) and never on a card of the person's data, a hero may stand in one soft light of its session's colour, and neon stays out. §14p (DS8, 2026-11-11) is the signed-out screens: the welcome stands on full-screen photographs of athletes that fade from one to the next (owner, 2026-11-12; `src/assets/welcome/`), sign-in and sign-up open on a drawn lifter who faces you, and the lockup is the mark beside "Tropos". §14q (Wid2, 2026-11-12) is what shows outside the app: a Live Activity's card and expanded island open on the session's own drawing, which changes pose as the card updates, the island's small sizes show the live figure, and the widgets follow in the same language (`src/lib/liveActivityArt.ts` names the drawings the widget extension holds). A visual change starts as a mockup with before-and-after captures; a pass that only removes things has not done the job. Screenshot capture and the emulator rig are in `docs/agents/capture-rig.md`.
 
 ### Component Architecture
 
@@ -581,18 +584,19 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   by SessionHero: the session's name, its focus and minutes, its picture,
   one line against last time, one neutral Start; a day's second session
   is a compact card under it; the words are `homeHero.ts`'s) → the week
-  card: WeekSessions over WeekStrip's seven segments → DayPeekCard (the
+  card: WeekSessions over WeekStrip's seven segments, then WeekSummary
+  (what the count is made of, and the days with food logged) beside
+  WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
   StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
   themselves) → VerifyEmailBanner (until the address is verified) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
-  WeeklyReviewEntry (a link on its heading while a review waits) →
-  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
-  Performance sits LAST by owner decision: the first thing on the scroll
-  should be something to do today, not a verdict on the week just gone.
+  TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
+  carries no performance score (Trim1 call 1, 2026-11-11): the "This
+  week" card that closed the page, with its Performance row, is gone,
+  and the score is on Analytics.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
@@ -740,6 +744,7 @@ lands in the same place (the plan-file lock rule, applied to ADRs):
 | 0010 | Volume currency — 1:1 is correct; the flip waits on landmark-aware builders        |
 | 0011 | Programme command boundary stops at the week engine — 8 sites stay document writes |
 | 0012 | Deleting a logged session reverses accumulators, not history                       |
+| 0013 | Weekly bands judge a plan and do not shape it; time sizes a day (Lift21)           |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 

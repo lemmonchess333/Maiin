@@ -93,6 +93,14 @@ export function isRunWalkTemplateId(id: string | null | undefined): boolean {
   );
 }
 
+/** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
+ *  A plan made then holds them, so they stay and read as before; nothing
+ *  picks them for a new run. */
+export const RETIRED_RUN_TEMPLATE_IDS: ReadonlySet<string> = new Set([
+  "long_15k",
+  "long_25k",
+]);
+
 const repeat = (seconds: number, times: number) =>
   Array.from({ length: times }, () => seconds);
 
@@ -263,13 +271,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "4 reps of 1 km hard with 90s rest",
-    estimatedDuration: 29,
+    estimatedDuration: 34,
     config: {
       intervals: {
         reps: 4,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -280,13 +288,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "5 reps of 1 km hard with 90s rest",
-    estimatedDuration: 35,
+    estimatedDuration: 40,
     config: {
       intervals: {
         reps: 5,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -297,13 +305,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "refresh-cw",
     description: "6 reps of 1 km hard with 90s rest",
-    estimatedDuration: 41,
+    estimatedDuration: 46,
     config: {
       intervals: {
         reps: 6,
         workDistance: 1000,
         restDuration: 90,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -314,13 +322,13 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     type: "intervals",
     icon: "wind",
     description: "8 reps of 400m with 60s rest",
-    estimatedDuration: 25,
+    estimatedDuration: 30,
     config: {
       intervals: {
         reps: 8,
         workDistance: 400,
         restDuration: 60,
-        warmupDuration: 300,
+        warmupDuration: 600,
         cooldownDuration: 300,
       },
     },
@@ -365,6 +373,15 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 12 },
   },
   {
+    id: "long_14k",
+    name: "Long 14K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 75,
+    config: { targetDistanceKm: 14 },
+  },
+  {
     id: "long_15k",
     name: "Long 15K",
     type: "long",
@@ -372,6 +389,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "Easy effort, time on feet",
     estimatedDuration: 80,
     config: { targetDistanceKm: 15 },
+  },
+  {
+    id: "long_16k",
+    name: "Long 16K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, time on feet",
+    estimatedDuration: 85,
+    config: { targetDistanceKm: 16 },
+  },
+  {
+    id: "long_18k",
+    name: "Long 18K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a half marathon needs",
+    estimatedDuration: 100,
+    config: { targetDistanceKm: 18 },
   },
   {
     id: "long_20k",
@@ -383,6 +418,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 20 },
   },
   {
+    id: "long_22k",
+    name: "Long 22K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 120,
+    config: { targetDistanceKm: 22 },
+  },
+  {
+    id: "long_24k",
+    name: "Long 24K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 135,
+    config: { targetDistanceKm: 24 },
+  },
+  {
     id: "long_25k",
     name: "Long 25K",
     type: "long",
@@ -392,13 +445,40 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 25 },
   },
   {
+    id: "long_26k",
+    name: "Long 26K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, building the endurance a marathon needs",
+    estimatedDuration: 145,
+    config: { targetDistanceKm: 26 },
+  },
+  {
+    id: "long_28k",
+    name: "Long 28K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, a long marathon build run",
+    estimatedDuration: 160,
+    config: { targetDistanceKm: 28 },
+  },
+  {
     id: "long_30k",
     name: "Long 30K",
     type: "long",
     icon: "route",
-    description: "Easy effort, the marathon build's longest run",
+    description: "Easy effort, a long marathon build run",
     estimatedDuration: 170,
     config: { targetDistanceKm: 30 },
+  },
+  {
+    id: "long_32k",
+    name: "Long 32K",
+    type: "long",
+    icon: "route",
+    description: "Easy effort, the marathon build's longest run",
+    estimatedDuration: 180,
+    config: { targetDistanceKm: 32 },
   },
   // Run-walk ladder (Run20 (5)), see RUN_WALK_TEMPLATE_IDS. Type "easy": the
   // running is easy, by feel, and no pace is set for any of it.

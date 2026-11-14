@@ -65,12 +65,31 @@ gate (`raceGoalValid`) takes it from the Firestore deploy.
       read back as A race I've entered), and on the goal's date the run
       tab says "Your 10K" and "Start your 10K".
 
+## The one ask for notifications (owner, Q66, 13 November 2026)
+
+The section below is the first-week offer this widened. Since 13 November
+every account is asked, once, on the finish screen of its first saved
+session with no answer on file (`ReminderOffer`), and one Remind me turns
+on the training-day reminder AND the server's pushes (streak nudge, weekly
+recap, badge): one iPhone permission covers both, and push had been asked
+for only from a switch in Settings. Setup's reminder row and the finish
+screen's evening-reminder switch are gone.
+
+- [ ] **One prompt, both channels.** On a TestFlight build, a new account,
+      save a first workout and answer the share question. Passing: Remind
+      me shows the iOS permission prompt once; after Allow, Settings →
+      Notifications shows training-day reminders on and Push on, and
+      Diagnostics shows this device's push token registered.
+- [ ] **An older account is asked too.** On an account set up before
+      this build that never answered the offer, save a session. Passing:
+      the offer shows once, and not again after either answer.
+
 ## A v2 account's one first-week reminder ask (XB1 call 8, 2026-10-31)
 
 After a v2 account's first saved session in its first week, and once the
 share question is answered, the finish screen offers the training-day
 reminder by naming the next session ("Remind you before Pull B?", with
-when it would first go off) and Not now (`FirstWeekReturnOffer`). Remind
+when it would first go off) and Not now (`FirstWeekReturnOffer`, now `ReminderOffer`). Remind
 me asks the phone for notification permission and turns on the reminder
 at setup's 07:30; a refusal says where to allow it. It asks nothing when
 setup's reminder row already turned it on, and a v2 account is no longer
@@ -220,12 +239,19 @@ longer replacing itself; only a phone shows the card.
       moves the countdown on; End rest or the next set takes the card away
       at once. After the lift, no ended rest cards are left on the Lock
       Screen.
-- [ ] **A run on the lock screen.** On the same build, start an outdoor
-      run and lock the phone. Passing: a dark card with "Recording" and the
-      distance, pace and time, updating while locked; Pause reads "Paused";
+- [ ] **A run on the lock screen.** On a build with the runner's drawing
+      (Wid2, 2026-11-12 or later), start an outdoor run and lock the phone.
+      Passing: a dark card with the runner drawn on the left in a coral
+      light, the session's name in capitals ("EASY 30" for a planned easy
+      run, "FREE RUN" for one with no plan), the distance large and the
+      pace and time under it, updating while locked; the runner changes pose about every four
+      seconds; Pause reads "PAUSED" and the runner dims and holds still;
       Finish or Discard takes the card away at once, leaving no blank card;
-      on an iPhone with a Dynamic
-      Island, the run's distance shows there. The rest of
+      on an iPhone with a Dynamic Island, the run's distance shows there,
+      and a long press shows the runner with the distance and pace. Failing
+      in a way to report: a grey photo icon where the runner should be (the
+      image did not load), no card at all (ActivityKit refused the image's
+      size), or a dark box with a lighter band round it. The rest of
       `docs/run-live-activity.md`'s device checklist goes with it.
 - [ ] **A card a closed app left.** On the same build, swipe the app
       away during a rest, open it again and tick the next set. Passing:
@@ -317,6 +343,12 @@ a phone shows the prompt.
 - [ ] **Location Services off for the phone.** Turn off Settings → Privacy
       & Security → Location Services, then tap a tile. Passing: the same
       words show, not "Acquiring GPS..." with no end.
+- [ ] **Location goes off when you leave without a fix.** Somewhere a fix
+      is slow (deep indoors), open Run, tap a tile, and back out before
+      the rings find one. Passing: the location arrow in the status bar
+      goes within about 10 seconds. The one-off fixes the run screen polls
+      for while acquiring now give up at their timeout, as the web's do;
+      before, each waited for a fix, one more every 3 seconds.
 
 ## A pause while the run is already paused (2026-11-10)
 
@@ -502,33 +534,40 @@ index and the trigger in production.
       counts `notification` and names no one, and Cloud Logging has no
       "requires an index" error from the function.
 
-## Partner streaks are counted on the server (2026-10-25)
+## Partner streaks, retired (Trim1 call 3(b), 2026-11-12)
 
-The rules no longer let an app create a partner bond. The
-`startPartnerStreak` callable makes each one, counting both people's bonds
-against the limit of five in the transaction that creates it, with the
-mutual follow, a block either way, both accounts' deletion state and a
-restriction checked as the rules checked them. An iPhone build from before
-this change writes the bond itself, so on it Start streak now fails with
-"Couldn't start the streak. Try again."; nothing is lost, and an existing
-streak still shows and can be ended. The unit, rules and emulator suites
-cover each part, including two starts racing for one person's last place;
-only a deploy confirms the callable in production.
+Partner streaks are gone: the card on a mutual follow's profile, the
+"Streak ready" chip on People's rows, the `startPartnerStreak` callable,
+the two session triggers' streak step and the bond's rule. Two people who
+train together use a Circle, which keeps no streak. The rows this file
+held for partner streaks went with them. These need the release and the
+Firebase console.
 
-- [ ] **Start a streak, then hit the limit.** After Deploy production has
-      shipped (`startPartnerStreak` is on the deployed-source list), on
-      two accounts that follow each other, tap Start streak on one's
-      profile from the other. Passing: "Streak started with …", and in the
-      console `partnerBonds/{a}__{b}` with streak 0 and a server
-      `createdAt`. With five streaks on either account, a sixth says whose
-      five it is ("You have 5 streak partners already. End one to start
-      another." or "{name} has 5 streak partners already.") and writes no
-      bond.
-- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
-      is on TestFlight or the App Store, and if anyone still runs an
-      older one, set `config/client.minSupportedVersion` to that build's
-      version, so the older build shows the update screen instead of a
-      Start streak button that fails.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `startPartnerStreak`,
+      and the deployed rules have no `partnerBonds` match.
+- [ ] **Stored bonds are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgePartnerBondDocs.js`, read
+      the count, then run it without `DRY_RUN`. Passing: a second dry run
+      reports 0 bonds, and Firestore console shows no `partnerBonds`
+      collection. Once this is ticked, account deletion's own delete of a
+      member's bonds (step 3b) and its inventory entry
+      (`partnerBondsMember`) can go.
+- [ ] **The profile and People.** On two TestFlight accounts that follow
+      each other. Passing: the other's profile has no streak card, People
+      has no "Streak ready" chip, and a session saved by each on the same
+      day writes nothing under `partnerBonds`.
+- [ ] **An older build.** A TestFlight build from before this change, on
+      two accounts that follow each other. Passing: the other's profile
+      shows no streak card (its read of the bond is refused), and nothing
+      else on it changes.
+- [ ] **Deleting a session.** Open a saved workout or run and tap
+      Delete. Passing: the confirmation's second sentence reads "Badges
+      you’ve already earned stay." and says nothing about a streak. It
+      named streaks while partner streaks existed; your own streak can
+      get shorter when a day's only log is deleted.
 
 ## Circle invite codes expire (2026-10-25)
 
@@ -752,7 +791,8 @@ Home reads this week's meals and 60 weigh-ins, the daily logs read covers
 this month and week, the challenges listener reaches back eight days and
 its reads follow the challenges' ids, the Spaces directory reads each Space
 once for every copy open, the training-load curve reads only on the
-Performance page, and a return to the app re-claims an unchanged push token
+Performance page (since Trim1 call 5, 2026-11-11: only while the score's
+details are open on the Analytics overview), and a return to the app re-claims an unchanged push token
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
@@ -816,33 +856,39 @@ true`, the app shows the restricted notice before a post, and
       Firestore console, reads null within a minute and the profile shows
       the person unnamed.
 
-## Friends board (Polish2, 2026-10-20)
+## Friends board, retired (Trim1 call 3(a), 2026-11-12)
 
-The feed's board ranks this week's sessions for you and the people you
-follow who share their week; the full board adds Distance and Volume. The
-server keeps each tally (`friendsBoard/{uid}`); the unit, rules
-(`firestore.friendsBoard.rules.test.ts`) and trigger tests cover the logic.
-These need the release and two real accounts that follow each other.
+The friends board is gone: its card on the feed, its full list, the Show
+my week switch, the `setBoardSharing` callable and the tally the server
+kept (`friendsBoard/{uid}`). The league is the one weekly ranking. The
+five device rows this section held went with it. These need the release
+and the Firebase console.
 
-- [ ] **The release carries the rules and the callable.** Passing: the
-      Deploy production run's Firestore and Functions stages are green, and
-      Firebase console → Functions lists `setBoardSharing`.
-- [ ] **Show my week starts the tally.** On two TestFlight accounts, A
-      and B, B following A: A logs a workout, then taps Show my week on the
-      feed's board. Passing: Firestore console shows `friendsBoard/{A}`
-      with `sessions: 1` and A's `weekKey` (A's Monday), and B's board
-      lists A.
-- [ ] **A session saved later moves the board.** Passing: A finishes a
-      run; within a minute `friendsBoard/{A}` reads `sessions: 2` and B's
-      Distance tab shows A's km. Deleting the run takes it back off.
-- [ ] **Off leaves nothing to read.** A turns off Settings → Social &
-      privacy → Show my week on friends' boards. Passing: the
-      `friendsBoard/{A}` document is gone, B's board no longer lists A,
-      and A's own board does not ask again.
-- [ ] **The week turns over where the person is.** On a Monday morning,
-      an account in a timezone ahead of UTC (Auckland). Passing: its board
-      reads an empty week before it logs anything that day, not last
-      week's figures.
+- [ ] **The release removes the callable and the rule.** Passing: the
+      Deploy production run's Firestore and Functions stages are green,
+      Firebase console → Functions no longer lists `setBoardSharing`, and
+      the deployed rules have no `friendsBoard` match.
+- [ ] **Stored weeks are cleared.** After that release, from the repo
+      root with operator credentials:
+      `DRY_RUN=true node functions/scripts/purgeFriendsBoardDocs.js`,
+      read the two counts, then run it without `DRY_RUN`. Passing: a
+      second dry run reports 0 weeks and 0 answers, and Firestore console
+      shows no `friendsBoard` collection. Once this is ticked, account
+      deletion's own delete of `friendsBoard/{uid}` and its inventory
+      entry (`friendsBoardOwn`) can go.
+- [ ] **The feed's week card.** On a TestFlight account following two or
+      more people, with a session this week. Passing: Following shows
+      "Your trajectory" under the third post where the board was, and no
+      board.
+- [ ] **The weekly challenge's leaders.** Joined, with one lift this
+      week. Passing: the card on Together lists up to three people under
+      "Leading this week", with "You" picked out if you are one of them;
+      before joining, and with no session yet, it lists nobody.
+- [ ] **An older build.** A TestFlight build from before this change,
+      on an account following two or more people. Passing: its feed's
+      board reads "Nothing to compare yet" (its reads are refused), and
+      its Show my week switch answers "Couldn’t change who sees your
+      week. Try again." Nothing else on it changes.
 
 ## Follow approval (Polish2, 2026-10-20)
 
@@ -1272,8 +1318,7 @@ these need a phone's keyboard.
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
-follows, Space and challenge joins, Circle events and partner bonds), the
-props, comment, like, reaction and Circle callables
+follows, Space and challenge joins and Circle events), the props, comment, like, reaction and Circle callables
 (`functions/lib/restriction.js`), the app's gates (`RestrictedNotice`,
 `showRestrictedToast`), Settings → Social & privacy's explanation, and
 the moderation page's Restricted accounts with Lift (`listRestrictedUsers`,
@@ -1287,8 +1332,8 @@ console.
       second from the first, then Restrict user on the moderation page.
       On the second account (no sign-out): the feed and Space composers,
       comments, props, likes, reactions, Follow (a profile's too), Space,
-      challenge and Circle joins, a Circle check-in and a partner streak
-      each say "Your account is restricted" and nothing goes out; taking
+      challenge and Circle joins and a Circle check-in each say "Your
+      account is restricted" and nothing goes out; taking
       back props, unfollowing and leaving still work; Social & privacy
       explains it, and Contact support opens Mail.
 - [ ] **Lift.** Lift the second account from Restricted accounts: within
@@ -1305,7 +1350,7 @@ Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
 `trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
 phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
 "Remind me before the trial ends", Home's strip for a trial's last two
-days, Settings → Subscription. The email goes at 10:00 local, two days
+days, Settings → Account. The email goes at 10:00 local, two days
 before the last moment to cancel (a day before the trial ends).
 
 Unit tests cover the timing in every zone, the record and the email's
@@ -1535,7 +1580,7 @@ need a phone and a deploy.
 - [x] _(Proven 2026-10-17: src/components/settings/**tests**/NotificationsSection.push.test.tsx, 'keeps the reminders on the native app and offers no push there' (and the web case). src/pages/**tests**/settingsNotificationsRow.test.tsx, 'does not name push on the native app' (expects 'Reminders, activity'). Both branches are pinned against the native-platform flag.)_ **No push on the iPhone app.** Settings > Notifications shows the
       meal, workout and streak reminders and no push switch; the Settings
       list says "Reminders, activity". The web build still has the switch.
-- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+- [ ] **Exports on the iPhone app.** Settings > Account > Export
       workouts opens the share sheet; Save to Files saves a .csv that
       opens in Numbers, then "Workouts exported" shows. Closing the sheet
       says nothing. On a slow connection a "Workouts export ready" toast
@@ -2314,6 +2359,16 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 - [x] ~~**Launch gate:** add the web App-Store steer~~ Not built, by the owner's call (17 October): the web build is not a sales surface, and web Pro comes later through a Stripe website (#2866). Was: — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
 - [ ] When #2866 builds the website, confirm no web surface but its checkout reaches Stripe (`useProCheckout` call sites).
 
+### The website sells through RevenueCat Billing on Stripe (owner, 13 November 2026)
+
+The whole-app grill (Q77) moved web sales to RevenueCat Billing, on Tropos's own Stripe account, replacing this section's dormant Stripe Checkout. Until then no web checkout could have started: the app sent no sign-in token to `createCheckoutSession`, which requires one. The web now opens RevenueCat's hosted Web Purchase Link as the signed-in account, Manage subscription opens RevenueCat's management link (`getSubscriptionManagementUrl`), and a web trial (`rc_billing`) gets the reminder email naming Tropos and Account. The setup is `docs/iap/revenuecat-setup.md`, Part W.
+
+- [ ] RevenueCat: the Web Billing app on the Stripe account, the two products with the App Store's identifiers, the offering's `$rc_monthly` and `$rc_annual` packages, a Purchase Link redirecting to `https://troposfit.com/upgrade?checkout=success`, and the repository variable `REVENUECAT_WEB_PURCHASE_TOKEN` (production token). Then re-run Deploy production.
+- [ ] With the sandbox link, signed in as a uid on `REVENUECAT_SANDBOX_UIDS`, a Stripe test card: back on Upgrade, "Payment received" and Pro on; Settings, Account, Manage subscription opens the portal; cancelling there turns the trial reminder off.
+- [ ] Whether RevenueCat fills `management_url` for a web purchase: if Manage subscription says there is nothing to manage for a web subscriber, the portal link has to come another way.
+- [ ] Once the above has worked: retire `createCheckoutSession`, `stripeWebhook` and the Stripe secrets they bind (Sub4's note lists what the removal touches).
+- [ ] Selling to the EU and the US (owner, 13 November): either Paddle as the engine (it handles VAT and sales tax; approve the domain, give its API key Customer portal sessions (Write)), or on Stripe: register for EU VAT (non-Union OSS) before the first EU sale, turn on Stripe Tax, and watch US state thresholds. Prices in GBP, EUR and USD in whichever engine is chosen.
+
 ## Legacy meal photos in Storage (uploaded before Food9)
 
 Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). New meal photos stay on the device ("Meal photos moved to the device (Food9)" above); these checks cover the photos uploaded before that. The agent sandbox runs the Storage emulator (`npm run test:rules:storage`).
@@ -2323,7 +2378,7 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceSection.tsx` (beside the Performance heading on the Analytics overview since Trim1 call 5, 2026-11-11; it was in `PerformanceTab.tsx`), Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
 
 **STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
@@ -3009,7 +3064,7 @@ same precedence the client uses.
 Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
 
 - [x] _(Proven 2026-10-17: Run 39063239262 logged 'Verified deployed source: onWorkoutCreated' and 'onRunCreated' (index.js byte-identical). main's index.js:57-59 requires ./lib/partnerStreakPersist, and lines 4574 and 4699 call applyPartnerActivity.)_ **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
-- [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b), so there is no shared day to count. See "Partner streaks, retired".)_ **First real shared day counts.**
 - [x] _(Proven 2026-10-17: functions/**tests**/partnerStreakPersist.test.js 'is idempotent on a same-day re-log (no second write)'. Deployed source verified (run 39063239262).)_ **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [x] _(Proven 2026-10-18: `functions/__tests__/partnerStreakPersist.test.js` 'onRunCreated — an ineligible run does not count'. index.js's onRunCreated decides with `isVolumeEligibleRun(data)` and calls applyPartnerActivity once, inside the `if (isCountable)` block. Moving the call above the gate, or into its else branch, turns the test red.)_ **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
 - [x] **Freeze ledger uses Monday weeks** — covered, by composition rather
@@ -3623,11 +3678,8 @@ tests cover them; these need a phone or the deployed rules.
       Share invite link, and a Circle's Share invite: the share sheet's
       link is `https://troposfit.com`, and it opens the web app from
       Messages. It was `capacitor://localhost`.
-- [ ] **A partner streak is offered.** After the Deploy production run
-      that ships the rules, open the profile of someone you follow who
-      follows you back and has no bond with you: the partner streak card
-      offers to start one. Before, the read of a bond that did not exist
-      yet was refused and the card never showed.
+- [x] _(Retired 2026-11-12: partner streaks went with Trim1 call 3(b).)_
+      **A partner streak is offered.**
 - [ ] **The route keeps off the distance.** In the feed on a phone, at
       the phone's largest text size too, a run card's route sits above
       its distance, never on it.
@@ -4198,8 +4250,8 @@ unit suites replay those orders; only a phone fires them for real.
       Passing: the ring empties and the run carries on; a full hold still
       finishes it.
 - [ ] **A long press held on.** Hold an exercise row on Train for a full
-      second before lifting, and hold a saved food in Food's Quick add for
-      a second. Passing: Train's menu opens and the exercise's history does
+      second before lifting, and hold a saved food under Food's Log again
+      for a second. Passing: Train's menu opens and the exercise's history does
       not; the food is removed (with Undo) and nothing is logged.
 - [ ] **Pinch, then tap.** Open a post's photo, pinch it bigger, lift one
       finger and then the other without moving it, then tap once. Passing:
@@ -4219,7 +4271,7 @@ are SVG with an illustration inside; how WebKit draws them at row size is
 for a phone to show.
 
 - [ ] **The race leads.** On a TestFlight build, with a race goal bound to a
-      race ahead (Settings → Programme, a race picked from the list), open
+      race ahead (Settings → Run plan, a race picked from the list), open
       Social → Together. Passing: the race's photo fills the first card with
       its name, "Your race · N weeks to go", its date and place, and the
       words readable over the photo at Settings → Accessibility → Larger
@@ -4254,3 +4306,521 @@ of thing a phone's screen and WebKit decide.
 - [ ] **Focus is not lost.** With a keyboard attached (or on the web
       build), Tab to a "Swap" style pill in dark mode. Passing: the purple
       focus ring shows, with the pill's edge still under it.
+
+## Motion 14 under every animation (2026-11-11)
+
+Affects: every screen. `framer-motion` went from 12.40 to 14.6, two major
+versions (#2965). Its upgrade guide lists nothing breaking for this app:
+13.0 drops an optional dependency the app never installed, and 14.0 has
+no breaking change. The unit suite passes on it. What no test here sees
+is how a spring, a sheet or a layout change feels on a phone, so these
+are checked on the first TestFlight build that carries it.
+
+- [ ] **Sheets and drawers.** Open and drag shut a bottom sheet (the
+      day's sheet from Home's week, the weight sheet, the share sheet).
+      Passing: each follows the finger, settles without a jump, and
+      closes on a flick as it did.
+- [ ] **A workout's moving parts.** Start a lift, tick a set, let the
+      rest timer run out, reorder two exercises by dragging, finish.
+      Passing: the set's tick, the docked rest card, the reorder and the
+      finish screen's entrance all play once and end where they should.
+- [ ] **Home and the tab bar.** Switch tabs quickly, pull Home to
+      refresh, tap a day on the week strip. Passing: no card flashes in
+      from the wrong place, the day's card opens in place, and the tab
+      bar's selection moves without a flicker.
+- [ ] **Reduce Motion.** With Reduce Motion on in iOS Settings, repeat
+      the first check. Passing: sheets and screens still appear and
+      close, with a fade in place of the slide.
+
+## Food leads with the calorie wheel (Food11, 2026-11-11)
+
+Affects: the Food page (`Food.tsx`, `FoodHeroCard`, `CalorieRing`,
+`FoodWeekStrip`, `FoodMacroRow`, `FoodComposerCard`,
+`FoodLogFlight`) and Home's food card, which draws the same wheel. The
+captures in `docs/visual-audit/food-2026-11-11/` are the real components
+in a desktop Chrome on the emulator. A phone decides the rest: the
+keyboard, the safe areas, Dynamic Type, and how the flight runs in
+WKWebView.
+
+- [ ] **The first screen.** On a TestFlight build, open Food on an iPhone
+      13 mini or an SE in Display Zoom. Passing: the wheel, Details, the
+      week's bars, the macros and the whole composer field (the camera at
+      its end included) are above the tab bar without scrolling.
+- [ ] **The wheel fills.** Log a food on a day with nothing logged.
+      Passing: the wheel starts as a grey track and grows by what was
+      logged, in both the "left" and the "logged" view (tap the wheel to
+      switch); the number alone changes between the two. Home's food card
+      shows the same arc.
+- [ ] **Over the target.** On a day over its target, the second lap is a
+      deeper orange and its head stands clear of the first lap by a thin
+      line of the page's colour. Passing: the two laps can be told apart
+      at arm's length, in light and in dark.
+- [ ] **The flight.** Log a food by typing, and again from the Log again
+      list. Passing: its drawing rises from the field to the end of the
+      arc and the arc then grows, in about half a second, with no stutter
+      and no jump of the page; the keyboard stays up and the next food
+      can be typed straight away. Scroll the wheel off the screen and log
+      again: nothing flies. Edit a meal, delete one, and log on
+      yesterday: nothing flies.
+- [ ] **Reduce Motion.** With Settings → Accessibility → Motion → Reduce
+      Motion on, log a food. Passing: nothing flies, and the wheel and
+      the macros are at their new figures at once.
+- [ ] **The meal comes from the clock.** The field has no meal control
+      (11 November 2026). Log a food before 10:00, another after 15:00
+      and a third after 17:00. Passing: the rows read Breakfast, Snacks
+      and Dinner. Leave Food open across 10:00 or 15:00, come back to
+      the app and log: the row reads the meal for the time it is now,
+      not the time Food was opened. Tap a row and move it to another
+      meal: the row's caption follows, and nothing else changes.
+- [ ] **The camera in the field.** Tap the camera at the end of the
+      field. Passing: the scanner opens, growing out of the camera; a
+      thumb finds it without looking (its tap area is 48 pt); the orange
+      camera can be made out on the light field in daylight. Type a few
+      words and tap the send arrow, then the camera: each does its own
+      thing and neither fires the other.
+- [ ] **The field while typing.** Type a long line ("200g chicken and
+      rice with a side salad"). Passing: the pencil has gone, the text
+      wraps inside the field, the field grows with it, and the send arrow
+      and the camera stay level with the field's middle. On an SE in
+      Display Zoom the field is still one row, and it does not change
+      height when it is tapped.
+- [ ] **Larger text.** At the largest standard text size and at the
+      largest accessibility size, open Food. Passing: the header row, the
+      wheel's label (it may wrap inside the ring), the week, the macros
+      (they stack) and the composer (one row: the pencil, the text and
+      the camera) all fit the screen, with nothing cut off and no
+      sideways scroll.
+- [ ] **The usual foods follow the meal.** With a history of breakfast
+      and lunch foods, focus the field before 10:00, then again between
+      10:00 and 15:00. Passing: each list leads with that meal's foods,
+      and logging one does not reshuffle the list on screen.
+- [ ] **The Pro scan demo shows this page.** On a free account tap the
+      camera in Food's field and watch the demo in the Pro offer through
+      twice, then open Upgrade and watch it there. Passing: the Food
+      page in the drawn phone has no title, the wheel on the page with
+      its target in the label, the week as bars, and one field with the
+      camera inside it and no meal control. After Log, the food's
+      picture rises from the field to the wheel, the wheel, the week and
+      the macros take the meal, the earlier diary rows move down for the
+      new one, and nothing stutters. With Reduce Motion on it is the
+      result sheet, still.
+
+## The mark is a T whose stem rises (DS7, 2026-11-11)
+
+Affects: the app icon in its three modes, the launch image and the launch
+animation (`LaunchSplash`), Home's header mark (`BrandMark`), the guide's
+face (`GuideMark`), the sign-in screens' logo and the mark on share cards.
+The icons and the launch image were regenerated and looked at as files;
+the launch animation never shows under automation, so only a phone shows
+the handover.
+
+- [ ] **The icon.** Install a TestFlight build made after the merge.
+      Passing: the home screen shows the white T on purple; with the home
+      screen set to Dark it is the purple T on a dark tile, and set to
+      Tinted it takes the tint. Spotlight, Settings and a notification
+      show the same T, and the gap under the bar is still open at the
+      smallest of them.
+- [ ] **The launch.** Force-quit and open the app three times. Passing:
+      the launch image is the purple bar alone, a little above the middle
+      of the screen; the stem rises into it without the bar moving or
+      changing size as the image hands over; the whole mark then flies
+      into Home's header and lands on the header's mark with no jump.
+- [ ] **A slow start.** Open the app on a poor connection. Passing: once
+      the stem is in, the mark breathes until the app is ready.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the app. Passing:
+      the stem fades in where it stays, nothing breathes or flies, and
+      the overlay fades.
+- [ ] **A share card.** Share a run and a medal. Passing: the small mark
+      in the card's corner is the T, in the card's colour.
+
+## The welcome shows your week, and sign-in a lifter who faces you (DS8, 2026-11-11)
+
+**The welcome rows below are replaced** by "The welcome stands on
+photographs of athletes" (DS9, 2026-11-12) further down: the example week
+is gone. The sign-in rows still apply; their button names now read "Sign in".
+
+Affects: `Login.tsx` (the welcome, sign-in and sign-up), `WelcomePreview`,
+`SignInFigure`, `AuthLockup` and the `.ds-auth-*`, `.welcome-*` and
+`.signin-*` styles. Captured in Chromium at 393 and 320 px and measured for
+overflow at 100%, 135% and 200% text; WebKit on a phone has not drawn them.
+
+- [ ] **The welcome on a phone.** Delete the app, install a build made
+      after the merge and open it. Passing: the lockup is clear of the
+      status bar; the week card, today's card and the target card are all
+      whole above "Get started"; the three cards rise in once and the ring
+      draws; nothing reaches past either edge of the screen.
+- [ ] **Sign-in on a phone.** Tap "Sign in". Passing: the lifter
+      appears at once (the drawing is in the app, not fetched), presses the
+      bar twice and rests with it overhead; "Welcome back" is on one line
+      beside it; the screen fits from the lockup to "Sign up" without
+      scrolling on a 6.1 inch phone.
+- [ ] **Across the forms.** Tap "Sign up", then "Sign in". Passing: the
+      heading changes and the lifter does not start its rep again.
+- [ ] **The keyboard.** Tap Email. Passing: the field is above the
+      keyboard, and the page scrolls so "Sign in" can be reached.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the welcome and
+      sign-in. Passing: the cards are in place with no rise, and the lifter
+      stands still.
+- [ ] **Larger Text.** Set Larger Text to its largest standard size and
+      open both. Passing: the words grow and wrap, the picture keeps its
+      size, and nothing is cut off or leaves the screen.
+- [ ] **iOS 15.** On a phone or simulator on iOS 15.4 to 15.8, open both.
+      Passing: the picture's cards are sized and placed as on a current
+      phone (they are measured from the screen, since iOS 15 has no
+      container query units).
+
+## The score is shown once, on Analytics (Trim1 calls 5 and 6, 2026-11-11)
+
+The Performance page is gone. The score sits in a ring on the card at the
+top of the Analytics overview, and "Score details" under it opens in place
+what the page held. The unit suites cover the words, the colours and the
+links; these need a phone.
+
+- [ ] **The ring holds its score at the largest text size.** With the
+      phone's text size at its largest, open Analytics. Passing: the score
+      sits inside the ring with room around it, the words wrap under the
+      ring instead of beside it where they no longer fit, and nothing runs
+      past the card.
+- [ ] **Score details opens where you are.** Tap Score details. Passing:
+      the page does not jump, the six-week line gives way to the twelve-week
+      chart, and the training load's range pills change its curve. Tap it
+      again: the page closes back to the card.
+- [ ] **A saved link still lands.** Open `/history#performance` and
+      `/history?view=performance` (a bookmark, or a link from before).
+      Passing: each opens the overview with Score details open.
+- [ ] **The tooltip opens on a tap.** Tap the small "i" beside
+      Performance. Passing: the explanation opens, reads in both themes,
+      and a tap elsewhere closes it.
+
+## Badges and medals are one shelf, on the profile (Trim1 call 3(c), 2026-11-11)
+
+Analytics' Badges tab is gone. A profile shows badges above medals, and on
+your own "See all" opens the whole badge collection in place. The unit
+suites cover the fold, the links and who sees what; these need a phone.
+
+- [ ] **From the streak.** On Home tap the streak chip, then "See your
+      badges". Passing: your profile opens with the Badges heading at the
+      top of the screen and the whole collection open under it.
+- [ ] **A saved link to the tab.** Open `/history?tab=badges`. Passing: it
+      lands on your profile with the collection open, and Analytics shows
+      two tabs, Analytics and Bests.
+- [ ] **Open and close.** On your profile tap "See all", then "Show
+      fewer". Passing: the collection opens where it is, the page does not
+      jump, and closing returns the newest four.
+- [ ] **Someone else's profile.** Open another person's profile.
+      Passing: their newest badges and their medals, and no "See all" on
+      the badges.
+- [ ] **Larger Text.** With the phone's text at its largest, open the
+      collection. Passing: the three streak figures and the badge tiles
+      wrap inside the screen, and nothing is cut off.
+
+## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
+
+Affects: the Settings list (ten rows, from twelve), Lift plan (the rest
+timer's two controls and Reset programme at its foot), Run plan (voice
+cues), Account (the plan, AI usage, the three exports and recently deleted
+meals), and four routes that are now redirects (`/settings/training`,
+`/settings/workout-prefs`, `/settings/subscription`, `/settings/data`).
+Captured in Chromium at 393 and 320 px; a phone has not drawn them.
+
+- [ ] **Back from the editors.** Settings → Lift plan, then swipe back
+      from the screen's left edge; the same from Run plan. Passing: each
+      returns to the Settings list, not to a blank or a third page.
+- [ ] **Reset programme, at the foot of Lift plan.** Scroll Lift plan to
+      its end and tap Reset programme. Passing: the confirmation opens
+      over the page with Cancel first; Cancel leaves the plan as it was.
+- [ ] **The rest timer, where it now lives.** On Lift plan, switch
+      Auto-start rest timer off, start a workout and finish a set.
+      Passing: no timer starts. Switch it back on and it does.
+- [ ] **Voice cues, where they now live.** On Run plan, switch Audio cues
+      off and open a run's setup. Passing: its Run controls line reads
+      "Voice cues off".
+- [ ] **The plan on Account.** On a free account, Settings shows "Free"
+      on the Account row; Account's first card opens the Pro page. On a
+      trial it reads the days left.
+- [ ] **An old link.** From Safari or a note, open a saved link to
+      `/settings/training` in the installed app. Passing: Lift plan
+      opens.
+
+## A short plan pairs its last lifts as supersets (Lift22, 2026-11-12)
+
+Affects: new plans of 30 and 45 minutes past beginner (`planSupersets.ts`,
+`sizeSessionsToTime`), the session clock (`estimateSessionSeconds`), a
+session's opening supersets (`sessionPrescription`) and Train's day list
+(`SupersetBlock`). Unit-tested and captured in Chromium from the app's own
+components; no signed-in account has drawn Train on a phone.
+
+- [ ] **A new 45-minute plan.** Reset the programme at 45 minutes,
+      intermediate, four days or more. Passing: Train shows at least one
+      day with a "Superset" block of two lifts, the block's line reads
+      "One set of each, then rest", and the day's minutes are 45 or under.
+- [ ] **The pair in the workout.** Start that day. Passing: the first
+      lift of the pair reads "Superset with" the second, finishing a set
+      of it moves to the second, and the rest timer runs after the second.
+- [ ] **Splitting it.** Open the first lift's "…" and tap "Remove from
+      superset". Passing: the two run as straight sets for the rest of the
+      session, and Train still shows the pair after Finish.
+- [ ] **An hour's plan.** Reset at 60 minutes. Passing: no day shows a
+      "Superset" block.
+
+## Train says when a lift day runs past its length (slice 4, 2026-11-12)
+
+Affects: Train's Lift tab, under the day's card (`OutgrownDayNotice`), and
+the lift plan editor's save, which now shares its builder input and its
+refusal wording with Train's rebuild (`liftPlanRebuild.ts`). Captured from
+the components in Chromium at 393 and 320 px; a phone has not drawn it, and
+no rebuild has gone through the deployed `configurePlan` yet.
+
+- [ ] **The owner's Pull A.** On the plan with the 12-lift Pull A, open
+      Train on that day. Passing: under the card, "Pull A takes about N
+      min" with N the card's own minutes, and "Your sessions are 45 min."
+- [ ] **Rebuild for 45 min.** Tap it, then Rebuild. Passing: a toast says
+      the lift days were rebuilt; every day's card reads 56 min or less;
+      the week number in the header is unchanged; a day done this week
+      still shows done, and its session still opens from it; the deadlift
+      and the other lifts the new days hold keep their weights.
+- [ ] **Cancel rebuilds nothing.** Tap Rebuild for 45 min, then Cancel.
+      Passing: the days are as they were.
+- [ ] **Keep this day.** On another long day, tap Keep this day. Passing:
+      the notice goes; close and reopen the app and it stays gone; add a
+      lift to that day and it comes back.
+- [ ] **Not on a done day, nor in a past week.** Open a done day and a
+      day of a past week. Passing: no notice on either.
+- [ ] **Offline.** Turn on airplane mode and tap Rebuild. Passing: an
+      error toast, and the plan unchanged once back online.
+
+## The deadlift's card faces the person (2026-11-12)
+
+Affects: the deadlift's card picture (Home's hero on a day it leads, Train,
+the exercise rows), now drawn from the front
+(`docs/exercise-art/cutout-sources/deadlift.json`), and Home's animation for
+it, made again from the front the same day
+(`docs/exercise-art/motion/README.md`). The form guide keeps its six frames
+drawn from behind. Checked in Chromium at 393 px in both themes; no phone
+has drawn it.
+
+- [ ] **Home on a deadlift day.** On a day whose plan starts with the
+      deadlift (Pull A), open Home. Passing: the hero shows the athlete from
+      the front with the bar on the floor, plays the lift from the front
+      for about five seconds (floor, lockout, back to the floor), and stops
+      on the card with no jump.
+- [ ] **The form guide is unchanged.** Open the deadlift's form guide in a
+      workout. Passing: the six frames from behind, as before.
+- [ ] **Reduce Motion.** With Reduce Motion on, open Home on a deadlift
+      day. Passing: the front-view card shows and nothing moves.
+
+## The welcome stands on photographs of athletes (DS9, 2026-11-12)
+
+Affects: the welcome in `Login.tsx`, `WelcomePhotos.tsx`, the photographs in
+`src/assets/welcome/` and the `.welcome-*` styles. Captured in Chromium at
+393, 375 and 320 px in both themes and at 1.35x and 2x text; WebKit on a
+phone has not drawn it, and nothing here can film a cold start.
+
+- [ ] **The first photograph on a cold start.** Delete the app, install a
+      build made after the merge, and open it on mobile data. Passing: the
+      first photograph (a woman sprinting) fades in within about a second,
+      with no white flash; the lockup is clear of the status bar; the
+      headline, Get started, Sign in and the links sit at the foot on the
+      dark ground.
+- [ ] **The fade.** Wait on the welcome. Passing: a new photograph fades in
+      every four or five seconds, five in all, then the first again; the
+      words never move; faces stay clear of the headline on a 6.1 inch
+      phone and on an iPhone SE.
+- [ ] **Away and back.** Switch to another app for a minute and back.
+      Passing: the photographs carry on from where they were, with no jump.
+- [ ] **Reduce Motion.** With Reduce Motion on, open the welcome. Passing:
+      the first photograph only, still.
+- [ ] **Light mode.** With the phone in light mode, open it. Passing: the
+      same as dark, light words on the photographs.
+- [ ] **Owner to-do (optional): the word on one strap.** One sports-bra
+      strap in the third photograph (three women running) carries the word
+      "RUN", about 3 px tall on a phone. It is a word, not a brand, and can
+      stay. To remove it: open `93-lfDpgAP5_Ao.jpg` from the welcome
+      originals zip in Photos on an iPhone, use Clean Up on the strap, and
+      send the result; the next session swaps it into
+      `src/assets/welcome/welcome-3-crew.webp` and its manifest.
+
+## Social covers and the race list's photographs (2026-11-12)
+
+Affects: six interest Space covers in `src/assets/editorial/` (New to
+Tropos, Runners, Women's Running, Lifters, Hybrid Training, Triathlon &
+Multisport), and the race list in the run plan and in setup
+(`UpcomingRacePicker.tsx`, `.race-pick-fade`). Captured in Chromium against
+the emulators at 393 px; no phone has drawn them.
+
+- [ ] **The Spaces row.** Open Social and scroll to Spaces. Passing: the six
+      new covers are sharp, and each name sits clear of the faces.
+- [ ] **A Space's header.** Open New to Tropos and Lifters. Passing: the
+      faces and the bars are inside the header band.
+- [ ] **The race list.** Settings → Run plan → Training for a race → A race
+      I've entered → Choose an upcoming race. Passing: each race is a card
+      with its place on the right, fading into the card under the date,
+      distance and name; the words read in light and dark.
+- [ ] **A long list.** Clear the filters and scroll the whole list.
+      Passing: it scrolls smoothly, and each photograph appears as its card
+      comes into view.
+- [ ] **Choosing a race.** Tap one. Passing: it is selected (a tick and a
+      coral edge), the list closes, and the race's name and date fill the
+      plan.
+- [ ] **Choosing a race in setup (2026-11-13).** On a new account, choose
+      Support my running, a race plan, then "A race I've entered", and
+      choose a race from the list. Passing: the same cards with their
+      places; the race's day fills the date; the review names the race; and
+      once setup is done, the run plan shows the race chosen, and its
+      Space's hero counts you in the plan group (once 3 or more have it).
+
+## Train's race band and Run plan's photograph cards (2026-11-13)
+
+Affects: `RaceCockpitCard` (a band of the race's Space cover when the goal
+is bound to a race), `PhotoChoiceCards` on Settings → Run plan (the running
+goal and the distance), and the photographs in `src/assets/plan/`. Captured
+in Chromium at 393 px in both themes against the emulators; no phone has
+drawn them.
+
+- [ ] **Train with a race chosen from the list.** Choose a race in Run plan
+      or setup and open Train's Run tab. Passing: the race card opens on
+      the race's place with its name on it, sharp, and the card's corners
+      clip the photograph. A race typed in by hand keeps the plain card.
+- [ ] **Run plan's cards.** Open Settings → Run plan. Passing: No race and
+      Training for a race, then the four distances, are photographs with
+      their names readable in both themes; tapping one moves the coral
+      edge and the tick at once, and the photographs are there on the
+      first open on mobile data within about a second.
+- [ ] **VoiceOver.** Swipe through the cards. Passing: each is read as its
+      name, "selected" or not, then its fact ("42.2 km, 12+ weeks").
+- [ ] **Larger Text.** At the largest size, open Run plan and Train.
+      Passing: the cards grow taller and keep every word; the band grows
+      with the race's name.
+
+## Readiness, and the Health plugin that reads sleep and heart (2026-11-13)
+
+Affects: the Health plugin (`@capgo/capacitor-health` 8.12.3 in place of
+`capacitor-health`), `healthKit.ts`, WatchRun's `openAppSettings`,
+readiness on Home's lift hero (`ReadinessStrip`, `useTodayReadiness`,
+`readiness.ts`), Train's `easier=1` link, and Pro's sleep and heart
+(`useBodySignals`, `bodySignals.ts`). Unit tests mock the plugin and the
+end-to-end tests run in Chromium; no phone has run any of it, and the
+simulator build in CI is the only native compile.
+
+- [ ] **Steps still read (the plugin switch).** On an account with steps
+      connected, open Home. Passing: today's steps match the Health app;
+      Settings → Apple Health's "Open Settings" opens Tropos's page in iOS
+      Settings, as before.
+- [ ] **The morning question.** On a lift day with nothing known, Home's
+      hero asks "How do you feel today?". Passing: Tired shows "Steady ·
+      You said you’re tired" and "Go easier today"; tapping it opens the
+      session with one set less per lift and lighter loads; Change asks
+      again; tomorrow it asks afresh.
+- [ ] **Sleep and heart (Pro).** On a Pro account with a Watch, tap "Add
+      sleep and heart from Apple Health" and allow all three. Passing:
+      after a normal night Home says "Ready · 7 h … of sleep, resting
+      heart rate as usual"; after a short night, Steady with the night's
+      hours against the usual; the minutes match the Health app's Sleep
+      for that night, counted once when both phone and Watch recorded it.
+- [ ] **Refused in Health.** Turn the three off in the Health app.
+      Passing: no sleep or heart line appears and nothing errors; the
+      question is asked as for a free account.
+- [ ] **The permission sheet.** Passing: iOS shows Steps on its first
+      ask, and Sleep, Resting Heart Rate and Heart Rate Variability on
+      the readiness ask, with the new wording; nothing asks to write.
+- [ ] **App Store privacy answers.** Sleep and heart are read on the
+      phone and never sent, so the "Health and Fitness" data answer is
+      unchanged; confirm in App Store Connect before submitting.
+
+## A free account is told its personal target (Q87, 2026-11-13)
+
+Affects: `resolveAdaptiveTarget` (the estimate is worked out for a free
+account, never applied), `PersonalTargetCard` under Food's wheel, Home's
+Pro strip (the trial is offered once the target is ready, Q71) and the
+formula line on Settings → Nutrition. Unit-tested; no phone and no store
+sandbox has run it.
+
+- [ ] **The card on a phone.** A free account with about three weeks of
+      meals and eight or more weigh-ins over 14 days. Passing: Food shows
+      "Your personal target is ready" under the wheel with the number and
+      how far it is from today's target; the wheel keeps today's target.
+- [ ] **The trial from the card.** Tap Try Pro free on a sandbox Apple ID
+      that has never had the trial. Passing: Apple's sheet offers 7 days
+      free; once it is confirmed Food's target moves the same day (to the
+      personal target when it is within 150 kcal, else 150 toward it).
+- [ ] **Not now.** Tap the cross. Passing: the card is gone, and stays
+      gone after closing and reopening the app.
+- [ ] **Home's strip.** On the same free account before and after the
+      target is ready (from day 3). Passing: before, "Log meals from a
+      photo with Pro" and See plans; after, "Your personal target is ready:
+      try Pro free for 7 days" and Start trial.
+
+## Charts older than 3 months and the score's details are Pro (Q84, 2026-11-13)
+
+Affects: Analytics' range pills (6M and 1Y), an exercise's chart (6M, 1Y,
+All), and Score details with the training load chart, for a free account.
+A person's sessions, bests, lifetime totals and exports stay free.
+Unit-tested; the capture specs that film 6M and the details now sign the
+test user in as Pro for the length of the capture.
+
+- [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
+      lock; tapping one opens the Pro page and leaves the range where it
+      was; Score details shows "Pro" and opens the Pro page, not the fold.
+- [ ] **An old link.** As a free account, open a saved link to
+      `history?range=1Y&score=details`. Passing: Analytics shows 3 months
+      and the headline score, with the details closed.
+- [ ] **VoiceOver.** Swipe the range pills as a free account. Passing:
+      each locked one is read as "6M, Pro".
+- [ ] **After a trial starts.** Passing: every range and the details open
+      at once, with no restart.
+
+## The easy cue on easy and long runs (Run24 (12), 2026-11-13)
+
+Affects: `checkEasyCeiling` in `useAudioCues`, called from `Run.tsx` on an
+easy or a long run in its easy running (`judgesEasyNow`) for a runner with
+a confirmed benchmark. Unit tests drive the spacing and the gate; no phone
+has spoken it on a real run.
+
+- [ ] **An easy run, too quick.** With a confirmed benchmark, start an easy
+      run and run clearly faster than the fast end of your easy pace for
+      two minutes. Passing: one spoken line about easing off after about
+      half a minute, then at most two more, a minute and two minutes
+      apart; nothing once you are back at easy.
+- [ ] **Strides and a race-pace finish.** Run an easy run with strides and
+      a long run that finishes at race pace. Passing: no easy cue during
+      the strides or the race-pace block.
+- [ ] **No benchmark, or the cue switched off.** Without a confirmed
+      benchmark, or with pace alerts off in the run's settings, run fast on
+      an easy run. Passing: no easy cue.
+
+## Half and full marathon plans are Pro after their first week (Q85, 2026-11-13)
+
+Affects: Home's run card and Train's Run tab (today's planned session offers
+Pro), the Run page (a planned training run on a locked plan opens as a free
+run), and the distance control in setup and Settings → Run plan (a note for a
+free account choosing a half or full marathon). The race itself, recovery
+weeks, 5K and 10K plans, the starter and free runs stay free. Unit-tested; no
+phone has drawn it.
+
+- [ ] **Week 1 free.** A free account sets up a half marathon. Passing: the
+      plan's first week (and any lead-in days) start as usual from Home and
+      Train; setup and Run plan say the plan is Pro after its first week.
+- [ ] **Week 2 on.** The same account in its second week. Passing: Home's run
+      card reads "Your half marathon plan continues with Pro" with Try Pro
+      free (or See Pro); Train's Start says the same; Start free run on Train
+      still records a run.
+- [ ] **After the trial starts.** Passing: Start comes back on Home and Train
+      at once, on the week the plan has reached.
+- [ ] **Race day and recovery.** Passing: Start race works on race day for a
+      free account, and the recovery weeks after it start as usual.
+
+## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
+
+Affects: the run summary's pace card after a race, a time trial, a tempo or
+an interval session. Settings' pace insight is Pro as before. Unit-tested;
+no phone has drawn it.
+
+- [ ] **Free, faster.** A free account saves a 5K faster than its benchmark.
+      Passing: the card reads "Pro moves every upcoming training pace from
+      VDOT … to …." with Try Pro free (See Pro once the trial is used) and
+      Not now; the button opens the Pro page and the paces stay as they were.
+- [ ] **Free, slower.** A free account's saved targets are too quick for its
+      runs. Passing: the card reads "Your saved targets may be too quick right
+      now" with Update paces, and the tap updates them.
+- [ ] **After the trial starts.** Passing: Settings → Run plan offers the
+      faster paces with Update paces.

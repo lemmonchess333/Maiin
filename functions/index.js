@@ -11,7 +11,7 @@
 // lives under /v1. Importing /v1 keeps the entire trigger surface intact.
 const functions = require("firebase-functions/v1");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 // Idempotent — admin keeps an app registry as module-level state
 // that survives Vitest's per-file module-cache reset. Without this
@@ -44,7 +44,6 @@ const followRemoval = require("./lib/followRemoval");
 const followBackfill = require("./lib/followBackfill");
 const discoveryHidden = require("./lib/discoveryHidden");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
-const friendsBoard = require("./lib/friendsBoard");
 // Soc15 call 3: weekly leagues, scored against each person's own plan.
 const leagues = require("./lib/leagues");
 const leagueRules = require("./lib/leagueRules");
@@ -78,10 +77,6 @@ const {
   lifetimeMilestoneBadges,
   liftWeightMilestoneBadges,
 } = require("./lib/badgeRules");
-const {
-  applyPartnerActivity,
-  resolvePartnerActivityDay,
-} = require("./lib/partnerStreakPersist");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const {
@@ -124,6 +119,7 @@ const { pushableBadgeIds } = require("./lib/badgeNudge");
 const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+exports.getSubscriptionManagementUrl = revenueCat.getSubscriptionManagementUrl;
 
 // The reminder before a free trial is charged (Sub1, STATUS 2026-10-06).
 exports.trialReminderSweep = require("./trialReminders").trialReminderSweep;
@@ -5308,9 +5304,6 @@ exports.onWorkoutCreated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5321,9 +5314,8 @@ exports.onWorkoutCreated = functions
 
     // Each side effect runs whatever happens to the others, and any that
     // failed fail the event, so failurePolicy delivers it again. Every
-    // step is idempotent on this workout (markers, `earnedAt`, the
-    // partner engine's MAX per day), so the retry repeats only what did
-    // not land. Caught and logged, as they all were, a transient error
+    // step is idempotent on this workout (markers, `earnedAt`), so the
+    // retry repeats only what did not land. Caught and logged, as they all were, a transient error
     // lost that credit for good.
     const steps = triggerSteps(`onWorkoutCreated ${uid}/${workoutId}`);
 
@@ -5385,18 +5377,6 @@ exports.onWorkoutCreated = functions
     await steps.run("correction", async () => {
       if ((await snap.ref.get()).data()?.revision > 0)
         await reconcileWorkoutMetrics(db, uid, workoutId);
-    });
-
-    // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
-    // rolling-window / cooldown early-returns below so a workout always
-    // counts toward the streak even when it's outside the perf window.
-    await steps.run("partner streak", async () => {
-      const workoutStreakDay = await resolvePartnerActivityDay(
-        db,
-        uid,
-        data.date
-      );
-      await applyPartnerActivity(db, uid, workoutStreakDay);
     });
 
     // Soc15: the live pulse counts every saved workout on its own day
@@ -5488,9 +5468,6 @@ exports.onRunCreated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5539,18 +5516,6 @@ exports.onRunCreated = functions
     const isCountable = isVolumeEligibleRun(data);
 
     if (isCountable) {
-      // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
-      // same eligibility predicate as challenges so isInvalid /
-      // savedAnyway / sub-threshold runs don't count toward a streak.
-      await steps.run("partner streak", async () => {
-        const runStreakDay = await resolvePartnerActivityDay(
-          db,
-          uid,
-          data.date
-        );
-        await applyPartnerActivity(db, uid, runStreakDay);
-      });
-
       // Server-side milestone badges (running distances + speed). The client
       // can't compute these from its WINDOWED streak snapshots, so they're
       // awarded here off the full run doc — gated by the same isCountable
@@ -5712,9 +5677,6 @@ exports.onWorkoutUpdated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5761,9 +5723,6 @@ exports.onRunUpdated = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5795,9 +5754,10 @@ exports.onRunUpdated = functions
 // are reversed; the Performance Index needs nothing (it is a projection
 // and self-heals on the next recompute); a `fastest_effort` best is
 // REBUILT from surviving runs when its driving run is deleted (ADR-0012
-// third amendment, lib/fastestEffortRebuild); partner streaks and
-// milestone badges are deliberately left standing as history rather
-// than accumulators.
+// third amendment, lib/fastestEffortRebuild); milestone badges are
+// deliberately left standing as history rather than accumulators.
+// (Partner streaks were left standing too, until they went with Trim1
+// call 3(b) on 12 November 2026.)
 //
 // THE GUARD IS NOT OPTIONAL. The account-deletion executor sweeps
 // `workouts` and `runs`, so these fire once per document during every
@@ -5841,9 +5801,6 @@ exports.onWorkoutDeleted = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -5920,9 +5877,6 @@ exports.onRunDeleted = functions
       uid,
       sessionDays
     );
-    // Polish2: the week this person shares on friends' boards, if they
-    // do. Outside the steps, like the line above: a failure retries.
-    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
@@ -8385,50 +8339,6 @@ exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
 
 // ═══════════════════════════════════════════════════════════════
-// Partner streaks: the one way a bond is made. The rules refuse every
-// client create, because only a transaction can count each person's
-// bonds against the limit (lib/partnerBonds.js). A restricted account
-// is refused, as the rules refused it, and so is one being deleted.
-// ═══════════════════════════════════════════════════════════════
-const partnerBonds = require("./lib/partnerBonds");
-
-exports.startPartnerStreak = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-    }
-    const uid = context.auth.uid;
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
-    if (await isRateLimited(uid, "partnerStreakStart", 10, 600_000)) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many requests. Try again in a few minutes."
-      );
-    }
-    try {
-      return await partnerBonds.startPartnerBond({
-        firestore: admin.firestore(),
-        uid,
-        partnerUid: data?.partnerUid,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (err) {
-      if (err instanceof partnerBonds.PartnerBondError) {
-        throw new functions.https.HttpsError(err.code, err.reason, {
-          reason: err.reason,
-        });
-      }
-      functions.logger.error("startPartnerStreak failed", err);
-      throw new functions.https.HttpsError("internal", "Something went wrong.");
-    }
-  });
-
-// ═══════════════════════════════════════════════════════════════
 // GOALS-CORE-01 (slice 3) — Goal Space membership callables.
 // Server-owned membership: the rules lock goalSpaces/{id} + members
 // to `write: if false`, so these callables are the ONLY writers.
@@ -9048,52 +8958,12 @@ exports.onFollowingEdgeWritten = functions
   });
 
 /**
- * setBoardSharing — the person's answer to "Show my week" on friends'
- * boards (Polish2 call 5). Yes stores the answer and computes this week's
- * tally at once (friendsBoard.js); no stores the answer and deletes the
- * tally. The answer is server-written, so the tally and the answer cannot
- * disagree because a client wrote one and not the other.
- *
- * A restricted account cannot start sharing (it reaches no one, S4e) but
- * can always stop.
- */
-exports.setBoardSharing = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
-    }
-    const uid = context.auth.uid;
-    const share = data && data.share;
-    if (typeof share !== "boolean") {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "share must be true or false."
-      );
-    }
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-    if (share) await restriction.assertNotRestricted(db, uid, functions);
-    const limited = await isRateLimited(uid, "boardSharing", 10, 60_000);
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Too many attempts. Try again in a minute."
-      );
-    }
-    await friendsBoard.setBoardSharing(db, uid, share);
-    return { share };
-  });
-
-/**
  * setLeagueSharing — the person's answer to weekly leagues (Soc15 call 3):
  * join or leave. Joining stores the answer and a Bronze membership; the
  * person is placed in a group on the next Monday's turn. Leaving stores the
  * answer, deletes their standing and takes them out of their group at once
- * (lib/leagues.js). The answer is server-written, as setBoardSharing's is,
- * so the membership and the answer cannot disagree.
+ * (lib/leagues.js). The answer is server-written, so the membership and
+ * the answer cannot disagree.
  *
  * A restricted account cannot join (it reaches no one, S4e) but can always
  * leave.

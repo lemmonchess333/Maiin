@@ -145,7 +145,7 @@ describe("PostPhotosSheet", () => {
     expect(vi.mocked(addPostPhotos).mock.calls[0][0].files).toEqual([first]);
     expect(
       await screen.findByText(
-        "A post holds up to 4 photos, so 2 photos you picked weren't added."
+        "A post holds up to 4 photos, so 2 photos you picked weren’t added."
       )
     ).toBeInTheDocument();
   });
@@ -239,7 +239,7 @@ describe("PostPhotosSheet", () => {
     await pick([file("good.jpg"), dropped]);
     expect(
       await screen.findByText(
-        "Couldn't add 1 photo. Check your connection and try again."
+        "Couldn’t add 1 photo. Check your connection and try again."
       )
     ).toBeInTheDocument();
     expect(onPhotosChange).toHaveBeenCalledWith([photo(1)]);

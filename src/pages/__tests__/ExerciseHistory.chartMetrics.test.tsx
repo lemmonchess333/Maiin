@@ -13,7 +13,14 @@ import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 const h = vi.hoisted(() => ({
   workouts: [] as unknown[],
   unit: "kg" as "kg" | "lbs",
+  pro: true,
+  track: vi.fn(),
 }));
+vi.mock("@/lib/subscription", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/subscription")>()),
+  useSubscription: () => ({ isPro: h.pro }),
+}));
+vi.mock("@/lib/paywallAnalytics", () => ({ track: h.track }));
 vi.mock("@/hooks/useWorkouts", () => ({
   useWorkouts: () => ({ workouts: h.workouts, loading: false }),
 }));
@@ -56,6 +63,8 @@ function session(
 
 beforeEach(() => {
   h.unit = "kg";
+  h.pro = true;
+  h.track.mockClear();
   const repeated = session("volume", 2, 95, 2, 2);
   repeated.exercises.push({ ...repeated.exercises[0] });
   h.workouts = [
@@ -73,6 +82,7 @@ async function open(name = "Bench Press") {
     >
       <Routes>
         <Route path="/history/exercise/:name" element={<ExerciseHistory />} />
+        <Route path="/upgrade" element={<p>Pro page</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -88,6 +98,30 @@ function select(metric: string) {
       screen.getByRole("button", { name: metric })
   );
 }
+
+describe("charts older than 3 months are Pro (whole-app grill Q84)", () => {
+  it("a free account's long ranges carry a lock and open Pro, not the chart", async () => {
+    h.pro = false;
+    await open();
+    for (const range of ["6M", "1Y", "All"]) {
+      expect(
+        screen.getByRole("radio", { name: `${range}, Pro` })
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByRole("radio", { name: "3M" })).toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "All, Pro" }));
+    expect(h.track).toHaveBeenCalledWith("paywall_cta_clicked", {
+      source: "history",
+    });
+    expect(await screen.findByText("Pro page")).toBeInTheDocument();
+  });
+
+  it("Pro sees every range with no lock", async () => {
+    await open();
+    expect(screen.getByRole("radio", { name: "All" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /, Pro$/ })).toBeNull();
+  });
+});
 
 describe("exercise chart metric records", () => {
   it("keeps a weight best outside the selected range in the record comparison", async () => {

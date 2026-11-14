@@ -42,7 +42,7 @@ beforeAll(() => {
   if (!EMULATOR_HOST) return;
   const idx = require("../../index");
   recreditMyLiftVolume = idx.recreditMyLiftVolume;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

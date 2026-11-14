@@ -12,7 +12,9 @@
  * Only advice waits its turn. An active lighter week is the week's state,
  * not advice, and always says so. The experience suggestion is rare and
  * about something else (moving up a level), so it only gives way to the
- * week-level notice, never to "Go easier today".
+ * week-level notice, never to "Go easier today". A day that runs past its
+ * session length (slice 4, `OutgrownDayNotice`) is about the plan, not the
+ * week's load, and gives way to the week-level notice the same way.
  */
 
 /** The dismissal keys, one per week, shared by the banners and by Train so

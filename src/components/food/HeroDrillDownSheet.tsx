@@ -1,6 +1,5 @@
 import { Suspense, useState } from "react";
 import type { CalorieRingMode } from "./CalorieRing";
-import { barFillPct, barLabelPct } from "@/lib/calorieRingFill";
 import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { CalendarDays, Lock } from "lucide-react";
@@ -70,17 +69,14 @@ interface MacroRowProps {
 function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   const pct = clampPct(consumed, target);
   const remaining = Math.max(0, Math.round(target - consumed));
-  /* Lockstep with the tile that opened this sheet. `MacroColumn` documents
-     the bar as moving the same direction as the big number beside it; this
-     row never received the mode, so it drew consumed% unconditionally and
-     the same protein data read as a 9%-full bar on the tile and an
-     89%-full bar here, one tap apart. */
-  const fillPct = barFillPct(pct, mode, consumed > target && target > 0);
-  const shownPct = barLabelPct(pct, mode);
-  /* The headline counts the way the bar and the percentage do (Food10
-     (1)): what is left in left mode, what is logged in logged mode. It
-     led with the logged grams in both, so "64%" of what was left sat
-     beside the grams eaten. */
+  /* Lockstep with the macro that opened this sheet: the bar and its
+     percentage are what is logged, in both modes, as the macro's own bar
+     and the calorie wheel are (Food11 call 5; `loggedFill` has the rule
+     and what happens when the two disagree). */
+  /* The headline follows the switch, as the macro's figure does: what
+     is left in left mode, what is logged in logged mode (Food10 (1)).
+     In left mode the line under the bar carries the grams logged, and
+     the percentage sits beside them. */
   const over = consumed > target && target > 0;
   const leftMode = mode === "left";
   return (
@@ -103,7 +99,7 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
       <div className="h-1.5 rounded-full overflow-hidden bg-muted">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${fillPct}%`, background: color }}
+          style={{ width: `${pct}%`, background: color }}
         />
       </div>
       <p className="text-caption text-muted-foreground font-mono tabular-nums">
@@ -113,7 +109,7 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
             ? `${formatMacro(remaining)}g left`
             : `${formatMacro(consumed - target)}g over`}
         {" · "}
-        {shownPct}%
+        {pct}%
       </p>
     </div>
   );
@@ -264,8 +260,9 @@ export default function HeroDrillDownSheet({
             <SectionLabel tier="section">Calories</SectionLabel>
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
-                {/* Counted the way the bar and the percentage are, as
-                    each macro row is (Food10 (1)). */}
+                {/* The figure follows the switch, as each macro row's
+                    does (Food10 (1)); the bar and the percentage are
+                    what is logged in both modes (Food11 call 5). */}
                 <span className="font-figure tabular-nums text-2xl font-extrabold text-foreground">
                   {formatCalories(
                     mode === "left" ? Math.abs(remaining) : dailyTotals.calories
@@ -278,14 +275,14 @@ export default function HeroDrillDownSheet({
                 </span>
               </div>
               <span className="font-mono tabular-nums text-xs text-muted-foreground">
-                {barLabelPct(consumedPct, mode)}%
+                {consumedPct}%
               </span>
             </div>
             <div className="h-2 rounded-full overflow-hidden bg-muted">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
-                  width: `${barFillPct(consumedPct, mode, remaining < 0)}%`,
+                  width: `${consumedPct}%`,
                   /* The calorie ring's colours: orange, and its deeper
                      overshoot orange once the day is over its target. */
                   background:
@@ -315,7 +312,7 @@ export default function HeroDrillDownSheet({
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">
-                  Fuel for today's training
+                  Fuel for today’s training
                 </p>
                 {!isPro && (
                   <span className="inline-flex items-center gap-1 text-caption font-semibold text-lifting-strong">
@@ -365,11 +362,11 @@ export default function HeroDrillDownSheet({
                     <span className="font-mono tabular-nums">
                       +{fuel.proteinDeltaG}g protein
                     </span>
-                    ; there isn't room for extra carbs.
+                    ; there isn’t room for extra carbs.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Protein and essential fat are already protected, so today's
+                    Protein and essential fat are already protected, so today’s
                     split stays steady.
                   </p>
                 )

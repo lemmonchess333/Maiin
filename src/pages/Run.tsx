@@ -55,6 +55,7 @@ import RunLaunchCard from "../components/run/RunLaunchCard";
 import RunTilePicker from "../components/run/RunTilePicker";
 import { useLastRunType } from "../hooks/useLastRunType";
 import {
+  ACTIVITY_TYPES,
   buildLaunchConfig,
   buildTileConfig,
 } from "../components/run/runConfigDefaults";
@@ -82,6 +83,7 @@ import {
   type SessionDistanceMode,
 } from "@/lib/sessionPlayerCheckpoint";
 import {
+  judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
   segmentsFromGuided,
@@ -100,7 +102,6 @@ import { useGpsWarmup } from "@/hooks/useGpsWarmup";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
-import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
@@ -139,10 +140,12 @@ import { computeRouteQuality } from "../lib/routeQuality";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { useBackDismiss } from "../lib/backDismiss";
 import { useProgram } from "../features/program/useProgram";
+import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
 import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runInProgressName,
   runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
@@ -191,6 +194,9 @@ function sessionSegmentsFor(
   seed: number
 ) {
   if (!config) return null;
+  /* A run begun from one of the three fixed guided workouts, before
+     Trim1 call 8 took them out of the setup. It carries its own steps, so
+     one still in flight when the app updates is finished as it began. */
   if (config.activityType === "guided") {
     return config.guidedWorkout
       ? segmentsFromGuided(config.guidedWorkout)
@@ -267,6 +273,9 @@ export default function Run() {
   // matches through the claims (useClaimMapForProgram). We only read programState +
   // loading here to drive the prefill memo.
   const { programState, loading: programLoading } = useProgram();
+  // Q85: past a half or full marathon plan's free first week, a planned
+  // training run opens as a free run (the race itself still starts).
+  const runPlanLocked = useRacePlanLocked(programState?.runPlan);
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
   const isFreeformUser = profileRunMode === "freeform";
   const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
@@ -377,7 +386,7 @@ export default function Run() {
       {snapshotWriteFailed && (
         <Banner
           variant="neutral"
-          description="Latest progress couldn't be saved for recovery. Recording continues; keep this run open."
+          description="Latest progress couldn’t be saved for recovery. Recording continues; keep this run open."
           className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
         />
       )}
@@ -577,8 +586,8 @@ export default function Run() {
   );
   // STRUCT-SESS-02: ONE structure source for the in-run player — the
   // canonical segments from the plan prefill, or derived on the spot for a
-  // hand-built interval session. Guided runs keep their own player (and
-  // overlay) this slice.
+  // hand-built interval session. A stored guided run's own steps come
+  // through here too, and are drawn by the same step shell.
   const sessionSegments = useMemo(
     () => sessionSegmentsFor(runConfig, unit, cueSeed),
     [runConfig, unit, cueSeed]
@@ -617,6 +626,12 @@ export default function Run() {
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
   const judgingPace = judgesPaceNow(
+    runConfig?.activityType,
+    player.segments,
+    player.current
+  );
+  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`).
+  const judgingEasy = judgesEasyNow(
     runConfig?.activityType,
     player.segments,
     player.current
@@ -723,12 +738,24 @@ export default function Run() {
         `[Run] Programme runDay templateId "${todayDay.userOverride ?? todayDay.templateId}" not in RUN_TEMPLATES; no prefill applied`
       );
     }
+    if (
+      runPlanLocked &&
+      result.metadata.plannedTemplateType &&
+      result.metadata.plannedTemplateType !== "race"
+    ) {
+      return {
+        metadata: freeformPlanMetadata(result.metadata.planMode),
+        prefill: {} as Partial<RunConfig>,
+        strip: null as ProgramContextStrip | null,
+      };
+    }
     return {
       metadata: result.metadata,
       prefill: result.prefill as Partial<RunConfig>,
       strip: deriveStrip(result.metadata, programState?.runPlan, unit),
     };
   }, [
+    runPlanLocked,
     isFreeformUser,
     profileRunMode,
     programState?.runPlan,
@@ -1406,6 +1433,17 @@ export default function Run() {
       }
     }
 
+    // Run24 (12), deep dive D17: an easy or a long run going faster than
+    // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
+    // in its easy running only (`judgesEasyNow`), never on a run-walk.
+    const easyFastEdge = paceTable?.easy[0];
+    if (easyFastEdge && !runWalkSession && judgingEasy) {
+      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+      if (currentPaceSec !== null) {
+        audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
+      }
+    }
+
     // Halfway and final 500m for distance targets.
     // target.value is metres per the RunConfig contract (see the
     // type definition in RunSetupModal). Read through the helper
@@ -1426,6 +1464,8 @@ export default function Run() {
     runConfig,
     judgingPace,
     runWalkSession,
+    paceTable,
+    judgingEasy,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1438,15 +1478,34 @@ export default function Run() {
     if (!isOutdoorGpsRun(runConfig)) return;
     if (phase !== "active" && phase !== "paused") return;
     const paceS = rollingPaceSeconds(gps.points, 30);
+    // The card names the session the run was started as, or its type.
+    const name = runInProgressName({
+      metadata: runConfig?.planMetadata,
+      launch: { templateId: launchWorkout?.id, racePace: launchRacePace },
+      unit,
+      typeName: ACTIVITY_TYPES.find((a) => a.type === runConfig?.activityType)
+        ?.name,
+    });
     const data = {
       distance: distanceLabel(gps.distance, unit),
       pace: paceS !== null ? paceLabel(paceS, unit) : "—",
       elapsed: timer.formatTime(timer.elapsed),
-      label: phase === "paused" ? "Paused" : "Recording",
+      label: phase === "paused" ? "Paused" : name,
+      paused: phase === "paused",
     };
     void startRunActivity(data);
     void updateRunActivity(data);
-  }, [phase, timer, timer.elapsed, gps.distance, gps.points, unit, runConfig]);
+  }, [
+    phase,
+    timer,
+    timer.elapsed,
+    gps.distance,
+    gps.points,
+    unit,
+    runConfig,
+    launchWorkout,
+    launchRacePace,
+  ]);
 
   // Dismiss the Live Activity the moment the run leaves the live states
   // (finish → summary, discard, GPS-fail exit) and on unmount — a card
@@ -1735,7 +1794,7 @@ export default function Run() {
       points.length < 2
     ) {
       toast(
-        "GPS never locked on — your time is saved, but there's no route or distance for this one."
+        "GPS never locked on — your time is saved, but there’s no route or distance for this one."
       );
     }
     if (watchEligible && identityRef.current && user?.uid)
@@ -2195,7 +2254,7 @@ export default function Run() {
             </div>
           ) : (
             // Freeform / rest / completed / ad-hoc → one-tap tile picker.
-            // Structured sessions (intervals/guided/race/route) and any run
+            // Structured sessions (intervals/race/route) and any run
             // on the treadmill live behind "More options" → the full modal.
             <RunTilePicker
               paceTable={paceTable}
@@ -2311,7 +2370,7 @@ export default function Run() {
                   ? "Location is off for Tropos"
                   : quality === "strong" || quality === "good"
                     ? "GPS locked"
-                    : "Acquiring GPS..."}
+                    : "Acquiring GPS…"}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
@@ -2320,10 +2379,10 @@ export default function Run() {
                 {locationDenied
                   ? isNativePlatform()
                     ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
-                    : "Allow location for this site in your browser's settings to track this run with GPS, or track it without GPS."
+                    : "Allow location for this site in your browser’s settings to track this run with GPS, or track it without GPS."
                   : quality === "weak" || quality === "searching"
                     ? "Move to an open area away from buildings"
-                    : "Getting accurate signal..."}
+                    : "Getting an accurate signal…"}
               </p>
               {locationDenied ? (
                 isNativePlatform() && (
@@ -2340,7 +2399,7 @@ export default function Run() {
                 )
               ) : gps.error ? (
                 <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
-                  Can't get a GPS signal right now. Move outside, or track
+                  Can’t get a GPS signal right now. Move outside, or track
                   without GPS below.
                 </p>
               ) : null}
@@ -2643,10 +2702,6 @@ export default function Run() {
               })()}
             </div>
 
-            {runConfig?.activityType === "guided" && sessionSegments && (
-              <GuidedRunOverlay player={player} />
-            )}
-
             <RunBottomSheet
               expandRequest={panelExpandRequest}
               elapsed={timer.elapsed}
@@ -2683,7 +2738,7 @@ export default function Run() {
               }}
               isInvalid={isInvalid}
               intervalDisplay={
-                sessionSegments && runConfig?.activityType !== "guided" ? (
+                sessionSegments ? (
                   <IntervalStepShell
                     player={player}
                     band={intervalBand}
@@ -2716,7 +2771,7 @@ export default function Run() {
           onResume={handleResumeFromPrompt}
           recoveryNote={
             resumeCoaching?.fallback
-              ? "Your recorded progress is kept. Session guidance couldn't be restored. Continue without coaching."
+              ? "Your recorded progress is kept. Session guidance couldn’t be restored. Continue without coaching."
               : undefined
           }
           resumeLabel={
@@ -2731,7 +2786,7 @@ export default function Run() {
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
-        description="This cannot be undone."
+        description="This can’t be undone."
         confirmLabel="Discard"
         destructive
         onConfirm={() => {

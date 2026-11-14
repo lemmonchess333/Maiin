@@ -9,7 +9,7 @@ describe("training load read failures", () => {
       <TrainingLoadCard points={[]} loading={false} failed onRetry={retry} />
     );
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Could not load your training history"
+      "Couldn’t load your training history"
     );
     expect(
       screen.queryByText("Your training load curve builds here")

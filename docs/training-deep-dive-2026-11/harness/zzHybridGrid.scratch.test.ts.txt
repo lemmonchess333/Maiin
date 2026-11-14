@@ -1,0 +1,446 @@
+// Scratch, not committed: the default week for every lift/run count, the
+// leg trim's real effect, a slipped session, a person's own days, and the
+// day's fuel tier.
+import { it, vi } from "vitest";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { rollLiftWeeks, rollRunWeeks } from "../weekRollover";
+import {
+  defaultWeekSchedule,
+  liftIndexForDayOfWeek,
+  type ScheduleDay,
+} from "@/lib/scheduleUtils";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { loadsTheLegs } from "../easierToday";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { withRaceLegTrim } from "../programEngine";
+import { nextUpIndex } from "../nextUpCursor";
+import { classifyDayIntensity } from "@/lib/dayIntensity";
+import { trainingSignalsForNutrition } from "@/lib/trainingSignals";
+import { liftSessionPurpose } from "@/lib/liftSessionPurpose";
+import { toExperience } from "../experienceModel";
+import { recoveryWeeksForDistance } from "../runScheduler";
+import type { ProgramState } from "../programTypes";
+import type { UserProfile } from "@/lib/auth";
+
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const START = "2026-11-09"; // a Monday
+
+const plusDays = (date: string, n: number) =>
+  localDateString(addLocalDays(parseLocalDate(date), n));
+
+const base: PlanBuilderInput = {
+  primaryGoal: "general",
+  nutritionPhase: "recomp" as never,
+  experience: "intermediate",
+  sessionMinutes: 60,
+  bodyweightKg: 80,
+  sex: "male",
+  liftDays: 4,
+  preferredSplit: "auto",
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  equipment: "full_gym",
+  injuries: [],
+  currentDate: START,
+  preserveHistory: false,
+};
+
+function profileOf(
+  plan: ReturnType<typeof buildPlan>,
+  input: PlanBuilderInput
+): UserProfile {
+  const createdAtMs = new Date(`${START}T12:00:00`).getTime();
+  const stamp = { toMillis: () => createdAtMs };
+  return {
+    uid: "scratch",
+    onboardingComplete: true,
+    createdAt: stamp,
+    onboardingCompletedAt: stamp,
+    ...plan.profileUpdates,
+    experience: input.experience,
+    weightKg: input.bodyweightKg,
+    targetCalories: 2600,
+    gender: "male",
+    runFrequency: "regular",
+    athleteType: "Hybrid",
+  } as unknown as UserProfile;
+}
+
+function rollTo(
+  state: ProgramState,
+  profile: UserProfile,
+  today: string
+): ProgramState {
+  for (let pass = 0; pass < 20; pass++) {
+    const run = rollRunWeeks(state, profile, today, "none", null);
+    if (run.weeks > 0) {
+      state = run.state;
+      continue;
+    }
+    const lift = rollLiftWeeks(
+      state,
+      profile,
+      localWeekKey(parseLocalDate(today))
+    );
+    if (lift.weeks > 0) {
+      state = lift.state;
+      continue;
+    }
+    break;
+  }
+  return state;
+}
+
+const trainAll = (state: ProgramState): ProgramState => ({
+  ...state,
+  workouts: state.workouts.map((d) =>
+    d.skipped ? d : { ...d, completed: true }
+  ),
+});
+
+function week(
+  state: ProgramState,
+  schedule: ScheduleDay[],
+  weekStart: string,
+  experience = "intermediate"
+) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = plusDays(weekStart, i);
+    const dow = parseLocalDate(date).getDay();
+    const li = liftIndexForDayOfWeek(schedule, dow);
+    const w = li >= 0 ? state.workouts[li] : undefined;
+    const runs = (state.runDays ?? [])
+      .filter((rd) => rd.date === date)
+      .map((rd) => {
+        const id = rd.userOverride || rd.templateId;
+        const t = RUN_TEMPLATES.find((x) => x.id === id);
+        return {
+          id,
+          type: rd.type,
+          name: t?.name ?? id,
+          minutes: t?.estimatedDuration ?? 0,
+          clash: rd.clashesWithLift === true,
+        };
+      });
+    return {
+      date,
+      dow: DOW[dow],
+      sched: schedule[dow]?.type,
+      tier: classifyDayIntensity({
+        date: parseLocalDate(date),
+        program: state,
+        weekSchedule: schedule,
+      }),
+      lift:
+        w && !w.skipped
+          ? {
+              name: w.dayName,
+              sets: w.exercises.reduce((t, e) => t + e.sets, 0),
+              legSets: w.exercises
+                .filter(loadsTheLegs)
+                .reduce((t, e) => t + e.sets, 0),
+              legMains: w.exercises
+                .filter((e) => e.isAccessory !== true && loadsTheLegs(e))
+                .map((e) => `${e.name} ${e.sets}x${e.reps}@${e.weight}`),
+              purpose: liftSessionPurpose(
+                state,
+                w,
+                date,
+                toExperience(experience)
+              ),
+            }
+          : null,
+      runs,
+    };
+  });
+}
+
+it("grid: the default week for every count, in a build week", () => {
+  mkdirSync("/tmp/work/train", { recursive: true });
+  vi.useFakeTimers({ toFake: ["Date"] });
+  const rows: unknown[] = [];
+  for (const primaryGoal of ["general", "running", "hypertrophy"] as const)
+    for (const liftDays of [2, 3, 4, 5, 6])
+      for (const weeklyRunDays of [2, 3, 4, 5]) {
+        vi.setSystemTime(new Date(`${START}T12:00:00`));
+        const input: PlanBuilderInput = {
+          ...base,
+          primaryGoal,
+          liftDays,
+          runMode: "race_prep",
+          weeklyRunDays,
+          raceGoal: { distance: "half", targetDate: plusDays(START, 7 * 11 + 6) },
+          raceLegTrim: false,
+        };
+        const plan = buildPlan(input);
+        const profile = profileOf(plan, input);
+        let state = plan.programState;
+        let weekStart = START;
+        for (let w = 2; w <= 7; w++) {
+          state = trainAll(state);
+          weekStart = plusDays(weekStart, 7);
+          vi.setSystemTime(new Date(`${weekStart}T12:00:00`));
+          state = rollTo(state, profile, weekStart);
+        }
+        rows.push({
+          primaryGoal,
+          liftDays,
+          weeklyRunDays,
+          schedule: plan.weekSchedule.map((d) => d.type),
+          split: state.splitType,
+          phase: state.currentPhase,
+          raceWeek: state.raceWeek ?? null,
+          days: week(state, plan.weekSchedule, weekStart),
+        });
+      }
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-grid.json", JSON.stringify(rows));
+});
+
+it("default schedules with no race, as the layout editor and backfill see them", () => {
+  const rows: unknown[] = [];
+  for (const l of [0, 1, 2, 3, 4, 5, 6])
+    for (const r of [0, 1, 2, 3, 4, 5, 6, 7])
+      rows.push({
+        l,
+        r,
+        week: defaultWeekSchedule(l, r)
+          .slice()
+          .sort((a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7))
+          .map((d) => d.type),
+      });
+  writeFileSync("/tmp/work/train/hybrid-schedules.json", JSON.stringify(rows));
+});
+
+it("the leg trim's real effect", () => {
+  const rows: unknown[] = [];
+  for (const primaryGoal of [
+    "general",
+    "running",
+    "hypertrophy",
+    "strength",
+    "fat_loss",
+  ] as const)
+    for (const experience of ["beginner", "intermediate", "advanced"] as const)
+      for (const sessionMinutes of [45, 60, 75])
+        for (const liftDays of [2, 3, 4, 5, 6]) {
+          const plan = buildPlan({
+            ...base,
+            primaryGoal,
+            experience,
+            sessionMinutes,
+            liftDays,
+            runMode: "race_prep",
+            weeklyRunDays: 3,
+            raceGoal: {
+              distance: "half",
+              targetDate: plusDays(START, 7 * 11 + 6),
+            },
+            raceLegTrim: false,
+          });
+          const before = plan.programState.workouts;
+          const after = withRaceLegTrim(before, true);
+          const legs = (ws: typeof before) =>
+            ws
+              .flatMap((d) => d.exercises)
+              .filter(loadsTheLegs)
+              .reduce((t, e) => t + e.sets, 0);
+          const liftsCut = after
+            .flatMap((d, i) =>
+              d.exercises.map((e, j) => [e, before[i].exercises[j]] as const)
+            )
+            .filter(([a, b]) => a.sets < b.sets).length;
+          const legLifts = before
+            .flatMap((d) => d.exercises)
+            .filter(loadsTheLegs).length;
+          rows.push({
+            primaryGoal,
+            experience,
+            sessionMinutes,
+            liftDays,
+            legLifts,
+            liftsCut,
+            before: legs(before),
+            after: legs(after),
+          });
+        }
+  writeFileSync("/tmp/work/train/hybrid-trim.json", JSON.stringify(rows));
+});
+
+it("a slipped session moves the leg day onto the long run's eve", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${START}T12:00:00`));
+  const input: PlanBuilderInput = {
+    ...base,
+    liftDays: 4,
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceGoal: { distance: "10k", targetDate: plusDays(START, 7 * 9 + 6) },
+    raceLegTrim: false,
+  };
+  const plan = buildPlan(input);
+  const profile = profileOf(plan, input);
+  let state = plan.programState;
+  const out: Record<string, unknown> = {
+    week1Planned: week(state, plan.weekSchedule, START),
+  };
+  // Monday's session done; Thursday missed. What does Home offer on Friday?
+  state = {
+    ...state,
+    workouts: state.workouts.map((d, i) =>
+      i === 0 ? { ...d, completed: true } : d
+    ),
+  };
+  const fridayIdx = nextUpIndex(state);
+  out.fridayOffer = {
+    calendarSlot:
+      state.workouts[liftIndexForDayOfWeek(plan.weekSchedule, 5)].dayName,
+    homeOffers: state.workouts[fridayIdx].dayName,
+  };
+  // They do it Friday, then Sunday's next-up; one session is left undone.
+  state = {
+    ...state,
+    workouts: state.workouts.map((d, i) =>
+      i <= 2 ? { ...d, completed: true } : d
+    ),
+  };
+  const next = plusDays(START, 7);
+  vi.setSystemTime(new Date(`${next}T12:00:00`));
+  state = rollTo(state, profile, next);
+  out.week2 = week(state, plan.weekSchedule, next);
+  // Every later week keeps the rotated order while all four are done.
+  state = trainAll(state);
+  const third = plusDays(next, 7);
+  vi.setSystemTime(new Date(`${third}T12:00:00`));
+  state = rollTo(state, profile, third);
+  out.week3 = week(state, plan.weekSchedule, third);
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-slip.json", JSON.stringify(out));
+});
+
+it("the person's own days", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  const mk = (types: string[]): ScheduleDay[] =>
+    // types given Mon..Sun
+    Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: types[(day + 6) % 7] as ScheduleDay["type"],
+    }));
+  const cases: Array<{ name: string; types: string[]; l: number; r: number }> =
+    [
+      {
+        name: "3L+3R alternating, rest Sat, long Sun",
+        types: ["lift", "run", "lift", "run", "lift", "rest", "run"],
+        l: 3,
+        r: 3,
+      },
+      {
+        name: "4L+3R with two doubles and two rest days",
+        types: ["lift", "both", "rest", "both", "lift", "rest", "run"],
+        l: 4,
+        r: 3,
+      },
+      {
+        name: "4L+3R, lifts Mon Tue Thu Fri, runs Wed Sat Sun",
+        types: ["lift", "lift", "run", "lift", "lift", "run", "run"],
+        l: 4,
+        r: 3,
+      },
+      {
+        name: "3L+4R, only doubles on Tue/Thu, long Sat",
+        types: ["run", "both", "rest", "both", "lift", "run", "rest"],
+        l: 3,
+        r: 4,
+      },
+    ];
+  const out: unknown[] = [];
+  for (const c of cases) {
+    vi.setSystemTime(new Date(`${START}T12:00:00`));
+    const input: PlanBuilderInput = {
+      ...base,
+      liftDays: c.l,
+      runMode: "race_prep",
+      weeklyRunDays: c.r,
+      weekSchedule: mk(c.types),
+      raceGoal: { distance: "half", targetDate: plusDays(START, 7 * 11 + 6) },
+      raceLegTrim: false,
+    };
+    const plan = buildPlan(input);
+    const profile = profileOf(plan, input);
+    let state = plan.programState;
+    let weekStart = START;
+    for (let w = 2; w <= 7; w++) {
+      state = trainAll(state);
+      weekStart = plusDays(weekStart, 7);
+      vi.setSystemTime(new Date(`${weekStart}T12:00:00`));
+      state = rollTo(state, profile, weekStart);
+    }
+    out.push({
+      name: c.name,
+      kept: plan.weekSchedule.every(
+        (d, i) => d.type === input.weekSchedule![i].type
+      ),
+      days: week(state, plan.weekSchedule, weekStart),
+    });
+  }
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-owndays.json", JSON.stringify(out));
+});
+
+it("after the race: recovery runs against the lifting", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`${START}T12:00:00`));
+  const race = plusDays(START, 7 * 2 + 6);
+  const input: PlanBuilderInput = {
+    ...base,
+    primaryGoal: "running",
+    liftDays: 3,
+    runMode: "race_prep",
+    weeklyRunDays: 4,
+    raceGoal: { distance: "marathon", targetDate: race },
+    raceLegTrim: true,
+  };
+  const plan = buildPlan(input);
+  const profile = profileOf(plan, input);
+  let state = plan.programState;
+  let weekStart = START;
+  const out: unknown[] = [];
+  for (let w = 2; w <= 8; w++) {
+    state = trainAll(state);
+    if (weekStart === plusDays(START, 14) && state.runPlan) {
+      // The race is logged: the plan goes into its recovery
+      // (`completeRunDay`), for the distance's weeks.
+      state = {
+        ...state,
+        runPlan: {
+          ...state.runPlan,
+          phase: "recovery",
+          recoveryEndDate: plusDays(
+            race,
+            7 * recoveryWeeksForDistance("marathon")
+          ),
+        },
+      };
+    }
+    weekStart = plusDays(weekStart, 7);
+    vi.setSystemTime(new Date(`${weekStart}T12:00:00`));
+    state = rollTo(state, profile, weekStart);
+    out.push({
+      week: w,
+      weekStart,
+      phase: state.currentPhase,
+      raceWeek: state.raceWeek ?? null,
+      runPhase: state.runPlan?.phase ?? null,
+      signals: trainingSignalsForNutrition(state),
+      days: week(state, plan.weekSchedule, weekStart),
+    });
+  }
+  vi.useRealTimers();
+  writeFileSync("/tmp/work/train/hybrid-recovery.json", JSON.stringify(out));
+});

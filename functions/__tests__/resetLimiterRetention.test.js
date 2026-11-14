@@ -62,6 +62,19 @@ describe("a rate-limit record", () => {
     ).toEqual(new Date(Date.UTC(2026, 9, 20, 12, 7)));
   });
 
+  it("is counted on the clock the caller hands in, not the global one", async () => {
+    const firestore = memoryFirestore();
+    const start = Date.UTC(2027, 0, 15);
+    const at = (now) =>
+      isRateLimited(firestore, "u1", "askGemini", 1, 50, { now });
+    expect(await at(start)).toBe(false);
+    expect(await at(start + 49)).toBe(true);
+    expect(await at(start + 50)).toBe(false);
+    expect(firestore.data.get("rateLimits/u1_askGemini").expiresAt).toEqual(
+      new Date(start + 100)
+    );
+  });
+
   it("is under a TTL policy on that field", () => {
     const { fieldOverrides } = JSON.parse(
       readFileSync(join(here, "..", "..", "firestore.indexes.json"), "utf8")

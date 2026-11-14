@@ -23,6 +23,12 @@ function instant(text: string | null | undefined): Date | null {
   return Number.isFinite(at.getTime()) ? at : null;
 }
 
+/** A trial bought on the website: RevenueCat Billing on Stripe, or Paddle
+ *  (owner, 13 Nov 2026). Managed from the web app's Account, not a store. */
+export function isWebStore(store: string): boolean {
+  return store === "rc_billing" || store === "paddle";
+}
+
 /** The store's own list of a person's subscriptions, where they cancel. */
 export function storeSubscriptionsUrl(store: string): string {
   return store === "play_store"
@@ -91,12 +97,12 @@ export function trialPhoneReminder(
     return null;
   const price = trialPriceText(trial);
   const choice = price
-    ? `if you don't want to pay ${price}`
-    : "if you don't want your subscription to start";
+    ? `if you don’t want to pay ${price}`
+    : "if you don’t want your subscription to start";
   return {
     fireAt,
     title: `Your free trial ends on ${endDay}`,
-    body: `Cancel by ${deadline} ${choice}. Already cancelled? There's nothing to do.`,
+    body: `Cancel by ${deadline} ${choice}. Already cancelled? There’s nothing to do.`,
   };
 }
 

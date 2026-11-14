@@ -61,7 +61,7 @@ beforeAll(() => {
   const idx = require("../../index");
   onWorkoutCreated = idx.onWorkoutCreated;
   onChallengeParticipantCreated = idx.onChallengeParticipantCreated;
-  admin = require("firebase-admin");
+  admin = require("../../lib/adminSdk");
   db = admin.firestore();
 });
 

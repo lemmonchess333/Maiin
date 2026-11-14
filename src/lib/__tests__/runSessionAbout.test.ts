@@ -85,7 +85,7 @@ describe("runSessionAbout", () => {
     // Run-walk 1 is the first week's: there is no last week's to swap in.
     expect(about("run_walk_1").ifWrong).not.toMatch(/last week/);
     expect(about("run_walk_1").ifWrong).toMatch(/start the walk early/);
-    expect(last.ifWrong).toMatch(/last week's session/);
+    expect(last.ifWrong).toMatch(/last week’s session/);
   });
 
   it("says each thing once: the plan's reason repeats none of the other lines", () => {
@@ -96,7 +96,7 @@ describe("runSessionAbout", () => {
     const phrases = (line: string) => {
       const words = line
         .toLowerCase()
-        .replace(/[^a-z0-9' ]+/g, " ")
+        .replace(/[^a-z0-9'’ ]+/g, " ")
         .split(/\s+/)
         .filter(Boolean);
       return new Set(
@@ -165,7 +165,7 @@ describe("runSessionAbout", () => {
   it("offers a way through when it feels wrong, not a verdict", () => {
     expect(about("easy_30").ifWrong).toMatch(/walk for a minute/);
     expect(about("4x1k").ifWrong).toMatch(/One fewer rep is still the session/);
-    expect(about("run_walk_2").ifWrong).toMatch(/last week's session/);
+    expect(about("run_walk_2").ifWrong).toMatch(/last week’s session/);
     for (const t of RUN_TEMPLATES) {
       expect(runSessionAbout(t).ifWrong, t.id).not.toMatch(
         /fail|bad|should have/i
@@ -257,7 +257,7 @@ describe("each session's shape, and the name coaches give it (Run21 (2))", () =>
       "A 5-minute warm-up, 20 minutes comfortably hard, then a 5-minute cool-down."
     );
     expect(about("4x1k").what).toBe(
-      "A 5-minute warm-up, then 4 repeats of 1K, hard, with 90 seconds of easy jogging or walking between, then a 5-minute cool-down."
+      "A 10-minute warm-up, then 4 repeats of 1K, hard, with 90 seconds of easy jogging or walking between, then a 5-minute cool-down."
     );
     expect(about("8x400").what).toMatch(
       /8 repeats of 400 m, quick and relaxed, with 1 minute of easy jogging/

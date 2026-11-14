@@ -128,8 +128,7 @@ describe("what the person blocked no longer sees of the blocker", () => {
    tray, badge and photos are driven above; these are pinned by their
    own suites against `blocked` (CommentSheet, ActivityPostComments,
    SpaceCommentSheet, Space, FollowList,
-   SpacePost, Social, PeopleView, ActivityCard, useFriendsBoard,
-   useChallenges),
+   SpacePost, Social, PeopleView, ActivityCard, useChallenges),
    so what is left to hold is that each one reads the merged set. */
 const ROOT = resolve(__dirname, "../../..");
 const FILTERING_SURFACES: Record<string, string> = {
@@ -145,7 +144,6 @@ const FILTERING_SURFACES: Record<string, string> = {
   "src/pages/ActivityPost.tsx": "a post a notice opens",
   "src/pages/SpacePost.tsx": "a Space post a notice opens",
   "src/hooks/useUnreadCount.ts": "the unread badge",
-  "src/hooks/useFriendsBoard.ts": "the friends board",
   "src/features/challenges/useChallenges.ts": "challenge leaderboards",
 };
 const READS_MERGED = /const \{[^}]*\bblocked\b[^}]*\} = useBlockedUsers\(\);/;

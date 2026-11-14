@@ -17,14 +17,17 @@
  * data: profile snapshot, programState (or its absence), URL params.
  */
 
+import { intervalRestSeconds } from "./intervalRest";
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
+import { runSessionName } from "./runLabels";
 import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import {
   racePaceWork,
   resolveRaceEnrichment,
   type RaceEnrichment,
+  type RacePaceWork,
   type RaceTarget,
 } from "./racePace";
 import {
@@ -141,6 +144,40 @@ export function runTemplateIdOf(
     | undefined
 ): string | undefined {
   return metadata?.actualTemplateId ?? metadata?.plannedTemplateId ?? undefined;
+}
+
+/**
+ * What the Lock Screen calls a run in progress (Wid2): the session it was
+ * started as ("Easy 30", "Long 18 km with race pace"), else its type's
+ * name ("Tempo run", "Free run").
+ *
+ * The session is `actualTemplateId` alone, not `runTemplateIdOf`: a run
+ * started as another type on a planned day is saved against the plan's
+ * template, but it is not that session, and the setup's own Start button
+ * stops naming it the moment the type changes. The race-pace work belongs
+ * to the launch's session, so it is named only while the run is that one.
+ */
+export function runInProgressName(input: {
+  metadata: Pick<RunPlanMetadata, "actualTemplateId"> | null | undefined;
+  /** The session the launch card offered, and its race-pace work. */
+  launch: {
+    templateId: string | null | undefined;
+    racePace: RacePaceWork | null | undefined;
+  };
+  unit: DistanceUnit;
+  /** The run type's name, from the setup's list. */
+  typeName: string | undefined;
+}): string {
+  const id = input.metadata?.actualTemplateId ?? null;
+  const template = id ? RUN_TEMPLATES.find((t) => t.id === id) : undefined;
+  return runSessionName(
+    template,
+    id !== null && id === input.launch.templateId
+      ? input.launch.racePace
+      : null,
+    input.unit,
+    input.typeName ?? "Run"
+  );
 }
 
 /**
@@ -764,8 +801,14 @@ function templateToPrefill(
     // user's fitness; falls through to undefined (PaceZoneBar's own fallback)
     // when there's no benchmark.
     const workPace = resolveSessionPaces(tmpl.type, paceTable ?? null).workPace;
+    // Deep dive D15: with the rep pace known, the rest is a share of the
+    // rep's own time (`intervalRestSeconds`).
     prefill.intervals = workPace
-      ? { ...tmpl.config.intervals, workPace }
+      ? {
+          ...tmpl.config.intervals,
+          workPace,
+          restDuration: intervalRestSeconds(tmpl.config.intervals, workPace),
+        }
       : tmpl.config.intervals;
   }
   // A2: a goal-pace tempo overrides the benchmark-derived threshold —
@@ -789,7 +832,9 @@ function templateToPrefill(
       tmpl.config.tempo,
       unit,
       prefill.target?.type === "pace" ? prefill.target.value : undefined,
-      tempoAtGoal ? { atGoalPace: true } : undefined,
+      tempoAtGoal
+        ? { atGoalPace: true, marathonBand: tempoAtGoal.source === "band" }
+        : undefined,
       seed
     );
   } else if (tmpl.config.strides) {
@@ -818,7 +863,8 @@ function templateToPrefill(
       tmpl.config.targetDistanceKm,
       raceFinish.blockKm,
       raceFinish.goalPaceS,
-      unit
+      unit,
+      raceFinish.source === "band"
     );
   }
   return prefill;

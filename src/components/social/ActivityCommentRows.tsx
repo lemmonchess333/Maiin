@@ -125,7 +125,7 @@ export default function ActivityCommentRows({
                 <IconButton
                   aria-label={
                     c.authorName
-                      ? `More options for ${c.authorName}'s comment`
+                      ? `More options for ${c.authorName}’s comment`
                       : "More options for this comment"
                   }
                   onClick={() => setPanel({ kind: "options", comment: c })}

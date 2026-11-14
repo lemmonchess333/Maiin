@@ -156,7 +156,7 @@ describe("a set far past today's plan", () => {
     const question = await screen.findByRole("alertdialog", {
       name: "125 kg?",
     });
-    expect(question).toHaveTextContent("Today's plan is 12.5 kg.");
+    expect(question).toHaveTextContent("Today’s plan is 12.5 kg.");
     fireEvent.click(screen.getByRole("button", { name: "Change it" }));
     await vi.waitFor(() =>
       expect(screen.queryByRole("alertdialog")).toBeNull()
@@ -208,7 +208,7 @@ describe("a set far past today's plan", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByText("125 kg?")).toBeInTheDocument();
-    expect(screen.getByText("Today's plan is 12.5 kg.")).toBeInTheDocument();
+    expect(screen.getByText("Today’s plan is 12.5 kg.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Log 125 kg" }));
     await vi.waitFor(() =>
       expect(screen.queryByLabelText("Weight (kg)")).toBeNull()
@@ -237,7 +237,7 @@ describe("a lifter who lifts in lb (Lift18)", () => {
     const question = await screen.findByRole("alertdialog", {
       name: "135 lb?",
     });
-    expect(question).toHaveTextContent("Today's plan is 27.6 lb.");
+    expect(question).toHaveTextContent("Today’s plan is 27.6 lb.");
     fireEvent.click(screen.getByRole("button", { name: "Log 135 lb" }));
     await vi.waitFor(() => expect(done("Set 1")).toBe(true));
     tick("Set 2");

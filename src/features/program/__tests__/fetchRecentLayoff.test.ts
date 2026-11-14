@@ -23,7 +23,11 @@ import {
   unfiredFailures,
   readLog,
 } from "@/test/firestoreHarness";
-import { fetchRecentLayoff, RECENT_RUN_SCAN_LIMIT } from "../fetchRecentLayoff";
+import { fetchRecentRuns, RECENT_RUN_SCAN_LIMIT } from "../fetchRecentLayoff";
+
+/** The layoff class the read settles on. */
+const fetchRecentLayoff = async (uid: string | null | undefined, day: string) =>
+  (await fetchRecentRuns(uid, day)).layoff;
 
 const UID = "u1";
 
@@ -50,7 +54,7 @@ function seedRuns(lastDate: string, count: number, every = 3): void {
 
 beforeEach(() => resetFirestore());
 
-describe("fetchRecentLayoff reads the history", () => {
+describe("fetchRecentRuns reads the history", () => {
   it("reports a real layoff", () => {
     seedRuns("2026-05-23", 10);
     return expect(fetchRecentLayoff(UID, "2026-08-04")).resolves.toBe(

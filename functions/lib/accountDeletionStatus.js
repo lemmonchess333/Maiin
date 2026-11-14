@@ -201,7 +201,7 @@ function makeSystemWriteBlockedError(uid) {
 /**
  * Read accountDeletionRequests/{uid}. Returns the doc data or null.
  *
- * @param {import('firebase-admin').firestore.Firestore} db
+ * @param {import('firebase-admin/firestore').Firestore} db
  * @param {string} uid
  * @returns {Promise<object | null>}
  */
@@ -214,7 +214,7 @@ async function readDeletionStatusDoc(db, uid) {
 /**
  * Read deletedAccounts/{uid}. Returns the tombstone doc or null.
  *
- * @param {import('firebase-admin').firestore.Firestore} db
+ * @param {import('firebase-admin/firestore').Firestore} db
  * @param {string} uid
  * @returns {Promise<object | null>}
  */
@@ -291,7 +291,7 @@ async function assertAccountNotDeleting(db, uid) {
  * Batched read uses getAll() so the per-uid Firestore round-trips are
  * amortised across one network call.
  *
- * @param {import('firebase-admin').firestore.Firestore} db
+ * @param {import('firebase-admin/firestore').Firestore} db
  * @param {string[]} uids
  */
 async function assertNoReferencedAccountsDeleting(db, uids) {
@@ -342,7 +342,7 @@ async function assertNoReferencedAccountsDeleting(db, uids) {
  * window when a system writer must not recreate data. A tombstone
  * (account already deleted) is the long-term signal. Both must block.
  *
- * @param {import('firebase-admin').firestore.Firestore} db
+ * @param {import('firebase-admin/firestore').Firestore} db
  * @param {string} uid
  * @param {string} reason  Optional context for diagnostic logging.
  */

@@ -1,18 +1,11 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import {
-  MARK_CHEVRON,
-  MARK_CHEVRON_WIDTH,
-  MARK_CORNER,
-  MARK_HEXAGON,
-  MARK_VIEWBOX,
-} from "@/lib/brandMark";
+import { MARK_BAR, MARK_STEM, MARK_VIEWBOX } from "@/lib/brandMark";
 import {
   flightBetween,
   flightFrames,
-  hexagonClipPath,
   isAutomated,
   settled,
   type Box,
@@ -20,15 +13,15 @@ import {
 } from "@/lib/launchSplash";
 import { hideNativeLaunchImage } from "@/lib/nativeLaunchImage";
 
-/** The chevron's rise into the hexagon: where it starts (a share of the
- *  mark's height below its place) and how long it climbs. A plain
- *  ease-out, not a sharp one, so the climb is seen and not only the
- *  arrival; it is solid before it slows into place. */
+/** The stem's rise into the bar: where it starts (a share of the mark's
+ *  height below its place) and how long it climbs. A plain ease-out, not
+ *  a sharp one, so the climb is seen and not only the arrival; it is
+ *  solid before it slows into place. */
 const RISE_FROM = "translateY(11%)";
 const RISE_MS = 560;
 const RISE_EASE = "cubic-bezier(0.33, 1, 0.68, 1)";
 const RISE_SOLID_MS = 260;
-/** Reduce Motion: the chevron fades in where it will stay. */
+/** Reduce Motion: the stem fades in where it will stay. */
 const APPEAR_MS = 200;
 /** Still loading once the mark is whole, it breathes, so a slow start
  *  looks like work rather than a hang. It waits a beat first, so a quick
@@ -67,8 +60,6 @@ const SETTLED_FRAMES = 3;
  *  beneath it says the app is still loading. */
 const HOLD_MAX_MS = 10_000;
 
-const HEXAGON_CLIP = hexagonClipPath();
-
 const box = (r: DOMRect): Box => ({
   left: r.left,
   top: r.top,
@@ -92,13 +83,13 @@ type Leaving = { flight: Flight | null; lift: boolean };
 
 /**
  * The launch animation. While the app loads, the phone shows the launch
- * image: the mark's hexagon alone (`scripts/art/gen-splash.mjs`).
- * index.html paints the same hexagon at the same size (#boot-splash) until
- * the bundle runs, and this takes over from it:
+ * image: the mark's bar alone (`scripts/art/gen-splash.mjs`). index.html
+ * paints the same bar at the same size (#boot-splash) until the bundle
+ * runs, and this takes over from it:
  *
  *  1. once its first frame is on screen, the native launch image goes
  *     (it is the same frame), so what follows is seen;
- *  2. the chevron rises into the hexagon, completing the mark;
+ *  2. the stem rises into the bar, completing the mark;
  *  3. it waits for the app (auth resolved; on Home, Home's header mark
  *     holding still and Home's content loaded), breathing if that is slow;
  *  4. on Home, the mark flies into the header's mark along a soft arc as
@@ -109,15 +100,13 @@ type Leaving = { flight: Flight | null; lift: boolean };
  * played by the Web Animations API, so the browser can run it off the main
  * thread: the rise plays while the bundle is still starting and the flight
  * while Home renders, and neither waits on JavaScript for its frames (the
- * framer-driven version visibly stalled mid-flight). The chevron rises as
- * a shape painted in the launch colour, which reads as a hole on the
- * launch ground, then becomes a real hole for the flight, so it shows the
- * page as the ground fades, which is what Home's mark shows when the
- * flight lands on it.
+ * framer-driven version visibly stalled mid-flight). The stem rises on a
+ * layer of its own and joins the bar's drawing once it is in place, so
+ * the flight moves one mark.
  *
  * The ground is the launch colour in both themes, as the launch image is,
  * so a light-mode user's page turns light as it is revealed, not under
- * the logo. Reduce Motion: the chevron fades in where it stays, nothing
+ * the logo. Reduce Motion: the stem fades in where it stays, nothing
  * breathes, and the overlay fades, with no rise, lift or flight. Under
  * automation it never shows (isAutomated).
  *
@@ -131,11 +120,10 @@ export default function LaunchSplash() {
   const reduce = useReducedMotion();
   const { user, profile, loading } = useAuth();
   const { pathname } = useLocation();
-  const ids = `launch-${useId().replace(/[^\w-]/g, "")}`;
   const groundRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const chevronRef = useRef<HTMLDivElement>(null);
+  const stemRef = useRef<HTMLDivElement>(null);
   const [risen, setRisen] = useState(false);
   const [overdue, setOverdue] = useState(false);
   const [leaving, setLeaving] = useState<Leaving | null>(null);
@@ -153,8 +141,8 @@ export default function LaunchSplash() {
   }, []);
 
   // Once the first frame has been drawn, the native launch image can go,
-  // and the chevron rises a frame later, in view. Until then the chevron
-  // layer is transparent (its CSS), so the frame is the hexagon alone.
+  // and the stem rises a frame later, in view. Until then the stem's
+  // layer is transparent (its CSS), so the frame is the bar alone.
   useEffect(() => {
     if (automated || risen) return;
     let raf = 0;
@@ -167,10 +155,10 @@ export default function LaunchSplash() {
       nextFrame(() => {
         void hideNativeLaunchImage();
         nextFrame(() => {
-          const chevron = chevronRef.current;
+          const stem = stemRef.current;
           if (reduce) {
             motions.push(
-              play(chevron, [{ opacity: 0 }, { opacity: 1 }], {
+              play(stem, [{ opacity: 0 }, { opacity: 1 }], {
                 duration: APPEAR_MS,
                 easing: "linear",
                 fill: "forwards",
@@ -179,11 +167,11 @@ export default function LaunchSplash() {
           } else {
             motions.push(
               play(
-                chevron,
+                stem,
                 [{ transform: RISE_FROM }, { transform: "translateY(0)" }],
                 { duration: RISE_MS, easing: RISE_EASE, fill: "both" }
               ),
-              play(chevron, [{ opacity: 0 }, { opacity: 1 }], {
+              play(stem, [{ opacity: 0 }, { opacity: 1 }], {
                 duration: RISE_SOLID_MS,
                 easing: "linear",
                 fill: "forwards",
@@ -359,56 +347,18 @@ export default function LaunchSplash() {
             viewBox={MARK_VIEWBOX}
             focusable="false"
           >
-            {/* Once risen, the chevron is a hole, not a shape in some
-                colour: it shows the launch ground, then the page as the
-                ground fades, which is what Home's mark shows when the
-                flight lands on it. */}
-            {risen && (
-              <defs>
-                <mask id={`${ids}-cut`}>
-                  <rect width="1024" height="1024" fill="white" />
-                  <polyline
-                    points={MARK_CHEVRON}
-                    fill="none"
-                    stroke="black"
-                    strokeWidth={MARK_CHEVRON_WIDTH}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </mask>
-              </defs>
-            )}
-            <polygon
-              points={MARK_HEXAGON}
-              fill="currentColor"
-              stroke="currentColor"
-              strokeWidth={MARK_CORNER}
-              strokeLinejoin="round"
-              mask={risen ? `url(#${ids}-cut)` : undefined}
-            />
+            <path d={MARK_BAR} fill="currentColor" />
+            {/* Once risen, the stem is part of the one drawing the flight
+                moves. */}
+            {risen && <path d={MARK_STEM} fill="currentColor" />}
           </svg>
-          {/* Rising, the chevron is painted in the launch colour, which on
-              the launch ground looks the same as the hole it becomes, on a
-              layer of its own that the browser can move without
-              repainting the mark. It is cut out only inside the hexagon's
-              inset outline, so the rim stays whole while it comes up. */}
+          {/* Rising, the stem is on a layer of its own that the browser
+              can move without repainting the bar. */}
           {!risen && (
-            <div
-              className="launch-splash-cut"
-              style={{ clipPath: HEXAGON_CLIP }}
-            >
-              <div ref={chevronRef} className="launch-splash-chevron">
-                <svg viewBox={MARK_VIEWBOX} focusable="false">
-                  <polyline
-                    points={MARK_CHEVRON}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={MARK_CHEVRON_WIDTH}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
+            <div ref={stemRef} className="launch-splash-stem">
+              <svg viewBox={MARK_VIEWBOX} focusable="false">
+                <path d={MARK_STEM} fill="currentColor" />
+              </svg>
             </div>
           )}
         </div>

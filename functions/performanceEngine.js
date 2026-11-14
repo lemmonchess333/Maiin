@@ -10,7 +10,7 @@ coexist in the collection until consumers stop reading the old ones.
 Spec locked in plan rows PI1 + PI5. See programme-run-followups.md.
 ───────────────────────────────────────────── */
 
-const admin = require("firebase-admin");
+const admin = require("./lib/adminSdk");
 
 // Post-baseline scoring lives in the admin-free shared module so the client
 // parity test can require it without an admin init. This file owns only the

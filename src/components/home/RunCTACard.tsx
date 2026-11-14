@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/Button";
+import { withPlannedRest } from "@/lib/intervalRest";
 import { localDateString } from "@/lib/dateHelpers";
-import { Play } from "lucide-react";
+import { Lock, Play } from "lucide-react";
+import { track as trackPaywall } from "@/lib/paywallAnalytics";
+import {
+  RACE_PLAN_UPGRADE_PATH,
+  lockedPlanRunStarts,
+} from "@/lib/racePlanAccess";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { unlockSpeech } from "@/lib/speechUnlock";
@@ -45,8 +51,10 @@ export default function RunCTACard({
   inProgress = null,
   startTarget,
   easyPaceSPerKm = null,
+  intervalPaceSPerKm = null,
   freeLine = null,
   variant = "hero",
+  planLocked = null,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -65,9 +73,16 @@ export default function RunCTACard({
   /** The confirmed easy pace, s/km (`planningEasyPaceSPerKm`), for the
    *  line of an easy or long run. */
   easyPaceSPerKm?: number | null;
+  /** The confirmed interval pace, s/km (`plannedIntervalPaceSPerKm`): the
+   *  rest an interval session's line states (deep dive D15). */
+  intervalPaceSPerKm?: number | null;
   /** A free run's line (`freeRunHeroLine`): this week's distance against
    *  last week's. Drawn only where no planned run is named. */
   freeLine?: HeroLine | null;
+  /** The half or full marathon plan has passed its free first week
+   *  (whole-app grill Q85): the button offers Pro instead of Start, with
+   *  its words. The race itself still starts. */
+  planLocked?: { cta: string; raceName: string } | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
 }) {
@@ -99,7 +114,28 @@ export default function RunCTACard({
      kicker's beside the date, and the reasons are Train's ("Why this
      run"). */
   const meta = tmpl && dose ? dose.split(" · ") : [];
-  const line = tmpl ? runHeroLine(tmpl, easyPaceSPerKm, unit) : freeLine;
+  /* Q85: past the plan's free first week a planned session offers Pro;
+     the race itself still starts, and so does a free run. */
+  const locked = !!planLocked && !!tmpl && !lockedPlanRunStarts(tmpl.type);
+  const line: HeroLine | null = locked
+    ? {
+        title: `Your ${planLocked?.raceName ?? "race"} plan continues with Pro`,
+        detail: "Week 2 on is part of Pro. Runs you record stay free.",
+        mark: "run",
+      }
+    : tmpl
+      ? runHeroLine(
+          withPlannedRest(tmpl, intervalPaceSPerKm),
+          easyPaceSPerKm,
+          unit
+        )
+      : freeLine;
+
+  const offerPro = function () {
+    haptic();
+    trackPaywall("paywall_cta_clicked", { source: "race_plan" });
+    navigate(RACE_PLAN_UPGRADE_PATH);
+  };
 
   const start = function () {
     // The run starts as the Run page opens, so the voice cues are
@@ -126,6 +162,19 @@ export default function RunCTACard({
           navigate(inProgress.resumeTarget);
         }}
       />
+    ) : startable && locked ? (
+      <Button
+        variant={variant === "hero" ? "neutral" : "sport-tinted"}
+        className={
+          variant === "hero"
+            ? "pointer-events-auto w-full text-base"
+            : "pointer-events-auto shrink-0"
+        }
+        onClick={offerPro}
+      >
+        <Lock className="size-4" aria-hidden="true" />
+        {planLocked?.cta}
+      </Button>
     ) : startable ? (
       variant === "hero" ? (
         /* The screen's one full-width filled button is neutral (DS4,

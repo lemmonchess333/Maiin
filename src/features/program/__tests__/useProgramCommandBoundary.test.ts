@@ -353,7 +353,7 @@ describe("a refused command is said once and reported", () => {
     const { toast } = await import("sonner");
     // The app's toast wrapper adds a dedupe id; the text is what is said.
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't skip that session. This workout changed since you started. Refresh and try again.",
+      "Couldn’t skip that session. This workout changed since you started. Refresh and try again.",
     ]);
     expect(
       (hook.result.current.programState as ProgramState).workouts[0].skipped
@@ -378,7 +378,7 @@ describe("a refused command is said once and reported", () => {
     expect(outcome).toEqual({ status: "declined", reason: null });
     const { toast } = await import("sonner");
     expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
-      "Couldn't save that setting. Refreshing.",
+      "Couldn’t save that setting. Refreshing.",
     ]);
     expect(
       (hook.result.current.programState as ProgramState).settings
@@ -1006,7 +1006,7 @@ it.each(["functions/internal", "functions/unavailable"])(
       expect(outboxLength("test-user-1")).toBe(0);
       const { toast } = await import("sonner");
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't save that change on this device. Try again.",
+        "Couldn’t save that change on this device. Try again.",
         expect.anything()
       );
     } finally {
@@ -1038,7 +1038,7 @@ it("reports failed and rolls back when the command queue is full", async () => {
   expect(localStorage.getItem("tropos.program.commandOutbox")).toBe(before);
   const { toast } = await import("sonner");
   expect(toast.error).toHaveBeenCalledWith(
-    "Couldn't save that change on this device. Try again.",
+    "Couldn’t save that change on this device. Try again.",
     expect.anything()
   );
 });

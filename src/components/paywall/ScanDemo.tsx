@@ -2,7 +2,6 @@ import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { motion, type Easing, type Transition } from "framer-motion";
 import {
   Beef,
-  CalendarDays,
   Camera,
   Check,
   ChevronLeft,
@@ -20,9 +19,9 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { buttonClasses } from "@/components/ui/buttonClasses";
-import Card from "@/components/ui/Card";
 import MealMacroBar from "@/components/food/MealMacroBar";
 import CalorieRing from "@/components/food/CalorieRing";
+import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import MacroColumn from "@/components/food/MacroColumn";
 import { Avocado } from "@/components/icons/Avocado";
 import { MEAL_SLOT_ICONS, type MealKey } from "@/components/food/mealConstants";
@@ -33,23 +32,30 @@ import {
   SocialTabIcon,
   TrainTabIcon,
 } from "@/components/icons/TabIcons";
+import { foodArtKindFor, foodArtUrl } from "@/lib/foodArt";
+import { arcEndPoint, FLIGHT_MS, FLIGHT_WHEEL_HOLD_MS } from "@/lib/foodFlight";
+import type { FoodWeekDay } from "@/lib/foodWeek";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-import { formatTimeOfDay } from "@/utils/formatters";
+import {
+  formatShortWeekdayDayMonth,
+  formatTimeOfDay,
+} from "@/utils/formatters";
 import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
 
 /**
  * A meal logged from a photo, start to finish, on a phone: it slides in
  * with the scanner open, the camera moves from the edge of the table to
  * the whole plate, the shutter takes it, the scanner reads it, the
- * result sheet rises over the Food page, Log is tapped, the day's ring
- * takes the meal and the page scrolls to the new diary row. Then the
- * phone slides out and it starts again.
+ * result sheet rises over the Food page, Log is tapped, the food flies
+ * to the day's wheel, the wheel takes the meal and the page scrolls to
+ * the new diary row. Then the phone slides out and it starts again.
  *
  * Every screen is drawn as the app draws it: the camera chrome and the
  * reading overlay as `FoodCameraModal` does, the sheet as `FoodAnalyzer`
- * does, and the Food page with its own `CalorieRing` and `MacroColumn`,
- * so the demo is the product at a smaller size rather than a picture of
- * a feature.
+ * does, and the Food page as it has been since Food11, with its own
+ * `CalorieRing`, `FoodWeekStrip` and `MacroColumn`, so the demo is the
+ * product at a smaller size rather than a picture of a feature. A
+ * change to the Food page's first screen is a change to make here too.
  *
  * The phone is laid out at its real size (a 390 × 844 screen) on a stage
  * of fixed proportions, and the stage scales that drawing to whatever
@@ -95,6 +101,8 @@ function dayTime(hours: number, minutes: number): string {
 /** The moment the demo shows: the phone's clock, and when the scanned
  *  meal is logged. */
 const NOW = dayTime(19, 42);
+/** The day, as the Food page's header row prints it ("Thu 15 Jan"). */
+const TODAY = formatShortWeekdayDayMonth(new Date(2026, 0, 15));
 
 /* ── Geometry, in the phone's own pixels ─────────────────────────────── */
 
@@ -154,8 +162,37 @@ const PAN_CLOSE = { ...lookAt(560, 1000, 1.6), zoom: 1.6 };
    phone comes in close. The scroll sets the diary's card down just above
    the tab bar, and the close-up frames the card with its new row in the
    upper half; both were measured with the rows as FoodRow draws them on a
-   day with a photo (Pol1). */
-const SCROLL_Y = -268;
+   day with a photo (Pol1), under the page's first screen as it has been
+   since Food11. */
+const SCROLL_Y = -186;
+/* Where the wheel and the composer's field stand on that page, in the
+   screen's pixels, for the food's flight from one to the other. Measured
+   on the page as it is drawn here: a unit test lays nothing out. */
+const WHEEL_BOX = {
+  left: (SCREEN_W - 264) / 2,
+  top: 146,
+  width: 264,
+  height: 264,
+};
+const FIELD_BOX = { left: 16, top: 590, width: SCREEN_W - 32, height: 48 };
+/** The flight, as `FoodLogFlight` flies it: a 44px picture from a third
+ *  of the way along the field to where the wheel's arc ends before the
+ *  meal. */
+const FLIGHT_SIZE = 44;
+const FLIGHT_START = {
+  x: FIELD_BOX.left + FIELD_BOX.width / 3,
+  y: FIELD_BOX.top + FIELD_BOX.height / 2,
+};
+const FLIGHT_END = arcEndPoint(WHEEL_BOX, DAY.before.calories, DAY.target);
+const FLIGHT_EASE = [0.4, 0, 0.2, 1] as const;
+/** What flies: our drawing of the dish, as the page reads it from the
+ *  meal's names. */
+const FLIGHT_ART = foodArtUrl(
+  foodArtKindFor([
+    SCAN_DEMO_RESULT.title,
+    ...SCAN_DEMO_RESULT.items.map((item) => item.name),
+  ])
+);
 const Z_SHEET = 1.4;
 const Y_SHEET = centreOn(BEZEL + 612, Z_SHEET);
 const Z_ROW = 1.35;
@@ -188,10 +225,15 @@ const ZOOM_IN = 5.95;
 const TAP = 7.15;
 const SAVED = 7.35;
 const SHEET_DOWN = 7.75;
-const COUNT = 8.25;
-const SCROLL_FROM = 8.8;
-const SCROLL_TO = 9.5;
-const ROW_IN = 9.55;
+/* The food leaves the field once the phone has drawn back from the
+   sheet, and the wheel waits for it as the page's does: it takes the
+   meal while the picture is still fading into it. */
+const FLY = 8.15;
+const FLIGHT_S = FLIGHT_MS / 1000;
+const COUNT = FLY + FLIGHT_WHEEL_HOLD_MS / 1000;
+const SCROLL_FROM = 8.9;
+const SCROLL_TO = 9.6;
+const ROW_IN = 9.65;
 const PHONE_OUT = 11;
 const PHONE_GONE = 11.6;
 
@@ -786,41 +828,38 @@ function ResultSheet({ live }: { live: boolean }) {
   );
 }
 
-const WEEK = [
-  { d: "M", n: 14, eaten: 0.86 },
-  { d: "T", n: 15, eaten: 0.97 },
-  { d: "W", n: 16, today: true },
-  { d: "T", n: 17 },
-  { d: "F", n: 18 },
-  { d: "S", n: 19 },
-  { d: "S", n: 20 },
-];
-const DAY_RING_R = 18.5;
-const DAY_RING_C = 2 * Math.PI * DAY_RING_R;
+/* ── The Food page ───────────────────────────────────────────────────── */
 
-function DayRing({ fraction }: { fraction: number }) {
-  return (
-    <svg viewBox="0 0 40 40" className="absolute inset-0 size-10 -rotate-90">
-      <circle
-        cx="20"
-        cy="20"
-        r={DAY_RING_R}
-        fill="none"
-        strokeWidth="3"
-        style={{ stroke: "hsl(var(--muted-foreground) / 0.2)" }}
-      />
-      <circle
-        cx="20"
-        cy="20"
-        r={DAY_RING_R}
-        fill="none"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray={`${fraction * DAY_RING_C} ${DAY_RING_C}`}
-        style={{ stroke: THEME.semantic.nutrition }}
-      />
-    </svg>
-  );
+/** The demo's day is a Thursday. Its week, Monday to Sunday as the Food
+ *  page's strip is: what was eaten on the days before it, as a share of
+ *  the target. */
+const WEEK_BEFORE_TODAY = [0.86, 0.97, 0.9];
+const TODAY_INDEX = WEEK_BEFORE_TODAY.length;
+
+/** The week as the Food page's strip takes it, with `todayCalories`
+ *  logged today. */
+function weekDays(todayCalories: number): FoodWeekDay[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const isToday = i === TODAY_INDEX;
+    const isFuture = i > TODAY_INDEX;
+    const eaten = isToday
+      ? todayCalories
+      : isFuture
+        ? 0
+        : Math.round(WEEK_BEFORE_TODAY[i] * DAY.target);
+    return {
+      key: `2026-01-${12 + i}`,
+      isToday,
+      isSelected: isToday,
+      isFuture,
+      isSelectable: !isFuture,
+      eaten,
+      target: DAY.target,
+      progress: eaten / DAY.target,
+      over: 0,
+      beforeJoined: false,
+    };
+  });
 }
 
 /** Before the meal, then after it: two copies of a thing, the second
@@ -853,60 +892,51 @@ function BeforeAfter({
   );
 }
 
+/** The calorie wheel as the Food page draws it (Food11): on the page,
+ *  with the target in its label, and already drawn. */
+function Wheel({ calories }: { calories: number }) {
+  return (
+    <CalorieRing
+      consumed={calories}
+      target={DAY.target}
+      mode="left"
+      onToggleMode={() => {}}
+      trajectoryLabel={null}
+      drawIn={false}
+    />
+  );
+}
+
+/** The macros as the Food page draws them: one row, no boxes. */
 function Macros({ totals }: { totals: typeof AFTER }) {
-  const tiles = [
+  const macros = [
     { key: "protein", Icon: Beef, label: "Protein" },
     { key: "carbs", Icon: Wheat, label: "Carbs" },
     { key: "fat", Icon: Avocado, label: "Fat" },
   ] as const;
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {tiles.map(({ key, Icon, label }) => (
-        <Card key={key} size="compact" className="flex min-w-0">
-          <MacroColumn
-            macroKey={key}
-            Icon={Icon}
-            consumed={totals[key]}
-            target={DAY.targets[key]}
-            label={label}
-            color={THEME.macros[key]}
-            mode="left"
-          />
-        </Card>
+    <div className="grid grid-cols-3 gap-x-4">
+      {macros.map(({ key, Icon, label }) => (
+        <MacroColumn
+          key={key}
+          size="row"
+          macroKey={key}
+          Icon={Icon}
+          consumed={totals[key]}
+          target={DAY.targets[key]}
+          label={label}
+          color={THEME.macros[key]}
+          mode="left"
+          drawIn={false}
+        />
       ))}
     </div>
   );
 }
 
-function CalorieCard({ calories }: { calories: number }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-card p-4 card-shadow">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-85 dark:opacity-100"
-        style={{
-          background:
-            "radial-gradient(ellipse 85% 75% at 15% 20%, hsl(var(--nutrition) / 0.32) 0%, hsl(var(--nutrition) / 0.12) 45%, transparent 78%), radial-gradient(ellipse 85% 75% at 85% 80%, hsl(var(--primary) / 0.38) 0%, hsl(var(--primary) / 0.14) 45%, transparent 78%)",
-        }}
-      />
-      <div className="relative">
-        <span className="absolute -right-2 -top-2 flex size-11 items-center justify-center text-muted-foreground">
-          <SettingsIcon className="size-4" />
-        </span>
-        <CalorieRing
-          consumed={calories}
-          target={DAY.target}
-          mode="left"
-          onToggleMode={() => {}}
-          trajectoryLabel={null}
-        />
-        <span className="absolute -bottom-2 -right-2 flex min-h-[44px] items-center gap-1 px-2.5 text-xs text-muted-foreground">
-          Details
-          <ChevronRight className="size-3" />
-        </span>
-      </div>
-    </div>
-  );
-}
+/** A diary row's height with its line: a 52px picture, 10px above and
+ *  below it, and the 1px line under the new row. */
+const LOG_ROW_H = 52 + 2 * 10 + 1;
 
 function LogRow({
   name,
@@ -967,12 +997,74 @@ const TABS = [
   { label: "Analytics", Icon: AnalyticsTabIcon },
 ];
 
-/** The Food page the scanner closes onto: the ring and the macros take
- *  the meal, then the page scrolls to the new row in the food log. */
+/** The logged food's picture on its way to the wheel, as `FoodLogFlight`
+ *  draws it on the Food page: our drawing of the food, rising from the
+ *  field to the end of the wheel's arc and fading into it while the
+ *  wheel takes the meal. It is placed where it lands and moved back to
+ *  where it starts, as the page's own is. */
+function Flight() {
+  const dx = FLIGHT_START.x - FLIGHT_END.x;
+  const dy = FLIGHT_START.y - FLIGHT_END.y;
+  const move = {
+    ...LOOP,
+    ease: ["linear", FLIGHT_EASE, "linear"] as Easing[],
+    times: times(0, FLY, FLY + FLIGHT_S, LOOP_S),
+  };
+  return (
+    <motion.img
+      src={FLIGHT_ART}
+      alt=""
+      draggable={false}
+      className="pointer-events-none absolute z-10 object-contain"
+      style={{
+        left: FLIGHT_END.x - FLIGHT_SIZE / 2,
+        top: FLIGHT_END.y - FLIGHT_SIZE / 2,
+        width: FLIGHT_SIZE,
+        height: FLIGHT_SIZE,
+      }}
+      initial={{ opacity: 0 }}
+      animate={{
+        x: [dx, dx, 0, 0],
+        y: [dy, dy, 0, 0],
+        scale: [1, 1, 0.45, 0.45],
+        opacity: [0, 0, 1, 1, 0, 0],
+      }}
+      transition={{
+        x: move,
+        y: move,
+        scale: move,
+        /* The page's own keyframes: in by 14% of the flight, out from
+           76%. */
+        opacity: {
+          ...LOOP,
+          ease: "linear",
+          times: times(
+            0,
+            FLY,
+            FLY + 0.14 * FLIGHT_S,
+            FLY + 0.76 * FLIGHT_S,
+            FLY + FLIGHT_S,
+            LOOP_S
+          ),
+        },
+      }}
+    />
+  );
+}
+
+/** The Food page the scanner closes onto, as the app draws it since
+ *  Food11: no title, the day in the header row, the calorie wheel on the
+ *  page with its target, the week as bars, the macros as one row, and
+ *  one field holding the text and the camera. The food flies
+ *  to the wheel, the wheel, the week and the macros take the meal, then
+ *  the page scrolls to the new row in the food log. */
 function FoodScreen({ live }: { live: boolean }) {
   const r = SCAN_DEMO_RESULT;
   return (
-    <div className="absolute inset-0 overflow-hidden bg-background text-foreground">
+    <div
+      data-screen="food"
+      className="absolute inset-0 overflow-hidden bg-background text-foreground"
+    >
       <motion.div
         className="space-y-4 px-4 pt-[78px]"
         animate={live ? { y: [0, 0, SCROLL_Y, SCROLL_Y] } : undefined}
@@ -986,114 +1078,78 @@ function FoodScreen({ live }: { live: boolean }) {
             : undefined
         }
       >
-        <div className="flex items-start justify-between gap-3 py-1">
-          {/* The page title's look, not a heading: this is a picture, and
-              the page it sits on has its own h1. */}
-          <p className="text-h1 font-extrabold leading-tight tracking-tight">
-            Food
-          </p>
-          <span className="inline-flex items-center rounded-full bg-card card-shadow">
-            <span className="flex size-11 items-center justify-center">
-              <ChevronLeft className="size-4" />
+        {/* The header row, as PageShell and FoodDateBar draw it: the day
+            with its arrows, and the targets gear at the other end. There
+            is no day after today, so that arrow is faded. */}
+        <div className="flex items-center justify-between py-1">
+          <span className="-ml-[12px] inline-flex items-center">
+            <span className="flex size-[44px] items-center justify-center">
+              <ChevronLeft className="size-5 text-muted-foreground" />
             </span>
-            <span className="flex items-center gap-1.5 px-1 text-sm font-semibold">
-              <CalendarDays className="size-3.5 text-muted-foreground" />
-              Today
+            <span className="flex items-baseline gap-x-1.5 px-0.5">
+              <span className="text-base font-bold">Today</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {TODAY}
+              </span>
             </span>
-            <span className="flex size-11 items-center justify-center">
-              <ChevronRight className="size-4" />
+            <span className="flex size-[44px] items-center justify-center opacity-40">
+              <ChevronRight className="size-5 text-muted-foreground" />
             </span>
           </span>
+          <span className="-mr-[12px] flex size-[44px] items-center justify-center text-muted-foreground">
+            <SettingsIcon className="size-5" />
+          </span>
         </div>
-        <div className="flex items-center justify-between">
-          {WEEK.map((day) => (
-            <div
-              key={day.n}
-              className="flex w-10 flex-col items-center gap-1.5"
-            >
-              <span
-                className={cn(
-                  "text-xs",
-                  day.today
-                    ? "font-bold text-foreground"
-                    : "font-medium text-muted-foreground"
-                )}
-              >
-                {day.d}
-              </span>
-              <span
-                className={cn(
-                  "relative flex size-10 items-center justify-center rounded-full",
-                  day.today &&
-                    "ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                )}
-              >
-                {day.eaten !== undefined && <DayRing fraction={day.eaten} />}
-                {day.today && (
-                  <BeforeAfter
-                    live={live}
-                    className="absolute inset-0"
-                    before={
-                      <DayRing fraction={DAY.before.calories / DAY.target} />
-                    }
-                    after={<DayRing fraction={AFTER.calories / DAY.target} />}
-                  />
-                )}
-                {/* Day numbers are numeric displays, as on the real strip. */}
-                <span
-                  className={cn(
-                    "relative text-sm font-semibold font-mono tabular-nums",
-                    day.eaten !== undefined || day.today
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {day.n}
-                </span>
-              </span>
-            </div>
-          ))}
-        </div>
-        <BeforeAfter
-          live={live}
-          before={<CalorieCard calories={DAY.before.calories} />}
-          after={<CalorieCard calories={AFTER.calories} />}
-        />
-        <BeforeAfter
-          live={live}
-          before={<Macros totals={DAY.before} />}
-          after={<Macros totals={AFTER} />}
-        />
         <div className="space-y-2">
-          <div className="grid grid-cols-4 gap-2">
-            {["Breakfast", "Lunch", "Snacks", "Dinner"].map((meal) => (
-              <span
-                key={meal}
-                className={cn(
-                  "flex min-h-11 min-w-0 items-center justify-center rounded-full border px-2 text-xs font-medium",
-                  meal === r.meal
-                    ? "border-transparent bg-nutrition-fill text-white"
-                    : "border-border/80 bg-card text-muted-foreground"
-                )}
-              >
-                {meal}
-              </span>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <span className="flex h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border border-border bg-card px-4 text-muted-foreground">
-              <PenLine className="size-4" />
-              Eggs
-            </span>
-            <span
-              className={buttonClasses({
-                variant: "nutrition",
-                className: "size-14 px-0",
-              })}
-            >
-              <Camera className="size-6" />
+          {/* The wheel on the page, in its one soft light, with Details
+              under it (FoodHeroCard). */}
+          <div className="relative flex flex-col items-center">
+            <div className="food-hero-glow pointer-events-none absolute inset-x-[-16px] top-[-38px] h-[340px]" />
+            <BeforeAfter
+              live={live}
+              className="relative w-full"
+              before={<Wheel calories={DAY.before.calories} />}
+              after={<Wheel calories={AFTER.calories} />}
+            />
+            <span className="relative flex min-h-[44px] items-center gap-1 px-3 text-sm font-medium">
+              Details
+              <ChevronRight className="size-4" />
             </span>
           </div>
+          <BeforeAfter
+            live={live}
+            before={
+              <FoodWeekStrip
+                days={weekDays(DAY.before.calories)}
+                onSelect={() => {}}
+              />
+            }
+            after={
+              <FoodWeekStrip
+                days={weekDays(AFTER.calories)}
+                onSelect={() => {}}
+              />
+            }
+          />
+          <BeforeAfter
+            live={live}
+            before={<Macros totals={DAY.before} />}
+            after={<Macros totals={AFTER} />}
+          />
+        </div>
+        {/* The composer's field at rest (FoodComposerCard): the pencil,
+            the prompt, and the camera at its end. It asks for no meal. */}
+        <div className="relative flex items-stretch">
+          <div className="ds-input-box absolute inset-0" />
+          <span className="relative flex size-[44px] shrink-0 items-center justify-center self-center text-muted-foreground">
+            <PenLine className="size-4" />
+          </span>
+          <span className="relative flex min-h-[48px] min-w-0 flex-1 items-center pl-0.5 text-sm text-muted-foreground">
+            Describe a meal
+          </span>
+          <span className="relative flex size-[48px] shrink-0 items-center justify-center self-center text-nutrition-strong">
+            <Camera className="size-[24px]" />
+          </span>
         </div>
         <div className="rounded-2xl bg-card p-4 card-shadow">
           <BeforeAfter
@@ -1114,6 +1170,7 @@ function FoodScreen({ live }: { live: boolean }) {
           {live && (
             <motion.div
               data-beat="logged"
+              className="border-b border-border/40"
               initial={{ opacity: 0 }}
               {...from(COUNT)}
             >
@@ -1127,7 +1184,25 @@ function FoodScreen({ live }: { live: boolean }) {
               />
             </motion.div>
           )}
-          <div className="border-t border-border/40">
+          {/* The day's earlier rows stand under the heading until the
+              meal is counted, then move down a row for it, as the diary's
+              do. The new row's room is always there (a height cannot be
+              animated here), so without the move the card showed a gap
+              where the row was going to be: it is on the first screen
+              since Food11, where it was behind the tab bar before. */}
+          <motion.div
+            initial={live ? { y: -LOG_ROW_H } : false}
+            animate={live ? { y: [-LOG_ROW_H, -LOG_ROW_H, 0, 0] } : undefined}
+            transition={
+              live
+                ? {
+                    ...LOOP,
+                    ease: "easeInOut",
+                    times: times(0, COUNT, COUNT + 0.2, LOOP_S),
+                  }
+                : undefined
+            }
+          >
             <LogRow
               name="Greek yogurt"
               meal="Snacks"
@@ -1135,18 +1210,20 @@ function FoodScreen({ live }: { live: boolean }) {
               time={dayTime(16, 24)}
               calories={180}
             />
-          </div>
-          <div className="border-t border-border/40">
-            <LogRow
-              name="Chicken & rice"
-              meal="Lunch"
-              slot="lunch"
-              time={dayTime(13, 17)}
-              calories={650}
-            />
-          </div>
+            <div className="border-t border-border/40">
+              <LogRow
+                name="Chicken & rice"
+                meal="Lunch"
+                slot="lunch"
+                time={dayTime(13, 17)}
+                calories={650}
+              />
+            </div>
+          </motion.div>
         </div>
       </motion.div>
+
+      {live && <Flight />}
 
       {/* Fixed chrome: a strip of page colour under the status bar, and
           the floating tab bar. */}

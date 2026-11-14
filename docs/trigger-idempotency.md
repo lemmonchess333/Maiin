@@ -70,9 +70,6 @@ idempotent by **one** of these mechanisms:
 - **`fanoutActivityToFeeds`** (`lib/socialFanout.js:151`) — feeds are
   server-only writes, so no reader depends on the previous auto-generated id;
   overwrite-on-replay is safe.
-- **`applyPartnerActivity`** (`lib/partnerStreakPersist.js`) — partner-streak
-  state is MAX-idempotent with a changed-guard skip; a same-day re-log is a
-  no-op write (see the Soc7 QA notes in `CLAUDE.md`).
 
 ## Checklist for a NEW trigger
 

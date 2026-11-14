@@ -103,15 +103,16 @@ describe("one edit entry, not three", () => {
     expect(program).not.toContain('navigate("/settings/lift-plan")');
   });
 
-  it("points the ⋯ edit row at the lift editor on the Lift tab", () => {
+  it("points the ⋯ edit row at the editor of the tab in view", () => {
     expect(program).toContain('? "/settings/lift-plan"');
-    expect(program).toContain(': "/settings/training"');
+    expect(program).toContain(': "/settings/run-plan"');
+    // Trim1 call 2: the Programme page it went to from the Run tab is gone.
+    expect(program).not.toContain('"/settings/training"');
   });
 
-  it("keeps the full programme form reachable from the Run tab", () => {
-    /* The lift editor is the right destination FROM the Lift tab; the
-       everything-form is still one tap away on Run, and from Settings
-       on either. */
+  it("chooses between the two editors by the tab", () => {
+    /* The lift editor from the Lift tab, the run editor from the Run
+       tab; Settings lists both. */
     const at = program.indexOf('? "/settings/lift-plan"');
     expect(program.slice(Math.max(0, at - 200), at)).toContain(
       'activeTab === "lift"'

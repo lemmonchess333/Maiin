@@ -1,0 +1,34 @@
+// Scratch: the owner's Pull A as his screenshot shows it (11 Nov 2026),
+// priced on the engine's clock.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { estimateSessionMinutes } from "../expressSession";
+import { EXERCISES } from "@/lib/exercises";
+
+it("owner pull a", () => {
+  const day: Array<[string, number, number]> = [
+    ["Barbell Row", 12, 50], ["Single-Arm Lat Pulldown", 12, 35], ["Barbell Curl", 12, 7.5], ["Pull-Ups", 8, 0],
+    ["Preacher Curl", 15, 7.5], ["Deadlift", 10, 102.5], ["Tricep Dips", 9, 0], ["Barbell Squat", 10, 87.5],
+    ["Front Squat", 10, 65], ["Romanian Deadlift", 10, 67.5], ["Seated Calf Raise", 10, 87.5], ["Cable Crunch", 10, 40],
+  ];
+  const legsA: Array<[string, number, number]> = [
+    ["Barbell Squat", 8, 47.5], ["Deadlift", 8, 100], ["Bulgarian Split Squat", 12, 30], ["Cable Crunch", 15, 37.5], ["Standing Calf Raise", 12, 32.5],
+  ];
+  const find = (name: string) => {
+    const c = (EXERCISES as Array<{ id: string; name: string; mechanic?: string }>).find((x) => x.name === name);
+    if (!c) throw new Error("no exercise " + name);
+    return c;
+  };
+  const build = (rows: Array<[string, number, number]>, flag: (i: number) => boolean | undefined) =>
+    rows.map(([name, reps, weight], i) => ({ name, exerciseId: find(name).id, sets: 2, reps, weight, isAccessory: flag(i) }));
+  const out: string[] = [];
+  for (const sessionMinutes of [45, 60]) {
+    out.push(`Pull A, 12 lifts x 2 sets, session ${sessionMinutes}: ` +
+      `${estimateSessionMinutes(build(day, () => undefined) as never, { sessionMinutes })} min with no lift flagged as supporting work, ` +
+      `${estimateSessionMinutes(build(day, (i) => i > 1) as never, { sessionMinutes })} min with all but the first two flagged`);
+    out.push(`Legs A, 5 lifts x 2 sets, session ${sessionMinutes}: ` +
+      `${estimateSessionMinutes(build(legsA, (i) => i > 1) as never, { sessionMinutes })} min (first two as main lifts)`);
+  }
+  out.push("mechanic: " + day.map(([n]) => `${n}=${find(n).mechanic}`).join(", "));
+  writeFileSync("/tmp/work/train/owner-pull-a.txt", out.join("\n"));
+});

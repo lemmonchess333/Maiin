@@ -203,7 +203,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   // that used to say so.
   "src/lib/backDismiss.ts:useBackDismissController",
 
-  "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
   "src/features/program/run9Migration.ts:migrateRunStateToRun9",

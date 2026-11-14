@@ -204,7 +204,7 @@ export function rewardLine(
     case "streak": {
       const next = STREAK_MILESTONES.find((days) => days > moment.days);
       return {
-        before: "You've trained ",
+        before: "You’ve trained ",
         figure: keepTogether(`${moment.days} days`),
         after: next ? ` in a row. ${next} is next.` : " in a row.",
       };

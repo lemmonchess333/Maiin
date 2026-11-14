@@ -166,11 +166,12 @@ test("reviews a run move while preserving actual history, lift rotation and usua
     await page.goto("./");
     const emailField = page.locator("#login-email");
     const signIn = page.getByRole("button", {
-      name: "I have an account",
+      name: "Sign in",
       exact: true,
     });
     await signIn.or(emailField).first().waitFor();
-    if (await signIn.isVisible()) await signIn.click();
+    // The form's submit is "Sign in" too: the email field says which screen is open.
+    if (!(await emailField.isVisible())) await signIn.first().click();
     await emailField.fill(email);
     await page.locator("#login-password").fill(PASSWORD);
     await page.locator('button[type="submit"]').first().click();

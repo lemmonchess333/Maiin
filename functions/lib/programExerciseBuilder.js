@@ -72,6 +72,7 @@ function buildProgramExercise(ex) {
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
     ...(ex.stretched !== undefined ? { stretched: ex.stretched } : {}),
     ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
+    ...(ex.supersetWith !== undefined ? { supersetWith: ex.supersetWith } : {}),
   };
 }
 

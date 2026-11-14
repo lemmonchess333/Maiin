@@ -133,7 +133,7 @@ function saveQueue(queue: QueuedWrite[]) {
   // Never evict an accepted durable meal to make space for another write.
   if (queue.some((item) => item.durable))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   // A refused write with no storage at all is not a full store: there is
   // nothing to shed into, and every shed would be reported as a drop.
@@ -210,7 +210,7 @@ export function queueDurableWrite(
   // Strict persistence: no quota shedding and no success on unavailable storage.
   if (!writeJson(QUEUE_KEY, queue))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   notifyQueue();
 }
@@ -281,7 +281,7 @@ function retainWorkoutCompletion(
     });
   if (!writeJson(QUEUE_KEY, queue))
     throw new Error(
-      "Couldn't save on this phone. Free device storage and retry."
+      "Couldn’t save on this phone. Free device storage and retry."
     );
   notifyQueue();
   return id;
@@ -485,7 +485,7 @@ export function discardRefusedSaves(uid: string): Promise<number> {
         queue.filter((item) => !discarded.includes(item))
       )
     )
-      throw new Error("Couldn't update this phone. Try again.");
+      throw new Error("Couldn’t update this phone. Try again.");
     notifyQueue();
     const completions = discarded
       .filter((item) => item.workoutCompletion)

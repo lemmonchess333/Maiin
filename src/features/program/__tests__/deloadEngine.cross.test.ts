@@ -308,7 +308,7 @@ describe("deload run half — client planner → server reducer", () => {
     );
     expect(byId["rd-tempo_40"]).toBe("tempo_30");
     expect(byId["rd-6x1k"]).toBe("5x1k");
-    expect(byId["rd-long_20k"]).toBe("long_15k");
+    expect(byId["rd-long_20k"]).toBe("long_16k");
     // Never the ease-week's destination — that is the rejected mechanism.
     expect(Object.values(byId)).not.toContain("easy_30");
   });

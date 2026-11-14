@@ -12,20 +12,20 @@ import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { withSign } from "@/utils/formatters";
 
 /**
- * Solo-user alternative to LeaderboardCard. Surfaces this week's
- * sessions vs last week's, the measure the friends board ranks
- * (Polish2 call 5), so the "leaderboard slot" on the Following tab stays
- * useful for users who don't yet have enough friends for a meaningful
- * leaderboard, and reads the same once they do.
+ * The week card on the Following feed: this week's sessions against last
+ * week's, the one measure a lifter and a runner share (Polish2 call 5).
+ * It began as the stand-in for the friends board, for someone following
+ * too few people for a board to mean anything. The board went on 11
+ * November 2026 (Trim1 call 3(a)), and this is the slot's one card, for
+ * anyone who follows someone.
  *
  * SOC-P1c: presentational — FeedView owns the getPersonalTrajectory
  * fetch (same one-shot read, just lifted), so an empty week renders no
  * card at all rather than a grid of zeros. It sits under the third
  * post, not above the feed.
  *
- * Keeps the same outer shape (p-4 rounded-2xl card with a header
- * row featuring Zap + title + "This week" pill) as LeaderboardCard
- * so swapping between the two doesn't cause a layout shift.
+ * The outer shape is a p-4 rounded-2xl card with a header row: Zap, the
+ * title and a "This week" pill.
  */
 export default function TrajectoryCard({
   data,

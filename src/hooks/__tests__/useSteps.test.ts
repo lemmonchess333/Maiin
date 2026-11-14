@@ -268,7 +268,7 @@ describe("useSteps connect / priming persistence", () => {
     expect(result.current.status).toBe("unprompted");
     expect(result.current.primingShown).toBe(true);
     expect(getTodayStepTotal).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalledWith("Couldn't connect Apple Health");
+    expect(toastError).toHaveBeenCalledWith("Couldn’t connect Apple Health");
   });
 
   /* A failed save of the flags went unsaid, and the next launch asked to
@@ -282,7 +282,7 @@ describe("useSteps connect / priming persistence", () => {
       await result.current.connect();
     });
     expect(toastError).toHaveBeenCalledWith(
-      "Couldn't save your Apple Health setting. Try again."
+      "Couldn’t save your Apple Health setting. Try again."
     );
   });
 

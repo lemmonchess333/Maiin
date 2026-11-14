@@ -107,6 +107,11 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["REVENUECAT_REST_KEY"],
   },
+  getSubscriptionManagementUrl: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   trialReminderSweep: {
     kind: "schedule",
     maxInstances: 1,
@@ -478,11 +483,6 @@ const EXPECTED = {
     schedule: "0 5 * * 1",
     timeoutSeconds: 540,
   },
-  startPartnerStreak: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
-  },
   createGoalSpace: {
     kind: "callable",
     maxInstances: 100,
@@ -538,11 +538,6 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
-  },
-  setBoardSharing: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
   },
   // Soc15 call 3: weekly leagues. Joining or leaving, and the week's turn,
   // Monday 12:15 UTC, after every timezone's Sunday has ended.

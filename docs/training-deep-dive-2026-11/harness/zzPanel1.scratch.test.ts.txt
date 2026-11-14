@@ -1,0 +1,69 @@
+// Scratch: panel 1. Target weeks for six lift days, General fitness,
+// intermediate, at 45 and 60 minutes, priced on the engine's own clock.
+import { it } from "vitest";
+import { writeFileSync } from "node:fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { estimateSessionMinutes } from "../expressSession";
+import { EXERCISES } from "@/lib/exercises";
+
+type Ex = { name: string; exerciseId: string; sets: number; reps: number; repRangeMax?: number; weight?: number; isAccessory?: boolean };
+type Row = [name: string, sets: number, lo: number, hi: number, main?: boolean];
+
+const GUESS: Record<string, number> = {
+  "Incline Dumbbell Press": 20, "Chest Press Machine": 50, "Reverse Flyes": 7.5, "Hammer Curl": 10, "Leg Press": 120,
+  "Leg Extension": 40, "Seated Leg Curl": 35, "Seated Calf Raise": 40, "Cable Lateral Raise": 7.5, "Face Pulls": 20,
+  "Romanian Deadlift": 70, "Cable Fly": 15, "Standing Calf Raise": 40, "Cable Crunch": 35,
+};
+
+const WEEKS: Record<string, Record<string, Row[]>> = {
+  "60": {
+    "Push A": [["Bench Press", 4, 6, 10, true], ["Dumbbell Shoulder Press", 3, 8, 12], ["Incline Dumbbell Press", 3, 8, 12], ["Lateral Raise", 3, 12, 17], ["Rope Tricep Pushdown", 3, 10, 15]],
+    "Pull A": [["Pull-Ups", 4, 6, 10, true], ["Barbell Row", 3, 8, 12], ["Lat Pulldown", 3, 10, 14], ["Face Pulls", 3, 12, 17], ["Dumbbell Curl", 3, 10, 15]],
+    "Legs A": [["Barbell Squat", 4, 6, 10, true], ["Romanian Deadlift", 3, 8, 12], ["Leg Press", 3, 10, 14], ["Seated Leg Curl", 3, 10, 15], ["Standing Calf Raise", 3, 10, 15]],
+    "Push B": [["Overhead Press", 4, 6, 10, true], ["Dumbbell Bench Press", 3, 8, 12], ["Chest Press Machine", 3, 10, 14], ["Cable Lateral Raise", 3, 12, 17], ["Overhead Tricep Extension", 3, 10, 15]],
+    "Pull B": [["Barbell Row", 4, 6, 10, true], ["Lat Pulldown", 3, 8, 12], ["Seated Cable Row", 3, 10, 14], ["Reverse Flyes", 3, 12, 17], ["Hammer Curl", 3, 10, 15]],
+    "Legs B": [["Deadlift", 3, 5, 8, true], ["Hack Squat", 3, 8, 12], ["Leg Extension", 3, 10, 15], ["Seated Calf Raise", 3, 12, 17], ["Cable Crunch", 3, 10, 15]],
+  },
+  "45": {
+    "Push A": [["Bench Press", 3, 6, 10, true], ["Dumbbell Shoulder Press", 3, 8, 12], ["Lateral Raise", 3, 12, 17], ["Rope Tricep Pushdown", 3, 10, 15]],
+    "Pull A": [["Pull-Ups", 3, 6, 10, true], ["Barbell Row", 3, 8, 12], ["Face Pulls", 3, 12, 17], ["Dumbbell Curl", 3, 10, 15]],
+    "Legs A": [["Barbell Squat", 3, 6, 10, true], ["Romanian Deadlift", 3, 8, 12], ["Leg Press", 3, 10, 14], ["Standing Calf Raise", 3, 10, 15]],
+    "Push B": [["Overhead Press", 3, 6, 10, true], ["Dumbbell Bench Press", 3, 8, 12], ["Cable Lateral Raise", 3, 12, 17], ["Overhead Tricep Extension", 3, 10, 15]],
+    "Pull B": [["Barbell Row", 3, 6, 10, true], ["Lat Pulldown", 3, 8, 12], ["Reverse Flyes", 3, 12, 17], ["Hammer Curl", 3, 10, 15]],
+    "Legs B": [["Deadlift", 3, 5, 8, true], ["Hack Squat", 3, 8, 12], ["Seated Leg Curl", 3, 10, 15], ["Cable Crunch", 3, 10, 15]],
+  },
+};
+
+it("panel 1", () => {
+  const seen = new Map<string, Ex>();
+  for (const primaryGoal of ["hypertrophy", "general"])
+    for (const liftDays of [3, 4, 5, 6])
+      for (const sessionMinutes of [60, 75]) {
+        const plan = buildPlan({
+          primaryGoal, nutritionPhase: "recomp", experience: "intermediate", sessionMinutes, bodyweightKg: 80, sex: "male",
+          liftDays, preferredSplit: "auto", runMode: "freeform", weeklyRunDays: 0, equipment: "full_gym", injuries: [], currentDate: "2026-11-09",
+        } as unknown as PlanBuilderInput) as unknown as { programState: { workouts: Array<{ exercises: Ex[] }> } };
+        for (const d of plan.programState.workouts) for (const e of d.exercises) seen.set(e.name, e);
+      }
+  const mk = ([name, sets, lo, hi, main]: Row): Ex => {
+    const hit = seen.get(name);
+    const c = (EXERCISES as Array<{ id: string; name: string }>).find((x) => x.name === name);
+    if (!hit && !c) throw new Error("no exercise " + name);
+    const base: Ex = hit ?? { name, exerciseId: c!.id, sets, reps: lo, weight: GUESS[name] ?? 20 };
+    return { ...base, sets, reps: lo, repRangeMax: hi, isAccessory: !main, weight: hit?.weight || GUESS[name] || base.weight };
+  };
+  const out: string[] = [];
+  for (const [minutes, week] of Object.entries(WEEKS)) {
+    let total = 0;
+    out.push(`\n== Target, ${minutes} minutes`);
+    for (const [day, rows] of Object.entries(week)) {
+      const ex = rows.map(mk);
+      const sets = ex.reduce((t, e) => t + e.sets, 0);
+      total += sets;
+      out.push(`${day} | ${ex.length} lifts | ${sets} sets | ${estimateSessionMinutes(ex as never, { sessionMinutes: Number(minutes) })} min | ` +
+        ex.map((e) => `${e.name} ${e.sets}x${e.reps}-${e.repRangeMax}${e.isAccessory ? "" : "*"}`).join(", "));
+    }
+    out.push(`week: ${total} sets`);
+  }
+  writeFileSync("/tmp/work/train/panel1-target.txt", out.join("\n"));
+});

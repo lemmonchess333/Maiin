@@ -112,14 +112,14 @@ export default function MedalReveal({
         background: "dark",
       });
       if (!file) {
-        toast.error("Couldn't create the share image. Try again.");
+        toast.error("Couldn’t create the share image. Try again.");
         return;
       }
       const outcome = await shareImageFile(
         file,
         `${medalTitle(medal)} on Tropos`
       );
-      if (outcome === "failed") toast.error("Couldn't share. Try again.");
+      if (outcome === "failed") toast.error("Couldn’t share. Try again.");
     } finally {
       setSharing(false);
     }

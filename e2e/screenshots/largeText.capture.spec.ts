@@ -7,7 +7,8 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food and its manual entry and edit sheets, Social's
+ * on a Monday), Food, its meal menu and its manual entry and edit
+ * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
  * following, Settings and every section of it, Train's exercise menu, a
@@ -48,6 +49,7 @@ import {
   openSignInForm,
   signInAsTestUser,
 } from "../helpers/auth";
+import { setTestUserTier } from "../helpers/testUserTier";
 import { emulatorActive } from "../helpers/emulator";
 import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
@@ -92,20 +94,16 @@ const ACCEPTED: {
 const SETTINGS_PAGES = [
   "profile",
   "account",
-  "training",
   "lift-plan",
   "run-plan",
-  "workout-prefs",
   "nutrition",
   "pantry",
-  "data",
   "recently-deleted-meals",
   "health",
   "shoes",
   "notifications",
   "privacy",
   "units-appearance",
-  "subscription",
   "support-legal",
 ] as const;
 
@@ -313,32 +311,38 @@ test.describe("large text", () => {
       monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7));
       monday.setHours(12, 0, 0, 0);
       await page.clock.setFixedTime(monday);
-      await signInAsTestUser(page);
+      // Six months is a Pro range (whole-app grill Q84).
+      await setTestUserTier("pro");
       const found: string[] = [];
-      const nav = page.getByRole("navigation").first();
+      try {
+        await signInAsTestUser(page);
+        const nav = page.getByRole("navigation").first();
 
-      for (const [range, views] of [
-        ["1W", [""]],
-        ["1M", ["", "lifting", "running"]],
-        ["6M", ["", "lifting", "running"]],
-      ] as const) {
-        for (const view of views) {
-          await page.goto(
-            `history?${view ? `view=${view}&` : ""}range=${range}`
-          );
-          await ready(page, nav);
-          // The chart is what this measures: a page without it would pass.
-          await page
-            .getByTestId("axis-ends")
-            .first()
-            .waitFor({ state: "attached", timeout: 20_000 });
-          await measure(
-            page,
-            `history${view ? `-${view}` : ""}-${range}-monday`,
-            width,
-            found
-          );
+        for (const [range, views] of [
+          ["1W", [""]],
+          ["1M", ["", "lifting", "running"]],
+          ["6M", ["", "lifting", "running"]],
+        ] as const) {
+          for (const view of views) {
+            await page.goto(
+              `history?${view ? `view=${view}&` : ""}range=${range}`
+            );
+            await ready(page, nav);
+            // The chart is what this measures: a page without it would pass.
+            await page
+              .getByTestId("axis-ends")
+              .first()
+              .waitFor({ state: "attached", timeout: 20_000 });
+            await measure(
+              page,
+              `history${view ? `-${view}` : ""}-${range}-monday`,
+              width,
+              found
+            );
+          }
         }
+      } finally {
+        await setTestUserTier("free");
       }
 
       expect(found).toEqual([]);
@@ -548,7 +552,7 @@ test.describe("large text", () => {
         page,
         page
           .getByText("Nothing from people you follow yet")
-          .or(page.getByText("You don't follow anyone yet"))
+          .or(page.getByText("You don’t follow anyone yet"))
           .or(
             page
               .getByRole("button", { name: /^(Add a comment|View comments)$/ })
@@ -795,7 +799,7 @@ test.describe("large text", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       await page.goto("space/womens-running/post/no-such-post");
-      await ready(page, page.getByText("This post isn't available"));
+      await ready(page, page.getByText("This post isn’t available"));
       await measure(page, "space-post-unavailable", width, found);
 
       expect(found).toEqual([]);
@@ -835,7 +839,7 @@ test.describe("large text", () => {
       await page.goto("program/plan");
       await ready(page, page.getByRole("heading", { name: "Your plan" }));
       await page
-        .getByRole("region", { name: "This week's plan" })
+        .getByRole("region", { name: "This week’s plan" })
         .getByRole("listitem")
         .first()
         .waitFor({ timeout: 20_000 });
@@ -903,7 +907,7 @@ test.describe("large text", () => {
       await page.waitForTimeout(800);
       await measure(page, "week-reset-heavy", width, found);
       const express = page.getByRole("button", {
-        name: "Use this week's Express session",
+        name: "Use this week’s Express session",
       });
       if (await express.isVisible().catch(() => false)) {
         await express.click();

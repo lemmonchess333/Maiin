@@ -584,18 +584,26 @@ export const CATALOGUE_PINNED_ACCESSORY_IDS: ReadonlySet<string> = new Set([
   // exercise — available at every equipment tier, so no
   // PINNED_EQUIPMENT_FALLBACK entry is needed.
   "lateral-raise",
+  // Rear-delt slots (Lift21): categorised horizontal_pull, so an unpinned
+  // re-point would turn the pull days' only direct rear-delt work into
+  // another row.
+  "face-pulls",
+  "reverse-flyes",
 ]);
 
 /**
  * Equipment fallback for pinned slots: when the user's equipment tier can't
  * provide the machine, the slot re-points HERE — a calf raise stays a calf
  * raise — instead of taking the generic within-category swap (which would
- * hand the slot to a squat variation). Bodyweight, so it is available at
- * every tier; `rescaleForSwap` correctly returns 0 (uncalibrated) for it.
+ * hand the slot to a squat variation). The calf fallback is bodyweight, so
+ * it is available at every tier; `rescaleForSwap` correctly returns 0
+ * (uncalibrated) for it.
  */
 export const PINNED_EQUIPMENT_FALLBACK: Readonly<Record<string, string>> = {
   "standing-calf-raise": "single-leg-calf-raise",
   "seated-calf-raise": "single-leg-calf-raise",
+  // The cable's rear-delt lift becomes the dumbbells'.
+  "face-pulls": "reverse-flyes",
 };
 
 /** The categories whose primary is a whole-body compound: the squat, the

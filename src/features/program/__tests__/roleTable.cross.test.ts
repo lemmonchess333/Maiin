@@ -4,7 +4,14 @@ import { createRequire } from "node:module";
 import { EXERCISES } from "@/lib/exercises";
 import { exerciseRole, type ExerciseRole } from "../exerciseRole";
 import { toExperience, type Experience } from "../experienceModel";
-import { isHighRepIsolation, roleReps, roleRepsFor } from "../roleTable";
+import {
+  FLOOR_DEADLIFT_IDS,
+  hasSixRepFloor,
+  isHighRepIsolation,
+  roleReps,
+  roleRepsFor,
+  SIX_REP_FLOOR,
+} from "../roleTable";
 import type { PrimaryGoal } from "../programTypes";
 
 /**
@@ -21,7 +28,10 @@ import type { PrimaryGoal } from "../programTypes";
  */
 const require = createRequire(import.meta.url);
 const cf = require("../../../../functions/lib/roleTable") as {
+  FLOOR_DEADLIFT_IDS: readonly string[];
   HIGH_REP_EXERCISE_IDS: readonly string[];
+  SIX_REP_FLOOR: number;
+  SIX_REP_FLOOR_IDS: readonly string[];
   ISOLATION_EXERCISE_IDS: readonly string[];
   exerciseRole: (ex: unknown) => ExerciseRole;
   roleReps: (
@@ -55,6 +65,21 @@ const EXPERIENCES: (Experience | undefined)[] = [
 const ROLES: ExerciseRole[] = ["main", "compound", "isolation"];
 
 describe("role table — client vs functions mirror", () => {
+  it("the floor deadlifts are the same list, and all in the catalogue", () => {
+    expect([...cf.FLOOR_DEADLIFT_IDS]).toEqual([...FLOOR_DEADLIFT_IDS]);
+    const ids = new Set(EXERCISES.map((e) => e.id));
+    expect(FLOOR_DEADLIFT_IDS.filter((id) => !ids.has(id))).toEqual([]);
+  });
+
+  it("the six-rep floor's list is the catalogue's dumbbell, kettlebell and one-leg lifts", () => {
+    expect(cf.SIX_REP_FLOOR).toBe(SIX_REP_FLOOR);
+    expect([...cf.SIX_REP_FLOOR_IDS].sort()).toEqual(
+      EXERCISES.filter((e) => hasSixRepFloor(e.id))
+        .map((e) => e.id)
+        .sort()
+    );
+  });
+
   it("the isolation list is the catalogue's isolations", () => {
     expect([...cf.ISOLATION_EXERCISE_IDS].sort()).toEqual(
       EXERCISES.filter((e) => e.mechanic === "isolation")

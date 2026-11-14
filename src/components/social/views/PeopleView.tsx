@@ -12,7 +12,6 @@ import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
 import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
-import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
 import { Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { THEME } from "@/lib/theme";
@@ -30,10 +29,6 @@ export interface PeopleViewProps {
    *  mounted across tab switches (SOCIAL-HOME-01 Stage A) so search
    *  state survives exactly as it did pre-extraction. */
   active: boolean;
-  /** True while FeedView's FullLeaderboard overlay is open — the shell
-   *  hides the tab bar and every tab section, exactly as the old
-   *  inline `!showFullLeaderboard && <>` gate did. */
-  chromeHidden: boolean;
   blockedUsers: Set<string>;
   /** SOCIAL-PRIVACY-01: true once the block list has loaded. The
    *  suggested-people fetch waits on this so a blocked user can't
@@ -45,7 +40,6 @@ export interface PeopleViewProps {
 
 export default function PeopleView({
   active,
-  chromeHidden,
   blockedUsers,
   blockedReady,
   openTogether,
@@ -156,7 +150,7 @@ export default function PeopleView({
       } catch {
         if (seq !== searchSeqRef.current) return;
         setSearchResults([]);
-        setSearchError("Couldn't search right now");
+        setSearchError("Couldn’t search right now");
       }
       if (seq === searchSeqRef.current) setSearching(false);
     },
@@ -186,7 +180,7 @@ export default function PeopleView({
     };
   }, []);
 
-  if (!active || chromeHidden) return null;
+  if (!active) return null;
 
   return (
     <section aria-label="People">
@@ -300,7 +294,6 @@ export default function PeopleView({
                           {u.displayName || "Athlete"}
                         </p>
                         <FollowsYouBadge uid={u.uid} />
-                        <PartnerReadyBadge uid={u.uid} />
                       </div>
                     </div>
                   </Link>
@@ -406,7 +399,6 @@ export default function PeopleView({
                         {p.displayName}
                       </p>
                       <FollowsYouBadge uid={p.uid} />
-                      <PartnerReadyBadge uid={p.uid} />
                     </div>
                     {/* No reason, no line: the name sits alone. */}
                     {suggestionReason(p) && (

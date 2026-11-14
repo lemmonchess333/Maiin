@@ -1,8 +1,12 @@
 /**
- * FoodHeroCard on a day before the account began (Food10 (3)): no ring,
- * no Details and no macro tiles, since a target and an empty day would be
- * claims about a day the app knows nothing about. A day with food logged
- * on it keeps the ring.
+ * FoodHeroCard on a day before the account began (Food10 (3)): no ring
+ * and no Details, since a target and an empty day would be claims about
+ * a day the app knows nothing about. A day with food logged on it keeps
+ * the ring.
+ *
+ * The macros are the page's to leave out since Food11 (`FoodMacroRow`, a
+ * sibling of the hero): `foodPageLayout.test.ts` pins that Food draws
+ * them only when the day is not one of these.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -51,21 +55,19 @@ function renderHero(selectedDate: string, dailyTotals: typeof EMPTY = EMPTY) {
 const RING = /toggle between calories left and calories logged/i;
 
 describe("FoodHeroCard — before the account began", () => {
-  it("says so in place of the ring, with no Details or tiles", () => {
-    const { container } = renderHero("2026-06-09");
+  it("says so in place of the ring, with no Details", () => {
+    renderHero("2026-06-09");
     expect(screen.getByText("Before you joined")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: RING })).toBeNull();
     expect(
       screen.queryByRole("button", { name: /view nutrition breakdown/i })
     ).toBeNull();
-    expect(container.querySelectorAll("[data-macro]")).toHaveLength(0);
   });
 
   it("draws the ring from the day the account began", () => {
-    const { container } = renderHero("2026-06-10");
+    renderHero("2026-06-10");
     expect(screen.queryByText("Before you joined")).toBeNull();
     expect(screen.getByRole("button", { name: RING })).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-macro]")).toHaveLength(3);
   });
 
   it("keeps the ring on an earlier day that has food logged", () => {

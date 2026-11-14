@@ -263,6 +263,26 @@ describe("Home programme loading", () => {
   });
 });
 
+describe("the signed-out screens", () => {
+  it("draw their pictures without the exercise database or the animation library", () => {
+    /* Login is its own chunk, fetched before anyone has signed in. Its
+       drawing is named by path (authArt.ts) so the 105 KB catalogue
+       stays behind, its figure moves by a flipbook, and the welcome's
+       photographs fade by CSS, not framer. */
+    const graph = eagerGraph(resolve(SRC, "pages/Login.tsx"));
+    expect(graph.has(resolve(SRC, "components/auth/WelcomePhotos.tsx"))).toBe(
+      true
+    );
+    for (const path of ["lib/exercises.ts", "lib/formArtCutouts.ts"]) {
+      expect(
+        graph.get(resolve(SRC, path))?.join("\n    → ") ?? null,
+        `Login statically imports ${path}`
+      ).toBeNull();
+    }
+    expect(eagerPackages(graph).get("framer-motion") ?? null).toBeNull();
+  });
+});
+
 describe("the word filter's lists", () => {
   it("load only through wordFilter.ts, never with a static import", () => {
     /* About 100 KB of word lists. A static import anywhere puts them in

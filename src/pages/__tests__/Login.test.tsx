@@ -100,9 +100,9 @@ describe("Login — who sees which screen", () => {
     expect(screens()).toEqual(["welcome", "sign_up"]);
   });
 
-  it("I have an account opens the sign-in form", () => {
+  it("Sign in opens the sign-in form", () => {
     show();
-    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(
       screen.getByRole("heading", { name: "Welcome back" })
     ).toBeInTheDocument();
@@ -117,6 +117,40 @@ describe("Login — who sees which screen", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Get started" })).toBeNull();
     expect(screens()).toEqual(["sign_in"]);
+  });
+});
+
+/* The welcome stands on photographs of athletes (owner, 2026-11-12), and
+   the forms open on a lifter who faces you (DS8). Both carry the lockup. */
+describe("Login — what the signed-out screens show", () => {
+  it("the welcome carries the lockup over its photographs, in the dark theme", () => {
+    const { container } = show();
+    expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
+    const photos = container.querySelector(".welcome-photos");
+    // A picture, not content: the words say what Tropos is.
+    expect(photos).toHaveAttribute("aria-hidden", "true");
+    expect(photos?.querySelector("img")).toHaveAttribute("alt", "");
+    // Light words on a dark ground in either theme: the stage's colours,
+    // which are fixed, not the theme's.
+    expect(
+      screen.getByRole("heading", {
+        name: "Your training and food, planned together",
+      })
+    ).toHaveClass("text-stage-foreground");
+  });
+
+  it("sign-in and sign-up share one lifter, which is not drawn again on the way across", () => {
+    h.signedInBefore = true;
+    const { container } = show();
+    expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
+    const lifter = container.querySelector(".signin-figure");
+    expect(lifter).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+    expect(
+      screen.getByRole("heading", { name: "Create your account" })
+    ).toBeInTheDocument();
+    // The same node: a new one would play its rep from the start.
+    expect(container.querySelector(".signin-figure")).toBe(lifter);
   });
 });
 
@@ -161,7 +195,7 @@ describe("Login — agreeing to the Terms", () => {
   it("is on the sign-in form, where Apple and Google can create an account too", () => {
     h.signedInBefore = true;
     show();
-    expectAgreementUnderEveryButton("Sign In");
+    expectAgreementUnderEveryButton("Sign in");
   });
 
   it("is not on the welcome screen, where no account can be made", () => {
@@ -288,7 +322,7 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
       screen.getByRole("button", { name: /Continue with Google/ })
     ).not.toHaveTextContent("Last used");
     expect(
-      screen.getByRole("button", { name: /^Sign In/ })
+      screen.getByRole("button", { name: /^Sign in/ })
     ).not.toHaveTextContent("Last used");
   });
 
@@ -296,7 +330,7 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
     h.signedInBefore = true;
     localStorage.setItem("tropos.last_sign_in_method", "password");
     show();
-    expect(screen.getByRole("button", { name: /^Sign In/ })).toHaveTextContent(
+    expect(screen.getByRole("button", { name: /^Sign in/ })).toHaveTextContent(
       "Last used"
     );
   });
@@ -348,7 +382,7 @@ describe("Login — reading the Terms and coming back", () => {
 
   it("brings the form back once, not on every later visit", () => {
     withLegalPages();
-    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(

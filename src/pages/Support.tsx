@@ -41,7 +41,7 @@ export default function Support() {
         <div className="space-y-5 text-sm text-foreground/80 leading-relaxed">
           <section className="space-y-3">
             <p>
-              Something broken, confusing, or missing? Email us and we'll get
+              Something broken, confusing, or missing? Email us and we’ll get
               you sorted.
             </p>
             <a
@@ -71,7 +71,7 @@ export default function Support() {
               Sign-in problems
             </h2>
             <p>
-              Can't get into your account? Use{" "}
+              Can’t get into your account? Use{" "}
               <span className="text-foreground font-medium">
                 Forgot password
               </span>{" "}

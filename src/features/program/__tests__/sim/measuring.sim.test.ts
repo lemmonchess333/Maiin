@@ -1685,7 +1685,7 @@ describe.skipIf(!SEEDS)("L5 (F8): the time fit's warm-ups", () => {
         };
         const b = priced(BLOCK_SESSIONS);
         const b12 = priced(LONGEST_BLOCK_SESSIONS);
-        const refit = refitWhenRampsGrow(goal, level);
+        const refit = refitWhenRampsGrow(level);
         const recC = recording(refit);
         const c = {
           list: seasons(persona, 26, { planVariant: recC.variant }),

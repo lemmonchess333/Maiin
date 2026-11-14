@@ -82,7 +82,7 @@ export default function CircleShareSheet({
     // saying so here keeps the person's words in the box to reword.
     const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
     if (!filter) {
-      toast.error("Couldn't share. Try again.");
+      toast.error("Couldn’t share. Try again.");
       return;
     }
     if (filter.containsProfanity(note)) {
@@ -104,7 +104,7 @@ export default function CircleShareSheet({
       onOpenChange(false);
     } else {
       // Stays open — the user keeps their note and selection.
-      toast.error("Couldn't share. Try again.");
+      toast.error("Couldn’t share. Try again.");
     }
   };
 

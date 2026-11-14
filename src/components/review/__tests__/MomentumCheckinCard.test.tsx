@@ -59,7 +59,7 @@ describe("MomentumCheckinCard", () => {
   it("shows the feel question first; focus + save appear after a pick", async () => {
     renderCard();
     expect(
-      await screen.findByText(/How did this week's plan feel\?/)
+      await screen.findByText(/How did this week’s plan feel\?/)
     ).toBeInTheDocument();
     expect(screen.queryByText("Save check-in")).toBeNull();
 
@@ -117,9 +117,9 @@ describe("MomentumCheckinCard", () => {
     });
     renderCard();
     expect(await screen.findByText(/Checked in — Too light/)).toBeVisible();
-    expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
+    expect(screen.queryByText(/How did this week’s plan feel\?/)).toBeNull();
     expect(
-      screen.getByRole("button", { name: "Review this week's plan" })
+      screen.getByRole("button", { name: "Review this week’s plan" })
     ).toBeInTheDocument();
   });
 
@@ -171,7 +171,7 @@ describe("MomentumCheckinCard", () => {
     await waitFor(() => expect(releaseRead()).toBe(true));
     await flushSnapshots();
     expect(container.innerHTML).toBe("");
-    expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
+    expect(screen.queryByText(/How did this week’s plan feel\?/)).toBeNull();
   });
 
   it("a failed load hides the card — never re-asks over an unread answer", async () => {
@@ -181,7 +181,7 @@ describe("MomentumCheckinCard", () => {
     // user whose answer we merely failed to READ, and saving would
     // overwrite it.
     await waitFor(() => expect(container.innerHTML).toBe(""));
-    expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
+    expect(screen.queryByText(/How did this week’s plan feel\?/)).toBeNull();
   });
 });
 
@@ -203,7 +203,7 @@ describe("MomentumCheckinCard — a save that does not land", () => {
     fireEvent.click(screen.getByText("Save check-in"));
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't save your check-in. Try again."
+        "Couldn’t save your check-in. Try again."
       )
     );
     expect(screen.getByText("Save check-in")).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe("MomentumCheckinCard — a save that does not land", () => {
     fireEvent.click(dismiss);
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "Couldn't hide the check-in. Try again."
+        "Couldn’t hide the check-in. Try again."
       )
     );
   });

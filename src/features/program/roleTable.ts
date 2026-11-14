@@ -21,6 +21,10 @@ import type { PrimaryGoal } from "./programTypes";
  * two; four on a strength main lift from intermediate up. "Lose fat" builds
  * as Build muscle, with the cut in the nutrition targets. Timed holds keep
  * their seconds and are not read here.
+ *
+ * A deadlift from the floor is its own row (Lift21): the main lift's in any
+ * slot, and past beginner three sets at most, 5–8 wherever the goal gives a
+ * range. Sets of 8 to 12 on it end on a tired back.
  */
 export interface RoleReps {
   sets: number;
@@ -107,18 +111,113 @@ export function isHighRepIsolation(exerciseId: string): boolean {
   return muscle !== undefined && HIGH_REP_MUSCLE_GROUPS.has(muscle);
 }
 
-/** The table's row for one exercise. */
+/**
+ * The lifts never prescribed under six reps (training deep dive, D5): a
+ * dumbbell or kettlebell lift, whose weight comes in steps too big for a
+ * heavy few reps and a load the hands give out on first, and a lift done a
+ * leg at a time, which balance limits before the legs do. A strength plan's
+ * main lift is a fixed five; swapped to dumbbells or a split squat for kit or
+ * an injury, it was "Bulgarian Split Squat 3 × 5" and "Dumbbell RDL 3 × 5"
+ * in a third of home plans. The server keeps the same list
+ * (`functions/lib/roleTable.js`).
+ */
+export const SIX_REP_FLOOR = 6;
+
+const ONE_LEG_IDS: readonly string[] = [
+  "barbell-step-ups",
+  "bulgarian-split",
+  "lunges",
+  "walking-dumbbell-lunges",
+];
+
+/** Whether a lift takes the six-rep floor: dumbbells, a kettlebell, or one
+ *  leg at a time. */
+export function hasSixRepFloor(exerciseId: string): boolean {
+  const equipment = getExerciseById(exerciseId)?.equipment;
+  return (
+    equipment === "Dumbbells" ||
+    equipment === "Kettlebell" ||
+    ONE_LEG_IDS.includes(exerciseId)
+  );
+}
+
+/** A row with its bottom raised to `floor`, its range kept as wide. */
+function atLeast(row: RoleReps, floor: number): RoleReps {
+  if (row.bottom >= floor) return row;
+  return row.top === undefined
+    ? { ...row, bottom: floor }
+    : { ...row, bottom: floor, top: Math.max(row.top, floor + 2) };
+}
+
+/** The deadlifts pulled from the floor, which take a row of their own. The
+ *  server keeps the same list (`functions/lib/roleTable.js`). */
+export const FLOOR_DEADLIFT_IDS: readonly string[] = [
+  "deadlift",
+  "sumo-deadlift",
+  "trap-bar-deadlift",
+];
+
+/** Whether a lift is a deadlift pulled from the floor. */
+export function isFloorDeadlift(exerciseId: string): boolean {
+  return FLOOR_DEADLIFT_IDS.includes(exerciseId);
+}
+
+/** Whether a lift is a floor deadlift held as a main lift. */
+export function isMainFloorDeadlift(exercise: {
+  exerciseId: string;
+  isAccessory?: boolean;
+}): boolean {
+  return exercise.isAccessory !== true && isFloorDeadlift(exercise.exerciseId);
+}
+
+/**
+ * The table's row for one exercise. A floor deadlift takes the main-lift
+ * row in any slot, and past beginner 3 sets of 5 to 8 at most (Lift21): it
+ * is never a supporting lift's 8 to 12, and a fourth set of it costs more
+ * than it gives.
+ */
 export function roleRepsFor(
   goal: PrimaryGoal | undefined,
   exercise: { exerciseId: string; isAccessory?: boolean },
   experience: Experience | undefined
 ): RoleReps {
-  return roleReps(
+  const floor = isFloorDeadlift(exercise.exerciseId);
+  const row = roleReps(
     goal,
-    exerciseRole(exercise),
+    floor ? "main" : exerciseRole(exercise),
     experience,
     isHighRepIsolation(exercise.exerciseId)
   );
+  const floored = hasSixRepFloor(exercise.exerciseId)
+    ? atLeast(row, SIX_REP_FLOOR)
+    : row;
+  if (!floor || toExperience(experience) === "beginner") return floored;
+  return floored.top === undefined
+    ? { ...floored, sets: Math.min(floored.sets, 3) }
+    : { sets: Math.min(floored.sets, 3), bottom: 5, top: 8 };
+}
+
+/**
+ * The reps for a lift held in its place for an injury, for the first plan it
+ * has (training deep dive, D2): 8 to 12 where the slot asks fewer, at a
+ * lighter first weight (`INJURY_SWAP_LOAD_SHARE`); a slot that asks 8 or
+ * more keeps its row. A trap bar deadlift for a sore back took the
+ * deadlift's strength reps; a sore knee's split squat, a fixed five. A
+ * training block's start or end gives it the slot's numbers again
+ * (`represcribeWorkouts`), as it does every lift. A floor deadlift keeps its
+ * own row, which never goes past eight (Lift21).
+ */
+export const INJURY_SWAP_REPS = { bottom: 8, top: 12 } as const;
+
+export function injurySwapReps(
+  goal: PrimaryGoal | undefined,
+  exercise: { exerciseId: string; isAccessory?: boolean },
+  experience: Experience | undefined
+): RoleReps {
+  const row = roleRepsFor(goal, exercise, experience);
+  if (isFloorDeadlift(exercise.exerciseId)) return row;
+  if (row.bottom >= INJURY_SWAP_REPS.bottom) return row;
+  return { sets: row.sets, ...INJURY_SWAP_REPS };
 }
 
 /** The reps a whole plan's starting loads are estimated for: its main
