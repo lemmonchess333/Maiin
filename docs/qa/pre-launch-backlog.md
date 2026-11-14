@@ -5351,3 +5351,35 @@ or populated database has shown either side of the line.
       populated database, with this month's community goal still under 10
       runners and last month's over. Passing: Together still offers its
       challenges and Spaces.
+
+## One free week of a half or full marathon plan per account (Q85, 2026-11-13)
+
+Affects: the same surfaces as Q85's rows above, and the profile field
+`racePlanFreeWeekUsed` (value-gated in `firestore.rules`: `true`, or `null`
+where never set, and kept once `true`). The first time a free account's half
+or full marathon plan passes its free week, the app writes it on the profile
+(`useRacePlanLocked`, from Home, Train's Run tab or the Run page); from then
+on a new half or full marathon plan is Pro from its first week. The race
+itself, recovery weeks, 5K and 10K plans and Pro or trial accounts are
+unaffected. Unit-tested; the rules suite (`firestore.profile.rules.test.ts`)
+has not been run against the emulator, and no phone has drawn it.
+
+- [ ] **The record is written.** After the release, in the Firebase
+      console, open a free test account's `users/{uid}` once its plan is in
+      week 2. Passing: `racePlanFreeWeekUsed: true` is there, and no "Couldn’t
+      save" toast showed on the phone.
+- [ ] **A new race goal after the free week.** The same free account changes
+      its race in Settings → Run plan to another half or full marathon.
+      Passing: the note reads "Half and full marathon plans are part of Pro,
+      and you’ve had your free week."; after saving, Home's run card and
+      Train's Start offer Pro in the new plan's first week, with "After your
+      free week, the plan is part of Pro."
+- [ ] **A new race goal inside the free week.** A fresh free account sets up a
+      marathon, then changes to a half marathon before its second week.
+      Passing: the new plan's first week starts as usual (nothing was
+      recorded yet), and it locks in its second week.
+- [ ] **Race day, recovery, 5K and 10K.** On the account that has used its
+      free week: Start race works on race day, recovery weeks start as usual,
+      and a 5K or 10K plan starts every week.
+- [ ] **Pro and trial.** An account that took Pro or a trial before its plan
+      reached week 2 has no `racePlanFreeWeekUsed`; Start works throughout.

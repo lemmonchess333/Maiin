@@ -1032,7 +1032,11 @@ export default function RunPlanSettings({
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
         <div ref={raceGoalRef} className="space-y-2">
-          <RacePlanProNote distance={raceDistance} isPro={isPro} />
+          <RacePlanProNote
+            distance={raceDistance}
+            isPro={isPro}
+            freeWeekUsed={profile.racePlanFreeWeekUsed === true}
+          />
           <RaceGoalPlanner
             distance={raceDistance}
             targetDate={raceTargetDate}

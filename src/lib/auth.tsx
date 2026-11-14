@@ -458,6 +458,12 @@ export interface UserProfileRunning {
      *  reads as a race (`raceGoalEntry`). */
     entry?: "race" | "own";
   } | null;
+  /** Whole-app grill Q85: the account has had the free week of a half or
+   *  full marathon plan, so a later one is Pro from its first week
+   *  (`racePlanLocked`). Written once, `true`, by the app the first time a
+   *  free account's plan passes that week (`useRacePlanLocked`); the rules
+   *  keep it once it is set. */
+  racePlanFreeWeekUsed?: boolean;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**
    * Schema version for `weekSchedule` shape. v7 spec uses this for

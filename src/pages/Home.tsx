@@ -134,7 +134,7 @@ import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { targetHasAdapted } from "@/hooks/useTrialReminder";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
-import { racePlanLocked } from "@/lib/racePlanAccess";
+import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
 import { usePriorHomeVisit } from "@/hooks/usePriorHomeVisit";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
@@ -517,15 +517,12 @@ export default function Home() {
   );
   // A half or full marathon plan past its free first week (whole-app grill
   // Q85): today's planned run offers Pro; the race itself still starts.
+  // The hook also records the account's free week as used, once.
   const raceDistance =
     profile?.raceGoal?.distance ??
     programState?.runPlan?.raceGoal?.distance ??
     null;
-  const runPlanLocked = racePlanLocked({
-    isPro,
-    runPlan: programState?.runPlan,
-    raceDistance,
-  })
+  const runPlanLocked = useRacePlanLocked(programState?.runPlan)
     ? {
         cta: proStripTrialEligible ? "Try Pro free" : "See Pro",
         raceName: raceDistance === "half" ? "half marathon" : "marathon",

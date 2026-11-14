@@ -1891,7 +1891,7 @@ export default function ProgrammeRunSection({
                      is "What it is", in "Why this run" below. */
                   description={
                     selectedLocked
-                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      ? "After your free week, your race plan is part of Pro. Runs you record stay free."
                       : selectedTemplate
                         ? runSessionAbout(selectedTemplate, {
                             racePace: selectedRacePace,

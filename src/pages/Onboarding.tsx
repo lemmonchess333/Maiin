@@ -1652,6 +1652,7 @@ export default function Onboarding() {
                       <RacePlanProNote
                         distance={raceDistance}
                         isPro={onboardingIsPro}
+                        freeWeekUsed={profile?.racePlanFreeWeekUsed === true}
                       />
                       <div className="space-y-2">
                         <p className="text-sm">Race or on your own</p>

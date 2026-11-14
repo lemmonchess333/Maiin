@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6960981,
+  "total": 6967739,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -496,7 +496,7 @@
     "user-plus": 310,
     "user-x": 306,
     "useRaceCohort": 3825,
-    "useRacePlanLock": 686,
+    "useRacePlanLock": 6758,
     "useRestrictedStatus": 1190,
     "useReviewReminder": 2247,
     "UserProfile": 22488,
