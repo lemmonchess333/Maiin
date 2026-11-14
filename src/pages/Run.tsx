@@ -129,6 +129,7 @@ import {
   type WatchRunPhase,
 } from "@/lib/watchRunBridge";
 import { clearWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
+import { watchRunStep } from "@/lib/watchRunStep";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
@@ -1955,6 +1956,17 @@ export default function Run() {
       : phase === "paused"
         ? "paused"
         : null;
+  // The structured run's live step, in the Run screen's own words, for the
+  // Watch to draw and buzz on (`watchRunStep`). Null on a run without steps.
+  const watchStep = () =>
+    watchRunStep({
+      segments: player.segments,
+      index: player.state.index,
+      phaseElapsed: player.state.phaseElapsed,
+      phaseDistanceCovered: player.state.phaseDistanceCovered,
+      unit,
+      band: intervalBand,
+    });
   const publishWatchBeat = (sessionId: string, phase: WatchRunPhase) => {
     void publishWatchRunSnapshot({
       sessionId,
@@ -1965,6 +1977,7 @@ export default function Run() {
       paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
       recordedAtMs: Date.now(),
       unit,
+      step: watchStep(),
     }).then(async (accepted) => {
       if (!accepted || watchConnectedRef.current) return;
       const now = Date.now();
@@ -1987,27 +2000,36 @@ export default function Run() {
   // second while running, every five while paused. Publishing from a render
   // effect sent two or three a second, each one a native state-file write,
   // and none at all while paused, which left the Watch's controls greyed.
+  const publishWatchNow = () => {
+    const identity = identityRef.current;
+    if (
+      !watchEligible ||
+      !identity ||
+      identity.sessionId !== activeSessionId ||
+      identity.uid !== user?.uid ||
+      !watchPhase
+    )
+      return;
+    if (watchPhaseRef.current !== watchPhase) {
+      watchPhaseRef.current = watchPhase;
+      watchRevisionRef.current += 1;
+      writeSnapshot(watchPhase === "paused" ? "paused" : "active");
+    }
+    publishWatchBeat(identity.sessionId, watchPhase);
+  };
   useWatchSnapshotBeat(
     watchEligible && user?.uid ? watchPhase : null,
     activeSessionId ?? null,
-    () => {
-      const identity = identityRef.current;
-      if (
-        !watchEligible ||
-        !identity ||
-        identity.sessionId !== activeSessionId ||
-        identity.uid !== user?.uid ||
-        !watchPhase
-      )
-        return;
-      if (watchPhaseRef.current !== watchPhase) {
-        watchPhaseRef.current = watchPhase;
-        watchRevisionRef.current += 1;
-        writeSnapshot(watchPhase === "paused" ? "paused" : "active");
-      }
-      publishWatchBeat(identity.sessionId, watchPhase);
-    }
+    publishWatchNow
   );
+  // A new step reaches the Watch at once rather than on the next beat (five
+  // seconds apart while paused, where Skip step can still move it), so the
+  // wrist's haptic lands with the phone's cue.
+  const publishWatchStepChange = useEffectEvent(publishWatchNow);
+  const watchStepIndex = player.state.index;
+  useEffect(() => {
+    if (watchStepIndex >= 0) publishWatchStepChange();
+  }, [watchStepIndex]);
   const { pause: holdTrace, resume: releaseTrace } = gps;
   useEffect(() => {
     if (clockHeld) holdTrace();
@@ -2195,6 +2217,12 @@ export default function Run() {
     const previous = watchCommandLedgerRef.current.get(command);
     if (previous) {
       void acknowledgeWatchRunCommand(previous);
+      trackLifecycleEvent("watch_command_answered", {
+        watchAction: command.action,
+        accepted: previous.accepted,
+        repeated: true,
+        ...(previous.reason ? { rejection: previous.reason } : {}),
+      });
       return;
     }
     const identity = identityRef.current;
@@ -2254,6 +2282,7 @@ export default function Run() {
             paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
             recordedAtMs: Date.now(),
             unit,
+            step: watchStep(),
           });
         }
       }
@@ -2268,6 +2297,12 @@ export default function Run() {
     };
     watchCommandLedgerRef.current.remember(ack);
     void acknowledgeWatchRunCommand(ack);
+    // Aggregate only: the action and its answer, never the run or session.
+    trackLifecycleEvent("watch_command_answered", {
+      watchAction: command.action,
+      accepted,
+      ...(ack.reason ? { rejection: ack.reason } : {}),
+    });
   });
   useEffect(() => {
     if (!watchEligible || !activeSessionId) return;

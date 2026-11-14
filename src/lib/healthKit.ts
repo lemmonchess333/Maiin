@@ -43,6 +43,9 @@ export interface NativeWorkoutExportPlugin extends Plugin {
     status: "absent" | "present" | "unverified";
     workoutId?: string;
     revision?: string;
+    /** On "absent": native has write access, and with it HealthKit shows
+     *  the app every sample it saved, so none found means none there. */
+    verified?: boolean;
   }>;
   exportWorkout(options: {
     runId: string;
@@ -58,9 +61,12 @@ export interface NativeWorkoutExportPlugin extends Plugin {
     workoutId: string;
     revision: string;
   }>;
-  deleteWorkout(options: {
-    runId: string;
-  }): Promise<{ status: "deleted" | "absent" }>;
+  deleteWorkout(options: { runId: string }): Promise<{
+    status: "deleted" | "absent";
+    /** On "absent": checked with write access, so the workout is gone (the
+     *  person may have removed it in Health), not merely unreadable. */
+    verified?: boolean;
+  }>;
   /** The app's own page in iOS Settings, where Health access is reached. */
   openAppSettings(): Promise<void>;
 }
