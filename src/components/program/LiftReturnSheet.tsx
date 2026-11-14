@@ -2,7 +2,8 @@
  * The lifter's welcome back, and the one way back in after a break
  * (Lift4 (11)).
  *
- * Offered from two weeks away (`assessLiftReturn`). It asks one thing: ease
+ * Offered from two weeks away from the weights (`liftReturnFrom`, the
+ * lifting half of the one return check, `trainingReturn.ts`). It asks one thing: ease
  * back in, or keep the old weights. Easing back is the only plan change
  * here, and it happens on the person's yes: the loads come down 10%, or 20%
  * after more than eight weeks away, this week has one set fewer (unless it
@@ -109,8 +110,10 @@ export default function LiftReturnSheet({
           <SectionLabel>Welcome back</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
             {/* The gap as a fact, in weeks: "24 days" invites arithmetic
-                where "3 weeks" reads at a glance. */}
-            {`It’s been about ${Math.round(daysAway / 7)} weeks`}
+                where "3 weeks" reads at a glance. Since the last lift, as
+                the run's says since the last run: someone who kept
+                running has been training (App1 Q35). */}
+            {`It’s been about ${Math.round(daysAway / 7)} weeks since your last lift`}
           </p>
         </div>
       </div>

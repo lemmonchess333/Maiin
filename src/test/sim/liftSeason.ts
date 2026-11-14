@@ -63,7 +63,7 @@ import {
   storeSessionProgression,
   type SavedProgrammeCompletion,
 } from "@/lib/workoutCompletion";
-import { assessLiftReturn } from "@/features/program/liftLayoff";
+import { assessTrainingReturn } from "@/features/program/trainingReturn";
 import {
   automaticStepUp,
   loadGridFor,
@@ -1000,7 +1000,13 @@ export function simulateLiftSeason(
 
         // Home's welcome back after a break: answered the day the person
         // comes back to train, once per break.
-        const back = assessLiftReturn(saved, date);
+        const back = assessTrainingReturn({
+          workouts: saved,
+          runs: null,
+          todayKey: date,
+          lifting: true,
+          running: "none",
+        }).lift;
         if (
           !resting &&
           back.welcomeBack &&
