@@ -3,6 +3,8 @@ import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import type { RacePaceWork } from "@/lib/racePace";
 import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
+import HotDayNote from "./HotDayNote";
+import { HEAT_SWAP_START } from "@/lib/heatAdjustment";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
  * 2026-07).
@@ -55,6 +57,14 @@ interface RunLaunchCardProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
+  /** It is hot where the phone is (Pgm8 (E8), `useHotDay`): the card says
+   *  to run by feel. */
+  hotDay?: boolean;
+  /** On a hot day, a quality session's offer: an easy run of these minutes
+   *  (`plannedSessionMinutes`), started by `onHeatSwap`. Null for any other
+   *  session. */
+  heatSwapMinutes?: number | null;
+  onHeatSwap?: () => void;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
@@ -85,6 +95,9 @@ export default function RunLaunchCard({
   onHelp,
   purpose,
   gpsSignal,
+  hotDay = false,
+  heatSwapMinutes = null,
+  onHeatSwap,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const name = runSessionName(workout, racePace, unit);
@@ -190,6 +203,23 @@ export default function RunLaunchCard({
             <RunAbout about={about} why={purpose} />
           </RunPurpose>
         </div>
+
+        {/* Pgm8 (E8): on a hot day, the heat line, and a quality session's
+            offer of an easy run of its minutes, which starts at once. The
+            plan keeps the session either way. */}
+        {hotDay && (
+          <HotDayNote
+            swap={
+              heatSwapMinutes != null && onHeatSwap
+                ? {
+                    minutes: heatSwapMinutes,
+                    label: HEAT_SWAP_START,
+                    onSwap: onHeatSwap,
+                  }
+                : null
+            }
+          />
+        )}
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />
       </div>

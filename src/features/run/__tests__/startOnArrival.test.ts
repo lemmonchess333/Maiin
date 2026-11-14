@@ -51,4 +51,33 @@ describe("startOnArrival", () => {
       ).toBe("show");
     }
   });
+
+  it("on a hot day, shows a tempo or interval session's card, whose swap is a choice to make", () => {
+    expect(startOnArrival({ ...ready, heat: "swap" })).toBe("show");
+  });
+
+  it("waits a moment for the weather before starting a tempo or interval session", () => {
+    expect(startOnArrival({ ...ready, heat: "checking" })).toBe("wait");
+  });
+
+  it("starts the planned run when the weather has nothing to offer", () => {
+    expect(startOnArrival({ ...ready, heat: "none" })).toBe("planned");
+  });
+
+  it("starts a free run whatever the weather: it has no session to swap", () => {
+    for (const heat of ["checking", "swap", "none"] as const) {
+      expect(startOnArrival({ ...ready, plannedRun: false, heat })).toBe(
+        "free"
+      );
+    }
+  });
+
+  it("lets the first-run hint and an interrupted run come before the weather", () => {
+    expect(
+      startOnArrival({ ...ready, firstRunHint: "checking", heat: "swap" })
+    ).toBe("wait");
+    expect(
+      startOnArrival({ ...ready, interruptedRun: true, heat: "checking" })
+    ).toBe("show");
+  });
 });

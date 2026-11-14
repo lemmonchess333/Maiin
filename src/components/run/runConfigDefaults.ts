@@ -22,6 +22,7 @@ import {
   type RunPlanMetadata,
 } from "@/lib/runPlanMetadata";
 import { resolveSessionPaces, type PaceTable } from "@/lib/runPaces";
+import { segmentsFromEasy } from "@/lib/runSegments";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -88,12 +89,7 @@ export interface RunConfig {
   paceAlerts: boolean;
   voiceRate: number;
   displayStats: (
-    | "pace"
-    | "distance"
-    | "time"
-    | "calories"
-    | "elevation"
-    | "avgPace"
+    "pace" | "distance" | "time" | "calories" | "elevation" | "avgPace"
   )[];
   /**
    * Activity target. `value`'s unit depends on `type` — single
@@ -129,6 +125,13 @@ export interface RunConfig {
    *  follow-up slice. */
   segments?: SessionSegment[];
   shoeId?: string;
+  /**
+   * The weather at the start was hot by Pgm8 (E8)'s rule (`isHotDay`,
+   * heatAdjustment.ts), so the summary reads the run by feel and does not
+   * judge its pace (`plannedRunVerdict`). Absent on any other day, and
+   * when the weather could not be read.
+   */
+  hotDay?: boolean;
   /**
    * Plan-adherence metadata block, Phase B1. Snapshot of the programme
    * context active at Start; persisted to the run doc. Always present
@@ -345,5 +348,29 @@ export function buildTileConfig(
     ...pacePatchForType(type, paceTable),
     planMetadata,
     ...(shoeId ? { shoeId } : {}),
+  };
+}
+
+/**
+ * A hot day's swap (Pgm8 (E8), heatAdjustment.ts): the run being set up as
+ * an easy run of `minutes`, as a planned easy run of that length is set up
+ * (a timed target and its one easy step). Everything about where and how
+ * it is recorded stays (shoe, place, voice cues, the plan's snapshot, which
+ * `handleStart` finalises against the easy type), and the session's own
+ * shape goes: its intervals, its steps, a guided workout.
+ */
+export function heatSwapConfig(config: RunConfig, minutes: number): RunConfig {
+  const whole = Math.max(1, Math.round(minutes));
+  const {
+    intervals: _intervals,
+    segments: _segments,
+    guidedWorkout: _guided,
+    ...rest
+  } = config;
+  return {
+    ...rest,
+    activityType: "easy",
+    target: { type: "time", value: whole * 60 },
+    segments: segmentsFromEasy(whole),
   };
 }

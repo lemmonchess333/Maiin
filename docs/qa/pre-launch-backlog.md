@@ -4935,3 +4935,39 @@ amounts are unchanged. Unit-tested; no phone has shown it.
       for the weights.
 - [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
       running-only plan. Passing: no Welcome back for the weights.
+
+## A hot day where a run is started (Pgm8 (E8) with actions, 2026-11-14)
+
+Affects: the run's launch card, the tile picker, the full setup and Home's
+day peek (the heat line, `HotDayNote`), the swap of a tempo or interval
+session for an easy run of its minutes (`heatSwapConfig`), Home's Start of
+such a session (`startOnArrival`'s heat check, `HEAT_CHECK_MS`) and the run
+summary's pace line for a run started on a hot day (`plannedRunVerdict`,
+tone `heat`). Hot is the T+DP rule's sum over 130 °F (`isHotDay`). The
+weather is the setup strip's own read (`getCurrentWeather`, MET Norway
+through the callable), asked only once location permission is granted, the
+same way on the web and in the app. Unit and page tests drive it; no phone
+has shown it.
+
+- [ ] **The weather in the app at all.** On an iPhone with location allowed
+      for Tropos, open a run's setup (Customise). Passing: the weather strip
+      shows the temperature and "Weather data from MET Norway". If it never
+      shows, the web view's location permission reads "prompt" in the app
+      (`navigator.permissions` in WKWebView), and no heat surface can show
+      either: file it before the rows below.
+- [ ] **A hot-day run.** On a hot day (for example 30 °C at 60% humidity, or
+      move the phone's location to somewhere hot), open today's planned easy
+      run from Train. Passing: the card says "Hot today: run by feel, not by
+      pace" with MET Norway's credit, and no swap; Home's day peek for today
+      says the same line; after the run, a run quicker than easy reads "Hot
+      today, so this run goes by feel, not by pace." in place of "Faster than
+      easy today".
+- [ ] **The swap offer on a phone.** On a hot day with a planned tempo today,
+      tap Start run on Home. Passing: the run page opens on the tempo's card
+      (it does not start) with "Or run easy for the same N min." and "Run
+      easy instead", N being the minutes Home and Train state for the tempo;
+      tapping it starts an easy run whose step lasts N minutes; after the run
+      the summary asks what should happen to the planned tempo, and Train
+      still shows the tempo until that is answered.
+- [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
+      it straight away, and no screen says anything of heat.

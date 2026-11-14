@@ -53,7 +53,14 @@ import {
   DISTANCE_TARGET_MAX_M,
 } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { heatLine } from "@/lib/heatAdjustment";
+import {
+  heatLine,
+  heatSwapLine,
+  isHotDay,
+  isQualitySession,
+  HEAT_SWAP_SWITCH,
+} from "@/lib/heatAdjustment";
+import Button from "@/components/ui/Button";
 import ShoeSelector from "./ShoeSelector";
 import SessionStructureView from "./SessionStructureView";
 import { segmentsFromIntervals } from "@/lib/runSegments";
@@ -81,6 +88,7 @@ import {
   ACTIVITY_TYPES,
   pacePatchForType as pacePatchForTypePure,
   chooserPaceFor as chooserPaceForPure,
+  heatSwapConfig,
   type RunConfig,
 } from "./runConfigDefaults";
 
@@ -149,6 +157,10 @@ interface RunSetupModalProps {
   /** The planned session's name, as its launch card and Home give it
    *  ("Easy 30"), when the setup opened on a planned run. */
   sessionName?: string;
+  /** The planned quality session's minutes (`plannedSessionMinutes`): on a
+   *  hot day the setup offers an easy run of them in its place (Pgm8
+   *  (E8)). Null for any other run. */
+  heatSwapMinutes?: number | null;
 }
 
 /**
@@ -202,6 +214,7 @@ export default function RunSetupModal({
   programContext,
   routeSection,
   sessionName,
+  heatSwapMinutes = null,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
@@ -512,7 +525,8 @@ export default function RunSetupModal({
               })()}
               {/* Pgm8 (E8): on a hot day, one line to run by feel, with no
                   number in it; nothing below hot. It never touches the
-                  plan's paces, and the tip above leaves heat to it. */}
+                  plan's paces, and the tip above leaves heat to it. A
+                  quality session's swap sits under the strip. */}
               {(() => {
                 const line = heatLine(weather);
                 if (!line) return null;
@@ -528,6 +542,30 @@ export default function RunSetupModal({
             </div>
           </motion.div>
         )}
+
+        {/* Pgm8 (E8): on a hot day, while the run is still the planned
+            tempo or interval session, an easy run of its minutes in its
+            place. The tap changes the run being set up; Start starts it.
+            The plan keeps the session. */}
+        {heatSwapMinutes != null &&
+          isHotDay(weather) &&
+          isQualitySession(config.activityType) &&
+          config.activityType === savedPreferences?.activityType && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {heatSwapLine(heatSwapMinutes)}
+              </p>
+              <Button
+                variant="sport-tinted"
+                fullWidth
+                onClick={() =>
+                  setConfig((prev) => heatSwapConfig(prev, heatSwapMinutes))
+                }
+              >
+                {HEAT_SWAP_SWITCH}
+              </Button>
+            </div>
+          )}
 
         {/* Shoe selector */}
         <ShoeSelector

@@ -90,3 +90,24 @@ it("offers repeatable run help without starting or changing setup", () => {
   expect(onMoreOptions).not.toHaveBeenCalled();
   expect(onBack).not.toHaveBeenCalled();
 });
+
+describe("RunTilePicker on a hot day (Pgm8 (E8))", () => {
+  it("says to run by feel under the tiles, with MET Norway's credit and no swap", () => {
+    setup({ hotDay: true });
+    const note = screen.getByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent("Hot today: run by feel, not by pace");
+    expect(note).toHaveTextContent("Weather data from MET Norway");
+    // A free run has no session to swap.
+    expect(note.querySelector("button")).toBeNull();
+    // Under the tiles, so the note arriving never moves them.
+    const tile = screen.getByText("Free run");
+    expect(
+      tile.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("says nothing of heat on a mild day", () => {
+    setup();
+    expect(screen.queryByRole("note", { name: "Hot day" })).toBeNull();
+  });
+});

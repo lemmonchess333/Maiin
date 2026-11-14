@@ -14,7 +14,11 @@
  *    it;
  *  - a route to follow, which only the full setup takes;
  *  - their first run, whose hint on the run's card says what is about to
- *    happen (FV1).
+ *    happen (FV1);
+ *  - a tempo or interval session on a hot day, whose card offers an easy
+ *    run of its minutes in its place (Pgm8 (E8)). The page waits a moment
+ *    for the weather (`HEAT_CHECK_MS`), which Home has usually read
+ *    already.
  *
  * Otherwise it starts the planned run the page names, or a free run, as
  * the card's Start and the Free tile would.
@@ -33,7 +37,18 @@ export function withStartOnArrival(url: string): string {
  *  the person standing at a blank screen. */
 export const FIRST_RUN_CHECK_MS = 1000;
 
+/** How long the page waits for the weather before starting a tempo or
+ *  interval session. Past it the run starts as planned: a slow read must
+ *  not keep the person standing at a blank screen. A Tropos heuristic, the
+ *  first-run check's second. */
+export const HEAT_CHECK_MS = 1000;
+
 export type ArrivalStart = "wait" | "show" | "planned" | "free";
+
+/** What the weather means for the start: still being read, a hot day with
+ *  a swap to offer, or nothing to show. "none" for any run with no swap to
+ *  offer (an easy, long or free run, a race). */
+export type ArrivalHeat = "checking" | "swap" | "none";
 
 export function startOnArrival(input: {
   /** The plan has loaded (a free runner has none to wait for). */
@@ -44,9 +59,14 @@ export function startOnArrival(input: {
   firstRunHint: "checking" | "due" | "not-due";
   /** The page names a planned run (its launch card would show). */
   plannedRun: boolean;
+  /** Whether the planned run's card has a hot day's swap to offer. */
+  heat?: ArrivalHeat;
 }): ArrivalStart {
   if (input.interruptedRun || input.routeToFollow) return "show";
   if (!input.planReady || input.firstRunHint === "checking") return "wait";
   if (input.firstRunHint === "due") return "show";
-  return input.plannedRun ? "planned" : "free";
+  if (!input.plannedRun) return "free";
+  if (input.heat === "checking") return "wait";
+  if (input.heat === "swap") return "show";
+  return "planned";
 }

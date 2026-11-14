@@ -6,9 +6,21 @@
  * no dew point); nothing below hot; and where hot starts, which is the
  * published T+DP rule of thumb's 3% band, a temperature-plus-dew-point
  * sum over 130°F. The sums quoted below were measured with `dewPointC`.
+ * Then the hot day's actions, which keep E8's no-number rule: which
+ * sessions a hot day offers as an easy run, the swap's words in the
+ * session's own minutes, and the summary's by-feel line.
  */
 import { describe, it, expect } from "vitest";
-import { dewPointC, heatLine } from "../heatAdjustment";
+import {
+  dewPointC,
+  heatLine,
+  heatSwapLine,
+  isHotDay,
+  isQualitySession,
+  HEAT_SWAP_START,
+  HEAT_SWAP_SWITCH,
+  HEAT_VERDICT_LINE,
+} from "../heatAdjustment";
 
 describe("dewPointC", () => {
   it("matches known Magnus values", () => {
@@ -67,5 +79,68 @@ describe("heatLine", () => {
         /injur|risk|danger|safe|guarantee|promise|hydrat|water|slower/i
       );
     }
+  });
+});
+
+describe("isHotDay", () => {
+  it("is the heat line's own test: hot exactly where the line shows", () => {
+    for (const day of HOT_DAYS) expect(isHotDay(day)).toBe(true);
+    for (const day of [
+      { temperature: 10, humidity: 50 },
+      { temperature: 22, humidity: 40 },
+      { temperature: 30, humidity: 20 },
+    ])
+      expect(isHotDay(day)).toBe(false);
+  });
+
+  it("starts where the line starts, a T+DP sum over 130°F", () => {
+    // Saturated air: the sum is 3.6 × T + 64 whatever Magnus's constants.
+    expect(isHotDay({ temperature: 18.3, humidity: 100 })).toBe(false); // 129.9°F
+    expect(isHotDay({ temperature: 18.4, humidity: 100 })).toBe(true); // 130.2°F
+    expect(isHotDay({ temperature: 25, humidity: 43 })).toBe(false); // 129.8°F
+    expect(isHotDay({ temperature: 25, humidity: 44 })).toBe(true); // 130.4°F
+  });
+
+  it("is not hot when there is no weather to read, or it can't be read", () => {
+    expect(isHotDay(null)).toBe(false);
+    expect(isHotDay(undefined)).toBe(false);
+    expect(isHotDay({ temperature: Number.NaN, humidity: 70 })).toBe(false);
+    expect(isHotDay({ temperature: 32, humidity: Number.NaN })).toBe(false);
+  });
+});
+
+describe("isQualitySession", () => {
+  it("is a tempo or an interval session, which a hot day offers to swap", () => {
+    expect(isQualitySession("tempo")).toBe(true);
+    expect(isQualitySession("intervals")).toBe(true);
+  });
+
+  it("is no other run: an easy or long run is easy already, a race is the race", () => {
+    for (const type of ["easy", "long", "race", "freerun", "guided", null]) {
+      expect(isQualitySession(type)).toBe(false);
+    }
+  });
+});
+
+describe("the hot day's words", () => {
+  it("offers the swap in the session's own minutes, with no pace and no %", () => {
+    expect(heatSwapLine(45)).toBe("Or run easy for the same 45 min.");
+    expect(heatSwapLine(37.6)).toBe("Or run easy for the same 38 min.");
+    expect(heatSwapLine(45)).not.toMatch(/%|\/km|\/mi|\d:\d\d|slower/);
+  });
+
+  it("names the swap's buttons as a verb and its object, short", () => {
+    for (const label of [HEAT_SWAP_START, HEAT_SWAP_SWITCH]) {
+      expect(label.length).toBeLessThanOrEqual(20);
+      expect(label.split(" ").length).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("reads a hot day's run by feel afterwards, with no number in it", () => {
+    expect(HEAT_VERDICT_LINE).toMatch(/by feel/);
+    expect(HEAT_VERDICT_LINE).not.toMatch(/\d/);
+    expect(HEAT_VERDICT_LINE).not.toMatch(
+      /injur|risk|danger|safe|slow|miss|fail|bad/i
+    );
   });
 });

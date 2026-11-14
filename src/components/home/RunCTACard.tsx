@@ -27,6 +27,9 @@ import {
 import InProgressStrip from "@/components/session/InProgressStrip";
 import SessionHero from "@/components/home/SessionHero";
 import type { SessionInProgress } from "@/lib/sessionsInFlight";
+import { useEffect } from "react";
+import { getCurrentWeather } from "@/lib/weather";
+import { isQualitySession } from "@/lib/heatAdjustment";
 
 /**
  * Today's run, as Home's hero (DS4; `SessionHero` draws it). Twin of
@@ -130,6 +133,19 @@ export default function RunCTACard({
           unit
         )
       : freeLine;
+
+  /* Pgm8 (E8): a tempo or interval session to start today reads the
+     weather now, so the run page finds it known and, on a hot day, shows
+     the session's card with its easy-run swap instead of starting
+     (startOnArrival) without a wait. The hero itself says nothing of it. */
+  const readsWeather =
+    startable && !inProgress && !locked && isQualitySession(tmpl?.type);
+  useEffect(
+    function () {
+      if (readsWeather) void getCurrentWeather();
+    },
+    [readsWeather]
+  );
 
   const offerPro = function () {
     haptic();

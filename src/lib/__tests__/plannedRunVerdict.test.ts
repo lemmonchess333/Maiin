@@ -216,3 +216,72 @@ describe("workPaceSeconds", () => {
     expect(workPaceSeconds(undefined)).toBeNull();
   });
 });
+
+describe("plannedRunVerdict on a hot day (Pgm8 (E8))", () => {
+  const easy = resolveSessionPaces("easy", TABLE).band!;
+  const tempo = resolveSessionPaces("tempo", TABLE);
+  const tempoTarget = tempo.targetPace ?? tempo.workPace!;
+  const hot = (
+    templateId: string,
+    avgPaceSeconds: number,
+    extra: Partial<Parameters<typeof plannedRunVerdict>[0]> = {}
+  ) =>
+    plannedRunVerdict({
+      planMetadata: planned(templateId),
+      avgPaceSeconds,
+      distance: 6000,
+      runFitness: FITNESS,
+      unit: "km",
+      hotDay: true,
+      ...extra,
+    });
+
+  it("reads a tempo run slower than its pace by feel, not slow", () => {
+    // The same run on a cooler day is "slow", and two of those in a
+    // fortnight offer "Take this week easier?" (A6).
+    expect(verdict(planned("tempo_20"), tempoTarget + 30)?.tone).toBe("slow");
+    const v = hot("tempo_20", tempoTarget + 30);
+    expect(v?.tone).toBe("heat");
+    expect(v?.line).toBe("Hot today, so this run goes by feel, not by pace.");
+    // It speaks where the judgement would have, with no number in it.
+    expect(v?.speaks).toBe(true);
+    expect(v?.line).not.toMatch(/\d/);
+  });
+
+  it("reads a tempo quicker than its pace by feel too", () => {
+    const v = hot("tempo_20", tempoTarget - 30);
+    expect(v?.tone).toBe("heat");
+    expect(v?.speaks).toBe(true);
+  });
+
+  it("keeps a run that matched its type quiet, as on any day (Run21 (6))", () => {
+    const onTempo = hot("tempo_20", tempoTarget);
+    expect(onTempo?.tone).toBe("heat");
+    expect(onTempo?.speaks).toBe(false);
+    const slowEasy = hot("easy_30", easy[1] + 40);
+    expect(slowEasy?.tone).toBe("heat");
+    expect(slowEasy?.speaks).toBe(false);
+  });
+
+  it("reads an easy run faster than its window by feel", () => {
+    const v = hot("easy_30", easy[0] - 30);
+    expect(v?.tone).toBe("heat");
+    expect(v?.speaks).toBe(true);
+  });
+
+  it("judges only what it judged before: no plan, a treadmill or intervals stay unjudged", () => {
+    expect(
+      hot("tempo_20", tempoTarget + 30, { planMetadata: null })
+    ).toBeNull();
+    expect(
+      hot("tempo_20", tempoTarget + 30, { place: "treadmill" })
+    ).toBeNull();
+    expect(hot("5x1k", 300)).toBeNull();
+  });
+
+  it("judges the pace as before on a day that was not hot", () => {
+    expect(hot("tempo_20", tempoTarget + 30, { hotDay: false })?.tone).toBe(
+      "slow"
+    );
+  });
+});

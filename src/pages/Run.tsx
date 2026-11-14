@@ -58,6 +58,7 @@ import {
   ACTIVITY_TYPES,
   buildLaunchConfig,
   buildTileConfig,
+  heatSwapConfig,
 } from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
@@ -163,9 +164,15 @@ import {
 } from "../features/run/runSessionReducer";
 import {
   FIRST_RUN_CHECK_MS,
+  HEAT_CHECK_MS,
   START_ON_ARRIVAL_PARAM,
   startOnArrival,
+  type ArrivalHeat,
 } from "../features/run/startOnArrival";
+import { useHotDay } from "../hooks/useHotDay";
+import { isQualitySession } from "../lib/heatAdjustment";
+import { plannedSessionMinutes } from "../lib/runDose";
+import { plannedIntervalPaceSPerKm } from "../lib/intervalRest";
 import { haptic } from "../lib/haptic";
 import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
 import {
@@ -417,6 +424,13 @@ export default function Run() {
     () =>
       searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
   );
+  /* Pgm8 (E8): whether it is hot where the phone is, read once as the page
+     opens. The setup surfaces say to run by feel, a tempo or interval
+     session is offered as an easy run, and a run started here on a hot day
+     is not judged on its pace afterwards (`RunConfig.hotDay`, set at the
+     start, or at the finish when the weather answered after the start). */
+  const hotDay = useHotDay();
+  const startedThisVisitRef = useRef(false);
   /* The GPS warms while the setup screen is open, and the screen shows
      the signal, so Start usually finds a fix waiting (useGpsWarmup).
      Never before location is allowed: a warm-up must not be the ask. */
@@ -879,6 +893,20 @@ export default function Run() {
     programState?.runPlan,
   ]);
 
+  /* Pgm8 (E8): the planned tempo or interval session's minutes, as its
+     cards state them, which a hot day offers as an easy run. Null for any
+     other run. */
+  const heatSwapMinutes = useMemo(
+    () =>
+      launchWorkout && isQualitySession(launchWorkout.type)
+        ? plannedSessionMinutes(
+            launchWorkout,
+            plannedIntervalPaceSPerKm(profile?.runFitness)
+          )
+        : null,
+    [launchWorkout, profile?.runFitness]
+  );
+
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
@@ -900,7 +928,10 @@ export default function Run() {
     const finalConfig: RunConfig = {
       ...config,
       planMetadata: finalisedMetadata,
+      // Pgm8 (E8): a run started on a hot day is read by feel afterwards.
+      ...(hotDay === "hot" ? { hotDay: true } : {}),
     };
+    startedThisVisitRef.current = true;
     setRunConfig(finalConfig);
     // Phase B3: capture the original-start epoch so the periodic
     // write effect persists it in every snapshot. Resume re-uses
@@ -998,6 +1029,24 @@ export default function Run() {
         ? "checking"
         : "not-due";
   const arrivalPlannedRun = launchWorkout !== null;
+  /* Pgm8 (E8): a tempo or interval session started from Home waits a
+     moment for the weather, and on a hot day shows its card, whose swap is
+     a choice to make. Home reads the weather for such a day, so it is
+     usually known already. */
+  const arrivalHeatSwap = heatSwapMinutes !== null;
+  const [heatCheckOver, setHeatCheckOver] = useState(false);
+  useEffect(() => {
+    if (arrival !== "deciding" || !arrivalHeatSwap) return;
+    const t = setTimeout(() => setHeatCheckOver(true), HEAT_CHECK_MS);
+    return () => clearTimeout(t);
+  }, [arrival, arrivalHeatSwap]);
+  const arrivalHeat: ArrivalHeat = !arrivalHeatSwap
+    ? "none"
+    : hotDay === "hot"
+      ? "swap"
+      : hotDay === "checking" && !heatCheckOver
+        ? "checking"
+        : "none";
   const arrivalRouteToFollow = targetRoute != null;
   const arrivalState = location.state;
   useEffect(() => {
@@ -1010,6 +1059,7 @@ export default function Run() {
       routeToFollow: arrivalRouteToFollow,
       firstRunHint: arrivalFirstRunHint,
       plannedRun: arrivalPlannedRun,
+      heat: arrivalHeat,
     });
     if (decision === "wait") return;
     setSearchParams(
@@ -1031,6 +1081,7 @@ export default function Run() {
     arrivalRouteToFollow,
     arrivalFirstRunHint,
     arrivalPlannedRun,
+    arrivalHeat,
     arrivalState,
     setSearchParams,
   ]);
@@ -1087,13 +1138,22 @@ export default function Run() {
     [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]
   );
 
+  /* The run's config as it finishes. A run started on this visit before
+     the weather answered takes the hot day now, when the read the page
+     opened with says hot (Pgm8 (E8)): the config is not changed mid-run,
+     where its steps are being played. */
+  const configAtFinish = (config: RunConfig): RunConfig =>
+    !config.hotDay && hotDay === "hot" && startedThisVisitRef.current
+      ? { ...config, hotDay: true }
+      : config;
+
   const keepFinishedRun = (finish: StoredRunFinish) => {
     const uid = profile?.uid;
     if (!uid || !runConfig || startedAtRef.current === null) return false;
     if (phase !== "active" && phase !== "paused") return false;
     const saved = writeStoredRun(uid, {
       v: RUN_RESUME_SCHEMA_VERSION,
-      config: runConfig,
+      config: configAtFinish(runConfig),
       ...(identityRef.current ? { identity: identityRef.current } : {}),
       watchRevision: watchRevisionRef.current,
       startedAt: startedAtRef.current,
@@ -1836,7 +1896,7 @@ export default function Run() {
            rewrites a run. */
         splits: finish.splits,
         elevationGain: finish.elevationGain,
-        runConfig,
+        runConfig: runConfig ? configAtFinish(runConfig) : runConfig,
         intervalData: finish.intervalData,
         routeQuality: finish.routeQuality,
         // What the session's work segments covered, which the summary
@@ -2197,6 +2257,21 @@ export default function Run() {
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
+              hotDay={hotDay === "hot"}
+              heatSwapMinutes={heatSwapMinutes}
+              onHeatSwap={() => {
+                if (heatSwapMinutes === null) return;
+                handleStart(
+                  heatSwapConfig(
+                    buildLaunchConfig(
+                      planDecision,
+                      profile?.audioCues !== false,
+                      launchShoeId
+                    ),
+                    heatSwapMinutes
+                  )
+                );
+              }}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -2241,6 +2316,7 @@ export default function Run() {
                     ? runSessionName(launchWorkout, launchRacePace, unit)
                     : undefined
                 }
+                heatSwapMinutes={heatSwapMinutes}
                 savedPreferences={{
                   autoPause: true,
                   audioCues: profile?.audioCues !== false,
@@ -2280,6 +2356,7 @@ export default function Run() {
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
+              hotDay={hotDay === "hot"}
             />
           )}
         </>

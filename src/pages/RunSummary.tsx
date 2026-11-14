@@ -1046,6 +1046,8 @@ export default function RunSummary() {
         distance,
         runFitness: profile?.runFitness,
         unit,
+        // Pgm8 (E8): a run started on a hot day is read by feel.
+        hotDay: runConfig?.hotDay === true,
       });
 
   // The context-aware primary stat, a card above the stats card of four.

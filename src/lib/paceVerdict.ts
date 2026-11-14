@@ -33,7 +33,10 @@ import type { DistanceUnit } from "@/lib/distanceUnits";
 export const ON_TARGET_TOLERANCE_S = 10;
 
 export interface PaceVerdict {
-  tone: "on" | "fast" | "easy-too-fast" | "slow";
+  /** "heat": the run started on a hot day, so its pace is not judged
+   *  (Pgm8 (E8), `plannedRunVerdict`); the easier-week nudge counts it
+   *  neither as a miss nor as on target. */
+  tone: "on" | "fast" | "easy-too-fast" | "slow" | "heat";
   line: string;
   /** Whether the summary shows `line`: only when the run didn't match its
    *  type (Run21 (6)). */

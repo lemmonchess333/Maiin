@@ -48,6 +48,9 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import HotDayNote from "@/components/run/HotDayNote";
+import { useHotDay } from "@/hooks/useHotDay";
+import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
 /* Closed when Home first draws, and it brings the bottom sheet (vaul and
    Radix) with it: it loads once the card has drawn, as Home's
@@ -248,6 +251,16 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
+  /* Pgm8 (E8): today's run still to do says to run by feel on a hot day.
+     The weather is read only for that run, and only once location is
+     allowed (`useHotDay`). */
+  const todayRunAhead =
+    dateKey === todayKey &&
+    resolved.run.runDay !== null &&
+    !resolved.run.isCompleted &&
+    resolved.run.status !== "none" &&
+    isScheduledRunStartable(resolved.run.status);
+  const hotDay = useHotDay(todayRunAhead);
   /* Today's lift is the one the today card offers (the programme's next),
      not the weekday's slot, so the peek and the card name one session. */
   const dayLift = liftOnDate({
@@ -643,6 +656,7 @@ export default function DayPeekCard({
                   <RunPurpose>
                     <RunAbout about={runAbout} why={runPurpose} />
                   </RunPurpose>
+                  {todayRunAhead && hotDay === "hot" && <HotDayNote />}
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

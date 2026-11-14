@@ -31,6 +31,15 @@
  * be judged on an average carrying its warm-up and cool-down, read slow and
  * feed the "Take this week easier?" nudge (A6). A typed distance sets no
  * pace record either (`isPaceEligible`).
+ *
+ * A run started on a hot day (`RunConfig.hotDay`, Pgm8 (E8)) is read by
+ * feel, not judged on its pace: heat slows running at the same effort
+ * (Ely 2007; El Helou 2012; running-evidence.md §4.12), which says not to
+ * mark a hot-day run a miss, and the line before the run said to run by
+ * feel. Its tone is "heat", which the easier-week nudge counts neither way,
+ * and its line (`HEAT_VERDICT_LINE`) carries no number. It speaks where the
+ * cooler day's judgement would have, so a run that matched its type keeps
+ * the quiet summary (Run21 (6)).
  */
 import type { DistanceUnit } from "./distanceUnits";
 import { resolvePaceVerdict, type PaceVerdict } from "./paceVerdict";
@@ -42,6 +51,7 @@ import {
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
 import { RUN_TEMPLATES, isRunWalkTemplateId } from "./workoutTemplates";
 import { isTreadmillRun } from "./runGuards";
+import { HEAT_VERDICT_LINE } from "./heatAdjustment";
 
 /** The least a run's work segments must cover to be judged on: a few
  *  hundred metres and a minute, so a block cut short isn't read as one. */
@@ -76,6 +86,8 @@ export function plannedRunVerdict(args: {
   distance: number;
   runFitness: Parameters<typeof paceTableFromFitness>[0];
   unit: DistanceUnit;
+  /** The run started on a hot day (`RunConfig.hotDay`): read by feel. */
+  hotDay?: boolean;
 }): PaceVerdict | null {
   const { planMetadata: pm, avgPaceSeconds, distance } = args;
   if (getAdherenceLabel(pm) !== "Planned") return null;
@@ -104,7 +116,7 @@ export function plannedRunVerdict(args: {
     tempo && args.pinnedPaceSeconds && args.pinnedPaceSeconds > 0
       ? args.pinnedPaceSeconds
       : null;
-  return resolvePaceVerdict({
+  const verdict = resolvePaceVerdict({
     templateType: tmpl.type,
     actualPaceS: judged,
     targetPaceS: pinned ?? target,
@@ -114,4 +126,6 @@ export function plannedRunVerdict(args: {
     targetBandS: pinned ? undefined : paces.band,
     unit: args.unit,
   });
+  if (!verdict || args.hotDay !== true) return verdict;
+  return { tone: "heat", line: HEAT_VERDICT_LINE, speaks: verdict.speaks };
 }

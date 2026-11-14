@@ -31,6 +31,7 @@ import {
   type RaceTarget,
 } from "./racePace";
 import {
+  segmentsFromEasy,
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
@@ -880,15 +881,7 @@ function templateToPrefill(
   } else if (tmpl.type === "easy" && minutes) {
     // Use the same pause-corrected player, remaining-time display and finish
     // cue as every structured session. A completed target never auto-saves.
-    prefill.segments = [
-      {
-        type: "easy",
-        label: `Easy ${minutes} min`,
-        instruction: "Conversational pace",
-        target: { kind: "duration", seconds: minutes * 60 },
-        cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
-      },
-    ];
+    prefill.segments = segmentsFromEasy(minutes);
   } else if (raceFinish && tmpl.config.targetDistanceKm) {
     prefill.segments = segmentsFromLongWithRacePace(
       tmpl.config.targetDistanceKm,

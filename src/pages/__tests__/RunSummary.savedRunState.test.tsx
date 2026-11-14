@@ -992,6 +992,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       activityType?: string;
       segments?: Record<string, unknown>[];
       workPortion?: { seconds: number; meters: number };
+      hotDay?: boolean;
     } = {}
   ) {
     const activityType = run.activityType ?? "easy";
@@ -1001,6 +1002,7 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
       runConfig: {
         activityType,
         ...(run.segments ? { segments: run.segments } : {}),
+        ...(run.hotDay ? { hotDay: true } : {}),
         planMetadata: {
           planMode: "race_prep",
           planSource: "today_plan",
@@ -1052,6 +1054,27 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     renderPlanned("run_walk_1");
     expect(
       await screen.findByRole("heading", { name: "Run-walk 1 done" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
+    ).toBeNull();
+  });
+
+  /* Pgm8 (E8): a run started on a hot day is read by feel, not judged on
+     its pace, where the same run on a cooler day hears it ran quick. */
+  it("reads a planned easy run started on a hot day by feel, not by its pace", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    renderPlanned("easy_30", { hotDay: true });
+    expect(
+      await screen.findByText(
+        "Hot today, so this run goes by feel, not by pace."
+      )
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/on target|Faster than|Slower than|Quicker than/)

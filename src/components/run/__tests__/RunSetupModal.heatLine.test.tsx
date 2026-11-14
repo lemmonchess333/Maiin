@@ -1,7 +1,9 @@
 /**
  * The run setup's weather strip on a hot day, Pgm8 (E8): one heat line,
  * saying to run by feel, with no number in it, and the run starts at the
- * plan's pace. Below hot the strip says nothing about heat.
+ * plan's pace. Below hot the strip says nothing about heat. A planned tempo
+ * or interval session is offered as an easy run of its minutes, which the
+ * setup's Start then starts; the plan's session is otherwise untouched.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
@@ -29,6 +31,8 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 vi.mock("@/components/run/ShoeSelector", () => ({ default: () => null }));
 
 import RunSetupModal from "../RunSetupModal";
+import { segmentsFromTempo } from "@/lib/runSegments";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 beforeEach(() => {
   weather.get.mockReset();
@@ -109,6 +113,114 @@ describe("RunSetupModal — the heat line", () => {
     expect(within(strip).queryAllByText(HEAT_WORDS)).toEqual([]);
     expect(
       within(strip).queryByText(/slower|by feel/i)
+    ).not.toBeInTheDocument();
+  });
+});
+
+const HOT_DAY = {
+  temperature: 32,
+  feelsLike: 36,
+  humidity: 70,
+  windSpeed: 10,
+  weatherCode: 0,
+  description: "Clear sky",
+};
+
+/** A planned tempo, as the plan's prefill hands it to the setup: its
+ *  pace, and its warm-up, tempo blocks and cool-down. */
+const PLANNED_TEMPO = {
+  activityType: "tempo" as const,
+  target: PACE_TARGET,
+  segments: segmentsFromTempo(
+    RUN_TEMPLATES.find((t) => t.id === "tempo_30")!.config.tempo!,
+    "km",
+    PACE_TARGET.value
+  ),
+};
+
+describe("RunSetupModal — a hot day's swap", () => {
+  it("offers a planned tempo as an easy run of its minutes, which Start then starts", async () => {
+    weather.get.mockResolvedValue(HOT_DAY);
+    const onStart = vi.fn();
+    render(
+      <RunSetupModal
+        onStart={onStart}
+        onCancel={vi.fn()}
+        savedPreferences={PLANNED_TEMPO}
+        sessionName="Tempo 30"
+        heatSwapMinutes={45}
+      />
+    );
+    expect(
+      await screen.findByText("Or run easy for the same 45 min.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start Tempo 30" })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Switch to easy" }));
+    // The offer is taken: the run being set up is the easy run now.
+    expect(
+      screen.queryByRole("button", { name: "Switch to easy" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start easy run" }));
+    expect(onStart).toHaveBeenCalledOnce();
+    const started = onStart.mock.calls[0][0];
+    expect(started.activityType).toBe("easy");
+    expect(started.target).toEqual({ type: "time", value: 2700 });
+    expect(started.intervals).toBeUndefined();
+    expect(started.segments).toEqual([
+      expect.objectContaining({
+        type: "easy",
+        label: "Easy 45 min",
+        target: { kind: "duration", seconds: 2700 },
+      }),
+    ]);
+  });
+
+  it("offers nothing on a mild day, and the tempo starts as planned", async () => {
+    weather.get.mockResolvedValue({
+      ...HOT_DAY,
+      temperature: 15,
+      feelsLike: 15,
+      humidity: 50,
+    });
+    const onStart = vi.fn();
+    render(
+      <RunSetupModal
+        onStart={onStart}
+        onCancel={vi.fn()}
+        savedPreferences={PLANNED_TEMPO}
+        sessionName="Tempo 30"
+        heatSwapMinutes={45}
+      />
+    );
+    await weatherStrip();
+    expect(
+      screen.queryByRole("button", { name: "Switch to easy" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start Tempo 30" }));
+    expect(onStart).toHaveBeenCalledWith(
+      expect.objectContaining({ activityType: "tempo", target: PACE_TARGET })
+    );
+  });
+
+  it("offers nothing for a run with no session to swap", async () => {
+    weather.get.mockResolvedValue(HOT_DAY);
+    render(
+      <RunSetupModal
+        onStart={vi.fn()}
+        onCancel={vi.fn()}
+        savedPreferences={{ activityType: "easy", target: PACE_TARGET }}
+        heatSwapMinutes={null}
+      />
+    );
+    const strip = await weatherStrip();
+    expect(
+      within(strip).getByText("Hot today: run by feel, not by pace")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Switch to easy" })
     ).not.toBeInTheDocument();
   });
 });

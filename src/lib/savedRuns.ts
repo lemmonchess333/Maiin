@@ -72,7 +72,7 @@ export interface RunSummaryItem {
    *  adaptive-intensity trigger + post-ease bounce check. Optional so
    *  existing item builders (tests, fixtures) stay assignable — the
    *  parser always sets it. */
-  paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | null;
+  paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | "heat" | null;
   routePreview?: RouteCoordinate[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
@@ -249,7 +249,8 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
       data.paceVerdictTone === "on" ||
       data.paceVerdictTone === "fast" ||
       data.paceVerdictTone === "easy-too-fast" ||
-      data.paceVerdictTone === "slow"
+      data.paceVerdictTone === "slow" ||
+      data.paceVerdictTone === "heat"
         ? data.paceVerdictTone
         : null,
     isInvalid: data.isInvalid === true,
