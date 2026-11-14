@@ -69,6 +69,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import { isRoadDistance, isTrailRace } from "@/features/program/runPlanTiming";
 import {
   BASE_RUNNER,
   VirtualRunner,
@@ -643,7 +644,11 @@ export class RunSide {
       urlType: null,
       urlScheduledRunId: runDay?.id ?? null,
       paceTable: prescriptivePaceTableFromFitness(profile.runFitness ?? null),
-      raceTarget: raceGoal?.targetTimeS
+      // Run26 (2): an ultra or a race over hills has no race pace.
+      raceTarget:
+        raceGoal?.targetTimeS &&
+        isRoadDistance(raceGoal.distance) &&
+        !isTrailRace(raceGoal)
         ? {
             distance: raceGoal.distance,
             targetTimeS: raceGoal.targetTimeS,

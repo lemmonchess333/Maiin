@@ -70,7 +70,10 @@ import { logger } from "./logger";
 import { traceBoot } from "@/lib/bootTrace";
 import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
-import type { PreferredSplit } from "@/features/program/programTypes";
+import type {
+  PreferredSplit,
+  RaceDistance,
+} from "@/features/program/programTypes";
 import {
   PROFILE_REFRESH_ATTEMPTS,
   PROFILE_REFRESH_WAIT_MS,
@@ -509,7 +512,7 @@ export interface UserProfileRunning {
   // stripped and would leave the old goal stranded). Readers gate on
   // truthiness, so `null` reads the same as absent.
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars (e.g. "London Marathon 2026"). */
     eventName?: string;
@@ -523,6 +526,10 @@ export interface UserProfileRunning {
     /** A race entered, or the distance run on your own (Run9). Absent
      *  reads as a race (`raceGoalEntry`). */
     entry?: "race" | "own";
+    /** Run26 (2): the race's total climb in metres, when the runner gives
+     *  it. A race whose climb is meaningful for its distance makes a trail
+     *  plan (`isTrailRace`); absent reads as a flat course. */
+    climbM?: number;
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**

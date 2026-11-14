@@ -61,6 +61,7 @@ import type {
   Experience,
   PrimaryGoal,
   ProgramExercise,
+  RaceDistance,
   WorkoutDay,
 } from "./programTypes";
 
@@ -332,7 +333,7 @@ export function represcribeSwapped(
  */
 export function blockOfferBlockedByRace(input: {
   runMode?: string;
-  raceDistance?: "5k" | "10k" | "half" | "marathon";
+  raceDistance?: RaceDistance;
   raceTargetDate?: string;
   today: string;
 }): boolean {

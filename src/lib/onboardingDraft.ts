@@ -145,6 +145,9 @@ export interface OnboardingDraft {
    *  goal run on your own. Additive: older drafts have neither. */
   raceEventSpaceId?: string;
   raceEventName?: string;
+  /** Run26 (2): the race's total climb in metres, when given. Additive:
+   *  older drafts have none. */
+  raceClimbM?: number;
   /** Run24 (3): free running's plan with no race date, or none. Additive:
    *  older drafts have none. */
   rollingGoal?: RollingGoal | null;
@@ -252,6 +255,7 @@ export function isValidDraft(
         d.raceEventSpaceId.length <= 120)) &&
     (d.raceEventName === undefined ||
       (typeof d.raceEventName === "string" && d.raceEventName.length <= 60)) &&
+    (d.raceClimbM === undefined || finiteInRange(d.raceClimbM, 0, 20000)) &&
     (d.rollingGoal === undefined ||
       d.rollingGoal === null ||
       isRollingGoal(d.rollingGoal)) &&

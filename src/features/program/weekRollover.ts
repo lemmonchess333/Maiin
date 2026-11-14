@@ -42,6 +42,7 @@ import {
 } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
+  RaceDistance,
   ManualCompletion,
   ProgramState,
   RaceBlockInputs,
@@ -96,9 +97,10 @@ function makeRunPlanRecord(
     shortBase: boolean;
   },
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     eventName?: string;
+    climbM?: number;
   },
   carry: { currentWeek?: number; totalWeeks?: number } = {}
 ): RunPlan {
@@ -163,9 +165,10 @@ export function regenerateRacePlan({
    *  ceiling to the nominal table, on the next weekly refresh. */
   profile: UserProfile;
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     eventName?: string;
+    climbM?: number;
   };
   weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   weeklyRunDays: number;

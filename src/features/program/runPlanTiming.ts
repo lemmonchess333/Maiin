@@ -6,6 +6,13 @@ import {
   startOfLocalWeek,
   weekPosition,
 } from "@/lib/dateHelpers";
+import {
+  ROAD_RACE_DISTANCES,
+  ULTRA_RACE_DISTANCES,
+  type RaceDistance,
+  type RoadRaceDistance,
+  type UltraRaceDistance,
+} from "./programTypes";
 
 /**
  * Whether a plan made on `date` starts partway through its week: Thursday to
@@ -35,12 +42,115 @@ interface RaceConfig {
   minWeeks: number;
 }
 
-export const RACE_CONFIGS: Record<string, RaceConfig> = {
+export const RACE_CONFIGS: Record<RaceDistance, RaceConfig> = {
   "5k": { peakLongKm: 8, baseLongKm: 4, minWeeks: 4 },
   "10k": { peakLongKm: 12, baseLongKm: 6, minWeeks: 6 },
   half: { peakLongKm: 20, baseLongKm: 10, minWeeks: 8 },
   marathon: { peakLongKm: 32, baseLongKm: 14, minWeeks: 12 },
+  /* Run26 (2): an ultra's long run is sized in time on feet
+     (`timeOnFeetLongRun` in runScheduler.ts), from these distances at the
+     runner's pace and the race's climb. The peaks sit inside Powell's
+     (Relentless Forward Progress, 2011, ch. 2): runs of 18 to 22 miles
+     comfortable for a 50K, "25 or so miles a couple of times" for a 50
+     miler, and between that and a 100 miler's 20 to 35 for a 100K. The
+     bases and the weeks a full block takes are Tropos heuristics, inside
+     the 16 to 20 weeks Run24 (3) caps a race block at. */
+  "50k": { peakLongKm: 32, baseLongKm: 16, minWeeks: 16 },
+  "50mi": { peakLongKm: 40, baseLongKm: 18, minWeeks: 18 },
+  "100k": { peakLongKm: 44, baseLongKm: 18, minWeeks: 18 },
 };
+
+/** Whether a stored distance is one of the road races, 5K to marathon. */
+export function isRoadDistance(
+  distance: string | null | undefined
+): distance is RoadRaceDistance {
+  return (ROAD_RACE_DISTANCES as readonly string[]).includes(distance ?? "");
+}
+
+/** Run26 (2): whether a race is an ultra, 50K and longer. */
+export function isUltraDistance(
+  distance: string | null | undefined
+): distance is UltraRaceDistance {
+  return (ULTRA_RACE_DISTANCES as readonly string[]).includes(distance ?? "");
+}
+
+/** A race's distance in km, by its plan key. 50 miles is 80.47 km. */
+export const RACE_KM_BY_DISTANCE: Record<RaceDistance, number> = {
+  "5k": 5,
+  "10k": 10,
+  half: 21.0975,
+  marathon: 42.195,
+  "50k": 50,
+  "50mi": 80.467,
+  "100k": 100,
+};
+
+/**
+ * Run26 (2): trail is a property of a race, its total climb, not a
+ * distance. ITRA scores a course's effort as its distance plus a kilometre
+ * for every 100 m of climb (km-effort, itra.run "Discover trail running").
+ * A race whose climb adds a tenth or more to that, 10 m a kilometre, makes
+ * a trail plan: a tenth is a Tropos heuristic, so a rolling road course
+ * stays a road plan and a course over hills becomes a trail one.
+ */
+export const TRAIL_CLIMB_M_PER_KM = 10;
+
+/**
+ * Run26 (2): a race steep enough that its descents are a large part of it,
+ * which adds downhill running to the plan. Only the climb is known, so the
+ * descent is taken as the climb, which a loop or an out-and-back course has;
+ * a course with far more down than up is not told apart. 20 m a km is a
+ * Tropos heuristic, twice the trail threshold.
+ */
+export const DESCENT_HEAVY_M_PER_KM = 20;
+
+/** A race goal as these helpers read it. */
+interface ClimbedRace {
+  distance: string;
+  climbM?: number | null;
+}
+
+/** The race's climb a kilometre, 0 for a race with none given or a
+ *  distance the plans don't know. */
+export function climbPerKm(goal: ClimbedRace | null | undefined): number {
+  const km = RACE_KM_BY_DISTANCE[goal?.distance as RaceDistance];
+  const climb = goal?.climbM;
+  if (!km || typeof climb !== "number" || !Number.isFinite(climb) || climb <= 0)
+    return 0;
+  return climb / km;
+}
+
+/** Run26 (2): whether a race makes a trail plan (`TRAIL_CLIMB_M_PER_KM`). */
+export function isTrailRace(goal: ClimbedRace | null | undefined): boolean {
+  return climbPerKm(goal) >= TRAIL_CLIMB_M_PER_KM;
+}
+
+/** Run26 (2): whether a trail race's descents add downhill running
+ *  (`DESCENT_HEAVY_M_PER_KM`). */
+export function isDescentHeavy(goal: ClimbedRace | null | undefined): boolean {
+  return climbPerKm(goal) >= DESCENT_HEAVY_M_PER_KM;
+}
+
+/**
+ * Run26 (2): how much longer a kilometre of the race takes than one on the
+ * flat, as ITRA's km-effort counts it: 1 plus a hundredth of the climb a
+ * kilometre. A trail plan's long runs, sized in time, take it, so they are
+ * the time a run on ground like the race's takes. 1 for a race below the
+ * trail threshold, whose course is run as flat.
+ */
+export function climbEffortFactor(
+  goal: ClimbedRace | null | undefined
+): number {
+  return isTrailRace(goal) ? 1 + climbPerKm(goal) / 100 : 1;
+}
+
+/** Run26 (2): whether a plan sizes its long runs in time on feet, not
+ *  kilometres: an ultra's, and a trail race's at any distance. */
+export function sizesLongRunsInTime(
+  goal: ClimbedRace | null | undefined
+): boolean {
+  return isUltraDistance(goal?.distance) || isTrailRace(goal);
+}
 
 /**
  * PR-K Q9b — distance-aware hard cap on taper duration.
@@ -63,13 +173,19 @@ export const RACE_CONFIGS: Record<string, RaceConfig> = {
  * remains, never negative.
  */
 export const TAPER_WEEKS_BY_DISTANCE: Record<
-  "5k" | "10k" | "half" | "marathon",
+  RaceDistance,
   number
 > = {
   "5k": 1,
   "10k": 1,
   half: 2,
   marathon: 3,
+  /* Run26 (2): an ultra keeps the marathon's three weeks and Run22's
+     stepped long run. A Tropos heuristic: the running handoff takes no
+     taper length from a source. */
+  "50k": 3,
+  "50mi": 3,
+  "100k": 3,
 };
 
 /**
@@ -82,20 +198,24 @@ export const TAPER_WEEKS_BY_DISTANCE: Record<
  * marathon its highest. A Tropos heuristic in the RUN-EV-06 register.
  */
 export const RACE_BLOCK_MAX_WEEKS: Record<
-  "5k" | "10k" | "half" | "marathon",
+  RaceDistance,
   number
 > = {
   "5k": 16,
   "10k": 16,
   half: 18,
   marathon: 20,
+  // Run26 (2): an ultra takes the lock's highest, as the marathon does.
+  "50k": 20,
+  "50mi": 20,
+  "100k": 20,
 };
 
 /** How many of a race plan's weeks come before its race block: the weeks
  *  of rolling base, 0 for a plan the block fits (`RACE_BLOCK_MAX_WEEKS`). */
 export function raceBlockStart(
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: RaceDistance
 ): number {
   return Math.max(0, totalWeeks - RACE_BLOCK_MAX_WEEKS[distance]);
 }
@@ -152,7 +272,7 @@ export const SHORT_BASE_SHARE = 0.25;
 export function getPhaseForWeek(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon",
+  distance: RaceDistance,
   shortBase?: boolean | null
 ): "base" | "build" | "taper" | "race" {
   const before = raceBlockStart(totalWeeks, distance);
@@ -184,7 +304,7 @@ export function getPhaseForWeek(
  *  when the block has none. */
 export function firstBuildWeek(
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon",
+  distance: RaceDistance,
   shortBase?: boolean | null
 ): number | null {
   for (let w = 0; w < totalWeeks; w++) {
@@ -236,7 +356,7 @@ export function isRampStepBack(
 export function isRunStepBackWeek(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: RaceDistance
 ): boolean {
   // Run24 (3): the rolling base before a capped block steps back on the
   // cycle that runs on into the block's.
@@ -258,14 +378,14 @@ export function isRunStepBackWeek(
  *  the date is no longer the safe default — the plan flips to "finish-safely".
  *  5k=2, 10k=2, half=3, marathon=4. */
 export function getRaceFloorWeeks(
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: RaceDistance
 ): number {
   return TAPER_WEEKS_BY_DISTANCE[distance] + 1;
 }
 
 /** Ideal-build length per distance (5k=4, 10k=6, half=8, marathon=12). */
 export function getRaceMinWeeks(
-  distance: "5k" | "10k" | "half" | "marathon"
+  distance: RaceDistance
 ): number {
   return RACE_CONFIGS[distance].minWeeks;
 }
@@ -283,7 +403,7 @@ export type RaceTiming = "healthy" | "compressible" | "below-floor";
  *
  * Pure; the Realign UI branches on this to pick the primary action + copy. */
 export function classifyRaceTiming(input: {
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RaceDistance;
   weeksRemaining: number;
 }): RaceTiming {
   const minWeeks = RACE_CONFIGS[input.distance].minWeeks;
@@ -363,7 +483,7 @@ export function clampPlanWeek(currentWeek: number, totalWeeks: number): number {
 export function getRacePhaseLabel(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon",
+  distance: RaceDistance,
   /** The plan's `RunPlan.shortBase` (Run24 (2)). */
   shortBase?: boolean | null
 ): string {
@@ -379,7 +499,7 @@ export function getRacePhaseLabel(
 export function isCurrentWeekInTaper(
   currentWeek: number | undefined,
   totalWeeks: number | undefined,
-  distance: "5k" | "10k" | "half" | "marathon" | undefined
+  distance: RaceDistance | undefined
 ): boolean {
   if (currentWeek == null || totalWeeks == null || !distance) return false;
   return getPhaseForWeek(currentWeek, totalWeeks, distance) === "taper";
@@ -411,7 +531,7 @@ export function isCurrentWeekInTaper(
 export function isCurrentWeekInRaceWindDown(
   currentWeek: number | undefined,
   totalWeeks: number | undefined,
-  distance: "5k" | "10k" | "half" | "marathon" | undefined
+  distance: RaceDistance | undefined
 ): boolean {
   if (currentWeek == null || totalWeeks == null || !distance) return false;
   const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);

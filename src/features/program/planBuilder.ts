@@ -55,6 +55,7 @@ import type {
   ProgramState,
   ProgramSettings,
   ScheduledRunDay,
+  RaceDistance,
   RunPlan,
   SplitType,
   WorkoutDay,
@@ -206,10 +207,12 @@ export interface PlanBuilderInput {
   newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars. */
     eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
     /** A2: optional goal finish time, seconds. Passed through to the
      *  profile; the scheduler does not consume it yet (goal-pace
      *  sessions are the follow-up slice). */

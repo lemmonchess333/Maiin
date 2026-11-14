@@ -23,9 +23,14 @@ import {
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
+  BACK_TO_BACK_MINUTES,
+  backToBackId,
   BASE_LIGHT_TEMPLATE_IDS,
+  DESCENT_BASE_LIGHT_TEMPLATE_IDS,
   racePaceLongTemplateId,
   RUN_TEMPLATES,
+  TIME_ON_FEET_LONG_MINUTES,
+  timeOnFeetLongId,
 } from "@/lib/workoutTemplates";
 import {
   recentPace,
@@ -34,7 +39,12 @@ import {
   type DatedRun,
   type LayoffClass,
 } from "./layoffDetection";
-import type { RaceBlockInputs, RunPlan, ScheduledRunDay } from "./programTypes";
+import type {
+  RaceBlockInputs,
+  RaceDistance,
+  RunPlan,
+  ScheduledRunDay,
+} from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
 import { beginnerQualityWeek, newRunnerTemplate } from "./newRunner";
 import { starterRunSlots, starterTemplateId } from "./starterPlan";
@@ -68,15 +78,20 @@ export type { RunPlan, ScheduledRunDay };
    ───────────────────────────────────────────── */
 
 import {
+  climbEffortFactor,
   getPhaseForWeek,
   getRaceFloorWeeks,
+  isDescentHeavy,
   isRampStepBack,
   isRollingStepBack,
   isRunStepBackWeek,
+  isTrailRace,
+  isUltraDistance,
   lastRampWeekOf,
   RACE_CONFIGS,
   raceBlockStart,
   raceCalendarWeeks,
+  sizesLongRunsInTime,
   startsPartway,
   TAPER_WEEKS_BY_DISTANCE,
   trainingWeeksOf,
@@ -294,6 +309,116 @@ export interface LongRunCeiling {
 }
 
 /**
+ * One rung of a long-run ladder: its id, its size (km on the distance
+ * ladder, minutes on the time ladder) and its nominal minutes.
+ */
+interface LongTier {
+  id: string;
+  size: number;
+  minutes: number;
+}
+
+/**
+ * A long-run ladder (Run26 (2)): the distance ladder (`LONG_RUN_TIERS`), or
+ * the time on feet an ultra's or a trail race's long runs are sized in
+ * (`TIME_ON_FEET_LONG_MINUTES`). The ramp, Run23's climb, the ceiling and
+ * Run22's taper shares work the same on either, in its own size: a time
+ * rung takes its minutes at any pace.
+ */
+interface LongLadder {
+  tiers: readonly LongTier[];
+  inTime: boolean;
+}
+
+const KM_LADDER: LongLadder = {
+  tiers: LONG_RUN_TIERS.map((t) => ({ id: t.id, size: t.km, minutes: t.minutes })),
+  inTime: false,
+};
+
+const TIME_LADDER: LongLadder = {
+  tiers: TIME_ON_FEET_LONG_MINUTES.map((minutes) => ({
+    id: timeOnFeetLongId(minutes),
+    size: minutes,
+    minutes,
+  })),
+  inTime: true,
+};
+
+/**
+ * Run26 (2): the longest an ultra's long run may take, by distance, the
+ * time on feet the ramp is clamped to, as the marathon's 180 minutes are
+ * (Run24 (1)). Three and a half hours for a 50K, four and a half for a 50
+ * miler and five for a 100K: under the 50 miler's and the 100K's own long
+ * runs in Powell (Relentless Forward Progress, 2011, ch. 2), as the peaks
+ * are (`RACE_CONFIGS`). Tropos heuristics in RUN-EV-06's register.
+ */
+const ULTRA_LONG_RUN_MAX_MINUTES: Record<"50k" | "50mi" | "100k", number> = {
+  "50k": 210,
+  "50mi": 270,
+  "100k": 300,
+};
+
+/**
+ * Run26 (2): the pace a plan in time sizes its distances at when it knows
+ * none of the runner's: the kilometre ladder's own, its 32 km in 180
+ * minutes (`LONG_RUN_TIERS`).
+ */
+const NOMINAL_LONG_PACE_S_PER_KM = (180 * 60) / 32;
+
+/**
+ * Run26 (2): an ultra's back-to-back runs. Powell (Relentless Forward
+ * Progress, 2011, ch. 2) runs "two or even three" in a season, three to six
+ * weeks before the race, and warns that running much of the week on tired
+ * legs invites injury; Pam Smith (UltraRunning, 2018) says to use them
+ * sparingly, with recovery planned. So a plan holds them in its last build
+ * weeks before the taper, never a step-back week: two for a 50K, three for
+ * the longer two. The second run is 60% of the long run's time, at least
+ * an hour. The counts and the share are Tropos heuristics; no trial tests
+ * back-to-back runs.
+ */
+const BACK_TO_BACK_WEEKS: Record<"50k" | "50mi" | "100k", number> = {
+  "50k": 2,
+  "50mi": 3,
+  "100k": 3,
+};
+const BACK_TO_BACK_SHARE = 0.6;
+
+/** The back-to-back run of at most `minutes`, the shortest at the least. */
+function backToBackIdFor(minutes: number): string {
+  let chosen = BACK_TO_BACK_MINUTES[0];
+  for (const m of BACK_TO_BACK_MINUTES) if (m <= minutes) chosen = m;
+  return backToBackId(chosen);
+}
+
+/** Run26 (2): whether a run is an ultra's back-to-back run. */
+function isBackToBackRun(templateId: string): boolean {
+  return !!RUN_TEMPLATES.find((t) => t.id === templateId)?.config.backToBack;
+}
+
+/**
+ * Run26 (2): the day an ultra's back-to-back run takes, beside the long
+ * run: a weekend day where the one beside it is, else the day after, else
+ * the day before. A run day with no lifting only, as the long run's own
+ * pick prefers (`pickLongRunSlot`); null when neither neighbour is one.
+ */
+function backToBackSlotOf(
+  longSlot: number,
+  slots: readonly number[],
+  weekSchedule: readonly ScheduleDay[]
+): number | null {
+  const after = (longSlot + 1) % 7;
+  const before = (longSlot + 6) % 7;
+  const open = [after, before].filter(
+    (d) =>
+      slots.includes(d) &&
+      weekSchedule.find((day) => day.day === d)?.type === "run"
+  );
+  return (
+    open.find((d) => d === 0 || d === 6) ?? open[0] ?? null
+  );
+}
+
+/**
  * Easy runs are a ladder too, ramped on the same progress as the long run.
  *
  * Before this they were a fixed `easy_30` for every week of every plan, so
@@ -340,7 +465,8 @@ const OWN_EASY_CAP_RUN_DAYS = 5;
  * to 40 km in week 1 and their usual week as the peak.
  */
 export interface OwnWeek {
-  /** The long run's first rung, km. */
+  /** The long run's first rung, km, or minutes in a plan sized in time on
+   *  feet (Run26 (2), `LongLadder`). */
   longKm: number;
   /** A weekday easy run's minutes, at most the cap for the run days. */
   easyMinutes: number;
@@ -438,14 +564,16 @@ const EASY_PEAK_MINUTES = 50;
  *  (Run20). */
 const CROWDED_MEDIUM_LONG_MINUTES = 50;
 
-const MEDIUM_LONG_PEAK_MINUTES: Record<
-  "5k" | "10k" | "half" | "marathon",
-  number
-> = {
+const MEDIUM_LONG_PEAK_MINUTES: Record<RaceDistance, number> = {
   "5k": 50,
   "10k": 60,
   half: 75,
   marathon: 90,
+  // Run26 (2): an ultra's midweek run is the marathon's; its weekend
+  // carries the rest (`BACK_TO_BACK_WEEKS`).
+  "50k": 90,
+  "50mi": 90,
+  "100k": 90,
 };
 
 /**
@@ -514,13 +642,16 @@ const QUALITY_BASE = { tempoWorkMinutes: 20, intervalReps: 4 };
  */
 const QUALITY_PEAK_AT = 0.7;
 const QUALITY_PEAK_BY_DISTANCE: Record<
-  "5k" | "10k" | "half" | "marathon",
+  RaceDistance,
   { tempoWorkMinutes: number; intervalReps: number }
 > = {
   "5k": { tempoWorkMinutes: 20, intervalReps: 6 },
   "10k": { tempoWorkMinutes: 30, intervalReps: 6 },
   half: { tempoWorkMinutes: 40, intervalReps: 6 },
   marathon: { tempoWorkMinutes: 40, intervalReps: 6 },
+  "50k": { tempoWorkMinutes: 40, intervalReps: 6 },
+  "50mi": { tempoWorkMinutes: 40, intervalReps: 6 },
+  "100k": { tempoWorkMinutes: 40, intervalReps: 6 },
 };
 
 /**
@@ -541,6 +672,9 @@ const LIBRARY_LADDERS = {
   pace5k: ["5k_pace_4x800", "5k_pace_5x800", "5k_pace_6x800"],
   pace10k: ["10k_pace_3x2k", "10k_pace_3x2k", "10k_pace_4x2k"],
   hills: ["hills_6x60s", "hills_8x60s", "hills_10x60s"],
+  // Run26 (2): a trail plan's, by effort.
+  climbs: ["climbs_3x5min", "climbs_4x5min", "climbs_4x6min"],
+  downhill: ["downhill_5x60s", "downhill_6x90s", "downhill_6x2min"],
 } as const;
 type LibraryFamily = keyof typeof LIBRARY_LADDERS;
 
@@ -558,7 +692,7 @@ type LibraryFamily = keyof typeof LIBRARY_LADDERS;
  * turns are a Tropos heuristic.
  */
 const BUILD_FAMILIES: Record<
-  "5k" | "10k" | "half" | "marathon",
+  RaceDistance,
   { tempo: readonly LibraryFamily[]; intervals: readonly LibraryFamily[] }
 > = {
   "5k": {
@@ -577,20 +711,68 @@ const BUILD_FAMILIES: Record<
     tempo: ["tempo", "cruise", "progression"],
     intervals: ["timed", "km", "hills"],
   },
+  /* Run26 (2): an ultra's quality is threshold work and repeats by time
+     and up hills, no 1 km repeats: for a 100 km race training volume
+     predicted the time better than training pace (Tanda and Knechtle 2015,
+     Open Access J Sports Med 6:129), so each opens on its gentlest: a
+     progression run and hill repeats. The order is a Tropos heuristic. */
+  "50k": {
+    tempo: ["progression", "tempo", "cruise"],
+    intervals: ["hills", "timed"],
+  },
+  "50mi": {
+    tempo: ["progression", "tempo", "cruise"],
+    intervals: ["hills", "timed"],
+  },
+  "100k": {
+    tempo: ["progression", "tempo", "cruise"],
+    intervals: ["hills", "timed"],
+  },
 };
+
+/**
+ * Run26 (2): a trail plan's families, by effort, whatever its distance: its
+ * tempo is longer climbs run comfortably hard and its intervals hill
+ * repeats, with downhill repeats in turn for a race whose descents are a
+ * large part of it (`isDescentHeavy`). Powell (Relentless Forward Progress,
+ * 2011, ch. 2) has a runner train on the surface and the hills their race
+ * is run on; a pace means little on a slope, so none of these has one.
+ */
+function trailFamilies(descentHeavy: boolean): {
+  tempo: readonly LibraryFamily[];
+  intervals: readonly LibraryFamily[];
+} {
+  return {
+    tempo: ["climbs"],
+    intervals: descentHeavy ? ["hills", "downhill"] : ["hills"],
+  };
+}
 
 /** Run24 (5): the taper's sharpener for each distance, in place of 8 x 400 m
  *  for every race: short repeats at 5K or 10K pace, two blocks at a half's
  *  or a marathon's race pace where the plan has one. */
-const TAPER_SHARPENER: Record<"5k" | "10k" | "half" | "marathon", string> = {
+const TAPER_SHARPENER: Record<RaceDistance, string> = {
   "5k": "sharpener_5k",
   "10k": "sharpener_10k",
   half: "sharpener_half",
   marathon: "sharpener_marathon",
+  // Run26 (2): a road ultra's, three short blocks; a trail race's is short
+  // hills (`TRAIL_SHARPENER`).
+  "50k": "sharpener_ultra",
+  "50mi": "sharpener_ultra",
+  "100k": "sharpener_ultra",
 };
+
+/** Run26 (2): a trail race's taper sharpener, by effort. */
+const TRAIL_SHARPENER = "sharpener_trail";
 
 /** Run24 (5): the base's light quality in turn (`BASE_LIGHT_TEMPLATE_IDS`). */
 const BASE_LIGHT_SESSIONS = BASE_LIGHT_TEMPLATE_IDS;
+
+/** A template's own type, by its id. */
+function templateTypeOf(id: string): string | undefined {
+  return RUN_TEMPLATES.find((t) => t.id === id)?.type;
+}
 
 /** Run24 (5): the library session on a flavour ladder's rung. */
 function librarySessionId(ladderId: string, family: LibraryFamily): string {
@@ -610,7 +792,7 @@ function librarySessionId(ladderId: string, family: LibraryFamily): string {
  * twice. A Tropos heuristic.
  */
 function freeFamilies(input: {
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RaceDistance;
   /** The plan's longest tempo, work minutes. */
   tempoWorkMinutes: number;
   /** Whether the plan holds short reps in a turn of their own. */
@@ -692,7 +874,11 @@ function taperStepShare(input: {
 const LIGHTER_PEAK_FACTOR = 0.75;
 const BIGGER_PEAK_FACTOR = 1.25;
 
-function effectivePeakKm(peakLongKm: number, volume: RunVolumePreset): number {
+function effectivePeakKm(
+  peakLongKm: number,
+  volume: RunVolumePreset,
+  ladder: LongLadder = KM_LADDER
+): number {
   if (volume === "lighter") return peakLongKm * LIGHTER_PEAK_FACTOR;
   if (volume === "bigger") {
     // Run17: the clamp is the larger of the top tier and the distance's own
@@ -701,7 +887,7 @@ function effectivePeakKm(peakLongKm: number, volume: RunVolumePreset): number {
     // `standard`. `bigger` can now never sit below `standard`; the emitted
     // tier is still capped by the schedulable ladder.
     const ceiling = Math.max(
-      LONG_RUN_TIERS[LONG_RUN_TIERS.length - 1].km,
+      ladder.tiers[ladder.tiers.length - 1].size,
       peakLongKm
     );
     return Math.min(peakLongKm * BIGGER_PEAK_FACTOR, ceiling);
@@ -780,8 +966,11 @@ export function longRunKmForWeek(input: {
   easyPaceSPerKm?: number | null;
   /** Run24 (1): the plan's ceiling, when it is not the 150 minutes. */
   ceiling?: LongRunCeiling | null;
+  /** Run26 (2): the ladder the sizes are on, kilometres when absent. */
+  ladder?: LongLadder;
 }): number {
   const { weekIndex, totalWeeks, baseLongKm, taperWeeks, volume } = input;
+  const ladder = input.ladder ?? KM_LADDER;
   // No headroom in the PLAN — checked before the knob, so "bigger" cannot
   // manufacture headroom the caller deliberately withheld. This is what makes
   // the below-floor caller's safety precedence structural rather than a
@@ -803,8 +992,8 @@ export function longRunKmForWeek(input: {
   // keeps `lighter` below `standard` (a 24 km intent stays a 20 km tier).
   // A Tropos heuristic in the RUN-EV-06 register, not a source rule.
   const peak = Math.min(
-    effectivePeakKm(input.peakLongKm, volume),
-    maxSchedulableLongKm(input.easyPaceSPerKm, input.ceiling) *
+    effectivePeakKm(input.peakLongKm, volume, ladder),
+    maxSchedulableLongKm(input.easyPaceSPerKm, input.ceiling, ladder) *
       (1 + PEAK_HOLD_FRACTION)
   );
   if (peak <= baseLongKm) return baseLongKm;
@@ -872,7 +1061,7 @@ export function mediumLongMinutesForWeek(input: {
   totalWeeks: number;
   taperWeeks: number;
   volume: RunVolumePreset;
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RaceDistance;
   /** Run24 (2): the runner's own easy runs (`OwnWeek`). */
   own?: OwnWeek | null;
 }): number {
@@ -910,16 +1099,20 @@ function tierMinutesForRunner(
 
 function schedulableLongTiers(
   easyPaceSPerKm?: number | null,
-  ceiling?: LongRunCeiling | null
-) {
-  const pace = ceiling?.paceSPerKm ?? easyPaceSPerKm;
+  ceiling?: LongRunCeiling | null,
+  ladder: LongLadder = KM_LADDER
+): readonly LongTier[] {
+  // Run26 (2): a rung of time on feet takes its minutes at any pace.
+  const pace = ladder.inTime ? null : (ceiling?.paceSPerKm ?? easyPaceSPerKm);
   const maxMinutes = ceiling?.maxMinutes ?? LONG_RUN_MAX_MINUTES;
   const floorKm = ceiling?.floorKm ?? 0;
-  const eligible = LONG_RUN_TIERS.filter(
-    (t) => tierMinutesForRunner(t, pace) <= maxMinutes || t.km <= floorKm
+  const eligible = ladder.tiers.filter(
+    (t) =>
+      tierMinutesForRunner({ km: t.size, minutes: t.minutes }, pace) <=
+        maxMinutes || t.size <= floorKm
   );
   // The shortest tier is always schedulable — the floor, not the ceiling.
-  return eligible.length > 0 ? eligible : [LONG_RUN_TIERS[0]];
+  return eligible.length > 0 ? eligible : [ladder.tiers[0]];
 }
 
 /** The longest long-run distance the ceiling lets THIS runner schedule —
@@ -927,10 +1120,11 @@ function schedulableLongTiers(
  *  plan can actually go instead of flat-lining at the ceiling tier. */
 export function maxSchedulableLongKm(
   easyPaceSPerKm?: number | null,
-  ceiling?: LongRunCeiling | null
+  ceiling?: LongRunCeiling | null,
+  ladder: LongLadder = KM_LADDER
 ): number {
-  const tiers = schedulableLongTiers(easyPaceSPerKm, ceiling);
-  return tiers[tiers.length - 1].km;
+  const tiers = schedulableLongTiers(easyPaceSPerKm, ceiling, ladder);
+  return tiers[tiers.length - 1].size;
 }
 
 /** Run17 — how far past the schedulable ceiling the intended long-run
@@ -947,12 +1141,13 @@ export const PEAK_HOLD_FRACTION = 0.1;
 export function longTierForKm(
   km: number,
   easyPaceSPerKm?: number | null,
-  ceiling?: LongRunCeiling | null
+  ceiling?: LongRunCeiling | null,
+  ladder: LongLadder = KM_LADDER
 ): string {
-  const eligible = schedulableLongTiers(easyPaceSPerKm, ceiling);
+  const eligible = schedulableLongTiers(easyPaceSPerKm, ceiling, ladder);
   let chosen = eligible[0];
   for (const tier of eligible) {
-    if (tier.km <= km) chosen = tier;
+    if (tier.size <= km) chosen = tier;
   }
   return chosen.id;
 }
@@ -1033,7 +1228,7 @@ export function qualityTemplateId(input: {
   weekIndex: number;
   totalWeeks: number;
   taperWeeks: number;
-  distance: "5k" | "10k" | "half" | "marathon";
+  distance: RaceDistance;
   difficulty: RunDifficultyPreset;
   /** The highest rung of this ladder the plan's earlier sessions reached,
    *  -1 before the first (`ladderBefore`). The session climbs at most
@@ -1120,6 +1315,8 @@ function pickLongTemplateId(input: {
   /** No build: the taper takes its shares of the starting point
    *  (`taperStepShare`). */
   fromStart?: boolean;
+  /** Run26 (2): the ladder the sizes are on, kilometres when absent. */
+  ladder?: LongLadder;
 }): string {
   if (input.phase === "race") return "easy_30";
   if (input.phase === "taper") {
@@ -1127,7 +1324,12 @@ function pickLongTemplateId(input: {
     if (share === null) return "easy_30";
     const longestKm = input.buildLongestKm();
     return longestKm > 0
-      ? longTierForKm(longestKm * share, input.easyPaceSPerKm, input.ceiling)
+      ? longTierForKm(
+          longestKm * share,
+          input.easyPaceSPerKm,
+          input.ceiling,
+          input.ladder
+        )
       : "easy_30";
   }
   return rampLongTierId(input, input.climb);
@@ -1165,10 +1367,13 @@ function rampLongTierId(
     volume: RunVolumePreset;
     easyPaceSPerKm?: number | null;
     ceiling?: LongRunCeiling | null;
+    ladder?: LongLadder;
   },
   climb: LongRunClimb
 ): string {
+  const ladder = input.ladder ?? KM_LADDER;
   const key = [
+    ladder.inTime ? "time" : "km",
     input.totalWeeks,
     input.baseLongKm,
     input.peakLongKm,
@@ -1184,13 +1389,14 @@ function rampLongTierId(
   const week = Math.max(0, input.weekIndex);
   while (held.rungs.length <= week) {
     const k = held.rungs.length;
-    const wanted = LONG_RUN_TIERS.findIndex(
+    const wanted = ladder.tiers.findIndex(
       (t) =>
         t.id ===
         longTierForKm(
           longRunKmForWeek({ ...input, weekIndex: k }),
           input.easyPaceSPerKm,
-          input.ceiling
+          input.ceiling,
+          ladder
         )
     );
     const stepsBack =
@@ -1209,7 +1415,7 @@ function rampLongTierId(
     held.rungs.push(rung);
     held.highest = Math.max(held.highest, rung);
   }
-  return LONG_RUN_TIERS[held.rungs[week]].id;
+  return ladder.tiers[held.rungs[week]].id;
 }
 
 /** Run23's climb for one plan: each ramp's rungs, week by week. */
@@ -1308,13 +1514,21 @@ export function scheduleStructuredWeekV2(
  * PR-E put an easy 30 on every run day from the day after.
  */
 const RECOVERY_STEPS: Record<
-  "5k" | "10k" | "half" | "marathon",
+  RaceDistance,
   { firstRun: number; thirty: number; forty: number }
 > = {
   "5k": { firstRun: 2, thirty: 4, forty: Number.POSITIVE_INFINITY },
   "10k": { firstRun: 3, thirty: 7, forty: Number.POSITIVE_INFINITY },
   half: { firstRun: 5, thirty: 11, forty: 18 },
   marathon: { firstRun: 8, thirty: 14, forty: 21 },
+  /* Run26 (2): a 50K takes the marathon's steps. A 50 miler and a 100K
+     wait nine days for the first run and sixteen for the 30s: after a
+     166 km mountain race most of the legs' strength came back within nine
+     days and all of it by sixteen (Millet et al. 2011, PLoS ONE 6:e17059).
+     Tropos heuristics; the races here are shorter than that one. */
+  "50k": { firstRun: 8, thirty: 14, forty: 21 },
+  "50mi": { firstRun: 9, thirty: 16, forty: 23 },
+  "100k": { firstRun: 9, thirty: 16, forty: 23 },
 };
 
 /** At most this many short runs a week while they are short, none on
@@ -1431,8 +1645,11 @@ export interface RacePlanV2Input {
   runTimeLimits?: RunTimeLimits | null;
   weekSchedule: ScheduleDay[];
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
+    /** Run26 (2): the race's total climb, metres: a race whose climb is
+     *  meaningful for its distance makes a trail plan (`isTrailRace`). */
+    climbM?: number | null;
   };
   /** Total runs target per week. Used in v1 as the slot cap; in v2
    *  the weekSchedule is authoritative — this only seeds the structure
@@ -1612,6 +1829,16 @@ export interface RacePlanV2Output {
 export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const config = RACE_CONFIGS[input.raceGoal.distance];
   const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
+  /* Run26 (2): an ultra, or a trail race at any distance, sizes its long
+     runs in time on feet; a trail race's sessions are by effort, with
+     climbs, and downhill running where its descents are a large part of
+     it; an ultra holds back-to-back runs in its last build weeks. */
+  const ultra = isUltraDistance(input.raceGoal.distance)
+    ? input.raceGoal.distance
+    : null;
+  const trail = isTrailRace(input.raceGoal);
+  const descentHeavy = isDescentHeavy(input.raceGoal);
+  const ladder = sizesLongRunsInTime(input.raceGoal) ? TIME_LADDER : KM_LADDER;
   const target = parseLocalDate(input.raceGoal.targetDate);
   // Normalised to the anchor, the way `migrateProgramState` normalises its
   // weekStart: `buildRunDayV2` already keys every run to the week that
@@ -1829,20 +2056,47 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      mid-block cannot lower the plan below one already in it. A run that was
      no long run of the plan, a race among them, doesn't lift it. 5K to half
      keep the 150 minutes at the confirmed pace. */
-  const longCeiling: LongRunCeiling | null =
-    input.raceGoal.distance === "marathon"
+  /** The ceiling on the kilometre ladder, which a plan in time keeps for
+   *  the rolling base before its block. */
+  const kmCeiling: LongRunCeiling | null =
+    input.raceGoal.distance === "marathon" || ultra
       ? {
           paceSPerKm: blockPace,
           maxMinutes: MARATHON_LONG_RUN_MAX_MINUTES,
           floorKm: heldLongKm,
         }
       : null;
+  /* Run26 (2): a plan in time on feet sizes its long runs from the
+     distance's kilometres at the block's pace, else the ladder's nominal
+     one, and the race's climb (`climbEffortFactor`, ITRA's km-effort), and
+     clamps them to its time: an ultra's own (`ULTRA_LONG_RUN_MAX_MINUTES`),
+     a trail marathon's three hours, a shorter trail race's 150 minutes. */
+  const inMinutes = (km: number) =>
+    (km * (blockPace ?? NOMINAL_LONG_PACE_S_PER_KM) * climbEffortFactor(input.raceGoal)) /
+    60;
+  const longCeiling: LongRunCeiling | null = ladder.inTime
+    ? {
+        paceSPerKm: null,
+        maxMinutes: ultra
+          ? ULTRA_LONG_RUN_MAX_MINUTES[ultra]
+          : input.raceGoal.distance === "marathon"
+            ? MARATHON_LONG_RUN_MAX_MINUTES
+            : LONG_RUN_MAX_MINUTES,
+      }
+    : kmCeiling;
+  /** The plan's opening and peak long runs, in its ladder's size. */
+  const baseLong = ladder.inTime
+    ? inMinutes(config.baseLongKm)
+    : config.baseLongKm;
+  const peakLong = ladder.inTime
+    ? inMinutes(config.peakLongKm)
+    : config.peakLongKm;
   /* Run24 (2), deep dive D3: a block starts from the runner's own week
      where it is above the plan's base (`OwnWeek`). Not a new runner's
      block, nor a detrained runner's, whose starting point is from before
      the gap. The minutes are at the block's pace (`blockPace`), the one
      the climb uses. */
-  const baselineOwnWeek =
+  const ownWeekOn = (onLadder: LongLadder, openingLong: number) =>
     detrained || beginnerBlock
       ? null
       : ownWeekOf({
@@ -1852,8 +2106,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           paceSPerKm: blockPace,
           weeklyRunDays: input.weeklyRunDays,
           runSlots: availableRunSlots.length,
-          openingLongKm: config.baseLongKm,
+          openingLongKm: openingLong,
+          ladder: onLadder,
         });
+  /** The runner's own week on the kilometre ladder, which a rolling base
+   *  before the block is run on. */
+  const kmOwnWeek = ownWeekOn(KM_LADDER, config.baseLongKm);
+  /** The runner's own week on the plan's ladder (Run26 (2)). */
+  const baselineOwnWeek = ladder.inTime
+    ? ownWeekOn(ladder, baseLong)
+    : kmOwnWeek;
   /* Run24 (3), deep dive D9: the weeks before a capped block are a rolling
      run (`raceBaseRolling`) on the cycle that runs on into the block's
      step-backs, opening where the block would and climbing to the long run
@@ -1870,14 +2132,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             startLongKm: config.baseLongKm,
           },
           isStepBack: (k) => stepsBack(k - preBlock),
-          own: baselineOwnWeek,
+          own: kmOwnWeek,
           ownWeekMinutes:
-            baselineOwnWeek && isRunningBaseline(input.runningBaseline)
+            kmOwnWeek && isRunningBaseline(input.runningBaseline)
               ? input.runningBaseline.weeklyMinutes
               : undefined,
           detrained,
           easyPaceSPerKm: input.easyPaceSPerKm,
-          ceiling: longCeiling,
+          ceiling: kmCeiling,
           holdsNoQuality: (k) => holdsNoQuality(k - preBlock),
           gentler: tuning.difficulty === "gentler",
           holdsTrial: (k) => trialWeeks.has(k - preBlock),
@@ -1891,8 +2153,21 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const ownWeek = ((): OwnWeek | null => {
     if (!rollingBase || detrained) return baselineOwnWeek;
     const open = rollingBase.levelAt(preBlock);
-    const longKm = LONG_RUN_TIERS[open.longRung].km;
-    if (longKm <= config.baseLongKm && open.easyMinutes <= EASY_BASE_MINUTES)
+    // Run26 (2): a block in time opens on the time the rolling base's long
+    // run took, the rung at or under it.
+    const longKm = ladder.inTime
+      ? ladder.tiers.find(
+          (t) =>
+            t.id ===
+            longTierForKm(
+              inMinutes(LONG_RUN_TIERS[open.longRung].km),
+              null,
+              longCeiling,
+              ladder
+            )
+        )!.size
+      : LONG_RUN_TIERS[open.longRung].km;
+    if (longKm <= baseLong && open.easyMinutes <= EASY_BASE_MINUTES)
       return baselineOwnWeek;
     const cap =
       Math.min(input.weeklyRunDays, availableRunSlots.length) >=
@@ -1929,9 +2204,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     getPhaseForWeek(w, blockWeeks, input.raceGoal.distance, shortBase);
   /** The long run's base and peak for the ramp: the plan's, or from the
    *  runner's own week, a peak `OWN_PEAK_SHARE` above their longest. */
-  const rampBaseLongKm = ownWeek?.longKm ?? config.baseLongKm;
+  const rampBaseLongKm = ownWeek?.longKm ?? baseLong;
   const rampPeakLongKm = Math.max(
-    config.peakLongKm,
+    peakLong,
     ownWeek ? ownWeek.longKm * OWN_PEAK_SHARE : 0
   );
   // Run22: the sizes the ramp gives the last build week's easy run and
@@ -1989,13 +2264,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const returnWeek = input.recentRuns
     ? returnWeekKey(input.recentRuns, input.recentRunsAsOf ?? input.currentDate)
     : null;
-  const baseLongRung = LONG_RUN_TIERS.findIndex(
+  const baseLongRung = ladder.tiers.findIndex(
     (t) =>
       t.id ===
       longTierForKm(
-        config.baseLongKm,
+        baseLong,
         input.easyPaceSPerKm ?? null,
-        longCeiling
+        longCeiling,
+        ladder
       )
   );
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
@@ -2054,7 +2330,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     })();
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
-    const remaining = runEligibleSlots.filter((d) => d !== longSlot);
+    /** The week's run days besides the long run. */
+    const runDays = runEligibleSlots.filter((d) => d !== longSlot);
 
     // Easy runs ramp with the long run in base/build. Race and below-floor
     // weeks stay at the base duration — cutting easy volume IS what those
@@ -2197,7 +2474,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         weekIndex: w,
         totalWeeks: blockWeeks,
         phase,
-        baseLongKm: config.baseLongKm,
+        baseLongKm: baseLong,
         // Cap at baseLongKm (not peak) so the long run never jumps, and
         // with it the Pgm6 safety precedence: peak === base leaves no
         // headroom, so "bigger" has nothing to inflate into.
@@ -2211,14 +2488,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // `longRunProgression.test.ts` ("a below-floor plan has no room to
         // ramp"), so that lowering getRaceFloorWeeks surfaces the
         // dependency instead of silently making this the only guard.
-        peakLongKm: config.baseLongKm,
+        peakLongKm: baseLong,
         taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
         volume: tuning.volume,
-        easyPaceSPerKm: input.easyPaceSPerKm ?? null,
+        easyPaceSPerKm: ladder.inTime ? null : (input.easyPaceSPerKm ?? null),
         ceiling: longCeiling,
         buildLongestKm,
         climb,
         fromStart: taperStart !== null,
+        ladder,
       });
       week.push(
         buildRunDayV2({
@@ -2228,7 +2506,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           weekStart,
         })
       );
-      remaining.forEach((d) =>
+      runDays.forEach((d) =>
         week.push(
           buildRunDayV2({
             dayIndex: d,
@@ -2260,21 +2538,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          ceiling. Capping peak at base keeps the existing ramp machinery
          and simply lowers what it climbs toward. */
       peakLongKm:
-        detrained && returnWeek === null ? config.baseLongKm : rampPeakLongKm,
+        detrained && returnWeek === null ? baseLong : rampPeakLongKm,
       taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
       volume: tuning.volume,
-      easyPaceSPerKm: input.easyPaceSPerKm ?? null,
+      easyPaceSPerKm: ladder.inTime ? null : (input.easyPaceSPerKm ?? null),
       ceiling: longCeiling,
       buildLongestKm,
       climb,
       fromStart: taperStart !== null,
+      ladder,
     });
     // Back from a layoff: a rung under base in the week back, a rung a week
     // after it, never past the ramp's own (`returnWeek`).
-    const rampRung = LONG_RUN_TIERS.findIndex((t) => t.id === rampLongId);
+    const rampRung = ladder.tiers.findIndex((t) => t.id === rampLongId);
     const longId =
       weeksBack !== null && rampRung >= 0 && baseLongRung >= 0
-        ? LONG_RUN_TIERS[
+        ? ladder.tiers[
             Math.min(rampRung, Math.max(0, baseLongRung - 1 + weeksBack))
           ].id
         : rampLongId;
@@ -2289,6 +2568,27 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         weekStart,
       })
     );
+
+    /* Run26 (2): an ultra's back-to-back run, beside the long run, in the
+       weeks that hold one (`backToBackWeeks`), 60% of the long run's time.
+       The week's other runs are placed around the pair as they are around
+       the long run. */
+    const b2bDay =
+      backToBackWeeks.has(w) && longId === rampLongId ? backToBackSlot : null;
+    if (b2bDay !== null) {
+      const longMinutes =
+        ladder.tiers.find((t) => t.id === longId)?.minutes ?? 0;
+      week.push(
+        buildRunDayV2({
+          dayIndex: b2bDay,
+          templateId: backToBackIdFor(BACK_TO_BACK_SHARE * longMinutes),
+          type: "easy",
+          weekStart,
+        })
+      );
+    }
+    const pairDays = b2bDay !== null ? [b2bDay] : [];
+    const remaining = runDays.filter((d) => d !== b2bDay);
 
     if (remaining.length > 0) {
       // Compressed-plan rule: cap hard sessions at 1/week (vs 1
@@ -2332,9 +2632,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         !gentler &&
         !beginnerBlock &&
         runEligibleSlots.length >= SECOND_QUALITY_RUN_DAYS &&
-        remaining.length >= 3 &&
+        runDays.length >= 3 &&
         chooseQualityRunSlots({
-          availableDays: remaining,
+          availableDays: runDays,
           longDay: longSlot,
           count: 2,
           weekSchedule: input.weekSchedule,
@@ -2369,11 +2669,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               weekSchedule: input.weekSchedule,
             })
           : [];
+        // Run26 (2): a descent-heavy race's base takes a gentle downhill
+        // session in turn with short hills.
+        const baseLight = descentHeavy
+          ? DESCENT_BASE_LIGHT_TEMPLATE_IDS
+          : BASE_LIGHT_SESSIONS;
         lightDays.forEach((d) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
-              templateId: BASE_LIGHT_SESSIONS[w % BASE_LIGHT_SESSIONS.length],
+              templateId: baseLight[w % baseLight.length],
               type: "intervals",
               weekStart,
             })
@@ -2412,8 +2717,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           hardCapApplies,
           skipQuality: skipQualityEntirely || detrainedSkipsQuality,
           gentler,
-          secondQuality: allowSecondQuality && remaining.length >= 3,
+          secondQuality: allowSecondQuality && runDays.length >= 3,
         };
+        /* Run26 (2): a week with a back-to-back run holds one quality
+           session: the weekend is its load. */
+        const secondQualityIn = (k: number) =>
+          rules.secondQuality && !backToBackWeeks.has(k);
         const ladder = {
           totalWeeks: blockWeeks,
           taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
@@ -2434,6 +2743,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               weekIndex: k,
               phase: phaseOf(k),
               ...rules,
+              secondQuality: secondQualityIn(k),
             });
             if (!planned.includes(flavour)) continue;
             // Run24 (4): a week's time trial takes its tempo, or its one
@@ -2466,7 +2776,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          *  family whose turn it is. */
         const sessionOf = (flavour: "tempo" | "intervals") => {
           const before = ladderBefore(flavour);
-          const families = BUILD_FAMILIES[input.raceGoal.distance][flavour];
+          const families = (
+            trail
+              ? trailFamilies(descentHeavy)
+              : BUILD_FAMILIES[input.raceGoal.distance]
+          )[flavour];
           return librarySessionId(
             qualityTemplateId({
               ...ladder,
@@ -2481,6 +2795,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           weekIndex: w,
           phase,
           ...rules,
+          secondQuality: secondQualityIn(w),
           // Run24 (8): nor a beginner's block until they can run 40
           // minutes. Its taper then holds none either: its build held none.
           skipQuality: rules.skipQuality || holdsNoQuality(w),
@@ -2494,12 +2809,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             longDay: longSlot,
             count: secondQualityHere ? 2 : 1,
             weekSchedule: input.weekSchedule,
+            otherDemanding: pairDays,
           });
           week.push(
             buildRunDayV2({
               dayIndex: qualitySlots[0],
               templateId: qualityId,
-              type: qualityType,
+              // Run26 (2): a trail plan's climbs are repeats in its tempo's
+              // turn; the run is the session's own type.
+              type: templateTypeOf(qualityId) ?? qualityType,
               weekStart,
             })
           );
@@ -2512,18 +2830,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // remaining slots, i.e. four run days or more.
           if (secondQualityHere) {
             const secondType = flavours[1];
+            const secondId = sessionOf(secondType);
             week.push(
               buildRunDayV2({
                 dayIndex: qualitySlots[1],
-                templateId: sessionOf(secondType),
-                type: secondType,
+                templateId: secondId,
+                type: templateTypeOf(secondId) ?? secondType,
                 weekStart,
               })
             );
           }
           const easyOrder = easyDaysInFillOrder({
             easyDays: remaining.filter((day) => !qualitySlots.includes(day)),
-            demandingDays: [longSlot, ...qualitySlots],
+            demandingDays: [longSlot, ...pairDays, ...qualitySlots],
             mediumLongDemanding: midLongDemanding,
           });
           /* Deep dive D16: a week with two quality sessions and no day clear
@@ -2536,7 +2855,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             secondQualityHere &&
             midLongDemanding &&
             easyOrder.length > 0 &&
-            !clearOf(easyOrder[0], [longSlot, ...qualitySlots])
+            !clearOf(easyOrder[0], [longSlot, ...pairDays, ...qualitySlots])
               ? easyTierForMinutes(CROWDED_MEDIUM_LONG_MINUTES)
               : midLongId;
           easyOrder.forEach((d, i) =>
@@ -2562,7 +2881,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // (WAVE1-STRIDES).
           easyDaysInFillOrder({
             easyDays: remaining,
-            demandingDays: [longSlot],
+            demandingDays: [longSlot, ...pairDays],
             mediumLongDemanding: midLongDemanding,
           }).forEach((d, i) =>
             week.push(
@@ -2610,7 +2929,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // minutes and could move the medium-long onto another day. Each
           // distance has its own sharpener (Run24 (5), `TAPER_SHARPENER`).
           const heldQuality = taperBuild().heldQuality;
-          const sharpenerId = TAPER_SHARPENER[input.raceGoal.distance];
+          const sharpenerId = trail
+            ? TRAIL_SHARPENER
+            : TAPER_SHARPENER[input.raceGoal.distance];
           week.push(
             buildRunDayV2({
               dayIndex: taperDay,
@@ -2690,7 +3011,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
    *  rolling base before a capped block (Run24 (3)), the trials start there
    *  and run on into the block on the same five weeks. */
   const firstTrialWeek = 1 - preBlock;
-  if (!belowFloor && !detrained) {
+  /* Run26 (2): a trail plan speaks in effort and holds no time trial: its
+     sessions take no pace for one to set. */
+  if (!belowFloor && !detrained && !trail) {
     const fits = (w: number) =>
       w >= -preBlock &&
       w < lastRampWeek &&
@@ -2716,7 +3039,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      detrained, compressed or gentler block. The order and the turns are a
      Tropos heuristic. */
   const racePaceRace =
-    input.raceGoal.distance === "marathon" || input.raceGoal.distance === "half"
+    !ladder.inTime &&
+    (input.raceGoal.distance === "marathon" ||
+      input.raceGoal.distance === "half")
       ? input.raceGoal.distance
       : null;
   const racePaceWeeks = new Set<number>();
@@ -2738,6 +3063,37 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         continue;
       if (turn % 2 === 0) racePaceWeeks.add(w);
       turn += 1;
+    }
+  }
+  /* Run26 (2): an ultra's back-to-back weeks (`BACK_TO_BACK_WEEKS`): its
+     last build weeks before the taper, counting back from the peak, never
+     a step-back week, where the week has a run day beside the long run.
+     Not a block begun as a new runner, a detrained, compressed or
+     below-floor block, nor on the lighter volume. */
+  const backToBackSlot = ultra
+    ? backToBackSlotOf(
+        pickLongRunSlot(availableRunSlots, input.weekSchedule),
+        availableRunSlots,
+        input.weekSchedule
+      )
+    : null;
+  const backToBackWeeks = new Set<number>();
+  if (
+    ultra &&
+    backToBackSlot !== null &&
+    !beginnerBlock &&
+    !detrained &&
+    !compressed &&
+    !belowFloor &&
+    tuning.volume !== "lighter"
+  ) {
+    for (
+      let w = lastRampWeek;
+      w >= 0 && backToBackWeeks.size < BACK_TO_BACK_WEEKS[ultra];
+      w--
+    ) {
+      if (phaseOf(w) !== "build") break;
+      if (!stepsBack(w)) backToBackWeeks.add(w);
     }
   }
   /** Week `w` as the plan holds it, its long run given race-pace blocks in
@@ -2893,15 +3249,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     if (!compressed || !baseline || detrained || beginnerBlock) return null;
     const climbed = runningClimb(baseline, blockWeekZero, {
       easyPaceSPerKm: climbPace,
+      timeOnFeet: ladder.inTime,
     });
     let longestKm = 0;
-    for (const tier of LONG_RUN_TIERS) {
+    for (const tier of ladder.tiers) {
       const template = RUN_TEMPLATES.find((t) => t.id === tier.id);
       if (
         template &&
         plannedRunMinutes(template, climbPace) <= climbed.longestMinutes
       )
-        longestKm = Math.max(longestKm, tier.km);
+        longestKm = Math.max(longestKm, tier.size);
     }
     const otherRuns = Math.max(
       1,
@@ -2949,6 +3306,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       baseline && weekKey
         ? runningClimb(baseline, weekKey, {
             easyPaceSPerKm: climbPace,
+            timeOnFeet: ladder.inTime,
             isStepBack: isStepBackWeek,
             done:
               // A week begun by the day the runs were read.
@@ -3038,7 +3396,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         if (run.type === "long")
           held.longestKm = Math.max(
             held.longestKm,
-            LONG_RUN_TIERS.find((t) => t.id === run.templateId)?.km ?? 0
+            ladder.tiers.find((t) => t.id === run.templateId)?.size ?? 0
           );
       if (k < firstTaperWeek - 1) continue;
       // The last build week's easy runs, each as planned and as held: the
@@ -3052,7 +3410,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           planned: minutesOf(run),
           held: minutesOf(week[i]),
         }))
-        .filter(({ run }) => run.type === "easy")
+        // Run26 (2): an ultra's back-to-back run is the weekend's, not
+        // the week's medium-long; the taper keeps none.
+        .filter(
+          ({ run }) => run.type === "easy" && !isBackToBackRun(run.templateId)
+        )
         .sort((a, b) => b.planned - a.planned);
       if (easy.length === 0) continue;
       held.mediumLongMinutes = easy[0].held;
@@ -3099,9 +3461,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
  *  its own race template in RUN_TEMPLATES — pre-PR-0a this
  *  fallback returned "5k_race" for every distance, which
  *  collapsed 10K / half / marathon race days to a 5K prefill. */
-function pickRaceTemplateId(
-  distance: "5k" | "10k" | "half" | "marathon"
-): string {
+function pickRaceTemplateId(distance: RaceDistance): string {
   switch (distance) {
     case "5k":
       return "5k_race";
@@ -3111,6 +3471,12 @@ function pickRaceTemplateId(
       return "half_race";
     case "marathon":
       return "marathon_race";
+    case "50k":
+      return "50k_race";
+    case "50mi":
+      return "50mi_race";
+    case "100k":
+      return "100k_race";
   }
 }
 
@@ -3120,9 +3486,7 @@ function pickRaceTemplateId(
  * race-day runDay transitions to completed_*. Standard coach
  * periodisation: bigger races → longer recovery.
  */
-export function recoveryWeeksForDistance(
-  distance: "5k" | "10k" | "half" | "marathon"
-): number {
+export function recoveryWeeksForDistance(distance: RaceDistance): number {
   switch (distance) {
     case "5k":
       return 1;
@@ -3131,7 +3495,13 @@ export function recoveryWeeksForDistance(
     case "half":
       return 3;
     case "marathon":
+    // Run26 (2): a 50K the marathon's four weeks, a 50 miler and a 100K
+    // five (`RECOVERY_STEPS`). Tropos heuristics.
+    case "50k":
       return 4;
+    case "50mi":
+    case "100k":
+      return 5;
   }
 }
 
@@ -3151,18 +3521,23 @@ function ownWeekOf(input: {
   paceSPerKm: number | null | undefined;
   weeklyRunDays: number;
   runSlots: number;
+  /** The plan's opening long run, in the ladder's size. */
   openingLongKm: number;
+  /** Run26 (2): the ladder its long run is on, kilometres when absent;
+   *  `longKm` is then in its size. */
+  ladder?: LongLadder;
 }): OwnWeek | null {
   const start = input.baseline;
   if (!start) return null;
+  const ladder = input.ladder ?? KM_LADDER;
   let longKm = 0;
-  for (const tier of LONG_RUN_TIERS) {
+  for (const tier of ladder.tiers) {
     const template = RUN_TEMPLATES.find((t) => t.id === tier.id);
     if (
       template &&
       plannedRunMinutes(template, input.paceSPerKm) <= start.longestRunMinutes
     )
-      longKm = Math.max(longKm, tier.km);
+      longKm = Math.max(longKm, tier.size);
   }
   const runDays = Math.min(input.weeklyRunDays, input.runSlots);
   const cap =

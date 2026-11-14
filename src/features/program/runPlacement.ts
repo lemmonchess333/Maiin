@@ -13,11 +13,15 @@ export function chooseQualityRunSlots({
   longDay,
   count,
   weekSchedule,
+  otherDemanding = [],
 }: {
   availableDays: readonly number[];
   longDay: number;
   count: 1 | 2;
   weekSchedule: readonly ScheduleDay[];
+  /** Run26 (2): other demanding days the week already holds (an ultra's
+   *  back-to-back run), kept apart from as the long run is. */
+  otherDemanding?: readonly number[];
 }): number[] {
   const days = [...new Set(availableDays)]
     .filter(
@@ -30,7 +34,7 @@ export function chooseQualityRunSlots({
       ? days.flatMap((day, i) => days.slice(i + 1).map((other) => [day, other]))
       : days.map((day) => [day]);
   const score = (choice: number[]) => {
-    const demanding = [longDay, ...choice];
+    const demanding = [longDay, ...otherDemanding, ...choice];
     const gaps = demanding.flatMap((day, i) =>
       demanding.slice(i + 1).map((other) => gap(day, other))
     );

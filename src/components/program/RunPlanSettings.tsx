@@ -123,8 +123,9 @@ import type { UserProfile } from "@/lib/auth";
 import type {
   PrimaryGoal,
   ProgramState,
-  RaceDistance,
+  RoadRaceDistance as RaceDistance,
 } from "@/features/program/programTypes";
+import { isRoadDistance } from "@/features/program/runPlanTiming";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { raceLegTrimCut } from "@/features/program/programEngine";
 import { sessionLengthOption } from "@/features/program/sessionFit";
@@ -375,7 +376,10 @@ export default function RunPlanSettings({
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ??
       (goalLink === "5k" ? "5k" : undefined) ??
-      storedDraft?.raceDistance ??
+      // Run26 (2): the editor lists the road races until its ultras land.
+      (storedDraft && isRoadDistance(storedDraft.raceDistance)
+        ? storedDraft.raceDistance
+        : undefined) ??
       saved.raceDistance
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(

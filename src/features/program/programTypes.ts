@@ -672,7 +672,13 @@ export interface RunPlan {
   stageStartedWeek?: string;
   /** Calendar anchor for an intentionally empty race-training week. */
   emptyRunWeekKey?: string;
-  raceGoal?: { distance: string; targetDate: string; eventName?: string };
+  raceGoal?: {
+    distance: string;
+    targetDate: string;
+    eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
+  };
   totalWeeks?: number;
   currentWeek?: number;
   /** P2-1: true when totalWeeks fell below the ideal for the race
@@ -1276,5 +1282,15 @@ export type Experience = (typeof VALID_EXPERIENCE)[number];
 export const VALID_EQUIPMENT = ["full_gym", "home_gym", "minimal"] as const;
 export type Equipment = (typeof VALID_EQUIPMENT)[number];
 
-export const VALID_RACE_DISTANCE = ["5k", "10k", "half", "marathon"] as const;
+/** The road races a plan prepares for, 5K to marathon. */
+export const ROAD_RACE_DISTANCES = ["5k", "10k", "half", "marathon"] as const;
+export type RoadRaceDistance = (typeof ROAD_RACE_DISTANCES)[number];
+/** Run26 (2): the ultras a plan prepares for, 50K, 50 miles and 100K. 100
+ *  miles is left out until its own call. */
+export const ULTRA_RACE_DISTANCES = ["50k", "50mi", "100k"] as const;
+export type UltraRaceDistance = (typeof ULTRA_RACE_DISTANCES)[number];
+export const VALID_RACE_DISTANCE = [
+  ...ROAD_RACE_DISTANCES,
+  ...ULTRA_RACE_DISTANCES,
+] as const;
 export type RaceDistance = (typeof VALID_RACE_DISTANCE)[number];

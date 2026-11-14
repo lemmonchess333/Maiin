@@ -30,6 +30,10 @@ const RACE_TEMPLATE_IDS = Object.freeze([
   "10k_race",
   "half_race",
   "marathon_race",
+  // Run26 (2): the ultras' race days.
+  "50k_race",
+  "50mi_race",
+  "100k_race",
 ]);
 
 /**
