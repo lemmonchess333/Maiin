@@ -12,7 +12,9 @@ import { advanceWeek, generateProgram } from "../programEngine";
 import { longRunKmForWeek } from "../runScheduler";
 import {
   getPhaseForWeek,
+  isRollingStepBack,
   isRunStepBackWeek,
+  raceBlockStart,
   TAPER_WEEKS_BY_DISTANCE,
 } from "../runPlanTiming";
 import {
@@ -32,12 +34,15 @@ describe("the run plan's step-back weeks", () => {
         const km = (w: number) =>
           longRunKmForWeek({
             weekIndex: w,
-            totalWeeks,
+            totalWeeks: totalWeeks - raceBlockStart(totalWeeks, distance),
             baseLongKm: 14,
             peakLongKm: 32,
             taperWeeks,
             volume: "standard",
           });
+        // Run24 (3): a plan longer than its block steps back on the
+        // rolling cycle before it, which runs on into the block's.
+        const before = raceBlockStart(totalWeeks, distance);
         for (let w = 1; w < totalWeeks; w++) {
           const phase = getPhaseForWeek(w, totalWeeks, distance);
           if (phase !== "base" && phase !== "build") {
@@ -47,7 +52,11 @@ describe("the run plan's step-back weeks", () => {
           expect(
             isRunStepBackWeek(w, totalWeeks, distance),
             `${distance}, ${totalWeeks} weeks, week ${w}`
-          ).toBe(km(w) < km(w - 1));
+          ).toBe(
+            w < before
+              ? isRollingStepBack(w, before)
+              : w > before && km(w - before) < km(w - before - 1)
+          );
         }
       }
     }
