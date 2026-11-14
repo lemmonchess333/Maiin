@@ -114,7 +114,12 @@ describe("a time trial on the run screen", () => {
       todayDayIndex: 1,
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2026-12-31" },
+        // Race day is counted from the clock: once it has passed, the plan
+        // has ended and the run launches as a free run with no segments.
+        raceGoal: {
+          distance: "10k",
+          targetDate: localDateString(addLocalDays(new Date(), 56)),
+        },
         totalWeeks: 10,
         currentWeek: 2,
       },
