@@ -91,6 +91,7 @@ import {
 } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import { Collapse } from "@/components/ui/Collapse";
@@ -155,6 +156,10 @@ interface DayActionSheetProps {
    *  Home's card offers, and a session done today keeps it on the sheet,
    *  done (`liftOnDate`). */
   sessionsOnDate?: ReadonlySet<string>;
+  /** A plan with no race date's weeks, by their Mondays
+   *  (`useRollingSessionContexts`, Run24 (3)): a run's reason in the plan's
+   *  terms. Home and Train pass them; without them such a run has none. */
+  rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null;
 }
 
 const NO_SESSIONS: ReadonlySet<string> = new Set();
@@ -176,6 +181,7 @@ export default function DayActionSheet({
   moveRunDay,
   scope = "day",
   sessionsOnDate = NO_SESSIONS,
+  rollingContexts = null,
 }: DayActionSheetProps) {
   const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
@@ -313,6 +319,9 @@ export default function DayActionSheet({
       ),
       racePace: selectedRacePace?.kind,
       inRecovery: isRecoveryRunDay(rp, run.runDay.date),
+      rolling: run.runDay.weekKey
+        ? rollingContexts?.get(run.runDay.weekKey)
+        : null,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.

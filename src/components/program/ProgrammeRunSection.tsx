@@ -171,6 +171,7 @@ import {
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
+import RollingPlanCard from "./RollingPlanCard";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
@@ -215,6 +216,7 @@ import {
   runModeWithPlan,
 } from "@/features/program/programMaintenance";
 import { ROLLING_GOAL_NAMES } from "@/features/program/rollingPlan";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
 import {
   goalDayName,
   goalDayQuestion,
@@ -426,6 +428,15 @@ export default function ProgrammeRunSection({
   // plan, its week and its Start, as the retired structured week did.
   const currentMode = runModeWithPlan(profile, programState);
   const rollingGoal = rollingGoalOf(programState, profile);
+  // Its weeks' places in the plan, for each run's "Why this run" here and
+  // on the day's sheet.
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: todayKeyDerivation,
+  });
   /* R4 — read the run plan through the resolver, not the mirror.
    *
    * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
@@ -974,6 +985,9 @@ export default function ProgrammeRunSection({
             programState?.runPlan,
             selectedRun.runDay.date
           ),
+          rolling: selectedRun.runDay.weekKey
+            ? rollingContexts?.get(selectedRun.runDay.weekKey)
+            : null,
         })
       : { purpose: null, weekLabel: null };
   // Non-breaking spaces: on a narrow card the eyebrow breaks before the
@@ -2046,6 +2060,19 @@ export default function ProgrammeRunSection({
           {/* The starter goal's week, where a race plan has its card. */}
           {starterView && <StarterGoalCard progress={starterView} />}
 
+          {/* Run24 (3): a plan with no race date's card, where a race plan
+              has its own, with the weeks ahead. */}
+          {currentMode === "rolling" && rollingGoal && (
+            <RollingPlanCard
+              goal={rollingGoal}
+              profile={profile}
+              programState={programState}
+              recentLayoff={recentLayoff}
+              recentRuns={recentRuns}
+              today={todayKeyDerivation}
+            />
+          )}
+
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /
               race-recent heroes stay on top. */}
@@ -2229,6 +2256,7 @@ export default function ProgrammeRunSection({
         restoreRunDay={restoreRunDay}
         restoreWorkoutDay={restoreWorkoutDay}
         moveRunDay={moveRunDay}
+        rollingContexts={rollingContexts}
       />
 
       {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
