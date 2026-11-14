@@ -4843,3 +4843,12 @@ Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` w
 - [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
 - [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
 
+
+## The session library in the plan (Run24 (5), 2026-11-13)
+
+Affects: which sessions a race plan's base, build and taper weeks hold (`runScheduler`'s `BUILD_FAMILIES`, `BASE_LIGHT_SESSIONS`, `TAPER_SHARPENER`) and a regular runner's second quality day. Unit tests and the simulator's traces cover the plan; no phone has shown one.
+
+- [ ] **A base week.** Set up a 10K 14 weeks out on four run days. Passing: Train's week 1 shows "Fartlek 30" (week 2 "Short hills 6×30s" or the 3K time trial) beside an easy run with strides, an easy run and the long run; its day sheet and Home's hero say what it is.
+- [ ] **A 5K build.** Set up a 5K 12 weeks out. Passing: the build weeks show 4×1 km, then a 5K-pace session ("4×800m at 5K pace") and later 200s; the week before race week shows "6×400m at 5K pace".
+- [ ] **A marathon taper.** Set up a marathon 18 weeks out with a confirmed benchmark and no goal time. Passing: each taper week shows "Sharpener 2×12 min", and Start plays its two 12-minute blocks at marathon pace.
+- [ ] **Two quality days.** As a "Regular runner" at setup, on five run days with no lifting on two of them. Passing: a build week holds two quality sessions, neither on a lifting day; the same runner with every run day a lifting day holds one.

@@ -77,30 +77,28 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   Run24 (4)'s time trials, which take a quality week in five and so move
  *   the quality ladder, gave sub-3:30 and the 2-3-day hybrids a
  *   `volume-jump` back (the week after a cutback, 28% and 26% over it)
- *   and the hybrids their `taper-cut`.
+ *   and the hybrids their `taper-cut`. Run24 (5), the session library in
+ *   the plan, took them out again. The week after the cutback is within a
+ *   quarter of it (`volume-jump`): sub-3:30's second quality day holds its
+ *   medium-long at 50 minutes (D16), 330 minutes after 272 where it was
+ *   345 after 269; the 2-3-day hybrids' cutback holds 3 × 2 km at 10K pace
+ *   where it held 4 × 1 km, 166 after 139 where it was 163 after 129. And
+ *   the 10K's own sharpener, 4 × 1 km at 10K pace, holds the hybrids'
+ *   first taper week at 94 minutes of the build's 180, where 8 × 400 m held
+ *   90 of 182 (`taper-cut`).
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": ["spike", "volume-jump"],
   "half-3-days": ["spike", "volume-jump"],
-  "sub-3-30": ["spike", "volume-jump"],
+  "sub-3-30": ["spike"],
   "sick-six-weeks": ["spike", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
-  "hybrid-2-3-trim": [
-    "lift:misses:overhead-press",
-    "spike",
-    "taper-cut",
-    "volume-jump",
-  ],
-  "hybrid-2-3-no-trim": [
-    "lift:misses:overhead-press",
-    "spike",
-    "taper-cut",
-    "volume-jump",
-  ],
+  "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
+  "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each

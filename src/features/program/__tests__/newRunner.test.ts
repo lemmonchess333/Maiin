@@ -125,12 +125,12 @@ describe("the race plan in a new runner's first weeks", () => {
   });
 
   it("drops the taper's session too", () => {
-    // A 5K six weeks out: a tempo, 6 × 1K and the taper's 8 × 400, all in
-    // the first six weeks.
+    // A 5K six weeks out: light quality in the base, a time trial and the
+    // taper's sharpener at 5K pace (Run24 (5)), all in the first six weeks.
     const regular = plan("5k", 6, null);
     const fresh = plan("5k", 6, until);
     expect(regular.weeks.flatMap(quality).map((r) => r.templateId)).toContain(
-      "8x400"
+      "sharpener_5k"
     );
     expect(fresh.weeks.flatMap(quality)).toEqual([]);
   });

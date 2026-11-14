@@ -67,7 +67,8 @@ describe("quality placement within the actual available week", () => {
         recentLayoff: "none",
         tuning: { difficulty: "standard", volume: "standard" },
       });
-      return plan.weeks.flat().filter((d) => d.templateId === "8x400");
+      // A half's taper session is its own sharpener (Run24 (5)).
+      return plan.weeks.flat().filter((d) => d.templateId === "sharpener_half");
     };
 
     it("isn't the day after the weekend's long-run slot", () => {
