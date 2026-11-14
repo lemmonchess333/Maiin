@@ -1,12 +1,23 @@
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { ZONE_NAMES, type HeartRateSummary } from "@/lib/hrZones";
+import {
+  ZONE_NAMES,
+  isHeartRateSourceKind,
+  type HeartRateSourceKind,
+  type HeartRateSummary,
+} from "@/lib/hrZones";
+
+/** Who read the heart rate, in the card's words. */
+const SOURCE_WORD: Record<HeartRateSourceKind, string> = {
+  "apple-watch": "Watch",
+  bluetooth: "Sensor",
+};
 
 function savedSummary(value: unknown): HeartRateSummary | null {
   if (!value || typeof value !== "object") return null;
   const summary = value as Partial<HeartRateSummary>;
   if (
-    summary.source !== "apple-watch" ||
+    !isHeartRateSourceKind(summary.source) ||
     !Number.isFinite(summary.averageBpm) ||
     !Number.isFinite(summary.maxBpm) ||
     !Number.isFinite(summary.coveredSeconds) ||
@@ -35,7 +46,12 @@ function duration(seconds: number): string {
     : `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-/** A saved summary only. Never renders raw beats or a fabricated zero. */
+/**
+ * A saved summary only. Never renders raw beats or a fabricated zero. Time
+ * in zone is elapsed time (`summarizeHeartRate`), shown only when readings
+ * covered at least half the moving time (connected training proposal,
+ * heart-rate rule 5); under that the card says the reading was partial.
+ */
 export default function HeartRateSummaryCard({
   summary: value,
 }: {
@@ -72,7 +88,8 @@ export default function HeartRateSummaryCard({
       {enoughCoverage && zonesAvailable ? (
         <div className="space-y-1 border-t border-border pt-3">
           <p className="mb-2 text-xs text-muted-foreground">
-            Time in zone · Watch covered {coveragePercent}% of moving time
+            Time in zone · {SOURCE_WORD[summary.source]} covered{" "}
+            {coveragePercent}% of moving time
           </p>
           {summary.zoneSeconds.map((seconds, index) => (
             <div
@@ -94,8 +111,8 @@ export default function HeartRateSummaryCard({
         </p>
       ) : (
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Heart rate was captured for {coveragePercent}% of moving time, so time
-          in zones is unavailable for this run.
+          Partial reading: heart rate covered {coveragePercent}% of moving time,
+          so time in zones isn’t shown.
         </p>
       )}
     </Card>

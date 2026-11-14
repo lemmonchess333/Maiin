@@ -3,11 +3,13 @@ import {
   maxHrFromAge,
   hrZones,
   zoneForHr,
-  zoneDistribution,
   targetZoneForRun,
   zoneShortLabel,
   ZONE_NAMES,
   summarizeHeartRate,
+  watchReadingSetAside,
+  easyHeartRateCeiling,
+  type HeartRateSample,
 } from "../hrZones";
 
 describe("zoneShortLabel", () => {
@@ -136,31 +138,6 @@ describe("targetZoneForRun — intensity → prescribed zone", () => {
   });
 });
 
-describe("zoneDistribution — post-run breakdown", () => {
-  it("excludes below-Z1 samples from the denominator", () => {
-    // 2 below-Z1 (90), 2 in Z2 (120,130), 2 in Z3 (140,150)
-    const dist = zoneDistribution([90, 90, 120, 130, 140, 150], 200);
-    const z2 = dist.find((d) => d.zone === 2)!;
-    const z3 = dist.find((d) => d.zone === 3)!;
-    expect(z2.samples).toBe(2);
-    expect(z3.samples).toBe(2);
-    // denominator is 4 in-zone samples, not 6
-    expect(z2.pct).toBeCloseTo(0.5);
-    expect(z3.pct).toBeCloseTo(0.5);
-  });
-
-  it("returns all-zero shares when no in-zone samples", () => {
-    const dist = zoneDistribution([80, 90], 200); // all below Z1
-    expect(dist.every((d) => d.samples === 0 && d.pct === 0)).toBe(true);
-  });
-
-  it("returns all-zero shares for an invalid max HR", () => {
-    const dist = zoneDistribution([150, 160], 0);
-    expect(dist.every((d) => d.samples === 0 && d.pct === 0)).toBe(true);
-    expect(dist).toHaveLength(5);
-  });
-});
-
 describe("summarizeHeartRate — elapsed time rather than sample counts", () => {
   const watch = (bpm: number, at: number, id?: string) => ({
     bpm,
@@ -231,5 +208,103 @@ describe("summarizeHeartRate — elapsed time rather than sample counts", () => 
       maxHr: 0,
       zoneSeconds: [0, 0, 0, 0, 0],
     });
+  });
+});
+
+/* Connected training proposal, heart-rate rule 5: time in zone is time,
+   not a count of readings. A Watch reads about every five seconds and a
+   strap every second, so a run that changes source mid-way is where a
+   count goes wrong. */
+describe("summarizeHeartRate — time in zone across cadences and sources", () => {
+  const reading = (
+    bpm: number,
+    at: number,
+    source: HeartRateSample["source"]
+  ): HeartRateSample => ({ bpm, at, source, id: `${source}:${at}` });
+
+  // Two minutes of Watch readings every 5 s in Zone 2 (125 bpm of 200),
+  // then a minute of strap readings every second in Zone 3 (145 bpm).
+  const watchThenStrap: HeartRateSample[] = [
+    ...Array.from({ length: 24 }, (_, i) =>
+      reading(125, i * 5_000, "apple-watch")
+    ),
+    ...Array.from({ length: 60 }, (_, i) =>
+      reading(145, 120_000 + i * 1_000, "bluetooth")
+    ),
+  ];
+  const moving = [{ startMs: 0, endMs: 180_000 }];
+
+  it("counts two minutes in Zone 2 and one in Zone 3, not 24 readings and 60", () => {
+    const summary = summarizeHeartRate(watchThenStrap, moving, 200);
+    expect(summary?.zoneSeconds).toEqual([0, 120, 60, 0, 0]);
+    expect(summary?.coverage).toBe(1);
+    // A count of readings would have put 60 of 84 (71%) in Zone 3.
+    const zone3Share = summary!.zoneSeconds[2] / summary!.coveredSeconds;
+    expect(zone3Share).toBeCloseTo(1 / 3);
+    // The average is by time too: (125 x 120 + 145 x 60) / 180.
+    expect(summary?.averageBpm).toBe(132);
+  });
+
+  it("names the source that covered most of the run", () => {
+    expect(summarizeHeartRate(watchThenStrap, moving, 200)?.source).toBe(
+      "apple-watch"
+    );
+    const strapOnly = watchThenStrap.filter((s) => s.source === "bluetooth");
+    expect(
+      summarizeHeartRate(strapOnly, [{ startMs: 120_000, endMs: 180_000 }], 200)
+        ?.source
+    ).toBe("bluetooth");
+  });
+
+  it("reads the sensor while it is fresh and the Watch around it", () => {
+    // The Watch every 5 s at 150 for 90 s; the strap every second at 140
+    // from 30 s to 59 s.
+    const both: HeartRateSample[] = [
+      ...Array.from({ length: 19 }, (_, i) =>
+        reading(150, i * 5_000, "apple-watch")
+      ),
+      ...Array.from({ length: 30 }, (_, i) =>
+        reading(140, 30_000 + i * 1_000, "bluetooth")
+      ),
+    ];
+    const summary = summarizeHeartRate(
+      both,
+      [{ startMs: 0, endMs: 90_000 }],
+      200
+    );
+    // 0-30 s Watch, 30-74 s strap (its last reading held 15 s, the Watch's
+    // 60, 65 and 70 set aside), 75-90 s Watch: 45 s at 150, 44 s at 140,
+    // and the second from 74 s to 75 s uncovered.
+    expect(summary?.coveredSeconds).toBe(89);
+    expect(summary?.averageBpm).toBe(145);
+    expect(summary?.zoneSeconds).toEqual([0, 0, 89, 0, 0]);
+  });
+});
+
+describe("watchReadingSetAside — one reading at a time", () => {
+  it("sets a Watch reading aside within 15 s of a sensor reading, and keeps it after", () => {
+    expect(watchReadingSetAside(1_000, 1_000)).toBe(true);
+    expect(watchReadingSetAside(15_999, 1_000)).toBe(true);
+    expect(watchReadingSetAside(16_000, 1_000)).toBe(false);
+  });
+
+  it("keeps a Watch reading with no sensor reading, or one older than it", () => {
+    expect(watchReadingSetAside(5_000, null)).toBe(false);
+    expect(watchReadingSetAside(5_000, 6_000)).toBe(false);
+  });
+});
+
+describe("easyHeartRateCeiling — the top of Zone 2", () => {
+  it("is the band Train's run card shows for an easy run", () => {
+    expect(easyHeartRateCeiling(187)).toBe(131);
+    expect(easyHeartRateCeiling(187)).toBe(
+      targetZoneForRun("easy", 187)?.maxBpm
+    );
+    expect(easyHeartRateCeiling(200)).toBe(140);
+  });
+
+  it("is 0 when the max is unknown", () => {
+    expect(easyHeartRateCeiling(0)).toBe(0);
+    expect(easyHeartRateCeiling(Number.NaN)).toBe(0);
   });
 });

@@ -20,6 +20,7 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import RunPlanSettings from "@/components/program/RunPlanSettings";
 import RunFitnessSection from "@/components/settings/RunFitnessSection";
 import HeartRateZonesSection from "@/components/settings/HeartRateZonesSection";
+import HeartRateSensorSection from "@/components/settings/HeartRateSensorSection";
 import VoiceCuesPref from "@/components/settings/VoiceCuesPref";
 
 export default function SettingsRunPlan() {
@@ -63,6 +64,8 @@ export default function SettingsRunPlan() {
         are running physiology.
       */}
       <RunFitnessSection profile={profile} updateProfile={updateProfile} />
+      {/* The sensor sits above the zones it reads against. */}
+      <HeartRateSensorSection />
       <HeartRateZonesSection updateProfile={updateProfile} />
     </SettingsSection>
   );

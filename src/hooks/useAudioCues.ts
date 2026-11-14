@@ -14,6 +14,11 @@ import {
 } from "@/lib/runCueCopy";
 import { paceMinSec } from "@/lib/runLabels";
 import { EASY_CEILING_MARGIN_S } from "@/lib/runSegments";
+import {
+  EASY_HR_DIP_HOLD_S,
+  EASY_HR_MARGIN_BPM,
+  EASY_HR_SUSTAIN_S,
+} from "@/lib/hrZones";
 import { lapMetresFor, finalStretchM } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
@@ -270,6 +275,55 @@ export function useAudioCues(
     [enabled, cueConfig.paceAlerts, speak, bumpVariant]
   );
 
+  /**
+   * Run24 (12) with live heart rate (deep dive D17): the same calm cue when
+   * heart rate stays over the top of Zone 2, by more than the margin, for a
+   * minute. A dip back under that does not hold for 15 seconds keeps the
+   * minute running; one that holds ends the stretch quietly, as at easy
+   * pace. It shares the pace cue's stretch, spacing and cap, so a run that
+   * moves between heart rate and pace hears no more than either alone. A
+   * gap in readings (none for 20 seconds) restarts the minute: a reading
+   * cannot stand in for the time it was missing.
+   */
+  const hrOverSince = useRef<number | null>(null);
+  const hrLastAt = useRef<number | null>(null);
+
+  const checkEasyHeartRate = useCallback(
+    (bpm: number, ceilingBpm: number, elapsed: number) => {
+      if (!enabled || !cueConfig.paceAlerts || !ceilingBpm) return;
+      if (hrLastAt.current !== null && elapsed - hrLastAt.current > 20) {
+        hrOverSince.current = null;
+        easySince.current = null;
+      }
+      hrLastAt.current = elapsed;
+      if (bpm <= ceilingBpm + EASY_HR_MARGIN_BPM) {
+        if (hrOverSince.current === null && easyStreak.current === 0) return;
+        if (easySince.current === null) {
+          easySince.current = elapsed;
+          return;
+        }
+        if (elapsed - easySince.current >= EASY_HR_DIP_HOLD_S) {
+          hrOverSince.current = null;
+          easyStreak.current = 0;
+          easySince.current = null;
+        }
+        return;
+      }
+      easySince.current = null;
+      if (hrOverSince.current === null) hrOverSince.current = elapsed;
+      if (elapsed - hrOverSince.current < EASY_HR_SUSTAIN_S) return;
+      if (easyStreak.current >= MAX_ALERTS_PER_STRETCH) return;
+      const spacing =
+        ALERT_SPACINGS[Math.min(easyStreak.current, ALERT_SPACINGS.length - 1)];
+      if (easyStreak.current > 0 && elapsed - easyCooldown.current <= spacing)
+        return;
+      easyCooldown.current = elapsed;
+      easyStreak.current += 1;
+      speak(easyCeilingCue(bumpVariant()));
+    },
+    [enabled, cueConfig.paceAlerts, speak, bumpVariant]
+  );
+
   const checkPaceAlert = useCallback(
     (
       currentPaceSeconds: number,
@@ -372,6 +426,8 @@ export function useAudioCues(
     easyStreak.current = 0;
     easyCooldown.current = 0;
     easySince.current = null;
+    hrOverSince.current = null;
+    hrLastAt.current = null;
     cueVariant.current = cueConfig.variantSeed;
   }, [cueConfig.variantSeed]);
 
@@ -382,6 +438,7 @@ export function useAudioCues(
     checkTimeCue,
     checkPaceAlert,
     checkEasyCeiling,
+    checkEasyHeartRate,
     checkHalfway,
     checkFinal500,
     reset,

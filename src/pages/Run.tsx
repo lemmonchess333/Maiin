@@ -103,6 +103,8 @@ import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import { useHeartRate } from "../hooks/useHeartRate";
+import { useHeartRateSensor } from "@/hooks/useHeartRateSensor";
+import { easyHeartRateCeiling } from "@/lib/hrZones";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
 import { isWatchRunLocallyDisabled } from "@/lib/connectedTrainingPrefs";
@@ -456,9 +458,13 @@ export default function Run() {
     !snapshotWriteFailed &&
     !!runConfig &&
     isOutdoorGpsRun(runConfig);
+  // A paired Bluetooth sensor reads any run, outdoors or on a treadmill,
+  // with or without the Watch.
+  const sensorPaired = !!useHeartRateSensor().status.paired;
+  const heartRateEligible = watchEligible || (sensorPaired && !!runConfig);
   const hr = useHeartRate({
     live: true,
-    enabled: watchEligible,
+    enabled: heartRateEligible,
     sessionId: activeSessionId,
     uid: user?.uid,
   });
@@ -1437,13 +1443,25 @@ export default function Run() {
     }
 
     // Run24 (12), deep dive D17: an easy or a long run going faster than
-    // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
-    // in its easy running only (`judgesEasyNow`), never on a run-walk.
+    // easy, in its easy running only (`judgesEasyNow`), never on a run-walk.
+    // With a live heart rate and a max to read it against, heart rate
+    // judges it (`easyHeartRateCeiling`, the top of Zone 2); without one,
+    // pace does, for a runner with a confirmed benchmark (`paceTable`,
+    // RUN-EV-08).
     const easyFastEdge = paceTable?.easy[0];
-    if (easyFastEdge && !runWalkSession && judgingEasy) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
-      if (currentPaceSec !== null) {
-        audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
+    const easyHrCeiling = hr.bpm != null ? easyHeartRateCeiling(hr.maxHr) : 0;
+    if (!runWalkSession && judgingEasy) {
+      if (hr.bpm != null && easyHrCeiling > 0) {
+        audioCues.checkEasyHeartRate(hr.bpm, easyHrCeiling, timer.elapsed);
+      } else if (easyFastEdge) {
+        const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+        if (currentPaceSec !== null) {
+          audioCues.checkEasyCeiling(
+            currentPaceSec,
+            easyFastEdge,
+            timer.elapsed
+          );
+        }
       }
     }
 
@@ -1469,6 +1487,8 @@ export default function Run() {
     runWalkSession,
     paceTable,
     judgingEasy,
+    hr.bpm,
+    hr.maxHr,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1610,7 +1630,7 @@ export default function Run() {
   } | null>(null);
   useEffect(() => {
     const previous = heartClockRef.current;
-    if (!watchEligible || !activeSessionId || !user?.uid) {
+    if (!heartRateEligible || !activeSessionId || !user?.uid) {
       if (previous?.running)
         pauseMoving(previous.uid, previous.sessionId, Date.now());
       heartClockRef.current = null;
@@ -1630,7 +1650,7 @@ export default function Run() {
       sessionId: activeSessionId,
       running: clockRunning,
     };
-  }, [watchEligible, activeSessionId, user?.uid, clockRunning]);
+  }, [heartRateEligible, activeSessionId, user?.uid, clockRunning]);
   const watchPhase: WatchRunPhase | null =
     phase === "active"
       ? autoPaused
@@ -1800,7 +1820,7 @@ export default function Run() {
         "GPS never locked on — your time is saved, but there’s no route or distance for this one."
       );
     }
-    if (watchEligible && identityRef.current && user?.uid)
+    if (heartRateEligible && identityRef.current && user?.uid)
       finishMoving(user.uid, identityRef.current.sessionId, finishedAt);
     timer.pause();
     gps.stop();

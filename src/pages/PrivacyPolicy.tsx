@@ -125,6 +125,13 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
+                  Heart rate sensor (optional):
+                </strong>{" "}
+                if you pair a Bluetooth chest strap or armband, Tropos reads
+                your heart rate from it during a run. See section 8.
+              </li>
+              <li>
+                <strong className="text-foreground">
                   Progress Photos (optional):
                 </strong>{" "}
                 if you add progress photos, new ones are encrypted on your
@@ -581,6 +588,19 @@ export default function PrivacyPolicy() {
               Apple Health workouts into your training plan. You can change
               either choice in Tropos settings and remove Apple Health access in
               the Health app.
+            </p>
+            <p>
+              <strong className="text-foreground">Heart rate sensor.</strong> If
+              you pair a Bluetooth heart rate sensor, such as a chest strap or
+              an armband, Tropos uses Bluetooth to read your heart rate from it
+              during a run, to show a live reading, to tell you when an easy run
+              goes above your easy zone, and to calculate a run summary. Raw
+              readings are held on your device until you save or discard the
+              run, and the sensor’s name is kept on this iPhone to reconnect to
+              it. A saved run can include average and maximum heart rate and
+              time in heart rate zones, as with Apple Watch runs, and those
+              values are not used to change calorie targets or sent to product
+              analytics. You can forget the sensor in Settings &gt; Run plan.
             </p>
             <p>
               <strong className="text-foreground">Disclaimer:</strong> Tropos is
