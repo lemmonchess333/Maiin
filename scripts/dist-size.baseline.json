@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6901199,
+  "total": 6907957,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -549,6 +549,7 @@
     "WorkoutSession": 72048,
     "workoutTemplates": 12548,
     "x": 154,
-    "zap": 262
+    "zap": 262,
+    "useRacePlanLock": 6758
   }
 }
