@@ -482,9 +482,11 @@ describe("todaySession — what a rest day offers", () => {
   const firstWorkoutReady = {
     programState: programStateWith({ workouts: [PUSH, PULL] }),
   };
+  /* Free running plans no day, so the plan's other parts say who runs
+     (`trainingKind`): no lift days, or a running level. */
   const freeRunner = profileWith(
     {},
-    { runMode: "freeform", athleteType: "Runner" }
+    { runMode: "freeform", weeklyWorkoutsTarget: 0 }
   );
 
   it("a new lifter's first workout, whatever the weekday", () => {
@@ -533,17 +535,55 @@ describe("todaySession — what a rest day offers", () => {
       kind: "free-run",
       startTarget: "/run?start=1",
     });
-    // A free-running lifter is not offered one: they have no run day.
+    // A lifter who does not run is not offered one: they have no run day.
     expect(
       todaySession(
         input({
           profile: profileWith(
             {},
-            { runMode: "freeform", athleteType: "Lifter" }
+            { runMode: "freeform", runFrequency: "none" }
           ),
+          programState: programStateWith({ workouts: [PUSH, PULL] }),
         })
       ).rest?.kind
     ).toBe("rest");
+  });
+
+  it("a run to anyone whose plan runs, whatever setup said (App1 Q23)", () => {
+    const lifts = programStateWith({ workouts: [PUSH, PULL] });
+    // Set up as a runner, lift days added since: both, so still a run.
+    expect(
+      todaySession(
+        input({
+          profile: profileWith(
+            {},
+            {
+              runMode: "freeform",
+              athleteType: "Runner",
+              runFrequency: "regular",
+            }
+          ),
+          programState: lifts,
+        })
+      ).rest?.kind
+    ).toBe("free-run");
+    // Set up as a lifter, a weekly running goal since.
+    expect(
+      todaySession(
+        input({
+          profile: profileWith(
+            {},
+            {
+              runMode: "freeform",
+              athleteType: "Lifter",
+              runFrequency: "none",
+              nonRaceGoal: { kind: "runs", target: 2 },
+            }
+          ),
+          programState: lifts,
+        })
+      ).rest?.kind
+    ).toBe("free-run");
   });
 
   it("a free run before a new person's first meal", () => {
@@ -1149,7 +1189,7 @@ describe("todaySession — a session under way", () => {
       input({
         profile: profileWith(
           {},
-          { runMode: "freeform", athleteType: "Runner" }
+          { runMode: "freeform", weeklyWorkoutsTarget: 0 }
         ),
         inFlight: { drafts: [], run: storedRun() },
       })

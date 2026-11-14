@@ -35,7 +35,7 @@ export default function WeekSummary({
   runner = false,
 }: {
   counts: WeekSummaryCounts;
-  /** The person runs (setup's `runFrequency` is not "none"). */
+  /** The plan has running in it (`trainingKind`). */
   runner?: boolean;
 }) {
   const training: Part[] = [];

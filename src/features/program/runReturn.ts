@@ -15,9 +15,9 @@
  *     lines a race plan's gap is a scheduling miss, which the weekly check's
  *     realign already answers.
  *
- * Only someone whose plan has running in it is greeted (`runningPlan`), and
- * only once they have a run to be back from: a new account has none, and a
- * lift-only plan has nothing to return to.
+ * Only someone whose plan has running in it is greeted (`runningPlan`, from
+ * `trainingKind`), and only once they have a run to be back from: a new
+ * account has none, and a lift-only plan has nothing to return to.
  *
  * The absence is measured from saved runs through the shared eligibility
  * rule (`lastRunDay`), the same runs and rule the race plan's re-entry
@@ -28,6 +28,7 @@
  */
 import type { UserProfile } from "@/lib/auth";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
+import { trainingKind, type TrainingKindProfile } from "@/lib/trainingKind";
 import type { ProgramState } from "./programTypes";
 import { WELCOME_BACK_DAYS } from "./liftLayoff";
 import {
@@ -69,19 +70,18 @@ export interface RunReturnAssessment {
  *  easy run in the library, at conversational effort. */
 export const RETURN_RUN_TEMPLATE_ID = "easy_20";
 
-type RunningProfile = Pick<
-  UserProfile,
-  "athleteType" | "runMode" | "raceGoal" | "weekSchedule"
->;
+type RunningProfile = TrainingKindProfile &
+  Partial<Pick<UserProfile, "raceGoal">>;
 
 /**
  * Whether the plan has running in it, and of which kind.
  *
  * A race counts while its rebuild could run: race prep with a race on the
  * profile, before race day and outside the recovery weeks after it, which
- * are the refusals `realignRacePlan` makes. Free running has no planned
- * days, so the athlete type says it (the rule `todaySession` offers a free
- * runner's run on); a week with a run day in it says it for anyone else.
+ * are the refusals `realignRacePlan` makes. Any other running on the plan
+ * is free (`trainingKind`, the rule `todaySession` offers a free runner's
+ * run on): a race over or in its recovery, the starter goal, run days, or
+ * free running, which has no planned days.
  */
 export function runningPlan(
   profile: RunningProfile | null | undefined,
@@ -94,14 +94,7 @@ export function runningPlan(
     if (!plan.isElapsed && !plan.inRecovery) return "race";
     return "free";
   }
-  if (profile.athleteType === "Runner" || profile.athleteType === "Hybrid")
-    return "free";
-  if (profile.runMode === "race_prep" || profile.runMode === "structured")
-    return "free";
-  const runDay = (profile.weekSchedule ?? []).some(
-    (day) => day?.type === "run" || day?.type === "both"
-  );
-  return runDay ? "free" : "none";
+  return trainingKind(profile, programState).runs ? "free" : "none";
 }
 
 /**

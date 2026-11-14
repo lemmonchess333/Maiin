@@ -56,9 +56,13 @@ function seedRunDaysAgo(id: string, n: number) {
   });
 }
 
-const runner = { athleteType: "Runner", runMode: "freeform" } as UserProfile;
+/** Runs only: no lift days on the plan. */
+const runner = {
+  runMode: "freeform",
+  weeklyWorkoutsTarget: 0,
+} as UserProfile;
 const lifter = {
-  athleteType: "Lifter",
+  runFrequency: "none",
   runMode: "freeform",
   weekSchedule: [{ day: 1, type: "lift" }],
 } as UserProfile;

@@ -617,6 +617,26 @@ describe("the version 2 first-week journey", () => {
     );
   });
 
+  it("offers a first run once the plan runs, and still counts the setup answer (App1 Q23)", async () => {
+    // Set up as a lifter, with a starter goal since.
+    h.profile.runMode = "starter";
+    h.profile.starterGoal = { startedOn: "2026-01-01" };
+    renderHome();
+    expect(
+      screen.getByRole("button", { name: /Finish your first workout/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Go for your first run/ })
+    ).toBeInTheDocument();
+    // The first-week numbers describe who set up.
+    await waitFor(() =>
+      expect(h.track).toHaveBeenCalledWith("first_week_card_viewed", {
+        sport: "lifter",
+        firstWeekDay: 1,
+      })
+    );
+  });
+
   it("shows the training task while meal and weight data are still loading", () => {
     h.mealsLoading = true;
     h.homeDataLoading = true;
@@ -660,7 +680,8 @@ describe("the version 2 first-week journey", () => {
   });
 
   it("shows missing-plan repair for a runner while unrelated workouts load", () => {
-    h.profile.athleteType = "Runner";
+    // A runner's plan: no lift days.
+    h.profile.weeklyWorkoutsTarget = 0;
     h.profile.runMode = "freeform";
     h.programState = null;
     h.workoutsLoading = true;
@@ -692,7 +713,6 @@ describe("the version 2 first-week journey", () => {
   });
 
   function racePlanToBuild() {
-    h.profile.athleteType = "Runner";
     h.profile.runMode = "race_prep";
     h.profile.raceGoal = { distance: "half", targetDate: "2099-01-01" };
     h.profile.weekSchedule = [0, 1, 2, 3, 4, 5, 6].map((day) => ({

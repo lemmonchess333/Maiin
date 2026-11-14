@@ -47,8 +47,22 @@ const assess = (plan: RunningPlan, runs: DatedRun[] | null) =>
   assessRunReturn({ plan, runs, todayKey: TODAY });
 
 type ProfileFields = Partial<
-  Pick<UserProfile, "athleteType" | "runMode" | "raceGoal" | "weekSchedule">
+  Pick<
+    UserProfile,
+    | "athleteType"
+    | "runMode"
+    | "raceGoal"
+    | "weekSchedule"
+    | "weeklyWorkoutsTarget"
+    | "runFrequency"
+  >
 >;
+/** A week laid out with these days, the rest rest days. */
+const week = (types: Record<number, "lift" | "run" | "both">) =>
+  [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+    day,
+    type: types[day] ?? ("rest" as const),
+  }));
 const profile = (fields: ProfileFields) => fields as UserProfile;
 const raceGoal = (targetDate: string) =>
   ({ distance: "half", targetDate }) as UserProfile["raceGoal"];
@@ -63,12 +77,9 @@ describe("runningPlan — whose plan has running in it", () => {
       runningPlan(
         profile({
           athleteType: "Lifter",
+          runFrequency: "none",
           runMode: "freeform",
-          weekSchedule: [
-            { day: 1, type: "lift" },
-            { day: 3, type: "lift" },
-            { day: 5, type: "rest" },
-          ],
+          weekSchedule: week({ 1: "lift", 3: "lift" }),
         }),
         null,
         TODAY
@@ -81,11 +92,56 @@ describe("runningPlan — whose plan has running in it", () => {
   });
 
   it("a free runner runs, whether running alone or with lifting", () => {
-    for (const athleteType of ["Runner", "Hybrid"]) {
-      expect(
-        runningPlan(profile({ athleteType, runMode: "freeform" }), null, TODAY)
-      ).toBe("free");
-    }
+    // Running alone: no lift days on the plan.
+    expect(
+      runningPlan(
+        profile({ runMode: "freeform", weeklyWorkoutsTarget: 0 }),
+        null,
+        TODAY
+      )
+    ).toBe("free");
+    // With lifting: free running puts no day on the plan, so its running
+    // level says it.
+    expect(
+      runningPlan(
+        profile({
+          runMode: "freeform",
+          runFrequency: "occasional",
+          weekSchedule: week({ 1: "lift", 3: "lift" }),
+        }),
+        null,
+        TODAY
+      )
+    ).toBe("free");
+  });
+
+  it("reads the plan, not setup's answer (App1 Q23)", () => {
+    // Set up as a runner, lift days added since: still running.
+    expect(
+      runningPlan(
+        profile({
+          athleteType: "Runner",
+          runFrequency: "regular",
+          runMode: "freeform",
+          weekSchedule: week({ 1: "lift", 3: "lift" }),
+        }),
+        null,
+        TODAY
+      )
+    ).toBe("free");
+    // "Both" at setup on a plan that holds no running at all.
+    expect(
+      runningPlan(
+        profile({
+          athleteType: "Hybrid",
+          runFrequency: "none",
+          runMode: "freeform",
+          weekSchedule: week({ 1: "lift", 3: "lift" }),
+        }),
+        null,
+        TODAY
+      )
+    ).toBe("none");
   });
 
   it("a week with a run day in it runs, whoever the athlete", () => {
@@ -93,11 +149,9 @@ describe("runningPlan — whose plan has running in it", () => {
       runningPlan(
         profile({
           athleteType: "Lifter",
+          runFrequency: "none",
           runMode: "freeform",
-          weekSchedule: [
-            { day: 1, type: "lift" },
-            { day: 4, type: "both" },
-          ],
+          weekSchedule: week({ 1: "lift", 4: "both" }),
         }),
         null,
         TODAY

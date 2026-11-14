@@ -1456,13 +1456,33 @@ describe("RunPlanSettings — the 30-minute goal", () => {
     const { unmount } = renderPage(baseProfile);
     expect(option()).not.toBeInTheDocument();
     unmount();
+    // Runs only: the plan has no lift days.
     const runnerOnly = renderPage({
       ...baseProfile,
-      athleteType: "Runner",
+      weeklyWorkoutsTarget: 0,
     } as unknown as UserProfile);
     expect(option()).toBeInTheDocument();
     runnerOnly.unmount();
     renderPage(newRunner);
+    expect(option()).toBeInTheDocument();
+  });
+
+  it("asks the plan who runs only, not setup's answer (App1 Q23)", () => {
+    // Set up as a runner, lift days added since: a hybrid who is not new
+    // to running keeps free running and race prep (Run9a).
+    const addedLifts = renderPage({
+      ...baseProfile,
+      athleteType: "Runner",
+      runFrequency: "regular",
+    } as unknown as UserProfile);
+    expect(option()).not.toBeInTheDocument();
+    addedLifts.unmount();
+    // Setup said lifting, and the plan holds no lift days now.
+    renderPage({
+      ...baseProfile,
+      athleteType: "Lifter",
+      weeklyWorkoutsTarget: 0,
+    } as unknown as UserProfile);
     expect(option()).toBeInTheDocument();
   });
 

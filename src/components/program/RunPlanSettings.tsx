@@ -92,6 +92,7 @@ import { raceGoalEntry, type RaceGoalEntry } from "@/lib/raceGoalEntry";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { trainingKind } from "@/lib/trainingKind";
 import { buildPlan, freshLiftWeek } from "@/features/program/planBuilder";
 import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -304,9 +305,12 @@ export default function RunPlanSettings({
   );
   const [goalLink] = useState(() => parseGoalDeepLink(searchParams));
   /* Run9's starter goal is offered to someone who runs only, to anyone
-     who said they are new to running, and to anyone already on it. */
+     who said they are new to running, and to anyone already on it. Who
+     runs only is the plan's to say (`trainingKind`, App1 Q23): a runner
+     who has added lift days lifts too. */
+  const planKind = trainingKind(profile, programState);
   const starterOffered =
-    profile.athleteType === "Runner" ||
+    (planKind.runs && !planKind.lifts) ||
     profile.runFrequency === "new" ||
     profile.runMode === "starter" ||
     goalLink === "starter";

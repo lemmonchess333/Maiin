@@ -66,6 +66,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
 import { todaySession } from "@/lib/todaySession";
+import { setupSport, trainingKind } from "@/lib/trainingKind";
 import {
   freeRunHeroLine,
   heroIsFreeRun,
@@ -901,11 +902,14 @@ export default function Home() {
   // count it ticks from, so no row ticks and then unticks as they load.
   const countsLoaded =
     !workoutsLoading && !mealsLoading && !runStatsLoading && !homeDataLoading;
-  const firstWeekLifts = (programState?.workouts?.length ?? 0) > 0;
-  const firstWeekRuns =
-    profile?.athleteType === "Runner" ||
-    profile?.athleteType === "Hybrid" ||
-    profile?.runMode === "race_prep";
+  // Its rows are what the plan trains now (`trainingKind`, App1 Q23), so a
+  // lifter who starts running in their first week is offered a first run.
+  const planKind = useMemo(
+    () => trainingKind(profile, programState),
+    [profile, programState]
+  );
+  const firstWeekLifts = planKind.lifts;
+  const firstWeekRuns = planKind.runs;
   const v2RacePlanNeedsBuild =
     activationJourneyV2 &&
     !!profile &&
@@ -975,13 +979,9 @@ export default function Home() {
     )
       return;
     firstWeekImpressionUid.current = user.uid;
+    // A first-week number: the setup answer, as the server's stamp is.
     trackLifecycle("first_week_card_viewed", {
-      sport:
-        profile?.athleteType === "Runner"
-          ? "runner"
-          : profile?.athleteType === "Hybrid"
-            ? "hybrid"
-            : "lifter",
+      sport: setupSport(profile),
       firstWeekDay: firstWeekState.day,
     });
   }, [
@@ -989,7 +989,7 @@ export default function Home() {
     welcomeCard.visible,
     firstWeekState,
     user?.uid,
-    profile?.athleteType,
+    profile,
   ]);
 
   /* The first-visit guide (FV1, firstGuide.ts). A new account's first visit
@@ -1121,12 +1121,7 @@ export default function Home() {
     if (activationJourneyV2 && (key === "workout" || key === "run")) {
       if (firstWeekState) {
         trackLifecycle("first_week_task_selected", {
-          sport:
-            profile?.athleteType === "Runner"
-              ? "runner"
-              : profile?.athleteType === "Hybrid"
-                ? "hybrid"
-                : "lifter",
+          sport: setupSport(profile),
           task: key,
           firstWeekDay: firstWeekState.day,
         });
@@ -1483,12 +1478,7 @@ export default function Home() {
                   same counts as the line above the segments. */}
               <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border pt-2.5">
                 <SectionErrorBoundary sectionName="week-summary">
-                  <WeekSummary
-                    counts={weekCounts}
-                    runner={
-                      !!profile?.runFrequency && profile.runFrequency !== "none"
-                    }
-                  />
+                  <WeekSummary counts={weekCounts} runner={planKind.runs} />
                 </SectionErrorBoundary>
                 <SectionErrorBoundary sectionName="weekly-review-entry">
                   <WeeklyReviewEntry />
