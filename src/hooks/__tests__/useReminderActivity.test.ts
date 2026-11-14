@@ -47,7 +47,7 @@ describe("reminder activity source boundaries", () => {
     await waitFor(() => expect(result.current.activity.ready).toBe(true));
     expect(result.current.activity.meals).toEqual(["lunch"]);
     expect(result.current.activity.workout).toBe(true);
-    expect(result.current.pushOwns).toBe(true);
+    expect(result.current.push).toEqual({ enabled: true, streak: true });
   });
   it("clears the previous account's completion and consent before another account loads", async () => {
     seedFirestore({
@@ -61,31 +61,23 @@ describe("reminder activity source boundaries", () => {
     rerender();
     await waitFor(() => expect(result.current.activity.ready).toBe(true));
     expect(result.current.activity.meals).toEqual([]);
-    expect(result.current.pushOwns).toBe(false);
+    expect(result.current.push).toEqual({ enabled: false });
   });
-  /* The Monday review's local notification stands aside wherever the
-     server's recap push may reach (useReviewReminder). */
-  it.each([
-    ["push on with the recap left on", { enabled: true }, true],
-    [
-      "the first-week opt-in, recap off",
-      { enabled: true, recap: false },
-      false,
-    ],
-    ["push off", { enabled: false, recap: true }, false],
-  ] as const)(
-    "reads the server's Monday recap from %s",
-    async (_name, push, owns) => {
-      seedFirestore({ "users/u1/settings/push": push });
-      const { result } = renderHook(() => useReminderActivity());
-      await waitFor(() => expect(result.current.recapPushOwns).not.toBeNull());
-      expect(result.current.recapPushOwns).toBe(owns);
-    }
-  );
-  it("reads no recap push, and writes no push document, for an account with none", async () => {
+  /* The stored push settings, as stored: whether push carries the streak
+     and review reminders is read from them (reminderDelivery, App1 Q26),
+     and so are the reminders' old switches. */
+  it("hands on the push settings as stored", async () => {
+    seedFirestore({
+      "users/u1/settings/push": { enabled: true, recap: false },
+    });
     const { result } = renderHook(() => useReminderActivity());
-    await waitFor(() => expect(result.current.recapPushOwns).not.toBeNull());
-    expect(result.current.recapPushOwns).toBe(false);
+    await waitFor(() => expect(result.current.push).not.toBeNull());
+    expect(result.current.push).toEqual({ enabled: true, recap: false });
+  });
+  it("reads an account with no push document as {}, and writes none", async () => {
+    const { result } = renderHook(() => useReminderActivity());
+    await waitFor(() => expect(result.current.push).not.toBeNull());
+    expect(result.current.push).toEqual({});
     expect(readDoc("users/u1/settings/push")).toBeUndefined();
   });
   it("does not treat an invalid or zero-distance run as today's session", async () => {

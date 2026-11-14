@@ -34,6 +34,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const healthWorkoutLedger = require("./lib/healthWorkoutLedger");
 const activationCohort = require("./lib/activationCohort");
 const weeklyRecap = require("./lib/weeklyRecap");
+const reminderChoices = require("./lib/reminderChoices");
 const activationBilling = require("./lib/activationBilling");
 const { activationSport } = require("./lib/firstWeekActivation");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
@@ -3169,15 +3170,15 @@ exports.rolloverChallenges = functions
 //
 // Composes the pure decision helpers — shouldSendStreakNudge (#964) plus the
 // once-ever shouldSendFirstWeekNudge below the `>= 2` floor (D-1 day-1→day-2
-// fix), isLocalSendHour (#1001), the inlined consent check (mirrors
-// src/lib/pushConsent — functions/ can't import the TS client module), and the
-// server-side active-date derivation (#activeDates / Option A) — with the FCM
-// I/O. Fires hourly; each eligible user is sent at most once/day at ~19:00
-// LOCAL, outside quiet hours, gated on streak consent. SCHEDULED_CAP
-// (maxInstances:1); admin.messaging() uses the default service-account creds
-// (no bound secret). Only targets users with a registered device token.
-
-const STREAK_NUDGE_LOCAL_HOUR = 19;
+// fix), isLocalSendHour (#1001), the person's one switch and time for the
+// evening reminder (lib/reminderChoices.js, App1 Q26), and the server-side
+// active-date derivation (#activeDates / Option A) — with the FCM I/O. Fires
+// hourly; each eligible user is sent at most once/day, at the LOCAL hour they
+// chose (it was 19:00 for everyone, whatever the app's time said), outside
+// quiet hours, only when push carries the reminder (otherwise the phone
+// schedules it, never both). SCHEDULED_CAP (maxInstances:1);
+// admin.messaging() uses the default service-account creds (no bound
+// secret). Only targets users with a registered device token.
 
 // Consent gate — see functions/lib/pushConsent.js. It was inlined here under
 // a comment claiming it mirrored src/lib/pushConsent.mayTargetUser, which had
@@ -3416,17 +3417,21 @@ async function maybeSendStreakNudge(uid, now, profile) {
     null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
-  // Hour-bucket: only at ~19:00 local, never inside quiet hours.
-  if (!isLocalSendHour(now, timezone, STREAK_NUDGE_LOCAL_HOUR)) return false;
+  // The person's evening reminder: on, carried by push (the account takes
+  // push), and this is its local hour. Off, or on the phone, the server
+  // sends nothing (App1 Q26: one switch, one time, one channel).
+  const consentSnap = await db.doc(`users/${uid}/settings/push`).get();
+  const hour = await reminderChoices.streakReminderPushHour(
+    db,
+    uid,
+    consentSnap.data() || null
+  );
+  if (hour === null || !isLocalSendHour(now, timezone, hour)) return false;
 
-  const [streakSnap, consentSnap, stateSnap] = await Promise.all([
+  const [streakSnap, stateSnap] = await Promise.all([
     db.doc(`users/${uid}/streaks/data`).get(),
-    db.doc(`users/${uid}/settings/push`).get(),
     db.doc(`users/${uid}/settings/pushState`).get(),
   ]);
-
-  // Consent: streak push must be opted in.
-  if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
 
   const streak = streakSnap.data() || {};
   const pushState = stateSnap.data() || {};
@@ -3598,7 +3603,8 @@ async function maybeSendBadgeNudge(uid, now, profile) {
   return batch.successCount > 0;
 }
 
-// Push #961 / weekly recap #967 — Monday ~8am LOCAL recap push. Celebratory
+// Push #961 / weekly recap #967 — Monday 09:00 LOCAL recap push (the review
+// reminder's one time, App1 Q26; it was 08:00 against the phone's 09:00). Celebratory
 // when the user kept up; fell-behind-aware (deep-links the Programme page where
 // the FellBehindSheet surfaces) when they ran <50% of their weekly target last
 // week. Fell-behind status is computed FRESH here from the prior week, NOT read
@@ -3617,12 +3623,12 @@ async function maybeSendBadgeNudge(uid, now, profile) {
 // off the same fell-behind signal; this is the FCM web/phone transport. They
 // intentionally differ by transport + cadence and SHARE the `_fellBehindRatio`
 // computation rather than each re-deriving "who's behind".
-const RECAP_LOCAL_HOUR = 8;
+const RECAP_LOCAL_HOUR = reminderChoices.REVIEW_REMINDER_HOUR;
 const RECAP_LOCAL_WEEKDAY = 1; // Monday (0=Sun..6=Sat)
 
 async function maybeSendWeeklyRecap(uid, now, profile) {
   // Cheap gate first: the tz (from the sweep's read, or one profile read),
-  // then the local Monday-8am check (skips the heavier reads on the other
+  // then the local Monday-09:00 check (skips the heavier reads on the other
   // 167 hours of the week).
   const timezone =
     (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
@@ -3638,8 +3644,16 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     db.doc(`users/${uid}/settings/pushState`).get(),
   ]);
 
-  // Consent: recap push must be opted in (absent per-type flag → on).
-  if (!mayTargetUserConsent(consentSnap.data() || null, "recap")) return false;
+  // The person's Monday review reminder: on, and carried by push. Off, or
+  // on the phone, the server sends nothing (App1 Q26).
+  if (
+    !(await reminderChoices.reviewReminderByPush(
+      db,
+      uid,
+      consentSnap.data() || null
+    ))
+  )
+    return false;
 
   const state = stateSnap.data() || {};
   if (state.lastRecapDateKey === todayKey) return false; // ≤1 recap/day

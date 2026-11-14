@@ -18,54 +18,61 @@ import {
   STREAK_NOTIFICATION_ID,
   FIRST_WEEK_NOTIFICATION_ID,
 } from "./streakNotificationId";
+import {
+  DEFAULT_STREAK_REMINDER_TIME,
+  REMINDERS_SETTINGS_DOC,
+  reminderDelivery,
+  streakReminderChoice,
+  streakReminderTime,
+  type StreakReminderChoice,
+} from "@/lib/reminderChoices";
 
 /**
  * Optional evening reminder — fires in the evening if the user hasn't logged
  * today and their current streak is ≥ 2. One notification per user.
  *
- * Mirrors useMealReminders / useWorkoutReminders:
- *   - Firestore-backed preferences at users/{uid}/settings/streakReminder.
- *   - Schedules via @capacitor/local-notifications on native; silent no-op
- *     on web when permission isn't granted.
- *   - Always-cancel-before-schedule so platform quirks around replacing a
+ * One switch and one time (App1 Q26, `lib/reminderChoices.ts`), at
+ * `users/{uid}/settings/reminders` (`streakEnabled`, `streakTime`), with the
+ * old `settings/streakReminder` and push switches read until those are
+ * written. The app picks the channel: when push carries the reminder the
+ * server sends it (`hourlyStreakNudge`, at the same hour) and this hook
+ * schedules nothing; otherwise it is scheduled here, on the phone:
+ *   - via @capacitor/local-notifications on native; silent no-op on web
+ *     when permission isn't granted.
+ *   - always cancel before schedule, so platform quirks around replacing a
  *     same-id notification can't cause duplicates.
  *
  * Guard chain (all must pass to schedule):
- *   1. Prefs loaded.
- *   2. `enabled` is true.
- *   3. `primingShown` is true — the permission priming modal has been
- *      responded to. Without this gate we could schedule a reminder for a
- *      user who's never opted in.
- *   4. `savableStreak >= 2` — no point nagging a brand-new user who
+ *   1. Prefs loaded, and whether push carries it is known.
+ *   2. The reminder is on, and push does not carry it.
+ *   3. `savableStreak >= 2` — no point nagging a brand-new user who
  *      doesn't have a streak yet. The streak a log today keeps, not the one
  *      shown: the morning after a rest day shows 0, and that is the evening
  *      the reminder is for.
- *   5. `hasLoggedToday` is false — cancel-on-activity in useStreaks also
+ *   4. `hasLoggedToday` is false — cancel-on-activity in useStreaks also
  *      covers the mid-day case, but we re-check here on every eval to
  *      avoid scheduling a stale reminder right after a fresh log.
- *   6. `restToday` is false — one of the plan's rest days keeps the streak
+ *   5. `restToday` is false — one of the plan's rest days keeps the streak
  *      with no log (App1 Q32), so there is nothing to remind about.
  */
 
-export interface StreakReminderPrefs {
-  enabled: boolean;
-  time: string; // HH:MM 24-hour local time
-  primingShown: boolean;
-  /**
-   * Local YYYY-MM-DD the once-ever first-week (day-2) return nudge was
-   * scheduled to FIRE (D-1 fix). Presence = consumed — the nudge never
-   * schedules again for this user. The dateKey (rather than a boolean)
-   * lets cancel-on-log target exactly the pending fire day.
-   */
-  firstWeekNudgeDateKey: string | null;
+/**
+ * `settings/streakReminder` as stored. Its switch and time (with the
+ * priming flag the switch needed) are the old fields, read by
+ * `streakReminderChoice` and never written again. The first-week nudge's
+ * marker still lives here: the local YYYY-MM-DD the once-ever first-week
+ * (day-2) return nudge was scheduled to FIRE (D-1 fix). Presence = consumed
+ * — the nudge never schedules again for this user. The dateKey (rather than
+ * a boolean) lets cancel-on-log target exactly the pending fire day.
+ */
+interface StoredStreakReminder {
+  enabled?: unknown;
+  time?: unknown;
+  primingShown?: unknown;
+  firstWeekNudgeDateKey?: string | null;
 }
 
-const DEFAULT_PREFS: StreakReminderPrefs = {
-  enabled: false,
-  time: "20:00",
-  primingShown: false,
-  firstWeekNudgeDateKey: null,
-};
+type Stored = Record<string, unknown>;
 
 /**
  * Given a "HH:MM" time string, return a Date for the next occurrence —
@@ -99,9 +106,10 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  */
 export function shouldScheduleStreakReminder(state: {
   loading: boolean;
+  /** Push carries the reminder (the server sends it); null while unknown. */
   pushOwns?: boolean | null;
+  /** The one switch (`streakReminderChoice`). */
   enabled: boolean;
-  primingShown: boolean;
   /** The streak a log today keeps (`useStreaks().savableStreak`). */
   savableStreak: number;
   hasLoggedToday: boolean;
@@ -111,7 +119,6 @@ export function shouldScheduleStreakReminder(state: {
   if (state.loading || state.pushOwns === true || state.pushOwns === null)
     return false;
   if (!state.enabled) return false;
-  if (!state.primingShown) return false;
   if (!(state.savableStreak >= 2)) return false;
   if (state.hasLoggedToday) return false;
   if (state.restToday) return false;
@@ -127,9 +134,9 @@ export function shouldScheduleStreakReminder(state: {
  *
  *   - "schedule": today is a log day (hasLoggedToday), the streak is
  *     exactly at its first day (< 2, and ≥ 1 so a log actually landed),
- *     consent has been granted (enabled + primingShown), and the nudge has
- *     never been scheduled before → schedule the one-shot for tomorrow at
- *     prefs.time and stamp `firstWeekNudgeDateKey`.
+ *     the evening reminder is on, and the nudge has never been scheduled
+ *     before → schedule the one-shot for tomorrow at the reminder's time
+ *     and stamp `firstWeekNudgeDateKey`.
  *   - "cancel": the marker exists and either the reminder was disabled, or
  *     it's the fire day and the user already logged (they came back on
  *     their own — the nudge's job is done, don't fire it at them).
@@ -138,8 +145,8 @@ export function shouldScheduleStreakReminder(state: {
  */
 export function firstWeekNudgeAction(state: {
   loading: boolean;
+  /** The evening reminder's one switch (`streakReminderChoice`). */
   enabled: boolean;
-  primingShown: boolean;
   currentStreak: number;
   hasLoggedToday: boolean;
   firstWeekNudgeDateKey: string | null;
@@ -169,7 +176,6 @@ export function firstWeekNudgeAction(state: {
     return "none";
   }
   if (shared) return "cancel";
-  if (!state.primingShown) return "none";
   if (state.currentStreak < 1 || state.currentStreak >= 2) return "none";
   if (!state.hasLoggedToday) return "none";
   if (state.restTomorrow) return "none";
@@ -235,7 +241,8 @@ export function computeTomorrowOccurrence(
  * RemindersProvider.tsx which reads this hook's output from context.
  */
 export function useStreakReminderInternal(
-  pushOwns: boolean | null = false,
+  /** `settings/push` as stored ({} for none), or null until it is read. */
+  push: Stored | null = {},
   refreshKey = ""
 ) {
   const scheduleChain = useRef<Promise<void>>(Promise.resolve());
@@ -249,46 +256,70 @@ export function useStreakReminderInternal(
     restTomorrow,
     loading: streaksLoading,
   } = useStreaks();
-  const [prefs, setPrefs] = useState<StreakReminderPrefs>(DEFAULT_PREFS);
-  const [loading, setLoading] = useState(true);
+  // The two documents as read, for this account: the new fields and the
+  // old one (whose marker the first-week nudge keeps).
+  const [stored, setStored] = useState<{
+    uid: string;
+    reminders: Stored;
+    old: StoredStreakReminder;
+  } | null>(null);
+  const loading = !!uid && stored?.uid !== uid;
+  const reminders = stored?.uid === uid ? stored.reminders : null;
+  const old = stored?.uid === uid ? stored.old : null;
+  const prefs: StreakReminderChoice = streakReminderChoice({
+    reminders,
+    streakReminder: old,
+    push,
+  });
+  // Push carries it (the server sends it), the phone does, or not known yet.
+  const pushOwns =
+    push === null ? null : reminderDelivery("streak", true, push) === "push";
+  const firstWeekNudgeDateKey = old?.firstWeekNudgeDateKey ?? null;
 
   // ── Firestore load / persist ──────────────────────────────────────────
 
   useEffect(() => {
-    if (!uid) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
-      setLoading(false);
-      return;
-    }
-    const ref = doc(db, "users", uid, "settings", "streakReminder");
-    getDoc(ref)
-      .then((snap) => {
-        if (snap.exists()) {
-          setPrefs({
-            ...DEFAULT_PREFS,
-            ...(snap.data() as Partial<StreakReminderPrefs>),
-          });
-        }
-        setLoading(false);
+    if (!uid) return;
+    let cancelled = false;
+    const settings = (name: string) =>
+      getDoc(doc(db, "users", uid, "settings", name)).then(
+        (snap) => (snap.exists() ? snap.data() : {}) as Stored
+      );
+    Promise.all([settings(REMINDERS_SETTINGS_DOC), settings("streakReminder")])
+      .then(([reminders, old]) => {
+        if (!cancelled) setStored({ uid, reminders, old });
       })
       .catch((err) => {
         logger.error("[StreakReminder] load failed", err);
-        setLoading(false);
+        if (!cancelled) setStored({ uid, reminders: {}, old: {} });
       });
+    return () => {
+      cancelled = true;
+    };
   }, [uid]);
 
-  const updatePrefs = useCallback(
-    async (updates: Partial<StreakReminderPrefs>) => {
+  const save = useCallback(
+    async (
+      name: typeof REMINDERS_SETTINGS_DOC | "streakReminder",
+      patch: Stored
+    ) => {
       if (!uid) return;
-      const ref = doc(db, "users", uid, "settings", "streakReminder");
       try {
-        // Patch the changed fields so a pending first-week marker does not
-        // overwrite a reminder switch changed on another device.
-        await setDocGuarded(ref, updates, { merge: true });
+        // Only the changed fields, so a pending first-week marker and a
+        // switch changed on another device do not overwrite each other.
+        await setDocGuarded(doc(db, "users", uid, "settings", name), patch, {
+          merge: true,
+        });
         if (auth.currentUser?.uid !== uid) return;
-        // Onto the prefs as they are now: a marker save started before a
-        // switch changed must not put the old switch back.
-        setPrefs((current) => ({ ...current, ...updates }));
+        // Onto the documents as they are now: a marker save started before
+        // a switch changed must not put the old switch back.
+        setStored((current) =>
+          current?.uid === uid
+            ? name === REMINDERS_SETTINGS_DOC
+              ? { ...current, reminders: { ...current.reminders, ...patch } }
+              : { ...current, old: { ...current.old, ...patch } }
+            : current
+        );
       } catch (err) {
         logger.error("[StreakReminder] save failed", err);
         captureError(
@@ -302,21 +333,34 @@ export function useStreakReminderInternal(
     [uid]
   );
 
+  /** The one switch and the one time, written in the new shape only. */
+  const updatePrefs = useCallback(
+    async (updates: Partial<StreakReminderChoice>) => {
+      const patch: Stored = {};
+      if (updates.enabled !== undefined) patch.streakEnabled = updates.enabled;
+      if (updates.time !== undefined)
+        patch.streakTime =
+          streakReminderTime(updates.time) ?? DEFAULT_STREAK_REMINDER_TIME;
+      await save(REMINDERS_SETTINGS_DOC, patch);
+    },
+    [save]
+  );
+
   // ── Reschedule on any relevant state change ───────────────────────────
   //
   // Re-evaluation triggers:
   //   - Mount.
-  //   - prefs.enabled / prefs.time / prefs.primingShown change.
+  //   - prefs.enabled / prefs.time change, or whether push carries it.
   //   - currentStreak change.
   //   - hasLoggedToday change (user logs something → cancel;
   //     midnight rollover clears today's activity → re-schedule).
   //
   // Foreground events are NOT handled here directly. The hasLoggedToday
   // value comes from useStreaks, whose onSnapshot subscriptions reflect
-  // activity changes in near-real-time while the app is open. Consent
-  // (`enabled` and `primingShown`) is asked in Settings. The finish
-  // screen's one ask (`ReminderOffer`, Q66) turns on the training-day
-  // reminder and push instead; push owns the streak nudge once it is on.
+  // activity changes in near-real-time while the app is open. The switch is
+  // in Settings. The finish screen's one ask (`ReminderOffer`, Q66) turns
+  // on the training-day reminder and push; once push is on it carries this
+  // reminder, and the server sends it at the same time.
 
   useEffect(() => {
     if (!uid || loading || streaksLoading) return;
@@ -339,7 +383,6 @@ export function useStreakReminderInternal(
         loading: false,
         pushOwns,
         enabled: prefs.enabled,
-        primingShown: prefs.primingShown,
         savableStreak,
         hasLoggedToday,
         restToday,
@@ -373,7 +416,6 @@ export function useStreakReminderInternal(
     streaksLoading,
     prefs.enabled,
     prefs.time,
-    prefs.primingShown,
     savableStreak,
     hasLoggedToday,
     restToday,
@@ -408,7 +450,7 @@ export function useStreakReminderInternal(
     const saveMarker = async (dateKey: string) => {
       for (let attempt = 1; attempt <= MARKER_ATTEMPTS; attempt++) {
         try {
-          await updatePrefs({ firstWeekNudgeDateKey: dateKey });
+          await save("streakReminder", { firstWeekNudgeDateKey: dateKey });
           return;
         } catch {
           // Retried here, then by the next pass from the shared claim.
@@ -427,7 +469,7 @@ export function useStreakReminderInternal(
       }
       const deviceId = firstWeekDeviceId(uid);
       let sharedNudge: { dateKey: string; mine: boolean } | null = null;
-      if (!prefs.firstWeekNudgeDateKey && prefs.enabled && prefs.primingShown) {
+      if (!firstWeekNudgeDateKey && prefs.enabled) {
         try {
           const shared = (await getDoc(sharedRef)).data();
           if (typeof shared?.firstWeekNudgeDateKey === "string")
@@ -443,10 +485,9 @@ export function useStreakReminderInternal(
       const action = firstWeekNudgeAction({
         loading: false,
         enabled: prefs.enabled,
-        primingShown: prefs.primingShown,
         currentStreak,
         hasLoggedToday,
-        firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
+        firstWeekNudgeDateKey,
         todayKey: format(new Date(), "yyyy-MM-dd"),
         sharedNudge,
         restTomorrow,
@@ -531,19 +572,21 @@ export function useStreakReminderInternal(
     pushOwns,
     refreshKey,
     prefs.enabled,
-    prefs.primingShown,
     prefs.time,
-    prefs.firstWeekNudgeDateKey,
+    firstWeekNudgeDateKey,
     currentStreak,
     hasLoggedToday,
     restTomorrow,
-    updatePrefs,
+    save,
   ]);
 
   return {
     prefs,
     loading,
     updatePrefs,
+    /** How it goes now: off, on the phone, or by push; null until known. */
+    delivery:
+      push === null ? null : reminderDelivery("streak", prefs.enabled, push),
     // Stable module-level function — no useCallback wrapper needed.
     requestPermission: requestNotificationPermission,
     // Exposed so the priming modal trigger can read the same values without

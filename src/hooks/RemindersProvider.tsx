@@ -46,18 +46,19 @@ interface RemindersValue {
 const RemindersContext = createContext<RemindersValue | null>(null);
 
 export function RemindersProvider({ children }: { children: ReactNode }) {
-  const { activity, pushOwns, recapPushOwns, refreshKey } =
-    useReminderActivity();
+  // `push`: the stored push settings, which say whether push carries the
+  // streak and review reminders (App1 Q26, `lib/reminderChoices.ts`).
+  const { activity, push, refreshKey } = useReminderActivity();
   const meal = useMealRemindersInternal(activity);
   // A lift day's reminder names the programme's next workout.
   const liftName = useNextLiftName();
   const workout = useWorkoutRemindersInternal(activity, liftName);
-  const streak = useStreakReminderInternal(pushOwns, refreshKey);
+  const streak = useStreakReminderInternal(push, refreshKey);
   // Monday's "Your week, reviewed", when a review will be waiting. A first
   // log is what makes a new account's first review, so today's logging
   // runs it again.
   const review = useReviewReminderInternal(
-    recapPushOwns,
+    push,
     refreshKey,
     `${activity.dateKey}:${activity.workout}:${activity.meals.length}`
   );

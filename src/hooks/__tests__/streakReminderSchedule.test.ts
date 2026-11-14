@@ -64,10 +64,11 @@ afterEach(async () => {
   });
 });
 
-it("arms a non-repeating alarm, then cancels it when push takes ownership", async () => {
+it("arms a non-repeating alarm, then cancels it when push carries the reminder", async () => {
   const { result, rerender } = renderHook(
-    ({ push }) => useStreakReminderInternal(push),
-    { initialProps: { push: false } }
+    ({ push }: { push: Record<string, unknown> }) =>
+      useStreakReminderInternal(push),
+    { initialProps: { push: {} } }
   );
   await waitFor(() => expect(result.current.loading).toBe(false));
   await waitFor(() =>
@@ -75,7 +76,9 @@ it("arms a non-repeating alarm, then cancels it when push takes ownership", asyn
   );
   expect(scheduledAt(STREAK_NOTIFICATION_ID)?.repeats).not.toBe(true);
   expect(scheduledAt(STREAK_NOTIFICATION_ID)?.scheduleAt?.getDate()).toBe(6);
-  rerender({ push: true });
+  // Push on: the server sends it, at the same hour, and the phone stands
+  // aside (App1 Q26: never both).
+  rerender({ push: { enabled: true } });
   await act(async () => {
     await settleNotifications();
   });
@@ -123,9 +126,12 @@ it("arms the evening after a rest day, when the streak shows 0 but a log keeps i
   );
 });
 
-it.each(["22:00", "23:30", "07:00"])(
-  "does not arm an overnight reminder at %s",
-  async (time) => {
+it.each([
+  ["22:00", 21],
+  ["23:30", 21],
+])(
+  "holds a late time of %s to the last evening hour, never overnight",
+  async (time, hour) => {
     seedFirestore({
       "users/u1/settings/streakReminder": {
         enabled: true,
@@ -135,12 +141,89 @@ it.each(["22:00", "23:30", "07:00"])(
     });
     const { result } = renderHook(() => useStreakReminderInternal());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await act(async () => {
-      await settleNotifications();
-    });
-    expect(scheduledIds()).toEqual([]);
+    expect(result.current.prefs.time).toBe("21:00");
+    await waitFor(() =>
+      expect(scheduledAt(STREAK_NOTIFICATION_ID)?.scheduleAt?.getHours()).toBe(
+        hour
+      )
+    );
   }
 );
+
+it("holds an early time to 08:00, which has passed at noon", async () => {
+  seedFirestore({
+    "users/u1/settings/streakReminder": {
+      enabled: true,
+      primingShown: true,
+      time: "07:00",
+    },
+  });
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.prefs.time).toBe("08:00");
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledIds()).toEqual([]);
+});
+
+it("arms at the hour chosen in the new shape, which wins over the old switch", async () => {
+  seedFirestore({
+    "users/u1/settings/reminders": { streakEnabled: true, streakTime: "18:00" },
+    "users/u1/settings/streakReminder": {
+      enabled: false,
+      primingShown: true,
+      time: "20:00",
+    },
+  });
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.prefs).toEqual({ enabled: true, time: "18:00" });
+  await waitFor(() =>
+    expect(scheduledAt(STREAK_NOTIFICATION_ID)?.scheduleAt?.getHours()).toBe(18)
+  );
+});
+
+it("writes the one switch and the one time in the new shape only", async () => {
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await waitFor(() =>
+    expect(scheduledAt(STREAK_NOTIFICATION_ID)).toBeDefined()
+  );
+  await act(async () => {
+    await result.current.updatePrefs({ time: "19:30" });
+  });
+  await act(async () => {
+    await result.current.updatePrefs({ enabled: false });
+    await settleNotifications();
+  });
+  expect(readDoc("users/u1/settings/reminders")).toEqual({
+    streakTime: "19:00",
+    streakEnabled: false,
+  });
+  // The old document keeps what it said; nothing reads it now.
+  expect(readDoc("users/u1/settings/streakReminder")).toEqual({
+    enabled: true,
+    primingShown: true,
+    time: "20:00",
+  });
+  expect(result.current.prefs).toEqual({ enabled: false, time: "19:00" });
+  expect(scheduledIds()).toEqual([]);
+});
+
+it("reads a push-only account as on, carried by push, and arms nothing", async () => {
+  seedFirestore({});
+  const { result } = renderHook(() =>
+    useStreakReminderInternal({ enabled: true })
+  );
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.prefs.enabled).toBe(true);
+  expect(result.current.delivery).toBe("push");
+  await act(async () => {
+    await settleNotifications();
+  });
+  expect(scheduledIds()).toEqual([]);
+});
 
 it("does not schedule tomorrow using today's stale streak", async () => {
   vi.setSystemTime(new Date(2026, 8, 6, 21));
@@ -291,9 +374,14 @@ it("keeps the claimed nudge armed when a new day reads the push consent again", 
     loading: false,
   };
   const { result, rerender } = renderHook(
-    ({ push, key }: { push: boolean | null; key: string }) =>
+    ({ push, key }: { push: Record<string, unknown> | null; key: string }) =>
       useStreakReminderInternal(push, key),
-    { initialProps: { push: false as boolean | null, key: "2026-09-06" } }
+    {
+      initialProps: {
+        push: {} as Record<string, unknown> | null,
+        key: "2026-09-06",
+      },
+    }
   );
   await waitFor(() => expect(result.current.loading).toBe(false));
   await waitFor(() =>
@@ -313,7 +401,7 @@ it("keeps the claimed nudge armed when a new day reads the push consent again", 
   await act(async () => {
     await settleNotifications();
   });
-  rerender({ push: false, key: "2026-09-07" });
+  rerender({ push: {}, key: "2026-09-07" });
   await act(async () => {
     await settleNotifications();
   });
@@ -356,6 +444,6 @@ it("leaves nothing armed when switched off while the nudge's marker saves", asyn
     await settleNotifications();
   });
   expect(result.current.prefs.enabled).toBe(false);
-  expect(readDoc("users/u1/settings/streakReminder")?.enabled).toBe(false);
+  expect(readDoc("users/u1/settings/reminders")?.streakEnabled).toBe(false);
   expect(scheduledAt(FIRST_WEEK_NOTIFICATION_ID)).toBeUndefined();
 });

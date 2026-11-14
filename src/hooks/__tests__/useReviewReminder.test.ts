@@ -28,7 +28,11 @@ import {
   REVIEW_ROUTE,
 } from "@/lib/reviewReminder";
 import { reviewViewedKey } from "@/lib/reviewEligibility";
-import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import {
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 import {
   resetNotifications,
   scheduledAt,
@@ -43,9 +47,9 @@ const WEDNESDAY = new Date(2026, 9, 28, 12, 0);
 const LAST_WEEK_DAY = "2026-10-21";
 const THIS_WEEK_DAY = "2026-10-27";
 
-async function run(pushOwns: boolean | null = false) {
+async function run(push: Record<string, unknown> | null = {}) {
   const hook = renderHook(
-    ({ key }: { key: string }) => useReviewReminderInternal(pushOwns, key, ""),
+    ({ key }: { key: string }) => useReviewReminderInternal(push, key, ""),
     { initialProps: { key: "a" } }
   );
   await act(async () => {
@@ -131,13 +135,62 @@ describe("useReviewReminderInternal", () => {
     expect(scheduledIds()).toEqual([]);
   });
 
-  it("leaves the Monday to the server's recap push when that is on", async () => {
+  it("leaves the Monday to push when push carries it: one reminder, one channel", async () => {
     vi.useFakeTimers({ now: MONDAY_EARLY, toFake: ["Date"] });
     seedFirestore({
       "users/u1/workouts/w1": { date: LAST_WEEK_DAY, exercises: [] },
     });
-    const hook = await run(true);
+    const hook = await run({ enabled: true });
     expect(hook.result.current.loading).toBe(false);
+    expect(hook.result.current.prefs.enabled).toBe(true);
+    expect(hook.result.current.delivery).toBe("push");
+    expect(scheduledIds()).toEqual([]);
+  });
+
+  it("schedules from the phone when the old recap switch was off and push stays on", async () => {
+    // The old first-week opt-in: push on, its recap off. Push carries the
+    // review now, so the phone stands aside and the server sends it.
+    vi.useFakeTimers({ now: MONDAY_EARLY, toFake: ["Date"] });
+    seedFirestore({
+      "users/u1/workouts/w1": { date: LAST_WEEK_DAY, exercises: [] },
+    });
+    const hook = await run({ enabled: true, recap: false });
+    expect(hook.result.current.prefs.enabled).toBe(true);
+    expect(hook.result.current.delivery).toBe("push");
+    expect(scheduledIds()).toEqual([]);
+  });
+
+  it("keeps the phone's old Off, which the recap push left at its default does not undo", async () => {
+    vi.useFakeTimers({ now: MONDAY_EARLY, toFake: ["Date"] });
+    seedFirestore({
+      "users/u1/workouts/w1": { date: LAST_WEEK_DAY, exercises: [] },
+      "users/u1/settings/reviewReminder": { enabled: false },
+    });
+    const hook = await run({ enabled: true });
+    expect(hook.result.current.prefs.enabled).toBe(false);
+    expect(hook.result.current.delivery).toBe("off");
+  });
+
+  it("reads the new switch over the old one, and writes only the new one", async () => {
+    vi.useFakeTimers({ now: MONDAY_EARLY, toFake: ["Date"] });
+    seedFirestore({
+      "users/u1/workouts/w1": { date: LAST_WEEK_DAY, exercises: [] },
+      "users/u1/settings/reviewReminder": { enabled: false },
+      "users/u1/settings/reminders": { reviewEnabled: true },
+    });
+    const hook = await run();
+    expect(hook.result.current.prefs.enabled).toBe(true);
+    expect(scheduledIds()).toEqual([REVIEW_NOTIFICATION_ID]);
+    await act(async () => {
+      await hook.result.current.updatePrefs({ enabled: false });
+      await settleNotifications();
+    });
+    expect(readDoc("users/u1/settings/reminders")).toEqual({
+      reviewEnabled: false,
+    });
+    expect(readDoc("users/u1/settings/reviewReminder")).toEqual({
+      enabled: false,
+    });
     expect(scheduledIds()).toEqual([]);
   });
 
