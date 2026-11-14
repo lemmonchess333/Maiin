@@ -319,7 +319,12 @@ export default function Social() {
 
       <NotificationsSheet
         open={showNotifications}
-        onOpenChange={setShowNotifications}
+        onOpenChange={(open) => {
+          setShowNotifications(open);
+          /* A row that arrived while the tray was open has been seen
+             too: closing it leaves no dot on the Social tab (App1 Q34). */
+          if (!open) notifications.markAllSeen();
+        }}
         items={notifications.items}
         loading={notifications.loading}
         error={notifications.error}

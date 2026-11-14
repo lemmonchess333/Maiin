@@ -23,10 +23,16 @@ import { useBlockedUsers } from "./useBlockedUsers";
  *
  * Read state: the Firestore rule allows read + delete but NOT update on the
  * notification doc, so we can't flip a per-doc `read` flag from the client.
- * Instead we use the same localStorage last-seen pattern as `useUnreadCount`
- * — the unread BADGE counts items newer than the last time the user opened
- * the tray. That's exactly the badge semantics the category leaders use, and
- * it needs no write permission.
+ * Instead a localStorage last-seen pointer: the unread BADGE counts items
+ * newer than the last time the user opened the tray. That's exactly the
+ * badge semantics the category leaders use, and it needs no write
+ * permission.
+ *
+ * Two readers show it: the bell on Social, with its count, and the Social
+ * tab's dot (`Layout`, App1 Q34), so that someone's props, comment or
+ * follow request is seen from any tab. Opening the tray clears both: the
+ * pointer goes to storage for the next launch and out as `SEEN_EVENT` to
+ * every reader mounted now, each of which holds its own state.
  */
 
 /** Every type the tray shows. A stored type outside this list is dropped
@@ -101,6 +107,14 @@ const LAST_SEEN_KEY_PREFIX = "tropos-notif-last-seen";
 function lastSeenKey(uid: string): string {
   return `${LAST_SEEN_KEY_PREFIX}:${uid}`;
 }
+
+/** Sent when one reader marks the tray seen, so the others clear with it.
+ *  Carries the account, and a reader acts only on its own. */
+const SEEN_EVENT = "tropos:notifications-seen";
+interface SeenDetail {
+  uid: string;
+  ms: number;
+}
 // Bound the per-client subscription regardless of how active the user's
 // social graph is — the tray shows the most recent slice, older history
 // is not a use case worth streaming.
@@ -143,7 +157,7 @@ const NO_ITEMS: NotificationItem[] = [];
 
 export function useNotifications() {
   const uid = useUid();
-  // Same suppression the feed and the unread badge apply.
+  // Same suppression the feed applies.
   const { blocked } = useBlockedUsers();
   const [answer, setAnswer] = useState<TrayAnswer>({
     key: null,
@@ -178,6 +192,20 @@ export function useNotifications() {
     ms: 0,
   });
   const lastSeenMs = uid && seenNow.uid === uid ? seenNow.ms : storedLastSeenMs;
+
+  // Another reader opened the tray (the bell, while the tab bar's dot
+  // listens): take its instant, for this account only.
+  useEffect(() => {
+    if (!uid) return;
+    const onSeen = (event: Event) => {
+      const detail = (event as CustomEvent<SeenDetail>).detail;
+      if (detail?.uid === uid && Number.isFinite(detail.ms)) {
+        setSeenNow({ uid, ms: detail.ms });
+      }
+    };
+    window.addEventListener(SEEN_EVENT, onSeen);
+    return () => window.removeEventListener(SEEN_EVENT, onSeen);
+  }, [uid]);
 
   useEffect(() => {
     if (!uid || !key) return;
@@ -261,6 +289,11 @@ export function useNotifications() {
     // Storage unavailable — in-memory state still clears the badge.
     writeString(lastSeenKey(uid), now.toISOString());
     setSeenNow({ uid, ms: now.getTime() });
+    window.dispatchEvent(
+      new CustomEvent<SeenDetail>(SEEN_EVENT, {
+        detail: { uid, ms: now.getTime() },
+      })
+    );
   }, [uid]);
 
   /** Re-subscribe after a failed read — bumps the generation, hides the

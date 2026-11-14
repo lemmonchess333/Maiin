@@ -247,7 +247,7 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 `useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (runs on `useSavedSessions`, the one live engine for saved runs and workouts; `savedSessionsReaderGuard.test.ts` keeps their readers the only ones), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live)
+`useSocialFeed`, `useDiscoverFeed`, `useNotifications` (the tray, and the Social tab's dot: its unread, cleared when the tray is opened), `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`, `usePulse` (today's sessions across Tropos, live)
 
 **Performance & Analytics:**
 `usePerformance`

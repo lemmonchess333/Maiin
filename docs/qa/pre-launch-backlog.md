@@ -4824,3 +4824,22 @@ no phone has drawn it.
       now" with Update paces, and the tap updates them.
 - [ ] **After the trial starts.** Passing: Settings → Run plan offers the
       faster paces with Update paces.
+
+## A dot on the Social tab for new activity (App1 Q34, 2026-11-13)
+
+Affects: the Social tab (`BottomNavigation`, fed by `Layout` from the
+notification tray's unread count in `useNotifications`) and Social's bell,
+which opens the tray. The dot used to mean new posts in the feed since
+Social was last tapped; it now means the tray holds something unread
+(props, a comment, a follow request, an invite joined, a league result),
+and it clears when the tray is opened or closed, not when the tab is
+tapped. Unit-tested; no phone has drawn it.
+
+- [ ] **A real notification.** From a second account, give props on a
+      post of yours. Passing: within a few seconds a small purple dot sits
+      on the Social tab's icon, on Home as well as on Social.
+- [ ] **VoiceOver.** With the dot showing, move to the Social tab. Passing:
+      it reads "Social, new activity"; with no dot it reads "Social".
+- [ ] **Cleared by the tray.** Tap Social, then the bell. Passing: the dot
+      stays after tapping the tab, and goes as the tray opens; it does not
+      come back after closing the tray or relaunching the app.

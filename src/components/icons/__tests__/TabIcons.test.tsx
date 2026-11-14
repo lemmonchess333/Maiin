@@ -69,8 +69,7 @@ describe("the tab bar draws them", () => {
             { to: "/history", icon: AnalyticsTabIcon, label: "Analytics" },
           ]}
           pathname="/food"
-          unreadCount={0}
-          onSocialVisit={() => {}}
+          socialNewActivity={false}
         />
       </MemoryRouter>
     );
