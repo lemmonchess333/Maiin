@@ -279,6 +279,10 @@ interface ProgrammeRunSectionProps {
  *  larger text), rather than a label broken over two lines in a pill. */
 const ACTION_PAIR = "flex-auto";
 
+/** Run plan opened on a plan with no race date, Keep fit chosen (Run24
+ *  (3)): what follows a race, and what free running is offered. */
+const AFTER_RACE_PLAN_PATH = "/settings/run-plan?goal=keep_fit";
+
 export default function ProgrammeRunSection({
   profile,
   programState,
@@ -617,6 +621,9 @@ export default function ProgrammeRunSection({
     profile.runFrequency === "new" &&
     !profile.starterGoal &&
     !starterOfferDismissed;
+  // Run24 (3): a plan with no race date, offered on free running.
+  const { dismissed: rollingOfferDismissed, dismiss: dismissRollingOffer } =
+    useDismissOnce("tropos-rolling-plan-offer");
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
@@ -1262,15 +1269,28 @@ export default function ProgrammeRunSection({
           actually does post-Run9 — resolveRecoveryExit returns the
           user to freeform (the locked two-state model has no
           structured mode to switch to). */}
+      {/* Run24 (3), deep dive D7: the plan offers what comes next rather
+          than stopping: a plan with no race date (Run plan opens on it,
+          Keep fit chosen), the next race, or no plan for now. */}
       {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
           title="Recovery complete"
-          description="What’s next?"
+          description="Keep your running going with a plan, or set your next race."
           action={
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="sport"
+                className={ACTION_PAIR}
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+              >
+                Choose a plan
+              </Button>
+              <Button
+                variant="secondary"
                 className={ACTION_PAIR}
                 onClick={() => {
                   haptic();
@@ -1280,11 +1300,11 @@ export default function ProgrammeRunSection({
                 Set next race
               </Button>
               <Button
-                variant="secondary"
+                variant="ghost"
                 className={ACTION_PAIR}
                 onClick={handleSkipRecoveryEarly}
               >
-                Back to freeform
+                No plan for now
               </Button>
             </div>
           }
@@ -1556,6 +1576,49 @@ export default function ProgrammeRunSection({
                   dismissStarterOffer();
                 }}
                 aria-label="Dismiss the 30-minute goal"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </Card>
+          )}
+
+          {/* Run24 (3), deep dive D7: a plan with no race date, offered to a
+              free runner until dismissed (per account on this device). It
+              waits while the 30-minute goal is offered, and while the
+              starter goal's Done shows, which offer their own next goal. */}
+          {!rollingOfferDismissed && !starterOffered && !starterDoneShowing && (
+            <Card size="compact" className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate(AFTER_RACE_PLAN_PATH);
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-running-strong">
+                    Plan, no race
+                  </p>
+                  <p className="text-base font-bold text-foreground">
+                    Keep your running going
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Keep fit, build to 5K or 10K, or get faster at 5K. A lighter
+                    week every fourth.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissRollingOffer();
+                }}
+                aria-label="Dismiss the plan with no race date"
                 className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
               >
                 <X className="size-4" />
