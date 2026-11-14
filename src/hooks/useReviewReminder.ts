@@ -155,6 +155,7 @@ export function useReviewReminderInternal(
         ...REVIEW_NOTIFICATION,
         scheduleAt: fireAt,
         route: REVIEW_ROUTE,
+        kind: "review",
       });
     };
     chain.current = chain.current.then(reschedule, reschedule);

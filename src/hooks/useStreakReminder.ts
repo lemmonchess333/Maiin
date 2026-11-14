@@ -400,6 +400,7 @@ export function useStreakReminderInternal(
         title: "An evening reminder",
         body: "Still time to log today if you want to keep the run going.",
         scheduleAt: fireAt,
+        kind: "streak",
       });
     };
 

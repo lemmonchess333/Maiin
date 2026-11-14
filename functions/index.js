@@ -91,9 +91,11 @@ const photoScreen = require("./lib/photoScreen");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
+  savableStreak,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,
+  STREAK_NUDGE_MIN_STREAK,
 } = require("./lib/streakNudge");
 const {
   isLocalSendHour,
@@ -115,6 +117,10 @@ const {
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeAnnouncements = require("./lib/challengeAnnouncements");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
+// App1 Q60 and Q62: one budget for every push not from a person, and a
+// reminder nobody answers goes quiet.
+const pushBudget = require("./lib/pushBudget");
+const reminderAttention = require("./lib/reminderAttention");
 
 // RevenueCat (ADR-0006): the entitlement source for in-app purchases.
 const revenueCat = require("./revenueCat");
@@ -3409,6 +3415,141 @@ async function releaseClaimedPushSendLeases(uid, registrations) {
   );
 }
 
+// --- App1 Q60: the day's one push, and which push it goes to -------------
+//
+// lib/pushBudget.js has the budget and the order (streak, recap, closing
+// challenge, new challenges, badge). A push that is ready gives way while a
+// higher one is still armed for now or later the same local day; then it
+// takes the day's one push in a transaction, or finds it taken.
+
+/** Whether the evening reminder may still go by push today: on, carried by
+ *  push, its hour now or later, not sent yet, nothing logged yet, and a
+ *  streak a log would keep (or the first-week return still to come). */
+async function eveningReminderArmed(uid, now, timezone) {
+  const localHour = localHourInTz(now, timezone);
+  const todayKey = localDateKeyInTz(now, timezone);
+  if (localHour === null || !todayKey) return false;
+  const consent =
+    (await db.doc(`users/${uid}/settings/push`).get()).data() || null;
+  const hour = await reminderChoices.streakReminderPushHour(db, uid, consent);
+  if (hour === null || hour < localHour) return false;
+  const [streakSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+  const pushState = stateSnap.data() || {};
+  if (pushState.lastStreakNudgeDateKey === todayKey) return false;
+  const streak = streakSnap.data() || {};
+  if (streak.lastActiveDate === todayKey) return false;
+  if (savableStreak({ ...streak, timezone }, now) >= STREAK_NUDGE_MIN_STREAK)
+    return true;
+  const yesterdayKey = localDateKeyInTz(
+    new Date(now.getTime() - 86400000),
+    timezone
+  );
+  return (
+    !pushState.firstWeekNudgeDateKey && streak.lastActiveDate === yesterdayKey
+  );
+}
+
+/** Whether Monday's review push is still to go this morning. */
+async function reviewPushArmed(uid, now, timezone) {
+  if (localWeekdayInTz(now, timezone) !== RECAP_LOCAL_WEEKDAY) return false;
+  const localHour = localHourInTz(now, timezone);
+  if (localHour === null || localHour > RECAP_LOCAL_HOUR) return false;
+  const [consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+  if (
+    !(await reminderChoices.reviewReminderByPush(
+      db,
+      uid,
+      consentSnap.data() || null
+    ))
+  )
+    return false;
+  return (
+    (stateSnap.data() || {}).lastRecapDateKey !==
+    localDateKeyInTz(now, timezone)
+  );
+}
+
+/**
+ * Takes today's push for `kind`: null when a higher push is still armed
+ * today, or the day or the seven days are used up. Resolves to the claim,
+ * which `releaseTodaysPush` gives back if the push reached no device.
+ */
+async function claimTodaysPush(uid, kind, now, timezone) {
+  const dayKey = localDateKeyInTz(now, timezone);
+  if (!dayKey) return null;
+  const above = pushBudget.PUSH_PRIORITY.slice(
+    0,
+    Math.max(0, pushBudget.PUSH_PRIORITY.indexOf(kind))
+  );
+  const armed = [];
+  if (
+    above.includes("streak") &&
+    (await eveningReminderArmed(uid, now, timezone))
+  )
+    armed.push("streak");
+  if (above.includes("recap") && (await reviewPushArmed(uid, now, timezone)))
+    armed.push("recap");
+  if (pushBudget.yieldsTo(kind, armed)) return null;
+  return pushBudget.claimPushBudget(db, uid, { kind, dayKey });
+}
+
+async function releaseTodaysPush(uid, claimId) {
+  await pushBudget.releasePushBudget(db, uid, claimId).catch(() => {});
+}
+
+// --- App1 Q62: a reminder ignored three times running goes quiet ----------
+
+function remindersRef(uid) {
+  return db.doc(
+    `users/${uid}/settings/${reminderChoices.REMINDERS_SETTINGS_DOC}`
+  );
+}
+
+/**
+ * Settles the last push of a reminder (lib/reminderAttention.js) before
+ * the next goes. When it was the third ignored running, the reminder is
+ * turned off with the mark Home reads, and null is returned: send nothing.
+ */
+async function settleReminderBeforeSend(
+  uid,
+  kind,
+  now,
+  timezone,
+  actedDayKeys
+) {
+  const reminders = (await remindersRef(uid).get()).data() || {};
+  const settle = reminderAttention.settleReminderPush(kind, reminders, {
+    actedDayKeys,
+    sentDayKey: (ms) => localDateKeyInTz(new Date(ms), timezone),
+  });
+  if (settle.quiet) {
+    await remindersRef(uid).set(
+      reminderAttention.quietPatch(
+        kind,
+        admin.firestore.Timestamp.fromDate(now)
+      ),
+      { merge: true }
+    );
+    return null;
+  }
+  return settle;
+}
+
+/** Records how the settle came out, and the push now waiting, if one went. */
+async function recordReminderPush(uid, kind, settle, sentAt) {
+  if (!settle || (!settle.settled && !sentAt)) return;
+  await remindersRef(uid).set(
+    reminderAttention.settledPatch(kind, settle.ignored, sentAt),
+    { merge: true }
+  );
+}
+
 async function maybeSendStreakNudge(uid, now, profile) {
   // The sweep passes the user's document it already read; the hour is
   // checked from it before anything else is.
@@ -3504,9 +3645,37 @@ async function maybeSendStreakNudge(uid, now, profile) {
   const firstWeek = !eligible && shouldSendFirstWeekNudge(decisionInput, now);
   if (!eligible && !firstWeek) return false;
 
+  // Q62: the last evening reminder is settled first (answered if the app
+  // was opened after it that day, or anything was logged that day). After
+  // three ignored running it goes quiet instead. The once-ever first-week
+  // return is not a repeating reminder and is not counted.
+  let settle = null;
+  if (eligible) {
+    settle = await settleReminderBeforeSend(
+      uid,
+      "streak",
+      now,
+      timezone,
+      activeDateKeys
+    );
+    if (!settle) return false;
+  }
+
+  // Q60: the day's one push. The evening reminder is first in the order,
+  // so it waits for nothing; the day or the seven days may be used up.
+  const claim = await claimTodaysPush(uid, "streak", now, timezone);
+  if (!claim) {
+    await recordReminderPush(uid, "streak", settle, null);
+    return false;
+  }
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    await recordReminderPush(uid, "streak", settle, null);
+    return false;
+  }
 
   const message = firstWeek
     ? buildFirstWeekNudgeMessage()
@@ -3516,6 +3685,9 @@ async function maybeSendStreakNudge(uid, now, profile) {
     batch = await admin
       .messaging()
       .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     // Release send leases before pruning (prune uses releaseTokenIfOwned,
     // which must not contend with an unexpired lease of its own).
@@ -3524,6 +3696,18 @@ async function maybeSendStreakNudge(uid, now, profile) {
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+
+  // A push that reached no device gives the day back. The one that went
+  // is the evening reminder now waiting to be answered (from `now`, the
+  // sweep's start, so an open straight after it counts).
+  const delivered = batch.successCount > 0;
+  if (!delivered) await releaseTodaysPush(uid, claim);
+  await recordReminderPush(
+    uid,
+    "streak",
+    settle,
+    delivered && settle ? admin.firestore.Timestamp.fromDate(now) : null
+  );
 
   // ≤1/day idempotency marker (local day); the first-week nudge additionally
   // records its once-EVER marker.
@@ -3541,18 +3725,27 @@ async function maybeSendStreakNudge(uid, now, profile) {
 
 // Push #961 / badge sender #968 — badge-earned nudge. Earned badges live in
 // users/{uid}/streaks/data.badges[] ({ id, earnedAt }). This fires at the next
-// non-quiet local hour after a badge is earned (not pinned to one hour, so it
+// local hour from 10:00 after a badge is earned (not pinned to one hour, so it
 // feels timely), at most once/day, gated on "badge" consent. The 2-day
 // recency window + pushedBadgeIds marker prevent back-spam of historical
 // badges and re-sends. Generic payload (Q7 — badge names leak streak counts).
+// Last in the day's order (App1 Q60, lib/pushBudget.js): it starts at 10:00,
+// after the 09:00 pushes, gives way to an evening reminder still to come,
+// and waits for a later hour or day when today's push has gone.
 async function maybeSendBadgeNudge(uid, now, profile) {
   const timezone =
     (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
     null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
-  // Any non-quiet local hour (timely), never inside quiet hours.
-  if (withinQuietHours(localHourInTz(now, timezone))) return false;
+  // From 10:00 local, never inside quiet hours.
+  const localHour = localHourInTz(now, timezone);
+  if (
+    withinQuietHours(localHour) ||
+    localHour === null ||
+    localHour < pushBudget.BADGE_EARLIEST_HOUR
+  )
+    return false;
 
   const [streakSnap, consentSnap, stateSnap] = await Promise.all([
     db.doc(`users/${uid}/streaks/data`).get(),
@@ -3573,9 +3766,16 @@ async function maybeSendBadgeNudge(uid, now, profile) {
   const fresh = pushableBadgeIds(badges, pushedBadgeIds, now);
   if (fresh.length === 0) return false;
 
+  // Q60: not marked pushed when it waits, so a later hour can send it.
+  const claim = await claimTodaysPush(uid, "badge", now, timezone);
+  if (!claim) return false;
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    return false;
+  }
 
   let batch;
   try {
@@ -3583,12 +3783,16 @@ async function maybeSendBadgeNudge(uid, now, profile) {
       tokens,
       ...withNativePushAlert(buildBadgeNudgeMessage(), uid),
     });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+  if (batch.successCount === 0) await releaseTodaysPush(uid, claim);
 
   // Mark these badge ids pushed + today's ≤1/day marker. Union with the
   // existing set so an earlier day's pushes aren't forgotten.
@@ -3613,11 +3817,15 @@ async function maybeSendBadgeNudge(uid, now, profile) {
 // 05:00 UTC pass — so the persisted flag would be stale for them. It shares the
 // `_fellBehindRatio` computation with that check (single source of truth), and
 // when behind it ensures the flag is written (idempotent merge, same shape) so
-// the deep-link target reliably exists when the user taps. Counts under the ≤1
-// server-push/day cap with priority recap > streak: a sent recap writes the
-// same `lastStreakNudgeDateKey` marker #966 reads, suppressing that evening's
-// streak nudge. ≤1 recap/day via `lastRecapDateKey`. Runs inside the existing
-// hourly sweep (no second active-user pass).
+// the deep-link target reliably exists when the user taps. Counts under the
+// day's one push (App1 Q60, lib/pushBudget.js), second in its order: it gives
+// way to an evening reminder still to come that day, which protects a streak
+// and cannot wait, where the review waits on Home all week. That reverses
+// #967's recap > streak, which wrote `lastStreakNudgeDateKey` to silence the
+// evening's reminder; the budget now keeps the day to one push. Ignored three
+// Mondays running, it goes quiet (App1 Q62, lib/reminderAttention.js).
+// ≤1 recap/day via `lastRecapDateKey`. Runs inside the existing hourly sweep
+// (no second active-user pass).
 //
 // #576 reconciliation: #576's "Friday weekly check-in" is the Watch/APNs sender
 // off the same fell-behind signal; this is the FCM web/phone transport. They
@@ -3691,9 +3899,26 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
   if (!behind && !(await weeklyRecap.reviewWaits(db, uid, range.weekEnd)))
     return false;
 
+  // Q62: last Monday's review push, settled: answered if the app was
+  // opened after it that day, or the review was read. After three ignored
+  // running it goes quiet instead.
+  const settle = await settleReminderBeforeSend(uid, "review", now, timezone);
+  if (!settle) return false;
+
+  // Q60: the day's one push, unless the evening reminder may still go.
+  const claim = await claimTodaysPush(uid, "recap", now, timezone);
+  if (!claim) {
+    await recordReminderPush(uid, "review", settle, null);
+    return false;
+  }
+
   const registrations = await leaseClaimedPushRegistrations(uid);
   const tokens = registrations.map((r) => r.token);
-  if (tokens.length === 0) return false;
+  if (tokens.length === 0) {
+    await releaseTodaysPush(uid, claim);
+    await recordReminderPush(uid, "review", settle, null);
+    return false;
+  }
 
   const message = behind
     ? buildFellBehindRecapMessage()
@@ -3703,12 +3928,23 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     batch = await admin
       .messaging()
       .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
+  } catch (error) {
+    await releaseTodaysPush(uid, claim);
+    throw error;
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
 
   // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
   await pruneDeadPushTokens(uid, registrations, batch);
+  const delivered = batch.successCount > 0;
+  if (!delivered) await releaseTodaysPush(uid, claim);
+  await recordReminderPush(
+    uid,
+    "review",
+    settle,
+    delivered ? admin.firestore.Timestamp.fromDate(now) : null
+  );
 
   // Behind → ensure the deep-link target exists. Write the fell-behind flag
   // (same shape weeklyFellBehindCheck writes) if it isn't already present for
@@ -3740,16 +3976,13 @@ async function maybeSendWeeklyRecap(uid, now, profile) {
     );
   }
 
-  // ≤1/day markers: record the recap AND suppress the evening streak nudge
-  // (recap > streak) by writing the same marker #966 reads.
+  // ≤1 recap/day. The evening's streak reminder is held back by the day's
+  // one push, not by a streak marker (App1 Q60).
   await db
     .doc(`users/${uid}/settings/pushState`)
-    .set(
-      { lastRecapDateKey: todayKey, lastStreakNudgeDateKey: todayKey },
-      { merge: true }
-    );
+    .set({ lastRecapDateKey: todayKey }, { merge: true });
 
-  return batch.successCount > 0;
+  return delivered;
 }
 
 exports.hourlyStreakNudge = functions
@@ -3788,8 +4021,8 @@ exports.hourlyStreakNudge = functions
             }
             // Three independent send-decisions per user in one sweep (avoids a
             // second full active-user pass — cost). A throw in one must not
-            // skip the others. Recap is evaluated first so its per-day marker
-            // (recap > streak) suppresses the evening streak nudge.
+            // skip the others. All three share the day's one push (App1 Q60,
+            // lib/pushBudget.js), whose order decides between them.
             try {
               if (await maybeSendWeeklyRecap(uid, now, profile)) recapSent++;
             } catch (e) {
@@ -3854,6 +4087,12 @@ function challengeNotificationOptions(uid, now, profile) {
     releaseRegistrations: releaseClaimedPushSendLeases,
     send: (message) => admin.messaging().sendEachForMulticast(message),
     prune: pruneDeadPushTokens,
+    // App1 Q60: the day's one push, after the review and the evening
+    // reminder in its order (lib/pushBudget.js).
+    budget: {
+      claim: (kind, timezone) => claimTodaysPush(uid, kind, now, timezone),
+      release: (claimId) => releaseTodaysPush(uid, claimId),
+    },
   };
 }
 

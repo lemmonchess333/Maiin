@@ -13,6 +13,7 @@ import {
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { retireReviewReminder } from "@/hooks/useReviewReminder";
+import { markReminderAnswered } from "@/lib/reminderAnswers";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
@@ -411,8 +412,11 @@ export default function WeeklyReview() {
     if (loading || failed || viewedRef.current) return;
     viewedRef.current = true;
     dismiss();
-    // Monday's notification for this week has nothing left to say.
+    // Monday's notification for this week has nothing left to say, and a
+    // review read answers Monday's push (App1 Q62).
     if (review) void retireReviewReminder(weekKey).catch(() => {});
+    if (review && user)
+      void markReminderAnswered(user.uid, "review").catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
   }, [loading, failed]);
 
