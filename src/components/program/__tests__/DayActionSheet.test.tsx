@@ -519,6 +519,61 @@ describe("DayActionSheet — planned run", () => {
     expect(why).not.toHaveTextContent(/race week/);
   });
 
+  it("Run24 (3): says why a run is in a plan with no race date's week", () => {
+    const profile = {
+      ...makeProfile([{ day: todayDow(), type: "run" }]),
+      runMode: "freeform",
+    } as UserProfile;
+    const programState = {
+      ...makeProgramState([
+        makeRunDay({
+          id: "runday_long",
+          dayIndex: todayDow(),
+          date: todayKey(),
+          weekKey: todayWeekKey(),
+          templateId: "long_8k",
+          type: "long",
+        }),
+      ]),
+      runPlan: {
+        mode: "rolling",
+        rollingGoal: "keep_fit",
+        currentWeek: 7,
+        rollingWeekKey: todayWeekKey(),
+      },
+    } as ProgramState;
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        rollingContexts={
+          new Map([
+            [
+              todayWeekKey(),
+              {
+                goal: "keep_fit",
+                unit: "km",
+                opening: false,
+                lighter: true,
+                longRun: { topKm: 10, holding: true },
+              },
+            ],
+          ])
+        }
+        {...commonCallbacks()}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it’s in your week.*A lighter week, one in every four: the long run steps back/
+    );
+  });
+
   it("Run21 (2): gives the run one feel line, outside 'Why this run'", () => {
     const { profile, programState, callbacks } = setup();
     render(
