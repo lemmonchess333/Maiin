@@ -79,8 +79,13 @@ interface ClimbRung {
 function longRunRungs(easyPaceSPerKm?: number | null): ClimbRung[] {
   const rungs = RUN_TEMPLATES.filter(
     (t) =>
-      (t.type === "long" && !RETIRED_RUN_TEMPLATE_IDS.has(t.id)) ||
-      (t.type === "easy" && !t.config?.strides && !isRunWalkTemplateId(t.id))
+      (t.type === "long" &&
+        !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
+        !t.config?.racePaceBlocks) ||
+      (t.type === "easy" &&
+        !t.config?.strides &&
+        !t.config?.pickUps &&
+        !isRunWalkTemplateId(t.id))
   )
     .map((t): ClimbRung => ({
       minutes: plannedRunMinutes(t, easyPaceSPerKm),
@@ -331,9 +336,11 @@ export function fitWeekToRunningBaseline(
         Boolean(t.config?.timeTrial) === Boolean(original.config?.timeTrial) &&
         minutes(t) <= ceiling &&
         (onlyEasy
-          ? t.type === "easy" && !t.config?.strides
+          ? t.type === "easy" && !t.config?.strides && !t.config?.pickUps
           : shorteningRank(original, t) !== null &&
-            Boolean(t.config?.strides) === Boolean(original.config?.strides))
+            Boolean(t.config?.strides) === Boolean(original.config?.strides) &&
+            // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+            Boolean(t.config?.pickUps) === Boolean(original.config?.pickUps))
     ).sort(
       (a, b) =>
         // Run24 (5): the same kind of work, its own ladder first.
@@ -349,6 +356,7 @@ export function fitWeekToRunningBaseline(
         (t) =>
           t.type === "easy" &&
           !t.config?.strides &&
+          !t.config?.pickUps &&
           !isRunWalkTemplateId(t.id) &&
           minutes(t) <= ceiling
       ).sort((a, b) => minutes(b) - minutes(a))[0]
@@ -361,7 +369,8 @@ export function fitWeekToRunningBaseline(
     // easy, and climbs as a long run.
     const faster =
       (original.type !== "easy" && original.type !== "long") ||
-      Boolean(original.config?.strides);
+      Boolean(original.config?.strides) ||
+      Boolean(original.config?.pickUps);
     const ceiling = Math.min(minutes(original), climb.longestMinutes);
     const replacement = choices(original, ceiling, easyOnly && faster);
     return replacement
