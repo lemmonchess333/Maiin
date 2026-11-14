@@ -87,6 +87,8 @@ export function fitRunToTimeLimit(
       Boolean(template.config.timeTrial) ===
         Boolean(original.config.timeTrial) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
+      // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+      Boolean(template.config?.pickUps) === Boolean(original.config?.pickUps) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <
         plannedRunMinutes(original, easyPaceSPerKm)

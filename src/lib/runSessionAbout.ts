@@ -310,6 +310,27 @@ export function runSessionAbout(
       alsoCalled: "A threshold run.",
     };
   }
+  if (template.type === "long" && config.racePaceBlocks) {
+    // Run24 (5): a long run with blocks at race pace, paced where the plan
+    // has a goal time or a marathon band, else by effort.
+    const { race, reps, blockKm, floatKm } = config.racePaceBlocks;
+    const raceName = race === "marathon" ? "marathon" : "half marathon";
+    const paced = racePace?.kind === "blocks";
+    const at =
+      racePace?.kind === "blocks"
+        ? racePace.source === "band"
+          ? "marathon pace"
+          : "your goal race pace"
+        : `${raceName} effort`;
+    return {
+      what: `Your long run, with ${NUMBER_WORDS[reps] ?? reps} blocks of ${blockKm} km at ${at} in its second half, ${floatKm} km easy between, then easy to the finish.`,
+      feel: paced
+        ? "Easy until the blocks, then even and controlled at race pace: the rhythm you’ll hold on race day."
+        : `Easy until the blocks, then even and controlled at ${raceName} effort: comfortably hard, a few words at a time.`,
+      ifWrong:
+        "Race pace won’t come today? Run the blocks easy. Finishing the distance matters more than the pace.",
+    };
+  }
   if (template.type === "long" && racePace?.kind === "finish") {
     return {
       what:
@@ -328,6 +349,16 @@ export function runSessionAbout(
       ifWrong:
         "Struggling to talk? Slow down, or walk for a minute. Finishing comfortably matters more than the pace.",
       alsoCalled: ZONE_2,
+    };
+  }
+  if (config.pickUps) {
+    // Run24 (8): a new runner's pick-ups by time, by feel.
+    const { reps, workSeconds, easySeconds } = config.pickUps;
+    return {
+      what: `An easy run with ${reps} pick-ups of ${spanOf(workSeconds).noun}, a little quicker, with ${spanOf(easySeconds).noun} of easy running between.`,
+      feel: "Easy, then comfortably hard on the pick-ups, by feel and not the watch. Smooth, never a sprint.",
+      ifWrong:
+        "Legs heavy, or out of breath? Leave the pick-ups out. The easy run is the session.",
     };
   }
   if (config.strides) {

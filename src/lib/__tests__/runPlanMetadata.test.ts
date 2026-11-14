@@ -1571,7 +1571,11 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
   });
 
   it("agrees with the launch for every long run in every week", () => {
-    const longs = RUN_TEMPLATES.filter((t) => t.type === "long");
+    // The plain long runs: one with race-pace blocks (Run24 (5)) never
+    // finishes at race pace, and has its own case below.
+    const longs = RUN_TEMPLATES.filter(
+      (t) => t.type === "long" && !t.config.racePaceBlocks
+    );
     for (const t of longs) {
       for (let week = 0; week < 10; week++) {
         const block = launch(t.id, week, runner());
@@ -1586,6 +1590,40 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
             meters: finish.kind === "finish" ? finish.blockKm * 1000 : 0,
           });
         }
+      }
+    }
+  });
+
+  it("plays a long run's race-pace blocks at the goal pace, its own race's only (Run24 (5))", () => {
+    const blocksOf = (id: string, week: number) => {
+      const { prefill } = computePlanMetadata({
+        displayUnit: "km",
+        profileRunMode: "race_prep",
+        todayDayIndex: MONDAY,
+        runPlan: halfPlan(week),
+        runDays: [makeRunDay(MONDAY, id, "long")],
+        urlTemplateId: null,
+        urlType: null,
+        raceTarget: raceTargetFromProfile(runner()),
+      });
+      return (prefill.segments ?? []).filter((s) => s.type === "moderate");
+    };
+    for (const t of RUN_TEMPLATES.filter((x) => x.config.racePaceBlocks)) {
+      for (let week = 0; week < 10; week++) {
+        const work = racePaceWorkFor(t, runner(), halfPlan(week));
+        const blocks = blocksOf(t.id, week);
+        const own = t.config.racePaceBlocks!.race === "half";
+        // The half's at its goal pace in every week; never a finish.
+        expect(work?.kind ?? null, `${t.id}, week ${week + 1}`).toBe(
+          own ? "blocks" : null
+        );
+        expect(blocks).toHaveLength(t.config.racePaceBlocks!.reps);
+        for (const block of blocks) {
+          expect(block.pacePinned ?? false).toBe(own);
+          if (own) expect(block.paceTarget).toBeCloseTo(300.04, 1);
+        }
+        // A marathon's twin on a half's plan is run by effort.
+        if (!own) expect(blocks[0].eyebrow).toMatch(/^MARATHON EFFORT/);
       }
     }
   });

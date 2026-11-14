@@ -43,6 +43,8 @@ import {
 } from "../runScheduler";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import {
+  RACE_PACE_LONG_LADDERS,
+  racePaceLongTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
 } from "@/lib/workoutTemplates";
@@ -151,16 +153,42 @@ describe("LONG_RUN_TIERS ↔ RUN_TEMPLATES", () => {
     // dead data as the `peakLongKm: 32` this module was written to fix.
     // Run24 (6): `long_15k` and `long_25k` stay in the registry so a plan
     // that holds them still reads; the 2 km ladder climbs past them.
+    // Run24 (5): a long run with race-pace blocks is a plain rung's twin,
+    // held in place of it in a later build week; each twin's rung is one
+    // the plans reach, and every twin a plan holds is one of the ladders'.
     const retired = RETIRED_RUN_TEMPLATE_IDS;
+    const isTwin = (id: string) =>
+      Boolean(RUN_TEMPLATES.find((t) => t.id === id)?.config.racePaceBlocks);
     const reachable = new Set(
       [...LONG_MIN_BY_ID.entries()]
         .filter(
           ([id, min]) =>
-            min <= MARATHON_LONG_RUN_MAX_MINUTES && !retired.has(id)
+            min <= MARATHON_LONG_RUN_MAX_MINUTES &&
+            !retired.has(id) &&
+            !isTwin(id)
         )
         .map(([id]) => id)
     );
-    expect(emittedLongIds()).toEqual(reachable);
+    const emitted = emittedLongIds();
+    expect(new Set([...emitted].filter((id) => !isTwin(id)))).toEqual(
+      reachable
+    );
+    const twins = new Set([
+      ...RACE_PACE_LONG_LADDERS.marathon,
+      ...RACE_PACE_LONG_LADDERS.half,
+    ]);
+    for (const id of emitted) if (isTwin(id)) expect(twins).toContain(id);
+    for (const twin of twins) {
+      const km = LONG_KM_BY_ID.get(twin)!;
+      const plain = [...reachable].find((id) => LONG_KM_BY_ID.get(id) === km);
+      expect(plain, twin).toBeDefined();
+      expect(
+        racePaceLongTemplateId(
+          plain!,
+          RUN_TEMPLATES.find((t) => t.id === twin)!.config.racePaceBlocks!.race
+        )
+      ).toBe(twin);
+    }
   });
 
   it("a long run past 150 minutes is the marathon's alone (Run24 (1))", () => {
