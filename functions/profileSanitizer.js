@@ -54,6 +54,9 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "onboardingPlatform",
   "onboardingSport",
   "activationBillingFirsts",
+  // App1 Q17: the first session and week-4 return, stamped empty by
+  // completeOnboarding and kept by the session triggers.
+  "launchMilestones",
 ]);
 
 /**

@@ -89,6 +89,8 @@ describe("completeOnboarding activation journey", () => {
     expect(first.onboardingPlatform).toBe("ios");
     expect(first.onboardingSport).toBe("runner");
     expect(first.onboardingCompletedAt).toMatch(/^SERVER_TS_/);
+    // App1 Q17: this account's launch numbers are kept from here.
+    expect(first.launchMilestones).toEqual({});
 
     const retry = request();
     retry.profileData.athleteType = "Lifter";
@@ -102,6 +104,16 @@ describe("completeOnboarding activation journey", () => {
     expect(db.data.get(path).activationJourneyVersion).toBe(2);
     expect(db.data.get(path).onboardingPlatform).toBe("ios");
     expect(db.data.get(path).onboardingSport).toBe("runner");
+  });
+
+  it("never resets an account's launch milestones on a retry", async () => {
+    await completeOnboarding.run(request(2, "ios"), actor);
+    const kept = {
+      firstSession: { atMs: 1, kind: "run", daysSinceSetup: 0 },
+    };
+    db.data.set(path, { ...db.data.get(path), launchMilestones: kept });
+    await completeOnboarding.run(request(2, "ios"), actor);
+    expect(db.data.get(path).launchMilestones).toEqual(kept);
   });
 
   it("does not enroll a completed legacy profile on a v2 retry", async () => {

@@ -438,6 +438,25 @@ function AppRoutes() {
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
+  /* App1 Q17: the launch numbers the server keeps (the first session, the
+     week-4 return, the first trial and payment) are sent once per account
+     by whichever of its devices is open (lib/launchEvents). Loaded once
+     setup is finished, with Firestore, which Login never reads. */
+  const setUp = !!profile?.onboardingComplete;
+  useEffect(() => {
+    if (!uid || !setUp) return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import("@/lib/launchEvents")
+      .then(({ startLaunchEvents }) => {
+        if (!cancelled) stop = startLaunchEvents(uid);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [uid, setUp]);
 
   useEffect(() => {
     if (!uid) return;

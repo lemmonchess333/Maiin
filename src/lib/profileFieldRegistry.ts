@@ -164,6 +164,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     undeclared: "activity timestamp written by the Firestore triggers",
   },
   { field: "lastLogDate", sanitized: true },
+  // App1 Q17: an account's first session and week-4 return, kept by the
+  // session triggers (functions/lib/launchMilestones.js). A client that
+  // could write it could send its launch numbers again.
+  { field: "launchMilestones", sanitized: false, serverOnly: true },
   // Soc15 call 3: in the weekly leagues or not. Written only by the
   // setLeagueSharing callable, which keeps the membership
   // (leagueMembers/{uid}) in step with the answer.
