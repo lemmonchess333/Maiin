@@ -4904,7 +4904,7 @@ Affects: which sessions a race plan's base, build and taper weeks hold (`runSche
 
 Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
 
-- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
+- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, a progression run, 8×200 m, a fartlek, short hills or a time trial, not easy runs only (Run24 (5), 2026-11-14); the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
 - [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
 - [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
 
@@ -4919,6 +4919,15 @@ Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picke
 - [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
 - [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
 - [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
+## The session library in plans with no race date (Run24 (5), 2026-11-14)
+
+Affects: the weeks of a plan with no race date and of the rolling base before a race far away (`rollingRun`, `freeFamilies` in `runScheduler`, `ROLLING_SPECS` in `rollingPlan`), the retired structured week (`scheduleStructuredWeekV2`), and Build to 5K's line in the goal picker ("with light sessions and a short tempo"). Unit tests (`rollingSessions.test.ts`) and the simulator's `build-10k-no-date`, `year-out-marathon` and `sick-six-weeks` traces drive it; no phone has shown it.
+
+- [ ] **Build to 5K.** Choose Plan, no race, Build to 5K, 4 runs a week. Passing: week 1 shows "Fartlek 30", week 2 "Short hills 6×30s" and week 3 "Fartlek 30", each beside an easy run with strides, an easy run and the long run; week 4 is the lighter week with strides only; week 5 holds "20 Min Tempo" and week 9 "Progression 40". The goal picker's line reads "Up to a long run of 8 km, with light sessions and a short tempo."
+- [ ] **Get faster at 5K.** With a confirmed benchmark, choose Get faster at 5K on 4 runs. Passing: week 2 shows "4×1K Intervals", week 5 "8×200m Speed" and week 6 "5×800m at 5K pace"; Start on the 200s plays eight quick repeats at a pace faster than the 4×1K's, with a full recovery between.
+- [ ] **No benchmark.** The same goal with no benchmark. Passing: the fartlek, the hills and the 200s speak in effort words on the run screen, never a pace.
+- [ ] **A new runner.** Set up as new to running with Plan, no race, Build to 10K. Passing: after the run-walk weeks no fartlek, hills, tempo or intervals appear until a run of 40 minutes is logged; from the week after it the sessions come, the first tempo "20 Min Tempo" and the first intervals "4×1K Intervals".
 
 ## Coming back after a break is one check for both sports (Q35, 2026-11-13)
 
