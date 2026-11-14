@@ -639,6 +639,7 @@ export default function ProgrammeRunSection({
         raceGoal,
         currentWeek: programState?.runPlan?.currentWeek,
         totalWeeks: programState?.runPlan?.totalWeeks,
+        shortBase: programState?.runPlan?.shortBase,
         compressed: raceCompressed,
         belowFloor: raceBelowFloor,
         todayKey: todayKeyDerivation,
@@ -647,6 +648,7 @@ export default function ProgrammeRunSection({
       raceGoal,
       programState?.runPlan?.currentWeek,
       programState?.runPlan?.totalWeeks,
+      programState?.runPlan?.shortBase,
       raceCompressed,
       raceBelowFloor,
       todayKeyDerivation,
@@ -928,6 +930,7 @@ export default function ProgrammeRunSection({
           templateId: selectedTemplate.id,
           currentWeek: programState?.runPlan?.currentWeek,
           totalWeeks: programState?.runPlan?.totalWeeks,
+          shortBase: programState?.runPlan?.shortBase,
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,

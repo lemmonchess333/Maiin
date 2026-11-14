@@ -43,9 +43,11 @@ import { advanceWeek } from "./programEngine";
 import type {
   ManualCompletion,
   ProgramState,
+  RaceBlockInputs,
   RunPlan,
   ScheduledRunDay,
 } from "./programTypes";
+import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import { raceWeekFromToday, type RaceWeekStart } from "./racePlanContinuation";
 import { clampPlanWeek } from "./runPlanTiming";
 import {
@@ -83,6 +85,9 @@ function makeRunPlanRecord(
     compressed: boolean;
     belowFloor: boolean;
     leadInWeek: string | null;
+    blockInputs?: RaceBlockInputs;
+    weeks: readonly (readonly ScheduledRunDay[])[];
+    shortBase: boolean;
   },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -100,8 +105,15 @@ function makeRunPlanRecord(
     // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
     // finish-safely risk instead of presenting a tight plan as a normal one.
     belowFloor: v2.belowFloor,
+    // Run24 (11): what the plan builds to, for the weekly race check.
+    peakLongRunKm: peakPlannedLongRunKm(v2.weeks),
     // While a plan made partway through a week is in its lead-in.
     ...(v2.leadInWeek ? { leadInWeek: v2.leadInWeek } : {}),
+    // Run24 (1), (2), (8): what the block is sized from, for its next
+    // rebuild to read.
+    ...(v2.blockInputs ? { blockInputs: v2.blockInputs } : {}),
+    // Run24 (2): the block's shorter base, kept for every rebuild of it.
+    ...(v2.shortBase ? { shortBase: true } : {}),
   };
 }
 
@@ -177,6 +189,16 @@ export function regenerateRacePlan({
      *  `totalWeeks`, or a rebuild in that week reads the plan as a week
      *  shorter than the time left and starts it again from this week. */
     leadInWeek?: string;
+    /** Run24 (1), (2), (8): the block's inputs (`RunPlan.blockInputs`),
+     *  carried with `totalWeeks`. A key every carry names, set or not: a
+     *  rebuild that left it out would size the block from whichever runs it
+     *  was given. */
+    blockInputs: RaceBlockInputs | undefined;
+    /** Run24 (2): the plan's shorter base (`RunPlan.shortBase`), carried
+     *  with `totalWeeks`. A key every carry names, set or not: a rebuild
+     *  that left it out would read the block's phases with the longer base
+     *  and move its build a few weeks later. */
+    shortBase: boolean | undefined;
     completedRaces?: string[];
     /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
      *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
@@ -236,6 +258,8 @@ export function regenerateRacePlan({
       // position 0.
       planTotalWeeks: carry?.totalWeeks,
       leadInWeek: carry?.leadInWeek,
+      blockInputs: carry?.blockInputs,
+      shortBase: carry?.shortBase,
       recentRuns,
       recentRunsAsOf,
     });
@@ -476,6 +500,8 @@ export function nextRunWeek(
             ? 0
             : (runPlan?.currentWeek ?? 0) + 1,
         totalWeeks: runPlan?.totalWeeks,
+        blockInputs: runPlan?.blockInputs,
+        shortBase: runPlan?.shortBase,
         completedRaces: runPlan?.completedRaces,
       },
     });
