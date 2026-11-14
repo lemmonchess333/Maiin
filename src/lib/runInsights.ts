@@ -9,15 +9,16 @@
  * questions a runner has: is my easy pace coming down, is my tempo where
  * it was?
  *
- * The fastest kilometres come from the splits a GPS run saves, so they
- * are real stretches of running: the fastest 5 km is five whole
- * kilometres in a row, inside one run. They are cut on the kilometre
- * marks, where the finish screen's "Best efforts" search the live track
- * from any point, so they can read a few seconds slower than that, never
- * faster. A run without splits (treadmill, manual, older runs) cannot set
- * one.
+ * The fastest kilometres are each run's own time over the distance
+ * (`runEffortSeconds`): the best effort it saved at the finish, else, for
+ * a run saved before those were kept, its fastest whole kilometres in a
+ * row from its splits. So they are real stretches of running inside one
+ * run, and the same figures the finish screen celebrates and Bests lists
+ * (App1 Q15). A treadmill or manual run times none.
  */
 import { isPaceEligible, isVolumeEligible } from "./runStatsEligibility";
+import { runEffortSeconds, type EffortRun } from "./runEfforts";
+import { FASTEST_EFFORT_METERS } from "./postMoments";
 import { runEvidenceDate } from "./runExecutionEvidence";
 import { T2_DELTA_MIN_POINTS } from "./dataConfidence";
 import { usualBinAmount, type SummaryBin } from "./periodSummary";
@@ -56,7 +57,8 @@ export interface InsightRun {
   date?: string;
   isInvalid?: boolean;
   savedAnyway?: boolean;
-  kmSplitSeconds?: number[];
+  kmSplitSeconds?: EffortRun["kmSplitSeconds"];
+  bestEfforts?: EffortRun["bestEfforts"];
 }
 
 export function runKindOf(activityType: string): RunKind | "intervals" | null {
@@ -156,36 +158,9 @@ export function paceByRunKind(
   };
 }
 
-/** The distances best efforts are kept for, in kilometres. */
-export const BEST_EFFORT_KM = [1, 5, 10] as const;
-
-/** A kilometre under 2:00 or over 30:00 is the GPS, not the runner. */
-export const SPLIT_MIN_SECONDS = 120;
-export const SPLIT_MAX_SECONDS = 1800;
-
-/** The fastest `km` whole kilometres in a row in one run's splits, in
- *  seconds, or null when the run is shorter or a split in every stretch
- *  is not believable. */
-export function fastestStretch(
-  splits: readonly number[],
-  km: number
-): number | null {
-  let best: number | null = null;
-  for (let start = 0; start + km <= splits.length; start++) {
-    let seconds = 0;
-    let believable = true;
-    for (let i = start; i < start + km; i++) {
-      const split = splits[i];
-      if (!(split >= SPLIT_MIN_SECONDS && split <= SPLIT_MAX_SECONDS)) {
-        believable = false;
-        break;
-      }
-      seconds += split;
-    }
-    if (believable && (best === null || seconds < best)) best = seconds;
-  }
-  return best === null ? null : Math.round(best);
-}
+/** The distances best efforts are kept for, in kilometres: the ones a
+ *  run's post can call the fastest yet. */
+export const BEST_EFFORT_KM = FASTEST_EFFORT_METERS.map((m) => m / 1000);
 
 export interface Effort {
   seconds: number;
@@ -203,28 +178,23 @@ export interface BestEffortRow {
 }
 
 /**
- * For each distance a split-carrying run has covered, the fastest in the
- * range and the fastest ever. A tie keeps the run that set it first, as
- * the lift records do.
+ * For each distance a run has timed, the fastest in the range and the
+ * fastest ever. A tie keeps the run that set it first, as the lift
+ * records do.
  */
 export function bestEfforts(
   runs: readonly InsightRun[],
   window: Window
 ): BestEffortRow[] {
   const eligible = runs
-    .filter(
-      (r) =>
-        isPaceEligible(r) &&
-        runEvidenceDate(r) <= window.todayKey &&
-        (r.kmSplitSeconds?.length ?? 0) > 0
-    )
+    .filter((r) => isPaceEligible(r) && runEvidenceDate(r) <= window.todayKey)
     .sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
   const rows: BestEffortRow[] = [];
   for (const km of BEST_EFFORT_KM) {
     let allTime: Effort | null = null;
     let inRange: Effort | null = null;
     for (const run of eligible) {
-      const seconds = fastestStretch(run.kmSplitSeconds ?? [], km);
+      const seconds = runEffortSeconds(run, km * 1000);
       if (seconds === null) continue;
       const effort = { seconds, runId: run.id, date: runEvidenceDate(run) };
       if (!allTime || seconds < allTime.seconds) allTime = effort;
