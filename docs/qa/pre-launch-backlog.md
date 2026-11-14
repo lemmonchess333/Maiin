@@ -181,6 +181,9 @@ paired-device run proves it.
       report an empty lookup with write access as verified absent, which
       may retry an `attempted` receipt. Passing: turn write access off,
       save a run, turn it on, Try again: the workout appears in Health.
+      Code (2026-11-14): both halves are in; with write access native
+      reports an empty lookup as a verified absence and the export writes
+      once. Kit row K18 proves it.
 - [ ] **Deleting a run whose workout was removed in Health gets stuck.**
       Native delete with write access and an empty lookup fails with
       `permissionRequired` while its local map still names the run
@@ -188,7 +191,8 @@ paired-device run proves it.
       `pending-delete` on every foreground. Fix: with write access and no
       workout found, forget the run and report it deleted. Passing: export
       a run, delete the workout in Health, delete the run in Tropos: no
-      pending update is left.
+      pending update is left. Code (2026-11-14): in, as a verified absence
+      the reconciler accepts. Kit row K19 proves it.
 - [ ] **After sign-out and sign-in, the Watch is off for runs until
       Settings is opened.** Signing out clears the native session, which
       sets the native switch off; only Settings → Apple Health
@@ -4936,21 +4940,6 @@ amounts are unchanged. Unit-tested; no phone has shown it.
 - [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
       running-only plan. Passing: no Welcome back for the weights.
 
-## A Bluetooth heart rate sensor, and easy runs on heart rate (Run24 (12), 2026-11-14)
-
-Affects: Settings › Run plan's Heart rate sensor (`HeartRateSensorSection`), the app's own CoreBluetooth plugin (`ios/App/App/HeartRateSensorPlugin.swift`, registered in `TroposBridgeViewController`), Info.plist's `NSBluetoothAlwaysUsageDescription` and `bluetooth-central` background mode, the run's heart rate stream (`heartRateSource.ts`: the sensor, and the Watch when no sensor reading is fresh), the easy cue's heart-rate path (`checkEasyHeartRate`: over the top of Zone 2 by more than 3 bpm for a minute), and the run summary's heart rate card for any run, the treadmill's too. Parser, stream, cue, store and card are unit-tested; the Swift is compiled only by CI's simulator job, and no phone or sensor has run it. Use a standard build (no Watch pilot) first, then the pilot with both.
-
-- [ ] **Pairing a strap.** Wear a chest strap (a Polar H10, Garmin HRM or Wahoo TICKR) and open Settings › Run plan › Heart rate sensor › Pair a sensor. Passing: iOS asks for Bluetooth once, with the purpose string; the strap appears by name within 30 seconds; Pair shows its name and "Connected · N bpm" with the reading moving; Forget returns to "No sensor paired". Refusing Bluetooth shows "Bluetooth is off for Tropos" with Open settings, which opens Tropos's page in Settings.
-- [ ] **An armband and a strap already in use.** Pair an optical armband (a Polar Verity Sense or Scosche) the same way; then, with the strap connected to another app, search again. Passing: both are found and read.
-- [ ] **A run with the strap.** Start an outdoor easy run with the strap paired. Passing: the HUD shows HR and its zone within a few seconds of Start; the summary shows "Time in zone · Sensor covered N% of moving time" with the zones adding up to about the moving time; the saved run's detail shows the same card.
-- [ ] **Losing and regaining it mid-run.** Mid-run, take the strap off for two minutes, then put it back; on another run, walk 30 m away from the phone and back. Passing: the HUD drops the reading within about 20 seconds and shows it again on reconnect without a tap; the run never stops; the summary's coverage falls by about the time it was off, and a run under half covered says "Partial reading" with no zones.
-- [ ] **The cue with the phone locked.** On an easy run with the strap, lock the phone and run hard enough to stay a few beats above Zone 2's top (Settings › Run plan shows it) for over a minute. Passing: the easy cue speaks with the screen locked, at most three times a stretch; a short hill does not set it off; easing back to Zone 2 for 15 seconds ends the stretch.
-- [ ] **Coverage under 50%.** Pair the strap, start a run, and take it off for more than half the run. Passing: the summary shows average and highest bpm and "Partial reading: heart rate covered N% of moving time, so time in zones isn’t shown."; nothing in the run's calories, the week's load or readiness changes with or without the strap.
-- [ ] **A treadmill run.** Start a treadmill easy run with the strap. Passing: the HUD shows heart rate, the easy cue speaks over Zone 2 as outdoors, and the summary shows the card.
-- [ ] **The Watch and a strap together (pilot build).** With Watch runs on and the strap paired, run outdoors. Passing: the HUD's heart rate follows the strap (compare with the strap's own app); take the strap off and the Watch's reading takes over within about 15 seconds; the summary names the source that covered most of the run.
-- [ ] **A reloaded web view.** Mid-run with the strap, force the web view to reload (Safari Web Inspector's reload on a development build), then finish. Passing: the summary's coverage includes the time before the reload (native kept the readings).
-- [ ] **App Review.** In the App Store submission notes, say the `bluetooth-central` background mode keeps a paired heart rate sensor's readings arriving while a run is recorded with the screen locked.
-
 ## What comes after the 30-minute goal (Run24 (3), 2026-11-14)
 
 Affects: the starter goal's Done card on Home and Train (`StarterDoneCard`) and Run plan opened from it (`?goal=build_5k`, `?goal=keep_fit`, `?goal=5k`). Component tests and the starter journey drive it; no phone has shown it, and no capture was taken.
@@ -5014,3 +5003,166 @@ Unit and page tests drive it; no phone has shown it.
       every 90 seconds, and with the strap off the eased paces apply.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
+
+## A Bluetooth heart rate sensor, and easy runs on heart rate (Run24 (12), 2026-11-14)
+
+Affects: Settings › Run plan's Heart rate sensor (`HeartRateSensorSection`), the app's own CoreBluetooth plugin (`ios/App/App/HeartRateSensorPlugin.swift`, registered in `TroposBridgeViewController`), Info.plist's `NSBluetoothAlwaysUsageDescription` and `bluetooth-central` background mode, the run's heart rate stream (`heartRateSource.ts`: the sensor, and the Watch when no sensor reading is fresh), the easy cue's heart-rate path (`checkEasyHeartRate`: over the top of Zone 2 by more than 3 bpm for a minute), and the run summary's heart rate card for any run, the treadmill's too. Parser, stream, cue, store and card are unit-tested; the Swift is compiled only by CI's simulator job, and no phone or sensor has run it. Use a standard build (no Watch pilot) first, then the pilot with both.
+
+- [ ] **Pairing a strap.** Wear a chest strap (a Polar H10, Garmin HRM or Wahoo TICKR) and open Settings › Run plan › Heart rate sensor › Pair a sensor. Passing: iOS asks for Bluetooth once, with the purpose string; the strap appears by name within 30 seconds; Pair shows its name and "Connected · N bpm" with the reading moving; Forget returns to "No sensor paired". Refusing Bluetooth shows "Bluetooth is off for Tropos" with Open settings, which opens Tropos's page in Settings.
+- [ ] **An armband and a strap already in use.** Pair an optical armband (a Polar Verity Sense or Scosche) the same way; then, with the strap connected to another app, search again. Passing: both are found and read.
+- [ ] **A run with the strap.** Start an outdoor easy run with the strap paired. Passing: the HUD shows HR and its zone within a few seconds of Start; the summary shows "Time in zone · Sensor covered N% of moving time" with the zones adding up to about the moving time; the saved run's detail shows the same card.
+- [ ] **Losing and regaining it mid-run.** Mid-run, take the strap off for two minutes, then put it back; on another run, walk 30 m away from the phone and back. Passing: the HUD drops the reading within about 20 seconds and shows it again on reconnect without a tap; the run never stops; the summary's coverage falls by about the time it was off, and a run under half covered says "Partial reading" with no zones.
+- [ ] **The cue with the phone locked.** On an easy run with the strap, lock the phone and run hard enough to stay a few beats above Zone 2's top (Settings › Run plan shows it) for over a minute. Passing: the easy cue speaks with the screen locked, at most three times a stretch; a short hill does not set it off; easing back to Zone 2 for 15 seconds ends the stretch.
+- [ ] **Coverage under 50%.** Pair the strap, start a run, and take it off for more than half the run. Passing: the summary shows average and highest bpm and "Partial reading: heart rate covered N% of moving time, so time in zones isn’t shown."; nothing in the run's calories, the week's load or readiness changes with or without the strap.
+- [ ] **A treadmill run.** Start a treadmill easy run with the strap. Passing: the HUD shows heart rate, the easy cue speaks over Zone 2 as outdoors, and the summary shows the card.
+- [ ] **The Watch and a strap together (pilot build).** With Watch runs on and the strap paired, run outdoors. Passing: the HUD's heart rate follows the strap (compare with the strap's own app); take the strap off and the Watch's reading takes over within about 15 seconds; the summary names the source that covered most of the run.
+- [ ] **A reloaded web view.** Mid-run with the strap, force the web view to reload (Safari Web Inspector's reload on a development build), then finish. Passing: the summary's coverage includes the time before the reload (native kept the readings).
+- [ ] **App Review.** In the App Store submission notes, say the `bluetooth-central` background mode keeps a paired heart rate sensor's readings arriving while a run is recorded with the screen locked.
+
+## Apple Watch companion: device acceptance kit (2026-11-14)
+
+The last step before `WATCH_RUN_RELEASE_ENABLED` and
+`VITE_CONNECTED_TRAINING_ENABLED` are turned on for a standard build. Every
+first-release item in `docs/proposals/connected-training.md` is built and
+unit-tested (its "First release: built and tested" table), and both native
+targets compile in CI's `ios-native-compile` job, but no device has run
+them: everything below is what only a paired iPhone and Watch can show. It
+covers the proposal's native feasibility gate (G1 to G6) and its acceptance
+matrix. Run it in one sitting with a pilot build ("Connected training pilot"
+in What to Test, docs/ios-release.md "Pilot builds on TestFlight") on a test
+account, Save workouts to Apple Health off until the export block. Plan
+about an hour: two short runs outdoors, then checks standing still. When
+every row passes, ask for the flip; when one fails, write what you saw on
+the proposal and keep the gates off (the proposal's "If this gate fails").
+
+Affects: `ios/App/TroposWatch/` (the Watch app), `ios/App/App/WatchRunCoordinator.swift`,
+`WatchRunPlugin.swift` and `HealthWorkoutStore.swift` (the iPhone side),
+`src/lib/watchRunBridge.ts`, `watchRunStep.ts`, `watchRunSyncStatus.ts`,
+`healthWorkoutExport.ts`, `src/pages/Run.tsx`, `RunSummary.tsx`, Settings →
+Apple Health.
+
+**Record first** (write the answers into the row when you tick it):
+
+- [ ] **The devices.** iPhone model and iOS version; Watch model and watchOS
+      version (the Watch app's minimum is watchOS 9, the iPhone's iOS 15.4);
+      the TestFlight build number and the commit in its What to Test note.
+- [ ] **The setup.** Settings → Apple Health on the iPhone: Use Watch for
+      runs on, Save workouts to Apple Health off. The Watch app installed
+      from the iPhone's Watch app. Today has a planned interval or tempo
+      session, or build one in the run setup's interval options with short
+      steps (a 1 min warm-up, 3 × 200 m with 60 s recoveries, a 1 min
+      cool-down) so the steps come round quickly.
+
+**Run A: a structured session, phone in a pocket, locked** (G1, G2, G3):
+
+- [ ] **K1. The Watch asks once, with the right words.** Start the session
+      on the iPhone, then open Tropos on the Watch (this release does not
+      open it for you). Passing: it shows the run, and its Health prompt
+      names heart rate (read) and
+      workouts (save) with the Watch's texts: "Tropos reads heart rate
+      during a run you start on your iPhone…" and "Apple Watch asks this of
+      any app that runs a workout session… The Watch saves no workout to
+      Health." After Allow, heart rate shows within 30 s.
+- [ ] **K2. The step on the wrist.** Passing: the Watch shows the step the
+      phone shows: "EASY" over "Warm-up" with its countdown (within a second
+      of the phone's), "Next:" naming the first rep. At the warm-up's end
+      the Watch buzzes once (Apple's start haptic) and shows the rep's
+      heading ("… · REP 1/3"), its distance or time and pace target, metres
+      or seconds left, and "Next: Recover"; the recovery buzzes the stop
+      haptic; the last step says "Last step"; after it "All steps complete"
+      with the success haptic. No buzz when the run starts. Note any step
+      whose words differ from the phone's.
+- [ ] **K3. With the phone locked.** Lock the phone and pocket it for at
+      least two step changes. Passing: the Watch's time, distance and step
+      keep moving, each step change still buzzes, and "Last update" never
+      shows. Write down how often the figures moved (every second, every few
+      seconds, or stopped). If they stop while the phone is locked, the web
+      view is not running and the wrist controls cannot be promised (G2):
+      stop here and record it.
+- [ ] **K4. Pause and Resume from the wrist, phone locked.** Tap Pause on
+      the Watch. Passing: within 8 s the Watch shows Paused (never "No phone
+      response"), and on unlocking, the phone is paused at the same time.
+      Resume from the wrist the same way. Then tap Pause twice quickly:
+      one pause, the second tap refused or greyed.
+- [ ] **K5. Heart rate with the wrist down.** Run two minutes with the wrist
+      lowered. Passing: on the finish screen the heart rate card shows Time
+      in zone (the Watch covered at least half the moving time), with no
+      gap at the step changes longer than a few seconds (each haptic pauses
+      HealthKit's collection while it plays).
+- [ ] **K6. Lose the phone, find it again.** Mid-run, turn off Bluetooth
+      and Wi-Fi in the iPhone's Settings app for 30 s (Control Center keeps
+      the Watch connected), or leave the phone behind and walk out of range.
+      Passing: the Watch says "Phone disconnected", Pause and End grey out,
+      the phone keeps recording; once connected again the Watch says
+      "Reconnecting to iPhone…" and then shows the phone's state, and
+      nothing tapped while disconnected happens afterwards.
+- [ ] **K7. End from the wrist, then lose the app.** With the phone locked,
+      tap End run and confirm. Passing: the Watch says "Review and save on
+      iPhone". Force-quit Tropos on the iPhone and open it again: Home
+      offers the run waiting to be saved, and it opens on that run's finish
+      screen. Save. Passing: the Watch shows "Saved on
+      iPhone · syncing", then "Synced to Tropos"; History holds one run, and
+      the planned session is done once.
+- [ ] **K8. End twice.** On the next run, tap End and confirm twice before
+      the Watch answers. Passing: one finish screen, one saved run.
+
+**Run B: a free run, then the edge cases** (acceptance matrix):
+
+- [ ] **K9. A free run.** Start a free run (not the planned one). Passing:
+      the Watch mirrors it with no step block; the save gives only the plan
+      credit the claim map would without a Watch.
+- [ ] **K10. Saved offline.** Finish, turn on airplane mode on the iPhone,
+      Save (privacy zones confirmed earlier in the session), force-quit,
+      reopen, turn airplane mode off. Passing: the Watch shows "Saved on
+      iPhone · syncing" until the run reaches the server, then "Synced to
+      Tropos"; one run in History.
+- [ ] **K11. The Watch app quit mid-run.** During a run, force-quit the
+      Watch app and open it again. Passing: it shows the run and the current
+      step with no buzz, and heart rate comes back.
+- [ ] **K12. No Watch.** With the Watch off, start and save a short run.
+      Passing: the run works as before; no heart rate card and no 0 bpm;
+      Settings → Apple Health reads Connection lost or Watch app not
+      installed, never a permission verdict.
+- [ ] **K13. Heart rate not allowed.** In the Health app, turn off Heart
+      Rate for Tropos and run briefly. Passing: the Watch shows "—" for
+      heart rate, never 0; Settings says "No heart rate yet?" with the way
+      to Health's Data Access, not "Denied".
+- [ ] **K14. Another account.** Sign out on the iPhone. Passing: the Watch
+      shows "Start a run on your iPhone". Sign in as another account and
+      start a run: nothing of the first account's run, heart rate or step
+      shows on the Watch.
+
+**Apple Health** (G4; the export block on a test account):
+
+- [ ] **K15. Export off writes nothing.** After Runs A and B, open Health →
+      Browse → Activity → Workouts. Passing: no Tropos workout and no
+      workout from the Watch app; the Activity rings count the runs once,
+      from the Watch's own movement.
+- [ ] **K16. Export on writes one.** Turn on Save workouts to Apple Health,
+      run and save. Passing: exactly one Tropos workout, its start and end
+      the run's recording, its duration the moving time (not the GPS wait
+      or pauses), no route; the Move ring counts it once.
+- [ ] **K17. Reinstall.** Delete the app, reinstall, sign in. Passing: no
+      second workout for the same run, now or after the next foreground.
+- [ ] **K18. Write access off, then on.** Turn off workout writing for
+      Tropos in Health, save a run: Settings shows a pending update. Turn it
+      on and tap Try again. Passing: the workout appears once, and the
+      pending update goes (the verified-absence fix, `HealthWorkoutStore`).
+- [ ] **K19. Removed in Health, then deleted in Tropos.** Delete an
+      exported run's workout in Health, then the run in Tropos. Passing: no
+      pending update is left in Settings after the next foreground.
+- [ ] **K20. Deleted on another device.** Delete an exported run on the web
+      app. Passing: on the iPhone's next foreground the workout leaves
+      Health and Settings shows nothing pending.
+- [ ] **K21. A time zone change.** Save a run after moving the iPhone to
+      another time zone (Settings → General → Date & Time). Passing: the run
+      stays on the day it started; the Health workout keeps its actual
+      start and end.
+
+**Packaging, from the run that built the pilot** (G6):
+
+- [ ] **K22. Both apps signed.** The pilot run's logs show the Watch app
+      signed with its own App Store profile (`com.tropos.app.watchkitapp`),
+      HealthKit in both, and the archive verified with
+      `--expected-connected-training YES`, including the Watch app's audio
+      background mode and its two Health texts.

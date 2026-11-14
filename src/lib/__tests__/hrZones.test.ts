@@ -10,6 +10,8 @@ import {
   watchReadingSetAside,
   easyHeartRateCeiling,
   type HeartRateSample,
+  heartRateCoverageBand,
+  ZONE_COVERAGE_MIN,
 } from "../hrZones";
 
 describe("zoneShortLabel", () => {
@@ -306,5 +308,17 @@ describe("easyHeartRateCeiling — the top of Zone 2", () => {
   it("is 0 when the max is unknown", () => {
     expect(easyHeartRateCeiling(0)).toBe(0);
     expect(easyHeartRateCeiling(Number.NaN)).toBe(0);
+  });
+});
+
+describe("heartRateCoverageBand — how much of a Watch run was measured", () => {
+  it("is none, partial below the zone threshold, or full", () => {
+    expect(heartRateCoverageBand(null)).toBe("none");
+    expect(heartRateCoverageBand({ coverage: 0 })).toBe("none");
+    expect(heartRateCoverageBand({ coverage: Number.NaN })).toBe("none");
+    expect(heartRateCoverageBand({ coverage: 0.49 })).toBe("partial");
+    // The summary card shows time in zone from exactly this share.
+    expect(heartRateCoverageBand({ coverage: ZONE_COVERAGE_MIN })).toBe("full");
+    expect(heartRateCoverageBand({ coverage: 1 })).toBe("full");
   });
 });

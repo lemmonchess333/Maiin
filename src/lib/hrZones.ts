@@ -189,6 +189,24 @@ export interface HeartRateSummary {
 /** A sample cannot stand in for a long gap or a disconnected source. */
 export const MAX_HEART_RATE_SAMPLE_AGE_MS = 15_000;
 
+/** The share of moving time a summary must cover before it shows time in
+ *  zone: below it the reading was partial (connected-training proposal,
+ *  contract 5). */
+export const ZONE_COVERAGE_MIN = 0.5;
+
+/**
+ * How much of a Watch run the heart rate covered, as a band for aggregate
+ * measurement: none, partial (under `ZONE_COVERAGE_MIN`, no zones shown) or
+ * full. A band of coverage, never a reading.
+ */
+export function heartRateCoverageBand(
+  summary: Pick<HeartRateSummary, "coverage"> | null | undefined
+): "none" | "partial" | "full" {
+  if (!summary || !Number.isFinite(summary.coverage) || summary.coverage <= 0)
+    return "none";
+  return summary.coverage < ZONE_COVERAGE_MIN ? "partial" : "full";
+}
+
 /**
  * One reading at a time when both sources are on: a Watch reading is set
  * aside while a sensor reading is fresh (taken within the last 15 seconds).
