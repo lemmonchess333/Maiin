@@ -109,7 +109,8 @@ export function usePaceInsightFromRuns(
 
   const insight = useMemo<PaceInsight | null>(() => {
     // Run24 (4): the run summary offers a runner with no confirmed paces
-    // their first, so the plan's time trial ends in one tap.
+    // their first, after the plan's time trial or another effort; taking
+    // them is Pro's (`paceUpdateLocked`).
     const firstPaces =
       everyAccount && (!runFitness || runFitness.pendingConfirmation === true);
     if (

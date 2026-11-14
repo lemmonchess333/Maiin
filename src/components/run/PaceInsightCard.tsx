@@ -99,12 +99,13 @@ export default function PaceInsightCard({
               : "Your saved targets may be too quick right now"}
         </p>
         {insight.direction === "first" ? (
+          // Run24 (4): a runner with no confirmed paces, after an effort.
           <p className="text-xs text-muted-foreground">
-            Set every upcoming training pace from VDOT{" "}
+            {locked ? "Pro sets" : "Set"} every upcoming training pace from VDOT{" "}
             <span className="font-mono tabular-nums">
               {insight.suggestedVdot}
             </span>
-            ?
+            {locked ? "." : "?"}
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">

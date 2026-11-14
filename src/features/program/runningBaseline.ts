@@ -325,8 +325,9 @@ export function fitWeekToRunningBaseline(
         t.type !== "race" &&
         !isRunWalkTemplateId(t.id) &&
         !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
-        // A time trial is a benchmark, never a shorter interval session.
-        !t.config?.timeTrial &&
+        // A time trial is fitted to a shorter trial, never to an interval
+        // session, nor an interval session to a trial (Run24 (4)).
+        Boolean(t.config?.timeTrial) === Boolean(original.config?.timeTrial) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides

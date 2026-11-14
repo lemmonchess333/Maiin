@@ -4809,22 +4809,6 @@ phone has drawn it.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
 
-## The time trial in the plan (Run24 (4), 2026-11-13)
-
-Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`'s trial weeks), their segments on the run screen (`segmentsFromTimeTrial`), and the run summary reading the trial's work as a race (`benchmarkEffortOf`). Unit tests drive each piece; no phone has run a time trial.
-
-- [ ] **Week 2 without a benchmark.** Set up a half 16 weeks out with no race time. Passing: week 2 shows "3K time trial" on the strides day, with its words (a warm-up, 3 km as hard as you can hold evenly, a cool-down, a parkrun does the same job).
-- [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
-- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces with one tap, on a free account too, read from the 3 km only (not the warm-up and cool-down); nothing changes until the tap.
-
-## A race block capped, with a rolling base before it (Run24 (3), 2026-11-13)
-
-Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
-
-- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
-- [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
-- [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
-
 ## Faster paces after a run are Pro; slower stay free (owner, 2026-11-13)
 
 Affects: the run summary's pace card after a race, a time trial, a tempo or
@@ -4840,3 +4824,19 @@ no phone has drawn it.
       now" with Update paces, and the tap updates them.
 - [ ] **After the trial starts.** Passing: Settings → Run plan offers the
       faster paces with Update paces.
+
+## The time trial in the plan (Run24 (4), 2026-11-13)
+
+Affects: the plan's `time_trial_3k` and `time_trial_5k` sessions (`runScheduler`'s trial weeks), their segments on the run screen (`segmentsFromTimeTrial`), and the run summary reading the trial's work as a race (`benchmarkEffortOf`). Unit tests drive each piece; no phone has run a time trial.
+
+- [ ] **Week 2 without a benchmark.** Set up a half 16 weeks out with no race time. Passing: week 2 shows "3K time trial" on the strides day, with its words (a warm-up, 3 km as hard as you can hold evenly, a cool-down, a parkrun does the same job).
+- [ ] **Running it.** Start the time trial. Passing: the run screen shows the warm-up, then "3 km time trial" with no pace bar and no pace alerts, then the cool-down; the 3 km segment ends at 3 km.
+- [ ] **The new paces.** Finish it faster than the paces in use. Passing: the run summary offers the new paces, read from the 3 km only (not the warm-up and cool-down); on a Pro account one tap takes them, on a free account the card names Pro and nothing changes; with no paces before, the card reads "Your training paces, from this run".
+
+## A race block capped, with a rolling base before it (Run24 (3), 2026-11-13)
+
+Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
+
+- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
+- [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
+- [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
