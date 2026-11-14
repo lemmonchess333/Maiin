@@ -15,6 +15,8 @@
  *     week (`ProgrammeRunSection`): `weekDone`;
  *   - a weekly running goal's runs and minutes (`nonRaceGoal.ts`):
  *     `weekRunsThatCount`;
+ *   - an anniversary's 50th and 100th session (`anniversaries.ts`):
+ *     `countedSessions`, the sessions the week's done counts count, ever;
  *   - the league's planned sessions: `functions/lib/leaguePlanned.js`, a
  *     server copy pinned by leaguePlanned.cross.test.ts. The league's done
  *     count (`functions/lib/weekTally.js`) counts recorded sessions only,
@@ -49,6 +51,7 @@ import { localWeekKey } from "./dateHelpers";
 import { isLegacyCompleted } from "./scheduledRunStatus";
 import { beforeStart, scheduledDaysSinceStart, startDayKey } from "./startDay";
 import { resolveRunDayForDate, weekScheduleFor } from "./trainingResolver";
+import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
 import { weekDays, weekRunsThatCount, type WeekRun } from "./weekRuns";
 
 // The week's days and its runs that count live in weekRuns.ts, which reads no
@@ -97,6 +100,23 @@ export interface TrainingWeekInput {
    * they belong to the week the plan was generated for, which is this one.
    */
   now?: Date;
+}
+
+/**
+ * The saved sessions a count of sessions counts: every saved lift (a
+ * session on a rest day happened), and every run that counts
+ * (`isVolumeEligible`, so a run saved anyway counts nowhere). The week's
+ * done counts are these, in its seven days; an anniversary's 50th and
+ * 100th session are these, ever (App1 Q58).
+ */
+export function countedSessions<
+  W extends { date: string },
+  R extends RunRecord,
+>(
+  workouts: readonly W[],
+  runs: readonly R[]
+): { lifts: readonly W[]; runs: R[] } {
+  return { lifts: workouts, runs: runs.filter((run) => isVolumeEligible(run)) };
 }
 
 /** The week's sessions done, and the distance its runs covered. */
@@ -148,7 +168,11 @@ function countDone(
   manual: Record<string, ManualCompletion>
 ): WeekDone {
   const inWeek = (day: string) => day >= days[0] && day <= days[6];
-  const counted = weekRunsThatCount(days[0], runs);
+  const sessions = countedSessions(
+    workouts.filter((w) => inWeek(w.date)),
+    runs.filter((run) => inWeek(run.day))
+  );
+  const counted = sessions.runs;
   const daysWithARun = new Set(counted.map((run) => run.day));
   const doneByHand = plannedRuns.filter(
     ({ date, runDay }) =>
@@ -157,7 +181,7 @@ function countDone(
       !daysWithARun.has(date)
   ).length;
   return {
-    lifts: workouts.filter((w) => inWeek(w.date)).length,
+    lifts: sessions.lifts.length,
     runs: counted.length + doneByHand,
     metres: counted.reduce((sum, run) => sum + (run.distance ?? 0), 0),
   };

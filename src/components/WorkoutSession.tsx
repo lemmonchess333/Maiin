@@ -41,7 +41,8 @@ import {
 } from "lucide-react";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
-import { accountStartMs } from "@/lib/startDay";
+import { accountStartMs, startDayKey } from "@/lib/startDay";
+import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import {
   cursorAfterRemoval,
   isAddedToday,
@@ -2252,6 +2253,26 @@ export default function WorkoutSession({
             setKeepQuestion((question) => ({ ...question, open: false }))
           }
         />
+        {/* The 50th or 100th session, or a year of Tropos, full screen
+            over the saved finish (App1 Q58). */}
+        {user?.uid && (
+          <AnniversaryGate
+            uid={user.uid}
+            session={
+              saved && savedWorkoutId
+                ? {
+                    id: savedWorkoutId,
+                    sport: "lift",
+                    day: sessionDay,
+                    counts: true,
+                    metres: 0,
+                  }
+                : null
+            }
+            startDay={startDayKey(profile?.createdAt)}
+            held={keepQuestion.open}
+          />
+        )}
       </Suspense>
     );
   }

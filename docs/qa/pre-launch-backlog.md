@@ -5383,3 +5383,23 @@ has not been run against the emulator, and no phone has drawn it.
       and a 5K or 10K plan starts every week.
 - [ ] **Pro and trial.** An account that took Pro or a trial before its plan
       reached week 2 has no `racePlanFreeWeekUsed`; Start works throughout.
+
+## Earned anniversaries (App1 Q58, 2026-11-14)
+
+Affects: both finish screens, which now read
+`users/{uid}/stats/anniversaries` after a save and show a full-screen
+reveal for a 50th or 100th session, a year of Tropos or 1,000 km run, with
+Share. Unit and component tests drive the rules, the marks and the reveal
+on the Firestore fake; no phone has shown one or shared its card.
+
+- [ ] **The 50th session on a phone.** On an account with 49 saved sessions,
+      save a lift on the iPhone app. Passing: the reveal covers the finish
+      screen edge to edge (safe areas kept, no tab bar under it), Share
+      opens the share sheet with a square card that reads "Your 50th
+      session", and the Firestore console shows `sessions50` with
+      `shown: true`.
+- [ ] **Once per account.** Open that finish again (Train's history, or
+      the same session on the web build). Passing: no reveal.
+- [ ] **An older account.** On an account with more than 100 sessions from
+      before this build, save any session. Passing: no reveal, and the
+      console shows `sessions50` and `sessions100` with `day: null`.
