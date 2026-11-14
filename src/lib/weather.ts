@@ -33,6 +33,9 @@ export const WEATHER_CREDIT = "Weather data from MET Norway";
 // 10-minute module-level cache
 let cachedWeather: { data: WeatherData; timestamp: number } | null = null;
 const CACHE_TTL = 10 * 60 * 1000;
+/* The read under way, shared: the run page, its setup and Home's day can
+   each ask at once, and one lookup answers them all. */
+let pendingWeather: Promise<WeatherData | null> | null = null;
 
 /** Two decimal places, about 1.1 km: all a forecast needs, and all the app
  *  hands on. The server rounds again, for a client that does not. */
@@ -71,7 +74,15 @@ export async function getCurrentWeather(): Promise<WeatherData | null> {
   if (cachedWeather && Date.now() - cachedWeather.timestamp < CACHE_TTL) {
     return cachedWeather.data;
   }
+  if (!pendingWeather) {
+    pendingWeather = readCurrentWeather().finally(() => {
+      pendingWeather = null;
+    });
+  }
+  return pendingWeather;
+}
 
+async function readCurrentWeather(): Promise<WeatherData | null> {
   // Only fetch if geo permission is already granted
   try {
     const perm = await navigator.permissions.query({ name: "geolocation" });

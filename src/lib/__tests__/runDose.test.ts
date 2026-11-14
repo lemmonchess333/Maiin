@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runDoseLine, runMinutesLine } from "../runDose";
+import { plannedSessionMinutes, runDoseLine, runMinutesLine } from "../runDose";
 import { RUN_TEMPLATES } from "../workoutTemplates";
 
 const template = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
@@ -68,5 +68,29 @@ describe("a run's dose", () => {
         expect(dose, t.id).not.toMatch(/\d(km|min)\b/);
       }
     }
+  });
+});
+
+/* Pgm8 (E8): a hot day's swap offers an easy run of the session's minutes,
+   the number its cards state. */
+describe("plannedSessionMinutes", () => {
+  it("is a tempo's own minutes", () => {
+    expect(plannedSessionMinutes(template("tempo_30"))).toBe(45);
+    expect(runMinutesLine(template("tempo_30"), null)).toBe("45 min");
+  });
+
+  it("is an interval session's minutes at the runner's interval pace, as its cards say", () => {
+    expect(plannedSessionMinutes(template("4x1k"), 240)).toBe(40);
+    expect(runMinutesLine(template("4x1k"), null, 240)).toBe("about 40 min");
+    expect(plannedSessionMinutes(template("8x400"), 225)).toBe(35);
+  });
+
+  it("is the template's minutes without a confirmed interval pace", () => {
+    expect(plannedSessionMinutes(template("4x1k"), null)).toBe(
+      template("4x1k").estimatedDuration
+    );
+    expect(plannedSessionMinutes(template("time_trial_5k"))).toBe(
+      template("time_trial_5k").estimatedDuration
+    );
   });
 });
