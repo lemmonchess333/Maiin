@@ -11,15 +11,28 @@ import { loadWordFilter } from "@/lib/wordFilter";
 import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
+import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
 
-type Gender = "male" | "female" | "unspecified";
+type Sex = "male" | "female";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
 
-const GENDER_OPTIONS: { value: Gender; label: string }[] = [
+/* The sex the calorie maths uses (`sex`), as setup asks it. This was a
+   Gender control writing `gender`, which nothing reads: a change here never
+   reached a target (App1's first settings fault, grill Q22). Gender as an
+   identity field is gone; an account set up before `sex` existed shows its
+   old answer until it picks one, and `gender` is never written. */
+const SEX_OPTIONS: { value: Sex; label: string }[] = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
-  { value: "unspecified", label: "Prefer not to say" },
 ];
+
+function sexShown(profile: UserProfile): Sex | undefined {
+  if (profile.sex) return profile.sex;
+  if (profile.gender === "male" || profile.gender === "female") {
+    return profile.gender;
+  }
+  return undefined;
+}
 
 // "under-16" intentionally omitted — it's the signup age gate, not a
 // legitimate edit target for an existing user.
@@ -122,6 +135,28 @@ export default function ProfileInfoSection({
   const [inches, setInches] = useState(() =>
     String(feetInches(savedCm).inches)
   );
+
+  /* A new sex changes the targets, which are stored, so they are worked
+     out again with it through the recipe Settings → Nutrition saves
+     (`buildGoalWeightPersistPayload`), as a change of age there does. An
+     account with no goal weight keeps its targets until it sets one: the
+     recipe would read it as maintaining and could undo a cut set up
+     before goal weights existed. */
+  async function saveSex(next: Sex) {
+    if (next === profile.sex) return;
+    if (profile.goalWeightKg == null) {
+      await updateProfile({ sex: next });
+      return;
+    }
+    const currentKg = profile.weightKg || 70;
+    const { payload } = buildGoalWeightPersistPayload({
+      profile: { ...profile, sex: next },
+      currentKg,
+      targetKg: profile.goalWeightKg,
+      rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
+    });
+    await updateProfile({ ...payload, sex: next });
+  }
 
   async function commitWeight() {
     const shown = weightText(savedKg, weightUnit);
@@ -352,18 +387,23 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <span className="text-xs text-muted-foreground">Gender</span>
+        <span className="text-xs text-muted-foreground">
+          Sex for calorie calculation
+        </span>
         <SegmentedControl
-          ariaLabel="Gender"
+          ariaLabel="Sex for calorie calculation"
           layout="wrap"
           className="mt-1.5"
-          value={profile.gender}
+          value={sexShown(profile)}
           onChange={(value) => {
             haptic("light");
-            void updateProfile({ gender: value });
+            void saveSex(value);
           }}
-          options={GENDER_OPTIONS}
+          options={SEX_OPTIONS}
         />
+        <p className="mt-1.5 text-xs text-muted-foreground text-pretty">
+          Your calorie and protein targets are worked out from it.
+        </p>
       </div>
 
       <div>
