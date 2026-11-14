@@ -4936,6 +4936,14 @@ amounts are unchanged. Unit-tested; no phone has shown it.
 - [ ] **A plan with no lifting.** Switch a hybrid who lifted a month ago to a
       running-only plan. Passing: no Welcome back for the weights.
 
+## What comes after the 30-minute goal (Run24 (3), 2026-11-14)
+
+Affects: the starter goal's Done card on Home and Train (`StarterDoneCard`) and Run plan opened from it (`?goal=build_5k`, `?goal=keep_fit`, `?goal=5k`). Component tests and the starter journey drive it; no phone has shown it, and no capture was taken.
+
+- [ ] **The card.** Finish the 30-minute goal's last week. Passing: Home shows Done, "30 minutes without stopping", and three rows, Build to 5K, Keep fit and Train for a 5K, each with its line, then Not now; at 320 px and with large text the rows wrap and nothing is cut.
+- [ ] **Build to 5K.** Tap it. Passing: Run plan opens on Plan, no race with Build to 5K chosen; Save plans the week, Train reads "Build to 5K · Week 1", the Done card is gone on Home and Train, and no Pro offer appears.
+- [ ] **The 5K.** On another account at the same point, tap Train for a 5K. Passing: Run plan opens on Training for a race with 5K chosen and its date still to pick, as before.
+
 ## Auto-pause reads the phone's motion as well as GPS (2026-11-14)
 
 Affects: when a run's clock stops and starts by itself on iPhone
