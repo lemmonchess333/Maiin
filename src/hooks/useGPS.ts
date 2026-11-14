@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  KalmanFilter,
+  VelocityKalmanFilter,
   fixTimestamp,
+  isTraceStep,
   isValidReading,
   pausedMsOf,
   readingVerdict,
@@ -80,7 +81,10 @@ export function useGPS(elapsedSeconds = 0) {
   // first time watchPosition actually delivers a fix.
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchHealthyRef = useRef(false);
-  const kalmanRef = useRef(new KalmanFilter());
+  /* The trace's smoothing (gps.ts). It takes every fix the trace could
+     use, moving or still, and is started again whenever the trace is:
+     a fresh run, a re-anchored start, the end of a hold, a restored trail. */
+  const filterRef = useRef(new VelocityKalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
   const elapsedRef = useRef(elapsedSeconds);
@@ -175,7 +179,7 @@ export function useGPS(elapsedSeconds = 0) {
     }
 
     if (pointsRef.current.length === 0) {
-      kalmanRef.current.reset();
+      filterRef.current.reset();
       pointsRef.current = [];
       distanceRef.current = 0;
       // PR H: reset rejected-fix count on a fresh tracking session
@@ -234,21 +238,15 @@ export function useGPS(elapsedSeconds = 0) {
         );
 
         const GOOD_FIX_M = 150;
-        const makePoint = (useKalman: boolean): GPSPoint => {
-          // The filter takes the fixes that become points, so the time
-          // since the last point is the time it has gone without a fix,
-          // across a gap in the signal or a hold.
-          const c = useKalman
-            ? kalmanRef.current.process(
-                latitude,
-                longitude,
-                accuracy,
-                lastPoint ? (fixAt - lastPoint.timestamp) / 1000 : 1
-              )
-            : { lat: latitude, lon: longitude };
+        const raw = { lat: latitude, lon: longitude };
+        /** The fix through the filter, which predicts across the time
+         *  since the last fix it took. */
+        const smooth = () =>
+          filterRef.current.process(latitude, longitude, accuracy, fixAt);
+        const makePoint = (at: { lat: number; lon: number }): GPSPoint => {
           return {
-            lat: c.lat,
-            lon: c.lon,
+            lat: at.lat,
+            lon: at.lon,
             altitude,
             accuracy,
             speed,
@@ -274,7 +272,7 @@ export function useGPS(elapsedSeconds = 0) {
             heldSinceRef.current !== null &&
             isValidReading(pos.coords, lastPoint, elapsedMs / 1000, fixAt)
           ) {
-            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+            setState((s) => ({ ...s, currentPoint: makePoint(raw) }));
           }
           return;
         }
@@ -300,7 +298,7 @@ export function useGPS(elapsedSeconds = 0) {
               watchHealthyRef.current ? "watch" : "poll"
             } (±${Math.round(accuracy)}m)`
           );
-          const point = makePoint(true);
+          const point = makePoint(smooth());
           pointsRef.current.push(point);
           setState((s) => ({
             ...s,
@@ -319,8 +317,8 @@ export function useGPS(elapsedSeconds = 0) {
             // First good fix — re-anchor the start here so the coarse lead-in
             // doesn't inject phantom distance. Drop the provisional point and
             // restart the track + distance from this fix.
-            kalmanRef.current.reset();
-            const point = makePoint(true);
+            filterRef.current.reset();
+            const point = makePoint(smooth());
             pointsRef.current = [point];
             distanceRef.current = 0;
             provisionalStartRef.current = false;
@@ -336,7 +334,7 @@ export function useGPS(elapsedSeconds = 0) {
           }
           // Still coarse — let the map follow the position, but don't record
           // it (avoids phantom distance from jumping between coarse fixes).
-          setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+          setState((s) => ({ ...s, currentPoint: makePoint(raw) }));
           return;
         }
 
@@ -347,17 +345,26 @@ export function useGPS(elapsedSeconds = 0) {
           elapsedMs / 1000,
           fixAt
         );
-        if (verdict !== "ok") {
-          // A fix that has not moved is not a bad one: route quality reads
-          // this count, and a runner standing at a crossing has a signal.
-          if (verdict === "still") {
-            // The route must not accumulate jitter, but auto-pause needs the
-            // current speed, not the speed of the last point that moved.
-            setState((s) => ({ ...s, currentPoint: makePoint(false) }));
-          } else rejectedFixCountRef.current += 1;
+        if (verdict !== "ok" && verdict !== "still") {
+          rejectedFixCountRef.current += 1;
           return;
         }
-        const point = makePoint(true);
+        /* A fix that has not moved, or has not moved the smoothed position
+           a step (`isTraceStep`), is not a bad one: route quality reads the
+           rejected count, and a runner standing at a crossing has a signal.
+           It still goes through the filter, which then knows the runner
+           slowed, and still moves the dot: the route must not take in
+           jitter, but auto-pause needs the current speed, not the speed of
+           the last point that moved. */
+        const smoothed = smooth();
+        if (
+          verdict === "still" ||
+          (lastPoint && !isTraceStep(lastPoint, smoothed, accuracy))
+        ) {
+          setState((s) => ({ ...s, currentPoint: makePoint(smoothed) }));
+          return;
+        }
+        const point = makePoint(smoothed);
         if (lastPoint) {
           // The splits' rule (gps.ts), so the run's distance and its splits
           // agree — including across a pause.
@@ -482,6 +489,9 @@ export function useGPS(elapsedSeconds = 0) {
     pausedTotalMsRef.current += Math.max(0, now - since);
     heldSinceRef.current = null;
     resumedAtRef.current = now;
+    // Nothing was recorded while held, and the runner may have stopped or
+    // walked: the velocity from before the hold says nothing about now.
+    filterRef.current.reset();
   }, []);
 
   // Clean up the active watch + fallback poll on unmount to prevent
@@ -522,6 +532,7 @@ export function useGPS(elapsedSeconds = 0) {
     // Rebuild cumulative distance from the restored trail, by the rule the
     // live distance counts with (and the resume prompt shows).
     const dist = totalDistance(restored);
+    filterRef.current.reset();
     pointsRef.current = [...pointsRef.current, ...restored];
     distanceRef.current = distanceRef.current + dist;
     const lastRestored = restored[restored.length - 1];

@@ -4977,6 +4977,52 @@ Affects: a marathon's or a half's later build weeks (`racePaceWeeks` in `runSche
 - [ ] **A half.** A half 14 weeks out on three run days. Passing: week 9's long run is "Long 18K with half marathon pace", two 3 km blocks; weeks 1 to 5 hold the light session and an easy run "with strides" beside the long run.
 - [ ] **Pick-ups.** As "New to running", a 5K 16 weeks out on three run days; move the date to week 8. Passing: one run reads "Easy 30 + pick-ups"; Start plays 10 minutes easy, six 1-minute pick-ups headed "COMFORTABLY HARD · 1/6" with a minute easy between, then easy to 30 minutes, with no pace shown and no easy-pace cue in the pick-ups; week 9's is "with strides" again.
 
+## Run distance: the velocity filter and the trace step (2026-11-14)
+
+Affects: every new run's distance, kilometre splits, best efforts, live pace
+and saved figures (`VelocityKalmanFilter`, `traceStepMetres`, `isTraceStep`
+in `src/lib/gps.ts`; `src/hooks/useGPS.ts`). Saved runs keep their stored
+distance and splits. The numbers that chose it come from a synthetic bench
+(`src/test/gpsBench.ts`), whose model of GPS error is an assumption: only a
+phone on a measured course, beside another app, says whether it holds.
+
+- [ ] **A track, beside Strava.** Run 10 laps of lane 1 of a 400 m track
+      (4 km) with Tropos on one phone and Strava on another, auto-pause the
+      same in both. Passing: Tropos reads 3.92 to 4.08 km, and within 2% of
+      Strava; each lap-kilometre split within a few seconds of Strava's.
+      Before this change the bench read a track 3% to 16% short.
+- [ ] **A parkrun, beside Strava.** A measured 5 km course, both apps.
+      Passing: Tropos reads 4.90 to 5.10 km, within 2% of Strava, and its
+      run time differs from Strava's moving time only by the stops (see the
+      note below).
+- [ ] **A street grid.** A loop with many right-angle corners, both apps.
+      Passing: Tropos within 2% of Strava. The old filter cut every corner.
+- [ ] **Which error model the phone matches.** Stand still in the open for
+      two minutes with a run recording and auto-pause off, then export the
+      GPX, which carries the raw fixes.
+      Work out the standard deviation of the change in position from one
+      fix to the next, per axis. Under about 0.7 m: the bench's smooth
+      model, where the new rule is within 2%. Over about 1.5 m: the rough
+      one, where it reads 2% to 5.5% long on straights and the next step is
+      Doppler speed in the distance (measured on the bench at within 3%).
+      Note the distance the run gained while standing: in two minutes the
+      bench read 18 to 55 m under the smooth model and up to 97 m under the
+      rough one (the old filter 20 to 45 m, and up to 67 m). With
+      auto-pause on (the default) a stop records none.
+- [ ] **A 1K best effort.** On a run with a steady kilometre, the 1K best
+      effort should be close to that kilometre's split, not much faster.
+      On the bench it reads 5 s to 11 s fast under the smooth model and
+      10 s to 25 s fast under the rough one (the old filter read 9 s to
+      51 s slow).
+
+Moving time is not the same rule as Strava's, on purpose, and this change
+leaves it alone: Tropos's auto-pause stops the clock after 5 s below
+0.5 m/s and restarts it at 1 m/s, from GPS speed; Strava's app pauses a run
+from the accelerometer within about a second; and Strava's server, for an
+activity recorded without pauses, takes out stretches below a speed
+threshold that last more than 15 s. Two phones on the same run can read
+different times for that reason alone.
+
 ## Adjust for heat (Pgm8 (E8) superseded by the owner, 2026-11-14)
 
 Affects: the planned run's launch card and the full setup (`HeatPanel`:
