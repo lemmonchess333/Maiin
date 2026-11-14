@@ -43,6 +43,8 @@ import {
  *   5. `hasLoggedToday` is false — cancel-on-activity in useStreaks also
  *      covers the mid-day case, but we re-check here on every eval to
  *      avoid scheduling a stale reminder right after a fresh log.
+ *   6. `restToday` is false — one of the plan's rest days keeps the streak
+ *      with no log (App1 Q32), so there is nothing to remind about.
  */
 
 export interface StreakReminderPrefs {
@@ -103,6 +105,8 @@ export function shouldScheduleStreakReminder(state: {
   /** The streak a log today keeps (`useStreaks().savableStreak`). */
   savableStreak: number;
   hasLoggedToday: boolean;
+  /** Today is one of the plan's rest days (`useStreaks().restToday`). */
+  restToday?: boolean;
 }): boolean {
   if (state.loading || state.pushOwns === true || state.pushOwns === null)
     return false;
@@ -110,6 +114,7 @@ export function shouldScheduleStreakReminder(state: {
   if (!state.primingShown) return false;
   if (!(state.savableStreak >= 2)) return false;
   if (state.hasLoggedToday) return false;
+  if (state.restToday) return false;
   return true;
 }
 
@@ -146,6 +151,11 @@ export function firstWeekNudgeAction(state: {
    * elsewhere (another phone, the push sender) leaves nothing armed here.
    */
   sharedNudge?: { dateKey: string; mine: boolean } | null;
+  /** Tomorrow, the evening it would fire, is one of the plan's rest days
+   *  (`useStreaks().restTomorrow`): "a quick log today keeps it going"
+   *  would not be true then, and from the day after the streak is past 1,
+   *  where the daily reminder owns the evening. */
+  restTomorrow?: boolean;
 }): "schedule" | "rearm" | "cancel" | "none" {
   if (state.loading) return "none";
   // Off is off: whatever was armed, with or without a saved marker.
@@ -162,6 +172,7 @@ export function firstWeekNudgeAction(state: {
   if (!state.primingShown) return "none";
   if (state.currentStreak < 1 || state.currentStreak >= 2) return "none";
   if (!state.hasLoggedToday) return "none";
+  if (state.restTomorrow) return "none";
   return "schedule";
 }
 
@@ -234,6 +245,8 @@ export function useStreakReminderInternal(
     currentStreak,
     savableStreak,
     hasLoggedToday,
+    restToday,
+    restTomorrow,
     loading: streaksLoading,
   } = useStreaks();
   const [prefs, setPrefs] = useState<StreakReminderPrefs>(DEFAULT_PREFS);
@@ -329,6 +342,7 @@ export function useStreakReminderInternal(
         primingShown: prefs.primingShown,
         savableStreak,
         hasLoggedToday,
+        restToday,
       });
       if (!shouldSchedule) return;
 
@@ -362,6 +376,7 @@ export function useStreakReminderInternal(
     prefs.primingShown,
     savableStreak,
     hasLoggedToday,
+    restToday,
   ]);
 
   // ── First-week (day-2) return nudge — one-shot, once ever ────────────
@@ -434,6 +449,7 @@ export function useStreakReminderInternal(
         firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
         todayKey: format(new Date(), "yyyy-MM-dd"),
         sharedNudge,
+        restTomorrow,
       });
       if (action === "cancel") {
         await cancelNotification(FIRST_WEEK_NOTIFICATION_ID);
@@ -520,6 +536,7 @@ export function useStreakReminderInternal(
     prefs.firstWeekNudgeDateKey,
     currentStreak,
     hasLoggedToday,
+    restTomorrow,
     updatePrefs,
   ]);
 

@@ -62,9 +62,14 @@ function loggedBy(days: Day[], day: number, evening: boolean): number[] {
   return out;
 }
 
-function replay(seed: number) {
+/**
+ * `restWeekdays`: the plan's rest days, as days of the week counted from the
+ * start (App1 Q32). The app reads them over the window, as it reads logs.
+ */
+function replay(seed: number, restWeekdays: readonly number[] = []) {
   const rnd = mulberry32(seed);
   const days = history(rnd);
+  const isRest = (d: number) => restWeekdays.includes(d % 7);
   let stored: StreakAnchor | null = null;
   const mismatches: string[] = [];
   for (let day = 0; day < DAYS; day++) {
@@ -75,9 +80,20 @@ function replay(seed: number) {
       const windowed = new Set(
         logged.filter((d) => d > day - WINDOW).map(keyOf)
       );
+      const restDays = (from: number) =>
+        new Set(
+          Array.from({ length: day + 1 }, (_, d) => d)
+            .filter((d) => d >= from && isRest(d))
+            .map(keyOf)
+        );
       const now = dateOf(day);
-      const truth = computeStreakSpan(all, now).streak;
-      const state = computeStreakState(windowed, stored, now);
+      const truth = computeStreakSpan(all, now, undefined, restDays(0)).streak;
+      const state = computeStreakState(
+        windowed,
+        stored,
+        now,
+        restDays(day - WINDOW + 1)
+      );
       if (state.live.streak !== truth) {
         mismatches.push(
           `seed ${seed} day ${day} ${evening ? "evening" : "morning"}: ${state.live.streak} vs ${truth}`
@@ -96,6 +112,25 @@ describe("the windowed streak and the stored pair agree with the whole history",
     for (let seed = 1; seed <= 120; seed++) mismatches.push(...replay(seed));
     expect(mismatches.slice(0, 10)).toEqual([]);
   });
+
+  it(
+    "with a plan's rest days, on 60 seeded histories (App1 Q32)",
+    {
+      timeout: 60_000,
+    },
+    () => {
+      // A three-day plan's four rest days a week, so most visits walk rest
+      // days and reach the stored pair across them; and a one-day plan's six,
+      // where a missed session each week would grow a streak with no log if
+      // the walk let it.
+      const mismatches: string[] = [];
+      for (let seed = 1; seed <= 30; seed++) {
+        mismatches.push(...replay(seed, [1, 3, 5, 6]));
+        mismatches.push(...replay(seed, [1, 2, 3, 4, 5, 6]));
+      }
+      expect(mismatches.slice(0, 10)).toEqual([]);
+    }
+  );
 
   it("every-other-day logging stays at 3, however long it goes on", () => {
     let stored: StreakAnchor | null = null;

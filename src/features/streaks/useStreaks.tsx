@@ -18,6 +18,7 @@ import {
   useCallback,
   useMemo,
   createContext,
+  memo,
   use,
   type ReactNode,
 } from "react";
@@ -34,7 +35,9 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useUid } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
+import { startDayKey } from "@/lib/startDay";
+import type { ProgramState } from "@/features/program/programTypes";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
 import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
@@ -54,6 +57,13 @@ import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
 import { STREAK_NOTIFICATION_ID } from "@/hooks/streakNotificationId";
 import { earlyDaysOf, keptEarlyDays, storedEarlyDays } from "./earlyLogDays";
+import {
+  isPlannedRestDay,
+  keptThroughAfter,
+  planHoldsSessions,
+  plannedRestDays,
+  type StreakPlan,
+} from "./restDays";
 
 export interface StreakData {
   /** The streak as shown: the today/yesterday rule, 0 when neither is active. */
@@ -70,6 +80,15 @@ export interface StreakData {
    */
   anchorStreak?: number;
   anchorDate?: string;
+  /**
+   * The last day the streak is kept through without another log: the day
+   * its span ends on, then the plan's rest days straight after it (App1
+   * Q32, `keptThroughAfter`). A forecast from the plan as it stood when it
+   * was saved, for the readers that cannot read a plan: the server's evening
+   * nudge, and, as the public profile's `lastActiveDate`, other people.
+   * Absent on documents written before 13 November 2026.
+   */
+  keptThrough?: string;
   /**
    * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
    * active-date set built from the subscriptions' window
@@ -300,7 +319,7 @@ function yesterdayKey(now: Date): string {
 }
 
 export interface StreakSpan {
-  /** Streak length including any bridged grace days. */
+  /** Streak length including any bridged grace days and covered rest days. */
   streak: number;
   /**
    * The non-active dates (YYYY-MM-DD) that grace bridged inside the current
@@ -310,12 +329,34 @@ export interface StreakSpan {
    */
   bridgedDates: string[];
   /**
-   * The day the streak ends on: today when today is active, else yesterday.
-   * Null when the streak is 0. The persisted pair stores this with the
-   * count, so the pair always names the span it counts.
+   * The plan's rest days the span counts (App1 Q32, `restDays.ts`),
+   * newest-first. Each is a day of the streak without a log, as a forgiven
+   * day is, but the plan's own, so it spends no grace.
+   */
+  restDates: string[];
+  /**
+   * The day the streak ends on: today when today is logged or a rest day,
+   * else yesterday. Null when the streak is 0.
    */
   endDate: string | null;
+  /**
+   * The newest logged day in the span: `endDate`, or before it when the
+   * days after it are rest days. Null when the streak is 0. The stored
+   * certificate ends here, so the day it names is always a logged one.
+   */
+  lastActiveDate: string | null;
 }
+
+/** No rest days: a person with no plan, and every walk before App1 Q32. */
+const NO_REST_DAYS: ReadonlySet<string> = new Set();
+
+const ZERO_SPAN: StreakSpan = {
+  streak: 0,
+  bridgedDates: [],
+  restDates: [],
+  endDate: null,
+  lastActiveDate: null,
+};
 
 /**
  * The persisted streak state, used to extend the walk past the read window.
@@ -330,15 +371,20 @@ export interface StreakAnchor {
 }
 
 /**
- * Walk the streak once and return its length, the grace days it bridged and
- * the day it ends on.
+ * Walk the streak once and return its length, the grace days it bridged,
+ * the rest days it covered and the day it ends on.
  *
  * Today/yesterday rule — the streak does NOT drop to zero at midnight.
- * - If today is active: streak ends on today (live).
- * - Else if yesterday is active: streak ends on yesterday (at risk).
+ * - If today is active or a rest day: streak ends on today (live).
+ * - Else if yesterday is: streak ends on yesterday (at risk).
  * - Else: streak = 0 (broken).
  * Walks backwards from the ending date, incrementing while days are in the
- * set, bridging isolated non-active days per the grace rule above.
+ * set, covering the plan's rest days (`restDays`, App1 Q32) and bridging
+ * isolated non-active days per the grace rule above. A rest day spends no
+ * grace and is still a calendar day, so the grace's spacing counts it; a
+ * second forgiven day also needs a logged day since the first. Like
+ * a bridged day, a rest day waits for an older active day to confirm it: a
+ * streak never starts on rest.
  *
  * `now` is injectable for deterministic tests; production callers omit it.
  *
@@ -355,49 +401,97 @@ export interface StreakAnchor {
  * visit) until the spacing no longer binds, and credits the rest of the
  * count only then. Crediting at once let every-other-day logging, with the
  * pair written back each day, add two days a day: day 20 read 21 where the
- * rule allows 3.
+ * rule allows 3. Rest days inside the anchored span are walked as days of
+ * it, so they count toward what has been walked.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakSpan(
   activeDates: Set<string>,
   now: Date = new Date(),
-  anchor?: StreakAnchor
+  anchor?: StreakAnchor,
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakSpan {
-  if (activeDates.size === 0)
-    return { streak: 0, bridgedDates: [], endDate: null };
+  if (activeDates.size === 0) return ZERO_SPAN;
 
   const today = format(now, "yyyy-MM-dd");
   const yesterday = yesterdayKey(now);
+  const kept = (key: string) => activeDates.has(key) || restDays.has(key);
 
   let endKey: string;
-  if (activeDates.has(today)) {
+  if (kept(today)) {
     endKey = today;
-  } else if (activeDates.has(yesterday)) {
+  } else if (kept(yesterday)) {
     endKey = yesterday;
   } else {
-    return { streak: 0, bridgedDates: [], endDate: null };
+    return ZERO_SPAN;
   }
   const endDate = new Date(endKey + "T12:00:00");
 
   let streak = 0;
-  // Grace days tentatively bridged, awaiting a confirming older active day.
-  let pendingGrace = 0;
+  // Grace and rest days tentatively counted, awaiting a confirming older
+  // active day.
+  let pending = 0;
   // Calendar days walked since the last grace was spent (Infinity = none yet).
   let stepsSinceGrace = Infinity;
-  // Confirmed + pending bridged dates (newest-first by walk order).
+  // Whether a logged day has been walked since the last grace. Without rest
+  // days the spacing alone ensures it; with them, a plan of one session a
+  // week could miss it every week, each a week apart, and grow a streak
+  // with no log at all. "Never miss twice" means two missed sessions.
+  let loggedSinceGrace = true;
+  // Confirmed + pending bridged and rest dates (newest-first by walk order).
   const bridged: string[] = [];
   let pendingBridged: string[] = [];
+  const rested: string[] = [];
+  let pendingRested: string[] = [];
+  let lastActive: string | null = null;
+
+  const confirmPending = () => {
+    streak += pending;
+    pending = 0;
+    bridged.push(...pendingBridged);
+    pendingBridged = [];
+    rested.push(...pendingRested);
+    pendingRested = [];
+  };
+  const span = (count: number): StreakSpan =>
+    count > 0
+      ? {
+          streak: count,
+          bridgedDates: bridged,
+          restDates: rested,
+          endDate: endKey,
+          lastActiveDate: lastActive,
+        }
+      : ZERO_SPAN;
 
   // Days of the anchored span walked one by one, while its credit waits for
   // this walk's last grace to fall a full spacing behind (see above). Null
   // when the walk is not inside the anchored span.
   let anchoredDaysWalked: number | null = null;
   let anchorLeft = anchor;
+  /** Inside the anchored span, once the next step back is a week from this
+   *  walk's grace: the rest of the anchored count, credited. Null to walk on. */
+  const creditAnchoredRest = (): StreakSpan | null => {
+    if (!anchorLeft || anchoredDaysWalked === null) return null;
+    anchoredDaysWalked++;
+    if (stepsSinceGrace + 1 < GRACE_MIN_SPACING_DAYS) return null;
+    const remaining = anchorLeft.streak - anchoredDaysWalked;
+    if (remaining > 0) {
+      // The anchored span certifies the rest days walked inside it.
+      confirmPending();
+      return span(streak + remaining);
+    }
+    // A stale-low anchor this walk has already outrun: walk on plain.
+    anchorLeft = undefined;
+    anchoredDaysWalked = null;
+    return null;
+  };
 
   const cursor = new Date(endDate);
   while (true) {
     const cursorKey = format(cursor, "yyyy-MM-dd");
     if (activeDates.has(cursorKey)) {
+      lastActive ??= cursorKey;
       if (anchorLeft && cursorKey === anchorLeft.lastActiveDate) {
         // Anchor day reached with the chain unbroken and no grace near it:
         // everything older is already certified — credit the anchored count
@@ -405,49 +499,40 @@ export function computeStreakSpan(
         // streak survive a meal window that only covers ~167 days of
         // documents.
         if (stepsSinceGrace >= GRACE_MIN_SPACING_DAYS) {
-          streak += pendingGrace + anchorLeft.streak;
-          if (pendingBridged.length > 0) bridged.push(...pendingBridged);
-          return { streak, bridgedDates: bridged, endDate: endKey };
+          confirmPending();
+          return span(streak + anchorLeft.streak);
         }
         anchoredDaysWalked = 0;
       }
-      // An active day confirms any pending grace bridge before it.
-      streak += pendingGrace + 1;
-      pendingGrace = 0;
-      if (pendingBridged.length > 0) {
-        bridged.push(...pendingBridged);
-        pendingBridged = [];
-      }
-      if (anchorLeft && anchoredDaysWalked !== null) {
-        anchoredDaysWalked++;
-        // From the next step back a missed day is a week from this walk's
-        // grace, so the anchored span's own forgiving holds: credit the rest.
-        if (stepsSinceGrace + 1 >= GRACE_MIN_SPACING_DAYS) {
-          const rest = anchorLeft.streak - anchoredDaysWalked;
-          if (rest > 0) {
-            return {
-              streak: streak + rest,
-              bridgedDates: bridged,
-              endDate: endKey,
-            };
-          }
-          // A stale-low anchor this walk has already outrun: walk on plain.
-          anchorLeft = undefined;
-          anchoredDaysWalked = null;
-        }
-      }
+      // An active day confirms any pending grace or rest day before it.
+      confirmPending();
+      streak += 1;
+      loggedSinceGrace = true;
+      // From the next step back a missed day is a week from this walk's
+      // grace, so the anchored span's own forgiving holds: credit the rest.
+      const credited = creditAnchoredRest();
+      if (credited) return credited;
+    } else if (restDays.has(cursorKey)) {
+      // The plan's rest day: counted once an older active day confirms it.
+      pending++;
+      pendingRested.push(cursorKey);
+      const credited = creditAnchoredRest();
+      if (credited) return credited;
     } else {
-      // Non-active day — bridge it only if far enough from the last grace.
-      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS) break;
-      pendingGrace++;
-      pendingBridged.push(format(cursor, "yyyy-MM-dd"));
+      // Non-active day — bridge it only if far enough from the last grace,
+      // with a logged day between.
+      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS || !loggedSinceGrace) break;
+      pending++;
+      pendingBridged.push(cursorKey);
       stepsSinceGrace = 0;
+      loggedSinceGrace = false;
     }
     cursor.setDate(cursor.getDate() - 1);
     stepsSinceGrace++;
   }
-  // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
-  return { streak, bridgedDates: bridged, endDate: endKey };
+  // Any unconfirmed pending grace or rest (a trailing gap into pre-history)
+  // is dropped.
+  return span(streak);
 }
 
 /**
@@ -500,9 +585,10 @@ function attestedAnchor(
 export function computeStreakSpanAnchored(
   activeDates: Set<string>,
   anchor: StreakAnchor | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakSpan {
-  const pure = computeStreakSpan(activeDates, now);
+  const pure = computeStreakSpan(activeDates, now, undefined, restDays);
   if (!anchor) return pure;
   if (!Number.isFinite(anchor.streak) || anchor.streak <= 0) return pure;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor.lastActiveDate)) return pure;
@@ -512,27 +598,60 @@ export function computeStreakSpanAnchored(
   // so an unattested anchor can never alter the result — skipping the
   // second walk here just saves the work of proving that.
   if (!attested) return pure;
-  const anchored = computeStreakSpan(activeDates, now, attested);
-  return anchored.streak >= pure.streak ? anchored : pure;
+  const anchored = computeStreakSpan(activeDates, now, attested, restDays);
+  if (anchored.streak < pure.streak) return pure;
+  // The anchored walk stops at the stored pair, which once saved is today
+  // or yesterday, so on its own it names no covered day. The plain walk
+  // takes the same steps over the days it can see, so its days are the
+  // streak's: the sheet's covered days and its line of reassurance stay
+  // after the save.
+  return {
+    ...anchored,
+    bridgedDates: newestFirst(anchored.bridgedDates, pure.bridgedDates),
+    restDates: newestFirst(anchored.restDates, pure.restDates),
+  };
+}
+
+/** Two lists of day keys as one, without repeats, newest first. */
+function newestFirst(a: readonly string[], b: readonly string[]): string[] {
+  return [...new Set([...a, ...b])].sort().reverse();
 }
 
 export interface StreakState {
   /** The streak shown now: the today/yesterday rule, 0 when neither day is
-   *  active. */
+   *  logged or a rest day. */
   live: StreakSpan;
   /**
    * The streak logging today keeps. `live` while it is alive; on the morning
-   * after a rest day, when `live` is 0, the streak through the day before
+   * after a day off, when `live` is 0, the streak through the day before
    * yesterday, which logging today saves with yesterday as its forgiven day.
    * 0 when nothing is left to save. The evening reminders read this: they
    * exist for exactly that morning-after.
    */
   savable: number;
   /**
-   * The pair to persist: the streak through its last active day, with that
+   * The pair to persist: the streak through its last logged day, with that
    * day. Null leaves the stored pair as it is (a streak already broken).
+   * Rest days after the last logged day are not in it: they are walked again
+   * from the plan, so the pair always ends on a day with a log.
    */
   anchor: StreakAnchor | null;
+  /**
+   * The day the counted span ends on (`live`'s, or the held span's on the
+   * morning after a day off), rest days included. Null with `anchor`.
+   */
+  endDate: string | null;
+}
+
+/** The pair a span stores: its count through its last logged day. Every
+ *  day after that one is a rest day or a forgiven one the span counts. */
+function anchorOf(span: StreakSpan): StreakAnchor | null {
+  if (span.streak <= 0 || !span.lastActiveDate) return null;
+  const last = span.lastActiveDate;
+  const after = [...span.restDates, ...span.bridgedDates].filter(
+    (d) => d > last
+  ).length;
+  return { streak: span.streak - after, lastActiveDate: last };
 }
 
 /**
@@ -545,33 +664,46 @@ export interface StreakState {
  * saving it replaced a 100-day certificate with 0, so the evening's log
  * read only what the window could see; and a backfilled yesterday saved 101
  * against the day before, so the next day read 103 for 102.
+ *
+ * `restDays` are the plan's rest days over the days read (App1 Q32,
+ * `restDays.ts`); none for a person with no plan.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakState(
   activeDates: Set<string>,
   stored: StreakAnchor | null | undefined,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): StreakState {
-  const live = computeStreakSpanAnchored(activeDates, stored, now);
-  if (live.streak > 0 && live.endDate) {
+  const live = computeStreakSpanAnchored(activeDates, stored, now, restDays);
+  const liveAnchor = anchorOf(live);
+  if (liveAnchor) {
     return {
       live,
       savable: live.streak,
-      anchor: { streak: live.streak, lastActiveDate: live.endDate },
+      anchor: liveAnchor,
+      endDate: live.endDate,
     };
   }
   // Today and yesterday are both empty: the walk as of yesterday is the
   // streak through the day before it, which today's log would still keep.
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const held = computeStreakSpanAnchored(activeDates, stored, yesterday);
-  return held.streak > 0 && held.endDate
+  const held = computeStreakSpanAnchored(
+    activeDates,
+    stored,
+    yesterday,
+    restDays
+  );
+  const heldAnchor = anchorOf(held);
+  return heldAnchor
     ? {
         live,
         savable: held.streak,
-        anchor: { streak: held.streak, lastActiveDate: held.endDate },
+        anchor: heldAnchor,
+        endDate: held.endDate,
       }
-    : { live, savable: 0, anchor: null };
+    : { live, savable: 0, anchor: null, endDate: null };
 }
 
 /**
@@ -580,21 +712,30 @@ export function computeStreakState(
  * logging today keeps, not 0) and as it stands with `day` active. Equal
  * when the day is already active, or too far back to reach the streak.
  * A post names the milestone the session reached from it (Soc15,
- * `streakMoment`), through the same walk, grace and anchor as the streak
- * shown everywhere else.
+ * `streakMoment`), through the same walk, grace, rest days and anchor as
+ * the streak shown everywhere else.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function streakAcross(
   activeDates: ReadonlySet<string>,
   stored: StreakAnchor | null | undefined,
   day: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  restDays: ReadonlySet<string> = NO_REST_DAYS
 ): { before: number; after: number } {
-  const before = computeStreakState(new Set(activeDates), stored, now).savable;
+  const before = computeStreakState(
+    new Set(activeDates),
+    stored,
+    now,
+    restDays
+  ).savable;
   if (activeDates.has(day)) return { before, after: before };
   const withDay = new Set(activeDates);
   withDay.add(day);
-  return { before, after: computeStreakState(withDay, stored, now).savable };
+  return {
+    before,
+    after: computeStreakState(withDay, stored, now, restDays).savable,
+  };
 }
 
 /** The certificate a stored document carries: its anchor fields, or the
@@ -617,7 +758,7 @@ function storedAnchorOf(
 // directly, each spinning up 4 Firestore subscriptions. Now <StreaksProvider>
 // runs it once near the authenticated root, and consumers read from context.
 
-function useStreaksInternal() {
+function useStreaksInternal(planProfile: PlanProfile | null) {
   const todayKey = useLocalDateKey();
   const uid = useUid();
 
@@ -626,6 +767,9 @@ function useStreaksInternal() {
 
   // Source streams
   const [meals, setMeals] = useState<MealRow[]>([]);
+  // The programme, for its run days and race: with the profile's schedule
+  // they say which days are the plan's rest days (App1 Q32).
+  const [program, setProgram] = useState<ProgramState | null>(null);
 
   /* Runs come through the one saved-run reader: one parse, the Lift3 day,
      and runs saved on this phone but not yet synced, so an offline run
@@ -676,16 +820,20 @@ function useStreaksInternal() {
     [savedRuns.runs]
   );
 
-  // Loading gates — 4 independent flags. We wait for all 4 to flip before
+  // Loading gates — 5 independent flags. We wait for all 5 to flip before
   // computing or persisting anything, so silent backfill can't double-award
   // badges that already have an earnedAt set in Firestore.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
+  const [programLoaded, setProgramLoaded] = useState(false);
   // A failed read settles its loaded flag (below) so nothing hangs, but
   // what it left behind is the defaults, not the data: the streak counted
   // from it must not be saved over the stored one.
   const [streaksDocFailed, setStreaksDocFailed] = useState(false);
   const [mealsFailed, setMealsFailed] = useState(false);
+  // Without the programme the plan's rest days are partly unknown, and a
+  // streak walked without them is shorter than the person's.
+  const [programFailed, setProgramFailed] = useState(false);
   // Bumped by retryLoad: Firestore ends a listener that fails, so trying
   // again means opening the two below afresh.
   const [streamsAttempt, setStreamsAttempt] = useState(0);
@@ -705,10 +853,13 @@ function useStreaksInternal() {
     setStreamsUid(uid);
     setStreakData(DEFAULT_STREAKS);
     setMeals([]);
+    setProgram(null);
     setStreaksDocLoaded(false);
     setMealsLoaded(false);
+    setProgramLoaded(false);
     setStreaksDocFailed(false);
     setMealsFailed(false);
+    setProgramFailed(false);
   }
 
   // Reveal only confirmed awards from this account. Intent may be queued
@@ -847,6 +998,11 @@ function useStreaksInternal() {
             /^\d{4}-\d{2}-\d{2}$/.test(data.anchorDate)
               ? data.anchorDate
               : undefined;
+          const keptThrough =
+            typeof data.keptThrough === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(data.keptThrough)
+              ? data.keptThrough
+              : undefined;
           setStreakData({
             ...DEFAULT_STREAKS,
             ...data,
@@ -855,6 +1011,7 @@ function useStreaksInternal() {
             totalActiveDays: sanitizedTotal,
             anchorStreak,
             anchorDate,
+            keptThrough,
             earlyLogDays: storedEarlyDays(data.earlyLogDays),
             badges: merged,
           });
@@ -938,19 +1095,54 @@ function useStreaksInternal() {
       onSubscriptionError("meals", setMealsLoaded, setMealsFailed)
     );
 
+    // The programme's run days and race, for the plan's rest days. Read
+    // only: the programme's upkeep belongs to useProgram.
+    const unsubProgram = onSnapshot(
+      doc(db, "users", uid, "programState", "current"),
+      (snap) => {
+        setProgram(snap.exists() ? (snap.data() as ProgramState) : null);
+        setProgramLoaded(true);
+      },
+      onSubscriptionError("programme", setProgramLoaded, setProgramFailed)
+    );
+
     return () => {
       unsubStreaks();
       unsubMeals();
+      unsubProgram();
     };
   }, [uid, streamsAttempt, windowStart]);
 
   const allLoaded =
-    streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
+    streaksDocLoaded &&
+    workoutsLoaded &&
+    runsLoaded &&
+    mealsLoaded &&
+    programLoaded;
   // Any stream that settled by failing. The saved-session readers report
   // `failed` only when they hold no rows for this account; rows already
   // read stay the evidence they were.
   const readFailed =
-    streaksDocFailed || mealsFailed || savedWorkouts.failed || savedRuns.failed;
+    streaksDocFailed ||
+    mealsFailed ||
+    programFailed ||
+    savedWorkouts.failed ||
+    savedRuns.failed;
+
+  // The plan the streak's rest days are read from (App1 Q32), and those
+  // days over the window the streak reads. A person with no plan has none.
+  const plan = useMemo<StreakPlan>(
+    () => ({
+      profile: planProfile?.schedule ?? null,
+      startKey: planProfile?.startKey ?? null,
+      programState: program,
+    }),
+    [planProfile, program]
+  );
+  const restDays = useMemo(
+    () => plannedRestDays(plan, windowStart, todayKey, todayKey),
+    [plan, windowStart, todayKey]
+  );
 
   // Per-day macro-target snapshots + water docs for the nutrition badges
   // (its own two listeners, owned here so they're singular per session).
@@ -963,6 +1155,7 @@ function useStreaksInternal() {
     lastActiveDate: storedLastActive,
     anchorStreak: storedAnchorStreak,
     anchorDate: storedAnchorDate,
+    keptThrough: storedKeptThrough,
   } = streakData;
   const storedAnchor = useMemo(
     () =>
@@ -980,8 +1173,10 @@ function useStreaksInternal() {
     currentStreak,
     savableStreak,
     anchorToStore,
+    keptThrough,
     totalActiveDays,
     bridgedDates,
+    restDates,
   } = useMemo(() => {
     if (!allLoaded) {
       return {
@@ -989,8 +1184,10 @@ function useStreaksInternal() {
         currentStreak: 0,
         savableStreak: 0,
         anchorToStore: null as StreakAnchor | null,
+        keptThrough: null as string | null,
         totalActiveDays: 0,
         bridgedDates: [] as string[],
+        restDates: [] as string[],
       };
     }
     const set = computeActiveDateSet(workouts, runs, meals);
@@ -1006,18 +1203,33 @@ function useStreaksInternal() {
     const state = computeStreakState(
       set,
       storedAnchor,
-      parseLocalDate(todayKey)
+      parseLocalDate(todayKey),
+      restDays
     );
     return {
       activeDateSet: set,
       currentStreak: state.live.streak,
       savableStreak: state.savable,
       anchorToStore: state.anchor,
-      // Grace days never inflate the honest "days you showed up" count.
+      keptThrough: state.endDate
+        ? keptThroughAfter(state.endDate, plan, todayKey)
+        : null,
+      // Grace and rest days never inflate the honest "days you showed up"
+      // count.
       totalActiveDays: set.size,
       bridgedDates: state.live.bridgedDates,
+      restDates: state.live.restDates,
     };
-  }, [todayKey, allLoaded, workouts, runs, meals, storedAnchor]);
+  }, [
+    todayKey,
+    allLoaded,
+    workouts,
+    runs,
+    meals,
+    storedAnchor,
+    restDays,
+    plan,
+  ]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
@@ -1031,10 +1243,11 @@ function useStreaksInternal() {
             activeDateSet,
             storedAnchor,
             day,
-            parseLocalDate(todayKey)
+            parseLocalDate(todayKey),
+            restDays
           )
         : null,
-    [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey]
+    [allLoaded, readFailed, activeDateSet, storedAnchor, todayKey, restDays]
   );
 
   // Distinct dates with ≥1 logged meal item — feeds meal_prep_master (same
@@ -1193,6 +1406,21 @@ function useStreaksInternal() {
     return activeDateSet.has(todayKey);
   }, [allLoaded, activeDateSet, todayKey]);
 
+  // Today is one of the plan's rest days (App1 Q32): the streak asks for
+  // nothing today, so nothing reminds the person to keep it. Tomorrow too,
+  // for the reminder armed today for tomorrow evening.
+  const restToday = allLoaded && restDays.has(todayKey);
+  const restTomorrow = useMemo(
+    () =>
+      allLoaded &&
+      isPlannedRestDay(
+        localDateString(addLocalDays(parseLocalDate(todayKey), 1)),
+        plan,
+        todayKey
+      ),
+    [allLoaded, plan, todayKey]
+  );
+
   // Gentle after-the-fact reassurance trigger (Streak1 visibility): true only
   // when the user is active TODAY *and* yesterday was a missed day that grace
   // bridged. One-day relevance window — the moment is "you took yesterday off
@@ -1220,9 +1448,14 @@ function useStreaksInternal() {
     augmented.add(yesterday);
     // Through the stored pair, as the streak itself is: the window alone
     // offered a 300-day streaker the ~167 days it can see.
-    const restored = computeStreakSpanAnchored(augmented, storedAnchor).streak;
+    const restored = computeStreakSpanAnchored(
+      augmented,
+      storedAnchor,
+      new Date(),
+      restDays
+    ).streak;
     return restored >= 3 ? restored : 0;
-  }, [allLoaded, currentStreak, activeDateSet, storedAnchor]);
+  }, [allLoaded, currentStreak, activeDateSet, storedAnchor, restDays]);
 
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
@@ -1434,10 +1667,16 @@ function useStreaksInternal() {
     // day, or the stored one where the streak is already broken. Never the
     // morning-after 0, which threw a long streak's certificate away.
     const anchor = anchorToStore ?? storedAnchor;
-    // The last active day is the day the counted span ends on. It was
+    // The last active day is the counted span's newest logged day. It was
     // "today if active, else the stored day", so a backfilled yesterday
     // saved 101 against the day before.
     const lastActiveDate = anchorToStore?.lastActiveDate ?? storedLastActive;
+    // The day the streak is kept through without another log (rest days
+    // ahead included), saved with the certificate it extends; a broken
+    // streak leaves the stored pair, and this, as they are.
+    const keptThroughToStore = anchorToStore
+      ? (keptThrough ?? anchorToStore.lastActiveDate)
+      : (storedKeptThrough ?? null);
     const nextLongest = Math.max(
       currentStreak,
       anchor.streak,
@@ -1448,6 +1687,7 @@ function useStreaksInternal() {
       lastActiveDate,
       anchorStreak: anchor.streak,
       anchorDate: anchor.lastActiveDate,
+      keptThrough: keptThroughToStore,
       longestStreak: nextLongest,
     };
     const signature = JSON.stringify(next);
@@ -1461,6 +1701,7 @@ function useStreaksInternal() {
       (anchor.streak <= 0 ||
         (anchor.streak === storedAnchorStreak &&
           anchor.lastActiveDate === storedAnchorDate)) &&
+      keptThroughToStore === (storedKeptThrough ?? null) &&
       nextLongest === streakData.longestStreak
     ) {
       lastWrittenStreakRef.current = signature;
@@ -1482,6 +1723,7 @@ function useStreaksInternal() {
         ...(anchor.streak > 0
           ? { anchorStreak: anchor.streak, anchorDate: anchor.lastActiveDate }
           : {}),
+        ...(keptThroughToStore ? { keptThrough: keptThroughToStore } : {}),
       },
       { merge: true }
     );
@@ -1495,17 +1737,22 @@ function useStreaksInternal() {
     );
     // Mirror onto the cross-user-readable public profile doc.
     // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
-    // With the day it last counted, so a reader can tell a streak that has
-    // lapsed since this device last wrote it (publicStreakAsOf).
+    // With the day it is kept through, so a reader can tell a streak that
+    // has lapsed since this device last wrote it (publicStreakAsOf). The
+    // field keeps its name, `lastActiveDate`, so the rules and every reader
+    // stand as they are: it is the last logged day for a person with no
+    // plan, and runs on over the plan's rest days after it for one with a
+    // plan, which keep the streak (App1 Q32).
+    const publicThrough = keptThroughToStore ?? lastActiveDate;
     batch.set(
       publicProfileRef,
       {
         uid,
         currentStreak,
         longestStreak: nextLongest,
-        ...(typeof lastActiveDate === "string" &&
-        /^\d{4}-\d{2}-\d{2}$/.test(lastActiveDate)
-          ? { lastActiveDate }
+        ...(typeof publicThrough === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(publicThrough)
+          ? { lastActiveDate: publicThrough }
           : {}),
       },
       { merge: true }
@@ -1541,11 +1788,13 @@ function useStreaksInternal() {
     readFailed,
     currentStreak,
     anchorToStore,
+    keptThrough,
     storedAnchor,
     storedCurrent,
     storedLastActive,
     storedAnchorStreak,
     storedAnchorDate,
+    storedKeptThrough,
     totalActiveDays,
     activeDateSet,
     streakData.longestStreak,
@@ -1629,6 +1878,15 @@ function useStreaksInternal() {
     activeDates: activeDateSet,
     /** The days grace covered inside the current streak, newest first. */
     bridgedDates,
+    /** The plan's rest days the current streak counts, newest first. */
+    restDates,
+    /** Today is one of the plan's rest days, which keep the streak. */
+    restToday,
+    /** Tomorrow is one of them. */
+    restTomorrow,
+    /** The person has a plan, so its rest days keep the streak; with no
+     *  plan every day asks for a log. */
+    coversRestDays: allLoaded && planHoldsSessions(plan),
     streakWithDay,
     hasLoggedToday,
     forgivenYesterday,
@@ -1665,11 +1923,67 @@ type StreaksValue = ReturnType<typeof useStreaksInternal>;
 
 const StreaksContext = createContext<StreaksValue | null>(null);
 
-export function StreaksProvider({ children }: { children: ReactNode }) {
-  const value = useStreaksInternal();
+/**
+ * The profile's fields the plan's rest days are read from, held by value:
+ * the provider below reads the profile only for them, so a profile write
+ * that changes none of them (the streak's own mirror among them) does not
+ * render every streak reader again.
+ */
+interface PlanProfile {
+  schedule: NonNullable<StreakPlan["profile"]>;
+  startKey: string | null;
+}
+
+function usePlanProfile(): PlanProfile | null {
+  const { profile } = useAuth();
+  const key = profile
+    ? JSON.stringify([
+        profile.weekSchedule ?? null,
+        profile.weeklyWorkoutsTarget ?? null,
+        profile.weeklyRunDaysTarget ?? null,
+        profile.weeklyRunsTarget ?? null,
+        startDayKey(profile.createdAt),
+      ])
+    : null;
+  return useMemo(() => {
+    if (key === null) return null;
+    const [weekSchedule, workouts, runDays, runs, startKey] = JSON.parse(
+      key
+    ) as [
+      NonNullable<StreakPlan["profile"]>["weekSchedule"] | null,
+      number | null,
+      number | null,
+      number | null,
+      string | null,
+    ];
+    return {
+      schedule: {
+        weekSchedule: weekSchedule ?? undefined,
+        weeklyWorkoutsTarget: workouts ?? undefined,
+        weeklyRunDaysTarget: runDays ?? undefined,
+        weeklyRunsTarget: runs ?? undefined,
+      },
+      startKey,
+    };
+  }, [key]);
+}
+
+const StreaksState = memo(function StreaksState({
+  planProfile,
+  children,
+}: {
+  planProfile: PlanProfile | null;
+  children: ReactNode;
+}) {
+  const value = useStreaksInternal(planProfile);
   return (
     <StreaksContext.Provider value={value}>{children}</StreaksContext.Provider>
   );
+});
+
+export function StreaksProvider({ children }: { children: ReactNode }) {
+  const planProfile = usePlanProfile();
+  return <StreaksState planProfile={planProfile}>{children}</StreaksState>;
 }
 
 /**
