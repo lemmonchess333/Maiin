@@ -199,7 +199,8 @@ const cases: {
     edit: allDone,
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 41 load 2262.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 2/13",
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
+      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -257,7 +258,8 @@ const cases: {
     }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 1/13",
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 1/13",
     ],
   },
   {
@@ -266,7 +268,8 @@ const cases: {
     edit: (s) => ({ ...s, liftWeekKey: shift(s.liftWeekKey ?? START, 7) }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 2/13",
+      // Run24 (5): the base week's light session took its strides run's day, so its one easy run keeps the strides.
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 41 load 2262.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
 ];

@@ -66,7 +66,35 @@ export interface RunTemplate {
     /** Run24 (5): the taper's sharpener for a race distance, never a build
      *  session, and never cut to one. */
     taper?: boolean;
+    /** Run24 (5), deep dive D5: a long run with blocks at its race's pace
+     *  (`RACE_PACE_LONG_RUNGS_KM`): easy running, then `reps` blocks of
+     *  `blockKm` with `floatKm` easy between, then `finishKm` easy to the
+     *  end. The distances sum to the run's `targetDistanceKm`. */
+    racePaceBlocks?: RacePaceBlocks;
+    /** Run24 (8), deep dive D6: an easy run with pick-ups by time, a new
+     *  runner's light quality before they run 40 minutes in one go:
+     *  `warmupSeconds` easy, `reps` pick-ups of `workSeconds` by feel with
+     *  `easySeconds` easy between, then easy to the run's minutes. No pace
+     *  anywhere in it. Segment sums equal estimatedDuration. */
+    pickUps?: PickUps;
   };
+}
+
+/** A long run's race-pace blocks (`RunTemplate.config.racePaceBlocks`). */
+export interface RacePaceBlocks {
+  race: "marathon" | "half";
+  reps: number;
+  blockKm: number;
+  floatKm: number;
+  finishKm: number;
+}
+
+/** An easy run's pick-ups (`RunTemplate.config.pickUps`). */
+export interface PickUps {
+  reps: number;
+  workSeconds: number;
+  easySeconds: number;
+  warmupSeconds: number;
 }
 
 /**
@@ -138,10 +166,95 @@ export const RETIRED_RUN_TEMPLATE_IDS: ReadonlySet<string> = new Set([
   "long_25k",
 ]);
 
+/**
+ * Run24 (5), deep dive D5: the long-run rungs that have a race-pace twin
+ * (`racePaceLongTemplateId`), by race. A marathon's from 16 km, so its
+ * easy running before the blocks is 8 km or more, and a half's from 14 km.
+ * The rungs past them have none, so a plan that holds one keeps it plain.
+ */
+export const RACE_PACE_LONG_RUNGS_KM: Readonly<
+  Record<RacePaceBlocks["race"], readonly number[]>
+> = {
+  marathon: [16, 18, 20, 22, 24, 26, 28, 30, 32],
+  half: [14, 16, 18, 20, 22, 24],
+};
+
+/** The id of a long-run rung's race-pace twin. */
+const racePaceLongId = (km: number, race: RacePaceBlocks["race"]) =>
+  `long_${km}k_${race === "marathon" ? "mp" : "hmp"}`;
+
+/**
+ * Run24 (5): a long run's blocks at race pace, by its distance. Blocks of
+ * 3 km, about 13 to 21 minutes from a 3-hour to a 5-hour marathon, inside
+ * the lock's 15 to 20; three of them in a marathon's long run from 22 km,
+ * two below it and in a half's, whose pace is harder to hold; 1 km easy
+ * between; and 2 km easy to finish from 18 km, 1 km under it. A Tropos
+ * heuristic, conservative beside Pfitzinger's (up to 16 km at marathon pace
+ * in a 29 km run).
+ */
+function racePaceBlocksFor(
+  km: number,
+  race: RacePaceBlocks["race"]
+): RacePaceBlocks {
+  return {
+    race,
+    reps: race === "marathon" && km >= 22 ? 3 : 2,
+    blockKm: 3,
+    floatKm: 1,
+    finishKm: km >= 18 ? 2 : 1,
+  };
+}
+
+/** A long-run rung's race-pace twin: the same distance and minutes, so a
+ *  week that holds it in place of the plain one runs as far. */
+function racePaceLong(
+  plain: RunTemplate,
+  race: RacePaceBlocks["race"]
+): RunTemplate {
+  const km = plain.config.targetDistanceKm!;
+  const blocks = racePaceBlocksFor(km, race);
+  const pace = race === "marathon" ? "marathon pace" : "half marathon pace";
+  return {
+    ...plain,
+    id: racePaceLongId(km, race),
+    name: `${plain.name} with ${pace}`,
+    description: `Easy effort, with ${blocks.reps} × ${blocks.blockKm} km at ${pace} in the second half`,
+    config: { targetDistanceKm: km, racePaceBlocks: blocks },
+  };
+}
+
+/**
+ * Run24 (5): the race-pace twin of a long run, for a race (`long_24k` and
+ * a marathon: `long_24k_mp`), or null where its rung has none.
+ */
+export function racePaceLongTemplateId(
+  longId: string,
+  race: RacePaceBlocks["race"]
+): string | null {
+  const config = RUN_TEMPLATES.find(
+    (t) => t.id === longId && t.type === "long"
+  )?.config;
+  const km = config?.targetDistanceKm;
+  if (!km || config.racePaceBlocks || RETIRED_RUN_TEMPLATE_IDS.has(longId))
+    return null;
+  return RACE_PACE_LONG_RUNGS_KM[race].includes(km)
+    ? racePaceLongId(km, race)
+    : null;
+}
+
 const repeat = (seconds: number, times: number) =>
   Array.from({ length: times }, () => seconds);
 
-export const RUN_TEMPLATES: RunTemplate[] = [
+/** An easy run's pick-ups: a 10-minute warm-up, then six 1-minute
+ *  pick-ups with a minute easy between (Run24 (8)). */
+const BEGINNER_PICK_UPS: PickUps = {
+  reps: 6,
+  workSeconds: 60,
+  easySeconds: 60,
+  warmupSeconds: 600,
+};
+
+const BASE_RUN_TEMPLATES: RunTemplate[] = [
   {
     id: "easy_30",
     name: "Easy 30",
@@ -223,6 +336,40 @@ export const RUN_TEMPLATES: RunTemplate[] = [
       "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
     estimatedDuration: 50,
     config: { strides: { reps: 4, workSeconds: 20 } },
+  },
+  // Run24 (8), deep dive D6: pick-ups by time, a new runner's light
+  // quality before they can run 40 minutes in one go, in turn with
+  // strides. By feel, with no pace. Duration equals the easy tier: the
+  // pick-ups replace minutes of easy running.
+  {
+    id: "easy_30_pickups",
+    name: "Easy 30 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 30,
+    config: { pickUps: BEGINNER_PICK_UPS },
+  },
+  {
+    id: "easy_40_pickups",
+    name: "Easy 40 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 40,
+    config: { pickUps: BEGINNER_PICK_UPS },
+  },
+  {
+    id: "easy_50_pickups",
+    name: "Easy 50 + pick-ups",
+    type: "easy",
+    icon: "person-standing",
+    description:
+      "Conversational pace, with 6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 50,
+    config: { pickUps: BEGINNER_PICK_UPS },
   },
   // Medium-long tiers (RUN-EV-11, 2026-08-09) — Pfitzinger's midweek
   // medium-long run, the mechanism that lets half/marathon weeks carry
@@ -1179,6 +1326,38 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     config: { targetDistanceKm: 42.2 },
   },
 ];
+
+/** The plain long runs' race-pace twins (`RACE_PACE_LONG_RUNGS_KM`), after
+ *  every other template, so a fit that weighs two runs of the same minutes
+ *  meets the plain one first. */
+const RACE_PACE_LONG_TEMPLATES: RunTemplate[] = (
+  Object.keys(RACE_PACE_LONG_RUNGS_KM) as RacePaceBlocks["race"][]
+).flatMap((race) =>
+  RACE_PACE_LONG_RUNGS_KM[race].map((km) =>
+    racePaceLong(
+      BASE_RUN_TEMPLATES.find(
+        (t) => t.type === "long" && t.config.targetDistanceKm === km
+      )!,
+      race
+    )
+  )
+);
+
+export const RUN_TEMPLATES: RunTemplate[] = [
+  ...BASE_RUN_TEMPLATES,
+  ...RACE_PACE_LONG_TEMPLATES,
+];
+
+/** Run24 (5): each race's long runs with race-pace blocks, shortest first:
+ *  the ladder a lighter week steps one down. */
+export const RACE_PACE_LONG_LADDERS: Readonly<
+  Record<RacePaceBlocks["race"], readonly string[]>
+> = {
+  marathon: RACE_PACE_LONG_RUNGS_KM.marathon.map((km) =>
+    racePaceLongId(km, "marathon")
+  ),
+  half: RACE_PACE_LONG_RUNGS_KM.half.map((km) => racePaceLongId(km, "half")),
+};
 
 /** Canonical race-template gate. Resolves a run template id to its
  *  type and asks "is it a race?" — the id-agnostic check the codebase
