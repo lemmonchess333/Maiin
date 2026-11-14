@@ -91,7 +91,9 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
       "Train's header names the goal and its stage"
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByText("This stage again: 1 more run on separate days to move on.")
+      page.getByText(
+        "This stage again: 1 more run on separate days to move on."
+      )
     ).toBeVisible();
 
     // Week two: two runs. The stage moves on.
@@ -128,7 +130,8 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     await moveDay(page, second.date!);
     await fastForwardRun(account, second, plan, "starter");
 
-    // The day after the second run, Home says Done and offers a 5K.
+    // The day after the second run, Home says Done and offers what comes
+    // next: two plans with no race date (Run24 (3)) and a 5K.
     await moveDay(page, plusDays(second.date!, 1));
     await openTab(page, TABS.home);
     await expect(
@@ -137,9 +140,10 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
     await expect(page.getByText(STARTER.done, { exact: true })).toBeVisible({
       timeout: 20_000,
     });
-    await expect(
-      page.getByRole("button", { name: STARTER.offer })
-    ).toBeVisible();
+    for (const next of [STARTER.buildTo5k, STARTER.keepFit, STARTER.offer])
+      await expect(
+        page.getByRole("button", { name: next, exact: true })
+      ).toBeVisible();
 
     // The Monday after, the goal is finished on that day and the runner is
     // free running, the plan with it.
