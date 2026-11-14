@@ -19,7 +19,6 @@ import {
 const base = {
   loading: false,
   enabled: true,
-  primingShown: true,
   savableStreak: 3,
   hasLoggedToday: false,
 };
@@ -37,12 +36,6 @@ describe("shouldScheduleStreakReminder", () => {
 
   it("does not schedule when disabled", () => {
     expect(shouldScheduleStreakReminder({ ...base, enabled: false })).toBe(
-      false
-    );
-  });
-
-  it("does not schedule before priming has been responded to", () => {
-    expect(shouldScheduleStreakReminder({ ...base, primingShown: false })).toBe(
       false
     );
   });
@@ -74,7 +67,6 @@ describe("shouldScheduleStreakReminder", () => {
 const fwBase = {
   loading: false,
   enabled: true,
-  primingShown: true,
   currentStreak: 1,
   hasLoggedToday: true,
   firstWeekNudgeDateKey: null as string | null,
@@ -86,11 +78,8 @@ describe("firstWeekNudgeAction", () => {
     expect(firstWeekNudgeAction(fwBase)).toBe("schedule");
   });
 
-  it("never schedules while loading or unconsented, and cancels when switched off", () => {
+  it("never schedules while loading, and cancels when switched off", () => {
     expect(firstWeekNudgeAction({ ...fwBase, loading: true })).toBe("none");
-    expect(firstWeekNudgeAction({ ...fwBase, primingShown: false })).toBe(
-      "none"
-    );
     // Off cancels whatever was armed, though its marker never saved.
     expect(firstWeekNudgeAction({ ...fwBase, enabled: false })).toBe("cancel");
   });

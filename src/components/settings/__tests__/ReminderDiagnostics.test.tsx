@@ -89,4 +89,30 @@ describe("ReminderDiagnostics — copy hygiene (#851 Phase 1)", () => {
     fireEvent.click(screen.getByRole("button", { name: /send test/i }));
     expect(onTest).toHaveBeenCalledTimes(1);
   });
+
+  it("says a reminder push carries arrives with the app closed, never a phone time", () => {
+    // App1 Q26: the server sends it, so the phone holds no schedule, and
+    // "No reminder is scheduled" or a stale local time would be false.
+    const next: PendingNotification = {
+      id: 3001,
+      title: "An evening reminder",
+      body: null,
+      scheduleAt: "2026-05-28T16:00:00.000Z",
+    };
+    render(
+      <ReminderDiagnostics
+        next={next}
+        formatNextFire={noopFormat}
+        onTest={() => {}}
+        delivery="push"
+      />
+    );
+    expect(
+      screen.getByText("Arrives even with the app closed.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Next:/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Reminders fire while this tab is open\./i)
+    ).not.toBeInTheDocument();
+  });
 });

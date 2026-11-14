@@ -19,7 +19,8 @@
  * logger IS active today but would be missed by lastActiveAt and get a wrong
  * nudge; passing the active-date set avoids that false positive.
  *
- * Hour-bucketing (send at ~19:00 local) is the CRON's job, not this predicate —
+ * Hour-bucketing (send at the person's chosen local hour, lib/reminderChoices.js)
+ * is the CRON's job, not this predicate —
  * this answers pure eligibility for the user's current local day.
  */
 
@@ -136,7 +137,7 @@ function shouldSendStreakNudge(input, nowUtc) {
  *   - not already nudged today (≤1 push/day, shared marker with the
  *     regular nudge + recap suppression)
  *
- * Hour-bucketing (~19:00 local) stays the cron's job, as with
+ * Hour-bucketing (the chosen local hour) stays the cron's job, as with
  * shouldSendStreakNudge.
  */
 function shouldSendFirstWeekNudge(input, nowUtc) {

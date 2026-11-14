@@ -4808,3 +4808,40 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## One switch and one time per reminder; the app picks phone or push (App1 Q26, 2026-11-13)
+
+Affects: Settings → Notifications (no push switch; Streak's time is a whole
+hour, 08:00 to 21:00; Badges and challenges keep a switch each), the phone's
+evening and Monday reminders, and the server's `hourlyStreakNudge` (the
+streak push now goes at the chosen hour, not 19:00; the Monday recap at
+09:00, not 08:00). Training days and meals still go from the phone only.
+Unit-tested on both sides; no phone or deployed sender has shown it.
+
+- [ ] **Streak by push, once, at its time, app closed.** On an iPhone build
+      with push, turn Streak on with 18:00, log nothing that day and close
+      the app. Passing: one "An evening reminder" at 18:00 local, and
+      nothing from the phone itself (Settings shows "Arrives even with the
+      app closed." under it, not a Next time).
+- [ ] **Streak on the phone where push is off.** On a build without push
+      (or an account whose push is off), turn Streak on with 18:00, open
+      the app that morning without logging, then close it. Passing: one
+      notification at 18:00, and Settings showed "Next: in … hrs" for it.
+- [ ] **Weekly review, once, at 09:00 Monday.** An account with push on and
+      something logged last week, app closed on Monday morning. Passing: one
+      "Your week, reviewed" at 09:00 local (not 08:00), opening the review.
+- [ ] **Turning a reminder on sets push up quietly.** On an iPhone whose
+      account never had push, turn Weekly review on. Passing: one system
+      prompt at most (the notifications one), the Badge and challenge
+      switches stay off, and Streak does not turn itself on.
+- [ ] **Off is off on both channels.** Turn Streak off on an account with
+      push on. Passing: no evening push that day or the next, and no local
+      notification either.
+- [ ] **An account from before.** On an account that had the old "Push
+      notifications" and "Streak nudges" on and never touched the phone's
+      Streak switch, open Settings → Notifications. Passing: Streak reads
+      on at 20:00, and the push comes at 20:00 (it came at 19:00 before).
+- [ ] **Deployed sender.** After the functions deploy, read the deployed
+      source of `hourlyStreakNudge` in the console. Passing: it calls
+      `reminderChoices.streakReminderPushHour` and the recap
+      `reminderChoices.reviewReminderByPush`.

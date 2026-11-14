@@ -114,6 +114,12 @@ function functionsJsFiles(): string[] {
 
 // Mirror file → its cross-test (relative to repo root). Each must exist.
 const PINNED: Record<string, string> = {
+  // The streak and review reminders' one switch and time (App1 Q26). Both
+  // copies run: the app's schedules the phone's copy and draws the switch,
+  // the server's decides whether the push goes and at what hour. A basename
+  // pair with src/lib/reminderChoices.ts.
+  "functions/lib/reminderChoices.js":
+    "src/lib/__tests__/reminderChoices.cross.test.ts",
   // A post's photos (Soc15 call 2): the server's limit of four, its photo
   // id rule and its "this post's own upload" URL check are held to the
   // app's and the rules' by the paths cross-test. The rest of each module
