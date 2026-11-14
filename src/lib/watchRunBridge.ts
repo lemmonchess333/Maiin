@@ -16,6 +16,7 @@ import { isNativePlatform } from "./platform";
 import { CONNECTED_TRAINING_RELEASED } from "./connectedTrainingRelease";
 import { distanceUnitLabel, type DistanceUnit } from "./distanceUnits";
 import { distanceValue, paceLabel } from "./runLabels";
+import { isWatchRunStep, type WatchRunStep } from "./watchRunStep";
 
 export type WatchRunPhase = "running" | "paused" | "review";
 export type WatchRunAction = "pause" | "resume" | "end";
@@ -45,19 +46,31 @@ export interface WatchRunSnapshot {
   /** The runner's unit. The Watch is sent the distance and pace written in
    * it, as the HUD and the Live Activity write them. */
   unit?: DistanceUnit;
+  /** The live step of a structured run (`watchRunStep`), sent with every
+   * snapshot while the run has steps. A figure like the distance, not a
+   * state change: it moves no revision. */
+  step?: WatchRunStep | null;
 }
 
 /** What crosses to native: the figures, and their labels in the runner's
  * unit, so the Watch never writes kilometres to someone running miles. */
-type NativeWatchRunSnapshot = Omit<WatchRunSnapshot, "unit"> & {
+type NativeWatchRunSnapshot = Omit<WatchRunSnapshot, "unit" | "step"> & {
   distanceLabel?: string;
   paceLabel?: string;
+  step?: WatchRunStep;
 };
 
 function nativeSnapshot({
   unit,
-  ...snapshot
+  step,
+  ...figures
 }: WatchRunSnapshot): NativeWatchRunSnapshot {
+  // A finished run has no live step, and a malformed one is left out
+  // rather than costing the Watch the rest of the snapshot.
+  const snapshot: NativeWatchRunSnapshot =
+    figures.phase !== "review" && isWatchRunStep(step)
+      ? { ...figures, step }
+      : figures;
   if (!unit) return snapshot;
   const pace = snapshot.paceSecondsPerKm;
   return {

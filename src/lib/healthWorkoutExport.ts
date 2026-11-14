@@ -402,8 +402,13 @@ async function reconcile(uid: string): Promise<void> {
         if (current.state !== "native-deleted") {
           const result = await plugin.deleteWorkout({ runId: record.runId });
           // HealthKit read permission is opaque. With a server receipt, an
-          // empty query after reinstall is not proof the sample is gone.
-          if (hasLedger && result.status !== "deleted")
+          // empty query after reinstall is not proof the sample is gone,
+          // unless native looked with write access, which shows the app
+          // every workout it saved (`verified`).
+          const gone =
+            result.status === "deleted" ||
+            (result.status === "absent" && result.verified === true);
+          if (hasLedger && !gone)
             throw new Error("Apple Health deletion cannot be verified");
           if (hasLedger)
             updateRecord(uid, record.runId, (prior) =>
@@ -498,9 +503,16 @@ async function reconcile(uid: string): Promise<void> {
         queueHealthWorkoutDeletion(uid, record.runId);
         continue;
       }
-      if (status.status === "absent" && reservation.state !== "fresh")
+      // An unverified absence may be a workout Health will not show: never
+      // write over an earlier attempt or a correction on its word. A
+      // verified one (looked for with write access) is no workout there, so
+      // an attempt interrupted before its save, or a workout the person
+      // removed in Health, is written once now.
+      const unverifiedAbsence =
+        status.status === "absent" && status.verified !== true;
+      if (unverifiedAbsence && reservation.state !== "fresh")
         throw new Error("Prior Apple Health export cannot be verified");
-      if (status.status === "absent" && current.purpose === "correction")
+      if (unverifiedAbsence && current.purpose === "correction")
         throw new Error("Prior Apple Health workout cannot be found");
       let workoutId = status.workoutId;
       if (status.status !== "present" || status.revision !== workout.revision) {

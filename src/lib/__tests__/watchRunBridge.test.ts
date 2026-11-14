@@ -172,6 +172,46 @@ describe("WatchRun bridge", () => {
     expect(sent).not.toHaveProperty("unit");
   });
 
+  it("sends the live step of a structured run, and never a malformed or finished one", async () => {
+    H.native = true;
+    const figures = {
+      sessionId: "run-A",
+      revision: 1,
+      phase: "running" as const,
+      elapsedSeconds: 700,
+      distanceMeters: 2_100,
+      recordedAtMs: 1_000,
+    };
+    const step = {
+      index: 1,
+      total: 13,
+      eyebrow: "QUICK AND RELAXED · REP 1/6",
+      headline: "800 m @ 3:50 /km",
+      effort: "work" as const,
+      remainingMeters: 587,
+      progress: 0.27,
+      next: "Recover",
+      haptic: "start" as const,
+    };
+    await publishWatchRunSnapshot({ ...figures, step });
+    expect(H.publishSnapshot).toHaveBeenLastCalledWith({ ...figures, step });
+    // A step the native bridge would refuse goes no further, and the run's
+    // figures still reach the Watch.
+    await publishWatchRunSnapshot({
+      ...figures,
+      step: { ...step, index: 14 },
+    });
+    expect(H.publishSnapshot).toHaveBeenLastCalledWith(figures);
+    await publishWatchRunSnapshot({ ...figures, step: null });
+    expect(H.publishSnapshot).toHaveBeenLastCalledWith(figures);
+    // The review has no live step, whatever the caller passes.
+    await publishWatchRunSnapshot({ ...figures, phase: "review", step });
+    expect(H.publishSnapshot).toHaveBeenLastCalledWith({
+      ...figures,
+      phase: "review",
+    });
+  });
+
   it("replays pending commands on subscribe and foreground without concurrent duplicates", async () => {
     H.native = true;
     H.pendingCommands = [command];
