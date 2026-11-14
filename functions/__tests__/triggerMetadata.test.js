@@ -140,6 +140,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // A shared post's public page behind Hosting's /activity/** rewrite
+  // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
+  publicPostPage: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   analyzeFoodText: {
     kind: "http",
     maxInstances: 100,

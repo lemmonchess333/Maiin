@@ -35,7 +35,7 @@ import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
-import type { SessionShareAction } from "../lib/sessionPost";
+import { postedActivityId, type SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -2404,6 +2404,8 @@ export default function RunSummary() {
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",
+          // Posted to the feed: the card links to the post while public.
+          postId: postedActivityId(shareAction),
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
           line: finishLine

@@ -8723,6 +8723,29 @@ exports.sendVerificationEmailCallable =
   accountEmails.sendVerificationEmailCallable;
 
 // ══════════════════════════════════════════════
+// A shared post's public page (App1, Q50 and Q51)
+// ══════════════════════════════════════════════
+//
+// Hosting sends every /activity/** request here (firebase.json): the web
+// app's page with the post named in its head, for a pasted link's preview,
+// and its public figures in a data block for a signed-out visitor. The
+// rules stay shut to signed-out readers; lib/publicPost.js reads with the
+// Admin SDK and hands out only what the card draws, and only for a public
+// post by a live, unrestricted account. No secrets and no sign-in: anyone
+// with the address may ask, as anyone may open the page.
+const publicPost = require("./lib/publicPost");
+const loadPublicPostShell = publicPost.shellLoader();
+exports.publicPostPage = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) =>
+    publicPost.servePublicPost(req, res, {
+      db: admin.firestore(),
+      loadShell: loadPublicPostShell,
+      logger: functions.logger,
+    })
+  );
+
+// ══════════════════════════════════════════════
 // PR-L L4 — weekly fell-behind detection
 // ══════════════════════════════════════════════
 //

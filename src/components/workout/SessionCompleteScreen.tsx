@@ -43,7 +43,7 @@ import { useAuth } from "@/lib/auth";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
-import type { SessionShareAction } from "@/lib/sessionPost";
+import { postedActivityId, type SessionShareAction } from "@/lib/sessionPost";
 
 /* The share card's sheet loads when Share is tapped, never with the
    screen. */
@@ -813,6 +813,8 @@ export default function SessionCompleteScreen({
               // The session's day, as the kicker and the saved workout
               // date it: by its start.
               date: finishKicker(undefined, startedAt ?? openedAt),
+              // Posted to the feed: the card links to the post while public.
+              postId: postedActivityId(share),
               totalVolumeKg: totalVolume,
               totalReps,
               exerciseCount: exerciseSummary.length,

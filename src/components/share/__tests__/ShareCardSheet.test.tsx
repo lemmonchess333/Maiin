@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  act,
   render,
   cleanup,
   screen,
@@ -19,6 +20,11 @@ vi.mock("@/lib/shareCardGenerator", () => ({
 const track = vi.fn();
 vi.mock("@/lib/socialAnalytics", () => ({
   track: (...a: unknown[]) => track(...a),
+}));
+// The post's visibility, read when a card of a post opens (App1 Q51).
+const publicPostShareLink = vi.fn();
+vi.mock("@/lib/postShareLink", () => ({
+  publicPostShareLink: (...a: unknown[]) => publicPostShareLink(...a),
 }));
 
 import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
@@ -46,6 +52,7 @@ beforeEach(() => {
   generateShareImage.mockReset();
   shareImageFile.mockReset();
   track.mockReset();
+  publicPostShareLink.mockReset();
   setNativeInstagramProvider(null); // web default: no IG bridge
 });
 afterEach(() => {
@@ -86,9 +93,11 @@ describe("ShareCardSheet — export funnel", () => {
       format: "story",
       background: "brand",
     });
+    // No post: the words end with the front door (no link of its own).
     expect(shareImageFile).toHaveBeenCalledWith(
       file,
-      expect.stringMatching(/run/i)
+      expect.stringMatching(/run/i),
+      undefined
     );
     await waitFor(() =>
       expect(track).toHaveBeenCalledWith("share_card_exported", {
@@ -100,6 +109,38 @@ describe("ShareCardSheet — export funnel", () => {
       })
     );
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it("ends a public post's card with the post's own page (App1 Q51)", async () => {
+    const file = new File(["x"], "tropos-story.png", { type: "image/png" });
+    generateShareImage.mockResolvedValue(file);
+    shareImageFile.mockResolvedValue("shared");
+    publicPostShareLink.mockResolvedValue(
+      "https://troposfit.com/activity/post1"
+    );
+
+    render(
+      <ShareCardSheet
+        open
+        onOpenChange={() => {}}
+        data={{ ...runData, postId: "post1" }}
+      />
+    );
+    await waitFor(() =>
+      expect(publicPostShareLink).toHaveBeenCalledWith("post1")
+    );
+    // The read settles before the tap, as it does when someone looks at
+    // the card first.
+    await act(async () => {});
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() =>
+      expect(shareImageFile).toHaveBeenCalledWith(
+        file,
+        "My run on Tropos",
+        "https://troposfit.com/activity/post1"
+      )
+    );
   });
 
   it("with a native IG provider, exports direct to Instagram (destination=instagram), skipping the sheet", async () => {

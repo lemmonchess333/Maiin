@@ -235,6 +235,8 @@ export default function FeedView({
             template: "run",
             handle: item.authorName,
             date,
+            // The card's words link to this post's page while it is public.
+            postId: item.activityId,
             // ActivityData.distance is metres (ActivityCard divides by
             // 1000 everywhere it renders km) — the sheet wants km.
             distanceKm: (a.distance ?? 0) / 1000,
@@ -251,6 +253,7 @@ export default function FeedView({
             template: "lift",
             handle: item.authorName,
             date,
+            postId: item.activityId,
             totalVolumeKg: a.totalVolume,
             exerciseCount: liftPostExerciseCount(a),
             prCount: a.prCount,
