@@ -1,6 +1,6 @@
 import { localDateString, localWeekKey } from "./dateHelpers";
 import type { RunRecord } from "./runStatsEligibility";
-import { weekRunsThatCount } from "./trainingWeek";
+import { weekRunsThatCount } from "./weekRuns";
 import { runEvidenceDate } from "./runExecutionEvidence";
 
 export type NonRaceGoal = { kind: "runs" | "minutes"; target: number };
@@ -25,7 +25,7 @@ export function isNonRaceGoal(value: unknown): value is NonRaceGoal {
 
 /**
  * This week's runs against a weekly goal: the runs that count, Monday to
- * Sunday, as every week counts them (`weekRunsThatCount`, trainingWeek.ts),
+ * Sunday, as every week counts them (`weekRunsThatCount`, weekRuns.ts),
  * each on the day it began. A run is read once however often it is
  * listed, and one not yet finished, or with no finite time, is not read.
  */

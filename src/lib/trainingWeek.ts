@@ -45,16 +45,16 @@ import type {
   ManualCompletion,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
-import {
-  addLocalDays,
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "./dateHelpers";
-import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
+import { localWeekKey } from "./dateHelpers";
 import { isLegacyCompleted } from "./scheduledRunStatus";
 import { beforeStart, scheduledDaysSinceStart, startDayKey } from "./startDay";
 import { resolveRunDayForDate, weekScheduleFor } from "./trainingResolver";
+import { weekDays, weekRunsThatCount, type WeekRun } from "./weekRuns";
+
+// The week's days and its runs that count live in weekRuns.ts, which reads no
+// plan, so a module the profile type reaches (nonRaceGoal.ts) can use them
+// without an import cycle back to auth.tsx through trainingResolver.
+export { weekDays, weekRunsThatCount, type WeekRun };
 
 export interface WeekCount {
   done: number;
@@ -70,12 +70,6 @@ export interface TrainingWeek {
     /** Kilometres the runs that count covered, to one decimal. */
     km: number;
   };
-}
-
-/** A saved run as the week counts it. */
-export interface WeekRun extends RunRecord {
-  /** The day the run belongs to, "yyyy-MM-dd". */
-  day: string;
 }
 
 export interface TrainingWeekInput {
@@ -103,14 +97,6 @@ export interface TrainingWeekInput {
    * they belong to the week the plan was generated for, which is this one.
    */
   now?: Date;
-}
-
-/** The seven days of the week that starts on `weekKey`. */
-export function weekDays(weekKey: string): string[] {
-  const monday = parseLocalDate(weekKey);
-  return Array.from({ length: 7 }, (_, i) =>
-    localDateString(addLocalDays(monday, i))
-  );
 }
 
 /** The week's sessions done, and the distance its runs covered. */
@@ -152,21 +138,6 @@ function plannedRunDays(
     if (runDay) planned.push({ date, runDay });
   }
   return planned;
-}
-
-/**
- * The week's runs that count: on a day in the week, and counted by
- * `isVolumeEligible`, the rule every run total uses. For a figure made of
- * the runs themselves, as a weekly goal's minutes are.
- */
-export function weekRunsThatCount<R extends WeekRun>(
-  weekKey: string,
-  runs: readonly R[]
-): R[] {
-  const days = weekDays(weekKey);
-  return runs.filter(
-    (run) => run.day >= days[0] && run.day <= days[6] && isVolumeEligible(run)
-  );
 }
 
 function countDone(
