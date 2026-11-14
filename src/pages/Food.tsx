@@ -2126,7 +2126,7 @@ export default function Food() {
             dailyTargets={dailyTargets}
             onOpenWeek={() => {
               setHeroSheetOpen(false);
-              navigate("/history?view=food");
+              navigate("/history?view=food&range=1W");
             }}
           />
         </Suspense>

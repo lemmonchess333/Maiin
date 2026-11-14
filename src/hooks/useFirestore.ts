@@ -1,7 +1,8 @@
 /* Barrel only — no Firestore access of its own.
  *
- * `useDailyLogs`, `useWeeklyStats`, `useMonthlyStats` and `useWeeklyDayMap`
- * used to live here, each owning its own `onSnapshot(users/{uid}/logs, ...)`.
+ * `useDailyLogs` and `useWeeklyDayMap` (with `useWeeklyStats` and
+ * `useMonthlyStats`, gone on 13 November 2026 with no reader) used to
+ * live here, each owning its own `onSnapshot(users/{uid}/logs, ...)`.
  * They collapsed into a single subscription behind <DailyLogsProvider>;
  * re-exporting from this barrel keeps every existing call site
  * (`import { ... } from "@/hooks/useFirestore"`) working untouched.
@@ -22,9 +23,4 @@
    re-exports the provider's hooks, a two-file cycle. */
 export type { DailyLog } from "@/hooks/DailyLogsProvider";
 
-export {
-  useDailyLogs,
-  useWeeklyStats,
-  useMonthlyStats,
-  useWeeklyDayMap,
-} from "@/hooks/DailyLogsProvider";
+export { useDailyLogs, useWeeklyDayMap } from "@/hooks/DailyLogsProvider";

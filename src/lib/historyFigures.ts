@@ -17,6 +17,7 @@ import {
   rollingWindowStart,
 } from "./dateHelpers";
 import { distanceLabel, paceMinSec } from "./runLabels";
+import { isFoodDay } from "./foodDay";
 import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 import { EXERCISES, getExerciseById } from "./exercises";
 import { bestSetPerExercise, type LiftRecord } from "./liftRecords";
@@ -309,6 +310,17 @@ function totalsByDate(meals: readonly RangeMeal[]): Record<string, DayTotals> {
   return byDate;
 }
 
+/**
+ * The food days among them (`foodDay.ts`), the days every screen counts: a
+ * day short of one is not a day of eating, so it is neither counted as
+ * logged nor averaged in.
+ */
+function foodDayTotals(meals: readonly RangeMeal[]): Record<string, DayTotals> {
+  return Object.fromEntries(
+    Object.entries(totalsByDate(meals)).filter(([, day]) => isFoodDay(day.cal))
+  );
+}
+
 function average(days: readonly DayTotals[], key: keyof DayTotals): number {
   return days.length
     ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length)
@@ -316,8 +328,8 @@ function average(days: readonly DayTotals[], key: keyof DayTotals): number {
 }
 
 /**
- * Daily food across the range: averages over the days logged, the same for
- * the range before, and how many of the range's days were logged.
+ * Daily food across the range: averages over the food days, the same for
+ * the range before, and how many of the range's days were food days.
  *
  * An account younger than the range is counted out of the days it has had,
  * not the whole range, as the overview counts it. A day logged before the
@@ -338,8 +350,8 @@ export function nutritionFigures(
     return d >= range.prevSince && d < range.since;
   });
 
-  const byDate = totalsByDate(inWindow);
-  const prevByDate = totalsByDate(inPrevious);
+  const byDate = foodDayTotals(inWindow);
+  const prevByDate = foodDayTotals(inPrevious);
   const loggedDays = Object.values(byDate);
   const prevLoggedDays = Object.values(prevByDate);
   const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));

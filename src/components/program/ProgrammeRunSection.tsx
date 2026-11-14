@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { weekDone } from "@/lib/trainingWeek";
 import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
@@ -1042,6 +1043,13 @@ export default function ProgrammeRunSection({
   const lastRun = runs[0] ?? null;
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+  // The week's runs and distance as every week counts them (`weekDone`,
+  // trainingWeek.ts); the bin above keeps the week's pace.
+  const thisWeekDone = weekDone({
+    weekKey: thisWeekKey,
+    workouts: [],
+    runs,
+  });
 
   // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
   // target or progress bar (that's the structure the model deliberately
@@ -1446,13 +1454,12 @@ export default function ProgrammeRunSection({
                 <div>
                   <SectionLabel>This week</SectionLabel>
                   <div className="mt-2 grid grid-cols-3 divide-x divide-border">
-                    {/* `totalDistance` is stored KILOMETRES, so it goes
-                        through `storedKmLabel` into the reader's unit. A
-                        bare `km` once showed a miles reader the metric
-                        figure beside a converted pace. */}
+                    {/* `storedKmLabel` takes KILOMETRES into the reader's
+                        unit. A bare `km` once showed a miles reader the
+                        metric figure beside a converted pace. */}
                     <StatFigure
                       value={storedKmLabel(
-                        thisWeek.totalDistance,
+                        thisWeekDone.metres / 1000,
                         unit,
                         false,
                         1
@@ -1460,8 +1467,8 @@ export default function ProgrammeRunSection({
                       unit={distanceUnitLabel(unit)}
                     />
                     <StatFigure
-                      value={String(thisWeek.runCount)}
-                      unit={thisWeek.runCount === 1 ? "run" : "runs"}
+                      value={String(thisWeekDone.runs)}
+                      unit={thisWeekDone.runs === 1 ? "run" : "runs"}
                     />
                     <StatFigure
                       value={

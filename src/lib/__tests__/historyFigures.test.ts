@@ -359,6 +359,22 @@ describe("nutritionFigures", () => {
     expect(figures.caloriesSparkline).toEqual([1800, 2000]);
   });
 
+  it("counts and averages food days only: a day short of 800 kcal is neither", () => {
+    const figures = nutritionFigures(
+      [
+        { date: key(1), totalCalories: 2200, totalProtein: 160 },
+        // A coffee and nothing else: not a day of eating.
+        { date: key(2), totalCalories: 120, totalProtein: 4 },
+        { date: key(3), totalCalories: 799 },
+        { date: key(4), totalCalories: 800, totalProtein: 40 },
+      ],
+      range30()
+    );
+    expect(figures.daysLogged).toBe(2);
+    expect(figures.avgCalories).toBe(1500);
+    expect(figures.avgProtein).toBe(100);
+  });
+
   it("compares with the range before only when both are well logged", () => {
     const both = meals([
       ...Array.from({ length: 20 }, (_, i) => i),

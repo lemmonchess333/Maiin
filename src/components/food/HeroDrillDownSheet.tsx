@@ -477,15 +477,17 @@ export default function HeroDrillDownSheet({
             </section>
           )}
 
-          {/* The way from one day to its week. The strip above the hero
-              shows calories only; days on target, the days protein was
-              met and the weekend against the weekdays are on Analytics'
-              Food page, and nothing on the Food page led there. */}
+          {/* The way from one day to the days around it. The strip above
+              the hero shows calories only; days on target, the days
+              protein was met and the weekend against the weekdays are on
+              Analytics' Food page, and nothing on the Food page led there.
+              It opens on the last 7 days, and says so: "This week" means
+              Monday to Sunday everywhere (App1 Q13). */}
           {onOpenWeek && (
             <ul className="@container rounded-xl bg-muted/50 overflow-hidden">
               <SettingsRow
                 icon={CalendarDays}
-                label="This week"
+                label="Last 7 days"
                 description="Days on target and protein, on Analytics"
                 onClick={onOpenWeek}
               />

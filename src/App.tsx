@@ -672,9 +672,8 @@ function SignedInRoutes({
             because useStreakReminderInternal reads useStreaks(). */}
             <RemindersProvider>
               {/* DailyLogsProvider owns the single `users/{uid}/logs` live
-            subscription — useDailyLogs / useWeeklyStats / useMonthlyStats
-            / useWeeklyDayMap all read from it, collapsing four listeners
-            into one. */}
+            subscription — useDailyLogs and useWeeklyDayMap both read from
+            it, one listener for the two. */}
               <DailyLogsProvider>
                 {/* #995: app-global tier-4 coordinator. Wraps the routes, so at
                 most one blocking surface shows per app-open. It was made

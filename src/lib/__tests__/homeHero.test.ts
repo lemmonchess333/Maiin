@@ -459,13 +459,39 @@ describe("a free run, with no planned run to describe", () => {
 describe("the free run line: this week's distance against last week's", () => {
   // TODAY is Sunday 27 September: this week runs from Monday the 21st,
   // last week from the 14th to the 20th.
+  const run = (day: string, distance: number) => ({
+    day,
+    distance,
+    duration: Math.round(distance * 0.33),
+  });
   const runs = [
-    { day: "2026-09-12", distance: 9_000 }, // the week before: not counted
-    { day: "2026-09-15", distance: 10_000 },
-    { day: "2026-09-19", distance: 8_200 },
-    { day: "2026-09-22", distance: 5_000 },
-    { day: "2026-09-26", distance: 7_400 },
+    run("2026-09-12", 9_000), // the week before: not counted
+    run("2026-09-15", 10_000),
+    run("2026-09-19", 8_200),
+    run("2026-09-22", 5_000),
+    run("2026-09-26", 7_400),
   ];
+
+  it("counts the runs that count, as every week count does", () => {
+    // A run flagged invalid and one saved anyway count nowhere
+    // (`weekDone`, trainingWeek.ts).
+    expect(
+      freeRunHeroLine({
+        runs: [
+          run("2026-09-22", 5_000),
+          { ...run("2026-09-23", 20_000), isInvalid: true },
+          { ...run("2026-09-24", 20_000), savedAnyway: true },
+        ],
+        todayKey: TODAY,
+        unit: "km",
+        first: false,
+      })
+    ).toEqual({
+      title: "5.0 km this week",
+      detail: "1 run so far",
+      mark: "run",
+    });
+  });
 
   it("gives this week's distance and last week's beside it", () => {
     expect(
@@ -507,7 +533,7 @@ describe("the free run line: this week's distance against last week's", () => {
     });
     expect(
       freeRunHeroLine({
-        runs: [{ day: "2026-09-27", distance: 5_000 }],
+        runs: [run("2026-09-27", 5_000)],
         todayKey: TODAY,
         unit: "km",
         first: false,
@@ -526,7 +552,7 @@ describe("the free run line: this week's distance against last week's", () => {
     // Back after a fortnight away: the same step, without "first".
     expect(
       freeRunHeroLine({
-        runs: [{ day: "2026-09-12", distance: 9_000 }],
+        runs: [run("2026-09-12", 9_000)],
         todayKey: TODAY,
         unit: "km",
         first: false,
@@ -537,7 +563,7 @@ describe("the free run line: this week's distance against last week's", () => {
   it("speaks the reader's unit", () => {
     expect(
       freeRunHeroLine({
-        runs: [{ day: "2026-09-22", distance: 8_046.72 }],
+        runs: [run("2026-09-22", 8_046.72)],
         todayKey: TODAY,
         unit: "mi",
         first: false,

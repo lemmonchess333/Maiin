@@ -65,7 +65,8 @@ const meal = (
 ) => ({
   date,
   foodName: `Meal ${date}`,
-  totalCalories: 400,
+  // A day's eating on its own, so each day here is a food day (`foodDay.ts`).
+  totalCalories: 900,
   totalProtein: 20,
   totalCarbs: 40,
   totalFat: 10,
