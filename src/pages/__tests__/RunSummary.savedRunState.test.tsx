@@ -592,10 +592,14 @@ describe("RunSummary — grade-adjusted pace", () => {
 
 describe("RunSummary — Save", () => {
   /** The same run, finished and not yet saved: no receipt. */
-  function renderUnsaved() {
+  function renderUnsaved(extra: Record<string, unknown> = {}) {
     const { savedRun: _receipt, ...run } = savedRun();
     return render(
-      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state: run }]}>
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/run-summary", state: { ...run, ...extra } },
+        ]}
+      >
         <Routes>
           <Route path="/run-summary" element={<RunSummary />} />
         </Routes>
@@ -633,6 +637,34 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("counts a Watch run as one, with how much of it the heart rate covered", async () => {
+    // The connected-training proposal's measurement of paired runs and
+    // coverage: a band, never a reading, and no run or session id.
+    const startedAt = Date.now() - 1_600_000;
+    renderUnsaved({
+      watchCompanionUsed: true,
+      finishedAt: Date.now() - 10_000,
+      identity: {
+        uid: "runner",
+        sessionId: "watch-run",
+        runId: "watch-run",
+        scheduledRunId: "rd-1",
+        startedAt,
+        startLocalDate: localDateString(new Date(startedAt)),
+        originTimeZone: "UTC",
+      },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(h.track).toHaveBeenCalledWith("run_completed", {
+      watchCompanion: true,
+      // No Watch readings reached this phone.
+      heartRateCoverage: "none",
+    });
   });
 
   it("recovers a finished review after reload and saves under the start-time ID", async () => {

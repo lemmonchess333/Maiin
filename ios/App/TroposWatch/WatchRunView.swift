@@ -20,6 +20,9 @@ struct WatchRunView: View {
                     Text(model.saveStatus != nil ? "Saved" : model.phase == "paused" ? "Paused" : model.phase == "review" ? "Finished" : "Running")
                         .font(.headline)
                         .foregroundStyle(runningColor)
+                    if let step = model.step {
+                        stepView(step)
+                    }
                     HStack(alignment: .firstTextBaseline) {
                         metric("TIME", value: duration(model.elapsedSeconds))
                         Spacer()
@@ -58,6 +61,67 @@ struct WatchRunView: View {
             Text("You will review and save it on your iPhone.")
         }
         }
+    }
+
+    /// The structured run's live step, as the phone's step shell draws it:
+    /// its heading in the effort's colour, the prescription, what is left,
+    /// and the step after it.
+    @ViewBuilder
+    private func stepView(_ step: WatchRunStep) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            if step.isComplete {
+                Text("All steps complete")
+                    .font(.headline)
+                Text("End the run when you’re ready")
+                    .font(.footnote).foregroundStyle(.secondary)
+            } else {
+                if let eyebrow = step.eyebrow {
+                    Text(eyebrow)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(effortColor(step.effort))
+                        .lineLimit(2)
+                }
+                if let headline = step.headline {
+                    Text(headline)
+                        .font(.headline)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let left = remaining(step) {
+                    Text(left)
+                        .font(.system(.title2, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                }
+                if let progress = step.progress {
+                    ProgressView(value: progress)
+                        .tint(effortColor(step.effort))
+                        .accessibilityHidden(true)
+                }
+                Text(step.next.map { "Next: \($0)" } ?? "Last step")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Work in the run's coral, easier steps softer, recovery neutral, as
+    /// the phone's step strip colours them.
+    private func effortColor(_ effort: String?) -> Color {
+        switch effort {
+        case "work": return runningColor
+        case "recovery": return .secondary
+        default: return runningColor.opacity(0.75)
+        }
+    }
+
+    /// The phone's figure for what is left: a countdown for a timed step,
+    /// metres for a measured one, as the phone's step shell writes them.
+    private func remaining(_ step: WatchRunStep) -> String? {
+        if let seconds = step.remainingSeconds { return duration(seconds) }
+        if let meters = step.remainingMeters { return "\(Int(meters.rounded())) m" }
+        return nil
     }
 
     private func metric(_ title: String, value: String) -> some View {

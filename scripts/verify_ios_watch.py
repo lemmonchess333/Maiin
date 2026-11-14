@@ -34,9 +34,24 @@ def validate_watch_background(info):
     # A run's heart rate comes from an HKWorkoutSession, which keeps the
     # Watch app running with the wrist down only in the Workout Processing
     # background mode; without it the samples stop until the app is raised.
+    # Apple's "Running workout sessions" also asks for the Audio mode of an
+    # app that plays haptics during the session, as the Watch does at each
+    # step of a structured run.
     modes = info.get("WKBackgroundModes")
     if not isinstance(modes, list) or "workout-processing" not in modes:
         raise ValueError("The Watch app needs the workout-processing background mode.")
+    if "audio" not in modes:
+        raise ValueError("The Watch app needs the audio background mode for its step haptics.")
+
+
+def validate_watch_health_usage(info):
+    # Apple asks the app running a workout session to request sharing
+    # workouts as well as reading heart rate; a request without both usage
+    # texts ends the app. The Watch saves no workout either way.
+    for key in (HEALTH_SHARE, HEALTH_UPDATE):
+        text = info.get(key)
+        if not isinstance(text, str) or not text.strip() or "$(" in text:
+            raise ValueError(f"The Watch app's {key} is missing or was not resolved.")
 
 
 def validate_signed_watch(entitlements, profile, info, bundle_id, companion_id):
@@ -128,6 +143,7 @@ def inspect_build(
     watch_info = read_plist(apps[0] / "Info.plist")
     validate_watch_identity(watch_info, bundle_id, companion_id)
     validate_watch_background(watch_info)
+    validate_watch_health_usage(watch_info)
     if signed:
         inspect_signed_watch(apps[0], bundle_id, companion_id, runner)
     validate_connected_training_flags(iphone_info, watch_info, "YES")

@@ -81,7 +81,11 @@ export type SettingsToggle =
   /** One of the activity notification switches (S3). Sends
    *  `"{category}:{on|off}"` (e.g. `"follows:on"`), like
    *  `share_default_set` pairs its value with the type it applies to. */
-  | "activity_notification";
+  | "activity_notification"
+  /** Use Watch for runs (connected training): `"on"`, `"off"`, or
+   *  `"on:failed"` when the paired Watch could not be switched on, so the
+   *  stream counts connection attempts as well as connections. */
+  | "watch_runs";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user
