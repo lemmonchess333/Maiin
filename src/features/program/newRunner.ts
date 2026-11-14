@@ -14,7 +14,7 @@ import {
   RUN_WALK_TEMPLATE_IDS,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
-import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
+import { qualityRungsFor } from "@/lib/planDeloadWeek";
 import { plannedRunMinutes } from "./runTimeLimits";
 import type { DatedRun } from "./layoffDetection";
 import { STARTER_STAGES, starterNewRunnerUntil } from "./starterPlan";
@@ -235,12 +235,11 @@ export function newRunnerTemplate(
       !t.config.timeTrial &&
       minutes(t) <= most
   ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
-  const quality = original.type === "tempo" || original.type === "intervals";
-  const rungs = DELOAD_LADDERS.find((ladder) => ladder.includes(original.id));
+  const rungs = qualityRungsFor(original);
   return (
     fitting.find((t) =>
-      quality
-        ? (rungs ?? []).includes(t.id)
+      rungs !== null
+        ? rungs.includes(t.id)
         : t.type === original.type &&
           Boolean(t.config.strides) === Boolean(original.config.strides)
     ) ??
