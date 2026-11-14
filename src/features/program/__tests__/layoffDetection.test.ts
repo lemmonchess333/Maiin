@@ -25,6 +25,7 @@ import {
   classifyLayoff,
   daysSinceLastRun,
   layoffFromRuns,
+  runsAtOwnPace,
   type DatedRun,
 } from "../layoffDetection";
 
@@ -192,5 +193,31 @@ describe("the window does not misfire on anyone else", () => {
       ...consistent("2026-08-01", 30), // resumed 2026-05-25, months ago
     ];
     expect(layoffFromRuns(history, "2026-08-04")).toBe("none");
+  });
+});
+
+describe("runsAtOwnPace (Run24 (2), (4))", () => {
+  it("leaves out races, time trials, tempos, interval sessions and pinned work", () => {
+    expect(runsAtOwnPace({ activityType: "race" })).toBe(false);
+    expect(runsAtOwnPace({ activityType: "tempo" })).toBe(false);
+    expect(runsAtOwnPace({ activityType: "intervals" })).toBe(false);
+    // A session named by its plan's template, whatever the run says it was.
+    expect(runsAtOwnPace({ templateId: "time_trial_5k" })).toBe(false);
+    expect(runsAtOwnPace({ activityType: "freerun", templateId: "4x1k" })).toBe(
+      false
+    );
+    expect(runsAtOwnPace({ activityType: "long", workPacePinned: true })).toBe(
+      false
+    );
+  });
+
+  it("counts easy and long runs, strides among them, and runs that name nothing", () => {
+    expect(runsAtOwnPace({ activityType: "easy" })).toBe(true);
+    expect(runsAtOwnPace({ templateId: "easy_40_strides" })).toBe(true);
+    expect(
+      runsAtOwnPace({ activityType: "long", templateId: "long_16k" })
+    ).toBe(true);
+    expect(runsAtOwnPace({ activityType: "freerun" })).toBe(true);
+    expect(runsAtOwnPace({})).toBe(true);
   });
 });
