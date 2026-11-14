@@ -31,11 +31,16 @@ import {
   paceUnitLabel,
   type DistanceUnit,
 } from "./distanceUnits";
+import type { RepeatsAt } from "./runPaces";
 import {
   cooldownCue,
   floatCue,
+  hillDownCue,
+  hillRepCue,
   intervalRecoveryCue,
   intervalRepCue,
+  pickUpCue,
+  pickUpEaseCue,
   runWalkCooldownCue,
   runWalkRunCue,
   runWalkWalkCue,
@@ -58,8 +63,10 @@ export function isWorkSegment(
 
 /**
  * The pace a session pinned as its prescription: the goal race pace on a
- * goal-pace tempo's blocks or a long run's race-pace block (`pacePinned`).
- * Null when no work segment pins one.
+ * goal-pace tempo's blocks or a long run's race-pace block, or since Run24
+ * (5) repeats at repetition pace or a race's (`pacePinned`). Null when no
+ * work segment pins one. A run that pinned its pace is never read as
+ * evidence of fitness at the band (`benchmarkEfforts`).
  */
 export function pinnedWorkPace(
   segments: readonly SessionSegment[] | null | undefined
@@ -244,6 +251,22 @@ export function stepEyebrow(seg: SessionSegment): string {
   return effort;
 }
 
+/**
+ * Run24 (5), deep dive D5: how a session's repeats are run, from its
+ * template (`RunTemplate.config`): what they are run at, and whether they
+ * go up a hill. Absent, repeats at the interval band.
+ */
+export interface IntervalStyle {
+  repeatsAt?: RepeatsAt;
+  uphill?: boolean;
+}
+
+/** A race's name on a repeat's heading, by what the repeats are run at. */
+const RACE_PACE_NAME: Partial<Record<RepeatsAt, string>> = {
+  "5k": "5K",
+  "10k": "10K",
+};
+
 export function segmentsFromIntervals(
   shape: IntervalShape,
   unit: DistanceUnit,
@@ -252,53 +275,119 @@ export function segmentsFromIntervals(
    *  within-session no-repeat guarantee — a constant offset never maps
    *  two distinct indices onto one pool entry). Callers derive it from
    *  run identity; 0 keeps the historical script. */
-  seed: number = 0
+  seed: number = 0,
+  style: IntervalStyle = {}
 ): SessionSegment[] {
   const out: SessionSegment[] = [];
   if (shape.warmupDuration) {
     out.push({
       type: "warmup",
       label: "Warm-up",
-      instruction: "Easy jogging",
+      instruction: style.uphill
+        ? "Easy jogging, to the foot of a hill"
+        : "Easy jogging",
       target: { kind: "duration", seconds: shape.warmupDuration },
       cue: warmupCue(seed),
       eyebrow: EFFORT_EYEBROW.easy,
     });
   }
-  const pace = shape.workPace
-    ? ` @ ${paceMinSec(shape.workPace, unit)} ${paceUnitLabel(unit)}`
+  // Run24 (5): repeats by feel (hills, a fartlek) carry no pace, whatever
+  // the config holds.
+  const byFeel = style.repeatsAt === "feel";
+  const workPace = byFeel ? undefined : shape.workPace;
+  const pace = workPace
+    ? ` @ ${paceMinSec(workPace, unit)} ${paceUnitLabel(unit)}`
     : "";
-  // Short repeats run quick and relaxed, longer ones hard (Run21 (1)).
-  const repEffort =
-    shape.workDistance && shape.workDistance < 1000
+  const raceName = style.repeatsAt ? RACE_PACE_NAME[style.repeatsAt] : null;
+  // Short repeats run quick and relaxed, longer ones hard (Run21 (1)); a
+  // race's pace is named for the race, a pace with a benchmark and an
+  // effort without one (Run24 (5)).
+  const repEffort = raceName
+    ? `${raceName} ${workPace ? "PACE" : "EFFORT"}`
+    : style.repeatsAt === "repetition" ||
+        (shape.workDistance && shape.workDistance < 1000)
       ? EFFORT_EYEBROW.quick
       : EFFORT_EYEBROW.hard;
   for (let rep = 1; rep <= shape.reps; rep++) {
-    out.push({
-      type: "hard",
-      label: `${workLabel(shape)}${pace}`,
-      instruction: `Rep ${rep} of ${shape.reps}`,
-      eyebrow: `${repEffort} · REP ${rep}/${shape.reps}`,
-      target: shape.workDistance
-        ? { kind: "distance", meters: shape.workDistance }
-        : { kind: "duration", seconds: shape.workDuration ?? 0 },
-      ...(shape.workPace ? { paceTarget: shape.workPace } : {}),
-      rep,
-      totalReps: shape.reps,
-      effort: workLabel(shape),
-      cue: intervalRepCue(rep, shape.reps, seed + rep),
-    });
-    if (rep < shape.reps) {
+    if (style.uphill) {
       out.push({
-        type: "recovery",
-        label: "Recover",
-        instruction: "Easy jog or walk",
-        target: { kind: "duration", seconds: shape.restDuration },
+        type: "hard",
+        label: `${workLabel(shape)} uphill`,
+        instruction: `Hill ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.hard} · HILL ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
         rep,
         totalReps: shape.reps,
-        cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
-        eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
+        cue: hillRepCue(rep, shape.reps, seed + rep),
       });
+    } else if (byFeel) {
+      out.push({
+        type: "moderate",
+        label: `${workLabel(shape)} pick-up`,
+        instruction: `Pick-up ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.comfortablyHard} · ${rep}/${shape.reps}`,
+        target: shape.workDistance
+          ? { kind: "distance", meters: shape.workDistance }
+          : { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: pickUpCue(rep, shape.reps, seed + rep),
+      });
+    } else {
+      // Run24 (5): repeats at repetition pace or a race's pace keep their
+      // own pace: the in-run shell would put the interval band on them.
+      const ownPace = !!workPace && !!style.repeatsAt;
+      out.push({
+        type: "hard",
+        label: `${workLabel(shape)}${pace}`,
+        instruction: `Rep ${rep} of ${shape.reps}`,
+        eyebrow: `${repEffort} · REP ${rep}/${shape.reps}`,
+        target: shape.workDistance
+          ? { kind: "distance", meters: shape.workDistance }
+          : { kind: "duration", seconds: shape.workDuration ?? 0 },
+        ...(workPace ? { paceTarget: workPace } : {}),
+        ...(ownPace ? { pacePinned: true } : {}),
+        rep,
+        totalReps: shape.reps,
+        effort: workLabel(shape),
+        cue: intervalRepCue(rep, shape.reps, seed + rep),
+      });
+    }
+    if (rep < shape.reps) {
+      out.push(
+        style.uphill
+          ? {
+              type: "recovery",
+              label: "Jog down",
+              instruction: "Easy jog or walk back down",
+              target: { kind: "duration", seconds: shape.restDuration },
+              rep,
+              totalReps: shape.reps,
+              cue: hillDownCue(seed + rep),
+              eyebrow: `${EFFORT_EYEBROW.easy} · JOG DOWN`,
+            }
+          : byFeel
+            ? {
+                type: "recovery",
+                label: "Easy",
+                instruction: "Easy running",
+                target: { kind: "duration", seconds: shape.restDuration },
+                rep,
+                totalReps: shape.reps,
+                cue: pickUpEaseCue(seed + rep),
+                eyebrow: `${EFFORT_EYEBROW.easy} · AFTER ${rep}/${shape.reps}`,
+              }
+            : {
+                type: "recovery",
+                label: "Recover",
+                instruction: "Easy jog or walk",
+                target: { kind: "duration", seconds: shape.restDuration },
+                rep,
+                totalReps: shape.reps,
+                cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
+                eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
+              }
+      );
     }
   }
   if (shape.cooldownDuration) {
@@ -312,6 +401,42 @@ export function segmentsFromIntervals(
     });
   }
   return out;
+}
+
+/**
+ * Run24 (5), deep dive D5: a progression run. Easy running, then a finish
+ * comfortably hard, at the threshold pace a benchmark gives (else by
+ * effort, Run20). The finish is the run's one work segment, so the pace is
+ * judged there only; the two sum to the session's minutes.
+ */
+export function segmentsFromProgression(
+  shape: { easySec: number; finishSec: number },
+  unit: DistanceUnit,
+  paceTarget?: number
+): SessionSegment[] {
+  const pace = paceTarget
+    ? ` @ ${paceMinSec(paceTarget, unit)} ${paceUnitLabel(unit)}`
+    : "";
+  return [
+    {
+      type: "easy",
+      label: `Easy ${min(shape.easySec)} min`,
+      instruction: "Conversational pace, the faster finish comes at the end",
+      target: { kind: "duration", seconds: shape.easySec },
+      cue: "Easy running. Settle in, the faster finish comes at the end.",
+      eyebrow: EFFORT_EYEBROW.easy,
+    },
+    {
+      type: "moderate",
+      label: `${min(shape.finishSec)} min to finish${pace}`,
+      instruction: "Comfortably hard, and hold it to the end",
+      target: { kind: "duration", seconds: shape.finishSec },
+      ...(paceTarget ? { paceTarget } : {}),
+      effort: `${min(shape.finishSec)} min to finish`,
+      eyebrow: EFFORT_EYEBROW.comfortablyHard,
+      cue: "Pick it up to comfortably hard, and hold it to the finish.",
+    },
+  ];
 }
 
 export function segmentsFromTempo(

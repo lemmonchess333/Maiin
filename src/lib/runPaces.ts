@@ -570,6 +570,50 @@ export function vdotFromIntervalPace(paceSPerKm: number): number {
   return vo2 > 0 ? vo2 / INTERVAL_PCT : 0;
 }
 
+/** What a session's repeats are run at where it is not the interval band
+ *  (Run24 (5)): repetition pace, a 5K's or a 10K's race pace, or by feel. */
+export type RepeatsAt = "repetition" | "5k" | "10k" | "feel";
+
+/**
+ * Run24 (5), deep dive D5: the pace a session's repeats are run at, from
+ * the runner's interval pace (the middle of the interval band a confirmed
+ * benchmark gives, `resolveSessionPaces("intervals")`). Repetition pace is
+ * the middle of the repetition band, and a race's pace the time that race
+ * takes at the same VDOT (Daniels–Gilbert, as `vdotFromRace`), both at the
+ * VDOT the interval pace gives back (`vdotFromIntervalPace`). Null for
+ * repeats run by feel, and without an interval pace.
+ *
+ * Every surface holds the interval pace, and the launch builds the run from
+ * it too, so the repeats' pace, their rest and their minutes are worked out
+ * from one number and agree wherever the session is named.
+ */
+export function repeatPaceFromIntervalPace(
+  intervalPaceSPerKm: number | null | undefined,
+  at: RepeatsAt | undefined
+): number | null {
+  if (!intervalPaceSPerKm || !(intervalPaceSPerKm > 0)) return null;
+  if (!at) return intervalPaceSPerKm;
+  if (at === "feel") return null;
+  const vdot = vdotFromIntervalPace(intervalPaceSPerKm);
+  if (!(vdot > 0)) return null;
+  if (at === "repetition") return mid(trainingBands(vdot).repetition);
+  const distanceM = RACE_DISTANCES_M[at];
+  return Math.round(raceTimeAtVdot(vdot, distanceM) / (distanceM / 1000));
+}
+
+/** The seconds a race of `distanceM` takes at `vdot`: `vdotFromRace`
+ *  solved for time. */
+function raceTimeAtVdot(vdot: number, distanceM: number): number {
+  let fast = distanceM / 10; // 10 m/s
+  let slow = distanceM; // 1 m/s
+  for (let i = 0; i < 50; i++) {
+    const t = (fast + slow) / 2;
+    if (vdotFromRace(distanceM, t) > vdot) fast = t;
+    else slow = t;
+  }
+  return (fast + slow) / 2;
+}
+
 /**
  * Pgm8 R1 — an effort a benchmark may be derived from (`benchmarkEfforts.ts`
  * picks them from the saved runs): a race or time trial, whole, or a tempo's

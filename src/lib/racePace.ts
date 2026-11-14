@@ -184,6 +184,10 @@ export function racePaceWork(
 ): RacePaceWork | null {
   if (!race) return null;
   if (tmpl.type === "tempo") {
+    // Run24 (5): a progression run's finish is threshold work, never a
+    // goal pace; the blocks of a tempo, cruise intervals or a sharpener are
+    // where race pace is run.
+    if (!tmpl.config.tempo) return null;
     return race.phase === "taper" ||
       (race.phase === "build" && buildTempoAtRacePace(race.week))
       ? { kind: "tempo", goalPaceS: race.goalPaceS, source: race.source }
