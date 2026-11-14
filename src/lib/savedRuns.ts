@@ -84,8 +84,15 @@ export interface RunSummaryItem {
   /** Each whole kilometre's time in seconds, in order, as the run saved
    *  them (`splits[].time`; a saved run's splits are always kilometres).
    *  Empty for a run that saved none: treadmill, manual, and runs from
-   *  before splits were kept. Analytics' fastest kilometres read these. */
+   *  before splits were kept. A run's time over 1, 5 or 10 km falls back
+   *  to these (`runEffortSeconds`). */
   kmSplitSeconds?: number[];
+  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
+   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
+   *  timed none, and for runs saved before they were kept. A new run's
+   *  post compares its own with them (Soc15), and Bests and the Running
+   *  page list the fastest (`runEffortSeconds`). */
+  bestEfforts?: { distance: number; time: number }[];
 }
 
 /** A saved run as every reader sees it. */
@@ -115,11 +122,6 @@ export interface SavedRun extends RunSummaryItem {
    *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
    *  goal was, not what the runner can do. */
   workPacePinned?: boolean;
-  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
-   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
-   *  timed none, and for runs saved before they were kept. A new run's
-   *  post compares its own with them (Soc15). */
-  bestEfforts?: { distance: number; time: number }[];
 }
 
 /**

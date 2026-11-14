@@ -106,7 +106,14 @@ export function plannedRunVerdict(args: {
   if (isTreadmillRun({ place: args.place })) return null;
   const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
   const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-  if (!tmpl || tmpl.type === "intervals" || isRunWalkTemplateId(tmpl.id))
+  // Run24 (5): a long run with race-pace blocks averages its easy running
+  // and its race pace, so its whole-run pace is no verdict on either.
+  if (
+    !tmpl ||
+    tmpl.type === "intervals" ||
+    isRunWalkTemplateId(tmpl.id) ||
+    tmpl.config.racePaceBlocks
+  )
     return null;
   if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
   const heat = args.heatAdjustment ?? null;

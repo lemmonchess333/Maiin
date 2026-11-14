@@ -40,7 +40,7 @@ export interface SessionExplainerInput {
   /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
    *  that finishes at it rehearses race day, and a tempo at it practises
    *  the pace, in place of the reasons for a tempo at fitness pace. */
-  racePace?: "finish" | "tempo" | null;
+  racePace?: "finish" | "tempo" | "blocks" | null;
   /** The run is one of the recovery's, after race day (`isRecoveryRunDay`).
    *  The plan's week counter still points at race week then, so without
    *  this its runs read as race week's. */
@@ -224,6 +224,14 @@ export function runSessionExplainer(
   }
   if (config?.repeatsAt === "feel") {
     return "A light fartlek wakes up faster running by feel, at little cost, before the harder sessions start.";
+  }
+  // Run24 (5): a long run with blocks at race pace.
+  if (config?.racePaceBlocks) {
+    return "It rehearses race pace inside a long run, on tired legs: the rhythm, the fuelling and the focus race day asks for.";
+  }
+  // Run24 (8): a new runner's pick-ups, before the harder sessions.
+  if (config?.pickUps) {
+    return "Easy day with pick-ups: six short spells of faster running wake up your legs before the harder sessions start. Not a hard session.";
   }
   if (config?.repeatsAt === "5k" || config?.repeatsAt === "10k") {
     return "It teaches your legs what race pace feels like, so it’s familiar when it counts.";

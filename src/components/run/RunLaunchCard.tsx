@@ -126,15 +126,24 @@ export default function RunLaunchCard({
   /* Run21 (2): a long run's race-pace finish, which its name and lines
      only name, with its size and pace before the run starts. Labelled as
      the run's own segment is, in the reader's unit. */
+  const compactDistance = (km: number) =>
+    `${distanceIn(km * 1000, unit)
+      .toFixed(1)
+      .replace(/\.0$/, "")} ${distanceUnitLabel(unit)}`;
+  const blocks = workout.config.racePaceBlocks;
   const racePaceLine =
     racePace?.kind === "finish"
-      ? `Last ${distanceIn(racePace.blockKm * 1000, unit)
-          .toFixed(1)
-          .replace(/\.0$/, "")} ${distanceUnitLabel(unit)} at ${paceMinSec(
+      ? `Last ${compactDistance(racePace.blockKm)} at ${paceMinSec(
           Math.round(racePace.goalPaceS),
           unit
         )} ${paceUnitLabel(unit)}`
-      : null;
+      : racePace?.kind === "blocks" && blocks
+        ? /* Run24 (5): the long run's blocks at race pace. */
+          `${blocks.reps} \u00d7 ${compactDistance(blocks.blockKm)} at ${paceMinSec(
+            Math.round(racePace.goalPaceS),
+            unit
+          )} ${paceUnitLabel(unit)}`
+        : null;
 
   const eyebrow = isExtra
     ? "Extra run"
@@ -203,6 +212,8 @@ export default function RunLaunchCard({
             {about.feel}
             {workout.config.strides &&
               ` ${workout.estimatedDuration} min in all, strides included.`}
+            {workout.config.pickUps &&
+              ` ${workout.estimatedDuration} min in all, pick-ups included.`}
           </p>
           <RunPurpose>
             <RunAbout about={about} why={purpose} />

@@ -9,6 +9,13 @@
  * `workoutTonnageKg` and `buildPRMap` already leave timed holds out; the
  * records now do too, and warm-up sets with them (writers strip warm-ups,
  * but a set typed as one says what it is).
+ *
+ * App1 Q15, one record book: a set the workout screen calls a new best
+ * (`checkSetPR`, loaded sets by estimated one-rep max) is this list's row
+ * for its exercise. So on a bodyweight exercise a set with added load
+ * outranks one without: the screen celebrates only loaded sets, and an
+ * unweighted set's reps are not on the same scale as a loaded set's
+ * estimate (20 reps would otherwise beat +10 kg × 5, which scores 11.7).
  */
 import { epley1RMExact } from "./analytics";
 import { EXERCISES } from "./exercises";
@@ -28,6 +35,9 @@ interface ScoredSet {
   weight: number;
   reps: number;
   date: string;
+  /** Lifted with load: every counted set of a loaded exercise, and a
+   *  bodyweight exercise's sets with added weight. */
+  loaded: boolean;
   score: number;
 }
 
@@ -42,8 +52,10 @@ function keepBest(
   // the row must not move its date, or say New, every session.
   if (
     !prev ||
-    set.score > prev.score ||
-    (set.score === prev.score && set.date < prev.date)
+    (set.loaded && !prev.loaded) ||
+    (set.loaded === prev.loaded &&
+      (set.score > prev.score ||
+        (set.score === prev.score && set.date < prev.date)))
   ) {
     best.set(name, set);
   }
@@ -88,14 +100,13 @@ export function bestSetPerExercise(
         if (set.type === "warmup") continue;
         if (!(set.reps > 0)) continue;
         if (!isBodyweight && !(set.weightKg > 0)) continue;
+        const loaded = set.weightKg > 0;
         const scored: ScoredSet = {
           weight: set.weightKg,
           reps: set.reps,
           date: w.date,
-          score:
-            isBodyweight && set.weightKg === 0
-              ? set.reps
-              : epley1RMExact(set.weightKg, set.reps),
+          loaded,
+          score: loaded ? epley1RMExact(set.weightKg, set.reps) : set.reps,
         };
         keepBest(allTime, name, scored);
         if (inWindow) keepBest(best, name, scored);

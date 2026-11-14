@@ -42,7 +42,7 @@ w8 2026-04-27  build, plan week 8 of 16  counted 4/5  plan 259 min, long 18.0 km
   week    211 min · 38.6 km · easy 67% · longest ×0.82 the month's
   runner  VDOT 44.80 · fitness 270 min · easy own 5:29–6:11, prescribed 5:52–6:36
 w9 2026-05-04  build, plan week 9 of 16  counted 4/5  plan 336 min, long 24.0 km, quality 2
-  planned Mon:easy_50 · Tue:cruise_3x10 · Wed:easy_50_strides · Fri:hills_10x60s · Sun:long_24k
+  planned Mon:easy_50 · Tue:cruise_3x10 · Wed:easy_50_strides · Fri:hills_10x60s · Sun:long_24k_mp
   ran     Mon easy_50 8.5 km/50 min 5:52 [on target] · Tue cruise_3x10 9.0 km/48 min 5:18 [on target] · Wed easy_50_strides 8.8 km/50 min 5:41 [easy too fast] · Fri hills_10x60s 9.0 km/48 min 5:22
   week    196 min · 35.3 km · easy 79% · longest ×0.41 the month's
   runner  VDOT 44.59 · fitness 259 min · easy own 5:28–6:09, prescribed 5:52–6:36
