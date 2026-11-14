@@ -84,9 +84,9 @@ describe("full-screen layers clear the status bar", () => {
     const outside = app.slice(0, start) + app.slice(end);
     const paths = [...outside.matchAll(/path="([^"]+)"/g)]
       .map((m) => m[1])
-      // The labs are not product surfaces; "/log" redirects; "*" is the
-      // signed-out and setup fallback (Login and Onboarding pad already).
-      .filter((p) => !p.startsWith("/dev/") && p !== "/log" && p !== "*");
+      // The labs are not product surfaces; "*" is the signed-out and
+      // setup fallback (Login and Onboarding pad already).
+      .filter((p) => !p.startsWith("/dev/") && p !== "*");
     expect([...new Set(paths)].sort()).toEqual(
       Object.keys(OUTSIDE_LAYOUT).sort()
     );
