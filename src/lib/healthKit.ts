@@ -1,6 +1,7 @@
 /**
- * HealthKit bridges: `@capgo/capacitor-health` reads daily steps for Home,
- * while the app's WatchRun plugin writes opted-in, server-confirmed run
+ * HealthKit bridges: `@capgo/capacitor-health` reads daily steps for the
+ * activity level offer on Food (whole-app grill Q31) and Settings → Apple
+ * Health, while the app's WatchRun plugin writes opted-in, server-confirmed run
  * workouts and opens the app's page in Settings.
  *
  * Web never reads steps or writes workouts: every native call guards on
@@ -266,6 +267,41 @@ export async function readDailyAverages(
     return (samples ?? [])
       .filter((s) => Number.isFinite(s.value) && s.value > 0)
       .map((s) => ({ dateKey: bucketDayKey(s.startDate), value: s.value }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Each local day's step total between two instants, keyed by the local day
+ * its bucket starts on, for the activity level offer (`stepActivity.ts`,
+ * whole-app grill Q31). Health's day buckets come from a statistics query,
+ * which counts a step the iPhone and a Watch both saw once; raw samples
+ * would count it twice. A day with nothing recorded is left out, and the
+ * caller reads a missing day as no reading. Null on the web or when the
+ * read fails.
+ */
+export async function readDailyStepTotals(
+  start: Date,
+  end: Date
+): Promise<DailyValue[] | null> {
+  if (!isNativePlatform()) return null;
+  try {
+    const { samples } = await (
+      await getPlugin()
+    ).plugin.queryAggregated({
+      dataType: "steps",
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      bucket: "day",
+      aggregation: "sum",
+    });
+    return (samples ?? [])
+      .filter((s) => Number.isFinite(s.value) && s.value > 0)
+      .map((s) => ({
+        dateKey: bucketDayKey(s.startDate),
+        value: Math.round(s.value),
+      }));
   } catch {
     return null;
   }

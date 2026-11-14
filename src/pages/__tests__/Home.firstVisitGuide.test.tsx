@@ -36,6 +36,7 @@ const h = vi.hoisted(() => ({
     primingShown: boolean;
     ready: boolean;
   },
+  isPro: true,
   track: vi.fn(),
   homeTrack: vi.fn(),
 }));
@@ -91,7 +92,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: h.track }));
 vi.mock("@/lib/subscription", () => ({
-  useSubscription: () => ({ isPro: true, isInTrial: false, trialDaysLeft: 0 }),
+  useSubscription: () => ({
+    isPro: h.isPro,
+    isInTrial: false,
+    trialDaysLeft: 0,
+  }),
   isCheckoutTrialEligible: () => false,
 }));
 vi.mock("@/hooks/useWorkouts", () => ({
@@ -245,7 +250,7 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 }));
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
-vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
+vi.mock("@/components/home/WeightTile", () => ({ default: () => null }));
 vi.mock("@/components/home/TodayEnergy", () => ({
   default: () => <section aria-label="Food">Food</section>,
 }));
@@ -370,6 +375,7 @@ beforeEach(() => {
   h.mealsLoading = false;
   h.homeDataLoading = false;
   h.steps = { status: "unavailable", primingShown: true, ready: true };
+  h.isPro = true;
   window.scrollBy = vi.fn();
   accountFrom(0);
 });
@@ -490,6 +496,27 @@ describe("the first-visit walk on Home", () => {
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
 
     h.steps = { status: "unprompted", primingShown: false, ready: true };
+    view.rerender(homeAt());
+    await waitFor(() =>
+      expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
+    );
+  });
+
+  it("the Health steps prompt asks only where steps can change the target", async () => {
+    // Steps feed the activity level offer on Food, which is Pro (whole-app
+    // grill Q31, Q45). A free account is not asked for data that would
+    // feed nothing; the same account on Pro is.
+    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
+    accountFrom(30);
+    h.steps = { status: "unprompted", primingShown: false, ready: true };
+    h.isPro = false;
+    const view = renderHome();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
+
+    h.isPro = true;
     view.rerender(homeAt());
     await waitFor(() =>
       expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")

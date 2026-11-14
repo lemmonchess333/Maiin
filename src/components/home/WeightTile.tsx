@@ -1,22 +1,19 @@
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import {
-  Scale,
-  Footprints,
-  ArrowRight,
-  ArrowDown,
-  ArrowUp,
-  Minus,
-} from "lucide-react";
+import { Scale, ArrowRight, ArrowDown, ArrowUp, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
-import { isNativePlatform } from "@/lib/platform";
-import type { StepsStatus } from "@/hooks/useSteps";
 
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
-export default function WeightStepsTiles({
+/**
+ * Home's weight tile, beside the water tile. It shared its column with a
+ * steps tile until the whole-app grill's Q31 (13 November 2026): "The
+ * steps tile leaves Home until it feeds something." Steps now feed the
+ * activity level offer on Food, and a count on Home that fed nothing went.
+ */
+export default function WeightTile({
   lastWeight,
   weightUnit,
   onLogWeight,
@@ -25,10 +22,6 @@ export default function WeightStepsTiles({
   saveAnnouncement,
   hideNumber = false,
   weightTrend = null,
-  stepsStatus = "unavailable",
-  steps = null,
-  stepsPending = false,
-  onConnectSteps,
   loading = false,
 }: {
   lastWeight: string | null;
@@ -44,15 +37,6 @@ export default function WeightStepsTiles({
   /* Trend direction derived from logged weight history. null = we
      have a weight but not enough history to call a direction. */
   weightTrend?: WeightTrendDirection;
-  /* HealthKit steps. On the native shell the default ("unavailable")
-     keeps the tile hidden for a caller that doesn't wire steps; on the
-     web the tile shows its Connect state whatever the status. */
-  stepsStatus?: StepsStatus;
-  steps?: number | null;
-  /** Today's steps are still being read: the figure is a placeholder,
-   *  not a 0. */
-  stepsPending?: boolean;
-  onConnectSteps?: () => void;
   /* True while the home data that carries the last weight is still
      loading. The tile then shows a skeleton, not the "not yet logged"
      empty state — every new user sees this window, and an empty state
@@ -95,96 +79,15 @@ export default function WeightStepsTiles({
       : hidden
         ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
         : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
-  // Steps (ADR-0007 Q5, and the owner's call). A browser can't read
-  // Apple Health, but the web still shows the tile, in the state a new
-  // iPhone user sees ("Connect Health"), so the web preview has the
-  // phone's layout. There it is a picture, not a control: a plain element
-  // that connects nothing. On the phone the tile hides only when the
-  // device has no Health at all. See POST_LAUNCH.md "Steps tile".
-  const native = isNativePlatform();
-  const stepsTileEnabled = !native || stepsStatus !== "unavailable";
-
-  // Connected / ambiguous both render the number (ambiguous = connected but
-  // zero/no-data, an iOS read-permission quirk we don't error on). Every
-  // other state shows Connect: `unprompted` on the phone, and the web.
-  const stepsConnected =
-    stepsStatus === "connected" || stepsStatus === "ambiguous";
-  const stepsValue = steps ?? 0;
-  const stepsAriaLabel = stepsConnected
-    ? stepsPending
-      ? "Steps today, loading."
-      : `${stepsValue.toLocaleString()} steps today.`
-    : "Steps not yet connected. Connect Apple Health to track steps.";
-
-  const stepsBody = (
-    <>
-      <div className="flex items-center gap-2 mb-1.5">
-        <div
-          className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: THEME.iconBg }}
-        >
-          {/* The weight tile's colour: steps are a reading like weight,
-              and green means a good result (DS3, one colour per job). */}
-          <Footprints
-            className="size-3.5"
-            style={{ color: THEME.semantic.activity }}
-            aria-hidden="true"
-          />
-        </div>
-        <SectionLabel>Steps</SectionLabel>
-      </div>
-      {stepsConnected ? (
-        <>
-          <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
-            {/* Same tier as the weight figure directly above it: peer
-                tiles stacked in one column, so the same size and weight
-                (DESIGN_GUIDE: never mix 700 and 800 in one tier). Only
-                the phone shows this state; the web shows Connect. */}
-            {stepsPending ? (
-              <Skeleton className="h-6 w-16" />
-            ) : (
-              <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
-                {stepsValue.toLocaleString()}
-              </p>
-            )}
-          </div>
-          <p
-            className="text-micro mt-1"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            today
-          </p>
-        </>
-      ) : (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-lifting-strong">
-            Connect Health
-            {!native && (
-              <span className="sr-only"> in the Tropos iPhone app</span>
-            )}
-          </span>
-          <ArrowRight
-            className="size-3"
-            style={{ color: THEME.brand }}
-            aria-hidden="true"
-          />
-        </div>
-      )}
-    </>
-  );
-
   return (
     /* home-declutter pyramid: this component lives in the RIGHT column
-       of the water/weight duo, so the tiles stack vertically (weight
-       above steps on native) instead of going 2-up — 2-up inside a
-       half-width cell would cramp both. h-full lets the weight tile
-       stretch to match the water tile beside it. DS3: both tiles sit on
-       the card surface, like the water tile, rather than the darker
-       muted tile. Under 9em of tile (larger text on the phone) the
-       icons give their room to the labels, which ran off the tile.
-       Each tile has an unseen heading, so Home's cards can be stepped
-       through by heading: the visible label sits inside the tile's
-       button, where a heading is no heading. */
+       of the water/weight duo. h-full lets the weight tile stretch to
+       match the water tile beside it. DS3: it sits on the card surface,
+       like the water tile, rather than the darker muted tile. Under 9em
+       of tile (larger text on the phone) the icon gives its room to the
+       label, which ran off the tile. The tile has an unseen heading, so
+       Home's cards can be stepped through by heading: the visible label
+       sits inside the tile's button, where a heading is no heading. */
     <div className="@container grid grid-cols-1 gap-2 h-full">
       <h2 className="sr-only">Weight</h2>
       <button
@@ -264,26 +167,6 @@ export default function WeightStepsTiles({
           {syncStatus ?? saveAnnouncement}
         </span>
       </button>
-      {stepsTileEnabled && <h2 className="sr-only">Steps</h2>}
-      {stepsTileEnabled &&
-        (native ? (
-          <button
-            type="button"
-            onClick={function () {
-              haptic();
-              trackHomeEvent("home_card_tapped", { card: "steps" });
-              // Only the unprompted tile connects; a connected tile tap is
-              // ambient (foreground refresh already keeps it current).
-              if (stepsStatus === "unprompted") onConnectSteps?.();
-            }}
-            aria-label={stepsAriaLabel}
-            className="p-3 rounded-xl text-left transition-transform motion-safe:active:scale-[0.97] bg-card card-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            {stepsBody}
-          </button>
-        ) : (
-          <div className="p-3 rounded-xl bg-card card-shadow">{stepsBody}</div>
-        ))}
     </div>
   );
 }

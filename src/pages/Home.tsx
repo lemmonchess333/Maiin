@@ -114,8 +114,9 @@ import {
 import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
+import { stepsFeedTheTarget } from "@/lib/stepActivity";
 import WaterCard from "@/components/home/WaterCard";
-import WeightStepsTiles from "@/components/home/WeightStepsTiles";
+import WeightTile from "@/components/home/WeightTile";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
@@ -311,8 +312,16 @@ export default function Home() {
   }, []);
   const [showProModal, setShowProModal] = useState(false);
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
-  // so the tile hides and the priming modal never opens). See POST_LAUNCH.md.
+  // so the priming modal never opens). Steps feed the activity level offer
+  // on Food (whole-app grill Q31), so Home asks to connect them only where
+  // they can change the target: a Pro account on the formula's target with
+  // no number of its own (`stepsFeedTheTarget`).
   const stepsData = useSteps();
+  const stepsFeedTarget = stepsFeedTheTarget({
+    isPro,
+    adaptiveSource: effectiveTargets.adaptiveSource,
+    manualTarget: !!profile?.customCalorieTarget,
+  });
   // First-week card dismissal — persisted once-ever (audit #7). It keeps the
   // welcome checklist's key, so anyone who closed that card is not shown
   // this one. Visibility is data-derived below (firstWeek.ts); this is only
@@ -1610,8 +1619,8 @@ export default function Home() {
             }}
           />
         </SectionErrorBoundary>
-        <SectionErrorBoundary sectionName="weight-steps">
-          <WeightStepsTiles
+        <SectionErrorBoundary sectionName="weight">
+          <WeightTile
             lastWeight={lastWeightInfo?.weight || null}
             weightUnit={weightUnit}
             onLogWeight={function () {
@@ -1624,12 +1633,6 @@ export default function Home() {
             loading={homeDataLoading}
             hideNumber={profile?.hideWeightNumber}
             weightTrend={weightTrend}
-            stepsStatus={stepsData.status}
-            steps={stepsData.steps}
-            stepsPending={stepsData.pending}
-            onConnectSteps={function () {
-              void stepsData.connect();
-            }}
           />
         </SectionErrorBoundary>
       </motion.div>
@@ -1891,12 +1894,16 @@ export default function Home() {
       {/* Steps priming (surface B) — native only, at most once ever. `open`
           is derived: connecting or dismissing persists primingShown, which
           flips this false. On web status is "unavailable" so it never opens.
+          Only where steps can change the target (Q31's offer on Food): a
+          free account, or one on a learned or manual target, is not asked
+          for data that would feed nothing.
           Not in the open of the app that held the first Home visit: that
           visit leads to the first session, whose finish screen has already
           asked about sharing and reminders, and back on Home this would be
           the third question in a minute. */}
       <StepsPrimingModal
         open={
+          stepsFeedTarget &&
           stepsData.ready &&
           stepsData.status === "unprompted" &&
           !stepsData.primingShown &&

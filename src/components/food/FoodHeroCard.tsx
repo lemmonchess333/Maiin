@@ -21,6 +21,7 @@ import { LOG_MOMENT_MS, WHEEL_GROW_MS } from "./logMoment";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 import { PersonalTargetOffer } from "./PersonalTargetCard";
+import { StepActivityOffer } from "./StepActivityOfferCard";
 import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
@@ -376,6 +377,10 @@ export default function FoodHeroCard({
           currentTarget={dailyTargets.finalTarget}
         />
       )}
+      {/* Last week's steps against the activity level the target assumes
+          (whole-app grill Q31): an offer of the level they fall in, beside
+          the target it changes. Phone and Pro only; never on the web. */}
+      {isToday && <StepActivityOffer targets={dailyTargets} />}
 
       {/* Only actionable setup guidance belongs here; the wheel and the
           macros under it already show the day's numbers. */}

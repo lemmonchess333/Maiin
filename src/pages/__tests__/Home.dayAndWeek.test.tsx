@@ -250,7 +250,7 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 }));
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
-vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
+vi.mock("@/components/home/WeightTile", () => ({ default: () => null }));
 /* The food card draws the figures it is handed; the test reads the one
    that says which day's food it is. */
 vi.mock("@/components/home/TodayEnergy", () => ({
