@@ -61,6 +61,11 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/bodyweightLogs/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/programState/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/streaks/{doc}", sides: ["owner"] },
+  // The posts a person hid from their feed (App1 Q38).
+  {
+    pathPattern: "match /users/{uid}/hiddenPosts/{activityId}",
+    sides: ["owner"],
+  },
   // Push packets 17+19 (rules lock re-cut 2026-08-03 from stale #1635):
   // /users/{uid}/devices/{tokenHash} is now fully client-locked
   // (`allow read, write: if false`) — registration/revocation go through
@@ -308,7 +313,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (30 paths)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (31 paths)", () => {
     // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
     // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
@@ -326,6 +331,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // accountDeletionWriteRulesSnapshot.test.ts.
     // Connected training adds one owner-writable Health receipt collection.
     // Trim1 call 3(b) (2026-11-12) removed /partnerBonds/{bondId} (→30).
-    expect(PROTECTED_PATHS.length).toBe(30);
+    // App1 Q38 (2026-11-13) added /users/{uid}/hiddenPosts (→31).
+    expect(PROTECTED_PATHS.length).toBe(31);
   });
 });

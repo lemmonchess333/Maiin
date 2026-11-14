@@ -104,7 +104,7 @@ export default function ReportForm({
     try {
       // Run the three actions independently so a failure in one
       // doesn't block the others. Block takes precedence (heaviest);
-      // Report queues to admin; Hide is local-only.
+      // Report queues to admin; Hide is the person's own list.
       if (doBlock && blockAvailable && targetAuthorUid) {
         await blockUser(uid, targetAuthorUid);
         // Every surface reading the block list drops them now, not on
@@ -126,7 +126,9 @@ export default function ReportForm({
         });
       }
       if (doHide && targetType === "activity") {
-        hide(targetId);
+        // Kept in the account, so it stays hidden on every device and
+        // Settings → Social & privacy → Hidden posts can show it again.
+        hide(targetId, targetAuthorUid);
       }
       // Success messaging — adapt copy to what actually fired.
       const parts: string[] = [];
@@ -265,7 +267,7 @@ export default function ReportForm({
           {targetType === "activity" ? (
             <ActionCheckbox
               label="Hide from my feed"
-              description="You won’t see this activity again."
+              description="You won’t see it in your feed. Undo it in Settings."
               checked={doHide}
               onChange={setDoHide}
             />

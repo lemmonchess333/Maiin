@@ -307,7 +307,7 @@ describe("ReportModal — submit orchestration", () => {
     });
     expect(reportContentMock).toHaveBeenCalledTimes(1);
     expect(blockUserMock).not.toHaveBeenCalled();
-    expect(hideMock).toHaveBeenCalledWith("act-1");
+    expect(hideMock).toHaveBeenCalledWith("act-1", "u-other");
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -367,7 +367,7 @@ describe("ReportModal — submit orchestration", () => {
       fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
     });
     expect(reportContentMock).not.toHaveBeenCalled();
-    expect(hideMock).toHaveBeenCalledWith("act-1");
+    expect(hideMock).toHaveBeenCalledWith("act-1", "u-other");
   });
 
   it("includes the chosen category + sub-reason in the report payload", async () => {

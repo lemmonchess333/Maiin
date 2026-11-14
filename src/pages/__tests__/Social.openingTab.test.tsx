@@ -21,7 +21,7 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "viewer" }));
 vi.mock("@/hooks/useHiddenActivities", () => ({
-  useHiddenActivities: () => ({ hidden: new Set() }),
+  useHiddenActivities: () => ({ hidden: new Set(), ready: true }),
 }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ blocked: new Set(), ready: true }),

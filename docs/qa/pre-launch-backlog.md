@@ -4981,3 +4981,31 @@ has drawn it.
       on either screen; "Hard session" does not come back to the wheel.
 - [ ] **Room.** At 320 px and with larger text, on a label day. Passing: the
       line wraps under the wheel without pushing Scan under the tab bar.
+
+## Hidden posts under Social & privacy (App1 Q38, 2026-11-13)
+
+Affects: the report form's Hide from my feed (it now writes
+`users/{uid}/hiddenPosts/{activityId}` in the account, not this device's
+local storage), the feed and the Social tab's unread count that leave hidden
+posts out, and the new Settings → Social & privacy → Hidden posts page
+(`/settings/hidden-posts`). Needs the rules deploy (Deploy production runs it
+before Hosting; the iOS build must not go out before the rules are live, or
+every hide is refused). Unit-tested on the Firestore fake; the rules tests
+ran on a local emulator. No phone has drawn it.
+
+- [ ] **Hide on the phone, see it gone on the web.** Report a post, keep Hide
+      from my feed on, submit. Passing: the post leaves the feed at once, also
+      in aeroplane mode, and is gone from the web build's feed signed in as
+      the same account.
+- [ ] **The list.** Open Settings → Social & privacy → Hidden posts. Passing:
+      the post shows with its author, its one line ("Easy run · 5.2 km ·
+      12 Nov") and Unhide; nothing runs past the screen at 320 px with large
+      text.
+- [ ] **Unhide.** Tap Unhide. Passing: the row goes, "Back in your feed"
+      offers Undo, and the post is back in the feed on both devices.
+- [ ] **An updated build keeps the old hides.** On a phone that hid a post
+      with a build from before this change, install the new one. Passing:
+      the post stays hidden, and it shows in Hidden posts.
+- [ ] **A block.** Block the author of a hidden post. Passing: the post
+      leaves the Hidden posts list (it stays hidden); unblock and it is back
+      in the list.

@@ -173,6 +173,9 @@ const SettingsRecentlyDeleted = lazyRetry(
 const SettingsPantry = lazyRetry(
   () => import("@/pages/settings/SettingsPantry")
 );
+const SettingsHiddenPosts = lazyRetry(
+  () => import("@/pages/settings/SettingsHiddenPosts")
+);
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
@@ -753,7 +756,9 @@ function SignedInRoutes({
                             land on the editor that took its reset. */}
                         <Route
                           path="/settings/training"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/run-plan"
@@ -782,7 +787,9 @@ function SignedInRoutes({
                         {/* Trim1 call 7: the rest timer is on Lift plan. */}
                         <Route
                           path="/settings/workout-prefs"
-                          element={<Navigate to="/settings/lift-plan" replace />}
+                          element={
+                            <Navigate to="/settings/lift-plan" replace />
+                          }
                         />
                         <Route
                           path="/settings/units-appearance"
@@ -858,6 +865,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <SettingsPantry />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/settings/hidden-posts"
+                          element={
+                            <RouteErrorBoundary>
+                              <SettingsHiddenPosts />
                             </RouteErrorBoundary>
                           }
                         />
