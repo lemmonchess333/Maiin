@@ -1581,4 +1581,43 @@ describe("RunPlanSettings — the 30-minute goal", () => {
       stage: 4,
     });
   });
+  it("Run24 (3): opens on Build to 5K from the Done card, and saves it in the goal's place", async () => {
+    const reached = {
+      ...newRunner,
+      runMode: "starter",
+      starterGoal: { startedOn: "2026-09-07" },
+      weeklyRunDaysTarget: 3,
+    } as unknown as UserProfile;
+    const programState = {
+      runDays: [],
+      runPlan: { mode: "starter", stage: 9, stageWeekKey: "2026-11-02" },
+      workouts: [],
+      weekNumber: 1,
+    } as unknown as ProgramState;
+    renderPage(reached, "/settings/run-plan?goal=build_5k", { programState });
+    expect(
+      screen.getByRole("radio", { name: "Plan, no race" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: /Build to 5K/ })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    // Free running, with the plan on the programme, as any plan with no
+    // race date is; the goal is kept with where it got to.
+    expect(payload.profileUpdates.runMode).toBe("freeform");
+    expect(payload.programState.runPlan).toMatchObject({
+      mode: "rolling",
+      rollingGoal: "build_5k",
+      currentWeek: 0,
+    });
+    expect(payload.profileUpdates.starterGoal).toMatchObject({
+      startedOn: "2026-09-07",
+      stage: 9,
+    });
+  });
 });

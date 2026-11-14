@@ -601,7 +601,8 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   (what the count is made of, and the days with food logged) beside
   WeeklyReviewEntry (a link while a review waits) → DayPeekCard (the
   tapped day) →
-  StarterDoneCard (the starter goal reached: Done, and a 5K offered once) →
+  StarterDoneCard (the starter goal reached: Done, and what comes next
+  offered once: Build to 5K, Keep fit or a 5K) →
   FirstWeekCard (a new account's first seven days from setup; one or two
   rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
