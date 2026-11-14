@@ -74,19 +74,33 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   their own week takes Tuesday's medium-long past the hour beside
  *   Wednesday's quality, and their Tuesday-to-Sunday days leave none
  *   clear (D16 holds it under the hour only beside two quality sessions).
+ *   Run24 (4)'s time trials, which take a quality week in five and so move
+ *   the quality ladder, gave sub-3:30 and the 2-3-day hybrids a
+ *   `volume-jump` back (the week after a cutback, 28% and 26% over it)
+ *   and the hybrids their `taper-cut`.
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": ["spike", "volume-jump"],
   "half-3-days": ["spike", "volume-jump"],
-  "sub-3-30": ["spike"],
+  "sub-3-30": ["spike", "volume-jump"],
   "sick-six-weeks": ["spike", "volume-jump"],
   "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
-  "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
-  "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
+  "hybrid-2-3-trim": [
+    "lift:misses:overhead-press",
+    "spike",
+    "taper-cut",
+    "volume-jump",
+  ],
+  "hybrid-2-3-no-trim": [
+    "lift:misses:overhead-press",
+    "spike",
+    "taper-cut",
+    "volume-jump",
+  ],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each

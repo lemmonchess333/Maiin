@@ -35,6 +35,8 @@ function midBlock() {
     weeklyRunDays: 4,
     recentLayoff: "none",
     planTotalWeeks: original.programState.runPlan!.totalWeeks,
+    // Carried as the rollover carries it (Run24 (1), (2), (8)).
+    blockInputs: original.programState.runPlan!.blockInputs,
   });
   return {
     ...original.programState,

@@ -72,9 +72,14 @@ const TEMPO_WORK: Record<string, number> = {
   tempo_30: 30,
   tempo_40: 40,
 };
+// The 1 km repeats at the interval band: a 10K's sharpener runs its 1 km
+// repeats at 10K pace (Run24 (5)).
 const INTERVAL_REPS = new Map(
   RUN_TEMPLATES.filter(
-    (t) => t.type === "intervals" && t.config.intervals?.workDistance === 1000
+    (t) =>
+      t.type === "intervals" &&
+      t.config.intervals?.workDistance === 1000 &&
+      !t.config.repeatsAt
   ).map((t) => [t.id, t.config.intervals!.reps])
 );
 
@@ -148,16 +153,17 @@ describe("quality sessions progress", () => {
     }
   });
 
-  it("volume ramps monotonically to the peak, then holds", () => {
-    // Not a formula check: read the emitted sizes for one flavour and require
-    // that the maximum is reached MORE THAN ONCE. One exposure at peak
-    // quality is a test, not a stimulus.
+  it("volume ramps monotonically to the peak", () => {
+    // Not a formula check: read the emitted sizes for one flavour and
+    // require the peak every distance builds to. It used to require the
+    // peak MORE THAN ONCE (one exposure at peak quality is a test, not a
+    // stimulus); Run24 (4)'s time trials take a quality week in five, half
+    // of them interval weeks, so the intervals now reach their peak in the
+    // last build week. A trade the lock made: the paces those sessions run
+    // at come from the trials.
     for (const distance of DISTANCES) {
       const sizes = qualitySizes(distance, "intervals");
-      const peak = Math.max(...sizes);
-      expect(sizes.filter((s) => s === peak).length, distance).toBeGreaterThan(
-        1
-      );
+      expect(Math.max(...sizes), distance).toBe(6);
     }
   });
 

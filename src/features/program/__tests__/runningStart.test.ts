@@ -310,6 +310,8 @@ describe("a plan made partway through a week starts with a lead-in (D)", () => {
         currentWeek: plan.currentWeek,
         totalWeeks: plan.totalWeeks,
         leadInWeek: plan.leadInWeek,
+        blockInputs: plan.blockInputs,
+        shortBase: plan.shortBase,
       },
       prior: { runDays: made.programState.runDays ?? [] },
     });
@@ -579,8 +581,10 @@ describe("the climb from what was done, at the runner's own pace", () => {
       "long_8k",
       "long_6k",
     ]);
-    // Without the runs, the templates' minutes: 6 km in the third week.
-    expect(outline(null)[2]).toBe("long_6k");
+    // Without the runs, the same weeks: the plan keeps the pace it was made
+    // at (Run24 (2), `RaceBlockInputs`), where a failed read put the
+    // templates' minutes back and 6 km in the third week.
+    expect(outline(null)).toEqual(outline([afternoon]));
   });
 
   it("keeps a benchmark's pace: the recent runs' pace sizes nothing for a benchmarked runner", () => {

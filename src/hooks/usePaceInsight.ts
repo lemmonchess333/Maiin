@@ -5,7 +5,11 @@ import { auth } from "@/lib/firebase";
 import { useSubscription } from "@/lib/subscription";
 import { useRunningStats } from "./useRunningStats";
 import { benchmarkEfforts, type EffortRun } from "@/lib/benchmarkEfforts";
-import { resolvePaceInsight, type PaceInsight } from "@/lib/runPaces";
+import {
+  resolveFirstPaces,
+  resolvePaceInsight,
+  type PaceInsight,
+} from "@/lib/runPaces";
 import { paceUpdateLocked } from "@/lib/paceUpdateAccess";
 import { logger } from "@/lib/logger";
 
@@ -104,12 +108,17 @@ export function usePaceInsightFromRuns(
   const runFitness = profile?.runFitness ?? null;
 
   const insight = useMemo<PaceInsight | null>(() => {
+    // Run24 (4): the run summary offers a runner with no confirmed paces
+    // their first, after the plan's time trial or another effort; taking
+    // them is Pro's (`paceUpdateLocked`).
+    const firstPaces =
+      everyAccount && (!runFitness || runFitness.pendingConfirmation === true);
     if (
       !enabled ||
       !(isPro || everyAccount) ||
       loading ||
       !profileIsCurrent ||
-      !runFitness
+      (!runFitness && !firstPaces)
     ) {
       return null;
     }
@@ -126,7 +135,9 @@ export function usePaceInsightFromRuns(
       )
     );
 
-    const next = resolvePaceInsight(runFitness, efforts);
+    const next = firstPaces
+      ? resolveFirstPaces(runFitness, efforts)
+      : resolvePaceInsight(runFitness, efforts);
     if (!next) return null;
     return dismissedVdot !== null &&
       Math.round(next.suggestedVdot) === Math.round(dismissedVdot)

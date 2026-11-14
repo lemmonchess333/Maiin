@@ -1,3 +1,5 @@
+import type { RepeatsAt } from "./runPaces";
+
 export interface RunTemplate {
   id: string;
   name: string;
@@ -40,6 +42,30 @@ export interface RunTemplate {
       walkSecs: number[];
       cooldownWalkSec: number;
     };
+    /** Run24 (4), deep dive D4: a time trial, the plan's benchmark session.
+     *  An easy warm-up, the distance as hard as the runner can hold it
+     *  evenly, an easy cool-down; no pace, since it is how the pace is
+     *  found. Its work is read as a race (`benchmarkEffortOf`). */
+    timeTrial?: {
+      distanceKm: number;
+      warmupSec: number;
+      cooldownSec: number;
+    };
+    /** Run24 (5), deep dive D5: what the repeats are run at, where it is
+     *  not the interval band: repetition pace (short, quick repeats), a 5K's
+     *  or a 10K's race pace, or by feel with no pace at all (a fartlek's
+     *  pick-ups, hill repeats). Absent: the interval band. */
+    repeatsAt?: RepeatsAt;
+    /** Run24 (5): the repeats go up a hill, with a jog back down. Run by
+     *  feel (`repeatsAt: "feel"`): a pace on a slope means nothing. */
+    uphill?: boolean;
+    /** Run24 (5): a progression run, easy and then a comfortably hard
+     *  finish, at the threshold band where a benchmark gives one. Segment
+     *  sums equal estimatedDuration. */
+    progression?: { easySec: number; finishSec: number };
+    /** Run24 (5): the taper's sharpener for a race distance, never a build
+     *  session, and never cut to one. */
+    taper?: boolean;
   };
 }
 
@@ -91,6 +117,12 @@ export function isRunWalkTemplateId(id: string | null | undefined): boolean {
     (RUN_WALK_TEMPLATE_IDS as readonly string[]).includes(key) ||
     (STARTER_NONSTOP_TEMPLATE_IDS as readonly string[]).includes(key)
   );
+}
+
+/** Run24 (4): whether a template is a time trial, the plan's benchmark
+ *  session. */
+export function isTimeTrialTemplateId(id: string | null | undefined): boolean {
+  return !!RUN_TEMPLATES.find((t) => t.id === id)?.config.timeTrial;
 }
 
 /** Run24 (6): the long runs of the ladder before it had a rung every 2 km.
@@ -264,6 +296,107 @@ export const RUN_TEMPLATES: RunTemplate[] = [
       },
     },
   },
+  // Run24 (5), deep dive D5: cruise intervals, Daniels' threshold work in
+  // blocks of 8 to 10 minutes with a short float, which holds more minutes
+  // at threshold than one block does. Their rungs are the lock's 3 x 8 and
+  // 3 x 10.
+  {
+    id: "cruise_3x8",
+    name: "Cruise 3×8 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 3×8 min tempo, 1 min floats → 5 min cooldown",
+    estimatedDuration: 41,
+    config: {
+      tempo: {
+        warmupSec: 600,
+        workSecs: [480, 480, 480],
+        floatSec: 60,
+        cooldownSec: 300,
+      },
+    },
+  },
+  {
+    id: "cruise_3x10",
+    name: "Cruise 3×10 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 3×10 min tempo, 90s floats → 5 min cooldown",
+    estimatedDuration: 48,
+    config: {
+      tempo: {
+        warmupSec: 600,
+        workSecs: [600, 600, 600],
+        floatSec: 90,
+        cooldownSec: 300,
+      },
+    },
+  },
+  // Run24 (5): a progression run, easy and then a comfortably hard finish
+  // (the threshold band), its finish growing by rung.
+  {
+    id: "progression_40",
+    name: "Progression 40",
+    type: "tempo",
+    icon: "trending-up",
+    description: "30 min easy, then 10 min comfortably hard to finish",
+    estimatedDuration: 40,
+    config: { progression: { easySec: 1800, finishSec: 600 } },
+  },
+  {
+    id: "progression_50",
+    name: "Progression 50",
+    type: "tempo",
+    icon: "trending-up",
+    description: "35 min easy, then 15 min comfortably hard to finish",
+    estimatedDuration: 50,
+    config: { progression: { easySec: 2100, finishSec: 900 } },
+  },
+  {
+    id: "progression_60",
+    name: "Progression 60",
+    type: "tempo",
+    icon: "trending-up",
+    description: "40 min easy, then 20 min comfortably hard to finish",
+    estimatedDuration: 60,
+    config: { progression: { easySec: 2400, finishSec: 1200 } },
+  },
+  // Run24 (5): the taper sessions of a half and a marathon, run at race
+  // pace where the plan has one (`racePaceWork`), else at threshold.
+  {
+    id: "sharpener_half",
+    name: "Sharpener 2×10 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 2×10 min, 2 min float → 5 min cooldown",
+    estimatedDuration: 37,
+    config: {
+      taper: true,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [600, 600],
+        floatSec: 120,
+        cooldownSec: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_marathon",
+    name: "Sharpener 2×12 min",
+    type: "tempo",
+    icon: "zap",
+    description: "10 min warmup → 2×12 min, 2 min float → 5 min cooldown",
+    estimatedDuration: 41,
+    config: {
+      taper: true,
+      tempo: {
+        warmupSec: 600,
+        workSecs: [720, 720],
+        floatSec: 120,
+        cooldownSec: 300,
+      },
+    },
+  },
   // Interval ladder. Same principle: reps grow, the rep pace does not.
   {
     id: "4x1k",
@@ -314,6 +447,373 @@ export const RUN_TEMPLATES: RunTemplate[] = [
         warmupDuration: 600,
         cooldownDuration: 300,
       },
+    },
+  },
+  // Run24 (5), deep dive D5: repeats by time, the lock's 6 x 2, 5 x 3 and
+  // 4 x 4 minutes at the interval band. A repeat by time is as long for a
+  // slow runner as a quick one, where a 1 km repeat takes one runner four
+  // minutes and another nearly seven. Each rest is what `intervalRest.ts`
+  // gives its repeat, so it is the same with a benchmark or without.
+  {
+    id: "6x2min",
+    name: "6×2 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "6 reps of 2 min hard with 90s rest",
+    estimatedDuration: 35,
+    config: {
+      intervals: {
+        reps: 6,
+        workDuration: 120,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5x3min",
+    name: "5×3 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "5 reps of 3 min hard with 2 min rest",
+    estimatedDuration: 38,
+    config: {
+      intervals: {
+        reps: 5,
+        workDuration: 180,
+        restDuration: 120,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "4x4min",
+    name: "4×4 min Intervals",
+    type: "intervals",
+    icon: "refresh-cw",
+    description: "4 reps of 4 min hard with 3 min rest",
+    estimatedDuration: 40,
+    config: {
+      intervals: {
+        reps: 4,
+        workDuration: 240,
+        restDuration: 180,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): short repeats at repetition pace, for a 5K and a 10K
+  // (Daniels' R pace: quick and relaxed, with a full recovery). Their
+  // minutes assume repeats at about 3:20 /km.
+  {
+    id: "8x200",
+    name: "8×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "8 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 31,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 8,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10x200",
+    name: "10×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "10 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 35,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 10,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "12x200",
+    name: "12×200m Speed",
+    type: "intervals",
+    icon: "wind",
+    description: "12 reps of 200m quick and relaxed, a full recovery between",
+    estimatedDuration: 40,
+    config: {
+      repeatsAt: "repetition",
+      intervals: {
+        reps: 12,
+        workDistance: 200,
+        restDuration: 90,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): race-pace sessions for a 5K and a 10K, at the race's pace
+  // the runner's benchmark gives, with a short rest. Their minutes assume
+  // 5K pace about 3:50 /km and 10K pace about 4:00.
+  {
+    id: "5k_pace_4x800",
+    name: "4×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 4,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5k_pace_5x800",
+    name: "5×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "5 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 34,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 5,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "5k_pace_6x800",
+    name: "6×800m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "6 reps of 800m at 5K race pace with 60s rest",
+    estimatedDuration: 38,
+    config: {
+      repeatsAt: "5k",
+      intervals: {
+        reps: 6,
+        workDistance: 800,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10k_pace_3x2k",
+    name: "3×2K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "3 reps of 2 km at 10K race pace with 2½ min rest",
+    estimatedDuration: 44,
+    config: {
+      repeatsAt: "10k",
+      intervals: {
+        reps: 3,
+        workDistance: 2000,
+        restDuration: 150,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "10k_pace_4x2k",
+    name: "4×2K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 2 km at 10K race pace with 2½ min rest",
+    estimatedDuration: 55,
+    config: {
+      repeatsAt: "10k",
+      intervals: {
+        reps: 4,
+        workDistance: 2000,
+        restDuration: 150,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): hill repeats, hard up and a jog back down, by feel: a pace
+  // on a slope means nothing. A 15-minute warm-up leaves time to reach a
+  // hill.
+  {
+    id: "hills_6x60s",
+    name: "Hills 6×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 hard 60s climbs, jogging back down between",
+    estimatedDuration: 36,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "hills_8x60s",
+    name: "Hills 8×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "8 hard 60s climbs, jogging back down between",
+    estimatedDuration: 42,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 8,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "hills_10x60s",
+    name: "Hills 10×60s",
+    type: "intervals",
+    icon: "mountain",
+    description: "10 hard 60s climbs, jogging back down between",
+    estimatedDuration: 48,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 10,
+        workDuration: 60,
+        restDuration: 120,
+        warmupDuration: 900,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  // Run24 (5): the base's light sessions, short hills and a fartlek, each
+  // half an hour, by feel.
+  {
+    id: "hills_6x30s",
+    name: "Short hills 6×30s",
+    type: "intervals",
+    icon: "mountain",
+    description: "6 strong 30s climbs, walking or jogging back down",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "feel",
+      uphill: true,
+      intervals: {
+        reps: 6,
+        workDuration: 30,
+        restDuration: 60,
+        warmupDuration: 900,
+        cooldownDuration: 420,
+      },
+    },
+  },
+  {
+    id: "fartlek_30",
+    name: "Fartlek 30",
+    type: "intervals",
+    icon: "wind",
+    description: "6 × 1 min pick-ups by feel, 1 min easy between",
+    estimatedDuration: 30,
+    config: {
+      repeatsAt: "feel",
+      intervals: {
+        reps: 6,
+        workDuration: 60,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 540,
+      },
+    },
+  },
+  // Run24 (5): the taper sessions of a 5K and a 10K, short repeats at the
+  // race's pace.
+  {
+    id: "sharpener_5k",
+    name: "6×400m at 5K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "6 reps of 400m at 5K race pace with 60s rest",
+    estimatedDuration: 29,
+    config: {
+      taper: true,
+      repeatsAt: "5k",
+      intervals: {
+        reps: 6,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "sharpener_10k",
+    name: "4×1K at 10K pace",
+    type: "intervals",
+    icon: "gauge",
+    description: "4 reps of 1 km at 10K race pace with 60s rest",
+    estimatedDuration: 34,
+    config: {
+      taper: true,
+      repeatsAt: "10k",
+      intervals: {
+        reps: 4,
+        workDistance: 1000,
+        restDuration: 60,
+        warmupDuration: 600,
+        cooldownDuration: 300,
+      },
+    },
+  },
+  {
+    id: "time_trial_3k",
+    name: "3K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "3 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 35,
+    config: {
+      timeTrial: { distanceKm: 3, warmupSec: 900, cooldownSec: 600 },
+    },
+  },
+  {
+    id: "time_trial_5k",
+    name: "5K time trial",
+    type: "intervals",
+    icon: "timer",
+    description: "5 km as hard as you can hold evenly, or a parkrun",
+    estimatedDuration: 45,
+    config: {
+      timeTrial: { distanceKm: 5, warmupSec: 900, cooldownSec: 600 },
     },
   },
   {
