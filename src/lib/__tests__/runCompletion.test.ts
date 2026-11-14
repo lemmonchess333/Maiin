@@ -97,6 +97,28 @@ beforeEach(() => {
 afterEach(() => online.mockRestore());
 
 describe("runDocument", () => {
+  it("keeps a goal race's predictions on its run, and on no other", () => {
+    const racePrediction = {
+      v: 1 as const,
+      distance: "10k" as const,
+      targetDate: localDateString(START),
+      entry: "race" as const,
+      goalTimeS: null,
+      predictions: [],
+    };
+    expect(runDocument(run({ racePrediction }), FINISH)).toMatchObject({
+      racePrediction,
+    });
+    expect(runDocument(run(), FINISH)).not.toHaveProperty("racePrediction");
+    expect(
+      runDocument(run({ racePrediction: null }), FINISH)
+    ).not.toHaveProperty("racePrediction");
+    // A run saved anyway is never the race.
+    expect(
+      runDocument(run({ racePrediction, isInvalid: true }), FINISH)
+    ).not.toHaveProperty("racePrediction");
+  });
+
   it("files the run under the day it started, not the day it was saved", () => {
     const saved = runDocument(run(), FINISH);
     expect(saved.date).toBe(localDateString(START));
