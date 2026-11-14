@@ -144,7 +144,7 @@ function PublicPostPage({ activityId }: { activityId: string }) {
           <div
             role="status"
             aria-label="Loading post"
-            className="aspect-square w-full rounded-2xl bg-muted animate-pulse"
+            className="aspect-square w-full rounded-2xl bg-muted motion-safe:animate-pulse"
           />
         )}
         <a
