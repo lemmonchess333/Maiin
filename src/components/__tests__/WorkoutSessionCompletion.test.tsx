@@ -8,6 +8,12 @@ import {
   resumeReads,
 } from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
+/* The saved screen's reminder offer reads providers this file does not
+   mount; it shows on a saved screen with no share, as a workout found on
+   the server on reopening has. ReminderOffer's own tests cover it. */
+vi.mock("@/components/workout/ReminderOffer", () => ({
+  default: () => null,
+}));
 /* Every save hands back a share now, as the writers' always did; the row
    that offers it is SessionShareRow's own tests' to cover. */
 const shareRow = vi.hoisted(() => ({ action: undefined as unknown }));
@@ -1178,6 +1184,64 @@ it("recognises a server-acknowledged completion after reopening instead of writi
   expect(viewWorkout).toHaveBeenCalledExactlyOnceWith(
     "programme-landed-original"
   );
+});
+
+it("a retry that fails after the server is found to have the workout leaves it saved (App1 Q20)", async () => {
+  h.user = { uid: "reopened-user" };
+  h.load.mockReturnValueOnce({
+    dayIndex: 0,
+    dayName: "Test lift",
+    identity: "test",
+    completionId: "landed-original",
+    completionCommandId: "landed-original",
+    completionPending: true,
+    elapsedSeconds: 1500,
+    currentExIndex: 0,
+    exerciseNotes: {},
+    setLogs: [[{ reps: 8, weight: 20, completed: true, type: "working" }]],
+  } as never);
+  seedFirestore({
+    "users/reopened-user/workouts/programme-landed-original": {
+      completionId: "landed-original",
+      date: "2026-09-06",
+      exercises: [],
+    },
+  });
+  // The read on reopening is held while the person taps Retry sync.
+  deferReads();
+  let failRetry!: (error: Error) => void;
+  const complete = vi.fn<CompleteDay>(
+    () =>
+      new Promise<LiftCompletionReceipt>((_, reject) => {
+        failRetry = reject;
+      })
+  );
+  await act(async () => openSession(complete));
+  await vi.waitFor(() =>
+    expect(pendingReads()).toContain(
+      "users/reopened-user/workouts/programme-landed-original"
+    )
+  );
+  // The finish screen loads on its own (`workoutSessionColdParts`).
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Retry sync" }, { timeout: 5000 })
+  );
+  await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  // The read answers first: the server has it.
+  await act(async () => {
+    resumeReads();
+    releaseAllReads();
+  });
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
+  // Then the retry fails. It used to mark the saved screen "Needs
+  // attention", under Done, with no retry on it.
+  await act(async () => failRetry(new Error("offline")));
+  expect(screen.getByText("Saved")).toBeVisible();
+  expect(
+    screen.queryByText("Needs attention · your session is here to retry")
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+  expect(h.error).not.toHaveBeenCalled();
 });
 
 describe("completed-set corrections", () => {
