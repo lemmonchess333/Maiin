@@ -51,4 +51,31 @@ describe("startOnArrival", () => {
       ).toBe("show");
     }
   });
+
+  it("on a hot day, shows the run's card, whose heat offer is a choice to make", () => {
+    expect(startOnArrival({ ...ready, heat: "show" })).toBe("show");
+    expect(startOnArrival({ ...ready, plannedRun: false, heat: "show" })).toBe(
+      "show"
+    );
+  });
+
+  it("waits a moment for the weather before starting", () => {
+    expect(startOnArrival({ ...ready, heat: "checking" })).toBe("wait");
+  });
+
+  it("starts the run when the weather has nothing to put first", () => {
+    expect(startOnArrival({ ...ready, heat: "none" })).toBe("planned");
+    expect(startOnArrival({ ...ready, plannedRun: false, heat: "none" })).toBe(
+      "free"
+    );
+  });
+
+  it("lets the first-run hint and an interrupted run come before the weather", () => {
+    expect(
+      startOnArrival({ ...ready, firstRunHint: "checking", heat: "show" })
+    ).toBe("wait");
+    expect(
+      startOnArrival({ ...ready, interruptedRun: true, heat: "checking" })
+    ).toBe("show");
+  });
 });

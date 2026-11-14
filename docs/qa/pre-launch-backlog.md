@@ -4953,6 +4953,53 @@ Affects: a marathon's or a half's later build weeks (`racePaceWeeks` in `runSche
 - [ ] **A half.** A half 14 weeks out on three run days. Passing: week 9's long run is "Long 18K with half marathon pace", two 3 km blocks; weeks 1 to 5 hold the light session and an easy run "with strides" beside the long run.
 - [ ] **Pick-ups.** As "New to running", a 5K 16 weeks out on three run days; move the date to week 8. Passing: one run reads "Easy 30 + pick-ups"; Start plays 10 minutes easy, six 1-minute pick-ups headed "COMFORTABLY HARD · 1/6" with a minute easy between, then easy to 30 minutes, with no pace shown and no easy-pace cue in the pick-ups; week 9's is "with strides" again.
 
+## Adjust for heat (Pgm8 (E8) superseded by the owner, 2026-11-14)
+
+Affects: the planned run's launch card and the full setup (`HeatPanel`:
+the heat line, Adjust for heat, Clear adjustment, the swaps), the tile
+picker and Home's day peek (the heat line), Home's Start of a planned run
+(`startOnArrival`'s heat check, `HEAT_CHECK_MS`), the run screen's eased
+bands, easy limit and heart-rate ceiling cue, and the run summary's verdict
+(tone `heat`). Hot is a T+DP sum over 130 °F, extreme over 180 °F
+(`heatLevel`). The weather is the setup strip's own read
+(`getCurrentWeather`, MET Norway through the callable), asked only once
+location permission is granted, the same way on the web and in the app.
+Unit and page tests drive it; no phone has shown it.
+
+- [ ] **The weather in the app at all.** On an iPhone with location allowed
+      for Tropos, open a run's setup (Customise). Passing: the weather strip
+      shows the temperature and "Weather data from MET Norway". If it never
+      shows, the web view's location permission reads "prompt" in the app
+      (`navigator.permissions` in WKWebView), and no heat surface can show
+      either: file it before the rows below.
+- [ ] **A hot-day run, no strap.** On a hot day (for example 30 °C at 60%
+      humidity), with a confirmed benchmark and a planned tempo today, tap
+      Start run on Home. Passing: the run page opens on the tempo's card (it
+      does not start) with "Hot today", the rule of thumb's range and
+      "Adjust for heat"; tapping it shows "Adjusted for heat: work at
+      X–Y /km." and the same range on the card; Clear adjustment gives back
+      the plan's pace; Start after adjusting runs the tempo with its steps'
+      paces slower than the plan's; the summary of a slow tempo reads
+      "Slower in the heat today: …", and no "Take this week easier?" follows
+      from it.
+- [ ] **The swaps on a phone.** On a hot day, the same tempo's card offers
+      "Run easy instead": it starts an easy run whose step lasts the minutes
+      Home and Train state for the tempo, and the summary then asks what
+      should happen to the planned tempo. A long run with a race-pace finish
+      offers "Run it all easy", which runs the distance with no race-pace
+      step.
+- [ ] **An extreme day.** On a day over 180 °F T+DP (for example 36 °C at
+      80%), Home's Start of any planned run shows its card with "Too hot to
+      run hard" and that running outside isn't advised; Start still runs it.
+- [ ] **A hot-day run with a strap.** Once the heart-rate source is live on
+      iOS (the connected-training release and the strap source), with a
+      measured max heart rate in Settings: the tempo's card offers "keep your
+      heart rate under N bpm", N the top of the tempo's zone; during the run,
+      going over N speaks "Heart rate over N. Ease off in the heat." at most
+      every 90 seconds, and with the strap off the eased paces apply.
+- [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
+      it straight away, and no screen says anything of heat.
+
 ## The session library in plans with no race date (Run24 (5), 2026-11-14)
 
 Affects: the weeks of a plan with no race date and of the rolling base before a race far away (`rollingRun`, `freeFamilies` in `runScheduler`, `ROLLING_SPECS` in `rollingPlan`), the retired structured week (`scheduleStructuredWeekV2`), and Build to 5K's line in the goal picker ("with light sessions and a short tempo"). Unit tests (`rollingSessions.test.ts`) and the simulator's `build-10k-no-date`, `year-out-marathon` and `sick-six-weeks` traces drive it; no phone has shown it.
