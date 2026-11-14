@@ -440,3 +440,40 @@ describe("RunDetail — the run's name", () => {
     ).toBeVisible();
   });
 });
+
+describe("RunDetail — a goal race against its prediction", () => {
+  const record = (predictions: unknown[]) => ({
+    v: 1,
+    distance: "5k",
+    targetDate: "2026-10-03",
+    entry: "race",
+    goalTimeS: null,
+    predictions,
+  });
+  const prediction = {
+    at: "2026-09-26T08:00:00.000Z",
+    reason: "race-week",
+    predictedS: 340,
+    vdot: 40,
+    source: "race",
+    weeksDone: 5,
+    planWeeks: 6,
+    daysToRace: 7,
+  };
+
+  it("shows what the finish screen showed, from the saved run", () => {
+    h.run = savedRun({ racePrediction: record([prediction]) });
+    renderDetail();
+    expect(screen.getByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 5:40. You ran 6:00, 0:20 slower."
+    );
+  });
+
+  it("says nothing for a goal race with no prediction, or any other run", () => {
+    h.run = savedRun({ racePrediction: record([]) });
+    renderDetail();
+    // POSITIVE anchor: the rest of the page is there.
+    expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
+    expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+  });
+});
