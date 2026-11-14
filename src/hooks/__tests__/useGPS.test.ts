@@ -366,11 +366,20 @@ describe("useGPS — a point is stamped when its fix was TAKEN", () => {
         h.watchOnFix?.(geoPos(north(3 * k), -0.12, 5, T0 - 10_000 + k * 1000));
       }
     });
+    /* Not every fix becomes a point: one does once the smoothed position
+       has moved a step (`traceStepMetres`, 2.5 m at ±5 m). Every point
+       still carries the second its fix was taken, none is thrown away, and
+       the trace reaches the batch's end. */
     const pts = result.current.points;
-    expect(pts).toHaveLength(10);
-    expect(pts.slice(1).map((p) => p.timestamp - (T0 - 10_000))).toEqual([
-      1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-    ]);
+    expect(pts.length).toBeGreaterThanOrEqual(5);
+    for (const p of pts.slice(1)) {
+      const k = (p.timestamp - (T0 - 10_000)) / 1000;
+      expect(Number.isInteger(k) && k >= 1 && k <= 9).toBe(true);
+    }
+    expect(pts[pts.length - 1].timestamp).toBeGreaterThanOrEqual(
+      T0 - 10_000 + 8000
+    );
+    expect(result.current.distance).toBeGreaterThan(24);
     expect(result.current.getRejectedFixCount()).toBe(0);
   });
 
@@ -572,7 +581,8 @@ describe("useGPS — holds: the trace stops when the run's clock does", () => {
     vi.setSystemTime(Date.now() + 5000);
     act(() => result.current.start());
     fixAt(0);
-    fixAt(3);
+    // 6 m: a step the smoothed position covers from a standing start.
+    fixAt(6);
     expect(result.current.points).toHaveLength(2);
     expect(result.current.points[1].pausedMs).toBeUndefined();
   });
@@ -639,5 +649,59 @@ describe("useGPS — standing still is not a weak signal", () => {
     vi.setSystemTime(T0 + 31_000);
     act(() => h.watchOnFix?.(geoPos(north(20), -0.12, 80, Date.now())));
     expect(result.current.getRejectedFixCount()).toBe(1);
+  });
+});
+
+describe("useGPS — a lap reads its length", () => {
+  /* The trace was smoothed by a filter with no velocity, which trailed a
+     3.5 m/s runner by about 16 m at ±10 m and cut across every bend by
+     that much: a lap of a 400 m track read about 370 m. End to end through
+     the hook, noise free, so the only error is the recording's own. */
+  const T0 = Date.parse("2026-10-04T08:00:00Z");
+
+  beforeEach(() => {
+    h.watchOnFix = null;
+    h.getCurrentImpl = () => {};
+    Object.defineProperty(navigator, "geolocation", {
+      value: {},
+      configurable: true,
+    });
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  /** Lane 1 of a 400 m track: straights of 84.39 m, bends of 36.5 m. */
+  function trackAt(m: number): { x: number; y: number } {
+    const R = 36.5;
+    const S = 84.39;
+    const bend = Math.PI * R;
+    const d = m % 400;
+    if (d < S) return { x: d, y: 0 };
+    if (d < S + bend) {
+      const a = -Math.PI / 2 + (d - S) / R;
+      return { x: S + R * Math.cos(a), y: R + R * Math.sin(a) };
+    }
+    if (d < 2 * S + bend) return { x: S - (d - S - bend), y: 2 * R };
+    const a = Math.PI / 2 + (d - 2 * S - bend) / R;
+    return { x: R * Math.cos(a), y: R + R * Math.sin(a) };
+  }
+
+  it("records three laps of a 400 m track within 2% of 1,200 m", () => {
+    const mPerLon = M_PER_DEG * Math.cos((51.5 * Math.PI) / 180);
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.start());
+    const seconds = Math.round(1200 / 3.5);
+    for (let s = 0; s <= seconds; s++) {
+      const p = trackAt(Math.min(1200, s * 3.5));
+      vi.setSystemTime(T0 + s * 1000);
+      act(() =>
+        h.watchOnFix?.(
+          geoPos(north(p.y), -0.12 + p.x / mPerLon, 10, Date.now(), 3.5)
+        )
+      );
+    }
+    expect(result.current.distance).toBeGreaterThan(1200 * 0.98);
+    expect(result.current.distance).toBeLessThan(1200 * 1.02);
   });
 });

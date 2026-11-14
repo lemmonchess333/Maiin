@@ -4873,6 +4873,17 @@ picked up the field yet.
       long run done, opened in a taper week. Passing: no "Your long runs and
       your race" sheet.
 
+## A goal race against what Tropos predicted (real outcomes, 2026-11-14)
+
+Affects: the goal race's prediction log (`users/{uid}/programState/racePrediction`, written from Home and Train by `useRacePredictionCapture`), the run summary and the saved run's page (`RacePredictionResult`), the race run's `racePrediction` record, and the operator report. Unit, hook, page and cross tests drive it; no phone has shown it, and the report has run only on fixtures.
+
+- [ ] **Plan made.** Set up a 10K race plan with a recent 5K time. Open Home. Passing: in the Firebase console, `users/{uid}/programState/racePrediction` holds one snapshot, reason `first`, `weeksDone` 0, its `predictedS` the 10K time Analytics shows for that benchmark.
+- [ ] **A pace update.** Accept faster paces after a time trial or a tempo, then open Train. Passing: the log has a second snapshot, reason `changed`, with the new time.
+- [ ] **Race week.** Move the device date into the six days before the race and open Home. Passing: the log has a `race-week` snapshot; opening Home again that day adds nothing.
+- [ ] **The race.** On race day, run the race (or start a plain run on the start line) over at least 95% of the distance, and open the summary. Passing: under the race's time, "Tropos predicted … You ran …, … faster" (or slower), and "First predicted … in week 1 of N." when the prediction moved; after Save, the run document carries `racePrediction` with the snapshots; the saved run's page shows the same line. A warm-up jog that morning shows nothing.
+- [ ] **Offline at the finish.** Finish the race with the phone offline, having opened the app earlier that week. Passing: the line still shows (the log is read from the device's copy), and the run saves with it.
+- [ ] **The report.** With application-default credentials for the project (`gcloud auth application-default login`), run `node functions/scripts/report-race-predictions.js --project=adaptive-fitness-af8bb` (add `--since=YYYY-MM-DD`, `--until=YYYY-MM-DD` for races in a date range, `--json` for JSON). Passing: it prints the goal races counted, then the error by distance and by weeks of the plan done, with no user ID; the race above is counted.
+
 ## A race plan's sizes kept on the plan (Run24 (1), (2), (8), 2026-11-14)
 
 Affects: the run plan document (`programState.runPlan.blockInputs`), written
@@ -4905,7 +4916,7 @@ Affects: which sessions a race plan's base, build and taper weeks hold (`runSche
 
 Affects: race plans more than 16 (5K, 10K), 18 (half) or 20 (marathon) weeks out (`RACE_BLOCK_MAX_WEEKS`, `raceBaseRolling` in `runScheduler`), and every reader of a plan's phase (`getPhaseForWeek`, `isRunStepBackWeek`): the race cockpit's rail and "Week N of M", the session words, the lifting's lighter weeks. Unit tests and the simulator's traces drive it; no phone has shown it.
 
-- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, 8 x 400 or a time trial, not easy runs only; the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
+- [ ] **A marathon a year out.** Set up a marathon 40 or more weeks away. Passing: the cockpit reads Base, "Week 1 of N" with N the whole plan; week 2 or 3 holds a tempo, a progression run, 8×200 m, a fartlek, short hills or a time trial, not easy runs only (Run24 (5), 2026-11-14); the long run climbs over the first weeks to 18 km and holds there; The weeks ahead shows a lighter week every fourth.
 - [ ] **Into the block.** On the same plan, move the device date to 20 weeks before the race. Passing: the long run that week is the one the base held (or a rung above), not a drop; the cockpit still reads Base until the block's build.
 - [ ] **The lifting's lighter week.** A hybrid plan with a far race. Passing: the lift side's lighter week falls in the same week as the run plan's lighter week, in the base and in the block.
 
@@ -4920,6 +4931,15 @@ Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picke
 - [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
 - [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
 - [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
+## The session library in plans with no race date (Run24 (5), 2026-11-14)
+
+Affects: the weeks of a plan with no race date and of the rolling base before a race far away (`rollingRun`, `freeFamilies` in `runScheduler`, `ROLLING_SPECS` in `rollingPlan`), the retired structured week (`scheduleStructuredWeekV2`), and Build to 5K's line in the goal picker ("with light sessions and a short tempo"). Unit tests (`rollingSessions.test.ts`) and the simulator's `build-10k-no-date`, `year-out-marathon` and `sick-six-weeks` traces drive it; no phone has shown it.
+
+- [ ] **Build to 5K.** Choose Plan, no race, Build to 5K, 4 runs a week. Passing: week 1 shows "Fartlek 30", week 2 "Short hills 6×30s" and week 3 "Fartlek 30", each beside an easy run with strides, an easy run and the long run; week 4 is the lighter week with strides only; week 5 holds "20 Min Tempo" and week 9 "Progression 40". The goal picker's line reads "Up to a long run of 8 km, with light sessions and a short tempo."
+- [ ] **Get faster at 5K.** With a confirmed benchmark, choose Get faster at 5K on 4 runs. Passing: week 2 shows "4×1K Intervals", week 5 "8×200m Speed" and week 6 "5×800m at 5K pace"; Start on the 200s plays eight quick repeats at a pace faster than the 4×1K's, with a full recovery between.
+- [ ] **No benchmark.** The same goal with no benchmark. Passing: the fartlek, the hills and the 200s speak in effort words on the run screen, never a pace.
+- [ ] **A new runner.** Set up as new to running with Plan, no race, Build to 10K. Passing: after the run-walk weeks no fartlek, hills, tempo or intervals appear until a run of 40 minutes is logged; from the week after it the sessions come, the first tempo "20 Min Tempo" and the first intervals "4×1K Intervals".
 
 ## Coming back after a break is one check for both sports (Q35, 2026-11-13)
 
@@ -4957,6 +4977,52 @@ Affects: a marathon's or a half's later build weeks (`racePaceWeeks` in `runSche
 - [ ] **By effort.** The same with no goal time and no benchmark. Passing: the blocks read "MARATHON EFFORT", with no pace bar, and the words say marathon effort, never a pace.
 - [ ] **A half.** A half 14 weeks out on three run days. Passing: week 9's long run is "Long 18K with half marathon pace", two 3 km blocks; weeks 1 to 5 hold the light session and an easy run "with strides" beside the long run.
 - [ ] **Pick-ups.** As "New to running", a 5K 16 weeks out on three run days; move the date to week 8. Passing: one run reads "Easy 30 + pick-ups"; Start plays 10 minutes easy, six 1-minute pick-ups headed "COMFORTABLY HARD · 1/6" with a minute easy between, then easy to 30 minutes, with no pace shown and no easy-pace cue in the pick-ups; week 9's is "with strides" again.
+
+## Run distance: the velocity filter and the trace step (2026-11-14)
+
+Affects: every new run's distance, kilometre splits, best efforts, live pace
+and saved figures (`VelocityKalmanFilter`, `traceStepMetres`, `isTraceStep`
+in `src/lib/gps.ts`; `src/hooks/useGPS.ts`). Saved runs keep their stored
+distance and splits. The numbers that chose it come from a synthetic bench
+(`src/test/gpsBench.ts`), whose model of GPS error is an assumption: only a
+phone on a measured course, beside another app, says whether it holds.
+
+- [ ] **A track, beside Strava.** Run 10 laps of lane 1 of a 400 m track
+      (4 km) with Tropos on one phone and Strava on another, auto-pause the
+      same in both. Passing: Tropos reads 3.92 to 4.08 km, and within 2% of
+      Strava; each lap-kilometre split within a few seconds of Strava's.
+      Before this change the bench read a track 3% to 16% short.
+- [ ] **A parkrun, beside Strava.** A measured 5 km course, both apps.
+      Passing: Tropos reads 4.90 to 5.10 km, within 2% of Strava, and its
+      run time differs from Strava's moving time only by the stops (see the
+      note below).
+- [ ] **A street grid.** A loop with many right-angle corners, both apps.
+      Passing: Tropos within 2% of Strava. The old filter cut every corner.
+- [ ] **Which error model the phone matches.** Stand still in the open for
+      two minutes with a run recording and auto-pause off, then export the
+      GPX, which carries the raw fixes.
+      Work out the standard deviation of the change in position from one
+      fix to the next, per axis. Under about 0.7 m: the bench's smooth
+      model, where the new rule is within 2%. Over about 1.5 m: the rough
+      one, where it reads 2% to 5.5% long on straights and the next step is
+      Doppler speed in the distance (measured on the bench at within 3%).
+      Note the distance the run gained while standing: in two minutes the
+      bench read 18 to 55 m under the smooth model and up to 97 m under the
+      rough one (the old filter 20 to 45 m, and up to 67 m). With
+      auto-pause on (the default) a stop records none.
+- [ ] **A 1K best effort.** On a run with a steady kilometre, the 1K best
+      effort should be close to that kilometre's split, not much faster.
+      On the bench it reads 5 s to 11 s fast under the smooth model and
+      10 s to 25 s fast under the rough one (the old filter read 9 s to
+      51 s slow).
+
+Moving time is not the same rule as Strava's, on purpose, and this change
+leaves it alone: Tropos's auto-pause stops the clock after 5 s below
+0.5 m/s and restarts it at 1 m/s, from GPS speed; Strava's app pauses a run
+from the accelerometer within about a second; and Strava's server, for an
+activity recorded without pauses, takes out stretches below a speed
+threshold that last more than 15 s. Two phones on the same run can read
+different times for that reason alone.
 
 ## Adjust for heat (Pgm8 (E8) superseded by the owner, 2026-11-14)
 

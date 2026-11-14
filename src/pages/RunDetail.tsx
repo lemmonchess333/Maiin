@@ -64,6 +64,8 @@ import {
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
 import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
+import RacePredictionResult from "@/components/run/RacePredictionResult";
+import { parseGoalRaceRecord } from "@/lib/racePrediction";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
@@ -557,6 +559,13 @@ export default function RunDetail() {
               unit: CALORIE_UNIT,
             },
           ]}
+        />
+
+        {/* A goal race against what Tropos predicted for it, as the
+            finish screen showed it (`racePrediction` on the run). */}
+        <RacePredictionResult
+          record={parseGoalRaceRecord(run.racePrediction)}
+          actualS={run.duration}
         />
 
         <HeartRateSummaryCard summary={run.heartRate} />
