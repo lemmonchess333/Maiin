@@ -111,6 +111,20 @@ describe("getCurrentWeather", () => {
     expect(call.fn).toHaveBeenCalledTimes(2);
   });
 
+  it("asks once for callers that ask at the same time", async () => {
+    // The run page, its setup and Home's day can each ask while the first
+    // read is still under way: one lookup answers them all.
+    const { getCurrentWeather } = await load();
+    const answers = await Promise.all([
+      getCurrentWeather(),
+      getCurrentWeather(),
+      getCurrentWeather(),
+    ]);
+    expect(answers).toEqual([READING, READING, READING]);
+    expect(call.fn).toHaveBeenCalledOnce();
+    expect(getCurrentPosition).toHaveBeenCalledOnce();
+  });
+
   it("answers null when the callable fails, and asks again next time", async () => {
     call.fn.mockRejectedValueOnce(
       Object.assign(new Error("unavailable"), { code: "functions/unavailable" })

@@ -3,6 +3,10 @@ import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import type { RacePaceWork } from "@/lib/racePace";
 import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
+import HeatPanel, {
+  type HeatPanelAdjust,
+  type HeatPanelSwap,
+} from "./HeatPanel";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
  * 2026-07).
@@ -55,6 +59,17 @@ interface RunLaunchCardProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
+  /** A hot or extreme day (heatAdjustment.ts): the heat line, the offer to
+   *  adjust this run for heat and any swap. Null on any other day. */
+  heat?: {
+    level: "hot" | "extreme";
+    line: string;
+    adjust?: HeatPanelAdjust | null;
+    swap?: HeatPanelSwap | null;
+  } | null;
+  /** The work pace as a range, in place of the one pace, once the run is
+   *  adjusted for heat. */
+  paceRange?: string | null;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
@@ -85,6 +100,8 @@ export default function RunLaunchCard({
   onHelp,
   purpose,
   gpsSignal,
+  heat = null,
+  paceRange = null,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const name = runSessionName(workout, racePace, unit);
@@ -100,8 +117,9 @@ export default function RunLaunchCard({
     target?.type === "time" && target.value
       ? Math.round(target.value / 60)
       : null;
-  const paceLabel =
-    target?.type === "pace" && target.value
+  const paceLabel = paceRange
+    ? paceRange
+    : target?.type === "pace" && target.value
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
@@ -201,6 +219,18 @@ export default function RunLaunchCard({
             <RunAbout about={about} why={purpose} />
           </RunPurpose>
         </div>
+
+        {/* A hot or extreme day: the heat line, the offer to adjust this
+            run for heat (and to clear it), and a swap, which starts at
+            once. The plan keeps the session either way. */}
+        {heat && (
+          <HeatPanel
+            level={heat.level}
+            line={heat.line}
+            adjust={heat.adjust}
+            swap={heat.swap}
+          />
+        )}
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />
       </div>

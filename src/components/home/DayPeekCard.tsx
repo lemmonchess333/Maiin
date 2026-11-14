@@ -48,6 +48,10 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import HeatPanel from "@/components/run/HeatPanel";
+import { heatLine, HEAT_PREVIEW_LINE } from "@/lib/heatAdjustment";
+import { useHotDay } from "@/hooks/useHotDay";
+import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
 /* Closed when Home first draws, and it brings the bottom sheet (vaul and
    Radix) with it: it loads once the card has drawn, as Home's
@@ -248,6 +252,18 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
+  /* Today's run still to do, on a hot or extreme day: the heat line, and
+     that the run can be adjusted for heat as it starts (heatAdjustment.ts).
+     The weather is read only for that run, and only once location is
+     allowed (`useHotDay`). */
+  const todayRunAhead =
+    dateKey === todayKey &&
+    resolved.run.runDay !== null &&
+    !resolved.run.isCompleted &&
+    resolved.run.status !== "none" &&
+    isScheduledRunStartable(resolved.run.status);
+  const heat = useHotDay(todayRunAhead);
+  const heatLineToday = heatLine(heat.weather);
   /* Today's lift is the one the today card offers (the programme's next),
      not the weekday's slot, so the peek and the card name one session. */
   const dayLift = liftOnDate({
@@ -643,6 +659,13 @@ export default function DayPeekCard({
                   <RunPurpose>
                     <RunAbout about={runAbout} why={runPurpose} />
                   </RunPurpose>
+                  {todayRunAhead && heat.level !== "none" && heatLineToday && (
+                    <HeatPanel
+                      level={heat.level}
+                      line={heatLineToday}
+                      note={HEAT_PREVIEW_LINE}
+                    />
+                  )}
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from
