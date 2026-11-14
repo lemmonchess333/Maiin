@@ -137,6 +137,7 @@ import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
 import {
   AUTO_PAUSE_IDLE,
+  motionFrom,
   stepAutoPause,
   type AutoPauseState,
 } from "@/lib/runAutoPause";
@@ -1899,9 +1900,9 @@ export default function Run() {
      sensors run from Start to the finish of an outdoor run with
      auto-pause on, so Motion & Fitness is asked for beside location,
      while GPS is still being found. Auto-pause itself comes into play
-     only with the clock (phase active, Run25 call 2), and stop evidence
-     from before then is not a stop (`armedAt`), so nothing found while
-     finding GPS pauses the run. */
+     only with the clock (phase active, Run25 call 2), and reads only what
+     the sensors saw from the clock's start (`motionFrom`), so nothing they
+     saw while GPS was found pauses the run or holds it running. */
   const motionSessionId =
     activeSessionId &&
     runConfig?.autoPause &&
@@ -1939,7 +1940,8 @@ export default function Run() {
     const step = stepAutoPause(autoPauseRef.current, {
       now: Date.now(),
       gps: gps.currentPoint,
-      motion: runMotion,
+      // The run's evidence starts with its clock (Run25 call 2).
+      motion: motionFrom(runMotion, recordingStartedAtRef.current),
       inRecovery,
     });
     autoPauseRef.current = step.state;
