@@ -58,6 +58,9 @@ const h = vi.hoisted(() => ({
   distanceCue: vi.fn(),
   timeCue: vi.fn(),
   speak: vi.fn(),
+  hr: { bpm: null as number | null, maxHr: 0 },
+  easyHeartRate: vi.fn(),
+  easyCeiling: vi.fn(),
 }));
 
 /* Stable across renders, as the real hook's useCallbacks are: the page's
@@ -129,7 +132,7 @@ vi.mock("@/hooks/useWakeLock", () => ({
   useWakeLock: () => ({ request: vi.fn(), release: vi.fn() }),
 }));
 vi.mock("@/hooks/useHeartRate", () => ({
-  useHeartRate: () => ({ bpm: null }),
+  useHeartRate: () => h.hr,
 }));
 vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
@@ -138,7 +141,8 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkDistanceCue: h.distanceCue,
     checkTimeCue: h.timeCue,
     checkPaceAlert: () => {},
-    checkEasyCeiling: () => {},
+    checkEasyCeiling: h.easyCeiling,
+    checkEasyHeartRate: h.easyHeartRate,
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),
@@ -337,6 +341,9 @@ beforeEach(() => {
   h.distanceCue.mockReset();
   h.timeCue.mockReset();
   h.speak.mockReset();
+  h.hr = { bpm: null, maxHr: 0 };
+  h.easyHeartRate.mockReset();
+  h.easyCeiling.mockReset();
 });
 afterEach(async () => {
   await restoreRealTimers();
@@ -836,6 +843,44 @@ describe("a run-walk's announcements", () => {
     await resumeFromSnapshot("active");
     expect(h.distanceCue).toHaveBeenCalled();
     expect(h.timeCue).toHaveBeenCalled();
+  });
+});
+
+/* Run24 (12) with live heart rate: an easy run is held to the top of Zone 2
+   when there is a reading and a max to read it against, and to pace
+   otherwise. */
+describe("the easy cue's source", () => {
+  it("reads heart rate against the top of Zone 2 when there is a live reading", async () => {
+    h.hr = { bpm: 150, maxHr: 187 };
+    await resumeFromSnapshot("active");
+    expect(h.easyHeartRate).toHaveBeenCalledWith(150, 131, 600);
+    expect(h.easyCeiling).not.toHaveBeenCalled();
+  });
+
+  it("asks nothing of heart rate with no reading, or no max to read it against", async () => {
+    h.hr = { bpm: null, maxHr: 187 };
+    const first = await resumeFromSnapshot("active");
+    first.view.unmount();
+    h.hr = { bpm: 150, maxHr: 0 };
+    await resumeFromSnapshot("active");
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
+  });
+
+  it("is not a tempo's, nor a run-walk's", async () => {
+    h.hr = { bpm: 150, maxHr: 187 };
+    const tempo = await resumeFromSnapshot("active", { activityType: "tempo" });
+    tempo.view.unmount();
+    const runWalk = RUN_TEMPLATES.find((t) => t.id === "run_walk_1")!;
+    await resumeFromSnapshot("active", {
+      target: { type: "time", value: 29 * 60 },
+      segments: segmentsFromRunWalk(runWalk.config.runWalk!),
+      planMetadata: {
+        ...freeformPlanMetadata("freeform"),
+        planSource: "url_template",
+        actualTemplateId: "run_walk_1",
+      },
+    });
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
   });
 });
 
