@@ -1901,6 +1901,12 @@ export default function Run() {
     const previous = watchCommandLedgerRef.current.get(command);
     if (previous) {
       void acknowledgeWatchRunCommand(previous);
+      trackLifecycleEvent("watch_command_answered", {
+        watchAction: command.action,
+        accepted: previous.accepted,
+        repeated: true,
+        ...(previous.reason ? { rejection: previous.reason } : {}),
+      });
       return;
     }
     const identity = identityRef.current;
@@ -1975,6 +1981,12 @@ export default function Run() {
     };
     watchCommandLedgerRef.current.remember(ack);
     void acknowledgeWatchRunCommand(ack);
+    // Aggregate only: the action and its answer, never the run or session.
+    trackLifecycleEvent("watch_command_answered", {
+      watchAction: command.action,
+      accepted,
+      ...(ack.reason ? { rejection: ack.reason } : {}),
+    });
   });
   useEffect(() => {
     if (!watchEligible || !activeSessionId) return;
