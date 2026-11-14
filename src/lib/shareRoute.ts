@@ -1,5 +1,5 @@
 import { haptic } from "./haptic";
-import { toGPX, type GPSPoint } from "./gps";
+import { rawTrace, toGPX, type GPSPoint } from "./gps";
 import { splitRouteSegments } from "./routeSegments";
 import { applyPrivacyZones, type PrivacyZone } from "./privacyZones";
 import { shareFile } from "./shareFile";
@@ -8,16 +8,30 @@ import { toast } from "./toast";
 export type ShareRouteResult = "shared" | "downloaded" | "cancelled" | "failed";
 
 /**
- * Remove all privacy-zone crossings, preserving gaps in the exported track.
+ * The points a GPX export writes: the raw fixes (`rawTrace`), with every
+ * privacy-zone crossing removed on those same coordinates. A raw fix can
+ * sit a few metres nearer a zone than its smoothed point, so the cut is
+ * made on what the file carries, not on what the map drew.
+ */
+export function exportTrace(
+  points: GPSPoint[],
+  zones: PrivacyZone[]
+): GPSPoint[] {
+  const raw = rawTrace(points);
+  return zones.length === 0 ? raw : applyPrivacyZones(raw, zones);
+}
+
+/**
+ * The export's points (`exportTrace`), preserving gaps in the track.
  * Returns null when the whole route sits inside a zone (nothing safe to share)
- * so callers can refuse rather than leak. No zones → the route unchanged.
+ * so callers can refuse rather than leak.
  */
 export function resolveShareRoute(
   points: GPSPoint[],
   zones: PrivacyZone[]
 ): GPSPoint[] | null {
-  if (zones.length === 0) return points;
-  const trimmed = applyPrivacyZones(points, zones);
+  const trimmed = exportTrace(points, zones);
+  if (zones.length === 0) return trimmed;
   return splitRouteSegments(trimmed).some((segment) => segment.length >= 2)
     ? trimmed
     : null;
