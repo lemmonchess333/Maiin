@@ -5130,3 +5130,20 @@ Unit-tested; no phone has drawn it.
       and opens the Circle sheet over the finish screen, dimming it, and sharing
       posts "completed a session" with no numbers. A saved routine or an empty
       workout offers no Share to circle there.
+
+## The retired "structured" run mode counted, then removed (App1 Q25, 2026-11-13)
+
+Affects: `functions/scripts/countStructuredRunMode.js`, a read-only count of
+the accounts whose profile (`runMode`) or plan (`programState/current`
+`runPlan.mode`) still holds the structured run mode Run9 (3a) retired. The
+removal that follows it (the mode out of the types, the scheduler, the
+server's enums) merges only once this reads 0. Saved runs keep the mode as
+history; their line does not hold the removal back.
+
+- [ ] **The count, before the removal merges.** From the repo root, with a
+      service account that can read Firestore:
+      `GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json node functions/scripts/countStructuredRunMode.js adaptive-fitness-af8bb`.
+      Passing: `"holding": 0` and the line "No account holds the
+      structured run mode: the removal can merge." Above 0, add `--uids`
+      to see which accounts, and run it again once they have opened the
+      app (each moves to free running when it does).
