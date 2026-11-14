@@ -164,20 +164,27 @@ describe("the long run with race-pace blocks (Run24 (5))", () => {
     ).toEqual([]);
   });
 
-  it("stays plain where the starting point's climb holds the long run short", () => {
+  it("stays plain in a week the starting point's climb holds short", () => {
     const out = plan("marathon", 20, 4, {
       runningBaseline: {
         version: 1,
-        experience: "occasional",
+        experience: "building",
         weeklyMinutes: 90,
         longestRunMinutes: 40,
         confirmedAt: "2026-03-01",
         source: "self_reported",
       },
     });
-    for (const week of out.weeks)
-      for (const run of week)
-        if (isTwin(run.templateId)) expect(run.trainingBasis).toBeUndefined();
+    const held = out.weeks.filter((week) =>
+      week.some((run) => run.trainingBasis)
+    );
+    // The climb holds this runner's later weeks short, and none of those
+    // holds blocks; the plain plan held two.
+    expect(held.length).toBeGreaterThan(0);
+    for (const week of held)
+      expect(week.some((run) => isTwin(run.templateId))).toBe(false);
+    expect(twinWeeks(plan("marathon", 20, 4))).toHaveLength(2);
+    expect(twinWeeks(out).length).toBeLessThan(2);
   });
 });
 
