@@ -5026,7 +5026,7 @@ different times for that reason alone.
 ## Run start: the clock waits for the first good fix (2026-11-14)
 
 Affects: every GPS run's start (Run25 call 2; `src/lib/gpsStart.ts`,
-`useGPS`'s `warm` and `start({ awaitStartFix })`, `useGpsWarmup`, the run
+`useGPS`'s `warm` and `startAwaitingFix`, `useGpsWarmup`, the run
 screen's "Finding GPS" in `src/pages/Run.tsx`). The run screen watches
 location from the moment it opens, before Start (a foreground-only watch
 that never asks for location), and a GPS run's clock, distance and steps

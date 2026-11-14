@@ -1270,7 +1270,7 @@ export default function Run() {
        now; without one the run waits on "Finding GPS" for it, or for
        Start anyway. */
     const tappedAt = Date.now();
-    const fixInHand = gps.start({ awaitStartFix: true, at: tappedAt });
+    const fixInHand = gps.startAwaitingFix(tappedAt);
     dispatch({ type: "START_GPS", fixInHand });
     if (fixInHand) startGpsClock(tappedAt);
   };

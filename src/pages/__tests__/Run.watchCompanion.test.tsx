@@ -134,6 +134,7 @@ vi.mock("@/hooks/useGPS", () => ({
     lastFixAt: null,
     warm: () => {},
     cool: () => {},
+    startAwaitingFix: () => false,
     startAnyway: () => {},
     start: () => {},
     stop: () => {},

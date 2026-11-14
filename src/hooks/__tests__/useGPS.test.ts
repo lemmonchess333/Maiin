@@ -316,7 +316,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
     const { result } = warmFix(8, T0 - 2000);
     let onFix = false;
     act(() => {
-      onFix = result.current.start({ awaitStartFix: true, at: T0 });
+      onFix = result.current.startAwaitingFix(T0);
     });
     expect(onFix).toBe(true);
     expect(result.current.points).toHaveLength(1);
@@ -334,7 +334,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
     const { result } = warmFix(accuracy, takenAt);
     let onFix = true;
     act(() => {
-      onFix = result.current.start({ awaitStartFix: true, at: T0 });
+      onFix = result.current.startAwaitingFix(T0);
     });
     expect(onFix).toBe(false);
     expect(result.current.points).toEqual([]);
@@ -343,7 +343,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
   it("waits past a 40 m fix, and starts on a later 18 m one when it was taken", () => {
     const { result } = renderHook(() => useGPS());
     act(() => {
-      result.current.start({ awaitStartFix: true, at: T0 });
+      result.current.startAwaitingFix(T0);
     });
     vi.setSystemTime(T0 + 3000);
     act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 3000)));
@@ -362,7 +362,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
   it("never stamps the first point before Start", () => {
     const { result } = renderHook(() => useGPS());
     act(() => {
-      result.current.start({ awaitStartFix: true, at: T0 });
+      result.current.startAwaitingFix(T0);
     });
     // Taken half a second before the tap, delivered just after it.
     vi.setSystemTime(T0 + 200);
@@ -373,7 +373,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
   it("takes the first fix the reading gate passes after Start anyway", () => {
     const { result } = renderHook(() => useGPS());
     act(() => {
-      result.current.start({ awaitStartFix: true, at: T0 });
+      result.current.startAwaitingFix(T0);
     });
     vi.setSystemTime(T0 + 2000);
     act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 2000)));
@@ -399,7 +399,7 @@ describe("useGPS — the first point a run's clock starts on", () => {
   it("restarting a run's watch never waits again", () => {
     const { result } = renderHook(() => useGPS());
     act(() => {
-      result.current.start({ awaitStartFix: true, at: T0 });
+      result.current.startAwaitingFix(T0);
     });
     act(() => result.current.startAnyway());
     act(() => result.current.stop());

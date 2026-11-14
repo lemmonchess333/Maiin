@@ -71,9 +71,10 @@ const gpsControls = {
     h.cools += 1;
   },
   startAnyway: () => h.gpsCalls.push("startAnyway"),
+  start: () => h.gpsCalls.push("start"),
   // No fix in hand at Start, as the real hook says with none from the
   // warm watch: the run waits on "Finding GPS" (Run25 call 2).
-  start: () => {
+  startAwaitingFix: () => {
     h.gpsCalls.push("start");
     return false;
   },
