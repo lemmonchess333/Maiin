@@ -109,7 +109,6 @@ async function main() {
       weekNumber: 2,
       splitType: "upper_lower",
       primaryGoal: "hypertrophy",
-      fatigueScore: 0,
       updatedAt: Date.now(),
       programSchemaVersion: 2,
       workouts: [

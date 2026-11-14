@@ -11,7 +11,6 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
    (2026-07-11 repo audit batch 3): this file imports the inference
    function, so the inference module must not import back from here. */
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
-import type { CanonicalMuscle } from "./muscleTaxonomy";
 export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
@@ -339,8 +338,8 @@ export interface ProgramSettings {
    * Lift4 (6): "I have small plates", so a barbell, and the belt on a
    * bodyweight lift (Pgm8 L6), step 1.25 kg instead of 2.5 kg
    * (`loadSteps.ts`). Off until the person turns it on. It replaced
-   * Microloading, whose `microloading` key older documents still carry and
-   * nothing reads.
+   * Microloading, whose retired `microloading` key the server deletes
+   * (`RETIRED_PROGRAM_STATE_SUBKEYS` in functions/lib/programStateSanitizer.js).
    */
   smallPlates: boolean;
   /**
@@ -397,7 +396,6 @@ export interface DeloadSnapshot {
    */
   runDays?: ScheduledRunDay[];
   currentPhase: string;
-  fatigueScore: number;
   appliedAt: number;
 }
 
@@ -853,12 +851,6 @@ export interface ActiveTrainingBlock {
    */
   goalBefore: PrimaryGoal;
   /**
-   * Weeks the programme-level response to a stall was held back after a
-   * block began. The block command still sets it, but nothing reads it: the
-   * response it held back, the adjustment rule, is retired (Lift4 (13)).
-   */
-  amnestyWeeksLeft: number;
-  /**
    * Lifts a week this block asks for. Display and the review denominator
    * only — NEVER mirrored to `profile.weeklyWorkoutsTarget`, which feeds
    * `expectedDayCount` and would silently send the user's next unrelated
@@ -884,11 +876,10 @@ export interface ProgramState {
   splitType: SplitType;
   workouts: WorkoutDay[];
   /**
-   * The score the retired fatigue shave read (Lift4 (13)). Nothing computes
-   * it now: new plans seed 0, and stored plans and the server's deload
-   * snapshot carry it.
+   * When the plan was last written. An operations timestamp: nothing
+   * decides anything from it, and it stays for saying when a plan last
+   * changed (App1 Q24).
    */
-  fatigueScore: number;
   updatedAt: number;
   settings?: ProgramSettings;
   weekHistory?: WeekSnapshot[];
@@ -945,20 +936,6 @@ export interface ProgramState {
    * fitted to time; for those, Start still trims to the person's usual time.
    */
   sessionMinutes?: number;
-  /**
-   * How many times the retired adjustment rule cut volume for a stall
-   * (Lift4 (13)). Nothing writes or reads it now; stored plans still carry
-   * it, and the server's allow-list admits it.
-   */
-  plateauResponses?: number;
-  /**
-   * ID of the handwritten template this program was assigned at
-   * onboarding, when a match existed. Absent when `matchTemplate`
-   * couldn't find a goal-matching template and the program came from
-   * the procedural engine — UI uses this to render or omit the
-   * "from the X template" clause.
-   */
-  templateId?: string;
 
   /**
    * Schema version for the `programState` doc shape. Read-side
@@ -980,7 +957,7 @@ export interface ProgramState {
   /**
    * Blk2: the training block that owns the lift prescription, or absent for
    * the overwhelmingly common no-block case. Optional with a defaulting
-   * reader → no schema bump, same pattern as `plateauResponses` above.
+   * reader → no schema bump, same pattern as `sessionMinutes` above.
    *
    * Client-written and never read by a function, but it is allow-listed in
    * `functions/lib/programStateSanitizer.js` — keep in lockstep, and note
@@ -1053,14 +1030,6 @@ export interface ProgramState {
   raceWeek?: "build" | "taper" | "race" | "after";
 
   /**
-   * The muscles the retired per-muscle recovery session eased (Lift4 (13)).
-   * Nothing reads or writes it now, and the rollover drops a stored one; it
-   * stays declared because stored plans carry it and the server's
-   * allow-list admits it.
-   */
-  recoveringMuscles?: CanonicalMuscle[];
-
-  /**
    * The last exercise removed through the command boundary, stashed verbatim
    * so `restoreExercise` can undo it (P6).
    *
@@ -1086,6 +1055,38 @@ export interface ProgramState {
     /** Epoch ms — the server refuses a restore older than its window. */
     removedAt: number;
   };
+}
+
+/**
+ * Top-level keys a plan used to carry that nothing reads or writes now
+ * (App1 Q24): the retired fatigue shave's score, the retired adjustment
+ * rule's count, the handwritten template a plan was matched to (the plan's
+ * own `templateId`, never a run day's) and the retired recovery session's
+ * muscles. None is on `ProgramState`.
+ *
+ * A stored plan carries them until the strip script has run
+ * (`functions/scripts/stripRetiredProgramFields.js`), and an app from
+ * before the change can write one back. The server deletes them from every
+ * plan a programme command writes, and never refuses a write for one
+ * (`RETIRED_PROGRAM_STATE_KEYS` in functions/lib/programStateSanitizer.js,
+ * which this list is pinned to by `retiredProgramKeys.cross.test.ts`); the
+ * week's rollover drops them (`withoutRetiredProgramKeys`), so this app
+ * never writes one back.
+ */
+export const RETIRED_PROGRAM_STATE_KEYS = [
+  "fatigueScore",
+  "plateauResponses",
+  "templateId",
+  "recoveringMuscles",
+] as const;
+
+/** The plan without the retired top-level keys a stored copy may carry. */
+export function withoutRetiredProgramKeys(state: ProgramState): ProgramState {
+  const stored = state as ProgramState & Record<string, unknown>;
+  if (!RETIRED_PROGRAM_STATE_KEYS.some((key) => key in stored)) return state;
+  const kept: Record<string, unknown> = { ...stored };
+  for (const key of RETIRED_PROGRAM_STATE_KEYS) delete kept[key];
+  return kept as unknown as ProgramState;
 }
 
 /* ================================

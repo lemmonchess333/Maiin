@@ -296,7 +296,6 @@ function programStateWith(overrides: Record<string, unknown> = {}) {
     weekNumber: 3,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

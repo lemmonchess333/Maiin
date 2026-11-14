@@ -42,7 +42,6 @@ function block(
     durationWeeks: 8,
     startDate: "2026-10-05",
     goalBefore: "hypertrophy",
-    amnestyWeeksLeft: 0,
     weeklyLiftTarget: 3,
     anchorExerciseIds: [],
     why: "",

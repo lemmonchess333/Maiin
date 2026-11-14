@@ -95,7 +95,6 @@ async function lifterOnWednesday(
         weekNumber: 1,
         splitType: "upper_lower",
         workouts,
-        fatigueScore: 0,
         updatedAt: wednesday.getTime(),
         liftWeekKey: localWeekKey(wednesday),
         programSchemaVersion: 3,

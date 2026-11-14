@@ -119,7 +119,6 @@ export function makeProgram(
     weekNumber: 1,
     splitType: "full_body",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 0,
     ...overrides,
   };

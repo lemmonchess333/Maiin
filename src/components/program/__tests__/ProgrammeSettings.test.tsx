@@ -542,7 +542,6 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
     weekNumber: 5,
     splitType: "upper_lower",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 1,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

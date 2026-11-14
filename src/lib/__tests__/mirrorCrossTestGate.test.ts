@@ -333,7 +333,8 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
   "functions/lib/challengeDefs.js":
     "consolidated server-owned definitions; no client copy to drift against",
   "functions/lib/programStateSanitizer.js":
-    "server-only payload sanitiser, not a mirror of a client function",
+    "server-only payload sanitiser, not a mirror of a client function; its " +
+    "retired-key list is pinned to the client's by retiredProgramKeys.cross.test.ts",
   "functions/lib/pushConsent.js":
     "the client copy is deliberately SHAPE-only (types + defaults); the predicate " +
     "was deleted there on purpose after the tested copy turned out to be the dead " +

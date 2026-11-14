@@ -59,7 +59,6 @@ const programme = (overrides: Partial<ProgramState> = {}): ProgramState =>
     weekNumber: 1,
     splitType: "upper_lower",
     workouts: [lift("Upper A"), lift("Lower A"), lift("Upper B")],
-    fatigueScore: 0,
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

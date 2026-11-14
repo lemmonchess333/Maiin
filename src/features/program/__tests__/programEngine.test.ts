@@ -453,7 +453,6 @@ describe("advanceWeek — a new cycle keeps every lift", () => {
       currentPhase: "deload",
       weekNumber: 4,
       splitType: "upper_lower",
-      fatigueScore: 0,
       updatedAt: 0,
       workouts: [
         {
@@ -491,7 +490,6 @@ describe("advanceWeek", () => {
     currentPhase: "progression",
     weekNumber: 3,
     splitType: "upper_lower",
-    fatigueScore: 50,
     updatedAt: Date.now(),
     workouts: [
       {
@@ -525,7 +523,6 @@ describe("advanceWeek", () => {
     const state: ProgramState = {
       ...baseProgramState,
       weekNumber: 1,
-      fatigueScore: 7,
       workouts: [
         {
           dayName: "Upper A",
@@ -542,17 +539,40 @@ describe("advanceWeek", () => {
     const result = advanceWeek(state);
     expect(result.currentPhase).toBe("progression");
     expect(result.workouts[0].exercises.map((e) => e.sets)).toEqual([6, 6, 6]);
-    expect(result.fatigueScore).toBe(7);
+  });
+
+  it("drops the retired keys a stored plan carries (App1 Q24)", () => {
+    // Nothing reads them; the rollover is a whole-document write, so a
+    // stored copy carried through it would be written back every week.
+    const stored = {
+      ...baseProgramState,
+      fatigueScore: 7,
+      plateauResponses: 2,
+      templateId: "ppl_4day",
+      recoveringMuscles: ["Chest"],
+      runDays: [{ dayIndex: 1, templateId: "easy_30", completed: false }],
+    } as unknown as ProgramState;
+    const result = advanceWeek(stored);
+    for (const key of [
+      "fatigueScore",
+      "plateauResponses",
+      "templateId",
+      "recoveringMuscles",
+    ]) {
+      expect(key in result).toBe(false);
+    }
+    // A run day's template is the run, and stays.
+    expect(result.runDays?.[0]?.templateId).toBe("easy_30");
   });
 
   it("caps week number at 52 and recycles to 1 (L2)", () => {
-    const state = { ...baseProgramState, weekNumber: 52, fatigueScore: 0 };
+    const state = { ...baseProgramState, weekNumber: 52 };
     const result = advanceWeek(state);
     expect(result.weekNumber).toBe(1); // recycled
   });
 
   it("does not recycle before 52", () => {
-    const state = { ...baseProgramState, weekNumber: 51, fatigueScore: 0 };
+    const state = { ...baseProgramState, weekNumber: 51 };
     const result = advanceWeek(state);
     expect(result.weekNumber).toBe(52);
   });
@@ -587,7 +607,6 @@ describe("advanceWeek — the week opens with the session not reached", () => {
       currentPhase: "progression",
       weekNumber: 1,
       splitType: "full_body",
-      fatigueScore: 0,
       updatedAt: 0,
       workouts,
       ...extra,
@@ -979,7 +998,6 @@ describe("the weekly reset to base sets (deload-decay fix)", () => {
       weekNumber: 1,
       splitType: "full_body",
       workouts: withWeights,
-      fatigueScore: 0,
       updatedAt: 0,
       settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
@@ -1278,7 +1296,6 @@ describe("lighter weeks (Lift4 (9))", () => {
       weekNumber: 3,
       splitType: "full_body",
       workouts,
-      fatigueScore: 0,
       updatedAt: 0,
       ...over,
     } as ProgramState;
@@ -1339,7 +1356,6 @@ describe("lighter weeks (Lift4 (9))", () => {
           workouts: [],
           runDays: [],
           currentPhase: "progression",
-          fatigueScore: 0,
           appliedAt: 0,
         },
       });
@@ -1372,7 +1388,6 @@ describe("lighter weeks (Lift4 (9))", () => {
         workouts: [],
         runDays: [],
         currentPhase: "progression",
-        fatigueScore: 0,
         appliedAt: 0,
       },
     });
@@ -1391,7 +1406,6 @@ describe("lighter weeks (Lift4 (9))", () => {
         workouts: [],
         runDays: [],
         currentPhase: "progression",
-        fatigueScore: 0,
         appliedAt: 0,
       },
     });
@@ -1445,7 +1459,6 @@ describe("advanceWeek — stalls and absences", () => {
       weekNumber: week,
       splitType: "upper_lower",
       workouts,
-      fatigueScore: 0,
       updatedAt: 0,
     };
   };

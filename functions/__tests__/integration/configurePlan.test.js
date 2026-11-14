@@ -58,7 +58,6 @@ function validProgramState(overrides = {}) {
     weekNumber: 1,
     splitType: "full_body",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: true },
     weekHistory: [],
@@ -867,7 +866,7 @@ suite("configurePlan — concurrent edits", () => {
     const baseProfile = validProfileUpdates();
     const current = {
       ...base,
-      fatigueScore: 15,
+      sessionMinutes: 45,
       workouts: [
         {
           dayName: "Push",
@@ -897,7 +896,7 @@ suite("configurePlan — concurrent edits", () => {
     );
     expect((await program.get()).data()).toMatchObject({
       workouts: current.workouts,
-      fatigueScore: 15,
+      sessionMinutes: 45,
       settings: { autoProgression: false, smallPlates: true },
     });
     expect((await user.get()).data().displayName).toBe("Latest name");

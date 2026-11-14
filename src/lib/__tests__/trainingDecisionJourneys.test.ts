@@ -45,7 +45,6 @@ function programme() {
     currentPhase: "base",
     splitType: "full_body",
     settings: { autoProgression: true, smallPlates: false },
-    fatigueScore: 0,
     weekHistory: [],
     updatedAt: 0,
     workouts: [
