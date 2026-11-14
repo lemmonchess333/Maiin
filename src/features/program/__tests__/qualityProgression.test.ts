@@ -160,7 +160,18 @@ describe("quality sessions progress", () => {
     // peak-and-hold window existed, because quality alternates by week parity
     // and a ramp that only touches peak on its final week reaches it for one
     // flavour at most.
-    const all = new Set(DISTANCES.flatMap((d) => emitted(d)));
+    // Run24 (3) and (5): a block is capped at 16 to 20 weeks and its
+    // tempo rungs are shared by tempos, cruise intervals and progression
+    // runs, so a standard plan's tempos meet the 30-minute rung only as a
+    // cruise; a harder plan, with its second quality session, runs it.
+    const all = new Set(
+      DISTANCES.flatMap((d) => [
+        ...emitted(d),
+        ...plan({ distance: d, daysAhead: 200, difficulty: "harder" })
+          .weeks.flat()
+          .map((day) => day.templateId),
+      ])
+    );
     for (const id of Object.keys(TEMPO_WORK))
       expect(all.has(id), id).toBe(true);
     for (const id of INTERVAL_REPS.keys()) expect(all.has(id), id).toBe(true);
