@@ -526,6 +526,34 @@ service cloud.firestore {
         || starterGoalValid();
     }
 
+    /* birthYear value gate (App1, grill Q57; the owner chose a year of
+       birth over a full date, 13 November 2026): the year the person was
+       born, which their age is worked out from for calories and
+       heart-rate zones. Settings → Profile writes it; setup sends it
+       through completeOnboarding. A whole year from this year less 120 to
+       this year less 16. The young end takes one year more, here and in
+       profileSanitizer.js's cleanBirthYear only: request.time is UTC, and
+       at New Year a person's own year can already be the next one, which
+       the app (holding the exact limit) counts on. `null` passes, as for
+       every gate here. Gated only when the field changes, like raceGoal
+       above. */
+    function birthYearValid() {
+      let v = request.resource.data.birthYear;
+      return !('birthYear' in request.resource.data)
+        || v == null
+        || (
+          v is int
+          && v <= request.time.year() - 15
+          && v >= request.time.year() - 120
+        );
+    }
+
+    function birthYearUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['birthYear'])
+        || birthYearValid();
+    }
+
     /* shareDefaults value gate — who sees a finished session, per type:
        the answer to "Share sessions automatically?", which the finish
        screen acts on without asking again. The client writes one field
@@ -669,6 +697,9 @@ service cloud.firestore {
         // profileSanitizer.js.
         'raceLegTrim',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
+        // App1 (Q57): the year of birth the age is worked out from.
+        // Value-gated by birthYearValid() above; also in profileSanitizer.js.
+        'birthYear',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
         // Goal-weight editor (#1140) — persisted by the CLIENT (Settings →
@@ -728,6 +759,7 @@ service cloud.firestore {
         && billingFieldsUnsetOnCreate()
         && raceGoalValid()
         && starterGoalValid()
+        && birthYearValid()
         && shareDefaultsValid()
         && notificationPreferencesValid()
         && approveFollowersValid();
@@ -737,6 +769,7 @@ service cloud.firestore {
         && subscriptionFieldsUnchanged()
         && raceGoalUnchangedOrValid()
         && starterGoalUnchangedOrValid()
+        && birthYearUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
         && notificationPreferencesUnchangedOrValid()
         && approveFollowersUnchangedOrValid();

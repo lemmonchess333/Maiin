@@ -7,6 +7,7 @@ import {
   type TDEEResult,
 } from "./tdee";
 import { offsetFromWeeklyRate } from "./macroConstants";
+import { profileAge } from "./age";
 
 /**
  * Goal-weight + rate → nutrition direction (Tier 2).
@@ -97,6 +98,9 @@ export function resolveGoalWeightPlan(args: {
 export interface GoalWeightProfileInputs {
   weightKg?: number | null;
   heightCm?: number | null;
+  /** The age is worked out from this when it is set (`profileAge`). */
+  birthYear?: number | null;
+  /** An older account's age, read when there is no year of birth. */
   age?: number | null;
   activityLevel?: ActivityLevel | null;
   sex?: "male" | "female" | null;
@@ -165,7 +169,7 @@ export function buildGoalWeightPersistPayload(args: {
   const tdee = calculateTDEE(
     currentKg,
     profile.heightCm ?? 170,
-    profile.age ?? 25,
+    profileAge(profile) ?? 25,
     profile.activityLevel ?? "moderate",
     plan.fitnessGoal,
     profile.sex ?? "male",

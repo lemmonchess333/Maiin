@@ -138,7 +138,9 @@ test("a new account can start training before replaying the guide", async ({
   await page
     .getByRole("textbox", { name: "Height (cm)", exact: true })
     .fill("178");
-  await page.getByRole("radio", { name: /^25/ }).click();
+  await page
+    .getByRole("textbox", { name: "Year of birth", exact: true })
+    .fill("1995");
   await next();
   await page
     .getByRole("textbox", { name: "Your public display name" })

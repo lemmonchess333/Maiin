@@ -157,6 +157,37 @@ suite("users/{uid} update — the client-writable surface", () => {
   });
 });
 
+/* App1 (grill Q57): the year of birth Settings → Profile writes. A whole
+   year from this year less 120 to this year less 16, with one year more at
+   the young end for New Year across time zones (the app holds the exact
+   limit). The years come from the clock the rules read. */
+suite("users/{uid} update — the year of birth", () => {
+  const year = new Date().getUTCFullYear();
+  async function write(uid: string, birthYear: unknown) {
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    return setDoc(doc(db, `users/${uid}`), { birthYear }, { merge: true });
+  }
+
+  it.each([
+    ["thirty years back", year - 30],
+    ["this year less 16", year - 16],
+    ["this year less 15, the New Year slack", year - 15],
+    ["this year less 120", year - 120],
+  ])("accepts %s", async (_case, birthYear) => {
+    await assertSucceeds(write(`by-ok-${birthYear}`, birthYear));
+  });
+
+  it.each([
+    ["this year less 14", year - 14],
+    ["this year less 121", year - 121],
+    ["a year as text", String(year - 30)],
+    ["a fraction", year - 30.5],
+  ])("refuses %s", async (_case, birthYear) => {
+    await assertFails(write(`by-no-${String(birthYear)}`, birthYear));
+  });
+});
+
 suite("users/{uid} update — fields a client must never write", () => {
   const serverOnly = PROFILE_FIELD_REGISTRY.filter((e) => e.serverOnly);
 

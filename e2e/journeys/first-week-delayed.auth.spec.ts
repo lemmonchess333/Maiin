@@ -39,7 +39,7 @@ test("setup days after sign-up still opens on first-week day one", async ({
       weightKg: 75,
       heightCm: 175,
       sex: "Female",
-      age: "25–34",
+      birthYear: 1995,
     });
     const profile = (await profileRef.get()).data();
     expect(profile?.activationJourneyVersion).toBe(2);

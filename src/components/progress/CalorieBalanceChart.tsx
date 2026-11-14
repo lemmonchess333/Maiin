@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
+import { profileAge } from "@/lib/age";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { formatDayMonthYear, withSign } from "@/utils/formatters";
 import { computeDataConfidence, T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
@@ -59,7 +60,7 @@ export default function CalorieBalanceChart({
     calculateTDEE(
       profile?.weightKg ?? 70,
       profile?.heightCm ?? 175,
-      profile?.age ?? 30,
+      profileAge(profile) ?? 30,
       (profile?.activityLevel as ActivityLevel) ?? "moderate",
       "recomp",
       (profile?.sex as "male" | "female") ?? "male"

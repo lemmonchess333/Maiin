@@ -51,7 +51,7 @@ test("an old client still sees the offer and original first-week tasks", async (
         weightKg: 75,
         heightCm: 175,
         sex: "Female",
-        age: "25–34",
+        birthYear: 1995,
       },
       { legacyClient: true }
     );

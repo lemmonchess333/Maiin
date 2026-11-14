@@ -95,6 +95,28 @@ function isCalendarDay(s) {
   );
 }
 
+/** The age range a profile keeps, as `age` below holds it. */
+const AGE_YEARS = Object.freeze({ min: 16, max: 120 });
+
+/**
+ * A year of birth (App1, grill Q57; the owner chose the year over a full
+ * date, 13 November 2026): a whole year from this year less 120 to this
+ * year less 16, or undefined. The app holds a person to exactly that on
+ * their own year (`birthYearProblem`, src/lib/age.ts, held to this by
+ * bodyMetrics.cross.test.ts). This runs on the server's year, in UTC, and
+ * at New Year a person's own year can already be the next one: Auckland
+ * is in January while UTC is still in December. So the young end, here
+ * and in firestore.rules' birthYearValid() only, takes one year more, and
+ * someone born this year less 15 by UTC's count is not refused for being
+ * in a time zone ahead of it. The app keeps the exact limit.
+ */
+function cleanBirthYear(value, now = new Date()) {
+  if (!Number.isInteger(value)) return undefined;
+  const years = now.getUTCFullYear() - value;
+  if (years < AGE_YEARS.min - 1 || years > AGE_YEARS.max) return undefined;
+  return value;
+}
+
 function cleanEnum(value, allowed) {
   if (typeof value !== "string") return undefined;
   return allowed.includes(value) ? value : undefined;
@@ -195,8 +217,13 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // written with them.
   gender: (v) =>
     cleanEnum(v, ["male", "female", "unspecified", "other", "prefer_not_say"]),
+  // LEGACY: setup sent an age range and its midpoint as `age` until the
+  // year of birth replaced both (App1, Q57). Kept for clients still running
+  // an older bundle; `age` stays the fallback for an account with no year
+  // of birth.
   ageRange: (v) => cleanString(v, 20),
-  age: (v) => cleanNumber(v, { min: 16, max: 120, integer: true }),
+  age: (v) => cleanNumber(v, { ...AGE_YEARS, integer: true }),
+  birthYear: (v) => cleanBirthYear(v),
   sex: (v) => cleanEnum(v, ["male", "female"]),
   activityLevel: (v) =>
     cleanEnum(v, ["sedentary", "light", "moderate", "active", "very_active"]),
@@ -551,10 +578,12 @@ function sanitizeProfileData(input) {
 }
 
 module.exports = {
+  AGE_YEARS,
   MAX_DISPLAY_NAME_LENGTH,
   SERVER_MANAGED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
+  cleanBirthYear,
 };

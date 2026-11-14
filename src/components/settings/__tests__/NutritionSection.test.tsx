@@ -893,9 +893,11 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
 describe("NutritionSection — the age field", () => {
   function AgeHarness({
     profileAge,
+    birthYear,
     updateProfile,
   }: {
     profileAge: number;
+    birthYear?: number;
     updateProfile: (d: Partial<UserProfile>) => Promise<UpdateProfileResult>;
   }) {
     const [age, setAge] = useState(profileAge);
@@ -903,7 +905,7 @@ describe("NutritionSection — the age field", () => {
       <>
         <output data-testid="age-in-use">{age}</output>
         <NutritionSection
-          profile={{ uid: "u-1", age: profileAge } as UserProfile}
+          profile={{ uid: "u-1", age: profileAge, birthYear } as UserProfile}
           age={age}
           setAge={setAge}
           activityLevel={"moderate" as ActivityLevel}
@@ -948,6 +950,28 @@ describe("NutritionSection — the age field", () => {
     expect(inUse()).toBe("34");
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ age: 34 });
+  });
+
+  /* App1 (Q57, Q21): an account with a year of birth has its age worked
+     out from it, so the age is set in one place, Profile. */
+  it("with a year of birth, shows the age and sends the change to Profile", () => {
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(
+      <AgeHarness
+        profileAge={30}
+        birthYear={1990}
+        updateProfile={updateProfile}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TDEE calculator/ }));
+    expect(screen.queryByLabelText("Age")).toBeNull();
+    expect(
+      screen.getByText("From your year of birth. Change it in Profile.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Age").nextElementSibling).toHaveTextContent("30");
   });
 
   it.each(["300", "0", "-5", "15", ""])(

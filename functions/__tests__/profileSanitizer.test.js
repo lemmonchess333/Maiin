@@ -26,6 +26,7 @@ const {
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
+  cleanBirthYear,
   PROFILE_ALLOWED_FIELDS,
   SERVER_MANAGED_PROFILE_FIELDS,
 } = require("../profileSanitizer");
@@ -307,6 +308,38 @@ describe("sanitizeProfileData — string fields", () => {
     expect(capped.trainingWhy.length).toBe(120);
     const nonString = sanitizeProfileData({ trainingWhy: { hack: true } });
     expect(nonString.trainingWhy).toBeUndefined();
+  });
+});
+
+/* App1 (grill Q57): the year of birth that replaced the age range. A whole
+   year from this year less 120 to this year less 16, with one year more at
+   the young end for a person whose own year is already the next one at New
+   Year (the server's year is UTC's). */
+describe("sanitizeProfileData — birthYear", () => {
+  const NOW = new Date("2026-11-13T12:00:00Z");
+  const kept = (value) => cleanBirthYear(value, NOW);
+
+  it("keeps a year from this year less 120 to this year less 16", () => {
+    expect(kept(1990)).toBe(1990);
+    expect(kept(2010)).toBe(2010);
+    expect(kept(1906)).toBe(1906);
+  });
+
+  it("keeps one year more at the young end, for a time zone already in 2027", () => {
+    expect(kept(2011)).toBe(2011);
+  });
+
+  it("drops a year past those, and anything not a whole year", () => {
+    for (const value of [2012, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
+      expect(kept(value)).toBeUndefined();
+  });
+
+  it("is on the allow-list, read against the real clock", () => {
+    expect(PROFILE_ALLOWED_FIELDS).toContain("birthYear");
+    expect(sanitizeProfileData({ birthYear: 1990 })).toEqual({
+      birthYear: 1990,
+    });
+    expect(sanitizeProfileData({ birthYear: "1990" })).toEqual({});
   });
 });
 

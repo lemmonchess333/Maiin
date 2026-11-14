@@ -5024,3 +5024,28 @@ Unit-tested; no phone has drawn it.
 - [ ] **An older account.** An account set up before `sex` existed, with a
       gender of Female. Passing: Profile shows Female selected; nothing is
       written until it is tapped.
+
+## The year of birth replaces the age range (App1, 2026-11-13)
+
+Affects: setup's About you and Settings → Profile. Both ask "Year of birth"
+(four digits on the number pad) where they asked an age range; Settings →
+Nutrition shows the age worked out from it, read-only. The age the calorie
+target and the heart-rate zones use is worked out from the year. A year
+later than this year less 16 is refused with setup's under-16 line.
+Unit-tested; no phone has drawn it.
+
+- [ ] **The iOS field.** On an iPhone, at About you and in Profile. Passing:
+      tapping the field opens the number pad, autofill may offer the year,
+      four digits fit at 320 px with the text at double size, and leaving
+      the Profile field saves it (the targets change on Food within a few
+      seconds for an account with a goal weight).
+- [ ] **The under-16 line.** At About you, type this year less 15. Passing:
+      "You need to be at least 16 to use Tropos." shows at once and Continue
+      stays off; this year less 16 clears it.
+- [ ] **An older account.** An account set up with an age range, so with an
+      `age` and no `birthYear`. Passing: Profile's field is empty with "Until
+      you add it, they use an age of N."; Nutrition keeps its Age field;
+      adding a year in Profile turns Nutrition's Age read-only.
+- [ ] **A draft from before.** A setup draft saved at the review before this
+      shipped. Passing: setup opens on About you for the year, and Back to
+      review returns to the review.
