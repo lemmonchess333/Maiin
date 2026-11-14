@@ -302,6 +302,11 @@ function weightToCheckAgainst(
   );
 }
 
+/** The newest saved workouts a session reads to start its rows from last
+ *  time. A read short of it holds every session, and the best-lift map is
+ *  built from it rather than read again (`loadLiftRecords`). */
+const RECENT_WORKOUTS = 50;
+
 /** How long a new best stays on screen: past the undo window (4 s), so
  *  the lifter can look up from the bar and still catch it. */
 const NEW_BEST_MOMENT_MS = 6000;
@@ -677,7 +682,7 @@ export default function WorkoutSession({
       // The 50 newest workouts, including one finished on this phone that
       // has not synced yet: it is the last session even offline.
       if (recentWorkoutsRef.current?.uid !== uid) {
-        const read = fetchSavedWorkouts(uid, { latest: 50 });
+        const read = fetchSavedWorkouts(uid, { latest: RECENT_WORKOUTS });
         recentWorkoutsRef.current = { uid, read };
         read.catch(() => {
           if (recentWorkoutsRef.current?.read === read)
@@ -745,7 +750,10 @@ export default function WorkoutSession({
       // again, and the bests already set this session went with it.
       if (loadedRecordsRef.current) return;
       try {
-        const records = await loadLiftRecords(uid, recent);
+        const records = await loadLiftRecords(uid, {
+          workouts: recent,
+          latest: RECENT_WORKOUTS,
+        });
         loadedRecordsRef.current = records;
         recordBaseline.current = records.map;
         setSessionCounts(records.sessionCounts);
