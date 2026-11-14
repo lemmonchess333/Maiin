@@ -4915,3 +4915,18 @@ Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picke
 - [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
 - [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
 - [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
+## Settings asks the sex the calorie maths uses (App1, 2026-11-13)
+
+Affects: Settings → Profile. "Gender" (Male, Female, Prefer not to say),
+which wrote a field nothing read, is now "Sex for calorie calculation"
+(Male, Female), as setup asks it, with a line saying what it is for.
+Unit-tested; no phone has drawn it.
+
+- [ ] **The targets follow it.** An account with a goal weight changes
+      Male to Female in Profile. Passing: Food's and Home's calorie target
+      drops within a few seconds, and Settings → Nutrition shows the same
+      number.
+- [ ] **An older account.** An account set up before `sex` existed, with a
+      gender of Female. Passing: Profile shows Female selected; nothing is
+      written until it is tapped.

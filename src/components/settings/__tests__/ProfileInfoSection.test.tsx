@@ -1,6 +1,6 @@
 /**
  * Settings pills cohesion (Set-cohesion PR series). Pins that the Profile
- * Gender / Age-range pickers render through the shared SegmentedControl
+ * sex / Age-range pickers render through the shared SegmentedControl
  * primitive (radiogroup a11y) — NOT the old bespoke purple-outline pill
  * buttons — and that selecting an option writes the right profile field.
  *
@@ -81,15 +81,20 @@ function renderSection(
 describe("ProfileInfoSection — pills use SegmentedControl", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("renders Gender + Age range as labelled radiogroups", () => {
+  it("renders the sex for calories + Age range as labelled radiogroups", () => {
     renderSection(makeProfile());
-    expect(screen.getByRole("radiogroup", { name: "Gender" })).toBeTruthy();
+    expect(
+      screen.getByRole("radiogroup", { name: "Sex for calorie calculation" })
+    ).toBeTruthy();
     expect(screen.getByRole("radiogroup", { name: "Age range" })).toBeTruthy();
+    expect(screen.queryByRole("radiogroup", { name: "Gender" })).toBeNull();
   });
 
-  it("Gender radios reflect the selected value via aria-checked", () => {
-    renderSection(makeProfile({ gender: "female" }));
-    const group = screen.getByRole("radiogroup", { name: "Gender" });
+  it("shows the sex the calorie maths reads", () => {
+    renderSection(makeProfile({ sex: "female", gender: "male" }));
+    const group = screen.getByRole("radiogroup", {
+      name: "Sex for calorie calculation",
+    });
     const female = screen.getByRole("radio", { name: "Female" });
     expect(female.getAttribute("aria-checked")).toBe("true");
     // exactly one selected
@@ -99,10 +104,68 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(checked).toHaveLength(1);
   });
 
-  it("selecting a gender writes the gender field", () => {
-    const { updateProfile } = renderSection(makeProfile({ gender: "male" }));
+  it("an account with no `sex` shows its old answer, read and never written", () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ sex: undefined, gender: "female" })
+    );
+    expect(
+      screen.getByRole("radio", { name: "Female" }).getAttribute("aria-checked")
+    ).toBe("true");
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("choosing a sex writes `sex` and the targets worked out with it", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({
+        sex: "male",
+        age: 30,
+        activityLevel: "moderate",
+        goalWeightKg: 70,
+        weeklyRateKg: -0.5,
+      })
+    );
     fireEvent.click(screen.getByRole("radio", { name: "Female" }));
-    expect(updateProfile).toHaveBeenCalledWith({ gender: "female" });
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    expect(patch.sex).toBe("female");
+    expect(patch).not.toHaveProperty("gender");
+    expect(typeof patch.targetCalories).toBe("number");
+    expect(patch.goalWeightKg).toBe(70);
+  });
+
+  it("the targets follow the sex: a woman's are lower than a man's", async () => {
+    const base = {
+      age: 30,
+      activityLevel: "moderate" as const,
+      goalWeightKg: 75,
+      weeklyRateKg: 0,
+    };
+    const asMale = renderSection(makeProfile({ ...base, sex: "female" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Male" }));
+    await waitFor(() => expect(asMale.updateProfile).toHaveBeenCalled());
+    const male = asMale.updateProfile.mock.calls[0][0].targetCalories;
+    cleanup();
+    const asFemale = renderSection(makeProfile({ ...base, sex: "male" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Female" }));
+    await waitFor(() => expect(asFemale.updateProfile).toHaveBeenCalled());
+    const female = asFemale.updateProfile.mock.calls[0][0].targetCalories;
+    expect(female ?? Infinity).toBeLessThan(male ?? 0);
+  });
+
+  it("with no goal weight, writes only `sex` and leaves the targets", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ sex: "male", goalWeightKg: undefined })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Female" }));
+    await waitFor(() =>
+      expect(updateProfile).toHaveBeenCalledWith({ sex: "female" })
+    );
+  });
+
+  it("choosing the sex already saved writes nothing", () => {
+    const { updateProfile } = renderSection(makeProfile({ sex: "male" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Male" }));
+    expect(updateProfile).not.toHaveBeenCalled();
   });
 
   it("selecting an age range writes the ageRange field", () => {
@@ -111,9 +174,11 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(updateProfile).toHaveBeenCalledWith({ ageRange: "45-54" });
   });
 
-  it("handles an unset gender (no radio checked) without crashing", () => {
-    renderSection(makeProfile({ gender: undefined }));
-    const group = screen.getByRole("radiogroup", { name: "Gender" });
+  it("handles an unset sex (no radio checked) without crashing", () => {
+    renderSection(makeProfile({ sex: undefined, gender: "unspecified" }));
+    const group = screen.getByRole("radiogroup", {
+      name: "Sex for calorie calculation",
+    });
     const checked = group.querySelectorAll(
       '[role="radio"][aria-checked="true"]'
     );
