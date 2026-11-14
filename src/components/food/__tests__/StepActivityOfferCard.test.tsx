@@ -9,7 +9,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import type { StepActivityOffer as Offer } from "@/lib/stepActivity";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 const h = vi.hoisted(() => ({
   native: true,
@@ -88,12 +88,12 @@ describe("the activity level offer", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        `You averaged ${group(11240)} steps a day last week. Your target assumes Light.`
+        `You averaged ${groupText(11240)} steps a day last week. Your target assumes Light.`
       )
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        `Active sets your target to ${group(2710)} kcal, up from ${group(2380)} kcal.`
+        `Active sets your target to ${groupText(2710)} kcal, up from ${groupText(2380)} kcal.`
       )
     ).toBeInTheDocument();
   });
