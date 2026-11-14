@@ -56,6 +56,8 @@ import {
 } from "@/lib/scheduleUtils";
 import { chooseSplit, expectedDayCount } from "./programEngine";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type { ProgramState } from "./programTypes";
+import { runModeWithPlan } from "./programMaintenance";
 
 /* Restructure-failure copy. The two realistic shapes here are a
    Firestore write failure (permission-denied / unavailable /
@@ -75,6 +77,9 @@ function friendlyRestructureError(error: unknown): string {
 
 export interface UseProgrammeScheduleEditorArgs {
   profile: UserProfile | null;
+  /** The programme, for a plan with no race date (Run24 (3)): free running
+   *  that holds one has its runs refreshed with the layout. */
+  programState?: ProgramState | null;
   updateProfile: (
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
@@ -135,6 +140,7 @@ export function useProgrammeScheduleEditor(
 ): UseProgrammeScheduleEditorReturn {
   const { profile, updateProfile, refreshRunSchedule, regenerateProgram } =
     args;
+  const programState = args.programState ?? null;
 
   const [workoutsTarget, setWorkoutsTarget] = useState(
     profile?.weeklyWorkoutsTarget ?? 4
@@ -240,7 +246,8 @@ export function useProgrammeScheduleEditor(
         weeklyWorkoutsTarget: workoutsTarget,
         ...runTargetWriteFields(runsTarget),
       };
-      if (profile?.runMode && profile.runMode !== "freeform") {
+      // A plan with no race date is refreshed as a plan (Run24 (3)).
+      if (runModeWithPlan(profile, programState) !== "freeform") {
         await refreshRunSchedule({
           weekSchedule: schedule,
           weeklyRunDaysTarget: runsTarget,
