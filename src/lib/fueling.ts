@@ -7,7 +7,7 @@
  *    tiers a scheduled long run HARD, which drives the biggest fat→carb
  *    shift in phaseNutrition;
  *  - race-week carb load — taperNutrition owns the final-days calorie
- *    bump + carb-max split and its "Race week — carb load" caption.
+ *    bump + carb-max split and its "Race week, carb load" label.
  *
  * This module adds the two genuinely missing pieces:
  *

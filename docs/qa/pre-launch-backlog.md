@@ -4808,3 +4808,22 @@ phone has drawn it.
       at once, on the week the plan has reached.
 - [ ] **Race day and recovery.** Passing: Start race works on race day for a
       free account, and the recovery weeks after it start as usual.
+
+## The day's fuel label on Food and Home (Q29, 2026-11-13)
+
+Affects: Food's wheel (a line under it, above Details) and Home's food card
+(a line under the macros, before a post-session note). Unit-tested; no phone
+has drawn it.
+
+- [ ] **The eve of a long run.** With a long run of 75 minutes or more
+      planned tomorrow and a rest or easy day today, open Food and Home.
+      Passing: both say "Long 20K tomorrow, fuel up today" (in miles for a
+      miles account) in the food orange, one line each; Food's other days
+      do not.
+- [ ] **Race week and a taper.** In a race's final days, and in its taper
+      week. Passing: both say "Race week, carb load", then "Taper week", for
+      a free account as for Pro.
+- [ ] **Any other day.** A hard lift day and a rest day. Passing: no label
+      on either screen; "Hard session" does not come back to the wheel.
+- [ ] **Room.** At 320 px and with larger text, on a label day. Passing: the
+      line wraps under the wheel without pushing Scan under the tab bar.
