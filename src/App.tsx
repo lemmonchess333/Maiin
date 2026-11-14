@@ -173,6 +173,9 @@ const SettingsRecentlyDeleted = lazyRetry(
 const SettingsPantry = lazyRetry(
   () => import("@/pages/settings/SettingsPantry")
 );
+const SettingsHiddenPosts = lazyRetry(
+  () => import("@/pages/settings/SettingsHiddenPosts")
+);
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const TrainingPlan = lazyRetry(() => import("@/pages/TrainingPlan"));
@@ -864,6 +867,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <SettingsPantry />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/settings/hidden-posts"
+                          element={
+                            <RouteErrorBoundary>
+                              <SettingsHiddenPosts />
                             </RouteErrorBoundary>
                           }
                         />

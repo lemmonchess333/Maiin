@@ -98,6 +98,7 @@ const SETTINGS_PAGES = [
   "run-plan",
   "nutrition",
   "pantry",
+  "hidden-posts",
   "recently-deleted-meals",
   "health",
   "shoes",
