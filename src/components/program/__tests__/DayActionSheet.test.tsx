@@ -91,7 +91,6 @@ function makeProfile(
   return {
     uid: "u-1",
     displayName: "Test",
-    email: "t@example.com",
     weekSchedule,
   } as UserProfile;
 }

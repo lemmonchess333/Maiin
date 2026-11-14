@@ -29,6 +29,12 @@ function memoryFirestore(seed = {}) {
         for (const [field, v] of Object.entries(value)) {
           const keys = field.split(".");
           const last = keys.pop();
+          if (isFieldDelete(v)) {
+            // Deleting under a map that is not there changes nothing.
+            const parent = keys.reduce((obj, key) => obj?.[key], next);
+            if (parent && typeof parent === "object") delete parent[last];
+            continue;
+          }
           const parent = keys.reduce((obj, key) => (obj[key] ||= {}), next);
           parent[last] = isIncrement(v)
             ? (Number(parent[last]) || 0) + v.__increment
@@ -43,10 +49,13 @@ function memoryFirestore(seed = {}) {
         const next = merge ? { ...before } : {};
         for (const [field, v] of Object.entries(
           merge ? value : structuredClone(value)
-        ))
-          next[field] = isIncrement(v)
-            ? (Number(before[field]) || 0) + v.__increment
-            : v;
+        )) {
+          if (isFieldDelete(v)) delete next[field];
+          else
+            next[field] = isIncrement(v)
+              ? (Number(before[field]) || 0) + v.__increment
+              : v;
+        }
         data.set(ref.path, next);
       }
     }
@@ -222,4 +231,12 @@ function increment(n) {
 function isIncrement(v) {
   return !!v && typeof v === "object" && typeof v.__increment === "number";
 }
-module.exports = { memoryFirestore, increment };
+// A stand-in for FieldValue.delete(): `update` (a dotted path reaches into
+// a map) and a merging `set` remove the field, as Firestore does.
+function fieldDelete() {
+  return { __delete: true };
+}
+function isFieldDelete(v) {
+  return !!v && typeof v === "object" && v.__delete === true;
+}
+module.exports = { memoryFirestore, increment, fieldDelete };

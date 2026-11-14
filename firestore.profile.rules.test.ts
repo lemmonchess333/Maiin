@@ -81,7 +81,6 @@ function signupProfile(uid: string) {
   return {
     uid,
     displayName: "",
-    email: "m@example.com",
     photoURL: null,
     athleteType: "Lifter",
     weightKg: 70,
@@ -96,12 +95,26 @@ function signupProfile(uid: string) {
     onboardingComplete: false,
     trialExpiresAt: null,
     subscriptionTier: "free",
+    program: { goal: "recomp", currentPhase: "base" },
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * What a build from before App1 Q24 sends at sign-up: the same document
+ * with the fields that release retired. The rules keep allowing them until
+ * config/client.minSupportedVersion is past that release, so an older
+ * build can still make an account.
+ */
+function olderBuildSignupProfile(uid: string) {
+  return {
+    ...signupProfile(uid),
+    email: "m@example.com",
     currentStreak: 0,
     longestStreak: 0,
     lastLogDate: null,
     adjustCaloriesForTraining: true,
     program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
-    createdAt: new Date(),
   };
 }
 
@@ -117,6 +130,13 @@ suite("users/{uid} create", () => {
     // so the create was rejected outright.
     const db = env.authenticatedContext("u1").firestore();
     await assertSucceeds(setDoc(doc(db, "users/u1"), signupProfile("u1")));
+  });
+
+  it("still accepts an older build's sign-up, retired fields and all", async () => {
+    const db = env.authenticatedContext("u1-old").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users/u1-old"), olderBuildSignupProfile("u1-old"))
+    );
   });
 
   it("rejects a create carrying an unlisted key", async () => {

@@ -630,13 +630,11 @@ export default function NutritionSection({
               // Undefined is stripped by the guarded merge and cannot clear
               // a stored override. Zero is the existing no-override value
               // understood by both the client and server target resolvers.
-              // Persist all target mirrors together, including on reset.
+              // Persist the stored targets together, including on reset.
               return updateProfile({
                 customCalorieTarget: customCalorieTarget ?? 0,
                 targetCalories: payload.targetCalories,
                 targetProtein: payload.targetProtein,
-                targetCarbs: payload.targetCarbs,
-                targetFat: payload.targetFat,
               });
             }}
           />

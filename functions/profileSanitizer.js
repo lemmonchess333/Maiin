@@ -41,7 +41,6 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "stripeCustomerId",
   "stripeSubscriptionId",
   "appleOriginalTransactionId",
-  "appleProductId",
   "subscriptionExpiresAt",
   "subscriptionTrial",
   "trialExpiresAt",
@@ -54,6 +53,45 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "onboardingPlatform",
   "onboardingSport",
   "activationBillingFirsts",
+]);
+
+/**
+ * Profile fields nothing reads, retired (App1 Q24, 13 November 2026): no
+ * build from then on sends them, and no validator keeps them, so a payload
+ * from an older build that still carries one has it dropped QUIETLY. They
+ * are listed so `findUnexpectedProfileFields` does not report them: the
+ * warning exists for a field someone forgot to add here, and a retired one
+ * was left out on purpose.
+ *
+ * The same list, pinned equal by profileFieldRegistry.test.ts, is the
+ * registry's `retired` entries, which `firestore.rules` still allow-lists
+ * until `config/client.minSupportedVersion` passes this release; and
+ * `scripts/stripRetiredProfileFields.js` removes them from every stored
+ * profile. When the rules entries go, this list goes with them.
+ */
+const RETIRED_PROFILE_FIELDS = Object.freeze([
+  "adjustCaloriesForTraining",
+  "aiCalorieAdjustment",
+  "appleProductId",
+  "autoPostBadges",
+  "autoPostRuns",
+  "autoPostWorkouts",
+  "crewId",
+  "currentStreak",
+  "defaultVisibility",
+  "email",
+  "enableRolloverCalories",
+  "goal",
+  "lastLogDate",
+  "longestStreak",
+  "macroTargets",
+  "targetCarbs",
+  "targetFat",
+  "targetFiber",
+  "targetSodium",
+  "targetSugar",
+  "tdeeBase",
+  "updatedAt",
 ]);
 
 /**
@@ -184,7 +222,6 @@ function cleanWeekSchedule(value) {
 const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Identity / display
   displayName: (v) => cleanString(v, MAX_DISPLAY_NAME_LENGTH),
-  email: (v) => cleanString(v, 254),
   photoURL: cleanPhotoURL,
   athleteType: (v) => cleanString(v, 30),
 
@@ -229,7 +266,6 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   defaultRestSeconds: (v) =>
     cleanNumber(v, { min: 0, max: 600, integer: true }),
   audioCues: cleanBoolean,
-  enableRolloverCalories: cleanBoolean,
   // Shared-run route privacy (opt-out; default-on enforced client-side).
   hideSharedRouteEnds: cleanBoolean,
   // Soc11: who sees a finished session, per type — the answer to "Share
@@ -243,14 +279,6 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     const cleanAnswer = (d) =>
       d === null ? null : cleanEnum(d, ["followers", "public", "never"]);
     return cleanObject(v, { run: cleanAnswer, workout: cleanAnswer });
-  },
-
-  // Streak summary
-  currentStreak: (v) => cleanNumber(v, { min: 0, max: 100000, integer: true }),
-  longestStreak: (v) => cleanNumber(v, { min: 0, max: 100000, integer: true }),
-  lastLogDate: (v) => {
-    if (v === null) return null;
-    return cleanString(v, 30);
   },
 
   // Training targets
@@ -274,7 +302,6 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Lift4 (11): a barbell and a rack beside a home gym's kit.
   barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
-  goal: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
   // D16 personal "why" — short free-text motivation (chip-seeded or custom).
   // Bounded to 120 chars; control chars stripped by cleanString.
@@ -403,18 +430,10 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     cleanNumber(v, { min: 1, max: 1000, integer: true }),
 
   // TDEE / nutrition targets — numeric ranges sized for human plausibility
-  tdeeBase: (v) => cleanNumber(v, { min: 0, max: 10000 }),
-  aiCalorieAdjustment: (v) => cleanNumber(v, { min: -2000, max: 2000 }),
   targetCalories: (v) => cleanNumber(v, { min: 0, max: 10000 }),
   targetProtein: (v) => cleanNumber(v, { min: 0, max: 1000 }),
-  targetCarbs: (v) => cleanNumber(v, { min: 0, max: 2000 }),
-  targetFat: (v) => cleanNumber(v, { min: 0, max: 1000 }),
   customCalorieTarget: (v) => cleanNumber(v, { min: 0, max: 10000 }),
-  targetFiber: (v) => cleanNumber(v, { min: 0, max: 500 }),
-  targetSugar: (v) => cleanNumber(v, { min: 0, max: 500 }),
-  targetSodium: (v) => cleanNumber(v, { min: 0, max: 20000 }),
   targetWaterGlasses: (v) => cleanNumber(v, { min: 0, max: 50, integer: true }),
-  adjustCaloriesForTraining: cleanBoolean,
 
   // Adaptive TDEE weekly-rate cap smoothing (client-managed). Shipped + written
   // by useAdaptiveTdee but was missing here AND from firestore.rules, so writes
@@ -478,18 +497,11 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     return cleanNumber(v, { min: 100, max: 240 });
   },
 
-  macroTargets: (v) =>
-    cleanObject(v, {
-      calories: (n) => cleanNumber(n, { min: 0, max: 10000 }),
-      protein: (n) => cleanNumber(n, { min: 0, max: 1000 }),
-      carbs: (n) => cleanNumber(n, { min: 0, max: 2000 }),
-      fat: (n) => cleanNumber(n, { min: 0, max: 1000 }),
-    }),
-
+  // `startWeight` is retired (App1 Q24): an older build's is dropped here,
+  // as every key outside this list is.
   program: (v) =>
     cleanObject(v, {
       goal: (g) => cleanString(g, 30),
-      startWeight: (n) => cleanNumber(n, { min: 30, max: 300 }),
       currentPhase: (p) => cleanString(p, 30),
     }),
 });
@@ -500,6 +512,7 @@ const PROFILE_ALLOWED_FIELDS = Object.freeze(
 
 const ALLOWED_FIELD_SET = new Set(PROFILE_ALLOWED_FIELDS);
 const SERVER_MANAGED_FIELD_SET = new Set(SERVER_MANAGED_PROFILE_FIELDS);
+const RETIRED_FIELD_SET = new Set(RETIRED_PROFILE_FIELDS);
 
 /**
  * Keys present in `input` that are neither allow-listed nor server-managed
@@ -512,7 +525,7 @@ const SERVER_MANAGED_FIELD_SET = new Set(SERVER_MANAGED_PROFILE_FIELDS);
  * persisted profile field added client-side but not here is silently dropped
  * by the Cloud-Function write") from a silent data-loss bug into a loud line
  * in the Cloud Function logs the first real call that sends one. Server-managed
- * fields are EXPECTED drops and are excluded.
+ * and retired fields are EXPECTED drops and are excluded.
  *
  * See docs/adr/0005 for why a structural schema-consolidation was rejected in
  * favour of this observability seam.
@@ -520,7 +533,10 @@ const SERVER_MANAGED_FIELD_SET = new Set(SERVER_MANAGED_PROFILE_FIELDS);
 function findUnexpectedProfileFields(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) return [];
   return Object.keys(input).filter(
-    (k) => !ALLOWED_FIELD_SET.has(k) && !SERVER_MANAGED_FIELD_SET.has(k)
+    (k) =>
+      !ALLOWED_FIELD_SET.has(k) &&
+      !SERVER_MANAGED_FIELD_SET.has(k) &&
+      !RETIRED_FIELD_SET.has(k)
   );
 }
 
@@ -533,7 +549,8 @@ function findUnexpectedProfileFields(input) {
  *
  * Special cases:
  *  - `photoURL: null` → preserved as `null` (clears the photo).
- *  - `lastLogDate: null` → preserved as `null`.
+ *  - A field whose validator keeps `null` (`raceGoal`, `starterGoal`,
+ *    `shareDefaults` and the like) → preserved as `null`, which clears it.
  *  - All other null values → omitted (treated as "absent").
  *
  * The function does NOT mutate the input.
@@ -553,6 +570,7 @@ function sanitizeProfileData(input) {
 module.exports = {
   MAX_DISPLAY_NAME_LENGTH,
   SERVER_MANAGED_PROFILE_FIELDS,
+  RETIRED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,
   findUnexpectedProfileFields,

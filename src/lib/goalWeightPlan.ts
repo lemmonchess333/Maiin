@@ -103,18 +103,19 @@ export interface GoalWeightProfileInputs {
   goalWeightKg?: number | null;
   weeklyRateKg?: number | null;
   customCalorieTarget?: number | null;
-  program?: { goal?: string; startWeight?: number; currentPhase?: string };
+  program?: { goal?: string; currentPhase?: string };
 }
 
+/** What a goal change stores. The day's carbs and fat are not stored: they
+ *  are worked out from the calorie target wherever they are shown
+ *  (`getAdjustedTargets`), so a stored copy could only fall behind it
+ *  (App1 Q21). Protein is kept because Home's recovery nudge reads it. */
 export interface GoalWeightPersistPayload {
   goalWeightKg: number;
   weeklyRateKg: number;
-  program: { goal: FitnessGoal; startWeight: number; currentPhase: string };
-  tdeeBase: number;
+  program: { goal: FitnessGoal; currentPhase: string };
   targetCalories: number;
   targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
 }
 
 /**
@@ -133,8 +134,7 @@ export interface GoalWeightPersistPayload {
  *   downstream readers (adaptive-TDEE offset, onboarding parity) see the
  *   true direction;
  * - `customCalorieTarget` survives as targetCalories (manual override wins);
- * - program.startWeight / currentPhase carry forward, seeding from current
- *   weight / "base" only when absent.
+ * - program.currentPhase carries forward, seeding "base" only when absent.
  */
 export function buildGoalWeightPersistPayload(args: {
   profile: GoalWeightProfileInputs;
@@ -182,23 +182,14 @@ export function buildGoalWeightPersistPayload(args: {
      `effectiveTdee` is the same result recomputed at whatever target is
      actually in force, and is `tdee` itself when there is no override. `bmr`
      and `tdee` (maintenance) stay formula facts; `deficit` is restated
-     against maintenance so it keeps meaning what it says. `tdeeBase` stays
-     the FORMULA target, and is WRITTEN BUT NEVER READ.
+     against maintenance so it keeps meaning what it says.
 
-     This comment used to say "the adaptive engine treats it as the
-     pre-override baseline". It does not. `useAdaptiveTdee` reads
-     `profile.targetCalories` for that role — see its own line, "Formula
-     target = the stored base (already customCalorieTarget || formula)".
-     Nothing in `src/` or `functions/` performs a property access on
-     `tdeeBase`; the same is true of `aiCalorieAdjustment`, written once by
-     Onboarding.
-
-     Left in place rather than deleted, on the same terms as `macroTargets`:
-     the field sits in three allow-lists a parity gate keeps in lockstep, and
-     dropping it from `firestore.rules` is a deploy that would reject the
-     write of any client still running the old bundle. The claim is what
-     needed fixing — it would have sent someone changing the adaptive engine
-     looking for a consumer that was never there. */
+     The payload used to carry `tdeeBase`, the FORMULA target, which was
+     written and never read: a comment here claimed "the adaptive engine
+     treats it as the pre-override baseline", and it did not
+     (`useAdaptiveTdee` reads `profile.targetCalories` for that role). It is
+     retired with the other fields nothing read (App1 Q24); `formulaTdee`
+     below is the baseline for the caller that needs one. */
   const effectiveCalories = profile.customCalorieTarget || tdee.targetCalories;
   const effectiveTdee: TDEEResult =
     effectiveCalories === tdee.targetCalories
@@ -223,14 +214,10 @@ export function buildGoalWeightPersistPayload(args: {
       weeklyRateKg: plan.effectiveRateKgPerWeek,
       program: {
         goal: plan.fitnessGoal,
-        startWeight: profile.program?.startWeight ?? currentKg,
         currentPhase: profile.program?.currentPhase ?? "base",
       },
-      tdeeBase: tdee.targetCalories,
       targetCalories: effectiveTdee.targetCalories,
       targetProtein: effectiveTdee.protein,
-      targetCarbs: effectiveTdee.carbs,
-      targetFat: effectiveTdee.fat,
     },
   };
 }

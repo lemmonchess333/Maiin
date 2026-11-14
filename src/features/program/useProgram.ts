@@ -2590,7 +2590,6 @@ export function useProgram() {
         ...overrides?.profileUpdates,
         program: {
           goal,
-          startWeight: profile.program?.startWeight ?? profile.weightKg ?? 70,
           currentPhase: "base",
         },
       };

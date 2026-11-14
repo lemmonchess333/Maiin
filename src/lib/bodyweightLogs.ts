@@ -174,8 +174,6 @@ export interface WeighInProfileInputs {
 export interface WeighInProfilePatch {
   weightKg: number;
   targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
 }
 
 /**
@@ -209,6 +207,10 @@ export interface WeighInProfilePatch {
  * by a mirror function. The split is therefore recomputed AT the existing
  * target, which is exactly what `getAdjustedTargets` renders.
  *
+ * Only protein is stored from the split. The patch also wrote its carbs and
+ * fat, which nothing read: every screen works them out from the calorie
+ * target. Both are retired (App1 Q21, Q24).
+ *
  * Returns null on no meaningful weight change (delegating that gate) or when
  * the profile carries no calorie target to split.
  */
@@ -236,7 +238,5 @@ export function weighInProfilePatch(
   return {
     ...mirror,
     targetProtein: split.protein,
-    targetCarbs: split.carbs,
-    targetFat: split.fat,
   };
 }

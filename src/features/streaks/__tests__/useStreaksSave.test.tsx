@@ -7,7 +7,7 @@
  * the shown count is 0, and the save put that 0 over a 100-day certificate,
  * so the evening's log could see only the window. It now keeps the
  * certificate (anchorStreak / anchorDate) beside the shown count, and the
- * mirrors still carry the shown count.
+ * public copy still carries the shown count.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
@@ -110,9 +110,10 @@ describe("useStreaks — the save keeps the certificate", () => {
       lastActiveDate: day(2),
       longestStreak: 100,
     });
-    // The mirrors carry the streak as shown.
-    expect(readDoc("users/runner")?.currentStreak).toBe(0);
+    // The public copy carries the streak as shown; the profile document
+    // keeps none (App1 Q21).
     expect(readDoc("users/runner/public/profile")?.currentStreak).toBe(0);
+    expect(readDoc("users/runner")?.currentStreak).toBeUndefined();
     // A write that is not a log leaves this evening's reminder armed.
     expect(h.cancelNotification).not.toHaveBeenCalled();
   });

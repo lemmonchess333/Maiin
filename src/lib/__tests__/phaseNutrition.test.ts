@@ -21,7 +21,6 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
     uid: "test-uid",
     displayName: "Test User",
-    email: "test@example.com",
     photoURL: null,
     athleteType: "Hybrid",
     weightKg: 80,
@@ -35,14 +34,9 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     onboardingComplete: true,
     trialExpiresAt: null,
     subscriptionTier: "free",
-    currentStreak: 0,
-    longestStreak: 0,
-    lastLogDate: null,
     targetCalories: 2500,
     targetProtein: 180,
-    targetCarbs: 300,
-    targetFat: 70,
-    program: { goal: "recomp", startWeight: 80, currentPhase: "base" },
+    program: { goal: "recomp", currentPhase: "base" },
     ...overrides,
   };
 }
@@ -185,7 +179,7 @@ describe("getAdjustedTargets — guards", () => {
     const p = makeProfile({
       weightKg: 90,
       targetCalories: 1800,
-      program: { goal: "cut", startWeight: 90, currentPhase: "cut" },
+      program: { goal: "cut", currentPhase: "cut" },
     });
     const hard = getAdjustedTargets(p, "lift", undefined, "HARD");
     expect(hard.carbs).toBeGreaterThanOrEqual(0);
