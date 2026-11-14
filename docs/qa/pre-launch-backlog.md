@@ -4915,3 +4915,11 @@ Affects: setup's "Plan, no race", Run plan's "Plan, no race" card and goal picke
 - [ ] **After a race.** On a race plan whose recovery has ended, open Train. Passing: the banner reads "Recovery complete" with Choose a plan, Set next race and No plan for now; Choose a plan opens Run plan on Plan, no race with Keep fit chosen, and saving it plans the week from today.
 - [ ] **Free running.** On free running with no plan, open Train's run tab. Passing: "Keep your running going" is offered above "Set a race goal", opens Run plan on Keep fit, and stays gone once dismissed.
 - [ ] **An older build.** With the plan saved, open the app on a build from before this change. Passing: the plan's runs stay as they are (a plan from a newer build is kept, `isRunPlanFromNewerBuild`), not wiped to free running.
+
+## What comes after the 30-minute goal (Run24 (3), 2026-11-14)
+
+Affects: the starter goal's Done card on Home and Train (`StarterDoneCard`) and Run plan opened from it (`?goal=build_5k`, `?goal=keep_fit`, `?goal=5k`). Component tests and the starter journey drive it; no phone has shown it, and no capture was taken.
+
+- [ ] **The card.** Finish the 30-minute goal's last week. Passing: Home shows Done, "30 minutes without stopping", and three rows, Build to 5K, Keep fit and Train for a 5K, each with its line, then Not now; at 320 px and with large text the rows wrap and nothing is cut.
+- [ ] **Build to 5K.** Tap it. Passing: Run plan opens on Plan, no race with Build to 5K chosen; Save plans the week, Train reads "Build to 5K · Week 1", the Done card is gone on Home and Train, and no Pro offer appears.
+- [ ] **The 5K.** On another account at the same point, tap Train for a 5K. Passing: Run plan opens on Training for a race with 5K chosen and its date still to pick, as before.
