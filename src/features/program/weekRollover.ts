@@ -36,6 +36,7 @@ import {
   isRunPlanFromNewerBuild,
   isStarterPlanRunning,
   raceAwaitsItsEnding,
+  rollingGoalOf,
   runWeekKeyOf,
   weekRolloverAnchor,
 } from "./programMaintenance";
@@ -65,6 +66,7 @@ import {
 } from "./starterPlan";
 import { starterRunPlan, starterWeekFrom } from "./starterWeek";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
+import { regenerateRollingPlan, rollingRunnerOf } from "./rollingWeek";
 
 /**
  * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
@@ -442,6 +444,25 @@ export function nextRunWeek(
       weekSchedule,
       recentRuns ? runDaysOf(recentRuns) : null
     );
+  }
+  // Run24 (3): a plan with no race date moves on a week, every week, and
+  // keeps going: it has no last week.
+  const rollingGoal = rollingGoalOf(current, profile);
+  if (rollingGoal) {
+    const week = regenerateRollingPlan({
+      runner: rollingRunnerOf(profile),
+      goal: rollingGoal,
+      planWeek: (runPlan?.currentWeek ?? 0) + 1,
+      weekSchedule,
+      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+      currentDate: next.date,
+      weekStart: next.weekStart,
+      recentLayoff,
+      recentRuns,
+      recentRunsAsOf,
+      ...(next.plannedFrom ? { plannedFrom: next.plannedFrom } : {}),
+    });
+    return { runDays: week.runDays, runPlan: week.runPlan, raceBlock: null };
   }
   // Asked about NEXT week's date, not today: the question is whether the
   // week being rolled into is still inside the recovery window.
