@@ -1397,16 +1397,19 @@ export function simulateLiftSeason(
         phase:
           plan?.phase === "recovery"
             ? "recovery"
-            : plan?.currentWeek !== undefined &&
-                plan.totalWeeks !== undefined &&
-                distance
-              ? getPhaseForWeek(
-                  plan.currentWeek,
-                  plan.totalWeeks,
-                  distance as "5k" | "10k" | "half" | "marathon",
-                  plan.shortBase
-                )
-              : null,
+            : // Run24 (3): a plan with no race date has no phases.
+              plan?.mode === "rolling"
+              ? `rolling ${plan.rollingGoal ?? ""}`.trim()
+              : plan?.currentWeek !== undefined &&
+                  plan.totalWeeks !== undefined &&
+                  distance
+                ? getPhaseForWeek(
+                    plan.currentWeek,
+                    plan.totalWeeks,
+                    distance as "5k" | "10k" | "half" | "marathon",
+                    plan.shortBase
+                  )
+                : null,
         offered: runsOffered,
         plannedDates: days.map((rd) => rd.date!),
         plannedMinutes: days.reduce(

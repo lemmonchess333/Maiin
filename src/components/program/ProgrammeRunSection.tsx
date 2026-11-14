@@ -202,6 +202,11 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import { useUidForStorageKey } from "@/lib/auth";
 import {
+  rollingGoalOf,
+  runModeWithPlan,
+} from "@/features/program/programMaintenance";
+import { ROLLING_GOAL_NAMES } from "@/features/program/rollingPlan";
+import {
   goalDayName,
   goalDayQuestion,
   raceGoalEntry,
@@ -397,7 +402,10 @@ export default function ProgrammeRunSection({
     writeString(raceElapsedDismissKey, "1");
   }
 
-  const currentMode = profile.runMode ?? "freeform";
+  // Run24 (3): free running holding a plan with no race date draws as a
+  // plan, its week and its Start, as the retired structured week did.
+  const currentMode = runModeWithPlan(profile, programState);
+  const rollingGoal = rollingGoalOf(programState, profile);
   /* R4 — read the run plan through the resolver, not the mirror.
    *
    * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
@@ -1064,13 +1072,15 @@ export default function ProgrammeRunSection({
   );
 
   const modeLabel =
-    currentMode === "race_prep"
-      ? "Race prep"
-      : currentMode === "structured"
-        ? "Structured"
-        : currentMode === "starter"
-          ? "30-minute goal"
-          : "Freeform";
+    currentMode === "rolling" && rollingGoal
+      ? ROLLING_GOAL_NAMES[rollingGoal]
+      : currentMode === "race_prep"
+        ? "Race prep"
+        : currentMode === "structured"
+          ? "Structured"
+          : currentMode === "starter"
+            ? "30-minute goal"
+            : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
   // Mode + race goal writers moved to Settings (then /settings/training;
@@ -1226,7 +1236,9 @@ export default function ProgrammeRunSection({
           description={
             currentMode === "starter"
               ? "Your 30-minute goal has no run days yet. Open Configure plan to add two or three."
-              : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
+              : currentMode === "rolling"
+                ? "Your plan has no run days yet. Open Configure plan to add two or more."
+                : `You’re on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`
           }
           action={
             <Button
