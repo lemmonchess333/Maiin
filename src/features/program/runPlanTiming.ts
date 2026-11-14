@@ -72,6 +72,55 @@ export const TAPER_WEEKS_BY_DISTANCE: Record<
   marathon: 3,
 };
 
+/**
+ * Run24 (3), deep dive D9: the longest a race block runs, by distance,
+ * inside the lock's 16 to 20 weeks. A race further out than this ran the
+ * same block stretched: a marathon a year out was fifteen weeks of easy
+ * running and a long run that did not move for six months. Its plan now
+ * runs a rolling base first (`raceBlockStart`), and the block takes the
+ * last of these weeks. The short races take the lock's lowest, the
+ * marathon its highest. A Tropos heuristic in the RUN-EV-06 register.
+ */
+export const RACE_BLOCK_MAX_WEEKS: Record<
+  "5k" | "10k" | "half" | "marathon",
+  number
+> = {
+  "5k": 16,
+  "10k": 16,
+  half: 18,
+  marathon: 20,
+};
+
+/** How many of a race plan's weeks come before its race block: the weeks
+ *  of rolling base, 0 for a plan the block fits (`RACE_BLOCK_MAX_WEEKS`). */
+export function raceBlockStart(
+  totalWeeks: number,
+  distance: "5k" | "10k" | "half" | "marathon"
+): number {
+  return Math.max(0, totalWeeks - RACE_BLOCK_MAX_WEEKS[distance]);
+}
+
+/** Run24 (3): a rolling plan's cycle, three weeks that build and one that
+ *  steps back, the race block's own four (`STEP_BACK_EVERY`). */
+export const ROLLING_CYCLE_WEEKS = 4;
+
+/** The first week of a rolling run that may step back: three weeks in, so
+ *  the first cycle builds before it eases. */
+const ROLLING_FIRST_STEP_BACK = 3;
+
+/**
+ * Whether week `weekIndex` of a rolling run steps back (Run24 (3)): every
+ * fourth, counted so the cycle lands on `alignTo`'s, and never in the first
+ * three weeks. A rolling plan counts from its own first week (`alignTo` 0);
+ * a race plan's rolling base counts back from the block's first week, so
+ * its step-backs run on into the block's every four weeks.
+ */
+export function isRollingStepBack(weekIndex: number, alignTo = 0): boolean {
+  if (weekIndex < ROLLING_FIRST_STEP_BACK) return false;
+  const cycle = ROLLING_CYCLE_WEEKS;
+  return (((weekIndex - alignTo) % cycle) + cycle) % cycle === cycle - 1;
+}
+
 /** Of a race block's weeks before its taper, the share that is base; the
  *  rest is build. */
 export const BASE_SHARE = 0.4;
@@ -94,6 +143,11 @@ export const SHORT_BASE_SHARE = 0.25;
  * race weeks and the generator agree on where the build starts. The taper,
  * race week and the step-back weeks (`isRunStepBackWeek`) do not depend on
  * it.
+ *
+ * Run24 (3), deep dive D9: a plan longer than its block
+ * (`RACE_BLOCK_MAX_WEEKS`) is base until the block starts, and the block's
+ * weeks are phased as a block of its own length, so every reader of a
+ * plan's week agrees with the weeks the generator builds.
  */
 export function getPhaseForWeek(
   weekIndex: number,
@@ -101,6 +155,16 @@ export function getPhaseForWeek(
   distance: "5k" | "10k" | "half" | "marathon",
   shortBase?: boolean | null
 ): "base" | "build" | "taper" | "race" {
+  const before = raceBlockStart(totalWeeks, distance);
+  if (before > 0) {
+    if (weekIndex < before) return "base";
+    return getPhaseForWeek(
+      weekIndex - before,
+      totalWeeks - before,
+      distance,
+      shortBase
+    );
+  }
   if (weekIndex >= totalWeeks - 1) return "race";
   const taperWeeks = TAPER_WEEKS_BY_DISTANCE[distance];
   /* Taper occupies the `taperWeeks` immediately before the final
@@ -174,6 +238,13 @@ export function isRunStepBackWeek(
   totalWeeks: number,
   distance: "5k" | "10k" | "half" | "marathon"
 ): boolean {
+  // Run24 (3): the rolling base before a capped block steps back on the
+  // cycle that runs on into the block's.
+  const before = raceBlockStart(totalWeeks, distance);
+  if (before > 0) {
+    if (weekIndex < before) return isRollingStepBack(weekIndex, before);
+    return isRunStepBackWeek(weekIndex - before, totalWeeks - before, distance);
+  }
   const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
   if (phase !== "base" && phase !== "build") return false;
   const last = lastRampWeekOf(totalWeeks, TAPER_WEEKS_BY_DISTANCE[distance]);

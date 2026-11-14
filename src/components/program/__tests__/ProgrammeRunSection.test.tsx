@@ -1620,7 +1620,16 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     expect(
       screen.queryByRole("button", { name: /Switch to structured/i })
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Back to freeform/i }));
+    // Run24 (3), D7: what comes next is offered, not a stop: a plan with
+    // no race date, the next race, or no plan for now (the exit to free
+    // running, labelled in the person's words).
+    fireEvent.click(screen.getByRole("button", { name: "Choose a plan" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(
+      "/settings/run-plan?goal=keep_fit"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Set next race" }));
+    expect(navigateMock).toHaveBeenLastCalledWith("/settings/run-plan");
+    fireEvent.click(screen.getByRole("button", { name: "No plan for now" }));
     expect(props.skipRecoveryEarly).toHaveBeenCalledTimes(1);
   });
 
@@ -2083,6 +2092,56 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
       />
     );
     expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+  });
+
+  it("offers a plan with no race date beside it (Run24 (3)), dismissible", () => {
+    const { props, profile } = freeformProps();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    fireEvent.click(screen.getByText("Keep your running going"));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/settings/run-plan?goal=keep_fit"
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Dismiss the plan with no race date",
+      })
+    );
+    expect(
+      screen.queryByText("Keep your running going")
+    ).not.toBeInTheDocument();
+  });
+
+  it("draws a plan with no race date as a plan: its week, not the free running offers", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={4}
+        programState={makeProgramState([makeRunDay()], {
+          runPlan: {
+            mode: "rolling",
+            rollingGoal: "keep_fit",
+            currentWeek: 2,
+          },
+        })}
+      />
+    );
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Keep your running going")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("tablist", { name: "Run week" })
+    ).toBeInTheDocument();
   });
 
   it("does NOT render for a race_prep user (freeform block hidden)", () => {

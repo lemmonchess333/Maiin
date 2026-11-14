@@ -77,7 +77,14 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   Run24 (4)'s time trials, which take a quality week in five and so move
  *   the quality ladder, gave sub-3:30 and the 2-3-day hybrids a
  *   `volume-jump` back (the week after a cutback, 28% and 26% over it)
- *   and the hybrids their `taper-cut`.
+ *   and the hybrids their `taper-cut`. Run24 (5), the session library in
+ *   the plan, took the 2-3-day hybrids' out again: their cutback holds
+ *   3 × 2 km at 10K pace where it held 4 × 1 km, so the week after it is
+ *   within a quarter of it, 166 minutes after 139 where it was 163 after
+ *   129 (`volume-jump`), and the 10K's own sharpener, 4 × 1 km at 10K pace,
+ *   holds their first taper week at 94 minutes of the build's 180, where
+ *   8 × 400 m held 90 of 182 (`taper-cut`). Sub-3:30 keeps its
+ *   `volume-jump` with a second quality day.
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
@@ -89,18 +96,13 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
-  "hybrid-2-3-trim": [
-    "lift:misses:overhead-press",
-    "spike",
-    "taper-cut",
-    "volume-jump",
-  ],
-  "hybrid-2-3-no-trim": [
-    "lift:misses:overhead-press",
-    "spike",
-    "taper-cut",
-    "volume-jump",
-  ],
+  "hybrid-2-3-trim": ["lift:misses:overhead-press", "spike"],
+  "hybrid-2-3-no-trim": ["lift:misses:overhead-press", "spike"],
+  /* Run24 (3): a plan with no race date, build to 10K on four runs. Its
+     long run climbs a 2 km rung at a time from the runner's own 8 km to
+     the goal's 12 (Run24 (6)'s ladder), each rung past the single-run
+     guard, as every race plan's are (`spike`). */
+  "build-10k-no-date": ["spike"],
   /* The owner's own set-up (R5): six run days and six lift days, a
      marathon 25 weeks out from about 3 km a run. The long run climbs a rung
      a done week from their 25 minutes, at the pace of their own runs, each
@@ -108,7 +110,13 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
      marathon read whole (R1) gives a benchmark 5 VDOT under them, which
      then calls their recovery runs too fast (`derived-low`, `easy-nag`).
      Six lift days leave a major group out of some weeks
-     (`lift:acsm-coverage`). */
+     (`lift:acsm-coverage`). With the rolling base before its 20-week block
+     (Run24 (3)) and the block's sizes kept (`RaceBlockInputs`), the build
+     holds a 20 km long run, which this runner skips, so the taper's reduced
+     long runs (14 and 12 km) are past the 50 minutes their own running has
+     climbed to, and the starting point's fit makes each an easy run of
+     those minutes (a 6 km long run takes 51 at their pace): no long run in
+     the two weeks before race week (`taper-long`). */
   "owner-marathon": [
     "derived-low",
     "easy-nag",
@@ -117,6 +125,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "lift:acsm-coverage:quads",
     "long-share",
     "spike",
+    "taper-long",
     "volume-jump",
   ],
 };
