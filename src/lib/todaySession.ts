@@ -20,6 +20,7 @@ import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { isActivationJourneyV2 } from "@/lib/activationJourney";
+import { trainingKind } from "@/lib/trainingKind";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { runDoseLine } from "@/lib/runDose";
@@ -485,6 +486,8 @@ function restDayOffer(
   // The first workout still leads for someone who also lifts; after it, a
   // free runner's day offers a run. Free running has no planned days, so
   // "Rest day" was wrong for anyone who runs freely, a lifter included.
+  // Whether they run is the plan's to say (`trainingKind`, App1 Q23), so a
+  // lifter who took up running is offered one too.
   if (day.firstWorkout) {
     const index = nextUpIndex(programState);
     const workout = index >= 0 ? programState?.workouts?.[index] : undefined;
@@ -501,9 +504,12 @@ function restDayOffer(
   // A plan with no race date is a plan here, though the profile says free
   // running (Run24 (3)).
   const runMode = runModeWithPlan(profile, programState);
+  // Free running is the profile's own word (a missing run mode is not it),
+  // and a plan with no race date is not free running.
   if (
+    profile?.runMode === "freeform" &&
     runMode === "freeform" &&
-    (profile?.athleteType === "Runner" || profile?.athleteType === "Hybrid")
+    trainingKind(profile, programState).runs
   ) {
     return { kind: "free-run", startTarget: runStartTarget(null) };
   }

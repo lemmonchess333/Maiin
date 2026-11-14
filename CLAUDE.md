@@ -168,6 +168,7 @@ Support & legal.
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `trainingWeek.ts`       | The week done and planned, which every week count reads        |
 | `foodDay.ts`            | A food day: 800 kcal or more, the one rule every count reads   |
+| `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
