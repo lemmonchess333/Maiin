@@ -4845,3 +4845,60 @@ Unit-tested on both sides; no phone or deployed sender has shown it.
       source of `hourlyStreakNudge` in the console. Passing: it calls
       `reminderChoices.streakReminderPushHour` and the recap
       `reminderChoices.reviewReminderByPush`.
+
+## One push a day, and a reminder nobody answers goes quiet (App1 Q60 and Q62, 2026-11-14)
+
+Affects: every server push not from a person (`hourlyStreakNudge`'s
+streak, first-week, recap and badge pushes; `hourlyChallengeAnnouncements`),
+now at most 1 a day and 5 in any 7 local days per account
+(`users/{uid}/settings/pushBudget`), the evening reminder first, then the
+review, a closing challenge, new challenges, a badge (from 10:00 local).
+Monday's review no longer silences that evening's streak reminder: on a day
+the evening reminder may still go, the review push waits for it. And every
+reminder, push or phone, goes quiet after 3 ignored running, said once on
+Home (`RemindersQuietCard`). "Answered" is the app opened after it the same
+day, a tap on it, a log that day (streak) or the review read (review).
+Unit-tested on both sides; nothing has been seen on a phone or a deployed
+sender.
+
+- [ ] **One a day, by the order.** An account with push, the evening
+      reminder on at 20:00, a streak of 2 or more, and a new badge earned
+      that morning. Log nothing. Passing: no badge push in the day, one
+      "An evening reminder" at 20:00, nothing else that day. The next day,
+      with nothing else due, the badge push from 10:00 if it is under 2
+      days old.
+- [ ] **Monday with the evening reminder on.** Monday, push on, a review
+      waiting, the evening reminder on with a streak a log would keep.
+      Passing: no 09:00 "Your week, reviewed"; the evening reminder at its
+      hour if nothing is logged. Turn the evening reminder off and the next
+      Monday the review push comes at 09:00.
+- [ ] **Five in seven days.** In the console, seed
+      `users/{uid}/settings/pushBudget.sent` with five entries for the last
+      six local days. Passing: no push from any non-social sender today;
+      the sixth day after the oldest entry, one can go again.
+- [ ] **Quiet hours.** Nothing from these senders between 22:00 and 08:00
+      local, and no badge before 10:00, on an account in a time zone well
+      away from UTC (Auckland or Los Angeles).
+- [ ] **The opened signal, push.** Tap an evening reminder push from the lock
+      screen. Passing: `users/{uid}/settings/reminders.streakAnsweredAt` is
+      written within seconds. Then on a second evening, ignore the push but
+      open Tropos from its icon that evening. Passing: `streakAnsweredAt`
+      is written again (the same-day open counts).
+- [ ] **Three ignored push reminders.** Let three evening reminder pushes
+      go by without opening the app or logging (or set `streakIgnored: 2`
+      and a `streakSentAt` from yesterday in the console). Passing: no
+      fourth push; `streakEnabled` false and `streakQuietAt` set; on the
+      next open Home shows "Streak reminders are off" once, Settings →
+      Notifications shows Streak off, and turning it on there sends again.
+- [ ] **Three ignored phone reminders.** On an iPhone with meal reminders on
+      and push off, do not open Tropos for 3 days, then open it. Passing:
+      Home says "Meal reminders are off" once, Settings shows Meals off,
+      and no meal notification comes the next day.
+- [ ] **A tap on a phone reminder.** Tap a workout reminder from the
+      notification centre the morning after it fired (after midnight).
+      Passing: it counts as answered (no quiet after it and two more
+      unopened days).
+- [ ] **Deployed senders.** After the functions deploy, read the deployed
+      source of `hourlyStreakNudge` and `hourlyChallengeAnnouncements`.
+      Passing: both reach `pushBudget.claimPushBudget`, and the streak and
+      recap senders call `settleReminderBeforeSend`.

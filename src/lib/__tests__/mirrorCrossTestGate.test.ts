@@ -120,6 +120,12 @@ const PINNED: Record<string, string> = {
   // pair with src/lib/reminderChoices.ts.
   "functions/lib/reminderChoices.js":
     "src/lib/__tests__/reminderChoices.cross.test.ts",
+  // A reminder ignored three times running goes quiet (App1 Q62). Both
+  // halves run: the server counts the streak and review pushes, the app
+  // writes the answers the server reads and reads the quiet marks the
+  // server writes. A basename pair with src/lib/reminderAttention.ts.
+  "functions/lib/reminderAttention.js":
+    "src/lib/__tests__/reminderAttention.cross.test.ts",
   // A post's photos (Soc15 call 2): the server's limit of four, its photo
   // id rule and its "this post's own upload" URL check are held to the
   // app's and the rules' by the paths cross-test. The rest of each module

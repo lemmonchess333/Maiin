@@ -297,6 +297,13 @@ function buildAnnouncementMessage(uid, claim, now) {
  * Only explicit zero-accepted FCM results may retry on a later local
  * morning within that campaign's three-day window. Any accepted recipient
  * completes the campaign.
+ *
+ * `budget` is the day's one push that every push not from a person shares
+ * (App1 Q60, lib/pushBudget.js): `claim(kind, timezone)` resolves to a
+ * claim, or null when the day is taken or a higher push may still go
+ * today, and then this morning's campaign is not claimed at all, so a
+ * later morning in its window can send it. `release(claim)` gives the day
+ * back when nothing reached a device.
  */
 async function maybeSendAnnouncement({
   db,
@@ -308,6 +315,7 @@ async function maybeSendAnnouncement({
   send,
   prune,
   profile,
+  budget,
   reminder = false,
 }) {
   const facts = profile || (await db.doc(`users/${uid}`).get()).data();
@@ -321,7 +329,15 @@ async function maybeSendAnnouncement({
   if (registrations.length === 0) return false;
   let batch;
   let status;
+  let todaysPush = null;
   try {
+    if (budget) {
+      todaysPush = await budget.claim(
+        reminder ? "challengeReminders" : "challenges",
+        facts.timezone
+      );
+      if (!todaysPush) return false;
+    }
     const claim = await (reminder ? claimReminder : claimAnnouncement)(
       db,
       uid,
@@ -329,7 +345,10 @@ async function maybeSendAnnouncement({
       now,
       serverTimestamp
     );
-    if (!claim) return false;
+    if (!claim) {
+      if (todaysPush) await budget.release(todaysPush);
+      return false;
+    }
     try {
       batch = await send({
         tokens: registrations.map((registration) => registration.token),
@@ -341,6 +360,9 @@ async function maybeSendAnnouncement({
       // caller lost its response. No raw transport/token error is logged.
       status = "uncertain";
     }
+    // An ambiguous send keeps the day: it may have arrived.
+    if (todaysPush && status === "retryable")
+      await budget.release(todaysPush);
     await finishAnnouncement(db, uid, claim, status, now, serverTimestamp);
   } finally {
     await releaseRegistrations(uid, registrations);

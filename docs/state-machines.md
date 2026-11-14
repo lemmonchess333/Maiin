@@ -42,6 +42,7 @@ inside that type.
 | A day on Home's week     | `src/components/home/WeekStrip.tsx` (`WeekDayState`)                                         | seven named states                                                                                                   |
 | Camera permission        | `src/components/FoodCameraModal.tsx` (`CameraState`)                                         | idle, granted, denied, unavailable                                                                                   |
 | A reminder's delivery    | `src/lib/reminderChoices.ts` (`ReminderDelivery`), and the server's copy (App1 Q26)          | off, local, push: the phone or the server sends it, never both                                                       |
+| A reminder's attention   | `src/lib/reminderAttention.ts` (`AttentionCount`), and the server's half (App1 Q62)          | on with 0, 1 or 2 ignored running; quiet (off, `{kind}QuietAt`); said on Home (`{kind}QuietShown`); on again from 0  |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.

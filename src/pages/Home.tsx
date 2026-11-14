@@ -112,6 +112,7 @@ import {
   summarizeEasier,
 } from "@/features/program/easierToday";
 import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
+import RemindersQuietCard from "@/components/home/RemindersQuietCard";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
 import WaterCard from "@/components/home/WaterCard";
@@ -1557,6 +1558,12 @@ export default function Home() {
           session rather than above it. Renders nothing once verified. */}
       <SectionErrorBoundary sectionName="verify-email">
         <VerifyEmailBanner />
+      </SectionErrorBoundary>
+
+      {/* A reminder that went quiet after 3 went unopened, said once
+          (App1 Q62). Renders nothing otherwise. */}
+      <SectionErrorBoundary sectionName="reminders-quiet">
+        <RemindersQuietCard />
       </SectionErrorBoundary>
 
       <motion.div
