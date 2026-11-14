@@ -77,7 +77,7 @@ export interface WeekOffersInput {
   } | null;
   /** New paces from a recent race or tempo, not yet set aside. */
   paces: {
-    direction: "faster" | "slower";
+    direction: "faster" | "slower" | "first";
     currentVdot: number;
     suggestedVdot: number;
   } | null;
@@ -189,8 +189,24 @@ function pacesOffer(input: WeekOffersInput): WeekOffer | null {
   const paces = input.paces;
   if (!paces) return null;
   // The easy band, which every plan runs most: one number and what it was.
-  const from = trainingBands(paces.currentVdot).easy;
   const to = trainingBands(paces.suggestedVdot).easy;
+  if (paces.direction === "first") {
+    // Run24 (4): a runner with no confirmed paces has none to move from,
+    // so the line says what their easy runs become and nothing else.
+    return {
+      kind: "paces",
+      sport: "run",
+      title: "Your training paces",
+      reason: "Your best recent race, time trial or tempo gives you paces.",
+      change: `Easy runs become ${paceBandLabel(to, input.unit)}.`,
+      acceptLabel: "Set paces",
+      route: null,
+      routeFirst: false,
+      undoable: false,
+      doneLine: "Training paces set.",
+    };
+  }
+  const from = trainingBands(paces.currentVdot).easy;
   const faster = paces.direction === "faster";
   return {
     kind: "paces",

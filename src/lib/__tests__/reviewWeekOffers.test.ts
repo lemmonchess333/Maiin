@@ -171,6 +171,20 @@ describe("reviewWeekOffers", () => {
     expect(offer.title).toBe("Easier paces");
   });
 
+  it("a runner's first paces say what easy runs become, with nothing to move from", () => {
+    const [offer] = offers({
+      paces: { direction: "first", currentVdot: 0, suggestedVdot: 42 },
+    });
+    expect(offer).toMatchObject({
+      kind: "paces",
+      title: "Your training paces",
+      acceptLabel: "Set paces",
+      undoable: false,
+      doneLine: "Training paces set.",
+    });
+    expect(offer.change).toMatch(/^Easy runs become \d:\d\d–\d:\d\d \/km\.$/);
+  });
+
   it("orders the race plan first, then the week's load, then the paces", () => {
     const list = offers({
       paces: { direction: "faster", currentVdot: 40, suggestedVdot: 44 },
