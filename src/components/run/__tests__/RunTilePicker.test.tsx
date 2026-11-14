@@ -91,13 +91,16 @@ it("offers repeatable run help without starting or changing setup", () => {
   expect(onBack).not.toHaveBeenCalled();
 });
 
-describe("RunTilePicker on a hot day (Pgm8 (E8))", () => {
-  it("says to run by feel under the tiles, with MET Norway's credit and no swap", () => {
-    setup({ hotDay: true });
+describe("RunTilePicker on a hot day (heatAdjustment.ts)", () => {
+  const HOT_LINE =
+    "By a common rule of thumb, this heat slows the same effort by 2–3%.";
+
+  it("says it is hot under the tiles, with MET Norway's credit, and offers nothing to adjust", () => {
+    setup({ heat: { level: "hot", line: HOT_LINE } });
     const note = screen.getByRole("note", { name: "Hot day" });
-    expect(note).toHaveTextContent("Hot today: run by feel, not by pace");
+    expect(note).toHaveTextContent(HOT_LINE);
     expect(note).toHaveTextContent("Weather data from MET Norway");
-    // A free run has no session to swap.
+    // A free run has no planned targets to adjust and no session to swap.
     expect(note.querySelector("button")).toBeNull();
     // Under the tiles, so the note arriving never moves them.
     const tile = screen.getByText("Free run");

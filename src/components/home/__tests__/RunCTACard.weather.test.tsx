@@ -1,8 +1,9 @@
 /**
- * Home's run hero reads the weather ahead for a tempo or interval session
- * still to start (Pgm8 (E8)), so Start finds it known and the run page can
- * offer a hot day's easy run without a wait (startOnArrival). It reads
- * nothing for any other run, and the hero shows nothing of it.
+ * Home's run hero reads the weather ahead for a planned run still to start
+ * (heatAdjustment.ts), so Start finds it known and the run page can offer
+ * a hot day's adjustment without a wait (startOnArrival). It reads nothing
+ * for a run already done, a race or a free run, and the hero shows nothing
+ * of it.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -50,18 +51,22 @@ function hero(day: ScheduledRunDay) {
 }
 
 describe("RunCTACard — the weather ahead", () => {
-  it("reads it for a tempo or interval session still to start", () => {
+  it("reads it for a planned run still to start", () => {
     hero(runDay("tempo_30", "tempo"));
     expect(weather.get).toHaveBeenCalledOnce();
     cleanup();
     hero(runDay("5x1k", "intervals"));
-    expect(weather.get).toHaveBeenCalledTimes(2);
-  });
-
-  it("reads nothing for an easy run, or for a session already done", () => {
+    cleanup();
     hero(runDay("easy_30", "easy"));
     cleanup();
+    hero(runDay("long_15k", "long"));
+    expect(weather.get).toHaveBeenCalledTimes(4);
+  });
+
+  it("reads nothing for a session already done, or a race", () => {
     hero(runDay("tempo_30", "tempo", "completed_exact"));
+    cleanup();
+    hero(runDay("5k_race", "race"));
     expect(weather.get).not.toHaveBeenCalled();
   });
 

@@ -15,10 +15,11 @@
  *  - a route to follow, which only the full setup takes;
  *  - their first run, whose hint on the run's card says what is about to
  *    happen (FV1);
- *  - a tempo or interval session on a hot day, whose card offers an easy
- *    run of its minutes in its place (Pgm8 (E8)). The page waits a moment
- *    for the weather (`HEAT_CHECK_MS`), which Home has usually read
- *    already.
+ *  - a hot day, whose card offers to adjust the run for heat or to swap
+ *    it, or an extreme one, which says running outside isn't advised and
+ *    leaves the start to the person (heatAdjustment.ts). For a planned
+ *    run the page waits a moment for the weather (`HEAT_CHECK_MS`), which
+ *    Home has usually read already; a free run waits for nothing.
  *
  * Otherwise it starts the planned run the page names, or a free run, as
  * the card's Start and the Free tile would.
@@ -45,10 +46,9 @@ export const HEAT_CHECK_MS = 1000;
 
 export type ArrivalStart = "wait" | "show" | "planned" | "free";
 
-/** What the weather means for the start: still being read, a hot day with
- *  a swap to offer, or nothing to show. "none" for any run with no swap to
- *  offer (an easy, long or free run, a race). */
-export type ArrivalHeat = "checking" | "swap" | "none";
+/** What the weather means for the start: still being read, a hot day
+ *  with something on the card to choose or read first, or nothing. */
+export type ArrivalHeat = "checking" | "show" | "none";
 
 export function startOnArrival(input: {
   /** The plan has loaded (a free runner has none to wait for). */
@@ -59,14 +59,13 @@ export function startOnArrival(input: {
   firstRunHint: "checking" | "due" | "not-due";
   /** The page names a planned run (its launch card would show). */
   plannedRun: boolean;
-  /** Whether the planned run's card has a hot day's swap to offer. */
+  /** Whether the weather puts something on the card first. */
   heat?: ArrivalHeat;
 }): ArrivalStart {
   if (input.interruptedRun || input.routeToFollow) return "show";
   if (!input.planReady || input.firstRunHint === "checking") return "wait";
   if (input.firstRunHint === "due") return "show";
-  if (!input.plannedRun) return "free";
   if (input.heat === "checking") return "wait";
-  if (input.heat === "swap") return "show";
-  return "planned";
+  if (input.heat === "show") return "show";
+  return input.plannedRun ? "planned" : "free";
 }

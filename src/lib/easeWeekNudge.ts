@@ -67,8 +67,9 @@ export const SHORT_TARGET_RATIO = 0.7;
 export const EXECUTION_POLICY_VERSION = "run-execution-v1";
 
 export type RelativeEffort = "easier" | "matched" | "harder" | null;
-/** "heat" is a run started on a hot day (Pgm8 (E8)): its pace was not
- *  judged, so it counts neither as a miss nor as on target. */
+/** "heat" is a hot day's run that ran slower than its pace, or one run by
+ *  effort only (heatAdjustment.ts): not judged slow, so it counts neither
+ *  as a miss nor as on target. */
 export type PaceVerdictTone = "on" | "fast" | "easy-too-fast" | "slow" | "heat";
 
 export interface EaseWeekNudgeRun {

@@ -29,7 +29,7 @@ import SessionHero from "@/components/home/SessionHero";
 import type { SessionInProgress } from "@/lib/sessionsInFlight";
 import { useEffect } from "react";
 import { getCurrentWeather } from "@/lib/weather";
-import { isQualitySession } from "@/lib/heatAdjustment";
+import { isHeatAdjustable } from "@/lib/heatAdjustment";
 
 /**
  * Today's run, as Home's hero (DS4; `SessionHero` draws it). Twin of
@@ -134,12 +134,12 @@ export default function RunCTACard({
         )
       : freeLine;
 
-  /* Pgm8 (E8): a tempo or interval session to start today reads the
-     weather now, so the run page finds it known and, on a hot day, shows
-     the session's card with its easy-run swap instead of starting
-     (startOnArrival) without a wait. The hero itself says nothing of it. */
+  /* A planned run to start today reads the weather now, so the run page
+     finds it known and, on a hot day, shows the run's card with its heat
+     offer instead of starting (startOnArrival) without a wait. The hero
+     itself says nothing of it. */
   const readsWeather =
-    startable && !inProgress && !locked && isQualitySession(tmpl?.type);
+    startable && !inProgress && !locked && isHeatAdjustable(tmpl?.type);
   useEffect(
     function () {
       if (readsWeather) void getCurrentWeather();

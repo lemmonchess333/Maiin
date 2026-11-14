@@ -23,6 +23,7 @@ import {
 } from "@/lib/runPlanMetadata";
 import { resolveSessionPaces, type PaceTable } from "@/lib/runPaces";
 import { segmentsFromEasy } from "@/lib/runSegments";
+import type { HeatAdjustment } from "@/lib/heatAdjustment";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -126,12 +127,19 @@ export interface RunConfig {
   segments?: SessionSegment[];
   shoeId?: string;
   /**
-   * The weather at the start was hot by Pgm8 (E8)'s rule (`isHotDay`,
-   * heatAdjustment.ts), so the summary reads the run by feel and does not
-   * judge its pace (`plannedRunVerdict`). Absent on any other day, and
-   * when the weather could not be read.
+   * The weather at the start was hot (`isHotDay`, heatAdjustment.ts), so
+   * the summary never judges the run slow (`plannedRunVerdict`). Absent on
+   * any other day, and when the weather could not be read.
    */
   hotDay?: boolean;
+  /**
+   * The runner adjusted this run for heat before starting it (offered,
+   * never applied by itself): its paces were set from the eased table, the
+   * run screen eases its bands and easy limit the same way, and a
+   * heart-rate ceiling, when it has one, governs while beats arrive. This
+   * run's alone: the plan and the stored paces are untouched.
+   */
+  heatAdjustment?: HeatAdjustment;
   /**
    * Plan-adherence metadata block, Phase B1. Snapshot of the programme
    * context active at Start; persisted to the run doc. Always present
@@ -352,7 +360,44 @@ export function buildTileConfig(
 }
 
 /**
- * A hot day's swap (Pgm8 (E8), heatAdjustment.ts): the run being set up as
+ * A long run's swap on a hot day: the same long run with its race-pace
+ * finish taken off, all of it easy running, as a plain long run of that
+ * distance is set up (its distance target, no steps).
+ */
+export function heatLongSwapConfig(config: RunConfig): RunConfig {
+  const { segments: _segments, ...rest } = config;
+  return rest;
+}
+
+/**
+ * A plan prefill with no pace in it, for a run adjusted to effort only on
+ * an extreme day: no pace target, no work pace, and steps that pin none.
+ * Distance, time and the steps themselves stay.
+ */
+export function withoutPaceTargets(
+  prefill: Partial<RunConfig>
+): Partial<RunConfig> {
+  const out: Partial<RunConfig> = { ...prefill };
+  if (out.target?.type === "pace") out.target = { type: "none" };
+  if (out.intervals) {
+    const { workPace: _workPace, ...intervals } = out.intervals;
+    out.intervals = intervals;
+  }
+  if (out.segments) {
+    out.segments = out.segments.map((segment) => {
+      const {
+        paceTarget: _paceTarget,
+        pacePinned: _pacePinned,
+        ...rest
+      } = segment;
+      return rest;
+    });
+  }
+  return out;
+}
+
+/**
+ * A hot day's swap (heatAdjustment.ts): the run being set up as
  * an easy run of `minutes`, as a planned easy run of that length is set up
  * (a timed target and its one easy step). Everything about where and how
  * it is recorded stays (shoe, place, voice cues, the plan's snapshot, which

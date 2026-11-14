@@ -26,7 +26,7 @@ import type { ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
-import HotDayNote from "./HotDayNote";
+import HeatPanel from "./HeatPanel";
 import { haptic } from "@/lib/haptic";
 import {
   ACTIVITY_TYPES,
@@ -61,9 +61,9 @@ interface RunTilePickerProps {
   /** The GPS signal, warmed while this screen is open, at the header's
    *  end. */
   gpsSignal?: ReactNode;
-  /** It is hot where the phone is (Pgm8 (E8), `useHotDay`): the picker
-   *  says to run by feel. */
-  hotDay?: boolean;
+  /** A hot or extreme day (heatAdjustment.ts): the heat line. A free run
+   *  has no planned targets to adjust and no session to swap. */
+  heat?: { level: "hot" | "extreme"; line: string } | null;
 }
 
 export default function RunTilePicker({
@@ -76,7 +76,7 @@ export default function RunTilePicker({
   onHelp,
   repeatType = null,
   gpsSignal,
-  hotDay = false,
+  heat = null,
 }: RunTilePickerProps) {
   const unit = useDistanceUnit();
   const tiles = DIRECT_LAUNCH_TYPES.map((type) =>
@@ -173,10 +173,9 @@ export default function RunTilePicker({
           })}
         </div>
 
-        {/* Pgm8 (E8): on a hot day, the heat line, under the tiles so a
-            note arriving with the weather never moves them under a thumb.
-            A free run has no session to swap. */}
-        {hotDay && <HotDayNote />}
+        {/* A hot or extreme day: the heat line, under the tiles so a note
+            arriving with the weather never moves them under a thumb. */}
+        {heat && <HeatPanel level={heat.level} line={heat.line} />}
 
         <Button
           variant="outline"

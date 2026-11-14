@@ -1046,8 +1046,10 @@ export default function RunSummary() {
         distance,
         runFitness: profile?.runFitness,
         unit,
-        // Pgm8 (E8): a run started on a hot day is read by feel.
+        // A hot day's run is never judged slow, and one adjusted for heat
+        // is judged against the paces it was set (heatAdjustment.ts).
         hotDay: runConfig?.hotDay === true,
+        heatAdjustment: runConfig?.heatAdjustment ?? null,
       });
 
   // The context-aware primary stat, a card above the stats card of four.

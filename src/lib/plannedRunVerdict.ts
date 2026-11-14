@@ -32,14 +32,17 @@
  * feed the "Take this week easier?" nudge (A6). A typed distance sets no
  * pace record either (`isPaceEligible`).
  *
- * A run started on a hot day (`RunConfig.hotDay`, Pgm8 (E8)) is read by
- * feel, not judged on its pace: heat slows running at the same effort
- * (Ely 2007; El Helou 2012; running-evidence.md §4.12), which says not to
- * mark a hot-day run a miss, and the line before the run said to run by
- * feel. Its tone is "heat", which the easier-week nudge counts neither way,
- * and its line (`HEAT_VERDICT_LINE`) carries no number. It speaks where the
- * cooler day's judgement would have, so a run that matched its type keeps
- * the quiet summary (Run21 (6)).
+ * A run started on a hot day (`RunConfig.hotDay`) is never judged slow:
+ * heat slows running at the same effort (Ely 2007; El Helou 2012;
+ * running-evidence.md §4.12), which says not to mark a hot day's run a
+ * miss. A slow one's tone is "heat", which the easier-week nudge counts
+ * neither way, and its line says slower is expected, where the cooler
+ * day's "slow" would have spoken (Run21 (6) keeps an easy run quiet). On
+ * target and quicker are judged as on any day: running hard in heat is
+ * the mistake to name. A run adjusted for heat (`RunConfig.heatAdjustment`)
+ * is judged against the paces it was set, the eased table
+ * (`heatEasedPaceTable`); one adjusted to effort only, on an extreme day,
+ * had no pace targets, so its pace is not judged at all.
  */
 import type { DistanceUnit } from "./distanceUnits";
 import { resolvePaceVerdict, type PaceVerdict } from "./paceVerdict";
@@ -51,7 +54,13 @@ import {
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
 import { RUN_TEMPLATES, isRunWalkTemplateId } from "./workoutTemplates";
 import { isTreadmillRun } from "./runGuards";
-import { HEAT_VERDICT_LINE } from "./heatAdjustment";
+import {
+  HEAT_FEEL_VERDICT_LINE,
+  heatEasedPaceTable,
+  heatSlowVerdictLine,
+  type HeatAdjustment,
+} from "./heatAdjustment";
+import { paceLabel } from "./runLabels";
 
 /** The least a run's work segments must cover to be judged on: a few
  *  hundred metres and a minute, so a block cut short isn't read as one. */
@@ -86,8 +95,11 @@ export function plannedRunVerdict(args: {
   distance: number;
   runFitness: Parameters<typeof paceTableFromFitness>[0];
   unit: DistanceUnit;
-  /** The run started on a hot day (`RunConfig.hotDay`): read by feel. */
+  /** The run started on a hot day (`RunConfig.hotDay`): never slow. */
   hotDay?: boolean;
+  /** The run's heat adjustment (`RunConfig.heatAdjustment`): judged
+   *  against the eased paces it was set. */
+  heatAdjustment?: HeatAdjustment | null;
 }): PaceVerdict | null {
   const { planMetadata: pm, avgPaceSeconds, distance } = args;
   if (getAdherenceLabel(pm) !== "Planned") return null;
@@ -97,7 +109,11 @@ export function plannedRunVerdict(args: {
   if (!tmpl || tmpl.type === "intervals" || isRunWalkTemplateId(tmpl.id))
     return null;
   if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
-  const table = paceTableFromFitness(args.runFitness ?? null);
+  const heat = args.heatAdjustment ?? null;
+  if (heat?.effortOnly)
+    return { tone: "heat", line: HEAT_FEEL_VERDICT_LINE, speaks: false };
+  const fitnessTable = paceTableFromFitness(args.runFitness ?? null);
+  const table = heat ? heatEasedPaceTable(fitnessTable, heat) : fitnessTable;
   if (!table) return null;
   const paces = resolveSessionPaces(tmpl.type, table, {
     raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistanceKm),
@@ -126,6 +142,11 @@ export function plannedRunVerdict(args: {
     targetBandS: pinned ? undefined : paces.band,
     unit: args.unit,
   });
-  if (!verdict || args.hotDay !== true) return verdict;
-  return { tone: "heat", line: HEAT_VERDICT_LINE, speaks: verdict.speaks };
+  const hot = args.hotDay === true || heat !== null;
+  if (!verdict || !hot || verdict.tone !== "slow") return verdict;
+  return {
+    tone: "heat",
+    line: heatSlowVerdictLine(paceLabel(judged, args.unit)),
+    speaks: verdict.speaks,
+  };
 }

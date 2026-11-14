@@ -1,11 +1,14 @@
 /**
- * A hot day where a run is started (Pgm8 (E8), kept with actions): through
- * the real Run page with device I/O stubbed. Home's Start of a tempo or
- * interval session on a hot day shows the session's card, whose swap is a
- * choice, instead of starting; the swap starts an easy run of the
- * session's minutes; any run started on a hot day carries `hotDay` to the
- * summary, which then reads it by feel. A mild day, an easy run and a
- * weather read that is slow all start as before.
+ * A hot day where a run is started (heatAdjustment.ts, the owner's heat
+ * adjustment), through the real Run page with device I/O stubbed. Home's
+ * Start of a planned run on a hot day with something to offer shows the
+ * run's card instead of starting; Adjust for heat starts the session from
+ * the eased paces with the adjustment on the run, Clear gives back the
+ * plan's; a swap starts an easy run of the session's minutes; an extreme
+ * day shows its advice and still starts on Start; a heart-rate ceiling,
+ * from a live source and a measured max, speaks over the ceiling. Any run
+ * started on a hot day carries `hotDay` to the summary. A mild day, a run
+ * with nothing to adjust and a slow weather read start as before.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -20,6 +23,8 @@ import Run from "../Run";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import type { ProgramState } from "@/features/program/programTypes";
 import { HEAT_CHECK_MS } from "@/features/run/startOnArrival";
+import { heatEasedPaceTable } from "@/lib/heatAdjustment";
+import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import { RUN } from "@/test/journeyScreens";
 
 const RACE_GOAL = { distance: "10k", targetDate: "2099-04-18" };
@@ -37,6 +42,10 @@ const HOT = {
 };
 /** 15°C at 50%: about 100°F, mild. */
 const MILD = { ...HOT, temperature: 15, feelsLike: 15, humidity: 50 };
+/** 36°C at 80%: about 192°F, past the table: hard running not advised. */
+const EXTREME = { ...HOT, temperature: 36, feelsLike: 45, humidity: 80 };
+/** A 25-minute 5K, confirmed: the plan's paces come from it. */
+const FITNESS = { benchmark: { distanceM: 5000, timeS: 1500 }, vdot: null };
 
 const h = vi.hoisted(() => ({
   runMode: "race_prep",
@@ -50,6 +59,11 @@ const h = vi.hoisted(() => ({
   native: false,
   openedSettings: 0,
   weather: null as null | (() => Promise<unknown>),
+  runFitness: null as unknown,
+  maxHeartRate: null as number | null,
+  hrLive: false,
+  bpm: null as number | null,
+  spoken: [] as string[],
 }));
 
 const visibility = vi.hoisted(() => ({
@@ -87,7 +101,13 @@ const gpsControls = {
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
-    profile: { uid: "arrival-test", runMode: h.runMode, raceGoal: RACE_GOAL },
+    profile: {
+      uid: "arrival-test",
+      runMode: h.runMode,
+      raceGoal: RACE_GOAL,
+      runFitness: h.runFitness,
+      maxHeartRate: h.maxHeartRate,
+    },
   }),
   useUidForStorageKey: () => "arrival-test",
   useUid: () => "arrival-test",
@@ -152,13 +172,22 @@ vi.mock("@/hooks/useRunTimer", () => ({
 vi.mock("@/hooks/useWakeLock", () => ({
   useWakeLock: () => ({ request: async () => {}, release: async () => {} }),
 }));
+vi.mock("@/lib/heartRateSource", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/heartRateSource")>()),
+  // A fake live source: available where the test says, never streaming
+  // (the hook below hands the run its beats).
+  getHeartRateSource: () => ({
+    available: h.hrLive,
+    subscribe: () => ({ stop() {} }),
+  }),
+}));
 vi.mock("@/hooks/useHeartRate", () => ({
-  useHeartRate: () => ({ bpm: null }),
+  useHeartRate: () => ({ bpm: h.bpm }),
 }));
 vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
     prime: () => {},
-    speak: () => {},
+    speak: (line: string) => h.spoken.push(line),
     checkDistanceCue: () => {},
     checkTimeCue: () => {},
     checkPaceAlert: () => {},
@@ -173,24 +202,40 @@ vi.mock("@/components/run/ShoeSelector", () => ({ default: () => null }));
 vi.mock("@/components/run/RunLaunchCard", () => ({
   default: ({
     onStart,
-    hotDay,
-    heatSwapMinutes,
-    onHeatSwap,
+    heat,
+    paceRange,
   }: {
     onStart: () => void;
-    hotDay?: boolean;
-    heatSwapMinutes?: number | null;
-    onHeatSwap?: () => void;
+    paceRange?: string | null;
+    heat?: {
+      level: string;
+      line: string;
+      adjust?: {
+        accepted: boolean;
+        adjustedLine: string;
+        onAccept: () => void;
+        onClear: () => void;
+      } | null;
+      swap?: { line: string; label: string; onSwap: () => void } | null;
+    } | null;
   }) => {
     h.launchCardRenders += 1;
     return (
       <>
         <button onClick={onStart}>The run's card</button>
-        {hotDay && <p>Hot day on the card</p>}
-        {hotDay && heatSwapMinutes != null && (
-          <button
-            onClick={onHeatSwap}
-          >{`Swap for ${heatSwapMinutes} min`}</button>
+        {heat && <p>{heat.line}</p>}
+        {paceRange && <p>{`Range ${paceRange}`}</p>}
+        {heat?.adjust &&
+          (heat.adjust.accepted ? (
+            <>
+              <p>{heat.adjust.adjustedLine}</p>
+              <button onClick={heat.adjust.onClear}>Clear adjustment</button>
+            </>
+          ) : (
+            <button onClick={heat.adjust.onAccept}>Adjust for heat</button>
+          ))}
+        {heat?.swap && (
+          <button onClick={heat.swap.onSwap}>{heat.swap.label}</button>
         )}
       </>
     );
@@ -210,13 +255,23 @@ function Summary() {
       activityType: string;
       target: { type: string; value?: number };
       hotDay?: boolean;
+      heatAdjustment?: {
+        from: number;
+        to: number;
+        effortOnly?: boolean;
+        hrCeiling?: number;
+      };
       planMetadata?: { scheduledRunId: string | null };
     };
   };
-  const { activityType, target, hotDay, planMetadata } = state.runConfig;
+  const { activityType, target, hotDay, heatAdjustment, planMetadata } =
+    state.runConfig;
+  const adjusted = heatAdjustment
+    ? `adjusted ${heatAdjustment.from}–${heatAdjustment.to}${heatAdjustment.effortOnly ? " by feel" : ""}${heatAdjustment.hrCeiling ? ` under ${heatAdjustment.hrCeiling} bpm` : ""}`
+    : "not adjusted";
   return (
     <p>
-      {`${activityType} · ${target.type} ${target.value ?? "-"} · ${hotDay ? "hot day" : "no hot day"} · ${planMetadata?.scheduledRunId ?? "no plan"}`}
+      {`${activityType} · ${target.type} ${target.value ?? "-"} · ${hotDay ? "hot day" : "no hot day"} · ${adjusted} · ${planMetadata?.scheduledRunId ?? "no plan"}`}
     </p>
   );
 }
@@ -292,6 +347,11 @@ beforeEach(() => {
   h.native = false;
   h.openedSettings = 0;
   h.weather = null;
+  h.runFitness = null;
+  h.maxHeartRate = null;
+  h.hrLive = false;
+  h.bpm = null;
+  h.spoken = [];
 });
 afterEach(() => {
   cleanup();
@@ -305,16 +365,41 @@ async function finishOnTheTreadmill() {
   await saveOnTheTreadmill("5");
 }
 
+async function tap(name: string) {
+  await act(async () => {
+    fireEvent.click(await screen.findByRole("button", { name }));
+  });
+}
+
+/** The tempo's pace from the eased table: 6–8% slower on HOT. */
+function easedTempoPace() {
+  const table = paceTableFromFitness(FITNESS);
+  return resolveSessionPaces(
+    "tempo",
+    heatEasedPaceTable(table, { from: 0.06, to: 0.08 })
+  ).targetPace!;
+}
+
 describe("a hot day, started from Home", () => {
-  it("shows a tempo's card with its easy-run swap, and starts nothing", async () => {
+  beforeEach(() => {
+    h.runFitness = FITNESS;
+  });
+
+  it("shows the tempo's card with the offer and the swap, and starts nothing", async () => {
     planToday("tempo_30");
     h.weather = async () => HOT;
     await open(HOME_TEMPO);
-    expect(await screen.findByText("Hot day on the card")).toBeInTheDocument();
-    expect(h.gpsCalls).not.toContain("start");
-    // The tempo_30 template's 45 minutes, as its cards state them.
     expect(
-      screen.getByRole("button", { name: "Swap for 45 min" })
+      await screen.findByText(
+        "By a common rule of thumb, this heat slows the same effort by 6–8%."
+      )
+    ).toBeInTheDocument();
+    expect(h.gpsCalls).not.toContain("start");
+    expect(
+      screen.getByRole("button", { name: "Adjust for heat" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Run easy instead" })
     ).toBeInTheDocument();
     // The start flag is off the address: a reload shows the card again.
     expect(screen.getByTestId("address")).toHaveTextContent(
@@ -322,47 +407,78 @@ describe("a hot day, started from Home", () => {
     );
   });
 
-  it("swaps the tempo for an easy run of its 45 minutes, read by feel afterwards", async () => {
+  it("starts the tempo as planned when the offer isn't taken", async () => {
     planToday("tempo_30");
     h.weather = async () => HOT;
     await open(HOME_TEMPO);
-    await act(async () => {
-      fireEvent.click(
-        await screen.findByRole("button", { name: "Swap for 45 min" })
-      );
-    });
+    await tap("The run's card");
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        "tempo · pace 319 · hot day · not adjusted · runday_today"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("adjusts the tempo for heat: the eased pace as a range, then the run carries it", async () => {
+    planToday("tempo_30");
+    h.weather = async () => HOT;
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    // 5:19 /km eased 6–8%: shown as a range, never one pace.
+    expect(
+      screen.getByText("Adjusted for heat: work at 5:38–5:45 /km.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Range 5:38–5:45 /km")).toBeInTheDocument();
+    await tap("The run's card");
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        `tempo · pace ${easedTempoPace()} · hot day · adjusted 0.06–0.08 · runday_today`
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("clears the adjustment back to the plan's tempo", async () => {
+    planToday("tempo_30");
+    h.weather = async () => HOT;
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    await tap("Clear adjustment");
+    await tap("The run's card");
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        "tempo · pace 319 · hot day · not adjusted · runday_today"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("swaps the tempo for an easy run of its 45 minutes", async () => {
+    planToday("tempo_30");
+    h.weather = async () => HOT;
+    await open(HOME_TEMPO);
+    await tap("Run easy instead");
     expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
     await finishOnTheTreadmill();
     expect(
-      screen.getByText("easy · time 2700 · hot day · runday_today")
+      screen.getByText(
+        "easy · time 2700 · hot day · not adjusted · runday_today"
+      )
     ).toBeInTheDocument();
   });
 
-  it("keeps the tempo when it is started from its card instead", async () => {
-    planToday("tempo_30");
-    h.weather = async () => HOT;
-    await open(HOME_TEMPO);
-    await act(async () => {
-      fireEvent.click(
-        await screen.findByRole("button", { name: "The run's card" })
-      );
-    });
-    await finishOnTheTreadmill();
-    expect(
-      screen.getByText(/^tempo · .* · hot day · runday_today$/)
-    ).toBeInTheDocument();
-  });
-
-  it("starts an easy run straight away, carrying the hot day to the summary", async () => {
+  it("offers an easy run a slower easy limit", async () => {
     planToday("easy_30");
     h.weather = async () => HOT;
     await open(HOME_EASY);
-    expect(await screen.findByText("Acquiring GPS…")).toBeInTheDocument();
-    expect(h.launchCardRenders).toBe(0);
-    await finishOnTheTreadmill();
+    await tap("Adjust for heat");
     expect(
-      screen.getByText("easy · time 1800 · hot day · runday_today")
+      screen.getByText(
+        /^Adjusted for heat: keep easy running slower than \d+:\d{2} \/km\.$/
+      )
     ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /instead$/ })).toBeNull();
   });
 
   it("starts the tempo straight away on a mild day, with no hot day on it", async () => {
@@ -373,7 +489,9 @@ describe("a hot day, started from Home", () => {
     expect(h.launchCardRenders).toBe(0);
     await finishOnTheTreadmill();
     expect(
-      screen.getByText(/^tempo · .* · no hot day · runday_today$/)
+      screen.getByText(
+        "tempo · pace 319 · no hot day · not adjusted · runday_today"
+      )
     ).toBeInTheDocument();
   });
 
@@ -400,22 +518,102 @@ describe("a hot day, started from Home", () => {
   });
 });
 
-describe("a hot day, opened from Train", () => {
-  it("shows the card's hot day and its swap for a tempo", async () => {
+describe("a hot day with nothing to adjust", () => {
+  it("starts an easy run with no confirmed paces straight away, carrying the hot day", async () => {
+    planToday("easy_30");
+    h.weather = async () => HOT;
+    await open(HOME_EASY);
+    expect(await screen.findByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(h.launchCardRenders).toBe(0);
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        "easy · time 1800 · hot day · not adjusted · runday_today"
+      )
+    ).toBeInTheDocument();
+  });
+});
+
+describe("an extreme day", () => {
+  it("shows the run's card, advising against running outside, and Start still runs it", async () => {
+    planToday("easy_30");
+    h.weather = async () => EXTREME;
+    await open(HOME_EASY);
+    expect(
+      await screen.findByText(
+        "Running outside isn’t advised in this heat. If you go, run by feel."
+      )
+    ).toBeInTheDocument();
+    expect(h.gpsCalls).not.toContain("start");
+    await tap("The run's card");
+    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+  });
+
+  it("adjusts a tempo to effort only: no pace target", async () => {
+    h.runFitness = FITNESS;
+    planToday("tempo_30");
+    h.weather = async () => EXTREME;
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    expect(
+      screen.getByText("Adjusted for heat: no pace targets, so run by feel.")
+    ).toBeInTheDocument();
+    await tap("The run's card");
+    await finishOnTheTreadmill();
+    expect(
+      screen.getByText(
+        "tempo · none - · hot day · adjusted 0.08–0.1 by feel · runday_today"
+      )
+    ).toBeInTheDocument();
+  });
+});
+
+describe("a heart-rate ceiling, from a live source and a measured max", () => {
+  beforeEach(() => {
+    h.runFitness = FITNESS;
+    h.hrLive = true;
+    h.maxHeartRate = 190;
+  });
+
+  it("offers the tempo's ceiling in place of its paces, and speaks over it", async () => {
     planToday("tempo_30");
     h.weather = async () => HOT;
-    await open("/run?template=tempo_30&scheduledRunId=runday_today");
-    expect(await screen.findByText("Hot day on the card")).toBeInTheDocument();
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    // The top of the tempo's zone, Z4, at a measured 190.
     expect(
-      screen.getByRole("button", { name: "Swap for 45 min" })
+      screen.getByText("Adjusted for heat: keep your heart rate under 171 bpm.")
+    ).toBeInTheDocument();
+    h.bpm = 178;
+    await tap("The run's card");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await vi.waitFor(() =>
+      expect(h.spoken).toContain("Heart rate over 171. Ease off in the heat.")
+    );
+    await saveOnTheTreadmill("5");
+    expect(
+      screen.getByText(
+        `tempo · pace ${easedTempoPace()} · hot day · adjusted 0.06–0.08 under 171 bpm · runday_today`
+      )
     ).toBeInTheDocument();
   });
 
-  it("offers no swap for an easy run, which says only the hot day", async () => {
-    planToday("easy_30");
+  it("says nothing while no beats arrive, and offers no ceiling without a live source", async () => {
+    planToday("tempo_30");
     h.weather = async () => HOT;
-    await open("/run?template=easy_30&scheduledRunId=runday_today");
-    expect(await screen.findByText("Hot day on the card")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^Swap/ })).toBeNull();
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    await tap("The run's card");
+    fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
+    await saveOnTheTreadmill("5");
+    expect(h.spoken.filter((line) => /Heart rate/.test(line))).toEqual([]);
+    cleanup();
+
+    h.hrLive = false;
+    await open(HOME_TEMPO);
+    await tap("Adjust for heat");
+    expect(
+      screen.getByText("Adjusted for heat: work at 5:38–5:45 /km.")
+    ).toBeInTheDocument();
   });
 });

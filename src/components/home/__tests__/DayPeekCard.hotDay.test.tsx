@@ -1,8 +1,9 @@
 /**
- * Home's day peek on a hot day (Pgm8 (E8)): today's run still to do says to
- * run by feel, with MET Norway's credit, and offers nothing else here (the
- * swap is the run page's). Another day, a run already done and a mild day
- * say nothing of heat, and only today's run to do reads the weather.
+ * Home's day peek on a hot day (heatAdjustment.ts): today's run still to do
+ * says it is hot, by the rule of thumb's range, with MET Norway's credit,
+ * and that the run can be adjusted for heat as it starts; the offer itself
+ * is the run page's. Another day, a run already done and a mild day say
+ * nothing of heat, and only today's run to do reads the weather.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -102,14 +103,20 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("DayPeekCard on a hot day", () => {
-  it("says to run by feel on today's run still to do, with MET Norway's credit", async () => {
+  it("says it is hot on today's run still to do, and where it can be adjusted", async () => {
     weather.get.mockResolvedValue(HOT);
     const today = new Date();
     peek(localDateString(today), [runDayOn(today)]);
     const note = await screen.findByRole("note", { name: "Hot day" });
-    expect(note).toHaveTextContent("Hot today: run by feel, not by pace");
+    expect(note).toHaveTextContent("Hot today");
+    expect(note).toHaveTextContent(
+      "By a common rule of thumb, this heat slows the same effort by 6–8%."
+    );
+    expect(note).toHaveTextContent(
+      "You can adjust the run for heat as you start it."
+    );
     expect(note).toHaveTextContent("Weather data from MET Norway");
-    // The swap is the run page's, where the run starts.
+    // The offer and the swap are the run page's, where the run starts.
     expect(note.querySelector("button")).toBeNull();
   });
 

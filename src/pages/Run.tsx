@@ -58,7 +58,9 @@ import {
   ACTIVITY_TYPES,
   buildLaunchConfig,
   buildTileConfig,
+  heatLongSwapConfig,
   heatSwapConfig,
+  withoutPaceTargets,
 } from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
@@ -87,6 +89,7 @@ import {
   judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
+  pinnedWorkPace,
   segmentsFromGuided,
   segmentsFromIntervals,
 } from "../lib/runSegments";
@@ -170,11 +173,37 @@ import {
   type ArrivalHeat,
 } from "../features/run/startOnArrival";
 import { useHotDay } from "../hooks/useHotDay";
-import { isQualitySession } from "../lib/heatAdjustment";
+import {
+  easeBand,
+  heatAdjustedLine,
+  heatAdjustmentFor,
+  heatEasedPaceTable,
+  heatEasedRaceTarget,
+  heatHeartRateCue,
+  heatHeartRateCueDue,
+  heatLine,
+  heatSwapLine,
+  isHotDay,
+  isQualitySession,
+  HEAT_LONG_SWAP,
+  HEAT_LONG_SWAP_LINE,
+  HEAT_SWAP_START,
+} from "../lib/heatAdjustment";
+import { getHeartRateSource } from "../lib/heartRateSource";
 import { plannedSessionMinutes } from "../lib/runDose";
 import { plannedIntervalPaceSPerKm } from "../lib/intervalRest";
+import type {
+  HeatPanelAdjust,
+  HeatPanelSwap,
+} from "../components/run/HeatPanel";
+import type { RunSetupHeat } from "../components/run/RunSetupModal";
 import { haptic } from "../lib/haptic";
-import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
+import {
+  distanceLabel,
+  distanceValue,
+  paceBandLabel,
+  paceLabel,
+} from "../lib/runLabels";
 import {
   startRunActivity,
   updateRunActivity,
@@ -424,13 +453,19 @@ export default function Run() {
     () =>
       searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
   );
-  /* Pgm8 (E8): whether it is hot where the phone is, read once as the page
-     opens. The setup surfaces say to run by feel, a tempo or interval
-     session is offered as an easy run, and a run started here on a hot day
-     is not judged on its pace afterwards (`RunConfig.hotDay`, set at the
-     start, or at the finish when the weather answered after the start). */
-  const hotDay = useHotDay();
+  /* Heat (heatAdjustment.ts): the weather where the phone is, read once as
+     the page opens. On a hot day the planned run's card offers to adjust
+     it for heat (`heatAccepted`, this run only, cleared as easily) and any
+     swap, and a run started here on a hot day is never judged slow
+     afterwards (`RunConfig.hotDay`, set at the start, or at the finish
+     when the weather answered after the start). */
+  const heat = useHotDay();
+  const hotNow = isHotDay(heat.weather);
   const startedThisVisitRef = useRef(false);
+  const [heatAccepted, setHeatAccepted] = useState(false);
+  /* The heart-rate ceiling's cue, spoken at most once a minute and a half
+     (`heatHeartRateCueDue`). */
+  const heatHrSpokeAtRef = useRef<number | null>(null);
   /* The GPS warms while the setup screen is open, and the screen shows
      the signal, so Start usually finds a fix waiting (useGpsWarmup).
      Never before location is allowed: a warm-up must not be the ask. */
@@ -668,11 +703,18 @@ export default function Run() {
   const intervalBand = useMemo(() => {
     // Union of STRUCT-SESS-02 (band for intervals AND tempo) and RUN-EV-08
     // (prescription sites read the consent-gated table).
+    // A run adjusted for heat shows its eased band (heatAdjustment.ts).
     const type = runConfig?.activityType;
     if (type !== "intervals" && type !== "tempo") return undefined;
-    const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
+    const fitness = prescriptivePaceTableFromFitness(
+      profile?.runFitness ?? null
+    );
+    const adjustment = runConfig?.heatAdjustment;
+    const table = adjustment
+      ? heatEasedPaceTable(fitness, adjustment)
+      : fitness;
     return table ? resolveSessionPaces(type, table).band : undefined;
-  }, [runConfig?.activityType, profile?.runFitness]);
+  }, [runConfig?.activityType, runConfig?.heatAdjustment, profile?.runFitness]);
 
   // ─── Phase B1: programme prefill + context strip ─────────────────
   //
@@ -893,9 +935,8 @@ export default function Run() {
     programState?.runPlan,
   ]);
 
-  /* Pgm8 (E8): the planned tempo or interval session's minutes, as its
-     cards state them, which a hot day offers as an easy run. Null for any
-     other run. */
+  /* The planned tempo or interval session's minutes, as its cards state
+     them, which a hot day offers as an easy run. Null for any other run. */
   const heatSwapMinutes = useMemo(
     () =>
       launchWorkout && isQualitySession(launchWorkout.type)
@@ -906,6 +947,188 @@ export default function Run() {
         : null,
     [launchWorkout, profile?.runFitness]
   );
+
+  /* ─── Heat: the planned run's offer (heatAdjustment.ts) ─────────────
+     What a hot day offers the run the page names: an adjustment (eased
+     paces from the T+DP rule of thumb, or a heart-rate ceiling where a
+     source is live and the max is measured), and a swap. The eased run is
+     the plan's own prefill built from the eased table, so its steps,
+     labels and cues all carry the eased paces; nothing is stored. */
+  const hrLive = useMemo(() => getHeartRateSource().available, []);
+  const measuredMaxHr = profile?.maxHeartRate ?? null;
+  const heatOffer = useMemo(
+    () =>
+      launchWorkout
+        ? heatAdjustmentFor({
+            weather: heat.weather,
+            sessionType: launchWorkout.type,
+            measuredMaxHr,
+            hrLive,
+          })
+        : null,
+    [launchWorkout, heat.weather, measuredMaxHr, hrLive]
+  );
+  const heatPrefill = useMemo(() => {
+    if (!heatOffer || !launchWorkout) return null;
+    const result = computePlanMetadata({
+      displayUnit: unit,
+      profileRunMode,
+      todayDayIndex: new Date().getDay(),
+      todayDate: localDateString(),
+      runPlan: programState?.runPlan,
+      runDays: programState?.runDays,
+      urlTemplateId,
+      urlType,
+      urlScheduledRunId,
+      paceTable: heatEasedPaceTable(paceTable, heatOffer),
+      raceTarget: heatEasedRaceTarget(
+        raceTargetFromProfile({ raceGoal, runFitness }),
+        heatOffer
+      ),
+    });
+    // The same session as the plan's, or nothing to adjust.
+    if (result.metadata.actualTemplateId !== launchWorkout.id) return null;
+    const prefill = result.prefill as Partial<RunConfig>;
+    return heatOffer.effortOnly ? withoutPaceTargets(prefill) : prefill;
+  }, [
+    heatOffer,
+    launchWorkout,
+    unit,
+    profileRunMode,
+    programState?.runPlan,
+    programState?.runDays,
+    urlTemplateId,
+    urlType,
+    urlScheduledRunId,
+    paceTable,
+    raceGoal,
+    runFitness,
+  ]);
+  /* What the adjustment sets, for its line: a quality session's work pace
+     as a range, an easy or long run's easy limit, or, on an extreme day,
+     no pace at all. Null when the run has none of them to ease (no
+     confirmed benchmark, no goal pace), and then there is nothing to
+     offer unless a heart-rate ceiling is. */
+  const heatTarget = useMemo(() => {
+    if (!heatOffer || !launchWorkout) return null;
+    const workPace =
+      livePaceTarget(planDecision.prefill) ??
+      pinnedWorkPace(planDecision.prefill.segments);
+    if (isQualitySession(launchWorkout.type)) {
+      if (!workPace) return null;
+      return heatOffer.effortOnly
+        ? ({ kind: "none" } as const)
+        : ({
+            kind: "range",
+            pace: paceBandLabel(
+              easeBand([workPace, workPace], heatOffer),
+              unit
+            ),
+          } as const);
+    }
+    if (!paceTable) return null;
+    const eased = heatEasedPaceTable(paceTable, heatOffer);
+    return eased
+      ? ({ kind: "easyLimit", pace: paceLabel(eased.easy[0], unit) } as const)
+      : ({ kind: "none" } as const);
+  }, [heatOffer, launchWorkout, planDecision.prefill, paceTable, unit]);
+  const heatCanAdjust =
+    heatOffer !== null &&
+    heatPrefill !== null &&
+    (heatOffer.hrCeiling !== undefined || heatTarget !== null);
+  const heatAdjusted = heatAccepted && heatCanAdjust;
+  /* The swaps beside it: a tempo or interval session for an easy run of
+     its minutes, a long run's race-pace finish for easy running. */
+  const heatSwapKind: "easy" | "longEasy" | null =
+    !hotNow || !launchWorkout
+      ? null
+      : heatSwapMinutes !== null
+        ? "easy"
+        : launchWorkout.type === "long" && launchRacePace?.kind === "finish"
+          ? "longEasy"
+          : null;
+  /* The planned run as its Start begins it: adjusted for heat when the
+     runner said so. */
+  const plannedLaunchConfig = (): RunConfig => {
+    const base = buildLaunchConfig(
+      heatAdjusted && heatPrefill
+        ? { prefill: heatPrefill, metadata: planDecision.metadata }
+        : planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    return heatAdjusted && heatOffer
+      ? { ...base, heatAdjustment: heatOffer }
+      : base;
+  };
+  /* A swap starts the easy run at once, adjusted for heat as an easy run
+     of its own when the runner had adjusted the session. */
+  const startHeatSwap = (kind: "easy" | "longEasy") => {
+    const base = buildLaunchConfig(
+      planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    const swapped =
+      kind === "easy" && heatSwapMinutes !== null
+        ? heatSwapConfig(base, heatSwapMinutes)
+        : heatLongSwapConfig(base);
+    const easyAdjustment = heatAdjusted
+      ? heatAdjustmentFor({
+          weather: heat.weather,
+          sessionType: swapped.activityType,
+          measuredMaxHr,
+          hrLive,
+        })
+      : null;
+    handleStart(
+      easyAdjustment ? { ...swapped, heatAdjustment: easyAdjustment } : swapped
+    );
+  };
+  const heatLineNow = heatLine(heat.weather);
+  const heatAdjust: HeatPanelAdjust | null =
+    heatCanAdjust && heatOffer
+      ? {
+          accepted: heatAdjusted,
+          adjustedLine: heatAdjustedLine(
+            heatOffer,
+            heatTarget ?? { kind: "none" }
+          ),
+          onAccept: () => setHeatAccepted(true),
+          onClear: () => setHeatAccepted(false),
+        }
+      : null;
+  const heatSwap: HeatPanelSwap | null =
+    heatSwapKind === "easy" && heatSwapMinutes !== null
+      ? {
+          line: heatSwapLine(heatSwapMinutes),
+          label: HEAT_SWAP_START,
+          onSwap: () => startHeatSwap("easy"),
+        }
+      : heatSwapKind === "longEasy"
+        ? {
+            line: HEAT_LONG_SWAP_LINE,
+            label: HEAT_LONG_SWAP,
+            onSwap: () => startHeatSwap("longEasy"),
+          }
+        : null;
+  /* The full setup's share of it: the same offer, which there changes the
+     run being set up rather than starting it. */
+  const setupHeat: RunSetupHeat | null =
+    hotNow && heatLineNow && heat.level !== "none"
+      ? {
+          level: heat.level,
+          line: heatLineNow,
+          adjustment: heatCanAdjust ? heatOffer : null,
+          prefill: heatCanAdjust ? heatPrefill : null,
+          adjustedLine:
+            heatCanAdjust && heatOffer
+              ? heatAdjustedLine(heatOffer, heatTarget ?? { kind: "none" })
+              : "",
+          swapMinutes: heatSwapKind === "easy" ? heatSwapMinutes : null,
+          longSwap: heatSwapKind === "longEasy",
+        }
+      : null;
 
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
@@ -928,8 +1151,8 @@ export default function Run() {
     const finalConfig: RunConfig = {
       ...config,
       planMetadata: finalisedMetadata,
-      // Pgm8 (E8): a run started on a hot day is read by feel afterwards.
-      ...(hotDay === "hot" ? { hotDay: true } : {}),
+      // A run started on a hot day is never judged slow afterwards.
+      ...(hotNow ? { hotDay: true } : {}),
     };
     startedThisVisitRef.current = true;
     setRunConfig(finalConfig);
@@ -1029,22 +1252,28 @@ export default function Run() {
         ? "checking"
         : "not-due";
   const arrivalPlannedRun = launchWorkout !== null;
-  /* Pgm8 (E8): a tempo or interval session started from Home waits a
-     moment for the weather, and on a hot day shows its card, whose swap is
-     a choice to make. Home reads the weather for such a day, so it is
-     usually known already. */
-  const arrivalHeatSwap = heatSwapMinutes !== null;
+  /* Heat: a planned run started from Home waits a moment for the weather
+     (Home reads it ahead, so it is usually known already). A hot day with
+     an adjustment or a swap to offer shows the run's card, whose offer is
+     a choice to make, and so does an extreme day, whose card says running
+     outside isn't advised; a free run waits for nothing, and shows the
+     picker only on an extreme day already known. */
+  const arrivalWaitsForHeat = launchWorkout !== null;
   const [heatCheckOver, setHeatCheckOver] = useState(false);
   useEffect(() => {
-    if (arrival !== "deciding" || !arrivalHeatSwap) return;
+    if (arrival !== "deciding" || !arrivalWaitsForHeat) return;
     const t = setTimeout(() => setHeatCheckOver(true), HEAT_CHECK_MS);
     return () => clearTimeout(t);
-  }, [arrival, arrivalHeatSwap]);
-  const arrivalHeat: ArrivalHeat = !arrivalHeatSwap
-    ? "none"
-    : hotDay === "hot"
-      ? "swap"
-      : hotDay === "checking" && !heatCheckOver
+  }, [arrival, arrivalWaitsForHeat]);
+  const heatFirst =
+    heat.level === "extreme" ||
+    (heat.level === "hot" && (heatCanAdjust || heatSwapKind !== null));
+  const arrivalHeat: ArrivalHeat =
+    heat.status === "read"
+      ? heatFirst
+        ? "show"
+        : "none"
+      : arrivalWaitsForHeat && !heatCheckOver
         ? "checking"
         : "none";
   const arrivalRouteToFollow = targetRoute != null;
@@ -1140,10 +1369,10 @@ export default function Run() {
 
   /* The run's config as it finishes. A run started on this visit before
      the weather answered takes the hot day now, when the read the page
-     opened with says hot (Pgm8 (E8)): the config is not changed mid-run,
-     where its steps are being played. */
+     opened with says hot: the config is not changed mid-run, where its
+     steps are being played. */
   const configAtFinish = (config: RunConfig): RunConfig =>
-    !config.hotDay && hotDay === "hot" && startedThisVisitRef.current
+    !config.hotDay && hotNow && startedThisVisitRef.current
       ? { ...config, hotDay: true }
       : config;
 
@@ -1481,7 +1710,24 @@ export default function Run() {
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
+    // Heat: a heart-rate ceiling, while beats arrive, governs in place of
+    // the paces (heatAdjustment.ts).
+    const heatCeiling = runConfig?.heatAdjustment?.hrCeiling ?? null;
+    const hrGoverns = heatCeiling !== null && hr.bpm !== null;
     if (
+      hrGoverns &&
+      heatHeartRateCueDue({
+        bpm: hr.bpm,
+        ceiling: heatCeiling,
+        now: Date.now(),
+        lastSpokeAt: heatHrSpokeAtRef.current,
+      })
+    ) {
+      audioCues.speak(heatHeartRateCue(heatCeiling));
+      heatHrSpokeAtRef.current = Date.now();
+    }
+    if (
+      !hrGoverns &&
       judgingPace &&
       runConfig?.target?.type === "pace" &&
       runConfig.target.value
@@ -1499,8 +1745,13 @@ export default function Run() {
     // Run24 (12), deep dive D17: an easy or a long run going faster than
     // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
     // in its easy running only (`judgesEasyNow`), never on a run-walk.
-    const easyFastEdge = paceTable?.easy[0];
-    if (easyFastEdge && !runWalkSession && judgingEasy) {
+    // A run adjusted for heat holds the eased easy limit, and one adjusted
+    // to effort only has none.
+    const easyTable = runConfig?.heatAdjustment
+      ? heatEasedPaceTable(paceTable, runConfig.heatAdjustment)
+      : paceTable;
+    const easyFastEdge = easyTable?.easy[0];
+    if (easyFastEdge && !hrGoverns && !runWalkSession && judgingEasy) {
       const currentPaceSec = rollingPaceSeconds(gps.points, 30);
       if (currentPaceSec !== null) {
         audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
@@ -1529,6 +1780,7 @@ export default function Run() {
     runWalkSession,
     paceTable,
     judgingEasy,
+    hr.bpm,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -2244,34 +2496,26 @@ export default function Run() {
               isExtra={isExtraLaunch}
               selectedShoeId={launchShoeId}
               onSelectShoe={setLaunchShoeId}
-              onStart={() =>
-                handleStart(
-                  buildLaunchConfig(
-                    planDecision,
-                    profile?.audioCues !== false,
-                    launchShoeId
-                  )
-                )
-              }
+              onStart={() => handleStart(plannedLaunchConfig())}
               onCustomize={() => setForceModal(true)}
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
-              hotDay={hotDay === "hot"}
-              heatSwapMinutes={heatSwapMinutes}
-              onHeatSwap={() => {
-                if (heatSwapMinutes === null) return;
-                handleStart(
-                  heatSwapConfig(
-                    buildLaunchConfig(
-                      planDecision,
-                      profile?.audioCues !== false,
-                      launchShoeId
-                    ),
-                    heatSwapMinutes
-                  )
-                );
-              }}
+              heat={
+                hotNow && heatLineNow && heat.level !== "none"
+                  ? {
+                      level: heat.level,
+                      line: heatLineNow,
+                      adjust: heatAdjust,
+                      swap: heatSwap,
+                    }
+                  : null
+              }
+              paceRange={
+                heatAdjusted && heatTarget?.kind === "range"
+                  ? heatTarget.pace
+                  : null
+              }
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -2316,7 +2560,7 @@ export default function Run() {
                     ? runSessionName(launchWorkout, launchRacePace, unit)
                     : undefined
                 }
-                heatSwapMinutes={heatSwapMinutes}
+                heat={setupHeat}
                 savedPreferences={{
                   autoPause: true,
                   audioCues: profile?.audioCues !== false,
@@ -2356,7 +2600,11 @@ export default function Run() {
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
-              hotDay={hotDay === "hot"}
+              heat={
+                hotNow && heatLineNow && heat.level !== "none"
+                  ? { level: heat.level, line: heatLineNow }
+                  : null
+              }
             />
           )}
         </>

@@ -48,7 +48,8 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Skeleton } from "@/components/LoadingSkeleton";
-import HotDayNote from "@/components/run/HotDayNote";
+import HeatPanel from "@/components/run/HeatPanel";
+import { heatLine, HEAT_PREVIEW_LINE } from "@/lib/heatAdjustment";
 import { useHotDay } from "@/hooks/useHotDay";
 import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
@@ -251,7 +252,8 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
-  /* Pgm8 (E8): today's run still to do says to run by feel on a hot day.
+  /* Today's run still to do, on a hot or extreme day: the heat line, and
+     that the run can be adjusted for heat as it starts (heatAdjustment.ts).
      The weather is read only for that run, and only once location is
      allowed (`useHotDay`). */
   const todayRunAhead =
@@ -260,7 +262,8 @@ export default function DayPeekCard({
     !resolved.run.isCompleted &&
     resolved.run.status !== "none" &&
     isScheduledRunStartable(resolved.run.status);
-  const hotDay = useHotDay(todayRunAhead);
+  const heat = useHotDay(todayRunAhead);
+  const heatLineToday = heatLine(heat.weather);
   /* Today's lift is the one the today card offers (the programme's next),
      not the weekday's slot, so the peek and the card name one session. */
   const dayLift = liftOnDate({
@@ -656,7 +659,13 @@ export default function DayPeekCard({
                   <RunPurpose>
                     <RunAbout about={runAbout} why={runPurpose} />
                   </RunPurpose>
-                  {todayRunAhead && hotDay === "hot" && <HotDayNote />}
+                  {todayRunAhead && heat.level !== "none" && heatLineToday && (
+                    <HeatPanel
+                      level={heat.level}
+                      line={heatLineToday}
+                      note={HEAT_PREVIEW_LINE}
+                    />
+                  )}
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from
