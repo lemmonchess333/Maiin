@@ -15,7 +15,10 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useRunReturn } from "@/features/program/useRunReturn";
 import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
-import { raceLongRunCheck } from "@/features/program/raceLongRunCheck";
+import {
+  raceCheckDismissKey,
+  raceLongRunCheck,
+} from "@/features/program/raceLongRunCheck";
 import { APPLIED } from "@/features/program/programOutcome";
 import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { useMeals } from "@/hooks/useMeals";
@@ -837,7 +840,7 @@ export default function Home() {
     [profile, programState, recentRuns, todayKey]
   );
   const { dismissed: raceCheckDismissed, dismiss: dismissRaceCheck } =
-    useDismissOnce(`tropos-race-check:${raceCheck?.weekKey ?? "none"}`);
+    useDismissOnce(raceCheckDismissKey(raceCheck?.weekKey ?? null));
   const raceCheckSurface = useSurface({
     id: "race-check",
     priority: 26,

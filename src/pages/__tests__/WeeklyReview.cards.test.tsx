@@ -10,13 +10,13 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 
 let mockProfile: Partial<UserProfile> | null = null;
 let mockReview: unknown = null;
-let mockWeekAhead: unknown = null;
 let mockLoading = false;
 let mockFailed = false;
 const mockRetry = vi.fn();
@@ -31,7 +31,6 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
   useWeeklyReview: () => ({
     loading: mockLoading,
     review: mockReview,
-    weekAhead: mockWeekAhead,
     weekKey: "2026-W27",
     failed: mockFailed,
     retry: mockRetry,
@@ -49,6 +48,18 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 
 // The real MomentumCheckinCard reads Firestore; the one fake (ADR-0009).
 vi.mock("firebase/firestore");
+
+/* The week ahead reads the plan live through Home's programme reader;
+   here it reads none, and the person's usual week (the profile's) shows. */
+vi.mock("@/features/program/useHomeProgram", () => ({
+  useHomeProgram: () => ({
+    programState: null,
+    loading: false,
+    recentLayoff: "none",
+    recentRuns: null,
+    controller: null,
+  }),
+}));
 
 vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: mockDismiss, dismissed: false }),
@@ -96,10 +107,26 @@ function normal(overrides: Record<string, unknown> = {}) {
       retuned: false,
     },
     body: null,
-    weekAhead: { lifts: 3, runs: 2, phaseNote: null },
     ...overrides,
   };
 }
+
+/** Three lift days and no runs: the week ahead's figure is 3 lifts. */
+const LIFT_WEEK = [
+  { day: 1, type: "lift" },
+  { day: 2, type: "rest" },
+  { day: 3, type: "lift" },
+  { day: 4, type: "rest" },
+  { day: 5, type: "lift" },
+  { day: 6, type: "rest" },
+  { day: 0, type: "rest" },
+] as UserProfile["weekSchedule"];
+
+/** A plan with no set days: the week ahead counts what is logged. */
+const FREE_PLAN = {
+  weeklyWorkoutsTarget: 0,
+  weeklyRunDaysTarget: 0,
+} as Partial<UserProfile>;
 
 function renderRecap() {
   return render(
@@ -119,7 +146,6 @@ afterEach(() => {
   cleanup();
   mockProfile = null;
   mockReview = null;
-  mockWeekAhead = null;
   mockLoading = false;
   mockFailed = false;
   mockRetry.mockClear();
@@ -238,20 +264,32 @@ describe("WeeklyReview — the recap as cards", () => {
     expect(screen.queryByText(/kg, weight trend/)).toBeNull();
   });
 
-  /* The plan's week in the figures "Your week" counts the last one in,
-     rather than one line over an empty page. */
-  it("gives the week ahead its figures, each over what it counts", () => {
+  /* The plan's week at the recap's size, then its days (App1 Q36). */
+  it("ends on the week ahead: its figure, then each day", () => {
+    mockProfile = { weekSchedule: LIFT_WEEK } as Partial<UserProfile>;
     mockReview = normal();
     renderRecap();
     expect(
       screen.getByText("lifts planned").previousElementSibling?.textContent
     ).toBe("3");
     expect(
-      screen.getByText("runs planned").previousElementSibling?.textContent
-    ).toBe("2");
+      within(screen.getByRole("list", { name: "Your week" })).getAllByRole(
+        "listitem"
+      )
+    ).toHaveLength(7);
+  });
+
+  /* Nothing is offered here, so the review ends on one button that agrees
+     the week and closes. */
+  it("with nothing offered, ends on Looks good, which closes the review", () => {
+    mockReview = normal();
+    renderRecap();
+    fireEvent.click(screen.getByRole("button", { name: "Looks good" }));
+    expect(screen.getByText("Home page")).toBeInTheDocument();
   });
 
   it("says a quiet week plainly, then the week ahead", () => {
+    mockProfile = FREE_PLAN;
     mockReview = {
       kind: "quiet",
       range: { start: "2026-06-29", end: "2026-07-05" },
@@ -259,7 +297,6 @@ describe("WeeklyReview — the recap as cards", () => {
       training: null,
       nutrition: null,
       body: null,
-      weekAhead: { lifts: null, runs: null, phaseNote: null },
     };
     renderRecap();
     expect(slides()).toEqual([
@@ -267,7 +304,7 @@ describe("WeeklyReview — the recap as cards", () => {
       "The week ahead, 2 of 2",
     ]);
     expect(
-      screen.getByText("Train when it suits you — log it and it counts.")
+      screen.getByText("Train when it suits you. Log it and it counts.")
     ).toBeInTheDocument();
   });
 
@@ -278,25 +315,27 @@ describe("WeeklyReview — the recap as cards", () => {
   });
 
   /* Mob2 call 10 (Rev1 STATUS): before a first review exists the card
-     shows the week ahead under its sentence, not a sentence alone. */
+     shows the week ahead under its sentence, not a sentence alone. It
+     agrees nothing yet, so it ends on Done. */
   it("before any review, shows the week ahead under its sentence", () => {
+    mockProfile = { weekSchedule: LIFT_WEEK } as Partial<UserProfile>;
     mockReview = null;
-    mockWeekAhead = { lifts: 3, runs: 2, phaseNote: null };
     renderRecap();
     expect(slides()).toEqual(["Your first review, 1 of 1"]);
     expect(
       screen.getByRole("heading", { name: "The week ahead" })
     ).toBeInTheDocument();
     expect(screen.getByText("lifts planned")).toBeInTheDocument();
-    expect(screen.getByText("runs planned")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Looks good" })).toBeNull();
   });
 
   it("before any review, a free plan's week ahead says it counts what is logged", () => {
+    mockProfile = FREE_PLAN;
     mockReview = null;
-    mockWeekAhead = { lifts: null, runs: null, phaseNote: null };
     renderRecap();
     expect(
-      screen.getByText("Train when it suits you — log it and it counts.")
+      screen.getByText("Train when it suits you. Log it and it counts.")
     ).toBeInTheDocument();
   });
 
