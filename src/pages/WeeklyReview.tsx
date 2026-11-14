@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -25,8 +25,10 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import WeekAheadEnding from "@/components/review/WeekAheadEnding";
 import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
+import StatRow from "@/components/review/StatRow";
+import ProMonthCard from "@/components/review/ProMonthCard";
+import { useProMonthReport } from "@/hooks/useProReport";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import {
@@ -39,46 +41,6 @@ import {
 /** How long the recap's counts take: the Food ring's count, not the
  *  counter's slower default, so they land before the eye moves on. */
 const COUNT_SECONDS = 0.6;
-
-/** One of the week's numbers, big, over the words that say what it is,
- *  with a rule in the colour of its job (DS3's recap card). */
-function StatRow({
-  rule,
-  value,
-  caption,
-  numeral = true,
-  children,
-}: {
-  /** A background utility for the rule: `bg-lifting`, `bg-running`… */
-  rule: string;
-  /** The figure, or its count-up (`AnimatedNumber`). */
-  value: ReactNode;
-  caption: string;
-  /** False for a word ("Steady"), which does not take the numeral face. */
-  numeral?: boolean;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex gap-3">
-      <span
-        aria-hidden="true"
-        className={cn("w-1 shrink-0 rounded-full", rule)}
-      />
-      <div className="min-w-0 py-0.5">
-        <p
-          className={cn(
-            "text-display font-extrabold leading-none text-foreground",
-            numeral && "font-figure tabular-nums"
-          )}
-        >
-          {value}
-        </p>
-        <p className="mt-1.5 text-sm text-muted-foreground">{caption}</p>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
@@ -326,11 +288,13 @@ function BestMoment({
   best,
   count,
   next,
+  nextLabel,
 }: {
   best: WeekBest;
   /** The week's new bests, one per exercise and rep range, this one included. */
   count: number;
   next: () => void;
+  nextLabel: string;
 }) {
   const more = Math.max(0, count - 1);
   const liftUnit = useLiftUnit();
@@ -381,7 +345,7 @@ function BestMoment({
       </div>
       <div className="mt-auto pt-8">
         <Button fullWidth onClick={next}>
-          The week ahead
+          {nextLabel}
         </Button>
       </div>
     </div>
@@ -390,14 +354,21 @@ function BestMoment({
 
 /**
  * Weekly Review (Rev1) — the Monday recap, told as cards (DS3): the week
- * in numbers, its best moment when a new best was set, and the week
- * ahead, where next week is agreed (App1 Q36, `WeekAheadEnding`). All
- * content rules live in weeklyReviewViewModel; this page is layout only.
+ * in numbers, its best moment when a new best was set, on a month's first
+ * Monday what Pro did in the month before (App1 Q56, `ProMonthCard`), and
+ * the week ahead, where next week is agreed (App1 Q36, `WeekAheadEnding`).
+ * All content rules live in weeklyReviewViewModel and proReport; this page
+ * is layout only.
  */
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
+  const weekly = useWeeklyReview();
+  const { review, weekKey, failed, retry } = weekly;
+  /* Read with the week, so the cards are whole when they first show: a
+     card arriving later would move the one the person is reading. */
+  const proMonth = useProMonthReport(weekKey);
+  const loading = weekly.loading || proMonth.loading;
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -506,6 +477,24 @@ export default function WeeklyReview() {
   } else {
     const best =
       review.kind === "normal" ? (review.training?.best ?? null) : null;
+    const pro = proMonth.report;
+    const proSlides: RecapSlide[] = pro
+      ? [
+          {
+            key: "pro",
+            label: `Pro in ${pro.month.name}`,
+            render: (next) => (
+              <ProMonthCard
+                monthName={pro.month.name}
+                lines={pro.lines}
+                next={next}
+              />
+            ),
+          },
+        ]
+      : [];
+    /* What the card before the week ahead's button names. */
+    const toAhead = pro ? `Pro in ${pro.month.name}` : "The week ahead";
     const ahead: RecapSlide = {
       key: "ahead",
       label: "The week ahead",
@@ -534,12 +523,13 @@ export default function WeeklyReview() {
               </p>
               <div className="mt-auto pt-8">
                 <Button variant="secondary" fullWidth onClick={next}>
-                  The week ahead
+                  {toAhead}
                 </Button>
               </div>
             </div>
           ),
         },
+        ...proSlides,
         ahead,
       ];
     } else {
@@ -551,7 +541,7 @@ export default function WeeklyReview() {
             <YourWeek
               review={review}
               next={next}
-              nextLabel={best ? "Your best moment" : "The week ahead"}
+              nextLabel={best ? "Your best moment" : toAhead}
               onOpenPhotos={user ? () => navigate("/history?view=body") : null}
               onShare={
                 review.training &&
@@ -572,11 +562,13 @@ export default function WeeklyReview() {
                     best={best}
                     count={review.training?.prsHit ?? 1}
                     next={next}
+                    nextLabel={toAhead}
                   />
                 ),
               },
             ]
           : []),
+        ...proSlides,
         ahead,
       ];
     }

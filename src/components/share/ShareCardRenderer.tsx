@@ -150,6 +150,9 @@ export interface ShareCardRenderData {
   //    totals rather than a single session's) ──
   sessionsCount?: number;
   streakDays?: number;
+  /** The recap's heading: "This week" when absent, "This year" for the
+   *  year recap before a yearly Pro renewal (App1 Q56). */
+  recapTitle?: string;
 }
 
 const DIMS: Record<ShareFormat, { w: number; h: number }> = {
@@ -560,7 +563,7 @@ function RecapTemplate({
           color: "transparent",
         }}
       >
-        This week
+        {data.recapTitle ?? "This week"}
       </div>
       {show("sessions") && (
         <Hero

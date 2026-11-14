@@ -170,6 +170,7 @@ Support & legal.
 | `postMoments.ts`        | A post's moments (Soc15): the pure rules and the stored shape  |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
 | `subscription.ts`       | Pro subscription handling                                      |
+| `proReport.ts`          | What Pro did: the review's month card, the yearly recap        |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
 | `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |
 | `api.ts`                | API client helpers                                             |
@@ -592,7 +593,8 @@ Read `DESIGN_GUIDE.md` before UI work: §0 is the non-negotiables, §10 the acce
   FirstWeekCard (a new account's first seven days; for a v2 account one
   or two rows, the first workout and the first run) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
-  themselves) → VerifyEmailBanner (until the address is verified) →
+  themselves) → YearRecapRow (the week before a yearly Pro renewal, the
+  year and what Pro did, opened on tap; App1 Q56) → VerifyEmailBanner (until the address is verified) →
   TodayEnergy → WaterCard → WeightStepsTiles. Home says the week once and
   carries no performance score (Trim1 call 1, 2026-11-11): the "This
   week" card that closed the page, with its Performance row, is gone,
