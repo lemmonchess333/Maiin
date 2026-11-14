@@ -141,14 +141,15 @@ function emptyTotals() {
 // Today (per CLAUDE.md context) is Saturday 2026-05-16. Build the
 // test dates around that so resolver matching exercises the
 // real same-week / future-week branches.
-const TODAY_DOW = new Date().getDay();
 // Pick a date in this calendar week for the planned-run cases.
 // Today is in the strip, so a Tuesday in this week is either past
 // or future depending on the weekday — but the resolver matches
-// by date string regardless of "future vs past".
+// by date string regardless of "future vs past". The weekday is read
+// with the date, at the call: read once when the file loaded, a run that
+// crossed midnight put every later case's Tuesday in last week.
 const dayOfThisWeek = (dow: number): string => {
   const todaySunday = new Date();
-  todaySunday.setDate(todaySunday.getDate() - TODAY_DOW + dow);
+  todaySunday.setDate(todaySunday.getDate() - todaySunday.getDay() + dow);
   const y = todaySunday.getFullYear();
   const m = String(todaySunday.getMonth() + 1).padStart(2, "0");
   const d = String(todaySunday.getDate()).padStart(2, "0");
@@ -208,7 +209,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     } as UserProfile;
     const program = makeProgramState([
       makeRunDay({
-        dayIndex: TODAY_DOW,
+        dayIndex: parseLocalDate(date).getDay(),
         date,
         weekKey: localWeekKey(parseLocalDate(date)),
         templateId: "easy_30",

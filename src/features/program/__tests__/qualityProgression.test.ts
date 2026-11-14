@@ -83,6 +83,43 @@ const INTERVAL_REPS = new Map(
   ).map((t) => [t.id, t.config.intervals!.reps])
 );
 
+/* Run24 (5): a build's quality sessions take turns through the session
+   library's families, each a ladder on its flavour's rung, so a session's
+   size is its rung, in the classic session's units: a tempo's 20, 30 or 40
+   minutes, 4, 5 or 6 repeats. A family of two holds one session on two
+   rungs; it reads at the lower (the first rung it can be) for sizes and
+   the first rung, and the climb check reads both. */
+const LIBRARY_RUNGS: Record<"tempo" | "intervals", string[][]> = {
+  tempo: [
+    ["tempo_20", "tempo_30", "tempo_40"],
+    ["cruise_3x8", "cruise_3x10", "cruise_3x10"],
+    ["progression_40", "progression_50", "progression_60"],
+  ],
+  intervals: [
+    ["4x1k", "5x1k", "6x1k"],
+    ["6x2min", "5x3min", "4x4min"],
+    ["8x200", "10x200", "12x200"],
+    ["5k_pace_4x800", "5k_pace_5x800", "5k_pace_6x800"],
+    ["10k_pace_3x2k", "10k_pace_3x2k", "10k_pace_4x2k"],
+    ["hills_6x60s", "hills_8x60s", "hills_10x60s"],
+  ],
+};
+const UNITS = { tempo: [20, 30, 40], intervals: [4, 5, 6] };
+/** A build session's rungs on its flavour's ladder, lowest and highest. */
+function rungsOf(
+  id: string,
+  flavour: "tempo" | "intervals"
+): { low: number; high: number } | null {
+  const ladder = LIBRARY_RUNGS[flavour].find((l) => l.includes(id));
+  return ladder
+    ? { low: ladder.indexOf(id), high: ladder.lastIndexOf(id) }
+    : null;
+}
+const sizeOf = (id: string, flavour: "tempo" | "intervals") => {
+  const rungs = rungsOf(id, flavour);
+  return rungs ? UNITS[flavour][rungs.low] : undefined;
+};
+
 function emitted(distance: Distance, daysAhead = 200): string[] {
   return plan({ distance, daysAhead })
     .weeks.flat()
@@ -95,9 +132,8 @@ function qualitySizes(
   distance: Distance,
   flavour: "tempo" | "intervals"
 ): number[] {
-  const table = flavour === "tempo" ? TEMPO_WORK : null;
   return emitted(distance)
-    .map((id) => (table ? table[id] : INTERVAL_REPS.get(id)))
+    .map((id) => sizeOf(id, flavour))
     .filter((n): n is number => typeof n === "number");
 }
 
@@ -124,7 +160,18 @@ describe("quality sessions progress", () => {
     // peak-and-hold window existed, because quality alternates by week parity
     // and a ramp that only touches peak on its final week reaches it for one
     // flavour at most.
-    const all = new Set(DISTANCES.flatMap((d) => emitted(d)));
+    // Run24 (3) and (5): a block is capped at 16 to 20 weeks and its
+    // tempo rungs are shared by tempos, cruise intervals and progression
+    // runs, so a standard plan's tempos meet the 30-minute rung only as a
+    // cruise; a harder plan, with its second quality session, runs it.
+    const all = new Set(
+      DISTANCES.flatMap((d) => [
+        ...emitted(d),
+        ...plan({ distance: d, daysAhead: 200, difficulty: "harder" })
+          .weeks.flat()
+          .map((day) => day.templateId),
+      ])
+    );
     for (const id of Object.keys(TEMPO_WORK))
       expect(all.has(id), id).toBe(true);
     for (const id of INTERVAL_REPS.keys()) expect(all.has(id), id).toBe(true);
@@ -198,15 +245,12 @@ describe("the ladder starts at its first rung", () => {
     daysAhead: number,
     flavour: "tempo" | "intervals"
   ) => {
-    const sizes = plan({ distance, daysAhead })
+    const ids = plan({ distance, daysAhead })
       .weeks.flat()
-      .map((d) =>
-        flavour === "tempo"
-          ? TEMPO_WORK[d.templateId]
-          : INTERVAL_REPS.get(d.templateId)
-      )
-      .filter((n): n is number => typeof n === "number");
-    return { sizes, first: sizes[0] };
+      .map((d) => d.templateId)
+      .filter((id) => rungsOf(id, flavour) !== null);
+    const sizes = ids.map((id) => sizeOf(id, flavour)!);
+    return { ids, sizes, first: sizes[0] };
   };
 
   it("a year-out marathon's first tempo and first intervals are the first rungs", () => {
@@ -224,21 +268,18 @@ describe("the ladder starts at its first rung", () => {
   it("climbs at most one rung past the highest before it", () => {
     // A cutback eases a session and the next returns to the ladder, so the
     // step is measured from the highest rung reached, not the last one.
-    const tempoRung = [20, 30, 40];
-    const intervalRung = [4, 5, 6];
     for (const distance of DISTANCES) {
       for (const daysAhead of [70, 112, 200, 364]) {
         for (const flavour of ["tempo", "intervals"] as const) {
-          const rungs = flavour === "tempo" ? tempoRung : intervalRung;
-          const { sizes } = firstAndSteps(distance, daysAhead, flavour);
+          const { ids } = firstAndSteps(distance, daysAhead, flavour);
           let highest = -1;
-          for (const size of sizes) {
-            const rung = rungs.indexOf(size);
+          for (const id of ids) {
+            const { low, high } = rungsOf(id, flavour)!;
             expect(
-              rung - highest,
-              `${distance} ${daysAhead}d ${flavour}: ${sizes.join(",")}`
+              low - highest,
+              `${distance} ${daysAhead}d ${flavour}: ${ids.join(",")}`
             ).toBeLessThanOrEqual(1);
-            highest = Math.max(highest, rung);
+            highest = Math.max(highest, Math.min(high, highest + 1));
           }
         }
       }

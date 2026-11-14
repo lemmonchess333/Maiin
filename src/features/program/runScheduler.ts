@@ -22,7 +22,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { BASE_LIGHT_TEMPLATE_IDS, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   recentPace,
   recentRunning,
@@ -313,6 +313,9 @@ const EASY_BASE_MINUTES = 30;
 /** Run24 (4): how often a build holds a time trial, inside the lock's 4 to
  *  6 weeks. A Tropos heuristic. */
 const TRIAL_EVERY_WEEKS = 5;
+/** Run24 (5), deep dive D5: the run days on which a regular runner's build
+ *  holds a second quality session by default. */
+const SECOND_QUALITY_RUN_DAYS = 5;
 /** Run24 (2), deep dive D3: how far above a runner's own week the plan
  *  builds them, the middle of the lock's 20 to 30%. A Tropos heuristic. */
 const OWN_PEAK_SHARE = 1.25;
@@ -502,6 +505,83 @@ const QUALITY_PEAK_BY_DISTANCE: Record<
   half: { tempoWorkMinutes: 40, intervalReps: 6 },
   marathon: { tempoWorkMinutes: 40, intervalReps: 6 },
 };
+
+/**
+ * Run24 (5), deep dive D5: the session library's ladders a build's quality
+ * day draws on, one session for each of its flavour's rungs (`TEMPO_TIERS`,
+ * `INTERVAL_TIERS`), so a family changes what the session is and never how
+ * far up the block has got. A family of two sessions spends a rung on the
+ * one nearer that rung's work: cruise intervals' 30 minutes are the 30
+ * minute tempo's, and 3 × 2 km at 10K pace follows 4 × 1 km and 5 × 1 km.
+ */
+const LIBRARY_LADDERS = {
+  tempo: ["tempo_20", "tempo_30", "tempo_40"],
+  cruise: ["cruise_3x8", "cruise_3x10", "cruise_3x10"],
+  progression: ["progression_40", "progression_50", "progression_60"],
+  km: ["4x1k", "5x1k", "6x1k"],
+  timed: ["6x2min", "5x3min", "4x4min"],
+  repetition: ["8x200", "10x200", "12x200"],
+  pace5k: ["5k_pace_4x800", "5k_pace_5x800", "5k_pace_6x800"],
+  pace10k: ["10k_pace_3x2k", "10k_pace_3x2k", "10k_pace_4x2k"],
+  hills: ["hills_6x60s", "hills_8x60s", "hills_10x60s"],
+} as const;
+type LibraryFamily = keyof typeof LIBRARY_LADDERS;
+
+/**
+ * Run24 (5): which families a build's quality sessions take in turn, by
+ * race distance. A 5K and a 10K hold repeats at their race's pace and short
+ * repeats at repetition pace beside 1 km repeats; a half and a marathon
+ * hold repeats by time and up hills. Every distance from the 10K up holds
+ * cruise intervals and a progression run beside its tempo, the 5K a
+ * progression run, under its 20-minute threshold ceiling. A half's or a
+ * marathon's tempo and cruise intervals run at race pace in the weeks that
+ * run race pace (`buildTempoAtRacePace`, Run24 (9)), so a marathon's
+ * race-pace work is in blocks, at the marathon band when no goal time is
+ * typed; a progression run's finish is always threshold. The order and the
+ * turns are a Tropos heuristic.
+ */
+const BUILD_FAMILIES: Record<
+  "5k" | "10k" | "half" | "marathon",
+  { tempo: readonly LibraryFamily[]; intervals: readonly LibraryFamily[] }
+> = {
+  "5k": {
+    tempo: ["tempo", "progression"],
+    intervals: ["km", "pace5k", "repetition", "timed"],
+  },
+  "10k": {
+    tempo: ["tempo", "cruise", "progression"],
+    intervals: ["km", "pace10k", "timed", "repetition"],
+  },
+  half: {
+    tempo: ["tempo", "cruise", "progression"],
+    intervals: ["km", "timed", "hills"],
+  },
+  marathon: {
+    tempo: ["tempo", "cruise", "progression"],
+    intervals: ["timed", "km", "hills"],
+  },
+};
+
+/** Run24 (5): the taper's sharpener for each distance, in place of 8 x 400 m
+ *  for every race: short repeats at 5K or 10K pace, two blocks at a half's
+ *  or a marathon's race pace where the plan has one. */
+const TAPER_SHARPENER: Record<"5k" | "10k" | "half" | "marathon", string> = {
+  "5k": "sharpener_5k",
+  "10k": "sharpener_10k",
+  half: "sharpener_half",
+  marathon: "sharpener_marathon",
+};
+
+/** Run24 (5): the base's light quality in turn (`BASE_LIGHT_TEMPLATE_IDS`). */
+const BASE_LIGHT_SESSIONS = BASE_LIGHT_TEMPLATE_IDS;
+
+/** Run24 (5): the library session on a flavour ladder's rung. */
+function librarySessionId(ladderId: string, family: LibraryFamily): string {
+  const rung = (
+    TEMPO_TIERS.some((t) => t.id === ladderId) ? TEMPO_TIERS : INTERVAL_TIERS
+  ).findIndex((t) => t.id === ladderId);
+  return LIBRARY_LADDERS[family][Math.max(0, rung)];
+}
 
 /** How much a cutback week takes off the ramped distance. Which weeks are
  *  cutbacks is `isRampStepBack`'s: every 4th, never the peak. */
@@ -892,7 +972,7 @@ export function qualityTemplateId(input: {
   distance: "5k" | "10k" | "half" | "marathon";
   difficulty: RunDifficultyPreset;
   /** The highest rung of this ladder the plan's earlier sessions reached,
-   *  -1 before the first (`highestRungBefore`). The session climbs at most
+   *  -1 before the first (`ladderBefore`). The session climbs at most
    *  one rung past it (Run20), so the first is the first rung however far
    *  into the block it falls. Omitted, the block's position alone decides. */
   highestBefore?: number;
@@ -1566,6 +1646,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     !!input.newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, -Math.max(0, planStart) * 7)) <
       input.newRunnerUntil;
+  /** Run24 (5): a runner whose starting point says they run regularly. */
+  const regularRunner =
+    isRunningBaseline(input.runningBaseline) &&
+    input.runningBaseline.experience === "regular";
   /* Run24 (1), (2) and (8): what sizes the block is worked out when the
      block is made and kept on its plan (`RaceBlockInputs`), so a week
      rebuilt on a rollover or an edit reads the same whichever runs were
@@ -2151,16 +2235,67 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          fires and they were handed `8x400` in weeks 2-3 regardless. */
       const detrainedSkipsQuality = detrained;
       const hardCapApplies = compressed || gentler;
-      const allowSecondQuality = tuning.difficulty === "harder" && !compressed;
+      /* Run24 (5): harder holds a second quality session on four run days
+         or more; a regular runner holds one by default on five or more,
+         a block begun as a new runner never (Run24 (8)), and gentler
+         never. By default only where both sessions have a day clear of
+         lifting: harder may put one on a lifting day, a default does not
+         (a Tropos heuristic, for a plan beside lifting). */
+      const defaultSecondQuality =
+        regularRunner &&
+        !gentler &&
+        !beginnerBlock &&
+        runEligibleSlots.length >= SECOND_QUALITY_RUN_DAYS &&
+        remaining.length >= 3 &&
+        chooseQualityRunSlots({
+          availableDays: remaining,
+          longDay: longSlot,
+          count: 2,
+          weekSchedule: input.weekSchedule,
+        }).every(
+          (d) =>
+            input.weekSchedule.find((day) => day.day === d)?.type !== "both"
+        );
+      const allowSecondQuality =
+        !compressed && (tuning.difficulty === "harder" || defaultSecondQuality);
+      /* Run24 (5), deep dive D5: a base week holds light quality, a
+         fartlek or short hills in turn, in place of being all easy, where
+         it has a run besides the long run and the medium-long. Not where a
+         build would hold none (heavily compressed, a returner, a new
+         runner's weeks and a beginner's block before 40 minutes in one go),
+         nor a compressed or gentler block, whose quality is capped. */
+      const lightBase =
+        remaining.length >= 2 &&
+        !compressed &&
+        !gentler &&
+        !detrainedSkipsQuality &&
+        !holdsNoQuality(w);
 
       if (phase === "base") {
-        // Base: all easy (compressed plans extend base proportionally
-        // since there's no time for a real build phase). The first slot
-        // carries the medium-long (RUN-EV-11); the second gains strides
-        // (WAVE1-STRIDES) — a detrained returner gets neither.
+        // Base: easy, with its light session where it holds one. The first
+        // easy slot carries the medium-long (RUN-EV-11); the second gains
+        // strides (WAVE1-STRIDES) — a detrained returner gets neither.
+        const lightDays = lightBase
+          ? chooseQualityRunSlots({
+              availableDays: remaining,
+              longDay: longSlot,
+              count: 1,
+              weekSchedule: input.weekSchedule,
+            })
+          : [];
+        lightDays.forEach((d) =>
+          week.push(
+            buildRunDayV2({
+              dayIndex: d,
+              templateId: BASE_LIGHT_SESSIONS[w % BASE_LIGHT_SESSIONS.length],
+              type: "intervals",
+              weekStart,
+            })
+          )
+        );
         easyDaysInFillOrder({
-          easyDays: remaining,
-          demandingDays: [longSlot],
+          easyDays: remaining.filter((d) => !lightDays.includes(d)),
+          demandingDays: [longSlot, ...lightDays],
           mediumLongDemanding: midLongDemanding,
         }).forEach((d, i) =>
           week.push(
@@ -2196,26 +2331,32 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         /* Run20: the highest rung each ladder reached in the block's
            earlier weeks, walked under the same rules, so the first session
            of each kind is its first rung and a regenerated week climbs on
-           from where the plan had got to. */
-        const highestRungBefore = (flavour: "tempo" | "intervals") => {
+           from where the plan had got to; and how many of the week's
+           families' turns they took (Run24 (5)). */
+        const ladderBefore = (flavour: "tempo" | "intervals") => {
           const tiers = flavour === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
           let highest = -1;
+          let turns = 0;
           for (let k = 0; k < w; k++) {
-            const held = qualityFlavoursForWeek({
+            const planned = qualityFlavoursForWeek({
               weekIndex: k,
               phase: phaseOf(k),
               ...rules,
-              // Run20 (5): a new runner's week held none.
-              skipQuality: rules.skipQuality || holdsNoQuality(k),
             });
-            if (!held.includes(flavour)) continue;
+            if (!planned.includes(flavour)) continue;
             // Run24 (4): a week's time trial takes its tempo, or its one
-            // quality session, which then climbs nothing.
+            // quality session, which then climbs nothing and takes no
+            // family's turn.
             if (
               trialWeeks.has(k) &&
-              flavour === (held.includes("tempo") ? "tempo" : held[0])
+              flavour === (planned.includes("tempo") ? "tempo" : planned[0])
             )
               continue;
+            // Run20 (5): a new runner's week held none. Run24 (5): nor
+            // took a family's turn, so a beginner's first session of each
+            // kind is its first family's, at its first rung (Run24 (8)).
+            if (holdsNoQuality(k)) continue;
+            turns += 1;
             const id = qualityTemplateId({
               ...ladder,
               flavour,
@@ -2227,7 +2368,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               tiers.findIndex((tier) => tier.id === id)
             );
           }
-          return highest;
+          return { highest, turns };
+        };
+        /** The week's session of a flavour: its ladder's rung, in the
+         *  family whose turn it is. */
+        const sessionOf = (flavour: "tempo" | "intervals") => {
+          const before = ladderBefore(flavour);
+          const families = BUILD_FAMILIES[input.raceGoal.distance][flavour];
+          return librarySessionId(
+            qualityTemplateId({
+              ...ladder,
+              flavour,
+              weekIndex: w,
+              highestBefore: before.highest,
+            }),
+            families[before.turns % families.length]
+          );
         };
         const flavours = qualityFlavoursForWeek({
           weekIndex: w,
@@ -2239,12 +2395,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         });
         if (flavours.length > 0) {
           const qualityType = flavours[0];
-          const qualityId = qualityTemplateId({
-            ...ladder,
-            flavour: qualityType,
-            weekIndex: w,
-            highestBefore: highestRungBefore(qualityType),
-          });
+          const qualityId = sessionOf(qualityType);
           const secondQualityHere = flavours.length === 2;
           const qualitySlots = chooseQualityRunSlots({
             availableDays: remaining,
@@ -2260,8 +2411,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               weekStart,
             })
           );
-          // Harder: a SECOND quality session (the other flavour) when
-          // the week has a spare slot and no safety cap applies. Run18:
+          // Harder, or a regular runner's five run days (Run24 (5)): a
+          // SECOND quality session (the other flavour) when the week has a
+          // spare slot and no safety cap applies. Run18:
           // "spare" means a slot BEYOND the week's easy run — with three
           // run days the second quality session took the only easy day
           // (tempo + intervals + long, nothing easy), so it needs three
@@ -2271,12 +2423,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             week.push(
               buildRunDayV2({
                 dayIndex: qualitySlots[1],
-                templateId: qualityTemplateId({
-                  ...ladder,
-                  flavour: secondType,
-                  weekIndex: w,
-                  highestBefore: highestRungBefore(secondType),
-                }),
+                templateId: sessionOf(secondType),
                 type: secondType,
                 weekStart,
               })
@@ -2366,15 +2513,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             weekSchedule: input.weekSchedule,
           });
           // Keep the sharpener's slot and the other easy runs' fill order.
-          // The easy replacement is shorter than 8x400's 25 minutes:
-          // dropping into the all-easy branch instead lengthened this run
-          // to 30 minutes and could move the medium-long onto another day.
+          // The easy replacement is shorter than the sharpener: dropping
+          // into the all-easy branch instead lengthened this run to 30
+          // minutes and could move the medium-long onto another day. Each
+          // distance has its own sharpener (Run24 (5), `TAPER_SHARPENER`).
           const heldQuality = taperBuild().heldQuality;
+          const sharpenerId = TAPER_SHARPENER[input.raceGoal.distance];
           week.push(
             buildRunDayV2({
               dayIndex: taperDay,
-              templateId: heldQuality ? "8x400" : "easy_20",
-              type: heldQuality ? "intervals" : "easy",
+              templateId: heldQuality ? sharpenerId : "easy_20",
+              type: heldQuality
+                ? RUN_TEMPLATES.find((t) => t.id === sharpenerId)!.type
+                : "easy",
               weekStart,
             })
           );
@@ -2470,10 +2621,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     if (!trialWeeks.has(w)) return week;
     const trialId =
       noBenchmark && w === firstTrialWeek ? "time_trial_3k" : "time_trial_5k";
-    // The week's tempo, else its quality session (`highestRungBefore`
-    // skips the one taken). A base week takes its strides run where it has
-    // a day between it and the long run; a week with neither holds no
-    // trial.
+    // The week's tempo, else its quality session (`ladderBefore` skips the
+    // one taken), a base week's light session among them. A base week with
+    // none takes its strides run where it has a day between it and the long
+    // run; a week with neither holds no trial.
     return withTimeTrial(week, trialId, phaseOf(w) === "base");
   };
 

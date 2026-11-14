@@ -370,8 +370,11 @@ describe("the taper retains quality only when the fitted build held it", () => {
     ]) {
       const p = built("marathon", 16, more);
       expect(quality(p.weeks.slice(0, 12).flat()).length).toBeGreaterThan(0);
+      // The marathon's own sharpener (Run24 (5)).
       for (const week of p.weeks.slice(12, -1))
-        expect(quality(week)).toMatchObject([{ templateId: "8x400" }]);
+        expect(quality(week)).toMatchObject([
+          { templateId: "sharpener_marathon" },
+        ]);
     }
   });
 });
@@ -662,21 +665,14 @@ describe("the taper's easy runs step down from what the last build week held (Ru
           ),
           `a ${distance} ${weeks} weeks out, ${volume}, ${days} days`
         ).toBe(
-          // Run24 (4): this half's time trials take two of its tempos, which
-          // lowers the weeks after them under the weekly hold (Run24 (6)),
-          // its last build week's medium-long with them; the taper steps
-          // down from that.
-          weeks === 17 &&
-            distance === "half" &&
-            volume === "standard" &&
-            days === 5
-            ? "30 30 30"
-            : // Run24 (3): a half 29 weeks out is 11 weeks of rolling base
-              // and an 18-week block, whose last build week holds its
-              // medium-long at an hour (above), so its taper runs 30s.
-              weeks === 29 && distance === "half"
-              ? "30 30 30".slice(0, 3 * (days - 2) - 1)
-              : easy
+          // Run24 (3): a half 29 weeks out is 11 weeks of rolling base and an
+          // 18-week block, whose last build week holds its medium-long at an
+          // hour, so its taper runs 30s. A 29-week marathon is a 20-week
+          // block after its base, whose last build week holds 6 × 1 km, so
+          // it tapers as a 17-week one does (Run24 (5)).
+          weeks === 29 && distance === "half"
+            ? "30 30 30".slice(0, 3 * (days - 2) - 1)
+            : easy
         );
     // A compressed marathon ten weeks out holds its last build week to 15%
     // over the week before (Run24 (6)): its easy run gives way, and the
