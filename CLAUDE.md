@@ -87,7 +87,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | Page                                   | Route                              | Description                                                                     |
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                        |
-| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)      |
+| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode                              |
 | `History.tsx`                          | `/history`                         | Progress: an overview, with Lifting / Running / Body / Food pages (`?view=`)    |
 | `TrainingHistory.tsx`                  | `/history/sessions`                | Saved lifts and runs, with period, sport and name filters                       |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                            |
@@ -108,7 +108,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
-| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here)  |
+| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA                                      |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                         |
 | `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — plan, sign-in, exports, deleted meals, sign-out, account deletion     |
 | `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Lift-plan editor, with the rest timer and Reset programme at its foot           |

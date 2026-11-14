@@ -35,6 +35,7 @@
  * ScheduleLayoutSheet, which this editor links to.
  */
 import { appErrorMessage } from "@/lib/callableErrors";
+import { rollingGoalOf } from "@/features/program/programMaintenance";
 import { useId, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Dialog } from "@/components/ui/Dialog";
@@ -483,8 +484,11 @@ export default function ProgrammeSettings({
     !activeBlockFocus &&
     (programState?.workouts?.length ?? 0) > 0;
 
+  // A plan with no race date keeps its run days (Run24 (3)).
   const effectiveRunDays =
-    saved.runMode === "freeform" ? 0 : saved.weeklyRunDays;
+    saved.runMode === "freeform" && !rollingGoalOf(programState, profile)
+      ? 0
+      : saved.weeklyRunDays;
 
   // ── Derived display values (P1/P2/P3 — presentational only) ───────
   // "Current setup" reflects the SAVED snapshot (not the draft), so it reads
