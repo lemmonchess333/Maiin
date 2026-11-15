@@ -70,6 +70,11 @@ import type {
 } from "@/features/program/programTypes";
 import type { RunningBaseline } from "@/features/program/runningBaseline";
 import {
+  climbEffortFactor,
+  isRoadDistance,
+  isTrailRace,
+} from "@/features/program/runPlanTiming";
+import {
   BASE_RUNNER,
   VirtualRunner,
   type RunDone,
@@ -166,14 +171,27 @@ export interface RunRecord {
 }
 
 /** The race distances' lengths, metres. */
-const RACE_M = { "5k": 5000, "10k": 10000, half: 21097.5, marathon: 42195 };
+const RACE_M = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+  // Run26 (2): the ultras.
+  "50k": 50000,
+  "50mi": 80467,
+  "100k": 100000,
+};
 
-/** The intensity a race is run at, for the runner's bands. */
+/** The intensity a race is run at, for the runner's bands. An ultra is run
+ *  at an easy effort. */
 const RACE_INTENSITY: Record<keyof typeof RACE_M, RunIntensity> = {
   "5k": "interval",
   "10k": "interval",
   half: "threshold",
   marathon: "marathon",
+  "50k": "easy",
+  "50mi": "easy",
+  "100k": "easy",
 };
 
 const day = (date: string, n: number) =>
@@ -643,14 +661,18 @@ export class RunSide {
       urlType: null,
       urlScheduledRunId: runDay?.id ?? null,
       paceTable: prescriptivePaceTableFromFitness(profile.runFitness ?? null),
-      raceTarget: raceGoal?.targetTimeS
-        ? {
-            distance: raceGoal.distance,
-            targetTimeS: raceGoal.targetTimeS,
-            currentVdot:
-              paceTableFromFitness(profile.runFitness ?? null)?.vdot ?? null,
-          }
-        : null,
+      // Run26 (2): an ultra or a race over hills has no race pace.
+      raceTarget:
+        raceGoal?.targetTimeS &&
+        isRoadDistance(raceGoal.distance) &&
+        !isTrailRace(raceGoal)
+          ? {
+              distance: raceGoal.distance,
+              targetTimeS: raceGoal.targetTimeS,
+              currentVdot:
+                paceTableFromFitness(profile.runFitness ?? null)?.vdot ?? null,
+            }
+          : null,
     });
     const template = templateId ? templateOf(templateId) : undefined;
     const race =
@@ -659,9 +681,12 @@ export class RunSide {
         : null;
     this.runner.startDay();
     const vdot = this.runner.dayVdot();
+    // Run26 (2): a race over hills takes longer by its km-effort, as the
+    // plan's own long runs are sized (`climbEffortFactor`).
     const racePace = race
-      ? raceTimeS(vdot, RACE_M[race], this.weeklyKm(date)) /
-        (RACE_M[race] / 1000)
+      ? (raceTimeS(vdot, RACE_M[race], this.weeklyKm(date)) /
+          (RACE_M[race] / 1000)) *
+        climbEffortFactor(raceGoal)
       : null;
     const segments =
       runDay === null

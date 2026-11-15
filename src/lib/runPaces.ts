@@ -443,6 +443,8 @@ export function raceDistanceKeyFromKm(
   distanceKm?: number
 ): RaceDistanceKey | undefined {
   if (distanceKm == null) return undefined;
+  // Run26 (2): an ultra is run by effort, with no race pace to set.
+  if (distanceKm > 43) return undefined;
   if (distanceKm <= 5) return "5k";
   if (distanceKm <= 10) return "10k";
   if (distanceKm <= 21.2) return "half";

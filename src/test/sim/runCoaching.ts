@@ -11,14 +11,17 @@
  *   weeks (§5.20: none for the first 4–6).
  * - `back-to-back`: two demanding days in a row: a long run, tempo,
  *   intervals, a race, or an easy run of an hour or more (§5.20: about
- *   48 h between hard sessions; running-engine-audit §7 item 3).
+ *   48 h between hard sessions; running-engine-audit §7 item 3). An
+ *   ultra's back-to-back run beside its long run is that pair on purpose
+ *   (Run26 (2)), so the pair alone is not one; either beside a third
+ *   demanding day still is.
  * - `spike`: a run more than 10% longer than the runner's longest of the
  *   30 days before (§2 item 2: the single-run guard).
  * - `volume-jump`: a week planning over 25% more minutes than the week
  *   before, outside race week and the recovery after it, which climbs
  *   back from days off on purpose (audit §7 item 1; deep dive D10).
- * - `taper-long`: a half or marathon plan with no long run in the two
- *   weeks before race week (§4.5: a reduced long run 2–3 weeks out; audit
+ * - `taper-long`: a half, marathon or ultra plan with no long run in the
+ *   two weeks before race week (§4.5: a reduced long run 2–3 weeks out; audit
  *   §7 item 6).
  * - `taper-cut`: the taper's first week planning under half the last build
  *   week's minutes in one step (§4.5: about 41–60% off, progressively).
@@ -42,7 +45,9 @@ import {
   localDateString,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { isUltraDistance } from "@/features/program/runPlanTiming";
 import { trainingBands } from "@/lib/runPaces";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { LiftPersona, Season } from "./liftSeason";
 import { longestRunMinutes, plannedRunMinutes, runTypeOf } from "./runSeason";
 
@@ -54,6 +59,10 @@ const SPIKE = 1.1;
 const DEMANDING = new Set(["long", "tempo", "intervals", "race"]);
 
 const templateOf = (entry: string) => entry.slice(entry.indexOf(":") + 1);
+
+/** Run26 (2): an ultra's back-to-back run. */
+const isBackToBack = (id: string) =>
+  !!RUN_TEMPLATES.find((t) => t.id === id)?.config.backToBack;
 
 /** The week holding the race (its phase can read recovery by Sunday). */
 const holdsRace = (w: Season["runWeeks"][number]) =>
@@ -113,9 +122,20 @@ export function runCoachingFindings(
       )
       .map((p) => p.date)
   );
-  for (const date of demanding)
-    if (demanding.has(localDateString(addLocalDays(parseLocalDate(date), 1))))
-      found.add("back-to-back");
+  /* Run26 (2): an ultra's back-to-back run and the long run beside it, the
+     pair the plan holds on purpose. */
+  const typeOn = new Map(planned.map((p) => [p.date, p.templateId]));
+  const isPair = (a: string, b: string) => {
+    const ids = [typeOn.get(a), typeOn.get(b)];
+    return (
+      ids.some((id) => id !== undefined && isBackToBack(id)) &&
+      ids.some((id) => id !== undefined && runTypeOf(id) === "long")
+    );
+  };
+  for (const date of demanding) {
+    const next = localDateString(addLocalDays(parseLocalDate(date), 1));
+    if (demanding.has(next) && !isPair(date, next)) found.add("back-to-back");
+  }
 
   if (
     season.runs.some(
@@ -128,10 +148,12 @@ export function runCoachingFindings(
   const distance = persona.answers.raceDistance;
   if (
     raceWeek > 0 &&
-    (distance === "half" || distance === "marathon") &&
+    (distance === "half" ||
+      distance === "marathon" ||
+      isUltraDistance(distance)) &&
     weeks
       .slice(Math.max(0, raceWeek - 2), raceWeek)
-      .every((w) => w.longKm === 0)
+      .every((w) => w.longMinutes === 0)
   )
     found.add("taper-long");
   const taper = weeks.findIndex((w) => w.phase === "taper");

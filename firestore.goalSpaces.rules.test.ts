@@ -152,6 +152,53 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
     });
   });
 
+  describe("meet-ups — member-read, server-written (Run26 call 4)", () => {
+    const meetupRef = (db: ReturnType<typeof asMember>, id = "m1") =>
+      doc(db, "goalSpaces", SPACE, "meetups", id);
+    const meetup = {
+      organiserUid: MEMBER,
+      sport: "run",
+      title: "Saturday long run",
+      place: "Tooting Lido gate",
+      note: null,
+      startsAt: Date.now() + 86_400_000,
+      timeZone: "Europe/London",
+      going: [MEMBER],
+      createdAt: Date.now(),
+    };
+
+    beforeEach(async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(meetupRef(ctx.firestore()), meetup);
+      });
+    });
+
+    it("lets a member read a meet-up", async () => {
+      await assertSucceeds(getDoc(meetupRef(asMember())));
+    });
+
+    it("refuses a non-member and a signed-out reader", async () => {
+      /* A time and a place reach only the people the organiser invited. */
+      await assertFails(getDoc(meetupRef(asOther())));
+      await assertFails(
+        getDoc(meetupRef(env.unauthenticatedContext().firestore()))
+      );
+    });
+
+    it("lets no client plan, join or call one off, member or not", async () => {
+      /* The callable holds the word filter, restriction and the block
+         check. A member writing here directly would skip all three, and
+         could add someone else to the list. */
+      const db = asMember();
+      await assertFails(setDoc(meetupRef(db, "m2"), meetup));
+      await assertFails(
+        updateDoc(meetupRef(db), { going: [MEMBER, OTHER] })
+      );
+      await assertFails(deleteDoc(meetupRef(db)));
+      await assertFails(setDoc(meetupRef(asOther(), "m3"), meetup));
+    });
+  });
+
   describe("events — the client-creatable subset", () => {
     it("accepts a member's own event of an allowed kind", async () => {
       await assertSucceeds(setDoc(eventRef(asMember()), validEvent()));

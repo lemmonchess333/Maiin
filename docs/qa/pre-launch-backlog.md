@@ -634,6 +634,33 @@ only a deploy can confirm the callables run it.
       week before the deploy shows "This code has expired." and Make a new
       code, and everyone already in it still opens it.
 
+## Meet-ups in a Circle (Run26 call 4, 2026-11-14)
+
+A Circle member plans a run or a lift with a day, a time and a place; the
+others say they're in, and the organiser or the owner calls it off. The
+`circleMeetup` callable writes every meet-up, the rules let only members
+read them, and two collection-group indexes (`meetups.organiserUid`,
+`meetups.going`) serve the account-deletion sweep. The unit suites hold
+both sides and the rules test runs on CI's emulator; only a deploy and two
+real accounts can confirm the callable, the notices and the indexes in
+production.
+
+- [ ] **Plan, answer, call off.** After Deploy production has shipped (the
+      Firestore step waits for the two `meetups` indexes to be READY), on
+      account A open a Circle with account B in it and tap Plan a meet-up.
+      Passing: the sheet takes Run or Lift, a name, a day, a time and a
+      place; after Plan it the Circle's row on Together reads the meet-up's
+      name and "Sat 21 Nov · 08:00" style time, and B's tray has "A planned
+      a group run", which opens Together. On B, I'm in turns the line into
+      "You and A are going". On A, Call it off asks first, then B's tray
+      has "A called off a group run".
+- [ ] **Two time zones.** With B's phone set to another time zone
+      (Settings → General → Date & Time), open the same Circle on B.
+      Passing: B sees the start in B's own time (a London 08:00 reads as
+      03:00 in New York), and A still sees 08:00.
+- [ ] **Leaving takes your part.** B leaves the Circle. Passing: A's sheet
+      no longer names B as going, and a meet-up B planned is gone.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,
@@ -4930,6 +4957,15 @@ Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` w
 - [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
 - [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
 
+## Ultra and trail sessions on the run screen (Run26 (2), 2026-11-14)
+
+Affects: the sessions an ultra or a trail plan holds, their segments, spoken cues and words (`segmentsFromIntervals` with a climb or downhill style, the time-on-feet long run's time target). Unit tests build each from template to segments; no phone has run one, and setup does not offer an ultra yet. Open each from a run day's template picker (day sheet → Template).
+
+- [ ] **Climbs.** Start Climbs 3×5 min with a confirmed benchmark. Passing: a 15-minute warm-up "to the foot of a hill", three "5 min climb" steps headed "COMFORTABLY HARD · CLIMB 1/3", no pace bar and no pace alerts, "Climb 1 of 3" spoken, "Jog down" between.
+- [ ] **Downhill repeats.** Start Downhill 4×60s. Passing: the warm-up says "to the top of a hill", four "1 min downhill" steps headed "EASY · DOWNHILL 1/4", "Descent 1 of 4" spoken, "Walk up" between with no pace anywhere.
+- [ ] **A long run in time.** Start Long 2 h. Passing: a 2-hour time target, no distance target and no pace target; the summary keeps it as a long run.
+- [ ] **A back-to-back run.** Start Back-to-back 1 h 30. Passing: a 90-minute easy run, counted on its day like any easy run.
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),
@@ -5098,6 +5134,58 @@ activity recorded without pauses, takes out stretches below a speed
 threshold that last more than 15 s. Two phones on the same run can read
 different times for that reason alone.
 
+## Run start: the clock waits for the first good fix (2026-11-14)
+
+Affects: every GPS run's start (Run25 call 2; `src/lib/gpsStart.ts`,
+`useGPS`'s `warm` and `startAwaitingFix`, `useGpsWarmup`, the run
+screen's "Finding GPS" in `src/pages/Run.tsx`). The run screen watches
+location from the moment it opens, before Start (a foreground-only watch
+that never asks for location), and a GPS run's clock, distance and steps
+start on the first fix within 20 m, or at the tap of Start when such a fix
+from the last 10 s is in hand. There is no 3-2-1 any more. The unit tests
+drive a faked location source; only a phone says how often iOS gives a
+fix within 20 m, and how soon.
+
+- [ ] **A cold start.** Outdoors in the open, with the phone just
+      unlocked and no app having used location for a while: open Tropos,
+      go straight to a run's card or Home's Start, and tap Start. Passing:
+      the screen says "Finding GPS" with Start anyway; within about 5 to
+      30 s it goes by itself to the run, "Go!" is spoken, and the clock
+      reads 0:00 then counts. The saved run's start time (the finish
+      screen's "07:42–08:23") is when "Go!" was spoken, not when Start was
+      tapped.
+- [ ] **A warm start.** Outdoors, open a run's card (or the picker) and
+      wait until the chip reads "GPS ready", then tap Start. Passing: no
+      "Finding GPS" at all; the run screen opens with the clock at 0:00 and
+      "Go!". Then put the phone down on the card for a minute and tap
+      Start: it should still be immediate. If the chip reads "Finding GPS"
+      or "Weak GPS", Start shows "Finding GPS" until the fix comes, which
+      is right. Note how long the chip takes to read "GPS ready" from
+      opening the card: under about 10 s is the expectation.
+- [ ] **An indoor start.** Indoors, a run on the treadmill (the setup's
+      "On a treadmill", or a planned run started there): Passing: never
+      "Finding GPS"; the treadmill screen and its clock start at once. An
+      outdoor run started indoors waits on "Finding GPS" (indoor fixes are
+      rarely within 20 m), and its Start anyway, Track without GPS (after
+      15 s) and On a treadmill all work.
+- [ ] **Start anyway under trees.** Under tree cover or between tall
+      buildings, start a run, and on "Finding GPS" tap Start anyway at
+      once. Passing: the clock starts at the tap; the distance reads
+      0.00 km until the phone has a fix within 150 m, then counts from
+      there; the map's chip reads "Acquiring GPS" until then. The run
+      saves with its start at the tap.
+- [ ] **The other clocks.** On one cold start with a Watch and the Live
+      Activity on: the Live Activity, the Watch's figure, the first spoken
+      cue and a structured session's first step all begin with "Go!", not
+      at the tap. The Health workout's start is "Go!".
+- [ ] **Location off.** With location turned off for Tropos, tap Start.
+      Passing: "Location is off for Tropos", Open settings, Track without
+      GPS, On a treadmill and Cancel, as before; no Start anyway.
+- [ ] **No location indicator behind your back.** Open a run's card, then
+      leave the app for the home screen without starting. Passing: the
+      location arrow goes from the status bar within a few seconds, and no
+      blue background-location pill appears at any point before Start.
+
 ## Adjust for heat (Pgm8 (E8) superseded by the owner, 2026-11-14)
 
 Affects: the planned run's launch card and the full setup (`HeatPanel`:
@@ -5144,6 +5232,21 @@ Unit and page tests drive it; no phone has shown it.
       every 90 seconds, and with the strap off the eased paces apply.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
+
+## A Bluetooth heart rate sensor, and easy runs on heart rate (Run24 (12), 2026-11-14)
+
+Affects: Settings › Run plan's Heart rate sensor (`HeartRateSensorSection`), the app's own CoreBluetooth plugin (`ios/App/App/HeartRateSensorPlugin.swift`, registered in `TroposBridgeViewController`), Info.plist's `NSBluetoothAlwaysUsageDescription` and `bluetooth-central` background mode, the run's heart rate stream (`heartRateSource.ts`: the sensor, and the Watch when no sensor reading is fresh), the easy cue's heart-rate path (`checkEasyHeartRate`: over the top of Zone 2 by more than 3 bpm for a minute), and the run summary's heart rate card for any run, the treadmill's too. Parser, stream, cue, store and card are unit-tested; the Swift is compiled only by CI's simulator job, and no phone or sensor has run it. Use a standard build (no Watch pilot) first, then the pilot with both.
+
+- [ ] **Pairing a strap.** Wear a chest strap (a Polar H10, Garmin HRM or Wahoo TICKR) and open Settings › Run plan › Heart rate sensor › Pair a sensor. Passing: iOS asks for Bluetooth once, with the purpose string; the strap appears by name within 30 seconds; Pair shows its name and "Connected · N bpm" with the reading moving; Forget returns to "No sensor paired". Refusing Bluetooth shows "Bluetooth is off for Tropos" with Open settings, which opens Tropos's page in Settings.
+- [ ] **An armband and a strap already in use.** Pair an optical armband (a Polar Verity Sense or Scosche) the same way; then, with the strap connected to another app, search again. Passing: both are found and read.
+- [ ] **A run with the strap.** Start an outdoor easy run with the strap paired. Passing: the HUD shows HR and its zone within a few seconds of Start; the summary shows "Time in zone · Sensor covered N% of moving time" with the zones adding up to about the moving time; the saved run's detail shows the same card.
+- [ ] **Losing and regaining it mid-run.** Mid-run, take the strap off for two minutes, then put it back; on another run, walk 30 m away from the phone and back. Passing: the HUD drops the reading within about 20 seconds and shows it again on reconnect without a tap; the run never stops; the summary's coverage falls by about the time it was off, and a run under half covered says "Partial reading" with no zones.
+- [ ] **The cue with the phone locked.** On an easy run with the strap, lock the phone and run hard enough to stay a few beats above Zone 2's top (Settings › Run plan shows it) for over a minute. Passing: the easy cue speaks with the screen locked, at most three times a stretch; a short hill does not set it off; easing back to Zone 2 for 15 seconds ends the stretch.
+- [ ] **Coverage under 50%.** Pair the strap, start a run, and take it off for more than half the run. Passing: the summary shows average and highest bpm and "Partial reading: heart rate covered N% of moving time, so time in zones isn’t shown."; nothing in the run's calories, the week's load or readiness changes with or without the strap.
+- [ ] **A treadmill run.** Start a treadmill easy run with the strap. Passing: the HUD shows heart rate, the easy cue speaks over Zone 2 as outdoors, and the summary shows the card.
+- [ ] **The Watch and a strap together (pilot build).** With Watch runs on and the strap paired, run outdoors. Passing: the HUD's heart rate follows the strap (compare with the strap's own app); take the strap off and the Watch's reading takes over within about 15 seconds; the summary names the source that covered most of the run.
+- [ ] **A reloaded web view.** Mid-run with the strap, force the web view to reload (Safari Web Inspector's reload on a development build), then finish. Passing: the summary's coverage includes the time before the reload (native kept the readings).
+- [ ] **App Review.** In the App Store submission notes, say the `bluetooth-central` background mode keeps a paired heart rate sensor's readings arriving while a run is recorded with the screen locked.
 
 ## Auto-pause reads the phone's motion as well as GPS (2026-11-14)
 

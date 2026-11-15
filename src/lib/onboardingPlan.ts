@@ -29,6 +29,7 @@ export function buildOnboardingPlan(
     | "raceDistance"
     | "raceTargetDate"
     | "raceEventName"
+    | "raceClimbM"
     | "rollingGoal"
     | "injuries"
     | "weightKg"
@@ -105,6 +106,8 @@ export function buildOnboardingPlan(
             // A race picked from the list keeps its name, as the run-plan
             // editor's does.
             ...(draft.raceEventName ? { eventName: draft.raceEventName } : {}),
+            // Run26 (2): the race's climb, which makes a trail plan.
+            ...(draft.raceClimbM ? { climbM: draft.raceClimbM } : {}),
           },
         }
       : {}),

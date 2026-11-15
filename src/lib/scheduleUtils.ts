@@ -301,21 +301,38 @@ export function isValidWeekSchedule(
  * `generateSchedule` stays the week derived for a profile that never stored
  * one (`backfillWeekScheduleIfMissing`, the calendar's fallback), so a plan
  * already made keeps its weekdays.
+ *
+ * Run26 (2): an ultra's week (`bothWeekendDays`) runs on both weekend days
+ * where it can, so its long run and the back-to-back run beside it are a
+ * weekend's, as the lock asks: a second run day moves onto the free one,
+ * chosen the same way.
  */
 export function defaultWeekSchedule(
   liftDays: number,
-  runDays: number
+  runDays: number,
+  bothWeekendDays = false
 ): ScheduleDay[] {
-  const schedule = generateSchedule(liftDays, runDays);
+  const first = weekendRunWeek(generateSchedule(liftDays, runDays));
+  return bothWeekendDays ? weekendRunWeek(first, true) : first;
+}
+
+/** `schedule` with a run moved onto a free weekend day, when no run is on
+ *  the weekend, or, with `both`, when one weekend day still has none. */
+function weekendRunWeek(schedule: ScheduleDay[], both = false): ScheduleDay[] {
   const runsOn = (day: ScheduleDay) =>
     day.type === "run" || day.type === "both";
-  if (schedule.some((d) => (d.day === 0 || d.day === 6) && runsOn(d)))
-    return schedule;
+  const onWeekend = schedule.filter(
+    (d) => (d.day === 0 || d.day === 6) && runsOn(d)
+  ).length;
+  if (onWeekend >= (both ? 2 : 1)) return schedule;
   const weekend = [0, 6].find((day) => schedule[day].type === "rest");
   if (weekend === undefined) return schedule;
   const runDaysNow = schedule.filter(runsOn).map((d) => d.day);
-  // Only a run-only day moves: a Both day would take its lift with it.
-  const movable = schedule.filter((d) => d.type === "run").map((d) => d.day);
+  // Only a run-only day moves: a Both day would take its lift with it, and
+  // a weekend run stays where it is.
+  const movable = schedule
+    .filter((d) => d.type === "run" && d.day !== 0 && d.day !== 6)
+    .map((d) => d.day);
   let best: { day: number; score: number[] } | null = null;
   for (const day of movable) {
     const after = runDaysNow.map((d) => (d === day ? weekend : d));
@@ -361,7 +378,9 @@ function isBetter(score: number[], than: number[]): boolean {
 export function planWeekSchedule(
   liftDays: number,
   runDays: number,
-  existing?: ScheduleDay[]
+  existing?: ScheduleDay[],
+  /** Run26 (2): an ultra's week, both weekend days run where it can. */
+  bothWeekendDays = false
 ): ScheduleDay[] {
   if (
     isValidWeekSchedule(existing) &&
@@ -371,7 +390,7 @@ export function planWeekSchedule(
       .length === runDays
   )
     return existing;
-  return defaultWeekSchedule(liftDays, runDays);
+  return defaultWeekSchedule(liftDays, runDays, bothWeekendDays);
 }
 
 /**

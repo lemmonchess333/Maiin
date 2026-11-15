@@ -33,6 +33,7 @@
 
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import {
+  Suspense,
   useCallback,
   useEffect,
   useState,
@@ -81,6 +82,14 @@ import {
   isInviteCodeExpired,
 } from "@/features/goalSpace/inviteCode";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
+import { lazyRetry } from "@/lib/lazyRetry";
+import {
+  defaultMeetupSport,
+  meetupWhen,
+  upcomingMeetups,
+  type CircleMeetup,
+  type MeetupPlan,
+} from "@/features/goalSpace/circleMeetups";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
@@ -89,6 +98,15 @@ import { loadWordFilter } from "@/lib/wordFilter";
 import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
 import { appInviteUrl } from "@/lib/publicLinks";
+
+/* A Circle's meet-ups (Run26 call 4) load with its sheet, not with Social:
+   the list when a Circle is opened, the plan sheet when it is first asked
+   for. */
+const CircleMeetupList = lazyRetry(() => import("./CircleMeetupList"));
+const CircleMeetupSheet = lazyRetry(() => import("./CircleMeetupSheet"));
+
+const MEETUP_OBJECTIONABLE_MESSAGE =
+  "This meet-up contains objectionable language. Reword it and try again.";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -308,6 +326,9 @@ export default function CirclesSection({
     setWeeklyFocus,
     backCheckIn,
     resolveTarget,
+    planMeetup,
+    setMeetupGoing,
+    cancelMeetup,
   } = useGoalSpaces(uid);
   /* Circle names go through the word filter (circleTitle), so a list with
      Circles in it waits for it as it waits for the Circles: no name is
@@ -361,6 +382,15 @@ export default function CirclesSection({
   const [detailSeenAt, setDetailSeenAt] = useState(0);
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
+  /* Run26 call 4: the open Circle's meet-ups, the plan sheet, and which
+     meet-up an answer or a call-off is in flight for. */
+  const [meetups, setMeetups] = useState<CircleMeetup[]>([]);
+  const [meetupSheetOpen, setMeetupSheetOpen] = useState(false);
+  /* The plan sheet mounts the first time it is asked for, and stays, so it
+     can animate closed. */
+  const [meetupSheetMounted, setMeetupSheetMounted] = useState(false);
+  const [meetupBusy, setMeetupBusy] = useState(false);
+  const [meetupBusyId, setMeetupBusyId] = useState<string | null>(null);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
   // When the create sheet is opened with a goal already chosen (cold-start
   // tap or a race-plan hand-off), the full goal picker is redundant — the
@@ -466,6 +496,8 @@ export default function CirclesSection({
   const [featuredRead, setFeaturedRead] = useState<{
     key: string;
     detail: CircleDetail;
+    /** When it landed: the moment its meet-ups are read as over or not. */
+    at: number;
   } | null>(null);
   const featuredDetail =
     featuredRead !== null && featuredRead.key === featuredKey
@@ -475,7 +507,8 @@ export default function CirclesSection({
     if (!featuredKey || !featuredId) return;
     let cancelled = false;
     void loadDetail(featuredId).then((detail) => {
-      if (!cancelled) setFeaturedRead({ key: featuredKey, detail });
+      if (!cancelled)
+        setFeaturedRead({ key: featuredKey, detail, at: Date.now() });
     });
     return () => {
       cancelled = true;
@@ -578,6 +611,98 @@ export default function CirclesSection({
     const detail = await loadDetail(c.space.id);
     setMembers(detail.members);
     setEvents(detail.events);
+    setMeetups(detail.meetups);
+  };
+
+  /* Meet-ups change in two copies, as check-ins do: the open sheet's and
+     the featured row's, so the row's next meet-up and the sheet agree. */
+  const patchMeetups = (
+    spaceId: string,
+    patch: (prev: CircleMeetup[]) => CircleMeetup[]
+  ) => {
+    if (detailOf?.space.id === spaceId) setMeetups(patch);
+    if (spaceId === featuredId) {
+      setFeaturedRead((prev) =>
+        prev && prev.key === featuredKey
+          ? {
+              ...prev,
+              detail: { ...prev.detail, meetups: patch(prev.detail.meetups) },
+            }
+          : prev
+      );
+    }
+  };
+
+  const submitMeetup = async (plan: MeetupPlan): Promise<boolean> => {
+    if (!detailOf || refused()) return false;
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn’t plan it. Try again.");
+      return false;
+    }
+    if (
+      [plan.title, plan.place, plan.note ?? ""].some((text) =>
+        filter.containsProfanity(text)
+      )
+    ) {
+      toast.error(MEETUP_OBJECTIONABLE_MESSAGE);
+      return false;
+    }
+    const spaceId = detailOf.space.id;
+    setMeetupBusy(true);
+    const res = await planMeetup(spaceId, plan);
+    setMeetupBusy(false);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return false;
+    }
+    const planned: CircleMeetup = {
+      id: res.meetupId,
+      organiserUid: uid,
+      ...plan,
+      going: [uid],
+      createdAt: Date.now(),
+    };
+    patchMeetups(spaceId, (prev) =>
+      [...prev.filter((m) => m.id !== planned.id), planned].sort(
+        (a, b) => a.startsAt - b.startsAt
+      )
+    );
+    setMeetupSheetOpen(false);
+    toast.success("Meet-up planned.");
+    return true;
+  };
+
+  const answerMeetup = async (m: CircleMeetup, going: boolean) => {
+    if (!detailOf) return;
+    // Saying you're in reaches the others; saying you can't stays open.
+    if (going && refused()) return;
+    haptic("light");
+    const spaceId = detailOf.space.id;
+    setMeetupBusyId(m.id);
+    const res = await setMeetupGoing(spaceId, m.id, going);
+    setMeetupBusyId(null);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return;
+    }
+    patchMeetups(spaceId, (prev) =>
+      prev.map((x) => (x.id === m.id ? { ...x, going: res.going } : x))
+    );
+  };
+
+  const callOffMeetup = async (m: CircleMeetup) => {
+    if (!detailOf) return;
+    const spaceId = detailOf.space.id;
+    setMeetupBusyId(m.id);
+    const ok = await cancelMeetup(spaceId, m.id);
+    setMeetupBusyId(null);
+    if (!ok) {
+      toast.error("Couldn’t call it off. Try again.");
+      return;
+    }
+    patchMeetups(spaceId, (prev) => prev.filter((x) => x.id !== m.id));
+    toast.success("Called off.");
   };
 
   /* A row's check-in: the weekly focus sheet, for the Circle it is on.
@@ -977,7 +1102,25 @@ export default function CirclesSection({
                   featuredDetail &&
                   featuredDetail.members.length >= 2 &&
                   featuredFocusCount > 0;
-                const meta = pulse ? (
+                /* The featured Circle's next meet-up, when it has one,
+                 is its line: the most useful thing to know about it this
+                 week (Run26 call 4). */
+                const nextMeetup =
+                  isFeatured && featuredDetail
+                    ? (upcomingMeetups(
+                        featuredDetail.meetups,
+                        featuredMemberUids,
+                        featuredRead?.at ?? 0
+                      )[0] ?? null)
+                    : null;
+                const meta = nextMeetup ? (
+                  <>
+                    {nextMeetup.title} ·{" "}
+                    <span className="font-mono tabular-nums">
+                      {meetupWhen(nextMeetup.startsAt)}
+                    </span>
+                  </>
+                ) : pulse ? (
                   <>
                     <span className="font-mono tabular-nums">
                       {featuredFocusCount}
@@ -1226,7 +1369,7 @@ export default function CirclesSection({
           }
         }}
         title="Start a circle"
-        description="Invite-only, 2–8 people. The circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite-only, 2–8 people. The circle sees check-ins and meet-ups, never your numbers, meals or photos."
       >
         <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
@@ -1581,6 +1724,27 @@ export default function CirclesSection({
                   </div>
                 )}
 
+                <Suspense fallback={null}>
+                  <CircleMeetupList
+                    meetups={upcomingMeetups(meetups, memberUids, detailSeenAt)}
+                    members={members}
+                    viewerUid={uid}
+                    ownerUid={detailOf.space.ownerId}
+                    canPlan={
+                      detailOf.space.active && !leadsWithInvite(detailOf)
+                    }
+                    busyId={meetupBusyId}
+                    onPlan={() => {
+                      if (refused()) return;
+                      haptic("light");
+                      setMeetupSheetMounted(true);
+                      setMeetupSheetOpen(true);
+                    }}
+                    onAnswer={(m, going) => void answerMeetup(m, going)}
+                    onCancel={(m) => void callOffMeetup(m)}
+                  />
+                </Suspense>
+
                 <div className="space-y-1.5">
                   <SectionHeading size="compact" as="h3">
                     Recent
@@ -1679,7 +1843,7 @@ export default function CirclesSection({
           if (!o) setInviteHandoff(null);
         }}
         title="Your circle is ready"
-        description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite 1–7 people. The circle sees check-ins and meet-ups, never your numbers, meals or photos."
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">
@@ -1731,6 +1895,20 @@ export default function CirclesSection({
           </div>
         )}
       </BottomSheet>
+
+      {/* ── Plan a meet-up (Run26 call 4) ── over the detail sheet, as
+          the weekly focus sheet is. */}
+      {meetupSheetMounted && (
+        <Suspense fallback={null}>
+          <CircleMeetupSheet
+            open={meetupSheetOpen}
+            onOpenChange={setMeetupSheetOpen}
+            defaultSport={defaultMeetupSport(detailOf?.space.type ?? "race")}
+            busy={meetupBusy}
+            onSubmit={submitMeetup}
+          />
+        </Suspense>
+      )}
 
       {/* ── Weekly focus sheet (SOCIAL-FOCUS-01) ──
           Exactly ONE instance; its inputs come from whichever surface

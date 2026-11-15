@@ -9,6 +9,7 @@ import {
   isRunWalkTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
+  sameTimeOnFeetFamily,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
 import { shorteningRank } from "@/lib/planDeloadWeek";
@@ -62,11 +63,13 @@ export function isRunningBaseline(
   );
 }
 
-/** One rung of the climb: its minutes, and a long run's distance (an easy
- *  run's is never done by distance). */
+/** One rung of the climb: its minutes, whether it is a long run, and a
+ *  long run's distance (an easy run's, and a long run's in time on feet,
+ *  is never done by distance). */
 interface ClimbRung {
   minutes: number;
   km: number;
+  long: boolean;
 }
 
 /**
@@ -74,30 +77,40 @@ interface ClimbRung {
  * `easyPaceSPerKm`: the easy runs shorter than the first long run, then the
  * long runs (Run23's ladder), each with its minutes at that pace (Run17;
  * the template's own minutes without a pace) and a long run with its
- * distance.
+ * distance. Run26 (2): a plan in time on feet climbs its own long runs, and
+ * every other plan the distance ladder's; a back-to-back run is never a
+ * rung.
  */
-function longRunRungs(easyPaceSPerKm?: number | null): ClimbRung[] {
+function longRunRungs(
+  easyPaceSPerKm?: number | null,
+  timeOnFeet = false
+): ClimbRung[] {
   const rungs = RUN_TEMPLATES.filter(
     (t) =>
       (t.type === "long" &&
         !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
-        !t.config?.racePaceBlocks) ||
+        !t.config?.racePaceBlocks &&
+        Boolean(t.config?.timeOnFeet) === timeOnFeet) ||
       (t.type === "easy" &&
         !t.config?.strides &&
         !t.config?.pickUps &&
+        !t.config?.backToBack &&
         !isRunWalkTemplateId(t.id))
   )
     .map((t): ClimbRung => ({
       minutes: plannedRunMinutes(t, easyPaceSPerKm),
       km: (t.type === "long" && t.config?.targetDistanceKm) || Infinity,
+      long: t.type === "long",
     }))
     // By minutes, a long run before an easy run of the same.
-    .sort((a, b) => a.minutes - b.minutes || a.km - b.km);
-  const firstLong = rungs.find((r) => r.km < Infinity)!.minutes;
+    .sort(
+      (a, b) =>
+        a.minutes - b.minutes || Number(b.long) - Number(a.long) || a.km - b.km
+    );
+  const firstLong = rungs.find((r) => r.long)!.minutes;
   return rungs.filter(
     (r, i) =>
-      (r.km < Infinity || r.minutes < firstLong) &&
-      r.minutes !== rungs[i - 1]?.minutes
+      (r.long || r.minutes < firstLong) && r.minutes !== rungs[i - 1]?.minutes
   );
 }
 
@@ -156,6 +169,8 @@ export function runningClimb(
   weekKey: string,
   options: {
     easyPaceSPerKm?: number | null;
+    /** Run26 (2): the plan sizes its long runs in time on feet. */
+    timeOnFeet?: boolean;
     isStepBack?: (weekKey: string) => boolean;
     /** What was done before this week, from the saved runs: the longest
      *  run of the four weeks before it, in minutes and in km (null with
@@ -171,7 +186,7 @@ export function runningClimb(
     } | null;
   } = {}
 ): RunningClimbWeek {
-  const rungs = longRunRungs(options.easyPaceSPerKm);
+  const rungs = longRunRungs(options.easyPaceSPerKm, options.timeOnFeet);
   let start = 0;
   rungs.forEach((rung, i) => {
     if (rung.minutes <= baseline.longestRunMinutes) start = i;
@@ -279,10 +294,17 @@ export function fitWeekToRunningBaseline(
       const t = templateFor(row);
       return sum + (t && t.type !== "race" ? minutes(t) : 0);
     }, 0);
-  /** The long run's day, by what the plan put there. */
-  const isLongRow = (row: ScheduledRunDay) =>
-    templateOf(row.trainingBasis?.originalTemplateId ?? row.templateId)
-      ?.type === "long";
+  /** The long run's day, by what the plan put there. Run26 (2): an
+   *  ultra's back-to-back run is a second long run, held to the long run's
+   *  climb rather than the rest of the week's, whose ten minutes a week
+   *  would never let one in; the week's own hold (Run24 (6)) still bounds
+   *  the week it is in. */
+  const isLongRow = (row: ScheduledRunDay) => {
+    const planned = templateOf(
+      row.trainingBasis?.originalTemplateId ?? row.templateId
+    );
+    return planned?.type === "long" || !!planned?.config.backToBack;
+  };
   // A week with no long run gives its runs the long run's minutes too: a
   // lead-in. A taper or race week does not (`cutting`): there the five
   // 30-minute runs after a build of five 20s were the long run's minutes
@@ -334,6 +356,11 @@ export function fitWeekToRunningBaseline(
         // A time trial is fitted to a shorter trial, never to an interval
         // session, nor an interval session to a trial (Run24 (4)).
         Boolean(t.config?.timeTrial) === Boolean(original.config?.timeTrial) &&
+        // Run26 (2): time on feet stays time on feet, a back-to-back a
+        // back-to-back, and no other run becomes either.
+        (onlyEasy
+          ? !t.config?.timeOnFeet
+          : sameTimeOnFeetFamily(original, t)) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides && !t.config?.pickUps
@@ -357,6 +384,7 @@ export function fitWeekToRunningBaseline(
           t.type === "easy" &&
           !t.config?.strides &&
           !t.config?.pickUps &&
+          !t.config?.timeOnFeet &&
           !isRunWalkTemplateId(t.id) &&
           minutes(t) <= ceiling
       ).sort((a, b) => minutes(b) - minutes(a))[0]

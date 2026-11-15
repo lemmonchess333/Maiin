@@ -119,7 +119,7 @@ describe("run-HUD capture spec — selectors", () => {
   it("the running HUD exposes Pause, Lock and the resize handle by those names", () => {
     // `Pause run` is the spec's proof that the active phase was reached —
     // if it does not exist under that name, the spec would shoot the setup
-    // screen or the countdown while claiming to be the HUD.
+    // screen or Finding GPS while claiming to be the HUD.
     renderSheet(false);
     for (const name of [
       /^pause run$/i,

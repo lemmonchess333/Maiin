@@ -120,6 +120,7 @@ Two axes, from the food-logging reference set:
 - **Tropos Team badge** — `official: true` on a post, rules-validated against `system/config.officialUids` (fails closed when unset). Officials pin posts and moderate-delete.
 - **Density gate (spaces)** — a member count below `SPACE_MEMBER_COUNT_MIN_VISIBLE` is never shown (Soc8 idiom). The directory card shows nothing in its place until the count is real (owner, Together copy pass); the Space page's hero says "New space" when it has nothing else to say. Challenges keep the same rule: a joined count below three is not shown, and no "founding" line stands in for it.
 - **Circles vs Spaces** — Circles stay the private 2–8-person support layer; Spaces are the public curated layer. Same tab (Community), different trust models.
+- **Meet-up** — a Circle member's plan to run or lift together (Run26 call 4): a name, the instant it starts with the organiser's time zone, a typed place (never coordinates) and an optional note, with the members who said they're in (`goalSpaces/{spaceId}/meetups/{meetupId}`, written only by the `circleMeetup` callable). Strava calls these a club's group events. Not in Spaces: a public time and place naming who will be there is an owner call (docs/clubs-gap-2026-11/audit.md).
 
 ### Following (Polish2, 2026-10-20)
 

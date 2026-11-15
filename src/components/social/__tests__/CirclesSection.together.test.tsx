@@ -86,7 +86,9 @@ function hookValue(overrides: Record<string, unknown> = {}) {
     createCircle: vi.fn(),
     joinCircle: vi.fn(),
     leaveCircle: vi.fn(),
-    loadDetail: vi.fn().mockResolvedValue({ members: [], events: [] }),
+    loadDetail: vi
+      .fn()
+      .mockResolvedValue({ members: [], events: [], meetups: [] }),
     publishEvent: vi.fn(),
     setWeeklyFocus: vi.fn(),
     backCheckIn: vi.fn(),
@@ -373,6 +375,7 @@ describe("featured circle change", () => {
           createdAt: 1,
         },
       ],
+      meetups: [],
     };
     // The second circle's read never lands: anything focus-shaped on its
     // card could only be the first circle's.
@@ -446,6 +449,7 @@ describe("a Circle of one", () => {
             createdAt: 1,
           },
         ],
+        meetups: [],
       })
     );
     mockUseGoalSpaces.mockImplementation(() =>
