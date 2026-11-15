@@ -177,7 +177,7 @@ const liftsOn = (w: WeekLayout, date: string) =>
   dayOf(w, date).sessions.filter((s): s is LayoutLift => s.sport === "lift");
 const runsOn = (w: WeekLayout, date: string) =>
   dayOf(w, date).sessions.filter((s): s is LayoutRun => s.sport === "run");
-/** Each day's lifts, by name and state: "A to-do". */
+/** Each day's lifts, by name and state: "A today", "saved w-… done". */
 const lifts = (w: WeekLayout) =>
   Object.fromEntries(
     w.days.map((d) => [
@@ -190,16 +190,22 @@ const lifts = (w: WeekLayout) =>
   );
 const names = (ls: readonly LayoutLift[]) =>
   ls.map((l) => l.workout?.dayName.slice(-1));
+/** Every plan lift's index, wherever the layout holds it. */
+const planIndices = (w: WeekLayout) =>
+  w.entries
+    .filter((s): s is LayoutLift => s.sport === "lift" && s.plan)
+    .map((l) => l.index)
+    .sort((a, b) => (a ?? 0) - (b ?? 0));
 
 describe("lifts on days", () => {
   it("lays the week's lifts on its lift days in order, with nothing done", () => {
     const w = week();
     expect(lifts(w)).toEqual({
-      [MON]: ["A to-do"],
+      [MON]: ["A today"],
       [TUE]: [],
-      [WED]: ["B to-do"],
+      [WED]: ["B planned"],
       [THU]: [],
-      [FRI]: ["C to-do"],
+      [FRI]: ["C planned"],
       [SAT]: [],
       [SUN]: [],
     });
@@ -211,21 +217,34 @@ describe("lifts on days", () => {
       isNext: true,
     });
     expect(w.stillToDo).toEqual([]);
+    expect(w.freeLiftDays).toEqual([MON, WED, FRI]);
   });
 
   it("slides a lift whose day passed to the next lift day, never missed", () => {
     // Nothing on Monday; Tuesday reads the week.
     const w = week({ today: TUE });
-    expect(lifts(w)[MON]).toEqual([]);
-    expect(lifts(w)[WED]).toEqual(["A to-do"]);
-    expect(lifts(w)[FRI]).toEqual(["B to-do"]);
+    expect(lifts(w)).toMatchObject({
+      [MON]: [],
+      [WED]: ["A planned"],
+      [FRI]: ["B planned"],
+    });
     expect(liftsOn(w, WED)[0].movedFrom).toBe(MON);
     expect(liftsOn(w, FRI)[0].movedFrom).toBe(WED);
     // More lifts than lift days left: C waits, in order, on no rest day.
     expect(names(w.stillToDo)).toEqual(["C"]);
-    expect(w.stillToDo[0].plannedOn).toBe(FRI);
-    const states = w.days.flatMap((d) => d.sessions.map((s) => s.state));
+    expect(w.stillToDo[0]).toMatchObject({
+      group: "still-to-do",
+      state: "still-to-do",
+      plannedOn: FRI,
+      movedFrom: null,
+    });
+    const states = w.entries.map((s) => s.state);
     expect(states).not.toContain("missed");
+    // Monday says where its lift went (the prototype's 5).
+    expect(dayOf(w, MON)).toMatchObject({ rest: "moved" });
+    expect(dayOf(w, MON).slidOut.map((s) => [s.lift.index, s.to])).toEqual([
+      [0, WED],
+    ]);
   });
 
   it("keeps a lift done on the day its session was saved, and lays the rest from today", () => {
@@ -236,16 +255,18 @@ describe("lifts on days", () => {
     });
     expect(lifts(w)).toMatchObject({
       [MON]: ["A done"],
-      [WED]: ["B to-do"],
-      [FRI]: ["C to-do"],
+      [WED]: ["B today"],
+      [FRI]: ["C planned"],
     });
     expect(liftsOn(w, MON)[0].savedId).toBe(`w-${MON}`);
     expect(w.next?.workout).toBe(B);
+    expect(dayOf(w, MON).lanes.lift).toBe("done");
+    expect(dayOf(w, FRI).lanes.lift).toBe("planned");
   });
 
-  it("brings the rest forward when one is done early, on a rest day", () => {
+  it("brings the rest forward when one is done early, on a rest day, and says so", () => {
     // A on Monday, B on Tuesday from Train: C is next on Wednesday's lift
-    // day, as Home's card offers it there.
+    // day, as Home's card offers it there (the prototype's 3 and 4).
     const w = week({
       today: TUE,
       programState: plan([doneOn(A, MON), doneOn(B, TUE), C]),
@@ -254,39 +275,43 @@ describe("lifts on days", () => {
     expect(lifts(w)).toMatchObject({
       [MON]: ["A done"],
       [TUE]: ["B done"],
-      [WED]: ["C to-do"],
+      [WED]: ["C planned"],
       [FRI]: [],
     });
     expect(liftsOn(w, WED)[0]).toMatchObject({
       plannedOn: FRI,
-      movedFrom: null,
+      movedFrom: FRI,
     });
+    expect(dayOf(w, FRI).rest).toBe("rest");
   });
 
-  it("follows Make this next, and says where the lifts it pushed moved from", () => {
+  it("follows Make this next, and says where each lift moved from", () => {
     const w = week({
       programState: plan([A, B, C], { nextWorkoutOverride: 2 }),
     });
     expect(lifts(w)).toMatchObject({
-      [MON]: ["C to-do"],
-      [WED]: ["A to-do"],
-      [FRI]: ["B to-do"],
+      [MON]: ["C today"],
+      [WED]: ["A planned"],
+      [FRI]: ["B planned"],
     });
-    expect(liftsOn(w, MON)[0].movedFrom).toBeNull();
+    expect(liftsOn(w, MON)[0].movedFrom).toBe(FRI);
     expect(liftsOn(w, WED)[0].movedFrom).toBe(MON);
     expect(liftsOn(w, FRI)[0].movedFrom).toBe(WED);
     expect(w.next?.workout).toBe(C);
   });
 
   it("takes a skipped lift off the days, into its own group", () => {
-    const w = week({ programState: plan([A, { ...B, skipped: true }, C]) });
+    const w = week({
+      today: TUE,
+      programState: plan([A, { ...B, skipped: true }, C]),
+    });
     expect(lifts(w)).toMatchObject({
-      [MON]: ["A to-do"],
-      [WED]: ["C to-do"],
-      [FRI]: [],
+      [WED]: ["A planned"],
+      [FRI]: ["C planned"],
     });
     expect(names(w.skipped)).toEqual(["B"]);
-    expect(w.skipped[0].restBeforeRace).toBe(false);
+    expect(w.skipped[0]).toMatchObject({ group: "skipped", plannedOn: WED });
+    expect(w.raceRest).toEqual([]);
   });
 
   it("holds every lift once: on a day, still to do, skipped or done off the week", () => {
@@ -295,42 +320,85 @@ describe("lifts on days", () => {
       { ...B, skipped: true },
       C,
       session("Full Body D"),
-      session("Full Body E"),
+      doneOn(session("Full Body E"), LAST_WEEK),
     ]);
-    const w = week({ today: FRI, programState, workouts: [saved(MON)] });
-    const held = [
-      ...w.days.flatMap((d) =>
-        d.sessions.filter((s): s is LayoutLift => s.sport === "lift")
-      ),
-      ...w.stillToDo,
-      ...w.skipped,
-      ...w.doneOffWeek,
-    ].map((l) => l.index);
-    expect(held.sort()).toEqual([0, 1, 2, 3, 4]);
-    expect(lifts(w)[FRI]).toEqual(["C to-do"]);
-    expect(names(w.stillToDo)).toEqual(["D", "E"]);
+    const w = week({
+      today: FRI,
+      programState,
+      workouts: [saved(MON), saved(LAST_WEEK)],
+    });
+    expect(planIndices(w)).toEqual([0, 1, 2, 3, 4]);
+    expect(lifts(w)[FRI]).toEqual(["C today"]);
+    expect(names(w.stillToDo)).toEqual(["D"]);
+    expect(names(w.doneOffWeek)).toEqual(["E"]);
+    expect(w.liftsDone).toBe(false);
   });
 
-  it("says the week's lifts are done, and offers none", () => {
-    const w = week({
+  it("offers Start next week once every lift is done, not skipped", () => {
+    const allDone = week({
       today: WED,
       programState: plan([doneOn(A, MON), doneOn(B, TUE), doneOn(C, WED)]),
       workouts: [saved(MON), saved(TUE), saved(WED)],
     });
-    expect(w.liftsDone).toBe(true);
-    expect(w.next).toBeNull();
-    expect(lifts(w)[FRI]).toEqual([]);
+    expect(allDone.liftsDone).toBe(true);
+    expect(allDone.next).toBeNull();
+    expect(lifts(allDone)[FRI]).toEqual([]);
+    const oneSkipped = week({
+      today: WED,
+      programState: plan([
+        doneOn(A, MON),
+        doneOn(B, TUE),
+        { ...C, skipped: true },
+      ]),
+      workouts: [saved(MON), saved(TUE)],
+    });
+    expect(oneSkipped.liftsDone).toBe(false);
+  });
+
+  it("holds today for a lift under way, and the rest go round it", () => {
+    const w = week({
+      today: WED,
+      programState: plan([doneOn(A, MON), B, C]),
+      workouts: [saved(MON)],
+      inProgress: [{ sport: "lift", index: 2 }],
+    });
+    expect(lifts(w)).toMatchObject({
+      [WED]: ["C in-progress"],
+      [FRI]: ["B planned"],
+    });
+    expect(w.next?.workout).toBe(C);
+    expect(dayOf(w, WED).lanes.lift).toBe("active");
+    expect(planIndices(w)).toEqual([0, 1, 2]);
+  });
+});
+
+describe("the day after today", () => {
+  it("names the next session when today holds nothing to do", () => {
+    // Tuesday is a run day with its run done; Wednesday's lift is next.
+    const w = week({
+      today: TUE,
+      programState: plan([doneOn(A, MON), B, C], {
+        runDays: [runDay(TUE), runDay(THU)],
+      }),
+      workouts: [saved(MON)],
+      runs: [savedRun(TUE)],
+    });
+    expect(w.nextSession).toMatchObject({ sport: "lift", index: 1 });
+  });
+
+  it("names none while today has something to do", () => {
+    expect(week().nextSession).toBeNull();
   });
 });
 
 describe("a session outside the plan", () => {
-  it("sits on its day, and leaves the lift day to the plan's lift", () => {
+  it("sits on its day after the plan's, and leaves the lift day to the plan's lift", () => {
     const w = week({
       workouts: [saved(MON, "empty-1"), saved(SAT, "routine-1")],
     });
-    expect(lifts(w)[MON]).toEqual(["saved empty-1 done", "A to-do"]);
+    expect(lifts(w)[MON]).toEqual(["A today", "saved empty-1 done"]);
     expect(lifts(w)[SAT]).toEqual(["saved routine-1 done"]);
-    expect(liftsOn(w, MON)[0].index).toBeNull();
+    expect(liftsOn(w, MON)[1]).toMatchObject({ plan: false, index: null });
     expect(w.count.lifts.done).toBe(2);
   });
 
@@ -340,8 +408,9 @@ describe("a session outside the plan", () => {
       runs: [savedRun(shift(MON, -2)), savedRun(MON)],
     });
     expect(runsOn(w, MON)).toEqual([
-      expect.objectContaining({ runDay: null, state: "done", counts: true }),
+      expect.objectContaining({ plan: false, state: "done", counts: true }),
     ]);
+    expect(w.entries.filter((s) => s.sport === "run")).toHaveLength(1);
   });
 
   it("shows a run saved anyway, counted in no total", () => {
@@ -351,6 +420,22 @@ describe("a session outside the plan", () => {
     });
     expect(runsOn(w, MON)[0].counts).toBe(false);
     expect(w.count.runs.done).toBe(0);
+  });
+
+  it("holds today while one is under way", () => {
+    const w = week({
+      today: TUE,
+      inProgress: [
+        { sport: "lift", index: null },
+        { sport: "run", runDayId: null },
+      ],
+    });
+    expect(
+      dayOf(w, TUE).sessions.map((s) => [s.sport, s.plan, s.state])
+    ).toEqual([
+      ["lift", false, "in-progress"],
+      ["run", false, "in-progress"],
+    ]);
   });
 });
 
@@ -365,7 +450,13 @@ describe("runs keep their dates", () => {
     expect(runsOn(w, TUE)).toEqual([
       expect.objectContaining({ state: "missed", runDay: runs[0] }),
     ]);
-    expect(runsOn(w, THU)[0].state).toBe("to-do");
+    expect(dayOf(w, TUE).lanes.run).toBe("missed");
+    expect(runsOn(w, THU)[0].state).toBe("planned");
+    const thursday = week({
+      today: THU,
+      programState: plan([A, B, C], { runDays: runs }),
+    });
+    expect(runsOn(thursday, THU)[0].state).toBe("today");
   });
 
   it("marks one done by the run that filled it, a day late included, and shows that run once", () => {
@@ -384,38 +475,44 @@ describe("runs keep their dates", () => {
     expect(w.count.runs.done).toBe(1);
   });
 
-  it("names a run skipped, a race not recorded, and where a moved run came from", () => {
+  it("names a run skipped, a race not recorded, one under way, and where a moved run came from", () => {
     const w = week({
       today: SAT,
       programState: plan([A, B, C], {
         runDays: [
           runDay(TUE, { status: "skipped" }),
           runDay(THU, { movedFromDate: WED }),
-          runDay(SAT, {
+          runDay(FRI, {
             templateId: "10k_race",
             type: "race",
             status: "race_no_show",
           }),
+          runDay(SAT),
         ],
       }),
+      inProgress: [{ sport: "run", runDayId: `rd-${SAT}` }],
     });
     expect(runsOn(w, TUE)[0].state).toBe("skipped");
     expect(runsOn(w, THU)[0]).toMatchObject({
       state: "missed",
       movedFrom: WED,
     });
-    expect(runsOn(w, SAT)[0].state).toBe("not-recorded");
+    expect(runsOn(w, FRI)[0].state).toBe("not-recorded");
+    expect(runsOn(w, SAT)[0].state).toBe("in-progress");
+    expect(dayOf(w, SAT).lanes.run).toBe("active");
   });
 
-  it("plans the runs the count plans", () => {
+  it("plans the runs the count plans, and keeps one dated before the start out of the days", () => {
     const w = week({
       today: WED,
+      profile: profile({ createdAt: createdOn(WED) }),
       programState: plan([A, B, C], { runDays: runs }),
     });
-    expect(w.count.runs.planned).toBe(2);
+    expect(w.count.runs.planned).toBe(1);
+    expect(runsOn(w, TUE)).toEqual([]);
     expect(
-      w.days.filter((d) => runsOn(w, d.date).some((r) => r.runDay))
-    ).toHaveLength(2);
+      w.entries.find((s) => s.sport === "run" && s.date === TUE)
+    ).toMatchObject({ group: "before-start", state: "before-start" });
   });
 });
 
@@ -506,7 +603,7 @@ describe("who the week is for", () => {
     expect(w.kind).toEqual({ lifts: false, runs: true });
     expect(w.count.runs).toMatchObject({ done: 1, planned: null });
     expect(runsOn(w, TUE)).toEqual([
-      expect.objectContaining({ runDay: null, state: "done" }),
+      expect.objectContaining({ plan: false, state: "done" }),
     ]);
     // Home's rest day offers a run on the same test.
     const home = todaySession({
@@ -531,21 +628,29 @@ describe("who the week is for", () => {
     expect(w.freeRunning).toBe(false);
   });
 
-  it("a new account: the days before it began are blank, the lifts from its first day", () => {
+  it("a new account begun mid-week: blank days before it, and the lifts over still to do (awaiting the owner)", () => {
     const w = week({
       today: WED,
       profile: profile({ createdAt: createdOn(WED) }),
       programState: plan([A, B, C], { runDays: [runDay(TUE), runDay(THU)] }),
-      runs: [],
     });
-    expect(dayOf(w, MON)).toMatchObject({ beforeStart: true, sessions: [] });
+    expect(dayOf(w, MON)).toMatchObject({
+      beforeStart: true,
+      sessions: [],
+      rest: null,
+    });
     expect(dayOf(w, TUE)).toMatchObject({ beforeStart: true, sessions: [] });
-    expect(lifts(w)).toMatchObject({ [WED]: ["A to-do"], [FRI]: ["B to-do"] });
+    expect(lifts(w)).toMatchObject({
+      [WED]: ["A today"],
+      [FRI]: ["B planned"],
+    });
     expect(liftsOn(w, WED)[0]).toMatchObject({
       plannedOn: WED,
       movedFrom: null,
     });
+    // The prototype's current answer, one of its two owner calls.
     expect(names(w.stillToDo)).toEqual(["C"]);
+    expect(w.stillToDo[0].plannedOn).toBeNull();
     expect(w.count.lifts.planned).toBe(2);
     expect(w.count.runs.planned).toBe(1);
   });
@@ -573,22 +678,41 @@ describe("a race", () => {
       workouts: [saved(MON)],
     });
     expect(dayOf(w, FRI).raceRest).toBe(true);
-    expect(lifts(w)[WED]).toEqual(["B to-do"]);
+    expect(lifts(w)[WED]).toEqual(["B today"]);
     expect(lifts(w)[FRI]).toEqual([]);
     expect(names(w.stillToDo)).toEqual(["C"]);
   });
 
-  it("reads race week's skipped lifts as rest before the race", () => {
+  it("race week: the lifts the app rests and the lift days they leave read rest before the race", () => {
     const w = week({
       today: TUE,
       programState: racePlan(
-        [A, { ...B, skipped: true }, { ...C, skipped: true }],
-        {
-          raceWeek: "race",
-        }
+        [doneOn(A, MON), { ...B, skipped: true }, { ...C, skipped: true }],
+        { raceWeek: "race" }
       ),
+      workouts: [saved(MON)],
     });
-    expect(w.skipped.map((l) => l.restBeforeRace)).toEqual([true, true]);
+    expect(names(w.raceRest)).toEqual(["B", "C"]);
+    expect(w.raceRest[0]).toMatchObject({
+      group: "race-rest",
+      state: "race-rest",
+      plannedOn: null,
+    });
+    expect(w.skipped).toEqual([]);
+    expect(dayOf(w, WED).rest).toBe("race");
+    expect(dayOf(w, FRI).rest).toBe("race");
+    expect(w.liftsDone).toBe(false);
+    // Awaiting the owner: the count still plans the lift days rested.
+    expect(w.count.lifts.planned).toBe(3);
+  });
+
+  it("never offers Start next week in race week", () => {
+    const w = week({
+      today: TUE,
+      programState: racePlan([doneOn(A, MON)], { raceWeek: "race" }),
+      workouts: [saved(MON)],
+    });
+    expect(w.liftsDone).toBe(false);
   });
 });
 
@@ -602,10 +726,10 @@ describe("a plan made for another week", () => {
       workouts: [saved(MON), saved(TUE), saved(WED)],
     });
     expect(lifts(w)[MON]).toEqual([`saved w-${MON} done`]);
-    expect(lifts(w)[WED]).toEqual([`saved w-${WED} done`, "A to-do"]);
-    expect(lifts(w)[FRI]).toEqual(["B to-do"]);
+    expect(lifts(w)[WED]).toEqual(["A today", `saved w-${WED} done`]);
+    expect(lifts(w)[FRI]).toEqual(["B planned"]);
     expect(names(w.stillToDo)).toEqual(["C"]);
-    // Next week's: no day of this one was planned for them.
+    // Next week's: no day of this one was first given them.
     expect(liftsOn(w, FRI)[0]).toMatchObject({
       plannedOn: null,
       movedFrom: null,
@@ -620,7 +744,15 @@ describe("a plan made for another week", () => {
       workouts: [saved(LAST_WEEK)],
     });
     expect(names(w.doneOffWeek)).toEqual(["A"]);
-    expect(lifts(w)).toMatchObject({ [MON]: ["B to-do"], [WED]: ["C to-do"] });
+    expect(w.doneOffWeek[0]).toMatchObject({
+      group: "done-off-week",
+      state: "done",
+      savedId: `w-${LAST_WEEK}`,
+    });
+    expect(lifts(w)).toMatchObject({
+      [MON]: ["B today"],
+      [WED]: ["C planned"],
+    });
     // Drawn done; the count counts the saved session in its own week.
     expect(w.count.lifts.done).toBe(0);
   });
@@ -634,7 +766,7 @@ describe("a plan made for another week", () => {
       programState: stale,
       workouts: [saved(LAST_WEEK)],
     });
-    expect(lifts(w)[MON]).toEqual(["B to-do"]);
+    expect(lifts(w)[MON]).toEqual(["B today"]);
     expect(liftsOn(w, MON)[0].plannedOn).toBeNull();
   });
 
@@ -643,10 +775,12 @@ describe("a plan made for another week", () => {
       weekKey: LAST_WEEK,
       today: WED,
       workouts: [saved(LAST_WEEK), saved(MON)],
+      inProgress: [{ sport: "lift", index: 0 }],
     });
     expect(lifts(w)[LAST_WEEK]).toEqual([`saved w-${LAST_WEEK} done`]);
+    expect(w.entries).toHaveLength(1);
     expect(w.next).toBeNull();
-    expect(w.stillToDo).toEqual([]);
+    expect(w.nextSession).toBeNull();
     expect(w.liftsDone).toBe(false);
   });
 });
@@ -722,7 +856,7 @@ describe("Home's card names the lift the week lays on today", () => {
     expect(card?.index).toBe(0);
     expect(liftsOn(w, FRI)[0]).toMatchObject({
       index: 0,
-      state: "to-do",
+      state: "today",
       isNext: true,
     });
   });
@@ -746,7 +880,7 @@ describe("Home's card names the lift the week lays on today", () => {
       };
       const w = layOutWeek(input);
       const card = homeLift(input);
-      const laid = liftsOn(w, today).find((l) => l.state === "to-do");
+      const laid = liftsOn(w, today).find((l) => l.state === "today");
       if (card?.status === "planned") expect(laid?.index).toBe(card.index);
       else expect(laid).toBeUndefined();
       expect(w.next?.index).toBe(2);

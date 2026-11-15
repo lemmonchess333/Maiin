@@ -1,10 +1,14 @@
 /**
  * The week laid out (TrainWk1, step 1 of the Train grill's eight): each of
  * a person's sessions on a day, both sports, in one answer for every
- * surface that draws a week. The grill is `docs/train-week-2026-11/grill.md`;
- * Home's week strip, day card and "tomorrow" line read it in step 2, which
- * ends the two rules (the cursor and the slot) that could name two
- * different next lifts.
+ * surface that draws a week. The grill is `docs/train-week-2026-11/grill.md`.
+ * The Train week prototype (`prototypes/train-week/index.html` on its own
+ * branch, never merged) drew every screen from a `layOutWeek` of its own;
+ * this is that function on the plan and the sessions as the app stores
+ * them, and keeps its answers, including its own choices where the grill
+ * left a rule open. Home's week strip, day card and "tomorrow" line read it
+ * in step 2, which ends the two rules (the cursor and the slot) that could
+ * name two different next lifts.
  *
  * Nothing is stored for it (Q4, Q42). It is worked out each time from what
  * is saved: the lift order and its done and skipped marks, the dated runs,
@@ -12,19 +16,18 @@
  *
  *   lifts   The order is the truth: lifts are split-ordered (ADR-0002),
  *           which TrainWk1 call 1 keeps while drawing them on days. A lift
- *           done sits on the day its saved session belongs to. The lifts
- *           still to do are laid, in the order the next-up cursor offers
- *           them, on the week's free lift days from today on. A free lift
- *           day is one the usual layout lifts on ("lift" or "both"), from
- *           the day the account began, not one of a race's rest days
- *           (`isRaceRestDay`), and holding no lift of the plan done on it.
- *           So a lift whose day passes moves to the next lift day by
- *           itself, and is never called missed. One laid later than the
- *           day the week first gave it says where it moved from ("Moved
- *           from Mon"). Lifts left when the free lift days run out are
- *           still to do (Q6): a rest day is not spent for the person, and
- *           the rollover opens next week with them. A skipped lift has no
- *           day (Q20).
+ *           done sits on the day its saved session belongs to, and one
+ *           under way holds today. The lifts still to do are laid, in the
+ *           order the next-up cursor offers them, on the week's free lift
+ *           days from today on. A free lift day is one the usual layout
+ *           lifts on ("lift" or "both"), from the day the account began,
+ *           not one of a race's rest days (`isRaceRestDay`), and holding no
+ *           lift of the plan done or under way. So a lift whose day passes
+ *           moves to the next lift day by itself, and is never called
+ *           missed. Lifts left when the free lift days run out are still to
+ *           do (Q6): a rest day is not spent for the person, and the
+ *           rollover opens next week with them. A skipped lift has no day
+ *           (Q20).
  *   runs    keep their dates (Q5). Each day's planned run is the one the
  *           plan holds on it (`resolveTrainingDayForDate`, one a day, as
  *           every surface and the count read it): done when the claim map
@@ -32,55 +35,77 @@
  *           once its day has passed without either. A saved run that fills
  *           no planned run of the week sits on the day it was run (Q23).
  *   a day   with a lift and a run holds both, in Home's order (Q19): the
- *           run first when running is the person's aim.
+ *           run first when running is the person's aim. The plan's
+ *           sessions come before the ones outside it.
  *
- * The plan's lifts belong to the week holding `today`: the cursor, the
- * marks and "to do" are about now. Any other week shows the sessions saved
- * in it and the runs the plan holds on its dates.
+ * The prototype's own choices this keeps, where the grill left the rule
+ * open (Tropos heuristics, each the prototype's numbered choice):
  *
- * Tropos heuristics, each chosen where the grill leaves the rule open:
+ *   - (3) One lift per lift day: a lift day with a lift of the plan done on
+ *     it takes no other. A lift done on a rest day stays there and takes
+ *     no lift day, so the lifts after it move up.
+ *   - (4) "Moved from" is said of a lift laid on another day than the week
+ *     first gave it, earlier as well as later. The day the week first gave
+ *     a lift (`plannedOn`) is the Nth lift day from the start for the Nth
+ *     lift: the week laid out with nothing done.
+ *   - (5) A past lift day whose lift went elsewhere says where it went
+ *     (`slidOut`), so a folded day is never a blank.
+ *   - (8, 10) With nothing to do today, the first planned session after it
+ *     is named (`nextSession`); a planned row carries no word of its own.
+ *   - (9) A session outside the plan (an empty workout, a routine, a free
+ *     run) sits on its day, takes no lift day and comes after the plan's.
+ *   - Race week (Q22): the lifts the app rests read "Rest before your
+ *     race", in their own group, and a lift day left empty that week reads
+ *     the same. The plan keeps no record of who skipped a lift, so every
+ *     skip in race week, or on one of the race's rest days, reads so.
+ *   - "Start next week" is offered once every lift of the week is done,
+ *     never in race week (`liftsDone`).
+ *   - The day's clash note (Q19): a hard run that is not a race and is not
+ *     done or skipped, beside a lift that loads the legs and is not done.
  *
- *   - Lifts to do fill the free lift days in order from today, so one done
- *     early, on a rest day, brings the rest forward rather than holding
- *     each lift's own day. The grill's words ("laid, in order, on the
- *     usual lift days from today onward"), and it is what Home's card
- *     does: a lift day offers the cursor's next lift, whatever was done
- *     the day before.
- *   - A lift day is taken only by a lift of the plan done on it. A session
- *     outside the plan (an empty workout, a routine) sits on its day
- *     beside the plan's lift, as Home's card still offers that lift.
- *   - The day the week first gave a lift (`plannedOn`) is the Nth free
- *     lift day for the Nth lift, which is the week laid out with nothing
- *     done. "Moved from" is said only of a lift laid later than that day:
- *     a lift brought forward has not slipped.
- *   - No lift is laid on a race's rest days (the two before it and race
- *     day), where the app skips any lift left (`raceRestSkips`), and a
- *     skipped lift reads as rest before the race in race week or on a
- *     rest day (Q22). A lift the person skipped themselves in race week
- *     reads the same: the plan keeps no record of who skipped it.
- *   - The day's clash note (Q19) is a hard run (`HARD_RUN_TYPES`) and a
- *     lift that loads the legs (`isLowerBodyDay`), both still to do.
- *   - A lift the plan marks done whose saved session is not on a day of
- *     the week is done all the same (`doneOffWeek`): done before the week
- *     began, after Start next week, or saved where the list given cannot
- *     see it. It is never dropped and never offered again.
+ * What this adds to the prototype, which modelled one week and its own
+ * sessions:
+ *
+ *   - The plan's lifts belong to the week holding `today`: the cursor, the
+ *     marks and "to do" are about now. Any other week shows the sessions
+ *     saved in it and the runs the plan holds on its dates. A plan made for
+ *     another week (after Start next week, or before the rollover has run)
+ *     is laid as it stands, as Home reads it, with no day it was first
+ *     given (`plannedOn` null).
+ *   - A lift the plan marks done whose saved session is on no day of the
+ *     week is done all the same (`doneOffWeek`): done before the week began,
+ *     after Start next week, or saved where the list given cannot see it.
+ *   - No lift is laid on a race's rest days in any week: a race early in a
+ *     week rests the last days of the week before it too (`raceRestSkips`).
+ *   - A run filled a day late keeps its date and says when it was run
+ *     (`doneOn`), as the claim map allows; a race the app found no run for
+ *     is "not-recorded".
+ *
+ * Two answers wait on the owner, the prototype's current ones meanwhile:
+ *
+ *   - A new account begun mid-week has fewer lift days left than lifts, and
+ *     the lifts over sit in Still to do from its first day.
+ *   - Race week's count counts the lift days the app rests.
  *
  * The counts are `trainingWeek`'s (`count`), never this module's: every
- * weekly count comes from one module (App1 Q14). The sessions drawn agree
- * with them except where the plan knows more than the saved list, each
- * pinned in `layOutWeek.test.ts`:
+ * weekly count comes from one module (App1 Q14), and the grill keeps them
+ * as they are (Q43). The prototype counted the same way. The sessions drawn
+ * agree with them except where the plan knows more than the saved list,
+ * each pinned in `layOutWeek.test.ts`:
  *
- *   - a lift in `doneOffWeek` is drawn done and counted in no week of this
- *     one (the count counts saved sessions in the week);
+ *   - a lift in `doneOffWeek` is drawn done and counted in the week its
+ *     session was saved in, not this one;
  *   - a planned run marked done by hand, on a day whose run that counts
- *     filled another planned run (a day late), is drawn done twice over
- *     two planned runs and counted once (the count counts a mark by hand
- *     only on a day with no run that counts).
+ *     filled another planned run a day late, is drawn done twice over two
+ *     planned runs and counted once (the count counts a mark by hand only
+ *     on a day with no run that counts).
  *
  * Where it differs from Home's card today (`todaySession.ts`), which step 2
  * moves onto this: Home's "tomorrow" line names a lift on a race's rest day
- * and, with every lift done, the weekday's own lift; the layout lays none
- * on a rest day and none once the week's lifts are done.
+ * and, with every lift done, the weekday's own lift, and calls a run day of
+ * the usual layout with no run written a run day; the layout lays no lift
+ * on a rest day or once the week's lifts are done, and plans only the runs
+ * the plan dates, as the count does.
  */
 import type { UserProfile } from "@/lib/auth";
 import {
@@ -107,6 +132,14 @@ import {
 import { isVolumeEligible } from "./runStatsEligibility";
 import { RUN_TEMPLATES } from "./workoutTemplates";
 
+/** A session under way on this phone (`sessionsInFlight.ts`). */
+export type SessionUnderWay =
+  /** A lift of the plan by its index, or one outside it (null): a
+   *  routine or an empty workout. */
+  | { sport: "lift"; index: number | null }
+  /** A planned run by its id, or a free run (null). */
+  | { sport: "run"; runDayId: string | null };
+
 export interface LayOutWeekInput {
   /** The week's Monday, "yyyy-MM-dd". */
   weekKey: string;
@@ -122,37 +155,72 @@ export interface LayOutWeekInput {
   /** Which planned runs are done (`useClaimMapForProgram`, `claimMapFor`),
    *  from the same runs. */
   claimMap: Map<string, ClaimState>;
+  /** The sessions under way today. Absent reads as none. */
+  inProgress?: readonly SessionUnderWay[];
 }
+
+/** Where a session is: on a day, or in one of the week's groups. */
+export type LayoutGroup =
+  | "day"
+  | "still-to-do"
+  | "skipped"
+  | "race-rest"
+  | "done-off-week"
+  | "before-start";
 
 export interface LayoutLift {
   sport: "lift";
-  /** Its place in the plan's `workouts`, for `?day=N`; null for a session
-   *  the plan does not hold (an empty workout, a routine, or a lift of a
-   *  week other than today's). */
+  /** A session of the plan, or one outside it. */
+  plan: boolean;
+  /** Its place in the plan's `workouts`, for `?day=N`; null outside the
+   *  plan, and for a lift of a week other than today's. */
   index: number | null;
   workout: WorkoutDay | null;
-  state: "done" | "to-do" | "skipped";
+  group: LayoutGroup;
+  /** The day it sits on, for one in the "day" group. */
+  date: string | null;
+  /** "today" and "planned" are a lift to do, laid on today or a day after
+   *  it. Never "missed". */
+  state:
+    | "done"
+    | "in-progress"
+    | "today"
+    | "planned"
+    | "still-to-do"
+    | "skipped"
+    | "race-rest";
   /** The saved session, for one done and saved. */
   savedId: string | null;
   /** The day the week first gave it: the week laid out with nothing done.
-   *  Null outside today's week, for a plan made for another week (a
-   *  rollover not reached yet, or Start next week), and for a lift the
-   *  week's lift days could not hold. */
+   *  Null outside the plan, for a plan made for another week, for a lift
+   *  the week's lift days could not hold and for one the app rests. */
   plannedOn: string | null;
-  /** `plannedOn`, when it now sits on a later day: "Moved from Mon". */
+  /** `plannedOn`, for a lift to do laid on another day: "Moved from Mon". */
   movedFrom: string | null;
-  /** The cursor's next (`nextUpIndex`): Train's "Up next", Home's lift. */
+  /** The lift to do next (`next`). */
   isNext: boolean;
-  /** Skipped by the app before a race: "Rest before your race". */
-  restBeforeRace: boolean;
 }
 
 export interface LayoutRun {
   sport: "run";
-  /** The plan's run, or null for a run outside the plan. */
+  /** A run of the plan, or one outside it. */
+  plan: boolean;
+  /** The plan's run, or null outside it. */
   runDay: ScheduledRunDay | null;
+  /** "day", or "before-start" for a planned run dated before the account
+   *  began: kept, not drawn and not counted (Q24). */
+  group: "day" | "before-start";
+  date: string;
   /** "not-recorded" is a race the app found no run for (`race_no_show`). */
-  state: "done" | "to-do" | "missed" | "skipped" | "not-recorded";
+  state:
+    | "done"
+    | "in-progress"
+    | "today"
+    | "planned"
+    | "missed"
+    | "skipped"
+    | "not-recorded"
+    | "before-start";
   /** The saved run it is, or the one that filled the plan's; null for a
    *  planned run not done or marked done by hand. */
   savedRunId: string | null;
@@ -168,6 +236,12 @@ export interface LayoutRun {
 
 export type LayoutSession = LayoutLift | LayoutRun;
 
+/** Where a past lift day's lift went: another day, or a group. */
+export interface SlidOut {
+  lift: LayoutLift;
+  to: string;
+}
+
 export interface LayoutDay {
   date: string;
   isToday: boolean;
@@ -178,10 +252,22 @@ export interface LayoutDay {
   liftDay: boolean;
   /** One of a race's rest days, which take no lift. */
   raceRest: boolean;
-  /** Its sessions, each sport's done before its to-do, the sports in
-   *  Home's order (`runFirst`). */
+  /** The plan's sessions, then the ones outside it; each in Home's order
+   *  of the sports (`runFirst`). */
   sessions: LayoutSession[];
-  /** A hard run beside a lift that loads the legs, both still to do. */
+  /** A past lift day's lifts that went elsewhere (the prototype's 5): to
+   *  a day ("yyyy-MM-dd"), or to "still-to-do" or "skipped". */
+  slidOut: SlidOut[];
+  /** What a day with nothing on it says, from the account's start:
+   *  "race" (rest before the race), "moved" (its lift went elsewhere) or
+   *  "rest". Null for a day with a session, or before the start. */
+  rest: "race" | "moved" | "rest" | null;
+  /** The strip's two lanes: what the day's lifts and runs come to. */
+  lanes: {
+    lift: "done" | "active" | "planned" | "none";
+    run: "done" | "active" | "missed" | "planned" | "none";
+  };
+  /** A hard run beside a lift that loads the legs, neither done. */
   clash: boolean;
 }
 
@@ -189,16 +275,27 @@ export interface WeekLayout {
   weekKey: string;
   /** Monday to Sunday. */
   days: LayoutDay[];
+  /** Every session of the week, once each, wherever it sits. */
+  entries: LayoutSession[];
   /** Lifts to do that no free lift day this week holds, in order (Q6). */
   stillToDo: LayoutLift[];
-  /** Lifts skipped this week, in the plan's order (Q20). */
+  /** Lifts the person skipped this week, in the plan's order (Q20). */
   skipped: LayoutLift[];
+  /** Lifts the app rests before a race (Q22), in the plan's order. */
+  raceRest: LayoutLift[];
   /** Lifts the plan marks done whose saved session is on no day of this
    *  week. */
   doneOffWeek: LayoutLift[];
-  /** The lift to do next, wherever it sits; null when none is left. */
+  /** The free lift days the lifts to do were laid on, from today. */
+  freeLiftDays: string[];
+  /** The lift under way, else the lift to do next; null when none is
+   *  left. */
   next: LayoutLift | null;
-  /** Every lift of the week done or skipped: Start next week (Q21). */
+  /** With nothing to do or under way today, the first planned session on
+   *  a day after it this week; else null. */
+  nextSession: LayoutSession | null;
+  /** Every lift of the week done, outside race week: Start next week
+   *  (Q21). */
   liftsDone: boolean;
   /** On a day with both, the run leads, as on Home. */
   runFirst: boolean;
@@ -207,123 +304,156 @@ export interface WeekLayout {
   freeRunning: boolean;
   /** What the plan trains (`trainingKind`). */
   kind: TrainingKind;
-  /** The week's counts, `trainingWeek`'s. */
+  /** The week's counts, `trainingWeek`'s. Awaiting the owner: in race
+   *  week they count the lift days the app rests, as they do now. */
   count: TrainingWeek;
 }
-
-/** A day's lift as laid, before the day's order is set. */
-type Placed = { date: string; lift: LayoutLift };
 
 export function layOutWeek(input: LayOutWeekInput): WeekLayout {
   const { weekKey, today, profile, programState, workouts, runs, claimMap } =
     input;
   const dates = weekDays(weekKey);
   const currentWeekKey = localWeekKey(parseLocalDate(today));
+  const thisWeek = weekKey === currentWeekKey;
   const startKey = startDayKey(profile?.createdAt);
   const runPlan = programState?.runPlan;
-  const schedule = weekScheduleFor(profile);
+  const raceWeek = thisWeek && programState?.raceWeek === "race";
   const liftWeekday = new Set(
-    schedule
+    weekScheduleFor(profile)
       .filter((d) => d.type === "lift" || d.type === "both")
       .map((d) => d.day)
   );
   const isLiftDay = (date: string) =>
     liftWeekday.has(parseLocalDate(date).getDay());
   const inWeek = (date: string) => date >= dates[0] && date <= dates[6];
+  const underWay = thisWeek ? (input.inProgress ?? []) : [];
+  const liftUnderWay = underWay.find((s) => s.sport === "lift");
+  const runUnderWay = underWay.find((s) => s.sport === "run");
 
-  /* ── Lifts ─────────────────────────────────────────────────────── */
-  const placed: Placed[] = [];
+  const entries: LayoutSession[] = [];
   const stillToDo: LayoutLift[] = [];
   const skipped: LayoutLift[] = [];
+  const raceRest: LayoutLift[] = [];
   const doneOffWeek: LayoutLift[] = [];
+  const add = <S extends LayoutSession>(session: S): S => {
+    entries.push(session);
+    return session;
+  };
+
+  /* ── The plan's lifts ──────────────────────────────────────────── */
   const plan = programState?.workouts ?? [];
-  const holdsPlan = weekKey === currentWeekKey && plan.length > 0;
+  const holdsPlan = thisWeek && plan.length > 0;
   const linked = new Set<string>();
+  let freeLiftDays: string[] = [];
 
   if (holdsPlan) {
     const savedDay = new Map(workouts.map((w) => [w.id, w.date]));
-    // A day the plan lifts on with nothing done yet: "lift"/"both", from
-    // the start, not a race's rest day.
-    const plannable = (date: string) =>
-      isLiftDay(date) &&
-      !beforeStart(date, startKey) &&
-      !isRaceRestDay(runPlan, date);
-    // The day the week first gave each lift: its own week only.
+    // The day the week first gave each lift, in the plan's own week only:
+    // the Nth lift day from the start for the Nth lift. Awaiting the
+    // owner: a week begun mid-week has fewer lift days than lifts, and the
+    // lifts over have none, so they are still to do from its first day.
     const planWeek = programState?.liftWeekKey ?? currentWeekKey;
-    const firstDays = planWeek === weekKey ? dates.filter(plannable) : [];
-    const restBeforeRace =
-      programState?.raceWeek === "race" || isRaceRestDay(runPlan, today);
-    const nextIndex = nextUpIndex(programState);
+    const firstDays =
+      planWeek === weekKey
+        ? dates.filter((d) => isLiftDay(d) && !beforeStart(d, startKey))
+        : [];
+    const restBeforeRace = raceWeek || isRaceRestDay(runPlan, today);
     const lift = (
       index: number,
+      group: LayoutGroup,
+      date: string | null,
       state: LayoutLift["state"],
-      savedId: string | null
+      extra: Partial<LayoutLift> = {}
     ): LayoutLift => ({
       sport: "lift",
+      plan: true,
       index,
       workout: plan[index],
+      group,
+      date,
       state,
-      savedId,
+      savedId: null,
       plannedOn: firstDays[index] ?? null,
       movedFrom: null,
-      isNext: index === nextIndex,
-      restBeforeRace: state === "skipped" && restBeforeRace,
+      isNext: false,
+      ...extra,
     });
 
     const taken = new Set<string>();
     plan.forEach((day, index) => {
-      if (day.completed) {
-        const id = day.completedWorkoutId;
-        const date = id ? savedDay.get(id) : undefined;
-        if (id && date && inWeek(date)) {
-          linked.add(id);
-          taken.add(date);
-          placed.push({ date, lift: lift(index, "done", id) });
-        } else doneOffWeek.push(lift(index, "done", id ?? null));
-      } else if (day.skipped) skipped.push(lift(index, "skipped", null));
+      if (!day.completed) return;
+      const id = day.completedWorkoutId ?? null;
+      const date = id ? savedDay.get(id) : undefined;
+      if (id && date && inWeek(date)) {
+        linked.add(id);
+        taken.add(date);
+        add(lift(index, "day", date, "done", { savedId: id }));
+      } else
+        doneOffWeek.push(
+          add(lift(index, "done-off-week", null, "done", { savedId: id }))
+        );
+    });
+    // A lift under way holds today until it is finished.
+    const underWayIndex =
+      liftUnderWay?.sport === "lift" &&
+      liftUnderWay.index !== null &&
+      plan[liftUnderWay.index] &&
+      !plan[liftUnderWay.index].completed
+        ? liftUnderWay.index
+        : null;
+    if (underWayIndex !== null) {
+      taken.add(today);
+      add(lift(underWayIndex, "day", today, "in-progress"));
+    }
+    plan.forEach((day, index) => {
+      if (day.completed || !day.skipped || index === underWayIndex) return;
+      if (restBeforeRace)
+        raceRest.push(
+          add(lift(index, "race-rest", null, "race-rest", { plannedOn: null }))
+        );
+      else skipped.push(add(lift(index, "skipped", null, "skipped")));
     });
 
-    const free = dates.filter(
-      (date) => date >= today && plannable(date) && !taken.has(date)
+    freeLiftDays = dates.filter(
+      (d) =>
+        d >= today &&
+        isLiftDay(d) &&
+        !beforeStart(d, startKey) &&
+        !isRaceRestDay(runPlan, d) &&
+        !taken.has(d)
     );
-    cursorOrder(programState).forEach((index, k) => {
-      const laid = lift(index, "to-do", null);
-      const date = free[k];
-      if (!date) {
-        stillToDo.push(laid);
-        return;
-      }
-      if (laid.plannedOn && date > laid.plannedOn)
-        laid.movedFrom = laid.plannedOn;
-      placed.push({ date, lift: laid });
-    });
+    cursorOrder(programState)
+      .filter((index) => index !== underWayIndex)
+      .forEach((index, k) => {
+        const date = freeLiftDays[k];
+        if (!date) {
+          stillToDo.push(add(lift(index, "still-to-do", null, "still-to-do")));
+          return;
+        }
+        const laid = lift(
+          index,
+          "day",
+          date,
+          date === today ? "today" : "planned"
+        );
+        if (laid.plannedOn && laid.plannedOn !== date)
+          laid.movedFrom = laid.plannedOn;
+        add(laid);
+      });
   }
 
   // Lift sessions the plan's marks don't hold: outside the plan, or of a
   // week before the plan's.
   for (const w of workouts)
     if (inWeek(w.date) && !linked.has(w.id))
-      placed.push({
-        date: w.date,
-        lift: {
-          sport: "lift",
-          index: null,
-          workout: null,
-          state: "done",
-          savedId: w.id,
-          plannedOn: null,
-          movedFrom: null,
-          isNext: false,
-          restBeforeRace: false,
-        },
-      });
+      add(outsideLift(w.date, "done", w.id));
+  if (liftUnderWay?.sport === "lift" && liftUnderWay.index === null)
+    add(outsideLift(today, "in-progress", null));
 
   /* ── Runs ──────────────────────────────────────────────────────── */
-  const planned = new Map<string, LayoutRun>();
   const filledBy = new Set<string>();
-  const runDay = new Map(runs.map((r) => [r.id, r.day]));
+  const runDayOf = new Map(runs.map((r) => [r.id, r.day]));
   for (const date of dates) {
-    if (beforeStart(date, startKey)) continue;
     const resolved = resolveTrainingDayForDate({
       dateKey: date,
       profile,
@@ -334,80 +464,168 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
     }).run;
     const rd = resolved.runDay;
     if (!rd) continue;
+    const before = beforeStart(date, startKey);
     const savedRunId =
       (rd.id ? claimMap.get(rd.id)?.claimedSavedRunId : undefined) ?? null;
-    if (savedRunId) filledBy.add(savedRunId);
-    const ranOn = savedRunId ? runDay.get(savedRunId) : undefined;
-    planned.set(date, {
+    if (savedRunId && !before) filledBy.add(savedRunId);
+    const done = resolved.isCompleted && !before;
+    const ranOn = savedRunId ? runDayOf.get(savedRunId) : undefined;
+    const isUnderWay =
+      runUnderWay?.sport === "run" &&
+      runUnderWay.runDayId !== null &&
+      runUnderWay.runDayId === rd.id;
+    add({
       sport: "run",
+      plan: true,
       runDay: rd,
-      state: resolved.isCompleted
-        ? "done"
-        : resolved.status === "skipped"
-          ? "skipped"
-          : resolved.status === "race_no_show"
-            ? "not-recorded"
-            : date < today
-              ? "missed"
-              : "to-do",
-      savedRunId: resolved.isCompleted ? savedRunId : null,
-      doneOn: resolved.isCompleted && ranOn && ranOn !== date ? ranOn : null,
+      group: before ? "before-start" : "day",
+      date,
+      state: before
+        ? "before-start"
+        : isUnderWay
+          ? "in-progress"
+          : done
+            ? "done"
+            : resolved.status === "skipped"
+              ? "skipped"
+              : resolved.status === "race_no_show"
+                ? "not-recorded"
+                : date < today
+                  ? "missed"
+                  : date === today
+                    ? "today"
+                    : "planned",
+      savedRunId: done ? savedRunId : null,
+      doneOn: done && ranOn && ranOn !== date ? ranOn : null,
       movedFrom: rd.movedFromDate ?? null,
       counts: true,
     });
   }
+  for (const run of runs)
+    if (inWeek(run.day) && !filledBy.has(run.id))
+      add(outsideRun(run.day, "done", run.id, isVolumeEligible(run)));
+  if (runUnderWay?.sport === "run" && runUnderWay.runDayId === null)
+    add(outsideRun(today, "in-progress", null, true));
+
+  /* ── Next ──────────────────────────────────────────────────────── */
+  const isPlanLift = (s: LayoutSession): s is LayoutLift =>
+    s.sport === "lift" && s.plan;
+  const next =
+    entries.find(
+      (s): s is LayoutLift =>
+        isPlanLift(s) &&
+        (s.state === "in-progress" ||
+          s.state === "today" ||
+          s.state === "planned")
+    ) ??
+    stillToDo[0] ??
+    null;
+  if (next) next.isNext = true;
 
   /* ── Days ──────────────────────────────────────────────────────── */
   const runFirst = profile?.primaryGoal === "running";
+  const rank = (s: LayoutSession) =>
+    (s.plan ? 0 : 2) + ((s.sport === "run") === runFirst ? 0 : 1);
+  const planLifts = entries.filter(isPlanLift);
   const days = dates.map((date): LayoutDay => {
-    const lifts = placed
-      .filter((p) => p.date === date)
-      .map((p) => p.lift)
-      .sort((a, b) => doneFirst(a.state) - doneFirst(b.state));
-    const dayRuns: LayoutRun[] = [];
-    const plannedRun = planned.get(date);
-    if (plannedRun) dayRuns.push(plannedRun);
-    for (const run of runs)
-      if (run.day === date && !filledBy.has(run.id))
-        dayRuns.push({
-          sport: "run",
-          runDay: null,
-          state: "done",
-          savedRunId: run.id,
-          doneOn: null,
-          movedFrom: null,
-          counts: isVolumeEligible(run),
-        });
-    dayRuns.sort((a, b) => doneFirst(a.state) - doneFirst(b.state));
+    const sessions = entries
+      .filter((s) => s.group === "day" && s.date === date)
+      .sort((a, b) => rank(a) - rank(b));
+    const lifts = sessions.filter((s): s is LayoutLift => s.sport === "lift");
+    const dayRuns = sessions.filter((s): s is LayoutRun => s.sport === "run");
+    const has = (list: readonly LayoutSession[], state: string) =>
+      list.some((s) => s.state === state);
+    const slidOut: SlidOut[] =
+      date < today
+        ? planLifts.flatMap((l) =>
+            l.plannedOn === date &&
+            l.state !== "done" &&
+            l.date !== date &&
+            (l.group === "day" ||
+              l.group === "still-to-do" ||
+              l.group === "skipped")
+              ? [{ lift: l, to: l.group === "day" ? l.date! : l.group }]
+              : []
+          )
+        : [];
+    const priorToAccount = beforeStart(date, startKey);
+    const liftDay = isLiftDay(date);
+    const raceRestDay = isRaceRestDay(runPlan, date);
     return {
       date,
       isToday: date === today,
       isPast: date < today,
-      beforeStart: beforeStart(date, startKey),
-      liftDay: isLiftDay(date),
-      raceRest: isRaceRestDay(runPlan, date),
-      sessions: runFirst ? [...dayRuns, ...lifts] : [...lifts, ...dayRuns],
+      beforeStart: priorToAccount,
+      liftDay,
+      raceRest: raceRestDay,
+      sessions,
+      slidOut,
+      rest:
+        sessions.length > 0 || priorToAccount
+          ? null
+          : liftDay && slidOut.length === 0 && (raceWeek || raceRestDay)
+            ? "race"
+            : slidOut.length > 0
+              ? "moved"
+              : "rest",
+      lanes: {
+        lift: has(lifts, "done")
+          ? "done"
+          : has(lifts, "in-progress")
+            ? "active"
+            : lifts.length > 0
+              ? "planned"
+              : "none",
+        run: has(dayRuns, "done")
+          ? "done"
+          : has(dayRuns, "in-progress")
+            ? "active"
+            : has(dayRuns, "missed")
+              ? "missed"
+              : has(dayRuns, "today") || has(dayRuns, "planned")
+                ? "planned"
+                : "none",
+      },
       clash:
+        dayRuns.some(
+          (r) =>
+            isHardRun(r.runDay) && r.state !== "done" && r.state !== "skipped"
+        ) &&
         lifts.some(
-          (l) => l.state === "to-do" && !!l.workout && isLowerBodyDay(l.workout)
-        ) && dayRuns.some((r) => r.state === "to-do" && isHardRun(r.runDay)),
+          (l) => l.state !== "done" && !!l.workout && isLowerBodyDay(l.workout)
+        ),
     };
   });
 
+  // The prototype's 8 and 10: with nothing to do or under way today, the
+  // first planned session after it names the next one.
+  const todayIndex = dates.indexOf(today);
+  const todayBusy =
+    todayIndex >= 0 &&
+    days[todayIndex].sessions.some(
+      (s) => s.state === "today" || s.state === "in-progress"
+    );
+  const nextSession =
+    todayIndex < 0 || todayBusy
+      ? null
+      : (days
+          .slice(todayIndex + 1)
+          .flatMap((d) => d.sessions)
+          .find((s) => s.state === "planned") ?? null);
+
   const kind = trainingKind(profile, programState);
-  const next =
-    placed.find((p) => p.lift.isNext)?.lift ??
-    stillToDo.find((l) => l.isNext) ??
-    null;
   return {
     weekKey,
     days,
+    entries,
     stillToDo,
     skipped,
+    raceRest,
     doneOffWeek,
+    freeLiftDays,
     next,
-    liftsDone:
-      holdsPlan && plan.every((day) => day.completed || day.skipped === true),
+    nextSession,
+    liftsDone: holdsPlan && !raceWeek && plan.every((day) => day.completed),
     runFirst,
     // Home's rest day offers a run on the same test (`todaySession.ts`).
     freeRunning:
@@ -423,6 +641,48 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
       runs,
       now: parseLocalDate(today),
     }),
+  };
+}
+
+/** A lift outside the plan, on its day. */
+function outsideLift(
+  date: string,
+  state: "done" | "in-progress",
+  savedId: string | null
+): LayoutLift {
+  return {
+    sport: "lift",
+    plan: false,
+    index: null,
+    workout: null,
+    group: "day",
+    date,
+    state,
+    savedId,
+    plannedOn: null,
+    movedFrom: null,
+    isNext: false,
+  };
+}
+
+/** A run outside the plan, on its day. */
+function outsideRun(
+  date: string,
+  state: "done" | "in-progress",
+  savedRunId: string | null,
+  counts: boolean
+): LayoutRun {
+  return {
+    sport: "run",
+    plan: false,
+    runDay: null,
+    group: "day",
+    date,
+    state,
+    savedRunId,
+    doneOn: null,
+    movedFrom: null,
+    counts,
   };
 }
 
@@ -449,17 +709,14 @@ function cursorOrder(programState: ProgramState | null): number[] {
   return order;
 }
 
-/** Done sessions sort before the day's to-do. */
-function doneFirst(state: LayoutSession["state"]): number {
-  return state === "done" ? 0 : 1;
-}
-
-/** A planned run of a hard kind: long, tempo, intervals or a race, by the
- *  session it holds now (a swap included). */
+/** A planned run of a hard kind other than a race: long, tempo or
+ *  intervals, by the session it holds now (a swap included). A race day
+ *  has no lift beside it. */
 function isHardRun(runDay: ScheduledRunDay | null): boolean {
   if (!runDay) return false;
-  const template = RUN_TEMPLATES.find(
-    (t) => t.id === (runDay.userOverride || runDay.templateId)
-  );
-  return HARD_RUN_TYPES.has(template?.type ?? runDay.type);
+  const type =
+    RUN_TEMPLATES.find(
+      (t) => t.id === (runDay.userOverride || runDay.templateId)
+    )?.type ?? runDay.type;
+  return type !== "race" && HARD_RUN_TYPES.has(type);
 }
