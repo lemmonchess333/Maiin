@@ -1,6 +1,6 @@
 /**
  * liveActivities — the one way into the Live Activity plugin, for the run's
- * card and a lift's rest.
+ * card and the lift's.
  *
  * Pinned here, because no CI run can see a Lock Screen:
  * - every card is ended with the patched plugin's `dismissalPolicy:
@@ -40,10 +40,10 @@ import {
   loadLiveActivities,
 } from "@/lib/liveActivities";
 import {
-  __resetRestActivityForTests,
-  endRestActivity,
-  startRestActivity,
-} from "@/lib/restLiveActivity";
+  __resetLiftActivityForTests,
+  showLiftSession,
+  type LiftCardSession,
+} from "@/lib/liftLiveActivity";
 import {
   __resetRunActivityForTests,
   endRunActivity,
@@ -57,11 +57,22 @@ const RUN = {
   label: "Recording",
 };
 const IMMEDIATE = { dismissalPolicy: "immediate" };
+const LIFT: LiftCardSession = {
+  name: "Pull A",
+  art: "deadlift",
+  set: {
+    exerciseName: "Deadlift",
+    setLabel: "Set 2 of 4",
+    load: "100 kg × 5",
+    fact: "2/4",
+  },
+  setsDone: 1,
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
   __resetLiveActivitiesForTests();
-  __resetRestActivityForTests();
+  __resetLiftActivityForTests();
   __resetRunActivityForTests();
   vi.mocked(isNativePlatform).mockReturnValue(true);
   plugin.startActivity.mockResolvedValue({ activityId: "this-launch" });
@@ -70,9 +81,9 @@ beforeEach(() => {
 });
 
 describe("a card's end", () => {
-  it("takes a rest off the Lock Screen at once", async () => {
-    await startRestActivity({ endsAt: Date.now() + 90_000 });
-    await endRestActivity();
+  it("takes a lift off the Lock Screen at once", async () => {
+    await showLiftSession(LIFT);
+    await showLiftSession(null);
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "this-launch",
       data: {},
@@ -100,7 +111,7 @@ describe("the cards an earlier launch left", () => {
         { id: "left-rest", state: "stale", systemId: "s2" },
       ],
     });
-    await startRestActivity({ endsAt: Date.now() + 90_000 });
+    await showLiftSession(LIFT);
     expect(plugin.endActivity).toHaveBeenCalledWith({
       activityId: "left-run",
       data: {},
@@ -122,7 +133,7 @@ describe("the cards an earlier launch left", () => {
     plugin.getAllActivities.mockReturnValue(
       new Promise((resolve) => (list = resolve))
     );
-    const start = startRestActivity({ endsAt: Date.now() + 90_000 });
+    const start = showLiftSession(LIFT);
     for (let i = 0; i < 20; i++) await Promise.resolve();
     await vi.dynamicImportSettled();
     for (let i = 0; i < 20; i++) await Promise.resolve();
@@ -146,7 +157,7 @@ describe("the cards an earlier launch left", () => {
     plugin.getAllActivities.mockResolvedValue({
       activities: [{ id: "this-launch", state: "active", systemId: "s1" }],
     });
-    await startRestActivity({ endsAt: Date.now() + 90_000 });
+    await showLiftSession(LIFT);
     await loadLiveActivities();
     expect(plugin.getAllActivities).toHaveBeenCalledOnce();
     expect(plugin.endActivity).not.toHaveBeenCalled();
@@ -169,7 +180,7 @@ describe("the cards an earlier launch left", () => {
     plugin.endActivity.mockImplementation(async ({ activityId }) => {
       if (activityId === "gone") throw new Error("activityNotFound");
     });
-    await startRestActivity({ endsAt: Date.now() + 90_000 });
+    await showLiftSession(LIFT);
     expect(plugin.endActivity).toHaveBeenCalledTimes(2);
     expect(plugin.startActivity).toHaveBeenCalledOnce();
   });
@@ -179,7 +190,7 @@ describe("on the web", () => {
   it("loads nothing and lists nothing", async () => {
     vi.mocked(isNativePlatform).mockReturnValue(false);
     await expect(loadLiveActivities()).resolves.toBeNull();
-    await startRestActivity({ endsAt: Date.now() + 90_000 });
+    await showLiftSession(LIFT);
     await startRunActivity(RUN);
     expect(plugin.getAllActivities).not.toHaveBeenCalled();
     expect(plugin.startActivity).not.toHaveBeenCalled();
