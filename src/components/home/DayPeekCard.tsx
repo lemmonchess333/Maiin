@@ -51,7 +51,12 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import HeatPanel from "@/components/run/HeatPanel";
-import { heatLine, HEAT_PREVIEW_LINE } from "@/lib/heatAdjustment";
+import {
+  coolestHourLine,
+  heatLine,
+  HEAT_PREVIEW_LINE,
+} from "@/lib/heatAdjustment";
+import { deviceTemperatureUnit } from "@/lib/temperature";
 import { useHotDay } from "@/hooks/useHotDay";
 import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
@@ -271,6 +276,16 @@ export default function DayPeekCard({
     isScheduledRunStartable(resolved.run.status);
   const heat = useHotDay(todayRunAhead);
   const heatLineToday = heatLine(heat.weather);
+  /* And today's coolest hour still ahead, where one is meaningfully
+     cooler (Run26 (5)). */
+  const coolestToday =
+    heat.coolest && heat.weather
+      ? coolestHourLine(
+          heat.coolest,
+          heat.weather.temperature,
+          deviceTemperatureUnit()
+        )
+      : null;
   /* Today's lift is the one the today card offers (the programme's next),
      not the weekday's slot, so the peek and the card name one session. */
   const dayLift = liftOnDate({
@@ -675,6 +690,7 @@ export default function DayPeekCard({
                     <HeatPanel
                       level={heat.level}
                       line={heatLineToday}
+                      coolest={coolestToday}
                       note={HEAT_PREVIEW_LINE}
                     />
                   )}
