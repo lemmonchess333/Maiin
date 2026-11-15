@@ -44,9 +44,16 @@ interface RunMapProps {
    * Static for the run; populate once (e.g. re-running a past run's polyline).
    */
   targetRoute?: GPSPoint[];
-  /** A tap on the map, not a pan or a pinch (MapLibre's `click`). The live
-   *  run raises its panel with it, now that the map itself takes touches. */
-  onMapTap?: () => void;
+  /** A tap on the map, not a pan or a pinch (MapLibre's `click`), and where
+   *  it landed. The live run raises its panel with it, now that the map
+   *  itself takes touches; the segment maker moves a handle to it. */
+  onMapTap?: (at: { lat: number; lon: number }) => void;
+  /**
+   * A stretch of `points`, by index, both ends included, drawn over the
+   * route: the segment being made from this run (Run26 call 3). Null or
+   * absent draws nothing.
+   */
+  highlight?: { from: number; to: number } | null;
   /** The start and finish dots on a finished route. Off for a route whose
    *  ends were cut off (a public post's page), where the line's ends are
    *  not where the run started or finished. On by default. */
@@ -69,6 +76,7 @@ export default function RunMap({
   markerUnit = "km",
   targetRoute,
   endMarkers = true,
+  highlight = null,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -241,6 +249,32 @@ export default function RunMap({
         });
         map.setLayoutProperty("route-line", "visibility", "none");
       }
+
+      // The stretch being made a segment, over everything else: a wide
+      // casing in the map's own ground colour, so it reads apart from the
+      // pace colours under it, and the brand colour on top.
+      map.addSource("segment-pick", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "segment-pick-casing",
+        type: "line",
+        source: "segment-pick",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": darkMode ? THEME.bg : THEME.purpleRamp[50],
+          "line-width": 11,
+          "line-opacity": 0.9,
+        },
+      });
+      map.addLayer({
+        id: "segment-pick-line",
+        type: "line",
+        source: "segment-pick",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": THEME.brand, "line-width": 6 },
+      });
     };
     map.on("load", onLoad);
 
@@ -260,7 +294,8 @@ export default function RunMap({
       followingRef.current = false;
       setShowRecenter(true);
     };
-    const onTap = () => onMapTapRef.current?.();
+    const onTap = (e: { lngLat: { lat: number; lng: number } }) =>
+      onMapTapRef.current?.({ lat: e.lngLat.lat, lon: e.lngLat.lng });
     map.on("click", onTap);
     if (liveControls) {
       map.on("dragstart", onUserGesture);
@@ -570,6 +605,46 @@ export default function RunMap({
       map.off("load", apply);
     };
   }, [targetRoute]);
+
+  // The stretch being made a segment, redrawn as its ends move. A map
+  // that never had one is left alone: the line is drawn only once asked.
+  const highlightFrom = highlight?.from ?? -1;
+  const highlightTo = highlight?.to ?? -1;
+  const highlightDrawnRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    const wanted = highlightFrom >= 0 && highlightTo > highlightFrom;
+    if (!map || (!wanted && !highlightDrawnRef.current)) return;
+    highlightDrawnRef.current = wanted;
+    const apply = () => {
+      const src = map.getSource("segment-pick") as
+        maplibregl.GeoJSONSource | undefined;
+      const stretch = wanted
+        ? points.slice(highlightFrom, highlightTo + 1)
+        : [];
+      src?.setData({
+        type: "FeatureCollection",
+        features: splitRouteSegments(stretch)
+          .filter((segment) => segment.length > 1)
+          .map((segment) => ({
+            type: "Feature" as const,
+            geometry: {
+              type: "LineString" as const,
+              coordinates: segment.map((p) => [p.lon, p.lat]),
+            },
+            properties: {},
+          })),
+      });
+    };
+    if (map.loaded()) {
+      apply();
+      return;
+    }
+    map.on("load", apply);
+    return () => {
+      map.off("load", apply);
+    };
+  }, [points, highlightFrom, highlightTo, darkMode, paceColored]);
 
   const recenter = () => {
     followingRef.current = true;
