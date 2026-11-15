@@ -31,7 +31,11 @@
  * `startActivity`, and this module swallows it.
  */
 import { logger } from "@/lib/logger";
-import { endCard, loadLiveActivities } from "@/lib/liveActivities";
+import {
+  endCard,
+  ISLAND_FIGURE_PT,
+  loadLiveActivities,
+} from "@/lib/liveActivities";
 import { POSE_HEIGHT_PT, poseAt } from "@/lib/liveActivityArt";
 import { THEME } from "@/lib/theme";
 /* Type-only — erased at build, zero web-bundle cost (the runtime import
@@ -263,11 +267,14 @@ function dynamicIslandLayout(): DynamicIslandLayout {
       // The drawing can be read only here: a compact side is 37 pt tall.
       bottom: pictureRow(84, [kicker, figure(32), line("{{paceLine}}")], []),
     },
-    // The two sides read as one fact: a run, and how far.
+    // The two sides read as one fact: a run, and how far. The figure is
+    // the island's size (Run26 call 1): where the island is short of room
+    // the trailing side is a 28 pt circle, which "12.4" fits at 12 pt.
     compactLeading: runGlyph(14),
-    compactTrailing: small("{{distanceValue}}", 14),
-    // Something live in the smallest size, as Apple asks (Wid2 call 1).
-    minimal: small("{{distanceValue}}", 12),
+    compactTrailing: small("{{distanceValue}}", ISLAND_FIGURE_PT),
+    // Something live in the smallest size, as Apple asks (Wid2 call 1),
+    // and what shows when music shares the island.
+    minimal: small("{{distanceValue}}", ISLAND_FIGURE_PT),
   };
 }
 
