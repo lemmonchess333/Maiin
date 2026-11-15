@@ -6262,6 +6262,18 @@ been seen on a phone or a deployed function.
       with Approve followers on, an account joining from a code, and a
       Monday league result: one push each, opening the asker's profile, the
       new person's profile and the league.
+- [ ] **A league result pushes (2026-11-15).** Until this fix no league
+      result ever pushed: the league writes its row with no sender, and the
+      check as the push goes refused a row without one. Now a
+      `league_result` with no sender is checked for the account (push on,
+      not being deleted) and the Leagues switch alone; every person's kind
+      keeps the block, restriction and own-act checks. On an iPhone in a
+      league, push on and Leagues on, after Monday's turn (12:15 UTC)
+      settles last week. Passing: one push, "Your league week" with the
+      tray row's sentence ("You moved up to Silver" or similar), opening
+      the league; with Leagues off, no row and no push. After the functions
+      deploy, the deployed source of `onNotificationItemWritten` calls
+      `socialPush.pushSender`.
 - [ ] **Props once a day.** Two accounts give props to A's run in the
       morning. Passing: nothing at the time; one push at 19:00 local, "2
       people gave props to your run", opening the run; nothing more that

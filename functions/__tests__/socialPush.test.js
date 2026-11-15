@@ -57,6 +57,34 @@ describe("pushes from people (App1 Q18)", () => {
     ).toBe("/social");
   });
 
+  it("come from the row's sender, or from the league for its own result", () => {
+    expect([...social.SYSTEM_PUSH_TYPES]).toEqual(["league_result"]);
+    // The league's row names no one (createNotification's `anonymous`).
+    expect(social.pushSender({ type: "league_result" })).toEqual({
+      system: true,
+    });
+    expect(social.pushSender({ type: "comment", fromUserId: "maya" })).toEqual({
+      from: "maya",
+    });
+    // A sender, whatever the kind, is a person to check.
+    expect(
+      social.pushSender({ type: "league_result", fromUserId: "maya" })
+    ).toEqual({ from: "maya" });
+    // A person's kind with no sender is no one's: it never pushes.
+    for (const type of [
+      "comment",
+      "space_post_comment",
+      "follow_request",
+      "follow_accepted",
+      "invite_joined",
+      "kudos",
+    ]) {
+      expect(social.pushSender({ type })).toBeNull();
+      expect(social.pushSender({ type, fromUserId: "" })).toBeNull();
+    }
+    expect(social.pushSender(null)).toBeNull();
+  });
+
   it("push only a new notice: a create, or a new createdAt under the same id", () => {
     const first = { createdAt: at("2026-11-14T10:00:00Z") };
     expect(social.isNewNotice(null, first)).toBe(true);

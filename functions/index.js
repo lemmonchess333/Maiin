@@ -4206,10 +4206,9 @@ async function takesSocialPush(uid, type, profile) {
 }
 
 /** Whether a push may carry `fromUid`'s act to `uid`: someone else, with
- *  no block either way and no restriction (the league's result is the
- *  server's own). */
+ *  no block either way and no restriction. Every named sender meets these
+ *  checks; a league result names none (socialPush.pushSender). */
 async function mayPushFrom(uid, fromUid) {
-  if (fromUid === leagues.LEAGUE_SENDER) return true;
   if (typeof fromUid !== "string" || !fromUid || fromUid === uid) return false;
   if (await blockGuard.isBlockedBetween(db, uid, fromUid)) return false;
   return !(await restriction.isRestricted(db, fromUid));
@@ -4280,6 +4279,8 @@ async function handleNotificationItemWrite(change, context) {
     return null;
   }
   if (!socialPush.isNewNotice(before, after)) return null;
+  const sender = socialPush.pushSender(after);
+  if (!sender) return null;
   if (
     !(await accountDeletionLocks.shouldSystemWriteProceed(
       db,
@@ -4291,7 +4292,7 @@ async function handleNotificationItemWrite(change, context) {
   const profile = (await db.doc(`users/${uid}`).get()).data() || {};
   if (
     !(await takesSocialPush(uid, type, profile)) ||
-    !(await mayPushFrom(uid, after.fromUserId))
+    (!sender.system && !(await mayPushFrom(uid, sender.from)))
   )
     return null;
   const now = new Date();

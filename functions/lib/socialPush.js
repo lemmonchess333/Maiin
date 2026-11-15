@@ -16,6 +16,14 @@
  * account takes push (`settings/push.enabled`), the switch is still on, no
  * block either way since, and the sender is not restricted.
  *
+ * A league result has no sender: the league writes it in its own name,
+ * with no `fromUserId` (createNotification's `anonymous`), so there is no
+ * person to check a block or a restriction against. It is checked for the
+ * account and the switch alone (`pushSender`). That holds only for the kinds
+ * in SYSTEM_PUSH_TYPES and only while the row names no one: a person's
+ * kind with no sender never pushes, and any row that names a sender gets
+ * every check on that sender, whatever its kind.
+ *
  * What a push says: the row's own sentence, which carries the sender's
  * public name ("Maya commented on your activity"), never a comment's words.
  * Between 22:00 and 08:00 in the recipient's time zone (pushSchedule.js)
@@ -54,6 +62,10 @@ const SOCIAL_PUSH_TYPES = Object.freeze([
   "invite_joined",
   "league_result",
 ]);
+
+/** Rows the server writes in its own name, with no sender: Monday's
+ *  league result (Soc15 call 3). Every other kind is a person's act. */
+const SYSTEM_PUSH_TYPES = Object.freeze(["league_result"]);
 
 /** Rows gathered into the daily bundle. */
 const BUNDLED_PUSH_TYPE = "kudos";
@@ -108,6 +120,20 @@ function isNewNotice(before, after) {
   const was = millisOf(before.createdAt);
   const now = millisOf(after.createdAt);
   return now !== null && now !== was;
+}
+
+/**
+ * Who a row's push comes from, for the checks as it goes:
+ *   { from }          a person, the row's sender: the sender's checks run
+ *   { system: true }  the server, for a kind in SYSTEM_PUSH_TYPES that
+ *                     names no sender: the account and switch checks alone
+ *   null              a person's kind with no sender: no push
+ */
+function pushSender(item) {
+  const from = item && item.fromUserId;
+  if (typeof from === "string" && from) return { from };
+  if (item && SYSTEM_PUSH_TYPES.includes(item.type)) return { system: true };
+  return null;
 }
 
 /** The key a row's push is claimed under: its notice's time. */
@@ -287,12 +313,14 @@ function propsBundleMessage(entries, { sessionTypes = {} } = {}) {
 
 module.exports = {
   SOCIAL_PUSH_TYPES,
+  SYSTEM_PUSH_TYPES,
   BUNDLED_PUSH_TYPE,
   PROPS_BUNDLE_HOUR,
   PROPS_BUNDLE_DOC,
   SOCIAL_PUSH_TTL_SECONDS,
   millisOf,
   isNewNotice,
+  pushSender,
   noticeKey,
   socialPushRoute,
   socialPushMessage,
