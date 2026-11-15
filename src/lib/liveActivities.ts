@@ -27,6 +27,19 @@ import { logger } from "@/lib/logger";
 
 type Plugin = typeof import("capacitor-live-activities").LiveActivities;
 
+/**
+ * The live figure's size in the Dynamic Island's compact and minimal views
+ * (Run26 call 1): a run's distance, a rest's countdown. Where the island is
+ * short of room, Apple fits each of those views in a 28 pt circle: on the
+ * iPhone 18 Pro beside another app's activity (music, say), and in
+ * landscape. "12.4" or "1:24" needs about 30 pt at 14 pt, so iOS cuts it to
+ * "1…", and about 26 pt at 12 pt, which fits. Those widths are a Tropos
+ * estimate from typical digit widths, not SF Pro measured on a phone; the
+ * backlog's island rows confirm it. The Lock Screen card's figure is its
+ * own, larger.
+ */
+export const ISLAND_FIGURE_PT = 12;
+
 let ready: Promise<{ plugin: Plugin } | null> | null = null;
 
 /** The plugin, once this launch's leftover cards are gone; null on the
