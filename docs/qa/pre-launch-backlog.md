@@ -5042,6 +5042,14 @@ Affects: setup's race step and Settings → Run plan (the Ultra row, Total climb
 - [ ] **Feet.** With miles chosen in Units, type 5000 in Total climb. Passing: the field says ft, and the stored `climbM` is 1524.
 - [ ] **Recovery after an ultra.** Run the race on its day (at least 95% of the distance). Passing: the plan enters recovery for 4 weeks after a 50K, 5 after 50 miles or a 100K, and the run summary shows no prediction line (Tropos predicts no ultra time).
 
+## No heavy legs the day before an ultra's back-to-back (Run27 call 19, 2026-11-15)
+
+Affects: a new ultra plan's lift order (`orderForAdjacency` with `longRunDaysOf`) and "Why this session"'s next-day note before a back-to-back run (`liftSessionPurpose`). Unit tests build the plans through `buildPlan`; no phone has shown one. A plan made before this keeps its order.
+
+- [ ] **Four lift days.** On a new account, set up Race prep, 50K, four runs and four lift days, a date 20 weeks out. Passing: the week strip shows the long run Sunday, a run Saturday, and Friday's lift is an upper session (no squat, deadlift or other leg lift); the lower sessions fall Monday and Wednesday.
+- [ ] **Two lift days.** The same with two lift days. Passing: Friday is a full-body session (both are), and in a week whose Saturday holds "Back-to-back 1 h 30" or another back-to-back, Friday's "Why this session" ends "Your back-to-back run is the next day, and heavy leg work can leave your legs tired for it."
+- [ ] **A marathon keeps its week.** Set up a marathon on the same days. Passing: nothing above changes for it; Friday's note appears only before a long run or a key session.
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),

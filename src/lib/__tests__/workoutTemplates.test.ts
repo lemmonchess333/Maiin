@@ -20,6 +20,7 @@ import {
   RUN_TEMPLATES,
   isRaceTemplateId,
   isScheduledRaceRunDay,
+  isLongRunTemplate,
 } from "../workoutTemplates";
 
 /* The run summary judges a long run against the easy band, so every long
@@ -268,5 +269,30 @@ describe("the base's light sessions (Run24 (5))", () => {
       expect(template, id).toBeDefined();
       expect(["tempo", "intervals"]).toContain(template!.type);
     }
+  });
+});
+
+/* Run27 (19): the week's long runs, one test for the fit and the lifting. */
+describe("isLongRunTemplate", () => {
+  const byId = (id: string) => RUN_TEMPLATES.find((t) => t.id === id);
+
+  it("is the long run in kilometres or in time, and the back-to-back", () => {
+    expect(isLongRunTemplate(byId("long_12k"))).toBe(true);
+    expect(isLongRunTemplate(byId("long_time_120"))).toBe(true);
+    expect(isLongRunTemplate(byId("back_to_back_90"))).toBe(true);
+    expect(byId("back_to_back_90")?.type).toBe("easy");
+  });
+
+  it("is no other easy run, quality session or race", () => {
+    expect(isLongRunTemplate(byId("easy_90"))).toBe(false);
+    expect(isLongRunTemplate(byId("tempo_30"))).toBe(false);
+    expect(isLongRunTemplate(byId("10k_race"))).toBe(false);
+    expect(isLongRunTemplate(undefined)).toBe(false);
+  });
+
+  it("covers every back-to-back template", () => {
+    const backToBacks = RUN_TEMPLATES.filter((t) => t.config.backToBack);
+    expect(backToBacks.length).toBeGreaterThan(0);
+    expect(backToBacks.every(isLongRunTemplate)).toBe(true);
   });
 });

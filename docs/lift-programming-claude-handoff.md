@@ -599,6 +599,15 @@ supersedes RP2, which was never built, and reverses the lifting v8
 evaluation's STATUS of 2026-08-02c that kept running out of the lift plan
 (noted there).
 
+STATUS 2026-11-15 (Run27 call 19): an ultra's back-to-back run counts as a
+long run for both of the rules above. A new ultra plan's lift order weighs
+the day before the back-to-back as Lift13 weighs the day before the long
+run (`longRunDaysOf`, the run plan's own pick of the day), and the note
+names it ("Your back-to-back run is the next day, …"), through
+`isLongRunTemplate`, the test the running starting point's fit already
+used. Two- and three-day full-body weeks keep legs on that day, with the
+note, as they do before the long run.
+
 STATUS 2026-10-06 (Lift4 (9) to (11), build step 5, eleventh part): a
 rebuild inside a lighter week keeps it lighter. New lift days or a new
 session length build the week's sessions afresh, which gave a lighter week

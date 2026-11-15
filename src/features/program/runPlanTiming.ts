@@ -74,6 +74,20 @@ export function isUltraDistance(
   return (ULTRA_RACE_DISTANCES as readonly string[]).includes(distance ?? "");
 }
 
+/**
+ * Run26 (2): whether a plan's weekend holds an ultra's back-to-back runs
+ * beside its long run: a race plan for an ultra. Its default week runs
+ * both weekend days for them, and (Run27 (19)) its lift order keeps
+ * heavy legs off the day before the back-to-back as it does the long
+ * run's (`longRunDaysOf`).
+ */
+export function weekendHoldsBackToBacks(
+  runMode: string | null | undefined,
+  raceGoal: { distance?: string | null } | null | undefined
+): boolean {
+  return runMode === "race_prep" && isUltraDistance(raceGoal?.distance);
+}
+
 /** A race's distance in km, by its plan key. 50 miles is 80.47 km. */
 export const RACE_KM_BY_DISTANCE: Record<RaceDistance, number> = {
   "5k": 5,
