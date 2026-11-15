@@ -196,15 +196,19 @@ export default function PerformanceSection({
       <Heading />
       <ArrivalFade {...arrival}>
         <Card className="space-y-4" data-performance-lead="">
-          <div className="space-y-1">
+          <div className="@container space-y-1">
             <p className="text-xs font-semibold text-muted-foreground">
               {scoreWindowLabel(currentWeek.weekKey, new Date())}
             </p>
-            {/* The verdict. It breaks inside a word only where the word
-                is wider than the card (a 320 pt phone at the largest
-                text), rather than running past it. */}
+            {/* The verdict. Its longest words ("Sharpening", "Recovering")
+                are about 5.3 em wide, so where the card is narrower than
+                that at the reader's text size (a 320 pt phone at the
+                largest text) the type steps down to 17% of the card's
+                width rather than split the word. Where container queries
+                are missing (iOS 15) it keeps its size and may break
+                inside the word, never past the card. */}
             <p
-              className="text-hero font-extrabold leading-[1.05] tracking-tight break-words hyphens-auto"
+              className="text-hero supports-[container-type:inline-size]:text-[length:min(var(--text-hero),17cqi)] font-extrabold leading-[1.05] tracking-tight break-words hyphens-auto"
               style={{ color: textHue }}
             >
               {label}

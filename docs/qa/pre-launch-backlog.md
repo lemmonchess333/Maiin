@@ -5033,9 +5033,10 @@ is current: a free account's Progress shows the verdict, not the score.
       twelve-week chart, Breakdown with the food logged, Load band and
       average; no Training load card, and no Fitness, Fatigue or Form.
 - [ ] **Larger text.** Settings → Accessibility → Larger Text at the
-      largest step on a small iPhone. Passing: "Backing off" or
-      "Sharpening" wraps or hyphenates inside the card and nothing runs
-      past its edge.
+      largest step on a small iPhone. Passing: "Sharpening" stays one
+      word, a little smaller, and nothing runs past the card's edge
+      (iOS 15 has no container queries: there the word may break inside
+      the card instead).
 - [ ] **Back after a break.** On an account whose newest score is more
       than a day old. Passing: the kicker names the window by its last day
       ("7 days to 2 Aug"), not "Last 7 days".

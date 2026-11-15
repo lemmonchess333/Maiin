@@ -144,6 +144,10 @@ describe("the lead: load against your usual (App1 Q10)", () => {
     renderSection();
     const verdict = within(lead()).getByText(/^Sharpening$/);
     expect(verdict.className).toMatch(/\btext-hero\b/);
+    // Stepping down to the card's width where a long word would not fit
+    // (320 pt at the largest text), rather than splitting it.
+    expect(verdict.className).toMatch(/min\(var\(--text-hero\),17cqi\)/);
+    expect(verdict.parentElement!.className).toMatch(/@container/);
   });
 
   it("puts the last 7 days' lifting and running beside the usual week", () => {
