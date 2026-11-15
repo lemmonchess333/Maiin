@@ -172,10 +172,7 @@ export function sizesLongRunsInTime(
  * but the build phase collapses first. Base phase is then whatever
  * remains, never negative.
  */
-export const TAPER_WEEKS_BY_DISTANCE: Record<
-  RaceDistance,
-  number
-> = {
+export const TAPER_WEEKS_BY_DISTANCE: Record<RaceDistance, number> = {
   "5k": 1,
   "10k": 1,
   half: 2,
@@ -197,10 +194,7 @@ export const TAPER_WEEKS_BY_DISTANCE: Record<
  * last of these weeks. The short races take the lock's lowest, the
  * marathon its highest. A Tropos heuristic in the RUN-EV-06 register.
  */
-export const RACE_BLOCK_MAX_WEEKS: Record<
-  RaceDistance,
-  number
-> = {
+export const RACE_BLOCK_MAX_WEEKS: Record<RaceDistance, number> = {
   "5k": 16,
   "10k": 16,
   half: 18,
@@ -377,16 +371,12 @@ export function isRunStepBackWeek(
  *  room for the distance's taper plus the race week, so compressing toward
  *  the date is no longer the safe default — the plan flips to "finish-safely".
  *  5k=2, 10k=2, half=3, marathon=4. */
-export function getRaceFloorWeeks(
-  distance: RaceDistance
-): number {
+export function getRaceFloorWeeks(distance: RaceDistance): number {
   return TAPER_WEEKS_BY_DISTANCE[distance] + 1;
 }
 
 /** Ideal-build length per distance (5k=4, 10k=6, half=8, marathon=12). */
-export function getRaceMinWeeks(
-  distance: RaceDistance
-): number {
+export function getRaceMinWeeks(distance: RaceDistance): number {
   return RACE_CONFIGS[distance].minWeeks;
 }
 

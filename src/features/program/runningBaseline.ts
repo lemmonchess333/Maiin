@@ -63,11 +63,13 @@ export function isRunningBaseline(
   );
 }
 
-/** One rung of the climb: its minutes, and a long run's distance (an easy
- *  run's is never done by distance). */
+/** One rung of the climb: its minutes, whether it is a long run, and a
+ *  long run's distance (an easy run's, and a long run's in time on feet,
+ *  is never done by distance). */
 interface ClimbRung {
   minutes: number;
   km: number;
+  long: boolean;
 }
 
 /**
@@ -98,14 +100,17 @@ function longRunRungs(
     .map((t): ClimbRung => ({
       minutes: plannedRunMinutes(t, easyPaceSPerKm),
       km: (t.type === "long" && t.config?.targetDistanceKm) || Infinity,
+      long: t.type === "long",
     }))
     // By minutes, a long run before an easy run of the same.
-    .sort((a, b) => a.minutes - b.minutes || a.km - b.km);
-  const firstLong = rungs.find((r) => r.km < Infinity)!.minutes;
+    .sort(
+      (a, b) =>
+        a.minutes - b.minutes || Number(b.long) - Number(a.long) || a.km - b.km
+    );
+  const firstLong = rungs.find((r) => r.long)!.minutes;
   return rungs.filter(
     (r, i) =>
-      (r.km < Infinity || r.minutes < firstLong) &&
-      r.minutes !== rungs[i - 1]?.minutes
+      (r.long || r.minutes < firstLong) && r.minutes !== rungs[i - 1]?.minutes
   );
 }
 
@@ -289,10 +294,17 @@ export function fitWeekToRunningBaseline(
       const t = templateFor(row);
       return sum + (t && t.type !== "race" ? minutes(t) : 0);
     }, 0);
-  /** The long run's day, by what the plan put there. */
-  const isLongRow = (row: ScheduledRunDay) =>
-    templateOf(row.trainingBasis?.originalTemplateId ?? row.templateId)
-      ?.type === "long";
+  /** The long run's day, by what the plan put there. Run26 (2): an
+   *  ultra's back-to-back run is a second long run, held to the long run's
+   *  climb rather than the rest of the week's, whose ten minutes a week
+   *  would never let one in; the week's own hold (Run24 (6)) still bounds
+   *  the week it is in. */
+  const isLongRow = (row: ScheduledRunDay) => {
+    const planned = templateOf(
+      row.trainingBasis?.originalTemplateId ?? row.templateId
+    );
+    return planned?.type === "long" || !!planned?.config.backToBack;
+  };
   // A week with no long run gives its runs the long run's minutes too: a
   // lead-in. A taper or race week does not (`cutting`): there the five
   // 30-minute runs after a build of five 20s were the long run's minutes

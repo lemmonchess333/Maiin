@@ -35,7 +35,8 @@ describe("RUN_TEMPLATES — what the descriptions tell the runner", () => {
 
   it("no race is described as all-out", () => {
     const races = RUN_TEMPLATES.filter((t) => t.type === "race");
-    expect(races.length).toBe(4);
+    // Run26 (2): 5K to marathon, and the three ultras.
+    expect(races.length).toBe(7);
     for (const t of races) expect(t.description, t.id).not.toMatch(/all-out/i);
   });
 });
@@ -167,11 +168,22 @@ describe("RUN_TEMPLATES", () => {
   });
 
   it("long/race templates have target distance", () => {
+    // Run26 (2): a long run in time on feet has a time and no distance.
     const distanceTemplates = RUN_TEMPLATES.filter(
-      (t) => t.type === "long" || t.type === "race"
+      (t) => (t.type === "long" && !t.config.timeOnFeet) || t.type === "race"
     );
     for (const t of distanceTemplates) {
       expect(t.config.targetDistanceKm).toBeGreaterThan(0);
+    }
+  });
+
+  it("a run in time on feet has a time and no distance (Run26 (2))", () => {
+    const timed = RUN_TEMPLATES.filter((t) => t.config.timeOnFeet);
+    expect(timed.length).toBeGreaterThan(0);
+    for (const t of timed) {
+      expect(t.config.targetDistanceKm, t.id).toBeUndefined();
+      expect(t.config.targetDurationMinutes, t.id).toBe(t.estimatedDuration);
+      expect(t.type === "long" || t.config.backToBack, t.id).toBe(true);
     }
   });
 

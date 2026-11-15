@@ -643,6 +643,10 @@ export interface RaceBlockInputs {
   /** The longest long run the block has held so far, km: a marathon's
    *  ceiling never comes under it. */
   heldLongKm: number;
+  /** Run26 (2): the longest long run in time on feet the block has held,
+   *  minutes, in a plan in time: its peak never comes under it when a pace
+   *  confirmed mid-block sizes the block shorter. Absent elsewhere. */
+  heldLongMinutes?: number;
   /** A beginner's block: the first week that may hold quality, a week key,
    *  once the runs have shown it (`beginnerQualityWeek`). */
   qualityFrom?: string;

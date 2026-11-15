@@ -73,7 +73,7 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
-import { firstFullWeekKey } from "./runPlanTiming";
+import { firstFullWeekKey, isUltraDistance } from "./runPlanTiming";
 import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
@@ -345,12 +345,15 @@ function buildWeekSchedule(
     | "weekSchedule"
     | "rollingGoal"
     | "existingState"
+    | "raceGoal"
   >
 ): ScheduleDay[] {
   return planWeekSchedule(
     input.liftDays,
     plannedRunDays(input),
-    input.weekSchedule
+    input.weekSchedule,
+    // Run26 (2): an ultra's long run and back-to-back run are a weekend's.
+    input.runMode === "race_prep" && isUltraDistance(input.raceGoal?.distance)
   );
 }
 

@@ -49,6 +49,7 @@ import {
   getRaceMinWeeks,
   getRaceFloorWeeks,
   getRacePhaseLabel,
+  isUltraDistance,
   raceOutOfReach,
 } from "@/features/program/runPlanTiming";
 import {
@@ -413,7 +414,9 @@ export function getRaceGoalPlannerState(
   const weekSchedule = planWeekSchedule(
     liftDays,
     weeklyRunDays,
-    input.weekSchedule
+    input.weekSchedule,
+    // Run26 (2): as the plan it previews (`buildPlan`) holds it.
+    isUltraDistance(distance)
   );
   const continued = continuingRacePlan(input.existingState?.runPlan, {
     distance,

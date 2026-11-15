@@ -10,7 +10,12 @@
  * safety. Pure and total — returns null rather than guessing when the
  * plan context is missing (freeform runs, extras, legacy docs).
  */
-import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import {
+  getPhaseForWeek,
+  isRoadDistance,
+  isUltraDistance,
+} from "@/features/program/runPlanTiming";
+import type { RaceDistance } from "@/features/program/programTypes";
 import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import {
   isRunWalkTemplateId,
@@ -125,7 +130,7 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   const phase = getPhaseForWeek(
     input.currentWeek,
     input.totalWeeks,
-    input.distance as "5k" | "10k" | "half" | "marathon",
+    input.distance as RaceDistance,
     input.shortBase
   );
   return {
@@ -174,10 +179,7 @@ export function runSessionExplainer(
     !Number.isInteger(totalWeeks) ||
     totalWeeks <= 0 ||
     currentWeek >= totalWeeks ||
-    (distance !== "5k" &&
-      distance !== "10k" &&
-      distance !== "half" &&
-      distance !== "marathon")
+    !(isRoadDistance(distance) || isUltraDistance(distance))
   ) {
     return null;
   }
@@ -231,6 +233,21 @@ export function runSessionExplainer(
   const config = RUN_TEMPLATES.find((t) => t.id === templateId)?.config;
   if (config?.progression) {
     return "It finishes faster than it starts: the easy minutes build endurance, and the finish teaches you to run strong on tired legs.";
+  }
+  // Run26 (2): a trail plan's and an ultra's own sessions.
+  if (config?.steadyClimbs) {
+    return "Long climbs at a comfortably hard effort build the strength and the climbing your race asks for, by effort, not pace.";
+  }
+  if (config?.downhill) {
+    return "Your race goes down as much as it goes up. A few controlled descents now teach your legs to take the downhills, so they hurt less on race day.";
+  }
+  if (config?.backToBack) {
+    return "Back-to-back long runs teach your legs to keep going when they’re already tired, as they will be late in your race.";
+  }
+  if (type === "long" && config?.timeOnFeet && input.racePace !== "finish") {
+    return phase === "base"
+      ? "The long run anchors the week, by time on feet, and climbs a step at a time through the base."
+      : "The week’s anchor run, by time on feet: the hours your race asks of you, built a step at a time.";
   }
   if (config?.uphill) {
     return phase === "base"

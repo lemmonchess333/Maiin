@@ -418,6 +418,64 @@ export function hillDownCue(variant: number): string {
   return pick(HILL_DOWN, variant);
 }
 
+/* Run26 (2): a trail plan's climbs, comfortably hard, and downhill
+ * repeats with a walk back up, by feel. Pools sized past the longest
+ * session's count, as HILL's is. */
+const CLIMB = [
+  "Comfortably hard, a few words at a time.",
+  "Short steps, steady breathing.",
+  "Hike the steep bits if you need to. Same effort.",
+  "Hold the effort, let the pace go.",
+  "Run tall and relax the shoulders.",
+  "An effort you could hold up a long climb on race day.",
+  "Steady to the top.",
+];
+
+/** `Climb 2 of 4. Short steps, steady breathing.` */
+export function climbCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Climb ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Steady to the top.`;
+  return `${head} ${pick(CLIMB, variant)}`;
+}
+
+const DOWNHILL = [
+  "Quick, light steps. Let the slope do the work.",
+  "Stay tall, eyes ahead.",
+  "Controlled, not braking hard.",
+  "Short strides, soft landings.",
+  "Easy on the breathing, busy feet.",
+  "Arms out a little for balance.",
+  "Relaxed and in control to the bottom.",
+];
+
+/** `Descent 3 of 6. Quick, light steps. Let the slope do the work.` */
+export function downhillCue(
+  rep: number,
+  totalReps: number,
+  variant: number
+): string {
+  const head = `Descent ${rep} of ${totalReps}.`;
+  if (rep >= totalReps) return `${head} Last one. Controlled to the bottom.`;
+  return `${head} ${pick(DOWNHILL, variant)}`;
+}
+
+const WALK_UP = [
+  "Walk back up. No hurry.",
+  "Easy walk to the top.",
+  "Walk it up and let the legs settle.",
+  "Back to the top, at a walk.",
+  "Walk up. Ready for the next one.",
+];
+
+/** The walk back up between downhill repeats. */
+export function walkUpCue(variant: number): string {
+  return pick(WALK_UP, variant);
+}
+
 const PICK_UP = [
   "Comfortably hard, by feel.",
   "Pick it up, smooth and strong.",

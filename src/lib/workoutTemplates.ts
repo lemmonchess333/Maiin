@@ -1353,7 +1353,8 @@ const BASE_RUN_TEMPLATES: RunTemplate[] = [
     name: "50K Race",
     type: "race",
     icon: "flag",
-    description: "Race effort: start easier than feels right, eat and drink early",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
     estimatedDuration: 360,
     config: { targetDistanceKm: 50 },
   },
@@ -1362,7 +1363,8 @@ const BASE_RUN_TEMPLATES: RunTemplate[] = [
     name: "50 Mile Race",
     type: "race",
     icon: "flag",
-    description: "Race effort: start easier than feels right, eat and drink early",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
     estimatedDuration: 660,
     config: { targetDistanceKm: 80.5 },
   },
@@ -1371,7 +1373,8 @@ const BASE_RUN_TEMPLATES: RunTemplate[] = [
     name: "100K Race",
     type: "race",
     icon: "flag",
-    description: "Race effort: start easier than feels right, eat and drink early",
+    description:
+      "Race effort: start easier than feels right, eat and drink early",
     estimatedDuration: 840,
     config: { targetDistanceKm: 100 },
   },
@@ -1414,7 +1417,7 @@ export const TIME_ON_FEET_LONG_MINUTES: readonly number[] = Array.from(
 );
 
 /** The id of a long run of `minutes` on feet. */
-export const timeOnFeetLongId = (minutes: number) => `long_${minutes}min`;
+export const timeOnFeetLongId = (minutes: number) => `long_time_${minutes}`;
 
 /**
  * Run26 (2): an ultra's back-to-back runs, the day beside the long run, a
@@ -1431,33 +1434,29 @@ export const BACK_TO_BACK_MINUTES: readonly number[] = Array.from(
 export const backToBackId = (minutes: number) => `back_to_back_${minutes}`;
 
 const TIME_ON_FEET_TEMPLATES: RunTemplate[] = [
-  ...TIME_ON_FEET_LONG_MINUTES.map(
-    (minutes): RunTemplate => ({
-      id: timeOnFeetLongId(minutes),
-      name: `Long ${timeOnFeetName(minutes)}`,
-      type: "long",
-      icon: "route",
-      description:
-        "Easy effort for the time, not a distance. Walk the steep climbs",
-      estimatedDuration: minutes,
-      config: { targetDurationMinutes: minutes, timeOnFeet: true },
-    })
-  ),
-  ...BACK_TO_BACK_MINUTES.map(
-    (minutes): RunTemplate => ({
-      id: backToBackId(minutes),
-      name: `Back-to-back ${timeOnFeetName(minutes)}`,
-      type: "easy",
-      icon: "route",
-      description: "Easy effort on tired legs, the day beside your long run",
-      estimatedDuration: minutes,
-      config: {
-        targetDurationMinutes: minutes,
-        timeOnFeet: true,
-        backToBack: true,
-      },
-    })
-  ),
+  ...TIME_ON_FEET_LONG_MINUTES.map((minutes): RunTemplate => ({
+    id: timeOnFeetLongId(minutes),
+    name: `Long ${timeOnFeetName(minutes)}`,
+    type: "long",
+    icon: "route",
+    description:
+      "Easy effort for the time, not a distance. Walk the steep climbs",
+    estimatedDuration: minutes,
+    config: { targetDurationMinutes: minutes, timeOnFeet: true },
+  })),
+  ...BACK_TO_BACK_MINUTES.map((minutes): RunTemplate => ({
+    id: backToBackId(minutes),
+    name: `Back-to-back ${timeOnFeetName(minutes)}`,
+    type: "easy",
+    icon: "route",
+    description: "Easy effort on tired legs, the day beside your long run",
+    estimatedDuration: minutes,
+    config: {
+      targetDurationMinutes: minutes,
+      timeOnFeet: true,
+      backToBack: true,
+    },
+  })),
 ];
 
 /**

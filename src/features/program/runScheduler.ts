@@ -331,7 +331,11 @@ interface LongLadder {
 }
 
 const KM_LADDER: LongLadder = {
-  tiers: LONG_RUN_TIERS.map((t) => ({ id: t.id, size: t.km, minutes: t.minutes })),
+  tiers: LONG_RUN_TIERS.map((t) => ({
+    id: t.id,
+    size: t.km,
+    minutes: t.minutes,
+  })),
   inTime: false,
 };
 
@@ -413,9 +417,7 @@ function backToBackSlotOf(
       slots.includes(d) &&
       weekSchedule.find((day) => day.day === d)?.type === "run"
   );
-  return (
-    open.find((d) => d === 0 || d === 6) ?? open[0] ?? null
-  );
+  return open.find((d) => d === 0 || d === 6) ?? open[0] ?? null;
 }
 
 /**
@@ -498,6 +500,10 @@ function isRaceBlockInputs(value: unknown): value is RaceBlockInputs {
     typeof v.heldLongKm === "number" &&
     Number.isFinite(v.heldLongKm) &&
     v.heldLongKm >= 0 &&
+    (v.heldLongMinutes === undefined ||
+      (typeof v.heldLongMinutes === "number" &&
+        Number.isFinite(v.heldLongMinutes) &&
+        v.heldLongMinutes >= 0)) &&
     (v.qualityFrom === undefined ||
       (typeof v.qualityFrom === "string" &&
         /^\d{4}-\d{2}-\d{2}$/.test(v.qualityFrom)))
@@ -518,6 +524,15 @@ function easyVariantOf(id: string): { plain: string; suffix: string } {
  *  the base 30, for a variant with no tier under it, or for a run that is
  *  not one of the ladder's easy runs. */
 function easyTierBelow(id: string): string | null {
+  // Run26 (2): a back-to-back run gives way a rung of its own at a time,
+  // and at its shortest, an hour, has nothing under it.
+  const backToBack = BACK_TO_BACK_MINUTES.findIndex(
+    (m) => backToBackId(m) === id
+  );
+  if (backToBack >= 0)
+    return backToBack > 0
+      ? backToBackId(BACK_TO_BACK_MINUTES[backToBack - 1])
+      : null;
   const { plain, suffix } = easyVariantOf(id);
   const at = EASY_RUN_TIERS.findIndex((tier) => tier.id === plain);
   if (at <= 0) return null;
@@ -1201,7 +1216,9 @@ const RETURN_EASY_MINUTES = 20;
 /** An easy tier's minutes, by its id (the base 30 for anything else). */
 function tierMinutesOfEasy(id: string): number {
   return (
-    EASY_RUN_TIERS.find((tier) => tier.id === id)?.minutes ?? EASY_BASE_MINUTES
+    EASY_RUN_TIERS.find((tier) => tier.id === id)?.minutes ??
+    BACK_TO_BACK_MINUTES.find((m) => backToBackId(m) === id) ??
+    EASY_BASE_MINUTES
   );
 }
 
@@ -2016,17 +2033,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   ): RaceBlockInputs | undefined => {
     if (unkept && !input.recentRuns) return undefined;
     let held = heldLongKm;
+    let heldMinutes = kept?.heldLongMinutes ?? 0;
     for (const run of weeks[0] ?? [])
-      if (run.type === "long")
-        held = Math.max(
-          held,
-          RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config
-            ?.targetDistanceKm ?? 0
-        );
+      if (run.type === "long") {
+        const config = RUN_TEMPLATES.find(
+          (t) => t.id === run.templateId
+        )?.config;
+        held = Math.max(held, config?.targetDistanceKm ?? 0);
+        if (config?.timeOnFeet)
+          heldMinutes = Math.max(
+            heldMinutes,
+            config.targetDurationMinutes ?? 0
+          );
+      }
     return {
       startingPoint,
       runsPaceSPerKm,
       heldLongKm: held,
+      // Run26 (2): a plan in time keeps its own (`peakLong`).
+      ...(ladder.inTime ? { heldLongMinutes: heldMinutes } : {}),
       ...(beginnerQualityFrom !== null
         ? { qualityFrom: beginnerQualityFrom }
         : {}),
@@ -2072,7 +2097,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      clamps them to its time: an ultra's own (`ULTRA_LONG_RUN_MAX_MINUTES`),
      a trail marathon's three hours, a shorter trail race's 150 minutes. */
   const inMinutes = (km: number) =>
-    (km * (blockPace ?? NOMINAL_LONG_PACE_S_PER_KM) * climbEffortFactor(input.raceGoal)) /
+    (km *
+      (blockPace ?? NOMINAL_LONG_PACE_S_PER_KM) *
+      climbEffortFactor(input.raceGoal)) /
     60;
   const longCeiling: LongRunCeiling | null = ladder.inTime
     ? {
@@ -2088,8 +2115,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const baseLong = ladder.inTime
     ? inMinutes(config.baseLongKm)
     : config.baseLongKm;
+  /* A plan in time never peaks under the long run its block has held
+     (`RaceBlockInputs.heldLongMinutes`), so a pace confirmed mid-block,
+     which sizes the block shorter, does not take back a long run already
+     run, as the marathon's ceiling does not (Run24 (1)). */
   const peakLong = ladder.inTime
-    ? inMinutes(config.peakLongKm)
+    ? Math.max(inMinutes(config.peakLongKm), kept?.heldLongMinutes ?? 0)
     : config.peakLongKm;
   /* Run24 (2), deep dive D3: a block starts from the runner's own week
      where it is above the plan's base (`OwnWeek`). Not a new runner's
@@ -2267,12 +2298,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const baseLongRung = ladder.tiers.findIndex(
     (t) =>
       t.id ===
-      longTierForKm(
-        baseLong,
-        input.easyPaceSPerKm ?? null,
-        longCeiling,
-        ladder
-      )
+      longTierForKm(baseLong, input.easyPaceSPerKm ?? null, longCeiling, ladder)
   );
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
    *  behind the runner has a negative `offset`: the taper's walk of the
@@ -2537,8 +2563,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          of runway, who needs a long run that PROGRESSES within a safe
          ceiling. Capping peak at base keeps the existing ramp machinery
          and simply lowers what it climbs toward. */
-      peakLongKm:
-        detrained && returnWeek === null ? baseLong : rampPeakLongKm,
+      peakLongKm: detrained && returnWeek === null ? baseLong : rampPeakLongKm,
       taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
       volume: tuning.volume,
       easyPaceSPerKm: ladder.inTime ? null : (input.easyPaceSPerKm ?? null),
@@ -2850,9 +2875,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
              intervals and a tempo (6 x 1 km, 90 minutes, 40 minutes of
              tempo on Monday to Wednesday). There the medium-long is held
              under the hour, so it is not one more demanding run beside
-             them. A Tropos heuristic in the RUN-EV-06 register. */
+             them. A Tropos heuristic in the RUN-EV-06 register. Run26 (2):
+             the same in a week with a back-to-back run, whose weekend is
+             two demanding days already. */
           const weekMidLongId =
-            secondQualityHere &&
+            (secondQualityHere || b2bDay !== null) &&
             midLongDemanding &&
             easyOrder.length > 0 &&
             !clearOf(easyOrder[0], [longSlot, ...pairDays, ...qualitySlots])
@@ -2879,17 +2906,26 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // Skip quality this week — all easy; first slot carries the
           // medium-long (RUN-EV-11), the second gains strides
           // (WAVE1-STRIDES).
-          easyDaysInFillOrder({
+          const easyOrder = easyDaysInFillOrder({
             easyDays: remaining,
             demandingDays: [longSlot, ...pairDays],
             mediumLongDemanding: midLongDemanding,
-          }).forEach((d, i) =>
+          });
+          // Run26 (2): a back-to-back week's medium-long, as above.
+          const weekMidLongId =
+            b2bDay !== null &&
+            midLongDemanding &&
+            easyOrder.length > 0 &&
+            !clearOf(easyOrder[0], [longSlot, ...pairDays])
+              ? easyTierForMinutes(CROWDED_MEDIUM_LONG_MINUTES)
+              : midLongId;
+          easyOrder.forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
                 templateId:
                   i === 0
-                    ? midLongId
+                    ? weekMidLongId
                     : i === 1 && input.recentLayoff !== "detrained"
                       ? stridesRunOf(easyId)
                       : easyId,
@@ -3495,6 +3531,7 @@ export function recoveryWeeksForDistance(distance: RaceDistance): number {
     case "half":
       return 3;
     case "marathon":
+      return 4;
     // Run26 (2): a 50K the marathon's four weeks, a 50 miler and a 100K
     // five (`RECOVERY_STEPS`). Tropos heuristics.
     case "50k":
