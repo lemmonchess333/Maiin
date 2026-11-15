@@ -1408,9 +1408,10 @@ describe("VelocityKalmanFilter — a gap in the fixes", () => {
 // ── Moving time: pauses are not running ──────
 // A pause (manual or auto) and the start countdown stop the run's clock;
 // useGPS records nothing while it is stopped and stamps every later point
-// with the time held (`pausedMs`). Splits, best efforts, the live pace and
-// the ghost all read the MOVING clock, as `duration` always has — Strava's
-// splits and best efforts do the same. `trace()` builds that shape.
+// with the time held (`pausedMs`). Splits, the live pace and the ghost read
+// the MOVING clock, as `duration` always has, and Strava's splits do the
+// same; best efforts are on elapsed time, as Strava's are (Run28 call 3).
+// `trace()` builds that shape.
 
 describe("calculateSplits — moving time", () => {
   it("leaves a 5-minute stop inside km 2 out of km 2's time", () => {
@@ -1459,34 +1460,41 @@ describe("calculateSplits — moving time", () => {
   });
 });
 
-describe("detectBestEfforts — moving time", () => {
-  it("never puts a pause's time into a best 1K", () => {
+describe("detectBestEfforts — elapsed time (Run28 call 3)", () => {
+  it("counts a stop inside a best 1K in its time, as Strava does", () => {
     /* 1.1 km at 5:00/km with a 5-minute stop at 0.5 km, so EVERY 1 km
-       stretch contains the stop. On the wall clock (the old code) the
-       best 1K was 10:00. */
+       stretch contains the stop. On the moving clock the best 1K read
+       5:00 to 5:30; on elapsed time it carries the stop. */
     const pts = trace(12, 100, 30, { 6: 300 });
     const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
       (e) => e.label === "1K"
     );
-    // 10 or 11 of the 100 m steps, whichever first covers 1 km: 5:00 or 5:30.
-    expect(oneK!.time).toBeGreaterThanOrEqual(300 - 1e-6);
-    expect(oneK!.time).toBeLessThanOrEqual(330 + 1e-6);
+    // 10 or 11 of the 100 m steps, whichever first covers 1 km, and the stop.
+    expect(oneK!.time).toBeGreaterThanOrEqual(300 + 300 - 1e-6);
+    expect(oneK!.time).toBeLessThanOrEqual(330 + 300 + 1e-6);
+  });
+
+  it("times a stretch on the wall clock whatever pausedMs says", () => {
+    const held = trace(12, 100, 30, { 6: 300 });
+    const unmarked = held.map(({ pausedMs: _held, ...p }) => p);
+    expect(detectBestEfforts(held, totalDistance(held))).toEqual(
+      detectBestEfforts(unmarked, totalDistance(held))
+    );
   });
 
   it("does not let a line drawn across a pause carry a 1K", () => {
     /* Paused, given a lift 2 km up the road, resumed. Nothing was recorded
-       while held, so the next point is 2 km from the last — with the
-       paused time taken out of the clock that line alone would be a 1K in
-       two seconds. Only what the two clock-running seconds either side of
-       the stop could cover (MAX_PLAUSIBLE_SPEED_MPS) is credited. On the
-       wall clock (the old code) that same line made the best 1K 10:02. */
+       while held, so the next point is 2 km from the last. Only what the
+       two clock-running seconds either side of the stop could cover
+       (MAX_PLAUSIBLE_SPEED_MPS) is credited, so the only stretch that
+       covers 1 km is the whole run, stop included. */
     const pts = trace(12, 100, 30, { 6: 600 }, { 6: 2000 }, { 6: 2 });
     const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
       (e) => e.label === "1K"
     );
     expect(oneK).toBeDefined();
-    expect(oneK!.time).toBeGreaterThan(280);
-    expect(oneK!.time).toBeLessThan(310);
+    // Ten steps of 30 s, the 2 s step and the 600 s held.
+    expect(oneK!.time).toBeCloseTo(10 * 30 + 2 + 600, 6);
     // …and the 2 km is not distance: 1.0 km run plus at most 2 s × 12 m/s.
     expect(totalDistance(pts)).toBeCloseTo(
       1000 + 2 * MAX_PLAUSIBLE_SPEED_MPS,

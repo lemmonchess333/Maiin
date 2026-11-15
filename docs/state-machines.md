@@ -82,6 +82,14 @@ code can hold that it should not, and what would make it explicit.
   can hold: the reducer in `countdown` with the hook not counting, were a
   Go's dispatch ever lost; the screen would sit on 1, and its tap would do
   nothing.
+- **Since 15 November 2026 (Run28 call 1).** With auto-pause off, the
+  page keeps what the finish replays auto-pause over (`movingEvidenceRef`:
+  the fixes it would have read, the recoveries, and whether the reducer was
+  ever `paused`), and the finish takes the moving time from the trace
+  (`src/lib/runMovingTime.ts`, `movingTimeOf`); every other run keeps its
+  timer. What it can hold: evidence from before a resume after the app
+  closed is gone, which the restored trace's hold covers, as such a run
+  keeps its timer.
 - **Explicit form.** The reducer's own header says its side effects move
   behind it in a follow-up. Candidate A3.
 

@@ -119,6 +119,11 @@ import { startDayKey } from "@/lib/startDay";
 import type { FinishedSession } from "@/lib/anniversaries";
 import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import { goalRaceRecord, isGoalRaceRun } from "@/lib/racePrediction";
+import {
+  elapsedSecondsOf,
+  goalRaceSeconds,
+  runTimeStat,
+} from "@/lib/runElapsed";
 import { useRacePredictionLog } from "@/hooks/useRacePredictionLog";
 import RacePredictionResult from "@/components/run/RacePredictionResult";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
@@ -736,62 +741,6 @@ export default function RunSummary() {
     );
   }, [state, historyRead, uid]);
 
-  // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
-  // is the candidate that can cross the threshold; dedupe it out of the
-  // historical copy by document id. These hooks run BEFORE the `if (!state)`
-  // early return to keep hook order stable.
-  const currentPaceCandidate = useMemo<PaceInsightRun | null>(() => {
-    if (!state || !saved || !savedRunId) return null;
-    const distance = editedDistanceMeters ?? state.distance;
-    const duration = state.elapsed;
-    return {
-      id: savedRunId,
-      distance,
-      duration,
-      completedAt: new Date(),
-      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
-      activityType: state.runConfig?.activityType ?? "freerun",
-      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
-      place: state.runConfig?.place ?? null,
-      isInvalid: false,
-      savedAnyway: false,
-      // What decides whether it was an effort (Pgm8 R1): a tempo by its
-      // work segments, unless they were pinned to a goal pace.
-      workPortion: state.workPortion ?? null,
-      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
-      // Run24 (4): a time trial is read by its work as a race.
-      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
-      // Run27 (14): a run started on a hot or extreme day never lowers
-      // the benchmark; a fast one still raises it.
-      ...(state.runConfig?.hotDay === true ? { hotDay: true } : {}),
-    };
-  }, [state, saved, savedRunId, editedDistanceMeters]);
-
-  const paceInsightRuns = useMemo(
-    () =>
-      currentPaceCandidate
-        ? [
-            currentPaceCandidate,
-            ...paceHistory.filter((run) => run.id !== currentPaceCandidate.id),
-          ]
-        : paceHistory,
-    [currentPaceCandidate, paceHistory]
-  );
-
-  const paceInsight = usePaceInsightFromRuns(paceInsightRuns, {
-    // Only after a VALID outdoor run is saved — never the invalid/save-anyway
-    // review path.
-    enabled:
-      saved &&
-      currentPaceCandidate !== null &&
-      isPaceEligible(currentPaceCandidate),
-    loading: paceHistoryLoading,
-    // Run24 (4): worked out for every account. Slower paces are one tap
-    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
-    // account sees them `locked` with the Pro page one tap away.
-    everyAccount: true,
-  });
-
   /* Fun distance comparison. Two constraints shape this.
      MEMOISED because `getDistanceComparison` picks at RANDOM among the
      eligible lines — recomputing in the render body reshuffles the text
@@ -857,6 +806,8 @@ export default function RunSummary() {
           pendingWeekRun.date ?? localDateString()
         ).raceGoal
       : null;
+  // `=== true`: a plain boolean, which the pace candidate below can memo on
+  // (React Compiler reads a call's result as something that may change).
   const isGoalRace =
     !!goalRace &&
     !!pendingWeekRun &&
@@ -866,8 +817,71 @@ export default function RunSummary() {
         date: pendingWeekRun.date ?? localDateString(),
       },
       goalRace
-    );
+    ) === true;
   const raceLog = useRacePredictionLog(user?.uid, isGoalRace);
+
+  // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
+  // is the candidate that can cross the threshold; dedupe it out of the
+  // historical copy by document id. These hooks run BEFORE the `if (!state)`
+  // early return to keep hook order stable.
+  const currentPaceCandidate = useMemo<PaceInsightRun | null>(() => {
+    if (!state || !saved || !savedRunId) return null;
+    const distance = editedDistanceMeters ?? state.distance;
+    const duration = state.elapsed;
+    const elapsedSeconds = elapsedSecondsOf(
+      state.recordingStartedAt,
+      state.finishedAt
+    );
+    return {
+      id: savedRunId,
+      distance,
+      duration,
+      completedAt: new Date(),
+      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
+      activityType: state.runConfig?.activityType ?? "freerun",
+      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
+      place: state.runConfig?.place ?? null,
+      isInvalid: false,
+      savedAnyway: false,
+      // What decides whether it was an effort (Pgm8 R1): a tempo by its
+      // work segments, unless they were pinned to a goal pace.
+      workPortion: state.workPortion ?? null,
+      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
+      // Run24 (4): a time trial is read by its work as a race.
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      // Run27 (14): a run started on a hot or extreme day never lowers
+      // the benchmark; a fast one still raises it.
+      ...(state.runConfig?.hotDay === true ? { hotDay: true } : {}),
+      // Run28 call 4: the goal race is read on its elapsed time.
+      ...(isGoalRace ? { goalRace: true } : {}),
+      ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
+    };
+  }, [state, saved, savedRunId, editedDistanceMeters, isGoalRace]);
+
+  const paceInsightRuns = useMemo(
+    () =>
+      currentPaceCandidate
+        ? [
+            currentPaceCandidate,
+            ...paceHistory.filter((run) => run.id !== currentPaceCandidate.id),
+          ]
+        : paceHistory,
+    [currentPaceCandidate, paceHistory]
+  );
+
+  const paceInsight = usePaceInsightFromRuns(paceInsightRuns, {
+    // Only after a VALID outdoor run is saved — never the invalid/save-anyway
+    // review path.
+    enabled:
+      saved &&
+      currentPaceCandidate !== null &&
+      isPaceEligible(currentPaceCandidate),
+    loading: paceHistoryLoading,
+    // Run24 (4): worked out for every account. Slower paces are one tap
+    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
+    // account sees them `locked` with the Pro page one tap away.
+    everyAccount: true,
+  });
 
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
@@ -915,6 +929,14 @@ export default function RunSummary() {
   const avgPaceSeconds =
     elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(state.points, distance);
+  /* Elapsed time (Run28 call 2): from the clock's start to the finish.
+     `elapsed` is the moving time. The goal race is timed on elapsed time
+     (call 4), as Strava times a run tagged Race. */
+  const recordedElapsed = elapsedSecondsOf(
+    state.recordingStartedAt,
+    state.finishedAt
+  );
+  const raceSeconds = goalRaceSeconds(elapsed, recordedElapsed);
 
   /* `distance` is metres throughout the run flow (useGPS.ts:118-120
      accumulates via Haversine in metres, RunSummary already converts
@@ -1119,7 +1141,9 @@ export default function RunSummary() {
       };
     }
     if (activityType === "race") {
-      const secs = elapsed ?? 0;
+      // The goal race's time is its elapsed time (Run28 call 4); any other
+      // race effort keeps its moving time.
+      const secs = (isGoalRace ? raceSeconds : elapsed) ?? 0;
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
       const s = secs % 60;
@@ -2007,7 +2031,7 @@ export default function RunSummary() {
           {/* The goal race against what Tropos predicted for it. */}
           <RacePredictionResult
             record={raceRecord}
-            actualS={elapsed}
+            actualS={raceSeconds}
             className="mx-4 mb-3"
           />
 
@@ -2018,7 +2042,7 @@ export default function RunSummary() {
           <div className="px-4 mb-4">
             <RunStatGrid
               stats={[
-                { label: "Time", value: formatTime(elapsed) },
+                runTimeStat(elapsed, recordedElapsed, formatTime),
                 {
                   label: "Average pace",
                   value: paceMinSec(avgPaceSeconds, unit),

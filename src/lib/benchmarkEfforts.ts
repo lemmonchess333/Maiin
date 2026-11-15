@@ -16,7 +16,8 @@
  *   template can't say; the type can.
  * - A race is a run started as one: the plan's race, or "Race" in the run
  *   chooser ("Race effort"), which is how a time trial or a parkrun is
- *   recorded (the app has no time-trial session). It is read whole.
+ *   recorded (the app has no time-trial session). It is read whole, on its
+ *   moving time, except the goal race, on its elapsed time (Run28 call 4).
  * - A tempo is read by its work segments (`workPortion`), its
  *   blocks without the warm-up and
  *   cool-down. One that recorded none, started from the chooser with no
@@ -39,6 +40,7 @@
  * drift apart.
  */
 import type { BenchmarkEffort } from "./runPaces";
+import { goalRaceSeconds } from "./runElapsed";
 import { isPaceEligible } from "./runStatsEligibility";
 import { isTimeTrialTemplateId, RUN_TEMPLATES } from "./workoutTemplates";
 
@@ -81,6 +83,12 @@ export interface EffortRun {
   templateId?: string;
   /** Run27 (14): started on a hot or extreme day (`RunConfig.hotDay`). */
   hotDay?: boolean;
+  /** The run was saved as the goal race (it keeps its `racePrediction`).
+   *  Its time is its elapsed time (Run28 call 4). */
+  goalRace?: boolean;
+  /** Seconds from the clock's start to the finish (`runElapsed.ts`), for a
+   *  run saved with both stamps. */
+  elapsedSeconds?: number;
 }
 
 /** The effort a run was, or null when it was none. */
@@ -106,11 +114,16 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     };
   }
   if (run.activityType === "race") {
-    if (!(run.distance >= MIN_RACE_METERS) || !(run.duration > 0)) return null;
+    // The goal race is read on its elapsed time, as Strava times a run
+    // tagged Race (Run28 call 4); any other race effort on its moving time.
+    const timeS = run.goalRace
+      ? goalRaceSeconds(run.duration, run.elapsedSeconds)
+      : run.duration;
+    if (!(run.distance >= MIN_RACE_METERS) || !(timeS > 0)) return null;
     return {
       kind: "race",
       distanceM: run.distance,
-      timeS: run.duration,
+      timeS,
       ...source,
     };
   }

@@ -480,12 +480,61 @@ describe("RunDetail — a goal race against its prediction", () => {
     );
   });
 
+  it("compares the race on its elapsed time, not its moving time (Run28 call 4)", () => {
+    // 6:00 moving; 7:10 from the clock's start to the finish.
+    const startMs = Date.UTC(2026, 9, 3, 8, 0, 0);
+    h.run = savedRun({
+      racePrediction: record([prediction]),
+      recordingStartedAt: { toMillis: () => startMs },
+      recordingEndedAt: { toMillis: () => startMs + 430_000 },
+    });
+    renderDetail();
+    expect(screen.getByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 5:40. You ran 7:10, 1:30 slower."
+    );
+  });
+
   it("says nothing for a goal race with no prediction, or any other run", () => {
     h.run = savedRun({ racePrediction: record([]) });
     renderDetail();
     // POSITIVE anchor: the rest of the page is there.
     expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
     expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+  });
+});
+
+describe("RunDetail — elapsed time beside moving time (Run28 call 2)", () => {
+  const startMs = Date.UTC(2026, 9, 3, 8, 0, 0);
+  /** The saved run (6:00 moving), stamped `wallS` seconds start to finish. */
+  const stamped = (wallS: number) =>
+    savedRun({
+      recordingStartedAt: { toMillis: () => startMs },
+      recordingEndedAt: { toMillis: () => startMs + wallS * 1000 },
+    });
+
+  it("shows the elapsed time when it is a minute or more over the moving time", () => {
+    h.run = stamped(360 + 60);
+    renderDetail();
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("6:00");
+    expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
+      "Elapsed time 7:00"
+    );
+    expect(screen.queryByText("Time")).toBeNull();
+  });
+
+  it("stays one figure under a minute apart, or without both stamps", () => {
+    for (const run of [stamped(360 + 59), savedRun()]) {
+      h.run = run;
+      renderDetail();
+      expect(screen.getByText("Time").nextElementSibling).toHaveTextContent(
+        "6:00"
+      );
+      expect(screen.queryByText(/Elapsed time/)).toBeNull();
+      expect(screen.queryByText("Moving time")).toBeNull();
+      cleanup();
+    }
   });
 });
 

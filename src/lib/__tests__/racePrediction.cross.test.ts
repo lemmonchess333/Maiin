@@ -11,7 +11,9 @@
  * 2. What the report reads. The operator report
  *    (`functions/scripts/report-race-predictions.js`) scores the record the
  *    app saves on the run (`runDocument`); if the shape drifts, the report
- *    reads nothing and says so only as zero races.
+ *    reads nothing and says so only as zero races. It scores the race's
+ *    time as the app compares it (Run28 call 4): its elapsed time from the
+ *    two stamps, else its duration (`runElapsed.ts`).
  */
 import { describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
@@ -28,6 +30,8 @@ import {
   type GoalRace,
 } from "../racePrediction";
 import { runDocument, type FinishedRun } from "../runCompletion";
+import { elapsedSecondsOf, goalRaceSeconds } from "../runElapsed";
+import { parseSavedRun } from "../savedRuns";
 import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
 
 const require_ = createRequire(import.meta.url);
@@ -118,9 +122,21 @@ describe("the record the app saves is the one the report scores", () => {
     now: new Date("2027-01-04T08:00:00"),
   });
   const start = new Date("2027-03-28T09:00:00");
-  const finished = (elapsed: number): FinishedRun => ({
+  /** The race with `elapsed` seconds of moving time, and with the clock's
+   *  start and the finish stamped `wall` seconds apart (plus a part of a
+   *  second each), or neither stamp. */
+  const finished = (
+    elapsed: number,
+    wall: number | null = null
+  ): FinishedRun => ({
     points: [],
     startedAt: start.getTime(),
+    ...(wall !== null
+      ? {
+          recordingStartedAt: start.getTime() + 400,
+          finishedAt: start.getTime() + 400 + wall * 1000 + 700,
+        }
+      : {}),
     distance: 10_040,
     elapsed,
     avgPaceSeconds: elapsed / 10.04,
@@ -156,12 +172,82 @@ describe("the record the app saves is the one the report scores", () => {
       });
       const result = racePredictionResult(
         saved.racePrediction,
-        saved.duration
+        goalRaceSeconds(
+          saved.duration,
+          elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
+        )
       )!;
       const pct = report.percentError(predicted, entry!.ranS);
       // Slower than predicted is a positive gap and a positive error.
       expect(Math.sign(pct)).toBe(Math.sign(result.gapS));
       expect(pct).toBeCloseTo((100 * result.gapS) / result.actualS, 10);
+    }
+  );
+});
+
+describe("the race's time: the report and the app read the same elapsed time (Run28 call 4)", () => {
+  const goal: GoalRace = { distance: "10k", targetDate: RACE_DAY };
+  const start = new Date("2027-03-28T09:00:00");
+  const record = goalRaceRecord(null, goal, start.getTime());
+  const race = (moving: number, wall: number | null): FinishedRun => ({
+    points: [],
+    startedAt: start.getTime(),
+    ...(wall !== null
+      ? {
+          recordingStartedAt: start.getTime() + 400,
+          finishedAt: start.getTime() + 400 + wall * 1000 + 700,
+        }
+      : {}),
+    distance: 10_040,
+    elapsed: moving,
+    avgPaceSeconds: moving / 10.04,
+    calories: 600,
+    elevationGain: 20,
+    splits: [],
+    runConfig: null,
+    notes: "",
+    relativeEffort: null,
+    paceVerdictTone: null,
+    isInvalid: false,
+    invalidReason: null,
+    routeQuality: null,
+    shoeId: null,
+    bestEfforts: [],
+    racePrediction: record,
+  });
+
+  it.each([
+    // Moving 49:10, 50:40 from start to finish: the race is 50:40.
+    { moving: 2950, wall: 3040, ran: 3040 },
+    // No stops: the two agree to the second.
+    { moving: 3000, wall: 3000, ran: 3000 },
+    // Saved without the stamps: its duration.
+    { moving: 3127, wall: null, ran: 3127 },
+  ])(
+    "moving $moving s, stamped $wall s apart: ran $ran s",
+    ({ moving, wall, ran }) => {
+      const saved = runDocument(
+        race(moving, wall),
+        new Date(start.getTime() + 4000 * 1000)
+      );
+      expect(saved.duration).toBe(moving);
+      // The report, reading the document as the server stores it…
+      const read = JSON.parse(JSON.stringify(saved));
+      expect(report.goalRaceEntry(read)!.ranS).toBe(ran);
+      // …the run's page, reading the saved stamps…
+      expect(
+        goalRaceSeconds(
+          saved.duration,
+          elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
+        )
+      ).toBe(ran);
+      // …and the saved-run reader the benchmark derive reads.
+      const parsed = parseSavedRun("race", {
+        ...saved,
+        completedAt: saved.completedAt,
+      })!;
+      expect(parsed.goalRace).toBe(true);
+      expect(goalRaceSeconds(parsed.duration, parsed.elapsedSeconds)).toBe(ran);
     }
   );
 });

@@ -73,6 +73,11 @@ import {
   type PointRange,
 } from "@/lib/segments";
 import { parseGoalRaceRecord } from "@/lib/racePrediction";
+import {
+  elapsedSecondsOf,
+  goalRaceSeconds,
+  runTimeStat,
+} from "@/lib/runElapsed";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
@@ -301,6 +306,13 @@ export default function RunDetail() {
       return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
+  /* Elapsed time (Run28 call 2): from the clock's start to the finish, as
+     the run was stamped; `duration` is the moving time. The goal race is
+     timed on elapsed time (call 4). */
+  const recordedElapsed = elapsedSecondsOf(
+    run.recordingStartedAt,
+    run.recordingEndedAt
+  );
 
   /* The run's name, as it was saved and posted (`runName.ts`). A run
      saved before runs were named reads as its type. A named treadmill
@@ -587,7 +599,7 @@ export default function RunDetail() {
 
         <RunStatGrid
           stats={[
-            { label: "Time", value: formatTime(run.duration) },
+            runTimeStat(run.duration ?? 0, recordedElapsed, formatTime),
             {
               label: "Average pace",
               value: paceMinSec(avgPace, unit),
@@ -610,7 +622,7 @@ export default function RunDetail() {
             finish screen showed it (`racePrediction` on the run). */}
         <RacePredictionResult
           record={parseGoalRaceRecord(run.racePrediction)}
-          actualS={run.duration}
+          actualS={goalRaceSeconds(run.duration, recordedElapsed)}
         />
 
         <HeartRateSummaryCard summary={run.heartRate} />

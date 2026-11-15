@@ -143,6 +143,11 @@ import {
   stepAutoPause,
   type AutoPauseState,
 } from "@/lib/runAutoPause";
+import {
+  movingTimeOf,
+  type MovingFix,
+  type RecoveryWindow,
+} from "@/lib/runMovingTime";
 import { useRunMotion } from "@/hooks/useRunMotion";
 import { useStartCountdown } from "@/hooks/useStartCountdown";
 import StartCountdown from "@/components/run/StartCountdown";
@@ -264,6 +269,19 @@ function sessionSegmentsFor(
   return config.activityType === "intervals" && config.intervals
     ? segmentsFromIntervals(config.intervals, unit, seed)
     : null;
+}
+
+/** What the finish replays auto-pause over when it was off (Run28 call 1,
+ *  `runMovingTime.ts`): the fixes, the recoveries, and whether the run was
+ *  ever paused by hand. */
+interface MovingEvidence {
+  fixes: MovingFix[];
+  recoveries: RecoveryWindow[];
+  pausedByHand: boolean;
+}
+
+function noMovingEvidence(): MovingEvidence {
+  return { fixes: [], recoveries: [], pausedByHand: false };
 }
 
 function discardStoredSession(
@@ -519,6 +537,8 @@ export default function Run() {
   // The instant the run's clock started (Apple Health's workout start), or
   // null until it has: a GPS run's clock waits for its first good fix.
   const recordingStartedAtRef = useRef<number | null>(null);
+  // What the finish replays auto-pause over, with it off (Run28 call 1).
+  const movingEvidenceRef = useRef<MovingEvidence>(noMovingEvidence());
   const identityRef = useRef<RunSessionIdentity | null>(null);
   const finishedRef = useRef(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -1284,6 +1304,7 @@ export default function Run() {
     finishedRef.current = false;
     startedAtRef.current = startedAt;
     recordingStartedAtRef.current = null;
+    movingEvidenceRef.current = noMovingEvidence();
     setActiveSessionId(identity.sessionId);
     watchRevisionRef.current = 0;
     watchConnectedRef.current = false;
@@ -1491,7 +1512,7 @@ export default function Run() {
       ? { ...config, hotDay: true }
       : config;
 
-  const keepFinishedRun = (finish: StoredRunFinish) => {
+  const keepFinishedRun = (finish: StoredRunFinish, points: GPSPoint[]) => {
     const uid = profile?.uid;
     if (!uid || !runConfig || startedAtRef.current === null) return false;
     if (phase !== "active" && phase !== "paused") return false;
@@ -1506,7 +1527,8 @@ export default function Run() {
         : {}),
       accumulatedSeconds: timer.getAccumulatedSeconds(),
       isRunning: false,
-      points: gps.getPoints(),
+      // The trace the review reads, its moving time's holds in it.
+      points,
       lastWriteAt: Date.now(),
       phase: "finished",
       finish,
@@ -1621,6 +1643,9 @@ export default function Run() {
     }
     startedAtRef.current = resumePrompt.startedAt;
     recordingStartedAtRef.current = resumePrompt.recordingStartedAt ?? null;
+    // Nothing before the app closed was kept: the restored trace's hold
+    // keeps its timer (`runMovingTime.ts`).
+    movingEvidenceRef.current = noMovingEvidence();
     const identity =
       resumePrompt.identity ??
       createRunSessionIdentity(
@@ -2041,6 +2066,37 @@ export default function Run() {
     };
   }, []);
 
+  /* Run28 call 1: with auto-pause off, the finish replays the GPS-only
+     auto-pause rule over the run (`runMovingTime.ts`), so it keeps what
+     that rule reads: every fix the screen saw while the clock ran, as
+     auto-pause would have read it (`gps.currentPoint`), when the plan was
+     in a recovery, which is never stopped, and whether the run was ever
+     paused by hand, which keeps its timer. In memory only. */
+  const movingFix = gps.currentPoint;
+  const keepsMovingFixes =
+    phase === "active" && !runConfig?.autoPause && isOutdoorGpsRun(runConfig);
+  useEffect(() => {
+    if (!keepsMovingFixes || !movingFix) return;
+    const fixes = movingEvidenceRef.current.fixes;
+    const last = fixes.at(-1);
+    if (last && movingFix.timestamp <= last.timestamp) return;
+    fixes.push({
+      timestamp: movingFix.timestamp,
+      speed: movingFix.speed,
+      accuracy: movingFix.accuracy,
+    });
+  }, [keepsMovingFixes, movingFix]);
+  useEffect(() => {
+    const windows = movingEvidenceRef.current.recoveries;
+    const open = windows.at(-1);
+    if (inRecovery && (!open || open.to !== null))
+      windows.push({ from: Date.now(), to: null });
+    else if (!inRecovery && open && open.to === null) open.to = Date.now();
+  }, [inRecovery]);
+  useEffect(() => {
+    if (phase === "paused") movingEvidenceRef.current.pausedByHand = true;
+  }, [phase]);
+
   /* The trace's clock follows the run's. While the run's clock is stopped
      — a pause, an auto-pause — useGPS records nothing
      and stamps the next point with the time held, so splits, best efforts
@@ -2211,7 +2267,23 @@ export default function Run() {
     // RunSummary with its original run ID and stopped clock.
     const finishedAt = Date.now();
     const finalDistance = distanceOverride ?? gps.distance;
-    const points = requiresManualDistance(runConfig) ? [] : gps.getPoints();
+    /* The run's moving time (Run28 call 1): with auto-pause off, read from
+       its trace, whose points then carry the stops it would have paused
+       for; otherwise its timer. The summary, the save and the post all
+       read these points and seconds. */
+    const evidence = movingEvidenceRef.current;
+    const moving = movingTimeOf({
+      points: requiresManualDistance(runConfig) ? [] : gps.getPoints(),
+      fixes: evidence.fixes,
+      recoveries: evidence.recoveries,
+      startedAt: recordingStartedAtRef.current,
+      finishedAt,
+      elapsedSeconds: timer.elapsed,
+      autoPause: !!runConfig?.autoPause,
+      outdoorGps: isOutdoorGpsRun(runConfig),
+      pausedByHand: evidence.pausedByHand,
+    });
+    const points = moving.points;
 
     // PR H (audit P1 #9): compute route-quality metrics at finish.
     // Only meaningful for outdoor GPS runs — treadmill / manual
@@ -2236,7 +2308,7 @@ export default function Run() {
       finishedAt,
       watchCompanionUsed: watchConnectedRef.current,
       distance: finalDistance,
-      elapsed: timer.elapsed,
+      elapsed: moving.seconds,
       splits: calculateSplits(points, SPLIT_LAP_IS_METRIC),
       elevationGain: totalElevationGain(points),
       intervalData:
@@ -2251,7 +2323,7 @@ export default function Run() {
     };
     const previousRevision = watchRevisionRef.current;
     if (watchEligible && identityRef.current) watchRevisionRef.current += 1;
-    const persisted = keepFinishedRun(finish);
+    const persisted = keepFinishedRun(finish, points);
     if (requireDurable && !persisted) {
       watchRevisionRef.current = previousRevision;
       return false;

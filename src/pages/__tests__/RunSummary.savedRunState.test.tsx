@@ -1552,6 +1552,44 @@ describe("RunSummary — heart rate from a sensor on a treadmill run", () => {
   });
 });
 
+describe("RunSummary — elapsed time beside moving time (Run28 call 2)", () => {
+  /** The saved receipt (25:00 moving), stamped `wall` seconds apart. */
+  const stamps = (wall: number) => {
+    const startedAt = Date.now() - 3600_000;
+    return {
+      recordingStartedAt: startedAt,
+      finishedAt: startedAt + wall * 1000,
+    };
+  };
+
+  it("shows the elapsed time a minute or more over the moving time", async () => {
+    renderSummary(stamps(1500 + 60));
+    expect(
+      (await screen.findByText("Moving time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
+      "Elapsed time 26:00"
+    );
+  });
+
+  it("stays one figure under a minute apart", async () => {
+    renderSummary(stamps(1500 + 59));
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Elapsed time/)).toBeNull();
+    expect(screen.queryByText("Moving time")).toBeNull();
+  });
+
+  it("stays one figure for a run saved without both stamps", async () => {
+    renderSummary({ recordingStartedAt: null });
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Elapsed time/)).toBeNull();
+  });
+});
+
 describe("RunSummary — the goal race against what Tropos predicted", () => {
   /* Race day is today: a run with no trace is today's. */
   const today = localDateString();
@@ -1589,9 +1627,11 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
     delete profile.raceGoal;
   });
 
-  /** A finished run, not yet saved, started as a race. */
-  function renderRun(distance: number, elapsed: number) {
+  /** A finished run, not yet saved, started as a race; `wall` seconds
+   *  from its clock's start to the finish, when stamped. */
+  function renderRun(distance: number, elapsed: number, wall?: number) {
     const { savedRun: _receipt, ...run } = savedRun();
+    const startedAt = Date.now() - 4 * 3600_000;
     return render(
       <MemoryRouter
         initialEntries={[
@@ -1601,6 +1641,12 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
               ...run,
               distance,
               elapsed,
+              ...(wall !== undefined
+                ? {
+                    recordingStartedAt: startedAt,
+                    finishedAt: startedAt + wall * 1000,
+                  }
+                : {}),
               runConfig: { ...run.runConfig, activityType: "race" },
             },
           },
@@ -1639,6 +1685,25 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
         ],
       },
     });
+  });
+
+  it("times the race on its elapsed time, and its pace on the moving time (Run28 call 4)", async () => {
+    // 49:10 moving, 50:40 from the clock's start to the finish.
+    renderRun(10_050, 2950, 3040);
+    expect(await screen.findByText(/Tropos predicted/)).toHaveTextContent(
+      "Tropos predicted 50:02. You ran 50:40, 0:38 slower."
+    );
+    // The race's own figure is its elapsed time…
+    expect(
+      screen.getByText(/^Race ·/).previousElementSibling
+    ).toHaveTextContent("50:40");
+    // …and the stats keep the moving time, the elapsed time beside it.
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("49:10");
+    expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
+      "Elapsed time 50:40"
+    );
   });
 
   it("says nothing and keeps nothing for a run on race day that was not the race", async () => {

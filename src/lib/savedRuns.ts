@@ -45,6 +45,7 @@ import {
 import { sampleRoute, type RouteCoordinate } from "./routeSegments";
 import { pinnedWorkPace, type SessionSegment } from "./runSegments";
 import { isTreadmillRun } from "./runGuards";
+import { elapsedSecondsOf } from "./runElapsed";
 import type { RunPlace } from "@/types/run";
 
 export interface RunSummaryItem {
@@ -127,6 +128,13 @@ export interface SavedRun extends RunSummaryItem {
    *  never lowers a benchmark (`heatHoldsBenchmark`). Absent on any other
    *  day, and for a run whose weather could not be read. */
   hotDay?: boolean;
+  /** Run28: seconds from the clock's start to the finish,
+   *  `recordingEndedAt` less `recordingStartedAt` (`runElapsed.ts`); absent
+   *  for a run saved without both. `duration` is the moving time. */
+  elapsedSeconds?: number;
+  /** Run28 call 4: the run was saved as the goal race, so it keeps its
+   *  `racePrediction`, and its time is its elapsed time. */
+  goalRace?: boolean;
 }
 
 /**
@@ -226,6 +234,10 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
   const bestEfforts = bestEffortsOf(data.bestEfforts);
+  const elapsedSeconds = elapsedSecondsOf(
+    data.recordingStartedAt,
+    data.recordingEndedAt
+  );
 
   return {
     id,
@@ -286,6 +298,8 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
       pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
     ...(data.runConfig?.hotDay === true ? { hotDay: true } : {}),
     ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
+    ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
+    ...(data.racePrediction?.v === 1 ? { goalRace: true } : {}),
   };
 }
 
