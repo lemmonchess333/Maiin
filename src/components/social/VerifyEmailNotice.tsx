@@ -26,7 +26,7 @@ import {
 interface VerifyEmailNoticeProps {
   /** The verb being held: "post" for shares and space posts, "comment" for
    *  the comment sheets. */
-  action?: "post" | "comment";
+  action?: "post" | "comment" | "make a segment";
   /** Reload + token refresh; resolves true once the account reads verified. */
   onRecheck: () => Promise<boolean>;
 }

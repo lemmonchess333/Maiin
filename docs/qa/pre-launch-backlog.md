@@ -834,6 +834,18 @@ deploy, two real accounts and a real run outdoors can confirm the rest.
       that made a segment another account has run. Passing: the segment is
       gone from the other account's run page and its efforts on it are
       gone in the console (`users/{other}/segmentEfforts`).
+- [ ] **Making one on the phone.** On a saved outdoor run's page, tap
+      Make a segment. Passing: the page scrolls to the map, the stretch is
+      drawn over the route, a tap on the map moves the nearer end, both
+      sliders move with a thumb at 2× text, the length reads "Length …",
+      a stretch under 400 m says so and keeps Save off, and Save opens the
+      new segment's page with "Segment saved". The map's credit stays
+      visible throughout.
+- [ ] **A run's efforts after saving.** Run along the segment, save, and
+      open the run from the finish screen. Passing: within a few seconds a
+      Segments card appears with the time and "Your 2nd best" (or the
+      place it earned), and the row opens the segment's page with you on
+      its board.
 
 ## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
 
