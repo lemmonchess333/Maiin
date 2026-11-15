@@ -8,7 +8,7 @@ vi.mock("@/lib/firebase", () => ({
 import { useHomeData } from "../useHomeData";
 import { queueWeightEntry, flushQueuedWeights } from "@/lib/weightQueue";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 const today = localDateString();
 /** Today as Home hands it to useHomeData. */
@@ -56,7 +56,9 @@ it("shows the latest locally saved weight immediately, after reopening, and afte
 });
 it("keeps another account and today's reading separate from a queued past-day correction", async () => {
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
-  const yesterday = new Date();
+  // From the same day key the file uses for today, so a run across midnight
+  // cannot make "yesterday" land on that today.
+  const yesterday = parseLocalDate(today);
   yesterday.setDate(yesterday.getDate() - 1);
   queueWeightEntry("a", localDateString(yesterday), 81);
   seedFirestore({
