@@ -1,0 +1,4 @@
+# Each line added to this file on main runs the "Backfill Space sessions"
+# workflow (.github/workflows/backfill-space-sessions.yml) once, as
+# Actions → Run workflow does. Add a dated line saying why.
+2026-11-15 first run after Run27 call 11 (#3357) deployed; also reads the Functions logs for missing-index errors
