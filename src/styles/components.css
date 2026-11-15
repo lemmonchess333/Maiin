@@ -523,8 +523,17 @@ select.ds-input:focus {
   align-self: end;
   padding-right: min(var(--signin-clear), var(--signin-room));
 }
+/* The lifter's box has a width of its own: the flipbook's frame at 176px
+   tall, 121px (SignInFigure.test.tsx holds the two together). The grid's
+   auto column takes its width from this box, and must never ask the
+   drawing for it: the drawing is a box with an aspect ratio and a
+   percentage max-width (HeroMotion), and Safari's engine counts such a box
+   as 0px wide when a column measures it. On iPhone the column then closed
+   to nothing and only the light showed, as a sliver at the screen's
+   right edge. Both lengths go to nothing with `--signin-room`. */
 .signin-figure {
   position: relative;
+  width: min(121px, var(--signin-room));
   height: min(176px, var(--signin-room));
   display: flex;
   justify-content: center;
