@@ -11,6 +11,8 @@
  *   - reminders opted in
  *   - timezone known (null → SKIP — locked invariant: no overnight pings)
  *   - NOT logged today
+ *   - today is NOT one of the plan's rest days, which keep the streak with
+ *     no log (App1 Q32, `keptToday`)
  *   - NOT already nudged today (≤1 streak nudge/day)
  *
  * CRITICAL: "logged today" is derived from the streaks/data ACTIVE-DATE SET
@@ -19,7 +21,8 @@
  * logger IS active today but would be missed by lastActiveAt and get a wrong
  * nudge; passing the active-date set avoids that false positive.
  *
- * Hour-bucketing (send at ~19:00 local) is the CRON's job, not this predicate —
+ * Hour-bucketing (send at the person's chosen local hour, lib/reminderChoices.js)
+ * is the CRON's job, not this predicate —
  * this answers pure eligibility for the user's current local day.
  */
 
@@ -47,19 +50,18 @@ function localDateKeyInTz(nowUtc, timezone) {
 }
 
 /**
- * The streak logging today keeps, from streaks/data's certificate
- * (`anchorStreak` days ending on `anchorDate`; documents from before
- * 2026-10-20 carry only {currentStreak, lastActiveDate}). Kept when it ends
- * yesterday, or the day before: yesterday is then its one forgiven day,
- * bridged by a log today. Older is already broken, so 0.
- *
- * The stored `currentStreak` is the streak as shown, and the morning after a
- * rest day shows 0 (the today/yesterday rule), so a nudge gated on it was
- * skipped on exactly the evening it exists for. Gated on nothing but it, a
- * person who stopped coming back was nudged about a dead streak every day.
+ * The stored streak, from streaks/data's certificate (`anchorStreak` days
+ * ending on `anchorDate`; documents from before 2026-10-20 carry only
+ * {currentStreak, lastActiveDate}), and the last day it is kept through
+ * without another log. That is the certificate's own day, or later where
+ * the app saved `keptThrough`: the day the streak's span ends on, then the
+ * plan's rest days straight after it, since a planned rest day keeps the
+ * streak (App1 Q32, 13 November 2026). The server reads no plan for this:
+ * the app forecasts the rest days from the plan whenever it saves the
+ * certificate. Null with no streak stored.
  */
-function savableStreak(input, nowUtc) {
-  const { anchorStreak, anchorDate, timezone = null } = input || {};
+function storedStreak(input) {
+  const { anchorStreak, anchorDate, keptThrough } = input || {};
   const hasAnchor =
     Number.isFinite(anchorStreak) &&
     anchorStreak > 0 &&
@@ -67,17 +69,56 @@ function savableStreak(input, nowUtc) {
     DATE_KEY.test(anchorDate);
   const count = hasAnchor ? anchorStreak : input?.currentStreak;
   const endsOn = hasAnchor ? anchorDate : input?.lastActiveDate;
-  if (!Number.isFinite(count) || count <= 0 || typeof endsOn !== "string") {
-    return 0;
+  if (
+    !Number.isFinite(count) ||
+    count <= 0 ||
+    typeof endsOn !== "string" ||
+    !DATE_KEY.test(endsOn)
+  ) {
+    return null;
   }
-  // "now - 24h / 48h formatted in tz" stays on the right local calendar day
+  const through =
+    typeof keptThrough === "string" &&
+    DATE_KEY.test(keptThrough) &&
+    keptThrough > endsOn
+      ? keptThrough
+      : endsOn;
+  return { count, through };
+}
+
+/**
+ * The streak logging today keeps. Kept when it is kept through yesterday or
+ * the day before (yesterday is then its one forgiven day, bridged by a log
+ * today), or through today itself. Older is already broken, so 0.
+ *
+ * The stored `currentStreak` is the streak as shown, and the morning after a
+ * rest day shows 0 (the today/yesterday rule), so a nudge gated on it was
+ * skipped on exactly the evening it exists for. Gated on nothing but it, a
+ * person who stopped coming back was nudged about a dead streak every day.
+ */
+function savableStreak(input, nowUtc) {
+  const stored = storedStreak(input);
+  if (!stored) return 0;
+  // "now - 48h formatted in tz" stays on the right local calendar day
   // across DST shifts at any daytime send hour (as shouldSendFirstWeekNudge).
-  const yesterday = localDateKeyInTz(new Date(nowUtc.getTime() - DAY_MS), timezone);
   const dayBefore = localDateKeyInTz(
     new Date(nowUtc.getTime() - 2 * DAY_MS),
-    timezone
+    input?.timezone ?? null
   );
-  return endsOn === yesterday || endsOn === dayBefore ? count : 0;
+  if (!dayBefore) return 0;
+  return stored.through >= dayBefore ? stored.count : 0;
+}
+
+/**
+ * Whether the stored streak is kept through today without a log: today was
+ * logged when it was last saved, or today is one of the plan's rest days
+ * (`keptThrough`). Neither nudge asks for a log the streak does not need.
+ */
+function keptToday(input, nowUtc) {
+  const stored = storedStreak(input);
+  if (!stored) return false;
+  const localToday = localDateKeyInTz(nowUtc, input?.timezone ?? null);
+  return !!localToday && stored.through >= localToday;
 }
 
 /**
@@ -86,6 +127,7 @@ function savableStreak(input, nowUtc) {
  *   lastActiveDate?: string,     // streaks/data: its last active day
  *   anchorStreak?: number,       // streaks/data: the certificate's count
  *   anchorDate?: string,         // streaks/data: the day it ends on
+ *   keptThrough?: string,        // streaks/data: kept through, rest days ahead included
  *   remindersOptedIn?: boolean,
  *   timezone?: string | null,
  *   activeDateKeys?: string[],   // local YYYY-MM-DD days the user was active (streaks/data)
@@ -109,6 +151,7 @@ function shouldSendStreakNudge(input, nowUtc) {
   if (!localToday) return false; // skip-on-null-tz invariant
 
   if (activeDateKeys.includes(localToday)) return false; // already logged today
+  if (keptToday(input, nowUtc)) return false; // a rest day keeps it today
   if (lastNudgeDateKey === localToday) return false; // already nudged today
 
   return true;
@@ -136,7 +179,7 @@ function shouldSendStreakNudge(input, nowUtc) {
  *   - not already nudged today (≤1 push/day, shared marker with the
  *     regular nudge + recap suppression)
  *
- * Hour-bucketing (~19:00 local) stays the cron's job, as with
+ * Hour-bucketing (the chosen local hour) stays the cron's job, as with
  * shouldSendStreakNudge.
  */
 function shouldSendFirstWeekNudge(input, nowUtc) {
@@ -157,6 +200,8 @@ function shouldSendFirstWeekNudge(input, nowUtc) {
   if (!localToday) return false; // skip-on-null-tz invariant
 
   if (activeDateKeys.includes(localToday)) return false; // already logged today
+  // A rest day: "a quick log today keeps it going" would not be true.
+  if (keptToday(input, nowUtc)) return false;
   if (lastNudgeDateKey === localToday) return false; // already nudged today
 
   // Day-2 anchor: active yesterday (their first / isolated log day). The
@@ -175,6 +220,7 @@ function shouldSendFirstWeekNudge(input, nowUtc) {
 
 module.exports = {
   savableStreak,
+  keptToday,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,

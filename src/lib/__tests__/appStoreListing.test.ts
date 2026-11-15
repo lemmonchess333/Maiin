@@ -173,8 +173,14 @@ describe("App Store listing: claims the code can contradict", () => {
   });
 
   it("rates the app at the minimum age setup enforces", () => {
-    const minimum = read("../../pages/Onboarding.tsx").match(
-      /You need to be at least (\d+) to use Tropos/
+    // Setup's age gate is the year of birth's too-young line (App1 Q57),
+    // worded from bodyMetrics' AGE_YEARS.min.
+    expect(read("../../pages/Onboarding.tsx")).toContain("BIRTH_YEAR_MESSAGES");
+    expect(read("../age.ts")).toContain(
+      "You need to be at least ${AGE_YEARS.min} to use Tropos."
+    );
+    const minimum = read("../bodyMetrics.ts").match(
+      /export const AGE_YEARS = \{ min: (\d+),/
     );
     expect(minimum).not.toBeNull();
     expect(LISTING).toContain(`raise the rating to **${minimum![1]}+**`);

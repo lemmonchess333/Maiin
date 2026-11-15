@@ -183,7 +183,7 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 - [ ] On an iPhone, tick a set: the box should pop and the check draw once. Go back to an earlier exercise and the tick should not replay. Turn on Settings → Accessibility → Reduce Motion and repeat: nothing should animate.
 - [ ] On an iPhone, finish a workout that earns a new best or a badge. On the finish screen, Done should stay pinned above the home indicator while the page scrolls under it. With VoiceOver on, saving should put focus on Done.
 - [ ] On an iPhone, open Food on a day with a scanned meal. That row should show a small photo of the meal and the other rows their meal tile. Swipe the photo row to delete it and it should fold away smoothly.
-- [ ] Force-quit the app, turn on Low Data Mode or a weak signal, reopen, and go straight to Analytics. The grey placeholder should have the page's shape, and nothing should jump as the score and range card load. Repeat with a larger text size.
+- [ ] Force-quit the app, turn on Low Data Mode or a weak signal, reopen, and go straight to Progress. The grey placeholder should have the page's shape, and nothing should jump as the score and range card load. Repeat with a larger text size.
 
 ### The run screen in the training-engine pass
 
@@ -257,10 +257,8 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 
 ### The first-visit guide
 
-- [ ] On the iPhone sign up a new account, finish setup and tap Continue with Free: Home dims around the first card, the logo lifts into the card; each Next moves the light and the card fades in beside the next stop; the third stop scrolls to the Food card; Done scrolls back up and the logo returns to the header.
-- [ ] On an iPhone SE (or a mini with Display Zoom) run the walk on a new account: no card sits under the tab bar or the status bar, and on Food the hint sits above the food box, not over the tab bar.
-- [ ] Turn VoiceOver on and run the walk on a new account: at each stop VoiceOver reads the stop's title and text, and focus starts on Next and stays on it.
-- [ ] Turn on Settings → Accessibility → Motion → Reduce Motion and run the walk: the logo does not fly, the cards just fade.
+- [ ] On the iPhone sign up a new account and finish setup: Start my plan opens Today with no Pro page and no walk (Home's walk went with App1, 13 November), and "Your first week" lists only the first workout, and the first run for a runner.
+- [ ] On an iPhone SE (or a mini with Display Zoom), on a new account open Food: the hint sits above the food box, not over the tab bar.
 - [ ] On an account that already answered 'Count your steps' (either way), force-quit and reopen Tropos, then switch to another tab and back to Home: the steps prompt never appears, even for a moment.
 
 ### Run recording: pauses, each fix's own time, smoothed climb

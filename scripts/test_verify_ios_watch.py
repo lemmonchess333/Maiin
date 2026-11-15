@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import verify_ios_watch as verifier
 
 STANDARD_HEALTH = {
-    "NSHealthShareUsageDescription": "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.",
+    "NSHealthShareUsageDescription": "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session.",
     "NSHealthUpdateUsageDescription": "Tropos does not add workouts or any other data to Health.",
 }
 WATCH_HEALTH = {
@@ -18,7 +18,7 @@ WATCH_HEALTH = {
     "NSHealthUpdateUsageDescription": "Apple Watch asks this of any app that runs a workout session. The Watch saves no workout to Health.",
 }
 PILOT_HEALTH = {
-    "NSHealthShareUsageDescription": "Tropos reads your step count for Home, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.",
+    "NSHealthShareUsageDescription": "Tropos reads your daily step count to check your activity level, heart rate during Apple Watch runs if enabled, and its own exported workouts to avoid duplicates.",
     "NSHealthUpdateUsageDescription": "Tropos saves completed runs as Apple Health workouts when you turn on export, and may correct or remove workouts it previously added.",
 }
 

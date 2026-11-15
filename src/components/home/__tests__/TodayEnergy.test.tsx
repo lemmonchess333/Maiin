@@ -292,6 +292,26 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     ).toBeInTheDocument();
   });
 
+  it("says the day's fuel label, as Food's hero does (App1 Q29)", () => {
+    renderAt({
+      calories: 1200,
+      targets: { ...targets, fuelLabel: "Race week, carb load" },
+      postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
+    });
+    const label = screen.getByText("Race week, carb load");
+    // The day's line first, then what the session just done asks.
+    const nudge = screen.getByText(/40g protein to your target/i);
+    expect(
+      label.compareDocumentPosition(nudge) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("says no fuel label on a day without one", () => {
+    renderAt({ calories: 1200, targets: { ...targets, fuelLabel: null } });
+    expect(ring()).toBeInTheDocument();
+    expect(screen.queryByText(/carb load|fuel up|Taper/)).toBeNull();
+  });
+
   it("does not restate the activity breakdown Food's drill-down owns", () => {
     /* Food's nutrition breakdown carries the activity figures and the
        "already counted, no need to eat it back" sentence. The target this

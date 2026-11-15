@@ -68,7 +68,6 @@ const { computeRunMove, dateForDay, runMoveSourceSignature } = require("./runRes
 // Goal-prescription engine (pinned by a parity cross-test). The transform a
 // training block applies at start and un-applies at release.
 const {
-  BLOCK_AMNESTY_WEEKS,
   makeBlockId,
   represcribeWorkouts,
   toExperience,
@@ -677,7 +676,7 @@ const KIND_VALIDATORS = {
   },
 
   // Blk2 — start a training block. The block's DERIVED fields (id,
-  // goalBefore, amnesty, weeklyLiftTarget, createdAt) are all computed by the
+  // goalBefore, weeklyLiftTarget, createdAt) are all computed by the
   // reducer; only the user's actual choices cross the wire.
   startTrainingBlock(command, out) {
     assertKeys(
@@ -1506,10 +1505,9 @@ function transitionRunDay(state, command) {
  * Blk2 — start a training block (the transform lives in represcribe.js).
  *
  * The block's DERIVED state is computed here, not accepted: its id,
- * `goalBefore`, the amnesty counter, `weeklyLiftTarget` and `createdAt` all
- * come from server-read state plus the transaction's `now`, so a client
- * cannot grant itself amnesty weeks or claim a `goalBefore` that was never
- * its focus.
+ * `goalBefore`, `weeklyLiftTarget` and `createdAt` all come from
+ * server-read state plus the transaction's `now`, so a client cannot claim
+ * a `goalBefore` that was never its focus.
  */
 function startTrainingBlock(state, profile, command, now) {
   if (isPlainObject(state.trainingBlock)) {
@@ -1531,12 +1529,6 @@ function startTrainingBlock(state, profile, command, now) {
     durationWeeks: command.durationWeeks,
     startDate: command.startDate,
     goalBefore,
-    // Amnesty only where early misses are expected: the targets just moved,
-    // or the user is deliberately under-reaching.
-    amnestyWeeksLeft:
-      command.focus !== goalBefore || command.pace === "easing"
-        ? BLOCK_AMNESTY_WEEKS
-        : 0,
     weeklyLiftTarget: workouts.length,
     anchorExerciseIds: (command.anchorExerciseIds || []).slice(0, 3),
     why: command.why || "",
@@ -1792,7 +1784,10 @@ function applyDeloadWeekCommand(state, profile, command, now) {
       // SDK refuses to write (the whole deload failed for such a plan).
       runDays: hasRunDays ? state.runDays : [],
       currentPhase: state.currentPhase,
-      fatigueScore: state.fatigueScore,
+      // No `fatigueScore` (App1 Q24): nothing reads it. A stored plan's own
+      // copy rides along in `...state` and the sanitiser deletes it before
+      // the write; nothing here may hold `undefined`, which the Admin SDK
+      // refuses.
       appliedAt: now,
     },
     // Written only for a plan that has runs: `applyDeloadRunSwaps` passes a
@@ -1804,7 +1799,6 @@ function applyDeloadWeekCommand(state, profile, command, now) {
     // the next week's reset restores it whatever the snapshot's state.
     workouts: applyDeloadToWorkouts(state.workouts),
     currentPhase: "deload",
-    fatigueScore: 0,
   };
 }
 
@@ -1869,11 +1863,13 @@ function revertDeloadWeekCommand(state, command) {
     failedPrecondition("Undo the easier week first, then the deload week.");
   }
   // tx.set replaces the whole doc, so omitting the key deletes it.
+  // A snapshot from before App1 Q24 also holds `fatigueScore`; it is not
+  // read, and goes with the snapshot below. Reading it would write
+  // `undefined` for a snapshot that has none, which the Admin SDK refuses.
   const next = {
     ...state,
     workouts: snap.workouts,
     currentPhase: snap.currentPhase,
-    fatigueScore: snap.fatigueScore,
   };
   // Undo means undo. Restoring sets while leaving the runs stepped down
   // would tell the user they were back to normal while a third of their

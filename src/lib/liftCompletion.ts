@@ -35,6 +35,7 @@ import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import type { LiftUnit } from "@/lib/liftLoad";
 import {
   liftPostMoments,
+  prMoments,
   type LiftMomentFacts,
   type PostMoment,
 } from "@/lib/postMoments";
@@ -225,8 +226,9 @@ export interface FinishedLift {
   liftUnit?: LiftUnit;
   /** What the session's post says happened (Soc15): its new bests, the
    *  streak and the plan's week, as the workout screen and the plan knew
-   *  them at Finish. Read once the post is built, never saved on the
-   *  workout. */
+   *  them at Finish. Read once the post is built. Only the count of new
+   *  bests is saved on the workout (`newBests`), for the server's first_pr
+   *  badge (App1 Q33). */
   moments?: LiftMomentFacts;
 }
 
@@ -263,6 +265,9 @@ export async function completeLift(
     durationMinutes: finished.durationMinutes,
     bodyweightKg: finished.bodyweightKg,
   });
+  // The exercises that set a new best, as the finish screen lists them:
+  // onWorkoutCreated awards first_pr from it (App1 Q33).
+  const newBests = prMoments(finished.moments?.prs).length;
   const data = stripUndefined({
     date: liftSessionDay(finished.startedAt),
     exercises,
@@ -276,6 +281,7 @@ export async function completeLift(
     createdAt: Timestamp.now(),
     source: finished.source,
     completionId: finished.completionId,
+    ...(newBests > 0 ? { newBests } : {}),
     ...finished.extra,
   });
 

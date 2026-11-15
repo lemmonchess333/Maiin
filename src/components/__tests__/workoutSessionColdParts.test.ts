@@ -2,8 +2,9 @@
  * The workout screen's chunk holds what every session draws. What only
  * some sessions open, or only at the end, loads on its own: the finish
  * screen, Finish's question about today's swaps, an exercise's menu, the
- * exercise picker, the empty session's screen and the Plate-Club rule run
- * after a save (Mob2 call 14).
+ * exercise picker and the empty session's screen (Mob2 call 14). The
+ * Plate-Club rule that used to run after a save is the server's now
+ * (App1 Q33).
  * `check-dist-size` holds the chunk's size; this holds which modules stay
  * out of it, since one static import brings a sheet back in without the
  * size moving past its tolerance on the day it lands.
@@ -31,7 +32,6 @@ const COLD = [
   "@/components/workout/ExerciseMenuSheet",
   "@/components/workout/EmptySessionScreen",
   "@/components/program/ExercisePicker",
-  "@/features/streaks/liftWeightMilestones",
 ];
 
 describe("the workout screen's cold parts", () => {

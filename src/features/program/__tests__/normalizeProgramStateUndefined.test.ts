@@ -37,7 +37,6 @@ const baseState: ProgramState = {
   weekNumber: 1,
   splitType: "full_body",
   workouts: [],
-  fatigueScore: 0,
   updatedAt: Date.now(),
   settings: { autoProgression: true, smallPlates: false },
   weekHistory: [],
@@ -94,7 +93,6 @@ describe("normalizeProgramState — undefined-field hygiene (issue #845)", () =>
       weekNumber: 1,
       splitType: "full_body",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: Date.now(),
     } as ProgramState;
     const result = normalizeProgramState(partial, { primaryGoal: undefined });
