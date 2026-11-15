@@ -26,7 +26,11 @@ import { nativeLocationSource } from "./nativeLocationSource";
 /* Contracts live in locationTypes.ts (audit batch 3 cycle break) —
    imported for local use, re-exported for existing importers. */
 import type { LocationSource } from "./locationTypes";
-export type { LocationSource, LocationWatch } from "./locationTypes";
+export type {
+  LocationSource,
+  LocationWatch,
+  WatchPurpose,
+} from "./locationTypes";
 
 /**
  * Web Geolocation source — a thin pass-through over `navigator.geolocation`.
@@ -36,6 +40,8 @@ export const webLocationSource: LocationSource = {
   getCurrent(options, onFix, onError) {
     navigator.geolocation.getCurrentPosition(onFix, onError, options);
   },
+  /* The web's watch has one kind: a warm watch runs only once location is
+     allowed (useGpsWarmup), so it never asks either. */
   watch(options, onFix, onError) {
     const id = navigator.geolocation.watchPosition(onFix, onError, options);
     return {

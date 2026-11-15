@@ -83,17 +83,17 @@ function plan(args: {
   });
 }
 
+/* The distance ladder's long runs. Run26 (2): an ultra's or a trail
+   race's long runs in time on feet are a ladder of their own, which these
+   road plans never reach (`ultraTrailPlans.test.ts`). */
+const DISTANCE_LONG = RUN_TEMPLATES.filter(
+  (t) => t.type === "long" && !t.config.timeOnFeet
+);
 const LONG_KM_BY_ID = new Map(
-  RUN_TEMPLATES.filter((t) => t.type === "long").map((t) => [
-    t.id,
-    t.config.targetDistanceKm ?? 0,
-  ])
+  DISTANCE_LONG.map((t) => [t.id, t.config.targetDistanceKm ?? 0])
 );
 const LONG_MIN_BY_ID = new Map(
-  RUN_TEMPLATES.filter((t) => t.type === "long").map((t) => [
-    t.id,
-    t.estimatedDuration,
-  ])
+  DISTANCE_LONG.map((t) => [t.id, t.estimatedDuration])
 );
 const MIN_BY_ID = new Map(
   RUN_TEMPLATES.map((t) => [t.id, t.estimatedDuration])

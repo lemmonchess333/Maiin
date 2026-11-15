@@ -55,6 +55,7 @@ import type {
   ProgramState,
   ProgramSettings,
   ScheduledRunDay,
+  RaceDistance,
   RunPlan,
   SplitType,
   WorkoutDay,
@@ -72,7 +73,7 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
-import { firstFullWeekKey } from "./runPlanTiming";
+import { firstFullWeekKey, isUltraDistance } from "./runPlanTiming";
 import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
@@ -206,10 +207,12 @@ export interface PlanBuilderInput {
   newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars. */
     eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
     /** A2: optional goal finish time, seconds. Passed through to the
      *  profile; the scheduler does not consume it yet (goal-pace
      *  sessions are the follow-up slice). */
@@ -342,12 +345,15 @@ function buildWeekSchedule(
     | "weekSchedule"
     | "rollingGoal"
     | "existingState"
+    | "raceGoal"
   >
 ): ScheduleDay[] {
   return planWeekSchedule(
     input.liftDays,
     plannedRunDays(input),
-    input.weekSchedule
+    input.weekSchedule,
+    // Run26 (2): an ultra's long run and back-to-back run are a weekend's.
+    input.runMode === "race_prep" && isUltraDistance(input.raceGoal?.distance)
   );
 }
 

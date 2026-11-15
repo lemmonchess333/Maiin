@@ -641,10 +641,18 @@ export interface RaceBlockInputs {
   /** The longest long run the block has held so far, km: a marathon's
    *  ceiling never comes under it. */
   heldLongKm: number;
+  /** Run26 (2): the longest long run in time on feet the block has held,
+   *  minutes, in a plan in time: its peak never comes under it when a pace
+   *  confirmed mid-block sizes the block shorter. Absent elsewhere. */
+  heldLongMinutes?: number;
   /** A beginner's block: the first week that may hold quality, a week key,
    *  once the runs have shown it (`beginnerQualityWeek`). */
   qualityFrom?: string;
 }
+
+/** The goals a plan with no race date can have (Run24 (3)); its specs and
+ *  words are `rollingPlan.ts`'s. */
+export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
 
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
@@ -655,7 +663,7 @@ export interface RunPlan {
    *  (`generateRollingPlan`). Its goal, and its week, `currentWeek` from
    *  0. The profile stays on free running (no race goal, no starter
    *  goal); the plan is the programme's alone (`rollingGoalOf`). */
-  rollingGoal?: import("./rollingPlan").RollingGoal;
+  rollingGoal?: RollingGoal;
   /** A rolling plan's week: the Monday key of the week `currentWeek` is
    *  for, which the rollover moves on from when the week holds no run. */
   rollingWeekKey?: string;
@@ -670,7 +678,13 @@ export interface RunPlan {
   stageStartedWeek?: string;
   /** Calendar anchor for an intentionally empty race-training week. */
   emptyRunWeekKey?: string;
-  raceGoal?: { distance: string; targetDate: string; eventName?: string };
+  raceGoal?: {
+    distance: string;
+    targetDate: string;
+    eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
+  };
   totalWeeks?: number;
   currentWeek?: number;
   /** P2-1: true when totalWeeks fell below the ideal for the race
@@ -1277,5 +1291,15 @@ export type Experience = (typeof VALID_EXPERIENCE)[number];
 export const VALID_EQUIPMENT = ["full_gym", "home_gym", "minimal"] as const;
 export type Equipment = (typeof VALID_EQUIPMENT)[number];
 
-export const VALID_RACE_DISTANCE = ["5k", "10k", "half", "marathon"] as const;
+/** The road races a plan prepares for, 5K to marathon. */
+export const ROAD_RACE_DISTANCES = ["5k", "10k", "half", "marathon"] as const;
+export type RoadRaceDistance = (typeof ROAD_RACE_DISTANCES)[number];
+/** Run26 (2): the ultras a plan prepares for, 50K, 50 miles and 100K. 100
+ *  miles is left out until its own call. */
+export const ULTRA_RACE_DISTANCES = ["50k", "50mi", "100k"] as const;
+export type UltraRaceDistance = (typeof ULTRA_RACE_DISTANCES)[number];
+export const VALID_RACE_DISTANCE = [
+  ...ROAD_RACE_DISTANCES,
+  ...ULTRA_RACE_DISTANCES,
+] as const;
 export type RaceDistance = (typeof VALID_RACE_DISTANCE)[number];

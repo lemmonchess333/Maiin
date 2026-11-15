@@ -37,6 +37,9 @@ import {
   floatCue,
   hillDownCue,
   hillRepCue,
+  climbCue,
+  downhillCue,
+  walkUpCue,
   intervalRecoveryCue,
   intervalRepCue,
   pickUpCue,
@@ -283,6 +286,10 @@ export function stepHeadline(
 export interface IntervalStyle {
   repeatsAt?: RepeatsAt;
   uphill?: boolean;
+  /** Run26 (2): the climbs are comfortably hard, not hard. */
+  steadyClimbs?: boolean;
+  /** Run26 (2): the repeats go down a hill, with a walk back up. */
+  downhill?: boolean;
 }
 
 /** A race's name on a repeat's heading, by what the repeats are run at. */
@@ -309,7 +316,9 @@ export function segmentsFromIntervals(
       label: "Warm-up",
       instruction: style.uphill
         ? "Easy jogging, to the foot of a hill"
-        : "Easy jogging",
+        : style.downhill
+          ? "Easy jogging, to the top of a hill"
+          : "Easy jogging",
       target: { kind: "duration", seconds: shape.warmupDuration },
       cue: warmupCue(seed),
       eyebrow: EFFORT_EYEBROW.easy,
@@ -333,7 +342,31 @@ export function segmentsFromIntervals(
       ? EFFORT_EYEBROW.quick
       : EFFORT_EYEBROW.hard;
   for (let rep = 1; rep <= shape.reps; rep++) {
-    if (style.uphill) {
+    if (style.uphill && style.steadyClimbs) {
+      // Run26 (2): a trail plan's climbs, comfortably hard.
+      out.push({
+        type: "moderate",
+        label: `${workLabel(shape)} climb`,
+        instruction: `Climb ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.comfortablyHard} · CLIMB ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: climbCue(rep, shape.reps, seed + rep),
+      });
+    } else if (style.downhill) {
+      // Run26 (2): downhill repeats at a controlled, easy effort.
+      out.push({
+        type: "moderate",
+        label: `${workLabel(shape)} downhill`,
+        instruction: `Descent ${rep} of ${shape.reps}`,
+        eyebrow: `${EFFORT_EYEBROW.easy} · DOWNHILL ${rep}/${shape.reps}`,
+        target: { kind: "duration", seconds: shape.workDuration ?? 0 },
+        rep,
+        totalReps: shape.reps,
+        cue: downhillCue(rep, shape.reps, seed + rep),
+      });
+    } else if (style.uphill) {
       out.push({
         type: "hard",
         label: `${workLabel(shape)} uphill`,
@@ -379,38 +412,49 @@ export function segmentsFromIntervals(
     }
     if (rep < shape.reps) {
       out.push(
-        style.uphill
+        style.downhill
           ? {
               type: "recovery",
-              label: "Jog down",
-              instruction: "Easy jog or walk back down",
+              label: "Walk up",
+              instruction: "Walk back up the hill",
               target: { kind: "duration", seconds: shape.restDuration },
               rep,
               totalReps: shape.reps,
-              cue: hillDownCue(seed + rep),
-              eyebrow: `${EFFORT_EYEBROW.easy} · JOG DOWN`,
+              cue: walkUpCue(seed + rep),
+              eyebrow: `${EFFORT_EYEBROW.easy} · WALK UP`,
             }
-          : byFeel
+          : style.uphill
             ? {
                 type: "recovery",
-                label: "Easy",
-                instruction: "Easy running",
+                label: "Jog down",
+                instruction: "Easy jog or walk back down",
                 target: { kind: "duration", seconds: shape.restDuration },
                 rep,
                 totalReps: shape.reps,
-                cue: pickUpEaseCue(seed + rep),
-                eyebrow: `${EFFORT_EYEBROW.easy} · AFTER ${rep}/${shape.reps}`,
+                cue: hillDownCue(seed + rep),
+                eyebrow: `${EFFORT_EYEBROW.easy} · JOG DOWN`,
               }
-            : {
-                type: "recovery",
-                label: "Recover",
-                instruction: "Easy jog or walk",
-                target: { kind: "duration", seconds: shape.restDuration },
-                rep,
-                totalReps: shape.reps,
-                cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
-                eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
-              }
+            : byFeel
+              ? {
+                  type: "recovery",
+                  label: "Easy",
+                  instruction: "Easy running",
+                  target: { kind: "duration", seconds: shape.restDuration },
+                  rep,
+                  totalReps: shape.reps,
+                  cue: pickUpEaseCue(seed + rep),
+                  eyebrow: `${EFFORT_EYEBROW.easy} · AFTER ${rep}/${shape.reps}`,
+                }
+              : {
+                  type: "recovery",
+                  label: "Recover",
+                  instruction: "Easy jog or walk",
+                  target: { kind: "duration", seconds: shape.restDuration },
+                  rep,
+                  totalReps: shape.reps,
+                  cue: intervalRecoveryCue(rep, shape.reps, seed + rep),
+                  eyebrow: `${EFFORT_EYEBROW.easy} · AFTER REP ${rep}/${shape.reps}`,
+                }
       );
     }
   }

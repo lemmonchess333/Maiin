@@ -16,6 +16,7 @@ import {
   foldMotion,
   footState,
   gpsSpeed,
+  motionFrom,
   stepAutoPause,
   type AutoPauseReason,
   type AutoPauseState,
@@ -605,6 +606,51 @@ describe("the motion reading", () => {
     );
     expect(footState(r, ms(1), ms(0))).toBe("unknown");
     expect(footState(r, ms(1), ms(-40))).toBe("stopped");
+  });
+
+  /* Run25 call 2: the sensors start at the tap of Start, the run's clock
+     on its first good fix. What they read in between is not the run's. */
+  it("keeps only what the sensors read from the clock's start", () => {
+    const r = fold(
+      { kind: "stepEvent", at: ms(-20), moving: true },
+      { kind: "steps", at: ms(-2), steps: 40, cadence: 2.8 },
+      { kind: "activity", at: ms(-1), activity: "walking", confidence: "high" }
+    );
+    // A walk to the start line, while GPS was found: stepping.
+    expect(footState(r, ms(1), ms(0))).toBe("stepping");
+    const run = motionFrom(r, ms(0))!;
+    expect(footState(run, ms(1), ms(0))).toBe("unknown");
+    expect(run).toMatchObject({
+      available: true,
+      steps: 40,
+      stepAt: null,
+      stepEvent: null,
+      activity: null,
+    });
+    // The count stays the baseline: the next update counts only its rise.
+    const next = foldMotion(run, {
+      kind: "steps",
+      at: ms(2),
+      steps: 44,
+      cadence: 2.8,
+    });
+    expect(next.stepAt).toBe(ms(2));
+    expect(footState(next, ms(2), ms(0))).toBe("stepping");
+  });
+
+  it("keeps what the sensors read after the clock's start, and drops nothing without one", () => {
+    const r = fold(
+      { kind: "stepEvent", at: ms(3), moving: false },
+      {
+        kind: "activity",
+        at: ms(3),
+        activity: "stationary",
+        confidence: "high",
+      }
+    );
+    expect(motionFrom(r, ms(0))).toEqual(r);
+    expect(motionFrom(r, null)).toBe(r);
+    expect(motionFrom(null, ms(0))).toBeNull();
   });
 
   it("an unavailable source is no evidence", () => {

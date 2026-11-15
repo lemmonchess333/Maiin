@@ -26,6 +26,7 @@ export default function GpsSignalChip({
   pointCount,
   signalQuality,
   onPage = false,
+  ready = true,
 }: {
   accuracy: number | null;
   isTracking: boolean;
@@ -35,6 +36,10 @@ export default function GpsSignalChip({
    *  muted fill, and words for a run not started yet ("GPS ready"). It
    *  announces itself, since the signal arriving is news there. */
   onPage?: boolean;
+  /** On the page: whether Start would start the run's clock on the fix
+   *  shown (gpsStart.ts, Run25 call 2). A fix short of that reads
+   *  "Finding GPS", as the run screen will, never "GPS ready". */
+  ready?: boolean;
 }) {
   if (!isTracking) return null;
   const quality: GPSSignalQuality =
@@ -48,7 +53,9 @@ export default function GpsSignalChip({
       : quality === "weak"
         ? "Weak GPS"
         : onPage
-          ? "GPS ready"
+          ? ready
+            ? "GPS ready"
+            : "Finding GPS"
           : "GPS";
   const metres =
     quality === "weak" && accuracy !== null ? Math.round(accuracy) : null;

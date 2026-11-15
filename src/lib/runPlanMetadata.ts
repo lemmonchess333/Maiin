@@ -855,6 +855,8 @@ function templateToPrefill(
     prefill.segments = segmentsFromIntervals(prefill.intervals, unit, seed, {
       repeatsAt: tmpl.config.repeatsAt,
       uphill: tmpl.config.uphill,
+      steadyClimbs: tmpl.config.steadyClimbs,
+      downhill: tmpl.config.downhill,
     });
   } else if (tmpl.config.progression) {
     // Run24 (5): the finish at the threshold pace a benchmark gives.
