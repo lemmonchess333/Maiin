@@ -236,7 +236,10 @@ const EXPECTED_INLINE_USES = {
   // medal icon, in the brand purple Social's rewards wear.
   // 2026-11-12: 33 → 32. The friends board's card went (Trim1 call
   // 3(a)), and its sessions board's bolt icon with it.
-  "THEME.brand": 32,
+  // 2026-11-15: 32 → 34. The notification tray's two Circle meet-up
+  // glyphs (Run26 call 4), CalendarClock and CalendarX: icons, in the
+  // brand purple the other Circle notices' glyphs wear. No text.
+  "THEME.brand": 34,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
