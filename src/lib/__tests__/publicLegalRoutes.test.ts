@@ -97,6 +97,14 @@ describe("public legal routes — App Store submission gate", () => {
       expect(signedOut.indexOf(`path="${path}"`)).toBeLessThan(catchAll);
     }
   });
+
+  it("a shared post's link opens its public page, not Login (App1 Q51)", () => {
+    // Signed in, the same address is the post in the app (inside Layout).
+    const signedOut = routeSetAfter("if (!user) {");
+    expect(signedOut).toContain(
+      '<Route path="/activity/:activityId" element={<PublicPost />} />'
+    );
+  });
 });
 
 describe("the Support page is a real page, not a mailto redirect", () => {

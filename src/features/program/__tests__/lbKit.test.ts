@@ -76,7 +76,6 @@ const plan = (loadUnit?: "kg" | "lbs"): ProgramState =>
       smallPlates: false,
       ...(loadUnit ? { loadUnit } : {}),
     },
-    fatigueScore: 0,
     weekHistory: [],
     updatedAt: 0,
   } as unknown as ProgramState);

@@ -236,7 +236,9 @@ const EXPECTED_INLINE_USES = {
   // medal icon, in the brand purple Social's rewards wear.
   // 2026-11-12: 33 → 32. The friends board's card went (Trim1 call
   // 3(a)), and its sessions board's bolt icon with it.
-  "THEME.brand": 32,
+  // 2026-11-14: 32 → 31. The steps tile left Home (App1 Q31), and its
+  // arrow to the steps sheet with it.
+  "THEME.brand": 31,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

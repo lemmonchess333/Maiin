@@ -2,14 +2,15 @@
  * Personal trajectory — this week's sessions against last week's, for a
  * single user.
  *
- * Counted as the league and the challenges count them (Polish2 call 5):
- * every saved workout, and every run that counts toward volume. Sessions
- * is the one measure a lifter and a runner share; the points this
- * replaced (`km * 100 + kg * 0.1`) made 1 km worth 1,000 kg. We count
- * both the current week (Monday 00:00 local → now) and the prior week
- * (Monday 00:00 → Sunday 23:59:59) so the Following feed's week card can
- * show a week-over-week trajectory. Distance and volume stay as the
- * breakdown.
+ * Counted as every week is counted (`weekDone`, trainingWeek.ts, App1
+ * Q14), so the card says what Home's "This week" says: every saved
+ * workout, every run that counts toward volume, and a planned run marked
+ * done by hand on a day with no run. Sessions is the one measure a lifter
+ * and a runner share; the points this replaced (`km * 100 + kg * 0.1`)
+ * made 1 km worth 1,000 kg. We count both the current week (Monday 00:00
+ * local → now) and the prior week (Monday 00:00 → Sunday 23:59:59) so the
+ * Following feed's week card can show a week-over-week trajectory.
+ * Distance and volume stay as the breakdown.
  *
  * It began as the stand-in for the friends board (from the council
  * review: when you're the only athlete on a board, showing it to
@@ -17,14 +18,20 @@
  * 2026 (Trim1 call 3(a)) and the card stayed.
  */
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { localDateString, startOfLocalWeek } from "@/lib/dateHelpers";
-import { isVolumeEligible } from "./runStatsEligibility";
+import { logger } from "@/lib/logger";
+import type { ManualCompletion } from "@/features/program/programTypes";
 import { fetchSavedRuns, type SavedRun } from "./savedRuns";
 import {
   fetchSavedWorkouts,
   workoutTonnageKg,
   type Workout,
 } from "./savedWorkouts";
+import { weekDone, type WeekDoneInput } from "./trainingWeek";
+
+type Plan = WeekDoneInput["programState"];
 
 export interface TrajectoryBreakdown {
   sessions: number;
@@ -100,10 +107,37 @@ function liftedBefore(workout: Workout, cutoff: Date): boolean {
   );
 }
 
+/** When a planned run was marked done by hand, in milliseconds. */
+function completedMs(completion: ManualCompletion): number {
+  const at = completion.completedAt;
+  if (typeof at === "number") return at;
+  if (at instanceof Date) return at.getTime();
+  return at.seconds * 1000 + Math.floor(at.nanoseconds / 1e6);
+}
+
+/**
+ * The plan as it stood at `cutoff`: a run marked done by hand counts once
+ * it had been marked, as a recorded session counts once it had been saved.
+ */
+function planAt(plan: Plan, cutoff: Date): Plan {
+  if (!plan?.manualCompletions) return plan;
+  return {
+    ...plan,
+    manualCompletions: Object.fromEntries(
+      Object.entries(plan.manualCompletions).filter(
+        ([, completion]) => completedMs(completion) < cutoff.getTime()
+      )
+    ),
+  };
+}
+
 async function computeRangeBreakdown(
   uid: string,
   fromDate: Date,
-  toDate: Date
+  toDate: Date,
+  plan: Plan,
+  /** Count only what had been done by `toDate`: the to-date slice. */
+  cut: boolean
 ): Promise<TrajectoryBreakdown> {
   const fromKey = toDateKey(fromDate);
   const lastDay = toDateKey(new Date(toDate.getTime() - 1));
@@ -113,20 +147,37 @@ async function computeRangeBreakdown(
     fetchSavedWorkouts(uid, { since: fromKey, until: lastDay, cap: 100 }),
   ]);
 
-  const counted = runs.filter(
-    (run) => isVolumeEligible(run) && ranBefore(run, toDate)
-  );
-  const lifted = workouts.filter((workout) => liftedBefore(workout, toDate));
-  const km = counted.reduce((s, run) => s + run.distance / 1000, 0);
+  const ran = cut ? runs.filter((run) => ranBefore(run, toDate)) : runs;
+  const lifted = cut
+    ? workouts.filter((workout) => liftedBefore(workout, toDate))
+    : workouts;
+  const done = weekDone({
+    weekKey: fromKey,
+    workouts: lifted,
+    runs: ran,
+    programState: cut ? planAt(plan, toDate) : plan,
+  });
   // Timed holds lift nothing (`workoutTonnageKg`), as the server's
   // challenge maths has it.
   const kg = lifted.reduce((s, workout) => s + workoutTonnageKg(workout), 0);
 
   return {
-    sessions: counted.length + lifted.length,
-    km: Math.round(km * 10) / 10,
+    sessions: done.lifts + done.runs,
+    km: Math.round(done.metres / 100) / 10,
     kg: Math.round(kg),
   };
+}
+
+/** The plan, for its runs marked done by hand. Without it the card counts
+ *  what was recorded, which is most of every week. */
+async function readPlan(uid: string): Promise<Plan> {
+  try {
+    const snap = await getDoc(doc(db, "users", uid, "programState", "current"));
+    return snap.exists() ? (snap.data() as NonNullable<Plan>) : null;
+  } catch (err) {
+    logger.warn("[personalTrajectory] plan read failed", err);
+    return null;
+  }
 }
 
 export async function getPersonalTrajectory(
@@ -144,10 +195,11 @@ export async function getPersonalTrajectory(
   const elapsedMs = now.getTime() - thisWeekStart.getTime();
   const lastWeekToDateEnd = new Date(lastWeekStart.getTime() + elapsedMs);
 
+  const plan = await readPlan(uid);
   const [thisWeek, lastWeek, lastWeekToDate] = await Promise.all([
-    computeRangeBreakdown(uid, thisWeekStart, nextWeekStart),
-    computeRangeBreakdown(uid, lastWeekStart, thisWeekStart),
-    computeRangeBreakdown(uid, lastWeekStart, lastWeekToDateEnd),
+    computeRangeBreakdown(uid, thisWeekStart, nextWeekStart, plan, false),
+    computeRangeBreakdown(uid, lastWeekStart, thisWeekStart, plan, false),
+    computeRangeBreakdown(uid, lastWeekStart, lastWeekToDateEnd, plan, true),
   ]);
 
   return {

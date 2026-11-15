@@ -20,6 +20,8 @@
  *   - communityGoal: the community goal's credits, server-only in both
  *     directions, owner included. A client that could write its own
  *     credit, or delete one, could move the total everyone reads.
+ *   - hiddenPosts (App1 Q38): the owner reads, hides and unhides; the
+ *     record is an id and a time; nobody else reads or writes it.
  *   - spaces/{id}/posts/{id}/likes and comments: any signed-in user reads;
  *     no client writes — not the liker, not the post's author.
  *
@@ -34,7 +36,14 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -315,6 +324,57 @@ suite(
         const ref = doc(asAnon(), path);
         await assertFails(getDoc(ref));
         await assertFails(setDoc(ref, { blockedAt: 2 }));
+        await assertFails(deleteDoc(ref));
+      });
+    });
+
+    describe("users/{uid}/hiddenPosts — the owner's own list, an id and a time (App1 Q38)", () => {
+      const path = `users/${OWNER}/hiddenPosts/act-1`;
+
+      it("the owner hides a post, reads the list and unhides it", async () => {
+        const ref = doc(asOwner(), path);
+        await assertSucceeds(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: OTHER })
+        );
+        await assertSucceeds(getDoc(ref));
+        // Hidden again (Undo after Unhide): the record is written again.
+        await assertSucceeds(setDoc(ref, { hiddenAt: serverTimestamp() }));
+        await assertSucceeds(deleteDoc(ref));
+      });
+
+      it("the record holds only the time it was hidden and the author's id", async () => {
+        const ref = doc(asOwner(), path);
+        await assertFails(
+          setDoc(ref, {
+            hiddenAt: serverTimestamp(),
+            authorId: OTHER,
+            authorName: "Maya",
+          })
+        );
+        await assertFails(setDoc(ref, { hiddenAt: 1 }));
+        await assertFails(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: "" })
+        );
+        await assertFails(
+          setDoc(ref, { hiddenAt: serverTimestamp(), authorId: 7 })
+        );
+      });
+
+      it("nobody else reads or writes it, the author of the post included", async () => {
+        await seed(path, { hiddenAt: 1, authorId: OTHER });
+        for (const db of [asOther(), asAnon()]) {
+          const ref = doc(db, path);
+          await assertFails(getDoc(ref));
+          await assertFails(setDoc(ref, { hiddenAt: serverTimestamp() }));
+          await assertFails(deleteDoc(ref));
+        }
+      });
+
+      it("the owner writes nothing once the account is being deleted", async () => {
+        await seed(`accountDeletionRequests/${OWNER}`, { status: "running" });
+        await seed(path, { hiddenAt: 1 });
+        const ref = doc(asOwner(), path);
+        await assertFails(setDoc(ref, { hiddenAt: serverTimestamp() }));
         await assertFails(deleteDoc(ref));
       });
     });

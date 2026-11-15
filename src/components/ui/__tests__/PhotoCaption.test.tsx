@@ -26,6 +26,9 @@ vi.mock("@/components/social/BlockAwareAvatar", () => ({
 vi.mock("@/lib/editorialImages", () => ({
   spaceEditorialImage: () => "/photo.webp",
 }));
+// Enough people are training for the directory to list every Space
+// (App1 Q6); below that it lists only the Spaces a person joined.
+vi.mock("@/hooks/useEnoughPeople", () => ({ useEnoughPeople: () => true }));
 const directory = vi.hoisted(() => ({ entries: [] as unknown[] }));
 vi.mock("@/features/spaces/useSpacesDirectory", () => ({
   useSpacesDirectory: () => ({

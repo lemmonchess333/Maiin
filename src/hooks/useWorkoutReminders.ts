@@ -135,6 +135,7 @@ export function useWorkoutRemindersInternal(
           // doesn't have to open the app to keep them queued.
           repeats: true,
           repeatEvery: "week",
+          kind: "training",
         });
       }
     };

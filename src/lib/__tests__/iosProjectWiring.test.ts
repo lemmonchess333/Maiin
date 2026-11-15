@@ -231,7 +231,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
         configuration
       );
       expect(standardShare).toBe(
-        "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
+        "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
       );
       expect(standardUpdate).toBe(
         "Tropos does not add workouts or any other data to Health."

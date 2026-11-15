@@ -15,6 +15,7 @@ import {
   emptyWorkoutName,
 } from "@/features/program/emptyWorkout";
 import { RESUME_PARAM } from "@/lib/resumeParam";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
 
 import WorkoutSession from "@/components/WorkoutSession";
@@ -101,6 +102,7 @@ export default function EmptyWorkout() {
       onViewWorkout={(id) =>
         navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
       }
+      onLogFood={() => navigate(recoveryFoodPath("lift"), { replace: true })}
       resumeDraft={resumeOnOpen}
     />
   );

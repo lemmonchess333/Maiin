@@ -37,6 +37,10 @@ export const LIGHTER_WEEK_EVERY = 4;
  * A cycle ends on its lighter week: finishing that week finishes a 4-week
  * cycle (the `programme_complete` badge). Read from
  * `generateWeekPrescription`, so it can't drift from the schedule.
+ *
+ * @oracle — test-only by design: the server awards the badge (App1 Q33,
+ * functions/lib/badgeRules.js `isCycleEndWeek`), and
+ * `badgeRules.cross.test.ts` pins its copy to this one.
  */
 export function isCycleEndWeek(week: number): boolean {
   return week > 0 && generateWeekPrescription(week).deload;

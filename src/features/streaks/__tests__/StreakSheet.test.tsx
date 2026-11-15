@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
   streak: 12,
   active: new Set<string>(),
   bridged: [] as string[],
+  rested: [] as string[],
+  plan: false,
   today: "2026-10-27",
 }));
 vi.mock("../useStreaks", async (importOriginal) => ({
@@ -26,6 +28,8 @@ vi.mock("../useStreaks", async (importOriginal) => ({
     currentStreak: h.streak,
     activeDates: h.active,
     bridgedDates: h.bridged,
+    restDates: h.rested,
+    coversRestDays: h.plan,
   }),
 }));
 vi.mock("@/hooks/useLocalDateKey", () => ({
@@ -51,6 +55,8 @@ beforeEach(() => {
     )
   );
   h.bridged = ["2026-10-26"];
+  h.rested = [];
+  h.plan = false;
   h.today = "2026-10-27";
 });
 afterEach(cleanup);
@@ -110,6 +116,51 @@ describe("StreakSheet", () => {
     expect(
       screen.getByRole("link", { name: "See your badges" })
     ).toHaveAttribute("href", "/user/me?badges=all");
+  });
+
+  it("rings the plan's rest days as covered, with no line of reassurance (App1 Q32)", () => {
+    // A lifter on Mondays, Wednesdays and Fridays who logs only lifts:
+    // the days between are the plan's, and need no comfort.
+    h.streak = 9;
+    h.active = new Set([
+      "2026-10-19",
+      "2026-10-21",
+      "2026-10-23",
+      "2026-10-26",
+    ]);
+    h.bridged = [];
+    h.rested = [
+      "2026-10-27",
+      "2026-10-25",
+      "2026-10-24",
+      "2026-10-22",
+      "2026-10-20",
+    ];
+    h.plan = true;
+    open();
+    const sheet = screen.getByRole("dialog", { name: "9-day streak" });
+    const month = within(sheet).getByRole("list", { name: "October 2026" });
+    expect(
+      within(month).getByText("Tuesday 20 October, covered")
+    ).toBeInTheDocument();
+    expect(
+      within(month).getByText("Tuesday 27 October, today, covered")
+    ).toBeInTheDocument();
+    expect(sheet.textContent).not.toMatch(/is covered\. Still on/);
+    expect(
+      within(sheet).getByText(
+        "A workout, a run or a meal logged keeps the streak going, and so do your plan’s rest days. One other day off in any seven is covered."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("with no plan, says what keeps the streak as before", () => {
+    open();
+    expect(
+      screen.getByText(
+        "A workout, a run or a meal logged keeps the streak going. One rest day in any seven is covered."
+      )
+    ).toBeInTheDocument();
   });
 
   it("says nothing of freezes, shields, tokens or a streak at risk", () => {

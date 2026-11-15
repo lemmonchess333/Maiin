@@ -52,7 +52,6 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     adaptiveRetunedInWeek: false,
     hideWeightNumber: false,
     established: true,
-    weekAhead: { lifts: 4, runs: 3, phaseNote: null },
     goalProfile: null,
     now: new Date("2026-06-29T10:00:00"),
     ...overrides,
@@ -81,14 +80,13 @@ describe("eligibility (Q6 amended)", () => {
     expect(buildWeeklyReview(base({ established: false }))).toBeNull();
   });
 
-  it("empty week + established → quiet variant with week-ahead only", () => {
+  it("empty week + established → quiet variant, no sections (the week ahead is the page's last card)", () => {
     const r = buildWeeklyReview(base());
     expect(r?.kind).toBe("quiet");
     expect(r?.headline).toBeNull();
     expect(r?.training).toBeNull();
     expect(r?.nutrition).toBeNull();
     expect(r?.body).toBeNull();
-    expect(r?.weekAhead).toEqual({ lifts: 4, runs: 3, phaseNote: null });
   });
 
   it("a discarded/invalid run still counts as a deliberate act (no quiet framing) but not as a stat", () => {

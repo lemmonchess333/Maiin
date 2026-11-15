@@ -1,346 +1,36 @@
-import type { TodaySession } from "@/lib/todaySession";
-import type { RestContext } from "@/features/program/restTime";
-import type { WorkoutDay } from "@/features/program/programTypes";
-import { cardSessionMinutes } from "@/features/program/expressSession";
-import { liftCardTitle } from "@/lib/liftDayLabel";
-import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
-import { FIRST_WEEK_DAYS, accountDay } from "@/lib/firstWeek";
 import { isAutomated } from "@/lib/launchSplash";
 import { readString } from "@/lib/localStore";
-import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 /**
- * The first-visit guide (FV1): the words, and who is offered what.
+ * The first-use guide (FV1): its hints' words, and where it may show.
  *
- * A new account's first visit to Home gets a short walk: the page dims and
- * the Tropos mark points at today's session, the first-week card and the
- * Food card, one at a time, saying what each screen doesn't. It talks about
- * this person's plan (FV3): today's session by name, and today's target. After that
- * the guide turns up once in each place the first time it is used: Train's
- * order, the first set, the food composer and the first run. Analytics has
- * no hint: its empty state already says what one would.
- * `GuideWalk` and `GuideHint` draw it; this decides it, so the rules can be
- * tested without rendering a page.
+ * The guide turns up once in each place the first time it is used:
+ * Train's order, the first set, the food composer and the first run.
+ * Analytics has no hint: its empty state already says what one would.
+ * `GuideHint` draws it; this decides it, so the rules can be tested
+ * without rendering a page.
  *
- * It replaced nothing: the first-week card (FW1) stays as the week's list,
- * and its rows now open the step they name.
+ * Home has no walk of its own (App1, whole-app grill Q27): the three-stop
+ * walk a new account once met on its first visit, and the "Show me
+ * around" that replayed it, went with the older first-week journey. Home
+ * leads with today's session and the first-week card (`firstWeek.ts`).
  */
-
-/** A stop on the walk. `target` names the element it points at: the one
- *  carrying `data-guide-stop="<target>"`. */
-export interface GuideStop {
-  id: "today" | "first-week" | "food";
-  target: string;
-  title: string;
-  body: string;
-}
-
-/** The first card in Home's session stack, as `StackedCTACards` draws it. */
-export type TodayCard =
-  "lift" | "first-workout" | "run" | "free-run" | "first-meal" | "rest";
-
-/**
- * What the stack's first card is today. Null when there is no card the
- * walk can explain: a lifting day whose plan has no workout linked shows a
- * "Check your lifting plan" notice, and the walk leaves that to the notice.
- */
-export function todayCard(session: TodaySession): TodayCard | null {
-  if (session.lift?.workout) return "lift";
-  if (session.run) return "run";
-  if (session.lift) return null;
-  switch (session.rest?.kind) {
-    case "first-workout":
-      return "first-workout";
-    case "free-run":
-      return "free-run";
-    case "first-meal":
-      return "first-meal";
-    case "rest":
-      return "rest";
-    default:
-      return null;
-  }
-}
-
-/** The `data-guide-stop` value each session card carries. */
-export function todayCardTarget(card: TodayCard): string {
-  switch (card) {
-    case "lift":
-    case "first-workout":
-      return "today-lift";
-    case "run":
-    case "free-run":
-      return "today-run";
-    default:
-      return "today-rest";
-  }
-}
-
-const TODAY_WORDS: Record<
-  Exclude<TodayCard, "first-meal">,
-  { title: string; body: string }
-> = {
-  lift: {
-    title: "Today’s workout",
-    body: "Start takes you through it set by set. Not training today? It stays here until it’s done.",
-  },
-  "first-workout": {
-    title: "Your first workout",
-    body: "Start takes you through it set by set, whenever suits you. It stays here until it’s done.",
-  },
-  run: {
-    title: "Today’s run",
-    body: "Start opens the run screen, which records the distance, pace and splits as you go.",
-  },
-  "free-run": {
-    title: "Run when it suits you",
-    body: "Start opens the run screen, which records the distance, pace and splits as you go.",
-  },
-  rest: {
-    title: "A rest day",
-    body: "Your next session shows here on its day, with Start to begin it.",
-  },
-};
-
-/**
- * What today's stop says of this person's own session (FV3), in the words
- * its card uses: a lift's name, size, minutes and first exercise; a run's
- * name and dose; on a rest day, the next session's name.
- */
-export type TodayAbout =
-  | {
-      kind: "lift";
-      name: string;
-      exercises: number;
-      /** As the card prices it, or null when it shows none. */
-      minutes: number | null;
-      first: string;
-    }
-  | { kind: "run"; name: string; dose: string | null }
-  | { kind: "rest"; next: string; when?: string };
-
-function liftAbout(
-  workout: WorkoutDay,
-  weekName: string | null | undefined,
-  rest: RestContext
-): TodayAbout | null {
-  const first = workout.exercises[0];
-  if (!first) return null;
-  return {
-    kind: "lift",
-    name: liftCardTitle(workout.dayName, weekName ?? undefined),
-    exercises: workout.exercises.length,
-    minutes: cardSessionMinutes(workout.exercises, rest),
-    first: first.name,
-  };
-}
-
-/** Today's session as the walk names it, or null when its card names
- *  nothing more than the stop's own words: a free run, a run day with no
- *  run written, a rest day before another. */
-export function todayAbout(session: TodaySession): TodayAbout | null {
-  switch (todayCard(session)) {
-    case "lift":
-      return session.lift?.workout
-        ? liftAbout(
-            session.lift.workout,
-            session.lift.name,
-            session.restContext
-          )
-        : null;
-    case "first-workout":
-      return session.rest?.kind === "first-workout"
-        ? liftAbout(
-            session.rest.workout,
-            session.rest.name,
-            session.restContext
-          )
-        : null;
-    case "run":
-      return session.run?.name
-        ? { kind: "run", name: session.run.name, dose: session.run.dose }
-        : null;
-    case "rest":
-      return session.rest?.kind === "rest" && session.rest.tomorrow
-        ? {
-            kind: "rest",
-            next: session.rest.tomorrow.label,
-            ...(session.rest.tomorrow.dateKey
-              ? {
-                  when: formatShortWeekdayDayMonth(
-                    parseLocalDate(session.rest.tomorrow.dateKey)
-                  ),
-                }
-              : {}),
-          }
-        : null;
-    default:
-      return null;
-  }
-}
-
-/** Today's stop: the card's words, led by this person's session when the
- *  walk knows it. */
-function todayWords(
-  card: Exclude<TodayCard, "first-meal">,
-  about: TodayAbout | null | undefined
-): { title: string; body: string } {
-  const words = TODAY_WORDS[card];
-  if (about?.kind === "lift" && (card === "lift" || card === "first-workout")) {
-    const size = [
-      `${about.exercises} ${about.exercises === 1 ? "exercise" : "exercises"}`,
-      ...(about.minutes ? [`about ${about.minutes} min`] : []),
-      `starting with ${about.first}`,
-    ].join(", ");
-    return { ...words, body: `${about.name}: ${size}. ${words.body}` };
-  }
-  if (about?.kind === "run" && card === "run") {
-    const lead = about.dose
-      ? `${about.name}: ${about.dose}.`
-      : `${about.name}.`;
-    return { ...words, body: `${lead} ${words.body}` };
-  }
-  if (about?.kind === "rest" && card === "rest") {
-    return {
-      ...words,
-      body: about.when
-        ? `Your next session, ${about.next}, is on ${about.when}. Open your plan to review it.`
-        : `Your next session, ${about.next}, shows here tomorrow, with Start to begin it.`,
-    };
-  }
-  return words;
-}
-
-const COUNT_WORDS = ["", "One", "Two", "Three", "Four", "Five", "Six"];
-
-/** "Three things", spelled as a person would say it. */
-function thingsToDo(n: number): string {
-  const word = COUNT_WORDS[n] ?? String(n);
-  return n === 1 ? `${word} thing to do` : `${word} things to do`;
-}
-
-export const FOOD_STOP_BODY =
-  "Log what you eat here, by typing it or scanning it. Your target already counts your training, so there’s nothing to eat back.";
-
-/** The Food stop with today's target in it, as Home's food card shows it. */
-export function foodStopBody(calories: number | null | undefined): string {
-  if (!calories || calories <= 0) return FOOD_STOP_BODY;
-  return `Log what you eat here, by typing it or scanning it. Today’s target is ${formatCalories(calories)} ${CALORIE_UNIT}, and it already counts your training, so there’s nothing to eat back.`;
-}
-
-/**
- * The walk's stops, in the order the page shows them. The session card
- * leads unless it is the first-meal card, which the Food stop already
- * covers; the first-week stop needs the card on screen; Food always ends
- * it.
- */
-export function walkStops(input: {
-  today: TodayCard | null;
-  /** Items on the first-week card, or 0 when the card isn't showing. */
-  firstWeekItems: number;
-  /** Today's session as the walk names it (`todayAbout`). */
-  about?: TodayAbout | null;
-  /** Today's calorie target, as Home's food card shows it. */
-  calories?: number | null;
-}): GuideStop[] {
-  const stops: GuideStop[] = [];
-  if (input.today && input.today !== "first-meal") {
-    stops.push({
-      id: "today",
-      target: todayCardTarget(input.today),
-      ...todayWords(input.today, input.about),
-    });
-  }
-  if (input.firstWeekItems > 0) {
-    stops.push({
-      id: "first-week",
-      target: "first-week",
-      title: "Your first week",
-      body: `${thingsToDo(input.firstWeekItems)} in your first seven days. Each one ticks itself when it’s done, and tapping one shows you how.`,
-    });
-  }
-  stops.push({
-    id: "food",
-    target: "food",
-    title: "Food",
-    body: foodStopBody(input.calories),
-  });
-  return stops;
-}
-
-/**
- * The one stop a first-week row opens on Home: the session card that does
- * the thing, when today's card is it. Null when it isn't, and the row
- * opens Train instead.
- */
-export function rowStop(
-  item: "workout" | "run",
-  today: TodayCard | null
-): GuideStop | null {
-  if (item === "workout" && (today === "lift" || today === "first-workout")) {
-    return {
-      id: "today",
-      target: "today-lift",
-      title: "Your first workout",
-      body: "Start takes you through it set by set. It’s ticked off on the card below when you finish.",
-    };
-  }
-  if (item === "run" && (today === "run" || today === "free-run")) {
-    return {
-      id: "today",
-      target: "today-run",
-      title: "Your first run",
-      body: "Start opens the run screen, which records the distance, pace and splits. It’s ticked off on the card below when you finish.",
-    };
-  }
-  return null;
-}
-
-/**
- * Whether Home offers the walk on its own: in the account's first seven
- * days, once. Older accounts never meet it unasked; anyone can play it
- * again from Settings → Support & legal.
- */
-export function walkOffered(input: {
-  startKey: string | null;
-  todayKey: string;
-  seen: boolean;
-  activationJourneyV2?: boolean;
-}): boolean {
-  if (input.activationJourneyV2) return false;
-  if (input.seen || !input.startKey) return false;
-  const day = accountDay(input.startKey, input.todayKey);
-  return day >= 1 && day <= FIRST_WEEK_DAYS;
-}
-
-/** Version 2 teaches at the point of use without making the Home walk a
- *  prerequisite. Legacy accounts still need to have met that walk. */
-export function guideHintsUnlocked(input: {
-  activationJourneyV2: boolean;
-  walkSeen: boolean;
-}): boolean {
-  return input.activationJourneyV2 || input.walkSeen;
-}
 
 /**
  * Whether one of the guide's hints is due on this visit, so something else
  * on the page can wait its turn (FV2: Food's Pro line under the food box
  * waits for the food-box hint). Due while the guide may show here, the
- * account is owed the hint or a first-week row asked for it, and it hasn't
- * been closed.
+ * account is owed the hint and it hasn't been closed.
  */
 export function hintDue(input: {
   allowed: boolean;
   owed: boolean;
-  requested: boolean;
   closed: boolean;
 }): boolean {
-  return input.allowed && !input.closed && (input.owed || input.requested);
+  return input.allowed && input.owed && !input.closed;
 }
 
-/** The hints, one per place, each shown once to an account that has met
- *  the guide. */
+/** The hints, one per place, each shown once to an account. */
 export const GUIDE_HINTS = {
   "train-order": {
     title: "Workouts go in order",
@@ -368,11 +58,8 @@ export const FIRST_SET_BODY_NO_AUTO_REST =
 
 export type GuideHintId = keyof typeof GUIDE_HINTS;
 
-/** Where the walk's seen flag lives (scoped to the account by
- *  `useDismissOnce`). An account that has seen the walk has met the guide,
- *  and only then do the hints turn up. */
-export const WALK_SEEN_KEY = "tropos-guide-walk-seen";
-
+/** Where a hint's seen flag lives (scoped to the account by
+ *  `useDismissOnce`). */
 export function hintSeenKey(id: GuideHintId): string {
   return `tropos-guide-hint:${id}`;
 }
@@ -396,18 +83,4 @@ export function guideAllowedHere(): boolean {
     typeof navigator === "undefined" ? undefined : navigator,
     readString(GUIDE_UNDER_AUTOMATION_KEY)
   );
-}
-
-/** Router state that asks a page to show its step: Settings' "Show me
- *  around" asks Home for the walk; a first-week row asks Food for the
- *  composer hint. */
-export type GuideRequest = { guide: "walk" } | { guide: GuideHintId };
-
-export function guideRequest(state: unknown): GuideRequest["guide"] | null {
-  if (!state || typeof state !== "object") return null;
-  const guide = (state as { guide?: unknown }).guide;
-  if (guide === "walk") return "walk";
-  return typeof guide === "string" && Object.hasOwn(GUIDE_HINTS, guide)
-    ? (guide as GuideHintId)
-    : null;
 }

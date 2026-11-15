@@ -17,17 +17,26 @@
  *   - One analytics emission (checkout_started / checkout_failed)
  *   - Plan captured at submit time so a fast re-tap mid-flight
  *     can't swap the plan during the network round-trip
+ *
+ * Since App1 Q20 the state is one `CheckoutState` (`checkoutFlow.ts`),
+ * moved only by `checkoutTransition`: one purchase at a time, and a
+ * purchase the store has is a note, never an error. What the paywall draws
+ * is read from it, so the three values it returns cannot disagree.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
-import {
-  purchase,
-  type CheckoutEntryPoint,
-  type PurchasePending,
-} from "@/lib/purchaseProvider";
+import { purchase, type CheckoutEntryPoint } from "@/lib/purchaseProvider";
 import { isNativeIOS } from "@/lib/purchaseProvider";
+import {
+  SIGN_IN_MESSAGE,
+  checkoutTransition,
+  checkoutView,
+  type CheckoutEvent,
+  type CheckoutState,
+  type PurchaseOutcome,
+} from "@/lib/checkoutFlow";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import type { PlanId } from "@/lib/proPlans";
 import type { ProFeatureKey } from "@/lib/proFeatures";
@@ -61,17 +70,7 @@ function entryPointFromPath(pathname: string): CheckoutEntryPoint {
   return "settings";
 }
 
-const SIGN_IN_MESSAGE = "Sign in to start Pro.";
-
-/** What a paywall says while the store has the purchase and Pro is not on.
- *  Each names what the person is waiting for, and neither asks them to buy
- *  again. */
-const PENDING_MESSAGE: Record<PurchasePending, string> = {
-  approval:
-    "Your purchase is waiting for approval. Pro switches on once it’s approved.",
-  entitlement:
-    "The App Store has your purchase. Pro switches on once it’s confirmed. If it hasn’t in a few minutes, tap Restore.",
-};
+const START_FAILED = "Couldn’t start checkout. Try again.";
 
 export interface UseProCheckoutResult {
   loading: boolean;
@@ -92,13 +91,32 @@ export interface UseProCheckoutResult {
 export function useProCheckout(): UseProCheckoutResult {
   const { user } = useAuth();
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [state, setState] = useState<CheckoutState>({ kind: "idle" });
+  /* The same state for the handler, which must see a purchase begun
+     before the next render; `send` is the one place either is written. */
+  const stateRef = useRef(state);
+  const send = useCallback((event: CheckoutEvent): CheckoutState => {
+    const next = checkoutTransition(stateRef.current, event);
+    if (next !== stateRef.current) {
+      stateRef.current = next;
+      setState(next);
+    }
+    return next;
+  }, []);
 
   const startCheckout = useCallback(
     async (plan: PlanId, options: StartCheckoutOptions = {}) => {
-      if (loading) return;
+      // Capture plan at submit so a mid-flight selection change
+      // can't swap which plan is purchased.
+      const submittedPlan = plan;
+      const before = stateRef.current;
+      const started = send({
+        type: "start",
+        plan: submittedPlan,
+        signedIn: !!user,
+      });
+      // One purchase at a time.
+      if (started === before) return;
 
       // Auth-less branch. Per the spec we don't disable the CTA —
       // we route the user to sign in. In Tropos, the unauthenticated
@@ -108,100 +126,75 @@ export function useProCheckout(): UseProCheckoutResult {
       // brings them back to the same page on success because
       // `<Login />` is rendered in place rather than at a /login URL.
       if (!user) {
-        setError(SIGN_IN_MESSAGE);
         toast.error(SIGN_IN_MESSAGE);
         return;
       }
 
-      setError(null);
-      setNotice(null);
-      setLoading(true);
-
-      // Capture plan at submit so a mid-flight selection change
-      // can't swap which plan is purchased.
-      const submittedPlan = plan;
       const platform = isNativeIOS() ? "ios" : "web";
-
-      track("checkout_started", {
+      const dimensions = {
         source: options.source ?? "unknown",
         featureKey: options.featureKey,
         selectedPlan: submittedPlan,
         platform,
-      });
+      } as const;
 
+      track("checkout_started", dimensions);
+
+      let outcome: PurchaseOutcome;
       try {
-        const result = await purchase(
-          submittedPlan,
-          user.uid,
-          user.email || "",
-          {
-            entryPoint:
-              options.entryPoint ?? entryPointFromPath(location.pathname),
-            source: options.source,
-            withTrial: options.withTrial,
-          }
-        );
-        if (!result.success && result.cancelled) {
+        outcome = await purchase(submittedPlan, user.uid, user.email || "", {
+          entryPoint:
+            options.entryPoint ?? entryPointFromPath(location.pathname),
+          source: options.source,
+          withTrial: options.withTrial,
+        });
+      } catch (err) {
+        outcome = {
+          kind: "failed",
+          message: START_FAILED,
+          detail: err instanceof Error ? err.message : String(err),
+        };
+      }
+      send({ type: "settled", outcome });
+
+      switch (outcome.kind) {
+        case "cancelled":
           // Closing the store's sheet is a choice, not an error.
-          track("checkout_cancelled", {
-            source: options.source ?? "unknown",
-            featureKey: options.featureKey,
-            selectedPlan: submittedPlan,
-            platform,
-          });
-        } else if (!result.success && result.pending) {
+          track("checkout_cancelled", dimensions);
+          break;
+        case "pending":
           // The store has not refused. The subscription listener switches
           // Pro on when the server hears; until then say what is awaited.
-          setNotice(PENDING_MESSAGE[result.pending]);
           track("checkout_pending", {
-            source: options.source ?? "unknown",
-            featureKey: options.featureKey,
-            selectedPlan: submittedPlan,
-            platform,
-            pending: result.pending,
+            ...dimensions,
+            pending: outcome.pending,
           });
-        } else if (!result.success) {
-          const message = result.error || "Couldn’t start checkout. Try again.";
-          setError(message);
-          toast.error(message);
+          break;
+        case "failed":
+          toast.error(outcome.message);
           track("checkout_failed", {
-            source: options.source ?? "unknown",
-            featureKey: options.featureKey,
-            selectedPlan: submittedPlan,
-            platform,
+            ...dimensions,
             // What went wrong underneath, where there is more to say than
             // the sentence shown.
-            error: result.detail ?? message,
+            error: outcome.detail ?? outcome.message,
           });
-        }
-        // Success path: on the web, purchase() has already sent the
-        // window to RevenueCat's checkout, and Upgrade syncs Pro on the
-        // way back. On Apple IAP, AuthProvider's subscription
-        // listener picks up the server-confirmed tier, including a delayed
-        // webhook when the best-effort sync fails. Restore uses the same
-        // listener, so neither surface needs its own refresh race.
-      } catch (err) {
-        const message = "Couldn’t start checkout. Try again.";
-        setError(message);
-        toast.error(message);
-        track("checkout_failed", {
-          source: options.source ?? "unknown",
-          featureKey: options.featureKey,
-          selectedPlan: submittedPlan,
-          platform,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      } finally {
-        setLoading(false);
+          break;
+        case "bought":
+        case "redirected":
+          // On the web, purchase() has already sent the window to
+          // RevenueCat's checkout, and Upgrade syncs Pro on the way back.
+          // On Apple IAP, AuthProvider's subscription listener picks up the
+          // server-confirmed tier, including a delayed webhook when the
+          // best-effort sync fails. Restore uses the same listener, so
+          // neither surface needs its own refresh race.
+          break;
       }
     },
-    [loading, user, location.pathname]
+    [user, location.pathname, send]
   );
 
   return {
-    loading,
-    error,
-    notice,
+    ...checkoutView(state),
     startCheckout,
     requiresSignIn: !user,
   };

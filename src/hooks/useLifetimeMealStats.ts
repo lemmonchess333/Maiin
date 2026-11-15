@@ -26,6 +26,7 @@
  * answer.
  *
  * Soft-deleted meals do not count: the tile says what you logged and kept.
+ * Its days are food days (`foodDay.ts`): a day's kept meals reach 800 kcal.
  */
 import { useEffect, useMemo, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
@@ -79,7 +80,7 @@ function readEveryMeal(uid: string): Promise<EveryMeal> {
       const meals: EveryMeal = new Map(
         snap.docs.map((d) => [
           d.id,
-          mealDay(d.data() as { date?: unknown; deletedAt?: unknown }),
+          mealDay(d.data() as Parameters<typeof mealDay>[0]),
         ])
       );
       wholeReads.set(uid, { at: Date.now(), meals });

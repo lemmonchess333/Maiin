@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { weekDone } from "@/lib/trainingWeek";
 import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
@@ -71,7 +72,14 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  *     (the focused run-plan editor).
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
@@ -133,6 +141,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -274,6 +283,12 @@ interface ProgrammeRunSectionProps {
   /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
    *  pace the weeks ahead size a running starting point's climb at. */
   recentRuns?: readonly DatedRun[] | null;
+  /** Train's lighter-week offer while it shows (`DeloadBanner`, from the
+   *  one decision `lighterWeekOffer` makes for both sports, whole-app
+   *  grill Q11): first among the week's notices. While it shows, the
+   *  ease-week nudge waits, one advice notice at a time, since a lighter
+   *  week shortens the runs too. */
+  lighterWeekNotice?: ReactNode;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -303,6 +318,7 @@ export default function ProgrammeRunSection({
   dismissFellBehindPrompt,
   recentLayoff,
   recentRuns,
+  lighterWeekNotice = null,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -762,7 +778,10 @@ export default function ProgrammeRunSection({
   );
   const dismissalScope = `${profile.uid}:${localWeekKey(parseLocalDate(todayKeyDerivation))}`;
   const easeNudgeVisible =
-    easeNudge.show && easeNudgeDismissed !== dismissalScope;
+    easeNudge.show &&
+    easeNudgeDismissed !== dismissalScope &&
+    // One advice notice at a time: the lighter week shortens the runs too.
+    !lighterWeekNotice;
   // A6: trigger-aware counts — the card copy branches on which signal
   // fired (user-authored ratings vs measured pace misses).
   const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
@@ -1010,7 +1029,8 @@ export default function ProgrammeRunSection({
   // neither, so the card just shows pace/type as before.
   const selectedHrItems: string[] = (() => {
     if (!selectedTemplate) return [];
-    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
+    const maxHr =
+      profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedTemplate.type,
       maxHr,
@@ -1074,6 +1094,13 @@ export default function ProgrammeRunSection({
   const lastRun = runs[0] ?? null;
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+  // The week's runs and distance as every week counts them (`weekDone`,
+  // trainingWeek.ts); the bin above keeps the week's pace.
+  const thisWeekDone = weekDone({
+    weekKey: thisWeekKey,
+    workouts: [],
+    runs,
+  });
 
   // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
   // target or progress bar (that's the structure the model deliberately
@@ -1152,6 +1179,10 @@ export default function ProgrammeRunSection({
   // The week's notices, drawn under the session card in every mode (DS4).
   const weekNotices = (
     <>
+      {/* The lighter-week offer, the one decision for both sports (Q11):
+          a week-level warning, so first. */}
+      {lighterWeekNotice}
+
       {/* Run7 Q6 + Q10: the banners, in severity-urgency order (warnings
           before info), on the shared <Banner> primitive — info = coral 6%,
           warning = amber 8%, no error variant (errors are toasts).
@@ -1495,13 +1526,12 @@ export default function ProgrammeRunSection({
                 <div>
                   <SectionLabel>This week</SectionLabel>
                   <div className="mt-2 grid grid-cols-3 divide-x divide-border">
-                    {/* `totalDistance` is stored KILOMETRES, so it goes
-                        through `storedKmLabel` into the reader's unit. A
-                        bare `km` once showed a miles reader the metric
-                        figure beside a converted pace. */}
+                    {/* `storedKmLabel` takes KILOMETRES into the reader's
+                        unit. A bare `km` once showed a miles reader the
+                        metric figure beside a converted pace. */}
                     <StatFigure
                       value={storedKmLabel(
-                        thisWeek.totalDistance,
+                        thisWeekDone.metres / 1000,
                         unit,
                         false,
                         1
@@ -1509,8 +1539,8 @@ export default function ProgrammeRunSection({
                       unit={distanceUnitLabel(unit)}
                     />
                     <StatFigure
-                      value={String(thisWeek.runCount)}
-                      unit={thisWeek.runCount === 1 ? "run" : "runs"}
+                      value={String(thisWeekDone.runs)}
+                      unit={thisWeekDone.runs === 1 ? "run" : "runs"}
                     />
                     <StatFigure
                       value={
@@ -1875,7 +1905,7 @@ export default function ProgrammeRunSection({
                      is "What it is", in "Why this run" below. */
                   description={
                     selectedLocked
-                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      ? "After your free week, your race plan is part of Pro. Runs you record stay free."
                       : selectedTemplate
                         ? runSessionAbout(selectedTemplate, {
                             racePace: selectedRacePace,

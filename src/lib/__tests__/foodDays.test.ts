@@ -89,6 +89,20 @@ describe("foodDaysReading", () => {
     expect(reading.protein).toEqual({ met: 1, judged: 2 });
   });
 
+  it("judges food days only: a day short of 800 kcal is not one", () => {
+    const reading = foodDaysReading({
+      meals: [meal(3, 799, 40), meal(4, 800, 60)],
+      targets: new Map([
+        [day(3), target(2300)],
+        [day(4), target(800, 50)],
+      ]),
+      ...SPAN,
+    });
+    expect(reading.calories).toEqual({ onTarget: 1, judged: 1 });
+    expect(reading.protein).toEqual({ met: 1, judged: 1 });
+    expect(reading.averageProtein).toBe(60);
+  });
+
   it("does not count a day logged as nothing", () => {
     const reading = foodDaysReading({
       meals: [meal(3, 0)],

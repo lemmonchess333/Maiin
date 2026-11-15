@@ -72,7 +72,9 @@ test.describe("lose fat with a goal weight", () => {
       await page
         .getByRole("textbox", { name: "Height (cm)", exact: true })
         .fill("178");
-      await page.getByRole("radio", { name: /^25/ }).click();
+      await page
+        .getByRole("textbox", { name: "Year of birth", exact: true })
+        .fill("1995");
       // The goal: 70 kg, at 0.25 kg a week.
       await page.locator("#onboarding-goal-weight").fill("70");
       await page

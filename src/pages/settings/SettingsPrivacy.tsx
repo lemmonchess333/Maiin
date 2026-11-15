@@ -1,15 +1,19 @@
 /** SettingsPrivacy — Social & privacy nested page (Set1.2). */
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import SettingsSection from "@/components/settings/SettingsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import RestrictionExplainer from "@/components/settings/RestrictionExplainer";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 
 export default function SettingsPrivacy() {
   const { user, profile, updateProfile, updateShareDefaults, refreshProfile } =
     useAuth();
+  const navigate = useNavigate();
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
@@ -47,6 +51,15 @@ export default function SettingsPrivacy() {
         newZoneRadius={newZoneRadius}
         setNewZoneRadius={setNewZoneRadius}
       />
+      {/* The posts hidden from the feed, each with Unhide (App1 Q38). */}
+      <SettingsGroup title="Your feed">
+        <SettingsRow
+          icon={EyeOff}
+          label="Hidden posts"
+          description="See the posts you’ve hidden and unhide them"
+          onClick={() => navigate("/settings/hidden-posts")}
+        />
+      </SettingsGroup>
     </SettingsSection>
   );
 }

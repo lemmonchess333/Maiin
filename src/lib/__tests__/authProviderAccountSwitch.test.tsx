@@ -171,6 +171,7 @@ import {
   seedCache,
   failNextFirestore,
   unfiredFailures,
+  readDoc,
 } from "@/test/firestoreHarness";
 
 function Probe() {
@@ -553,6 +554,24 @@ describe("AuthProvider — email sign-up", () => {
       await H.signUp!("n@example.com", "secret-123");
     });
     await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("N"));
+    // The document sign-up writes carries no retired field (App1 Q24): the
+    // address is Auth's, the streak is the streaks document's.
+    const created = readDoc("users/N");
+    expect(created).toMatchObject({ uid: "N", subscriptionTier: "free" });
+    for (const retired of [
+      "email",
+      "currentStreak",
+      "longestStreak",
+      "lastLogDate",
+      "adjustCaloriesForTraining",
+    ])
+      expect(created).not.toHaveProperty(retired);
+    expect(created?.program).toEqual({ goal: "recomp", currentPhase: "base" });
+    // The public copy still starts the streak at 0.
+    expect(readDoc("users/N/public/profile")).toMatchObject({
+      currentStreak: 0,
+      longestStreak: 0,
+    });
   });
 
   it("still sends the link and counts the sign-up when the profile write fails", async () => {
@@ -641,6 +660,28 @@ describe("AuthProvider — the device's copy of the signed-out account", () => {
     expect(H.reload).not.toHaveBeenCalled();
     expect(state().loading).toBe("false");
     expect(state().u).toBe("A");
+  });
+
+  /* A change confirmed elsewhere while this device stayed signed in: the
+     boot that sees Auth carry the noted address clears the note, and
+     writes no copy of the address to the profile (App1 Q21). */
+  it("a boot that sees the email change landed forgets the note", async () => {
+    noteEmailChange("new-address@x.z");
+    const { updateDocGuarded } = await import("@/lib/firestoreWrite");
+    vi.mocked(updateDocGuarded).mockClear();
+    mockAuth.currentUser = { uid: "A", email: "new-address@x.z" } as {
+      uid: string;
+    };
+    await act(async () => {
+      H.authCb?.(mockAuth.currentUser);
+    });
+    await waitFor(() => expect(state().p).toBe("A"));
+    await waitFor(() => expect(pendingEmailChange()).toBeNull());
+    expect(
+      vi
+        .mocked(updateDocGuarded)
+        .mock.calls.some(([, data]) => "email" in (data as object))
+    ).toBe(false);
   });
 
   /* The note says where an email change is going, for the Login a

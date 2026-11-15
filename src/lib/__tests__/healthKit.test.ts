@@ -37,6 +37,7 @@ import {
   isHealthAvailable,
   openHealthSettings,
   readDailyAverages,
+  readDailyStepTotals,
   readSleepSamples,
   requestBodySignalsReadPermission,
   requestStepsReadPermission,
@@ -58,6 +59,7 @@ describe("on the web", () => {
     expect(
       await readDailyAverages("restingHeartRate", new Date(), new Date())
     ).toBeNull();
+    expect(await readDailyStepTotals(new Date(), new Date())).toBeNull();
     await openHealthSettings();
     for (const fn of Object.values(plugin)) expect(fn).not.toHaveBeenCalled();
     expect(watchRun.openAppSettings).not.toHaveBeenCalled();
@@ -121,6 +123,35 @@ describe("in the iOS app", () => {
     expect(await getTodayStepTotal()).toBe(0);
     plugin.queryAggregated.mockRejectedValueOnce(new Error("x"));
     expect(await getTodayStepTotal()).toBeNull();
+  });
+
+  it("totals each day's steps by local day for the activity level offer", async () => {
+    // Q31: a week of day buckets from one statistics query, which counts
+    // a step the phone and a Watch both saw once. A day with nothing is
+    // left out, so the offer reads it as no reading.
+    const monday = new Date(2026, 10, 2, 0, 0, 0);
+    const sunday = new Date(2026, 10, 8, 0, 0, 0);
+    plugin.queryAggregated.mockResolvedValueOnce({
+      samples: [
+        { startDate: monday.toISOString(), value: 8123.6 },
+        { startDate: sunday.toISOString(), value: 0 },
+        { startDate: "2026-11-05", value: 10400 },
+      ],
+    });
+    const end = new Date(2026, 10, 9, 0, 0, 0);
+    expect(await readDailyStepTotals(monday, end)).toEqual([
+      { dateKey: "2026-11-02", value: 8124 },
+      { dateKey: "2026-11-05", value: 10400 },
+    ]);
+    expect(plugin.queryAggregated).toHaveBeenLastCalledWith({
+      dataType: "steps",
+      startDate: monday.toISOString(),
+      endDate: end.toISOString(),
+      bucket: "day",
+      aggregation: "sum",
+    });
+    plugin.queryAggregated.mockRejectedValueOnce(new Error("x"));
+    expect(await readDailyStepTotals(monday, end)).toBeNull();
   });
 
   it("opens the app's settings page through WatchRun, and swallows a refusal", async () => {

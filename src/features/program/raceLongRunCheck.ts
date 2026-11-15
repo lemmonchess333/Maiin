@@ -91,6 +91,12 @@ export interface RaceLongRunCheck {
   weekKey: string;
 }
 
+/** The check's answer for a week, set aside on Home's sheet or the weekly
+ *  review (`useDismissOnce`), so neither asks again that week. */
+export function raceCheckDismissKey(weekKey: string | null): string {
+  return `tropos-race-check:${weekKey ?? "none"}`;
+}
+
 /**
  * The check for this week, when the runner has fallen behind the plan's
  * long runs and their running can't reach, before the taper, half the race
