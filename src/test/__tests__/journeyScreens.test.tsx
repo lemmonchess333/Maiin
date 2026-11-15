@@ -157,8 +157,7 @@ describe("the tab bar the journeys move by", () => {
         <BottomNavigation
           tabs={tabs.map((tab) => ({ ...tab, icon: HomeTabIcon }))}
           pathname="/"
-          unreadCount={0}
-          onSocialVisit={() => {}}
+          socialNewActivity={false}
         />
       </MemoryRouter>
     );

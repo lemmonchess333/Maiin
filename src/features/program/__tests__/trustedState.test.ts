@@ -31,7 +31,6 @@ function plan(): ProgramState {
     currentPhase: "base",
     weekNumber: 2,
     splitType: "ppl",
-    fatigueScore: 0,
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -227,11 +226,11 @@ describe("programme transitions", () => {
     const current = plan();
     current.workouts[0].completed = true;
     current.workouts[0].completedWorkoutId = "saved-workout";
-    current.fatigueScore = 15;
+    current.sessionMinutes = 45;
     seedFirestore({ [PROGRAM]: current as unknown as Record<string, unknown> });
     await commitProgramTransition(db, "u1", base, { ...base, runDays: [] });
     expect(storedPlan().workouts).toEqual(current.workouts);
-    expect(storedPlan().fatigueScore).toBe(15);
+    expect(storedPlan().sessionMinutes).toBe(45);
     expect(storedPlan().runDays).toEqual([]);
   });
 

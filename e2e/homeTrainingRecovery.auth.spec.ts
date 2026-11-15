@@ -68,7 +68,6 @@ test.describe("Home training recovery", () => {
           weekNumber: 1,
           splitType: "ppl",
           workouts,
-          fatigueScore: 0,
           updatedAt: saturday.getTime(),
           liftWeekKey: localWeekKey(saturday),
           programSchemaVersion: 3,
@@ -84,7 +83,6 @@ test.describe("Home training recovery", () => {
         await userRef.set({
           ...seedProfile.data(),
           uid: user.uid,
-          email: user.email,
           darkMode: colorScheme === "dark",
           weekScheduleVersion: 1,
           // #2253: Saturday is the seventh lifting day in a six-workout plan.

@@ -297,7 +297,7 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 }));
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
-vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
+vi.mock("@/components/home/WeightTile", () => ({ default: () => null }));
 vi.mock("@/components/home/TodayEnergy", () => ({ default: () => null }));
 vi.mock("@/components/home/VerifyEmailBanner", () => ({ default: () => null }));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
@@ -363,7 +363,6 @@ const programState = (overrides: Record<string, unknown> = {}) => ({
   weekNumber: 3,
   splitType: "ppl",
   workouts: [],
-  fatigueScore: 0,
   updatedAt: 0,
   settings: { autoProgression: true, smallPlates: false },
   weekHistory: [],

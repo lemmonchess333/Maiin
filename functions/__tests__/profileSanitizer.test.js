@@ -15,8 +15,9 @@
  *  - per-field type / range validation
  *  - photoURL protocol gate (http/https only)
  *  - null-handling for fields where null is a meaningful state
- *  - nested-object sanitisation (raceGoal, macroTargets, program)
+ *  - nested-object sanitisation (raceGoal, program)
  *  - server-managed fields can't be passed through
+ *  - retired fields (App1 Q24) are dropped quietly
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -26,8 +27,10 @@ const {
   sanitizeProfileData,
   findUnexpectedProfileFields,
   cleanPhotoURL,
+  cleanBirthYear,
   PROFILE_ALLOWED_FIELDS,
   SERVER_MANAGED_PROFILE_FIELDS,
+  RETIRED_PROFILE_FIELDS,
 } = require("../profileSanitizer");
 
 describe("recurring run availability", () => {
@@ -160,6 +163,14 @@ describe("findUnexpectedProfileFields — loud-drop detection (ADR-0005)", () =>
   it("does NOT flag server-managed (deny-listed) fields — those are expected drops", () => {
     const input = {};
     for (const f of SERVER_MANAGED_PROFILE_FIELDS) input[f] = "x";
+    expect(findUnexpectedProfileFields(input)).toEqual([]);
+  });
+
+  it("does NOT flag a retired field an older build still sends", () => {
+    // App1 Q24: left out on purpose, so not the forgotten-field case the
+    // warning is for.
+    const input = {};
+    for (const f of RETIRED_PROFILE_FIELDS) input[f] = 0;
     expect(findUnexpectedProfileFields(input)).toEqual([]);
   });
 
@@ -307,6 +318,38 @@ describe("sanitizeProfileData — string fields", () => {
     expect(capped.trainingWhy.length).toBe(120);
     const nonString = sanitizeProfileData({ trainingWhy: { hack: true } });
     expect(nonString.trainingWhy).toBeUndefined();
+  });
+});
+
+/* App1 (grill Q57): the year of birth that replaced the age range. A whole
+   year from this year less 120 to this year less 16, with one year more at
+   the young end for a person whose own year is already the next one at New
+   Year (the server's year is UTC's). */
+describe("sanitizeProfileData — birthYear", () => {
+  const NOW = new Date("2026-11-13T12:00:00Z");
+  const kept = (value) => cleanBirthYear(value, NOW);
+
+  it("keeps a year from this year less 120 to this year less 16", () => {
+    expect(kept(1990)).toBe(1990);
+    expect(kept(2010)).toBe(2010);
+    expect(kept(1906)).toBe(1906);
+  });
+
+  it("keeps one year more at the young end, for a time zone already in 2027", () => {
+    expect(kept(2011)).toBe(2011);
+  });
+
+  it("drops a year past those, and anything not a whole year", () => {
+    for (const value of [2012, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
+      expect(kept(value)).toBeUndefined();
+  });
+
+  it("is on the allow-list, read against the real clock", () => {
+    expect(PROFILE_ALLOWED_FIELDS).toContain("birthYear");
+    expect(sanitizeProfileData({ birthYear: 1990 })).toEqual({
+      birthYear: 1990,
+    });
+    expect(sanitizeProfileData({ birthYear: "1990" })).toEqual({});
   });
 });
 
@@ -477,37 +520,17 @@ describe("sanitizeProfileData — photoURL", () => {
 });
 
 describe("sanitizeProfileData — nested objects", () => {
-  it("sanitises macroTargets keys and drops unknowns", () => {
-    const out = sanitizeProfileData({
-      macroTargets: {
-        calories: 2200,
-        protein: 160,
-        carbs: 250,
-        fat: 60,
-        fiber: "nope", // dropped (unknown key)
-        stripeKey: "sk_test", // dropped (unknown key)
-      },
-    });
-    expect(out.macroTargets).toEqual({
-      calories: 2200,
-      protein: 160,
-      carbs: 250,
-      fat: 60,
-    });
-  });
-
-  it("sanitises program sub-object", () => {
+  it("sanitises program sub-object, dropping the retired startWeight", () => {
     const out = sanitizeProfileData({
       program: {
         goal: "recomp",
-        startWeight: 70,
+        startWeight: 70, // retired (App1 Q24): an older build still sends it
         currentPhase: "base",
         evilField: "x",
       },
     });
     expect(out.program).toEqual({
       goal: "recomp",
-      startWeight: 70,
       currentPhase: "base",
     });
   });
@@ -630,31 +653,26 @@ describe("sanitizeProfileData — nested objects", () => {
 
   it("drops the whole nested object when none of its keys validate", () => {
     const out = sanitizeProfileData({
-      macroTargets: { random: 1, garbage: 2 },
+      program: { random: 1, garbage: 2 },
     });
-    expect(out.macroTargets).toBeUndefined();
+    expect(out.program).toBeUndefined();
   });
 
   it("drops non-object nested values (arrays, primitives)", () => {
     const out = sanitizeProfileData({
-      macroTargets: [1, 2, 3],
+      adaptiveCapState: [1, 2, 3],
       program: "not an object",
     });
-    expect(out.macroTargets).toBeUndefined();
+    expect(out.adaptiveCapState).toBeUndefined();
     expect(out.program).toBeUndefined();
   });
 });
 
 describe("sanitizeProfileData — null handling on specific fields", () => {
-  it("preserves null on lastLogDate (clears the value)", () => {
-    const out = sanitizeProfileData({ lastLogDate: null });
-    expect(out.lastLogDate).toBeNull();
-  });
-
   it("drops null on other string fields (treated as absent)", () => {
     // For most fields, null === "I don't want to send this", not
-    // "clear it". `photoURL` and `lastLogDate` are the explicit
-    // null-supports-clear fields; everything else drops null.
+    // "clear it". `photoURL` and the goal and preference objects are the
+    // explicit null-supports-clear fields; everything else drops null.
     const out = sanitizeProfileData({
       displayName: null,
       athleteType: null,
@@ -673,10 +691,6 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
     // dropping fields the real client uses.
     const input = {
       displayName: "Alice",
-      email: "alice@example.com",
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
       darkMode: false,
       weeklyWorkoutsTarget: 4,
       weeklyMealsTarget: 10,
@@ -701,14 +715,9 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
       age: 30,
       sex: "female",
       activityLevel: "moderate",
-      tdeeBase: 2200,
-      aiCalorieAdjustment: 0,
       targetCalories: 2200,
       targetProtein: 160,
-      targetCarbs: 250,
-      targetFat: 60,
-      macroTargets: { calories: 2200, protein: 160, carbs: 250, fat: 60 },
-      program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+      program: { goal: "recomp", currentPhase: "base" },
     };
     const out = sanitizeProfileData(input);
     // Every input key (that's on the allow-list) should be present
@@ -717,6 +726,35 @@ describe("sanitizeProfileData — happy path (realistic onboarding payload)", ()
       if (key === "onboardingComplete") continue; // not on allow-list — handler overwrites
       expect(out[key]).toEqual(value);
     }
+  });
+});
+
+describe("retired profile fields (App1 Q24)", () => {
+  it("drops every one an older build's onboarding payload still carries", () => {
+    // What a build from before App1 sent beside the live fields.
+    const out = sanitizeProfileData({
+      displayName: "Alice",
+      targetCalories: 2200,
+      email: "alice@example.com",
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLogDate: null,
+      tdeeBase: 2200,
+      aiCalorieAdjustment: 0,
+      targetCarbs: 250,
+      targetFat: 60,
+      program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+    });
+    expect(out).toEqual({
+      displayName: "Alice",
+      targetCalories: 2200,
+      program: { goal: "recomp", currentPhase: "base" },
+    });
+  });
+
+  it("has no validator for any of them", () => {
+    for (const field of RETIRED_PROFILE_FIELDS)
+      expect(PROFILE_ALLOWED_FIELDS).not.toContain(field);
   });
 });
 

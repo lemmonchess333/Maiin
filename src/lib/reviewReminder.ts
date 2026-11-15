@@ -1,6 +1,7 @@
 /**
- * The Monday review notification (Mob2 call 10, Rev1 STATUS): a local
- * notification at 09:00 on Monday, "Your week, reviewed", opening
+ * The Monday review notification (Mob2 call 10, Rev1 STATUS): a
+ * notification at 09:00 on Monday, from the phone unless push carries it
+ * (App1 Q26, `reminderChoices.ts`), "Your week, reviewed", opening
  * `/review`, scheduled only when a review will be waiting then.
  *
  * Weeks start on Monday (`WEEK_STARTS_ON`), so at 09:00 on Monday the
@@ -16,6 +17,7 @@
  * `useReviewReminder` reads the state and schedules.
  */
 import { reviewedWeekKey } from "@/lib/reviewEligibility";
+import { REVIEW_REMINDER_HOUR } from "@/lib/reminderChoices";
 
 /** Its own id in the 3000s, the event-driven notifications' range
  *  (useMealReminders' band note). */
@@ -29,7 +31,9 @@ export const REVIEW_NOTIFICATION = {
   body: "Last week in a few cards, and the week ahead.",
 } as const;
 
-const REVIEW_HOUR = 9;
+/** The same hour as the server's recap push, which is this reminder when
+ *  push carries it (`lib/reminderChoices.ts`). */
+const REVIEW_HOUR = REVIEW_REMINDER_HOUR;
 /** `Date.getDay()` of Monday. */
 const MONDAY = 1;
 
@@ -51,32 +55,13 @@ export function reviewWeekFor(fireAt: Date): string {
 }
 
 /**
- * Whether the server's Monday recap push (functions/index.js
- * `maybeSendWeeklyRecap`, 08:00 local) may reach this account, read from
- * `users/{uid}/settings/push` as its gate reads it
- * (`mayTargetUserConsent(consent, "recap")`, functions/lib/pushConsent.js):
- * push on, and the recap not turned off. An absent document is off: the
- * local notification never writes one (the first-week return offer hides
- * itself once one exists). Pinned to the server's gate by
- * `reviewReminder.cross.test.ts`.
- *
- * Which channel owns Monday is still the owner's call; until then, the
- * local notification stands aside wherever the push would say it.
- */
-export function serverRecapPushOn(consent: unknown): boolean {
-  if (!consent || typeof consent !== "object") return false;
-  const stored = consent as { enabled?: unknown; recap?: unknown };
-  // Truthy, as the server reads it: the two must agree on every shape.
-  return Boolean(stored.enabled) && stored.recap !== false;
-}
-
-/**
  * Whether to schedule it.
  *
- * - `enabled`: the person's switch (on unless they turned it off).
- * - `pushOwns`: the server's Monday recap push is on for this account
- *   (push and its Weekly recap switch), and says the same thing an hour
- *   earlier; two would be one too many.
+ * - `enabled`: the person's one switch (on unless they turned it off,
+ *   `reviewReminderChoice`).
+ * - `pushOwns`: push carries this reminder (`reminderDelivery`): the
+ *   server's Monday recap sends it at the same hour, so the phone stands
+ *   aside; two would be one too many. Null while not known.
  * - `waiting`: a review will render for that week (`useReviewEligibility`'s
  *   question, asked of the week the notification is about).
  * - `viewed`: the person has already read that week's review.

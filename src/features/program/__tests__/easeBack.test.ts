@@ -53,7 +53,6 @@ function state(over: Partial<ProgramState> = {}): ProgramState {
     currentPhase: "progression",
     weekNumber: 3,
     splitType: "full_body",
-    fatigueScore: 0,
     updatedAt: 0,
     workouts: [
       day([

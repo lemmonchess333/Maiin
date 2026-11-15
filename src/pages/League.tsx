@@ -1,9 +1,11 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, ChevronLeft } from "lucide-react";
 import { useAuth, useUid } from "@/lib/auth";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { roomShown } from "@/lib/enoughPeople";
 import { LEAGUE_LIGHT } from "@/features/league/leaguePalettes";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/Avatar";
@@ -24,6 +26,7 @@ import {
 } from "@/features/league/league";
 import {
   demotionCount,
+  GROUP_MIN,
   promotionCount,
   tierName,
 } from "@/features/league/leagueRules";
@@ -38,6 +41,10 @@ import { useLeagueJoin } from "@/features/league/useLeagueJoin";
  * Someone either of you has blocked is left out of what you see, as on
  * every social surface (`useBlockedUsers`); the places still count
  * everyone, so the numbers can skip one.
+ *
+ * Until Tropos has enough people to fill a league (App1 Q6), someone who
+ * has not joined is not offered one here either: an old link brings them
+ * back to Together.
  */
 export default function League() {
   const uid = useUid();
@@ -47,6 +54,8 @@ export default function League() {
   const { blocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const sharing = useLeagueJoin(league.reload);
+  const enough = useEnoughPeople();
+  const optedIn = profile?.leagueOptIn === true;
   const [confirmLeave, setConfirmLeave] = useState(false);
   // The countdown moves on the minute.
   const [now, setNow] = useState(() => new Date());
@@ -54,6 +63,9 @@ export default function League() {
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
+
+  if (!optedIn && enough === false)
+    return <Navigate to="/social?tab=together" replace />;
 
   const leave = (
     <Button
@@ -67,7 +79,7 @@ export default function League() {
   );
 
   let body: ReactNode;
-  if (!uid || league.loading) {
+  if (!uid || league.loading || !roomShown(optedIn, enough)) {
     body = (
       <ul aria-label="Loading the league" className="space-y-2">
         {[0, 1, 2, 3].map((i) => (
@@ -93,7 +105,7 @@ export default function League() {
   } else {
     const state = leagueCardState({
       uid,
-      optedIn: profile?.leagueOptIn === true,
+      optedIn,
       status: league.status,
       member: league.member,
       standings: league.standings,
@@ -175,7 +187,13 @@ export default function League() {
       <ConfirmDialog
         open={confirmLeave}
         title="Leave the league?"
-        description="Your row comes out of this week’s group now, and you won’t be placed in the next one. You can join again from Social, starting in Bronze."
+        description={
+          /* At small numbers Social offers no league to join (App1 Q6),
+             so the way back is not promised. */
+          enough
+            ? "Your row comes out of this week’s group now, and you won’t be placed in the next one. You can join again from Social, starting in Bronze."
+            : `Your row comes out of this week’s group now, and you won’t be placed in the next one. Social offers the league again once ${GROUP_MIN} people are training on Tropos.`
+        }
         confirmLabel="Leave"
         destructive
         onConfirm={() => {

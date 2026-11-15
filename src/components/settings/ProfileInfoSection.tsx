@@ -11,18 +11,33 @@ import { loadWordFilter } from "@/lib/wordFilter";
 import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
+import { buildGoalWeightPersistPayload } from "@/lib/goalWeightPlan";
+import {
+  BIRTH_YEAR_MESSAGES,
+  birthYearProblem,
+  parseBirthYear,
+} from "@/lib/age";
 
-type Gender = "male" | "female" | "unspecified";
-type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
+type Sex = "male" | "female";
 
-const GENDER_OPTIONS: { value: Gender; label: string }[] = [
+/* The sex the calorie maths uses (`sex`), as setup asks it. This was a
+   Gender control writing `gender`, which nothing reads: a change here never
+   reached a target (App1's first settings fault, grill Q22). Gender as an
+   identity field is gone; an account set up before `sex` existed shows its
+   old answer until it picks one, and `gender` is never written. */
+const SEX_OPTIONS: { value: Sex; label: string }[] = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
-  { value: "unspecified", label: "Prefer not to say" },
 ];
 
-// "under-16" intentionally omitted — it's the signup age gate, not a
-// legitimate edit target for an existing user.
+function sexShown(profile: UserProfile): Sex | undefined {
+  if (profile.sex) return profile.sex;
+  if (profile.gender === "male" || profile.gender === "female") {
+    return profile.gender;
+  }
+  return undefined;
+}
+
 /* Body metrics are STORED in kg and cm and shown in the unit chosen under
    Units & appearance. These fields showed kg and cm whatever was chosen. */
 const CM_PER_INCH = 2.54;
@@ -42,14 +57,6 @@ function feetInches(cm: number): { feet: number; inches: number } {
   const total = Math.round(cm / CM_PER_INCH);
   return { feet: Math.floor(total / 12), inches: total % 12 };
 }
-
-const AGE_RANGE_OPTIONS: { value: AgeRange; label: string }[] = [
-  { value: "16-24", label: "16 – 24" },
-  { value: "25-34", label: "25 – 34" },
-  { value: "35-44", label: "35 – 44" },
-  { value: "45-54", label: "45 – 54" },
-  { value: "55+", label: "55+" },
-];
 
 interface ProfileInfoSectionProps {
   profile: UserProfile;
@@ -76,9 +83,10 @@ export default function ProfileInfoSection({
   const nameRevision = useRef(0);
   const heightRevision = useRef(0);
   const whyRevision = useRef(0);
-  const pendingSaves = useRef({ name: 0, height: 0, why: 0 });
+  const yearRevision = useRef(0);
+  const pendingSaves = useRef({ name: 0, height: 0, why: 0, year: 0 });
   async function saveField(
-    field: "name" | "height" | "why",
+    field: "name" | "height" | "why" | "year",
     data: Partial<UserProfile>
   ) {
     pendingSaves.current[field]++;
@@ -93,6 +101,7 @@ export default function ProfileInfoSection({
       nameRevision.current++;
       heightRevision.current++;
       whyRevision.current++;
+      yearRevision.current++;
     },
     []
   );
@@ -122,6 +131,79 @@ export default function ProfileInfoSection({
   const [inches, setInches] = useState(() =>
     String(feetInches(savedCm).inches)
   );
+
+  /* A new sex changes the targets, which are stored, so they are worked
+     out again with it through the recipe Settings → Nutrition saves
+     (`buildGoalWeightPersistPayload`), as a change of age there does. An
+     account with no goal weight keeps its targets until it sets one: the
+     recipe would read it as maintaining and could undo a cut set up
+     before goal weights existed. */
+  async function saveSex(next: Sex) {
+    if (next === profile.sex) return;
+    if (profile.goalWeightKg == null) {
+      await updateProfile({ sex: next });
+      return;
+    }
+    const currentKg = profile.weightKg || 70;
+    const { payload } = buildGoalWeightPersistPayload({
+      profile: { ...profile, sex: next },
+      currentKg,
+      targetKg: profile.goalWeightKg,
+      rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
+    });
+    await updateProfile({ ...payload, sex: next });
+  }
+
+  /* The year of birth replaces the age range (App1, grill Q57; the owner
+     chose the year over a full date, 13 November 2026), which wrote a
+     field nothing reads. The age the calorie maths and the heart-rate zones
+     use is worked out from it (`profileAge`), and a new one changes the
+     targets, which are stored, so they are worked out again with it, as
+     `saveSex` does above and for the same reason: an account with no goal
+     weight writes only the year. `age` and `ageRange` are never written
+     here (Q21). The limits are setup's: this year less 120 up to this
+     year less 16. An account set up before the year was asked shows the
+     field empty, and its old `age` is used until it adds one. */
+  const savedYear = profile.birthYear != null ? String(profile.birthYear) : "";
+  const [yearText, setYearText] = useState(savedYear);
+  const [yearError, setYearError] = useState<string | null>(null);
+
+  function birthYearPatch(next: number): Partial<UserProfile> {
+    if (profile.goalWeightKg == null) return { birthYear: next };
+    const { payload } = buildGoalWeightPersistPayload({
+      profile: { ...profile, birthYear: next },
+      currentKg: profile.weightKg || 70,
+      targetKg: profile.goalWeightKg,
+      rateKgPerWeek: Math.abs(profile.weeklyRateKg ?? 0) || 0.5,
+    });
+    return { ...payload, birthYear: next };
+  }
+
+  async function commitBirthYear() {
+    const submitted = ++yearRevision.current;
+    const typed = yearText.trim();
+    // The profile stays on the last saved year while a save runs, so a
+    // return to it is another write, as for the height.
+    if (typed === savedYear && pendingSaves.current.year === 0) return;
+    // A cleared field puts the saved year back.
+    if (typed === "") {
+      setYearText(savedYear);
+      setYearError(null);
+      return;
+    }
+    const year = parseBirthYear(typed);
+    const problem =
+      year === null ? "invalid" : birthYearProblem(year, localDateString());
+    if (year === null || problem) {
+      setYearError(BIRTH_YEAR_MESSAGES[problem ?? "invalid"]);
+      return;
+    }
+    setYearError(null);
+    setYearText(String(year));
+    const result = await saveField("year", birthYearPatch(year));
+    if (!result.ok && yearRevision.current === submitted)
+      setYearText(savedYear);
+  }
 
   async function commitWeight() {
     const shown = weightText(savedKg, weightUnit);
@@ -352,33 +434,78 @@ export default function ProfileInfoSection({
       </div>
 
       <div>
-        <span className="text-xs text-muted-foreground">Gender</span>
+        <span className="text-xs text-muted-foreground">
+          Sex for calorie calculation
+        </span>
         <SegmentedControl
-          ariaLabel="Gender"
+          ariaLabel="Sex for calorie calculation"
           layout="wrap"
           className="mt-1.5"
-          value={profile.gender}
+          value={sexShown(profile)}
           onChange={(value) => {
             haptic("light");
-            void updateProfile({ gender: value });
+            void saveSex(value);
           }}
-          options={GENDER_OPTIONS}
+          options={SEX_OPTIONS}
         />
+        <p className="mt-1.5 text-xs text-muted-foreground text-pretty">
+          Your calorie and protein targets are worked out from it.
+        </p>
       </div>
 
       <div>
-        <span className="text-xs text-muted-foreground">Age range</span>
-        <SegmentedControl
-          ariaLabel="Age range"
-          layout="wrap"
-          className="mt-1.5"
-          value={profile.ageRange}
-          onChange={(value) => {
-            haptic("light");
-            void updateProfile({ ageRange: value });
+        <label
+          htmlFor="profile-birth-year"
+          className="text-xs text-muted-foreground"
+        >
+          Year of birth
+        </label>
+        {/* Four digits on the phone's number pad: quicker than a wheel of
+            a hundred years, and one line wide at 320 px. */}
+        <input
+          id="profile-birth-year"
+          type="text"
+          inputMode="numeric"
+          autoComplete="bday-year"
+          maxLength={4}
+          value={yearText}
+          aria-invalid={yearError ? true : undefined}
+          aria-describedby={
+            yearError
+              ? "profile-birth-year-error profile-birth-year-why"
+              : "profile-birth-year-why"
+          }
+          onChange={(e) => {
+            yearRevision.current++;
+            setYearText(e.target.value);
+            setYearError(null);
           }}
-          options={AGE_RANGE_OPTIONS}
+          onBlur={() => void commitBirthYear()}
+          className="ds-input mt-1 text-sm font-mono tabular-nums"
         />
+        {yearError && (
+          <p
+            id="profile-birth-year-error"
+            role="alert"
+            className="text-xs text-destructive-strong mt-1"
+          >
+            {yearError}
+          </p>
+        )}
+        <p
+          id="profile-birth-year-why"
+          className="mt-1.5 text-xs text-muted-foreground text-pretty"
+        >
+          Your calorie target and heart-rate zones are worked out from it. It’s
+          never shown on your profile.
+          {!savedYear && profile.age != null && (
+            <>
+              {" "}
+              Until you add it, they use an age of{" "}
+              <span className="font-mono tabular-nums">{profile.age}</span>.
+            </>
+          )}
+        </p>
       </div>
 
       <div>

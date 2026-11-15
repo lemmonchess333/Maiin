@@ -17,6 +17,7 @@ import {
 import { isAdaptiveExcludedDate, isAdaptiveFrozen } from "@/lib/taperNutrition";
 import type { UserProfile } from "@/lib/auth";
 import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import { appendProChange } from "@/lib/proReport";
 
 /**
  * The goal calorie offset baked into the stored formula target (mirrors
@@ -123,17 +124,36 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
   // doesn't re-trigger the write).
   useEffect(() => {
     if (!resolved.capChanged || !resolved.capState) return;
-    const key = `${resolved.capState.lastApplied}@${resolved.capState.lastAppliedAt}`;
+    const capState = resolved.capState;
+    const key = `${capState.lastApplied}@${capState.lastAppliedAt}`;
     if (persistKeyRef.current === key) return;
     persistKeyRef.current = key;
-    void updateProfile({ adaptiveCapState: resolved.capState })
+    // The move, for what Pro did (App1 Q56). A target only moves when it is
+    // applied, which is Pro's; from the formula on the first engage, as
+    // `applyWeeklyCap` seeds it.
+    const change = {
+      kind: "calories" as const,
+      at: capState.lastAppliedAt,
+      from: Math.round(capPrev?.lastApplied ?? formulaTarget),
+      to: capState.lastApplied,
+    };
+    const changes = profile?.proChanges;
+    void updateProfile({ adaptiveCapState: capState })
       .then((result) => {
-        if (!result.ok && persistKeyRef.current === key)
-          persistKeyRef.current = "";
+        if (!result.ok) {
+          if (persistKeyRef.current === key) persistKeyRef.current = "";
+          return;
+        }
+        // Its own write, after the target's: a record that failed to save
+        // must never cost the target its own.
+        void updateProfile({
+          proChanges: appendProChange(changes, change),
+        }).catch(() => {});
       })
       .catch(() => {
         if (persistKeyRef.current === key) persistKeyRef.current = "";
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per new cap state; the change's other inputs are read at that moment
   }, [resolved, updateProfile]);
 
   // Raise the high-water latch (legitimate derived-state-from-prop case).

@@ -20,8 +20,8 @@ afterEach(cleanup);
 
 describe("PageShell header", () => {
   it("renders the title as the page's h1 at the H1 token, not text-xl", () => {
-    render(<PageShell title="Analytics">x</PageShell>);
-    const h1 = screen.getByRole("heading", { level: 1, name: "Analytics" });
+    render(<PageShell title="Progress">x</PageShell>);
+    const h1 = screen.getByRole("heading", { level: 1, name: "Progress" });
     expect(h1.className).toMatch(/\btext-h1\b/);
     expect(h1.className).not.toMatch(/\btext-xl\b/);
     expect(h1.className).toMatch(/font-extrabold/);

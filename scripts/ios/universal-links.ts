@@ -20,7 +20,12 @@ export function appleAppSiteAssociation(prefix: string) {
               "/": "/",
               "?": { invite: "????????" },
               comment:
-                "Tropos friend invites only; ordinary web, legal and auth links stay on the web.",
+                "Tropos friend invites; ordinary web, legal and auth links stay on the web.",
+            },
+            {
+              "/": "/activity/*",
+              comment:
+                "A shared post opens in the app (App1 Q51); without the app it is the post's public page.",
             },
           ],
         },

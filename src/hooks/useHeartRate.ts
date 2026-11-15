@@ -12,6 +12,7 @@ import {
   type HeartRateSubscription,
 } from "@/lib/heartRateSource";
 import { appendHeartRateSample } from "@/lib/heartRateSession";
+import { profileAge } from "@/lib/age";
 
 export interface HeartRateState {
   /** Effective max HR: user-measured if set, else the age estimate, else 0. */
@@ -54,7 +55,8 @@ export function useHeartRate(
   const { profile } = useAuth();
 
   const measured = profile?.maxHeartRate ?? null;
-  const age = profile?.age ?? 0;
+  // From the year of birth, else an older account's age (App1, Q57).
+  const age = profileAge(profile) ?? 0;
 
   const { maxHr, maxHrSource } = useMemo(() => {
     if (measured && measured > 0) {
