@@ -10,6 +10,23 @@
 const PLATFORMS = new Set(["ios", "web", "android"]);
 const SOURCES = new Set(["ios_iap", "stripe"]);
 
+/**
+ * The RevenueCat stores whose purchases are observed, and the source each is
+ * kept under: the App Store's, and the website's checkouts (RevenueCat
+ * Billing on Stripe and Paddle, docs/iap/revenuecat-setup.md Part W, and a
+ * Stripe purchase sent to RevenueCat), kept as `stripe`, the web's source,
+ * as `subscriptionSource` names it (lib/revenueCatEntitlement.js
+ * STORE_SOURCES). App1 Q17: a trial started on the web is a launch number
+ * like one started on the iPhone. Play has no source here until Android.
+ */
+const STORE_SOURCES = Object.freeze({
+  app_store: "ios_iap",
+  mac_app_store: "ios_iap",
+  rc_billing: "stripe",
+  paddle: "stripe",
+  stripe: "stripe",
+});
+
 function validOnboardingPlatform(value) {
   return PLATFORMS.has(value);
 }
@@ -60,14 +77,15 @@ function revenueCatObservation(snapshot, outcome) {
     !snapshot.active ||
     snapshot.sandbox ||
     snapshot.ownershipType === "FAMILY_SHARED" ||
-    (snapshot.store !== "app_store" && snapshot.store !== "mac_app_store")
+    !Object.hasOwn(STORE_SOURCES, snapshot.store)
   )
     return null;
+  const source = STORE_SOURCES[snapshot.store];
   if (snapshot.trial) {
     if (snapshot.trial.startedAtMs > snapshot.syncedAtMs) return null;
     return {
       kind: "trial",
-      source: "ios_iap",
+      source,
       atMs: snapshot.trial.startedAtMs,
     };
   }
@@ -75,7 +93,7 @@ function revenueCatObservation(snapshot, outcome) {
   if (snapshot.purchaseAtMs > snapshot.syncedAtMs) return null;
   return {
     kind: "paid",
-    source: "ios_iap",
+    source,
     atMs: snapshot.purchaseAtMs,
   };
 }

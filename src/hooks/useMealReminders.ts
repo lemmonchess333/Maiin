@@ -133,6 +133,7 @@ export function useMealRemindersInternal(activity?: ReminderActivity) {
           // (and the rescheduleAll call above) still handles the
           // disable / time-edit cases.
           repeats: true,
+          kind: "meals",
         });
       }
     };

@@ -21,6 +21,8 @@ import {
   makeProfile,
   makeProgram,
   liftDay,
+  fixtureDateFor,
+  fixtureKeyDay,
 } from "@/test/nutritionFixtures";
 
 const h = vi.hoisted(() => ({
@@ -307,9 +309,99 @@ describe("useEffectiveTargets — training label gating (free→Pro conversion h
     h.profile = free;
     // no programState doc — legacy fallback branch
     const t = renderHook(() => useEffectiveTargets()).result.current;
-    expect(t.annotation).toBe("Race week — carb load"); // label shown to free
+    expect(t.annotation).toBe("Race week, carb load"); // label shown to free
+    expect(t.fuelLabel).toBe("Race week, carb load"); // and said on Food and Home
     expect(t.taperActive).toBe(false); // but the calorie move is NOT applied
     expect(t.finalTarget).toBe(free.targetCalories); // flat, uncut
+  });
+});
+
+/* App1 Q29: the day's fuel label, said on Food's hero and Home's food
+   card, is the annotation's fuelling part and nothing else. */
+describe("useEffectiveTargets — the day's fuel label", () => {
+  const REST_WEEK = Array.from({ length: 7 }, (_, day) => ({
+    day,
+    type: "rest" as const,
+  }));
+  /** A Long 20K on the fixture week's Thursday (dayIndex 4). */
+  const longRunThursday = () =>
+    makeProgram({
+      primaryGoal: "running",
+      runDays: [
+        {
+          id: "run-long",
+          weekKey: fixtureKeyDay(0),
+          date: fixtureKeyDay(4),
+          dayIndex: 4,
+          type: "long",
+          templateId: "long_20k",
+        },
+      ],
+    });
+
+  beforeEach(() => {
+    resetFirestore();
+  });
+
+  it("names tomorrow's long run on its quiet eve", () => {
+    h.profile = makeProfile({ weekSchedule: REST_WEEK });
+    seedFirestore({
+      [PROGRAM_DOC]: longRunThursday() as unknown as Record<string, unknown>,
+    });
+    const wednesday = fixtureDateFor(3);
+    const t = renderHook(() => useEffectiveTargets(wednesday)).result.current;
+    expect(t.fuelLabel).toBe("Long 20K tomorrow, fuel up today");
+    expect(t.annotation).toBe(t.fuelLabel);
+  });
+
+  it("names the long run in the reader's unit", () => {
+    h.profile = makeProfile({
+      weekSchedule: REST_WEEK,
+      preferredDistanceUnit: "mi",
+    });
+    seedFirestore({
+      [PROGRAM_DOC]: longRunThursday() as unknown as Record<string, unknown>,
+    });
+    const wednesday = fixtureDateFor(3);
+    const t = renderHook(() => useEffectiveTargets(wednesday)).result.current;
+    expect(t.fuelLabel).toMatch(/^Long [\d.]+ mi tomorrow, fuel up today$/);
+  });
+
+  it("says nothing on a day with no fuelling to do", () => {
+    h.profile = makeProfile({ weekSchedule: REST_WEEK });
+    seedFirestore({
+      [PROGRAM_DOC]: longRunThursday() as unknown as Record<string, unknown>,
+    });
+    const tuesday = fixtureDateFor(2);
+    expect(
+      renderHook(() => useEffectiveTargets(tuesday)).result.current.fuelLabel
+    ).toBeNull();
+  });
+
+  it("leaves a session's own intensity off: a hard day is not a fuel label", () => {
+    h.profile = makeProfile({
+      weightKg: 80,
+      targetCalories: 2500,
+      weekSchedule: ALL_LIFT,
+    });
+    seedFirestore({
+      [PROGRAM_DOC]: makeProgram({
+        primaryGoal: "hypertrophy",
+        currentPhase: "progression",
+        weekNumber: 2,
+        workouts: [liftDay("Heavy", 8, 4, 6)],
+      }) as unknown as Record<string, unknown>,
+    });
+    const t = renderHook(() => useEffectiveTargets()).result.current;
+    expect(t.annotation).toBe("Hard session");
+    expect(t.fuelLabel).toBeNull();
+  });
+
+  it("says a taper week", () => {
+    h.profile = PRO_TAPER({ daysToRace: 6 }).profile;
+    expect(
+      renderHook(() => useEffectiveTargets()).result.current.fuelLabel
+    ).toBe("Taper week");
   });
 });
 

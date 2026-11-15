@@ -147,6 +147,30 @@ describe("analyticsProvider", () => {
     expect(() => mod.logAnalyticsEvent("x", {})).not.toThrow();
   });
 
+  it("settles once init has an answer: true only when delivering", async () => {
+    vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
+    const active = await import("../analyticsProvider");
+    active.initAnalytics(FAKE_APP);
+    await expect(active.analyticsSettled()).resolves.toBe(true);
+    expect(active.isAnalyticsActive()).toBe(true);
+
+    for (const arrange of [
+      () => vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", ""),
+      () => isSupported.mockResolvedValue(false),
+      () => {
+        isNativePlatform.mockReturnValue(true);
+        nativeSetEnabled.mockRejectedValue(new Error("no plist"));
+      },
+    ]) {
+      vi.resetModules();
+      arrange();
+      const mod = await import("../analyticsProvider");
+      mod.initAnalytics(FAKE_APP);
+      await expect(mod.analyticsSettled()).resolves.toBe(false);
+      expect(mod.isAnalyticsActive()).toBe(false);
+    }
+  });
+
   it("init is idempotent (second call does not re-init)", async () => {
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-TEST");
     const mod = await import("../analyticsProvider");

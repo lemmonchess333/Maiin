@@ -970,3 +970,59 @@ describe("production monthly sender wiring", () => {
     }
   });
 });
+
+describe("the day's one push (App1 Q60)", () => {
+  const budget = (claimResult = "claim-1") => ({
+    claim: vi.fn(async () => claimResult),
+    release: vi.fn(async () => {}),
+  });
+
+  it("asks the budget for the day in the person's time zone, and sends", async () => {
+    const args = { ...setup(), budget: budget() };
+    expect(await announcements.maybeSendAnnouncement(args)).toBe(true);
+    expect(args.budget.claim).toHaveBeenCalledWith(
+      "challenges",
+      "Europe/London"
+    );
+    expect(args.budget.release).not.toHaveBeenCalled();
+  });
+
+  it("waits when the day is taken, leaving the month's campaign for a later morning", async () => {
+    const args = { ...setup(), budget: budget(null) };
+    expect(await announcements.maybeSendAnnouncement(args)).toBe(false);
+    expect(args.send).not.toHaveBeenCalled();
+    expect(args.db.store.has(STATE)).toBe(false);
+    expect(args.releaseRegistrations).toHaveBeenCalledTimes(1);
+    const tomorrow = {
+      ...args,
+      now: new Date("2026-11-02T09:00:00Z"),
+      budget: budget(),
+    };
+    expect(await announcements.maybeSendAnnouncement(tomorrow)).toBe(true);
+  });
+
+  it("gives the day back when no device took it, or the campaign had gone already", async () => {
+    const args = { ...setup(), budget: budget() };
+    args.send.mockResolvedValueOnce({
+      responses: [
+        { success: false, error: { code: "messaging/server-unavailable" } },
+      ],
+    });
+    expect(await announcements.maybeSendAnnouncement(args)).toBe(false);
+    expect(args.budget.release).toHaveBeenCalledWith("claim-1");
+    const again = { ...args, budget: budget("claim-2") };
+    expect(await announcements.maybeSendAnnouncement(again)).toBe(false);
+    expect(again.budget.release).toHaveBeenCalledWith("claim-2");
+  });
+
+  it("the closing reminder asks as its own kind", async () => {
+    const args = reminderSetup();
+    args.join();
+    args.budget = budget();
+    expect(await announcements.maybeSendReminder(args)).toBe(true);
+    expect(args.budget.claim).toHaveBeenCalledWith(
+      "challengeReminders",
+      "Europe/London"
+    );
+  });
+});

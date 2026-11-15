@@ -232,7 +232,10 @@ test("the run's reward for a first, its summary, and its reward for a new best",
   fields.uid = { stringValue: uid };
   fields.runMode = { stringValue: "freeform" };
   // A free runner: Home's hero is the free run, captured after the runs.
+  // What a person trains is read from the plan (App1 Q23), and free running
+  // puts no day on it, so the running level says it, as setup writes it.
   fields.athleteType = { stringValue: "Runner" };
+  fields.runFrequency = { stringValue: "regular" };
   fields.weekSchedule = {
     arrayValue: {
       values: Array.from({ length: 7 }, (_, day) => ({

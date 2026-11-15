@@ -91,7 +91,6 @@ async function ensureProfile(
       {
         uid,
         displayName: account.displayName,
-        email: account.email,
         photoURL: null,
         athleteType: "Lifter",
         weightKg: 70,
@@ -103,15 +102,9 @@ async function ensureProfile(
         darkMode: false,
         onboardingComplete: true,
         subscriptionTier: "free",
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLogDate: null,
-        adjustCaloriesForTraining: true,
-        program: { goal: "recomp", startWeight: 70, currentPhase: "base" },
+        program: { goal: "recomp", currentPhase: "base" },
         targetCalories: 2200,
         targetProtein: 160,
-        targetCarbs: 250,
-        targetFat: 60,
       },
       { merge: true }
     );

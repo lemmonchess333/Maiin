@@ -56,6 +56,18 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
    page grows another Firestore-touching child. */
 vi.mock("firebase/firestore");
 
+/* The week ahead reads the plan live through Home's programme reader;
+   here it reads none, and the person's usual week (the profile's) shows. */
+vi.mock("@/features/program/useHomeProgram", () => ({
+  useHomeProgram: () => ({
+    programState: null,
+    loading: false,
+    recentLayoff: "none",
+    recentRuns: null,
+    controller: null,
+  }),
+}));
+
 vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
 }));
@@ -63,11 +75,10 @@ vi.mock("@/hooks/useDismissOnce", () => ({
 import WeeklyReview from "../WeeklyReview";
 
 // A minimal "quiet" review — enough for `review` to be truthy and the
-// week-ahead block (which reads review.weekAhead) to render.
+// week ahead, the review's last card, to render.
 const QUIET_REVIEW = {
   kind: "quiet",
   range: { start: "2026-06-29", end: "2026-07-05" },
-  weekAhead: { lifts: null, runs: null, phaseNote: null },
 };
 
 function renderReview() {

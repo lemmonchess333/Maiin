@@ -76,6 +76,7 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
     carbs: 300,
     fat: 60,
     annotation: "Hard session",
+    fuelLabel: null,
     caption: null,
     targetTooAggressive: false,
     targetInfeasible: false,
@@ -380,7 +381,7 @@ describe("HeroDrillDownSheet — other nutrients keep each unit's treatment", ()
 describe("HeroDrillDownSheet — the way to the week", () => {
   /* The weekly reading (days on target, protein, the weekend) lives on
      Analytics' Food page; this row is the way there from a day. */
-  it("offers This week and hands the tap to the page", () => {
+  it("offers the last 7 days and hands the tap to the page", () => {
     const onOpenWeek = vi.fn();
     render(
       <HeroDrillDownSheet
@@ -393,13 +394,14 @@ describe("HeroDrillDownSheet — the way to the week", () => {
         onOpenWeek={onOpenWeek}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /^This week/ }));
+    // Not "This week": that is Monday to Sunday everywhere (App1 Q13).
+    fireEvent.click(screen.getByRole("button", { name: /^Last 7 days/ }));
     expect(onOpenWeek).toHaveBeenCalledTimes(1);
   });
 
   it("draws no row when the page gives it nowhere to go", () => {
     render(<Harness dailyTargets={targets()} />);
     expect(screen.getByText("Macros")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^This week/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Last 7 days/ })).toBeNull();
   });
 });

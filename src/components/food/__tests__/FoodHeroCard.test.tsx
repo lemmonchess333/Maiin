@@ -188,6 +188,51 @@ describe("FoodHeroCard — no day-type caption on the card", () => {
   });
 });
 
+/* App1 Q29: the day's fuel label is said under the wheel, today only, while
+   the day type above stays off the card. */
+describe("FoodHeroCard — the day's fuel label", () => {
+  function renderWithFuel(isToday: boolean) {
+    const targets = {
+      ...dailyTargets,
+      annotation: "Long 20K tomorrow, fuel up today",
+      fuelLabel: "Long 20K tomorrow, fuel up today",
+    } as unknown as EffectiveTargets;
+    return render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={isToday}
+          dailyTargets={targets}
+          dailyTotals={dailyTotals}
+          onTapDrillDown={() => {}}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("today: one line under the wheel, before Details", () => {
+    renderWithFuel(true);
+    const line = screen.getByText("Long 20K tomorrow, fuel up today");
+    const details = screen.getByRole("button", {
+      name: "View nutrition breakdown",
+    });
+    expect(
+      ringButton().compareDocumentPosition(line) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      line.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.getAllByText(/fuel up today/)).toHaveLength(1);
+  });
+
+  it("another day: not said, since it speaks of today and tomorrow", () => {
+    renderWithFuel(false);
+    expect(ringButton()).toBeInTheDocument();
+    expect(screen.queryByText(/fuel up today/)).toBeNull();
+  });
+});
+
 describe("FoodHeroCard — the wheel is on the page", () => {
   function renderToday() {
     return render(

@@ -275,7 +275,7 @@ describe("ProModal — feature-specific hero", () => {
 
 describe("ProModal — checkout", () => {
   it("calls purchase() with the currently-selected plan on CTA tap", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
@@ -287,7 +287,7 @@ describe("ProModal — checkout", () => {
   });
 
   it("calls purchase() with monthly after the user switches plan", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     const radios = screen.getAllByRole("radio");
     fireEvent.click(radios.find((r) => r.textContent?.includes("Monthly"))!);
@@ -300,8 +300,8 @@ describe("ProModal — checkout", () => {
 
   it("surfaces an inline error when purchase() fails", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
-      error: "Card declined.",
+      kind: "failed",
+      message: "Card declined.",
     });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -311,7 +311,7 @@ describe("ProModal — checkout", () => {
 
   it("a purchase the store took shows a note, not an error", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
+      kind: "pending",
       pending: "entitlement",
     });
     renderModal({ onClose: () => {} });
@@ -428,7 +428,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
 
   it("Cycle 7: tapping the trial CTA passes withTrial=true to purchase()", async () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: false });
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(
       screen.getByRole("button", { name: /Start your 7-day free trial/ })
@@ -444,7 +444,7 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
 
   it("Cycle 8: tapping the no-trial CTA passes withTrial=false to purchase()", async () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: true });
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderModal({ onClose: () => {} });
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
