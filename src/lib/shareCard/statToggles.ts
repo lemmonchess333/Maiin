@@ -12,7 +12,7 @@
 
 /** Toggleable stats per template — the keys a card's eye-icons control. */
 export const TOGGLEABLE_STATS: Record<
-  "run" | "lift" | "hybrid" | "nutrition" | "recap",
+  "run" | "lift" | "hybrid" | "nutrition" | "recap" | "anniversary",
   readonly string[]
 > = {
   run: ["distance", "duration", "pace", "splits", "elevation"],
@@ -20,6 +20,8 @@ export const TOGGLEABLE_STATS: Record<
   hybrid: ["liftVolume", "runDistance", "totalTime"],
   nutrition: ["calories", "macros"],
   recap: ["sessions", "runDistance", "liftVolume", "streak"],
+  // One figure and its sentence: nothing to hide.
+  anniversary: [],
 };
 
 /** Is a stat currently shown? (hidden-set membership is the inverse.) */

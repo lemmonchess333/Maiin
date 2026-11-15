@@ -50,6 +50,12 @@
          There is no weather host: the phone asks the getCurrentWeather
          callable (*.cloudfunctions.net), which asks MET Norway.
 
+         connect-src carries https://troposfit.com, the production web
+         app, for a shared post's public page opened anywhere else (the
+         GitHub Pages preview): it asks troposfit.com/activity/<id> for the
+         post's public figures (src/lib/publicPost.ts). On troposfit.com
+         itself that is 'self'.
+
          img-src carries https://images.openfoodfacts.org for the product
          photo on a barcode result (FoodAnalyzer reads image_url from Open
          Food Facts); without it the result showed a broken image.
@@ -81,6 +87,7 @@
       font-src 'self';
       img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://lh3.googleusercontent.com https://appleid.cdn-apple.com https://tiles.openfreemap.org https://images.openfoodfacts.org https://www.google-analytics.com https://www.googletagmanager.com;
       connect-src 'self'
+        https://troposfit.com
         https://*.googleapis.com
         https://*.firebaseio.com
         https://*.firebaseapp.com

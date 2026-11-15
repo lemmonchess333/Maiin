@@ -168,6 +168,8 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     currentStreak: h.streak,
     activeDates: new Set<string>(),
     bridgedDates: [],
+    restDates: [],
+    coversRestDays: false,
     newBadge: null,
     dismissNewBadge: vi.fn(),
   }),
@@ -270,7 +272,7 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 }));
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
-vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
+vi.mock("@/components/home/WeightTile", () => ({ default: () => null }));
 /* The food card draws the figures it is handed; the test reads the one
    that says which day's food it is. */
 vi.mock("@/components/home/TodayEnergy", () => ({
@@ -316,7 +318,6 @@ function programStateWith(overrides: Record<string, unknown> = {}) {
     weekNumber: 3,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 0,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -556,13 +557,14 @@ describe("Home — the week's runs, as every screen counts them", () => {
   });
 });
 
-describe("Home — the week's food days are days with a meal", () => {
+describe("Home — the week's food days are days of 800 kcal or more", () => {
   beforeEach(() => {
     pinClock(WEDNESDAY);
   });
 
   const monday = () => localDateString(addLocalDays(WEDNESDAY, -2));
   const tuesday = () => localDateString(addLocalDays(WEDNESDAY, -1));
+  const wednesday = () => localDateString(WEDNESDAY);
 
   it("does not count a day whose meals were all deleted", () => {
     /* Food writes the day's log only while the day has a meal, so the log
@@ -577,17 +579,19 @@ describe("Home — the week's food days are days with a meal", () => {
     expect(weekPart("food")).toBe("Food logged 0 of 7 days");
   });
 
-  it("reads the daily log while the meals are still loading", () => {
+  it("has no food count while the meals are still loading", () => {
+    /* The daily log keeps how many meals a day had, not their calories,
+       so it cannot say which days were food days. */
     h.dayMap = new Map([
       [monday(), { workouts: 0, meals: 2, caloriesHit: false }],
     ]);
     h.meals = [];
     h.mealsLoading = true;
     renderHome();
-    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
+    expect(weekPart("food")).toBeNull();
   });
 
-  it("reads the daily log when the meals could not be read", () => {
+  it("has no food count when the meals could not be read", () => {
     // An empty list after a failed read is not a week without food.
     h.dayMap = new Map([
       [monday(), { workouts: 0, meals: 2, caloriesHit: false }],
@@ -595,13 +599,19 @@ describe("Home — the week's food days are days with a meal", () => {
     h.meals = [];
     h.mealsError = "Couldn’t load your food diary.";
     renderHome();
-    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
+    expect(weekPart("food")).toBeNull();
   });
 
-  it("counts a loaded meal whose day has no log yet", () => {
-    h.meals = [{ id: "m1", date: tuesday() }];
+  it("counts a day once its meals reach 800 kcal, today included", () => {
+    h.meals = [
+      { id: "m1", date: monday(), calories: 2100 },
+      // A coffee and nothing else is not a day of eating.
+      { id: "m2", date: tuesday(), calories: 150 },
+      { id: "m3", date: wednesday(), calories: 500 },
+      { id: "m4", date: wednesday(), calories: 300 },
+    ];
     renderHome();
-    expect(weekPart("food")).toBe("Food logged 1 of 7 days");
+    expect(weekPart("food")).toBe("Food logged 2 of 7 days");
   });
 });
 

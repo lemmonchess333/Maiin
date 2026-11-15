@@ -649,7 +649,6 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     durationWeeks: 8 as const,
     startDate: "2026-08-01",
     goalBefore: "hypertrophy" as const,
-    amnestyWeeksLeft: 3,
     weeklyLiftTarget: 4,
     anchorExerciseIds: ["squat"],
     why: "",
@@ -1197,7 +1196,6 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
         durationWeeks: 8,
         startDate: "2026-05-11",
         goalBefore: "hypertrophy",
-        amnestyWeeksLeft: 0,
       } as ProgramState["trainingBlock"],
     };
     const edited = buildPlan(

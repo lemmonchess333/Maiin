@@ -13,6 +13,10 @@
  *              next step, ended ones folded; with none, the start-or-join
  *              card alone.
  *   Discover   races and Spaces, then the challenges not joined.
+ *
+ * All of that with enough people training on Tropos (App1 Q6, seeded
+ * below); at small numbers the page is the person's own: what they joined
+ * and their Circles, with nothing offered.
  */
 import {
   afterEach,
@@ -28,6 +32,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -37,6 +42,7 @@ import type { SpaceDirectoryEntry } from "@/features/spaces/useSpacesDirectory";
 import { loadWordFilter } from "@/lib/wordFilter";
 import {
   flushSnapshots,
+  readsAt,
   resetFirestore,
   seedFirestore,
 } from "@/test/firestoreHarness";
@@ -146,6 +152,9 @@ beforeEach(() => {
   circlesHook.circles = [];
   seedFirestore({
     "users/me": h.profile,
+    // Twelve people in the league trained lately: enough for Together to
+    // offer its challenges, the league and Spaces.
+    "leagueStatus/current": { joined: 12 },
     "challenges/weekly-2026-09-07": {
       name: "Weekly Warrior",
       description: "Train twice this week",
@@ -176,11 +185,7 @@ afterEach(() => {
 async function openTogether() {
   render(
     <MemoryRouter>
-      <CommunityView
-        active
-        uid="me"
-        refreshRef={{ current: null }}
-      />
+      <CommunityView active uid="me" refreshRef={{ current: null }} />
     </MemoryRouter>
   );
   await flushSnapshots();
@@ -402,5 +407,38 @@ describe("the page's one filled button", () => {
     expect(
       screen.getByRole("button", { name: "Start a circle" }).className
     ).toMatch(NEUTRAL);
+  });
+});
+
+describe("at small numbers", () => {
+  it("is the person's own: their Circles, with no challenge, league or Space offered", async () => {
+    seedFirestore({ "leagueStatus/current": { joined: 3 } });
+    const { container } = render(
+      <MemoryRouter>
+        <CommunityView active uid="me" refreshRef={{ current: null }} />
+      </MemoryRouter>
+    );
+    await flushSnapshots();
+    // Anchor: the count of people was read and the page has stopped
+    // loading.
+    await waitFor(() =>
+      expect(readsAt("leagueStatus/current").length).toBeGreaterThan(0)
+    );
+    await waitFor(() =>
+      expect(container.querySelector(".motion-safe\\:animate-pulse")).toBeNull()
+    );
+    await flushSnapshots();
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((el) => el.textContent)
+    ).toEqual(["Circles"]);
+    expect(
+      screen.queryByRole("button", { name: "Join weekly challenge" })
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Join the league" })
+    ).toBeNull();
+    expect(screen.queryByText("Runners")).toBeNull();
+    // With no Circle, the page's one filled button is Start a circle.
+    expect(filledButtons()).toEqual(["Start a circle"]);
   });
 });

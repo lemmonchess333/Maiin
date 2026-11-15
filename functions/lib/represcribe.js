@@ -22,7 +22,6 @@
  *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
  *   withRoleNumbers                               → represcribe.ts
- *   BLOCK_AMNESTY_WEEKS                           → represcribe.ts
  *   makeBlockId                                   → trainingBlock.ts
  *
  * The reps themselves come from the role table (Lift4 (5)), whose server
@@ -235,9 +234,6 @@ function scaleLoadForReps(weight, fromReps, toReps, unit = "kg") {
   return Math.round((weight * ratio) / 2.5) * 2.5;
 }
 
-/** Mirror of represcribe.ts BLOCK_AMNESTY_WEEKS. */
-const BLOCK_AMNESTY_WEEKS = 3;
-
 /** Mirror of trainingBlock.ts makeBlockId. */
 function makeBlockId(startDate, createdAt) {
   return `${startDate}-${createdAt}`;
@@ -345,7 +341,6 @@ function withRoleNumbers(workouts, dayIndex, instanceId, goal, experience, maxSe
 }
 
 module.exports = {
-  BLOCK_AMNESTY_WEEKS,
   GOAL_PROFILES,
   MAX_PRESCRIBED_BODYWEIGHT_REPS,
   MAX_PRESCRIBED_REPS,

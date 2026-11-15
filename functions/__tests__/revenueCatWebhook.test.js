@@ -306,8 +306,9 @@ describe("revenueCatWebhook — syncing", () => {
         store: "app_store",
         syncedAtMs: NOW,
       },
-      updatedAt: "SERVER_TIME",
     });
+    // The profile keeps no write time (App1 Q24).
+    expect(db.data.get("users/uid-1")).not.toHaveProperty("updatedAt");
     const record = db.data.get("revenueCatEvents/evt-1");
     expect(record).toEqual({
       type: "INITIAL_PURCHASE",

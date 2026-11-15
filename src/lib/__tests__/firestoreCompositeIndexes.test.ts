@@ -183,12 +183,8 @@ describe("firestore composite indexes", () => {
         (q) => q.coll === "activities" && q.orders.includes("createdAt")
       )
     ).toBe(true);
-    // Both the feed page and unread listener use the schema filter; the
-    // latter also bounds createdAt, already represented by its order field.
-    for (const file of [
-      "src/lib/socialApi.ts",
-      "src/hooks/useUnreadCount.ts",
-    ]) {
+    // The feed page uses the schema filter, ordered by createdAt.
+    for (const file of ["src/lib/socialApi.ts"]) {
       expect(
         queries.some(
           (q) =>

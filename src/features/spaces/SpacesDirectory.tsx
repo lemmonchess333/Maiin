@@ -17,8 +17,13 @@
  * stands in for it (Spc1c). How many posts a Space had this week is not
  * read here (the directory reads a member count and membership only), so
  * no card says it. No animation loops (WKWebView).
+ *
+ * Until Tropos has enough people to fill them (App1 Q6, `roomShown`), the
+ * directory offers nothing: it draws only the Spaces the person joined,
+ * under "Your spaces", and nothing at all when they joined none. No filter
+ * chips then, as there is nothing to browse.
  */
-import { useState } from "react";
+import { useId, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import PhotoCaption from "@/components/ui/PhotoCaption";
@@ -48,6 +53,8 @@ import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
+import { roomShown } from "@/lib/enoughPeople";
 import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
@@ -272,6 +279,37 @@ function CardRow({
 export default function SpacesDirectory() {
   const [filters, setFilters] = useState(UK_RACE_FILTERS);
   const { entries, upcomingRaces } = useSpacesDirectory(true, filters);
+  const enough = useEnoughPeople();
+  const yoursId = useId();
+
+  if (!enough) {
+    const yours = entries.filter((e) => roomShown(e.joined, enough));
+    if (yours.length === 0) return null;
+    const yourRaces = yours.filter((e) => e.def.kind === "race");
+    const yourInterest = yours.filter((e) => e.def.kind !== "race");
+    return (
+      <section aria-labelledby={yoursId} className="space-y-3">
+        <SectionHeading id={yoursId}>Your spaces</SectionHeading>
+        {yourRaces.length > 0 && (
+          <CardRow
+            label="Your races"
+            entries={yourRaces}
+            size="regular"
+            hideLabel
+          />
+        )}
+        {yourInterest.length > 0 && (
+          <CardRow
+            label="Spaces"
+            entries={yourInterest}
+            size="small"
+            hideLabel
+          />
+        )}
+      </section>
+    );
+  }
+
   const interest = entries.filter((e) => e.def.kind !== "race");
   const races = entries.filter((e) => e.def.kind === "race");
   const showRaces = upcomingRaces.length > 0;

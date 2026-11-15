@@ -1,7 +1,8 @@
 /**
- * The Settings list's Notifications row names push only where there is a
- * push switch to find: on the web. The iPhone app has no remote push
- * (isRemotePushOffered), so its row says what the page holds there.
+ * The Settings list's Notifications row names what the page holds:
+ * reminders and activity. There is no push switch to find on either
+ * platform since App1 Q26 (the app picks how each reminder goes), so the
+ * web and the iPhone app say the same.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
@@ -47,17 +48,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the Notifications row", () => {
-  it("names push on the web, where the switch is", () => {
-    renderList();
-    expect(screen.getByText("Reminders, push, activity")).toBeInTheDocument();
-  });
-
-  it("does not name push on the native app", () => {
-    platform.native = true;
+  it.each([
+    ["the web", false],
+    ["the native app", true],
+  ])("names reminders and activity, not push, on %s", (_name, native) => {
+    platform.native = native;
     renderList();
     expect(screen.getByText("Reminders, activity")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Reminders, push, activity")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/push/i)).not.toBeInTheDocument();
   });
 });

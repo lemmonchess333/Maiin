@@ -513,6 +513,24 @@
       ]
     },
     {
+      "collectionGroup": "settings",
+      "fieldPath": "propsBundleDueAt",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
       "collectionGroup": "appleSubscriptions",
       "fieldPath": "deletionExpiresAt",
       "ttl": true,

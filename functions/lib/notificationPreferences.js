@@ -17,7 +17,10 @@
  *
  * `createNotification` (socialFanout.js) reads `users/{uid}.
  * notificationPreferences` and writes nothing for a kind that is off: a
- * switch that only hid the row would still let the row arrive.
+ * switch that only hid the row would still let the row arrive. The same
+ * switch decides the push (App1 Q18, socialPush.js): comments, follow
+ * requests, invites and league results push as their row is written, and
+ * props come together once a day; the other kinds stay in the tray.
  *
  * The client keeps a copy of the switches and their defaults in
  * src/lib/notificationPreferences.ts so Settings shows what this file will

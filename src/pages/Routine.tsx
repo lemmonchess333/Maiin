@@ -18,6 +18,7 @@ import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
 import { keepTitleWhole } from "@/lib/workoutLabels";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -234,6 +235,7 @@ export default function Routine() {
       onViewWorkout={(id) =>
         navigate(`/workout/${encodeURIComponent(id)}`, { replace: true })
       }
+      onLogFood={() => navigate(recoveryFoodPath("lift"), { replace: true })}
       resumeDraft={resumeOnOpen}
     />
   );

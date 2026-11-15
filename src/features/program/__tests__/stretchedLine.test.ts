@@ -189,7 +189,6 @@ function stateWith(ex: ProgramExercise): ProgramState {
     currentPhase: "progression",
     weekNumber: 3,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 1,
     settings: { autoProgression: true, smallPlates: false },
     workouts: [

@@ -1,32 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import SupportLegalSection from "../SupportLegalSection";
-import { guideRequest } from "@/lib/firstGuide";
 
-function HomeProbe() {
-  const location = useLocation();
-  return (
-    <output aria-label="Home asked for">
-      {guideRequest(location.state) ?? "nothing"}
-    </output>
-  );
-}
-
-describe("SupportLegalSection — Show me around", () => {
-  it("takes you to Home asking for the first-visit walk", () => {
+describe("SupportLegalSection", () => {
+  it("offers help, reporting and the legal pages", () => {
     render(
-      <MemoryRouter initialEntries={["/settings/support-legal"]}>
-        <Routes>
-          <Route
-            path="/settings/support-legal"
-            element={<SupportLegalSection inline />}
-          />
-          <Route path="/" element={<HomeProbe />} />
-        </Routes>
+      <MemoryRouter>
+        <SupportLegalSection inline />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole("link", { name: /Show me around/ }));
-    expect(screen.getByLabelText("Home asked for")).toHaveTextContent("walk");
+    expect(
+      screen.getByRole("link", { name: /Help & support/ })
+    ).toHaveAttribute("href", expect.stringMatching(/^mailto:/));
+    expect(
+      screen.getByRole("link", { name: /Report objectionable content/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Privacy Policy" })
+    ).toHaveAttribute("href", "/privacy");
+    expect(
+      screen.getByRole("link", { name: "Terms of Service" })
+    ).toHaveAttribute("href", "/terms");
+  });
+
+  /* Its "Show me around" replayed Home's first-visit walk, which went with
+     the older first-week journey (App1, whole-app grill Q27). */
+  it("no longer offers a walk through Home", () => {
+    render(
+      <MemoryRouter>
+        <SupportLegalSection inline />
+      </MemoryRouter>
+    );
+    expect(screen.queryByRole("link", { name: /Show me around/ })).toBeNull();
   });
 });

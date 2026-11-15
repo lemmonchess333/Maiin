@@ -30,7 +30,6 @@ function makeLegacyProgramState(
     weekNumber: 3,
     splitType: "upper_lower",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 1_700_000_000_000,
     ...overrides,
   };

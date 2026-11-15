@@ -11,6 +11,7 @@ import { finishKicker } from "@/lib/finishMoment";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
+import type { ReactNode } from "react";
 
 const motionPref = vi.hoisted(() => ({ reduce: true }));
 vi.mock("@/hooks/useReducedMotion", () => ({
@@ -55,15 +56,36 @@ vi.mock("@/features/streaks/BadgeEarnedModal", () => ({
   ),
 }));
 
-/* What the finish screen hands its share card, read without drawing it. */
+/* What the finish screen hands its share card, read without drawing the
+   card; the other ways to share it, under the card, are drawn. */
 const shareCard = vi.hoisted(() => ({
   data: null as null | Record<string, unknown>,
 }));
 vi.mock("@/components/share/ShareCardSheet", () => ({
-  default: ({ data }: { data: Record<string, unknown> }) => {
+  default: ({
+    data,
+    extras,
+  }: {
+    data: Record<string, unknown>;
+    extras?: ReactNode;
+  }) => {
     shareCard.data = data;
-    return null;
+    return extras ? <div data-testid="share-extras">{extras}</div> : null;
   },
+}));
+/* The props prompt and the Circle sheet are their own tests' to cover;
+   here they only have to be on the screen when they should be. */
+const kudos = vi.hoisted(() => ({ fails: false }));
+vi.mock("@/components/social/SavedSessionKudos", () => ({
+  default: ({ uid }: { uid?: string }) => {
+    if (kudos.fails) throw new TypeError("Importing a module script failed.");
+    return <p data-testid="props-prompt">{uid}</p>;
+  },
+}));
+vi.mock("@/components/social/CircleShareSheet", () => ({
+  default: ({ uid }: { uid: string }) => (
+    <div data-testid="circle-sheet">{uid}</div>
+  ),
 }));
 
 const confetti = vi.hoisted(() => Object.assign(vi.fn(), { reset: vi.fn() }));
@@ -181,6 +203,7 @@ const follows = (earlier: Node, later: Node) =>
   0;
 
 beforeEach(() => {
+  kudos.fails = false;
   motionPref.reduce = true;
   streaks.newBadge = { id: "first-pr", name: "First PR" };
 });
@@ -483,5 +506,97 @@ describe("SessionCompleteScreen — the reward and the summary (DS4)", () => {
     );
     expect(register()).toBe("summary");
     expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
+  });
+});
+
+/* App1 Q30: a finished lift gets what a finished run gets, a recovery-food
+   link, the props prompt and sharing to a Circle, and like the run it
+   offers them only for a saved session: the screen opens before its save. */
+describe("SessionCompleteScreen — what a finished run gets (App1 Q30)", () => {
+  it("offers none of the three before the save", async () => {
+    const logFood = vi.fn();
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ planWeek: true, onLogFood: logFood })}
+      />
+    );
+    await screen.findByRole("button", { name: "Save workout" });
+    expect(screen.queryByTestId("props-prompt")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Log recovery food" })
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Share" })).toBeNull();
+    expect(screen.queryByText("Share to circle")).toBeNull();
+  });
+
+  it("opens the food log from the saved screen, under View workout", () => {
+    const logFood = vi.fn();
+    render(
+      <SessionCompleteScreen
+        {...screenProps({
+          saved: true,
+          onLogFood: logFood,
+          onViewWorkout: () => {},
+        })}
+      />
+    );
+    const food = screen.getByRole("button", { name: "Log recovery food" });
+    expect(
+      follows(screen.getByRole("button", { name: "View workout" }), food)
+    ).toBe(true);
+    // Done stays last.
+    expect(follows(food, screen.getByRole("button", { name: "Done" }))).toBe(
+      true
+    );
+    fireEvent.click(food);
+    expect(logFood).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for props once saved, as the account that trained", async () => {
+    const view = render(<SessionCompleteScreen {...screenProps()} />);
+    expect(screen.queryByTestId("props-prompt")).toBeNull();
+    view.rerender(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    expect(await screen.findByTestId("props-prompt")).toHaveTextContent("u1");
+  });
+
+  it("keeps the saved screen when the props prompt cannot load", async () => {
+    kudos.fails = true;
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    expect(
+      await screen.findByText(
+        "Remind you before your next session?",
+        {},
+        { timeout: 5_000 }
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("props-prompt")).toBeNull();
+    expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
+    error.mockRestore();
+  });
+
+  it("shares a saved programme day to a Circle from under its card", async () => {
+    render(
+      <SessionCompleteScreen
+        {...screenProps({ saved: true, planWeek: true })}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    const circle = await screen.findByRole("button", {
+      name: "Share to circle",
+    });
+    expect(circle.closest("[data-testid='share-extras']")).not.toBeNull();
+    fireEvent.click(circle);
+    // The card's sheet closes, and the Circle's opens as the lifter.
+    expect(await screen.findByTestId("circle-sheet")).toHaveTextContent("u1");
+    expect(screen.queryByTestId("share-extras")).toBeNull();
+  });
+
+  it("offers no Circle share for a session outside the plan", async () => {
+    shareCard.data = null;
+    render(<SessionCompleteScreen {...screenProps({ saved: true })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    await waitFor(() => expect(shareCard.data).not.toBeNull());
+    expect(screen.queryByText("Share to circle")).toBeNull();
   });
 });

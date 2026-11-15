@@ -15,6 +15,22 @@ describe("RacePlanProNote (whole-app grill Q85)", () => {
     }
   });
 
+  it("tells an account that has had its free week a new plan is Pro from its start", () => {
+    render(<RacePlanProNote distance="half" isPro={false} freeWeekUsed />);
+    expect(
+      screen.getByText(
+        "Half and full marathon plans are part of Pro, and you’ve had your free week. 5K and 10K plans stay free."
+      )
+    ).toBeInTheDocument();
+    cleanup();
+    render(<RacePlanProNote distance="half" isPro={false} />);
+    expect(
+      screen.getByText(
+        "Half and full marathon plans are part of Pro after their first week. 5K and 10K plans stay free."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("says nothing for a 5K or 10K, or to Pro", () => {
     const { container } = render(
       <RacePlanProNote distance="10k" isPro={false} />
