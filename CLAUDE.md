@@ -128,7 +128,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked      |
 | `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces         |
 | `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                        |
-| `Login.tsx`                            | `*` (fallback)                     | Welcome screen on first visit, then sign-up or sign-in (Email, Google, Apple)   |
+| `Login.tsx`                            | `*` (fallback)                     | Welcome whenever signed out, then sign-up or sign-in (Email, Google, Apple)     |
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                    |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                    |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out              |

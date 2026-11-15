@@ -35,10 +35,10 @@ export const TEST_USER = {
 };
 
 /**
- * A browser that has never signed in opens on the welcome screen, where
- * "Get started" leads to the sign-up form. One that has signed in before
- * opens on the sign-in form, whose "Sign up" switches to it. Either way this
- * returns with the sign-up form showing.
+ * Signed out, the app opens on the welcome screen, where "Get started"
+ * leads to the sign-up form. Just after an account is deleted or its email
+ * changed it opens on the sign-in form, whose "Sign up" switches to it.
+ * Either way this returns with the sign-up form showing.
  */
 export async function openSignUpForm(page: Page): Promise<void> {
   const getStarted = page.getByRole("button", {
@@ -55,7 +55,8 @@ export async function openSignUpForm(page: Page): Promise<void> {
 
 /** The sign-in form, by "Sign in" from the welcome screen. The form's own
  *  submit button is "Sign in" too, so the email field decides which screen
- *  is open: a device that has signed in before opens on the form. */
+ *  is open: an account just deleted or an email just changed opens on the
+ *  form. */
 export async function openSignInForm(page: Page): Promise<void> {
   const welcomeSignIn = page.getByRole("button", {
     name: "Sign in",
