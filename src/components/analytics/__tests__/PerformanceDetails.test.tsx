@@ -1,9 +1,8 @@
 /**
- * What the score is made of, opened under the Performance card by "Score
- * details" (Trim1 call 5). The score, its verb and its change are the
- * card's, and `PerformanceSection.test.tsx` holds them; these are the
- * cases the retired Performance page's tests carried for everything
- * below its gauge.
+ * The score and what it is made of, opened under Progress's lead by
+ * "Score details" (Trim1 call 5). App1 Q10 moved the 0–100 score itself
+ * here; the verdict and the last seven days against the usual week are
+ * the lead's, and `PerformanceSection.test.tsx` holds them.
  *
  * The fixtures are WRITER-SHAPED on purpose: top-level `loadBand`, no
  * `labels` map, exactly as `functions/lib/perfScoring.js` emits. The
@@ -12,8 +11,10 @@
  * green while the page showed every user an em dash for their load band.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { groupText } from "@/test/localeGrouping";
+import { THEME } from "@/lib/theme";
 
 const mockUsePerformanceWeeks = vi.fn();
 // Chart telemetry is unrelated here. Keep its provider outside the
@@ -48,11 +49,13 @@ function week(
   pi: number,
   {
     loadBand = "high",
+    deloadRecommended = false,
     lifetimeWeeks = 8,
     baselineWeeks = lifetimeWeeks,
     planAdjustments,
   }: {
     loadBand?: string;
+    deloadRecommended?: boolean;
     lifetimeWeeks?: number;
     baselineWeeks?: number;
     planAdjustments?: { lift: string[]; run: string[] };
@@ -62,7 +65,7 @@ function week(
     weekKey,
     performanceIndex: pi,
     loadBand,
-    deloadRecommended: false,
+    deloadRecommended,
     breakdown: {
       liftLoadScore: 100,
       runLoadScore: 67,
@@ -72,7 +75,13 @@ function week(
     multipliers: { liftProgression: 1, runVolume: 1, runPaceAdjustmentPct: 0 },
     // The device case: 12.4k kg this week against a baseline of one
     // session's 2.9k, which is where "+324%" once came from.
-    aggregates: { liftSessions: 3, liftTonnage: 12400 },
+    aggregates: {
+      liftSessions: 3,
+      liftTonnage: 12400,
+      mealDaysLogged: 6,
+      avgDailyCalories: 2184,
+      avgDailyProtein: 148,
+    },
     baseline: { liftTonnage: 2925, weeksUsed: baselineWeeks },
     adherenceScore: 100,
     signals: { lifetimeWeeks, daysSinceLastTraining: 1 },
@@ -80,7 +89,7 @@ function week(
   };
 }
 
-function renderWeeks(weeks: Week[], children?: React.ReactNode) {
+function renderWeeks(weeks: Week[]) {
   mockUsePerformanceWeeks.mockReturnValue({
     weeks,
     currentWeek: weeks.length ? weeks[weeks.length - 1] : null,
@@ -88,7 +97,7 @@ function renderWeeks(weeks: Week[], children?: React.ReactNode) {
   });
   return render(
     <MemoryRouter>
-      <PerformanceDetails>{children}</PerformanceDetails>
+      <PerformanceDetails />
     </MemoryRouter>
   );
 }
@@ -111,22 +120,123 @@ beforeEach(() => {
   review.eligibility = "ineligible";
 });
 
-describe("PerformanceDetails", () => {
-  it("does not show the score again: that is the card's", () => {
-    renderWeeks(warm());
-    // The score is 81. The twelve-week average is another figure.
-    expect(screen.queryByText("81")).toBeNull();
-    expect(screen.queryByText(/^(Sharpening|Early read)$/)).toBeNull();
-    expect(screen.queryByText(/on last week|pts$/)).toBeNull();
+const scoreCard = () => screen.getByRole("region", { name: "Your score" });
+
+describe("PerformanceDetails: the score (App1 Q10)", () => {
+  it("holds the 0–100 score, once, inside its ring", () => {
+    const { container } = renderWeeks(warm());
+    const score = within(scoreCard()).getByText("81");
+    // The ring is the element the score sits in: §3f's "the ring in the
+    // band's colour with the score in it", not digits beside a ring.
+    expect(
+      score.closest("div.relative")?.querySelector("svg circle")
+    ).not.toBeNull();
+    expect(screen.getAllByText("81")).toHaveLength(1);
+    expect(
+      container.querySelectorAll("svg circle[stroke-dasharray]")
+    ).toHaveLength(1);
   });
 
+  it("draws the ring in rem, so the score still fits at larger text", () => {
+    renderWeeks(warm());
+    const ring = screen.getByText("81").closest("div.relative") as HTMLElement;
+    expect(ring.style.width).toMatch(/rem$/);
+    expect(ring.style.height).toBe(ring.style.width);
+  });
+
+  it("does not repeat the lead's verb", () => {
+    renderWeeks(warm());
+    expect(screen.queryByText(/^(Sharpening|Early read)$/)).toBeNull();
+  });
+
+  it("labels its window the 7 days, never this week (Q13)", () => {
+    renderWeeks(warm());
+    // The newest score here is weeks old: named by its last day.
+    expect(
+      within(scoreCard()).getByText("7 days to 2 Aug · out of 100")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/this week/i)).toBeNull();
+  });
+
+  it("gives the change on the 7 days before", () => {
+    renderWeeks(warm());
+    expect(screen.getByText("Up 21 on the 7 days before")).toBeInTheDocument();
+  });
+
+  it("says nothing about a score that held level", () => {
+    /* A device screenshot, 13 August 2026: a held-level week read
+       "+0 pts" in the app's green. Zero is the one value whose sign
+       carries nothing, so the chip has nothing to add. */
+    renderWeeks([week("2026-07-26", 60), week("2026-08-02", 60)]);
+    expect(screen.queryByText(/on the 7 days before/)).toBeNull();
+    expect(screen.queryByText(/[+−-]0\b/)).toBeNull();
+  });
+
+  it("still reports a real drop", () => {
+    // Suppressing zero must not suppress a decline.
+    renderWeeks([week("2026-07-26", 60), week("2026-08-02", 52)]);
+    expect(screen.getByText("Down 8 on the 7 days before")).toBeInTheDocument();
+  });
+
+  it("colours the ring amber when the lead says to back off", () => {
+    const { container } = renderWeeks(
+      warm({ loadBand: "overreach", deloadRecommended: true })
+    );
+    expect(
+      container
+        .querySelector("svg circle[stroke-dasharray]")
+        ?.getAttribute("stroke")
+    ).toBe(THEME.amber);
+  });
+
+  it("explains the number from its heading, on a tap", () => {
+    renderWeeks(warm());
+    expect(screen.queryByText(/not a recommendation/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "About your score" }));
+    expect(
+      screen.getByText(/not a recommendation to train harder/)
+    ).toBeInTheDocument();
+  });
+});
+
+describe("PerformanceDetails: the score while the baseline forms", () => {
+  it("still shows the score: it is the verdict that was unsupported", () => {
+    renderWeeks(COLD);
+    expect(within(scoreCard()).getByText("81")).toBeInTheDocument();
+  });
+
+  it("hides the change, which is noise against no baseline", () => {
+    renderWeeks([
+      week("2026-07-26", 40, { loadBand: "low", lifetimeWeeks: 1 }),
+      week("2026-08-02", 55, { loadBand: "moderate", lifetimeWeeks: 2 }),
+    ]);
+    expect(screen.queryByText(/on the 7 days before/)).toBeNull();
+  });
+
+  it("draws a first week's ring in the brand's colour, not amber", () => {
+    const { container } = renderWeeks([
+      week("2026-08-02", 92, {
+        loadBand: "overreach",
+        deloadRecommended: true,
+        lifetimeWeeks: 1,
+      }),
+    ]);
+    expect(
+      container
+        .querySelector("svg circle[stroke-dasharray]")
+        ?.getAttribute("stroke")
+    ).toBe(THEME.brand);
+  });
+});
+
+describe("PerformanceDetails", () => {
   it("shows all of it at once, with no second fold", () => {
     /* The four factors, the load band and the average sat behind a
        "Score details" button inside the page: two taps from the overview.
        Hist6 removed that double fold once already. */
     renderWeeks(warm());
     expect(screen.queryByRole("button", { name: /details/i })).toBeNull();
-    expect(screen.getByText("The last 7 days")).toBeInTheDocument();
+    expect(scoreCard()).toBeInTheDocument();
     for (const factor of ["Lift load", "Run load", "Recovery", "Adherence"]) {
       expect(screen.getByText(factor)).toBeInTheDocument();
     }
@@ -134,13 +244,30 @@ describe("PerformanceDetails", () => {
     expect(screen.getByText(/^Avg PI \(\d+w\)$/)).toBeInTheDocument();
   });
 
-  it("draws what its page hands it, the training load, among the rest", () => {
-    renderWeeks(warm(), <p>Training load</p>);
-    expect(screen.getByText("Training load")).toBeInTheDocument();
+  it("keeps one load model, the score's own: no minutes curve or its warnings (Q16)", () => {
+    renderWeeks(warm());
+    expect(screen.queryByText("Training load")).toBeNull();
+    expect(screen.queryByText(/Fitness|Fatigue|Form [+−-]?\d/)).toBeNull();
+    expect(screen.queryByText(/4-week base|near-identical load/)).toBeNull();
   });
 
-  it("still draws the training load when the scores cannot be read", () => {
-    // The load is computed from the sessions, not the score's documents.
+  it("does not repeat the lead's lifting and running against the usual week", () => {
+    renderWeeks(warm());
+    expect(screen.queryByText("12.4k kg")).toBeNull();
+    expect(screen.queryByText(/usual week/)).toBeNull();
+  });
+
+  it("gives the food logged, with the numbers in the numeral face and the words not", () => {
+    renderWeeks(warm());
+    expect(screen.getByText("6 of 7 days")).toBeInTheDocument();
+    const kcal = screen.getByText(groupText(2184));
+    expect(kcal.className).toContain("font-mono");
+    expect(kcal.parentElement!.textContent).toMatch(
+      /kcal and 148 g protein a day, on the days logged/
+    );
+  });
+
+  it("says the scores could not load, and nothing else", () => {
     mockUsePerformanceWeeks.mockReturnValue({
       weeks: [],
       currentWeek: null,
@@ -150,15 +277,12 @@ describe("PerformanceDetails", () => {
     });
     render(
       <MemoryRouter>
-        <PerformanceDetails>
-          <p>Training load</p>
-        </PerformanceDetails>
+        <PerformanceDetails />
       </MemoryRouter>
     );
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Performance could not load"
     );
-    expect(screen.getByText("Training load")).toBeInTheDocument();
   });
 });
 
@@ -188,38 +312,6 @@ describe("PerformanceDetails: the load band", () => {
     expect(
       statValue("Load band").getByText("Establishing")
     ).toBeInTheDocument();
-  });
-});
-
-describe("PerformanceDetails: the week against the usual week", () => {
-  /* The same screen once read "Lifting progression: +324%", a ratio
-     against a baseline of one session: arithmetically correct and
-     meaningless. The page states the week's lifting beside the usual
-     week instead, and no usual week until the baseline has formed. */
-  it("offers no usual week while the baseline has not formed", () => {
-    renderWeeks(COLD);
-    // The week's own figure is here; only the comparison is withheld.
-    // Anchoring on it stops the null below being satisfied by a card
-    // that did not render at all.
-    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
-    expect(screen.queryByText(/usual week/)).toBeNull();
-    expect(screen.queryByText(/\+324%/)).toBeNull();
-  });
-
-  it("states the usual week once the baseline is settled", () => {
-    // The control: same figures, only the history differs.
-    renderWeeks(warm());
-    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
-    expect(screen.getByText(/usual week/)).toBeInTheDocument();
-    expect(screen.getByText("2.9k kg")).toBeInTheDocument();
-  });
-
-  it("offers no usual week from a baseline of one active week, even when settled", () => {
-    renderWeeks(
-      warm().map((w) => ({ ...w, baseline: { ...w.baseline, weeksUsed: 1 } }))
-    );
-    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
-    expect(screen.queryByText(/usual week/)).toBeNull();
   });
 });
 

@@ -73,6 +73,16 @@ says which.
     (it can be "saved" and "needs attention" at once) and checkout (a
     completed purchase can be reported as failed).
 
+STATUS 2026-11-15: Q10, Q12, Q13's score window and Q16 built on
+`claude/app1-score-one-place`. Progress leads with the engine's verdict
+over the last 7 days' lifting and running against the usual week; the
+0–100 score is the first of Score details (Pro, Q84), so a free account
+sees the verdict and not the number; the window is "Last 7 days" (or "7
+days to" a date for a kept score), never "This week"; the weekly review
+keeps its verdict and drops the number; and the minutes-based training
+load chart went with its two warnings, which did not feed the lighter-week
+decision: that stays the engine's alone (Q11), so one model decides it.
+
 ## Round 3. Settings and leftovers
 
 Three settings faults found, to be fixed: Gender in Settings writes a field

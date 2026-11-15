@@ -4,6 +4,9 @@
  * training load chart and the performance score's details. Logging and
  * recent history stay free."
  *
+ * The training load chart it names went with App1 Q16 (one load model,
+ * the score's own), and Q10 put the 0–100 score itself in the details.
+ *
  * Read as the reference apps draw the line: Hevy keeps 3 months of graph
  * history free and Cronometer a week of reports, and neither hides the
  * logs themselves. So the ranges that chart further back than 3 months are

@@ -7,6 +7,7 @@ import {
   VERB_LABEL,
   EMPTY_STATE_LINE,
   performanceEmptyCopy,
+  scoreWindowLabel,
   type VerbState,
 } from "../performanceLine";
 import type { PerformanceSignals } from "../performanceTypes";
@@ -100,11 +101,14 @@ describe("getLine — backing-off state", () => {
   });
 });
 
+/* The sharpening lines describe the score's window, which the card names
+   above them ("Last 7 days"), so they no longer end "this week", which
+   means Monday to Sunday (App1 Q13). */
 describe("getLine — sharpening state", () => {
   it("bothLoadsStrong signal: hybrid celebration line", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, bothLoadsStrong: true })
-    ).toBe("Lifting and running both strong this week");
+    ).toBe("Lifting and running both strong");
   });
 
   it("liftAheadOfBaseline > 0.15: cites the percentage", () => {
@@ -130,23 +134,23 @@ describe("getLine — sharpening state", () => {
       liftAheadOfBaseline: 0.2,
       runAheadOfBaseline: 0.3,
     });
-    expect(line).toBe("Lifting and running both strong this week");
+    expect(line).toBe("Lifting and running both strong");
   });
 
   it("no signals: says what the band means, with no cheer", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("Load is high this week");
+    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("Load is high");
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
-    ).toBe("Load is high this week");
+    ).toBe("Load is high");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
-    ).toBe("Load is high this week");
+    ).toBe("Load is high");
   });
 });
 
@@ -306,6 +310,27 @@ describe("the supporting line's shape", () => {
       for (const state of states) {
         expect(getLine(state, signals), state).not.toMatch(/\u2014/);
       }
+    }
+  });
+});
+
+describe("scoreWindowLabel — the score's window by name (App1 Q13)", () => {
+  // A Thursday, so a Monday-to-Sunday week and the rolling seven differ.
+  const today = new Date(2026, 10, 12, 9, 0);
+
+  it("calls a window ending today or yesterday the last 7 days", () => {
+    expect(scoreWindowLabel("2026-11-12", today)).toBe("Last 7 days");
+    expect(scoreWindowLabel("2026-11-11", today)).toBe("Last 7 days");
+  });
+
+  it("names an older window by its last day", () => {
+    expect(scoreWindowLabel("2026-11-10", today)).toBe("7 days to 10 Nov");
+    expect(scoreWindowLabel("2026-08-02", today)).toBe("7 days to 2 Aug");
+  });
+
+  it("never calls it this week, which means Monday to Sunday", () => {
+    for (const key of ["2026-11-12", "2026-11-09", "2026-10-01"]) {
+      expect(scoreWindowLabel(key, today)).not.toMatch(/this week/i);
     }
   });
 });

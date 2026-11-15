@@ -23,6 +23,8 @@
    ───────────────────────────────────────────── */
 
 import type { LoadBand, PerformanceSignals } from "./performanceTypes";
+import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
+import { formatDayMonth } from "@/utils/formatters";
 
 /** Verb-state — categorical state the card communicates. */
 export type VerbState =
@@ -104,6 +106,10 @@ export function getEstablishingLine(signals: PerformanceSignals): string {
     : "Settling in";
 }
 
+/* A line describes the score's window, seven days ending today, which the
+   card names above it ("Last 7 days", `scoreWindowLabel`); so no line calls
+   that window "this week", which means Monday to Sunday (App1 Q13). "Ease
+   off this week" is advice for the calendar week, and keeps its words. */
 export function getLine(state: VerbState, signals: PerformanceSignals): string {
   switch (state) {
     case "backing-off":
@@ -112,11 +118,10 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
       return "Load is high. Ease off this week";
 
     case "sharpening":
-      if (signals.bothLoadsStrong)
-        return "Lifting and running both strong this week";
+      if (signals.bothLoadsStrong) return "Lifting and running both strong";
       if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
       if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
-      return "Load is high this week";
+      return "Load is high";
 
     case "cruising":
       if (signals.adherenceWeak) return "Fewer sessions than usual";
@@ -150,6 +155,21 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
         return "Quiet week. Log when you’re back";
       return "Light week. Take it easy";
   }
+}
+
+/**
+ * What the score's window is called (App1 Q13: "This week" means Monday to
+ * Sunday everywhere; the score's window is labelled "last 7 days"). The
+ * window is the seven days ending on its document's compute date, not a
+ * Monday. One that ended today or yesterday is the last 7 days; an older
+ * one, which someone back after a break keeps until they train, is named
+ * by its last day.
+ */
+export function scoreWindowLabel(computeKey: string, today: Date): string {
+  const yesterday = localDateString(addLocalDays(today, -1));
+  return computeKey >= yesterday
+    ? "Last 7 days"
+    : `7 days to ${formatDayMonth(parseLocalDate(computeKey))}`;
 }
 
 /** Empty-state line (no perf doc yet — pre-first-log). */

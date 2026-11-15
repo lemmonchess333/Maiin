@@ -4983,6 +4983,37 @@ test user in as Pro for the length of the capture.
 - [ ] **After a trial starts.** Passing: every range and the details open
       at once, with no restart.
 
+## The score in one place, one load model (App1 Q10, Q12, Q13, Q16, 2026-11-15)
+
+Affects: the top of Progress (`PerformanceSection`, `LoadAgainstUsual`),
+Score details (`PerformanceDetails`) and the weekly review's first card.
+The lead is the verdict at hero size over the last 7 days' lifting and
+running against the usual week; the 0–100 score opens first under Score
+details, which is Pro (Q84), so a free account no longer sees the number
+anywhere; the minutes-based training load chart is gone. Unit-tested; the
+capture specs read the new lead and details on the emulator. Where this
+section and the Q84 one above disagree on "the headline score", this one
+is current: a free account's Progress shows the verdict, not the score.
+
+- [ ] **A free account on Progress.** Passing: the top card reads "Last 7
+      days", a word such as Steady or Sharpening in large type, its line,
+      and Lifting and Running each with a bar and a tick at the usual
+      week; no 0–100 figure on the page; Score details shows "Pro".
+- [ ] **A Pro account opens Score details.** Passing: "Your score" first,
+      the ring with the figure and "Last 7 days · out of 100", then the
+      twelve-week chart, Breakdown with the food logged, Load band and
+      average; no Training load card, and no Fitness, Fatigue or Form.
+- [ ] **Larger text.** Settings → Accessibility → Larger Text at the
+      largest step on a small iPhone. Passing: "Backing off" or
+      "Sharpening" wraps or hyphenates inside the card and nothing runs
+      past its edge.
+- [ ] **Back after a break.** On an account whose newest score is more
+      than a day old. Passing: the kicker names the window by its last day
+      ("7 days to 2 Aug"), not "Last 7 days".
+- [ ] **The weekly review.** Open a review for a week with training.
+      Passing: the first card ends on its verdict in words alone, with no
+      "performance" figure or change.
+
 ## The easy cue on easy and long runs (Run24 (12), 2026-11-13)
 
 Affects: `checkEasyCeiling` in `useAudioCues`, called from `Run.tsx` on an

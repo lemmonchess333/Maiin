@@ -569,7 +569,7 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
 describe("the week the account began", () => {
   const perf = { pi: 63, loadBand: "moderate", deloadRecommended: false };
 
-  it("is reviewed from the start day, with a first-score verdict", () => {
+  it("is reviewed from the start day, with a first-week verdict", () => {
     // Joined on the Friday: three days of the week.
     const r = buildWeeklyReview(
       base({
@@ -579,8 +579,10 @@ describe("the week the account began", () => {
       })
     );
     expect(r?.firstDays).toEqual({ start: "2026-06-26", count: 3 });
+    // The review names no score (App1 Q12), so the first week's verdict
+    // says what the next weeks build rather than calling it a first score.
     expect(r?.headline?.verdict).toBe(
-      "Your first score. It settles over the next few weeks."
+      "Your usual week takes shape over the next few weeks."
     );
   });
 

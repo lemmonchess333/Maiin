@@ -1,19 +1,17 @@
 /**
- * The Performance section: the one place the score is shown (Trim1 call 5).
+ * The top of Progress (App1 Q10): "the single score moves into the
+ * details; the page leads with load against your usual and whether you can
+ * take more".
  *
- * It was shown three ways. Home's row and the overview's card read the
- * taxonomy PI1 locks, derived from (loadBand, deloadRecommended); the
- * gauge on the Performance page once derived its own band from the SCORE
- * alone (Peak / Building / Moderate / Recovery), so one week had two
- * names, and a parity test rendered both surfaces to hold them together.
- * There is one surface now, so what that test protected is asserted here
- * directly: the locked verb, once, and none of the retired vocabulary.
+ * The lead is the engine's verdict, the verb PI1 locks and its line, over
+ * the last seven days' lifting and running against the usual week. The
+ * 0–100 score is the first of its details, under "Score details", and
+ * `PerformanceDetails.test.tsx` holds it there.
  *
  * The cases the retired surfaces' tests carried are kept with their
- * reasons: the held-level week that read "+0 pts" in green, the
- * first-week 81 that read "Peak" over "Establishing your baseline", the
- * overreaching week told it had a "Low training load", and the first
- * session greeted with "No sessions logged yet".
+ * reasons: the first-week 81 that read "Peak" over "Establishing your
+ * baseline", the overreaching week told it had a "Low training load", and
+ * the first session greeted with "No sessions logged yet".
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -44,19 +42,21 @@ vi.mock("@/hooks/usePerformance", () => ({
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 /* The details are their own module with their own tests, loaded lazily.
-   Here they are a marker, so this file is about the card and its fold. */
+   Here they are a marker, so this file is about the lead and its fold. */
 vi.mock("@/components/analytics/PerformanceDetails", () => ({
-  default: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="performance-details">{children}</div>
-  ),
+  default: () => <div data-testid="performance-details" />,
 }));
 
 import PerformanceSection from "../PerformanceSection";
 import { VERB_LABEL } from "@/lib/performanceLine";
-import { THEME } from "@/lib/theme";
+import { localDateString, addLocalDays } from "@/lib/dateHelpers";
 
-/** A writer-shaped weekly doc: top-level band, NO labels map, exactly as
- *  `functions/lib/perfScoring.js` emits. */
+/** A day `n` days before today, as the engine keys its documents. */
+const daysAgo = (n: number) => localDateString(addLocalDays(new Date(), -n));
+
+/** A writer-shaped document: top-level band, NO labels map, exactly as
+ *  `functions/lib/perfScoring.js` emits, with the seven days' figures
+ *  and the usual week it was scored against. */
 function week(
   weekKey: string,
   pi: number,
@@ -76,18 +76,25 @@ function week(
       adherenceScore: 60,
     },
     multipliers: { liftProgression: 1, runVolume: 1, runPaceAdjustmentPct: 0 },
-    aggregates: {},
+    aggregates: {
+      liftSessions: 4,
+      liftTonnage: 16240,
+      runSessions: 3,
+      runKm: 32.4,
+      runLongKm: 14.2,
+    },
+    baseline: { liftTonnage: 13700, runKm: 28, weeksUsed: 4 },
     adherenceScore: 60,
     signals: { lifetimeWeeks, daysSinceLastTraining: 1 },
   };
 }
 
-// Four weeks clears the `establishing` cold-start gate.
+// Four weeks clears the `establishing` cold-start gate; the newest is today's.
 const history = (pi: number, band: string, deload = false) => [
-  week("2026-07-12", 55, "moderate"),
-  week("2026-07-19", 58, "moderate"),
-  week("2026-07-26", 60, "moderate"),
-  week("2026-08-02", pi, band, deload),
+  week(daysAgo(21), 55, "moderate"),
+  week(daysAgo(14), 58, "moderate"),
+  week(daysAgo(7), 60, "moderate"),
+  week(daysAgo(0), pi, band, deload),
 ];
 
 function serve(weeks: object[], loading = false) {
@@ -114,33 +121,43 @@ const verbsIn = (el: HTMLElement) =>
     (v) => within(el).queryAllByText(new RegExp(`^${v}$`)).length > 0
   );
 
+const lead = () =>
+  document.querySelector("[data-performance-lead]") as HTMLElement;
+
 beforeEach(() => {
   mockUsePerformanceWeeks.mockReset();
   cleanup();
 });
 
-describe("the Performance card", () => {
-  it("shows the week's index once, inside its ring, and the change on last week", () => {
+describe("the lead: load against your usual (App1 Q10)", () => {
+  it("does not lead with the 0–100 score: no ring and no figure out of 100", () => {
     serve(history(72, "high"));
     const { container } = renderSection();
-    const score = screen.getByText("72");
-    // The ring is the element the score sits in: §3f's "the ring in the
-    // band's colour with the score in it", not digits beside a ring.
-    const ring = score.closest("div.relative");
-    expect(ring?.querySelector("svg circle")).not.toBeNull();
-    expect(screen.getAllByText("72")).toHaveLength(1);
-    expect(screen.getByText("Up 12 on last week")).toBeInTheDocument();
-    expect(
-      container.querySelectorAll("svg circle[stroke-dasharray]")
-    ).toHaveLength(1);
+    // The score is 72. It is the first of the details, not the lead.
+    expect(screen.queryByText("72")).toBeNull();
+    expect(screen.queryByText(/Performance Index/)).toBeNull();
+    expect(container.querySelector("svg circle[stroke-dasharray]")).toBeNull();
   });
 
-  it("draws the ring in rem, so the score still fits at larger text", () => {
+  it("leads with the verdict, the screen's largest words", () => {
     serve(history(72, "high"));
     renderSection();
-    const ring = screen.getByText("72").closest("div.relative") as HTMLElement;
-    expect(ring.style.width).toMatch(/rem$/);
-    expect(ring.style.height).toBe(ring.style.width);
+    const verdict = within(lead()).getByText(/^Sharpening$/);
+    expect(verdict.className).toMatch(/\btext-hero\b/);
+  });
+
+  it("puts the last 7 days' lifting and running beside the usual week", () => {
+    serve(history(72, "high"));
+    renderSection();
+    const list = within(lead()).getByRole("list", {
+      name: "Against your usual week",
+    });
+    expect(within(list).getByText("16.2k kg")).toBeInTheDocument();
+    expect(within(list).getByText("13.7k kg")).toBeInTheDocument();
+    expect(within(list).getByText("32.4 km")).toBeInTheDocument();
+    expect(within(list).getByText("28.0 km")).toBeInTheDocument();
+    expect(screen.getByTestId("against-usual-lifting")).toBeInTheDocument();
+    expect(screen.getByTestId("against-usual-running")).toBeInTheDocument();
   });
 
   it.each([
@@ -184,65 +201,68 @@ describe("the Performance card", () => {
     [81, "high", true],
     [62, "moderate", true],
   ])(
-    "does not celebrate a %s when recovery takes priority",
+    "says to ease off at %s when recovery takes priority, and nothing else",
     (pi, band, deload) => {
-      /* The safety case. This once read "Low training load. Good time to
-         recover or increase intensity." to an athlete the engine had
+      /* The safety case, and "whether you can take more": the engine's
+         answer is the verb. This once read "Low training load. Good time
+         to recover or increase intensity." to an athlete the engine had
          classed as overreaching. */
       serve(history(pi as number, band as string, deload as boolean));
-      const { container } = renderSection();
+      renderSection();
       expect(screen.getByText(/^Backing off$/)).toHaveStyle({
         color: "hsl(var(--warning-strong))",
       });
-      expect(
-        container
-          .querySelector("svg circle[stroke-dasharray]")
-          ?.getAttribute("stroke")
-      ).toBe(THEME.amber);
       expect(screen.getAllByText(/ease off this week/i)).toHaveLength(1);
       expect(screen.queryByText(/consider a deload/i)).toBeNull();
       expect(screen.queryByText(/increase intensity/i)).toBeNull();
     }
   );
 
-  it("says nothing about a week that held level", () => {
-    /* A device screenshot, 13 August 2026: a held-level week read
-       "+0 pts" in the app's green. Zero is the one value whose sign
-       carries nothing, so the chip has nothing to add. */
-    serve(history(60, "moderate"));
-    renderSection();
-    expect(screen.queryByText(/on last week/)).toBeNull();
-    expect(screen.queryByText(/[+−-]0\b/)).toBeNull();
-  });
-
-  it("still reports a real drop", () => {
-    // Suppressing zero must not suppress a decline, which is the signal
-    // a person needs to act on.
-    serve(history(52, "moderate"));
-    renderSection();
-    expect(screen.getByText("Down 8 on last week")).toBeInTheDocument();
-  });
-
-  it("dates its line by the weeks it draws", () => {
+  it("explains the usual week and the verdict from its heading, on a tap", () => {
     serve(history(72, "high"));
     renderSection();
-    // The newest score here is weeks old: its date, not "This week".
-    expect(screen.getByText("12 Jul")).toBeInTheDocument();
-    expect(screen.getByText("2 Aug")).toBeInTheDocument();
-    expect(screen.queryByText("This week")).toBeNull();
-  });
-
-  it("explains the number from its heading", () => {
-    serve(history(72, "high"));
-    renderSection();
-    expect(
-      screen.getByRole("button", { name: "About Performance Index" })
-    ).toBeInTheDocument();
+    // Not printed at rest: help text re-read on every visit.
+    expect(screen.queryByText(/means ease off/)).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "About your usual week" })
+    );
+    expect(screen.getByText(/Backing off means ease off/)).toBeInTheDocument();
+    expect(screen.getByText(/carry on with your plan/)).toBeInTheDocument();
   });
 });
 
-describe("the Performance card while the baseline forms", () => {
-  const COLD = [week("2026-08-02", 81, "high", false, 1)];
+describe("the lead names its window (App1 Q13)", () => {
+  it("calls a window ending today the last 7 days, never this week", () => {
+    serve(history(72, "high"));
+    const { container } = renderSection();
+    expect(within(lead()).getByText("Last 7 days")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/this week/i);
+  });
+
+  it("names an older window by its last day", () => {
+    // Someone back after a break keeps the score they last earned.
+    serve([
+      week("2026-07-12", 55, "moderate"),
+      week("2026-07-19", 58, "moderate"),
+      week("2026-07-26", 60, "moderate"),
+      week("2026-08-02", 72, "high"),
+    ]);
+    renderSection();
+    expect(within(lead()).getByText("7 days to 2 Aug")).toBeInTheDocument();
+    expect(screen.queryByText("Last 7 days")).toBeNull();
+  });
+
+  it("does not call the window this week in the verdict's line", () => {
+    // The line reads under the window's name; a high week said "Load is
+    // high this week" there.
+    serve(history(77, "high"));
+    renderSection();
+    expect(within(lead()).getByText("Load is high")).toBeInTheDocument();
+  });
+});
+
+describe("the lead while the baseline forms", () => {
+  const COLD = [week(daysAgo(0), 81, "high", false, 1)];
 
   it("does not give a first-week 81 a verdict", () => {
     /* Reported from a device: the gauge read 81 / Peak in a confident
@@ -255,32 +275,19 @@ describe("the Performance card while the baseline forms", () => {
     expect(screen.getByText(/Establishing your week/)).toBeInTheDocument();
   });
 
-  it("still shows the score: it is the verdict that was unsupported", () => {
+  it("states the week's own figures and no usual week to set them against", () => {
     serve(COLD);
     renderSection();
-    expect(screen.getByText("81")).toBeInTheDocument();
-  });
-
-  it("hides the change, which is noise against no baseline", () => {
-    serve([
-      week("2026-07-26", 40, "low", false, 1),
-      week("2026-08-02", 55, "moderate", false, 2),
-    ]);
-    renderSection();
-    expect(screen.queryByText(/on last week/)).toBeNull();
+    expect(within(lead()).getByText("16.2k kg")).toBeInTheDocument();
+    expect(within(lead()).queryByText(/usual week/)).toBeNull();
   });
 
   it("does not tell a first week to back off in amber", () => {
-    serve([week("2026-08-02", 92, "overreach", true, 1)]);
-    const { container } = renderSection();
+    serve([week(daysAgo(0), 92, "overreach", true, 1)]);
+    renderSection();
     expect(screen.getByText("Early read")).toHaveStyle({
       color: "hsl(var(--primary-strong))",
     });
-    expect(
-      container
-        .querySelector("svg circle[stroke-dasharray]")
-        ?.getAttribute("stroke")
-    ).toBe(THEME.brand);
     expect(screen.queryByText(/^Backing off$/)).toBeNull();
   });
 });
@@ -312,44 +319,28 @@ describe("Score details", () => {
     expect(onToggleDetails).toHaveBeenCalledWith(true);
   });
 
-  it("opens in place, with what its page hands it inside", async () => {
+  it("opens in place, under the lead, which stays", async () => {
     const onToggleDetails = vi.fn();
     serve(history(72, "high"));
-    renderSection({
+    const { container } = renderSection({
       detailsOpen: true,
       onToggleDetails,
-      children: <p>Training load</p>,
     });
     const row = screen.getByRole("button", { name: "Score details" });
     expect(row).toHaveAttribute("aria-expanded", "true");
     const details = await screen.findByTestId("performance-details");
-    expect(within(details).getByText("Training load")).toBeInTheDocument();
     expect(
       details.closest(`#${CSS.escape(row.getAttribute("aria-controls")!)}`)
     ).not.toBeNull();
+    expect(verbsIn(container)).toEqual(["Sharpening"]);
     fireEvent.click(row);
     expect(onToggleDetails).toHaveBeenCalledWith(false);
   });
-
-  it("draws the weeks once: the card's line gives way to the chart in the details", () => {
-    serve(history(72, "high"));
-    const closed = renderSection();
-    expect(
-      closed.container.querySelector("[data-performance-trend]")
-    ).not.toBeNull();
-    cleanup();
-    serve(history(72, "high"));
-    const open = renderSection({ detailsOpen: true });
-    expect(open.container.querySelector("[data-performance-trend]")).toBeNull();
-    // The score and its verb stay.
-    expect(screen.getByText("72")).toBeInTheDocument();
-    expect(verbsIn(open.container)).toEqual(["Sharpening"]);
-  });
 });
 
-describe("the Performance card before it has a score", () => {
+describe("the lead before there is a score", () => {
   it("keeps the heading and the card's shape while the week loads (Pol1)", () => {
-    // A shorter placeholder dropped everything under it when the score
+    // A shorter placeholder dropped everything under it when the week
     // landed.
     serve([], true);
     const { container } = renderSection();
@@ -367,7 +358,7 @@ describe("the Performance card before it has a score", () => {
   it("fades the card in where its placeholder was, and not when the week was already there (Pol1)", () => {
     /* framer writes a fade's starting opacity inline as it mounts. */
     const fadesIn = () => {
-      let el: HTMLElement | null = screen.getByText("72");
+      let el: HTMLElement | null = screen.getByText(/^Sharpening$/);
       while (el) {
         if ((el.getAttribute("style") ?? "").includes("opacity: 0"))
           return true;
@@ -388,7 +379,7 @@ describe("the Performance card before it has a score", () => {
 
     serve(history(72, "high"));
     renderSection();
-    expect(screen.getByText("72")).toBeInTheDocument();
+    expect(screen.getByText(/^Sharpening$/)).toBeInTheDocument();
     expect(fadesIn()).toBe(false);
   });
 
@@ -425,7 +416,7 @@ describe("the Performance card before it has a score", () => {
   });
 });
 
-describe("Analytics hands the section what it needs", () => {
+describe("Progress hands the section what it needs", () => {
   /* The section defaults `hasLoggedSession` to false, so an unwired call
      site silently restores the old behaviour and every test above still
      passes. This reads the page instead. What it proves is narrow: that
@@ -435,8 +426,8 @@ describe("Analytics hands the section what it needs", () => {
     resolve(__dirname, "../../..", "pages/History.tsx"),
     "utf8"
   );
-  const mount = src.slice(src.indexOf("<PerformanceSection"));
-  const props = mount.slice(0, mount.indexOf("</PerformanceSection>"));
+  const at = src.indexOf("<PerformanceSection");
+  const props = src.slice(at, src.indexOf("/>", at));
 
   it("whether anything is logged, the reader's unit, and the fold's state", () => {
     expect(props).toMatch(/hasLoggedSession=/);
@@ -444,9 +435,5 @@ describe("Analytics hands the section what it needs", () => {
     expect(props).toMatch(/distanceUnit=\{unit\}/);
     expect(props).toMatch(/detailsOpen=\{scoreOpen\}/);
     expect(props).toMatch(/onToggleDetails=\{setScoreOpen\}/);
-  });
-
-  it("the training load, inside the details", () => {
-    expect(props).toMatch(/<TrainingLoadCard/);
   });
 });

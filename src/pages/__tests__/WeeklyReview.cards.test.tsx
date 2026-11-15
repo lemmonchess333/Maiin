@@ -223,12 +223,16 @@ describe("WeeklyReview — the recap as cards", () => {
     }
   });
 
-  it("closes the first card on the week's index and its verdict", () => {
+  it("closes the first card on the week's verdict, in words alone (App1 Q12)", () => {
+    /* The score is shown in one place, Progress's Score details. The
+       review printed it as well ("92 performance, up 2"), so one week's
+       number was on two pages. */
     mockReview = normal();
-    renderRecap();
-    const line = screen.getByText(/performance, up/);
-    expect(line.textContent).toBe("92 performance, up 2");
+    const { container } = renderRecap();
     expect(screen.getByText("Load has run high.")).toBeInTheDocument();
+    expect(screen.queryByText(/performance/i)).toBeNull();
+    expect(container.textContent).not.toContain("92");
+    expect(container.textContent).not.toMatch(/\bup 2\b/);
   });
 
   it("shows the best moment: the lift, the figure, what it beat", () => {

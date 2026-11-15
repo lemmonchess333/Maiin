@@ -31,9 +31,10 @@
  * was hiding Tropos's whole adaptive positioning from free users).
  * Pro now gates only AI-augmented + adaptive-optimisation features.
  * Whole-app grill Q84 (13 November 2026) moved part of it back: the
- * headline score stays free, and its details (the training load chart
- * among them) and charts older than 3 months are Pro, gated where they
- * are drawn (`src/lib/historyAccess.ts`), not through this registry.
+ * score's details and charts older than 3 months are Pro, gated where
+ * they are drawn (`src/lib/historyAccess.ts`), not through this registry.
+ * Q10 put the 0–100 score itself among those details; the verdict and the
+ * last 7 days against the usual week that lead Progress stay free (Q46).
  *
  * #977 — paywall-honesty reconcile: only advertise what's runtime-
  * gated. `ai_coaching` (not built) removed. The registry is the real,

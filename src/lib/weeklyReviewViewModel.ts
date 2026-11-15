@@ -11,11 +11,13 @@
  *    event (workout / run / meal / weigh-in — never passive data). A fully
  *    quiet week renders the gentle "quiet" variant ONLY for established
  *    users; brand-new users get nothing (never a guilt screen).
- *  - Headline PI collapses for zero-training weeks (no garbage PI on a
- *    one-meal first week); the delta renders only when the PREVIOUS week
- *    also has a PI (no "+41" return-from-vacation spikes); the verdict is
- *    TEMPLATED from the engine's band/deload flags (no AI) and a PI drop
- *    is never negative-framed in a detected deload week.
+ *  - The headline collapses for zero-training weeks (no verdict from a
+ *    garbage PI on a one-meal first week); the delta counts only when the
+ *    PREVIOUS week also has a PI (no "+41" return-from-vacation spikes);
+ *    the verdict is TEMPLATED from the engine's band/deload flags (no AI)
+ *    and a PI drop is never negative-framed in a detected deload week.
+ *    The review shows the verdict in words and never the number (App1
+ *    Q12): the score is shown in one place, Progress's Score details.
  *  - Planned-vs-done comparisons render only when a plan exists (Run9a
  *    freeform substrate has no planned km → done-only framing).
  *  - Run stats count only runs passing the standard eligibility predicate
@@ -160,9 +162,12 @@ export interface WeeklyReview {
   /** The week the account began in, reviewed from that day: its first
    *  day and how many days it had. Null for any later week. */
   firstDays: { start: string; count: number } | null;
+  /** The week's verdict, in words. The review shows `verdict` alone (App1
+   *  Q12: the score is shown in one place, Progress's Score details); `pi`
+   *  and `delta` are the figures it was chosen from. */
   headline: {
     pi: number;
-    /** Display delta — null when prior week has no PI OR suppressed (deload drop). */
+    /** Delta — null when prior week has no PI OR suppressed (deload drop). */
     delta: number | null;
     verdict: string;
     deload: boolean;
@@ -360,9 +365,10 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       pi: Math.round(data.perf.pi),
       delta,
       deload,
-      // A first week has nothing before it to be steady against.
+      // A first week has nothing before it to be steady against, and the
+      // review names no score (Q12), so it says what the next weeks build.
       verdict: firstDays
-        ? "Your first score. It settles over the next few weeks."
+        ? "Your usual week takes shape over the next few weeks."
         : verdictFor({
             delta: rawDelta,
             loadBand: data.perf.loadBand,
