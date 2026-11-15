@@ -17,11 +17,12 @@
  * distance in turn, and a base week's light session.
  */
 
-import type { RaceDistance } from "./programTypes";
+import type { RaceDistance, RollingGoal } from "./programTypes";
 import { isUltraDistance } from "./runPlanTiming";
 
-/** The goals a plan with no race date can have. */
-export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
+/** The goals a plan with no race date can have, kept in programTypes so the
+ *  types file imports nothing of the engine's. */
+export type { RollingGoal };
 
 export const ROLLING_GOALS: readonly RollingGoal[] = [
   "keep_fit",

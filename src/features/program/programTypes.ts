@@ -652,6 +652,10 @@ export interface RaceBlockInputs {
   qualityFrom?: string;
 }
 
+/** The goals a plan with no race date can have (Run24 (3)); its specs and
+ *  words are `rollingPlan.ts`'s. */
+export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
+
 export interface RunPlan {
   /** `starter`: Run9's starter goal, 30 minutes without stopping, a week
    *  at each stage (`starterPlan.ts`). */
@@ -661,7 +665,7 @@ export interface RunPlan {
    *  (`generateRollingPlan`). Its goal, and its week, `currentWeek` from
    *  0. The profile stays on free running (no race goal, no starter
    *  goal); the plan is the programme's alone (`rollingGoalOf`). */
-  rollingGoal?: import("./rollingPlan").RollingGoal;
+  rollingGoal?: RollingGoal;
   /** A rolling plan's week: the Monday key of the week `currentWeek` is
    *  for, which the rollover moves on from when the week holds no run. */
   rollingWeekKey?: string;
