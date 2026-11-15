@@ -109,6 +109,51 @@ Every number in it is a Tropos heuristic, labelled where it is defined: three
 hours shown after the start, two months ahead at most, eight ahead per Circle,
 past ones pruned after two days.
 
+- STATUS 2026-11-15: built (Run27 calls 10 and 11). Meet-ups now carry what
+  Strava's group events do, still without a pin or a route (GsPb1):
+  - **Reminder.** `hourlyMeetupSweep` (functions/index.js, half past each
+    hour, one instance) sends `circle_meetup_reminder` about 24 hours before
+    the start (Strava: "All RSVP'd athletes will receive an event
+    notification 24 hours before the start time of the event", read 15
+    November 2026 on "Clubs on the mobile app") to each member still in,
+    under the Circles switch, in their own time zone ("Group run on Saturday
+    at 08:00. You and 3 others are in."). It is a row and a push (it joins
+    App1 Q18's pushes; the reason is in `functions/lib/socialPush.js`). Sent
+    once: the meet-up's `remindAt` marks it due and is cleared after the
+    sends, and each member's row has a fixed id written with
+    `keepExisting`, so a sweep cut off part way and run again adds nothing.
+    Never for a meet-up called off (deleted, and re-read before sending),
+    never after the start, never in an ended Circle, never across a block
+    with the organiser. A meet-up planned less than 30 hours ahead gets no
+    reminder (Tropos heuristic: six hours' notice before the reminder would
+    go), since everyone has just been told of it.
+  - **Repeat weekly**, model (a): the next one is planned when this one is
+    over (three hours after its start, when the list drops it), at the same
+    time of day in the organiser's zone a week on (the clocks changing
+    included), with only the organiser in and no new notice. One at a time,
+    so a series takes one of the eight places ahead. It ends when it is
+    called off, the organiser leaves, is restricted or is deleting their
+    account, the Circle ends, the Circle has eight others ahead, or its
+    words meet a filter that now refuses them.
+  - **Pace groups:** a run's optional typed field, one line, 80 characters
+    (Tropos heuristic: Strava allows four groups), through the word filter
+    in the app and on the server. A lift has none.
+  - **Rename a Circle** (row 5, rank 11): the owner, while it is live,
+    through the `renameGoalSpace` callable, under the rule a new Circle's
+    name meets; refused to anyone else and to a restricted account. The
+    Together row, the Circle's sheet and a later invite read the new name
+    from the Circle; each member's journey link, its one copy, changes in
+    the same transaction. No notification carries a Circle's name, and
+    identity resync carries people's names only, so nothing else changes.
+  - Tests: `functions/__tests__/circleMeetupReminders.test.js` (23, each
+    guard checked by removing it), `goalSpaceRename.test.js` (8),
+    `CirclesSection.rename.test.tsx` (6), new cases in
+    `CirclesSection.meetups.test.tsx`, `circleMeetups.cross.test.ts`,
+    `renameRejection.cross.test.ts` and the rules spec.
+  - Not built: meet-ups in Spaces (rank 3, owner call), a route (rank 16,
+    owner call), a cap on who can come, a discussion on a meet-up, and
+    skipping one week of a series while keeping it.
+
 ## The rest of the gap, ranked
 
 Ranked by how often a club member would use it in a week, with a build

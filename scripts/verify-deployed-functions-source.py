@@ -141,6 +141,17 @@ def source_targets():
         # A Circle's invite code expires, and its owner replaces it.
         "joinGoalSpace": circle_paths,
         "renewGoalSpaceInviteCode": circle_paths,
+        # Run27 call 11: the owner renames a Circle, under the word filter.
+        "renameGoalSpace": circle_paths + ["lib/objectionableText.js", "profanityFilter.js"],
+        # Run26 call 4 and Run27 call 10: a Circle's meet-ups, with pace
+        # groups and a weekly repeat, and the hourly sweep that sends their
+        # reminders and plans each repeat once.
+        "circleMeetup": circle_paths + ["lib/circleMeetups.js", "lib/socialFanout.js",
+                                        "lib/notificationPreferences.js", "profanityFilter.js"],
+        "hourlyMeetupSweep": ["index.js", "package-lock.json", "lib/circleMeetups.js",
+                              "lib/socialFanout.js", "lib/notificationPreferences.js",
+                              "lib/blockGuard.js", "lib/deletionTransactionGuard.js",
+                              "lib/restriction.js", "lib/jobRuns.js", "profanityFilter.js"],
         # Soc15 invites: the one writer of follows both ways from a code, and
         # of the codes themselves, with the checks it holds them to.
         "redeemInvite": invite_paths + ["lib/socialFanout.js", "lib/notificationPreferences.js"],

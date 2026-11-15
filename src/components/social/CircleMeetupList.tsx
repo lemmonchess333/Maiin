@@ -5,7 +5,11 @@
  * owner; any other member says they're in or that they can't make it.
  *
  * Calling one off asks first, in the card itself: a dialog over the sheet
- * would sit outside the sheet's focus trap.
+ * would sit outside the sheet's focus trap. A weekly one (Run27 call 10)
+ * says so beside its time, and calling it off ends the series, which the
+ * question says.
+ *
+ * A run's pace groups show as typed, under the place.
  *
  * Presentational: the reads and the callable live in `useGoalSpaces`, and
  * CirclesSection hands the answers in. Times show in this phone's zone
@@ -16,6 +20,7 @@ import { CalendarPlus, Dumbbell, Footprints, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import {
+  callOffLine,
   goingLine,
   goingMembers,
   meetupWhen,
@@ -93,8 +98,16 @@ export default function CircleMeetupList({
                     <p className="text-sm font-semibold text-foreground break-words">
                       {m.title}
                     </p>
-                    <p className="text-xs font-medium text-foreground font-mono tabular-nums">
-                      {meetupWhen(m.startsAt)}
+                    <p className="text-xs font-medium text-foreground">
+                      <span className="font-mono tabular-nums">
+                        {meetupWhen(m.startsAt)}
+                      </span>
+                      {m.repeat === "weekly" && (
+                        <span className="font-normal text-muted-foreground">
+                          {" "}
+                          · Every week
+                        </span>
+                      )}
                     </p>
                     <p className="flex items-start gap-1 text-xs text-muted-foreground break-words">
                       <MapPin
@@ -103,6 +116,11 @@ export default function CircleMeetupList({
                       />
                       <span className="min-w-0">{m.place}</span>
                     </p>
+                    {m.paceGroups && (
+                      <p className="text-xs text-muted-foreground break-words">
+                        Pace groups: {m.paceGroups}
+                      </p>
+                    )}
                     {m.note && (
                       <p className="text-xs text-muted-foreground break-words">
                         {m.note}
@@ -119,9 +137,7 @@ export default function CircleMeetupList({
                     role="group"
                     aria-label="Call it off?"
                   >
-                    <p className="text-xs text-foreground">
-                      Call it off? Anyone who said they’re in will be told.
-                    </p>
+                    <p className="text-xs text-foreground">{callOffLine(m)}</p>
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button
                         variant="ghost"

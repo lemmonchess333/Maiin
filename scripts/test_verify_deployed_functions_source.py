@@ -125,6 +125,20 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                                 .issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
+    def test_circle_rename_and_meetups_read_back_their_rules(self):
+        targets = verifier.source_targets()
+        self.assertTrue({"lib/goalSpaceMembership.js", "lib/objectionableText.js",
+                         "profanityFilter.js", "lib/restriction.js"}
+                        .issubset(targets["renameGoalSpace"]))
+        self.assertIn("lib/circleMeetups.js", targets["circleMeetup"])
+        self.assertTrue({"lib/circleMeetups.js", "lib/socialFanout.js",
+                         "lib/notificationPreferences.js", "lib/blockGuard.js",
+                         "lib/deletionTransactionGuard.js", "lib/jobRuns.js"}
+                        .issubset(targets["hourlyMeetupSweep"]))
+        for name in ("renameGoalSpace", "circleMeetup", "hourlyMeetupSweep"):
+            with self.subTest(function=name):
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_invite_callables_read_back_the_checks_they_hold(self):
         targets = verifier.source_targets()
         for name in ("redeemInvite", "getInviteCode"):

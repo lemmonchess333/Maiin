@@ -166,6 +166,23 @@ async function assertNoBlockedPair({ tx, firestore, uid, memberUids }) {
 }
 
 /**
+ * A Circle's name as it is stored, or a refusal: trimmed, cut to
+ * GOAL_SPACE_TEXT_MAX, and held to the word filter a display name is, with
+ * the same sentence, because everyone invited reads it. Starting a Circle
+ * and renaming one (Run27 call 11) both use it, so a name is held to one
+ * rule however it was written.
+ */
+function circleName(value) {
+  const title = sanitizeDisplay(value, null);
+  if (!title) {
+    throw new GoalSpaceError("invalid-argument", "title required");
+  }
+  const refusal = displayNameRefusal(title);
+  if (refusal) throw new GoalSpaceError("invalid-argument", refusal);
+  return title;
+}
+
+/**
  * Create a Circle: space doc + owner membership + 'joined' event, one
  * batch. `makeId` injected for testability.
  */
@@ -182,14 +199,7 @@ async function createGoalSpace({
   if (!GOAL_SPACE_TYPES.includes(input?.type)) {
     throw new GoalSpaceError("invalid-argument", "unknown goal space type");
   }
-  const title = sanitizeDisplay(input.title, null);
-  if (!title) {
-    throw new GoalSpaceError("invalid-argument", "title required");
-  }
-  // A Circle's name is shown to everyone invited to it, so it is held to
-  // the word filter a display name is, with the same sentence.
-  const refusal = displayNameRefusal(title);
-  if (refusal) throw new GoalSpaceError("invalid-argument", refusal);
+  const title = circleName(input.title);
   // Same validator as the `continue` path in goalSpaceLifecycle: the two
   // write paths for this one field disagreed, and create was the weaker —
   // regex only, so a 30 February was stored verbatim. Create's contract is
@@ -471,6 +481,52 @@ async function removeGoalSpaceMember({ firestore, uid, spaceId, memberUid }) {
   });
 }
 
+/**
+ * Rename a Circle (Run27 call 11): its owner, while it is live, under the
+ * rule a new Circle's name meets (`circleName`). The name lives on the
+ * Circle, which every member reads, so the Together row, the sheets and an
+ * invite shared after it all read the new one. Its one copy is each
+ * member's journey link (users/{uid}/journeys/{spaceId}.title), changed in
+ * the same transaction; a link already gone (a member leaving or deleting
+ * their account) is not made again. No notification carries a Circle's
+ * name, so none needs changing, and none is sent.
+ *
+ * Returns { title, changed }: the stored name, and whether it is new.
+ */
+async function renameGoalSpace({ firestore, uid, spaceId, title }) {
+  if (!isDocumentId(spaceId)) {
+    throw new GoalSpaceError("invalid-argument", "spaceId required");
+  }
+  const name = circleName(title);
+  return firestore.runTransaction(async (tx) => {
+    const spaceRef = firestore.doc(`goalSpaces/${spaceId}`);
+    const spaceSnap = await tx.get(spaceRef);
+    if (!spaceSnap.exists) {
+      throw new GoalSpaceError("not-found", "no such circle");
+    }
+    const space = spaceSnap.data();
+    if (space.ownerId !== uid) {
+      throw new GoalSpaceError("permission-denied", "owner only");
+    }
+    if (space.active !== true) {
+      throw new GoalSpaceError("failed-precondition", "circle inactive");
+    }
+    if (space.title === name) return { title: name, changed: false };
+    const membersSnap = await tx.get(
+      firestore.collection(`goalSpaces/${spaceId}/members`)
+    );
+    const links = membersSnap.docs.map((d) =>
+      firestore.doc(`users/${d.id}/journeys/${spaceId}`)
+    );
+    const linkSnaps = await Promise.all(links.map((ref) => tx.get(ref)));
+    tx.update(spaceRef, { title: name });
+    linkSnaps.forEach((snap, i) => {
+      if (snap.exists) tx.update(links[i], { title: name });
+    });
+    return { title: name, changed: true };
+  });
+}
+
 module.exports = {
   GOAL_SPACE_MAX_MEMBERS,
   // Exported so the client<->server parity test can reach it. It was
@@ -489,4 +545,5 @@ module.exports = {
   renewGoalSpaceInviteCode,
   leaveGoalSpace,
   removeGoalSpaceMember,
+  renameGoalSpace,
 };

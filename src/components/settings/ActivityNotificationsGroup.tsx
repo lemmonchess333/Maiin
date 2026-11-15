@@ -10,8 +10,9 @@
  *
  * The same switches decide the pushes from people (App1 Q18,
  * functions/lib/socialPush.js): a comment, a follow request, an invite
- * joined and a league result also come to the phone when the account takes
- * push, and props once a day at 19:00, as the footer says.
+ * joined, a league result and a meet-up's reminder (Run27 call 10, under
+ * Circles) also come to the phone when the account takes push, and props
+ * once a day at 19:00, as the footer says.
  */
 import { useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
@@ -44,7 +45,7 @@ const ROWS: {
   {
     category: "circles",
     label: "Circles",
-    description: "Backing, milestones, new members",
+    description: "Meet-ups, backing, milestones, new members",
   },
   {
     category: "spaces",
@@ -97,7 +98,7 @@ export default function ActivityNotificationsGroup() {
   return (
     <SettingsGroup
       title="Activity"
-      footer="These show under the bell on Social. With notifications on, comments, follow requests, invites and league results also come to your phone, and props once a day at 19:00."
+      footer="These show under the bell on Social. With notifications on, comments, follow requests, invites, league results and meet-up reminders also come to your phone, and props once a day at 19:00."
     >
       {ROWS.map((row) => (
         <SettingsRow

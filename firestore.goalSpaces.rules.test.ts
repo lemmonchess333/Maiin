@@ -191,11 +191,50 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
          could add someone else to the list. */
       const db = asMember();
       await assertFails(setDoc(meetupRef(db, "m2"), meetup));
-      await assertFails(
-        updateDoc(meetupRef(db), { going: [MEMBER, OTHER] })
-      );
+      await assertFails(updateDoc(meetupRef(db), { going: [MEMBER, OTHER] }));
       await assertFails(deleteDoc(meetupRef(db)));
       await assertFails(setDoc(meetupRef(asOther(), "m3"), meetup));
+    });
+
+    it("lets no client write the reminder, the repeat or pace groups (Run27 call 10)", async () => {
+      /* The hourly sweep reads remindAt and repeatAt to decide what to send
+         and what to plan: a member writing them could send a reminder now,
+         stop one, or plan meet-ups week after week past the cap. Pace
+         groups meet the word filter only in the callable. */
+      const db = asMember();
+      for (const patch of [
+        { remindAt: Date.now() },
+        { remindedAt: Date.now() },
+        { repeatAt: Date.now() },
+        { repeat: "weekly" },
+        { paceGroups: "5:30 /km" },
+      ]) {
+        await assertFails(updateDoc(meetupRef(db), patch));
+        await assertFails(setDoc(meetupRef(db, "m4"), { ...meetup, ...patch }));
+      }
+      // Anchored: the member still reads the meet-up the server wrote.
+      await assertSucceeds(getDoc(meetupRef(db)));
+    });
+  });
+
+  describe("renaming a Circle — the server's (Run27 call 11)", () => {
+    it("refuses the owner renaming it directly", async () => {
+      /* The renameGoalSpace callable holds the word filter, restriction and
+         the owner check, and changes each member's journey link with the
+         name. A direct write would skip all of them. */
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "goalSpaces", SPACE), {
+          name: "Test space",
+          title: "Spring half",
+          ownerId: MEMBER,
+          active: true,
+        });
+      });
+      const db = asMember();
+      await assertFails(
+        updateDoc(doc(db, "goalSpaces", SPACE), { title: "Autumn 10K" })
+      );
+      await assertSucceeds(getDoc(doc(db, "goalSpaces", SPACE)));
     });
   });
 

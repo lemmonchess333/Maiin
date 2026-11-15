@@ -52,6 +52,7 @@ import {
   type MeetupPlan,
 } from "./circleMeetups";
 import { describeMeetupRejection } from "./meetupRejection";
+import { describeRenameRejection } from "./renameRejection";
 
 /** A join either landed, or was refused for a reason worth showing. */
 export type JoinOutcome = { ok: true } | { ok: false; reason: string };
@@ -92,6 +93,11 @@ export interface CircleDetail {
   /** Meet-ups not yet over, soonest first (Run26 call 4). */
   meetups: CircleMeetup[];
 }
+
+/** A rename either landed, with the name as stored, or was refused for a
+ *  reason worth showing (Run27 call 11). */
+export type RenameOutcome =
+  { ok: true; title: string } | { ok: false; reason: string };
 
 /** Planning a meet-up either landed, or was refused for a reason worth
  *  showing. */
@@ -264,6 +270,30 @@ export function useGoalSpaces(uid: string | undefined) {
       } catch (err) {
         logger.error("goalSpaces: renew invite code failed", err);
         return null;
+      }
+    },
+    [reload]
+  );
+
+  /** Run27 call 11: the owner renames a Circle. Server-owned (the space
+   *  doc is rules-locked), so the list reloads to carry the new name into
+   *  every row; the refusal comes back in words. */
+  const renameCircle = useCallback(
+    async (spaceId: string, title: string): Promise<RenameOutcome> => {
+      try {
+        const res = await httpsCallable(
+          fns(),
+          "renameGoalSpace"
+        )({ spaceId, title });
+        await reload();
+        const data = res.data as { title?: unknown };
+        return {
+          ok: true,
+          title: typeof data.title === "string" ? data.title : title,
+        };
+      } catch (err) {
+        logger.error("goalSpaces: rename failed", err);
+        return { ok: false, reason: describeRenameRejection(err) };
       }
     },
     [reload]
@@ -536,6 +566,7 @@ export function useGoalSpaces(uid: string | undefined) {
     reload,
     createCircle,
     renewInviteCode,
+    renameCircle,
     joinCircle,
     leaveCircle,
     loadDetail,

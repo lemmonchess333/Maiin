@@ -253,6 +253,9 @@ const VALID_NOTIFICATION_TYPES = [
   // callable). Named, as the Circle events above are.
   "circle_meetup",
   "circle_meetup_cancelled",
+  // Run27 call 10: a meet-up the recipient is in starts in about 24 hours
+  // (hourlyMeetupSweep). From the meet-up, not a person: it names nobody.
+  "circle_meetup_reminder",
   // SOC-P2g: space-post engagement (like = "props" flame, comment). NAMED
   // types — the actor is already visible on the post itself, so naming is
   // consistent, not a leak. These open the post via spaceId and postId

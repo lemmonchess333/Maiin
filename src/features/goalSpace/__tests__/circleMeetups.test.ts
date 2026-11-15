@@ -47,6 +47,8 @@ function meetup(over: Partial<CircleMeetup> = {}): CircleMeetup {
     title: "Saturday long run",
     place: "Tooting Lido gate",
     note: null,
+    paceGroups: null,
+    repeat: null,
     startsAt: 0,
     timeZone: "Europe/London",
     going: ["maya"],

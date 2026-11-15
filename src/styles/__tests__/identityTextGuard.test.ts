@@ -241,7 +241,9 @@ const EXPECTED_INLINE_USES = {
   // 2026-11-15: 31 → 33. The notification tray's two Circle meet-up
   // glyphs (Run26 call 4), CalendarClock and CalendarX: icons, in the
   // brand purple the other Circle notices' glyphs wear. No text.
-  "THEME.brand": 33,
+  // 2026-11-15: 33 → 34. The tray's meet-up reminder (Run27 call 10),
+  // the same CalendarClock glyph in the same purple. An icon, no text.
+  "THEME.brand": 34,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

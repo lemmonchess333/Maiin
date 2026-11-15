@@ -715,6 +715,48 @@ production.
 - [ ] **Leaving takes your part.** B leaves the Circle. Passing: A's sheet
       no longer names B as going, and a meet-up B planned is gone.
 
+## Meet-up reminders, weekly meet-ups, pace groups and renaming a Circle (Run27 calls 10 and 11, 2026-11-15)
+
+`hourlyMeetupSweep` (half past each hour) sends each meet-up's reminder
+about 24 hours before it starts and plans a weekly one's next once it is
+over; `renameGoalSpace` lets a Circle's owner rename it. The unit suites
+drive both on the in-memory Firestore with the real notification writer,
+and the rules spec runs on CI's emulator; only a deploy, the two new
+`meetups` indexes and real phones can confirm the sweep, the push and the
+rename in production.
+
+- [ ] **The indexes are READY.** After Deploy production, the Firestore
+      step's readiness gate passes for `meetups/fields/remindAt` and
+      `meetups/fields/repeatAt` (collection group, ascending). Passing: the
+      first `hourlyMeetupSweep` run after it records success in its job
+      run, with no `FAILED_PRECONDITION` in its log.
+- [ ] **The reminder, once, as a push.** On account A plan a run in a
+      Circle with B in it, starting between 30 and 31 hours from now; on B
+      tap I'm in. Leave both phones with notifications allowed. Passing:
+      about 24 hours before the start (within the hour after), A and B each
+      get one push titled "Coming up", "Group run on <day> at <time>. You
+      and 1 other are in.", in each phone's own time zone; tapping it opens
+      Together; the tray has one such row each, and no second one comes an
+      hour later.
+- [ ] **Circles switched off.** Repeat with B's Settings → Notifications →
+      Circles off. Passing: A gets the reminder and B gets neither the push
+      nor the row.
+- [ ] **Called off.** Plan another, B in, then call it off on A before the
+      24-hour mark. Passing: B gets "A called off a group run" and no
+      reminder at the 24-hour mark.
+- [ ] **Every week.** Plan a run with Every week on, starting within the
+      next day. Passing: the card says "Every week"; within an hour of three
+      hours after its start, the Circle's row on Together reads the same
+      name a week on at the same time, with only A going, and no notice
+      reached B.
+- [ ] **Pace groups.** Plan a run with pace groups "5:30 and 6:15 /km".
+      Passing: the card shows "Pace groups: 5:30 and 6:15 /km"; with Lift
+      chosen the field is gone and the card shows none.
+- [ ] **Rename.** On A (the owner) open the Circle, tap Rename circle, type
+      a new name and Save name. Passing: the sheet's title and the row on
+      Together show it at once, and on B the Circle shows the new name after
+      pulling to refresh. On B, the sheet offers no Rename circle.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,

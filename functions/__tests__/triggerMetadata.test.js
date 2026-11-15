@@ -628,6 +628,20 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Run27 call 10: a meet-up's reminder and its weekly repeat, each hour.
+  hourlyMeetupSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "30 * * * *",
+    timeoutSeconds: 540,
+  },
+  // Run27 call 11: the owner renames a Circle.
+  renameGoalSpace: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onGoalSpaceEventCreated: {
     kind: "event",
     maxInstances: 50,
