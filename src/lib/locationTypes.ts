@@ -23,6 +23,16 @@ export interface LocationSource {
   watch(
     options: PositionOptions,
     onFix: PositionCallback,
-    onError: PositionErrorCallback
+    onError: PositionErrorCallback,
+    purpose?: WatchPurpose
   ): LocationWatch;
 }
+
+/**
+ * What a watch is for. "record" (the default) is a run's own: it asks for
+ * location if it has to and keeps going with the screen locked. "warm" is
+ * the run screen's before Start (useGpsWarmup): it never asks, and stops
+ * with the app in the background, so it is never the ask and never keeps
+ * location on behind the person's back.
+ */
+export type WatchPurpose = "record" | "warm";

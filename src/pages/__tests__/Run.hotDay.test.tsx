@@ -96,8 +96,16 @@ vi.mock("@/lib/nativeLocationSettings", async (importOriginal) => ({
 
 /* Stable across renders, as the real hook's useCallbacks are. */
 const gpsControls = {
-  preWarm: () => {},
+  warm: () => {},
+  cool: () => {},
+  startAnyway: () => {},
   start: () => h.gpsCalls.push("start"),
+  // No fix in hand at Start, as the real hook says with none from the
+  // warm watch: the run waits on "Finding GPS" (Run25 call 2).
+  startAwaitingFix: () => {
+    h.gpsCalls.push("start");
+    return false;
+  },
   stop: () => h.gpsCalls.push("stop"),
   pause: () => {},
   resume: () => {},
@@ -474,7 +482,7 @@ describe("a hot day, started from Home", () => {
     h.weather = async () => HOT;
     await open(HOME_TEMPO);
     await tap("Run easy instead");
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -514,7 +522,7 @@ describe("a hot day, started from Home", () => {
     planToday("tempo_30");
     h.weather = async () => MILD;
     await open(HOME_TEMPO);
-    expect(await screen.findByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
     await finishOnTheTreadmill();
     expect(
@@ -528,7 +536,7 @@ describe("a hot day, started from Home", () => {
     planToday("tempo_30");
     h.weather = async () => null;
     await open(HOME_TEMPO);
-    expect(await screen.findByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
   });
 
@@ -539,7 +547,7 @@ describe("a hot day, started from Home", () => {
     expect(h.gpsCalls).not.toContain("start");
     expect(h.launchCardRenders).toBe(0);
     expect(
-      await screen.findByText("Acquiring GPS…", undefined, {
+      await screen.findByText("Finding GPS", undefined, {
         timeout: HEAT_CHECK_MS + 2000,
       })
     ).toBeInTheDocument();
@@ -552,7 +560,7 @@ describe("a hot day with nothing to adjust", () => {
     planToday("easy_30");
     h.weather = async () => HOT;
     await open(HOME_EASY);
-    expect(await screen.findByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
     await finishOnTheTreadmill();
     expect(
@@ -575,7 +583,7 @@ describe("an extreme day", () => {
     ).toBeInTheDocument();
     expect(h.gpsCalls).not.toContain("start");
     await tap("The run's card");
-    expect(screen.getByText("Acquiring GPS…")).toBeInTheDocument();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 
   it("adjusts a tempo to effort only: no pace target", async () => {

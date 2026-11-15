@@ -48,7 +48,8 @@ const h = vi.hoisted(() => ({
     permissionState: "granted" as PermissionState,
   },
   gpsCalls: [] as string[],
-  preWarms: 0,
+  warms: 0,
+  cools: 0,
   pauseSince: [] as (number | undefined)[],
   timer: { isRunning: false, elapsed: 600 },
   unit: "mi" as "km" | "mi",
@@ -69,10 +70,20 @@ const h = vi.hoisted(() => ({
 /* Stable across renders, as the real hook's useCallbacks are: the page's
    hold effect lists them as dependencies. */
 const gpsControls = {
-  preWarm: () => {
-    h.preWarms += 1;
+  warm: () => {
+    h.warms += 1;
   },
+  cool: () => {
+    h.cools += 1;
+  },
+  startAnyway: () => h.gpsCalls.push("startAnyway"),
   start: () => h.gpsCalls.push("start"),
+  // No fix in hand at Start, as the real hook says with none from the
+  // warm watch: the run waits on "Finding GPS" (Run25 call 2).
+  startAwaitingFix: () => {
+    h.gpsCalls.push("start");
+    return false;
+  },
   stop: () => h.gpsCalls.push("stop"),
   pause: (since?: number) => {
     h.gpsCalls.push("pause");
@@ -333,7 +344,8 @@ beforeEach(() => {
   h.gps.error = null;
   h.gps.permissionState = "granted";
   h.gpsCalls.length = 0;
-  h.preWarms = 0;
+  h.warms = 0;
+  h.cools = 0;
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
   h.timer.elapsed = 600;
@@ -701,15 +713,18 @@ describe("a structured run's real player", () => {
   });
 });
 
-/* Mob2 finding 7: the setup screen warms the GPS and shows the signal
-   before Start, once location is allowed, and never asks for it. */
+/* Mob2 finding 7 and Run25 call 2: the run screen watches location before
+   Start and shows the signal, once location is allowed, and never asks for
+   it, so Start usually finds the fix that starts the clock in hand. */
 describe("the setup screen warms the GPS", () => {
-  it("shows the signal and warms while location is allowed", () => {
+  it("shows the signal and watches while location is allowed", () => {
     render(tree());
     expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
-    expect(h.preWarms).toBe(1);
+    expect(h.warms).toBe(1);
+    // One watch, not a fix asked for every so often.
     act(() => vi.advanceTimersByTime(15_000));
-    expect(h.preWarms).toBe(2);
+    expect(h.warms).toBe(1);
+    expect(h.cools).toBe(0);
     // Warming is not the run: nothing is recording.
     expect(h.gpsCalls).toEqual([]);
   });
@@ -721,7 +736,7 @@ describe("the setup screen warms the GPS", () => {
     expect(screen.getByRole("button", { name: "Easy run" })).toBeVisible();
     expect(screen.queryByText("GPS ready")).toBeNull();
     act(() => vi.advanceTimersByTime(30_000));
-    expect(h.preWarms).toBe(0);
+    expect(h.warms).toBe(0);
   });
 
   it("stops warming once the run starts", async () => {
@@ -729,10 +744,12 @@ describe("the setup screen warms the GPS", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
-    const warmedBefore = h.preWarms;
+    // The run's own watch takes over; the setup screen's stops.
+    expect(h.gpsCalls).toEqual(["start"]);
+    expect(h.cools).toBeGreaterThanOrEqual(1);
+    const warmedBefore = h.warms;
     act(() => vi.advanceTimersByTime(45_000));
-    // The start's own preWarm is the run's; the setup screen's stops.
-    expect(h.preWarms - warmedBefore).toBe(0);
+    expect(h.warms - warmedBefore).toBe(0);
   });
 });
 
@@ -792,13 +809,12 @@ describe("GPS acquisition recovery", () => {
     h.gps.error = null;
     h.gps.points = [point(0, Date.now())];
     view.rerender(tree());
-    for (let tick = 0; tick < 3; tick++) {
-      act(() => vi.advanceTimersByTime(1000));
-    }
+    // Run25 call 2: the clock starts on the fix, at once, with no 3-2-1
+    // after it; it was three seconds later.
     expect(h.timerStart).toHaveBeenCalledOnce();
     expect(
       readStoredRun("recording-test", Date.now())?.recordingStartedAt
-    ).toBe(T0 + 13_000);
+    ).toBe(T0 + 10_000);
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
     expect(
       screen.queryByRole("textbox", { name: "Distance covered" })
@@ -807,7 +823,7 @@ describe("GPS acquisition recovery", () => {
     const finish = JSON.parse(
       screen.getByTestId("finish-payload").textContent ?? "null"
     );
-    expect(finish.recordingStartedAt).toBe(T0 + 13_000);
+    expect(finish.recordingStartedAt).toBe(T0 + 10_000);
   });
 });
 
@@ -978,27 +994,23 @@ describe("the trace's clock follows the run's", () => {
     expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
   });
 
-  it("holds the trace through the 3-2-1 countdown and releases it at Go", async () => {
-    /* The first fix lands while acquiring and starts the countdown; the
-       timer starts at Go. Fixes in between (a runner shuffling to the
-       line) are not the run, and km 1 is not three seconds slower. */
-    h.gps.points = [point(0, T0)];
+  it("starts the clock on the first fix, with nothing held before it", async () => {
+    /* Run25 call 2: the first good fix starts the clock at its own time,
+       and there is no 3-2-1 after it, during which the trace was held: the
+       trace and the clock start together, so km 1 is not three seconds
+       slower. The release is the clock running, not a hold ending. */
+    h.gps.points = [point(0, T0 - 400)];
     render(tree());
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
-    expect(h.gpsCalls).toEqual(["start", "pause"]);
-    // 3, 2, 1, Go — each second re-arms the next, so one step at a time.
-    for (let tick = 0; tick < 2; tick++) {
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
-      expect(h.gpsCalls).toEqual(["start", "pause"]);
-    }
+    expect(h.gpsCalls).toEqual(["start", "resume"]);
+    expect(h.timerStart).toHaveBeenCalledExactlyOnceWith(T0 - 400);
+    expect(h.speak).toHaveBeenCalledWith("Go!");
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(3000);
     });
-    expect(h.gpsCalls).toEqual(["start", "pause", "resume"]);
+    expect(h.gpsCalls).toEqual(["start", "resume"]);
   });
 
   it("holds the trace for a pause and releases it on resume", async () => {

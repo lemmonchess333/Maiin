@@ -24,7 +24,7 @@ inside that type.
 
 | Flow                     | Where                                                                                        | States                                                                                                               |
 | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`)                                         | waiting, acquiring, countdown, active, paused, finished                                                              |
+| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)  | waiting, acquiring ("Finding GPS": the clock waits for a fix within 20 m, or Start anyway), active, paused, finished |
 | Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                | running, stopping (a stop window open), paused, setting off (GPS alone against a still phone, held 2 s)              |
 | Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                           | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`) |
 | Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                       | server-owned                                                                                                         |

@@ -76,8 +76,10 @@ import {
 } from "../lib/runResumeStorage";
 import {
   createRunSessionIdentity,
+  identityStartedAt,
   type RunSessionIdentity,
 } from "@/lib/runSessionIdentity";
+import { isStartAccuracy } from "@/lib/gpsStart";
 import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
@@ -137,6 +139,7 @@ import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
 import {
   AUTO_PAUSE_IDLE,
+  motionFrom,
   stepAutoPause,
   type AutoPauseState,
 } from "@/lib/runAutoPause";
@@ -351,7 +354,6 @@ export default function Run() {
   useEffect(() => {
     if (locked) unlockButtonRef.current?.focus();
   }, [locked]);
-  const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
@@ -481,13 +483,15 @@ export default function Run() {
   /* The heart-rate ceiling's cue, spoken at most once a minute and a half
      (`heatHeartRateCueDue`). */
   const heatHrSpokeAtRef = useRef<number | null>(null);
-  /* The GPS warms while the setup screen is open, and the screen shows
-     the signal, so Start usually finds a fix waiting (useGpsWarmup).
+  /* Location is watched from the moment the run screen opens, before
+     Start, and the setup screen shows the signal, so Start usually finds
+     the fix that starts the clock in hand (useGpsWarmup, Run25 call 2).
      Never before location is allowed: a warm-up must not be the ask. */
   const showSetupSignal = useGpsWarmup({
-    active: phase === "waiting" && arrival === "done",
+    active: phase === "waiting",
     permissionState: gps.permissionState,
-    preWarm: gps.preWarm,
+    warm: gps.warm,
+    cool: gps.cool,
   });
   const setupSignal = showSetupSignal ? (
     <GpsSignalChip
@@ -496,14 +500,15 @@ export default function Run() {
       pointCount={gps.gpsAccuracy === null ? 0 : 1}
       signalQuality={gps.signalQuality}
       onPage
+      ready={gps.gpsAccuracy !== null && isStartAccuracy(gps.gpsAccuracy)}
     />
   ) : null;
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
   const startedAtRef = useRef<number | null>(null);
-  // The first timer tick may be much later than Start while GPS acquires.
-  // Keep its wall time separately for an accurate Apple Health workout.
+  // The instant the run's clock started (Apple Health's workout start), or
+  // null until it has: a GPS run's clock waits for its first good fix.
   const recordingStartedAtRef = useRef<number | null>(null);
   const identityRef = useRef<RunSessionIdentity | null>(null);
   const finishedRef = useRef(false);
@@ -1174,6 +1179,29 @@ export default function Run() {
         }
       : null;
 
+  /* Run25 call 2: the run's clock starts at one instant, and every reader
+     of the run's start is given it: the timer, Apple Health's start
+     (`recordingStartedAt`), and the saved run's start and day (its
+     identity, made at the tap of Start, before the clock waited for GPS)
+     and the stored run's. The trace's first point carries it (useGPS), and
+     the session player, the cues, the Live Activity and the Watch begin as
+     the phase turns active with it. */
+  const stampRunStart = useCallback((at: number) => {
+    recordingStartedAtRef.current = at;
+    startedAtRef.current = at;
+    if (identityRef.current)
+      identityRef.current = identityStartedAt(identityRef.current, at);
+  }, []);
+  /** A GPS run's clock starts, once: on its first good fix, at the tap of
+   *  Start with that fix in hand, or on Start anyway. */
+  const startGpsClock = (at: number) => {
+    if (recordingStartedAtRef.current !== null) return;
+    stampRunStart(at);
+    timer.start(at);
+    audioCues.speak("Go!");
+    haptic("heavy");
+  };
+
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
@@ -1222,8 +1250,8 @@ export default function Run() {
     watchLastStatusCheckRef.current = 0;
     watchPhaseRef.current = "running";
     watchCommandLedgerRef.current.clear();
-    // Persist the identity before GPS acquisition or the countdown. A crash
-    // during preparation can safely resume as a paused, zero-second run.
+    // Persist the identity before GPS is found. A crash while the run
+    // waits for it can safely resume as a paused, zero-second run.
     setSnapshotWriteFailed(
       !writeStoredRun(uid, {
         v: RUN_RESUME_SCHEMA_VERSION,
@@ -1251,9 +1279,24 @@ export default function Run() {
       haptic("heavy");
       return;
     }
-    dispatch({ type: "START_GPS" });
-    gps.preWarm();
-    gps.start();
+    /* Run25 call 2: the clock starts on a fix within GPS_START_ACCURACY_M
+       (gpsStart.ts). One in hand from the run screen's watch starts it
+       now; without one the run waits on "Finding GPS" for it, or for
+       Start anyway. */
+    const tappedAt = Date.now();
+    const fixInHand = gps.startAwaitingFix(tappedAt);
+    dispatch({ type: "START_GPS", fixInHand });
+    if (fixInHand) startGpsClock(tappedAt);
+  };
+
+  /* Start anyway, on "Finding GPS": the clock starts at the tap, and the
+     trace takes the first fix the reading gate passes, so distance counts
+     from there. Not offered while location is refused, where no fix will
+     come and the run would record none. */
+  const handleStartAnyway = () => {
+    gps.startAnyway();
+    dispatch({ type: "START_ANYWAY" });
+    startGpsClock(Date.now());
   };
 
   // ─── Start on arrival (Home's run card) ──────────────────────────
@@ -1368,7 +1411,7 @@ export default function Run() {
   //   3. Manual-distance edits (synchronous, including while paused).
   //
   // It's a no-op when there's no run in flight (runConfig null, or
-  // phase is waiting/acquiring/countdown/finished). The write itself
+  // phase is waiting/acquiring/finished). The write itself
   // is best-effort — writeStoredRun returns false on quota / private
   // mode but never throws.
   const writeSnapshot = useCallback(
@@ -1693,40 +1736,19 @@ export default function Run() {
     return () => clearInterval(t);
   }, [phase]);
 
-  // Transition from acquiring to countdown when we get a GPS point
-  useEffect(() => {
-    if (phase === "acquiring" && gps.points.length > 0) {
-      const transition = () => {
-        dispatch({ type: "GPS_ACQUIRED" });
-        setCountdown(3);
-      };
-      transition();
-    }
-  }, [phase, gps.points.length]);
-
-  // Side-effects at "GO!" — wrapped in an effect event so the countdown
-  // effect below can depend ONLY on [phase, countdown]. Previously `timer`
-  // and `audioCues` were deps; both return fresh object references each
-  // render, so every re-render (and GPS fixes stream in during the countdown)
-  // cleared + restarted the 1s setTimeout — the countdown could stall and
-  // never reach the active phase.
-  const onCountdownGo = useEffectEvent(() => {
-    dispatch({ type: "COUNTDOWN_DONE" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
-    audioCues.speak("Go!");
-    haptic("heavy");
+  /* The first good fix starts the clock (Run25 call 2). While the run
+     waits, useGPS takes only a fix within GPS_START_ACCURACY_M as the
+     trace's first point, stamped when it was taken, so the clock starts on
+     that point's time and the trace, its splits and the clock agree. */
+  const startClockOnFix = useEffectEvent((at: number) => {
+    dispatch({ type: "GPS_ACQUIRED" });
+    startGpsClock(at);
   });
-
+  const firstPointAt = gps.points[0]?.timestamp ?? null;
   useEffect(() => {
-    if (phase !== "countdown") return;
-    if (countdown <= 0) {
-      onCountdownGo();
-      return;
-    }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [phase, countdown]);
+    if (phase === "acquiring" && firstPointAt !== null)
+      startClockOnFix(firstPointAt);
+  }, [phase, firstPointAt]);
 
   useEffect(() => {
     if (phase !== "active") return;
@@ -1902,15 +1924,15 @@ export default function Run() {
      sensors decide when the clock stops by itself and starts again. The
      sensors run from Start to the finish of an outdoor run with
      auto-pause on, so Motion & Fitness is asked for beside location,
-     while GPS is still being found. */
+     while GPS is still being found. Auto-pause itself comes into play
+     only with the clock (phase active, Run25 call 2), and reads only what
+     the sensors saw from the clock's start (`motionFrom`), so nothing they
+     saw while GPS was found pauses the run or holds it running. */
   const motionSessionId =
     activeSessionId &&
     runConfig?.autoPause &&
     isOutdoorGpsRun(runConfig) &&
-    (phase === "acquiring" ||
-      phase === "countdown" ||
-      phase === "active" ||
-      phase === "paused")
+    (phase === "acquiring" || phase === "active" || phase === "paused")
       ? activeSessionId
       : null;
   const runMotion = useRunMotion(motionSessionId);
@@ -1943,7 +1965,8 @@ export default function Run() {
     const step = stepAutoPause(autoPauseRef.current, {
       now: Date.now(),
       gps: gps.currentPoint,
-      motion: runMotion,
+      // The run's evidence starts with its clock (Run25 call 2).
+      motion: motionFrom(runMotion, recordingStartedAtRef.current),
       inRecovery,
     });
     autoPauseRef.current = step.state;
@@ -1987,17 +2010,14 @@ export default function Run() {
   }, []);
 
   /* The trace's clock follows the run's. While the run's clock is stopped
-     — the 3-2-1 countdown, a pause, an auto-pause — useGPS records nothing
+     — a pause, an auto-pause — useGPS records nothing
      and stamps the next point with the time held, so splits, best efforts
      and the live pace count moving time only, as `duration` always has
      (gps.ts `pausedMs`). Derived from the phase and `autoPaused`, the state
      that stands for the timer being stopped, rather than called beside
      each timer.pause(): a path added later cannot stop one clock and not
      the other. */
-  const clockHeld =
-    phase === "countdown" ||
-    phase === "paused" ||
-    (phase === "active" && autoPaused);
+  const clockHeld = phase === "paused" || (phase === "active" && autoPaused);
   const clockRunning = phase === "active" && !autoPaused;
   const heartClockRef = useRef<{
     uid: string;
@@ -2417,7 +2437,8 @@ export default function Run() {
 
        audioCues.prime() / wakeLock.request() were called when the run
        originally entered the acquiring phase and don't need to fire
-       again. */
+       again. The clock starts now, and the run's start with it: the
+       seconds spent finding GPS are not the run's (Run25 call 2). */
     gps.stop();
     replaceManualDistanceDraft(null);
     setRunConfig((prev) =>
@@ -2432,10 +2453,11 @@ export default function Run() {
         : prev
     );
     dispatch({ type: "MANUAL_FALLBACK" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
+    const at = Date.now();
+    if (recordingStartedAtRef.current === null) stampRunStart(at);
+    timer.start(at);
     haptic("heavy");
-  }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
+  }, [gps, timer, sessionSegments, replaceManualDistanceDraft, stampRunStart]);
 
   const handleMoveToTreadmill = useCallback(() => {
     /* On a treadmill after all. A run from Home's Start never passes the
@@ -2447,10 +2469,11 @@ export default function Run() {
     replaceManualDistanceDraft(null);
     setRunConfig((prev) => (prev ? { ...prev, place: "treadmill" } : prev));
     dispatch({ type: "MANUAL_FALLBACK" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
+    const at = Date.now();
+    if (recordingStartedAtRef.current === null) stampRunStart(at);
+    timer.start(at);
     haptic("heavy");
-  }, [gps, timer, replaceManualDistanceDraft]);
+  }, [gps, timer, replaceManualDistanceDraft, stampRunStart]);
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -2813,13 +2836,11 @@ export default function Run() {
               </div>
 
               {/* A refusal is not a search: no signal will arrive until
-                  location is turned back on, so it gets its own words. */}
+                  location is turned back on, so it gets its own words.
+                  Otherwise the run is waiting for the fix its clock starts
+                  on (Run25 call 2). */}
               <p className="text-white font-semibold text-lg mb-1">
-                {locationDenied
-                  ? "Location is off for Tropos"
-                  : quality === "strong" || quality === "good"
-                    ? "GPS locked"
-                    : "Acquiring GPS…"}
+                {locationDenied ? "Location is off for Tropos" : "Finding GPS"}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
@@ -2854,24 +2875,62 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
-                  /* Replaces the old "Start without GPS" CTA. That one
-                   started an outdoor run with zero GPS fixes \u2014 the
-                   canonical 0km production bug. This sends the user
-                   to manual distance entry (TreadmillMode) instead so
-                   they record a real time and add distance after. */
+                {!locationDenied && (
+                  /* Run25 call 2: the clock starts now rather than on a
+                     good fix; the run still records GPS, and its distance
+                     counts from the first fix the reading gate passes.
+                     Not while location is refused, where none will come:
+                     that run is Track without GPS's, which records a time
+                     and asks for the distance. A run started anyway that
+                     never finds a fix finishes as any unlocked GPS run
+                     does, with the finish's "GPS never locked on" and the
+                     validity rule's verdict on its distance. */
                   <div className="w-full">
-                    <button
-                      type="button"
-                      onClick={handleSwitchToManual}
-                      className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
-                      style={{
-                        background: THEME.running,
-                        color: "hsl(var(--stage))",
-                      }}
+                    <Button
+                      variant="sport"
+                      size="lg"
+                      fullWidth
+                      onClick={handleStartAnyway}
+                      className="rounded-2xl"
                     >
-                      Track without GPS
-                    </button>
+                      Start anyway
+                    </Button>
+                    <p
+                      className="text-xs text-center mt-2"
+                      style={{ color: "rgba(255,255,255,0.5)" }}
+                    >
+                      Your run starts by itself when GPS finds you.
+                    </p>
+                  </div>
+                )}
+                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
+                  /* Manual distance entry (TreadmillMode): a real time now,
+                     the distance typed in after. With location refused it
+                     is the way to run and the one filled button; beside
+                     Start anyway it is the quieter choice. */
+                  <div className="w-full">
+                    {locationDenied ? (
+                      <button
+                        type="button"
+                        onClick={handleSwitchToManual}
+                        className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
+                        style={{
+                          background: THEME.running,
+                          color: "hsl(var(--stage))",
+                        }}
+                      >
+                        Track without GPS
+                      </button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={handleSwitchToManual}
+                        className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                      >
+                        Track without GPS
+                      </Button>
+                    )}
                     <p
                       className="text-xs text-center mt-2"
                       style={{ color: "rgba(255,255,255,0.5)" }}
@@ -2905,17 +2964,6 @@ export default function Run() {
             </div>
           );
         })()}
-
-      {phase === "countdown" && (
-        <div
-          className="h-full flex items-center justify-center text-white"
-          style={{ backgroundColor: THEME.bg }}
-        >
-          <span className="text-9xl font-bold motion-safe:animate-pulse">
-            {countdown || "GO!"}
-          </span>
-        </div>
-      )}
 
       {(phase === "active" || phase === "paused") &&
         requiresManualDistance(runConfig) && (
