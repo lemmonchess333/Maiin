@@ -263,6 +263,46 @@ longer replacing itself; only a phone shows the card.
       same for a run: swipe it away while recording, open the app and
       resume the run, and one run card shows.
 
+## The island's live figure (Run26 call 1, 2026-11-14)
+
+The Dynamic Island's small views show the live figure, never a mark: a
+rest's smallest view is its countdown (it was the dumbbell), and the
+figure in the compact and minimal views is 12 pt on a run and in a rest
+(the compact side was 14). When music shares the island, most iPhones show
+each app's minimal view and the iPhone 18 Pro shows each compact view at a
+reduced width, where Apple asks each side to fit a 28 pt circle; "12.4" and
+"1:24" are estimated at about 26 pt at 12 pt and 30 at 14, which is why 14
+was cut to "1…". The plugin draws every view from the layout the app sends
+(`src/lib/runLiveActivity.ts`, `src/lib/restLiveActivity.ts`), so no Swift
+changed and CI's simulator build proves nothing here; the unit suite
+(`liveActivityIsland.test.ts`) pins the layout. Only a phone shows the
+result.
+
+- [ ] **A rest's countdown in the smallest view.** On an iPhone with a
+      Dynamic Island from before the 18 Pro, start a timer in Clock, tick
+      a working set and go to the Home Screen. Passing: Tropos's round
+      side of the island shows the time left ("1:24") in white, centred,
+      and counting down, not the dumbbell; it stops at 0:00.
+- [ ] **A run beside music.** With music playing, record an outdoor run.
+      Passing: Tropos's side of the island shows the distance in coral,
+      not cut to "1…", and still does past 10 km ("12.4"). On an iPhone 18
+      Pro the side shows the runner and the distance; on earlier iPhones
+      the distance alone.
+- [ ] **A rest beside music.** With music playing, tick a set. Passing:
+      Tropos's side shows the countdown, not "1…" (with the dumbbell beside
+      it on an iPhone 18 Pro). If the iPhone 18 Pro still cuts the figure,
+      the fix is the plugin reading Apple's limited-width flag and showing
+      the minimal view there, a patch to `capacitor-live-activities`.
+- [ ] **The compact figure at 12 pt.** With nothing else in the island,
+      record a run and tick a set. Passing: the distance and the countdown
+      beside the camera read clearly at a glance, snug to the camera, and
+      the island is no wider than with the 14 pt figure.
+- [ ] **The iPhone 13's card unchanged.** On an iPhone without an island
+      (the owner's iPhone 13), record a run and tick a set with the phone
+      locked. Passing: the Lock Screen cards look as the rows above say
+      (the runner in the coral light, the distance large; "Rest", the
+      large countdown and "Next:"), unchanged from before this round.
+
 ## A photo and a few words (Mob2 call 3, 2026-10-28)
 
 A photo's result has "Add a detail": a line of up to 200 characters sent
@@ -5078,6 +5118,51 @@ Unit and page tests drive it; no phone has shown it.
       every 90 seconds, and with the strap off the eased paces apply.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
+
+## Auto-pause reads the phone's motion as well as GPS (2026-11-14)
+
+Affects: when a run's clock stops and starts by itself on iPhone
+(`src/lib/runAutoPause.ts`, fed by the new `MotionActivity` plugin,
+`ios/App/App/MotionActivityPlugin.swift`, through
+`src/lib/runMotionSource.ts`), the Motion & Fitness prompt on the first
+outdoor run with auto-pause on (`NSMotionUsageDescription`), and the
+privacy policy's "Motion During Runs (iPhone)". The web keeps the GPS-only
+rule. The decision table is unit-tested and the page wiring is tested with
+the sensors stubbed; CI's `ios-native-compile` builds the plugin for the
+simulator, which has no motion sensors. Only a phone outside shows the
+rest. For each run, record Strava's moving time on the same run (Strava
+recording on the same phone or a second one) beside Tropos's duration.
+
+- [ ] **The prompt.** On a fresh install, start an outdoor run with
+      auto-pause on. Passing: iOS asks for Motion & Fitness with the
+      auto-pause reason while GPS is being found, after or beside the
+      location prompt, and the run starts either way. Refuse it on a
+      second install: the run auto-pauses on GPS as before, with no error.
+- [ ] **Crossings.** A city run of 5 km or more with at least four stops
+      at crossings, the phone in a pocket or armband. Passing: each stop
+      shows "Auto-paused" within about 4 s of standing still, with no
+      resume while standing even between tall buildings, and the clock
+      starts within a second of setting off. Tropos's duration is within
+      10 s of Strava's moving time.
+- [ ] **Jogging on the spot.** At one crossing, jog on the spot. Passing:
+      the clock keeps running, as Strava's does.
+- [ ] **A hill.** A run with a climb steep enough to slow to a walk or a
+      hike. Passing: no auto-pause on the climb; duration within 10 s of
+      Strava's moving time.
+- [ ] **A run-walk session.** Start a planned run-walk and stand still for
+      a whole walk once. Passing: no auto-pause in any walk, walking or
+      standing, and the next run's cue comes when the walk's time is up.
+      Stopping during a run segment still auto-pauses.
+- [ ] **Locked in a pocket.** A run of 3 km or more with the screen locked
+      and the phone in a pocket, with two stops. Passing: both stops pause
+      and resume (the Live Activity reads Paused, then the time moves
+      again), and the duration is within 10 s of Strava's moving time.
+- [ ] **A tunnel or a bag.** If a route has an underpass or tunnel, stop
+      once inside it; or run with the phone in a bag. Passing: the stop
+      pauses and setting off resumes with no GPS fix.
+- [ ] **With the Watch.** In the connected-training pilot, stop at a
+      crossing. Passing: the Watch shows Paused, and its Resume restarts
+      the clock.
 
 ## Apple Watch companion: device acceptance kit (2026-11-14)
 
