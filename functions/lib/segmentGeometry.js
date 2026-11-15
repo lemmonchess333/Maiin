@@ -10,9 +10,9 @@
  * stored (`segmentShape`) and the cells the matcher looks it up by
  * (`encodeGeohash`, `traceCells`).
  *
- * The stretch rule and its refusals are what the app's segment maker says
- * before the request goes, so a copy of them in the app must be pinned to
- * these by a cross-test.
+ * The app's segment maker says the same before the request goes: its copy
+ * of the stretch rule and its refusals (src/lib/segments.ts) is pinned to
+ * this one by src/lib/__tests__/segments.cross.test.ts.
  */
 
 const EARTH_RADIUS_M = 6371000;

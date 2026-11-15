@@ -217,6 +217,12 @@ const PINNED: Record<string, string> = {
   // (src/lib/gps.ts) and isOutdoorGpsRun (src/lib/runGuards.ts), which the
   // same cross-test holds to the app's.
   "functions/lib/publicRoute.js": "src/lib/__tests__/publicPost.cross.test.ts",
+  // Run26 call 3: a segment's stretch rule and name refusals, which the
+  // maker says before asking. A basename pair with src/lib/segments.ts;
+  // the cross-test drives segments.js and segmentGeometry.js both.
+  "functions/lib/segments.js": "src/lib/__tests__/segments.cross.test.ts",
+  "functions/lib/segmentGeometry.js":
+    "src/lib/__tests__/segments.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",

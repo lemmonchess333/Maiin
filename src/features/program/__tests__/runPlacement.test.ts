@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { chooseQualityRunSlots } from "../runPlacement";
+import {
+  backToBackDayOf,
+  chooseQualityRunSlots,
+  longRunDaysOf,
+} from "../runPlacement";
 import { generateRacePlanV2 } from "../runScheduler";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
@@ -187,5 +191,50 @@ describe("quality placement within the actual available week", () => {
         weekSchedule: schedule([0, 1, 2]),
       })
     ).toEqual([1, 2]);
+  });
+});
+
+/* Run26 (2) and Run27 (19): the back-to-back's day is one pick, read by
+   the run plan that places it and by the lift order that keeps heavy legs
+   off the day before it. */
+describe("the day an ultra's back-to-back run falls on", () => {
+  it("takes the weekend day beside a Sunday long run", () => {
+    const week = schedule([0, 2, 4, 6]);
+    expect(backToBackDayOf(week)).toBe(6);
+    expect(longRunDaysOf(week, true)).toEqual([0, 6]);
+    expect(longRunDaysOf(week, false)).toEqual([0]);
+  });
+
+  it("takes Monday when Saturday lifts, and none when neither side is free", () => {
+    expect(backToBackDayOf(schedule([0, 1, 4], [6]))).toBe(1);
+    expect(backToBackDayOf(schedule([0, 3], [1, 6]))).toBeNull();
+    expect(longRunDaysOf(schedule([0, 3], [1, 6]), true)).toEqual([0]);
+  });
+
+  it("is the day the race plan puts its back-to-back on", () => {
+    const week = schedule([0, 1, 3, 4], [6]);
+    const plan = generateRacePlanV2({
+      weekSchedule: week,
+      raceGoal: { distance: "50k", targetDate: "2027-01-30" },
+      weeklyRunDays: 4,
+      currentDate: "2026-09-14",
+      weekStart: "2026-09-14",
+      recentLayoff: "none",
+    });
+    const days = new Set(
+      plan.weeks
+        .flat()
+        .filter((run) => run.templateId.startsWith("back_to_back_"))
+        .map((run) => run.dayIndex)
+    );
+    expect(backToBackDayOf(week)).toBe(1);
+    expect([...days]).toEqual([1]);
+  });
+});
+
+describe("a week with no run day", () => {
+  it("has no long run days", () => {
+    expect(longRunDaysOf(schedule([]), true)).toEqual([]);
+    expect(backToBackDayOf(schedule([]))).toBeNull();
   });
 });

@@ -834,6 +834,18 @@ deploy, two real accounts and a real run outdoors can confirm the rest.
       that made a segment another account has run. Passing: the segment is
       gone from the other account's run page and its efforts on it are
       gone in the console (`users/{other}/segmentEfforts`).
+- [ ] **Making one on the phone.** On a saved outdoor run's page, tap
+      Make a segment. Passing: the page scrolls to the map, the stretch is
+      drawn over the route, a tap on the map moves the nearer end, both
+      sliders move with a thumb at 2× text, the length reads "Length …",
+      a stretch under 400 m says so and keeps Save off, and Save opens the
+      new segment's page with "Segment saved". The map's credit stays
+      visible throughout.
+- [ ] **A run's efforts after saving.** Run along the segment, save, and
+      open the run from the finish screen. Passing: within a few seconds a
+      Segments card appears with the time and "Your 2nd best" (or the
+      place it earned), and the row opens the segment's page with you on
+      its board.
 
 ## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
 
@@ -4975,6 +4987,14 @@ Affects: setup's race step and Settings → Run plan (the Ultra row, Total climb
 - [ ] **A listed ultra.** Open the Race to the Stones 100K space. Passing: "Train for this race" opens Run plan with 100K chosen and the race bound; the Chiltern 50 lists under a 50K goal's "Choose an upcoming race".
 - [ ] **Feet.** With miles chosen in Units, type 5000 in Total climb. Passing: the field says ft, and the stored `climbM` is 1524.
 - [ ] **Recovery after an ultra.** Run the race on its day (at least 95% of the distance). Passing: the plan enters recovery for 4 weeks after a 50K, 5 after 50 miles or a 100K, and the run summary shows no prediction line (Tropos predicts no ultra time).
+
+## No heavy legs the day before an ultra's back-to-back (Run27 call 19, 2026-11-15)
+
+Affects: a new ultra plan's lift order (`orderForAdjacency` with `longRunDaysOf`) and "Why this session"'s next-day note before a back-to-back run (`liftSessionPurpose`). Unit tests build the plans through `buildPlan`; no phone has shown one. A plan made before this keeps its order.
+
+- [ ] **Four lift days.** On a new account, set up Race prep, 50K, four runs and four lift days, a date 20 weeks out. Passing: the week strip shows the long run Sunday, a run Saturday, and Friday's lift is an upper session (no squat, deadlift or other leg lift); the lower sessions fall Monday and Wednesday.
+- [ ] **Two lift days.** The same with two lift days. Passing: Friday is a full-body session (both are), and in a week whose Saturday holds "Back-to-back 1 h 30" or another back-to-back, Friday's "Why this session" ends "Your back-to-back run is the next day, and heavy leg work can leave your legs tired for it."
+- [ ] **A marathon keeps its week.** Set up a marathon on the same days. Passing: nothing above changes for it; Friday's note appears only before a long run or a key session.
 
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 

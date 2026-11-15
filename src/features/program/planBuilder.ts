@@ -73,7 +73,7 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
-import { firstFullWeekKey, isUltraDistance } from "./runPlanTiming";
+import { firstFullWeekKey, weekendHoldsBackToBacks } from "./runPlanTiming";
 import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
@@ -353,7 +353,7 @@ function buildWeekSchedule(
     plannedRunDays(input),
     input.weekSchedule,
     // Run26 (2): an ultra's long run and back-to-back run are a weekend's.
-    input.runMode === "race_prep" && isUltraDistance(input.raceGoal?.distance)
+    weekendHoldsBackToBacks(input.runMode, input.raceGoal)
   );
 }
 
@@ -436,6 +436,7 @@ type LiftProgramInput = Pick<
   | "runMode"
   | "weeklyRunDays"
   | "weekSchedule"
+  | "raceGoal"
   | "equipment"
   | "barbellAtHome"
   | "injuries"
@@ -495,7 +496,10 @@ function buildLiftProgram(input: LiftProgramInput): {
             equipment: input.equipment,
             injuries: input.injuries,
             barbellAtHome: input.barbellAtHome,
-          }
+          },
+          // Run27 (19): the day before an ultra's back-to-back run is
+          // kept as the day before the long run is.
+          weekendHoldsBackToBacks(input.runMode, input.raceGoal)
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that

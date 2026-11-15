@@ -199,7 +199,7 @@ export interface CompletedSessionData {
    *  workout. */
   moments?: LiftMomentFacts;
 }
-import type { RaceTiming } from "./runPlanTiming";
+import { weekendHoldsBackToBacks, type RaceTiming } from "./runPlanTiming";
 import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
 import {
   localWeekKey,
@@ -621,7 +621,10 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
-          }
+          },
+          // Run27 (19): an ultra's back-to-back day, kept as the long
+          // run's is.
+          weekendHoldsBackToBacks(effectiveRunMode, profile.raceGoal)
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -2488,7 +2491,10 @@ export function useProgram() {
             equipment: profile.equipment,
             injuries: profile.injuries,
             barbellAtHome: profile.barbellAtHome,
-          }
+          },
+          // Run27 (19): an ultra's back-to-back day, kept as the long
+          // run's is.
+          weekendHoldsBackToBacks(profile.runMode, profile.raceGoal)
         );
 
         // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen

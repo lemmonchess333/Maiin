@@ -1668,6 +1668,19 @@ export function timeOnFeetFamilyOf(
   return template.config.backToBack ? "backToBack" : "long";
 }
 
+/**
+ * Run27 (19): whether a run is one of the week's long runs: the long run,
+ * or an ultra's back-to-back run beside it, a second long run that is an
+ * easy run by type (Run26 (2)). The one test for both: the starting point's
+ * fit holds either to the long run's climb, and the lifting says so of a
+ * leg session the day before either.
+ */
+export function isLongRunTemplate(
+  template: Pick<RunTemplate, "type" | "config"> | null | undefined
+): boolean {
+  return template?.type === "long" || template?.config.backToBack === true;
+}
+
 /** Run26 (2): whether a run may be fitted or swapped to another, by their
  *  families (`timeOnFeetFamilyOf`). */
 export function sameTimeOnFeetFamily(

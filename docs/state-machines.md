@@ -49,6 +49,8 @@ inside that type.
 | Checkout                 | `src/lib/checkoutFlow.ts` (`CheckoutState`, `PurchaseOutcome`), since App1 Q20               | idle, sign-in needed, buying, waiting, failed; a purchase comes to bought, redirected, cancelled, pending or failed  |
 | A reminder's attention   | `src/lib/reminderAttention.ts` (`AttentionCount`), and the server's half (App1 Q62)          | on with 0, 1 or 2 ignored running; quiet (off, `{kind}QuietAt`); said on Home (`{kind}QuietShown`); on again from 0  |
 | Heat on a run            | `src/lib/heatAdjustment.ts` (`HeatLevel`), `src/hooks/useHotDay.ts` (`HotDay`)               | none, hot, extreme; then offered, adjusted or swapped                                                                |
+| Making a segment         | `src/components/run/SegmentMaker.tsx` (`MakerState`)                                         | picking, saving, refused; closed is RunDetail's (`segmentRange` null)                                                |
+| A segment's page         | `src/hooks/useSegment.ts` (`SegmentStatus`, `BoardStatus`)                                   | loading, ready, missing, failed; its board loading, ready, failed                                                    |
 
 `useSessionDoc` and `useUserProfileData` are the pattern to copy: a read has
 four outcomes, and "missing" and "failed" are different ones.
