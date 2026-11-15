@@ -24,7 +24,11 @@
  * longer (+15 s) is shown by ending the activity and starting another.
  */
 import { logger } from "@/lib/logger";
-import { endCard, loadLiveActivities } from "@/lib/liveActivities";
+import {
+  endCard,
+  ISLAND_FIGURE_PT,
+  loadLiveActivities,
+} from "@/lib/liveActivities";
 import { THEME } from "@/lib/theme";
 import type {
   ActivityLayout,
@@ -59,7 +63,11 @@ const glyph = (size: number): LayoutElement => ({
   ],
 });
 
-const countdown = (endsAt: number, fontSize: number): LayoutElement => ({
+const countdown = (
+  endsAt: number,
+  fontSize: number,
+  alignment?: "center"
+): LayoutElement => ({
   type: "timer",
   properties: [
     { endTime: endsAt },
@@ -68,6 +76,7 @@ const countdown = (endsAt: number, fontSize: number): LayoutElement => ({
     { fontWeight: "bold" },
     { color: "#FFFFFF" },
     { monospacedDigit: true },
+    ...(alignment ? [{ alignment }] : []),
   ],
 });
 
@@ -125,8 +134,12 @@ function islandLayout(endsAt: number): DynamicIslandLayout {
       },
     },
     compactLeading: glyph(14),
-    compactTrailing: countdown(endsAt, 14),
-    minimal: glyph(14),
+    compactTrailing: countdown(endsAt, ISLAND_FIGURE_PT),
+    // The time left, not the dumbbell, as Apple asks of the smallest view
+    // and as the Clock app's timer shows (Run26 call 1). It is also what
+    // shows when music shares the island. The system's timer text takes
+    // all the width it is given, so the digits are set in its middle.
+    minimal: countdown(endsAt, ISLAND_FIGURE_PT, "center"),
   };
 }
 
