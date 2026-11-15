@@ -16,12 +16,27 @@ import { useState } from "react";
 import type { GPSPoint } from "@/lib/gps";
 import type { PointRange } from "@/lib/segments";
 
-const H = vi.hoisted(() => ({ call: vi.fn(), restrictedToast: vi.fn() }));
+const H = vi.hoisted(() => ({
+  call: vi.fn(),
+  restrictedToast: vi.fn(),
+  needsVerification: false,
+  restricted: false,
+}));
 
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 vi.mock("firebase/functions", () => ({
   httpsCallable: (_f: unknown, name: string) => (data: unknown) =>
     H.call(name, data),
+}));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { uid: "me" } }) }));
+vi.mock("@/hooks/useEmailVerificationGate", () => ({
+  useEmailVerificationGate: () => ({
+    needsVerification: H.needsVerification,
+    recheck: vi.fn(),
+  }),
+}));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => ({ isRestricted: H.restricted }),
 }));
 vi.mock("@/lib/accountRestriction", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/accountRestriction")>()),
@@ -66,6 +81,8 @@ function Harness({ initial }: { initial: PointRange }) {
 }
 
 beforeEach(() => {
+  H.needsVerification = false;
+  H.restricted = false;
   H.call.mockReset();
   H.restrictedToast.mockReset();
   made.mockReset();
@@ -144,5 +161,23 @@ describe("SegmentMaker", () => {
       "Couldn’t save the segment. Try again."
     );
     expect(H.restrictedToast).toHaveBeenCalledTimes(1);
+  });
+
+  it("holds Save for an unverified email, and says why where Save is", () => {
+    H.needsVerification = true;
+    render(<Harness initial={{ from: 2, to: 13 }} />);
+    name("Common straight");
+    expect(
+      screen.getByText(/Verify your email to make a segment/)
+    ).toBeVisible();
+    expect(save()).toBeDisabled();
+  });
+
+  it("holds Save for a restricted account, with the way to support", () => {
+    H.restricted = true;
+    render(<Harness initial={{ from: 2, to: 13 }} />);
+    name("Common straight");
+    expect(screen.getByRole("link", { name: "Contact support" })).toBeVisible();
+    expect(save()).toBeDisabled();
   });
 });

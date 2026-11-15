@@ -18,6 +18,11 @@ import {
   showRestrictedToast,
 } from "@/lib/accountRestriction";
 import type { DistanceUnit } from "@/lib/distanceUnits";
+import { useAuth } from "@/lib/auth";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
+import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import type { GPSPoint } from "@/lib/gps";
 
 /**
@@ -37,6 +42,10 @@ export type MakerState =
  * for a stretch (at least 400 m, no gap) and the name's are checked here
  * before the request goes; the server checks them again, with the privacy
  * zones and the word filter, and its refusal is shown in its own words.
+ *
+ * A segment's name and line are public, so making one needs a verified
+ * email and an unrestricted account, as a post does: the maker says which
+ * is missing where Save is, before the server refuses.
  */
 export default function SegmentMaker({
   runId,
@@ -57,6 +66,10 @@ export default function SegmentMaker({
 }) {
   const headingId = useId();
   const nameId = useId();
+  const { user } = useAuth();
+  const gate = useEmailVerificationGate(user);
+  const { isRestricted } = useRestrictedStatus(user?.uid);
+  const held = gate.needsVerification || isRestricted;
   const startId = useId();
   const endId = useId();
   const [name, setName] = useState("");
@@ -205,6 +218,14 @@ export default function SegmentMaker({
         </p>
       </div>
 
+      {isRestricted ? (
+        <RestrictedNotice />
+      ) : (
+        gate.needsVerification && (
+          <VerifyEmailNotice action="make a segment" onRecheck={gate.recheck} />
+        )
+      )}
+
       {state.step === "refused" && (
         <p role="alert" className="text-sm font-medium text-warning-strong">
           {state.message}
@@ -224,7 +245,7 @@ export default function SegmentMaker({
           variant="primary"
           className="flex-1"
           loading={saving}
-          disabled={!stretch.ok || !!nameRefusal}
+          disabled={held || !stretch.ok || !!nameRefusal}
           onClick={() => void save()}
         >
           Save segment
