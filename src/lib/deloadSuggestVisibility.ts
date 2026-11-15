@@ -1,3 +1,4 @@
+import type { RaceDistance } from "@/features/program/programTypes";
 import { isCurrentWeekInRaceWindDown } from "@/features/program/runPlanTiming";
 
 export interface DeloadSuggestInput {
@@ -10,7 +11,7 @@ export interface DeloadSuggestInput {
   /** `programState.runPlan.totalWeeks` — absent for non-race plans. */
   totalWeeks: number | undefined;
   /** Resolved race distance — absent for non-race plans. */
-  distance: "5k" | "10k" | "half" | "marathon" | undefined;
+  distance: RaceDistance | undefined;
   /** `lighterWeekAllowed(programState)`: whether Train's menu offers a
    *  lighter week now (Lift4 (9): not during one, not straight after one,
    *  not in a first week back). The banner's button sends the menu's

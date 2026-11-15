@@ -13,10 +13,11 @@ import {
   getPhaseForWeek,
   getRaceMinWeeks,
 } from "@/features/program/runPlanTiming";
-import type { ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  RaceDistance,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 /** True when this runDay resolves to a race-type template. Mirrors the
  *  canonical id-agnostic gate (`type === "race"`), never `templateId ===

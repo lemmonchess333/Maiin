@@ -31,6 +31,11 @@ describe("raceDistanceLabel", () => {
     expect(raceDistanceLabel("10k")).toBe("10K");
     expect(raceDistanceLabel("5k")).toBe("5K");
   });
+  it("names the ultras (Run26 (2))", () => {
+    expect(raceDistanceLabel("50k")).toBe("50K");
+    expect(raceDistanceLabel("50mi")).toBe("50 Miles");
+    expect(raceDistanceLabel("100k")).toBe("100K");
+  });
   it("passes through unknown distances unchanged", () => {
     expect(raceDistanceLabel("ultra")).toBe("ultra");
   });
@@ -120,6 +125,10 @@ describe("race copy once race day has passed", () => {
     expect(raceDistanceInSentence("half")).toBe("half marathon");
     expect(raceDistanceInSentence("10k")).toBe("10K");
     expect(raceDistanceInSentence("5k")).toBe("5K");
+    // Run26 (2): "Your 50-mile race was on 17 Oct."
+    expect(raceDistanceInSentence("50k")).toBe("50K");
+    expect(raceDistanceInSentence("50mi")).toBe("50-mile race");
+    expect(raceDistanceInSentence("100k")).toBe("100K");
   });
 });
 

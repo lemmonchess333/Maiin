@@ -114,7 +114,10 @@ import {
   type SessionVariant,
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
-import type { ProgramExercise } from "@/features/program/programTypes";
+import type {
+  ProgramExercise,
+  RaceDistance,
+} from "@/features/program/programTypes";
 import {
   buildEasierSession,
   pickLighterDay,
@@ -1190,8 +1193,7 @@ function ProgramInner() {
     lighterWeekAllowed: !!programState && lighterWeekAllowed(programState),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
-    distance: resolvedRunPlan.raceGoal?.distance as
-      "5k" | "10k" | "half" | "marathon" | undefined,
+    distance: resolvedRunPlan.raceGoal?.distance as RaceDistance | undefined,
   });
   const liftAdvice = pickLiftAdvice({
     deload:

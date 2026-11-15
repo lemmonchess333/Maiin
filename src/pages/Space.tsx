@@ -62,6 +62,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import {
   spaceDef,
   isTrainableRaceEvent,
+  raceEventPlanDistance,
   type SpaceEventInfo,
 } from "@/features/spaces/spaceDefs";
 import { raceDistanceLabel } from "@/features/spaces/raceBrowse";
@@ -234,7 +235,7 @@ function RaceEventHeader({
             disabled={!trainingDate}
             onClick={() =>
               navigate(
-                `/settings/run-plan?distance=${event.distance}&date=${
+                `/settings/run-plan?distance=${raceEventPlanDistance(event)}&date=${
                   trainingDate
                 }&eventName=${encodeURIComponent(name)}&spaceId=${spaceId}`
               )
@@ -247,8 +248,8 @@ function RaceEventHeader({
 
       {!trainable && (
         <p className="text-sm text-muted-foreground">
-          Ultra training plans aren’t available in Tropos yet. Visit the
-          organiser for event preparation and entry details.
+          Tropos has no plan for this distance yet. Visit the organiser for
+          event preparation and entry details.
         </p>
       )}
 

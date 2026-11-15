@@ -55,6 +55,10 @@ describe("constants", () => {
       "10k": 10000,
       half: 21097,
       marathon: 42195,
+      // Run26 (2): the ultras.
+      "50k": 50000,
+      "50mi": 80467,
+      "100k": 100000,
     });
   });
 
@@ -64,6 +68,10 @@ describe("constants", () => {
       "10k": 2,
       half: 3,
       marathon: 4,
+      // Run26 (2): as the scheduler's `recoveryWeeksForDistance`.
+      "50k": 4,
+      "50mi": 5,
+      "100k": 5,
     });
   });
 
@@ -78,6 +86,25 @@ describe("constants", () => {
     expect(plannedDistanceFor(undefined)).toBe(0);
     expect(recoveryWeeksFor("marathon")).toBe(4);
     expect(recoveryWeeksFor("ultra")).toBe(0);
+    // Run26 (2): an ultra's race is measured and recovered like any other.
+    expect(plannedDistanceFor("100k")).toBe(100000);
+    expect(recoveryWeeksFor("50mi")).toBe(5);
+  });
+
+  it("counts an ultra run at 95% of its distance, and not one short of it (Run26 (2))", () => {
+    const planned = plannedDistanceFor("50k");
+    expect(
+      isStrictRaceRun(
+        rawRun({ actualTemplateId: "50k_race", distance: 47500 }),
+        planned
+      )
+    ).toBe(true);
+    expect(
+      isStrictRaceRun(
+        rawRun({ actualTemplateId: "50k_race", distance: 47400 }),
+        planned
+      )
+    ).toBe(false);
   });
 });
 

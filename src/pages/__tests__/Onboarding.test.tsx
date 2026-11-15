@@ -762,6 +762,63 @@ describe("a race needs a date", () => {
     });
   });
 
+  // Run26 (2): an ultra with its climb, from a setup's draft to the goal
+  // and the plan it builds.
+  it("saves an ultra and its climb on the goal, and plans for them", async () => {
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 140));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      weeklyRunDays: 4,
+      raceDistance: "50k",
+      raceTargetDate: raceDay,
+      raceEntry: "race",
+      raceClimbM: 1500,
+      runningWeekMinutes: "240",
+      runningLongestMinutes: "120",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.raceGoal).toEqual({
+      distance: "50k",
+      targetDate: raceDay,
+      entry: "race",
+      climbM: 1500,
+    });
+    expect(programState.runPlan).toMatchObject({
+      mode: "race_prep",
+      raceGoal: { distance: "50k", climbM: 1500 },
+    });
+  });
+
+  it("offers the ultras under the road races, and says 100 miles isn't one", () => {
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(screen.getByText("No 100-mile plan yet.")).toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByRole("radiogroup", { name: "Ultra distance" })
+      ).getByRole("radio", { name: "100K" })
+    );
+    expect(
+      screen.getByText(
+        "An ultra plan works best on four runs a week, with both weekend days free for the long runs. Add a day, or choose a shorter race."
+      )
+    ).toBeInTheDocument();
+    // The climb is checked before the step goes on.
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: localDateString(addLocalDays(new Date(), 140)) },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    fireEvent.change(screen.getByLabelText("Total climb (optional)"), {
+      target: { value: "lots" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
   it("begins the 30-minute goal today, with no race goal (Run9)", async () => {
     await loadWordFilter();
     saveOnboardingDraft("setup-test", {
@@ -817,7 +874,11 @@ describe("a race needs a date", () => {
   it("no longer calls the date optional", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
-    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
+    // Run26 (2): the race's climb is optional, and the one field that says
+    // so (was: no field at all called optional).
+    expect(
+      screen.queryAllByLabelText(/optional/i).map((field) => field.id)
+    ).toEqual(["setup-race-climb"]);
   });
 });
 

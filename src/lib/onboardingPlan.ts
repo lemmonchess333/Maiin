@@ -107,7 +107,10 @@ export function buildOnboardingPlan(
             // editor's does.
             ...(draft.raceEventName ? { eventName: draft.raceEventName } : {}),
             // Run26 (2): the race's climb, which makes a trail plan.
-            ...(draft.raceClimbM ? { climbM: draft.raceClimbM } : {}),
+            // Whole metres, as the rules hold it.
+            ...(draft.raceClimbM
+              ? { climbM: Math.round(draft.raceClimbM) }
+              : {}),
           },
         }
       : {}),

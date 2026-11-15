@@ -1,7 +1,8 @@
 import {
-  isTrainableRaceEvent,
+  raceEventPlanDistance,
   raceSpaceDefs,
 } from "./src/features/spaces/spaceDefs";
+import { VALID_RACE_DISTANCE } from "./src/features/program/programTypes";
 /**
  * users/{uid} profile writes, against the real rules engine.
  *
@@ -821,8 +822,34 @@ suite("users/{uid} — raceGoal value gate", () => {
         raceGoal: { ...VALID, eventSpaceId: "london-marathon" },
       })
     );
-    for (const distance of ["5k", "10k", "half", "marathon"]) {
+    // Every distance a plan prepares for, the ultras with them (Run26 (2)).
+    for (const distance of VALID_RACE_DISTANCE) {
       await assertSucceeds(write({ raceGoal: { ...VALID, distance } }));
+    }
+  });
+
+  it("accepts an ultra goal and a climb, in whole metres up to the bound", async () => {
+    // Run26 (2): a profile written by today's app, with neither, passes
+    // above; these are the new keys, each in and out of range.
+    const ULTRA = { distance: "50k", targetDate: "2027-09-25" };
+    await assertSucceeds(write({ raceGoal: ULTRA }));
+    for (const climbM of [0, 1, 1500, 20000]) {
+      await assertSucceeds(write({ raceGoal: { ...ULTRA, climbM } }));
+      await assertSucceeds(write({ raceGoal: { ...VALID, climbM } }));
+    }
+    await assertSucceeds(
+      write({
+        raceGoal: {
+          ...ULTRA,
+          climbM: 1500,
+          entry: "race",
+          eventName: "Chiltern 50 Ultra Challenge",
+          eventSpaceId: "chiltern-50",
+        },
+      })
+    );
+    for (const climbM of [-1, 20001, 450.5, "1500", null, true]) {
+      await assertFails(write({ raceGoal: { ...ULTRA, climbM } }));
     }
   });
 
@@ -830,11 +857,13 @@ suite("users/{uid} — raceGoal value gate", () => {
     // One write per supported race, so this test grows with the catalogue. It
     // ran past the default 5 s timeout on a slow CI runner.
     for (const race of raceSpaceDefs()) {
-      if (!isTrainableRaceEvent(race.event!)) continue;
+      // An ultra trains for the plan nearest its kilometres (Run26 (2)).
+      const distance = raceEventPlanDistance(race.event!);
+      if (!distance) continue;
       await assertSucceeds(
         write({
           raceGoal: {
-            distance: race.event!.distance,
+            distance,
             targetDate: race.event!.dateKey,
             eventName: race.name,
             eventSpaceId: race.id,
@@ -844,9 +873,15 @@ suite("users/{uid} — raceGoal value gate", () => {
     }
   }, 60_000);
 
-  it("refuses training plans for directory-only ultras", async () => {
-    for (const race of raceSpaceDefs()) {
-      if (isTrainableRaceEvent(race.event!)) continue;
+  // Run26 (2): every listed ultra has a plan now, so this refuses the
+  // directory's own word for one, "ultra", which no plan holds (was: the
+  // ultras themselves, which had no plan).
+  it("refuses the directory's ultra distance as a plan's", async () => {
+    const ultras = raceSpaceDefs().filter(
+      (race) => race.event!.distance === "ultra"
+    );
+    expect(ultras.length).toBeGreaterThan(0);
+    for (const race of ultras) {
       await assertFails(
         write({
           raceGoal: {
@@ -876,6 +911,8 @@ suite("users/{uid} — raceGoal value gate", () => {
     // in dailyRaceReconciliationSweep.
     await assertFails(write({ raceGoal: { ...VALID, distance: "ultra" } }));
     await assertFails(write({ raceGoal: { ...VALID, distance: "5K" } }));
+    // 100 miles is not a plan (Run26 (2)).
+    await assertFails(write({ raceGoal: { ...VALID, distance: "100mi" } }));
     await assertFails(write({ raceGoal: { ...VALID, distance: 5 } }));
   });
 

@@ -171,11 +171,18 @@ it("requires London's assigned day and sends that day to the training editor", a
 });
 
 describe("Space page", () => {
-  it("shows an ultra's distance and organiser without offering a marathon training plan", async () => {
+  // Run26 (2): an ultra listed by its kilometres trains for the plan's
+  // ultra nearest them, 100 km a 100K (was: no plan for any ultra).
+  it("shows an ultra's distance and organiser, and offers its 100K plan", async () => {
+    function TrainingDestination() {
+      const location = useLocation();
+      return <output data-testid="training-query">{location.search}</output>;
+    }
     render(
       <MemoryRouter initialEntries={["/space/race-to-the-stones-100k"]}>
         <Routes>
           <Route path="/space/:spaceId" element={<Space />} />
+          <Route path="/settings/run-plan" element={<TrainingDestination />} />
         </Routes>
       </MemoryRouter>
     );
@@ -189,11 +196,14 @@ describe("Space page", () => {
       "https://www.thresholdtrailseries.com/race-to-the-stones/"
     );
     expect(
-      screen.queryByRole("button", { name: "Train for this race" })
+      screen.queryByText(/Tropos has no plan for this distance/)
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/Ultra training plans aren’t available/)
-    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Train for this race" })
+    );
+    expect(await screen.findByTestId("training-query")).toHaveTextContent(
+      "distance=100k"
+    );
   });
   it("hides the retired coach posts and puts the pinned team note above the members", async () => {
     seedFirestore({

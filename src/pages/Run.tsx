@@ -139,7 +139,11 @@ import {
   type AutoPauseState,
 } from "@/lib/runAutoPause";
 import { useRunMotion } from "@/hooks/useRunMotion";
-import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  RUN_TEMPLATES,
+  runsByEffort,
+} from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
   isTreadmillRun,
@@ -695,12 +699,11 @@ export default function Run() {
     player.segments,
     player.current
   );
-  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`).
-  const judgingEasy = judgesEasyNow(
-    runConfig?.activityType,
-    player.segments,
-    player.current
-  );
+  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`),
+  // unless it is held by effort (Run26 (2), `runsByEffort`).
+  const judgingEasy =
+    judgesEasyNow(runConfig?.activityType, player.segments, player.current) &&
+    !runsByEffort(runTemplateIdOf(runConfig?.planMetadata));
   // The bar's pace: none until the run has one to judge (Run20).
   const barPace = runConfig ? livePaceTarget(runConfig) : null;
   // A run-walk session (Run20 (5)) is running its steps. A run type picked

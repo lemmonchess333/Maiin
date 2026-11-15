@@ -379,7 +379,17 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     v === null
       ? null
       : cleanObject(v, {
-          distance: (d) => cleanEnum(d, ["5k", "10k", "half", "marathon"]),
+          // Run26 (2): the ultras join the road races.
+          distance: (d) =>
+            cleanEnum(d, [
+              "5k",
+              "10k",
+              "half",
+              "marathon",
+              "50k",
+              "50mi",
+              "100k",
+            ]),
           targetDate: (d) => cleanString(d, 30),
           // Optional user-entered event name — free-text, bounded to 60 chars
           // (control chars stripped by cleanString). Without this entry the
@@ -395,6 +405,10 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
           // Run9: a race the person has entered, or the
           // distance run on their own. Absent reads as a race.
           entry: (d) => cleanEnum(d, ["race", "own"]),
+          // Run26 (2): the race's total climb, whole metres. 20,000 m is
+          // past any race the plans prepare for (a 100K's climb runs to a
+          // few thousand metres).
+          climbM: (d) => cleanNumber(d, { min: 0, max: 20000, integer: true }),
         }),
 
   injuries: cleanInjuries,

@@ -44,7 +44,10 @@ import {
   type RaceTiming,
 } from "@/features/program/runPlanTiming";
 import { realignResultMessage } from "@/lib/realignCopy";
-import type { ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  RaceDistance,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 import type { RealignOutcome } from "@/features/program/programOutcome";
 
 type Intent = "not_100" | "crowded" | "easier";
@@ -60,7 +63,7 @@ interface AdjustWeekSheetProps {
   onClose: () => void;
   runDays: ScheduledRunDay[];
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
   };
   /**

@@ -468,12 +468,12 @@ export const RUN_PERSONAS: readonly { persona: LiftPersona; weeks: number }[] =
     { persona: OWNER_MARATHON, weeks: 33 },
   ];
 
-/** Run26 (2): the ultra and trail personas, each to its race week. The
- *  weeks after an ultra wait on the server's recovery for its distance. */
+/** Run26 (2): the ultra and trail personas, each through its race, its
+ *  recovery weeks (4 after a 50K, 5 after a 100K) and the week after. */
 export const ULTRA_PERSONAS: readonly {
   persona: LiftPersona;
   weeks: number;
 }[] = [
-  { persona: TRAIL_50K, weeks: 20 },
-  { persona: ROAD_100K, weeks: 24 },
+  { persona: TRAIL_50K, weeks: 25 },
+  { persona: ROAD_100K, weeks: 30 },
 ];

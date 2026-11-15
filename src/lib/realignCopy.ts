@@ -12,15 +12,17 @@
  * than presenting a doomed compressed plan as normal.
  */
 
+import type { RaceDistance } from "@/features/program/programTypes";
 import type { RaceTiming } from "@/features/program/runPlanTiming";
-
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 const DISTANCE_LABEL: Record<RaceDistance, string> = {
   "5k": "5K",
   "10k": "10K",
   half: "half marathon",
   marathon: "marathon",
+  "50k": "50K",
+  "50mi": "50-mile race",
+  "100k": "100K",
 };
 
 export function realignResultMessage(input: {

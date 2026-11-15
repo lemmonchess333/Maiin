@@ -33,12 +33,21 @@ import {
 import PhaseRail from "./PhaseRail";
 import UpcomingRacePicker from "./UpcomingRacePicker";
 import PhotoChoiceCards, { type PhotoChoice } from "./PhotoChoiceCards";
+import UltraDistanceChoice from "./UltraDistanceChoice";
+import RaceClimbField from "./RaceClimbField";
 import { PLAN_DISTANCE_PHOTOS } from "@/lib/planPhotos";
-import { getRaceMinWeeks } from "@/features/program/runPlanTiming";
+import {
+  getRaceMinWeeks,
+  isRoadDistance,
+} from "@/features/program/runPlanTiming";
+import type { RoadRaceDistance } from "@/features/program/programTypes";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 
-/* The distances as photograph cards (DESIGN_GUIDE §14m rule 26), each with its
-   length and the weeks a full build takes (`getRaceMinWeeks`). */
-const DISTANCE_OPTIONS: PhotoChoice<RaceDistance>[] = (
+/* The road distances as photograph cards (DESIGN_GUIDE §14m rule 26), each
+   with its length and the weeks a full build takes (`getRaceMinWeeks`). The
+   ultras are a row of their own below (Run26 (2)): no photograph of one is
+   licensed yet. */
+const DISTANCE_OPTIONS: PhotoChoice<RoadRaceDistance>[] = (
   [
     ["5k", "5K", "5 km"],
     ["10k", "10K", "10 km"],
@@ -74,6 +83,11 @@ interface RaceGoalPlannerProps {
    *  person answers (Run9). */
   entry: RaceGoalEntry | null;
   onEntryChange: (next: RaceGoalEntry) => void;
+  /** Run26 (2): the race's total climb, as typed. */
+  climbText: string;
+  onClimbTextChange: (next: string) => void;
+  /** The reader's unit: the climb is typed in metres or feet. */
+  unit: DistanceUnit;
 }
 
 function outLabel(
@@ -100,6 +114,9 @@ export default function RaceGoalPlanner({
   onPickRace,
   entry,
   onEntryChange,
+  climbText,
+  onClimbTextChange,
+  unit,
 }: RaceGoalPlannerProps) {
   const trainingRaces = upcomingRaces.filter(
     (race) => race.event && isTrainableRaceEvent(race.event)
@@ -129,13 +146,31 @@ export default function RaceGoalPlanner({
       {/* Distance */}
       <div className="space-y-2">
         <SectionHeading size="compact">Distance</SectionHeading>
-        <PhotoChoiceCards<RaceDistance>
+        <PhotoChoiceCards<RoadRaceDistance>
           ariaLabel="Race distance"
           options={DISTANCE_OPTIONS}
-          value={distance}
+          value={isRoadDistance(distance) ? distance : null}
           onChange={onDistanceChange}
         />
+        <UltraDistanceChoice
+          distance={distance}
+          onChange={onDistanceChange}
+          labelClassName="text-sm text-muted-foreground"
+        />
       </div>
+
+      {/* Trail is the race's climb, at any distance (Run26 (2)). */}
+      <RaceClimbField
+        id="ps-race-climb"
+        distance={distance}
+        text={climbText}
+        onTextChange={onClimbTextChange}
+        unit={unit}
+        labelClassName=""
+        wrapLabel={(label) => (
+          <SectionHeading size="compact">{label}</SectionHeading>
+        )}
+      />
 
       {/* A race entered, or the distance on your own. Neither is chosen
           for a new goal; the plan is the same, what its last day is

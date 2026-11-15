@@ -334,7 +334,7 @@ export function noSplitsReason(
 
 /**
  * Format the raceGoal.distance enum (`'5k'` / `'10k'` / `'half'`
- * / `'marathon'`) as a presentable label for the race-prep
+ * / `'marathon'`, and the ultras) as a presentable label for the race-prep
  * context strip + race-progress card.
  *
  * Falls through to UPPERCASE for unknown values so a future
@@ -346,6 +346,10 @@ export function formatRaceDistance(distance: string | undefined): string {
   if (distance === "10k") return "10K";
   if (distance === "half") return "Half Marathon";
   if (distance === "marathon") return "Marathon";
+  // Run26 (2): the ultras, as `raceDistanceLabel` names them.
+  if (distance === "50k") return "50K";
+  if (distance === "50mi") return "50 Miles";
+  if (distance === "100k") return "100K";
   return distance.toUpperCase();
 }
 

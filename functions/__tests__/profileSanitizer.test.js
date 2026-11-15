@@ -30,6 +30,45 @@ const {
   SERVER_MANAGED_PROFILE_FIELDS,
 } = require("../profileSanitizer");
 
+describe("raceGoal — the ultras and the climb (Run26 (2))", () => {
+  const goal = { distance: "50k", targetDate: "2027-05-15" };
+
+  it("keeps an ultra's distance and a climb in whole metres", () => {
+    for (const distance of ["50k", "50mi", "100k"])
+      expect(
+        sanitizeProfileData({ raceGoal: { ...goal, distance } }).raceGoal
+      ).toEqual({ ...goal, distance });
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, climbM: 1500 } }).raceGoal
+    ).toEqual({ ...goal, climbM: 1500 });
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, climbM: 0 } }).raceGoal
+    ).toEqual({ ...goal, climbM: 0 });
+  });
+
+  it("keeps a goal written by today's app unchanged", () => {
+    const today = {
+      distance: "marathon",
+      targetDate: "2027-04-25",
+      eventName: "London Marathon 2027",
+      targetTimeS: 14400,
+      entry: "race",
+    };
+    expect(sanitizeProfileData({ raceGoal: today }).raceGoal).toEqual(today);
+  });
+
+  it("drops a climb out of range or not whole, and an unknown distance", () => {
+    for (const climbM of [-1, 20001, 12.5, "800"])
+      expect(
+        sanitizeProfileData({ raceGoal: { ...goal, climbM } }).raceGoal
+      ).toEqual(goal);
+    expect(
+      sanitizeProfileData({ raceGoal: { ...goal, distance: "100mi" } })
+        .raceGoal
+    ).toEqual({ targetDate: goal.targetDate });
+  });
+});
+
 describe("recurring run availability", () => {
   it("retains only bounded numbers and explicit nulls", () => {
     expect(

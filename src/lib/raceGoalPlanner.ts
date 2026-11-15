@@ -15,6 +15,7 @@ import {
 } from "@/features/program/racePlanContinuation";
 import type {
   ProgramState,
+  RaceDistance,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 /**
@@ -50,6 +51,7 @@ import {
   getRaceFloorWeeks,
   getRacePhaseLabel,
   isUltraDistance,
+  sizesLongRunsInTime,
   raceOutOfReach,
 } from "@/features/program/runPlanTiming";
 import {
@@ -74,13 +76,16 @@ import {
   type DistanceUnit,
 } from "./distanceUnits";
 
-export type RaceDistance = "5k" | "10k" | "half" | "marathon";
+export type { RaceDistance };
 
 const DISTANCE_METERS: Record<RaceDistance, number> = {
   "5k": 5000,
   "10k": 10000,
   half: 21097.5,
   marathon: 42195,
+  "50k": 50000,
+  "50mi": 80467,
+  "100k": 100000,
 };
 
 /** Pgm7 A7: a race plan needs at least two run days a week. A plan that
@@ -89,6 +94,11 @@ const DISTANCE_METERS: Record<RaceDistance, number> = {
 export const MIN_RACE_RUN_DAYS = 2;
 /** Pgm7 A7: a marathon's setup recommends three. */
 export const MARATHON_RUN_DAYS = 3;
+/** Run26 (2): an ultra's setup recommends four, so the build's weekend can
+ *  hold the long run and its back-to-back, with a quality day and an easy
+ *  day in the week besides. A Tropos heuristic, from the weeks the engine
+ *  builds (`BACK_TO_BACK_WEEKS` in runScheduler.ts). */
+export const ULTRA_RUN_DAYS = 4;
 
 /**
  * The line under a race plan's run-days control, or null when the count
@@ -103,6 +113,8 @@ export function raceRunDaysNote(
     return "A race plan needs at least two runs a week. Add a day when you can.";
   if (distance === "marathon" && runDays < MARATHON_RUN_DAYS)
     return "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date.";
+  if (isUltraDistance(distance) && runDays < ULTRA_RUN_DAYS)
+    return "An ultra plan works best on four runs a week, with both weekend days free for the long runs. Add a day, or choose a shorter race.";
   return null;
 }
 
@@ -123,6 +135,9 @@ const RACE_IN_A_SENTENCE: Record<RaceDistance, string> = {
   "10k": "10K",
   half: "half marathon",
   marathon: "marathon",
+  "50k": "50K",
+  "50mi": "50-mile race",
+  "100k": "100K",
 };
 
 /** A span of minutes to the nearest five: "35 min", "2 h", "2 h 30 min". */
@@ -185,7 +200,7 @@ function longestBeforeRace(
   weeks: readonly ScheduledRunDay[][],
   easyPaceSPerKm: number | null | undefined,
   unit: DistanceUnit
-): { minutes: number; reads: string } | null {
+): { minutes: number; inTime: boolean; reads: string } | null {
   let longest: ScheduledRunDay | null = null;
   for (const week of weeks.slice(0, -1))
     for (const run of week)
@@ -200,11 +215,16 @@ function longestBeforeRace(
   const template = RUN_TEMPLATES.find((t) => t.id === longest.templateId);
   const km = template?.type === "long" ? template.config?.targetDistanceKm : 0;
   const minutes = runMinutesOf(longest, easyPaceSPerKm);
+  // Run26 (2): a long run sized in time on feet reads as its time.
+  const inTime = template?.config?.timeOnFeet === true;
   return {
     minutes,
+    inTime,
     reads: km
       ? `${Math.round(distanceIn(km * 1000, unit))} ${distanceUnitLabel(unit)}`
-      : `${Math.round(minutes)} min`,
+      : inTime
+        ? aboutTime(minutes)
+        : `${Math.round(minutes)} min`,
   };
 }
 
@@ -224,21 +244,29 @@ function distanceWords(km: number, unit: DistanceUnit): string {
  */
 function weeksHold(weeks: readonly ScheduledRunDay[][]): {
   longestKm: number;
+  /** Run26 (2): a plan sizing its long runs in time on feet has them in
+   *  minutes, and no kilometres. */
+  longestMinutes: number;
   climbs: boolean;
   quality: number;
 } {
   const before = weeks.slice(0, -1).flat();
-  const longKm = before
+  const longConfigs = before
     .filter((run) => run.type === "long")
-    .map(
-      (run) =>
-        RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config
-          ?.targetDistanceKm ?? 0
-    )
+    .map((run) => RUN_TEMPLATES.find((t) => t.id === run.templateId)?.config);
+  const longKm = longConfigs
+    .map((config) => config?.targetDistanceKm ?? 0)
     .filter((km) => km > 0);
+  const longMinutes = longConfigs
+    .map((config) =>
+      config?.timeOnFeet ? (config.targetDurationMinutes ?? 0) : 0
+    )
+    .filter((minutes) => minutes > 0);
+  const sizes = longKm.length > 0 ? longKm : longMinutes;
   return {
     longestKm: longKm.length > 0 ? Math.max(...longKm) : 0,
-    climbs: longKm.some((km) => km > longKm[0]),
+    longestMinutes: longMinutes.length > 0 ? Math.max(...longMinutes) : 0,
+    climbs: sizes.some((size) => size > sizes[0]),
     quality: before.filter(
       (run) => run.type === "tempo" || run.type === "intervals"
     ).length,
@@ -278,6 +306,8 @@ export type RacePlannerStatus =
 
 export interface RaceGoalPlannerInput {
   distance: RaceDistance;
+  /** Run26 (2): the race's total climb, whole metres; none is 0. */
+  climbM?: number;
   /** Local "YYYY-MM-DD"; "" when no date chosen yet. */
   targetDate: string;
   /** Local "YYYY-MM-DD" — injected for determinism, never read from wall clock here. */
@@ -355,6 +385,11 @@ export function getRaceGoalPlannerState(
   input: RaceGoalPlannerInput
 ): RaceGoalPlannerState {
   const { distance, targetDate, currentDate, liftDays, weeklyRunDays } = input;
+  /* Run26 (2): the race as the plan reads it, its climb with it, and
+     whether its long runs are sized in time on feet. */
+  const climb =
+    input.climbM && input.climbM > 0 ? { climbM: input.climbM } : {};
+  const inTime = sizesLongRunsInTime({ distance, ...climb });
 
   // Distance-only fields are valid in every state (no date needed).
   const distanceLabel = raceDistanceLabel(distance);
@@ -431,7 +466,7 @@ export function getRaceGoalPlannerState(
       // Calendar-only callers deliberately retain the no-history fallback.
       recentLayoff: input.recentLayoff ?? "none",
       weekSchedule,
-      raceGoal: { distance, targetDate },
+      raceGoal: { distance, targetDate, ...climb },
       weeklyRunDays,
       currentDate: from.currentDate,
       weekStart: from.weekStart,
@@ -548,8 +583,11 @@ export function getRaceGoalPlannerState(
     input.runningBaseline && input.easyPaceSPerKm && input.easyPaceSPerKm > 0
       ? (input.runningBaseline.longestRunMinutes * 60) / input.easyPaceSPerKm
       : null;
+  /* A long run sized in time is never weighed against the race's distance:
+     no ultra plan's long run comes near it, by design (Run26 (2)). */
   const outOfReach =
     status !== "healthy" &&
+    !inTime &&
     !input.newRunnerUntil &&
     (ownLongestKm ?? 0) < raceKm &&
     raceOutOfReach({
@@ -566,6 +604,7 @@ export function getRaceGoalPlannerState(
             weekSchedule,
             raceGoal: {
               distance,
+              ...climb,
               targetDate: localDateString(
                 addLocalDays(
                   parseLocalDate(localWeekKey(now)),
@@ -592,15 +631,18 @@ export function getRaceGoalPlannerState(
   const far = outOfReach
     ? `${ownLongestKm !== null ? `Your longest run now is about ${distanceWords(Math.round(ownLongestKm), unit)}. ` : ""}${held.longestKm > 0 ? `By race day the plan’s long run gets to ${distanceWords(held.longestKm, unit)}` : "There’s no time for a long run before race day"}, and a ${RACE_IN_A_SENTENCE[distance]} is ${distanceWords(raceKm, unit)}. ${givesItTime}`
     : null;
-  const longest = distanceWords(held.longestKm, unit);
-  const holdLine =
+  const longest =
     held.longestKm > 0
-      ? held.climbs
-        ? `The long run builds to ${longest} before race week in fewer weeks than a full plan, with bigger jumps between them. ${qualityLine}`
-        : `The longest run before race week is ${longest}. ${qualityLine}`
-      : held.quality === 0
-        ? "There’s no time for a long run before race day, only easy runs up to the race."
-        : `There’s no time for a long run before race day. ${qualityLine}`;
+      ? distanceWords(held.longestKm, unit)
+      : aboutTime(held.longestMinutes);
+  const hasLong = held.longestKm > 0 || held.longestMinutes > 0;
+  const holdLine = hasLong
+    ? held.climbs
+      ? `The long run builds to ${longest} before race week in fewer weeks than a full plan, with bigger jumps between them. ${qualityLine}`
+      : `The longest run before race week is ${longest}. ${qualityLine}`
+    : held.quality === 0
+      ? "There’s no time for a long run before race day, only easy runs up to the race."
+      : `There’s no time for a long run before race day. ${qualityLine}`;
   if (status === "healthy") {
     statusTitle = shortLine ? "Short runway for your running" : "Good runway";
     /* Run24 (1): setup states the peak, in time too where a pace gives it:
@@ -610,8 +652,8 @@ export function getRaceGoalPlannerState(
       input.easyPaceSPerKm ?? plan.blockInputs?.runsPaceSPerKm ?? null;
     const peak = longestBeforeRace(plan.weeks, peakPace, unit);
     const peakLine =
-      peak && held.longestKm > 0
-        ? ` Your longest run will be ${peak.reads}${peakPace ? `, about ${aboutTime(peak.minutes)}` : ""}.`
+      peak && hasLong
+        ? ` Your longest run will be ${peak.reads}${peakPace && !peak.inTime ? `, about ${aboutTime(peak.minutes)}` : ""}.`
         : "";
     /* Run24 (2): a regular runner above the plan's base gets a shorter
        base, and setup says where the build starts and why. */
@@ -643,7 +685,7 @@ export function getRaceGoalPlannerState(
     statusDescription = far
       ? `${far} Tropos can create a mostly-easy plan — easy running only, no quality sessions.`
       : // Run24 (7): the honest sentence and the alternatives first.
-        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan — easy running only, no quality sessions.${held.longestKm > 0 ? ` The longest run before race week is ${longest}.` : ""}`;
+        `Too soon for a full ${lower} build. ${givesItTime} Tropos can create a mostly-easy plan — easy running only, no quality sessions.${hasLong ? ` The longest run before race week is ${longest}.` : ""}`;
     ctaLabel = "Save mostly-easy plan";
   }
 
