@@ -33,6 +33,7 @@ function seed(extra = {}) {
   vi.spyOn(db, "doc").mockImplementation(firestore.doc);
   vi.spyOn(db, "collection").mockImplementation(firestore.collection);
   vi.spyOn(db, "runTransaction").mockImplementation(firestore.runTransaction);
+  vi.spyOn(db, "batch").mockImplementation(firestore.batch);
 }
 
 beforeEach(() => {
@@ -134,13 +135,116 @@ describe("a push as the row is written", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("sends a league result from the league, and goes quietly at night", async () => {
-    vi.setSystemTime(new Date("2026-11-16T23:30:00Z"));
-    await write({
-      type: "league_result",
-      fromUserId: "tropos-leagues",
-      message: "You finished 3rd of 18",
+  it("sends nothing for a person's kind of row that names no sender", async () => {
+    // A person's act always carries its sender; one without is not a
+    // notice from the league, whatever it says.
+    for (const type of [
+      "comment",
+      "space_post_comment",
+      "follow_request",
+      "follow_accepted",
+      "invite_joined",
+    ]) {
+      const item = { ...comment, type, fromUserId: undefined };
+      await write(item);
+    }
+    await write(
+      { type: "kudos", activityId: "act1", fromUserId: undefined },
+      null,
+      `notifications/${TO}/items/kudos_act1_none`
+    );
+    expect(send).not.toHaveBeenCalled();
+    expect(firestore.data.has(BUNDLE)).toBe(false);
+  });
+});
+
+// Monday's result as the league writes it: weeklyLeagueTurn settles last
+// week's group and its own notify writes the row through createNotification,
+// in the league's name and with no sender (`anonymous`). The trigger is then
+// handed that stored row, as Firestore hands it over.
+describe("a league result, as the league writes it", () => {
+  const TURN = new Date("2026-11-16T12:15:00Z");
+  const LAST_WEEK = "2026-11-09";
+  const RESULT = `notifications/${TO}/items/league-${LAST_WEEK}`;
+
+  function seedLeague(extra = {}) {
+    seed({
+      [`leagueMembers/${TO}`]: {
+        uid: TO,
+        tier: "silver",
+        groupId: "last-001",
+        weekKey: LAST_WEEK,
+      },
+      "leagueGroups/last-001": {
+        weekKey: LAST_WEEK,
+        tier: "silver",
+        memberUids: [TO],
+        size: 1,
+      },
+      [`leagueGroups/last-001/standings/${TO}`]: {
+        uid: TO,
+        name: "Sam",
+        tier: "silver",
+        done: 0,
+        planned: 3,
+        points: 0,
+        reachedAt: new Date("2026-11-10T09:00:00Z"),
+      },
+      ...extra,
     });
+  }
+
+  /** The Monday turn, with its own writer. The row it stored, or null. */
+  async function runTurn() {
+    vi.setSystemTime(TURN);
+    vi.spyOn(admin.firestore.FieldValue, "serverTimestamp").mockImplementation(
+      () => admin.firestore.Timestamp.fromDate(new Date())
+    );
+    await fns.weeklyLeagueTurn.run({});
+    return firestore.data.get(RESULT) || null;
+  }
+
+  /** The trigger for the row's creation. */
+  function fire(row) {
+    return fns._handleNotificationItemWrite(
+      {
+        before: { exists: false, data: () => null },
+        after: { exists: true, data: () => row, ref: firestore.doc(RESULT) },
+      },
+      { params: { uid: TO, itemId: `league-${LAST_WEEK}` } }
+    );
+  }
+
+  it("is written with no sender, and sends one push that opens the league", async () => {
+    seedLeague();
+    const row = await runTurn();
+    expect(row).toMatchObject({
+      type: "league_result",
+      message: "You moved down to Bronze",
+      read: false,
+    });
+    expect("fromUserId" in row).toBe(false);
+    await fire(row);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].data).toMatchObject({
+      type: "social",
+      kind: "league_result",
+      title: "Your league week",
+      body: "You moved down to Bronze",
+      route: "/league",
+      ownerUid: TO,
+    });
+    expect(send.mock.calls[0][0].apns.payload.aps.sound).toBe("default");
+    // The same event again (a retry), and the turn again: nothing more.
+    await fire(row);
+    await fns.weeklyLeagueTurn.run({});
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes quietly where the turn falls at night", async () => {
+    // 12:15 UTC on a Monday is 01:15 on Tuesday in Auckland.
+    seedLeague({ [`users/${TO}`]: { timezone: "Pacific/Auckland" } });
+    await fire(await runTurn());
     expect(send).toHaveBeenCalledTimes(1);
     const message = send.mock.calls[0][0];
     expect(message.data).toMatchObject({ route: "/league", silent: "1" });
@@ -148,6 +252,51 @@ describe("a push as the row is written", () => {
       "interruption-level": "passive",
     });
     expect(message.apns.payload.aps.sound).toBeUndefined();
+  });
+
+  it("sends nothing with Leagues switched off", async () => {
+    const leaguesOff = {
+      timezone: "Europe/London",
+      notificationPreferences: { leagues: false },
+    };
+    // Off at the turn: no row, so no push.
+    seedLeague({ [`users/${TO}`]: leaguesOff });
+    expect(await runTurn()).toBeNull();
+    // Turned off after the row was written, before the push went.
+    seedLeague();
+    const row = await runTurn();
+    expect(row).not.toBeNull();
+    firestore.data.set(`users/${TO}`, leaguesOff);
+    await fire(row);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing to an account without push, or one being deleted", async () => {
+    seedLeague({ [`users/${TO}/settings/push`]: { enabled: false } });
+    await fire(await runTurn());
+    seedLeague();
+    deletion.shouldSystemWriteProceed.mockResolvedValue(false);
+    await fire(await runTurn());
+    expect(send).not.toHaveBeenCalled();
+    // Anchored: with neither, it goes.
+    seedLeague();
+    deletion.shouldSystemWriteProceed.mockResolvedValue(true);
+    await fire(await runTurn());
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it("a result row that names a person is checked as that person's", async () => {
+    // Only the league's own row, with no sender, skips the sender's checks.
+    const named = {
+      type: "league_result",
+      message: "You moved down to Bronze",
+      fromUserId: FROM,
+    };
+    seed({ [`blocks/${TO}/users/${FROM}`]: { at: 1 } });
+    await write(named);
+    seed({ [`globalRestrictedUids/${FROM}`]: { at: 1 } });
+    await write(named);
+    expect(send).not.toHaveBeenCalled();
   });
 });
 
