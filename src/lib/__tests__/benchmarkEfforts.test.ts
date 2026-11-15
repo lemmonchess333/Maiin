@@ -38,19 +38,21 @@ const tempo = (over: Partial<EffortRun> = {}) =>
   });
 
 describe("benchmarkEffortOf", () => {
-  it("reads the goal race on its elapsed time, any other race on its moving time (Run28 call 4)", () => {
+  it("reads every race on its elapsed time: the goal race and any other Race effort (Run28 call 4, its STATUS)", () => {
     // 25:00 moving, 26:10 from the clock's start to the finish.
     const stamped = { duration: 1500, elapsedSeconds: 1570 };
     expect(benchmarkEffortOf(run({ ...stamped, goalRace: true }))?.timeS).toBe(
       1570
     );
-    expect(benchmarkEffortOf(run(stamped))?.timeS).toBe(1500);
-    // A goal race saved without both stamps: its duration.
+    // A parkrun started as "Race effort", not the goal race: elapsed too.
+    expect(benchmarkEffortOf(run(stamped))?.timeS).toBe(1570);
+    // A race saved without both stamps: its duration.
     expect(benchmarkEffortOf(run({ goalRace: true }))?.timeS).toBe(1500);
-    // So the goal race sets a slower benchmark than its moving time would.
-    expect(
-      effortVdot(benchmarkEffortOf(run({ ...stamped, goalRace: true }))!)
-    ).toBeLessThan(effortVdot(benchmarkEffortOf(run(stamped))!));
+    expect(benchmarkEffortOf(run())?.timeS).toBe(1500);
+    // So a race with stops sets a slower benchmark than its moving time would.
+    expect(effortVdot(benchmarkEffortOf(run(stamped))!)).toBeLessThan(
+      effortVdot(benchmarkEffortOf(run())!)
+    );
   });
 
   it("reads the goal race and its elapsed time from the saved run", () => {

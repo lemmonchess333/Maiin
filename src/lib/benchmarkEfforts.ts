@@ -17,7 +17,8 @@
  * - A race is a run started as one: the plan's race, or "Race" in the run
  *   chooser ("Race effort"), which is how a time trial or a parkrun is
  *   recorded (the app has no time-trial session). It is read whole, on its
- *   moving time, except the goal race, on its elapsed time (Run28 call 4).
+ *   elapsed time, as Strava times a run tagged Race (Run28 call 4 and its
+ *   STATUS).
  * - A tempo is read by its work segments (`workPortion`), its
  *   blocks without the warm-up and
  *   cool-down. One that recorded none, started from the chooser with no
@@ -40,7 +41,7 @@
  * drift apart.
  */
 import type { BenchmarkEffort } from "./runPaces";
-import { goalRaceSeconds } from "./runElapsed";
+import { raceSeconds } from "./runElapsed";
 import { isPaceEligible } from "./runStatsEligibility";
 import { isTimeTrialTemplateId, RUN_TEMPLATES } from "./workoutTemplates";
 
@@ -114,11 +115,10 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     };
   }
   if (run.activityType === "race") {
-    // The goal race is read on its elapsed time, as Strava times a run
-    // tagged Race (Run28 call 4); any other race effort on its moving time.
-    const timeS = run.goalRace
-      ? goalRaceSeconds(run.duration, run.elapsedSeconds)
-      : run.duration;
+    // A race is read on its elapsed time, as Strava times a run tagged
+    // Race: the goal race (Run28 call 4) and any other race effort (its
+    // STATUS).
+    const timeS = raceSeconds(run.duration, run.elapsedSeconds);
     if (!(run.distance >= MIN_RACE_METERS) || !(timeS > 0)) return null;
     return {
       kind: "race",

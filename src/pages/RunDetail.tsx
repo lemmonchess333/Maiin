@@ -73,11 +73,7 @@ import {
   type PointRange,
 } from "@/lib/segments";
 import { parseGoalRaceRecord } from "@/lib/racePrediction";
-import {
-  elapsedSecondsOf,
-  goalRaceSeconds,
-  runTimeStat,
-} from "@/lib/runElapsed";
+import { elapsedSecondsOf, raceSeconds, runTimeStat } from "@/lib/runElapsed";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
@@ -622,7 +618,7 @@ export default function RunDetail() {
             finish screen showed it (`racePrediction` on the run). */}
         <RacePredictionResult
           record={parseGoalRaceRecord(run.racePrediction)}
-          actualS={goalRaceSeconds(run.duration, recordedElapsed)}
+          actualS={raceSeconds(run.duration, recordedElapsed)}
         />
 
         <HeartRateSummaryCard summary={run.heartRate} />
