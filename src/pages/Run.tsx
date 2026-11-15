@@ -199,7 +199,7 @@ import {
   HEAT_SWAP_START,
 } from "../lib/heatAdjustment";
 import { getHeartRateSource } from "../lib/heartRateSource";
-import { temperatureUnitFor } from "../lib/temperature";
+import { deviceTemperatureUnit } from "../lib/temperature";
 import { plannedSessionMinutes } from "../lib/runDose";
 import { plannedIntervalPaceSPerKm } from "../lib/intervalRest";
 import type {
@@ -1131,7 +1131,7 @@ export default function Run() {
       ? coolestHourLine(
           heat.coolest,
           heat.weather.temperature,
-          temperatureUnitFor(unit)
+          deviceTemperatureUnit()
         )
       : null;
   const heatAdjust: HeatPanelAdjust | null =

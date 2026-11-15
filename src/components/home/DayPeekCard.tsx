@@ -56,7 +56,7 @@ import {
   heatLine,
   HEAT_PREVIEW_LINE,
 } from "@/lib/heatAdjustment";
-import { temperatureUnitFor } from "@/lib/temperature";
+import { deviceTemperatureUnit } from "@/lib/temperature";
 import { useHotDay } from "@/hooks/useHotDay";
 import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
@@ -283,7 +283,7 @@ export default function DayPeekCard({
       ? coolestHourLine(
           heat.coolest,
           heat.weather.temperature,
-          temperatureUnitFor(unit)
+          deviceTemperatureUnit()
         )
       : null;
   /* Today's lift is the one the today card offers (the programme's next),

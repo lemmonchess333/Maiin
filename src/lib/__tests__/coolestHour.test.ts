@@ -2,11 +2,12 @@
  * Today's coolest hour (Run26 (5), heatAdjustment.ts): on a hot day, the
  * coolest hour still to come today, named when it starts at least an hour
  * from now, is at least one band of the T+DP table cooler, and its air a
- * whole degree cooler; in the runner's temperature unit (temperature.ts).
+ * whole degree cooler; in the device region's temperature unit
+ * (temperature.ts).
  * Times are built on the device's own clock, so each case reads the same
  * in every time zone CI runs.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   coolestHourAhead,
   coolestHourLine,
@@ -14,7 +15,12 @@ import {
   COOLEST_COOLER_BY_F,
   COOLEST_MIN_LEAD_MS,
 } from "../heatAdjustment";
-import { temperatureLabel, temperatureUnitFor } from "../temperature";
+import {
+  deviceTemperatureUnit,
+  temperatureLabel,
+  temperatureUnitForLocales,
+} from "../temperature";
+import { setDeviceLanguage } from "@/test/deviceLanguage";
 import type { WeatherHour } from "../weather";
 
 /** 15 July, on the device's clock, at the hour (and minute) given. */
@@ -140,13 +146,67 @@ describe("the coolest hour's line", () => {
     );
   });
 
-  it("speaks °F to a runner who reads miles", () => {
-    expect(temperatureUnitFor("mi")).toBe("F");
-    expect(temperatureUnitFor("km")).toBe("C");
+  it("speaks °F where the device's region reads it", () => {
     // 24 °C is 75.2 °F, 32 °C is 89.6 °F.
-    expect(coolestHourLine(coolest, 32, temperatureUnitFor("mi"))).toBe(
+    expect(coolestHourLine(coolest, 32, "F")).toBe(
       "Coolest at 21:00, 75 °F against 90 °F now."
     );
+  });
+});
+
+describe("the temperature unit follows the device's region, not the distance unit", () => {
+  let restore: (() => void) | null = null;
+  afterEach(() => {
+    restore?.();
+    restore = null;
+  });
+
+  it("is °F in the US and the regions that read °F, °C elsewhere", () => {
+    expect(temperatureUnitForLocales(["en-US"])).toBe("F");
+    expect(temperatureUnitForLocales(["es-US"])).toBe("F");
+    for (const tag of ["en-LR", "my-MM", "en-BS", "en-BZ", "en-KY"])
+      expect(temperatureUnitForLocales([tag])).toBe("F");
+    for (const tag of ["en-PW", "en-FM", "en-MH"])
+      expect(temperatureUnitForLocales([tag])).toBe("F");
+    expect(temperatureUnitForLocales(["en-GB"])).toBe("C");
+    expect(temperatureUnitForLocales(["fr-FR"])).toBe("C");
+    expect(temperatureUnitForLocales(["de-DE"])).toBe("C");
+    expect(temperatureUnitForLocales(["en-CA"])).toBe("C");
+    expect(temperatureUnitForLocales(["en-AU"])).toBe("C");
+  });
+
+  it("reads the region however the tag is written", () => {
+    expect(temperatureUnitForLocales(["en-gb"])).toBe("C");
+    expect(temperatureUnitForLocales(["en_US"])).toBe("F");
+    expect(temperatureUnitForLocales(["zh-Hant-TW"])).toBe("C");
+    expect(temperatureUnitForLocales(["en-US-u-ca-gregory"])).toBe("F");
+  });
+
+  it("takes the first tag that names a region, and °C when none does", () => {
+    // iOS has sent a bare "en" for UK and Canadian devices: never read
+    // as the US.
+    expect(temperatureUnitForLocales(["en"])).toBe("C");
+    expect(temperatureUnitForLocales(["en", "en-US"])).toBe("F");
+    expect(temperatureUnitForLocales(["en-GB", "en-US"])).toBe("C");
+    expect(temperatureUnitForLocales([])).toBe("C");
+    expect(temperatureUnitForLocales([null, undefined, "", "not a tag!"])).toBe(
+      "C"
+    );
+  });
+
+  it("reads the device: en-GB is °C, en-US is °F, fr-FR is °C", () => {
+    restore = setDeviceLanguage("en-GB");
+    expect(deviceTemperatureUnit()).toBe("C");
+    restore();
+    restore = setDeviceLanguage("en-US");
+    expect(deviceTemperatureUnit()).toBe("F");
+    restore();
+    restore = setDeviceLanguage("fr-FR");
+    expect(deviceTemperatureUnit()).toBe("C");
+    restore();
+    // A bare language, with the region only in the list.
+    restore = setDeviceLanguage("en", ["en", "en-US"]);
+    expect(deviceTemperatureUnit()).toBe("F");
   });
 });
 

@@ -43,7 +43,7 @@ import {
 } from "@/lib/weather";
 import { paceMinSec, distanceValue, runTitle } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { temperatureLabel, temperatureUnitFor } from "@/lib/temperature";
+import { deviceTemperatureUnit, temperatureLabel } from "@/lib/temperature";
 import {
   paceUnitLabel,
   distanceUnitLabel,
@@ -253,7 +253,9 @@ export default function RunSetupModal({
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
-  const temperatureUnit = temperatureUnitFor(unit);
+  /* Temperatures follow the device's region, not the distance unit
+     (temperature.ts). */
+  const temperatureUnit = deviceTemperatureUnit();
   const motionSafe = useMotionSafe();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
@@ -538,8 +540,9 @@ export default function RunSetupModal({
             })()}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                {/* In the runner's unit (temperature.ts, Run26 (5)), as
-                    the heat panel's coolest hour is. */}
+                {/* °C, or °F where the device's region reads it
+                    (temperature.ts, Run26 (5)), as the heat panel's
+                    coolest hour is. */}
                 {temperatureLabel(weather.temperature, temperatureUnit)}
                 {weather.feelsLike !== weather.temperature && (
                   <span className="text-xs text-muted-foreground ml-1">

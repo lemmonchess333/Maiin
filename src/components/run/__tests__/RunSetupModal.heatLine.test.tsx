@@ -37,13 +37,18 @@ import RunSetupModal, { type RunSetupHeat } from "../RunSetupModal";
 import { segmentsFromTempo } from "@/lib/runSegments";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { heatLine } from "@/lib/heatAdjustment";
+import { setDeviceLanguage } from "@/test/deviceLanguage";
 
+let restoreLanguage: () => void = () => {};
 beforeEach(() => {
   weather.get.mockReset();
   distance.unit = "km";
+  // A UK device: °C (jsdom reports en-US, which reads °F).
+  restoreLanguage = setDeviceLanguage("en-GB");
 });
 afterEach(() => {
   cleanup();
+  restoreLanguage();
 });
 
 /** Words a line about heat uses. (The cold tips' "warm up" can't fire on
@@ -165,9 +170,25 @@ describe("RunSetupModal — the heat line", () => {
   });
 });
 
-describe("RunSetupModal — temperatures in the runner's unit (Run26 (5))", () => {
-  it("shows the strip in °F to a runner who reads miles", async () => {
+describe("RunSetupModal — temperatures in the device region's unit (Run26 (5))", () => {
+  it("keeps the strip in °C for a UK runner who reads miles", async () => {
     distance.unit = "mi";
+    weather.get.mockResolvedValue(HOT_DAY);
+    render(
+      <RunSetupModal
+        onStart={vi.fn()}
+        onCancel={vi.fn()}
+        savedPreferences={{ target: PACE_TARGET }}
+      />
+    );
+    const strip = await weatherStrip();
+    expect(strip).toHaveTextContent(/32 °C\s*\(feels 36 °C\)/);
+    expect(strip).not.toHaveTextContent("°F");
+  });
+
+  it("shows the strip in °F on a US device", async () => {
+    restoreLanguage();
+    restoreLanguage = setDeviceLanguage("en-US");
     weather.get.mockResolvedValue(HOT_DAY);
     render(
       <RunSetupModal

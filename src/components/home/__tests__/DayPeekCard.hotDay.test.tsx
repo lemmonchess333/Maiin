@@ -17,6 +17,7 @@ import type {
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { restoreRealTimers } from "@/test/fakeTimers";
+import { setDeviceLanguage } from "@/test/deviceLanguage";
 
 const weather = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@/lib/weather", async (importOriginal) => ({
@@ -163,11 +164,14 @@ describe("DayPeekCard: today's coolest hour (Run26 (5))", () => {
       dewPoint: h === 21 ? 20 : 24,
     }));
   }
+  let restoreLanguage: () => void = () => {};
   beforeEach(() => {
     // 13:00 today, so the evening's hours are today's in every time zone.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(today(13));
+    restoreLanguage = setDeviceLanguage("en-GB");
   });
+  afterEach(() => restoreLanguage());
 
   it("names it under the heat line on a hot day", async () => {
     weather.get.mockResolvedValue({ ...HOT, hours: hoursFrom13() });
@@ -178,8 +182,19 @@ describe("DayPeekCard: today's coolest hour (Run26 (5))", () => {
     );
   });
 
-  it("names it in °F for a runner who reads miles", async () => {
+  it("keeps °C for a UK runner who reads miles: the distance unit plays no part", async () => {
     distance.unit = "mi";
+    weather.get.mockResolvedValue({ ...HOT, hours: hoursFrom13() });
+    peek(localDateString(), [runDayOn(new Date())]);
+    const note = await screen.findByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent(
+      "Coolest at 21:00, 24 °C against 32 °C now."
+    );
+  });
+
+  it("names it in °F on a US device", async () => {
+    restoreLanguage();
+    restoreLanguage = setDeviceLanguage("en-US");
     weather.get.mockResolvedValue({ ...HOT, hours: hoursFrom13() });
     peek(localDateString(), [runDayOn(new Date())]);
     const note = await screen.findByRole("note", { name: "Hot day" });

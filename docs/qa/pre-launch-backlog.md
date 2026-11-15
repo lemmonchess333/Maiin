@@ -5121,8 +5121,10 @@ and `HeatPanel`'s line on the run's card, the full setup, the tile picker
 and Home's day peek: "Coolest at 21:00, 24 °C against 32 °C now." Named
 only on a hot day, for an hour still to come today that starts at least an
 hour from now, is a T+DP band (10 °F) cooler and has air a whole degree
-cooler. Temperatures follow the distance setting: °F for a runner who reads
-miles, in the setup strip too. The callable ships with the next production
+cooler. Temperatures are °F only where the phone's region reads °F (the
+US, LR, MM, BS, BZ, KY, PW, FM, MH, from the region the locale names) and
+°C everywhere else, the setup strip included; the distance unit plays no
+part. The callable ships with the next production
 release (Deploy production runs the functions deploy for any change under
 `functions/` and reads `getCurrentWeather`'s deployed source back); until
 then no line shows anywhere. Unit and page tests drive it; no phone has
@@ -5137,8 +5139,11 @@ shown it.
       example 30 °C at 60% humidity), with a run planned today and location
       allowed for Tropos: Home's day peek and the run's card show "Coolest
       at HH:MM, X °C against Y °C now." with a later hour of today, and
-      HH:MM is the phone's own clock, not UTC. With Settings → Units &
-      appearance on miles, the line and the setup strip read °F.
+      HH:MM is the phone's own clock, not UTC. With the iPhone's region
+      the United Kingdom and Tropos on miles, the line and the setup strip
+      read °C; with the region the United States, °F. If a UK phone shows
+      °F or a US phone °C, the web view's `navigator.language` is not
+      naming the region: note what it reads (Safari's Web Inspector).
 - [ ] **An older build keeps working.** A TestFlight build from before
       this change, against the deployed callable: the setup strip still
       shows the weather and "Weather data from MET Norway", and a hot day

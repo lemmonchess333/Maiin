@@ -396,7 +396,7 @@ export function heatLine(weather: HeatInput | null | undefined): string | null {
 }
 
 /** The coolest hour's line: when, how cool, and against now, in the
- *  reader's unit (`temperatureUnitFor`). */
+ *  device region's unit (`deviceTemperatureUnit`). */
 export function coolestHourLine(
   coolest: WeatherHour,
   nowTemperatureC: number,

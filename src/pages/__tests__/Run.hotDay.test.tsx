@@ -28,6 +28,7 @@ import { heatEasedPaceTable } from "@/lib/heatAdjustment";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import { RUN } from "@/test/journeyScreens";
 import { restoreRealTimers } from "@/test/fakeTimers";
+import { setDeviceLanguage } from "@/test/deviceLanguage";
 
 const RACE_GOAL = { distance: "10k", targetDate: "2099-04-18" };
 const HOME_EASY = "/run?template=easy_30&scheduledRunId=runday_today&start=1";
@@ -546,13 +547,19 @@ describe("today's coolest hour on the run's card (Run26 (5))", () => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour);
   }
+  let restoreLanguage: () => void = () => {};
   beforeEach(() => {
     h.runFitness = FITNESS;
     // 13:00 today, so the evening's hours are today's in every time zone.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(today(13));
+    // A UK device: °C (jsdom reports en-US).
+    restoreLanguage = setDeviceLanguage("en-GB");
   });
-  afterEach(() => restoreRealTimers());
+  afterEach(async () => {
+    restoreLanguage();
+    await restoreRealTimers();
+  });
 
   it("names the coolest hour still ahead today beside the heat line", async () => {
     planToday("tempo_30");
