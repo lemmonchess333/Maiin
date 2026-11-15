@@ -17,8 +17,12 @@
  * distance in turn, and a base week's light session.
  */
 
-/** The goals a plan with no race date can have. */
-export type RollingGoal = "build_5k" | "build_10k" | "faster_5k" | "keep_fit";
+import type { RaceDistance, RollingGoal } from "./programTypes";
+import { isUltraDistance } from "./runPlanTiming";
+
+/** The goals a plan with no race date can have, kept in programTypes so the
+ *  types file imports nothing of the engine's. */
+export type { RollingGoal };
 
 export const ROLLING_GOALS: readonly RollingGoal[] = [
   "keep_fit",
@@ -184,15 +188,16 @@ const RACE_BASE_LONG_KM: Record<"5k" | "10k" | "half" | "marathon", number> = {
  * a half or a marathon, its sessions the race's (Run24 (5)). Its horizon is
  * the block's opening: the block starts from it.
  */
-export function raceBaseRolling(
-  distance: "5k" | "10k" | "half" | "marathon"
-): RollingSpec {
-  const longer = distance === "half" || distance === "marathon";
+export function raceBaseRolling(distance: RaceDistance): RollingSpec {
+  // Run26 (2): the base before an ultra's block is the marathon's: the
+  // block starts its time on feet from there.
+  const road = isUltraDistance(distance) ? "marathon" : distance;
+  const longer = road === "half" || road === "marathon";
   return {
     ...ROLLING_SPECS.keep_fit,
-    distance,
+    distance: road,
     horizon: {
-      longKm: RACE_BASE_LONG_KM[distance],
+      longKm: RACE_BASE_LONG_KM[road],
       easyMinutes: 40,
       mediumLongMinutes: longer ? 50 : 40,
       weekMinutes: longer ? 240 : 180,

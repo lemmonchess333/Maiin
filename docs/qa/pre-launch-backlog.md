@@ -4896,6 +4896,15 @@ Affects: the new sessions' segments on the run screen (`segmentsFromIntervals` w
 - [ ] **A progression run.** Start Progression 50 with a confirmed benchmark. Passing: 35 minutes easy with no pace alert, then "15 min to finish" at the threshold band, judged on pace there only.
 - [ ] **The setup's steps.** Open any of the four above and tap Customise. Passing: the steps shown are the session's own words until you change the repeats.
 
+## Ultra and trail sessions on the run screen (Run26 (2), 2026-11-14)
+
+Affects: the sessions an ultra or a trail plan holds, their segments, spoken cues and words (`segmentsFromIntervals` with a climb or downhill style, the time-on-feet long run's time target). Unit tests build each from template to segments; no phone has run one, and setup does not offer an ultra yet. Open each from a run day's template picker (day sheet → Template).
+
+- [ ] **Climbs.** Start Climbs 3×5 min with a confirmed benchmark. Passing: a 15-minute warm-up "to the foot of a hill", three "5 min climb" steps headed "COMFORTABLY HARD · CLIMB 1/3", no pace bar and no pace alerts, "Climb 1 of 3" spoken, "Jog down" between.
+- [ ] **Downhill repeats.** Start Downhill 4×60s. Passing: the warm-up says "to the top of a hill", four "1 min downhill" steps headed "EASY · DOWNHILL 1/4", "Descent 1 of 4" spoken, "Walk up" between with no pace anywhere.
+- [ ] **A long run in time.** Start Long 2 h. Passing: a 2-hour time target, no distance target and no pace target; the summary keeps it as a long run.
+- [ ] **A back-to-back run.** Start Back-to-back 1 h 30. Passing: a 90-minute easy run, counted on its day like any easy run.
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),

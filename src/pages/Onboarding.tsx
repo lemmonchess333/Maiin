@@ -90,6 +90,8 @@ import {
   lbToKg,
 } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
+import type { RoadRaceDistance } from "@/features/program/programTypes";
+import { isRoadDistance } from "@/features/program/runPlanTiming";
 import {
   isRunningBaseline,
   type RunningBaseline,
@@ -361,9 +363,10 @@ export default function Onboarding() {
   );
   // The runs a week the plan is built on: the starter goal's own count.
   const planRunDays = runMode === "starter" ? starterRunDays : weeklyRunDays;
-  const [raceDistance, setRaceDistance] = useState<
-    OnboardingDraft["raceDistance"]
-  >(draft?.raceDistance ?? "10k");
+  // Run26 (2): setup lists the road races until its ultras land.
+  const [raceDistance, setRaceDistance] = useState<RoadRaceDistance>(
+    draft && isRoadDistance(draft.raceDistance) ? draft.raceDistance : "10k"
+  );
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
@@ -1621,7 +1624,7 @@ export default function Onboarding() {
                           }
                         />
                       </label>
-                      <SegmentedControl<OnboardingDraft["raceDistance"]>
+                      <SegmentedControl<RoadRaceDistance>
                         ariaLabel="Race distance"
                         tone="running"
                         value={raceDistance}

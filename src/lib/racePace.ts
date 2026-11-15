@@ -8,7 +8,12 @@
  * It sits apart from `runPlanMetadata` so Home can read it without loading
  * the segment builders and their cue copy.
  */
-import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import {
+  getPhaseForWeek,
+  isTrailRace,
+  isUltraDistance,
+} from "@/features/program/runPlanTiming";
+import type { RaceDistance } from "@/features/program/programTypes";
 import type { RunPlan } from "@/features/program/runScheduler";
 import {
   paceTableFromFitness,
@@ -222,8 +227,9 @@ export function racePaceWork(
 export interface RaceTargetProfile {
   runMode?: string | null;
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetTimeS?: number;
+    climbM?: number;
   } | null;
   runFitness?: RunFitnessInput | null;
 }
@@ -241,6 +247,9 @@ export function raceTargetFromProfile(
 ): RaceTarget | null {
   const goal = profile?.raceGoal;
   if (!goal) return null;
+  // Run26 (2): an ultra, and a race over hills, are run by effort: there is
+  // no race pace to train at.
+  if (isUltraDistance(goal.distance) || isTrailRace(goal)) return null;
   if (!goal.targetTimeS) {
     // Run24 (9): a marathon with no goal time runs its race-pace work at
     // the middle of the marathon band a confirmed benchmark gives

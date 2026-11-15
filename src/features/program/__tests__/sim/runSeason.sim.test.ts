@@ -32,7 +32,11 @@ import {
 } from "@/test/sim/liftSeason";
 import { liftTrace } from "@/test/sim/liftTrace";
 import { runCoachingFindings } from "@/test/sim/runCoaching";
-import { HALF_ON_3_DAYS, RUN_PERSONAS } from "@/test/sim/runPersonas";
+import {
+  HALF_ON_3_DAYS,
+  RUN_PERSONAS,
+  ULTRA_PERSONAS,
+} from "@/test/sim/runPersonas";
 import { runTrace } from "@/test/sim/runTrace";
 
 const SEED = 1;
@@ -117,6 +121,22 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
      climbed to, and the starting point's fit makes each an easy run of
      those minutes (a 6 km long run takes 51 at their pace): no long run in
      the two weeks before race week (`taper-long`). */
+  /* Run26 (2): a 50K over hills on four runs and about five hours a week,
+     lifting twice. Its long run climbs a 15-minute rung a week in time on
+     feet, each past the single-run guard (`spike`), as every race plan's
+     rungs are; the week after each step-back climbs back over a quarter
+     on the week before it (`volume-jump`) while it stays under Run24 (6)'s
+     15% over the last week that was not one; and on four runs a 3½-hour
+     long run is over half the week in most build weeks (`long-share`), the
+     price of an ultra on four days. Its two back-to-back weekends are the
+     pair the plan holds on purpose, which `back-to-back` leaves out. */
+  "trail-50k": ["long-share", "spike", "volume-jump"],
+  /* Run26 (2): a flat 100K on five runs. Its rungs, in kilometres in the
+     rolling base and in time on feet in the block, each pass the
+     single-run guard (`spike`). Its back-to-back weeks hold the
+     medium-long under the hour where no weekday is clear of the weekend,
+     so Monday is not one more demanding day after it. */
+  "road-100k": ["spike"],
   "owner-marathon": [
     "derived-low",
     "easy-nag",
@@ -142,54 +162,53 @@ function seasonOf(persona: LiftPersona, weeks: number): Season {
 
 const lifts = (persona: LiftPersona) => persona.tracked.length > 0;
 
-describe.each(RUN_PERSONAS.map((p) => [p.persona.name, p] as const))(
-  "%s",
-  (name, { persona, weeks }) => {
-    it(
-      "keeps the app's rules, or only the ones known broken",
-      () => {
-        const season = seasonOf(persona, weeks);
-        const known = KNOWN_RULE_FAILURES[name] ?? [];
-        const fresh = season.failures
-          .filter((f) => !known.includes(f.rule))
-          .slice(0, 10)
-          .map((f) => describeFailure(season, f));
-        expect(fresh).toEqual([]);
-        // A known failure that no longer happens: take it out of the list.
-        const broken = new Set(season.failures.map((f) => f.rule));
-        expect(known.filter((rule) => !broken.has(rule))).toEqual([]);
-      },
-      TIMEOUT
-    );
+describe.each(
+  [...RUN_PERSONAS, ...ULTRA_PERSONAS].map((p) => [p.persona.name, p] as const)
+)("%s", (name, { persona, weeks }) => {
+  it(
+    "keeps the app's rules, or only the ones known broken",
+    () => {
+      const season = seasonOf(persona, weeks);
+      const known = KNOWN_RULE_FAILURES[name] ?? [];
+      const fresh = season.failures
+        .filter((f) => !known.includes(f.rule))
+        .slice(0, 10)
+        .map((f) => describeFailure(season, f));
+      expect(fresh).toEqual([]);
+      // A known failure that no longer happens: take it out of the list.
+      const broken = new Set(season.failures.map((f) => f.rule));
+      expect(known.filter((rule) => !broken.has(rule))).toEqual([]);
+    },
+    TIMEOUT
+  );
 
-    it(
-      "does what its trace says",
-      async () => {
-        const season = seasonOf(persona, weeks);
-        const text = lifts(persona)
-          ? `${runTrace(season, persona)}\n${liftTrace(season, persona.tracked)}`
-          : runTrace(season, persona);
-        await expect(text).toMatchFileSnapshot(`./__traces__/run/${name}.txt`);
-      },
-      TIMEOUT
-    );
+  it(
+    "does what its trace says",
+    async () => {
+      const season = seasonOf(persona, weeks);
+      const text = lifts(persona)
+        ? `${runTrace(season, persona)}\n${liftTrace(season, persona.tracked)}`
+        : runTrace(season, persona);
+      await expect(text).toMatchFileSnapshot(`./__traces__/run/${name}.txt`);
+    },
+    TIMEOUT
+  );
 
-    it(
-      "has only the coaching findings known today",
-      () => {
-        const season = seasonOf(persona, weeks);
-        const found = [
-          ...runCoachingFindings(season, persona),
-          ...(lifts(persona)
-            ? coachingFindings(season, persona).map((f) => `lift:${f}`)
-            : []),
-        ].sort();
-        expect(found).toEqual([...(KNOWN_COACHING[name] ?? [])].sort());
-      },
-      TIMEOUT
-    );
-  }
-);
+  it(
+    "has only the coaching findings known today",
+    () => {
+      const season = seasonOf(persona, weeks);
+      const found = [
+        ...runCoachingFindings(season, persona),
+        ...(lifts(persona)
+          ? coachingFindings(season, persona).map((f) => `lift:${f}`)
+          : []),
+      ].sort();
+      expect(found).toEqual([...(KNOWN_COACHING[name] ?? [])].sort());
+    },
+    TIMEOUT
+  );
+});
 
 describe("the run simulator", () => {
   it(
