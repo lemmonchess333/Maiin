@@ -801,6 +801,40 @@ trigger runs in production and the two apps agree.
       Firebase console, `blockedBy/{B}/users/{A}` exists. Unblock on A, and
       both ways come back (follows do not: blocking ended them).
 
+## Segments: timing runs, and who sees a board (Run26 call 3, 2026-11-14)
+
+Every saved GPS run is timed on the segments it ran (`onRunCreated`,
+`functions/lib/segments.js`), and a segment's board shows only the people
+you follow, from runs they shared, outside their privacy zones, across no
+block and never a restricted account's. The unit, rules and emulator suites
+cover the matcher, the board's privacy and the deletion sweeps; only a
+deploy, two real accounts and a real run outdoors can confirm the rest.
+
+- [ ] **The functions and indexes deployed.** After Deploy production runs
+      for this change, `createSegment`, `deleteSegment`, `getSegmentBoard`
+      and `onPrivacyZoneWritten` are in the Firebase console's function
+      list and the release's source read-back passed for them and
+      `onRunCreated`. In Firestore → Indexes → Single field, the
+      exemptions for `segmentEfforts.segmentId` and `board.uid` (collection
+      group) read Enabled: without them a segment's deletion, and an
+      account's, fail on their sweep.
+- [ ] **A run timed outdoors, beside Strava.** Make a segment from a run
+      along a stretch that also has a Strava segment, then run it again
+      with both apps recording. Passing: within a minute of saving, the
+      run's page lists the effort, and its time is within a few seconds of
+      Strava's for the same stretch (Strava times between its own nearest
+      points, so a second or two either way is expected).
+- [ ] **A board seen from two accounts.** Account B follows A (accepted).
+      A runs the segment and shares the run with followers. Passing, on
+      B's segment page: A's row with A's time. Then on A: take the share
+      back (B's board drops A), draw a privacy zone over the segment's
+      start (B's board drops A at once), block B (B sees nothing of A).
+      An account that does not follow A never sees A's row.
+- [ ] **Deleting an account takes its segments.** Delete a test account
+      that made a segment another account has run. Passing: the segment is
+      gone from the other account's run page and its efforts on it are
+      gone in the console (`users/{other}/segmentEfforts`).
+
 ## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
 
 Native Apple sign-in now keeps the name Apple shares on the first

@@ -117,6 +117,8 @@ What every serious run-plan app does, in the order a runner notices it missing:
 
 Not table stakes, despite the noise: AI chat, readiness scores, segments. Strava and COROS both shipped connectors to general AI assistants in 2026 instead of building coaches [S6][S8][O8]; Strava's built-in AI is widely dismissed [S10][S4].
 
+- STATUS 2026-11-14: segments built on the server (Run26 call 3, `functions/lib/segments.js`). A runner makes one from a stretch of their own run; every saved run is timed on the segments it ran (start and end within 25 m, in order, the route within 35 to 75 m, elapsed time, each lap an effort; Tropos heuristics, pinned by `segmentMatch.test.js`); the board shows only the people you follow, from runs shared with followers or everyone, outside privacy zones, across no block and never a restricted account's. No board of everyone and no crowns. The app's surfaces (making one on a run's map, a run's efforts, a segment's page) follow in their own pull request.
+
 ## 4. What Runna is known for, and where it is weak
 
 **Known for**

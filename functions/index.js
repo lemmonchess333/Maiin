@@ -187,6 +187,8 @@ const activityReversal = require("./lib/activityReversal");
 const communityGoal = require("./lib/communityGoal");
 // The live pulse: each day's count of sessions across Tropos (Soc15).
 const pulse = require("./lib/pulse");
+// Run26 call 3: segments, their efforts and the boards of who you follow.
+const segments = require("./lib/segments");
 const spacePostPhoto = require("./lib/spacePostPhoto");
 // A run post's map images, deleted with the post (Soc15 call 5).
 const routeMapFiles = require("./lib/routeMapFiles");
@@ -6065,6 +6067,19 @@ exports.onRunCreated = functions
       );
     }
 
+    // Run26 call 3: the run's efforts on every segment it ran, from its
+    // trace as saved, and the runner's board entries on them
+    // (lib/segments). Its own eligibility gate (a GPS run that counts);
+    // idempotent on the run, so a retry writes the same efforts.
+    await steps.run("segments", () =>
+      segments.matchRunToSegments(db, {
+        uid,
+        runId,
+        data,
+        nowMs: eventTimeMs(context),
+      })
+    );
+
     // PR-L L2: recovery-entry write. Runs BEFORE the rolling-window
     // and cooldown gates because recovery entry is independent of
     // the performance recompute — a race run logged late (poor
@@ -6303,6 +6318,15 @@ exports.onRunUpdated = functions
       await runRename.syncSharedRunName(db, uid, runId, {
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
+    // Run26 call 3: a run shared, unshared or made invalid changes which
+    // of its segment efforts may be shown, so its board entries are
+    // recomputed from the current documents.
+    if (segments.boardMayHaveChanged(change.before.data(), change.after.data()))
+      await segments.refreshRunBoardEntries(db, {
+        uid,
+        runId,
+        nowMs: eventTimeMs(context),
+      });
     return null;
   });
 
@@ -6485,8 +6509,200 @@ exports.onRunDeleted = functions
         nowMs: eventTimeMs(context),
       })
     );
+    // Run26 call 3: its segment efforts, and the boards they were on.
+    await steps.run("segments", () =>
+      segments.removeRunEfforts(db, {
+        uid,
+        runId,
+        nowMs: eventTimeMs(context),
+      })
+    );
     steps.settle();
     console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
+    return null;
+  });
+
+// ══════════════════════════════════════════════
+// SEGMENTS (Run26 call 3) — lib/segments.js
+// ══════════════════════════════════════════════
+
+/* What a segment refusal from lib/segments.js becomes: its own code and
+   sentence, which the app shows (failed-precondition and the others carry
+   their message through describeRejection). */
+function segmentHttpsError(err) {
+  if (err && err.refusal) {
+    return new functions.https.HttpsError(
+      err.code || "failed-precondition",
+      err.message,
+      err.reason ? { reason: err.reason } : undefined
+    );
+  }
+  return err;
+}
+
+/**
+ * createSegment — a runner makes a segment from a stretch of one of their
+ * own saved runs: `{ runId, startIndex, endIndex, name }`, the indices into
+ * the run's saved points, both ends included. A segment's name is read by
+ * anyone whose run is timed on it, so it is public text: the account needs
+ * a verified email, may not be restricted, and the name goes through the
+ * word filter. Returns `{ segmentId, efforts }`, the efforts found on the
+ * maker's own latest runs.
+ */
+exports.createSegment = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const token = context.auth.token;
+    if (!token || token.email_verified !== true) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Verify your email to make a segment."
+      );
+    }
+    const uid = context.auth.uid;
+    const { runId, startIndex, endIndex, name } = data || {};
+    if (
+      !isDocumentId(runId) ||
+      !Number.isInteger(startIndex) ||
+      !Number.isInteger(endIndex) ||
+      typeof name !== "string"
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "A segment needs a run, a start, an end and a name."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(db, uid, functions);
+    if (await isRateLimited(uid, "createSegment", 10, 3_600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many segments made in the last hour. Try again later."
+      );
+    }
+    try {
+      return await segments.createSegment(db, {
+        uid,
+        runId,
+        startIndex,
+        endIndex,
+        name,
+      });
+    } catch (err) {
+      throw segmentHttpsError(err);
+    }
+  });
+
+/**
+ * deleteSegment — its maker deletes a segment, and with it every effort
+ * anyone has on it and its board: `{ segmentId }`.
+ */
+exports.deleteSegment = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const segmentId = data && data.segmentId;
+    if (!isDocumentId(segmentId)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which segment?"
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    if (await isRateLimited(uid, "deleteSegment", 20, 3_600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again later."
+      );
+    }
+    try {
+      const { efforts } = await segments.deleteOwnSegment(db, {
+        uid,
+        segmentId,
+      });
+      return { deleted: true, efforts };
+    } catch (err) {
+      throw segmentHttpsError(err);
+    }
+  });
+
+/**
+ * getSegmentBoard — a segment's board as the caller may see it: the fastest
+ * shown effort of each person they follow who has run it
+ * (lib/segments.js readSegmentBoard says what is shown and why). The
+ * caller's own row is the app's, from their own efforts.
+ */
+exports.getSegmentBoard = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const segmentId = data && data.segmentId;
+    if (!isDocumentId(segmentId)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which segment?"
+      );
+    }
+    if (await isRateLimited(uid, "segmentBoard", 60, 60_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Try again in a minute."
+      );
+    }
+    const board = await segments.readSegmentBoard(db, {
+      viewerUid: uid,
+      segmentId,
+    });
+    if (!board) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "That segment isn’t there any more."
+      );
+    }
+    return board;
+  });
+
+/**
+ * A privacy zone drawn, moved or removed changes which of the person's
+ * segment efforts may be shown, so every board entry they have is
+ * recomputed (lib/segments.js). Board reads check the zones again, so an
+ * entry inside a new zone is hidden before this lands.
+ */
+exports.onPrivacyZoneWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true, timeoutSeconds: 300 })
+  .firestore.document("users/{uid}/privacyZones/{zoneId}")
+  .onWrite(async (change, context) => {
+    const { uid } = context.params;
+    // Recomputed from the current documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
+    // Account deletion sweeps the zones: nothing to recompute, and nothing
+    // may be written for an account being erased.
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onPrivacyZoneWritten"
+      ))
+    )
+      return null;
+    await segments.refreshAllBoardEntries(db, uid, {
+      nowMs: eventTimeMs(context),
+    });
     return null;
   });
 

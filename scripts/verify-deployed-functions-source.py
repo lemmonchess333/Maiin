@@ -28,6 +28,7 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantWritten", "onRaceGoalWritten",
     "onFollowerEdgeWritten", "onFollowingEdgeWritten",
     "onNotificationItemWritten",
+    "onPrivacyZoneWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -91,6 +92,12 @@ def source_targets():
     league_lib = ["lib/leagues.js", "lib/leagueRules.js", "lib/leaguePlanned.js"]
     # Soc15: the live pulse's one writer, and the deletion guard it reads.
     pulse_lib = ["lib/pulse.js", "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js"]
+    # Run26 call 3: segments, their matcher and the geometry both share.
+    segment_lib = ["lib/segments.js", "lib/segmentMatch.js", "lib/segmentGeometry.js"]
+    segment_paths = ["index.js", "package-lock.json"] + segment_lib + [
+                     "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                     "lib/restriction.js", "lib/accountDeletionLocks.js",
+                     "lib/objectionableText.js", "profanityFilter.js"]
     follow_count_paths = ["index.js", "package-lock.json", "lib/followCounts.js",
                           "lib/raceCohorts.js", "lib/spaceIds.js",
                           "lib/deletionTransactionGuard.js",
@@ -154,7 +161,13 @@ def source_targets():
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
         "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"]
-                        + league_lib + pulse_lib,
+                        + league_lib + pulse_lib + segment_lib,
+        # Run26 call 3: making, deleting and reading a segment's board, and
+        # the zone trigger that recomputes a runner's board entries.
+        "createSegment": segment_paths,
+        "deleteSegment": segment_paths,
+        "getSegmentBoard": segment_paths + ["lib/identityResync.js", "lib/publicPhotoUrl.js"],
+        "onPrivacyZoneWritten": segment_paths + ["lib/triggerRetry.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
         "onWorkoutCreated": training_paths + challenge_paths[2:] + league_lib + pulse_lib,

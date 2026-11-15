@@ -620,6 +620,35 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Segments (Run26 call 3, lib/segments.js). Making and deleting one match
+  // or sweep a run's worth of documents, past the 60 s default.
+  createSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  deleteSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  getSegmentBoard: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // A zone drawn or removed recomputes every board entry its owner has.
+  onPrivacyZoneWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    timeoutSeconds: 300,
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/privacyZones/{zoneId}",
+  },
   weeklyLeagueTurn: {
     kind: "schedule",
     maxInstances: 1,

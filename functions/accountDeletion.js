@@ -30,6 +30,7 @@ const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
 const leagues = require("./lib/leagues");
+const segments = require("./lib/segments");
 
 /**
  * Every subcollection under users/{uid}.
@@ -104,6 +105,11 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // How each league week went (lib/leagues.js, Soc15 call 3). Server-owned,
   // owner-read.
   "leagueResults",
+  // Every segment effort the account made (lib/segments.js, Run26 call 3):
+  // the time, the run it came from, and where it started and ended.
+  // Server-owned, owner-read. Its board entries and the segments it made
+  // go in the segments step below, which reads no subcollection of its own.
+  "segmentEfforts",
   "dailyNutrition",
   "checkins",
   "trainingBlocks",
@@ -444,6 +450,17 @@ async function deleteAccount({
       uid,
       logger,
     });
+
+    // 0f. Segments (Run26 call 3, inventory `segmentsOwned`,
+    // `segmentOwners` and `segmentBoardEntries`). Every segment the account
+    // made goes, with every effort anyone has on it (a collection-group
+    // sweep of segmentEfforts by segment), its board and its owner record;
+    // then the account's own entries on anyone's board. Order-independent:
+    // it finds its segments by `segmentOwners.uid`, not through the
+    // account's tree. The run sweep below fires onRunDeleted for each run,
+    // which the deletion guard turns into a no-op.
+    stage = "segments";
+    await segments.removeSegmentTracesForUser(firestore, uid);
 
     // 1. User's own subcollections
     stage = "user_subcollections";
