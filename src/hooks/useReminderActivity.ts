@@ -4,8 +4,6 @@ import { useUid } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { mealSlotFor } from "@/lib/mealSlots";
-import { DEFAULT_PUSH_CONSENT } from "@/lib/pushConsent";
-import { serverRecapPushOn } from "@/lib/reviewReminder";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { SAVED_WORKOUTS } from "@/lib/savedWorkouts";
@@ -29,14 +27,12 @@ export function useReminderActivity() {
     key: string;
     meals: MealKey[];
     loaded: string[];
-    pushOwns: boolean | null;
-    recapPushOwns: boolean | null;
+    push: Record<string, unknown> | null;
   }>({
     key: "",
     meals: [],
     loaded: [],
-    pushOwns: null,
-    recapPushOwns: null,
+    push: null,
   });
   const key = `${uid ?? ""}:${clock.dateKey}`;
   // Today's sessions by the day they started (Lift3), as the streak counts
@@ -83,8 +79,7 @@ export function useReminderActivity() {
                 key,
                 meals: [],
                 loaded: [],
-                pushOwns: null,
-                recapPushOwns: null,
+                push: null,
               };
         return {
           ...current,
@@ -110,15 +105,11 @@ export function useReminderActivity() {
             .map((d) => mealSlotFor(d.data())),
         })
       ),
+      // The push settings as stored, read as the server's senders read
+      // them, never written here: whether push carries the streak and
+      // review reminders (`reminderDelivery`), and their old switches.
       onSnapshot(doc(db, "users", uid, "settings", "push"), (snap) => {
-        const consent = { ...DEFAULT_PUSH_CONSENT, ...snap.data() };
-        publish("push", {
-          pushOwns: consent.enabled === true && consent.streak === true,
-          // The server's Monday recap push says what the review's local
-          // notification says (useReviewReminder): read from the stored
-          // document as the server's gate reads it, never written here.
-          recapPushOwns: serverRecapPushOn(snap.data()),
-        });
+        publish("push", { push: snap.data() ?? {} });
       }),
     ];
     return () => {
@@ -138,8 +129,9 @@ export function useReminderActivity() {
       meals: current?.meals ?? [],
       workout: !!current && (todaysWorkouts.items.length > 0 || ranToday),
     } satisfies ReminderActivity,
-    pushOwns: current?.pushOwns ?? null,
-    recapPushOwns: current?.recapPushOwns ?? null,
+    /** `users/{uid}/settings/push` as stored ({} when there is none), or
+     *  null until today's read lands. */
+    push: current?.push ?? null,
     refreshKey: `${key}:${clock.opened}`,
   };
 }

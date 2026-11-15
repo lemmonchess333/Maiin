@@ -15,7 +15,7 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { startOfWeek, endOfWeek } from "date-fns";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { db } from "@/lib/firebase";
@@ -41,28 +41,21 @@ type DailyLogPatch = Pick<DailyLog, "date"> &
 
 /**
  * Single authoritative subscription on `users/{uid}/logs`, by date desc,
- * from the earlier of this week's Monday and this month's first day: the
- * widest of the slices below (the week, the month). useDailyLogs,
- * useWeeklyStats, useMonthlyStats and useWeeklyDayMap all read this
- * provider, one live listener for the four. The window moves with the
- * local day. Weekly and monthly aggregates are derived from the same
- * in-memory array via useMemo, so another slice inside the window costs
- * nothing extra on the network path.
+ * from this week's Monday: the week is all its one slice reads.
+ * useDailyLogs and useWeeklyDayMap read this provider, one live listener
+ * for the two. The window moves with the local day.
+ *
+ * It reached back to the month's first day for a monthly count, and kept
+ * a weekly count beside it with its own target (`weeklyWorkoutsTarget`,
+ * 4 without one). Neither had a reader, and a week's sessions are
+ * counted in one place, `src/lib/trainingWeek.ts` (App1 Q14): both went
+ * on 13 November 2026.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function dailyLogsFrom(todayKey: string): string {
-  const today = parseLocalDate(todayKey);
-  const monday = startOfWeek(today, { weekStartsOn: 1 });
-  const first = startOfMonth(today);
-  return localDateString(monday < first ? monday : first);
-}
-
-interface WeeklyStats {
-  workoutsDone: number;
-  workoutsTarget: number;
-  mealsDone: number;
-  mealsTarget: number;
-  hasPR: boolean;
+  return localDateString(
+    startOfWeek(parseLocalDate(todayKey), { weekStartsOn: 1 })
+  );
 }
 
 interface WeeklyDayEntry {
@@ -75,15 +68,13 @@ interface DailyLogsValue {
   logs: DailyLog[];
   loading: boolean;
   saveLog: (log: DailyLogPatch) => Promise<void>;
-  weeklyStats: WeeklyStats;
-  monthlyStats: WeeklyStats;
   weeklyDayMap: Map<string, WeeklyDayEntry>;
 }
 
 const DailyLogsContext = createContext<DailyLogsValue | null>(null);
 
 export function DailyLogsProvider({ children }: { children: ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const todayKey = useLocalDateKey();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,53 +125,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
-  // Derived slices — all memo'd on `logs` + profile targets. Re-derivation
-  // only fires when the underlying snapshot or targets change.
-
-  const weeklyStats = useMemo<WeeklyStats>(() => {
-    const now = new Date();
-    const start = localDateString(startOfWeek(now, { weekStartsOn: 1 }));
-    const end = localDateString(endOfWeek(now, { weekStartsOn: 1 }));
-    let workouts = 0;
-    let meals = 0;
-    let pr = false;
-    for (const l of logs) {
-      if (l.date < start || l.date > end) continue;
-      workouts += l.workouts || 0;
-      meals += l.meals || 0;
-      if (l.hasPR) pr = true;
-    }
-    return {
-      workoutsDone: workouts,
-      workoutsTarget: profile?.weeklyWorkoutsTarget || 4,
-      mealsDone: meals,
-      mealsTarget: profile?.weeklyMealsTarget || 10,
-      hasPR: pr,
-    };
-  }, [logs, profile?.weeklyWorkoutsTarget, profile?.weeklyMealsTarget]);
-
-  const monthlyStats = useMemo<WeeklyStats>(() => {
-    const now = new Date();
-    const start = localDateString(startOfMonth(now));
-    const end = localDateString(endOfMonth(now));
-    let workouts = 0;
-    let meals = 0;
-    let pr = false;
-    for (const l of logs) {
-      if (l.date < start || l.date > end) continue;
-      workouts += l.workouts || 0;
-      meals += l.meals || 0;
-      if (l.hasPR) pr = true;
-    }
-    return {
-      workoutsDone: workouts,
-      workoutsTarget: (profile?.weeklyWorkoutsTarget || 4) * 4,
-      mealsDone: meals,
-      mealsTarget: (profile?.weeklyMealsTarget || 10) * 4,
-      hasPR: pr,
-    };
-  }, [logs, profile?.weeklyWorkoutsTarget, profile?.weeklyMealsTarget]);
-
+  // The week's slice, memo'd on `logs`.
   const weeklyDayMap = useMemo(() => {
     const now = new Date();
     const start = localDateString(startOfWeek(now, { weekStartsOn: 1 }));
@@ -203,8 +148,6 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     logs,
     loading,
     saveLog,
-    weeklyStats,
-    monthlyStats,
     weeklyDayMap,
   };
 
@@ -219,7 +162,7 @@ function useDailyLogsContext(): DailyLogsValue {
   const ctx = use(DailyLogsContext);
   if (!ctx) {
     throw new Error(
-      "useDailyLogs/useWeeklyStats/useMonthlyStats/useWeeklyDayMap must be used inside <DailyLogsProvider>"
+      "useDailyLogs/useWeeklyDayMap must be used inside <DailyLogsProvider>"
     );
   }
   return ctx;
@@ -234,16 +177,6 @@ function useDailyLogsContext(): DailyLogsValue {
 export function useDailyLogs() {
   const { logs, loading, saveLog } = useDailyLogsContext();
   return { logs, loading, saveLog };
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useWeeklyStats(): WeeklyStats {
-  return useDailyLogsContext().weeklyStats;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useMonthlyStats(): WeeklyStats {
-  return useDailyLogsContext().monthlyStats;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

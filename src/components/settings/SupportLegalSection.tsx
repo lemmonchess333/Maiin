@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Scale, Mail, Shield, ChevronRight, Flag, Compass } from "lucide-react";
+import { Scale, Mail, Shield, ChevronRight, Flag } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 
 declare const __APP_VERSION__: string;
@@ -78,23 +78,6 @@ export default function SupportLegalSection({
       title="Support & legal"
       subtitle="Help, privacy policy, terms"
     >
-      {/* The first-visit walk again (FV1): Home reads the request from the
-          router state, plays it, then clears it. */}
-      <Link to="/" state={{ guide: "walk" }} className={ROW}>
-        <div className="flex min-w-0 items-center gap-3">
-          <Compass className={ICON} />
-          <div className="min-w-0">
-            <p className="text-sm text-foreground break-words hyphens-auto">
-              Show me around
-            </p>
-            <p className="text-xs text-muted-foreground">
-              A short walk through Home
-            </p>
-          </div>
-        </div>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-      </Link>
-
       <a href={buildSupportMailto()} className={ROW}>
         <div className="flex min-w-0 items-center gap-3">
           <Mail className={ICON} />

@@ -271,7 +271,7 @@ const DECLINE_TEMPLATES: PerformanceInsight[] = [
   {
     source: "decline",
     headline: "Down from last week",
-    body: "A double-digit drop usually means recovery or adherence took a hit. Open Analytics to see which.",
+    body: "A double-digit drop usually means recovery or adherence took a hit. Open Progress to see which.",
   },
 ];
 

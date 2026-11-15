@@ -40,7 +40,8 @@ describe("service-worker file contract", () => {
       resolve(__dirname, "../../../public/sw.js"),
       "utf8"
     );
-    expect(source).toMatch(/requestedRoute === "\/review"/);
+    // The tap itself is driven in serviceWorkerNotificationClick.test.ts.
+    expect(source).toMatch(/\["\/program", "\/review", "\/league"\]/);
   });
 
   it("public/sw.js installs notificationclick before importing FCM messaging", () => {

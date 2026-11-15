@@ -26,6 +26,14 @@
  * `PushConsent` / `DEFAULT_PUSH_CONSENT` in `src/lib/pushConsent.ts`, still
  * read by `usePushSettings` and `pushNotifications` — not the predicate.
  *
+ * STREAK AND RECAP (2026-11-13, App1 Q26). The evening streak and Monday
+ * review reminders no longer pass through here: each has one switch and one
+ * time, read by `lib/reminderChoices.js`, where `streak` and `recap` below
+ * are old fields, read as a fallback until the new ones are written and
+ * never written again. `enabled` stays this gate, and is what tells the app
+ * that push carries those two reminders. The badge and the monthly
+ * challenge types are push-only and still decided here.
+ *
  * Consequence worth stating plainly: this file is now the ONLY definition.
  * A change here changes real push behaviour with no second copy to compare
  * against, so `functions/__tests__/pushConsent.test.js` is the whole safety

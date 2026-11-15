@@ -140,6 +140,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // A shared post's public page behind Hosting's /activity/** rewrite
+  // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
+  publicPostPage: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   analyzeFoodText: {
     kind: "http",
     maxInstances: 100,
@@ -206,6 +213,24 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // App1 Q18: a comment, a follow request, an invite joined and a league
+  // result push as their tray row is written; props once a day at 19:00
+  // local (lib/socialPush.js).
+  onNotificationItemWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/notifications/{uid}/items/{itemId}",
+  },
+  hourlyPropsBundle: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
   },
   dailyRaceReconciliationSweep: {
     kind: "schedule",
@@ -288,6 +313,49 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.update",
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
+  },
+  // App1 Q33 — the badges no session trigger sees (lib/badgeAwards). A
+  // delete reaches the four write triggers too, during an account sweep,
+  // and each returns before reading anything.
+  onMealWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/meals/{mealId}",
+  },
+  onWaterLogWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/waterLog/{day}",
+  },
+  onDailyNutritionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/dailyNutrition/{day}",
+  },
+  onStreakWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/streaks/data",
+  },
+  onProgramStateWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/programState/current",
   },
   // ADR-0012 — the delete halves. Same collections, same cap: they fire
   // once per document during an account deletion sweep, so an uncapped

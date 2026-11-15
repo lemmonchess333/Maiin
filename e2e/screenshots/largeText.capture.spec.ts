@@ -98,6 +98,7 @@ const SETTINGS_PAGES = [
   "run-plan",
   "nutrition",
   "pantry",
+  "hidden-posts",
   "recently-deleted-meals",
   "health",
   "shoes",
@@ -485,7 +486,9 @@ test.describe("large text", () => {
       await measure(page, "setup-about-you", width, found);
       await page.getByLabel("Weight (kg)", { exact: true }).fill("81.5");
       await page.getByLabel("Height (cm)", { exact: true }).fill("175");
-      await page.getByRole("radio", { name: /^25/ }).click();
+      await page
+        .getByRole("textbox", { name: SETUP.birthYear, exact: true })
+        .fill("1995");
       await next();
       await measure(page, "setup-summary", width, found);
 

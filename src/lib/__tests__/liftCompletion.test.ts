@@ -297,7 +297,7 @@ describe("completeLift", () => {
     });
   });
 
-  it("posts the session's moments and its PR count, never saved on the workout (Soc15)", async () => {
+  it("posts the session's moments and its PR count; the workout keeps only its count of new bests (Soc15, App1 Q33)", async () => {
     h.compose.mockResolvedValue({ visibility: "public", caption: "" });
     // A session of its own: a post is remembered per session for the life
     // of the module (sessionPost.ts), so sharing c1 here would answer the
@@ -325,6 +325,16 @@ describe("completeLift", () => {
     const saved = readDoc("users/lifter/workouts/routine-c-moments");
     expect(saved).not.toHaveProperty("moments");
     expect(saved).not.toHaveProperty("prCount");
+    // What onWorkoutCreated awards first_pr from.
+    expect(saved).toMatchObject({ newBests: 1 });
+  });
+
+  it("saves no count of new bests for a session that set none", async () => {
+    await completeLift(routineLift({ moments: { prs: [] } }));
+    const saved = readDoc("users/lifter/workouts/routine-c1");
+    // POSITIVE anchor: the workout itself landed.
+    expect(saved).toMatchObject({ source: "routine" });
+    expect(saved).not.toHaveProperty("newBests");
   });
 
   it("waits in the offline queue, then saves", async () => {

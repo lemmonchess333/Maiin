@@ -43,7 +43,8 @@ export async function generateShareImage(
 
 /**
  * Hand a generated share card to the share sheet, its words ending in a
- * link to Tropos (`withAppLink`) (Web Share API — works in
+ * link to Tropos (`withAppLink`): `link` when the card is of a public post
+ * (its page, `publicPostUrl`), else the front door (Web Share API — works in
  * browsers AND the iOS WKWebView), falling back to a download on the web
  * only: the native app has no download, so there a card the sheet cannot
  * take is a failure, not a silent "downloaded". A user-cancelled share
@@ -61,10 +62,11 @@ export async function generateShareImage(
  */
 export async function shareImageFile(
   file: File,
-  text: string
+  text: string,
+  link?: string
 ): Promise<"shared" | "downloaded" | "cancelled" | "failed"> {
   // The link goes in the words, not as a separate url: several share
   // targets drop a url given beside a file, and keep the text.
-  const outcome = await shareFile(file, { text: withAppLink(text) });
+  const outcome = await shareFile(file, { text: withAppLink(text, link) });
   return outcome === "blocked" ? "failed" : outcome;
 }

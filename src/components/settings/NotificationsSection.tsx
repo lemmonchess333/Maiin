@@ -3,6 +3,7 @@ import { AlertTriangle, Bell } from "lucide-react";
 import { Banner } from "@/components/ui/Banner";
 import { subscribeNotificationScheduleChanges } from "@/lib/notificationScheduleEvents";
 import { Toggle } from "@/components/ui/Toggle";
+import Select from "@/components/ui/Select";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
@@ -20,19 +21,30 @@ import { toast } from "@/lib/toast";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import { WORKOUT_REMINDER_IDS } from "@/lib/workoutReminderCopy";
-import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
-import type { ReviewReminderPrefs } from "@/hooks/useReviewReminder";
 import { REVIEW_NOTIFICATION_ID } from "@/lib/reviewReminder";
+import {
+  FIRST_WEEK_NOTIFICATION_ID,
+  STREAK_NOTIFICATION_ID,
+} from "@/hooks/streakNotificationId";
+import {
+  reminderDelivery,
+  STREAK_REMINDER_HOURS,
+  type ReminderDelivery,
+  type ReviewReminderChoice,
+  type StreakReminderChoice,
+} from "@/lib/reminderChoices";
+import { pushTurnedOn, type PushOnlyType } from "@/lib/pushConsent";
 import { useUid } from "@/lib/auth";
 import { usePushSettings } from "@/hooks/usePushSettings";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import {
+  isPushSupported,
   isRemotePushOffered,
   requestRemotePushPermission,
   registerDeviceToken,
-  unregisterDeviceToken,
 } from "@/lib/pushNotifications";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { isNativePlatform } from "@/lib/platform";
@@ -45,6 +57,22 @@ import { isNativePlatform } from "@/lib/platform";
 const ROW =
   "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
 const LABEL = "min-w-[min(100%,8em)] flex-1";
+
+/** The kinds only the server can send, each with no time and no phone
+ *  copy, so each is one switch that needs push. */
+const PUSH_ONLY_ROWS: readonly [PushOnlyType, string, string | null][] = [
+  ["badge", "Badge unlocked", null],
+  [
+    "challenges",
+    "Monthly challenges",
+    "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
+  ],
+  [
+    "challengeReminders",
+    "Monthly challenge reminders",
+    "One reminder in the final three days, around 09:00 in your time zone, for joined monthly goals still in progress.",
+  ],
+];
 
 interface ReminderStatus {
   loading: boolean;
@@ -60,14 +88,26 @@ interface NotificationsSectionProps {
   updateMealReminders: (data: Partial<MealReminders>) => Promise<void>;
   workoutReminders: WorkoutReminders;
   updateWorkoutReminders: (data: Partial<WorkoutReminders>) => Promise<void>;
-  streakReminder: StreakReminderPrefs;
-  updateStreakReminder: (data: Partial<StreakReminderPrefs>) => Promise<void>;
+  /** The evening reminder's one switch and time (`streakReminderChoice`). */
+  streakReminder: StreakReminderChoice;
+  updateStreakReminder: (data: Partial<StreakReminderChoice>) => Promise<void>;
+  /** The streak's and review's choices are still being read. */
+  remindersLoading?: boolean;
   /** Monday's "Your week, reviewed" (useReviewReminder). */
-  reviewReminder?: ReviewReminderPrefs;
-  updateReviewReminder?: (data: Partial<ReviewReminderPrefs>) => Promise<void>;
+  reviewReminder?: ReviewReminderChoice;
+  updateReviewReminder?: (data: Partial<ReviewReminderChoice>) => Promise<void>;
   inline?: boolean;
 }
 
+/**
+ * Settings → Notifications: one switch and one time per reminder (App1
+ * Q26). Which channel a reminder goes by is the app's call
+ * (`reminderDelivery`, `lib/reminderChoices.ts`), so there is no push
+ * switch: turning on a reminder push can carry, on a device that can take
+ * push, sets push up (`setUpPush`), and the server then sends it at the
+ * same time instead of the phone. The kinds only the server can send
+ * (badges, monthly challenges) keep a switch each.
+ */
 export default function NotificationsSection({
   mealStatus,
   workoutStatus,
@@ -77,13 +117,15 @@ export default function NotificationsSection({
   updateWorkoutReminders,
   streakReminder,
   updateStreakReminder,
+  remindersLoading = false,
   reviewReminder,
   updateReviewReminder,
   inline = false,
 }: NotificationsSectionProps) {
-  // Push (server-side FCM) consent — #969. Separate from the on-device
-  // reminders above: this is the global kill-switch + per-type consent the
-  // server senders read, plus token register/revoke on the global toggle.
+  // The push settings at `users/{uid}/settings/push` (#969): whether push
+  // carries the streak and review reminders (`enabled`), and the push-only
+  // kinds' switches, which each server sender reads through
+  // `mayTargetUserConsent` (functions/lib/pushConsent.js).
   const uid = useUid();
   const {
     consent: pushConsent,
@@ -91,51 +133,58 @@ export default function NotificationsSection({
     loading: pushLoading,
   } = usePushSettings();
   const [pushBusy, setPushBusy] = useState(false);
-  // Old native binaries without FirebaseMessaging keep local reminders;
-  // remote permission is offered only when the delivery channel exists.
+  // Old native binaries without FirebaseMessaging keep every reminder on
+  // the phone; push is set up only where the delivery channel exists.
   const pushOffered = isRemotePushOffered();
+  const streakDelivery: ReminderDelivery = reminderDelivery(
+    "streak",
+    streakReminder.enabled,
+    pushConsent
+  );
+  const reviewDelivery: ReminderDelivery = reminderDelivery(
+    "review",
+    !!reviewReminder?.enabled,
+    pushConsent
+  );
 
-  const handleTogglePush = async () => {
-    if (pushBusy || pushLoading || !uid) return;
-    haptic("light");
-    setPushBusy(true);
-    const next = !pushConsent.enabled;
+  /**
+   * The app's own move to push (App1 Q26), when a reminder push can carry,
+   * or a push-only kind, is turned on and this device can take push. True
+   * when push is on afterwards.
+   *
+   * The streak's and review's choices are written in their new shape
+   * first, as they read now: their old fields read the push switch, so
+   * push coming on must not turn either of them on by itself. The
+   * push-only kinds stay off unless one of them is what was asked for
+   * (`pushTurnedOn`). A device that cannot take push keeps the reminder on
+   * the phone, and nothing is said: it still arrives.
+   */
+  const setUpPush = async (
+    asked: Partial<Record<PushOnlyType, boolean>> = {}
+  ): Promise<boolean> => {
+    if (!uid || !pushOffered || pushLoading) return false;
+    if (pushConsent.enabled) {
+      if (Object.keys(asked).length === 0) return true;
+      return await updatePushConsent(asked);
+    }
     try {
-      if (next && !(await requestRemotePushPermission())) {
-        refreshPermission();
-        toast.error(
-          "Allow notifications in your device or browser settings to turn this on."
-        );
-        return;
+      if (!(await isPushSupported())) return false;
+      if (!(await requestRemotePushPermission())) return false;
+      const registered = await registerDeviceToken(uid);
+      if (!registered.ok) {
+        logger.warn("[Notifications] push could not be set up", registered);
+        return false;
       }
-      refreshPermission();
-      if (!(await updatePushConsent({ enabled: next }))) return;
-      trackSettingsEvent("settings_toggle_changed", {
-        toggle: "push_notifications",
-        value: next,
+      await updateStreakReminder({
+        enabled: streakReminder.enabled,
+        time: streakReminder.time,
       });
-      if (next) {
-        const result = await registerDeviceToken(uid);
-        if (result.ok) {
-          toast.success("Push on. This device is registered.");
-        } else if (result.reason !== "account-changed") {
-          toast.error(
-            `Couldn’t register for push (${result.reason}${result.detail ? `: ${result.detail}` : ""}).`
-          );
-        }
-      } else {
-        try {
-          await unregisterDeviceToken(uid);
-        } catch {
-          toast.error(
-            "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
-          );
-        }
-      }
-    } catch {
-      toast.error("Couldn’t save push settings. Try again when you’re online.");
-    } finally {
-      setPushBusy(false);
+      if (reviewReminder && updateReviewReminder)
+        await updateReviewReminder({ enabled: reviewReminder.enabled });
+      return await updatePushConsent(pushTurnedOn(asked));
+    } catch (err) {
+      logger.warn("[Notifications] push could not be set up", err);
+      return false;
     }
   };
 
@@ -151,7 +200,9 @@ export default function NotificationsSection({
       if (data.ok) {
         toast.success("Test push sent. It should arrive in a few seconds.");
       } else if (data.reason === "no-registered-device") {
-        toast.error("No device registered yet. Toggle push off and on again.");
+        toast.error(
+          "This device isn’t set up for push yet. Turn the reminder off and on again."
+        );
       } else {
         // Surface the FCM reason/detail so a non-delivering send is diagnosable
         // (e.g. send-failed: messaging/third-party-auth-error).
@@ -285,34 +336,24 @@ export default function NotificationsSection({
   };
 
   /**
-   * Find the soonest pending notification whose ID matches the
-   * supplied prefix. Each reminder hook (useMealReminders,
-   * useWorkoutReminders, useStreakReminder) generates IDs from
-   * predictable bands (meal = 100s, workout = 200s, streak = 300s
-   * by convention). The actual prefix mapping is best-effort because
-   * the schedule code currently uses small integers — we approximate
-   * by scanning the title.
+   * The soonest pending notification of a reminder: meals by their
+   * titles, the rest by their ids. The workout reminder's title names its
+   * session ("Upper A today") and the streak's says "An evening reminder",
+   * so no title search could find either.
    */
   const nextForCategory = (
     kind: TestNotificationKind
   ): PendingNotification | null => {
     if (kind === "generic") return null;
-    const titleNeedles: Record<
-      Exclude<TestNotificationKind, "generic">,
-      string[]
-    > = {
-      meal: ["meal", "breakfast", "lunch", "dinner", "eat"],
-      workout: [], // found by its ids below
-      streak: ["streak", "log"],
-      review: [], // found by its id below
+    const ids: Partial<Record<TestNotificationKind, readonly number[]>> = {
+      workout: WORKOUT_REMINDER_IDS,
+      streak: [STREAK_NOTIFICATION_ID, FIRST_WEEK_NOTIFICATION_ID],
+      review: [REVIEW_NOTIFICATION_ID],
     };
-    const needles = titleNeedles[kind];
+    const known = ids[kind];
+    const needles = ["meal", "breakfast", "lunch", "dinner", "eat"];
     const candidates = pending.filter((p) => {
-      // A workout reminder's title names its session ("Upper A today"),
-      // so it is known by its weekday ids instead.
-      if (kind === "workout")
-        return (WORKOUT_REMINDER_IDS as readonly number[]).includes(p.id);
-      if (kind === "review") return p.id === REVIEW_NOTIFICATION_ID;
+      if (known) return known.includes(p.id);
       const text = (p.title || "").toLowerCase();
       return needles.some((n) => text.includes(n));
     });
@@ -325,8 +366,7 @@ export default function NotificationsSection({
     return sorted[0];
   };
 
-  const streakReminderOn =
-    streakReminder.enabled && streakReminder.primingShown;
+  const streakReminderOn = streakReminder.enabled;
   const anyReminderOn =
     mealReminders.enabled || workoutReminders.enabled || streakReminderOn;
   /* The review's notification is on by default for anyone who has allowed
@@ -553,7 +593,8 @@ export default function NotificationsSection({
       </div>
 
       {/* The Monday review (Mob2 call 10): on unless turned off, and
-          only sent when a review is waiting. */}
+          only sent when a review is waiting. One switch: from the phone,
+          or by push when push carries it, at the same 09:00 (App1 Q26). */}
       {reviewReminder && updateReviewReminder && (
         <div className="space-y-3">
           <div className={ROW}>
@@ -567,6 +608,7 @@ export default function NotificationsSection({
               className="ml-auto"
               checked={reviewReminderOn}
               label="Toggle weekly review notification"
+              disabled={remindersLoading}
               onChange={async () => {
                 haptic("light");
                 const next = !reviewReminderOn;
@@ -581,6 +623,8 @@ export default function NotificationsSection({
                       );
                       return;
                     }
+                    // Push carries it where this device can take push.
+                    await setUpPush();
                   }
                   await updateReviewReminder({ enabled: next });
                   trackSettingsEvent("settings_toggle_changed", {
@@ -597,13 +641,19 @@ export default function NotificationsSection({
             <ReminderDiagnostics
               next={nextForCategory("review")}
               formatNextFire={formatNextFire}
-              onTest={() => handleTestNotification("review")}
+              delivery={reviewDelivery}
+              onTest={() =>
+                reviewDelivery === "push"
+                  ? void handleTestPush()
+                  : void handleTestNotification("review")
+              }
             />
           )}
         </div>
       )}
 
-      {/* Streak */}
+      {/* Streak: one switch and one time (App1 Q26). From the phone, or by
+          push when push carries it, at the same hour. */}
       <div className="space-y-3">
         <div className={ROW}>
           <div className={LABEL}>
@@ -616,14 +666,15 @@ export default function NotificationsSection({
             className="ml-auto"
             checked={streakReminderOn}
             label="Toggle streak reminder"
+            disabled={remindersLoading}
             onChange={async () => {
               haptic("light");
               const next = !streakReminderOn;
               try {
                 if (next) {
-                  /* The native LocalNotifications permission is distinct
-                     from remote push. Never show an enabled switch after a
-                     denied system request. */
+                  /* The native LocalNotifications permission is the one
+                     an iPhone also uses for push. Never show an enabled
+                     switch after a denied system request. */
                   const granted = await requestNotificationPermission();
                   refreshPermission();
                   if (!granted) {
@@ -632,11 +683,10 @@ export default function NotificationsSection({
                     );
                     return;
                   }
+                  // Push carries it where this device can take push.
+                  await setUpPush();
                 }
-                await updateStreakReminder({
-                  enabled: next,
-                  primingShown: true,
-                });
+                await updateStreakReminder({ enabled: next });
                 trackSettingsEvent("settings_toggle_changed", {
                   toggle: "streak_reminder",
                   value: next,
@@ -652,17 +702,24 @@ export default function NotificationsSection({
           <ReminderDiagnostics
             next={nextForCategory("streak")}
             formatNextFire={formatNextFire}
-            onTest={() => handleTestNotification("streak")}
+            delivery={streakDelivery}
+            onTest={() =>
+              streakDelivery === "push"
+                ? void handleTestPush()
+                : void handleTestNotification("streak")
+            }
           />
         )}
 
         {streakReminderOn && (
           <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
-            <input
-              type="time"
+            {/* Whole hours, 08:00 to 21:00: the same time by either
+                channel (STREAK_REMINDER_HOURS). */}
+            <Select
               aria-label="Streak reminder time"
               value={streakReminder.time}
+              disabled={remindersLoading}
               onChange={(e) => {
                 void updateStreakReminder({ time: e.target.value }).catch(
                   () => {
@@ -670,116 +727,83 @@ export default function NotificationsSection({
                   }
                 );
               }}
-              className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
-            />
+              className="ml-auto w-auto min-w-0 max-w-full"
+              fieldClassName="text-sm font-mono tabular-nums"
+            >
+              {STREAK_REMINDER_HOURS.map((hour) => {
+                const time = `${String(hour).padStart(2, "0")}:00`;
+                return (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                );
+              })}
+            </Select>
           </div>
         )}
+      </div>
 
-        {/* Push notifications (#969) — the server-side delivery channel. The
-            global toggle requests OS permission + registers/revokes this
-            device's FCM token; per-type toggles gate which senders may target
-            the user (each sender checks the flag via the server-side
-            mayTargetUserConsent in functions/lib/pushConsent.js). */}
-        {pushOffered && (
-          <>
-            <div className={ROW}>
+      {/* The kinds only the server can send (#969): a switch each, shown
+          where this device can take push. Turning one on sets push up;
+          each sender checks its flag (mayTargetUserConsent in
+          functions/lib/pushConsent.js). */}
+      {pushOffered && (
+        <div className="space-y-3">
+          <SectionHeading size="compact" className="px-1">
+            Badges and challenges
+          </SectionHeading>
+          {PUSH_ONLY_ROWS.map(([type, label, description]) => (
+            <div key={type} className={ROW}>
               <div className={LABEL}>
-                <p className="text-sm text-foreground">Push notifications</p>
-                <p className="text-xs text-muted-foreground">
-                  Get reminders and challenge alerts when the app is closed
-                </p>
+                <p className="text-sm text-foreground">{label}</p>
+                {description && (
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                )}
               </div>
               <Toggle
                 className="ml-auto"
-                checked={pushConsent.enabled}
-                label="Toggle push notifications"
-                disabled={pushLoading || pushBusy}
-                onChange={() => void handleTogglePush()}
+                checked={pushConsent.enabled && pushConsent[type]}
+                label={`Toggle ${label} push`}
+                disabled={pushLoading || pushBusy || remindersLoading}
+                onChange={async () => {
+                  if (pushBusy || pushLoading) return;
+                  haptic("light");
+                  setPushBusy(true);
+                  const next = !(pushConsent.enabled && pushConsent[type]);
+                  try {
+                    const saved = pushConsent.enabled
+                      ? await updatePushConsent({ [type]: next })
+                      : await setUpPush({ [type]: true });
+                    if (saved) {
+                      trackSettingsEvent("settings_toggle_changed", {
+                        toggle: `push_${type}`,
+                        value: next,
+                      });
+                    } else if (!pushConsent.enabled) {
+                      refreshPermission();
+                      toast.error(
+                        "Allow notifications for Tropos in your device settings, then try again."
+                      );
+                    }
+                  } catch {
+                    toast.error(
+                      "Couldn’t save notification settings. Try again when you’re online."
+                    );
+                  } finally {
+                    setPushBusy(false);
+                  }
+                }}
               />
             </div>
-
-            {!isNativePlatform() && (
-              <p className="px-1 text-xs text-muted-foreground">
-                On iPhone, add Tropos to your Home Screen in Safari, then open
-                it from that icon to enable push notifications.
-              </p>
-            )}
-
-            {pushConsent.enabled &&
-              (
-                [
-                  ["streak", "Streak nudges", null],
-                  ["recap", "Weekly recap", null],
-                  ["badge", "Badge unlocked", null],
-                  [
-                    "challenges",
-                    "Monthly challenges",
-                    "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
-                  ],
-                  [
-                    "challengeReminders",
-                    "Monthly challenge reminders",
-                    "One reminder in the final three days, around 09:00 in your time zone, for joined monthly goals still in progress.",
-                  ],
-                ] as const
-              ).map(([type, label, description]) => (
-                <div key={type} className={ROW}>
-                  <div className={LABEL}>
-                    <p className="text-sm text-foreground">{label}</p>
-                    {description && (
-                      <p className="text-xs text-muted-foreground">
-                        {description}
-                      </p>
-                    )}
-                  </div>
-                  <Toggle
-                    className="ml-auto"
-                    checked={pushConsent[type]}
-                    label={`Toggle ${label} push`}
-                    disabled={pushLoading || pushBusy}
-                    onChange={async () => {
-                      if (pushBusy || pushLoading) return;
-                      haptic("light");
-                      setPushBusy(true);
-                      const next = !pushConsent[type];
-                      try {
-                        if (await updatePushConsent({ [type]: next })) {
-                          trackSettingsEvent("settings_toggle_changed", {
-                            toggle: `push_${type}`,
-                            value: next,
-                          });
-                        }
-                      } catch {
-                        toast.error(
-                          "Couldn’t save push settings. Try again when you’re online."
-                        );
-                      } finally {
-                        setPushBusy(false);
-                      }
-                    }}
-                  />
-                </div>
-              ))}
-
-            {/* #965 — on-demand test push so the user can confirm end-to-end
-            server→device delivery (works with the app closed in PWA mode). */}
-            {pushConsent.enabled && (
-              <button
-                type="button"
-                onClick={handleTestPush}
-                className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
-              >
-                <span className="text-sm text-foreground">
-                  Send a test push
-                </span>
-                <span className="text-sm font-medium text-lifting-strong">
-                  Send test
-                </span>
-              </button>
-            )}
-          </>
-        )}
-      </div>
+          ))}
+          {!isNativePlatform() && (
+            <p className="px-1 text-xs text-muted-foreground">
+              On iPhone, add Tropos to your Home Screen in Safari, then open it
+              from that icon to get these.
+            </p>
+          )}
+        </div>
+      )}
     </AccordionSection>
   );
 }
@@ -788,8 +812,12 @@ export default function NotificationsSection({
  * Per-reminder diagnostics strip. Surfaces:
  *   - "Next: <relative time>" when an OS-scheduled notification
  *     matches the category (or a tab-open caveat when on web).
+ *   - For a reminder push carries (`delivery` "push"), that it arrives
+ *     with the app closed: the server sends it, so the phone holds no
+ *     schedule to show, and "No reminder is scheduled" would be false.
  *   - "Send test" button — fires a notification in +3s with stable
- *     ID per category so repeated taps replace rather than queue.
+ *     ID per category so repeated taps replace rather than queue (a test
+ *     push, for a reminder push carries).
  *
  * Lives at the top of each enabled-reminder block so users can
  * verify their device-level setup without waiting for the real
@@ -799,16 +827,21 @@ export function ReminderDiagnostics({
   next,
   formatNextFire,
   onTest,
+  delivery = "local",
 }: {
   next: PendingNotification | null;
   formatNextFire: (iso: string | null) => string | null;
   onTest: () => void;
+  delivery?: ReminderDelivery;
 }) {
-  const relative = next ? formatNextFire(next.scheduleAt) : null;
+  const relative =
+    delivery === "local" && next ? formatNextFire(next.scheduleAt) : null;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3 rounded-lg bg-muted/60 border border-border/40">
       <div className={cn(LABEL, "text-xs text-muted-foreground")}>
-        {relative ? (
+        {delivery === "push" ? (
+          <span>Arrives even with the app closed.</span>
+        ) : relative ? (
           <>
             Next:{" "}
             <span className="font-medium text-foreground">{relative}</span>

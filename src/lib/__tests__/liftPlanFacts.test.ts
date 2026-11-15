@@ -32,7 +32,6 @@ const block: ActiveTrainingBlock = {
   // Today is in its second week.
   startDate: "2026-08-30",
   goalBefore: "general",
-  amnestyWeeksLeft: 1,
   weeklyLiftTarget: 3,
   anchorExerciseIds: [],
   why: "",

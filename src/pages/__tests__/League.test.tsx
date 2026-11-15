@@ -4,7 +4,9 @@
  * move down, the time left in the week, and Leave the league behind a
  * confirmation. Someone blocked either way is left out of the list while
  * the places still count them. Firestore runs on the one fake (ADR-0009);
- * the callable is stubbed; dates come from the clock.
+ * the callable is stubbed; dates come from the clock. Until Tropos has
+ * enough people for a league (App1 Q6), someone who has not joined is sent
+ * back to Together rather than offered one.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,7 +17,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 const H = vi.hoisted(() => ({
   blocked: new Set<string>(),
@@ -57,6 +59,7 @@ import { Timestamp } from "firebase/firestore";
 import League from "../League";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 import { localWeekKey } from "@/lib/dateHelpers";
+import { communityGoalIds } from "@/lib/enoughPeople";
 
 const WEEK = localWeekKey(new Date());
 
@@ -195,6 +198,9 @@ describe("Leave the league", () => {
     fireEvent.click(screen.getByRole("button", { name: "Leave the league" }));
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText("Leave the league?")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/You can join again from Social/)
+    ).toBeInTheDocument();
     expect(H.call).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "Leave" }));
     await waitFor(() =>
@@ -220,6 +226,10 @@ describe("before a group", () => {
     H.profile = { uid: "me" };
     seedFirestore({
       "leagueStatus/current": { joined: 4, needed: 10, open: false },
+      // Twelve people ran on Tropos this month: enough for a league.
+      [`challenges/${communityGoalIds(new Date())[0]}`]: {
+        collectiveRunners: 12,
+      },
     });
     renderPage();
     expect(
@@ -247,5 +257,51 @@ describe("before a group", () => {
     expect(
       screen.getByRole("button", { name: "Leave the league" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("at small numbers", () => {
+  function Where() {
+    const { pathname, search } = useLocation();
+    return <p>{`At ${pathname}${search}`}</p>;
+  }
+
+  it("does not promise a way back to someone leaving", async () => {
+    seedFirestore({
+      "leagueStatus/current": { joined: 4, needed: 10, open: false },
+      "leagueMembers/me": { tier: "bronze", groupId: null, weekKey: null },
+    });
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Leave the league" })
+    );
+    const dialog = await screen.findByRole("alertdialog");
+    expect(
+      within(dialog).getByText(
+        /Social offers the league again once 10 people are training on Tropos\./
+      )
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByText(/You can join again/)).toBeNull();
+  });
+
+  it("takes someone who has not joined back to Together, offering nothing", async () => {
+    H.profile = { uid: "me" };
+    seedFirestore({
+      "leagueStatus/current": { joined: 4, needed: 10, open: false },
+    });
+    render(
+      <MemoryRouter initialEntries={["/league"]}>
+        <Routes>
+          <Route path="/league" element={<League />} />
+          <Route path="/social" element={<Where />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(
+      await screen.findByText("At /social?tab=together")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Join the league" })
+    ).toBeNull();
   });
 });

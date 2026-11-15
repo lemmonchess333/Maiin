@@ -39,6 +39,9 @@ const OUTSIDE_LAYOUT: Record<string, string> = {
   "/privacy": "pages/PrivacyPolicy.tsx",
   "/terms": "pages/TermsOfService.tsx",
   "/support": "pages/Support.tsx",
+  // Signed out, a shared post's public page; signed in, the same path is
+  // ActivityPost inside Layout.
+  "/activity/:activityId": "pages/PublicPost.tsx",
   "/review": "components/review/RecapStory.tsx",
   "/run": "pages/Run.tsx",
   "/run-summary": "pages/RunSummary.tsx",

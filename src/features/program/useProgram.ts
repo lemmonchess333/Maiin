@@ -674,7 +674,6 @@ export function useProgram() {
           weekNumber: 1,
           splitType,
           workouts,
-          fatigueScore: 0,
           updatedAt: Date.now(),
           settings: DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
@@ -2596,7 +2595,6 @@ export function useProgram() {
           weekNumber: 1,
           splitType,
           workouts,
-          fatigueScore: base?.fatigueScore ?? 0,
           updatedAt: Date.now(),
           settings: base?.settings ?? DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
@@ -2635,7 +2633,6 @@ export function useProgram() {
         ...overrides?.profileUpdates,
         program: {
           goal,
-          startWeight: profile.program?.startWeight ?? profile.weightKg ?? 70,
           currentPhase: "base",
         },
       };
