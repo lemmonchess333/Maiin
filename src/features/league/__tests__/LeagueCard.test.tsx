@@ -6,9 +6,14 @@
  * Joining goes through the callable; a restricted account is told why it
  * cannot. Firestore runs on the one fake (ADR-0009); dates come from the
  * clock.
+ *
+ * Someone who has not joined is offered a league only once Tropos has
+ * enough people training (App1 Q6): below that the card draws nothing and
+ * reads no league; someone who joined keeps theirs.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -32,6 +37,7 @@ vi.mock("firebase/functions", () => ({
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: H.profile, refreshProfile: H.refresh }),
+  useUid: () => "me",
 }));
 vi.mock("@/hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => ({ isRestricted: H.restricted }),
@@ -42,12 +48,19 @@ import { Timestamp } from "firebase/firestore";
 import LeagueCard from "../LeagueCard";
 import {
   failNextFirestore,
+  readsAt,
   resetFirestore,
   seedFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { localWeekKey } from "@/lib/dateHelpers";
+import { communityGoalIds } from "@/lib/enoughPeople";
 import { endsLine } from "../league";
+
+/** Twelve people ran on Tropos this month: enough for a league. */
+const ENOUGH_PEOPLE = {
+  [`challenges/${communityGoalIds(new Date())[0]}`]: { collectiveRunners: 12 },
+};
 
 const WEEK = localWeekKey(new Date());
 const at = (minutes: number) =>
@@ -71,6 +84,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("not joined", () => {
+  beforeEach(() => seedFirestore(ENOUGH_PEOPLE));
+
   it("says what a league is, what joining shows and to whom, and offers Join", async () => {
     seedFirestore({
       "leagueStatus/current": { joined: 3, needed: 10, open: false },
@@ -115,6 +130,37 @@ describe("not joined", () => {
     expect(
       screen.queryByRole("button", { name: "Join the league" })
     ).toBeNull();
+  });
+});
+
+describe("at small numbers", () => {
+  it("draws nothing for someone who has not joined, and reads no league", async () => {
+    seedFirestore({
+      "leagueStatus/current": { joined: 3, needed: 10, open: false },
+      [`challenges/${communityGoalIds(new Date())[0]}`]: {
+        collectiveRunners: 9,
+      },
+    });
+    const { container } = renderCard();
+    // Anchor: the count of people has been read and has settled.
+    await waitFor(() =>
+      expect(readsAt("leagueStatus/current")).toHaveLength(1)
+    );
+    await act(async () => {});
+    expect(container).toBeEmptyDOMElement();
+    expect(readsAt("leagueMembers/me")).toHaveLength(0);
+  });
+
+  it("keeps the card of someone who joined", async () => {
+    H.profile = { uid: "me", leagueOptIn: true };
+    seedFirestore({
+      "leagueStatus/current": { joined: 3, needed: 10, open: false },
+      "leagueMembers/me": { tier: "bronze", groupId: null, weekKey: null },
+    });
+    renderCard();
+    expect(
+      await screen.findByRole("heading", { name: "Weekly league" })
+    ).toBeInTheDocument();
   });
 });
 
@@ -229,7 +275,8 @@ describe("joined", () => {
 
 describe("a read that fails", () => {
   it("says so, with Try again", async () => {
-    failNextFirestore("getDoc", { path: "leagueStatus/current" });
+    H.profile = { uid: "me", leagueOptIn: true };
+    failNextFirestore("getDoc", { path: "leagueMembers/me" });
     renderCard();
     expect(
       await screen.findByText("Couldn’t load your league.")

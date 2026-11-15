@@ -10,7 +10,11 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import type { LiftUnit } from "@/lib/liftLoad";
-import { generateInstanceId, loweringOf } from "./programTypes";
+import {
+  generateInstanceId,
+  loweringOf,
+  withoutRetiredProgramKeys,
+} from "./programTypes";
 import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
@@ -3335,15 +3339,15 @@ export function advanceWeek(
     );
   }
 
-  // The retired per-muscle recovery session's list (Lift4 (13)): nothing
-  // reads it, so a stored one goes with this week. The return's weeks go
-  // once they are done.
+  // The retired keys a stored plan may carry (App1 Q24: the fatigue
+  // score, the adjustment rule's count, the plan's template and the
+  // recovery session's muscles) go with this week, so the rollover never
+  // writes one back. The return's weeks go once they are done.
   const {
-    recoveringMuscles: _retired,
     easingBack: _easing,
     raceWeek: _lastRaceWeek,
     ...kept
-  } = state;
+  } = withoutRetiredProgramKeys(state);
   return {
     ...kept,
     ...(easingLeft > 0 ? { easingBack: { weeksLeft: easingLeft } } : {}),

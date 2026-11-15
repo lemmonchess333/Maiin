@@ -127,7 +127,7 @@ import {
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { useWeekPulse } from "@/hooks/useWeekPulse";
 import {
   historyRange,
   liftFigures,
@@ -183,7 +183,9 @@ const ProgressPhotos = lazyRetry(
 );
 
 /* Two tabs: Analytics and Bests (Trim1 calls 3(c) and 6, 11 November
-   2026).
+   2026). The page is Progress since App1 Q4 (13 November 2026), so the
+   first tab says Overview; its `?tab=` value stays "analytics" for the
+   links already saved.
 
    Hist5b consolidated six tabs to three after the Performance fold and
    the PRs tab: Analytics, PRs and Badges. It called the Badges tab an
@@ -288,7 +290,7 @@ function FilterPills({
       size="sm"
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : "Bests",
+        label: f === "analytics" ? "Overview" : "Bests",
       }))}
     />
   );
@@ -676,6 +678,12 @@ export default function History() {
     error: mealsError,
   });
   const { profile } = useAuth();
+  /* This week as Home and the finish screens count it, read once: the
+     lifts and runs the plan holds now (`trainingWeek`; grill Q14, one
+     module for every weekly count). */
+  const weekPulse = useWeekPulse();
+  const plannedThisWeek =
+    (weekPulse?.lifts?.planned ?? 0) + (weekPulse?.runs?.planned ?? 0);
   /* The range the pill names, read once for every figure below: its
      window, the range before it, and the days an account younger than
      the range has had (`historyFigures`). Such an account has nothing in
@@ -784,8 +792,9 @@ export default function History() {
    *
    * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
    * and by nothing since. The goal-weight recipe
-   * (`buildGoalWeightPersistPayload`) writes `targetCalories` and the three
-   * gram fields but not this one, and neither does the weigh-in patch. So a
+   * (`buildGoalWeightPersistPayload`) wrote `targetCalories` and the gram
+   * fields but not this one, and neither did the weigh-in patch. The field
+   * is retired now (App1 Q24). So a
    * user who onboarded at maintenance and later set a goal weight kept
    * seeing their onboarding-day plan here — "target 2,650 kcal" against a
    * plan that had been 2,100 for months, widening with every goal change,
@@ -1203,7 +1212,7 @@ export default function History() {
     <PageShell
       {...pullBindProps}
       className={ONE_CARD_RADIUS}
-      title="Analytics"
+      title="Progress"
       actions={
         <Link
           to={periodHistoryHref}
@@ -1248,7 +1257,7 @@ export default function History() {
       <Suspense
         fallback={
           <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
-            Loading analytics…
+            Loading progress…
           </div>
         }
       >
@@ -1452,16 +1461,12 @@ export default function History() {
                         to: periodHistoryHref,
                         returnTo: historyReturnTo,
                       }}
-                      /* The user's own weekly targets. `daysPerWeek` is what
-                         onboarding asked for and, capped at 6, is never
-                         reshaped by the engine's 7-day cap — so requested
-                         and actual agree. The run side goes through the
-                         canonical resolver rather than reading either of
-                         the two drifted profile fields directly. */
-                      plannedThisWeek={
-                        (profile?.daysPerWeek ?? 0) +
-                        getWeeklyRunTarget(profile)
-                      }
+                      /* This week's planned sessions from the plan as it is
+                         now (`trainingWeek`, the count Home and the finish
+                         screens show), not the days asked for at setup,
+                         which are written once (App1's third settings
+                         fault). */
+                      plannedThisWeek={plannedThisWeek}
                       distanceUnit={unit}
                     />
                   </SectionErrorBoundary>

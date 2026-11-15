@@ -36,7 +36,6 @@ describe("a lighter week taken from Train, then the rollovers", () => {
       splitType: "full_body",
       workouts,
       weekHistory: [],
-      fatigueScore: 0,
       updatedAt: 0,
     } as unknown as ProgramState;
     let state = server.applyProgramCommand({

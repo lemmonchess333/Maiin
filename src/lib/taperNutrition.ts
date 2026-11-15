@@ -100,7 +100,7 @@ export function resolveTaper(
       carbLoad: true,
       // Descriptive of the race-week PLAN, not an assertion the user's macros
       // changed (the move is Pro-gated — see useEffectiveTargets).
-      annotation: "Race week — carb load",
+      annotation: "Race week, carb load",
     };
   }
 

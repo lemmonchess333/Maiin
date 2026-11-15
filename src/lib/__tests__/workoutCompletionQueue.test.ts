@@ -73,14 +73,12 @@ describe("durable workout completion replay", () => {
       "users/user-a/programState/current": {
         weekNumber: 2,
         workouts: [day],
-        fatigueScore: 42,
         nextWorkoutOverride: 0,
       },
     });
     expect(await reconnect()).toBe(1);
     await expect(receipt).resolves.toBe("synced");
     expect(readDoc("users/user-a/programState/current")).toMatchObject({
-      fatigueScore: 42,
       workouts: [expect.objectContaining({ completed: true, skipped: false })],
     });
     expect(readDoc("users/user-a/programState/current")).not.toHaveProperty(
@@ -110,7 +108,6 @@ describe("durable workout completion replay", () => {
             ],
           },
         ],
-        fatigueScore: 7,
         ...(change === "training block changed"
           ? { trainingBlock: { id: "new-block" } }
           : {}),

@@ -486,7 +486,6 @@ function stateWith(
     currentPhase: "progression",
     weekNumber: 3,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 1,
     settings: { autoProgression: true, smallPlates: false },
     workouts: [
@@ -549,7 +548,6 @@ const heldWeek: Partial<ProgramState> = {
     durationWeeks: 8,
     startDate: "2026-10-05",
     goalBefore: "hypertrophy",
-    amnestyWeeksLeft: 3,
   } as ActiveTrainingBlock,
 };
 

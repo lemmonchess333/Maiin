@@ -21,6 +21,9 @@ import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
 import { traceBoot } from "./bootTrace";
 import type { StorePrice } from "./proPlans";
+import type { PurchasePending } from "./checkoutFlow";
+
+export type { PurchasePending };
 
 const RC_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as
   string | undefined;
@@ -32,6 +35,9 @@ export function isRevenueCatEnabled(): boolean {
 }
 
 let configured = false;
+/** The set-up under way, shared: the identity hook at sign-in and a
+ *  purchase's account check can both ask for it. */
+let configuring: Promise<void> | null = null;
 
 /**
  * One RevenueCat call, timed into the step list a stalled or failed
@@ -74,16 +80,21 @@ async function loadPurchases() {
  */
 export async function configureRevenueCat(appUserID: string): Promise<void> {
   if (!isRevenueCatEnabled() || configured) return;
-  try {
-    const { Purchases } = await loadPurchases();
-    await step("set up", () =>
-      Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
-    );
-    configured = true;
-    logger.log("[RevenueCat] configured");
-  } catch (err) {
-    logger.error("[RevenueCat] configure failed", err);
-  }
+  configuring ??= (async () => {
+    try {
+      const { Purchases } = await loadPurchases();
+      await step("set up", () =>
+        Purchases.configure({ apiKey: RC_PUBLIC_KEY!, appUserID })
+      );
+      configured = true;
+      logger.log("[RevenueCat] configured");
+    } catch (err) {
+      logger.error("[RevenueCat] configure failed", err);
+    } finally {
+      configuring = null;
+    }
+  })();
+  await configuring;
 }
 
 /** Bind the RC identity to a Firebase uid on sign-in. Configures on first use,
@@ -127,34 +138,34 @@ export async function rcLogOut(): Promise<void> {
  *  docs/iap/revenuecat-setup.md Part B3 (lowercase `pro`). */
 const PRO_ENTITLEMENT_ID = "pro";
 
-/** Why a purchase the store has not refused is not Pro yet. Neither is a
- *  failure, and neither is helped by buying again. */
-export type PurchasePending =
-  /** The store is holding the payment for someone's yes: Ask to Buy, a
-   *  bank's check. Nothing has been bought until it is given. */
-  | "approval"
-  /** The store took the purchase, and RevenueCat's answer carried no Pro:
-   *  its servers are behind, or the product is not on the entitlement. */
-  | "entitlement";
+/**
+ * What an App Store purchase came to: exactly one of these (App1 Q20). A
+ * sheet that finished is `bought` or `pending`, never `failed`. `price` is
+ * the product's, as Apple's sheet showed it: the server keeps it for the
+ * trial reminder's email, since RevenueCat holds no renewal price for a
+ * trial.
+ */
+export type RcPurchaseOutcome =
+  /** The `pro` entitlement is active on the returned CustomerInfo. */
+  | { kind: "bought"; price?: StorePrice }
+  /** The person dismissed Apple's sheet: not an error. */
+  | { kind: "cancelled" }
+  /** The store has the purchase and Pro is not active. */
+  | { kind: "pending"; pending: PurchasePending; price?: StorePrice }
+  /** Nothing was bought. `message` is a sentence for the person; `detail`
+   *  the SDK's own text ("There was a problem with the App Store."), for
+   *  logs and telemetry, never shown. */
+  | { kind: "failed"; message: string; detail?: string };
 
-export interface RcPurchaseOutcome {
+/** What a restore came to. */
+export interface RcRestoreOutcome {
   success: boolean;
-  /** True when the `pro` entitlement is active on the returned CustomerInfo —
-   *  the caller treats this, not `success` alone, as "Pro unlocked". */
+  /** True when the `pro` entitlement is active on the returned
+   *  CustomerInfo. */
   isProActive: boolean;
-  /** True when the user dismissed Apple's purchase sheet — not an error. */
-  userCancelled?: boolean;
-  /** Set when the store has the purchase and Pro is not active: `success`
-   *  is false and `error` is unset. */
-  pending?: PurchasePending;
-  /** The price of the product bought, as Apple's sheet showed it. The
-   *  server keeps it for the trial reminder's email, since RevenueCat holds
-   *  no renewal price for a trial. */
-  price?: StorePrice;
   /** A sentence for the person. */
   error?: string;
-  /** The SDK's own text ("There was a problem with the App Store."), for
-   *  logs and telemetry. Never shown. */
+  /** The SDK's own text, for logs and telemetry. Never shown. */
   detail?: string;
 }
 
@@ -191,9 +202,34 @@ function hasProEntitlement(customerInfo: {
 }
 
 /**
+ * Whether RevenueCat is this account, binding it first when it is not. A
+ * failed log-in at sign-in (`useRevenueCatIdentity` tries again for five
+ * minutes, then stops) left it on an anonymous id, and a purchase made then
+ * did not reach the account (App1 Q20).
+ */
+async function boundTo(appUserID: string): Promise<boolean> {
+  if (!configured) {
+    await configureRevenueCat(appUserID);
+    if (!configured) return false;
+  }
+  try {
+    const { Purchases } = await loadPurchases();
+    const before = await step("account check", () => Purchases.getAppUserID());
+    if (before.appUserID === appUserID) return true;
+    await step("switch account", () => Purchases.logIn({ appUserID }));
+    const after = await Purchases.getAppUserID();
+    return after.appUserID === appUserID;
+  } catch (err) {
+    logger.error("[RevenueCat] account check failed", err);
+    return false;
+  }
+}
+
+/**
  * Purchase the Pro subscription for a given App Store product id (the caller
  * owns the plan → product-id mapping; passing the id keeps this module free
- * of a purchaseProvider import and the cycle that would create).
+ * of a purchaseProvider import and the cycle that would create), as the
+ * account `appUserID`: the sheet opens only once RevenueCat is that account.
  *
  * Flow per RC docs: fetch the current Offering, find the package whose store
  * product matches, `purchasePackage`, then read the entitlement off the
@@ -201,17 +237,25 @@ function hasProEntitlement(customerInfo: {
  * by the time this resolves, so no client-side receipt handling exists here.
  */
 export async function rcPurchase(
-  productId: string
+  productId: string,
+  appUserID: string
 ): Promise<RcPurchaseOutcome> {
   if (!isRevenueCatEnabled()) {
     return {
-      success: false,
-      isProActive: false,
-      error: "Purchases are not available in this build.",
+      kind: "failed",
+      message: "Purchases are not available in this build.",
     };
   }
   try {
     traceBoot(`RevenueCat: buying ${productId} (set up: ${configured})`);
+    if (!(await boundTo(appUserID))) {
+      // Bought now, it would be an anonymous id's, not this account's.
+      return {
+        kind: "failed",
+        message: "Couldn’t start checkout. Try again.",
+        detail: "RevenueCat is not signed in as this account",
+      };
+    }
     const { Purchases } = await loadPurchases();
     const offerings = await step("plans for the purchase", () =>
       Purchases.getOfferings()
@@ -228,41 +272,29 @@ export async function rcPurchase(
       // verbatim). Surface it plainly rather than a generic failure.
       logger.error("[RevenueCat] product not in current offering", productId);
       return {
-        success: false,
-        isProActive: false,
-        error: "This plan isn’t available right now. Try again later.",
+        kind: "failed",
+        message: "This plan isn’t available right now. Try again later.",
       };
     }
     const result = await step("Apple purchase sheet", () =>
       Purchases.purchasePackage({ aPackage: pkg })
     );
-    const isProActive = hasProEntitlement(result.customerInfo);
     const { priceString, price, currencyCode } = pkg.product;
     const shown = { priceString, price, currencyCode };
-    if (!isProActive) {
+    if (!hasProEntitlement(result.customerInfo)) {
       // The sheet finished, so the store has the purchase. Calling it a
       // failure asks the person to pay for something they already bought.
       logger.error("[RevenueCat] purchase completed without pro entitlement");
-      return {
-        success: false,
-        isProActive,
-        pending: "entitlement",
-        price: shown,
-      };
+      return { kind: "pending", pending: "entitlement", price: shown };
     }
-    return { success: true, isProActive, price: shown };
+    return { kind: "bought", price: shown };
   } catch (err) {
-    if (isUserCancelled(err)) {
-      return { success: false, isProActive: false, userCancelled: true };
-    }
-    if (isPaymentPending(err)) {
-      return { success: false, isProActive: false, pending: "approval" };
-    }
+    if (isUserCancelled(err)) return { kind: "cancelled" };
+    if (isPaymentPending(err)) return { kind: "pending", pending: "approval" };
     logger.error("[RevenueCat] purchase failed", err);
     return {
-      success: false,
-      isProActive: false,
-      error: "Couldn’t complete the purchase. Try again.",
+      kind: "failed",
+      message: "Couldn’t complete the purchase. Try again.",
       detail: err instanceof Error ? err.message : String(err),
     };
   }
@@ -270,7 +302,7 @@ export async function rcPurchase(
 
 /** Restore prior purchases via RC (replaces the hand-rolled
  *  original-transaction-id flow on the RC path). */
-export async function rcRestore(): Promise<RcPurchaseOutcome> {
+export async function rcRestore(): Promise<RcRestoreOutcome> {
   if (!isRevenueCatEnabled()) {
     return {
       success: false,

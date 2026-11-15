@@ -48,7 +48,6 @@ function state(over: Partial<ProgramState> = {}): Input {
       workouts: [],
       runDays: [day("run-1", "tempo_40"), day("run-2", "6x1k")],
       currentPhase: "progression",
-      fatigueScore: 10,
       appliedAt: 1,
     },
     ...over,

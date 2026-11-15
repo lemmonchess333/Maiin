@@ -54,6 +54,10 @@ interface RunMapProps {
    * absent draws nothing.
    */
   highlight?: { from: number; to: number } | null;
+  /** The start and finish dots on a finished route. Off for a route whose
+   *  ends were cut off (a public post's page), where the line's ends are
+   *  not where the run started or finished. On by default. */
+  endMarkers?: boolean;
 }
 
 export default function RunMap({
@@ -71,6 +75,7 @@ export default function RunMap({
   onMapTap,
   markerUnit = "km",
   targetRoute,
+  endMarkers = true,
   highlight = null,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -477,7 +482,7 @@ export default function RunMap({
       }
 
       // Start marker (green dot)
-      if (points.length > 0 && !startMarkerRef.current) {
+      if (endMarkers && points.length > 0 && !startMarkerRef.current) {
         const el = document.createElement("div");
         el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.success};border:2px solid white;`;
         startMarkerRef.current = new maplibregl.Marker({ element: el })
@@ -530,6 +535,7 @@ export default function RunMap({
         endMarkerRef.current = null;
       }
       if (
+        endMarkers &&
         !currentPoint &&
         points.length > 1 &&
         !endMarkerRef.current &&
@@ -568,6 +574,7 @@ export default function RunMap({
     interactive,
     darkMode,
     liveControls,
+    endMarkers,
   ]);
 
   // Target route (static) — drawn independently of the live track so it shows

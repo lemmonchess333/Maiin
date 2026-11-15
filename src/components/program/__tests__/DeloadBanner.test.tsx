@@ -61,10 +61,24 @@ describe("DeloadBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("speaks for running, the one load it is shown for (Lift4 (9))", () => {
-    render(<DeloadBanner visible weekKey="w14" />);
-    expect(screen.getByText(/Your running load has been high/i)).toBeTruthy();
+  it("says the reason it is given, and never one reason for all (Q11)", () => {
+    /* It said "Your running load has been high, with signs of reduced
+       recovery" whichever of the engine's three reasons fired, and in
+       whichever sport. The words come from the one decision now
+       (`lighterWeekOffer`), which names the reason and the sport. */
+    const reason =
+      "You lifted 30% more than your usual week, and your recovery score is low. A lighter week halves your sets, at the same weights.";
+    const { unmount } = render(
+      <DeloadBanner visible weekKey="w14" reason={reason} />
+    );
+    expect(screen.getByText(reason)).toBeInTheDocument();
+    expect(screen.queryByText(/running load/i)).toBeNull();
     expect(screen.queryByText(/deload/i)).toBeNull();
+    unmount();
+    // Without a reason the offer is its title and button alone.
+    render(<DeloadBanner visible weekKey="w14" />);
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
+    expect(screen.queryByText(/running load/i)).toBeNull();
   });
 
   it("fires programme_deload_banner_viewed exactly once on first visible render", () => {

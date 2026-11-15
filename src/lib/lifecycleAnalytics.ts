@@ -18,16 +18,29 @@
  * pre-traffic would be rewritten before it's usable. Adopt Firebase A/B
  * Testing — which rides on this same Analytics — when traffic warrants it.
  *
- * Currently wired: `auth_screen_viewed` (Login.tsx: the welcome screen and
- * the two forms), `signup_completed` (auth.tsx, all three providers), the
- * `onboarding_step_*` pair and `onboarding_completed` (Onboarding.tsx),
- * `onboarding_abandoned` (signing out of an unfinished setup),
- * `email_verified` (the app seeing an email account's address confirmed),
- * and the first-visit guide's `guide_*` events (Home's walk and the
- * hints, FV1).
- * The remaining events are declared for schema stability and wired as their
- * call sites are instrumented. Paywall conversion already lives in
- * `paywallAnalytics`.
+ * Every event here is sent (App1 Q17, 13 November 2026, deleted the ones
+ * nothing sent: `first_workout_started`, `first_workout_completed`,
+ * `first_run_started`, `first_food_logged`). A new one is declared with the
+ * code that sends it. Paywall conversion lives in `paywallAnalytics`.
+ *
+ * **The five launch numbers** (App1 Q17), each one event, once per account:
+ *   1. finished setup: `onboarding_completed`, from Onboarding.tsx when the
+ *      plan is saved (a finished account never sees setup again);
+ *   2. first session within 7 days: `first_session_saved`, with `kind` and
+ *      `daysSinceSetup`; within 7 days is `daysSinceSetup` 0 to 6, cut in
+ *      the analytics tool;
+ *   3. week-4 return: `week_4_returned`, the first counted session on days
+ *      21 to 27 after setup;
+ *   4. trial start: `trial_started`, and
+ *   5. paid: `subscription_started`, each with `purchasePlatform` and
+ *      `daysSinceSetup`.
+ * The server decides 2 to 5 and the app sends them (`launchEvents.ts`):
+ * the session triggers keep the first session and the week-4 return
+ * (functions/lib/launchMilestones.js), and the billing record keeps the
+ * first verified trial and paid period from RevenueCat, App Store and web
+ * alike (functions/lib/activationBilling.js), so a sale the app never saw
+ * finish (closed after Apple's sheet, or a trial that turned paid with the
+ * app shut) still counts, and counts once.
  *
  * Read the start of the funnel in that order: auth_screen_viewed (welcome)
  * → auth_screen_viewed (sign_up) → signup_completed → the onboarding steps
@@ -47,10 +60,11 @@ export type LifecycleEvent =
   | "onboarding_completed"
   | "onboarding_abandoned"
   | "first_plan_generated"
-  | "first_workout_started"
-  | "first_workout_completed"
-  | "first_run_started"
-  | "first_food_logged"
+  /** Launch numbers 2 and 3: the account's first counted session, and its
+   *  first in days 21 to 27 after setup. Sent once per account by
+   *  `launchEvents.ts` from what the server kept. */
+  | "first_session_saved"
+  | "week_4_returned"
   // Activation activity events — per-occurrence (fired by the snapshot
   // observer in activationTracker.ts for food/workout, and at the run save
   // site). GA4 derives first-occurrence/activation from these natively, and
@@ -62,6 +76,8 @@ export type LifecycleEvent =
   | "first_week_task_selected"
   | "first_week_reminder_offered"
   | "first_week_reminder_choice"
+  /** Launch numbers 4 and 5: the account's first verified trial and its
+   *  first paid period. Sent once per account by `launchEvents.ts`. */
   | "trial_started"
   | "subscription_started"
   // Companion batch B0 — the training loop, as distinct from the
@@ -76,12 +92,9 @@ export type LifecycleEvent =
   | "week_reset_viewed"
   | "week_reset_choice"
   | "week_reset_completed"
-  /** The first-visit guide (FV1): a walk began, showed a stop, was
-   *  finished from its last stop or skipped; a hint was shown. */
-  | "guide_started"
-  | "guide_step_viewed"
-  | "guide_finished"
-  | "guide_skipped"
+  /** The first-use guide (FV1): a hint was shown. Home's walk, and its
+   *  guide_started / guide_step_viewed / guide_finished / guide_skipped,
+   *  went with App1 (whole-app grill Q27). */
   | "guide_hint_viewed"
   /** The Watch companion (connected-training proposal, acceptance
    *  matrix): each wrist command the phone answered, applied or not. */
@@ -138,8 +151,16 @@ export interface LifecycleEventMetadata {
   runMode?: string;
   /** Generic timing dimension (ms). */
   durationMs?: number;
-  /** session_started: which discipline. */
+  /** session_started, first_session_saved, week_4_returned: which
+   *  discipline. */
   kind?: "lift" | "run";
+  /** first_session_saved, week_4_returned, trial_started,
+   *  subscription_started: whole days from setup to the moment, setup's day
+   *  being 0. */
+  daysSinceSetup?: number;
+  /** trial_started, subscription_started: where it was bought. The device
+   *  that sends the event can be another one. */
+  purchasePlatform?: "ios" | "web";
   /** First-week card: onboarding training selection, never a free-text goal. */
   sport?: "runner" | "lifter" | "hybrid";
   /** first_week_task_selected: training task selected. */
@@ -164,8 +185,7 @@ export interface LifecycleEventMetadata {
    * completion_surfaces: dialogs plus toasts shown between the session
    * ending and the user reaching the page again. Exists to catch the
    * pile-up creeping back after it was collapsed to one screen, so it is
-   * read as a regression signal rather than as a metric. guide_started:
-   * how many stops the walk has.
+   * read as a regression signal rather than as a metric.
    */
   count?: number;
   /** return_surface_shown / return_choice: which surface was shown. */
@@ -179,14 +199,6 @@ export interface LifecycleEventMetadata {
   /** Guided review-to-plan handoff; the choice is never an automatic edit. */
   weekResetAction?: "run_move" | "usual_layout" | "keep_plan";
   weekResetOutcome?: "applied" | "queued";
-  /**
-   * guide_*: which walk. Not `guide`: the redaction drops any key that
-   * contains "uid", and "guide" does.
-   */
-  walk?: "first-visit" | "replay" | "first-week-row";
-  /** guide_step_viewed / guide_finished / guide_skipped: the stop's id
-   *  ("today", "first-week", "food"). With `stepIndex`, its place. */
-  stop?: string;
   /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
   hint?: string;
   /** run_completed: the Watch companion joined the run. Absent otherwise. */

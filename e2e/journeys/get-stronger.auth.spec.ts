@@ -63,7 +63,7 @@ test("Get stronger: sixteen weeks of a three-day plan", async ({ page }) => {
       weightKg: 80,
       heightCm: 178,
       sex: "Male",
-      age: "25–34",
+      birthYear: 1995,
     });
     const savedProfile = (
       await emulatorAdmin().db.doc(`users/${account.uid}`).get()

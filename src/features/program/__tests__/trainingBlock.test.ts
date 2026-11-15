@@ -213,7 +213,6 @@ describe("legacy block adoption (Blk2)", () => {
     expect(live.focus).toBe("hypertrophy");
     // Equal to focus, so a release is a no-op by construction.
     expect(live.goalBefore).toBe("hypertrophy");
-    expect(live.amnestyWeeksLeft).toBe(0);
   });
 
   it("carries the block's own identity and window unchanged", () => {

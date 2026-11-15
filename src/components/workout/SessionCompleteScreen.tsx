@@ -6,6 +6,8 @@ import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
+import OptionalSummaryBoundary from "@/components/OptionalSummaryBoundary";
 import SessionBadge from "@/components/workout/SessionBadge";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Card } from "@/components/ui/Card";
@@ -41,12 +43,22 @@ import { useAuth } from "@/lib/auth";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
-import type { SessionShareAction } from "@/lib/sessionPost";
+import { postedActivityId, type SessionShareAction } from "@/lib/sessionPost";
 
 /* The share card's sheet loads when Share is tapped, never with the
    screen. */
 const ShareCardSheet = lazyRetry(
   () => import("@/components/share/ShareCardSheet")
+);
+/* What the run's finish has and the lift's lacked (App1 Q30): the props
+   prompt, once the session is saved, and the Circle share, whose sheet
+   (and its Circle reads) loads only when it is opened. */
+const SavedSessionKudos = lazyRetry(
+  () => import("@/components/social/SavedSessionKudos"),
+  { reloadOnChunkError: false }
+);
+const CircleShareSheet = lazyRetry(
+  () => import("@/components/social/CircleShareSheet")
 );
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
@@ -80,12 +92,17 @@ interface SessionCompleteScreenProps {
   onEdit?: () => void;
   onClose: () => void;
   onViewWorkout?: () => void;
+  /** Opens the food log for a recovery meal, once saved (App1 Q30). The
+   *  page hosting the session says how it leaves, as for the workout. */
+  onLogFood?: () => void;
   /** When the session started, in ms (Lift3 dates the workout by it). */
   startedAt?: number;
   /** Says it started earlier, for a lift recorded late (Mob2 call 12).
    *  Absent once the save is under way. */
   onChangeStart?: (startedAt: number) => void;
-  /** A programme day: its start stays in the plan's week. */
+  /** A programme day: its start stays in the plan's week, and, as a
+   *  planned session, it can be shared to a Circle once saved
+   *  (CIRCLE-SESSION-01, as a planned run can). */
   planWeek?: boolean;
   /** When the account began, in ms: no start is said to be earlier. */
   accountStart?: number | null;
@@ -117,6 +134,7 @@ export default function SessionCompleteScreen({
   onEdit,
   onClose,
   onViewWorkout,
+  onLogFood,
   startedAt,
   onChangeStart,
   planWeek = false,
@@ -129,8 +147,9 @@ export default function SessionCompleteScreen({
   /* The detail being changed: when it started, or its name. */
   const [changing, setChanging] = useState<"start" | "name" | null>(null);
   const liftUnit = useLiftUnit();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [shareOpen, setShareOpen] = useState(false);
+  const [circleShareOpen, setCircleShareOpen] = useState(false);
   // The day as Train and the workout screen name it ("Legs B"), handed
   // down by the workout screen. A routine's own name is itself.
   const dayLabel = liftDayLine(dayName);
@@ -632,6 +651,19 @@ export default function SessionCompleteScreen({
           {saved && (
             <CompletionExtras share={share} badge={false} kind="lift" />
           )}
+          {/* Someone the lifter follows trained today too: give them
+              props, as the run's finish offers (App1 Q30). Mounted once the
+              session is saved; nothing shows otherwise. */}
+          {saved && (
+            <OptionalSummaryBoundary>
+              <Suspense fallback={null}>
+                <SavedSessionKudos
+                  uid={user?.uid}
+                  fromName={profile?.displayName}
+                />
+              </Suspense>
+            </OptionalSummaryBoundary>
+          )}
 
           {hasMuscleFigure(muscleCategories) && (
             <Card className="@container">
@@ -721,11 +753,17 @@ export default function SessionCompleteScreen({
               </div>
             </div>
           </details>
-          {/* The saved workout, where it can be changed or deleted. */}
-          {saved && onViewWorkout && (
-            <Button fullWidth variant="secondary" onClick={onViewWorkout}>
-              View workout
-            </Button>
+          {/* The saved workout, where it can be changed or deleted, and the
+              food log for a recovery meal, as after a run (App1 Q30). */}
+          {saved && (onViewWorkout || onLogFood) && (
+            <div className="space-y-2">
+              {onViewWorkout && (
+                <Button fullWidth variant="secondary" onClick={onViewWorkout}>
+                  View workout
+                </Button>
+              )}
+              {onLogFood && <RecoveryFoodButton onClick={onLogFood} />}
+            </div>
           )}
         </div>
 
@@ -775,6 +813,8 @@ export default function SessionCompleteScreen({
               // The session's day, as the kicker and the saved workout
               // date it: by its start.
               date: finishKicker(undefined, startedAt ?? openedAt),
+              // Posted to the feed: the card links to the post while public.
+              postId: postedActivityId(share),
               totalVolumeKg: totalVolume,
               totalReps,
               exerciseCount: exerciseSummary.length,
@@ -788,6 +828,32 @@ export default function SessionCompleteScreen({
               tone: reward?.tone,
               artSrc: object ? formArtCutoutUrl(object.cutout) : undefined,
             }}
+            /* CIRCLE-SESSION-01, as on the run's finish: a planned
+               session, saved, can tell a Circle it was done. Only
+               "completed a session" is shared, never a number. */
+            extras={
+              saved && planWeek && user ? (
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => {
+                    setShareOpen(false);
+                    setCircleShareOpen(true);
+                  }}
+                >
+                  Share to circle
+                </Button>
+              ) : undefined
+            }
+          />
+        </Suspense>
+      )}
+      {saved && user && circleShareOpen && (
+        <Suspense fallback={null}>
+          <CircleShareSheet
+            open
+            onOpenChange={setCircleShareOpen}
+            uid={user.uid}
           />
         </Suspense>
       )}

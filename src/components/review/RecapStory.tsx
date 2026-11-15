@@ -29,11 +29,17 @@ export default function RecapStory({
   eyebrow,
   slides,
   onClose,
+  title = "Weekly Review",
+  label = "Weekly recap",
 }: {
   /** The reviewed week's dates, above the cards. */
   eyebrow: string;
   slides: readonly RecapSlide[];
   onClose: () => void;
+  /** The page's heading, for screen readers. The year recap is "Your year". */
+  title?: string;
+  /** What the cards are called, for screen readers. */
+  label?: string;
 }) {
   /* The track, held as state through a callback ref rather than read
      from a ref object: every card's button is built during render, and
@@ -60,7 +66,7 @@ export default function RecapStory({
         paddingBottom: "var(--safe-bottom)",
       }}
     >
-      <h1 className="sr-only">Weekly Review</h1>
+      <h1 className="sr-only">{title}</h1>
       <div className="space-y-2 px-4 pt-3">
         {slides.length > 1 && (
           <div className="flex gap-1" aria-hidden="true">
@@ -92,7 +98,7 @@ export default function RecapStory({
         ref={setTrack}
         role="region"
         aria-roledescription="carousel"
-        aria-label="Weekly recap"
+        aria-label={label}
         onScroll={(event) => {
           const el = event.currentTarget;
           if (el.clientWidth > 0) {

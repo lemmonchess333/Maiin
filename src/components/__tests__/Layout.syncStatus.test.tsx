@@ -25,8 +25,8 @@ const state = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({ useUid: () => state.uid }));
 vi.mock("@/lib/firebase", () => ({ db: state.db }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("@/hooks/useUnreadCount", () => ({
-  useUnreadCount: () => ({ count: 0, markSeen: vi.fn() }),
+vi.mock("@/hooks/useNotifications", () => ({
+  useNotifications: () => ({ unreadCount: 0 }),
 }));
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
 vi.mock("@/lib/offlineQueue", () => ({

@@ -63,7 +63,7 @@ describe("Settings row descriptions", () => {
     expect(all).toContain("Plan, sign-in, your data");
     expect(all).not.toContain("Export, recently deleted");
     // Apple Health's description follows the connected training gate.
-    expect(all).toContain("Daily step count on Home");
+    expect(all).toContain("Steps for your activity level");
     expect(all).toContain("Steps, Watch runs, workouts");
   });
 

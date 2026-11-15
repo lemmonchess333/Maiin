@@ -16,7 +16,9 @@
  *     `resolveSubscriptionUpdate` so this path cannot drift from the others.
  *   - `revenueCat` — a server-only map recording the last snapshot. It is how
  *     a later snapshot knows whether RevenueCat granted the Pro it may take
- *     away. Clients cannot write it: it is not in the rules allow-list.
+ *     away. Clients cannot write it: it is not in the rules allow-list. The
+ *     app reads its `period`, `willRenew` and `periodType` to know when a
+ *     yearly subscription renews (App1 Q56's "your year", src/lib/proReport.ts).
  *
  * A sandbox purchase grants Pro only to the uids in REVENUECAT_SANDBOX_UIDS
  * (see getSandboxUidAllowlist); for anyone else it counts as no entitlement.
@@ -136,7 +138,7 @@ function readEntitlement(response) {
   }
   const entitlement = subscriber.entitlements && subscriber.entitlements[ENTITLEMENT_ID];
   if (!entitlement || typeof entitlement !== "object") {
-    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs, trial: null, purchaseAtMs: null, periodType: null, ownershipType: null };
+    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs, trial: null, purchaseAtMs: null, periodType: null, ownershipType: null, willRenew: null };
   }
   if (!("expires_date" in entitlement)) {
     throw new RevenueCatResponseError("entitlement has no expires_date");
@@ -169,6 +171,9 @@ function readEntitlement(response) {
       typeof purchase?.ownership_type === "string"
         ? purchase.ownership_type.toUpperCase()
         : null,
+    // Renewal is off once RevenueCat has seen the person turn it off. Null
+    // when there is no purchase to read it from.
+    willRenew: purchase ? purchase.unsubscribe_detected_at == null : null,
   };
 }
 
@@ -301,6 +306,12 @@ function planEntitlementBase(userData, entitlement, { sandboxAllowed }) {
     expiresAt,
     sandbox: entitlement.sandbox,
     syncedAtMs: entitlement.syncedAtMs,
+    // How often it renews, whether it will, and whether this period is a
+    // trial: the app's "your year" recap shows only before a yearly
+    // subscription's renewal (src/lib/proReport.ts yearRecapDue).
+    period: entitlement.productId ? trialReminder.periodFor(entitlement.productId) : null,
+    willRenew: entitlement.willRenew ?? null,
+    periodType: entitlement.periodType ?? null,
   };
 
   // A lifetime purchase is never touched by a subscription snapshot, the

@@ -141,8 +141,9 @@ suite("a trigger whose step fails is delivered again", () => {
     await expect(onRunCreated.run(snap, context)).rejects.toThrow(
       "lifetime distance failed"
     );
-    // The steps around it still ran.
-    expect(await earnedBadgeIds()).toEqual(["first_5k"]);
+    // The steps around it still ran: the badges the server awards for a
+    // first run (App1 Q33), first_step included.
+    expect(await earnedBadgeIds()).toEqual(["first_step", "first_5k"]);
     expect(await lifetimeRunMeters()).toBeUndefined();
 
     await onRunCreated.run(snap, context);
@@ -150,7 +151,7 @@ suite("a trigger whose step fails is delivered again", () => {
     // A further delivery changes nothing.
     await onRunCreated.run(snap, context);
     expect(await lifetimeRunMeters()).toBe(5200);
-    expect(await earnedBadgeIds()).toEqual(["first_5k"]);
+    expect(await earnedBadgeIds()).toEqual(["first_step", "first_5k"]);
   });
 
   it("drops a retry of an event older than the window, writing nothing", async () => {

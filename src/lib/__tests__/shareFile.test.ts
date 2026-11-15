@@ -160,6 +160,20 @@ describe("shareImageFile — the share card on the same path", () => {
     });
   });
 
+  it("ends a public post's card with the post's own page (App1 Q51)", async () => {
+    expect(
+      await shareImageFile(
+        card,
+        "My run on Tropos",
+        "https://troposfit.com/activity/abc123"
+      )
+    ).toBe("shared");
+    expect(share).toHaveBeenCalledWith({
+      files: [card],
+      text: "My run on Tropos https://troposfit.com/activity/abc123",
+    });
+  });
+
   it("fails on the native app instead of claiming a download", async () => {
     platform.native = true;
     canShare.mockReturnValue(false);

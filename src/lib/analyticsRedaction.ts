@@ -144,6 +144,7 @@ const ROUTE_WORDS = new Set([
   "account",
   "data",
   "health",
+  "hidden-posts",
   "legacy",
   "lift-plan",
   "notifications",

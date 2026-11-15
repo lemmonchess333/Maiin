@@ -22,8 +22,8 @@ vi.mock("@/lib/auth", () => ({ useUid: () => state.uid }));
 vi.mock("@/lib/errorReporting", () => ({ captureError: state.errors }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
-vi.mock("@/hooks/useUnreadCount", () => ({
-  useUnreadCount: () => ({ count: 0, markSeen: vi.fn() }),
+vi.mock("@/hooks/useNotifications", () => ({
+  useNotifications: () => ({ unreadCount: 0 }),
 }));
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
 vi.mock("@/features/program/commandOutbox", () => ({ outboxLength: () => 0 }));
