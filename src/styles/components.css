@@ -734,6 +734,13 @@ html.launching [data-brand-mark] {
   font-size: clamp(64px, 18vw, 72px);
 }
 
+/* The run's 3-2-1 (Run27 (1), StartCountdown): one digit on the run
+   screen's dark stage, its one display element, at the top of the
+   register's 120 px on a 393 px phone and 96 px on a 320 px one. */
+.ds-display-figure.ds-display-countdown {
+  font-size: clamp(96px, 32vw, 120px);
+}
+
 /* The finish screen's reward light (DS4 §14m rules 13, 14, 31): one hue,
    the achievement's (`--glow`, by its `data-finish-glow`), from the object out
    into the plain page. A light page needs more of it to read as colour at

@@ -226,6 +226,19 @@ async function open(url: string) {
   });
 }
 
+/** Run27 (1): Start counts 3-2-1 first; the runner taps it away. A start
+ *  that waits on a read comes once it ends, so it may take `timeout`. */
+async function skipCountdown(timeout?: number) {
+  const countdown = await screen.findByRole(
+    "button",
+    { name: "Start now" },
+    timeout ? { timeout } : undefined
+  );
+  await act(async () => {
+    fireEvent.click(countdown);
+  });
+}
+
 function planTodaysEasyRun() {
   const today = new Date();
   h.programState = {
@@ -305,7 +318,13 @@ describe("a run started from Home", () => {
   it("starts the planned run as the page opens, with no second Start", async () => {
     planTodaysEasyRun();
     await open(HOME_START);
-    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
+    // Run27 (1): the 3-2-1, which runs out by itself.
+    expect(
+      screen.getByRole("button", { name: "Start now" })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Finding GPS", undefined, { timeout: 4000 })
+    ).toBeInTheDocument();
     expect(h.gpsCalls).toContain("start");
     expect(h.launchCardRenders).toBe(0);
     // Off the address, so going Back here from the summary, or a reload,
@@ -318,6 +337,7 @@ describe("a run started from Home", () => {
   it("starts a free run for a free runner, not the picker", async () => {
     h.runMode = "freeform";
     await open("/run?start=1");
+    await skipCountdown();
     expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.pickerRenders).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
@@ -330,6 +350,7 @@ describe("a run started from Home", () => {
   it("moves to the treadmill from the GPS screen, keeping the run's type and its plan", async () => {
     planTodaysEasyRun();
     await open(HOME_START);
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     expect(h.gpsCalls).toEqual(["start", "stop"]);
     await saveOnTheTreadmill("5");
@@ -341,6 +362,7 @@ describe("a run started from Home", () => {
   it("goes back to the run's own card from the GPS screen's Cancel", async () => {
     planTodaysEasyRun();
     await open(HOME_START);
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(
       screen.getByRole("button", { name: "The run's card" })
@@ -373,6 +395,7 @@ describe("a run started from Home", () => {
     planTodaysEasyRun();
     h.hint = { owed: true, loading: false, runCount: 4 };
     await open(HOME_START);
+    await skipCountdown();
     expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 
@@ -383,11 +406,8 @@ describe("a run started from Home", () => {
     // Neither started nor showing the run's card while it reads.
     expect(h.gpsCalls).not.toContain("start");
     expect(h.launchCardRenders).toBe(0);
-    expect(
-      await screen.findByText("Finding GPS", undefined, {
-        timeout: FIRST_RUN_CHECK_MS + 2000,
-      })
-    ).toBeInTheDocument();
+    await skipCountdown(FIRST_RUN_CHECK_MS + 2000);
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
   });
 });
@@ -401,6 +421,7 @@ describe("a run whose location is refused", () => {
   it("says location is off rather than that it is still searching", async () => {
     refuse();
     await open("/run?start=1");
+    await skipCountdown();
     expect(screen.getByText("Location is off for Tropos")).toBeInTheDocument();
     expect(screen.queryByText("Finding GPS")).toBeNull();
     expect(
@@ -415,6 +436,7 @@ describe("a run whose location is refused", () => {
     refuse();
     h.native = true;
     await open("/run?start=1");
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
     expect(h.openedSettings).toBe(1);
   });
@@ -422,6 +444,7 @@ describe("a run whose location is refused", () => {
   it("offers no Settings button on the web, where there is none to open", async () => {
     refuse();
     await open("/run?start=1");
+    await skipCountdown();
     expect(screen.queryByRole("button", { name: "Open settings" })).toBeNull();
     expect(screen.getByText(/browser’s settings/)).toBeInTheDocument();
   });
@@ -470,6 +493,7 @@ describe("a run opened from Train", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "The run's card" }));
     });
+    await skipCountdown();
     expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 });
