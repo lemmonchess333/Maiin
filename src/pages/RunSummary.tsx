@@ -761,6 +761,9 @@ export default function RunSummary() {
       workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
       // Run24 (4): a time trial is read by its work as a race.
       templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      // Run27 (14): a run started on a hot or extreme day never lowers
+      // the benchmark; a fast one still raises it.
+      ...(state.runConfig?.hotDay === true ? { hotDay: true } : {}),
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 

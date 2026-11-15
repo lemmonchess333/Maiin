@@ -4988,6 +4988,32 @@ Affects: setup's race step and Settings → Run plan (the Ultra row, Total climb
 - [ ] **Feet.** With miles chosen in Units, type 5000 in Total climb. Passing: the field says ft, and the stored `climbM` is 1524.
 - [ ] **Recovery after an ultra.** Run the race on its day (at least 95% of the distance). Passing: the plan enters recovery for 4 weeks after a 50K, 5 after 50 miles or a 100K, and the run summary shows no prediction line (Tropos predicts no ultra time).
 
+## Ultra plans are Pro after their first week (Run27 call 18, 2026-11-15)
+
+Affects: what Q85 gates for the half and the marathon, now for 50K, 50
+miles and 100K too (`racePlanLocked`): Home's run card ("Your 50K plan
+continues with Pro"), Train's Start, the Run page's planned run, the note
+under the distance in setup and Run plan ("Plans for a half marathon or
+longer are part of Pro after their first week."), the Pro page's list and
+Pro's month card. The free week is the account's one, shared with a half
+or a marathon. Unit and component tests drive it; no phone has shown it.
+
+- [ ] **Week 1 free, week 2 Pro.** A free account sets up a 50K. Passing:
+      the note says plans for a half marathon or longer are Pro after their
+      first week; week 1's runs start from Home and Train; in week 2 Home
+      reads "Your 50K plan continues with Pro" with Try Pro free (or See
+      Pro), Train's Start offers the same, and Start free run still records
+      a run.
+- [ ] **A 10K stays free.** A free account on a 10K plan in week 2.
+      Passing: Start works on Home and Train, and no note shows in setup or
+      Run plan.
+- [ ] **The free week is shared.** A free account that has had its week of
+      a marathon plan switches to a 100K. Passing: the note says "you’ve
+      had your free week", and the 100K plan's first week already offers
+      Pro.
+- [ ] **The Pro page.** Open Pro from a free account. Passing: the list
+      reads "Plans for a half marathon or longer, after their first week".
+
 ## No heavy legs the day before an ultra's back-to-back (Run27 call 19, 2026-11-15)
 
 Affects: a new ultra plan's lift order (`orderForAdjacency` with `longRunDaysOf`) and "Why this session"'s next-day note before a back-to-back run (`liftSessionPurpose`). Unit tests build the plans through `buildPlan`; no phone has shown one. A plan made before this keeps its order.
@@ -5323,6 +5349,28 @@ Unit and page tests drive it; no phone has shown it.
 - [ ] **A mild day.** On a mild day, Home's Start of the same tempo starts
       it straight away, and no screen says anything of heat.
 
+## A hot day's run never lowers the benchmark (Run27 call 14, 2026-11-15)
+
+Affects: the run summary's new-paces card after a race, a time trial, a
+tempo or an interval session, the weekly review's paces offer, and the
+benchmark the app derives on the Programme page. A run started on a hot or
+extreme day (the `runConfig.hotDay` the run screen saves) is read as an
+effort that may raise the benchmark and never lowers it
+(`heatHoldsBenchmark`). Unit and page tests drive it; no phone has shown
+it.
+
+- [ ] **A slow hot run.** On a hot day (for example 30 °C at 60% humidity),
+      with a confirmed benchmark, run a 5K as "Race effort" well slower
+      than the benchmark. Passing: the run summary shows no "Your saved
+      targets may be too quick right now" card, and Settings → Run plan's
+      paces are unchanged. In the Firebase console the run's
+      `runConfig.hotDay` is `true`.
+- [ ] **The same on a mild day.** Run the same slow 5K on a mild day.
+      Passing: the summary offers slower paces, as before.
+- [ ] **A fast hot run.** On a hot day, run a 5K faster than the
+      benchmark. Passing: the summary offers the faster paces (Pro's to
+      take, with Try Pro free or See Pro on a free account).
+
 ## Today's coolest hour (Run26 call 5, 2026-11-14)
 
 Affects: the `getCurrentWeather` callable, whose answer now carries
@@ -5335,7 +5383,8 @@ and Home's day peek: "Coolest at 21:00, 24 °C against 32 °C now." Named
 only on a hot day, for an hour still to come today that starts at least an
 hour from now, is a T+DP band (10 °F) cooler and has air a whole degree
 cooler. Temperatures are °F only where the phone's region reads °F (the
-US, LR, MM, BS, BZ, KY, PW, FM, MH, from the region the locale names) and
+US, LR, MM, BS, BZ, KY, PW, FM, MH, and since Run27 call 4 PR, GU, VI, AS
+and MP, from the region the locale names) and
 °C everywhere else, the setup strip included; the distance unit plays no
 part. The callable ships with the next production
 release (Deploy production runs the functions deploy for any change under
@@ -5357,6 +5406,11 @@ shown it.
       read °C; with the region the United States, °F. If a UK phone shows
       °F or a US phone °C, the web view's `navigator.language` is not
       naming the region: note what it reads (Safari's Web Inspector).
+- [ ] **A US territory reads °F (Run27 call 4).** With the iPhone's region
+      Puerto Rico (or Guam), open a run's setup. Passing: the setup strip
+      and the coolest-hour line read °F. If they read °C, note what
+      `navigator.language` reads there: iOS may name the US, not the
+      territory, which would read °F anyway.
 - [ ] **An older build keeps working.** A TestFlight build from before
       this change, against the deployed callable: the setup strip still
       shows the weather and "Weather data from MET Norway", and a hot day

@@ -465,7 +465,9 @@ export function raceDistanceKeyFromKm(
  * effort is enough, as it is for the derive: the person decides.
  * `direction` is relative to the stored benchmark: "faster" = improved (best
  * recent effort implies a higher VDOT); "slower" = even the best recent effort
- * is well below the stored mark (detrained / stale benchmark).
+ * is well below the stored mark (detrained / stale benchmark). Run27 (14):
+ * never "slower" when that best effort was run on a hot or extreme day
+ * (`heatHoldsBenchmark`); a hot effort that is faster still offers.
  */
 export interface PaceInsight {
   currentVdot: number;
@@ -483,7 +485,9 @@ export interface PaceInsight {
  * confirmed paces (no benchmark, or one the app derived and they haven't
  * accepted): their best recent effort, whatever its distance from the
  * unconfirmed one, so the plan's week-2 time trial gives them paces. Null
- * with no effort. Accepting still writes the paces (RUN-EV-08).
+ * with no effort, and where a hot day's run would come in under the
+ * unconfirmed one (Run27 (14), `heatHoldsBenchmark`). Accepting still
+ * writes the paces (RUN-EV-08).
  */
 export function resolveFirstPaces(
   fitness: RunFitnessInput | null | undefined,
@@ -492,6 +496,7 @@ export function resolveFirstPaces(
   if (fitness && fitness.pendingConfirmation !== true) return null;
   const best = bestEffort(efforts);
   if (!best) return null;
+  if (heatHoldsBenchmark(best, storedBenchmarkVdot(fitness))) return null;
   const suggested = derivedFitness(best);
   return {
     currentVdot: Math.round((fitness?.vdot ?? 0) * 10) / 10,
@@ -518,6 +523,7 @@ export function resolvePaceInsight(
   const best = bestEffort(efforts);
   if (!best) return null;
   if (Math.abs(best.vdot - currentVdot) < minDeltaVdot) return null;
+  if (heatHoldsBenchmark(best, currentVdot)) return null;
 
   const suggested = derivedFitness(best);
   return {
@@ -630,6 +636,9 @@ export interface BenchmarkEffort {
   /** RUN-EV-08 provenance: the run it came from. */
   id?: string;
   completedAt?: Date;
+  /** Run27 (14): run on a hot or extreme day (`RunConfig.hotDay`), so it
+   *  may raise a benchmark and never lowers one (`heatHoldsBenchmark`). */
+  hotDay?: boolean;
 }
 
 /** The VDOT an effort implies: a race by its finish, a tempo by its pace. */
@@ -658,6 +667,32 @@ export function bestEffort(
       best = { effort, vdot };
   }
   return best;
+}
+
+/**
+ * Run27 (14): whether a run on a hot or extreme day is all that would
+ * lower a benchmark of `currentVdot`. Heat slows a run at the same effort
+ * (Ely 2007; El Helou 2012; running-evidence.md §4.12), so a hot run under
+ * the benchmark says the day was hot, not that the runner is less fit,
+ * and the benchmark stays. A hot run over it still raises it: it was run
+ * with the heat against it. Every reader of the best effort asks this
+ * (the pace offer, a runner's first paces, the benchmark the app derives),
+ * so a hot run lowers none of them. With no benchmark (`currentVdot` 0)
+ * there is nothing to lower.
+ */
+export function heatHoldsBenchmark(
+  best: { effort: BenchmarkEffort; vdot: number },
+  currentVdot: number
+): boolean {
+  return best.effort.hotDay === true && best.vdot < currentVdot;
+}
+
+/** The VDOT a stored benchmark stands at: its own, else its race's; 0 with
+ *  none. */
+export function storedBenchmarkVdot(
+  fitness: RunFitnessInput | null | undefined
+): number {
+  return resolveFitnessVdot(fitness)?.vdot ?? 0;
 }
 
 /** A benchmark derived from an effort, in `runFitness`'s own fields. */

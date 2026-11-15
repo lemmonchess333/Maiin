@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  isProRaceDistance,
   lockedPlanRunStarts,
+  proRaceName,
   racePlanFreeWeekToRecord,
   racePlanLocked,
 } from "../racePlanAccess";
@@ -27,6 +29,68 @@ describe("racePlanLocked (whole-app grill Q85)", () => {
         raceDistance: "half",
       })
     ).toBe(true);
+  });
+
+  it("an ultra plan is free in week 1 and Pro from week 2, as a marathon is (Run27 (18))", () => {
+    for (const distance of ["50k", "50mi", "100k"]) {
+      const ultra = (week: number) => ({
+        isPro: false,
+        runPlan: marathonWeek(week, { raceGoal: { distance } }),
+        raceDistance: distance,
+      });
+      expect(racePlanLocked(ultra(0))).toBe(false);
+      expect(racePlanLocked(ultra(1))).toBe(true);
+      expect(racePlanLocked({ ...ultra(5), isPro: true })).toBe(false);
+      expect(
+        racePlanLocked({
+          ...ultra(5),
+          runPlan: marathonWeek(5, {
+            raceGoal: { distance },
+            phase: "recovery",
+          }),
+        })
+      ).toBe(false);
+    }
+    // The 10K at week 2 stays free.
+    expect(
+      racePlanLocked({
+        isPro: false,
+        runPlan: marathonWeek(1, { raceGoal: { distance: "10k" } }),
+        raceDistance: "10k",
+      })
+    ).toBe(false);
+  });
+
+  it("an ultra shares the account's one free week with the half and the marathon", () => {
+    // A marathon's free week used: a new 50K plan is Pro from its start.
+    expect(
+      racePlanLocked({
+        isPro: false,
+        runPlan: marathonWeek(0, { raceGoal: { distance: "50k" } }),
+        raceDistance: "50k",
+        freeWeekUsed: true,
+      })
+    ).toBe(true);
+    // Passing a 100K's free week is the moment to record it.
+    expect(
+      racePlanFreeWeekToRecord({
+        isPro: false,
+        runPlan: marathonWeek(1, { raceGoal: { distance: "100k" } }),
+        raceDistance: "100k",
+      })
+    ).toBe(true);
+  });
+
+  it("names the race a locked plan is for", () => {
+    expect(proRaceName("half")).toBe("half marathon");
+    expect(proRaceName("marathon")).toBe("marathon");
+    expect(proRaceName("50k")).toBe("50K");
+    expect(proRaceName("50mi")).toBe("50-mile race");
+    expect(proRaceName("100k")).toBe("100K");
+    expect(proRaceName("10k")).toBe("race");
+    expect(proRaceName(null)).toBe("race");
+    expect(isProRaceDistance("50mi")).toBe(true);
+    expect(isProRaceDistance("5k")).toBe(false);
   });
 
   it("Pro and trials are never locked", () => {

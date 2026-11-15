@@ -168,6 +168,9 @@ describe("the temperature unit follows the device's region, not the distance uni
       expect(temperatureUnitForLocales([tag])).toBe("F");
     for (const tag of ["en-PW", "en-FM", "en-MH"])
       expect(temperatureUnitForLocales([tag])).toBe("F");
+    // Run27 (4): the US territories, whose phones send their own region.
+    for (const tag of ["en-PR", "es-PR", "en-GU", "en-VI", "en-AS", "en-MP"])
+      expect(temperatureUnitForLocales([tag])).toBe("F");
     expect(temperatureUnitForLocales(["en-GB"])).toBe("C");
     expect(temperatureUnitForLocales(["fr-FR"])).toBe("C");
     expect(temperatureUnitForLocales(["de-DE"])).toBe("C");
@@ -203,6 +206,13 @@ describe("the temperature unit follows the device's region, not the distance uni
     restore();
     restore = setDeviceLanguage("fr-FR");
     expect(deviceTemperatureUnit()).toBe("C");
+    restore();
+    // Run27 (4): a phone in Puerto Rico or Guam reads °F.
+    restore = setDeviceLanguage("en-PR");
+    expect(deviceTemperatureUnit()).toBe("F");
+    restore();
+    restore = setDeviceLanguage("en-GU");
+    expect(deviceTemperatureUnit()).toBe("F");
     restore();
     // A bare language, with the region only in the list.
     restore = setDeviceLanguage("en", ["en", "en-US"]);

@@ -337,7 +337,7 @@ export default function Run() {
     recentLayoff,
     recentRuns,
   } = useProgram();
-  // Q85: past a half or full marathon plan's free first week, a planned
+  // Q85: past a half, marathon or ultra plan's free first week, a planned
   // training run opens as a free run (the race itself still starts).
   const runPlanLocked = useRacePlanLocked(programState?.runPlan);
   // A plan with no race date is a plan here, though the profile says free

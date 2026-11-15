@@ -370,7 +370,8 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "Running paces that speed up as your races and sessions show you’re fitter",
       "Readiness from your sleep and heart rate in Apple Health",
       "Charts older than 3 months, your training load and your score’s details",
-      "Half and full marathon plans, after their first week",
+      // Run27 (18): the ultras are Pro after week 1 too.
+      "Plans for a half marathon or longer, after their first week",
     ]);
     const freeKeeps = screen.getByText(
       "Free keeps your training plan, 5K and 10K race plans, run tracking, and typed and barcode food logging."

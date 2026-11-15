@@ -458,8 +458,9 @@ export default function ProgrammeRunSection({
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);
-  // Q85: a half or full marathon plan past its free first week. Today's
-  // planned session offers Pro; the race itself and free runs still start.
+  // Q85, Run27 (18): a half, marathon or ultra plan past its free first
+  // week. Today's planned session offers Pro; the race itself and free runs
+  // still start.
   const planLocked = useRacePlanLocked(programState?.runPlan);
   const proCtaLabel = useProCtaLabel();
   const raceCompressed = !!programState?.runPlan?.compressed;

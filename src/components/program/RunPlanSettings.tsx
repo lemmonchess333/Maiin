@@ -212,8 +212,8 @@ interface RunPlanSettingsProps {
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
   refreshProfile: () => Promise<void>;
-  /** Pro or in a trial. A free account is told that half and full
-   *  marathon plans are Pro after their first week (Q85). Absent reads as
+  /** Pro or in a trial. A free account is told that half, marathon and
+   *  ultra plans are Pro after their first week (Q85). Absent reads as
    *  Pro, so nothing is said. */
   isPro?: boolean;
 }

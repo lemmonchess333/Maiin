@@ -1213,6 +1213,35 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(benchmarkEffortOf(pinned)).toBeNull();
   });
 
+  /* Run27 (14): a run started on a hot day is handed over as one, so it
+     may raise the benchmark and never lowers it (`heatHoldsBenchmark`). */
+  it("hands Pace Insight a hot day's tempo marked hot, and a mild day's not", async () => {
+    const workPortion = { seconds: 1200, meters: 4000 };
+    const hot = renderPlanned("tempo_20", {
+      activityType: "tempo",
+      workPortion,
+      hotDay: true,
+    });
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
+    const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(handed.hotDay).toBe(true);
+    expect(benchmarkEffortOf(handed)).toMatchObject({
+      kind: "tempo",
+      hotDay: true,
+    });
+    hot.unmount();
+
+    renderPlanned("tempo_20", { activityType: "tempo", workPortion });
+    expect(
+      await screen.findByRole("heading", { name: "20 Min Tempo done" })
+    ).toBeVisible();
+    const mild = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(mild.hotDay).toBeUndefined();
+    expect(benchmarkEffortOf(mild)?.hotDay).toBeUndefined();
+  });
+
   it("gives a run-walk no pace trend against runs", async () => {
     // Eight 5 km runs at 5:30 /km: this 5:00 /km is a PR for a run, and
     // nothing for a run-walk, whose pace includes its walks.

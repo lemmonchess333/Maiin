@@ -2,9 +2,11 @@
  * Temperatures as the reader reads them (Run26 (5)). The weather arrives
  * in °C (weather.ts) and is shown in °F only where the device's region
  * reads temperatures in °F (the US, Liberia, Myanmar, the Bahamas, Belize,
- * the Cayman Islands, Palau, Micronesia and the Marshall Islands), and in
- * °C everywhere else. The distance setting plays no part: many runners in
- * the UK read miles and think in °C.
+ * the Cayman Islands, Palau, Micronesia and the Marshall Islands, and since
+ * Run27 (4) the US territories: Puerto Rico, Guam, the US Virgin Islands,
+ * American Samoa and the Northern Mariana Islands), and in °C everywhere
+ * else. The distance setting plays no part: many runners in the UK read
+ * miles and think in °C.
  *
  * The region is the one the locale tag names (`navigator.language`, then
  * `navigator.languages`), and only one it names outright. A bare "en" is
@@ -30,6 +32,12 @@ const FAHRENHEIT_REGIONS: ReadonlySet<string> = new Set([
   "PW",
   "FM",
   "MH",
+  // Run27 (4): the US territories, whose phones name their own region.
+  "PR",
+  "GU",
+  "VI",
+  "AS",
+  "MP",
 ]);
 
 /** The region a locale tag names outright ("en-GB" → "GB", "en" → null),

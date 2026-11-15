@@ -9,9 +9,10 @@ import {
 } from "@/lib/racePlanAccess";
 
 /**
- * Whether this account's half or full marathon plan has moved past its free
- * first week (whole-app grill Q85). `runPlan` is the caller's
- * `programState.runPlan`; the account's tier and race come from here.
+ * Whether this account's half, marathon or ultra plan has moved past its
+ * free first week (whole-app grill Q85, Run27 (18)). `runPlan` is the
+ * caller's `programState.runPlan`; the account's tier and race come from
+ * here.
  *
  * The free week is once per account: the first time a free account's plan
  * passes it, this records it on the profile (`racePlanFreeWeekUsed`), so a

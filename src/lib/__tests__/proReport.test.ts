@@ -172,6 +172,15 @@ describe("proLineWords", () => {
         totalWeeks: 16,
       })
     ).toEqual({ value: "5 of 16", caption: "weeks of your marathon plan" });
+    // Run27 (18): an ultra plan is Pro's past its first week too.
+    expect(
+      proLineWords({
+        kind: "race_plan",
+        distance: "50mi",
+        week: 9,
+        totalWeeks: 20,
+      }).caption
+    ).toBe("weeks of your 50-mile race plan");
   });
 });
 
@@ -215,6 +224,18 @@ describe("proRacePlan — a half or full marathon plan past its free week", () =
       week: 7,
       totalWeeks: 14,
     });
+  });
+
+  it("counts an ultra plan past its free week (Run27 (18))", () => {
+    expect(
+      proRacePlan(plan({ raceGoal: { distance: "100k" } }), "100k")
+    ).toEqual({ distance: "100k", week: 7, totalWeeks: 14 });
+    expect(
+      proRacePlan(
+        plan({ currentWeek: 0, raceGoal: { distance: "50k" } }),
+        "50k"
+      )
+    ).toBeNull();
   });
 
   it("is null where the plan is free", () => {
