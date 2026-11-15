@@ -51,18 +51,18 @@ function shownAt(weightKg: number) {
 }
 
 describe("weighInProfilePatch", () => {
-  it("writes the macros the Food page would render at the new weight", () => {
+  it("writes the protein the Food page would render at the new weight", () => {
     /* The contract, stated as the equality that matters: what the weigh-in
        stores and what the user is shown must be the same split. Compared
        against getAdjustedTargets rather than against hand-computed grams, so
-       the two cannot drift apart without this failing. */
+       the two cannot drift apart without this failing. Carbs and fat are
+       not stored (App1 Q21): every screen works them out from the calorie
+       target, so there is no stored copy to keep in step. */
     const patch = weighInProfilePatch(AT_SETUP, 78);
     const shown = shownAt(78);
     expect(patch).toEqual({
       weightKg: 78,
       targetProtein: shown.protein,
-      targetCarbs: shown.carbs,
-      targetFat: shown.fat,
     });
   });
 
@@ -126,19 +126,19 @@ describe("weighInProfilePatch", () => {
     expect(unset.targetProtein).toBe(160); // 2.0 g/kg — recomp default
   });
 
-  it("keeps the written split internally consistent", () => {
-    /* Whatever the weight, the stored triple must still add up to the target
-       it was split from — the invariant the whole nutrition arc turns on.
-       Note 90 is absent deliberately: it is AT_SETUP's own weight, so the
-       delta gate returns null and there is no patch to check. */
+  it("stores the protein of a split that adds up to the target", () => {
+    /* Whatever the weight, the split the stored protein comes from must
+       still add up to the target it was split from — the invariant the
+       whole nutrition arc turns on. Note 90 is absent deliberately: it is
+       AT_SETUP's own weight, so the delta gate returns null and there is no
+       patch to check. */
     for (const w of [55, 70, 85, 120]) {
       const patch = weighInProfilePatch(AT_SETUP, w) as {
         targetProtein: number;
-        targetCarbs: number;
-        targetFat: number;
       };
-      const sum =
-        patch.targetProtein * 4 + patch.targetCarbs * 4 + patch.targetFat * 9;
+      const shown = shownAt(w);
+      expect(patch.targetProtein).toBe(shown.protein);
+      const sum = shown.protein * 4 + shown.carbs * 4 + shown.fat * 9;
       expect(Math.abs(sum - AT_SETUP.targetCalories)).toBeLessThanOrEqual(9);
     }
   });

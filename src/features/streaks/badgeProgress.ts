@@ -2,13 +2,15 @@
  * Badge PROGRESS — the goal-gradient pull. For an unearned badge, "how close
  * am I, in human terms?" so the grid can show a ring + "X / Y" and surface the
  * single nearest badge. Returns `null` for badges whose progress can't be
- * computed from the client's windowed snapshots (lifetime distance, PRs,
- * nutrition) — those earn server-side (a follow-up); the UI just renders them
- * as a plain locked badge with no ring.
+ * computed from the client's windowed snapshots (lifetime distance, PRs, a
+ * one-day nutrition hit); the UI just renders them as a plain locked badge
+ * with no ring.
  *
- * Pure + `today`-injected so the rolling-window maths is unit-testable. Reuses
- * `activeDayCounts` from ./badgeEarning so progress and earning never disagree
- * (earned ⇔ pct >= 1 for every badge that has progress here).
+ * Every badge is awarded by the server (App1 Q33). Pure + `today`-injected,
+ * and built on ./badgeEarning, the client copy of the server's rules, so a
+ * ring and the award never disagree: `badgeRules.cross.test.ts` drives this
+ * and the server's rules from the same facts and asserts pct >= 1 exactly
+ * when the server awards.
  */
 import type { BadgeDef } from "./badges";
 import {
@@ -31,7 +33,8 @@ export interface BadgeProgress {
   label: string;
 }
 
-/** Progress context — same inputs as the earning decision. */
+/** Progress context — the facts the server's rules read, as this device
+ *  sees them. */
 export type BadgeProgressContext = BadgeEarningContext;
 
 function clamp01(n: number): number {

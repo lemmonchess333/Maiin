@@ -54,7 +54,7 @@ test.describe("cold-start: a brand-new user can open every surface", () => {
     await signOut(page);
   });
 
-  test("Home, Food, Programme, Analytics, Social all render cleanly with no logged data", async ({
+  test("Home, Food, Programme, Progress, Social all render cleanly with no logged data", async ({
     page,
   }) => {
     const pageErrors = trackPageErrors(page);
@@ -67,7 +67,7 @@ test.describe("cold-start: a brand-new user can open every surface", () => {
     const surfaces: { path: string; heading: string }[] = [
       { path: "food", heading: "Food" },
       { path: "program", heading: "Train" },
-      { path: "history", heading: "Analytics" },
+      { path: "history", heading: "Progress" },
       { path: "social", heading: "Social" },
     ];
 

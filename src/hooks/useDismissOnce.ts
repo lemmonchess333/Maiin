@@ -27,9 +27,9 @@ import { readString, writeString } from "@/lib/localStore";
  * The boolean second element is the in-memory state — the hook
  * re-renders the consumer once on dismiss, then never again.
  *
- * The first-visit guide's "seen" flags are dismissals too (`useGuideHint`,
- * `WALK_SEEN_KEY`); it is the app's one kind of one-time hint since the
- * coach marks went (FV2).
+ * The first-use guide's "seen" flags are dismissals too (`useGuideHint`);
+ * it is the app's one kind of one-time hint since the coach marks went
+ * (FV2).
  *
  * ── uid scoping is THIS hook's job, not the caller's ─────────────────
  *

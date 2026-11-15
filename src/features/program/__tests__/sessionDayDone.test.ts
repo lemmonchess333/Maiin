@@ -66,7 +66,6 @@ const plan = (override?: number): ProgramState =>
       },
     ],
     settings: { autoProgression: true, smallPlates: false },
-    fatigueScore: 0,
     weekHistory: [],
     updatedAt: 0,
     ...(override === undefined ? {} : { nextWorkoutOverride: override }),

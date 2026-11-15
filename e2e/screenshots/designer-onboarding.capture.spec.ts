@@ -103,12 +103,14 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     page.getByRole("textbox", { name: "Weight (st)", exact: true })
   ).toHaveValue("12");
   await capture(page, "body-scale");
-  // Height and the age range are the other two halves of the calorie
+  // Height and the year of birth are the other two halves of the calorie
   // estimate, and neither arrives filled in.
   await page
     .getByRole("textbox", { name: "Height (cm)", exact: true })
     .fill("175");
-  await page.getByRole("radio", { name: /^25/ }).click();
+  await page
+    .getByRole("textbox", { name: "Year of birth", exact: true })
+    .fill("1995");
   await next();
   // The review leads with the plan; the answers fold away under one line.
   const answers = page.locator("summary", { hasText: "Your answers" });

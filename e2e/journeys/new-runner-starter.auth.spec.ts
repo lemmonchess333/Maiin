@@ -58,7 +58,7 @@ test("a new runner repeats a week, moves on, and finishes the 30-minute goal", a
       weightKg: 64,
       heightCm: 168,
       sex: "Female",
-      age: "25–34",
+      birthYear: 1995,
     });
     const { db } = emulatorAdmin();
     const profileOf = async () =>

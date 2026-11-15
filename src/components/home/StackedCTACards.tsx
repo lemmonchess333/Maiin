@@ -37,9 +37,7 @@ const fadeUp = {
  *
  * Which sessions show, and what each says, is decided by `todaySession`;
  * this draws the answer, and `heroLead` (homeHero.ts) gives the same lead
- * for the kicker. Each piece carries the `data-guide-stop` the
- * first-visit walk points at (`todayCardTarget` in firstGuide.ts names the
- * same three).
+ * for the kicker.
  */
 export default function StackedCTACards({
   session,
@@ -73,7 +71,7 @@ export default function StackedCTACards({
   // the run is not (`heroLead`, which the label beside the date reads too).
   const runLeads = !!run && heroLead(session) === "run";
   const runCard = run && (
-    <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
+    <motion.div key="run" variants={fadeUp}>
       <RunCTACard
         todayRun={run.runDay}
         racePace={run.racePace}
@@ -92,7 +90,7 @@ export default function StackedCTACards({
     </motion.div>
   );
   const liftCard = lift?.workout ? (
-    <motion.div key="lift" variants={fadeUp} data-guide-stop="today-lift">
+    <motion.div key="lift" variants={fadeUp}>
       <LiftCTACard
         nextWorkout={lift.workout}
         dayLabel={lift.name ?? undefined}
@@ -170,17 +168,7 @@ export default function StackedCTACards({
         </>
       )}
       {rest && (
-        <motion.div
-          key="rest"
-          variants={fadeUp}
-          data-guide-stop={
-            rest.kind === "first-workout"
-              ? "today-lift"
-              : rest.kind === "free-run"
-                ? "today-run"
-                : "today-rest"
-          }
-        >
+        <motion.div key="rest" variants={fadeUp}>
           {/* Rest-day hero. Previously neither lift nor run rendered on
               rest days and the page looked half-empty — users couldn't
               distinguish "scheduled rest" from "something broke". The
