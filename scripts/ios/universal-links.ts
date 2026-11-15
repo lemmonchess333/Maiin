@@ -39,9 +39,22 @@ export function appleAppSiteAssociation(prefix: string) {
   };
 }
 
-/** Opt-in until the signed app's public identifier has been verified.
- * Apple's supported root location avoids Hosting's dotfile ignore.
+/** Where the association is served. Apple's CDN, which is what an iPhone
+ * asks, reads `/.well-known/apple-app-site-association` and falls back to
+ * the root only when that is missing; Firebase Hosting answers the
+ * `.well-known` address with its own generated file (every path, for the
+ * app registered with the project) unless the deploy carries one, which is
+ * what kept Apple on Firebase's after the root file shipped (15 Nov 2026).
+ * Hosting's dotfile ignore (firebase.json) drops a dotfile itself, not a
+ * file inside a dot directory, so `.well-known/` deploys: firebase-tools
+ * 15.34.0's own file listing keeps `.well-known/apple-app-site-association`.
  */
+export const ASSOCIATION_PATHS = [
+  ".well-known/apple-app-site-association",
+  "apple-app-site-association",
+] as const;
+
+/** Opt-in until the signed app's public identifier has been verified. */
 export function universalLinksPlugin(
   prefix: string | undefined,
   isFirebaseHosting: boolean
@@ -55,11 +68,10 @@ export function universalLinksPlugin(
       // pasted newline must not fail every website deploy.
       const value = prefix?.replace(/\s/g, "");
       if (!isFirebaseHosting || !value) return;
-      this.emitFile({
-        type: "asset",
-        fileName: "apple-app-site-association",
-        source: JSON.stringify(appleAppSiteAssociation(value)),
-      });
+      const source = JSON.stringify(appleAppSiteAssociation(value));
+      for (const fileName of ASSOCIATION_PATHS) {
+        this.emitFile({ type: "asset", fileName, source });
+      }
     },
   };
 }
