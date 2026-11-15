@@ -1,6 +1,8 @@
 /**
  * Plan a meet-up in a Circle (Run26 call 4): run or lift, a name, a day
  * and a time, where to meet, and a note if there is something to know.
+ * A run may carry its pace groups, and any meet-up may repeat every week
+ * (Run27 call 10): the server plans the next when this one ends.
  *
  * The day and the time are this phone's (the native inputs), sent as one
  * instant with this phone's zone, so every member sees the start in their
@@ -14,9 +16,11 @@ import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import { Toggle } from "@/components/ui/Toggle";
 import {
   MEETUP_MAX_AHEAD_MS,
   MEETUP_NOTE_MAX,
+  MEETUP_PACE_GROUPS_MAX,
   MEETUP_PLACE_MAX,
   MEETUP_SPORTS,
   MEETUP_TITLE_MAX,
@@ -57,7 +61,9 @@ export default function CircleMeetupSheet({
   const [day, setDay] = useState("");
   const [time, setTime] = useState("");
   const [place, setPlace] = useState("");
+  const [paceGroups, setPaceGroups] = useState("");
   const [note, setNote] = useState("");
+  const [weekly, setWeekly] = useState(false);
   /* What the last tap of Plan it found missing; cleared by any edit. */
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -71,7 +77,9 @@ export default function CircleMeetupSheet({
       setDay("");
       setTime("");
       setPlace("");
+      setPaceGroups("");
       setNote("");
+      setWeekly(false);
       setProblem(null);
     }
   }
@@ -96,11 +104,16 @@ export default function CircleMeetupSheet({
     setProblem(found);
     if (found || startsAt === null) return;
     haptic("light");
+    // Pace groups are a run's: switching to Lift keeps what was typed in
+    // case of a switch back, and sends none.
+    const pace = sport === "run" ? paceGroups.trim() : "";
     await onSubmit({
       sport,
       title: title.trim(),
       place: place.trim(),
       note: note.trim() ? note.trim() : null,
+      paceGroups: pace ? pace : null,
+      repeat: weekly ? "weekly" : null,
       startsAt,
       timeZone: deviceTimeZone(),
     });
@@ -167,6 +180,17 @@ export default function CircleMeetupSheet({
           aria-label="Where to meet"
           className="ds-input text-sm"
         />
+        {sport === "run" && (
+          <input
+            type="text"
+            value={paceGroups}
+            onChange={edit(setPaceGroups)}
+            maxLength={MEETUP_PACE_GROUPS_MAX}
+            placeholder="Pace groups (optional, e.g. 5:30 and 6:15 /km)"
+            aria-label="Pace groups"
+            className="ds-input text-sm"
+          />
+        )}
         <textarea
           value={note}
           onChange={edit(setNote)}
@@ -176,6 +200,22 @@ export default function CircleMeetupSheet({
           aria-label="Note"
           className="ds-input text-sm resize-none"
         />
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm text-foreground">Every week</p>
+            <p className="text-xs text-muted-foreground">
+              The next one appears when this one ends.
+            </p>
+          </div>
+          <Toggle
+            checked={weekly}
+            onChange={() => {
+              haptic("light");
+              setWeekly((on) => !on);
+            }}
+            label="Every week"
+          />
+        </div>
         {problem && (
           <p className="text-xs text-muted-foreground" role="alert">
             {problem}

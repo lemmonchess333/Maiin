@@ -8,7 +8,7 @@ const { withNativePushAlert } = require("../lib/pushSend");
 const at = (iso) => ({ toMillis: () => Date.parse(iso) });
 
 describe("pushes from people (App1 Q18)", () => {
-  it("are comments, follow requests both ways, an invite joined and a league result", () => {
+  it("are comments, follow requests both ways, an invite joined, a league result and a meet-up's reminder", () => {
     expect([...social.SOCIAL_PUSH_TYPES]).toEqual([
       "comment",
       "space_post_comment",
@@ -16,8 +16,19 @@ describe("pushes from people (App1 Q18)", () => {
       "follow_accepted",
       "invite_joined",
       "league_result",
+      // Run27 call 10: the reminder for a meet-up you said you're in for.
+      "circle_meetup_reminder",
     ]);
-    for (const type of ["kudos", "follow", "space_post_like", "circle_joined"])
+    // A meet-up planned or called off is a Circle's news, and stays in the
+    // tray as the other Circle notices do.
+    for (const type of [
+      "kudos",
+      "follow",
+      "space_post_like",
+      "circle_joined",
+      "circle_meetup",
+      "circle_meetup_cancelled",
+    ])
       expect(
         social.socialPushMessage({ type, message: "Maya did a thing" })
       ).toBeNull();
@@ -51,6 +62,10 @@ describe("pushes from people (App1 Q18)", () => {
       social.socialPushRoute({ type: "follow_request", fromUserId: "maya" })
     ).toBe("/user/maya");
     expect(social.socialPushRoute({ type: "league_result" })).toBe("/league");
+    // A meet-up's reminder opens Together, where its Circle shows it.
+    expect(social.socialPushRoute({ type: "circle_meetup_reminder" })).toBe(
+      "/social?tab=together"
+    );
     // An id that is not a plain id opens Social, never a path built from it.
     expect(
       social.socialPushRoute({ type: "comment", activityId: "../x" })

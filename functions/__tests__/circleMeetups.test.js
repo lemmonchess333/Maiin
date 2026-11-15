@@ -132,7 +132,13 @@ describe("normaliseMeetupInput", () => {
       { ...PLAN, title: "  Saturday \n long run ", note: "   " },
       NOW
     );
-    expect(out).toEqual({ ...PLAN, title: "Saturday long run", note: null });
+    expect(out).toEqual({
+      ...PLAN,
+      title: "Saturday long run",
+      note: null,
+      paceGroups: null,
+      repeat: null,
+    });
   });
 
   it("refuses an unknown sport, missing words, a past or far start and a made-up zone", () => {
@@ -182,8 +188,13 @@ describe("planMeetup", () => {
     expect(db.__docs.get("goalSpaces/c1/meetups/m-new")).toEqual({
       organiserUid: "maya",
       ...PLAN,
+      paceGroups: null,
+      repeat: null,
       going: ["maya"],
       createdAt: NOW,
+      // Run27 call 10: 46 hours ahead, so its reminder is due 24 hours
+      // before the start; it does not repeat, so it carries no repeatAt.
+      remindAt: PLAN.startsAt - 24 * HOUR,
     });
   });
 

@@ -151,6 +151,34 @@ describe("a push as the row is written", () => {
   });
 });
 
+describe("a meet-up's reminder (Run27 call 10)", () => {
+  it("pushes the row's sentence from the meet-up, under the Circles switch", async () => {
+    // As meetupReminderNotifier writes it: from the meet-up, not a person.
+    const reminder = {
+      type: "circle_meetup_reminder",
+      fromUserId: "tropos-meetups",
+      message: "Group run on Saturday at 08:00. You and 2 others are in.",
+    };
+    await write(reminder);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].data).toMatchObject({
+      kind: "circle_meetup_reminder",
+      title: "Coming up",
+      body: "Group run on Saturday at 08:00. You and 2 others are in.",
+      route: "/social?tab=together",
+    });
+    // With Circles switched off, nothing goes.
+    seed({
+      [`users/${TO}`]: {
+        timezone: "Europe/London",
+        notificationPreferences: { circles: false },
+      },
+    });
+    await write(reminder, null, `notifications/${TO}/items/n2`);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("props, once a day", () => {
   it("gathers props into the bundle due at 19:00, and sends it once", async () => {
     await write(

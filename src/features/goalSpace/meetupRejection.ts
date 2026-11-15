@@ -29,6 +29,7 @@ const BY_MESSAGE: [needle: string, copy: string][] = [
   ["starts too far ahead", "Plan it within the next two months."],
   ["blocked-pair", "You can’t join this meet-up."],
   ["not a member", "You’re no longer in this circle."],
+  ["pace groups too long", "Shorten the pace groups."],
 ];
 
 const BY_CODE: [suffix: string, copy: string][] = [

@@ -101,6 +101,8 @@ function meetup(over: Partial<CircleMeetup> = {}): CircleMeetup {
     title: "Saturday long run",
     place: "Tooting Lido gate",
     note: "Easy pace",
+    paceGroups: null,
+    repeat: null,
     startsAt: Date.now() + 30 * HOUR,
     timeZone: "Europe/London",
     going: ["maya"],
@@ -224,6 +226,38 @@ describe("the Circle's sheet", () => {
     );
   });
 
+  it("shows a weekly run's pace groups and that it repeats, and says calling it off ends the repeat", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        loadDetail: vi.fn(async () => ({
+          members: MEMBERS,
+          events: [],
+          meetups: [
+            meetup({
+              organiserUid: "me",
+              going: ["me"],
+              paceGroups: "5:30 and 6:15 /km",
+              repeat: "weekly",
+            }),
+          ],
+        })),
+      })
+    );
+    renderSection();
+    const sheet = await openSheet();
+    const card = await sheet.findByTestId("circle-meetup");
+    expect(within(card).getByText(/Every week/)).toBeInTheDocument();
+    expect(
+      within(card).getByText("Pace groups: 5:30 and 6:15 /km")
+    ).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole("button", { name: "Call it off" }));
+    expect(
+      within(card).getByText(
+        "Call it off? Anyone who’s in will be told, and it won’t repeat."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("offers no plan in an ended Circle", async () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({
@@ -287,6 +321,8 @@ describe("planning a meet-up", () => {
       title: "Saturday long run",
       place: "Tooting Lido gate",
       note: null,
+      paceGroups: null,
+      repeat: null,
       startsAt: new Date(
         IN_TWO_DAYS.getFullYear(),
         IN_TWO_DAYS.getMonth(),
@@ -297,6 +333,59 @@ describe("planning a meet-up", () => {
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
     expect(toastMock.success).toHaveBeenCalledWith("Meet-up planned.");
+  });
+
+  it("sends a run's pace groups and Every week (Run27 call 10)", async () => {
+    const value = hookValue();
+    const plan = await openPlan(value);
+    fill(plan, { title: "Saturday long run", place: "Tooting Lido gate" });
+    fireEvent.change(plan.getByLabelText("Pace groups"), {
+      target: { value: " 5:30 and 6:15 /km " },
+    });
+    fireEvent.click(plan.getByRole("switch", { name: "Every week" }));
+    fireEvent.click(plan.getByRole("button", { name: "Plan it" }));
+    await waitFor(() => expect(value.planMeetup).toHaveBeenCalledTimes(1));
+    expect(value.planMeetup).toHaveBeenCalledWith(
+      "c1",
+      expect.objectContaining({
+        sport: "run",
+        paceGroups: "5:30 and 6:15 /km",
+        repeat: "weekly",
+      })
+    );
+  });
+
+  it("offers a lift no pace groups, and sends none typed before the switch", async () => {
+    const value = hookValue();
+    const plan = await openPlan(value);
+    fill(plan, { title: "Thursday legs", place: "The gym" });
+    fireEvent.change(plan.getByLabelText("Pace groups"), {
+      target: { value: "5:30 /km" },
+    });
+    fireEvent.click(plan.getByRole("radio", { name: "Lift" }));
+    expect(plan.queryByLabelText("Pace groups")).toBeNull();
+    fireEvent.click(plan.getByRole("button", { name: "Plan it" }));
+    await waitFor(() => expect(value.planMeetup).toHaveBeenCalledTimes(1));
+    expect(value.planMeetup).toHaveBeenCalledWith(
+      "c1",
+      expect.objectContaining({ sport: "lift", paceGroups: null, repeat: null })
+    );
+  });
+
+  it("refuses objectionable pace groups before anything is sent", async () => {
+    const value = hookValue();
+    const plan = await openPlan(value);
+    fill(plan, { title: "Saturday long run", place: "Tooting Lido gate" });
+    fireEvent.change(plan.getByLabelText("Pace groups"), {
+      target: { value: "shit pace" },
+    });
+    fireEvent.click(plan.getByRole("button", { name: "Plan it" }));
+    await waitFor(() =>
+      expect(toastMock.error).toHaveBeenCalledWith(
+        "This meet-up contains objectionable language. Reword it and try again."
+      )
+    );
+    expect(value.planMeetup).not.toHaveBeenCalled();
   });
 
   it("says what is missing and sends nothing", async () => {

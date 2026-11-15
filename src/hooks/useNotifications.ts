@@ -67,6 +67,10 @@ export const TRAY_NOTIFICATION_TYPES = [
   // the row opens Together, where the Circle shows it.
   "circle_meetup",
   "circle_meetup_cancelled",
+  // Run27 call 10 — a meet-up the recipient said they're in for starts in
+  // about 24 hours. From the meet-up, not a person: it names nobody, and
+  // the row opens Together.
+  "circle_meetup_reminder",
   // SOC-P2g — Space-post engagement: props / a comment on the
   // recipient's space post. Rows open the post (the Space when the row
   // carries no post id), not the actor's profile.

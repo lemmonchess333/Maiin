@@ -9288,6 +9288,29 @@ exports.renewGoalSpaceInviteCode = functions
     }
   });
 
+/* The owner renames their Circle (Run27 call 11), under the rule a new
+   Circle's name meets: the word filter, with the display name's sentence
+   (lib/goalSpaceMembership renameGoalSpace). Everyone in it reads the new
+   name, so a restricted owner is refused it as they are refused starting
+   one. */
+exports.renameGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRename", 10, {
+      reachesOthers: true,
+    });
+    try {
+      return await goalSpaceMembership.renameGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        title: data?.title,
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
 exports.leaveGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -9587,6 +9610,38 @@ exports.circleMeetup = functions
       throw mapGoalSpaceError(err);
     }
   });
+
+// ── Run27 call 10 — a meet-up's reminder and its weekly repeat. Each hour:
+// a weekly meet-up that is over plans its next (the same time of day in the
+// organiser's zone a week on), and everyone in a meet-up that starts in
+// about 24 hours gets one notice, under the Circles switch, which
+// onNotificationItemWritten pushes (lib/socialPush.js). The work and its
+// once-only markers are lib/circleMeetups.js's (sweepMeetups); the two
+// collection-group indexes it reads are in firestore.indexes.json. At half
+// past, clear of the jobs on the hour.
+exports.hourlyMeetupSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyMeetupSweep", async () => {
+      const summary = await circleMeetups.sweepMeetups({
+        firestore: db,
+        now: Date.now(),
+        notify: circleMeetups.meetupReminderNotifier({
+          firestore: db,
+          createNotification: socialFanout.createNotification,
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        }),
+        makeId: goalSpaceRandomId,
+        deleteField: () => admin.firestore.FieldValue.delete(),
+        isRestricted: (uid) => restriction.isRestricted(db, uid),
+        containsProfanity: (text) => profanityFilter.containsProfanity(text),
+      });
+      functions.logger.info("hourlyMeetupSweep.done", summary);
+      return summary;
+    })
+  );
 
 // ── CIRCLE-ACTIVITY-NOTIFICATIONS — fan an in-app notification to the
 // other Circle members when a co-member publishes a high-signal event.

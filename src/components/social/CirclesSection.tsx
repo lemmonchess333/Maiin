@@ -85,6 +85,7 @@ import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import { lazyRetry } from "@/lib/lazyRetry";
 import {
   defaultMeetupSport,
+  meetupTypedWords,
   meetupWhen,
   upcomingMeetups,
   type CircleMeetup,
@@ -96,7 +97,7 @@ import { showRestrictedToast } from "@/lib/accountRestriction";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/objectionableMessages";
 import { loadWordFilter } from "@/lib/wordFilter";
 import { useWordFilter } from "@/hooks/useWordFilter";
-import { circleTitle } from "@/features/goalSpace/circleTitle";
+import { CIRCLE_NAME_MAX, circleTitle } from "@/features/goalSpace/circleTitle";
 import { appInviteUrl } from "@/lib/publicLinks";
 
 /* A Circle's meet-ups (Run26 call 4) load with its sheet, not with Social:
@@ -319,6 +320,7 @@ export default function CirclesSection({
     reload,
     createCircle,
     renewInviteCode,
+    renameCircle,
     joinCircle,
     leaveCircle,
     loadDetail,
@@ -391,6 +393,10 @@ export default function CirclesSection({
   const [meetupSheetMounted, setMeetupSheetMounted] = useState(false);
   const [meetupBusy, setMeetupBusy] = useState(false);
   const [meetupBusyId, setMeetupBusyId] = useState<string | null>(null);
+  /* Run27 call 11: the owner's new name for the open Circle, while the
+     field is open (null when it is not), and whether it is being saved. */
+  const [renameDraft, setRenameDraft] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
   // When the create sheet is opened with a goal already chosen (cold-start
   // tap or a race-plan hand-off), the full goal picker is redundant — the
@@ -608,6 +614,7 @@ export default function CirclesSection({
     setDetailOf(c);
     setDetailSeenAt(Date.now());
     setMembers(null);
+    setRenameDraft(null);
     const detail = await loadDetail(c.space.id);
     setMembers(detail.members);
     setEvents(detail.events);
@@ -640,11 +647,7 @@ export default function CirclesSection({
       toast.error("Couldn’t plan it. Try again.");
       return false;
     }
-    if (
-      [plan.title, plan.place, plan.note ?? ""].some((text) =>
-        filter.containsProfanity(text)
-      )
-    ) {
+    if (meetupTypedWords(plan).some((text) => filter.containsProfanity(text))) {
       toast.error(MEETUP_OBJECTIONABLE_MESSAGE);
       return false;
     }
@@ -703,6 +706,43 @@ export default function CirclesSection({
     }
     patchMeetups(spaceId, (prev) => prev.filter((x) => x.id !== m.id));
     toast.success("Called off.");
+  };
+
+  /* Run27 call 11: the owner renames the open Circle. The name meets the
+     word filter here, and the server's after it, with the sentence a
+     display name gets; the list reloads with it, and the open sheet takes
+     it at once. */
+  const saveRename = async () => {
+    if (!detailOf || renameDraft === null || refused()) return;
+    const trimmed = renameDraft.trim();
+    if (!trimmed) {
+      toast.error("Give the circle a name.");
+      return;
+    }
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn’t rename it. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(trimmed)) {
+      toast.error(OBJECTIONABLE_NAME_MESSAGE);
+      return;
+    }
+    const spaceId = detailOf.space.id;
+    setRenaming(true);
+    const res = await renameCircle(spaceId, trimmed);
+    setRenaming(false);
+    if (!res.ok) {
+      toast.error(res.reason);
+      return;
+    }
+    setDetailOf((d) =>
+      d && d.space.id === spaceId
+        ? { ...d, space: { ...d.space, title: res.title } }
+        : d
+    );
+    setRenameDraft(null);
+    toast.success("Circle renamed.");
   };
 
   /* A row's check-in: the weekly focus sheet, for the Circle it is on.
@@ -1448,7 +1488,7 @@ export default function CirclesSection({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            maxLength={60}
+            maxLength={CIRCLE_NAME_MAX}
             placeholder={`Name it (${
               COLD_START_OPTIONS.find((t) => t.type === template)
                 ?.namePlaceholder ?? "e.g. Autumn strength block"
@@ -1814,6 +1854,62 @@ export default function CirclesSection({
                     );
                   })}
                 </div>
+
+                {/* Run27 call 11: the owner renames a live Circle, in the
+                    sheet itself, as a meet-up is called off: a dialog over
+                    the sheet would sit outside its focus trap. */}
+                {detailOf.space.ownerId === uid &&
+                  detailOf.space.active &&
+                  (renameDraft === null ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        if (refused()) return;
+                        haptic("light");
+                        setRenameDraft(circleTitle(detailOf.space, wordFilter));
+                      }}
+                    >
+                      Rename circle
+                    </Button>
+                  ) : (
+                    <div
+                      className="space-y-2"
+                      role="group"
+                      aria-label="Rename circle"
+                    >
+                      <input
+                        type="text"
+                        value={renameDraft}
+                        onChange={(e) => setRenameDraft(e.target.value)}
+                        maxLength={CIRCLE_NAME_MAX}
+                        aria-label="Circle name"
+                        className="ds-input text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Everyone in the circle sees the new name.
+                      </p>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setRenameDraft(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="neutral"
+                          size="sm"
+                          loading={renaming}
+                          disabled={renameDraft.trim().length === 0}
+                          onClick={() => void saveRename()}
+                        >
+                          Save name
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
 
                 <Button
                   variant="ghost"

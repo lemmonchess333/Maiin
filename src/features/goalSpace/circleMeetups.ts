@@ -15,6 +15,12 @@
  * by circleMeetups.cross.test.ts. A meet-up is stored as the instant it
  * starts and the organiser's time zone, and each member sees it in their
  * own phone's time.
+ *
+ * Run27 call 10 adds what Strava's club events carry, without a map: a
+ * run's pace groups as typed words, a weekly repeat (the server plans the
+ * next one when this one is over, at the same time of day in the
+ * organiser's zone, with everyone but the organiser to say again), and a
+ * reminder about 24 hours before to everyone in, which the server sends.
  */
 import {
   formatShortWeekdayDayMonth,
@@ -28,6 +34,19 @@ export type MeetupSport = (typeof MEETUP_SPORTS)[number];
 export const MEETUP_TITLE_MAX = 60;
 export const MEETUP_PLACE_MAX = 80;
 export const MEETUP_NOTE_MAX = 200;
+
+/** A run's pace groups, on one line (Run27 call 10). A Tropos heuristic:
+ *  Strava allows four groups, and "5:00, 5:30, 6:00 and 6:30 /km" with a
+ *  word for each still fits. */
+export const MEETUP_PACE_GROUPS_MAX = 80;
+
+/** How a meet-up may repeat (Run27 call 10). */
+export const MEETUP_REPEATS = ["weekly"] as const;
+export type MeetupRepeat = (typeof MEETUP_REPEATS)[number];
+
+/** How long before its start the server reminds everyone in: Strava's
+ *  "24 hours before the start time of the event". */
+export const MEETUP_REMINDER_LEAD_MS = 86_400_000;
 
 /** How far ahead a meet-up may be planned. A Tropos heuristic: two months
  *  covers a block's long runs without a list of far-off plans. */
@@ -49,6 +68,10 @@ export interface CircleMeetup {
   title: string;
   place: string;
   note: string | null;
+  /** A run's pace groups as typed, or null. */
+  paceGroups: string | null;
+  /** "weekly" when it repeats, else null. */
+  repeat: MeetupRepeat | null;
   /** The instant it starts, in ms. */
   startsAt: number;
   /** The organiser's IANA zone when they planned it. */
@@ -58,12 +81,15 @@ export interface CircleMeetup {
   createdAt: number;
 }
 
-/** What the plan sheet sends: the typed words and the instant. */
+/** What the plan sheet sends: the typed words, the instant and whether it
+ *  repeats. */
 export interface MeetupPlan {
   sport: MeetupSport;
   title: string;
   place: string;
   note: string | null;
+  paceGroups: string | null;
+  repeat: MeetupRepeat | null;
   startsAt: number;
   timeZone: string;
 }
@@ -93,6 +119,16 @@ export function parseCircleMeetup(data: unknown): CircleMeetup | null {
       typeof d.note === "string" && d.note.length > 0
         ? d.note.slice(0, MEETUP_NOTE_MAX)
         : null,
+    // A lift has no pace groups, whatever is stored.
+    paceGroups:
+      d.sport === "run" &&
+      typeof d.paceGroups === "string" &&
+      d.paceGroups.length > 0
+        ? d.paceGroups.slice(0, MEETUP_PACE_GROUPS_MAX)
+        : null,
+    repeat: MEETUP_REPEATS.includes(d.repeat as MeetupRepeat)
+      ? (d.repeat as MeetupRepeat)
+      : null,
     startsAt: d.startsAt,
     timeZone: d.timeZone,
     going: Array.isArray(d.going)
@@ -197,6 +233,22 @@ export function startsAtFromInputs(
   if (at.getFullYear() !== y || at.getMonth() !== mo - 1 || at.getDate() !== d)
     return null;
   return at.getTime();
+}
+
+/** Every piece of a plan the organiser typed, for the word filter, which
+ *  the server holds them to as well. */
+export function meetupTypedWords(
+  plan: Pick<MeetupPlan, "title" | "place" | "note" | "paceGroups">
+): string[] {
+  return [plan.title, plan.place, plan.note ?? "", plan.paceGroups ?? ""];
+}
+
+/** What calling a meet-up off says first: who is told, and for a weekly
+ *  one, that the series ends with it. */
+export function callOffLine(meetup: Pick<CircleMeetup, "repeat">): string {
+  return meetup.repeat === "weekly"
+    ? "Call it off? Anyone who’s in will be told, and it won’t repeat."
+    : "Call it off? Anyone who said they’re in will be told.";
 }
 
 /** Why a plan cannot be sent yet, in the sheet's words, or null. */

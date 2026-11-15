@@ -27,10 +27,22 @@
  *   follow_request, follow_accepted  a request, both ways (one switch)
  *   invite_joined                someone joined from your link or code
  *   league_result                Monday's result, for a league member
+ *   circle_meetup_reminder       a meet-up you said you're in for starts
+ *                                in about 24 hours (Run27 call 10)
  *   kudos                        props, gathered into one push a day
  * Not pushed, in the tray only: a new follower (off by default, S3), a like
  * on a Space post, and the Circle events (backing is anonymous; the rest
  * are a group's news, not one person to another).
+ *
+ * The meet-up reminder is a Circle notice that pushes, where the others do
+ * not: it is not news but the reminder for a time and a place the person
+ * said yes to, which Strava sends as a push ("All RSVP'd athletes will
+ * receive an event notification 24 hours before the start time"), and a
+ * reminder that waits in the tray until the app is opened reminds nobody.
+ * It is outside App1 Q60's budget as the pushes above are: it is about a
+ * plan a Circle member made and the person said yes to, not one of
+ * Tropos's own nudges, and a budget spent that day by the streak reminder
+ * would drop the one push about a fixed time.
  *
  * THE PROPS BUNDLE. Props come together once a day, at 19:00 in the
  * recipient's time zone: most sessions are posted by the evening, so it
@@ -53,6 +65,7 @@ const SOCIAL_PUSH_TYPES = Object.freeze([
   "follow_accepted",
   "invite_joined",
   "league_result",
+  "circle_meetup_reminder",
 ]);
 
 /** Rows gathered into the daily bundle. */
@@ -79,6 +92,7 @@ const TITLES = Object.freeze({
   follow_accepted: "Follow request accepted",
   invite_joined: "Joined from your invite",
   league_result: "Your league week",
+  circle_meetup_reminder: "Coming up",
 });
 
 /** A stored time as milliseconds: a Timestamp (or its plain copy), a Date
@@ -144,6 +158,9 @@ function socialPushRoute(item) {
   )
     return `/user/${item.fromUserId}`;
   if (type === "league_result") return "/league";
+  // A meet-up's reminder opens Together, where its Circle shows it, as the
+  // tray's row does.
+  if (type === "circle_meetup_reminder") return "/social?tab=together";
   return "/social";
 }
 
