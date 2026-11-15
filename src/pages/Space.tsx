@@ -391,7 +391,8 @@ export default function Space() {
     setSearchParams(next, { replace: true });
   };
   const unit = useDistanceUnit();
-  const weekLine = spaceWeekLine(useSpaceWeek(def ? spaceId : undefined), unit);
+  const spaceWeek = useSpaceWeek(def ? spaceId : undefined);
+  const weekLine = spaceWeekLine(spaceWeek, unit);
   const composeRequested = searchParams.get("compose") === "1";
   const composeReady = composeRequested && joined === true;
   /* The composer opens during render, the moment the request can be
