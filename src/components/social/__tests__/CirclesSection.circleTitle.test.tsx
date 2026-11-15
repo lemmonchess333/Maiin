@@ -50,7 +50,9 @@ describe("a Circle under a refused name", () => {
       createCircle: vi.fn(),
       joinCircle: vi.fn(),
       leaveCircle: vi.fn(),
-      loadDetail: vi.fn().mockResolvedValue({ members: [], events: [] }),
+      loadDetail: vi
+        .fn()
+        .mockResolvedValue({ members: [], events: [], meetups: [] }),
       publishEvent: vi.fn(),
       setWeeklyFocus: vi.fn(),
       backCheckIn: vi.fn(),
