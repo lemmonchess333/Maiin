@@ -13,7 +13,8 @@ import type {
  * longer be read; the Space post page opens the Space instead. A Space
  * row stored without its post's id opens the Space. The rest open the
  * profile of whoever acted, except a Circle backing, which is anonymous.
- * A league result opens the league.
+ * A league result opens the league, and a Circle's meet-up opens Together,
+ * where the Circle shows it.
  */
 
 /** What the post page is handed: who to show when the post can't be
@@ -48,6 +49,8 @@ export function notificationTarget(
   n: NotificationItem
 ): { to: string; state?: ActivityPostState | SpacePostState } | null {
   if (n.type === "league_result") return { to: "/league" };
+  if (n.type === "circle_meetup" || n.type === "circle_meetup_cancelled")
+    return { to: "/social?tab=together" };
   if (
     (n.type === "space_post_like" || n.type === "space_post_comment") &&
     n.spaceId

@@ -1143,6 +1143,26 @@
       "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
+      "key": "goalSpaceMeetups",
+      "domain": "C_ugc",
+      "type": "collectionGroupByField",
+      "collectionGroup": "meetups",
+      "pathFilter": "goalSpaces/*/meetups",
+      "where": ["organiserUid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "userContent",
+      "recordPurpose": "userContent",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "feasibilityNote": "Run26 call 4. Server-written by the circleMeetup callable. The goal_spaces step sweeps every current Circle (lib/circleMeetups afterMemberLeft); the social step scans the collection group for meetups.organiserUid and meetups.going (array-contains), covering Circles the user left, and a closed owned Circle loses all its meet-ups.",
+      "reason": "A meet-up the user planned is deleted, and their uid comes off every other meet-up's going list.",
+      "testCoverageKey": "unit::accountDeletion.goalSpaceMeetups",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/goalSpaceCleanup.js, functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
+    },
+    {
       "key": "spaceMemberships",
       "domain": "D_crossUserEdge",
       "type": "deleteKnownDocIfExists",

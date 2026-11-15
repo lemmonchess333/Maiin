@@ -12,6 +12,8 @@ import {
   ClipboardList,
   Flame,
   Medal,
+  CalendarClock,
+  CalendarX,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -57,6 +59,8 @@ const TYPE_ICON: Record<
   circle_needs_support: { Icon: HeartHandshake, color: THEME.brand },
   circle_joined: { Icon: UserPlus, color: THEME.brand },
   circle_routine_shared: { Icon: ClipboardList, color: THEME.brand },
+  circle_meetup: { Icon: CalendarClock, color: THEME.brand },
+  circle_meetup_cancelled: { Icon: CalendarX, color: THEME.brand },
   // SOC-P2g — space-post engagement. Coral: the running/vitals register
   // the flame action itself uses.
   space_post_like: { Icon: Flame, color: THEME.running },
@@ -97,6 +101,10 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} joined your circle`;
     case "circle_routine_shared":
       return `${who} shared a routine`;
+    case "circle_meetup":
+      return `${who} planned a meet-up`;
+    case "circle_meetup_cancelled":
+      return `${who} called off a meet-up`;
     case "space_post_like":
       return `${who} gave your space post props`;
     case "space_post_comment":

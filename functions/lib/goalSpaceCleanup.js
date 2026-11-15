@@ -18,6 +18,8 @@
  *         member doc + journey deleted, memberCount decremented, and
  *         the space deactivated when the departing user is the owner
  *         (v1 policy — ownership transfer is a later feature).
+ *      c. the meet-ups they planned, their uid on every other's
+ *         `going`, and every meet-up of a Circle their leaving ended.
  *   2. per-space failures are logged and skipped — one bad space must
  *      never wedge an account deletion; leftover journey docs are
  *      caught by the executor's normal subcollection sweep right after.
@@ -28,6 +30,7 @@
  */
 
 const { leaveGoalSpace, GoalSpaceError } = require("./goalSpaceMembership");
+const { afterMemberLeft } = require("./circleMeetups");
 
 async function cleanupGoalSpacesForUser({ firestore, uid, logger = console }) {
   const journeysSnap = await firestore
@@ -69,6 +72,10 @@ async function cleanupGoalSpacesForUser({ firestore, uid, logger = console }) {
       // 1b. Leave — deletes member + journey, decrements memberCount,
       // deactivates if owner. Idempotent for a missing member doc.
       await leaveGoalSpace({ firestore, uid, spaceId });
+      // 1c. Meet-ups (Run26 call 4): the ones they planned go, their uid
+      // comes off every other's `going`, and if they owned the Circle its
+      // leaving ended it, so every meet-up in it goes.
+      await afterMemberLeft({ firestore, spaceId, uid });
     } catch (err) {
       if (err instanceof GoalSpaceError && err.code === "not-found") {
         // The space itself is gone — just drop the stale journey
