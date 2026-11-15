@@ -17,6 +17,7 @@ import {
   Bookmark,
   Repeat,
   Pencil,
+  Spline,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -65,6 +66,12 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import RacePredictionResult from "@/components/run/RacePredictionResult";
+import {
+  defaultStretch,
+  moveNearerEnd,
+  nearestPointIndex,
+  type PointRange,
+} from "@/lib/segments";
 import { parseGoalRaceRecord } from "@/lib/racePrediction";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -76,6 +83,13 @@ import { isRunDateKey } from "@/lib/runExecutionEvidence";
 
 const RenameRunSheet = lazyRetry(
   () => import("@/components/run/RenameRunSheet")
+);
+/* Loaded on the first tap of "Make a segment", not with the page. */
+const SegmentMaker = lazyRetry(() => import("@/components/run/SegmentMaker"));
+/* The run's segment efforts arrive from the server after the page has
+   drawn, so the card's code can too. */
+const RunSegmentEfforts = lazyRetry(
+  () => import("@/components/run/RunSegmentEfforts")
 );
 
 /**
@@ -137,6 +151,10 @@ export default function RunDetail() {
   /* The name just saved, shown before the page reads the run again. */
   const [renamed, setRenamed] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
+  /* The stretch being made a segment (Run26 call 3); null while the maker
+     is closed. The map draws it, and a tap on the map moves its nearer
+     end. */
+  const [segmentRange, setSegmentRange] = useState<PointRange | null>(null);
   const [replayIndex, setReplayIndex] = useState(0);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const replayEndRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -347,6 +365,14 @@ export default function RunDetail() {
             avgPaceSecPerKm={avgPace}
             darkMode={darkTheme}
             replayIndex={replaying ? replayIndex : undefined}
+            highlight={segmentRange}
+            onMapTap={(at) =>
+              setSegmentRange((range) =>
+                range
+                  ? moveNearerEnd(range, nearestPointIndex(run.points, at))
+                  : range
+              )
+            }
           />
           {/* Back button over map */}
           <button
@@ -423,6 +449,25 @@ export default function RunDetail() {
       )}
 
       <div className="px-[16px] pt-4 space-y-4">
+        {/* Making a segment: under the map it draws on, before the rest. */}
+        {segmentRange && user && runId && (
+          <Suspense fallback={null}>
+            <SegmentMaker
+              runId={runId}
+              points={run.points}
+              range={segmentRange}
+              onRangeChange={setSegmentRange}
+              unit={unit}
+              onCancel={() => setSegmentRange(null)}
+              onMade={(segmentId) => {
+                setSegmentRange(null);
+                toast.success("Segment saved");
+                navigate(`/segment/${segmentId}`);
+              }}
+            />
+          </Suspense>
+        )}
+
         {/* Saved-anyway notice. Surfaces only when the run was
             persisted with `isInvalid: true` (PR #480 metadata). The
             user already saw InvalidRunReview at save time and chose
@@ -619,6 +664,10 @@ export default function RunDetail() {
         {/* The finish screen's two cards, in its order: best efforts,
             then one splits table. */}
         <BestEffortsCard efforts={bestEfforts} />
+        {/* Run26 call 3: the segments this run was timed on. */}
+        <Suspense fallback={null}>
+          <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
+        </Suspense>
         {displaySplits.length > 0 && (
           <SplitsTable splits={displaySplits} lapUnit={lapUnit} unit={unit} />
         )}
@@ -680,6 +729,25 @@ export default function RunDetail() {
                 Export GPX
               </Button>
             </div>
+            {/* Run26 call 3: a segment is cut from an outdoor run with GPS
+                that counts. Opens under the map, which scrolls into view. */}
+            {user && runId && isOutdoorGpsRun(kind) && !run.isInvalid && (
+              <Button
+                variant="outline"
+                fullWidth
+                disabled={segmentRange !== null}
+                onClick={() => {
+                  setSegmentRange(defaultStretch(run.points));
+                  window.scrollTo({ top: 0 });
+                }}
+              >
+                <Spline
+                  className="size-4 @max-[7em]:hidden"
+                  aria-hidden="true"
+                />
+                Make a segment
+              </Button>
+            )}
           </div>
         )}
 
