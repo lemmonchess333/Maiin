@@ -20,6 +20,8 @@
  * lists change in the same commit.
  */
 
+const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
+
 /** The catalogue's `mechanic: "isolation"` rows. */
 const ISOLATION_EXERCISE_IDS = Object.freeze([
   "ab-wheel",
@@ -261,6 +263,66 @@ function isFloorDeadlift(exerciseId) {
   return FLOOR_DEADLIFT_IDS.includes(exerciseId);
 }
 
+/** Mirror of roleTable.ts MIN_BODYWEIGHT_REPS: the fewest reps a
+ *  bodyweight lift with no load added is set. */
+const MIN_BODYWEIGHT_REPS = 8;
+
+/** Mirror of roleTable.ts EASY_BODYWEIGHT_EXERCISE_IDS: the bodyweight
+ *  lifts most people can do 8 of, which the 8-rep floor is for. */
+const EASY_BODYWEIGHT_EXERCISE_IDS = Object.freeze([
+  "push-ups",
+  "pike-push-up",
+  "diamond-push-ups",
+  "weighted-push-ups",
+  "bodyweight-squat",
+  "bodyweight-lunge",
+  "single-leg-calf-raise",
+  "glute-bridge",
+  "crunches",
+  "bicycle-crunch",
+  "decline-sit-up",
+  "russian-twist",
+  "toe-touches",
+  "mountain-climbers",
+  "dead-bug",
+  "burpees",
+  "plank",
+  "side-plank",
+  "superman-hold",
+]);
+const EASY_BODYWEIGHT_SET = new Set(EASY_BODYWEIGHT_EXERCISE_IDS);
+
+/** Mirror of roleTable.ts isUnloadedBodyweight. */
+function isUnloadedBodyweight(exercise) {
+  return (
+    !!exercise &&
+    isBodyweightExerciseId(exercise.exerciseId) &&
+    !(typeof exercise.weight === "number" && exercise.weight > 0) &&
+    exercise.repUnit !== "seconds"
+  );
+}
+
+/** Mirror of roleTable.ts takesBodyweightFloor: an easy bodyweight lift
+ *  with no load added. */
+function takesBodyweightFloor(exercise) {
+  return (
+    !!exercise &&
+    EASY_BODYWEIGHT_SET.has(exercise.exerciseId) &&
+    isUnloadedBodyweight(exercise)
+  );
+}
+
+/** Mirror of roleTable.ts fromBodyweightFloor. */
+function fromBodyweightFloor(row) {
+  if (row.bottom >= MIN_BODYWEIGHT_REPS) return row;
+  const up = MIN_BODYWEIGHT_REPS - row.bottom;
+  return {
+    ...row,
+    bottom: MIN_BODYWEIGHT_REPS,
+    ...(row.top !== undefined ? { top: row.top + up } : {}),
+  };
+}
+
 /** Mirror of roleTable.ts roleRepsFor. */
 function roleRepsFor(goal, exercise, experience) {
   const floor = isFloorDeadlift(exercise && exercise.exerciseId);
@@ -270,9 +332,12 @@ function roleRepsFor(goal, exercise, experience) {
     experience,
     HIGH_REP_SET.has(exercise && exercise.exerciseId)
   );
-  const floored = hasSixRepFloor(exercise && exercise.exerciseId)
+  const sixRep = hasSixRepFloor(exercise && exercise.exerciseId)
     ? atLeast(row, SIX_REP_FLOOR)
     : row;
+  const floored = takesBodyweightFloor(exercise)
+    ? fromBodyweightFloor(sixRep)
+    : sixRep;
   if (!floor || toExperience(experience) === "beginner") return floored;
   return floored.top === undefined
     ? { ...floored, sets: Math.min(floored.sets, 3) }
@@ -283,10 +348,14 @@ module.exports = {
   FLOOR_DEADLIFT_IDS,
   HIGH_REP_EXERCISE_IDS,
   ISOLATION_EXERCISE_IDS,
+  EASY_BODYWEIGHT_EXERCISE_IDS,
+  MIN_BODYWEIGHT_REPS,
   SIX_REP_FLOOR,
   SIX_REP_FLOOR_IDS,
   exerciseRole,
   hasSixRepFloor,
+  isUnloadedBodyweight,
+  takesBodyweightFloor,
   roleReps,
   roleRepsFor,
   toExperience,
