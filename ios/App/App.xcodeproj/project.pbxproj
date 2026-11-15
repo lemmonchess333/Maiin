@@ -16,6 +16,7 @@
 		B10000000000000000000002 /* WatchRunPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* WatchRunPlugin.swift */; };
 		B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WatchRunCoordinator.swift */; };
 		B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* HealthWorkoutStore.swift */; };
+		B1BE47000000000000000001 /* HeartRateSensorPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */; };
 		B1000000000000000000000A /* MotionActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000C /* MotionActivityPlugin.swift */; };
 		B10000000000000000000005 /* TroposWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* TroposWatchApp.swift */; };
 		B10000000000000000000006 /* WatchRunModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* WatchRunModel.swift */; };
@@ -85,6 +86,7 @@
 		A10000000000000000000002 /* WatchRunPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* WatchRunCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunCoordinator.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* HealthWorkoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthWorkoutStore.swift; sourceTree = "<group>"; };
+		A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateSensorPlugin.swift; sourceTree = "<group>"; };
 		A1000000000000000000000C /* MotionActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionActivityPlugin.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* TroposWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TroposWatchApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* WatchRunModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchRunModel.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 				A10000000000000000000002 /* WatchRunPlugin.swift */,
 				A10000000000000000000003 /* WatchRunCoordinator.swift */,
 				A10000000000000000000004 /* HealthWorkoutStore.swift */,
+				A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */,
 				A1000000000000000000000C /* MotionActivityPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -367,6 +370,7 @@
 				B10000000000000000000002 /* WatchRunPlugin.swift in Sources */,
 				B10000000000000000000003 /* WatchRunCoordinator.swift in Sources */,
 				B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */,
+				B1BE47000000000000000001 /* HeartRateSensorPlugin.swift in Sources */,
 				B1000000000000000000000A /* MotionActivityPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
