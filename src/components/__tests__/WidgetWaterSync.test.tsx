@@ -28,6 +28,8 @@ const H = vi.hoisted(() => {
   };
 });
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { uid: "u1" } }) }));
+// Mounted on the phone only (App.tsx), where the widgets are.
+vi.mock("@/lib/platform", () => ({ isNativePlatform: () => true }));
 vi.mock("@/hooks/useWaterLog", () => ({ useWaterLog: () => H.water }));
 vi.mock("@/lib/homeWidgets", () => ({
   writeHomeWidgetSections: vi.fn(async (sections: HomeWidgetSections) => {

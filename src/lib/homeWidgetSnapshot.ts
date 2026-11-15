@@ -38,19 +38,30 @@ import {
 } from "@/lib/dateHelpers";
 import { formatWeekday } from "@/utils/formatters";
 import { differenceInCalendarDays } from "date-fns";
-import { formatWaterVolume, WATER_PRESETS } from "@/lib/waterUnits";
 import {
   HOME_WIDGET_SNAPSHOT_VERSION,
   widgetAccount,
   type HomeWidgetSnapshot,
   type WidgetDay,
-  type WidgetFood,
-  type WidgetWater,
   type WidgetSegment,
   type WidgetSport,
   type WidgetWeek,
 } from "@/lib/homeWidgetContract";
 import { widgetUrl } from "@/lib/widgetLinks";
+import {
+  widgetFoodSection,
+  widgetWaterSection,
+  whole,
+  type FoodFigures,
+  type WaterFigures,
+} from "@/lib/homeWidgetSections";
+
+export {
+  servingLabel,
+  widgetFoodSection,
+  widgetWaterSection,
+} from "@/lib/homeWidgetSections";
+export type { FoodFigures, WaterFigures };
 import { sessionLeadArt } from "@/lib/formArtCutouts";
 import { LIFT_POSE, liftArtFor, poseAssetName } from "@/lib/liveActivityArt";
 
@@ -81,24 +92,6 @@ export interface HomeWidgetInput {
   streak: { days: number; best: number; loggedToday: boolean } | null;
   food: FoodFigures | null;
   water: WaterFigures | null;
-}
-
-/** The day's food as Home's and Food's cards hold it: calories and
- *  protein logged, against the day's targets (`useEffectiveTargets`). */
-export interface FoodFigures {
-  eaten: number;
-  target: number;
-  protein: number;
-  /** 0 for no protein goal (an infeasible split, Nutr3). */
-  proteinTarget: number;
-}
-
-/** The day's water as `useWaterLog` holds it. */
-export interface WaterFigures {
-  ml: number;
-  targetMl: number;
-  servingMl: number;
-  drinkIds: readonly string[];
 }
 
 /** One session today, as the widget words it. */
@@ -466,52 +459,6 @@ export function widgetWeek(input: HomeWidgetInput): WidgetWeek | null {
       of !== null
         ? `${done} of ${of} ${noun} this week`
         : `${done} ${noun} this week`,
-  };
-}
-
-/** The water step's name on the widget's button: the container Home's
- *  size sheet calls it ("Glass"), or its volume. */
-export function servingLabel(ml: number): string {
-  return (
-    WATER_PRESETS.find((preset) => preset.ml === ml)?.label ??
-    formatWaterVolume(ml)
-  );
-}
-
-const whole = (n: number) => (Number.isFinite(n) ? Math.round(n) : 0);
-
-/** The food section, whole numbers, for `dateKey`. Home's snapshot and
- *  Food's own section write both come through here. */
-export function widgetFoodSection(
-  dateKey: string,
-  food: FoodFigures,
-  nowMs: number
-): WidgetFood {
-  return {
-    date: dateKey,
-    eaten: Math.max(0, whole(food.eaten)),
-    target: Math.max(0, whole(food.target)),
-    protein: Math.max(0, whole(food.protein)),
-    proteinTarget: Math.max(0, whole(food.proteinTarget)),
-    updatedAt: Math.round(nowMs),
-  };
-}
-
-/** The water section, whole numbers, for `dateKey`. Home's snapshot and
- *  the water writer above the routes both come through here. */
-export function widgetWaterSection(
-  dateKey: string,
-  water: WaterFigures,
-  nowMs: number
-): WidgetWater {
-  return {
-    date: dateKey,
-    ml: Math.max(0, whole(water.ml)),
-    targetMl: Math.max(0, whole(water.targetMl)),
-    servingMl: whole(water.servingMl),
-    servingLabel: servingLabel(whole(water.servingMl)),
-    drinkIds: [...water.drinkIds],
-    updatedAt: Math.round(nowMs),
   };
 }
 

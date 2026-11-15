@@ -1,9 +1,23 @@
 import { useEffect, useEffectEvent } from "react";
-import {
-  homeWidgetSnapshot,
-  type HomeWidgetInput,
-} from "@/lib/homeWidgetSnapshot";
-import { writeHomeWidgetSnapshot } from "@/lib/homeWidgets";
+import type { HomeWidgetInput } from "@/lib/homeWidgetSnapshot";
+import { isNativePlatform } from "@/lib/platform";
+import { logger } from "@/lib/logger";
+
+/** The snapshot's builder and its writer, loaded once and on a phone only:
+ *  the web has no widgets, and Home's own chunk carries neither. */
+let writer: Promise<
+  [
+    typeof import("@/lib/homeWidgetSnapshot"),
+    typeof import("@/lib/homeWidgets"),
+  ]
+> | null = null;
+function loadWriter() {
+  writer ??= Promise.all([
+    import("@/lib/homeWidgetSnapshot"),
+    import("@/lib/homeWidgets"),
+  ]);
+  return writer;
+}
 
 /**
  * Keeps the Home Screen and Lock Screen widgets on what Home shows (Wid1):
@@ -13,16 +27,19 @@ import { writeHomeWidgetSnapshot } from "@/lib/homeWidgets";
  *
  * `input` is null until every source Home draws from has loaded: a
  * snapshot written mid-load would put a week with nothing done on the
- * lock screen. Off the phone the write does nothing.
+ * lock screen. Off the phone nothing is loaded or written.
  */
 export function useHomeWidgetSnapshot(
   input: Omit<HomeWidgetInput, "nowMs"> | null
 ): void {
   const write = useEffectEvent(() => {
-    if (!input) return;
-    void writeHomeWidgetSnapshot(
-      homeWidgetSnapshot({ ...input, nowMs: Date.now() })
-    );
+    if (!input || !isNativePlatform()) return;
+    const nowMs = Date.now();
+    void loadWriter()
+      .then(([{ homeWidgetSnapshot }, { writeHomeWidgetSnapshot }]) =>
+        writeHomeWidgetSnapshot(homeWidgetSnapshot({ ...input, nowMs }))
+      )
+      .catch((err) => logger.warn("[widgets] snapshot not written", err));
   });
   useEffect(() => {
     write();

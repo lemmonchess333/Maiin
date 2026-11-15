@@ -103,6 +103,11 @@ vi.mock("@/components/food/FoodConsistencyCard", () => ({
 vi.mock("@/components/ManualFoodLogger", () => ({
   ManualFoodLogger: () => null,
 }));
+/* On the phone, where the widgets are: the web loads no widget code. */
+vi.mock("@/lib/platform", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/platform")>()),
+  isNativePlatform: () => true,
+}));
 /* The widgets' bridge: the sections Food hands it, as the plugin would
    merge them into the snapshot. */
 vi.mock("@/lib/homeWidgets", () => ({
