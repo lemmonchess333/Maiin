@@ -599,20 +599,22 @@ export default function RunMap({
     };
   }, [targetRoute]);
 
-  // The stretch being made a segment, redrawn as its ends move.
+  // The stretch being made a segment, redrawn as its ends move. A map
+  // that never had one is left alone: the line is drawn only once asked.
   const highlightFrom = highlight?.from ?? -1;
   const highlightTo = highlight?.to ?? -1;
+  const highlightDrawnRef = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    const wanted = highlightFrom >= 0 && highlightTo > highlightFrom;
+    if (!map || (!wanted && !highlightDrawnRef.current)) return;
+    highlightDrawnRef.current = wanted;
     const apply = () => {
       const src = map.getSource("segment-pick") as
-        | maplibregl.GeoJSONSource
-        | undefined;
-      const stretch =
-        highlightFrom >= 0 && highlightTo > highlightFrom
-          ? points.slice(highlightFrom, highlightTo + 1)
-          : [];
+        maplibregl.GeoJSONSource | undefined;
+      const stretch = wanted
+        ? points.slice(highlightFrom, highlightTo + 1)
+        : [];
       src?.setData({
         type: "FeatureCollection",
         features: splitRouteSegments(stretch)

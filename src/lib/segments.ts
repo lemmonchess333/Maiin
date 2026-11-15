@@ -25,8 +25,9 @@ import type { RouteCoordinate } from "./routeSegments";
 
 /** The shortest segment, in metres (a Tropos heuristic, as the server's). */
 export const MIN_SEGMENT_METRES = 400;
-/** The longest segment, in metres (a Tropos heuristic, as the server's). */
-export const MAX_SEGMENT_METRES = 50000;
+/** The longest segment (a Tropos heuristic, as the server's). */
+const MAX_SEGMENT_KM = 50;
+export const MAX_SEGMENT_METRES = MAX_SEGMENT_KM * 1000;
 /** The longest name, in characters. */
 export const SEGMENT_NAME_MAX = 60;
 
@@ -35,7 +36,8 @@ export const STRETCH_REFUSALS = {
   range: "Pick a start before the end.",
   gap: "A segment can’t cross a gap in the route.",
   short: `A segment needs to be at least ${MIN_SEGMENT_METRES} m.`,
-  long: `A segment can be at most ${MAX_SEGMENT_METRES / 1000} km.`,
+  // The server's sentence, word for word (segments.cross.test.ts).
+  long: `A segment can be at most ${MAX_SEGMENT_KM} km.`,
 } as const;
 
 export type StretchRefusal = keyof typeof STRETCH_REFUSALS;
@@ -163,7 +165,8 @@ export function nearestPointIndex(
 export function moveNearerEnd(range: PointRange, index: number): PointRange {
   const toStart = Math.abs(index - range.from);
   const toEnd = Math.abs(index - range.to);
-  if (toStart <= toEnd) return { ...range, from: Math.min(index, range.to - 1) };
+  if (toStart <= toEnd)
+    return { ...range, from: Math.min(index, range.to - 1) };
   return { ...range, to: Math.max(index, range.from + 1) };
 }
 
@@ -317,6 +320,59 @@ export function rankWords(rank: number, of: number): string {
   if (of <= 1) return "Your first time";
   if (rank <= 1) return "Your best";
   return `Your ${ordinal(rank)} best`;
+}
+
+/* ───────────── A board as the viewer reads it ───────────── */
+
+/** A board row: someone the viewer follows, or the viewer's own best. */
+export interface BoardRow {
+  uid: string;
+  self: boolean;
+  name: string;
+  photoURL: string | null;
+  elapsedSeconds: number;
+  day: string | null;
+  /** Where the row opens: the post it came from, or the viewer's run. */
+  href: string | null;
+}
+
+/**
+ * The board as the viewer reads it: the people they follow (the server
+ * has already left out anyone they may not see), their own best among
+ * them, fastest first, ranked in that order. Someone blocked since the
+ * board was read is left out here too, as on every social surface.
+ */
+export function boardRows(
+  entries: readonly BoardEntry[],
+  own: SegmentEffort | null,
+  uid: string | null,
+  blocked: ReadonlySet<string>
+): BoardRow[] {
+  const rows: BoardRow[] = entries
+    .filter((e) => e.uid !== uid && !blocked.has(e.uid))
+    .map((e) => ({
+      uid: e.uid,
+      self: false,
+      name: e.name ?? "Runner",
+      photoURL: e.photoURL,
+      elapsedSeconds: e.elapsedSeconds,
+      day: e.day,
+      href: e.activityId ? `/activity/${e.activityId}` : null,
+    }));
+  if (own && uid)
+    rows.push({
+      uid,
+      self: true,
+      name: "You",
+      photoURL: null,
+      elapsedSeconds: own.elapsedSeconds,
+      day: own.day,
+      href: `/run/${own.runId}`,
+    });
+  return rows.sort(
+    (a, b) =>
+      a.elapsedSeconds - b.elapsedSeconds || Number(b.self) - Number(a.self)
+  );
 }
 
 /* ───────────── The callables ───────────── */

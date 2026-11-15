@@ -66,7 +66,6 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import HeartRateSummaryCard from "@/components/run/HeartRateSummaryCard";
 import RacePredictionResult from "@/components/run/RacePredictionResult";
-import RunSegmentEfforts from "@/components/run/RunSegmentEfforts";
 import {
   defaultStretch,
   moveNearerEnd,
@@ -87,6 +86,11 @@ const RenameRunSheet = lazyRetry(
 );
 /* Loaded on the first tap of "Make a segment", not with the page. */
 const SegmentMaker = lazyRetry(() => import("@/components/run/SegmentMaker"));
+/* The run's segment efforts arrive from the server after the page has
+   drawn, so the card's code can too. */
+const RunSegmentEfforts = lazyRetry(
+  () => import("@/components/run/RunSegmentEfforts")
+);
 
 /**
  * The finish screen's "How did it feel?" answer, as a saved run reads it
@@ -661,7 +665,9 @@ export default function RunDetail() {
             then one splits table. */}
         <BestEffortsCard efforts={bestEfforts} />
         {/* Run26 call 3: the segments this run was timed on. */}
-        <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
+        <Suspense fallback={null}>
+          <RunSegmentEfforts uid={user?.uid} runId={runId} unit={unit} />
+        </Suspense>
         {displaySplits.length > 0 && (
           <SplitsTable splits={displaySplits} lapUnit={lapUnit} unit={unit} />
         )}

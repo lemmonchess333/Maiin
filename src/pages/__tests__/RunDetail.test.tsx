@@ -24,6 +24,7 @@ import { runTitle } from "@/lib/runLabels";
 const h = vi.hoisted(() => ({
   run: null as Record<string, unknown> | null,
   mapProps: [] as Record<string, unknown>[],
+  segmentRows: [] as unknown[],
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -64,6 +65,15 @@ vi.mock("@/components/share/ShareCardSheet", () => ({
 }));
 vi.mock("@/components/session/DeleteSessionAction", () => ({
   default: () => null,
+}));
+// Run26 call 3: the run's segment efforts, read from the server in their
+// own hook (useRunSegmentEfforts.test.ts); the page only draws them.
+vi.mock("@/hooks/useRunSegmentEfforts", () => ({
+  useRunSegmentEfforts: () => ({
+    loading: false,
+    failed: false,
+    rows: h.segmentRows,
+  }),
 }));
 const renameRun = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/runRename", async (importOriginal) => ({
@@ -130,6 +140,7 @@ function renderDetail() {
 beforeEach(() => {
   h.run = null;
   h.mapProps.length = 0;
+  h.segmentRows = [];
 });
 afterEach(() => cleanup());
 
@@ -475,5 +486,88 @@ describe("RunDetail — a goal race against its prediction", () => {
     // POSITIVE anchor: the rest of the page is there.
     expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
     expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+  });
+});
+
+describe("RunDetail — segments (Run26 call 3)", () => {
+  const lastMap = () => h.mapProps[h.mapProps.length - 1];
+
+  it("lists the segments the run was timed on, with its place among your own", async () => {
+    h.run = savedRun();
+    h.segmentRows = [
+      {
+        effort: {
+          id: "run-1_hill_1",
+          segmentId: "hill",
+          runId: "run-1",
+          lap: 1,
+          elapsedSeconds: 251,
+          startedAtMs: 1,
+          day: "2026-10-03",
+        },
+        segment: {
+          id: "hill",
+          name: "Common hill",
+          lengthMeters: 800,
+          points: [],
+        },
+        rank: 2,
+        of: 5,
+      },
+    ];
+    renderDetail();
+    const card = await screen.findByRole("region", { name: "Segments" });
+    const row = within(card).getByRole("link", { name: /Common hill/ });
+    expect(row).toHaveAttribute("href", "/segment/hill");
+    expect(row).toHaveTextContent("800 m");
+    expect(row).toHaveTextContent("4:11");
+    expect(row).toHaveTextContent("Your 2nd best");
+  });
+
+  it("opens the maker under the map, which draws the stretch and moves its nearer end to a tap", async () => {
+    h.run = savedRun();
+    renderDetail();
+    expect(lastMap().highlight).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Make a segment" }));
+    const maker = await screen.findByRole("region", { name: "Make a segment" });
+    // Points 111 m apart: the first past 1,000 m is the ninth (1,001 m).
+    expect(lastMap().highlight).toEqual({ from: 0, to: 9 });
+    expect(maker).toHaveTextContent("Length 1.0 km");
+
+    const points = (h.run as { points: GPSPoint[] }).points;
+    const tap = (i: number) =>
+      act(() => {
+        (lastMap().onMapTap as (at: { lat: number; lon: number }) => void)({
+          lat: points[i].lat,
+          lon: points[i].lon,
+        });
+      });
+    tap(6); // nearer the end
+    expect(lastMap().highlight).toEqual({ from: 0, to: 6 });
+    tap(3); // as near both: the start moves
+    expect(lastMap().highlight).toEqual({ from: 3, to: 6 });
+    expect(
+      within(maker).getByText("A segment needs to be at least 400 m.")
+    ).toBeVisible();
+    expect(
+      within(maker).getByRole("button", { name: "Save segment" })
+    ).toBeDisabled();
+
+    fireEvent.click(within(maker).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("region", { name: "Make a segment" })).toBeNull();
+    expect(lastMap().highlight).toBeNull();
+  });
+
+  it("offers no segment from a treadmill run or one saved despite invalid figures", () => {
+    h.run = savedRun({ place: "treadmill" });
+    const { unmount } = renderDetail();
+    // POSITIVE anchor: the page drew.
+    expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Make a segment" })).toBeNull();
+    unmount();
+    h.run = savedRun({ isInvalid: true });
+    renderDetail();
+    expect(screen.getByText("Saved despite invalid metrics")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Make a segment" })).toBeNull();
   });
 });

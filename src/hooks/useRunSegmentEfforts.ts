@@ -113,7 +113,10 @@ export function useRunSegmentEfforts(
                   a.effort.startedAtMs - b.effort.startedAtMs ||
                   a.effort.id.localeCompare(b.effort.id)
               );
-            setRead({ key: at, value: { loading: false, failed: false, rows } });
+            setRead({
+              key: at,
+              value: { loading: false, failed: false, rows },
+            });
           })
           .catch(fail);
       },

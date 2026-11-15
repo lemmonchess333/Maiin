@@ -106,6 +106,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: the week's sessions, badges and medals (yours: all), posts  |
 | `FollowList.tsx`                       | `/followers`, `/following`         | Your own followers and following, from your profile's counts; Remove follower   |
 | `League.tsx`                           | `/league`                          | The weekly league: your group's standings, its zones, the countdown, Leave      |
+| `Segment.tsx`                          | `/segment/:segmentId`              | A segment: its line, your best and your efforts, the board of who you follow    |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows)  |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                     |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA                                      |

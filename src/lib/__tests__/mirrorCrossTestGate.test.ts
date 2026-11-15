@@ -197,6 +197,12 @@ const PINNED: Record<string, string> = {
   // date}`; the app reads `pulse/{its local today}` and its `sessions`.
   // A basename pair with src/lib/pulse.ts.
   "functions/lib/pulse.js": "src/lib/__tests__/pulse.cross.test.ts",
+  // Run26 call 3: a segment's stretch rule and name refusals, which the
+  // maker says before asking. A basename pair with src/lib/segments.ts;
+  // the cross-test drives segments.js and segmentGeometry.js both.
+  "functions/lib/segments.js": "src/lib/__tests__/segments.cross.test.ts",
+  "functions/lib/segmentGeometry.js":
+    "src/lib/__tests__/segments.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",

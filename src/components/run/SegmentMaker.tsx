@@ -57,6 +57,8 @@ export default function SegmentMaker({
 }) {
   const headingId = useId();
   const nameId = useId();
+  const startId = useId();
+  const endId = useId();
   const [name, setName] = useState("");
   const [state, setState] = useState<MakerState>({ step: "picking" });
   const along = useMemo(() => metresAlong(points), [points]);
@@ -106,20 +108,23 @@ export default function SegmentMaker({
           Make a segment
         </SectionHeading>
         <p className="text-sm text-muted-foreground text-pretty">
-          Tap the map to move the nearer end, or use the sliders. Every run
-          you save along it is timed.
+          Tap the map to move the nearer end, or use the sliders. Every run you
+          save along it is timed.
         </p>
       </div>
 
       <div className="space-y-3">
-        <label className="block space-y-1">
-          <span className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="font-semibold text-foreground">Start</span>
+        <div className="space-y-1">
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <label htmlFor={startId} className="font-semibold text-foreground">
+              Start
+            </label>
             <span className="font-mono tabular-nums text-muted-foreground">
               {at(range.from)} in
             </span>
-          </span>
+          </div>
           <RangeInput
+            id={startId}
             min={0}
             max={last}
             step={1}
@@ -133,15 +138,18 @@ export default function SegmentMaker({
               })
             }
           />
-        </label>
-        <label className="block space-y-1">
-          <span className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="font-semibold text-foreground">End</span>
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <label htmlFor={endId} className="font-semibold text-foreground">
+              End
+            </label>
             <span className="font-mono tabular-nums text-muted-foreground">
               {at(range.to)} in
             </span>
-          </span>
+          </div>
           <RangeInput
+            id={endId}
             min={0}
             max={last}
             step={1}
@@ -155,7 +163,7 @@ export default function SegmentMaker({
               })
             }
           />
-        </label>
+        </div>
         <p className="text-sm" aria-live="polite">
           {stretch.ok ? (
             <>
@@ -192,8 +200,8 @@ export default function SegmentMaker({
           className="ds-input text-base"
         />
         <p className="text-xs text-muted-foreground text-pretty">
-          Anyone whose run is timed on it sees its name and its line, never
-          who made it.
+          Anyone whose run is timed on it sees its name and its line, never who
+          made it.
         </p>
       </div>
 
