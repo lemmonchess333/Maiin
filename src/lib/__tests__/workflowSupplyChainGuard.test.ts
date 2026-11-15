@@ -298,6 +298,7 @@ describe("jobs that read release credentials name the production environment", (
       "backfill-community-goal.yml backfill",
       "backfill-follow-counts.yml backfill",
       "backfill-medals.yml backfill",
+      "backfill-space-sessions.yml backfill",
       "deploy-firestore.yml deploy",
       "deploy-functions.yml deploy",
       "deploy-hosting.yml build-and-deploy",
