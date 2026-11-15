@@ -1,4 +1,5 @@
 import { localDateString, parseLocalDate } from "./dateHelpers";
+import { raceSeconds } from "./runElapsed";
 import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
 
 /** Recorded race effort, never inferred from a planned race or recovery marker. */
@@ -9,9 +10,11 @@ export interface MilestoneRace {
   durationSeconds: number;
 }
 
-/** Reuse the run documents already fetched for History's lifetime totals. */
+/** Reuse the run documents already fetched for History's lifetime totals.
+ *  A race's time is its elapsed time where the run has one (Run28 call 4
+ *  and its STATUS), else its duration. */
 export function recordedRaceMilestones(
-  runs: readonly RunRecord[]
+  runs: readonly (RunRecord & { elapsedSeconds?: number })[]
 ): MilestoneRace[] {
   return runs.flatMap((run) => {
     // `completedRaces` contains recovery-effect dedupe IDs, not results.
@@ -32,7 +35,7 @@ export function recordedRaceMilestones(
         id: run.id,
         date: run.date,
         distanceMetres: run.distance!,
-        durationSeconds: run.duration!,
+        durationSeconds: raceSeconds(run.duration!, run.elapsedSeconds),
       },
     ];
   });

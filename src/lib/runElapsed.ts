@@ -62,9 +62,11 @@ export function shownElapsedSeconds(
     : null;
 }
 
-/** The goal race's time (Run28 call 4): its elapsed time, as Strava times
- *  a run tagged Race; its duration for a run saved without both stamps. */
-export function goalRaceSeconds(
+/** A race's time (Run28 call 4, and its STATUS for a Race effort): a run
+ *  started as a race, the goal race or a "Race effort" from the chooser, is
+ *  timed on its elapsed time, as Strava times a run tagged Race; on its
+ *  duration when it was saved without both stamps. */
+export function raceSeconds(
   durationSeconds: number,
   elapsedSeconds: number | null | undefined
 ): number {

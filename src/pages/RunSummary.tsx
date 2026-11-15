@@ -119,11 +119,7 @@ import { startDayKey } from "@/lib/startDay";
 import type { FinishedSession } from "@/lib/anniversaries";
 import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import { goalRaceRecord, isGoalRaceRun } from "@/lib/racePrediction";
-import {
-  elapsedSecondsOf,
-  goalRaceSeconds,
-  runTimeStat,
-} from "@/lib/runElapsed";
+import { elapsedSecondsOf, raceSeconds, runTimeStat } from "@/lib/runElapsed";
 import { useRacePredictionLog } from "@/hooks/useRacePredictionLog";
 import RacePredictionResult from "@/components/run/RacePredictionResult";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
@@ -930,13 +926,14 @@ export default function RunSummary() {
     elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(state.points, distance);
   /* Elapsed time (Run28 call 2): from the clock's start to the finish.
-     `elapsed` is the moving time. The goal race is timed on elapsed time
-     (call 4), as Strava times a run tagged Race. */
+     `elapsed` is the moving time. A race, the goal race or a Race effort,
+     is timed on elapsed time (call 4 and its STATUS), as Strava times a
+     run tagged Race. */
   const recordedElapsed = elapsedSecondsOf(
     state.recordingStartedAt,
     state.finishedAt
   );
-  const raceSeconds = goalRaceSeconds(elapsed, recordedElapsed);
+  const raceTimeS = raceSeconds(elapsed, recordedElapsed);
 
   /* `distance` is metres throughout the run flow (useGPS.ts:118-120
      accumulates via Haversine in metres, RunSummary already converts
@@ -1141,9 +1138,8 @@ export default function RunSummary() {
       };
     }
     if (activityType === "race") {
-      // The goal race's time is its elapsed time (Run28 call 4); any other
-      // race effort keeps its moving time.
-      const secs = (isGoalRace ? raceSeconds : elapsed) ?? 0;
+      // A race's time is its elapsed time (Run28 call 4 and its STATUS).
+      const secs = raceTimeS;
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
       const s = secs % 60;
@@ -2031,7 +2027,7 @@ export default function RunSummary() {
           {/* The goal race against what Tropos predicted for it. */}
           <RacePredictionResult
             record={raceRecord}
-            actualS={raceSeconds}
+            actualS={raceTimeS}
             className="mx-4 mb-3"
           />
 

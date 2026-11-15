@@ -1581,6 +1581,21 @@ describe("RunSummary — elapsed time beside moving time (Run28 call 2)", () => 
     expect(screen.queryByText("Moving time")).toBeNull();
   });
 
+  it("times a Race effort that is not the goal race on its elapsed time too (Run28 call 4, its STATUS)", async () => {
+    // A parkrun started as "Race effort": 25:00 moving, 26:00 wall clock.
+    renderSummary({
+      ...stamps(1500 + 60),
+      runConfig: { ...savedRun().runConfig, activityType: "race" },
+    });
+    expect(
+      (await screen.findByText(/^Race ·/)).previousElementSibling
+    ).toHaveTextContent("26:00");
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("25:00");
+    expect(screen.queryByText(/Tropos predicted/)).toBeNull();
+  });
+
   it("stays one figure for a run saved without both stamps", async () => {
     renderSummary({ recordingStartedAt: null });
     expect(

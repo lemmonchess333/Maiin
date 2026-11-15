@@ -30,7 +30,7 @@ import {
   type GoalRace,
 } from "../racePrediction";
 import { runDocument, type FinishedRun } from "../runCompletion";
-import { elapsedSecondsOf, goalRaceSeconds } from "../runElapsed";
+import { elapsedSecondsOf, raceSeconds } from "../runElapsed";
 import { parseSavedRun } from "../savedRuns";
 import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
 
@@ -172,7 +172,7 @@ describe("the record the app saves is the one the report scores", () => {
       });
       const result = racePredictionResult(
         saved.racePrediction,
-        goalRaceSeconds(
+        raceSeconds(
           saved.duration,
           elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
         )
@@ -236,7 +236,7 @@ describe("the race's time: the report and the app read the same elapsed time (Ru
       expect(report.goalRaceEntry(read)!.ranS).toBe(ran);
       // …the run's page, reading the saved stamps…
       expect(
-        goalRaceSeconds(
+        raceSeconds(
           saved.duration,
           elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
         )
@@ -247,7 +247,7 @@ describe("the race's time: the report and the app read the same elapsed time (Ru
         completedAt: saved.completedAt,
       })!;
       expect(parsed.goalRace).toBe(true);
-      expect(goalRaceSeconds(parsed.duration, parsed.elapsedSeconds)).toBe(ran);
+      expect(raceSeconds(parsed.duration, parsed.elapsedSeconds)).toBe(ran);
     }
   );
 });
