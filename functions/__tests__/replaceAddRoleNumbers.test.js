@@ -22,7 +22,6 @@ function plan(goal = "hypertrophy") {
     currentPhase: "progression",
     weekNumber: 3,
     splitType: "upper_lower",
-    fatigueScore: 0,
     updatedAt: 1000,
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],

@@ -49,10 +49,7 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
-  useStreaks: () => ({
-    awardEventBadge: vi.fn(),
-    awardEventBadges: vi.fn(),
-  }),
+  useStreaks: () => ({}),
 }));
 vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
   // The pure helpers (`draftLayout`) stay real.

@@ -57,7 +57,7 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => h.user.uid,
 }));
 vi.mock("@/features/streaks/useStreaks", () => ({
-  useStreaks: () => ({ awardEventBadge: vi.fn(), awardEventBadges: vi.fn() }),
+  useStreaks: () => ({}),
 }));
 vi.mock("@/hooks/RemindersProvider", () => ({
   useStreakReminder: () => ({

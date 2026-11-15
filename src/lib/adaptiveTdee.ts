@@ -38,6 +38,7 @@
  * Pure function — no I/O, no clock. Table-tested like `raceGoalPlanner`.
  * Recency-weighting is a documented v2 refinement (this is an even-weighted fit).
  */
+import { FOOD_DAY_KCAL } from "./foodDay";
 
 export interface AdaptiveTdeeInput {
   /** Days that have a logged intake total, within the trailing window. Missing/zero days are simply absent. */
@@ -89,7 +90,8 @@ export const ADAPTIVE_TDEE_DEFAULTS = {
    * bound its query anyway.
    */
   windowDays: 21,
-  plausibilityFloorKcal: 800,
+  /** A trusted intake day is a food day (`foodDay.ts`), the one rule. */
+  plausibilityFloorKcal: FOOD_DAY_KCAL,
   minTrustedDays: 10,
   minWeighIns: 8,
   minSpanDays: 14,

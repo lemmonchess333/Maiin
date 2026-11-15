@@ -23,7 +23,6 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { weekKeyMinusN } from "@/lib/performanceEngine";
-import { localWeekKey } from "@/lib/dateHelpers";
 import {
   probeHasDoc,
   probeReviewEligibility,
@@ -32,7 +31,6 @@ import {
 import {
   buildWeeklyReview,
   weekBounds,
-  type WeekAheadPlan,
   type WeekBest,
   type WeeklyReview,
   type WeeklyReviewData,
@@ -53,7 +51,6 @@ import {
 } from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
-import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { logger } from "@/lib/logger";
 import { startDayKey } from "@/lib/startDay";
@@ -263,9 +260,6 @@ export function useReviewEligibility(): {
 interface WeeklyReviewState {
   loading: boolean;
   review: WeeklyReview | null;
-  /** The plan's week under way, read whether or not there is a review:
-   *  the page shows it before a first review exists. */
-  weekAhead: WeekAheadPlan | null;
   weekKey: string;
   /** The read failed: not the same as a week with nothing to review. */
   failed: boolean;
@@ -282,7 +276,6 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
   const [state, setState] = useState<WeeklyReviewState>({
     loading: true,
     review: null,
-    weekAhead: null,
     weekKey,
     failed: false,
   });
@@ -440,43 +433,23 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         }
         if (cancelled) return;
 
-        // The reviewed week's counts and the week ahead's plan, counted as
-        // Home and the finish screens count them (`trainingWeek`). A free
-        // runner's plan has no runs, so their weeks are done-only (Run9a).
+        // The reviewed week's counts, counted as Home and the finish
+        // screens count them (`trainingWeek`). A free runner's plan has no
+        // runs, so their weeks are done-only (Run9a). The week ahead is the
+        // review's last card's to read, live (`WeekAheadEnding`).
         const programState = programStateSnap.exists()
           ? (programStateSnap.data() as Record<string, unknown>)
           : null;
-        const surface = resolveRunPlanSurface(
-          profile as Parameters<typeof resolveRunPlanSurface>[0],
-          programState as Parameters<typeof resolveRunPlanSurface>[1]
-        );
         const planState = programState as TrainingWeekInput["programState"];
         const startKey = startDayKey(profile?.createdAt);
-        const readAt = new Date();
         const reviewed = trainingWeek({
           weekKey,
           profile,
           programState: planState,
           workouts: weekWorkoutDocs,
           runs: savedRuns,
-          now: readAt,
+          now: new Date(),
         });
-        const ahead = trainingWeek({
-          weekKey: localWeekKey(readAt),
-          profile,
-          programState: planState,
-          workouts: [],
-          runs: [],
-          now: readAt,
-        });
-        const runPlan = programState?.runPlan as
-          { phase?: string | null } | undefined;
-        const phaseNote =
-          surface.kind === "race_goal"
-            ? runPlan?.phase
-              ? `Race prep — ${runPlan.phase}`
-              : "Race prep"
-            : null;
 
         // Adaptive-TDEE retune inside the reviewed week?
         const appliedAt = profile?.adaptiveCapState?.lastAppliedAt;
@@ -516,11 +489,6 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           adaptiveRetunedInWeek: retuned,
           hideWeightNumber: Boolean(profile?.hideWeightNumber),
           established,
-          weekAhead: {
-            lifts: ahead.lifts.planned,
-            runs: ahead.runs.planned,
-            phaseNote,
-          },
           goalProfile: profile
             ? {
                 goalWeightKg: profile.goalWeightKg,
@@ -533,7 +501,6 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         setState({
           loading: false,
           review: buildWeeklyReview(data),
-          weekAhead: data.weekAhead,
           weekKey,
           failed: false,
         });
@@ -543,7 +510,6 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           setState({
             loading: false,
             review: null,
-            weekAhead: null,
             weekKey,
             failed: true,
           });

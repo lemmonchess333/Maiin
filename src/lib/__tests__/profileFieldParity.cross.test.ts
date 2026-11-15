@@ -40,6 +40,7 @@ const sanitizer = require(
 ) as {
   PROFILE_ALLOWED_FIELDS: readonly string[];
   SERVER_MANAGED_PROFILE_FIELDS: readonly string[];
+  RETIRED_PROFILE_FIELDS: readonly string[];
 };
 
 /** Parse the `allowedUserFields()` function body out of firestore.rules. */
@@ -68,8 +69,17 @@ function rulesAllowedFields(): Set<string> {
  */
 const DIRECT_WRITE_ONLY = new Set<string>(
   PROFILE_FIELD_REGISTRY.filter(
-    (e) => !e.sanitized && !e.serverGuarded && !e.serverOnly
+    (e) => !e.sanitized && !e.serverGuarded && !e.serverOnly && !e.retired
   ).map((e) => e.field)
+);
+
+/**
+ * In rules only because an older build may still send it (App1 Q24): no
+ * build writes it now, and the sanitiser drops it quietly
+ * (`RETIRED_PROFILE_FIELDS`). Derived from the registry, as above.
+ */
+const RETIRED = new Set<string>(
+  PROFILE_FIELD_REGISTRY.filter((e) => e.retired).map((e) => e.field)
 );
 
 /** In the sanitiser (CF write) but intentionally NOT directly client-writable.
@@ -93,12 +103,17 @@ describe("profile field-allowlist parity — rules ↔ sanitiser", () => {
     ).toEqual([]);
   });
 
-  it("every client-writable field (rules) is CF-sanitised, server-managed, or explicitly direct-only", () => {
+  it("every client-writable field (rules) is CF-sanitised, server-managed, retired, or explicitly direct-only", () => {
     const rules = [...rulesAllowedFields()];
     const allowed = new Set(sanitizer.PROFILE_ALLOWED_FIELDS);
     const server = new Set(sanitizer.SERVER_MANAGED_PROFILE_FIELDS);
+    const retired = new Set(sanitizer.RETIRED_PROFILE_FIELDS);
     const unclassified = rules.filter(
-      (f) => !allowed.has(f) && !server.has(f) && !DIRECT_WRITE_ONLY.has(f)
+      (f) =>
+        !allowed.has(f) &&
+        !server.has(f) &&
+        !retired.has(f) &&
+        !DIRECT_WRITE_ONLY.has(f)
     );
     expect(
       unclassified,
@@ -124,6 +139,9 @@ describe("profile field-allowlist parity — rules ↔ sanitiser", () => {
       orphanDirect,
       `Orphan DIRECT_WRITE_ONLY (no longer in rules)`
     ).toEqual([]);
+    // A retired field the sanitiser still validates was never retired.
+    const liveRetired = [...RETIRED].filter((f) => allowed.has(f));
+    expect(liveRetired, `Retired yet still CF-sanitised`).toEqual([]);
   });
 });
 

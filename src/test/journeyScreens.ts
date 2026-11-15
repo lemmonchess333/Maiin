@@ -5,7 +5,6 @@
  * journey in CI.
  *
  * - Setup's names: `Onboarding.test.tsx` walks setup by them.
- * - The offer after setup: `Upgrade.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
@@ -46,7 +45,8 @@ export const SETUP = {
   weight: "Weight (kg)",
   height: "Height (cm)",
   sex: "Sex for calorie calculation",
-  age: "Age range",
+  /** App1 (Q57): the year of birth that replaced the age range. */
+  birthYear: "Year of birth",
   name: "Your public display name",
   start: "Start my plan",
 } as const;
@@ -71,17 +71,10 @@ export const SETUP_OPTIONS = {
   equipment: ["Full gym", "Home gym", "Minimal / bodyweight"],
   experience: ["New to lifting", "Some experience", "Experienced"],
   sexes: ["Male", "Female"],
-  ages: ["16–24", "25–34", "35–44", "45–54", "55+"],
 } as const;
 
 export type SetupOption<Question extends keyof typeof SETUP_OPTIONS> =
   (typeof SETUP_OPTIONS)[Question][number];
-
-/** The offer setup ends on (`Upgrade`). */
-export const OFFER = {
-  ready: "Your plan is ready",
-  free: "Continue with Free",
-} as const;
 
 /** The workout screen (`WorkoutSession`), from Train's Start workout. */
 export const WORKOUT = {
@@ -149,7 +142,7 @@ export const STRIP = {
   runDone: "completed run",
 } as const;
 
-/** Home, where a saved version 2 plan lands (`Home`'s page h1: for screen
+/** Home, where a saved plan lands (`Home`'s page h1: for screen
  *  readers only since DS4, where the hero names the screen). */
 export const HOME = {
   heading: "Today",
@@ -218,7 +211,7 @@ export const TABS = {
   train: "Train",
   food: "Food",
   social: "Social",
-  analytics: "Analytics",
+  progress: "Progress",
 } as const;
 
 export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];

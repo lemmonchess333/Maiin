@@ -46,7 +46,9 @@ describe("Train's Lift tab", () => {
   it("orders the strip, the session card, then the week's notices", () => {
     const stripAt = at(program, 'section="day_stepper"');
     const cardAt = at(program, "<SessionCommandCard");
-    const deloadAt = at(program, "<DeloadBanner");
+    // The Lift tab's, the last in the file: the Run tab's offer is handed
+    // to its section above (whole-app grill Q11).
+    const deloadAt = program.lastIndexOf("<DeloadBanner");
     const levelAt = at(program, "<ExperienceSuggestionCard");
     // The exercise list follows the notices.
     const listAt = at(program, "<SortableExerciseRow");
@@ -58,6 +60,18 @@ describe("Train's Lift tab", () => {
 });
 
 describe("Train's Run tab", () => {
+  it("takes the lighter-week offer first among the week's notices (Q11)", () => {
+    /* One lighter-week decision for both sports: the Run tab draws the
+       same offer the Lift tab does, handed in by Train. */
+    const notices = run.slice(at(run, "const weekNotices = ("));
+    const offerAt = at(notices, "{lighterWeekNotice}");
+    expect(offerAt).toBeLessThan(at(notices, "<Banner"));
+    const mount = program.slice(at(program, "<ProgrammeRunSection"));
+    expect(mount.slice(0, mount.indexOf("/>\n"))).toMatch(
+      /lighterWeekNotice=\{/
+    );
+  });
+
   it("draws the week's notices after the session card, in every mode", () => {
     const decl = at(run, "const weekNotices = (");
     const ret = run.indexOf("\n  return (", decl);

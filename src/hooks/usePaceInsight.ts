@@ -11,6 +11,7 @@ import {
   type PaceInsight,
 } from "@/lib/runPaces";
 import { paceUpdateLocked } from "@/lib/paceUpdateAccess";
+import { appendProChange } from "@/lib/proReport";
 import { logger } from "@/lib/logger";
 
 /**
@@ -156,6 +157,7 @@ export function usePaceInsightFromRuns(
   ]);
 
   const locked = insight !== null && paceUpdateLocked(insight.direction, isPro);
+  const proChanges = profile?.proChanges;
 
   const accept = useCallback(async (): Promise<PaceInsightAcceptResult> => {
     if (!insight || !user || locked) return "failure";
@@ -183,6 +185,22 @@ export function usePaceInsightFromRuns(
         },
         { throwOnError: true }
       );
+      // Faster paces and a runner's first are Pro's (`paceUpdateLocked`);
+      // kept for what Pro did (App1 Q56), in a write of their own so a
+      // record that fails to save never fails the paces.
+      if (insight.direction !== "slower" && isPro) {
+        void updateProfile({
+          proChanges: appendProChange(proChanges, {
+            kind: "paces",
+            at: new Date().toISOString(),
+            from:
+              insight.direction === "first" || !(insight.currentVdot > 0)
+                ? null
+                : insight.currentVdot,
+            to: vdot,
+          }),
+        }).catch(() => {});
+      }
       // If the account switched during the write, stay silent (no A feedback
       // under B) — the write itself still landed for A.
       return auth.currentUser?.uid === writeUid ? "success" : "stale";
@@ -191,7 +209,7 @@ export function usePaceInsightFromRuns(
       logger.error("[usePaceInsight] accept failed", error);
       return "failure";
     }
-  }, [insight, locked, updateProfile, user]);
+  }, [insight, isPro, locked, proChanges, updateProfile, user]);
 
   const dismiss = useCallback(() => {
     if (!insight || !user) return;

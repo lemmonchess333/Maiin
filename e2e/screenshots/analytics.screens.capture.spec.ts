@@ -214,7 +214,7 @@ test.describe("analytics tab screenshots", () => {
     return uid;
   }
 
-  test("Analytics leaves skeleton state and renders real content", async ({
+  test("Progress leaves skeleton state and renders real content", async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -226,7 +226,7 @@ test.describe("analytics tab screenshots", () => {
 
     // Positive anchor FIRST: the tab actually rendered its analytics body.
     await expect(
-      page.getByRole("heading", { name: /analytics/i }).first()
+      page.getByRole("heading", { level: 1, name: "Progress" })
     ).toBeVisible({ timeout: 30_000 });
 
     // The defect, stated directly. `motion-safe:animate-pulse` is the
@@ -237,7 +237,7 @@ test.describe("analytics tab screenshots", () => {
     await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,
     });
-    await expect(page.getByText(/loading analytics/i)).toHaveCount(0);
+    await expect(page.getByText(/loading progress/i)).toHaveCount(0);
 
     await shootBoth(page, "analytics-loaded");
 
@@ -320,7 +320,7 @@ test.describe("analytics tab screenshots", () => {
     await page.reload();
     await page.waitForLoadState("domcontentloaded");
     await expect(
-      page.getByRole("heading", { name: /analytics/i }).first()
+      page.getByRole("heading", { level: 1, name: "Progress" })
     ).toBeVisible({ timeout: 30_000 });
 
     // The tab strip is a SegmentedControl, so its options are radios.
@@ -379,7 +379,7 @@ test.describe("analytics tab screenshots", () => {
     await page.goto("/Maiin/history");
     await page.waitForLoadState("domcontentloaded");
     await expect(
-      page.getByRole("heading", { name: /analytics/i }).first()
+      page.getByRole("heading", { level: 1, name: "Progress" })
     ).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,

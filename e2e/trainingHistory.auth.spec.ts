@@ -245,7 +245,7 @@ test("browses lifts and runs, filters an older period and restores the expanded 
     );
     await page
       .locator("#main-content")
-      .getByRole("link", { name: "Analytics", exact: true })
+      .getByRole("link", { name: "Progress", exact: true })
       .click();
     await expect(page).toHaveURL(/\/history\?range=3M$/);
     await expect(page.getByRole("radio", { name: "3M" })).toBeChecked();

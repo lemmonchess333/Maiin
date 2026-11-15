@@ -17,6 +17,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { TodaySession, NextSession } from "@/lib/todaySession";
 import type { WeekSummaryCounts } from "@/lib/weekSummary";
+import { weekDone, type WeekRun } from "@/lib/trainingWeek";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { blockWeekOf } from "@/features/program/trainingBlock";
@@ -317,13 +318,6 @@ export function heroIsFreeRun(session: TodaySession): boolean {
 }
 
 /** A saved run, as much of one as the free run line reads. */
-export interface HeroRun {
-  /** Its local day, "yyyy-MM-dd". */
-  day: string;
-  /** Metres. */
-  distance: number;
-}
-
 /**
  * A free run's line: this week's distance, and last week's beside it
  * ("12.4 km this week", "18.2 km last week"), the one number and what it
@@ -332,10 +326,14 @@ export interface HeroRun {
  * it did not have. With no run in either week it is a first step, the
  * week drawn at zero ("0 km this week", "Finish your first run and it
  * counts here"). Null while the runs are read.
+ *
+ * Both weeks are counted as every week is (`weekDone`, trainingWeek.ts):
+ * the runs that count, on the day each began. A free runner's plan holds
+ * no run days, so there is no run marked done by hand to add.
  */
 export function freeRunHeroLine(input: {
-  /** Saved runs that count, from last week's Monday on; null while read. */
-  runs: readonly HeroRun[] | null;
+  /** Saved runs from last week's Monday on; null while read. */
+  runs: readonly WeekRun[] | null;
   /** Local "yyyy-MM-dd". */
   todayKey: string;
   unit: DistanceUnit;
@@ -346,25 +344,22 @@ export function freeRunHeroLine(input: {
   if (!runs) return null;
   const monday = localWeekKey(parseLocalDate(todayKey));
   const lastMonday = localDateString(addLocalDays(parseLocalDate(monday), -7));
-  const sum = (list: readonly HeroRun[]) =>
-    list.reduce(
-      (m, r) => m + (finite(r.distance) && r.distance > 0 ? r.distance : 0),
-      0
-    );
-  const thisWeek = runs.filter((r) => r.day >= monday && r.day <= todayKey);
-  const lastWeek = runs.filter((r) => r.day >= lastMonday && r.day < monday);
+  const thisWeek = weekDone({ weekKey: monday, workouts: [], runs });
+  const lastWeek = weekDone({ weekKey: lastMonday, workouts: [], runs });
   const label = distanceUnitLabel(unit);
   const amount = (metres: number) =>
     metres > 0 ? `${distanceValue(metres, unit, 1)} ${label}` : `0 ${label}`;
-  const thisMetres = sum(thisWeek);
-  const lastMetres = sum(lastWeek);
-  const title = `${amount(thisMetres)} this week`;
-  if (lastMetres > 0)
-    return { title, detail: `${amount(lastMetres)} last week`, mark: "run" };
-  if (thisMetres > 0)
+  const title = `${amount(thisWeek.metres)} this week`;
+  if (lastWeek.metres > 0)
     return {
       title,
-      detail: `${plural(thisWeek.length, "run", "runs")} so far`,
+      detail: `${amount(lastWeek.metres)} last week`,
+      mark: "run",
+    };
+  if (thisWeek.metres > 0)
+    return {
+      title,
+      detail: `${plural(thisWeek.runs, "run", "runs")} so far`,
       mark: "run",
     };
   return {

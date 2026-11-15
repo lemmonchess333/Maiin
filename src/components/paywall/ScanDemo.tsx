@@ -26,9 +26,9 @@ import MacroColumn from "@/components/food/MacroColumn";
 import { Avocado } from "@/components/icons/Avocado";
 import { MEAL_SLOT_ICONS, type MealKey } from "@/components/food/mealConstants";
 import {
-  AnalyticsTabIcon,
   FoodTabIcon,
   HomeTabIcon,
+  ProgressTabIcon,
   SocialTabIcon,
   TrainTabIcon,
 } from "@/components/icons/TabIcons";
@@ -994,7 +994,7 @@ const TABS = [
   { label: "Train", Icon: TrainTabIcon },
   { label: "Food", Icon: FoodTabIcon },
   { label: "Social", Icon: SocialTabIcon },
-  { label: "Analytics", Icon: AnalyticsTabIcon },
+  { label: "Progress", Icon: ProgressTabIcon },
 ];
 
 /** The logged food's picture on its way to the wheel, as `FoodLogFlight`
