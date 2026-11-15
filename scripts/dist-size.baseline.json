@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 7066223,
+  "total": 7076725,
   "coldStart": [
     "analyticsClient",
     "analyticsProvider",
@@ -444,9 +444,10 @@
     "Social": 92206,
     "socialAnalytics": 95,
     "socialApi": 9813,
-    "Space": 23690,
+    "Space": 30703,
     "spaceDefs": 22592,
     "SpacePost": 3200,
+    "SpaceSessionList": 3489,
     "sparkles": 494,
     "star": 472,
     "startDay": 653,
