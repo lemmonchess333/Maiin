@@ -1,8 +1,8 @@
 /**
- * The run setup screen warms the GPS (useGpsWarmup): a one-shot fix at
- * once and every 15 seconds while the screen is open and the app is in
- * front, never before location is allowed, and nothing once the screen
- * goes.
+ * The run screen watches location before Start (useGpsWarmup), so the fix
+ * that starts a GPS run's clock is usually in hand when Start is tapped
+ * (Run25 call 2): a watch while the screen is open and the app is in
+ * front, never before location is allowed, and none once the screen goes.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
@@ -14,7 +14,7 @@ vi.mock("@/lib/platform", async (importOriginal) => ({
   isNativePlatform: () => h.native,
 }));
 
-import { GPS_WARM_INTERVAL_MS, useGpsWarmup } from "../useGpsWarmup";
+import { useGpsWarmup } from "../useGpsWarmup";
 
 let visibility: DocumentVisibilityState = "visible";
 function setVisibility(next: DocumentVisibilityState) {
@@ -33,72 +33,77 @@ beforeEach(() => {
 });
 afterEach(() => restoreRealTimers());
 
-function warm(
-  props: Partial<Parameters<typeof useGpsWarmup>[0]> = {},
-  preWarm = vi.fn()
-) {
+function warmup(props: Partial<Parameters<typeof useGpsWarmup>[0]> = {}) {
+  const warm = vi.fn();
+  const cool = vi.fn();
   const hook = renderHook(
     (p: Parameters<typeof useGpsWarmup>[0]) => useGpsWarmup(p),
     {
       initialProps: {
         active: true,
         permissionState: "granted" as PermissionState,
-        preWarm,
+        warm,
+        cool,
         ...props,
       },
     }
   );
-  return { ...hook, preWarm };
+  return { ...hook, warm, cool };
 }
 
 describe("useGpsWarmup", () => {
-  it("asks for a fix at once and again every 15 seconds", () => {
-    const { preWarm, result } = warm();
+  it("watches while the screen is open, and only once", () => {
+    const { warm, cool, result } = warmup();
     expect(result.current).toBe(true);
-    expect(preWarm).toHaveBeenCalledTimes(1);
-    act(() => vi.advanceTimersByTime(GPS_WARM_INTERVAL_MS * 2));
-    expect(preWarm).toHaveBeenCalledTimes(3);
+    expect(warm).toHaveBeenCalledTimes(1);
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(warm).toHaveBeenCalledTimes(1);
+    expect(cool).not.toHaveBeenCalled();
   });
 
   it.each([["prompt"], [null], [undefined], ["denied"]] as const)(
-    "never asks on the web while location is %s",
+    "never watches on the web while location is %s",
     (permissionState) => {
-      const { preWarm, result } = warm({
+      const { warm, result } = warmup({
         permissionState: permissionState as PermissionState | null,
       });
-      act(() => vi.advanceTimersByTime(GPS_WARM_INTERVAL_MS * 2));
-      expect(preWarm).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(60_000));
+      expect(warm).not.toHaveBeenCalled();
       expect(result.current).toBe(false);
     }
   );
 
-  it("warms in the app before the web's permission is known, since its one-shot never asks", () => {
+  it("watches in the app before the web's permission is known, since its watch never asks", () => {
     h.native = true;
-    const { preWarm, result } = warm({ permissionState: null });
-    expect(preWarm).toHaveBeenCalledTimes(1);
+    const { warm, result } = warmup({ permissionState: null });
+    expect(warm).toHaveBeenCalledTimes(1);
     expect(result.current).toBe(true);
   });
 
   it("stops in the app once location is refused", () => {
     h.native = true;
-    const { preWarm, result } = warm({ permissionState: "denied" });
-    expect(preWarm).not.toHaveBeenCalled();
-    expect(result.current).toBe(false);
+    const { warm, cool, rerender } = warmup({ permissionState: null });
+    rerender({
+      active: true,
+      permissionState: "denied",
+      warm,
+      cool,
+    });
+    expect(cool).toHaveBeenCalledTimes(1);
   });
 
-  it("stops when the setup screen goes", () => {
-    const { preWarm, rerender } = warm();
-    rerender({ active: false, permissionState: "granted", preWarm });
-    act(() => vi.advanceTimersByTime(GPS_WARM_INTERVAL_MS * 3));
-    expect(preWarm).toHaveBeenCalledTimes(1);
+  it("stops when the screen goes", () => {
+    const { warm, cool, rerender } = warmup();
+    rerender({ active: false, permissionState: "granted", warm, cool });
+    expect(cool).toHaveBeenCalledTimes(1);
+    expect(warm).toHaveBeenCalledTimes(1);
   });
 
-  it("rests while the app is in the background, and warms again on return", () => {
-    const { preWarm } = warm();
+  it("rests while the app is in the background, and watches again on return", () => {
+    const { warm, cool } = warmup();
     act(() => setVisibility("hidden"));
-    act(() => vi.advanceTimersByTime(GPS_WARM_INTERVAL_MS * 3));
-    expect(preWarm).toHaveBeenCalledTimes(1);
+    expect(cool).toHaveBeenCalledTimes(1);
     act(() => setVisibility("visible"));
-    expect(preWarm).toHaveBeenCalledTimes(2);
+    expect(warm).toHaveBeenCalledTimes(2);
   });
 });

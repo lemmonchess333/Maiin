@@ -12,10 +12,11 @@
  * `navigator.geolocation.watchPosition`, which Chromium emulates from
  * `context.setGeolocation`. Each call delivers one fix, so walking a short
  * path in a loop is what moves the page through its phases — waiting →
- * acquiring (needs one fix) → countdown (3s) → active — and what
+ * acquiring ("Finding GPS", until a fix within 20 m, or straight past it
+ * when the run screen's watch already has one) → active — and what
  * accumulates the distance and pace the HUD is there to display. Accuracy
- * is 5m because `getSignalQuality` calls <= 8 "strong"; a looser value
- * would park the page in acquiring behind the GOOD_FIX_M gate.
+ * is 5m, inside the 20 m a run's clock starts on (gpsStart.ts); a looser
+ * value would park the page on "Finding GPS".
  *
  * The HUD is DARK-ONLY by construction (`text-white` throughout,
  * `THEME.bg` behind it), so unlike every other capture spec there is no
@@ -116,17 +117,16 @@ test.describe("live run HUD", () => {
     }
 
     /* Two walks, not one, and the split matters. The first only has to
-       reach the active phase: acquiring needs a single fix, then the
-       countdown burns three seconds during which fixes still stream but
-       the timer has not started. The FIRST version of this spec walked
+       reach the active phase: acquiring needs a single good fix, and the
+       clock starts on it. The FIRST version of this spec walked
        once, for 14 steps, and the resulting frame read 0:02 / 0.00 km /
        --:-- — the HUD captured, but every value it exists to display at
        zero, and the live-pace label never in its real state.
 
        So: walk enough to get in, assert, then keep walking so distance
        and rolling pace are real when the shutter goes. */
-    // One fix leaves acquiring; the countdown is 3s. Four fixes at this
-    // cadence covers both with margin.
+    // One good fix leaves acquiring and starts the clock. Four fixes at
+    // this cadence covers it with margin.
     await walk(page, 4);
 
     /* Assert the HUD is really up before shooting. `Pause run` is the
@@ -135,7 +135,7 @@ test.describe("live run HUD", () => {
     await expect(
       pause,
       "the run never reached the active phase — the frame would show the " +
-        "setup screen or the countdown while claiming to be the HUD"
+        "setup screen or Finding GPS while claiming to be the HUD"
     ).toBeVisible({ timeout: 30_000 });
 
     /* 25 more at 6m — ~150m over 50s, which is all the frame needs: every

@@ -192,6 +192,38 @@ export function foldMotion(
   }
 }
 
+/**
+ * A run's motion evidence from `since`, the instant its clock started
+ * (Run25 call 2). The sensors start at the tap of Start, so Motion & Fitness
+ * is asked for while GPS is being found, but nothing they saw before the
+ * clock is the run's: not a stop, and not the steps of a walk to the start
+ * line either. The step count stays, as the baseline the next update's rise
+ * is measured from. `since` null (no clock start known) drops nothing.
+ */
+export function motionFrom(
+  reading: MotionReading | null,
+  since: number | null
+): MotionReading | null {
+  if (!reading || !reading.available || since === null) return reading;
+  const stepEvent =
+    reading.stepEvent && reading.stepEvent.at >= since
+      ? reading.stepEvent
+      : null;
+  return {
+    ...reading,
+    stepAt:
+      reading.stepAt !== null && reading.stepAt >= since
+        ? reading.stepAt
+        : null,
+    stepEvent,
+    risesSincePause: stepEvent ? reading.risesSincePause : 0,
+    activity:
+      reading.activity && reading.activity.at >= since
+        ? reading.activity
+        : null,
+  };
+}
+
 export type FootState = "stepping" | "stopped" | "unknown";
 
 /**
@@ -206,7 +238,7 @@ export type FootState = "stepping" | "stopped" | "unknown";
  *   still while no steps are being counted.
  *
  * Stop evidence from before `since`, when auto-pause last came into play
- * (Go after the countdown, a Resume by hand), is not a stop: the person
+ * (the clock's start, a Resume by hand), is not a stop: the person
  * has started since.
  */
 export function footState(
