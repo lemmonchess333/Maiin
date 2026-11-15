@@ -28,6 +28,7 @@ import {
   type GoalRace,
 } from "../racePrediction";
 import { runDocument, type FinishedRun } from "../runCompletion";
+import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
 
 const require_ = createRequire(import.meta.url);
 const server = require_("../../../functions/lib/raceDayCompletion") as {
@@ -58,7 +59,14 @@ describe("the goal race: the app and the server's race-day rule agree", () => {
     expect(GOAL_RACE_DISTANCE_RATIO).toBe(server.RACE_STRICT_DISTANCE_RATIO);
   });
 
-  const distances = ["5k", "10k", "half", "marathon"] as const;
+  // Every distance a plan prepares for, the ultras with them (Run26 (2)).
+  const distances = VALID_RACE_DISTANCE;
+
+  it("knows every distance a plan prepares for, and the server's metres", () => {
+    expect(Object.keys(server.PLANNED_RACE_DISTANCE_METERS).sort()).toEqual(
+      [...VALID_RACE_DISTANCE].sort()
+    );
+  });
   const shares = [0, 0.3, 0.9499, 0.95, 0.9501, 1, 1.04, 1.3];
   const flags = [
     {},

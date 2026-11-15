@@ -1677,6 +1677,19 @@ export function sameTimeOnFeetFamily(
   return timeOnFeetFamilyOf(a) === timeOnFeetFamilyOf(b);
 }
 
+/**
+ * Run26 (2): whether a run is held by effort, never judged by its pace: a
+ * long run or back-to-back sized in time on feet, run on ground like the
+ * race's, where the hills set the pace. The run screen's easy cue stays
+ * quiet on one, and it gets no pace verdict after.
+ */
+export function runsByEffort(templateId: string | null | undefined): boolean {
+  if (!templateId) return false;
+  return (
+    RUN_TEMPLATES.find((t) => t.id === templateId)?.config.timeOnFeet === true
+  );
+}
+
 /** Run24 (5): each race's long runs with race-pace blocks, shortest first:
  *  the ladder a lighter week steps one down. */
 export const RACE_PACE_LONG_LADDERS: Readonly<

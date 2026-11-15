@@ -267,6 +267,11 @@ describe("formatRaceDistance", () => {
     expect(formatRaceDistance("50k")).toBe("50K");
   });
 
+  it("names the ultras a plan prepares for (Run26 (2))", () => {
+    expect(formatRaceDistance("50mi")).toBe("50 Miles");
+    expect(formatRaceDistance("100k")).toBe("100K");
+  });
+
   it("returns empty string for empty string", () => {
     expect(formatRaceDistance("")).toBe("");
   });

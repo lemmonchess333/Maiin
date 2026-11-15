@@ -96,6 +96,15 @@ export const RACE_KM_BY_DISTANCE: Record<RaceDistance, number> = {
 export const TRAIL_CLIMB_M_PER_KM = 10;
 
 /**
+ * Run26 (2): the most climb a race goal holds, metres. A Tropos heuristic:
+ * 200 m a km over the longest race a plan holds, a 100K, which is steeper
+ * than a whole course runs, so no real course is refused and a mistyped
+ * figure is. The Firestore rules and the profile sanitizer hold the same
+ * bound.
+ */
+export const MAX_RACE_CLIMB_M = 20000;
+
+/**
  * Run26 (2): a race steep enough that its descents are a large part of it,
  * which adds downhill running to the plan. Only the climb is known, so the
  * descent is taken as the climb, which a loop or an out-and-back course has;

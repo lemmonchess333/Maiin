@@ -3,7 +3,11 @@ import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import { heatEasedPaceTable } from "@/lib/heatAdjustment";
 import type { RunPlanMetadata } from "@/lib/runPlanMetadata";
-import { RUN_WALK_TEMPLATE_IDS } from "@/lib/workoutTemplates";
+import {
+  RUN_WALK_TEMPLATE_IDS,
+  backToBackId,
+  timeOnFeetLongId,
+} from "@/lib/workoutTemplates";
 
 /** A 25-minute 5K. */
 const FITNESS = {
@@ -59,6 +63,16 @@ describe("plannedRunVerdict", () => {
     const v = verdict(planned("easy_30"), easy[0] - 30);
     expect(v?.tone).toBe("easy-too-fast");
     expect(v?.speaks).toBe(true);
+  });
+
+  it("judges no long run or back-to-back held by effort (Run26 (2))", () => {
+    // Sized in time on feet on ground like the race's, where the hills
+    // set the pace: well under easy or well over, no verdict.
+    for (const id of [timeOnFeetLongId(180), backToBackId(90)])
+      for (const pace of [easy[0] - 60, easy[1] + 120])
+        expect(verdict(planned(id), pace, 20000), id).toBeNull();
+    // Anchor: the same paces on a long run sized in km are judged.
+    expect(verdict(planned("long_16k"), easy[0] - 60, 16000)).not.toBeNull();
   });
 
   it("calls a tempo well over its pace slow, and says so", () => {

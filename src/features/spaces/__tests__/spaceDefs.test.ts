@@ -14,6 +14,8 @@ import {
   raceSpaceDefs,
   upcomingRaceSpaceDefs,
   RACE_COUNTRIES,
+  isTrainableRaceEvent,
+  raceEventPlanDistance,
 } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
@@ -150,5 +152,50 @@ describe("config ↔ functions parity (lib/spaceIds.js)", () => {
       (m) => m[1]
     );
     expect(new Set(serverIds)).toEqual(new Set(SPACE_IDS));
+  });
+});
+
+/* Run26 (2): the plan a listed race trains for. A road race's own distance;
+   an ultra's the plan's ultra nearest its kilometres, the bands split
+   halfway between them, and none past 130 km or without kilometres. */
+describe("raceEventPlanDistance", () => {
+  const ultra = (distanceKm?: number) =>
+    raceEventPlanDistance({ distance: "ultra", distanceKm });
+
+  it("keeps a road race's distance", () => {
+    for (const distance of ["5k", "10k", "half", "marathon"] as const)
+      expect(raceEventPlanDistance({ distance })).toBe(distance);
+  });
+
+  it("takes an ultra to the plan nearest its kilometres", () => {
+    expect(ultra(42.195)).toBeNull();
+    expect(ultra(45)).toBe("50k");
+    expect(ultra(50)).toBe("50k");
+    expect(ultra(64.9)).toBe("50k");
+    expect(ultra(65)).toBe("50mi");
+    expect(ultra(80.5)).toBe("50mi");
+    expect(ultra(89.9)).toBe("50mi");
+    expect(ultra(90)).toBe("100k");
+    expect(ultra(100)).toBe("100k");
+    expect(ultra(129.9)).toBe("100k");
+    // Nearer 100 miles, which has no plan.
+    expect(ultra(130)).toBeNull();
+    expect(ultra(161)).toBeNull();
+    expect(ultra(undefined)).toBeNull();
+  });
+
+  it("trains the listed ultras, each by its kilometres", () => {
+    const ultras = raceSpaceDefs().filter(
+      (race) => race.event!.distance === "ultra"
+    );
+    expect(ultras.length).toBeGreaterThan(0);
+    for (const race of ultras) {
+      expect(race.event!.distanceKm, race.id).toBeGreaterThan(0);
+      expect(isTrainableRaceEvent(race.event!), race.id).toBe(true);
+    }
+    expect(raceEventPlanDistance(spaceDef("chiltern-50")!.event!)).toBe("50k");
+    expect(
+      raceEventPlanDistance(spaceDef("race-to-the-king-100k")!.event!)
+    ).toBe("100k");
   });
 });

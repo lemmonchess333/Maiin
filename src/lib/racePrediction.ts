@@ -40,6 +40,8 @@ import {
   type RaceDistanceKey,
   type RunFitnessInput,
 } from "@/lib/runPaces";
+import type { RaceDistance } from "@/features/program/programTypes";
+import { isRoadDistance } from "@/features/program/runPlanTiming";
 
 /** The log's document id under `users/{uid}/programState`. */
 export const RACE_PREDICTION_LOG_DOC = "racePrediction";
@@ -81,7 +83,7 @@ export interface RacePredictionLog {
  *  `predictions` is a goal race Tropos had no prediction for. */
 export interface GoalRaceRecord {
   v: 1;
-  distance: RaceDistanceKey;
+  distance: RaceDistance;
   targetDate: string;
   /** A race entered, or the distance run on the runner's own (Run9). */
   entry: "race" | "own";
@@ -99,12 +101,17 @@ export interface GoalRace {
 }
 
 /** The race distances in metres, as the server's race-day rule holds them
- *  (`PLANNED_RACE_DISTANCE_METERS`), the half's to the whole metre. */
-const GOAL_RACE_METRES: Record<RaceDistanceKey, number> = {
+ *  (`PLANNED_RACE_DISTANCE_METERS`), the half's to the whole metre. The
+ *  ultras (Run26 (2)) are goal races too, though Tropos predicts no time
+ *  for them: the pace tables stop at the marathon. */
+const GOAL_RACE_METRES: Record<RaceDistance, number> = {
   "5k": 5000,
   "10k": 10000,
   half: 21097,
   marathon: 42195,
+  "50k": 50000,
+  "50mi": 80467,
+  "100k": 100000,
 };
 
 /** The share of the race distance a run must cover to be the race: the
@@ -118,11 +125,16 @@ const RACE_WEEK_DAYS = 7;
  *  heuristic: a 20-week block with a pace update every week is under it. */
 export const MAX_RACE_PREDICTIONS = 40;
 
-function isRaceDistance(value: unknown): value is RaceDistanceKey {
+function isGoalRaceDistance(value: unknown): value is RaceDistance {
   return (
     typeof value === "string" &&
     Object.prototype.hasOwnProperty.call(GOAL_RACE_METRES, value)
   );
+}
+
+/** A distance Tropos predicts a time for: 5K to marathon. */
+function isRaceDistance(value: unknown): value is RaceDistanceKey {
+  return isGoalRaceDistance(value) && isRoadDistance(value);
 }
 
 /** The runner's benchmark as the profile holds it: the pace engine's input
@@ -254,7 +266,7 @@ export function isGoalRaceRun(
   run: GoalRaceRunFacts,
   goal: GoalRace | null | undefined
 ): boolean {
-  if (!goal || !isRaceDistance(goal.distance)) return false;
+  if (!goal || !isGoalRaceDistance(goal.distance)) return false;
   if (!run.date || run.date !== goal.targetDate) return false;
   if (run.isInvalid === true || run.savedAnyway === true) return false;
   if (typeof run.distance !== "number" || !Number.isFinite(run.distance))
@@ -275,7 +287,7 @@ export function goalRaceRecord(
   goal: GoalRace,
   startedAtMs?: number | null
 ): GoalRaceRecord | null {
-  if (!isRaceDistance(goal.distance)) return null;
+  if (!isGoalRaceDistance(goal.distance)) return null;
   const before =
     typeof startedAtMs === "number" && Number.isFinite(startedAtMs)
       ? startedAtMs
@@ -357,7 +369,7 @@ export function parseRacePredictionLog(
 export function parseGoalRaceRecord(data: unknown): GoalRaceRecord | null {
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  if (d.v !== 1 || !isRaceDistance(d.distance)) return null;
+  if (d.v !== 1 || !isGoalRaceDistance(d.distance)) return null;
   if (typeof d.targetDate !== "string") return null;
   const goal = finiteOrNull(d.goalTimeS);
   return {

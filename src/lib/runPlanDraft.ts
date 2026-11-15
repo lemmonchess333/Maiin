@@ -104,6 +104,9 @@ export interface RunPlanDraft {
   raceEntry?: "race" | "own" | null;
   /** Run24 (3): the goal of a plan with no race date. Additive in v1. */
   rollingGoal?: RollingGoal;
+  /** Run26 (2): the race's climb as typed, in the reader's unit. Additive
+   *  in v1. */
+  raceClimbText?: string;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -183,6 +186,7 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
     (e.runTimeLimits !== undefined && !isRunTimeLimits(e.runTimeLimits)) ||
     (e.raceLegTrim !== undefined && typeof e.raceLegTrim !== "boolean") ||
     (e.rollingGoal !== undefined && !isRollingGoal(e.rollingGoal)) ||
+    (e.raceClimbText !== undefined && typeof e.raceClimbText !== "string") ||
     !isOneOf(RUN_MODES, e.runMode) ||
     !isOneOf(VALID_RACE_DISTANCE, e.raceDistance) ||
     !isOneOf(VOLUMES, e.runVolume) ||
@@ -220,6 +224,9 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
       : { runTimeLimits: e.runTimeLimits }),
     ...(e.raceLegTrim === undefined ? {} : { raceLegTrim: e.raceLegTrim }),
     ...(e.rollingGoal === undefined ? {} : { rollingGoal: e.rollingGoal }),
+    ...(e.raceClimbText === undefined
+      ? {}
+      : { raceClimbText: e.raceClimbText }),
     ...(e.raceEntry === "race" || e.raceEntry === "own" || e.raceEntry === null
       ? { raceEntry: e.raceEntry }
       : {}),

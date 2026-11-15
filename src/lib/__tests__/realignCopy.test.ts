@@ -51,5 +51,22 @@ describe("realignResultMessage", () => {
         totalWeeks: 8,
       })
     ).toMatch(/half marathon/);
+    // Run26 (2): the ultras.
+    expect(
+      realignResultMessage({
+        timing: "compressible",
+        distance: "50mi",
+        totalWeeks: 12,
+      })
+    ).toBe(
+      "Plan realigned — 12 weeks to your 50-mile race. It’s a tighter build, so expect fewer easy weeks."
+    );
+    expect(
+      realignResultMessage({
+        timing: "healthy",
+        distance: "100k",
+        totalWeeks: 18,
+      })
+    ).toBe("Plan realigned to today — 18 weeks to your 100K.");
   });
 });

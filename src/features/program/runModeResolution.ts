@@ -44,6 +44,8 @@ export interface RaceGoal {
    *  distance run on their own. Absent on a goal set before the question
    *  was asked, which reads as a race (`raceGoalEntry`). */
   entry?: "race" | "own";
+  /** Run26 (2): the race's total climb, whole metres. */
+  climbM?: number;
 }
 
 /**

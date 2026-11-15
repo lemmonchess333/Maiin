@@ -37,6 +37,7 @@ import {
   isRollingGoal,
   type RollingGoal,
 } from "@/features/program/rollingPlan";
+import { MAX_RACE_CLIMB_M } from "@/features/program/runPlanTiming";
 import { logger } from "@/lib/logger";
 import { readString, remove, writeJson } from "@/lib/localStore";
 import {
@@ -265,7 +266,8 @@ export function isValidDraft(
         d.raceEventSpaceId.length <= 120)) &&
     (d.raceEventName === undefined ||
       (typeof d.raceEventName === "string" && d.raceEventName.length <= 60)) &&
-    (d.raceClimbM === undefined || finiteInRange(d.raceClimbM, 0, 20000)) &&
+    (d.raceClimbM === undefined ||
+      finiteInRange(d.raceClimbM, 0, MAX_RACE_CLIMB_M)) &&
     (d.rollingGoal === undefined ||
       d.rollingGoal === null ||
       isRollingGoal(d.rollingGoal)) &&

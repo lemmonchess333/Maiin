@@ -4966,6 +4966,16 @@ Affects: the sessions an ultra or a trail plan holds, their segments, spoken cue
 - [ ] **A long run in time.** Start Long 2 h. Passing: a 2-hour time target, no distance target and no pace target; the summary keeps it as a long run.
 - [ ] **A back-to-back run.** Start Back-to-back 1 h 30. Passing: a 90-minute easy run, counted on its day like any easy run.
 
+## Ultras and a race's climb in setup and Run plan (Run26 (2), 2026-11-15)
+
+Affects: setup's race step and Settings → Run plan (the Ultra row, Total climb, the goal time hidden for an ultra or a trail race), the race spaces' "Train for this race" for the listed ultras, `raceGoal.distance` and `raceGoal.climbM` through `completeOnboarding`, `configurePlan` and the rules, and the server's recovery after an ultra. Unit, page, cross and rules tests drive them (the rules tests in CI's emulator job); no phone has shown them. The production deploy runs Firestore → Storage → Functions → Hosting, so the rules and functions that accept an ultra land before the web build that offers one; an iOS build offering ultras must not ship before that deploy has run.
+
+- [ ] **An ultra from setup.** On a new account, choose Race prep, then 50K under Ultra, 1500 in Total climb, a date 20 weeks out. Passing: the line under the climb says "A trail plan: long runs in time, hill work, run by effort."; Start my plan succeeds; the Firestore console shows `raceGoal` `{ distance: "50k", climbM: 1500, … }`; Train's long runs read "Long 2 h" and so on.
+- [ ] **No goal time.** In Settings → Run plan, switch a marathon goal with a goal time to 100K. Passing: the Goal time field goes; after Save the stored `raceGoal` has no `targetTimeS`, and Train shows no race-day pace table in the taper.
+- [ ] **A listed ultra.** Open the Race to the Stones 100K space. Passing: "Train for this race" opens Run plan with 100K chosen and the race bound; the Chiltern 50 lists under a 50K goal's "Choose an upcoming race".
+- [ ] **Feet.** With miles chosen in Units, type 5000 in Total climb. Passing: the field says ft, and the stored `climbM` is 1524.
+- [ ] **Recovery after an ultra.** Run the race on its day (at least 95% of the distance). Passing: the plan enters recovery for 4 weeks after a 50K, 5 after 50 miles or a 100K, and the run summary shows no prediction line (Tropos predicts no ultra time).
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),

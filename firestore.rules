@@ -452,8 +452,9 @@ service cloud.firestore {
         || (
           g is map
           && g.keys().hasAll(['distance', 'targetDate'])
-          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId', 'targetTimeS', 'entry'])
-          && g.distance in ['5k', '10k', 'half', 'marathon']
+          && g.keys().hasOnly(['distance', 'targetDate', 'eventName', 'eventSpaceId', 'targetTimeS', 'entry', 'climbM'])
+          // Run26 (2): the ultras join the road races.
+          && g.distance in ['5k', '10k', 'half', 'marathon', '50k', '50mi', '100k']
           // Local "YYYY-MM-DD". Pinned by pattern, not just length: the whole
           // race plan is derived from parsing this, and a 10-character
           // non-date is the same crash as a bad distance.
@@ -475,6 +476,12 @@ service cloud.firestore {
           )
           // Run9 STATUS 2026-11-01: a race entered, or run on your own.
           && (!('entry' in g) || g.entry in ['race', 'own'])
+          // Run26 (2): the race's total climb, whole metres, as the
+          // sanitizer keeps it.
+          && (
+            !('climbM' in g)
+            || (g.climbM is int && g.climbM >= 0 && g.climbM <= 20000)
+          )
         );
     }
 

@@ -861,8 +861,7 @@ export default function Home() {
       toast.success(
         realignResultMessage({
           timing: result.timing,
-          distance: profile.raceGoal.distance as
-            "5k" | "10k" | "half" | "marathon",
+          distance: profile.raceGoal.distance,
           totalWeeks: result.totalWeeks,
         })
       );

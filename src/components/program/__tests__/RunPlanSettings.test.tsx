@@ -556,6 +556,73 @@ describe("RunPlanSettings", () => {
      "Long-run volume") and a 12px caption ("Distance"), and two of them
      sat in cards of their own while the rest sat bare. Every group now
      opens with the compact SectionHeading and none is boxed. */
+  /* Run26 (2): an ultra or a trail race runs by effort, so it asks for no
+     goal time and saves none; trail is the race's climb, saved in whole
+     metres with the goal. */
+  it("Run26 (2): an ultra asks for no goal time, and saves its climb", async () => {
+    renderPage(baseProfile);
+    pickRacePrep();
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    // A goal time typed for a marathon goes with the switch to an ultra.
+    fireEvent.click(screen.getByRole("radio", { name: "Marathon" }));
+    fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
+      target: { value: "3:59:00" },
+    });
+    fireEvent.click(
+      within(
+        screen.getByRole("radiogroup", { name: "Ultra distance" })
+      ).getByRole("radio", { name: "50K" })
+    );
+    expect(screen.queryByLabelText(/Goal time/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("50 km · 16+ weeks. No 100-mile plan yet.")
+    ).toBeInTheDocument();
+    // No road card is chosen while the race is an ultra.
+    expect(
+      within(
+        screen.getByRole("radiogroup", { name: "Race distance" })
+      ).queryByRole("radio", { checked: true })
+    ).toBeNull();
+    fireEvent.change(screen.getByLabelText("Total climb (optional)"), {
+      target: { value: "1500" },
+    });
+    expect(
+      screen.getByText(
+        "A trail plan: long runs in time, hill work, run by effort."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const goal = sentPayload().profileUpdates.raceGoal!;
+    expect(goal).toMatchObject({ distance: "50k", climbM: 1500 });
+    expect("targetTimeS" in goal).toBe(false);
+  });
+
+  it("Run26 (2): a climb that isn't a whole number holds the save, and says so", async () => {
+    renderPage(baseProfile);
+    pickRacePrep();
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    const climb = screen.getByLabelText("Total climb (optional)");
+    fireEvent.change(climb, { target: { value: "12a" } });
+    expect(climb).toHaveAttribute("aria-invalid", "true");
+    const save = screen.getByRole("button", { name: "Fix total climb" });
+    fireEvent.click(save);
+    expect(configureSpy).not.toHaveBeenCalled();
+    // A road race with no climb saves no climb key.
+    fireEvent.change(climb, { target: { value: "" } });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect("climbM" in sentPayload().profileUpdates.raceGoal!).toBe(false);
+  });
+
   it("opens every race-prep group with the compact section heading", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
     pickRacePrep();
@@ -564,6 +631,7 @@ describe("RunPlanSettings", () => {
       "Distance",
       "Race name (optional)",
       "Target date",
+      "Total climb (optional)",
       "Goal time (optional)",
       "Run days / week",
       "Time for running",

@@ -52,7 +52,11 @@ import {
   resolveSessionPaces,
 } from "./runPaces";
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
-import { RUN_TEMPLATES, isRunWalkTemplateId } from "./workoutTemplates";
+import {
+  RUN_TEMPLATES,
+  isRunWalkTemplateId,
+  runsByEffort,
+} from "./workoutTemplates";
 import { isTreadmillRun } from "./runGuards";
 import {
   HEAT_FEEL_VERDICT_LINE,
@@ -108,11 +112,14 @@ export function plannedRunVerdict(args: {
   const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
   // Run24 (5): a long run with race-pace blocks averages its easy running
   // and its race pace, so its whole-run pace is no verdict on either.
+  // Run26 (2): a run held by effort, sized in time on feet, has no pace to
+  // be judged by (`runsByEffort`).
   if (
     !tmpl ||
     tmpl.type === "intervals" ||
     isRunWalkTemplateId(tmpl.id) ||
-    tmpl.config.racePaceBlocks
+    tmpl.config.racePaceBlocks ||
+    runsByEffort(tmpl.id)
   )
     return null;
   if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;

@@ -46,6 +46,7 @@
  *
  * Pure: no React, no clock, no storage.
  */
+import type { RaceDistance } from "@/features/program/programTypes";
 import { isCurrentWeekInRaceWindDown } from "@/features/program/runPlanTiming";
 import { shouldRecommendDeload } from "./performanceEngine";
 import { resolveDeloadRecommended } from "./performanceDocFields";
@@ -224,7 +225,7 @@ export function lighterWeekOffer(input: {
   /** `programState.runPlan.totalWeeks`; absent without a race plan. */
   totalWeeks: number | undefined;
   /** The race's distance; absent without a race plan. */
-  distance: "5k" | "10k" | "half" | "marathon" | undefined;
+  distance: RaceDistance | undefined;
 }): LighterWeekOffer | null {
   const { week } = input;
   if (!week || !resolveDeloadRecommended(week)) return null;

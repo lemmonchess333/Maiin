@@ -311,8 +311,7 @@ export default function DayActionSheet({
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
       shortBase: rp?.shortBase,
-      distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
-        "5k" | "10k" | "half" | "marathon" | undefined,
+      distance: rp?.raceGoal?.distance ?? profile?.raceGoal?.distance,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey

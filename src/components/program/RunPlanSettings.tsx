@@ -113,7 +113,7 @@ import {
 } from "@/lib/runPlanDraft";
 import {
   spaceDef,
-  isTrainableRaceEvent,
+  raceEventPlanDistance,
   type SpaceDef,
 } from "@/features/spaces/spaceDefs";
 import {
@@ -121,12 +121,15 @@ import {
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
 import type { UserProfile } from "@/lib/auth";
-import type {
-  PrimaryGoal,
-  ProgramState,
-  RoadRaceDistance as RaceDistance,
+import {
+  VALID_RACE_DISTANCE,
+  type PrimaryGoal,
+  type ProgramState,
+  type RaceDistance,
+  type RoadRaceDistance,
 } from "@/features/program/programTypes";
-import { isRoadDistance } from "@/features/program/runPlanTiming";
+import { sizesLongRunsInTime } from "@/features/program/runPlanTiming";
+import { climbFieldText, parseClimbField } from "@/lib/raceClimb";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { raceLegTrimCut } from "@/features/program/programEngine";
 import { sessionLengthOption } from "@/features/program/sessionFit";
@@ -141,12 +144,13 @@ import {
  *  as free running, with the plan's goal on the programme. */
 type RunMode = "freeform" | "race_prep" | "starter" | "rolling";
 
-const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
+const RACE_DISTANCES: readonly RaceDistance[] = VALID_RACE_DISTANCE;
 
 /** A goal time a recreational runner might set at each distance, for the
  *  goal-time field's example. A 10K showed a 5K time ("24:30") and a half
- *  a marathon one ("3:59:00"). */
-const GOAL_TIME_EXAMPLE: Record<RaceDistance, string> = {
+ *  a marathon one ("3:59:00"). An ultra asks for none (Run26 (2)). */
+const GOAL_TIME_EXAMPLE: Partial<Record<RaceDistance, string>> &
+  Record<RoadRaceDistance, string> = {
   "5k": "24:30",
   "10k": "50:00",
   half: "1:50:00",
@@ -304,6 +308,8 @@ export default function RunPlanSettings({
       raceEventName: profile.raceGoal?.eventName ?? "",
       raceTargetTimeS: profile.raceGoal?.targetTimeS ?? 0,
       raceEventSpaceId: profile.raceGoal?.eventSpaceId ?? "",
+      // Run26 (2): the race's climb, whole metres; none is 0.
+      raceClimbM: profile.raceGoal?.climbM ?? 0,
       // A goal from before the question reads as a race; no goal, no answer.
       raceEntry: profile.raceGoal
         ? raceGoalEntry(profile.raceGoal)
@@ -380,10 +386,7 @@ export default function RunPlanSettings({
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ??
       (goalLink === "5k" ? "5k" : undefined) ??
-      // Run26 (2): the editor lists the road races until its ultras land.
-      (storedDraft && isRoadDistance(storedDraft.raceDistance)
-        ? storedDraft.raceDistance
-        : undefined) ??
+      storedDraft?.raceDistance ??
       saved.raceDistance
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
@@ -398,11 +401,27 @@ export default function RunPlanSettings({
     storedDraft?.raceTimeStr ??
       (saved.raceTargetTimeS ? formatRaceTime(saved.raceTargetTimeS) : "")
   );
-  const raceTimeParsed = raceTimeStr.trim()
-    ? parseRaceTimeToSeconds(raceTimeStr.trim())
-    : null;
+  /* Run26 (2): the race's climb, typed in the reader's unit (metres, or
+     feet for miles) and saved in whole metres. */
+  const unit = resolveDistanceUnit(profile.preferredDistanceUnit);
+  const [raceClimbText, setRaceClimbText] = useState<string>(
+    storedDraft?.raceClimbText ?? climbFieldText(saved.raceClimbM, unit)
+  );
+  const raceClimbM = parseClimbField(raceClimbText, unit);
+  const raceClimbInvalid = runMode === "race_prep" && raceClimbM === null;
+  /* An ultra's or a trail race's plan runs by time and effort, so it asks
+     for no goal time, and saves none. */
+  const timePlan = sizesLongRunsInTime({
+    distance: raceDistance,
+    climbM: raceClimbM ?? 0,
+  });
+  const raceTimeParsed =
+    !timePlan && raceTimeStr.trim()
+      ? parseRaceTimeToSeconds(raceTimeStr.trim())
+      : null;
   const raceTimeInvalid =
     runMode === "race_prep" &&
+    !timePlan &&
     raceTimeStr.trim() !== "" &&
     raceTimeParsed === null;
   /** The catalogue binding (Q4). Cleared by any manual distance/date
@@ -518,6 +537,7 @@ export default function RunPlanSettings({
         raceTargetDate !== saved.raceTargetDate ||
         raceEventName.trim() !== saved.raceEventName ||
         (raceTimeParsed ?? 0) !== saved.raceTargetTimeS ||
+        (raceClimbM ?? 0) !== saved.raceClimbM ||
         raceEventSpaceId !== saved.raceEventSpaceId ||
         raceEntry !== saved.raceEntry ||
         weeklyRunDays !== saved.weeklyRunDays ||
@@ -588,6 +608,7 @@ export default function RunPlanSettings({
     () =>
       getRaceGoalPlannerState({
         distance: raceDistance,
+        climbM: raceClimbM ?? 0,
         targetDate: raceTargetDate,
         currentDate: today,
         liftDays,
@@ -606,6 +627,7 @@ export default function RunPlanSettings({
       }),
     [
       raceDistance,
+      raceClimbM,
       raceTargetDate,
       today,
       liftDays,
@@ -657,6 +679,7 @@ export default function RunPlanSettings({
         nonRaceGoal,
         raceLegTrim,
         rollingGoal,
+        raceClimbText,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -679,6 +702,7 @@ export default function RunPlanSettings({
     runningBaseline,
     nonRaceGoal,
     raceLegTrim,
+    raceClimbText,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -702,8 +726,9 @@ export default function RunPlanSettings({
   }
 
   function handlePickRace(def: SpaceDef): void {
-    if (!def.event || !isTrainableRaceEvent(def.event)) return;
-    setRaceDistance(def.event.distance);
+    const distance = def.event ? raceEventPlanDistance(def.event) : null;
+    if (!def.event || !distance) return;
+    setRaceDistance(distance);
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);
     setRaceEventSpaceId(def.id);
@@ -726,6 +751,7 @@ export default function RunPlanSettings({
       readiness !== "ready" ||
       raceDateInvalid ||
       raceTimeInvalid ||
+      raceClimbInvalid ||
       baselineInvalid ||
       goalInvalid
     )
@@ -776,6 +802,8 @@ export default function RunPlanSettings({
                   ? { eventName: raceEventName.trim() }
                   : {}),
                 ...(raceTimeParsed ? { targetTimeS: raceTimeParsed } : {}),
+                // Run26 (2): whole metres; none leaves the key out.
+                ...(raceClimbM ? { climbM: raceClimbM } : {}),
               },
             }
           : {}),
@@ -921,6 +949,7 @@ export default function RunPlanSettings({
   const invalid =
     raceDateInvalid ||
     entryMissing ||
+    raceClimbInvalid ||
     raceTimeInvalid ||
     baselineInvalid ||
     goalInvalid;
@@ -932,11 +961,13 @@ export default function RunPlanSettings({
     const target =
       raceDateInvalid || entryMissing
         ? raceGoalRef.current
-        : baselineInvalid
-          ? document.getElementById("running-starting-point")
-          : goalInvalid
-            ? document.getElementById("weekly-running-goal")
-            : document.getElementById("ps-race-time");
+        : raceClimbInvalid
+          ? document.getElementById("ps-race-climb")
+          : baselineInvalid
+            ? document.getElementById("running-starting-point")
+            : goalInvalid
+              ? document.getElementById("weekly-running-goal")
+              : document.getElementById("ps-race-time");
     /* No `behavior`: the default defers to the computed
        `scroll-behavior`, so Reduce Motion gets an instant jump to the
        invalid field instead of a page-length glide. */
@@ -954,13 +985,15 @@ export default function RunPlanSettings({
     ? "Saving…"
     : raceDateInvalid
       ? "Fix race date"
-      : raceTimeInvalid
-        ? "Fix goal time"
-        : baselineInvalid || goalInvalid
-          ? "Check running details"
-          : runMode === "race_prep" && plannerState.ctaLabel
-            ? plannerState.ctaLabel
-            : "Save run plan";
+      : raceClimbInvalid
+        ? "Fix total climb"
+        : raceTimeInvalid
+          ? "Fix goal time"
+          : baselineInvalid || goalInvalid
+            ? "Check running details"
+            : runMode === "race_prep" && plannerState.ctaLabel
+              ? plannerState.ctaLabel
+              : "Save run plan";
 
   return (
     <div className="space-y-4 pb-6">
@@ -1059,12 +1092,16 @@ export default function RunPlanSettings({
             onPickRace={handlePickRace}
             entry={raceEntry}
             onEntryChange={handleEntryChange}
+            climbText={raceClimbText}
+            onClimbTextChange={setRaceClimbText}
+            unit={unit}
           />
         </div>
       )}
 
-      {/* ── A2: goal time (optional) + feasibility verdict ───────────── */}
-      {runMode === "race_prep" && (
+      {/* ── A2: goal time (optional) + feasibility verdict. An ultra or a
+          trail race runs by effort and asks for none (Run26 (2)). ── */}
+      {runMode === "race_prep" && !timePlan && (
         <div className="space-y-2">
           <SectionHeading size="compact">
             <label htmlFor="ps-race-time">Goal time (optional)</label>

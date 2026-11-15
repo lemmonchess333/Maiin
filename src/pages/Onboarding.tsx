@@ -90,8 +90,15 @@ import {
   lbToKg,
 } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
-import type { RoadRaceDistance } from "@/features/program/programTypes";
+import type {
+  RaceDistance,
+  RoadRaceDistance,
+} from "@/features/program/programTypes";
 import { isRoadDistance } from "@/features/program/runPlanTiming";
+import UltraDistanceChoice from "@/components/program/UltraDistanceChoice";
+import RaceClimbField from "@/components/program/RaceClimbField";
+import { climbFieldText, parseClimbField } from "@/lib/raceClimb";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import {
   isRunningBaseline,
   type RunningBaseline,
@@ -363,10 +370,16 @@ export default function Onboarding() {
   );
   // The runs a week the plan is built on: the starter goal's own count.
   const planRunDays = runMode === "starter" ? starterRunDays : weeklyRunDays;
-  // Run26 (2): setup lists the road races until its ultras land.
-  const [raceDistance, setRaceDistance] = useState<RoadRaceDistance>(
-    draft && isRoadDistance(draft.raceDistance) ? draft.raceDistance : "10k"
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
+    draft?.raceDistance ?? "10k"
   );
+  /* Run26 (2): the race's total climb, typed in metres (feet for miles),
+     which makes a trail plan at any distance. */
+  const climbUnit = resolveDistanceUnit(profile?.preferredDistanceUnit);
+  const [raceClimbText, setRaceClimbText] = useState(() =>
+    climbFieldText(draft?.raceClimbM, climbUnit)
+  );
+  const raceClimbM = parseClimbField(raceClimbText, climbUnit);
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
@@ -468,6 +481,7 @@ export default function Onboarding() {
       raceTargetDate,
       raceEntry,
       ...(raceEventSpaceId ? { raceEventSpaceId, raceEventName } : {}),
+      ...(raceClimbM ? { raceClimbM } : {}),
       injuries,
       gender,
       birthYearText,
@@ -513,6 +527,7 @@ export default function Onboarding() {
       raceEntry,
       raceEventSpaceId,
       raceEventName,
+      raceClimbM,
       injuries,
       gender,
       birthYearText,
@@ -700,6 +715,7 @@ export default function Onboarding() {
           raceDistance,
           raceTargetDate,
           raceEventName: raceEventName || undefined,
+          ...(raceClimbM ? { raceClimbM } : {}),
           injuries,
           weightKg,
           sessionMinutes,
@@ -729,6 +745,7 @@ export default function Onboarding() {
       raceDistance,
       raceTargetDate,
       raceEventName,
+      raceClimbM,
       injuries,
       weightKg,
       sessionMinutes,
@@ -775,6 +792,7 @@ export default function Onboarding() {
     () =>
       getRaceGoalPlannerState({
         distance: raceDistance,
+        climbM: raceClimbM ?? 0,
         targetDate: raceTargetDate,
         currentDate,
         liftDays: daysPerWeek,
@@ -786,6 +804,7 @@ export default function Onboarding() {
       }),
     [
       raceDistance,
+      raceClimbM,
       raceTargetDate,
       currentDate,
       daysPerWeek,
@@ -822,7 +841,8 @@ export default function Onboarding() {
       runMode === "race_prep" &&
       (racePreview.status === "invalid" ||
         racePreview.status === "empty" ||
-        raceEntry === undefined)
+        raceEntry === undefined ||
+        raceClimbM === null)
     ) &&
     !(recentRace && "error" in recentRace) &&
     runningStartValid;
@@ -966,6 +986,8 @@ export default function Onboarding() {
                 distance: raceDistance,
                 targetDate: raceTargetDate,
                 ...(raceEntry ? { entry: raceEntry } : {}),
+                // Run26 (2): whole metres; none leaves the key out.
+                ...(raceClimbM ? { climbM: raceClimbM } : {}),
                 ...(raceEventSpaceId
                   ? { eventName: raceEventName, eventSpaceId: raceEventSpaceId }
                   : {}),
@@ -1627,7 +1649,9 @@ export default function Onboarding() {
                       <SegmentedControl<RoadRaceDistance>
                         ariaLabel="Race distance"
                         tone="running"
-                        value={raceDistance}
+                        value={
+                          isRoadDistance(raceDistance) ? raceDistance : null
+                        }
                         onChange={(next) => {
                           setRaceDistance(next);
                           forgetPickedRace();
@@ -1638,6 +1662,13 @@ export default function Onboarding() {
                           { value: "half", label: "Half" },
                           { value: "marathon", label: "Full" },
                         ]}
+                      />
+                      <UltraDistanceChoice
+                        distance={raceDistance}
+                        onChange={(next) => {
+                          setRaceDistance(next);
+                          forgetPickedRace();
+                        }}
                       />
                       <RacePlanProNote
                         distance={raceDistance}
@@ -1682,6 +1713,13 @@ export default function Onboarding() {
                           {raceRunDaysNote(raceDistance, weeklyRunDays)}
                         </p>
                       )}
+                      <RaceClimbField
+                        id="setup-race-climb"
+                        distance={raceDistance}
+                        text={raceClimbText}
+                        onTextChange={setRaceClimbText}
+                        unit={climbUnit}
+                      />
                       <label className="block text-sm space-y-2">
                         <span>Race target date</span>
                         <input

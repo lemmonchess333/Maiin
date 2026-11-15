@@ -15,7 +15,10 @@ import {
   RACE_DISTANCE_LABELS,
   type RaceBrowseFilters,
 } from "@/features/spaces/raceBrowse";
-import type { SpaceDef } from "@/features/spaces/spaceDefs";
+import {
+  raceEventPlanDistance,
+  type SpaceDef,
+} from "@/features/spaces/spaceDefs";
 import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance } from "@/lib/raceGoalPlanner";
 
@@ -49,9 +52,17 @@ export default function UpcomingRacePicker({
   const selected = races.find((r) => r.id === selectedId);
   const [filters, setFilters] = useState<RaceBrowseFilters>(() => ({
     country: selected?.event?.countryCode ?? "GB",
-    distance,
+    distance: "all",
   }));
-  const filteredRaces = filterRaceDefs(races, filters);
+  /* The races whose plan is the goal's distance, an ultra's by its
+     kilometres (`raceEventPlanDistance`, Run26 (2)), until Clear filters
+     opens every distance. */
+  const [byGoalDistance, setByGoalDistance] = useState(true);
+  const filteredRaces = filterRaceDefs(races, filters).filter(
+    (race) =>
+      !byGoalDistance ||
+      (race.event && raceEventPlanDistance(race.event) === distance)
+  );
   const raceDays = filteredRaces.flatMap((race) =>
     raceEventDates(race.event!)
       .filter((dateKey) => dateKey >= minDate)
@@ -91,7 +102,6 @@ export default function UpcomingRacePicker({
           <RaceFilters
             value={filters}
             onChange={setFilters}
-            trainingOnly
             showDistance={false}
           />
           {raceDays.length === 0 ? (
@@ -104,7 +114,10 @@ export default function UpcomingRacePicker({
               action={{
                 label: "Clear filters",
                 variant: "secondary",
-                onClick: () => setFilters(ALL_RACE_FILTERS),
+                onClick: () => {
+                  setFilters(ALL_RACE_FILTERS);
+                  setByGoalDistance(false);
+                },
               }}
             />
           ) : (

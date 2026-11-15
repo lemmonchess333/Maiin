@@ -173,7 +173,10 @@ import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
 import RollingPlanCard from "./RollingPlanCard";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
-import type { RaceDistance } from "@/lib/raceDayPlan";
+import {
+  isRoadDistance,
+  sizesLongRunsInTime,
+} from "@/features/program/runPlanTiming";
 import {
   isRecoveryRunDay,
   runSessionPresentation,
@@ -224,6 +227,7 @@ import {
 } from "@/lib/raceGoalEntry";
 import type {
   ProgramState,
+  RaceDistance,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 
@@ -1160,7 +1164,7 @@ export default function ProgrammeRunSection({
         toast.success(
           realignResultMessage({
             timing: result.timing,
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             totalWeeks: result.totalWeeks,
           })
         );
@@ -2144,12 +2148,16 @@ export default function ProgrammeRunSection({
               `targetTimeS` reads the PROFILE copy — the canonical store for
               the goal time (runPlan.raceGoal is the schedule's snapshot and
               doesn't carry it). */}
+          {/* Run26 (2): an ultra or a trail race is run by effort, so it
+              gets no pace table. */}
           {currentMode === "race_prep" &&
             raceGoal &&
+            isRoadDistance(raceGoal.distance) &&
+            !sizesLongRunsInTime(raceGoal) &&
             !raceElapsed &&
             raceCockpitVM && (
               <RaceDayPlanCard
-                distance={raceGoal.distance as RaceDistance}
+                distance={raceGoal.distance}
                 targetTimeS={profile.raceGoal?.targetTimeS ?? null}
                 runFitness={profile.runFitness ?? null}
                 currentWeek={programState?.runPlan?.currentWeek ?? null}
@@ -2269,7 +2277,7 @@ export default function ProgrammeRunSection({
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             targetDate: raceGoal.targetDate,
           }}
           applyEaseWeek={applyEaseWeek}

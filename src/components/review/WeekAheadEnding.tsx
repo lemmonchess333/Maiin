@@ -56,6 +56,7 @@ import {
 import { formatShortWeekday, formatWeekdayDayMonth } from "@/utils/formatters";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
+import type { RaceDistance } from "@/features/program/programTypes";
 import MomentumCheckinCard from "./MomentumCheckinCard";
 
 type HomeProgram = ReturnType<typeof useHomeProgram>;
@@ -380,8 +381,7 @@ function WeekAgreement({
           lighterWeekAllowed: lighterWeekAllowed(programState),
           currentWeek: programState.runPlan?.currentWeek,
           totalWeeks: programState.runPlan?.totalWeeks,
-          distance: raceGoal?.distance as
-            "5k" | "10k" | "half" | "marathon" | undefined,
+          distance: raceGoal?.distance as RaceDistance | undefined,
         })
       : null;
   const lighterWeek: { why: string | null } | null = trainOffer
@@ -505,8 +505,7 @@ function WeekAgreement({
           line = profile?.raceGoal
             ? realignResultMessage({
                 timing: result.timing,
-                distance: profile.raceGoal.distance as
-                  "5k" | "10k" | "half" | "marathon",
+                distance: profile.raceGoal.distance,
                 totalWeeks: result.totalWeeks,
               })
             : "Plan realigned.";

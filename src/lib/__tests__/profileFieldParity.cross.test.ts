@@ -30,6 +30,8 @@ import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 
 import { PROFILE_FIELD_REGISTRY } from "../profileFieldRegistry";
+import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
+import { MAX_RACE_CLIMB_M } from "@/features/program/runPlanTiming";
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -175,8 +177,49 @@ describe("race goal keys, rules ↔ sanitizer", () => {
         eventSpaceId: "london-marathon",
         targetTimeS: 2700,
         entry: "own",
+        climbM: 450,
       },
     }).raceGoal;
     expect(Object.keys(kept ?? {}).sort()).toEqual(rulesRaceGoalKeys());
+  });
+
+  /* Run26 (2): the distances a plan prepares for and the climb's bound, on
+     the engine, the rules and the sanitizer alike, so an ultra the app
+     offers is never refused on one path and kept on another. */
+  function rulesSource(): string {
+    const rules = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
+    const gate = rules.match(/function raceGoalValid\(\)[\s\S]*?\n {4}\}/);
+    if (!gate) throw new Error("could not locate raceGoalValid() in rules");
+    return gate[0];
+  }
+
+  it("takes the same distances as the engine on both paths", () => {
+    const listed = rulesSource().match(/g\.distance in \[([^\]]*)\]/);
+    if (!listed) throw new Error("could not locate the distance list");
+    const rulesDistances = [...listed[1].matchAll(/'([a-z0-9]+)'/g)]
+      .map((m) => m[1])
+      .sort();
+    expect(rulesDistances).toEqual([...VALID_RACE_DISTANCE].sort());
+    for (const distance of VALID_RACE_DISTANCE)
+      expect(
+        sanitize({ raceGoal: { distance, targetDate: "2027-06-19" } }).raceGoal,
+        distance
+      ).toEqual({ distance, targetDate: "2027-06-19" });
+  });
+
+  it("bounds the climb alike on both paths", () => {
+    const bound = rulesSource().match(/g\.climbM <= (\d+)/);
+    expect(Number(bound?.[1])).toBe(MAX_RACE_CLIMB_M);
+    const climbOf = (climbM: number) =>
+      (
+        sanitize({
+          raceGoal: { distance: "50k", targetDate: "2027-06-19", climbM },
+        }).raceGoal as { climbM?: number } | undefined
+      )?.climbM;
+    expect(climbOf(MAX_RACE_CLIMB_M)).toBe(MAX_RACE_CLIMB_M);
+    expect(climbOf(0)).toBe(0);
+    expect(climbOf(MAX_RACE_CLIMB_M + 1)).toBeUndefined();
+    expect(climbOf(-1)).toBeUndefined();
+    expect(climbOf(450.5)).toBeUndefined();
   });
 });
