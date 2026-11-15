@@ -828,6 +828,67 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
   });
 });
 
+/* Run27 (18): an ultra plan is Pro after its first week, exactly as the
+   half and the marathon are (Q85); a 10K is free throughout. Today's
+   planned session on a free account offers Pro in place of Start from the
+   plan's second week (`currentWeek` 1). */
+describe("ProgrammeRunSection — the race plan's free week (Q85, Run27 (18))", () => {
+  beforeEachReset();
+
+  function renderPlan(distance: string, currentWeek: number) {
+    const props = raceProps(distance, "2099-04-18");
+    return renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState(
+          [
+            makeRunDay({
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ],
+          {
+            runPlan: {
+              mode: "race_prep",
+              raceGoal: { distance, targetDate: "2099-04-18" },
+              totalWeeks: 20,
+              currentWeek,
+            },
+          } as Partial<ProgramState>
+        )}
+      />
+    );
+  }
+
+  it("an ultra plan offers Pro at week 2 exactly as a marathon does, and a 10K doesn't", () => {
+    for (const distance of ["marathon", "50k", "50mi", "100k"]) {
+      const week1 = renderPlan(distance, 0);
+      expect(
+        screen.getByRole("button", { name: "Start run" })
+      ).toBeInTheDocument();
+      week1.unmount();
+
+      const week2 = renderPlan(distance, 1);
+      expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+      expect(
+        screen.getByText(
+          "After your free week, your race plan is part of Pro. Runs you record stay free."
+        )
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Try Pro free" }));
+      expect(navigateMock).toHaveBeenLastCalledWith("/upgrade?from=race_plan");
+      week2.unmount();
+    }
+
+    renderPlan("10k", 1);
+    expect(
+      screen.getByRole("button", { name: "Start run" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try Pro free" })).toBeNull();
+  });
+});
+
 describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
   beforeEachReset();
 

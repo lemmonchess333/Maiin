@@ -19,14 +19,14 @@ export const PRO_INCLUDES: readonly string[] = [
   "Running paces that speed up as your races and sessions show you’re fitter",
   "Readiness from your sleep and heart rate in Apple Health",
   "Charts older than 3 months, your training load and your score’s details",
-  "Half and full marathon plans, after their first week",
+  "Plans for a half marathon or longer, after their first week",
 ];
 
 /** What stays free, said once under the list on the offer. Each is
- *  ungated: the plan and the run tracker read no tier (a half or full
- *  marathon plan past its first week is the one exception, Q85; a 5K or
- *  10K race plan is free), a typed meal goes to the on-device parser when
- *  there is no Pro (`Food.tsx`), and the barcode scanner is free on every
- *  tier (F2b). */
+ *  ungated: the plan and the run tracker read no tier (a plan for a half
+ *  marathon or longer past its first week is the one exception, Q85 and
+ *  Run27 (18); a 5K or 10K race plan is free), a typed meal goes to the
+ *  on-device parser when there is no Pro (`Food.tsx`), and the barcode
+ *  scanner is free on every tier (F2b). */
 export const FREE_KEEPS =
   "Free keeps your training plan, 5K and 10K race plans, run tracking, and typed and barcode food logging.";

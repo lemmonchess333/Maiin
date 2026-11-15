@@ -205,7 +205,7 @@ const GOALS = [
 
 export default function Onboarding() {
   const { user, profile, refreshProfile, signOut } = useAuth();
-  // A half or full marathon plan is Pro after its first week (Q85): the
+  // A half, marathon or ultra plan is Pro after its first week (Q85): the
   // distance control says so to a free account.
   const { isPro: onboardingIsPro } = useSubscription();
   const navigate = useNavigate();

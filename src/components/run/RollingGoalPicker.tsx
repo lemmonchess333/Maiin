@@ -9,8 +9,8 @@ import {
 /**
  * The goals of a plan with no race date (Run24 (3), deep dive D7), one card
  * each with what its weeks hold, as setup and the run plan editor offer
- * them. A plan with no date is free on every account: only half and full
- * marathon race plans are Pro after their first week (`racePlanLocked`).
+ * them. A plan with no date is free on every account: only half, marathon
+ * and ultra race plans are Pro after their first week (`racePlanLocked`).
  */
 export default function RollingGoalPicker({
   value,

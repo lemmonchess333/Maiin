@@ -231,5 +231,27 @@ describe("the saved run, read back", () => {
       expect(merged.workPacePinned).toBe(true);
       expect(benchmarkEffortOf(merged)).toBeNull();
     });
+
+    it("keeps a hot day when the write didn't touch its config (Run27 (14))", () => {
+      const loaded = parseSavedRun(
+        "h",
+        stored({ runConfig: { activityType: "tempo", hotDay: true } })
+      )!;
+      expect(loaded.hotDay).toBe(true);
+      queueDurableWrite(
+        "runner",
+        "users/runner/runs",
+        "h",
+        { relativeEffort: "harder" },
+        true
+      );
+      const [merged] = withQueuedRuns("runner", [loaded], { all: true });
+      expect(merged.relativeEffort).toBe("harder");
+      expect(merged.hotDay).toBe(true);
+      expect(benchmarkEffortOf(merged)).toMatchObject({
+        kind: "tempo",
+        hotDay: true,
+      });
+    });
   });
 });

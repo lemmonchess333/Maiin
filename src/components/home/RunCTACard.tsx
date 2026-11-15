@@ -82,9 +82,9 @@ export default function RunCTACard({
   /** A free run's line (`freeRunHeroLine`): this week's distance against
    *  last week's. Drawn only where no planned run is named. */
   freeLine?: HeroLine | null;
-  /** The half or full marathon plan has passed its free first week
-   *  (whole-app grill Q85): the button offers Pro instead of Start, with
-   *  its words. The race itself still starts. */
+  /** The half, marathon or ultra plan has passed its free first week
+   *  (whole-app grill Q85, Run27 (18)): the button offers Pro instead of
+   *  Start, with its words. The race itself still starts. */
   planLocked?: { cta: string; raceName: string } | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";

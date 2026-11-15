@@ -15,8 +15,8 @@
  *   - Meals the AI scan worked out, read off each meal: a photo scan is
  *     saved with the model's confidence ("high", "medium" or "low"), a typed
  *     meal Gemini read as "ai-parse" (Food.tsx, FoodAnalyzer.tsx).
- *   - A half or full marathon plan past its free first week (Q85): where it
- *     stands now, which is all the plan keeps.
+ *   - A half, marathon or ultra plan past its free first week (Q85,
+ *     Run27 (18)): where it stands now, which is all the plan keeps.
  *
  * Left out, with the reason: readiness from sleep and heart is read on the
  * phone each day and nothing of it is stored or sent (`useBodySignals`,
@@ -29,7 +29,12 @@
  */
 import type { UserProfile } from "./auth";
 import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
-import { racePlanLocked } from "./racePlanAccess";
+import {
+  isProRaceDistance,
+  proRaceName,
+  racePlanLocked,
+  type ProRaceDistance,
+} from "./racePlanAccess";
 import { formatMonth } from "@/utils/formatters";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
@@ -114,7 +119,7 @@ const PHOTO_SCAN_CONFIDENCES: ReadonlySet<string> = new Set([
 const TYPED_SCAN_CONFIDENCE = "ai-parse";
 
 export interface ProRacePlan {
-  distance: "half" | "marathon";
+  distance: ProRaceDistance;
   /** The plan's week, counted from 1. */
   week: number;
   totalWeeks: number;
@@ -184,7 +189,7 @@ export function proReportLines(input: ProReportInput): ProLine[] {
 }
 
 /**
- * The plan Pro is building, when it is a half or full marathon plan past
+ * The plan Pro is building, when it is a half, marathon or ultra plan past
  * the week a free account may use (`racePlanLocked` asked as for a free
  * account): its week now and its length. Null for anything else.
  */
@@ -206,7 +211,7 @@ export function proRacePlan(
   }
   const distance = raceDistance ?? runPlan.raceGoal?.distance;
   const total = runPlan.totalWeeks;
-  if (distance !== "half" && distance !== "marathon") return null;
+  if (!isProRaceDistance(distance)) return null;
   if (typeof total !== "number" || !(total > 0)) return null;
   const week = Math.min(total, (runPlan.currentWeek ?? 0) + 1);
   return { distance, week, totalWeeks: total };
@@ -260,7 +265,7 @@ export function proLineWords(line: ProLine): ProLineWords {
     case "race_plan":
       return {
         value: `${line.week} of ${line.totalWeeks}`,
-        caption: `weeks of your ${line.distance === "half" ? "half marathon" : "marathon"} plan`,
+        caption: `weeks of your ${proRaceName(line.distance)} plan`,
       };
   }
 }

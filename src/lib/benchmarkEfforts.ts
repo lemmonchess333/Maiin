@@ -29,6 +29,10 @@
  *   and a fartlek's pick-ups are not.
  * - Every effort is first an outdoor GPS run with valid figures
  *   (`isPaceEligible`): a typed treadmill distance never sets a benchmark.
+ * - A run started on a hot or extreme day (`hotDay`, the run screen's
+ *   `RunConfig.hotDay`, saved with the run's config) is still an effort,
+ *   marked as one run in the heat: it may raise a benchmark and never
+ *   lowers one (Run27 (14), `heatHoldsBenchmark`).
  *
  * The benchmark the app derives (`useRunFitnessAutoDerive`), Pace Insight
  * (`usePaceInsight`) and the simulator all read efforts here, so they can't
@@ -75,6 +79,8 @@ export interface EffortRun {
   /** What was run, as the saved run names it: a time trial is read by its
    *  work as a race (Run24 (4)). */
   templateId?: string;
+  /** Run27 (14): started on a hot or extreme day (`RunConfig.hotDay`). */
+  hotDay?: boolean;
 }
 
 /** The effort a run was, or null when it was none. */
@@ -83,6 +89,7 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
   const source = {
     ...(run.id ? { id: run.id } : {}),
     ...(run.completedAt ? { completedAt: run.completedAt } : {}),
+    ...(run.hotDay === true ? { hotDay: true } : {}),
   };
   // Run24 (4), deep dive D4: the plan's time trial, read by its one work
   // segment as a race over that distance; the warm-up and cool-down around

@@ -518,8 +518,8 @@ export interface UserProfileRunning {
      *  plan (`isTrailRace`); absent reads as a flat course. */
     climbM?: number;
   } | null;
-  /** Whole-app grill Q85: the account has had the free week of a half or
-   *  full marathon plan, so a later one is Pro from its first week
+  /** Whole-app grill Q85: the account has had the free week of a half,
+   *  marathon or ultra plan, so a later one is Pro from its first week
    *  (`racePlanLocked`). Written once, `true`, by the app the first time a
    *  free account's plan passes that week (`useRacePlanLocked`); the rules
    *  keep it once it is set. */

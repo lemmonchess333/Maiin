@@ -122,6 +122,11 @@ export interface SavedRun extends RunSummaryItem {
    *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
    *  goal was, not what the runner can do. */
   workPacePinned?: boolean;
+  /** Run27 (14): the run started on a hot or extreme day, as the run
+   *  screen saved it with the run's config (`runConfig.hotDay`). Such a run
+   *  never lowers a benchmark (`heatHoldsBenchmark`). Absent on any other
+   *  day, and for a run whose weather could not be read. */
+  hotDay?: boolean;
 }
 
 /**
@@ -279,6 +284,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     workPacePinned:
       Array.isArray(data.runConfig?.segments) &&
       pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
+    ...(data.runConfig?.hotDay === true ? { hotDay: true } : {}),
     ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
   };
 }
@@ -382,8 +388,10 @@ export function withQueuedRuns(
         const touched = (key: string) => Object.hasOwn(entry.data, key);
         if (!EXECUTION_FIELDS.some(touched))
           run.executionTarget = base.executionTarget ?? null;
-        if (!touched("runConfig"))
+        if (!touched("runConfig")) {
           run.workPacePinned = base.workPacePinned ?? false;
+          if (base.hotDay) run.hotDay = true;
+        }
         if (!touched("splits")) run.kmSplitSeconds = base.kmSplitSeconds;
         if (!touched("createdAt") && !touched("completedAt"))
           run.savedAtSeconds = base.savedAtSeconds;
