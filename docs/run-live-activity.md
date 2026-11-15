@@ -138,9 +138,12 @@ before a launch's first card it ends any card an earlier launch left.
    ```
 
 8. **App Groups** capability on BOTH the app target and the extension
-   target: `group.com.tropos.app.liveactivities`. Xcode writes the
-   extension's entitlements file and adds the group to
-   `App/App.entitlements`.
+   target: `group.com.tropos.app`, the group both App IDs hold on Apple's
+   site. The plugin names its own group, `group.<bundle id>.liveactivities`,
+   but only for its `appGroup` images, which no Tropos layout uses
+   (`iosProjectWiring.test.ts` keeps it that way). A layout that needs an
+   app-group image first needs that group registered and assigned on
+   Apple's site, and both entitlements files changed to it.
 9. Build to a device (Live Activities need iOS 16.2+; Dynamic Island needs
    iPhone 14 Pro+). There is no `pod install` step.
 

@@ -653,17 +653,22 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /DynamicActivityWidget\(\)/
     );
 
-    // Both carry the group the plugin names from the app's bundle ID.
-    expect(
-      read(
-        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
-      )
-    ).toContain('"group.\\(bundleId).liveactivities"');
-    const group = "<string>group.com.tropos.app.liveactivities</string>";
+    // Both targets carry the one App Group the two App IDs hold on Apple's
+    // site, group.com.tropos.app, so the profiles the run makes from the API
+    // key match. The plugin's own group (group.<bundle id>.liveactivities)
+    // only serves its "appGroup" images, which no Tropos layout uses: the
+    // cards draw SF Symbols and the extension's own asset catalog.
+    const group = "<string>group.com.tropos.app</string>";
     expect(entitlements).toContain(group);
     expect(
       read("ios/App/LiveActivities/LiveActivities.entitlements")
     ).toContain(group);
+    for (const layout of [
+      "src/lib/runLiveActivity.ts",
+      "src/lib/restLiveActivity.ts",
+    ]) {
+      expect(read(layout)).not.toMatch(/\bappGroup\b/);
+    }
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
