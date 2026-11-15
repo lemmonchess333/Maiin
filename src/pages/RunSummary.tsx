@@ -452,13 +452,10 @@ export default function RunSummary() {
   // older account's age (App1, Q57).
   const ageYears = profileAge(profile);
   useEffect(() => {
-    if (
-      !user?.uid ||
-      !state?.identity ||
-      state.identity.uid !== user.uid ||
-      !state.watchCompanionUsed ||
-      !isOutdoorGpsRun(state.runConfig)
-    )
+    // Any run with a session: the Watch reads outdoor runs, and a paired
+    // Bluetooth sensor any run, the treadmill's too. With no readings the
+    // summary is null and no card shows, as the save below decides.
+    if (!user?.uid || !state?.identity || state.identity.uid !== user.uid)
       return;
     let active = true;
     void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
@@ -476,7 +473,7 @@ export default function RunSummary() {
         if (summary) setHeartRatePreview(summary);
       })
       .catch((error) =>
-        logger.warn("[RunSummary] Watch heart rate unavailable", error)
+        logger.warn("[RunSummary] Heart rate unavailable", error)
       );
     return () => {
       active = false;
@@ -484,9 +481,7 @@ export default function RunSummary() {
   }, [
     user?.uid,
     state?.identity,
-    state?.watchCompanionUsed,
     state?.elapsed,
-    state?.runConfig,
     profile?.maxHeartRate,
     ageYears,
   ]);
@@ -1272,7 +1267,7 @@ export default function RunSummary() {
          writing a second run, which onRunCreated would credit twice
          (challenges, lifetime totals, weekly distance). */
       let heartRate: ReturnType<typeof summarizeHeartRate> = null;
-      if (state.identity && outdoorGps) {
+      if (state.identity) {
         try {
           const captured = await getRecoveredHeartRateSession(
             user.uid,
@@ -1293,7 +1288,7 @@ export default function RunSummary() {
           );
           if (heartRate) setHeartRatePreview(heartRate);
         } catch (error) {
-          logger.warn("[RunSave] Watch heart rate unavailable:", error);
+          logger.warn("[RunSave] Heart rate unavailable:", error);
         }
       }
       // Stage optional export before the durable run write. A process kill

@@ -128,4 +128,22 @@ describe("GpsSignalChip — on the setup screen", () => {
     );
     expect(screen.getByRole("status")).toHaveTextContent("Weak GPS±48 m");
   });
+
+  /* Run25 call 2: Start starts the clock only on a fix within 20 m, so a
+     fair fix past that is not "ready": the screen Start opens would say
+     "Finding GPS", and so does the chip before it. */
+  it("says it is still finding the GPS on a fix Start would not start on", () => {
+    render(
+      <GpsSignalChip
+        accuracy={26}
+        isTracking
+        pointCount={1}
+        signalQuality="fair"
+        onPage
+        ready={false}
+      />
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Finding GPS");
+    expect(screen.getByRole("status")).not.toHaveTextContent("GPS ready");
+  });
 });

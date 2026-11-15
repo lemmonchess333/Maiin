@@ -9076,33 +9076,37 @@ exports.leaveGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
     const uid = await goalSpaceCallableGate(context, "goalSpaceLeave", 10);
+    const spaceId = String(data?.spaceId || "");
     try {
       await goalSpaceMembership.leaveGoalSpace({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
       });
-      return { ok: true };
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
+    await sweepMeetupsAfterLeaving(spaceId, uid);
+    return { ok: true };
   });
 
 exports.removeGoalSpaceMember = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
     const uid = await goalSpaceCallableGate(context, "goalSpaceRemove", 10);
+    const spaceId = String(data?.spaceId || "");
     try {
       await goalSpaceMembership.removeGoalSpaceMember({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
         memberUid: data?.memberUid,
       });
-      return { ok: true };
     } catch (err) {
       throw mapGoalSpaceError(err);
     }
+    await sweepMeetupsAfterLeaving(spaceId, String(data?.memberUid || ""));
+    return { ok: true };
   });
 
 // ── SOCIAL-FOCUS-01 — server-owned weekly check-in + focus backing.
@@ -9192,14 +9196,177 @@ exports.resolveGoalSpaceTarget = functions
       10
     );
     try {
-      return await goalSpaceLifecycle.resolveTarget({
+      const spaceId = String(data?.spaceId || "");
+      const result = await goalSpaceLifecycle.resolveTarget({
         firestore: admin.firestore(),
         uid,
-        spaceId: String(data?.spaceId || ""),
+        spaceId,
         action: data?.action,
         newTargetDate: data?.newTargetDate,
         now: Date.now(),
       });
+      // A wrapped Circle has ended, and its meet-ups go with it (Run26
+      // call 4). Best effort: the wrap stands either way, and the app
+      // shows no meet-ups on an ended Circle.
+      if (result.action === "wrap") {
+        try {
+          await circleMeetups.deleteCircleMeetups({
+            firestore: admin.firestore(),
+            spaceId,
+          });
+        } catch (sweepErr) {
+          functions.logger.warn("resolveGoalSpaceTarget.meetups_sweep_failed", {
+            spaceId,
+            message: sweepErr && sweepErr.message,
+          });
+        }
+      }
+      return result;
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+// ── Run26 call 4 — meet-ups in a Circle: a member plans a run or a lift
+// with a time and a place, and the others say whether they are in. The
+// rules refuse every client write to goalSpaces/{id}/meetups, so this one
+// callable is the writer (lib/circleMeetups). Planning and saying you're
+// in reach the other members, so a restricted account is refused them;
+// saying you can't make it and calling one off stay open (S4e).
+const circleMeetups = require("./lib/circleMeetups");
+
+/** The member's copy of their name, as the Circle event fan-out reads it. */
+async function circleMemberName(spaceId, uid) {
+  const snap = await db.doc(`goalSpaces/${spaceId}/members/${uid}`).get();
+  return (
+    (snap.exists && identityResync.carriedName(snap.data().displayName)) ||
+    "A Circle member"
+  );
+}
+
+/** Tell members about a meet-up. A failed notice is logged: the plan or
+ *  the call-off it is about has happened either way. */
+async function notifyCircleMeetup({
+  spaceId,
+  meetupId,
+  fromUid,
+  recipients,
+  type,
+  verb,
+  sport,
+}) {
+  if (recipients.length === 0) return;
+  try {
+    const fromName = await circleMemberName(spaceId, fromUid);
+    const what = sport === "lift" ? "a group lift" : "a group run";
+    await Promise.all(
+      recipients.map((toUid) =>
+        socialFanout.createNotification({
+          firestore: admin.firestore(),
+          fromUid,
+          toUid,
+          data: { type, fromName, message: `${fromName} ${verb} ${what}` },
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          notificationId: `${type}_${spaceId}_${meetupId}`,
+        })
+      )
+    );
+  } catch (err) {
+    functions.logger.warn("circleMeetup.notification_failed", {
+      spaceId,
+      meetupId,
+      type,
+      message: err && err.message,
+    });
+  }
+}
+
+/** After someone leaves or is removed: their part in the Circle's
+ *  meet-ups goes, and all of them if the Circle ended. Best effort, as the
+ *  leaving stands; the app shows only current members' meet-ups and names. */
+async function sweepMeetupsAfterLeaving(spaceId, uid) {
+  if (!spaceId || !uid) return;
+  try {
+    await circleMeetups.afterMemberLeft({
+      firestore: admin.firestore(),
+      spaceId,
+      uid,
+    });
+  } catch (err) {
+    functions.logger.warn("goalSpace.meetups_sweep_failed", {
+      spaceId,
+      message: err && err.message,
+    });
+  }
+}
+
+exports.circleMeetup = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const action = data?.action;
+    if (!circleMeetups.MEETUP_ACTIONS.includes(action)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Unknown action."
+      );
+    }
+    const uid = await goalSpaceCallableGate(context, "circleMeetup", 30, {
+      reachesOthers: action === "plan" || action === "going",
+    });
+    const spaceId = String(data?.spaceId || "");
+    const firestore = admin.firestore();
+    const now = Date.now();
+    try {
+      if (action === "plan") {
+        const { meetupId, recipients, sport } = await circleMeetups.planMeetup({
+          firestore,
+          uid,
+          spaceId,
+          input: data?.meetup,
+          now,
+          makeId: goalSpaceRandomId,
+          containsProfanity: (text) => profanityFilter.containsProfanity(text),
+        });
+        await notifyCircleMeetup({
+          spaceId,
+          meetupId,
+          fromUid: uid,
+          recipients,
+          type: "circle_meetup",
+          verb: "planned",
+          sport,
+        });
+        return { ok: true, meetupId };
+      }
+      const meetupId = String(data?.meetupId || "");
+      if (action === "cancel") {
+        const { notify, sport } = await circleMeetups.cancelMeetup({
+          firestore,
+          uid,
+          spaceId,
+          meetupId,
+          now,
+        });
+        await notifyCircleMeetup({
+          spaceId,
+          meetupId,
+          fromUid: uid,
+          recipients: notify,
+          type: "circle_meetup_cancelled",
+          verb: "called off",
+          sport,
+        });
+        return { ok: true };
+      }
+      const { going } = await circleMeetups.setMeetupGoing({
+        firestore,
+        uid,
+        spaceId,
+        meetupId,
+        going: action === "going",
+        now,
+      });
+      return { ok: true, going };
     } catch (err) {
       throw mapGoalSpaceError(err);
     }

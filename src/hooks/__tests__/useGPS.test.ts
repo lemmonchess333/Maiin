@@ -23,6 +23,11 @@ import {
 // getCurrentPosition fallback poll.
 const h = vi.hoisted(() => ({
   watchOnFix: null as PositionCallback | null,
+  watchOnError: null as PositionErrorCallback | null,
+  /** Each watch's purpose, in the order they began. */
+  watchPurposes: [] as (string | undefined)[],
+  /** How many watches have been cleared. */
+  cleared: 0,
   getCurrentImpl: null as
     ((onFix: PositionCallback, onErr: PositionErrorCallback) => void) | null,
 }));
@@ -36,9 +41,20 @@ vi.mock("../../lib/locationSource", () => ({
     ) => {
       h.getCurrentImpl?.(onFix, onErr);
     },
-    watch: (_opts: PositionOptions, onFix: PositionCallback) => {
+    watch: (
+      _opts: PositionOptions,
+      onFix: PositionCallback,
+      onErr: PositionErrorCallback,
+      purpose?: string
+    ) => {
       h.watchOnFix = onFix;
-      return { clear: () => {} };
+      h.watchOnError = onErr;
+      h.watchPurposes.push(purpose);
+      return {
+        clear: () => {
+          h.cleared += 1;
+        },
+      };
     },
   }),
 }));
@@ -192,13 +208,17 @@ describe("useGPS — watchPosition watchdog (iOS Safari/PWA fallback)", () => {
   });
 });
 
-/* The run setup screen warms the GPS with preWarm and shows its signal
-   (useGpsWarmup). A warm fix moves the signal, never the trace; a refusal
-   is recorded, so the screen stops showing a signal it cannot get. */
-describe("useGPS — preWarm", () => {
+/* The run screen watches location before Start (`warm`, useGpsWarmup). A
+   warm fix moves the signal, never the trace; its watch never asks for
+   location; a refusal is recorded, so the screen stops showing a signal it
+   cannot get; and the run's own watch takes over from it at Start. */
+describe("useGPS — warm, the run screen's watch before Start", () => {
   beforeEach(() => {
     h.watchOnFix = null;
-    h.getCurrentImpl = null;
+    h.watchOnError = null;
+    h.watchPurposes.length = 0;
+    h.cleared = 0;
+    h.getCurrentImpl = () => {};
     Object.defineProperty(navigator, "geolocation", {
       value: {},
       configurable: true,
@@ -206,29 +226,189 @@ describe("useGPS — preWarm", () => {
   });
 
   it("shows a warm fix's signal and adds nothing to the trace", () => {
-    h.getCurrentImpl = (onFix) => onFix(geoPos(51.5, -0.12, 6));
     const { result } = renderHook(() => useGPS());
-    act(() => result.current.preWarm());
+    act(() => result.current.warm());
+    expect(h.watchPurposes).toEqual(["warm"]);
+    act(() => h.watchOnFix?.(geoPos(51.5, -0.12, 6)));
     expect(result.current.gpsAccuracy).toBe(6);
     expect(result.current.signalQuality).toBe("strong");
     expect(result.current.points).toEqual([]);
+    expect(result.current.isTracking).toBe(false);
   });
 
   it("records a refusal as denied", () => {
-    h.getCurrentImpl = (_onFix, onErr) =>
-      onErr({ code: 1, message: "denied" } as GeolocationPositionError);
     const { result } = renderHook(() => useGPS());
-    act(() => result.current.preWarm());
+    act(() => result.current.warm());
+    act(() =>
+      h.watchOnError?.({
+        code: 1,
+        message: "denied",
+      } as GeolocationPositionError)
+    );
     expect(result.current.permissionState).toBe("denied");
   });
 
   it("leaves the permission alone when a warm fix only timed out", () => {
-    h.getCurrentImpl = (_onFix, onErr) =>
-      onErr({ code: 3, message: "timeout" } as GeolocationPositionError);
     const { result } = renderHook(() => useGPS());
-    act(() => result.current.preWarm());
+    act(() => result.current.warm());
+    act(() =>
+      h.watchOnError?.({
+        code: 3,
+        message: "timeout",
+      } as GeolocationPositionError)
+    );
     expect(result.current.permissionState).not.toBe("denied");
     expect(result.current.error).toBeNull();
+  });
+
+  it("watches once, and gives way to the run's own watch at Start", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.warm());
+    act(() => result.current.warm());
+    expect(h.watchPurposes).toEqual(["warm"]);
+    act(() => {
+      result.current.start();
+    });
+    expect(h.cleared).toBe(1);
+    expect(h.watchPurposes).toEqual(["warm", undefined]);
+    // Never a second watch beside the run's.
+    act(() => result.current.warm());
+    expect(h.watchPurposes).toEqual(["warm", undefined]);
+  });
+
+  it("stops on cool", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => result.current.warm());
+    act(() => result.current.cool());
+    expect(h.cleared).toBe(1);
+  });
+});
+
+/* Run25 call 2: a GPS run's clock starts on its first good fix. The trace's
+   first point is that fix, so the clock (Run.tsx starts it on the point's
+   time), the trace and its splits all begin at one instant. */
+describe("useGPS — the first point a run's clock starts on", () => {
+  const T0 = Date.parse("2026-10-04T08:00:00Z");
+
+  beforeEach(() => {
+    h.watchOnFix = null;
+    h.watchOnError = null;
+    h.watchPurposes.length = 0;
+    h.cleared = 0;
+    h.getCurrentImpl = () => {};
+    Object.defineProperty(navigator, "geolocation", {
+      value: {},
+      configurable: true,
+    });
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  function warmFix(accuracy: number, takenAt: number) {
+    const hook = renderHook(() => useGPS());
+    act(() => hook.result.current.warm());
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, accuracy, takenAt)));
+    return hook;
+  }
+
+  it("starts on a good fix in hand from the warm watch, stamped at Start", () => {
+    const { result } = warmFix(8, T0 - 2000);
+    let onFix = false;
+    act(() => {
+      onFix = result.current.startAwaitingFix(T0);
+    });
+    expect(onFix).toBe(true);
+    expect(result.current.points).toHaveLength(1);
+    expect(result.current.points[0]).toMatchObject({
+      timestamp: T0,
+      accuracy: 8,
+    });
+    expect(result.current.distance).toBe(0);
+  });
+
+  it.each([
+    ["too rough", 26, T0 - 1000],
+    ["too old", 8, T0 - 11_000],
+  ])("does not start on a fix in hand %s", (_why, accuracy, takenAt) => {
+    const { result } = warmFix(accuracy, takenAt);
+    let onFix = true;
+    act(() => {
+      onFix = result.current.startAwaitingFix(T0);
+    });
+    expect(onFix).toBe(false);
+    expect(result.current.points).toEqual([]);
+  });
+
+  it("waits past a 40 m fix, and starts on a later 18 m one when it was taken", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => {
+      result.current.startAwaitingFix(T0);
+    });
+    vi.setSystemTime(T0 + 3000);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 3000)));
+    expect(result.current.points).toEqual([]);
+    // Not the run's yet, so not counted against its route.
+    expect(result.current.getRejectedFixCount()).toBe(0);
+    vi.setSystemTime(T0 + 6200);
+    act(() => h.watchOnFix?.(geoPos(north(2), -0.12, 18, T0 + 6000)));
+    expect(result.current.points).toHaveLength(1);
+    expect(result.current.points[0]).toMatchObject({
+      timestamp: T0 + 6000,
+      accuracy: 18,
+    });
+  });
+
+  it("never stamps the first point before Start", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => {
+      result.current.startAwaitingFix(T0);
+    });
+    // Taken half a second before the tap, delivered just after it.
+    vi.setSystemTime(T0 + 200);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 10, T0 - 500)));
+    expect(result.current.points[0].timestamp).toBe(T0);
+  });
+
+  it("takes the first fix the reading gate passes after Start anyway", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => {
+      result.current.startAwaitingFix(T0);
+    });
+    vi.setSystemTime(T0 + 2000);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 2000)));
+    expect(result.current.points).toEqual([]);
+    act(() => result.current.startAnyway());
+    vi.setSystemTime(T0 + 4000);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 4000)));
+    expect(result.current.points).toHaveLength(1);
+    expect(result.current.points[0]).toMatchObject({
+      timestamp: T0 + 4000,
+      accuracy: 40,
+    });
+    // Distance counts from that point on.
+    for (let k = 1; k <= 10; k++) {
+      vi.setSystemTime(T0 + 4000 + k * 1000);
+      act(() =>
+        h.watchOnFix?.(geoPos(north(3 * k), -0.12, 10, T0 + 4000 + k * 1000))
+      );
+    }
+    expect(result.current.distance).toBeGreaterThan(20);
+  });
+
+  it("restarting a run's watch never waits again", () => {
+    const { result } = renderHook(() => useGPS());
+    act(() => {
+      result.current.startAwaitingFix(T0);
+    });
+    act(() => result.current.startAnyway());
+    act(() => result.current.stop());
+    act(() => {
+      result.current.start();
+    });
+    vi.setSystemTime(T0 + 1000);
+    act(() => h.watchOnFix?.(geoPos(north(0), -0.12, 40, T0 + 1000)));
+    expect(result.current.points).toHaveLength(1);
   });
 });
 

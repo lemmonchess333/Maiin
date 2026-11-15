@@ -2612,6 +2612,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Meet-ups (Run26 call 4): a member's plan to run or lift together,
+    // with a time and a typed place. SERVER-WRITTEN only: the circleMeetup
+    // callable plans, joins, leaves and calls them off, and holds the
+    // bounds, the word filter, restriction and the block check. Members
+    // read them; nobody else does. No coordinates, no training numbers and
+    // no copied names are stored (GsPb1's fence).
+    match /goalSpaces/{spaceId}/meetups/{meetupId} {
+      allow read: if isGoalSpaceMember(spaceId);
+      allow write: if false;
+    }
+
     // ========================================
     // Scan usage — food-scan quota tracker.
     // Written exclusively by Cloud Functions (analyzeFood /

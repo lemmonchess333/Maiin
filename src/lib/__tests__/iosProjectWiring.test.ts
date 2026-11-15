@@ -750,13 +750,16 @@ describe("iOS project wiring — the app's own plugins", () => {
         ),
       ])
       .map(([, cls, jsName]) => ({ cls, jsName }));
+    // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
     expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "HeartRateSensor",
       "MotionActivity",
       "WatchRun",
     ]);
     for (const { cls, jsName } of plugins) {
       expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
       const callers = [
+        "src/lib/heartRateSensorBridge.ts",
         "src/lib/runMotionSource.ts",
         "src/lib/watchRunBridge.ts",
       ].filter((file) =>
@@ -764,5 +767,70 @@ describe("iOS project wiring — the app's own plugins", () => {
       );
       expect(callers).toHaveLength(1);
     }
+  });
+});
+
+describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
+  const plugin = read("ios/App/App/HeartRateSensorPlugin.swift");
+  const bridge = read("src/lib/heartRateSensorBridge.ts");
+
+  it("compiles the plugin into the app", () => {
+    const sources = compiledSourcePaths();
+    // Anchor: the parse found the files that were already there.
+    expect(sources).toContain("WatchRunPlugin.swift");
+    expect(sources).toContain("HeartRateSensorPlugin.swift");
+  });
+
+  it("registers it before the web view loads, under the name the web asks for", () => {
+    // An app-target plugin is not found by Capacitor's package scan.
+    expect(read("ios/App/App/TroposBridgeViewController.swift")).toMatch(
+      /registerPluginInstance\(HeartRateSensorPlugin\(\)\)/
+    );
+    const jsName = plugin.match(/let jsName = "([^"]+)"/)?.[1];
+    expect(jsName).toBe("HeartRateSensor");
+    expect(bridge).toContain(
+      `registerPlugin<HeartRateSensorPlugin>("${jsName}")`
+    );
+  });
+
+  it("implements every method the web calls", () => {
+    const iface = bridge.match(
+      /interface HeartRateSensorPlugin \{([\s\S]*?)\n\}/
+    );
+    expect(iface).not.toBeNull();
+    const called = [...iface![1].matchAll(/^\s{2}(\w+)\(/gm)]
+      .map((m) => m[1])
+      .filter((name) => name !== "addListener");
+    expect(called.length).toBeGreaterThanOrEqual(10);
+    for (const name of called) {
+      expect(plugin).toContain(`CAPPluginMethod(name: "${name}"`);
+      expect(plugin).toMatch(
+        new RegExp(`@objc func ${name}\\(_ call: CAPPluginCall\\)`)
+      );
+    }
+  });
+
+  it("emits only the events the web listens for", () => {
+    const emitted = new Set(
+      [...plugin.matchAll(/notifyListeners\("(\w+)"/g)].map((m) => m[1])
+    );
+    expect([...emitted].sort()).toEqual([
+      "reading",
+      "sensorFound",
+      "statusChanged",
+    ]);
+    for (const event of emitted) expect(bridge).toContain(`"${event}"`);
+  });
+
+  it("asks for Bluetooth with a purpose string and keeps a run's sensor in the background", () => {
+    // Apple: the key "is required if your app uses the device's Bluetooth
+    // interface", and the bluetooth-central mode wakes the app for a
+    // connected peripheral's updated values.
+    expect(infoPlist).toMatch(
+      /<key>NSBluetoothAlwaysUsageDescription<\/key>\s*<string>[^<]*heart rate sensor[^<]*<\/string>/
+    );
+    expect(infoPlist).toMatch(
+      /<key>UIBackgroundModes<\/key>\s*<array>\s*<string>location<\/string>\s*<string>bluetooth-central<\/string>\s*<\/array>/
+    );
   });
 });

@@ -172,6 +172,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /comments/{commentId}",
   "match /goalSpaces/{spaceId}",
   "match /goalSpaces/{spaceId}/members/{memberUid}",
+  // Run26 call 4: a Circle's meet-ups. Member READ only; the circleMeetup
+  // callable writes them behind the deletion actor-lock, and the executor
+  // sweeps them (inventory goalSpaceMeetups).
+  "match /goalSpaces/{spaceId}/meetups/{meetupId}",
   // Short invite-code → spaceId lookup (bearer index). Admin SDK writes
   // only (createGoalSpace reserves the code, joinGoalSpace reads it);
   // `allow read, write: if false` for clients so codes can't be

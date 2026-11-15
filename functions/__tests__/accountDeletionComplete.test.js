@@ -114,6 +114,17 @@ function setup(extra = {}) {
       uid: "bob",
       supporterIds: ["alice", "carol"],
     },
+    // Run26 call 4: a meet-up Alice planned in a Circle she left, and one
+    // of Bob's she was in for.
+    "goalSpaces/old/meetups/hers": { organiserUid: "alice", going: ["alice"] },
+    "goalSpaces/old/meetups/bobs": {
+      organiserUid: "bob",
+      going: ["bob", "alice", "carol"],
+    },
+    "goalSpaces/owned/meetups/planned": {
+      organiserUid: "bob",
+      going: ["bob"],
+    },
     "goalSpaces/owned": {
       ownerId: "alice",
       title: "Alice's circle",
@@ -285,6 +296,9 @@ describe("complete account erasure", () => {
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
+      "goalSpaces/old/meetups/hers",
+      // A closed Circle's meet-ups go with it.
+      "goalSpaces/owned/meetups/planned",
       "goalSpaceInvites/join",
       "reportAuthority/report",
       "rateLimits/alice_scan",
@@ -352,6 +366,10 @@ describe("complete account erasure", () => {
       data.get("comments/other/items/bobs-comment").reactions.fire
     ).toEqual(["carol"]);
     expect(data.get("goalSpaces/old/events/backed").supporterIds).toEqual([
+      "carol",
+    ]);
+    expect(data.get("goalSpaces/old/meetups/bobs").going).toEqual([
+      "bob",
       "carol",
     ]);
     expect(data.get("goalSpaces/owned")).toMatchObject({
