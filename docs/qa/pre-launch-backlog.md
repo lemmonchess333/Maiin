@@ -5327,7 +5327,7 @@ Only a phone says how they behave outside.
 - [ ] **Large text and a small phone.** At the largest text size, and on a
       320 px wide phone if one is to hand, the digit and its line fit the
       screen.
-- [ ] **A buggy or a wheelchair.** Fix the phone to a buggy or a chair (a
+- [x] _(Retired 2026-11-15: Run27 call 5 reversed (#3363), the steady-heading rule removed.)_ **A buggy or a wheelchair.** Fix the phone to a buggy or a chair (a
       cup holder or a mount), start an outdoor run with auto-pause on, and
       push at an ordinary walk for two minutes on an open path, with one
       stop of 30 s. Passing: the clock pauses at the start, starts again
@@ -5336,7 +5336,7 @@ Only a phone says how they behave outside.
       about 10 s later. Note the GPS accuracy the map's chip shows: below
       15 m is where this works; rougher, a walking push waits for 2.5 m/s
       or a step, as before.
-- [ ] **Crossings, with the phone still.** On a city run, stand at four
+- [x] _(Retired 2026-11-15: Run27 call 5 reversed (#3363), the steady-heading rule removed.)_ **Crossings, with the phone still.** On a city run, stand at four
       crossings for 30 to 60 s each with the phone still in a hand or a
       pocket. Passing: "Auto-paused" stays while you stand, between tall
       buildings too, and the clock starts at your first steps. Count any
