@@ -3644,8 +3644,11 @@ user. The plan's start weight was overwritten.
 - [ ] **An email sign-up on a phone:** no wall before the questions, the
       link arrives during onboarding, and after tapping it in Mail and
       coming back, Home's "Verify your email" notice has gone.
-- [ ] **The first screen:** a fresh install opens on the welcome screen;
-      after signing out, the same phone opens on Sign in.
+- [ ] _(Superseded 2026-11-15 by the DS9 STATUS: after signing out, the
+      same phone opens on the welcome too. Check it in "The welcome opens
+      whenever no one is signed in" below.)_ **The first screen:** a fresh
+      install opens on the welcome screen; after signing out, the same
+      phone opens on Sign in.
 - [ ] **A Google sign-up's photo** is still on their profile, seen from a
       second account, after onboarding.
 - [x] _(Proven 2026-10-18: e2e/loseFatGoalWeight.auth.spec.ts 'the plan's target is under maintenance, and Nutrition shows the goal and pace' (emulator rig, Start my plan answered by the real completeOnboarding handler): sign up, Lose fat, 80 kg with a goal of 70 kg at 0.25 kg a week. The review shows 2,470 kcal; the saved profile has goalWeightKg 70 and weeklyRateKg -0.25; Settings → Nutrition shows 70.0 kg, Relaxed, "Losing → Cut", Base TDEE 2,740 and Daily target 2,470 cal (the review's figure), with the Cut offset the difference.)_ **Lose fat with a goal weight:** the plan's target is below
@@ -4939,6 +4942,32 @@ phone has not drawn it, and nothing here can film a cold start.
       originals zip in Photos on an iPhone, use Clean Up on the strap, and
       send the result; the next session swaps it into
       `src/assets/welcome/welcome-3-crew.webp` and its manifest.
+
+## The welcome opens whenever no one is signed in, and sign-in's lifter shows on iPhone (DS9 STATUS, 2026-11-15)
+
+Affects: `Login.tsx` (which screen a signed-out visit opens on, and
+`returningDevice` on `auth_screen_viewed`), `SignInFigure` and the
+`.signin-figure` style. The lifter's fault was measured in WebKitGTK 2.52 on
+Linux (the box 0 by 176 px before, 121 by 176 px after) and in Chromium (121
+by 176 px both times); no iPhone has drawn the fix.
+
+- [ ] **Signed out, the photographs.** On a phone that has had an account,
+      sign out from Settings → Account. Passing: the welcome opens, with the
+      photographs fading from one to the next, "Get started" and "Sign in"
+      under them.
+- [ ] **Sign in, the lifter.** Tap "Sign in". Passing: "Welcome back", and
+      beside it the lifter, about a third of the screen's width, pressing
+      the bar in its soft purple light; no thin oval at the screen's right
+      edge. Tap "Sign up": "Create your account" and the same lifter.
+- [ ] **After deleting an account.** Delete a test account from Settings →
+      Account. Passing: the app opens on Sign in with "Your account and all
+      data have been deleted." above the buttons; close and reopen the app,
+      and it opens on the welcome.
+- [ ] **The funnel in GA4 DebugView.** Sign out and back in on a phone that
+      has had an account. Passing: `auth_screen_viewed` with
+      `screen: welcome` and `returningDevice: true`, then `screen: sign_in`.
+      To read the first rung in reports, register `returningDevice` as an
+      event-scoped custom dimension (Admin → Custom definitions).
 
 ## Social covers and the race list's photographs (2026-11-12)
 
