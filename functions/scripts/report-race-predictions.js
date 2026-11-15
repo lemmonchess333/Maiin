@@ -122,7 +122,8 @@ function raceSeconds(run) {
 /**
  * A goal race as the report reads it from a run document, or null for a
  * run it cannot score: no record (or one of another version), a run saved
- * anyway, no recorded time (`raceSeconds`). Its predictions are in the order recorded.
+ * anyway, no recorded time (`raceSeconds`). Its predictions are in the
+ * order recorded.
  */
 function goalRaceEntry(run) {
   if (!run || typeof run !== "object") return null;

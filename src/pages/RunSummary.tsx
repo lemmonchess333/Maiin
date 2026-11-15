@@ -806,6 +806,8 @@ export default function RunSummary() {
           pendingWeekRun.date ?? localDateString()
         ).raceGoal
       : null;
+  // `=== true`: a plain boolean, which the pace candidate below can memo on
+  // (React Compiler reads a call's result as something that may change).
   const isGoalRace =
     !!goalRace &&
     !!pendingWeekRun &&
@@ -815,7 +817,7 @@ export default function RunSummary() {
         date: pendingWeekRun.date ?? localDateString(),
       },
       goalRace
-    );
+    ) === true;
   const raceLog = useRacePredictionLog(user?.uid, isGoalRace);
 
   // Pace insight (Pro) — reuse the already-fetched history. The just-saved run

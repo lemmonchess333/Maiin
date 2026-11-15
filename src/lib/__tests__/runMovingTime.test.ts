@@ -75,7 +75,9 @@ function record(stretches: Stretch[]): Recorded {
       for (let s = 0; s < stretch.stand; s++) {
         fixes.push({ timestamp: T0 + t * 1000, speed, accuracy: 5 });
         if (stretch.driftEvery && s > 0 && s % stretch.driftEvery === 0)
-          points.push(point(s % (2 * stretch.driftEvery) === 0 ? -3 : 3, speed));
+          points.push(
+            point(s % (2 * stretch.driftEvery) === 0 ? -3 : 3, speed)
+          );
         t++;
       }
     } else {
@@ -251,7 +253,11 @@ describe("a run that keeps its timer", () => {
 describe("withHolds", () => {
   it("gives a point inside a hold the time held up to it, less what its metres keep", () => {
     // Standing 15 to 30 s with a point 3 m off every 5 s.
-    const rec = record([{ run: 10 }, { stand: 20, driftEvery: 5 }, { run: 10 }]);
+    const rec = record([
+      { run: 10 },
+      { stand: 20, driftEvery: 5 },
+      { run: 10 },
+    ]);
     const { points, heldMs } = withHolds(
       rec.points,
       [{ from: T0 + 15_000, to: T0 + 30_000 }],

@@ -1556,7 +1556,10 @@ describe("RunSummary — elapsed time beside moving time (Run28 call 2)", () => 
   /** The saved receipt (25:00 moving), stamped `wall` seconds apart. */
   const stamps = (wall: number) => {
     const startedAt = Date.now() - 3600_000;
-    return { recordingStartedAt: startedAt, finishedAt: startedAt + wall * 1000 };
+    return {
+      recordingStartedAt: startedAt,
+      finishedAt: startedAt + wall * 1000,
+    };
   };
 
   it("shows the elapsed time a minute or more over the moving time", async () => {
@@ -1571,18 +1574,18 @@ describe("RunSummary — elapsed time beside moving time (Run28 call 2)", () => 
 
   it("stays one figure under a minute apart", async () => {
     renderSummary(stamps(1500 + 59));
-    expect((await screen.findByText("Time")).nextElementSibling).toHaveTextContent(
-      "25:00"
-    );
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
     expect(screen.queryByText(/Elapsed time/)).toBeNull();
     expect(screen.queryByText("Moving time")).toBeNull();
   });
 
   it("stays one figure for a run saved without both stamps", async () => {
     renderSummary({ recordingStartedAt: null });
-    expect((await screen.findByText("Time")).nextElementSibling).toHaveTextContent(
-      "25:00"
-    );
+    expect(
+      (await screen.findByText("Time")).nextElementSibling
+    ).toHaveTextContent("25:00");
     expect(screen.queryByText(/Elapsed time/)).toBeNull();
   });
 });
@@ -1691,13 +1694,13 @@ describe("RunSummary — the goal race against what Tropos predicted", () => {
       "Tropos predicted 50:02. You ran 50:40, 0:38 slower."
     );
     // The race's own figure is its elapsed time…
-    expect(screen.getByText(/^Race ·/).previousElementSibling).toHaveTextContent(
-      "50:40"
-    );
+    expect(
+      screen.getByText(/^Race ·/).previousElementSibling
+    ).toHaveTextContent("50:40");
     // …and the stats keep the moving time, the elapsed time beside it.
-    expect(screen.getByText("Moving time").nextElementSibling).toHaveTextContent(
-      "49:10"
-    );
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("49:10");
     expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
       "Elapsed time 50:40"
     );

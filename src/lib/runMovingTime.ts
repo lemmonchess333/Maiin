@@ -141,9 +141,7 @@ export function replayAutoPause(
     .filter((w) => Number.isFinite(w.from) && w.to > w.from);
   const recovering = (at: number) =>
     windows.some((w) => w.from <= at && at < w.to);
-  const boundaries = [
-    ...new Set(windows.flatMap((w) => [w.from, w.to])),
-  ]
+  const boundaries = [...new Set(windows.flatMap((w) => [w.from, w.to]))]
     .filter((at) => at > startedAt && at <= finishedAt)
     .sort((a, b) => a - b);
 
@@ -241,7 +239,8 @@ export function withHolds(
     const metres = b.breakBefore ? 0 : segmentMetres(a, b);
     const keepMs =
       metres > 0 ? Math.ceil((metres / MAX_PLAUSIBLE_SPEED_MPS) * 1000) + 1 : 0;
-    const movingMs = b.timestamp - pausedMsOf(b) - (a.timestamp - pausedMsOf(a));
+    const movingMs =
+      b.timestamp - pausedMsOf(b) - (a.timestamp - pausedMsOf(a));
     added += Math.max(0, Math.min(wanted, movingMs - keepMs));
     out.push(stamped(b, added));
   }

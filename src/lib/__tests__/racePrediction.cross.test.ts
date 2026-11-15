@@ -125,7 +125,10 @@ describe("the record the app saves is the one the report scores", () => {
   /** The race with `elapsed` seconds of moving time, and with the clock's
    *  start and the finish stamped `wall` seconds apart (plus a part of a
    *  second each), or neither stamp. */
-  const finished = (elapsed: number, wall: number | null = null): FinishedRun => ({
+  const finished = (
+    elapsed: number,
+    wall: number | null = null
+  ): FinishedRun => ({
     points: [],
     startedAt: start.getTime(),
     ...(wall !== null
@@ -220,28 +223,31 @@ describe("the race's time: the report and the app read the same elapsed time (Ru
     { moving: 3000, wall: 3000, ran: 3000 },
     // Saved without the stamps: its duration.
     { moving: 3127, wall: null, ran: 3127 },
-  ])("moving $moving s, stamped $wall s apart: ran $ran s", ({ moving, wall, ran }) => {
-    const saved = runDocument(
-      race(moving, wall),
-      new Date(start.getTime() + 4000 * 1000)
-    );
-    expect(saved.duration).toBe(moving);
-    // The report, reading the document as the server stores it…
-    const read = JSON.parse(JSON.stringify(saved));
-    expect(report.goalRaceEntry(read)!.ranS).toBe(ran);
-    // …the run's page, reading the saved stamps…
-    expect(
-      goalRaceSeconds(
-        saved.duration,
-        elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
-      )
-    ).toBe(ran);
-    // …and the saved-run reader the benchmark derive reads.
-    const parsed = parseSavedRun("race", {
-      ...saved,
-      completedAt: saved.completedAt,
-    })!;
-    expect(parsed.goalRace).toBe(true);
-    expect(goalRaceSeconds(parsed.duration, parsed.elapsedSeconds)).toBe(ran);
-  });
+  ])(
+    "moving $moving s, stamped $wall s apart: ran $ran s",
+    ({ moving, wall, ran }) => {
+      const saved = runDocument(
+        race(moving, wall),
+        new Date(start.getTime() + 4000 * 1000)
+      );
+      expect(saved.duration).toBe(moving);
+      // The report, reading the document as the server stores it…
+      const read = JSON.parse(JSON.stringify(saved));
+      expect(report.goalRaceEntry(read)!.ranS).toBe(ran);
+      // …the run's page, reading the saved stamps…
+      expect(
+        goalRaceSeconds(
+          saved.duration,
+          elapsedSecondsOf(saved.recordingStartedAt, saved.recordingEndedAt)
+        )
+      ).toBe(ran);
+      // …and the saved-run reader the benchmark derive reads.
+      const parsed = parseSavedRun("race", {
+        ...saved,
+        completedAt: saved.completedAt,
+      })!;
+      expect(parsed.goalRace).toBe(true);
+      expect(goalRaceSeconds(parsed.duration, parsed.elapsedSeconds)).toBe(ran);
+    }
+  );
 });

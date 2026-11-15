@@ -515,9 +515,9 @@ describe("RunDetail — elapsed time beside moving time (Run28 call 2)", () => {
   it("shows the elapsed time when it is a minute or more over the moving time", () => {
     h.run = stamped(360 + 60);
     renderDetail();
-    expect(screen.getByText("Moving time").nextElementSibling).toHaveTextContent(
-      "6:00"
-    );
+    expect(
+      screen.getByText("Moving time").nextElementSibling
+    ).toHaveTextContent("6:00");
     expect(screen.getByText(/Elapsed time/)).toHaveTextContent(
       "Elapsed time 7:00"
     );

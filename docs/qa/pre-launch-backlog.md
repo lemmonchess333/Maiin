@@ -5292,10 +5292,10 @@ Affects: every run's start (Run27 (1): `useStartCountdown`,
 `StartCountdown`, the reducer's `countdown`; the run screen keeps watching
 location through it, and Go starts the clock on a fix within 20 m in hand
 or goes on to "Finding GPS"), and auto-pause over a still phone (Run27 (5):
-`gpsTrail`, `gpsStraightness` and `steadyMovement` in
-`src/lib/runAutoPause.ts`). Page tests drive the countdown with a faked
-location source; the steady heading's numbers come from the synthetic GPS
-bench (`runAutoPause.bench.test.ts`), whose error models are assumptions.
+removed with Run27 call 5's reversal (#3364)). Page tests drive the
+countdown with a faked location source; the steady heading's numbers come
+from the synthetic GPS bench (removed with Run27 call 5's reversal
+(#3364)), whose error models are assumptions.
 Only a phone says how they behave outside.
 
 - [ ] **The countdown, warm.** Outdoors, wait for "GPS ready" on a run's
