@@ -140,6 +140,18 @@ planned sessions read `daysPerWeek`, written once at setup.
 51. A public post gets a public page with the card and "Get Tropos", route
     ends hidden.
 52. The website does not offer the app itself in the browser yet.
+    STATUS 2026-11-15: built, after the owner's "yes" on 15 November (the
+    audit had found troposfit.com serving the whole app, sign-up
+    included). troposfit.com is now one page, `website.html`
+    (`src/website/`): Q50's explainer on the welcome's photographs with
+    Apple's App Store badge, a shared post's page (Q51), the legal and
+    support pages, and the invite code to copy for a link opened without
+    the app. Every address already handed out keeps answering
+    (`websiteAddresses.test.tsx`). Not built: the website's checkout
+    (Q77), which started from the signed-in web app. The owner is
+    choosing between a signed-in Pro corner on the website and an
+    anonymous purchase the iPhone app redeems; until then
+    `/upgrade?checkout=success` says the payment went through.
 53. What people rely on is "my next session is ready"; the streak supports
     it.
 54. A ladder for someone who stops (about day 3, 7, 14 and 30), then

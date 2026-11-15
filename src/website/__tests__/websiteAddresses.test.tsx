@@ -1,0 +1,396 @@
+/**
+ * Every address troposfit.com has handed out keeps answering after the
+ * website stopped serving the app (App1 Q52, owner 15 November 2026), and
+ * the page everything else reaches points to the App Store.
+ *
+ * Each address is followed twice: through firebase.json the way Firebase
+ * Hosting reads it (`resolveHosting`, over the files the Hosting build
+ * deploys), then through the website's own routes, rendered. A post's
+ * address goes to `publicPostPage`, which answers with the website's
+ * index.html and the post's figures (functions/lib/publicPost.js), so its
+ * page is the website's too.
+ *
+ * The last block reads the code for every troposfit.com address it builds
+ * or names, so an address added later fails here until it is kept.
+ */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import type { PublicPostView } from "@/lib/publicPost";
+import {
+  hostingHeaders,
+  resolveHosting,
+  type HostingAnswer,
+  type HostingConfig,
+} from "../../../scripts/website/hostingResolve";
+import { ASSOCIATION_PATHS } from "../../../scripts/ios/universal-links";
+import { WEBSITE_OUTPUT } from "../../../scripts/website/websiteEntry";
+
+const RUN: PublicPostView = {
+  id: "run1",
+  type: "run",
+  authorName: "Sam",
+  title: "Long run",
+  createdAt: Date.UTC(2026, 10, 12, 12),
+  unit: "km",
+  liftUnit: "kg",
+  distanceM: 10210,
+  durationSec: 3130,
+  paceSecPerKm: 306,
+  summary: "Long run: 10.21 km in 52:10 at 5:06 /km.",
+};
+
+vi.mock("@/lib/publicPost", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/publicPost")>()),
+  loadPublicPost: async (id: string) => (id === "run1" ? RUN : null),
+}));
+vi.mock("@/website/inviterName", () => ({
+  lookupInviterName: async () => "Sam",
+}));
+
+import WebsiteRoutes from "@/website/WebsiteRoutes";
+import {
+  APP_STORE_URL,
+  PUBLIC_APP_ORIGIN,
+  appInviteUrl,
+  publicPostUrl,
+  publicSpaceUrl,
+} from "@/lib/publicLinks";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const hosting = (
+  JSON.parse(readFileSync(join(repoRoot, "firebase.json"), "utf8")) as {
+    hosting: HostingConfig;
+  }
+).hosting;
+
+/** What the Hosting build deploys at its root: the website's page,
+ *  `public/` as Vite copies it, and the association file the deploy
+ *  builds (`IOS_APP_ID_PREFIX`). Hashed assets are left out. */
+function deployedFiles(): Set<string> {
+  const files = new Set<string>([WEBSITE_OUTPUT, ...ASSOCIATION_PATHS]);
+  (function walk(dir: string, rel: string) {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      const path = rel ? `${rel}/${name}` : name;
+      if (statSync(full).isDirectory()) walk(full, path);
+      else files.add(path);
+    }
+  })(join(repoRoot, "public"), "");
+  return files;
+}
+const files = deployedFiles();
+
+type Page =
+  | { page: "landing"; note?: RegExp; invite?: boolean }
+  | { page: "post" }
+  | { page: "legal"; heading: string };
+
+interface Kept {
+  address: string;
+  /** Where the address comes from. */
+  from: string;
+  hosting: HostingAnswer;
+  /** What the website draws, for an address its page answers. */
+  shows?: Page;
+}
+
+const WEBSITE: HostingAnswer = { kind: "file", file: WEBSITE_OUTPUT };
+const POST_FUNCTION: HostingAnswer = {
+  kind: "function",
+  functionId: "publicPostPage",
+  region: "us-central1",
+};
+
+const KEPT: Kept[] = [
+  {
+    address: "/",
+    from: "PUBLIC_APP_ORIGIN: a shared card's link, a Circle invite",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/?invite=K7P49M2H",
+    from: "appInviteUrl(code), Soc15; a universal link",
+    hosting: WEBSITE,
+    shows: { page: "landing", invite: true },
+  },
+  {
+    address: "/privacy",
+    from: "the App Store listing; the app's legal links",
+    hosting: WEBSITE,
+    shows: { page: "legal", heading: "Privacy Policy" },
+  },
+  {
+    address: "/terms",
+    from: "the App Store listing; the app's legal links",
+    hosting: WEBSITE,
+    shows: { page: "legal", heading: "Terms of Service" },
+  },
+  {
+    address: "/support",
+    from: "the App Store's Support URL",
+    hosting: WEBSITE,
+    shows: { page: "legal", heading: "Support" },
+  },
+  {
+    address: "/activity/run1",
+    from: "publicPostUrl(id), App1 Q51; a universal link",
+    hosting: POST_FUNCTION,
+    shows: { page: "post" },
+  },
+  {
+    address: "/activity/run1?format=json",
+    from: "loadPublicPost on the GitHub Pages preview",
+    hosting: POST_FUNCTION,
+  },
+  {
+    address: "/space/brighton-marathon",
+    from: "publicSpaceUrl(id), Run27 call 11; a universal link",
+    hosting: WEBSITE,
+    shows: { page: "landing", note: /open this Space/ },
+  },
+  {
+    address: "/upgrade?checkout=success",
+    from: "RevenueCat's Purchase Link return (revenuecat-setup.md Part W)",
+    hosting: WEBSITE,
+    shows: { page: "landing", note: /Payment received/ },
+  },
+  {
+    address: "/upgrade",
+    from: "the web paywall's address",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/settings/account",
+    from: "the web trial reminder's Manage link (trialReminderEmail.js)",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/.well-known/apple-app-site-association",
+    from: "Apple's CDN, for universal links (#3366)",
+    hosting: { kind: "file", file: ".well-known/apple-app-site-association" },
+  },
+  {
+    address: "/apple-app-site-association",
+    from: "Apple's fallback address for universal links",
+    hosting: { kind: "file", file: "apple-app-site-association" },
+  },
+  {
+    address: "/__/auth/handler",
+    from: "Firebase Auth's sign-in handler",
+    hosting: { kind: "reserved" },
+  },
+  {
+    address: "/__/auth/action",
+    from: "the password reset and verify email links (Admin-minted)",
+    hosting: { kind: "reserved" },
+  },
+  {
+    address: "/index.html",
+    from: "publicPostPage's page (shellLoader)",
+    hosting: WEBSITE,
+  },
+  {
+    address: "/icons/icon-512x512.png",
+    from: "a post's and the website's preview picture",
+    hosting: { kind: "file", file: "icons/icon-512x512.png" },
+  },
+  {
+    address: "/legal/privacy.html",
+    from: "the static legal copies (docs/public-legal-pages.md)",
+    hosting: { kind: "file", file: "legal/privacy.html" },
+  },
+  {
+    address: "/sw.js",
+    from: "a browser that opened the web app here before",
+    hosting: { kind: "file", file: "sw.js" },
+  },
+];
+
+function pathOf(address: string): string {
+  return new URL(address, PUBLIC_APP_ORIGIN).pathname;
+}
+
+function renderAt(address: string) {
+  return render(
+    <MemoryRouter initialEntries={[address]}>
+      <WebsiteRoutes />
+    </MemoryRouter>
+  );
+}
+
+afterEach(cleanup);
+
+describe("Firebase Hosting answers every kept address", () => {
+  it.each(KEPT)("$address ($from)", ({ address, hosting: expected }) => {
+    expect(resolveHosting(hosting, files, pathOf(address))).toEqual(expected);
+  });
+
+  it("serves the association file as JSON at both addresses", () => {
+    for (const path of ASSOCIATION_PATHS) {
+      expect(hostingHeaders(hosting, `/${path}`).get("content-type")).toBe(
+        "application/json"
+      );
+    }
+  });
+
+  it("sends a shared post's address to publicPostPage, whose page is the website's", () => {
+    const source = readFileSync(
+      join(repoRoot, "functions/lib/publicPost.js"),
+      "utf8"
+    );
+    // The function fetches Hosting's /index.html, which is the website.
+    expect(source).toContain("`${PUBLIC_ORIGIN}/index.html`");
+    expect(resolveHosting(hosting, files, "/index.html")).toEqual(WEBSITE);
+  });
+
+  it("serves nothing of the app: no address reaches an app page", () => {
+    for (const address of ["/settings", "/program", "/food", "/onboarding"]) {
+      expect(resolveHosting(hosting, files, address)).toEqual(WEBSITE);
+    }
+  });
+});
+
+describe("the website's page at each address", () => {
+  const shown = KEPT.filter((k) => k.shows);
+
+  it.each(shown)("$address", async ({ address, shows }) => {
+    renderAt(address);
+    if (shows?.page === "legal") {
+      expect(
+        await screen.findByRole("heading", { level: 1, name: shows.heading })
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Get started/)).toBeNull();
+      return;
+    }
+    if (shows?.page === "post") {
+      expect(
+        await screen.findByRole("heading", { name: "Sam’s run" })
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Get Tropos" })).toHaveAttribute(
+        "href",
+        APP_STORE_URL
+      );
+      return;
+    }
+    // The App Store page.
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Your training and food, planned together",
+      })
+    ).toBeInTheDocument();
+    const badge = screen.getByRole("link", {
+      name: "Download on the App Store",
+    });
+    expect(badge).toHaveAttribute("href", APP_STORE_URL);
+    // No way into an app: no sign-up, no sign-in.
+    expect(screen.queryByRole("button", { name: /Get started/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Sign in/ })).toBeNull();
+    if (shows?.page === "landing" && shows.note) {
+      expect(screen.getByText(shows.note)).toBeInTheDocument();
+    }
+    if (shows?.page === "landing" && shows.invite) {
+      expect(
+        await screen.findByText("Sam invited you to Tropos")
+      ).toBeInTheDocument();
+      expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Copy invite code" })
+      ).toBeInTheDocument();
+    } else {
+      expect(screen.queryByText(/invited you to Tropos/)).toBeNull();
+    }
+  });
+
+  it("links the legal and support pages from the App Store page", async () => {
+    renderAt("/");
+    await screen.findByRole("heading", { level: 1 });
+    for (const [name, href] of [
+      ["Privacy Policy", "/privacy"],
+      ["Terms of Service", "/terms"],
+      ["Support", "/support"],
+    ]) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
+    }
+    // Apple's credit, which its badge rules ask for.
+    expect(screen.getByText(/App Store is a service mark of Apple Inc/)).toBe(
+      screen.getByText(/Apple and the Apple logo are trademarks/)
+    );
+  });
+
+  it("says nothing of a Space or a payment where none brought the visitor", async () => {
+    renderAt("/upgrade?checkout=cancelled");
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByText(/Payment received/)).toBeNull();
+    expect(screen.queryByText(/open this Space/)).toBeNull();
+  });
+});
+
+/** Every troposfit.com address the code names, outside its tests. */
+function addressesInCode(): string[] {
+  const roots = ["src", "functions/lib", "functions/email"];
+  const found = new Set<string>();
+  const scan = (text: string) => {
+    for (const m of text.matchAll(
+      /https:\/\/(?:www\.)?troposfit\.com(\/[^\s"'`<>)${]*)?/g
+    )) {
+      found.add(m[1] ?? "/");
+    }
+  };
+  function walk(dir: string) {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      if (statSync(full).isDirectory()) {
+        if (name === "__tests__" || name === "node_modules") continue;
+        walk(full);
+      } else if (/\.(ts|tsx|js|cjs)$/.test(name) && !/\.test\./.test(name)) {
+        scan(readFileSync(full, "utf8"));
+      }
+    }
+  }
+  for (const root of roots) walk(join(repoRoot, root));
+  for (const name of readdirSync(join(repoRoot, "functions"))) {
+    if (name.endsWith(".js"))
+      scan(readFileSync(join(repoRoot, "functions", name), "utf8"));
+  }
+  return [...found];
+}
+
+describe("the addresses the code hands out", () => {
+  const kept = new Set(KEPT.map((k) => k.address));
+
+  it("builds only addresses that are kept", () => {
+    const origin = PUBLIC_APP_ORIGIN.length;
+    expect(kept).toContain(PUBLIC_APP_ORIGIN.slice(origin) || "/");
+    expect(kept).toContain(appInviteUrl("K7P49M2H").slice(origin));
+    expect(kept).toContain(publicPostUrl("run1").slice(origin));
+    expect(kept).toContain(publicSpaceUrl("brighton-marathon").slice(origin));
+  });
+
+  it("names no troposfit.com address the table does not keep", () => {
+    // An address written as a family ("https://troposfit.com/activity/<id>"
+    // in a comment, `${PUBLIC_ORIGIN}/activity/${id}` in code) is kept
+    // when a kept address is that family with an id.
+    const families = KEPT.map((k) => pathOf(k.address));
+    const isKept = (address: string) =>
+      kept.has(address) ||
+      (address.endsWith("/") &&
+        families.some(
+          (path) =>
+            path.startsWith(address) &&
+            /^[^/]+$/.test(path.slice(address.length))
+        ));
+    const found = addressesInCode();
+    expect(found.length).toBeGreaterThan(0);
+    for (const address of found) {
+      expect(isKept(address), `${address} is named in the code`).toBe(true);
+    }
+  });
+});

@@ -30,7 +30,7 @@ export function appleAppSiteAssociation(prefix: string) {
             {
               "/": "/space/*",
               comment:
-                "A shared Space opens in the app (Run27 call 11); without the app it is the web app's sign-in, then the Space.",
+                "A shared Space opens in the app (Run27 call 11); without the app it is the website's page pointing to the App Store.",
             },
           ],
         },
