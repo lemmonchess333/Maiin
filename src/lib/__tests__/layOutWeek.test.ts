@@ -7,7 +7,7 @@ import {
   type WeekLayout,
 } from "../layOutWeek";
 import { todaySession } from "../todaySession";
-import { weekDays } from "../trainingWeek";
+import { trainingWeek, weekDays } from "../trainingWeek";
 import { claimableRuns, claimMapFor } from "../runClaims";
 import {
   addLocalDays,
@@ -628,7 +628,7 @@ describe("who the week is for", () => {
     expect(w.freeRunning).toBe(false);
   });
 
-  it("a new account begun mid-week: blank days before it, and the lifts over still to do (awaiting the owner)", () => {
+  it("a new account begun mid-week gets its full plan from day one (the owner's call)", () => {
     const w = week({
       today: WED,
       profile: profile({ createdAt: createdOn(WED) }),
@@ -648,11 +648,21 @@ describe("who the week is for", () => {
       plannedOn: WED,
       movedFrom: null,
     });
-    // The prototype's current answer, one of its two owner calls.
+    // Every lift of the first week, from today: the one the days left
+    // cannot hold waits in order, held back to no Monday.
     expect(names(w.stillToDo)).toEqual(["C"]);
     expect(w.stillToDo[0].plannedOn).toBeNull();
     expect(w.count.lifts.planned).toBe(2);
     expect(w.count.runs.planned).toBe(1);
+    // Nothing done by Friday: A moves on, B and C wait, in order.
+    const friday = week({
+      today: FRI,
+      profile: profile({ createdAt: createdOn(WED) }),
+      programState: plan([A, B, C]),
+    });
+    expect(lifts(friday)[FRI]).toEqual(["A today"]);
+    expect(liftsOn(friday, FRI)[0].movedFrom).toBe(WED);
+    expect(names(friday.stillToDo)).toEqual(["B", "C"]);
   });
 });
 
@@ -702,8 +712,49 @@ describe("a race", () => {
     expect(dayOf(w, WED).rest).toBe("race");
     expect(dayOf(w, FRI).rest).toBe("race");
     expect(w.liftsDone).toBe(false);
-    // Awaiting the owner: the count still plans the lift days rested.
-    expect(w.count.lifts.planned).toBe(3);
+  });
+
+  it("race week counts only the lifts it asks for (the owner's call)", () => {
+    const input = {
+      today: TUE,
+      programState: racePlan(
+        [doneOn(A, MON), { ...B, skipped: true }, { ...C, skipped: true }],
+        { raceWeek: "race" }
+      ),
+      workouts: [saved(MON)],
+    };
+    const w = week(input);
+    expect(w.count.lifts).toEqual({ done: 1, planned: 1 });
+    // trainingWeek still plans every lift day until step 2 moves it here.
+    expect(
+      trainingWeek({
+        weekKey: WEEK,
+        profile: profile(),
+        programState: input.programState,
+        workouts: input.workouts,
+        runs: [],
+        now: parseLocalDate(TUE),
+      }).lifts.planned
+    ).toBe(3);
+    // Rested to the last one: nothing is planned.
+    const allRested = week({
+      today: FRI,
+      programState: racePlan(
+        [
+          { ...A, skipped: true },
+          { ...B, skipped: true },
+          { ...C, skipped: true },
+        ],
+        { raceWeek: "race" }
+      ),
+    });
+    expect(allRested.count.lifts.planned).toBeNull();
+    // An ordinary week's skip is the person's, and still planned.
+    const ordinary = week({
+      today: TUE,
+      programState: plan([A, { ...B, skipped: true }, C]),
+    });
+    expect(ordinary.count.lifts.planned).toBe(3);
   });
 
   it("never offers Start next week in race week", () => {

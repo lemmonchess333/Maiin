@@ -10,6 +10,8 @@
  * in step 2, which ends the two rules (the cursor and the slot) that could
  * name two different next lifts.
  *
+ * @unwired: TrainWk1 step 1 adds it alone; Home reads it in step 2 (the grill's Q52).
+ *
  * Nothing is stored for it (Q4, Q42). It is worked out each time from what
  * is saved: the lift order and its done and skipped marks, the dated runs,
  * the usual weekly layout on the profile, and the saved sessions.
@@ -81,17 +83,25 @@
  *     (`doneOn`), as the claim map allows; a race the app found no run for
  *     is "not-recorded".
  *
- * Two answers wait on the owner, the prototype's current ones meanwhile:
+ * The owner's two calls on what the prototype left open (TrainWk1's
+ * STATUS line of the 15th):
  *
- *   - A new account begun mid-week has fewer lift days left than lifts, and
- *     the lifts over sit in Still to do from its first day.
- *   - Race week's count counts the lift days the app rests.
+ *   - The full plan from day one: a new account begun mid-week has every
+ *     lift of its first week laid from today, and the lifts the days left
+ *     cannot hold wait in order in Still to do and move on as any lift
+ *     does. No lighter first week, and no start held back to Monday.
+ *   - Race week counts only what it asks for: a lift the app rests before
+ *     a race (the `raceRest` group) is not counted as planned
+ *     (`countAsked`).
  *
- * The counts are `trainingWeek`'s (`count`), never this module's: every
+ * The counts are `trainingWeek`'s (`count`), not this module's: every
  * weekly count comes from one module (App1 Q14), and the grill keeps them
- * as they are (Q43). The prototype counted the same way. The sessions drawn
- * agree with them except where the plan knows more than the saved list,
- * each pinned in `layOutWeek.test.ts`:
+ * as they are (Q43). The prototype counted the same way. One change is
+ * the owner's: race week's planned lifts leave out the lifts the app
+ * rests. `trainingWeek` and its server copy `leaguePlanned.js` count them
+ * still, until step 2 moves them onto it. The sessions drawn agree with
+ * the counts except where the plan knows more than the saved list, each
+ * pinned in `layOutWeek.test.ts`:
  *
  *   - a lift in `doneOffWeek` is drawn done and counted in the week its
  *     session was saved in, not this one;
@@ -304,8 +314,8 @@ export interface WeekLayout {
   freeRunning: boolean;
   /** What the plan trains (`trainingKind`). */
   kind: TrainingKind;
-  /** The week's counts, `trainingWeek`'s. Awaiting the owner: in race
-   *  week they count the lift days the app rests, as they do now. */
+  /** The week's counts, `trainingWeek`'s, with the lifts the app rests
+   *  before a race left out of the planned lifts (`countAsked`). */
   count: TrainingWeek;
 }
 
@@ -349,9 +359,10 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
   if (holdsPlan) {
     const savedDay = new Map(workouts.map((w) => [w.id, w.date]));
     // The day the week first gave each lift, in the plan's own week only:
-    // the Nth lift day from the start for the Nth lift. Awaiting the
-    // owner: a week begun mid-week has fewer lift days than lifts, and the
-    // lifts over have none, so they are still to do from its first day.
+    // the Nth lift day from the start for the Nth lift. A week begun
+    // mid-week can have fewer lift days left than lifts: the lifts over
+    // have none, and wait in Still to do (the owner's full plan from day
+    // one).
     const planWeek = programState?.liftWeekKey ?? currentWeekKey;
     const firstDays =
       planWeek === weekKey
@@ -633,14 +644,39 @@ export function layOutWeek(input: LayOutWeekInput): WeekLayout {
       runModeWithPlan(profile, programState) === "freeform" &&
       kind.runs,
     kind,
-    count: trainingWeek({
-      weekKey,
-      profile,
-      programState,
-      workouts,
-      runs,
-      now: parseLocalDate(today),
-    }),
+    count: countAsked(
+      trainingWeek({
+        weekKey,
+        profile,
+        programState,
+        workouts,
+        runs,
+        now: parseLocalDate(today),
+      }),
+      plan.length,
+      raceRest.length
+    ),
+  };
+}
+
+/**
+ * The week's count with race week counting only what it asks for (the
+ * owner's call): the lifts the app rests before a race are not planned.
+ * Race week keeps one session of the plan's (`raceWeekSession`), so its
+ * planned lifts are the plan's lifts the app did not rest, never more than
+ * the week's lift days; none reads as nothing planned, as the count's own
+ * none does.
+ */
+function countAsked(
+  count: TrainingWeek,
+  lifts: number,
+  rested: number
+): TrainingWeek {
+  if (rested === 0 || count.lifts.planned === null) return count;
+  const asked = Math.min(count.lifts.planned, lifts - rested);
+  return {
+    ...count,
+    lifts: { ...count.lifts, planned: asked > 0 ? asked : null },
   };
 }
 
