@@ -82,6 +82,14 @@ it.each([
     expect(emit(prefix, hosting)).not.toHaveBeenCalled();
   }
 );
+it("reads the prefix as the iPhone build reads the secret, whitespace stripped", () => {
+  expect(emit(" A2B3C4D5E6\n", true)).toHaveBeenCalledExactlyOnceWith({
+    type: "asset",
+    fileName: "apple-app-site-association",
+    source: JSON.stringify(appleAppSiteAssociation("A2B3C4D5E6")),
+  });
+  expect(emit(" \n", true)).not.toHaveBeenCalled();
+});
 it("fails a configured Hosting build rather than emit an invalid association", () => {
   expect(() => emit("NOT_A_PREFIX", true)).toThrow("IOS_APP_ID_PREFIX");
 });
