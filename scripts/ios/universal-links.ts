@@ -27,6 +27,11 @@ export function appleAppSiteAssociation(prefix: string) {
               comment:
                 "A shared post opens in the app (App1 Q51); without the app it is the post's public page.",
             },
+            {
+              "/": "/space/*",
+              comment:
+                "A shared Space opens in the app (Run27 call 11); without the app it is the web app's sign-in, then the Space.",
+            },
           ],
         },
       ],

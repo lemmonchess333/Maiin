@@ -1931,6 +1931,31 @@ service cloud.firestore {
           && !isWriteFrozen(uid);
       }
 
+      /* A Space's members' sessions (Run27 call 11, functions/lib/
+         spaceFeed.js): one routing row per public post of a member,
+         `{ activityId, authorId, createdAt }`. It names a post and its
+         author, which the member list above and the public post itself
+         already show anyone signed in. The app then reads each post on its
+         own, where the activities rule checks who may see it and a block
+         either way. Only the server writes a row: one a client could write
+         would put a post in a Space its author is not in, or keep one there
+         after it was narrowed. */
+      match /sessions/{activityId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+
+      /* A Space's week (Run27 call 11, functions/lib/spaceWeeks.js): how
+         many members trained, their sessions and metres, or only `quiet`
+         while fewer than five did. A figure that names no one, so anyone
+         signed in reads it; only the server writes it, counted from each
+         member's credit (users/{uid}/spaceWeeks), which has no rule: no
+         client reads or writes a credit, its owner included. */
+      match /weeks/{weekKey} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+
       // Posts — title + body + optional attached-activity snapshot +
       // (PR4) photoUrl. likeCount / commentCount are SERVER-OWNED
       // (kudos-lockdown idiom): they must start neutral and no client

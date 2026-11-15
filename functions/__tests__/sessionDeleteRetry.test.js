@@ -17,6 +17,7 @@ process.env.GCLOUD_PROJECT ||= "tropos-unit-test";
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const challengeParticipation = require("../lib/challengeParticipationProgress");
 const leagues = require("../lib/leagues");
+const spaceWeeks = require("../lib/spaceWeeks");
 const activityReversal = require("../lib/activityReversal");
 const healthWorkoutLedger = require("../lib/healthWorkoutLedger");
 const communityGoal = require("../lib/communityGoal");
@@ -60,6 +61,10 @@ beforeEach(() => {
   ).mockResolvedValue(undefined);
   vi.spyOn(leagues, "refreshLeagueStanding").mockResolvedValue({
     written: false,
+  });
+  // Run27 call 11: the member's weeks in their Spaces, counted again.
+  vi.spyOn(spaceWeeks, "refreshMemberWeeks").mockResolvedValue({
+    recounted: 0,
   });
   vi.spyOn(healthWorkoutLedger, "markDeletedRun").mockResolvedValue(false);
   vi.spyOn(

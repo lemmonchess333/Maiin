@@ -135,6 +135,30 @@ function memoryFirestore(seed = {}) {
           };
         },
       }),
+      // An aggregation, as Firestore's aggregate(): a count and sums over
+      // the matching documents (AggregateField.count() and .sum(field)),
+      // read at a time later than the last read. A sum skips a value that
+      // is not a number, as Firestore's does.
+      aggregate: (spec) => ({
+        get: async () => {
+          const result = await q.get();
+          const readMs = (lastReadMs = Math.max(Date.now(), lastReadMs + 1));
+          const out = {};
+          for (const [name, field] of Object.entries(spec)) {
+            if (field.aggregateType === "count") out[name] = result.size;
+            else if (field.aggregateType === "sum")
+              out[name] = result.docs.reduce((sum, d) => {
+                const v = d.data()[field._field];
+                return typeof v === "number" ? sum + v : sum;
+              }, 0);
+            else
+              throw new Error(
+                `Unsupported aggregation: ${field.aggregateType}`
+              );
+          }
+          return { readTime: { toMillis: () => readMs }, data: () => out };
+        },
+      }),
       get: async () => {
         check(path, "query");
         const paths = [...data.keys()]

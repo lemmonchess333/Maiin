@@ -40,6 +40,14 @@ export function publicPostUrl(activityId: string): string {
   return `${PUBLIC_APP_ORIGIN}/activity/${encodeURIComponent(activityId)}`;
 }
 
+/** A Space's own address (Run27 call 11): the Space in the app, the same
+ *  path as the in-app route, so the iPhone app opens it as it is once the
+ *  universal-links file names it, and the web app's sign-in leads to it
+ *  for anyone else. */
+export function publicSpaceUrl(spaceId: string): string {
+  return `${PUBLIC_APP_ORIGIN}/space/${encodeURIComponent(spaceId)}`;
+}
+
 /** A shared card's words with the way back to Tropos after them. A card
  *  reaches people who do not have the app, and until 13 Nov 2026 it was
  *  an image and words with nowhere to go (owner, Q69). The address is the

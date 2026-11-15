@@ -2,15 +2,25 @@
  * Community Space page (Spc1 PR2 shell + PR3 posting).
  *
  * A photo hero with the space's name, its size and this week's post
- * count, and one small membership control (Join, or Joined with a
- * confirmed Leave). Below it: the tagline, the race header on race spaces,
- * any pinned Tropos Team note, then the members' posts, a page at a time
- * with Load more. The retired weekly coach posts and blocked authors are
- * filtered out. An empty space offers to share the member's last session.
- * Post cards carry the moderation kit (author delete / report / block) and
- * likes and comments.
+ * count, the week's training in figures that name no one once enough
+ * members trained (Run27 call 11), one small membership control (Join, or
+ * Joined with a confirmed Leave) and Share, which hands the Space's link to
+ * the share sheet or copies it. Below it: the tagline, the race header on
+ * race spaces, any pinned Tropos Team note, then the members' posts, a page
+ * at a time with Load more, and beside them (Sessions) the sessions members
+ * shared with everyone, as Strava's club Recent Activity. The retired weekly
+ * coach posts and blocked authors are filtered out. An empty space offers
+ * to share the member's last session. Post cards carry the moderation kit
+ * (author delete / report / block) and likes and comments.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   collection,
@@ -38,6 +48,7 @@ import {
   Mountain,
   PenLine,
   Plane,
+  Share2,
   Sprout,
   Users,
   Zap,
@@ -51,6 +62,9 @@ import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import SegmentedControl from "@/components/ui/SegmentedControl";
+import { haptic } from "@/lib/haptic";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
@@ -89,6 +103,11 @@ import {
 } from "@/features/spaces/spaceHeroMeta";
 import { planGroupHeroLine, planGroupRace } from "@/features/spaces/planGroup";
 import { useRaceCohort } from "@/features/spaces/useRaceCohort";
+import { useSpaceWeek } from "@/features/spaces/useSpaceWeek";
+import { spaceWeekLine } from "@/features/spaces/spaceWeek";
+import { shareSpace } from "@/features/spaces/shareSpace";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import {
   isMemberFacing,
   type SpacePostDoc,
@@ -278,6 +297,29 @@ const PLAIN_CHIP = "rounded-full bg-background/80 border border-border/60";
 
 type PostItem = SpacePostDoc & { id: string };
 
+/* The members' sessions (Run27 call 11) load with their view: a visit that
+   stays on Posts reads and downloads none of it. */
+const SpaceSessionList = lazyRetry(
+  () => import("@/features/spaces/SpaceSessionList")
+);
+
+/** The members' sessions' place while their chunk loads. */
+const SESSIONS_PLACEHOLDER = (
+  <div
+    className="h-24 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
+    aria-hidden
+  />
+);
+
+/** What the members' half of the page shows: their posts, or the sessions
+ *  they shared with everyone (Run27 call 11). Kept in the address, so Back
+ *  from a session returns to the sessions. */
+type MembersView = "posts" | "sessions";
+const MEMBERS_VIEWS: { value: MembersView; label: string }[] = [
+  { value: "posts", label: "Posts" },
+  { value: "sessions", label: "Sessions" },
+];
+
 /** Posts one page reads, the first and each Load more. While the oldest
  *  post loaded is from this week and more wait, the count says "50+". */
 const POSTS_PAGE_SIZE = 50;
@@ -340,6 +382,17 @@ export default function Space() {
    * "join, then post" flow. Consumed once (replace) so back/refresh
    * doesn't re-open it. */
   const [searchParams, setSearchParams] = useSearchParams();
+  const membersView: MembersView =
+    searchParams.get("view") === "sessions" ? "sessions" : "posts";
+  const showMembersView = (view: MembersView) => {
+    const next = new URLSearchParams(searchParams);
+    if (view === "sessions") next.set("view", "sessions");
+    else next.delete("view");
+    setSearchParams(next, { replace: true });
+  };
+  const unit = useDistanceUnit();
+  const spaceWeek = useSpaceWeek(def ? spaceId : undefined);
+  const weekLine = spaceWeekLine(spaceWeek, unit);
   const composeRequested = searchParams.get("compose") === "1";
   const composeReady = composeRequested && joined === true;
   /* The composer opens during render, the moment the request can be
@@ -429,6 +482,15 @@ export default function Space() {
   const yourRaceAhead = !!def && planGroup?.def.id === def.id;
   const cohort = useRaceCohort(yourRaceAhead && def ? def.id : null);
   const planGroupLine = yourRaceAhead ? planGroupHeroLine(cohort.count) : null;
+
+  const share = async () => {
+    if (!def) return;
+    haptic("light");
+    const outcome = await shareSpace(def);
+    if (outcome === "copied") toast.success("Link copied.");
+    else if (outcome === "failed")
+      toast.error("Couldn’t share the link. Try again.");
+  };
 
   const handleRemoved = useCallback((postId: string) => {
     setPosts((prev) => prev?.filter((p) => p.id !== postId) ?? prev);
@@ -566,6 +628,18 @@ export default function Space() {
             style={photo ? { background: THEME.scrim } : undefined}
           />
         </div>
+        {/* Share sits opposite Back on the same chip: the Space's link to
+            the share sheet, or copied where there is none. */}
+        <div className="absolute top-3 right-3 z-10">
+          <IconButton
+            onClick={() => void share()}
+            aria-label={`Share ${def.name}`}
+            icon={<Share2 />}
+            data-testid="space-share"
+            className={photo ? PHOTO_CHIP : PLAIN_CHIP}
+            style={photo ? { background: THEME.scrim } : undefined}
+          />
+        </div>
         {/* Join or Joined drops under the name where the two do not fit
             side by side (larger text), rather than squeezing the name
             out of its column. The top padding keeps the words clear of
@@ -586,6 +660,18 @@ export default function Space() {
             >
               <InlineNumerals>{meta}</InlineNumerals>
             </p>
+            {/* The Space's week, in figures that name no one (Run27
+                call 11). Only once enough members trained. */}
+            {weekLine && (
+              <p
+                className={`text-micro font-semibold mt-0.5 ${
+                  photo ? "text-white" : "text-foreground"
+                }`}
+                data-testid="space-week"
+              >
+                <InlineNumerals>{weekLine}</InlineNumerals>
+              </p>
+            )}
             {/* Your plan group: the people training for your race. */}
             {planGroupLine && (
               <p
@@ -661,18 +747,39 @@ export default function Space() {
         <section className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionHeading>From members</SectionHeading>
-            {joined === true && memberPosts.length > 0 && (
-              <Button
-                variant="secondary"
-                className="rounded-full"
-                leftIcon={<PenLine className="size-4" />}
-                onClick={() => openComposer(false)}
-              >
-                Write a post
-              </Button>
-            )}
+            {membersView === "posts" &&
+              joined === true &&
+              memberPosts.length > 0 && (
+                <Button
+                  variant="secondary"
+                  className="rounded-full"
+                  leftIcon={<PenLine className="size-4" />}
+                  onClick={() => openComposer(false)}
+                >
+                  Write a post
+                </Button>
+              )}
           </div>
-          {posts === null && postsFailed ? (
+          <SegmentedControl
+            ariaLabel="Members’ posts or sessions"
+            options={MEMBERS_VIEWS}
+            value={membersView}
+            onChange={(view) => {
+              haptic("light");
+              showMembersView(view);
+            }}
+          />
+          {membersView === "sessions" ? (
+            <SectionErrorBoundary sectionName="space-sessions">
+              <Suspense fallback={SESSIONS_PLACEHOLDER}>
+                <SpaceSessionList
+                  spaceId={def.id}
+                  accent={accent}
+                  followAuthor={!restricted}
+                />
+              </Suspense>
+            </SectionErrorBoundary>
+          ) : posts === null && postsFailed ? (
             <ErrorState
               title="Couldn’t load posts"
               description="Check your connection and try again."
@@ -718,7 +825,7 @@ export default function Space() {
           ) : (
             memberPosts.map(renderPost)
           )}
-          {posts !== null && hasMore && (
+          {membersView === "posts" && posts !== null && hasMore && (
             <Button
               variant="ghost"
               fullWidth

@@ -96,6 +96,34 @@ function setup(extra = {}) {
       sessionId: "r1",
       dateKey: pulseDay,
     },
+    // Run27 call 11: a Space's list rows for Alice's post and Bob's (one
+    // in a Space she left), each one's week credit, and the Space's week,
+    // which names no one.
+    "spaces/runners/sessions/own": { activityId: "own", authorId: "alice" },
+    "spaces/lifters/sessions/own": { activityId: "own", authorId: "alice" },
+    "spaces/runners/sessions/other": { activityId: "other", authorId: "bob" },
+    "users/alice/spaceWeeks/runners_2026-09-14": {
+      uid: "alice",
+      spaceId: "runners",
+      weekKey: "2026-09-14",
+      spaceWeek: "runners_2026-09-14",
+      sessions: 2,
+      meters: 9000,
+    },
+    "users/bob/spaceWeeks/runners_2026-09-14": {
+      uid: "bob",
+      spaceId: "runners",
+      weekKey: "2026-09-14",
+      spaceWeek: "runners_2026-09-14",
+      sessions: 1,
+      meters: 5000,
+    },
+    "spaces/runners/weeks/2026-09-14": {
+      weekKey: "2026-09-14",
+      members: 6,
+      sessions: 9,
+      meters: 40000,
+    },
     // Run26 call 3: a segment Alice made, which Bob has run, and one Bob
     // made, which both have run.
     "segments/seg-alice": { name: "Alice's hill", lengthMeters: 800 },
@@ -287,6 +315,8 @@ function setup(extra = {}) {
 // smoke::userSubcollections::leagueResults
 // smoke::userSubcollections::pulseCredits
 // smoke::userSubcollections::segmentEfforts
+// smoke::userSubcollections::spaceWeeks
+// unit::accountDeletion.spaceSessionRows
 // unit::segments.removeSegmentTracesForUser.owned
 // unit::segments.removeSegmentTracesForUser.owners
 // unit::segments.removeSegmentTracesForUser.entries
@@ -331,6 +361,11 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/alice",
       "users/alice/leagueResults/2026-09-07",
       "users/alice/pulseCredits/workout_w1",
+      // Run27 call 11: her posts' rows in every Space, a left one too, and
+      // her week credit.
+      "spaces/runners/sessions/own",
+      "spaces/lifters/sessions/own",
+      "users/alice/spaceWeeks/runners_2026-09-14",
       // Run26 call 3: Alice's segment with everyone's efforts on it and its
       // board, her efforts, and her entry on Bob's board.
       "segments/seg-alice",
@@ -379,6 +414,9 @@ describe("complete account erasure", () => {
       "leagueGroups/wk-001/standings/bob",
       "users/bob/leagueResults/2026-09-07",
       "users/bob/pulseCredits/run_r1",
+      // Bob's row and credit stay.
+      "spaces/runners/sessions/other",
+      "users/bob/spaceWeeks/runners_2026-09-14",
       // Bob's segment, his entry on it and his own effort stay.
       "segments/seg-bob",
       "segmentOwners/seg-bob",
@@ -389,6 +427,10 @@ describe("complete account erasure", () => {
       expect(data.has(path), path).toBe(true);
     // The day's count names no one and stands, as the community goal's.
     expect(data.get(`pulse/${pulseDay}`)).toEqual({ sessions: 2 });
+    // So does a Space's week: it is counted again on the next change.
+    expect(data.get("spaces/runners/weeks/2026-09-14")).toMatchObject({
+      members: 6,
+    });
     // The group stays for Bob, without Alice in it.
     expect(data.get("leagueGroups/wk-001")).toMatchObject({
       memberUids: ["bob"],

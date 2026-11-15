@@ -99,6 +99,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // The live pulse's per-session credits (lib/pulse.js, Soc15).
   // Server-owned, like `communityGoal`; each also expires by TTL.
   "pulseCredits",
+  // Each Space's week credit (lib/spaceWeeks.js, Run27 call 11): one
+  // member's sessions and metres in one Space in one week. Server-owned,
+  // like `pulseCredits`; the Space's figures carry no one's id.
+  "spaceWeeks",
   // A medal per challenge edition (lib/medals.js, Soc15). Server-owned,
   // owner-read; the public summary goes with `public` below.
   "medals",

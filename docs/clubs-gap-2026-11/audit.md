@@ -134,5 +134,46 @@ out until the owner reopens it.
 | 15   | A request queue for a Circle (row 3), beside the code.                                                                                                      | 1.5 days: a request collection and the owner's approve and decline.                                                                            |
 | 16   | A route or pace groups on a meet-up (row 12). **Owner call** for the route: coordinates in a Circle cross GsPb1's GPS line. Pace groups fit the note today. | 1 day for pace groups as fields; the route waits on the call.                                                                                  |
 
+- STATUS 2026-11-15: built (Run27 call 11), four Space gaps: rank 2, a
+  Space's members' sessions; rank 4, its week in totals; rank 9, sharing a
+  Space; rank 12, searching Spaces by name. Rows 7, 9, 13 and 4 above are
+  partly closed by it.
+  - **Members' sessions.** A Space's page has Posts and Sessions. Sessions
+    lists the sessions members shared with everyone, newest first, 20 at a
+    time, each drawn as Following and Explore draw it. Server-written rows,
+    `spaces/{id}/sessions/{postId}` (`functions/lib/spaceFeed.js`), route a
+    public post to each Space its author is in: `onActivitySpaceRows` on
+    any post made public, narrowed, flagged or deleted;
+    `onSpaceMemberWritten` on a join (the last 28 days, at most 20, a Tropos
+    heuristic) or a leave; `onRestrictionWritten`, since the app cannot see
+    who is restricted. The app reads each post on its own, where the rules
+    refuse one across a block either way, keeps it only while public, and
+    leaves out people blocked either way and posts the viewer hid. A run's
+    map is the post's own, cut at the author's privacy zones when shared.
+    Followers-only and private sessions never show, which is narrower than
+    Strava (only "Only You" is left out there): CLAUDE.md's
+    followers-only invariant outranks parity.
+  - **The week.** "38 members trained this week: 127 sessions, 412 km" in
+    the hero, from `spaces/{id}/weeks/{weekKey}`: a count and two sums over
+    each member's credit (`users/{uid}/spaceWeeks`, the member's week
+    counted from their saved sessions as the league counts them), never
+    incremented, never summed by the app. Nothing is stored below 5 members
+    (a Tropos heuristic, the floor a Space's member count already has), so
+    a small group's training is not in a readable document. No top
+    performer and no scatterplot: those name people (Trim1 call 3(a)).
+  - **Sharing.** Share on the hero hands `https://troposfit.com/space/{id}`
+    to the share sheet (the Web Share API, iOS's own sheet in the app, as
+    every share in Tropos) or copies it. The universal-links file names
+    `/space/*`, so once `IOS_APP_ID_PREFIX` is set the link opens the
+    Space in the app.
+  - **Search.** A field over the directory finds a Space by any word of its
+    name, or a race by its city, ignoring case, accents and apostrophes,
+    among every Space and race whatever the chips say. It runs on the
+    phone over the app's own list (Spaces are config, Spc1a); Firestore
+    has no case-insensitive or contains query to do it with.
+  - Not built: post notifications, handing a Circle on, Circle challenges,
+    join requests and a Space on a profile (Run27 call 11 says they wait),
+    and renaming a Circle, which is outside this change.
+
 Not a gap: verified clubs (Tropos's Spaces are its own, with Tropos Team
 officials), and the 50,000-member limits Strava sets on large clubs.

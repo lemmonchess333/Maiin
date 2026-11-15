@@ -480,6 +480,60 @@ show the round trip.
       count. A deletes the post from its menu and lands on the Space; the
       comment row then opens the Space too.
 
+## A Space's members' sessions, its week, sharing and search (Run27 call 11, 2026-11-15)
+
+A Space's page has Posts and Sessions: Sessions lists the sessions its
+members shared with everyone, from server-written rows
+(`spaces/{id}/sessions`, `onActivitySpaceRows`, `onSpaceMemberWritten`,
+`onRestrictionWritten`), each post read on its own under the activities
+rules. The hero says the week ("38 members trained this week: 127
+sessions, 412 km") once at least 5 members trained, counted by the server
+from each member's credit (`users/{uid}/spaceWeeks`) through a count and
+two sums that need three new collection-group indexes. Share hands the
+Space's link to the share sheet or copies it; the directory has a search
+field. The unit suites, the functions suites and the rules suite (CI's
+emulator) cover each part; only a deploy, real accounts and a phone can
+confirm the triggers, the indexes and the share sheet.
+
+- [ ] **Deploy, then backfill once.** After Deploy production has shipped
+      (the Firestore step waits for the `sessions.activityId`,
+      `sessions.authorId` and `spaceWeeks.spaceWeek` indexes and the two
+      `spaceWeeks` composites to be READY), run
+      `node functions/scripts/backfill-space-sessions.js adaptive-fitness-af8bb`
+      with a service account. Passing: it prints totals with `rowsAdded`
+      above 0, and a second run prints `rowsAdded: 0`. Then open the
+      Functions logs for `onSpaceMemberWritten` and the session triggers:
+      no `FAILED_PRECONDITION` (a missing index) after the first session
+      saved.
+- [ ] **A public session reaches the Space; a narrower one does not.**
+      Accounts A and B are both in Runners. A finishes a run shared with
+      everyone. Passing: on B, Runners → Sessions shows A's run within a
+      minute, with its map cut at A's privacy zones as in Explore. A makes
+      it followers only from the post's menu. Passing: B's Sessions no
+      longer shows it once B reopens the Space. A followers-only and a
+      private run never show.
+- [ ] **Blocks and restrictions.** B blocks A. Passing: neither sees the
+      other's sessions in any Space's Sessions. A moderator restricts A
+      (Admin moderation → Restrict user). Passing: A's sessions leave every
+      Space's Sessions for everyone, and Lift brings A's recent public ones
+      back.
+- [ ] **The week.** In a Space where at least 5 accounts saved a session
+      this week. Passing: the hero's second line reads "N members trained
+      this week: N sessions, N km" (N mi for a miles account) and names no
+      one; with 4 or fewer it shows no line.
+- [ ] **Share on an iPhone.** On a TestFlight build, open a Space and tap
+      Share (top right of the photo). Passing: the iOS share sheet opens
+      with "Join me in … on Tropos" and the `https://troposfit.com/space/…`
+      link; Copy and paste it into Notes to see the link. On the web build
+      in a desktop browser, Share says "Link copied." Once
+      `IOS_APP_ID_PREFIX` is set ("troposfit.com links open the app", below), tapping
+      the link in Messages on a phone with Tropos opens that Space in the
+      app; without the app it opens the web app's sign-in.
+- [ ] **Search.** Together → Spaces, type "brighton". Passing: Brighton
+      Marathon and Brighton Half Marathon are listed, whatever the country
+      chip says; tapping one opens its Space; Clear search brings the rows
+      back. At 2× text the field and rows fit the screen.
+
 ## A routine's workout under way (2026-10-25)
 
 A saved routine's workout left with a set done is offered on Home and

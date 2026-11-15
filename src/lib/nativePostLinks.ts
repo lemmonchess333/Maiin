@@ -2,10 +2,12 @@ import { isNativePlatform } from "@/lib/platform";
 import { PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
 
 /**
- * A shared post's address (`publicPostUrl`), as the iPhone app receives it
- * through the universal-links file (App1 Q51): the in-app route for that
- * post, or null. A native URL event is untrusted input, so nothing but
- * this one shape on the production origin becomes a route.
+ * A shared post's address (`publicPostUrl`, App1 Q51) or a shared Space's
+ * (`publicSpaceUrl`, Run27 call 11), as the iPhone app receives it through
+ * the universal-links file: the in-app route for that post or Space, or
+ * null. A native URL event is untrusted input, so nothing but these two
+ * shapes on the production origin becomes a route. A Space id the app does
+ * not know opens the Space page's own "Space not found".
  */
 export function nativePostRoute(input: unknown): string | null {
   if (typeof input !== "string" || input.length > 2048) return null;
@@ -14,8 +16,10 @@ export function nativePostRoute(input: unknown): string | null {
     if (url.origin !== PUBLIC_APP_ORIGIN || url.username || url.password) {
       return null;
     }
-    const match = /^\/activity\/([A-Za-z0-9_-]{1,64})\/?$/.exec(url.pathname);
-    return match ? `/activity/${match[1]}` : null;
+    const post = /^\/activity\/([A-Za-z0-9_-]{1,64})\/?$/.exec(url.pathname);
+    if (post) return `/activity/${post[1]}`;
+    const space = /^\/space\/([a-z0-9-]{1,64})\/?$/.exec(url.pathname);
+    return space ? `/space/${space[1]}` : null;
   } catch {
     return null;
   }
