@@ -26,11 +26,11 @@
  *   a slow climb, jogging on the spot at a crossing, a tunnel with no GPS.
  * - GPS at 1 m/s or more keeps or restarts it too, unless the phone itself
  *   reads still: then only `GPS_CLEARLY_MOVING_MPS` does (held for
- *   `GPS_OVERRIDE_HOLD_MS` to restart it), or 1 m/s held for
- *   `GPS_STEADY_HOLD_MS` on a steady heading (Run27 (5), `steadyMovement`).
- *   So drift at a crossing, which wanders, neither holds the clock running
- *   nor starts it again, and moving with no steps (a phone fixed to a buggy
- *   or a wheelchair, pushed at a walk) is still seen.
+ *   `GPS_OVERRIDE_HOLD_MS` to restart it). So drift at a crossing neither
+ *   holds the clock running nor starts it again, and a phone fixed to a
+ *   buggy or a wheelchair, which feels no steps, restarts once it is
+ *   pushed at a jog. Pushed slower, it stays paused: auto-pause is a
+ *   switch in run setup, and that runner turns it off (Run27 (5)).
  * - A recovery segment is the plan's rest (a run-walk's walk, a rep's
  *   recovery): its clock is never stopped, or a runner standing through a
  *   recovery would never be told to start the next rep.
@@ -84,148 +84,6 @@ export function gpsSpeed(point: GPSPoint | null, now: number): number | null {
   )
     return null;
   return point.speed;
-}
-
-/* ── Steady movement over a still phone (Run27 (5)) ───────────────────
-   A phone fixed to a buggy or a wheelchair reads still while it is pushed
-   at a walk, and feels no steps, so neither the sensors nor GPS under
-   `GPS_CLEARLY_MOVING_MPS` would ever start its clock again. GPS that
-   holds `GPS_MOVING_MPS` for `GPS_STEADY_HOLD_MS` on a steady heading
-   does. Drift at a crossing reads 1 to 2 m/s too, but it wanders: its
-   heading changes and its fixes scatter, so it is not steady. */
-
-/** How long GPS must hold `GPS_MOVING_MPS` (`gpsStraightness` says what
- *  holding is) before a steady heading restarts a clock the sensors say is
- *  still. The lock's number (Run27 (5)), a Tropos heuristic: ten
- *  one-second fixes. */
-export const GPS_STEADY_HOLD_MS = 10_000;
-
-/** The straightness (`gpsStraightness`) at or above which those fixes
- *  went one way. A Tropos heuristic, chosen on the synthetic GPS bench's
- *  two error models (`runAutoPause.bench.test.ts`): at ±5 and ±10 m a push
- *  at 1.2 to 2 m/s restarts the clock within 21 s, and drift ran it for at
- *  most 3.5% of a stand. */
-export const GPS_STEADY_STRAIGHTNESS = 0.7;
-
-/** The accuracy, in metres, those fixes must average for their positions
- *  to show a heading at all: the run screen's "good" signal (useGPS
- *  `getSignalQuality`). A Tropos heuristic. Rougher fixes wander by about
- *  the 10 m a walk covers in the hold: without this floor, drift in the
- *  bench's ±16 m rough error ran a still phone's clock for 29% of a stand.
- *  With it, a walking push on fixes that rough waits for 2.5 m/s or a
- *  step, as before. */
-export const GPS_STEADY_ACCURACY_M = 15;
-
-/** Metres in a degree of latitude, by gps.ts's haversine (R = 6,371 km). */
-const M_PER_DEG_LAT = (6_371_000 * Math.PI) / 180;
-
-/** The run's recent fixes, which steady movement is read from: `point`
- *  added when it is newer than the last one kept, and every fix too old to
- *  open a hold that ends now dropped. In memory only. */
-export function gpsTrail(
-  trail: readonly GPSPoint[],
-  point: GPSPoint | null,
-  now: number
-): GPSPoint[] {
-  const last = trail.at(-1);
-  const added =
-    point &&
-    Number.isFinite(point.timestamp) &&
-    (!last || point.timestamp > last.timestamp)
-      ? [...trail, point]
-      : trail;
-  const horizon = now - GPS_STEADY_HOLD_MS - GPS_FIX_MAX_AGE_MS;
-  return added.filter((p) => p.timestamp >= horizon);
-}
-
-/**
- * How straight the last `GPS_STEADY_HOLD_MS` of fixes went, or null unless
- * GPS held `GPS_MOVING_MPS` through them: their speeds average 1 m/s or
- * more, none of them reads standing (under `GPS_STATIONARY_MPS`; between
- * the two bands one fix is no evidence either way, as everywhere here), no
- * gap between them is longer than a fix may age (`gpsSpeed`), the newest
- * still fresh at `now`, and their accuracy averages `GPS_STEADY_ACCURACY_M`
- * or better.
- *
- * Straightness is net displacement over path length: 1 for a straight
- * line, near 0 for a path that wanders back on itself. Each half is taken
- * so that a few metres of error on a fix does not decide it:
- * - the net displacement is the straight line fitted through every fix of
- *   the window by least squares (its velocity times the window's length),
- *   not the gap between its first and last fix, which two fixes' errors
- *   set;
- * - the path length is what the fixes' own speeds add up to over the
- *   window, not the hops between fixes, which every fix's error lengthens.
- *
- * A phone pushed along a path goes where its speeds say it goes, so the
- * two agree; drift reports 1 to 2 m/s while its fixes turn back, so they
- * do not. Positions are the raw fixes (`rawLat`, `rawLon`), as a held
- * fix's point carries no other.
- */
-export function gpsStraightness(
-  trail: readonly GPSPoint[],
-  now: number
-): number | null {
-  const notStanding = (p: GPSPoint, at: number) => {
-    const speed = gpsSpeed(p, at);
-    return speed !== null && speed >= GPS_STATIONARY_MPS ? speed : null;
-  };
-  let first = trail.length - 1;
-  if (first < 0) return null;
-  const latestSpeed = notStanding(trail[first], now);
-  if (latestSpeed === null) return null;
-  const speeds = [latestSpeed];
-  const end = trail[first].timestamp;
-  while (end - trail[first].timestamp < GPS_STEADY_HOLD_MS) {
-    // Each fix must still be fresh at the next one's time, so two missed
-    // fixes end the hold.
-    const speed =
-      first > 0 ? notStanding(trail[first - 1], trail[first].timestamp) : null;
-    if (speed === null) return null;
-    speeds.unshift(speed);
-    first--;
-  }
-  const window = trail.slice(first);
-  // Metres east and north of the window's first fix: a flat projection,
-  // true to centimetres over the tens of metres a window spans.
-  const lat0 = window[0].rawLat;
-  const lon0 = window[0].rawLon;
-  const mPerDegLon = M_PER_DEG_LAT * Math.cos((lat0 * Math.PI) / 180);
-  const ts = window.map((p) => (p.timestamp - window[0].timestamp) / 1000);
-  const xs = window.map((p) => (p.rawLon - lon0) * mPerDegLon);
-  const ys = window.map((p) => (p.rawLat - lat0) * M_PER_DEG_LAT);
-  const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
-  const tMean = mean(ts);
-  const xMean = mean(xs);
-  const yMean = mean(ys);
-  let stt = 0;
-  let stx = 0;
-  let sty = 0;
-  for (let i = 0; i < window.length; i++) {
-    const dt = ts[i] - tMean;
-    stt += dt * dt;
-    stx += dt * (xs[i] - xMean);
-    sty += dt * (ys[i] - yMean);
-  }
-  const span = ts[ts.length - 1];
-  const net = Math.hypot(stx / stt, sty / stt) * span;
-  let path = 0;
-  for (let i = 1; i < window.length; i++)
-    path += ((speeds[i - 1] + speeds[i]) / 2) * (ts[i] - ts[i - 1]);
-  if (path < GPS_MOVING_MPS * span) return null;
-  if (mean(window.map((p) => p.accuracy)) > GPS_STEADY_ACCURACY_M) return null;
-  const straightness = net / path;
-  return Number.isFinite(straightness) ? straightness : null;
-}
-
-/** GPS held `GPS_MOVING_MPS` for `GPS_STEADY_HOLD_MS` on a steady
- *  heading (Run27 (5)). */
-export function steadyMovement(
-  trail: readonly GPSPoint[],
-  now: number
-): boolean {
-  const straightness = gpsStraightness(trail, now);
-  return straightness !== null && straightness >= GPS_STEADY_STRAIGHTNESS;
 }
 
 /* ── The phone's motion sensors ────────────────────────────────────── */
@@ -443,9 +301,6 @@ export interface AutoPauseInput {
   now: number;
   /** The latest accepted fix (useGPS `currentPoint`). */
   gps: GPSPoint | null;
-  /** The run's recent fixes (`gpsTrail`), for steady movement over a still
-   *  phone (Run27 (5)). Without them none is seen. */
-  trail?: readonly GPSPoint[];
   /** The sensors' reading; null with no motion source (the web). */
   motion: MotionReading | null;
   /** The session player is in a recovery segment. */
@@ -456,7 +311,6 @@ export interface AutoPauseInput {
 export type AutoPauseReason =
   | "stepping"
   | "gps-moving"
-  | "gps-steady"
   | "gps-clearly-moving"
   | "stopped-on-foot"
   | "gps-stationary"
@@ -484,10 +338,6 @@ export function autoPauseEvidence(
     return { go: "now", stopAfterMs: null, reason: "stepping" };
   if (speed !== null && speed >= GPS_MOVING_MPS && !still)
     return { go: "now", stopAfterMs: null, reason: "gps-moving" };
-  // Its hold is in the trail itself, so it restarts at once and keeps a
-  // running clock running while the heading stays steady.
-  if (steadyMovement(input.trail ?? [], now))
-    return { go: "now", stopAfterMs: null, reason: "gps-steady" };
   if (speed !== null && speed >= GPS_CLEARLY_MOVING_MPS)
     return { go: "held", stopAfterMs: null, reason: "gps-clearly-moving" };
   if (inRecovery) return { go: null, stopAfterMs: null, reason: "recovery" };
@@ -539,8 +389,7 @@ export interface AutoPauseStep {
 /** One step of auto-pause, for a run whose clock auto-pause may stop
  *  (active, auto-pause on, an outdoor GPS run). Stopping needs its
  *  evidence to hold for the whole window; restarting is at once, except
- *  for GPS alone past `GPS_CLEARLY_MOVING_MPS` against a still phone. A
- *  steady heading's hold is in the trail it is read from (Run27 (5)). */
+ *  for GPS alone against a still phone. */
 export function stepAutoPause(
   state: AutoPauseState,
   input: AutoPauseInput
