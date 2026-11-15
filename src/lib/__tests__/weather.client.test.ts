@@ -142,6 +142,41 @@ describe("getCurrentWeather", () => {
     expect(call.fn).toHaveBeenCalledOnce();
   });
 
+  it("reads the next hours the callable sends, in time order, dropping any that isn't one (Run26 (5))", async () => {
+    call.fn.mockResolvedValueOnce({
+      data: {
+        ...READING,
+        hours: [
+          { time: "2026-07-15T20:00:00.000Z", temperature: 24, dewPoint: 20 },
+          { time: "2026-07-15T19:00:00.000Z", temperature: 26, dewPoint: 21 },
+          { time: "not a time", temperature: 20, dewPoint: 15 },
+          { time: "2026-07-15T21:00:00.000Z", temperature: "cool" },
+          null,
+        ],
+      },
+    });
+    const { getCurrentWeather } = await load();
+    expect((await getCurrentWeather())?.hours).toEqual([
+      { at: Date.parse("2026-07-15T19:00:00Z"), temperature: 26, dewPoint: 21 },
+      { at: Date.parse("2026-07-15T20:00:00Z"), temperature: 24, dewPoint: 20 },
+    ]);
+  });
+
+  it("reads an answer without hours, from a server that predates them, as before: no hours, and no coolest hour", async () => {
+    // A hot reading with no hours: the heat line still shows, the coolest
+    // hour can't.
+    call.fn.mockResolvedValueOnce({
+      data: { ...READING, temperature: 32, humidity: 70 },
+    });
+    const { getCurrentWeather } = await load();
+    const { coolestHourAhead, isHotDay } = await import("../heatAdjustment");
+    const weather = await getCurrentWeather();
+    expect(weather).not.toBeNull();
+    expect(weather).not.toHaveProperty("hours");
+    expect(isHotDay(weather)).toBe(true);
+    expect(coolestHourAhead(weather, Date.now())).toBeNull();
+  });
+
   it("answers null when the position cannot be had", async () => {
     getCurrentPosition.mockImplementationOnce(
       (_ok: PositionCallback, fail: PositionErrorCallback) =>

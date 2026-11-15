@@ -1,8 +1,9 @@
 /**
  * MET Norway weather, the pure half (lib/metWeather.js): the symbol
  * mapping the app's tips read, feels-like, the hour that counts as now,
- * and the per-place cache that keeps MET's terms (Expires,
- * If-Modified-Since, a User-Agent, no more than two decimals sent).
+ * the next hours (Run26 (5)), and the per-place cache that keeps MET's
+ * terms (Expires, If-Modified-Since, a User-Agent, no more than two
+ * decimals sent).
  */
 import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
@@ -11,6 +12,7 @@ const require = createRequire(import.meta.url);
 const {
   MET_USER_AGENT,
   MIN_CACHE_MS,
+  NEXT_HOURS,
   SYMBOLS,
   WeatherError,
   validateCoords,
@@ -19,9 +21,23 @@ const {
   windChillC,
   heatIndexC,
   currentConditions,
+  nextHours,
+  weatherAt,
   cacheUntil,
   createWeatherService,
 } = require("../lib/metWeather");
+
+/**
+ * A recorded compact response: what MET Norway's Locationforecast 2.0
+ * served for Bergen (60.39, 5.32) as updated at 12:28:55 UTC on
+ * 7 November 2025, 86 time steps, hourly for 60 hours and six-hourly
+ * after. Kept whole as saved (its keys sorted by whoever saved it);
+ * taken from a public project's test data (the file yr.example.json in
+ * echo-webkom/echo-web-mono on GitHub), because this build's network
+ * cannot reach api.met.no. MET Norway's data, CC BY 4.0.
+ */
+const RECORDED = require("./fixtures/metCompactBergen.json");
+const RECORDED_AT = Date.parse(RECORDED.properties.meta.updated_at);
 
 const NOW = Date.parse("2026-10-04T10:20:00Z");
 const MINUTE = 60_000;
@@ -197,6 +213,90 @@ describe("currentConditions", () => {
   });
 });
 
+describe("the next hours (Run26 (5))", () => {
+  it("reads the recorded response's next twelve hours, temperature and dew point", () => {
+    const series = RECORDED.properties.timeseries;
+    expect(series).toHaveLength(86);
+    // 12:28:55 UTC: the 12:00 step is now, and 13:00 the first hour ahead.
+    expect(weatherAt(series, RECORDED_AT)).toEqual({
+      temperature: 13,
+      feelsLike: 13,
+      humidity: 90,
+      // 2.5 m/s.
+      windSpeed: 9,
+      weatherCode: 3,
+      description: "Cloudy",
+      // Air temperature as MET gives it; the compact product has no dew
+      // point, so it is worked out from the humidity: 12.5 °C at 91.4% is
+      // a dew point of 11.1 °C.
+      hours: [
+        ["2025-11-07T13:00:00.000Z", 12.5, 11.1],
+        ["2025-11-07T14:00:00.000Z", 11.9, 10.6],
+        ["2025-11-07T15:00:00.000Z", 11.3, 10.1],
+        ["2025-11-07T16:00:00.000Z", 10, 9.3],
+        ["2025-11-07T17:00:00.000Z", 9.5, 9],
+        ["2025-11-07T18:00:00.000Z", 10.3, 9.8],
+        ["2025-11-07T19:00:00.000Z", 10.4, 9.7],
+        ["2025-11-07T20:00:00.000Z", 10.5, 9.7],
+        ["2025-11-07T21:00:00.000Z", 10.3, 9.2],
+        ["2025-11-07T22:00:00.000Z", 10.2, 9],
+        ["2025-11-07T23:00:00.000Z", 10.6, 9],
+        ["2025-11-08T00:00:00.000Z", 10.7, 9],
+      ].map(([time, temperature, dewPoint]) => ({
+        time,
+        temperature,
+        dewPoint,
+      })),
+    });
+    expect(NEXT_HOURS).toBe(12);
+  });
+
+  it("takes MET's own dew point where the response has one", () => {
+    const series = [
+      hour("2026-10-04T11:00:00Z", { temp: 24.04, rh: 50 }),
+      hour("2026-10-04T12:00:00Z", { temp: 26, rh: 50 }),
+    ];
+    // complete.json's field, where 26 °C at 50% would work out at 14.8.
+    series[1].data.instant.details.dew_point_temperature = 15.26;
+    expect(nextHours(series, NOW)).toEqual([
+      // 24.04 °C at 50%: 13 °C, worked out.
+      { time: "2026-10-04T11:00:00.000Z", temperature: 24, dewPoint: 13 },
+      { time: "2026-10-04T12:00:00.000Z", temperature: 26, dewPoint: 15.3 },
+    ]);
+  });
+
+  it("keeps only hours ahead of now, none past twelve hours, at most twelve", () => {
+    const series = RECORDED.properties.timeseries;
+    // Half past one: 13:00 is behind, 14:00 is the first hour ahead.
+    const later = Date.parse("2025-11-07T13:30:00Z");
+    const hours = nextHours(series, later);
+    expect(hours).toHaveLength(12);
+    expect(hours[0].time).toBe("2025-11-07T14:00:00.000Z");
+    expect(hours[11].time).toBe("2025-11-08T01:00:00.000Z");
+    // Two days on the steps are six-hourly: an hour twelve hours off is
+    // the last one taken, whatever the step.
+    const sixHourly = Date.parse("2025-11-10T00:00:00Z");
+    expect(nextHours(series, sixHourly).map((h) => h.time)).toEqual([
+      "2025-11-10T06:00:00.000Z",
+      "2025-11-10T12:00:00.000Z",
+    ]);
+  });
+
+  it("leaves out an hour without its temperature or its humidity", () => {
+    const series = [
+      hour("2026-10-04T11:00:00Z"),
+      hour("2026-10-04T12:00:00Z"),
+      hour("2026-10-04T13:00:00Z"),
+    ];
+    delete series[0].data.instant.details.air_temperature;
+    delete series[1].data.instant.details.relative_humidity;
+    expect(nextHours(series, NOW).map((h) => h.time)).toEqual([
+      "2026-10-04T13:00:00.000Z",
+    ]);
+    expect(nextHours(undefined, NOW)).toEqual([]);
+  });
+});
+
 describe("coordinates", () => {
   it("rounds to two decimal places", () => {
     expect(validateCoords(51.507351, -0.127758)).toEqual({
@@ -328,6 +428,31 @@ describe("the weather service", () => {
     advance(30 * MINUTE);
     await service.currentWeather(51.5, -0.13);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers with the next hours, and a held forecast still has twelve ahead", async () => {
+    const recorded = () => ({
+      status: 200,
+      ok: true,
+      headers: new Headers({
+        expires: new Date(RECORDED_AT + 3 * 60 * MINUTE).toUTCString(),
+      }),
+      json: async () => RECORDED,
+    });
+    let clock = RECORDED_AT;
+    const fetchImpl = vi.fn(async () => recorded());
+    const service = createWeatherService({ fetchImpl, now: () => clock });
+    const first = await service.currentWeather(60.39, 5.32);
+    expect(first.hours).toHaveLength(12);
+    expect(first.hours[0].time).toBe("2025-11-07T13:00:00.000Z");
+    // Two hours on, still inside MET's Expires: the held forecast, with
+    // the twelve hours after the new now.
+    clock += 2 * 60 * MINUTE;
+    const held = await service.currentWeather(60.39, 5.32);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(held.hours).toHaveLength(12);
+    expect(held.hours[0].time).toBe("2025-11-07T15:00:00.000Z");
+    expect(held.hours[11].time).toBe("2025-11-08T02:00:00.000Z");
   });
 
   it("serves the last forecast when MET fails and it still covers now", async () => {

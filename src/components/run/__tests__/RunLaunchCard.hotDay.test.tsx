@@ -41,6 +41,7 @@ function HotCard(props: {
   onStart: () => void;
   onSwap: () => void;
   level?: "hot" | "extreme";
+  coolest?: string | null;
 }) {
   const [accepted, setAccepted] = useState(false);
   return (
@@ -57,6 +58,7 @@ function HotCard(props: {
       heat={{
         level: props.level ?? "hot",
         line: props.level === "extreme" ? EXTREME_HEAT_LINE : HOT_LINE,
+        coolest: props.coolest ?? null,
         adjust: {
           accepted,
           adjustedLine: "Adjusted for heat: work at 5:06–5:09 /km.",
@@ -74,10 +76,17 @@ function HotCard(props: {
   );
 }
 
-function hotCard(level?: "hot" | "extreme") {
+function hotCard(level?: "hot" | "extreme", coolest?: string | null) {
   const onStart = vi.fn();
   const onSwap = vi.fn();
-  render(<HotCard onStart={onStart} onSwap={onSwap} level={level} />);
+  render(
+    <HotCard
+      onStart={onStart}
+      onSwap={onSwap}
+      level={level}
+      coolest={coolest}
+    />
+  );
   return {
     onStart,
     onSwap,
@@ -139,6 +148,20 @@ describe("RunLaunchCard on a hot day", () => {
     expect(within(note).getByText(EXTREME_HEAT_LINE)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^Start / }));
     expect(onStart).toHaveBeenCalledOnce();
+  });
+
+  it("names today's coolest hour still ahead under the heat line (Run26 (5))", () => {
+    const line = "Coolest at 21:00, 24 °C against 32 °C now.";
+    const { note } = hotCard("hot", line);
+    const texts = Array.from(note.querySelectorAll("p")).map(
+      (p) => p.textContent
+    );
+    expect(texts.indexOf(line)).toBe(texts.indexOf(HOT_LINE) + 1);
+    cleanup();
+    // Where no hour is cooler enough, or the read has none: no line.
+    const { note: none } = hotCard("hot", null);
+    expect(within(none).getByText(HOT_LINE)).toBeInTheDocument();
+    expect(within(none).queryByText(/Coolest/)).toBeNull();
   });
 
   it("says nothing of heat on a mild day", () => {

@@ -51,9 +51,12 @@
  * (plannedRunVerdict.ts): the evidence says not to mark a hot day's run a
  * miss.
  *
- * Today's coolest hour is not offered: the weather the app reads
- * (weather.ts, MET Norway through the getCurrentWeather callable) is the
- * current hour only, with no hourly forecast.
+ * Today's coolest hour (Run26 (5)): the weather read carries the next
+ * twelve hours (weather.ts, MET Norway through the getCurrentWeather
+ * callable), and on a hot day the heat panel names the coolest of them
+ * still to come today, when it is far enough off and meaningfully cooler
+ * (`coolestHourAhead`): "Coolest at 21:00, 24 °C against 32 °C now." It
+ * is a fact to plan by, never a move of the run.
  *
  * Altitude, roadmap B2's other half, is not here: it needs an elevation
  * the person declares to be honest (GPS elevation is noisy).
@@ -62,7 +65,11 @@
  */
 import type { PaceBand, PaceTable } from "./runPaces";
 import type { RaceTarget } from "./racePace";
+import type { WeatherHour } from "./weather";
 import { targetZoneForRun } from "./hrZones";
+import { localDateString } from "./dateHelpers";
+import { temperatureLabel, type TemperatureUnit } from "./temperature";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 /** Magnus-formula dew point, °C, from temp (°C) + relative humidity (%). */
 export function dewPointC(tempC: number, humidityPct: number): number {
@@ -80,16 +87,21 @@ export interface HeatInput {
   humidity: number;
 }
 
+/** An air temperature and a dew point, both °C, summed in °F. */
+function sumInF(temperatureC: number, dewPointC: number): number {
+  const fahrenheit = (c: number) => c * 1.8 + 32;
+  return fahrenheit(temperatureC) + fahrenheit(dewPointC);
+}
+
 /** The air temperature plus the dew point, both in °F, or null when the
  *  weather can't be read. */
 export function tdpSumF(weather: HeatInput | null | undefined): number | null {
   if (!weather) return null;
   if (!Number.isFinite(weather.temperature)) return null;
   if (!Number.isFinite(weather.humidity)) return null;
-  const fahrenheit = (c: number) => c * 1.8 + 32;
-  return (
-    fahrenheit(weather.temperature) +
-    fahrenheit(dewPointC(weather.temperature, weather.humidity))
+  return sumInF(
+    weather.temperature,
+    dewPointC(weather.temperature, weather.humidity)
   );
 }
 
@@ -145,6 +157,73 @@ export function heatLevel(weather: HeatInput | null | undefined): HeatLevel {
 /** Hot or extreme: the one test every heat surface uses. */
 export function isHotDay(weather: HeatInput | null | undefined): boolean {
   return heatLevel(weather) !== "none";
+}
+
+/* ── Today's coolest hour (Run26 (5)) ────────────────────────────────── */
+
+/** An hour starting sooner than this is too close to now to be another
+ *  time to run: one step of the forecast, which is hourly, so an hour
+ *  starting inside the next one is, by the forecast's own measure, now.
+ *  A Tropos heuristic. */
+export const COOLEST_MIN_LEAD_MS = 60 * 60 * 1000;
+
+/** Meaningfully cooler: the hour's T+DP sum at least this far under
+ *  now's, °F. One band of Hadley's table (its bands are 10 °F wide), the
+ *  smallest step the rule itself tells apart: a slowdown one to two
+ *  percentage points smaller at the same effort. Over a day the dew point moves
+ *  far less than the air, so it is about 5.5 °C of cooler air. A Tropos
+ *  heuristic. */
+export const COOLEST_COOLER_BY_F = 10;
+
+/** And its air at least this much cooler than now's, °C, so the two
+ *  temperatures the line names differ in whole degrees in either unit. */
+const COOLEST_AIR_COOLER_BY_C = 1;
+
+/**
+ * Today's coolest hour still ahead on a hot day, or null. The hours are
+ * the weather read's (`WeatherData.hours`); `nowMs` is when it was read.
+ * Considered: hours that start at least `COOLEST_MIN_LEAD_MS` from now and
+ * on today's date where the phone is (the planned run is today's).
+ * Picked: the coolest by air temperature, the earliest of a tie, which is
+ * what "coolest" says. Named only when it is meaningfully cooler by the
+ * heat rule's own measure (`COOLEST_COOLER_BY_F`) and its air is a whole
+ * degree cooler than now's. Null on a day that isn't hot, and where the
+ * read has no hours (a server that predates them).
+ */
+export function coolestHourAhead(
+  weather: (HeatInput & { hours?: readonly WeatherHour[] }) | null | undefined,
+  nowMs: number
+): WeatherHour | null {
+  if (!weather || !isHotDay(weather) || !Number.isFinite(nowMs)) return null;
+  const nowSum = tdpSumF(weather);
+  if (nowSum === null) return null;
+  const today = localDateString(new Date(nowMs));
+  let coolest: WeatherHour | null = null;
+  for (const hour of weather.hours ?? []) {
+    if (
+      !Number.isFinite(hour.at) ||
+      !Number.isFinite(hour.temperature) ||
+      !Number.isFinite(hour.dewPoint)
+    )
+      continue;
+    if (hour.at < nowMs + COOLEST_MIN_LEAD_MS) continue;
+    if (localDateString(new Date(hour.at)) !== today) continue;
+    if (
+      !coolest ||
+      hour.temperature < coolest.temperature ||
+      (hour.temperature === coolest.temperature && hour.at < coolest.at)
+    )
+      coolest = hour;
+  }
+  if (!coolest) return null;
+  if (
+    nowSum - sumInF(coolest.temperature, coolest.dewPoint) <
+    COOLEST_COOLER_BY_F
+  )
+    return null;
+  if (coolest.temperature > weather.temperature - COOLEST_AIR_COOLER_BY_C)
+    return null;
+  return coolest;
 }
 
 /** The sessions run for their pace: a tempo (progressions and sharpeners
@@ -314,6 +393,16 @@ export function heatLine(weather: HeatInput | null | undefined): string | null {
   if (sum === null || sum <= HOT_OVER_F) return null;
   if (sum > EXTREME_OVER_F) return EXTREME_HEAT_LINE;
   return `By a common rule of thumb, this heat slows the same effort by ${slowdownLabel(heatSlowdown(sum)!)}.`;
+}
+
+/** The coolest hour's line: when, how cool, and against now, in the
+ *  device region's unit (`deviceTemperatureUnit`). */
+export function coolestHourLine(
+  coolest: WeatherHour,
+  nowTemperatureC: number,
+  unit: TemperatureUnit
+): string {
+  return `Coolest at ${formatTimeOfDay(new Date(coolest.at))}, ${temperatureLabel(coolest.temperature, unit)} against ${temperatureLabel(nowTemperatureC, unit)} now.`;
 }
 
 /** Home's day peek, beside the heat line: where the adjustment is. */
