@@ -1,0 +1,103 @@
+name: App1 data cleanup
+
+# App1 Q24 and Q25, operator-run, against production:
+#   - the accounts still on the retired structured run mode, counted (read
+#     only; functions/scripts/countStructuredRunMode.js). The branch that
+#     takes the mode out of the code merges once this reads 0.
+#   - the plan's 7 retired fields and the profile's retired fields, counted,
+#     and stripped only when asked (stripRetiredProgramFields.js and
+#     stripRetiredProfileFields.js, each a dry run without --apply).
+# Every script prints counts and checkpoint paths, never anything else about
+# an account. Run it only once Deploy production has shipped App1 (the
+# release that stopped writing the fields), as the scripts' headers say.
+#
+# Run it from the Actions tab (Apply strips; left off, it only counts), or
+# add a dated line to .github/app1-data-cleanup.request on main: a line that
+# starts with "apply" strips, any other line only counts. After a strip it
+# counts again and fails if a plan or profile still holds a retired field.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Strip the retired fields (left off, it only counts)"
+        type: boolean
+        default: false
+  # A new line in the request file on main. Only main, which is also the
+  # only branch the production environment lets this job read its
+  # credentials on.
+  push:
+    branches: [main]
+    paths:
+      - .github/app1-data-cleanup.request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app1-data-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Choose count or strip
+        id: mode
+        env:
+          DISPATCH_APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply }}
+        run: |
+          set -euo pipefail
+          apply=false
+          if [ "$DISPATCH_APPLY" = "true" ]; then
+            apply=true
+          elif [ "$GITHUB_EVENT_NAME" = "push" ] &&
+            grep -v '^[[:space:]]*$' .github/app1-data-cleanup.request | tail -n 1 | grep -q '^apply'; then
+            apply=true
+          fi
+          echo "apply=$apply" >> "$GITHUB_OUTPUT"
+          echo "Strip: $apply"
+
+      - name: Count the accounts on the structured run mode
+        run: node functions/scripts/countStructuredRunMode.js adaptive-fitness-af8bb
+
+      - name: The plan's retired fields
+        env:
+          APPLY: ${{ steps.mode.outputs.apply }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then flag=--apply; else flag=; fi
+          node functions/scripts/stripRetiredProgramFields.js --project adaptive-fitness-af8bb $flag
+
+      - name: The profile's retired fields
+        env:
+          APPLY: ${{ steps.mode.outputs.apply }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then flag=--apply; else flag=; fi
+          node functions/scripts/stripRetiredProfileFields.js --project adaptive-fitness-af8bb $flag
+
+      - name: Count again and expect nothing left
+        if: steps.mode.outputs.apply == 'true'
+        run: |
+          set -euo pipefail
+          node functions/scripts/stripRetiredProgramFields.js --project adaptive-fitness-af8bb | tee plans.txt
+          node functions/scripts/stripRetiredProfileFields.js --project adaptive-fitness-af8bb | tee profiles.txt
+          grep -q '^DRY RUN: 0 of ' plans.txt || { echo "::error::A plan still carries a retired field."; exit 1; }
+          grep -q '^DRY RUN: 0 of ' profiles.txt || { echo "::error::A profile still holds a retired field."; exit 1; }
