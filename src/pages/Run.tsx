@@ -139,7 +139,6 @@ import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
 import {
   AUTO_PAUSE_IDLE,
-  gpsTrail,
   motionFrom,
   stepAutoPause,
   type AutoPauseState,
@@ -1957,8 +1956,7 @@ export default function Run() {
      itself comes into play only with the clock (phase active, Run25 call
      2), and reads only what the sensors saw from the clock's start
      (`motionFrom`), so nothing they saw while GPS was found pauses the run
-     or holds it running. On a still phone it reads the recent fixes too
-     (`gpsTrail`), for a steady heading (Run27 (5)). */
+     or holds it running. */
   const motionSessionId =
     activeSessionId &&
     runConfig?.autoPause &&
@@ -1974,8 +1972,6 @@ export default function Run() {
   // The truth for the next step, read synchronously; `autoPaused` is its
   // copy for rendering.
   const autoPauseRef = useRef<AutoPauseState>(AUTO_PAUSE_IDLE);
-  // The recent fixes a steady heading is read from (Run27 (5)).
-  const autoPauseTrailRef = useRef<GPSPoint[]>([]);
   // Bumped when a pending window is due, to step again with nothing new.
   const [autoPauseRecheck, setAutoPauseRecheck] = useState(0);
 
@@ -1996,19 +1992,11 @@ export default function Run() {
         ...AUTO_PAUSE_IDLE,
         paused: autoPauseRef.current.paused,
       };
-      autoPauseTrailRef.current = [];
       return;
     }
-    const now = Date.now();
-    autoPauseTrailRef.current = gpsTrail(
-      autoPauseTrailRef.current,
-      gps.currentPoint,
-      now
-    );
     const step = stepAutoPause(autoPauseRef.current, {
-      now,
+      now: Date.now(),
       gps: gps.currentPoint,
-      trail: autoPauseTrailRef.current,
       // The run's evidence starts with its clock (Run25 call 2).
       motion: motionFrom(runMotion, recordingStartedAtRef.current),
       inRecovery,
