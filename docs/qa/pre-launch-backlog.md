@@ -5014,6 +5014,14 @@ or a marathon. Unit and component tests drive it; no phone has shown it.
 - [ ] **The Pro page.** Open Pro from a free account. Passing: the list
       reads "Plans for a half marathon or longer, after their first week".
 
+## No heavy legs the day before an ultra's back-to-back (Run27 call 19, 2026-11-15)
+
+Affects: a new ultra plan's lift order (`orderForAdjacency` with `longRunDaysOf`) and "Why this session"'s next-day note before a back-to-back run (`liftSessionPurpose`). Unit tests build the plans through `buildPlan`; no phone has shown one. A plan made before this keeps its order.
+
+- [ ] **Four lift days.** On a new account, set up Race prep, 50K, four runs and four lift days, a date 20 weeks out. Passing: the week strip shows the long run Sunday, a run Saturday, and Friday's lift is an upper session (no squat, deadlift or other leg lift); the lower sessions fall Monday and Wednesday.
+- [ ] **Two lift days.** The same with two lift days. Passing: Friday is a full-body session (both are), and in a week whose Saturday holds "Back-to-back 1 h 30" or another back-to-back, Friday's "Why this session" ends "Your back-to-back run is the next day, and heavy leg work can leave your legs tired for it."
+- [ ] **A marathon keeps its week.** Set up a marathon on the same days. Passing: nothing above changes for it; Friday's note appears only before a long run or a key session.
+
 ## The weekly race check against the plan's own peak (Run24 (11) review fix, 2026-11-13)
 
 Affects: Home's race register of the fell-behind sheet (`raceLongRunCheck`),

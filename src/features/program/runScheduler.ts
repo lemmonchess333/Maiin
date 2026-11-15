@@ -49,6 +49,7 @@ import { HARD_RUN_TYPES } from "./programTypes";
 import { beginnerQualityWeek, newRunnerTemplate } from "./newRunner";
 import { starterRunSlots, starterTemplateId } from "./starterPlan";
 import {
+  backToBackDayOf,
   chooseQualityRunSlots,
   clearOf,
   easyDaysInFillOrder,
@@ -397,27 +398,6 @@ function backToBackIdFor(minutes: number): string {
 /** Run26 (2): whether a run is an ultra's back-to-back run. */
 function isBackToBackRun(templateId: string): boolean {
   return !!RUN_TEMPLATES.find((t) => t.id === templateId)?.config.backToBack;
-}
-
-/**
- * Run26 (2): the day an ultra's back-to-back run takes, beside the long
- * run: a weekend day where the one beside it is, else the day after, else
- * the day before. A run day with no lifting only, as the long run's own
- * pick prefers (`pickLongRunSlot`); null when neither neighbour is one.
- */
-function backToBackSlotOf(
-  longSlot: number,
-  slots: readonly number[],
-  weekSchedule: readonly ScheduleDay[]
-): number | null {
-  const after = (longSlot + 1) % 7;
-  const before = (longSlot + 6) % 7;
-  const open = [after, before].filter(
-    (d) =>
-      slots.includes(d) &&
-      weekSchedule.find((day) => day.day === d)?.type === "run"
-  );
-  return open.find((d) => d === 0 || d === 6) ?? open[0] ?? null;
 }
 
 /**
@@ -3106,13 +3086,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
      a step-back week, where the week has a run day beside the long run.
      Not a block begun as a new runner, a detrained, compressed or
      below-floor block, nor on the lighter volume. */
-  const backToBackSlot = ultra
-    ? backToBackSlotOf(
-        pickLongRunSlot(availableRunSlots, input.weekSchedule),
-        availableRunSlots,
-        input.weekSchedule
-      )
-    : null;
+  const backToBackSlot = ultra ? backToBackDayOf(input.weekSchedule) : null;
   const backToBackWeeks = new Set<number>();
   if (
     ultra &&

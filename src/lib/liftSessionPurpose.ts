@@ -47,7 +47,7 @@ import {
   localDateString,
   parseLocalDate,
 } from "@/lib/dateHelpers";
-import { isDemandingScheduledRun } from "@/lib/runSpacing";
+import { isDemandingScheduledRun, isLongScheduledRun } from "@/lib/runSpacing";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type {
@@ -121,7 +121,8 @@ export const RACE_WEEK =
 export const RACE_AFTER =
   "This is a lighter week after your race, with half the sets at the same weights, while you recover.";
 
-/** Lift4 (10): a leg session the day before a long run or a key session. */
+/** Lift4 (10): a leg session the day before a long run or a key session,
+ *  and (Run27 (19)) an ultra's back-to-back run. */
 export const legsBefore = (run: string) =>
   `Your ${run} is the next day, and heavy leg work can leave your legs tired for it.`;
 
@@ -130,9 +131,11 @@ export const RACE_BUILD_LEGS =
   "Your leg lifts have fewer sets at the same weights in the build-up to your race, as you chose.";
 
 /** The run the day after a session, when it is a long run or a key
- *  session (`isDemandingScheduledRun`), named as the note below names it.
- *  The plan leaves a leg session before one where it is: the person
- *  decides (Lift4 (10)). */
+ *  session (`isDemandingScheduledRun`), or (Run27 (19)) an ultra's
+ *  back-to-back run, which the lifting treats as a long run
+ *  (`isLongScheduledRun`), named as the note below names it. The plan
+ *  leaves a leg session before one where it is: the person decides (Lift4
+ *  (10)). */
 function demandingRunNextDay(
   programme: LiftPurposeProgramme,
   date: string
@@ -141,10 +144,16 @@ function demandingRunNextDay(
   if (Number.isNaN(day.getTime())) return null;
   const next = localDateString(addLocalDays(day, 1));
   const run = programme.runDays?.find(
-    (rd) => rd.date === next && isDemandingScheduledRun(rd)
+    (rd) =>
+      rd.date === next &&
+      (isDemandingScheduledRun(rd) || isLongScheduledRun(rd))
   );
   if (!run) return null;
   if (isScheduledRaceRunDay(run)) return "race";
+  const effective = RUN_TEMPLATES.find(
+    (template) => template.id === (run.userOverride || run.templateId)
+  );
+  if (effective?.config.backToBack) return "back-to-back run";
   const type =
     RUN_TEMPLATES.find((template) => template.id === run.userOverride)?.type ??
     run.type;

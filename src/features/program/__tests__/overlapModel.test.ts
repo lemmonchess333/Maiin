@@ -6,7 +6,7 @@ import {
   expensiveExposures,
   lowCostAlternative,
   orderForAdjacency,
-  sessionBeforeLongRun,
+  sessionsBeforeLongRuns,
   surplusExposures,
   weekWrapsBackToBack,
   EXPENSIVE_PATTERNS,
@@ -341,7 +341,7 @@ describe("Lift13 — no heavy legs the day before the long run", () => {
     d.exercises.some((e) => e.movementCategory === "knee_dominant");
 
   it("finds the session the day before the long run", () => {
-    expect(sessionBeforeLongRun(fourAndTwo, 4)).toBe(3); // Saturday's
+    expect(sessionsBeforeLongRuns(fourAndTwo, 4)).toEqual([3]); // Saturday's
     // A Monday long run: the week's last session, Sunday's, is its eve.
     const mondayLong = [
       { day: 0, type: "lift" },
@@ -352,17 +352,17 @@ describe("Lift13 — no heavy legs the day before the long run", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "rest" },
     ];
-    expect(sessionBeforeLongRun(mondayLong, 3)).toBe(2);
+    expect(sessionsBeforeLongRuns(mondayLong, 3)).toEqual([2]);
   });
 
-  it("is null with no run day, or no lift the day before", () => {
+  it("is empty with no run day, or no lift the day before", () => {
     const liftsOnly = [1, 3, 5].map((d) => ({ day: d, type: "lift" }));
-    expect(sessionBeforeLongRun(liftsOnly, 3)).toBeNull();
+    expect(sessionsBeforeLongRuns(liftsOnly, 3)).toEqual([]);
     const restBefore = fourAndTwo.map((d) =>
       d.day === 6 ? { ...d, type: "rest" } : d
     );
-    expect(sessionBeforeLongRun(restBefore, 3)).toBeNull();
-    expect(sessionBeforeLongRun(undefined, 3)).toBeNull();
+    expect(sessionsBeforeLongRuns(restBefore, 3)).toEqual([]);
+    expect(sessionsBeforeLongRuns(undefined, 3)).toEqual([]);
   });
 
   it("puts an upper session, not the lower one, the day before", () => {
@@ -387,6 +387,47 @@ describe("Lift13 — no heavy legs the day before the long run", () => {
   it("leaves a week whose eve already holds the lightest session", () => {
     const already = [lower(), upper(), lower(), upper()];
     expect(orderForAdjacency(already, fourAndTwo)).toBe(already);
+  });
+});
+
+describe("Run27 (19) — no heavy legs the day before a back-to-back", () => {
+  // An ultra's default week for four lift and four run days
+  // (`defaultWeekSchedule(4, 4, true)`): the long run Sunday, the
+  // back-to-back Saturday, lifts Monday (with a run), Tuesday, Wednesday
+  // and Friday.
+  const ultraWeek = [
+    { day: 0, type: "run" },
+    { day: 1, type: "both" },
+    { day: 2, type: "lift" },
+    { day: 3, type: "lift" },
+    { day: 4, type: "run" },
+    { day: 5, type: "lift" },
+    { day: 6, type: "run" },
+  ];
+  const upper = () => day(ex("horizontal_push"), ex("horizontal_pull"));
+  const lower = () => day(ex("knee_dominant"), ex("hip_dominant"));
+  const isLower = (d: WorkoutDay) =>
+    d.exercises.some((e) => e.movementCategory === "knee_dominant");
+
+  it("finds Friday's session, the day before the back-to-back", () => {
+    expect(sessionsBeforeLongRuns(ultraWeek, 4, true)).toEqual([3]);
+    // Saturday holds no lift, so the long run's own eve has no session.
+    expect(sessionsBeforeLongRuns(ultraWeek, 4)).toEqual([]);
+  });
+
+  it("puts an upper session on Friday, and keeps the lower days apart", () => {
+    const out = orderForAdjacency(
+      [upper(), lower(), upper(), lower()],
+      ultraWeek,
+      true
+    );
+    expect(isLower(out[3])).toBe(false);
+    expect(out.map(isLower)).toEqual([true, false, true, false]);
+  });
+
+  it("leaves a week with no back-to-back as it was", () => {
+    const week = [upper(), lower(), upper(), lower()];
+    expect(orderForAdjacency(week, ultraWeek)).toBe(week);
   });
 });
 
