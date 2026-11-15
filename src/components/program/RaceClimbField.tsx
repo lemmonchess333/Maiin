@@ -36,7 +36,9 @@ export default function RaceClimbField({
           Total climb (optional)
         </label>
       )}
-      <div className="flex items-center gap-2">
+      {/* px, not rem, for the field (largeText): with 2x text a 8rem field
+          and its unit ran past a 320 px screen. The field gives way first. */}
+      <div className="flex min-w-0 items-center gap-2">
         <input
           id={id}
           type="text"
@@ -46,9 +48,9 @@ export default function RaceClimbField({
           onChange={(e) => onTextChange(e.target.value)}
           aria-invalid={climbM === null}
           aria-describedby={`${id}-note`}
-          className="ds-input min-h-11 w-32 text-sm font-mono tabular-nums"
+          className="ds-input min-h-11 w-[128px] min-w-0 shrink text-sm font-mono tabular-nums"
         />
-        <span className="text-sm text-muted-foreground">
+        <span className="shrink-0 text-sm text-muted-foreground">
           {elevationUnitLabel(unit)}
         </span>
       </div>
