@@ -24,8 +24,8 @@ inside that type.
 
 | Flow                     | Where                                                                                        | States                                                                                                               |
 | ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)  | waiting, acquiring ("Finding GPS": the clock waits for a fix within 20 m, or Start anyway), active, paused, finished |
-| Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                | running, stopping (a stop window open), paused, setting off (GPS alone against a still phone, held 2 s)              |
+| GPS run phase            | `src/features/run/runSessionReducer.ts` (`RunPhase`), `src/lib/gpsStart.ts` (`isFixInHand`)  | waiting, countdown (3-2-1, Run27 (1)), acquiring ("Finding GPS": a fix within 20 m), active, paused, finished        |
+| Auto-pause               | `src/lib/runAutoPause.ts` (`AutoPauseState`, `stepAutoPause`)                                | running, stopping, paused, setting off (GPS over a still phone: 2.5 m/s held 2 s, or a steady heading, Run27 (5))    |
 | Account deletion         | `functions/lib/accountDeletionLedger.js` (`STATUS`, `STATE_GRAPH`)                           | a server graph with terminal states; the client reads it in a reducer (`src/components/settings/AccountSection.tsx`) |
 | Push token claim         | `functions/lib/pushTokenOwnership.js` (`CLAIM_STATUS`)                                       | server-owned                                                                                                         |
 | Health export receipt    | `firestore.rules` (`healthWorkoutExports`), `src/lib/healthWorkoutExport.ts` (`ExportState`) | attempted, exported, pending-delete; the rules refuse any other move                                                 |
@@ -76,6 +76,12 @@ code can hold that it should not, and what would make it explicit.
   by hand resets both. What it can still hold: `paused` true while the
   reducer is in `paused` (Pause pressed during an auto-pause), which Resume
   clears.
+- **Since 15 November 2026 (Run27 (1)).** Start's 3-2-1 is the reducer's
+  `countdown`; its seconds and its one Go live in `useStartCountdown`
+  (`src/hooks/useStartCountdown.ts`), and Go dispatches the start. What it
+  can hold: the reducer in `countdown` with the hook not counting, were a
+  Go's dispatch ever lost; the screen would sit on 1, and its tap would do
+  nothing.
 - **Explicit form.** The reducer's own header says its side effects move
   behind it in a follow-up. Candidate A3.
 

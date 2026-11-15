@@ -313,6 +313,14 @@ function tree() {
   );
 }
 
+/** Run27 (1): Start counts 3-2-1 first; the runner taps it away, so the
+ *  run's clock starts at the instant of Start, as these rows expect. */
+async function skipCountdown() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Start now" }));
+  });
+}
+
 async function resumeFromSnapshot(
   phase: "active" | "paused",
   config: Partial<StoredRun["config"]> = {}
@@ -744,6 +752,7 @@ describe("the setup screen warms the GPS", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     // The run's own watch takes over; the setup screen's stops.
     expect(h.gpsCalls).toEqual(["start"]);
     expect(h.cools).toBeGreaterThanOrEqual(1);
@@ -767,6 +776,7 @@ describe("GPS acquisition recovery", () => {
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
       });
+      await skipCountdown();
       expect(h.timerStart).not.toHaveBeenCalled();
       expect(screen.queryByRole("button", { name: "Finish" })).toBeNull();
       const manual = screen.getByRole("button", { name: "Track without GPS" });
@@ -785,6 +795,7 @@ describe("GPS acquisition recovery", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     expect(
       screen.queryByRole("button", { name: "Track without GPS" })
     ).toBeNull();
@@ -801,6 +812,7 @@ describe("GPS acquisition recovery", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     expect(h.timerStart).not.toHaveBeenCalled();
     expect(
       readStoredRun("recording-test", Date.now())?.recordingStartedAt
@@ -1004,6 +1016,7 @@ describe("the trace's clock follows the run's", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     expect(h.gpsCalls).toEqual(["start", "resume"]);
     expect(h.timerStart).toHaveBeenCalledExactlyOnceWith(T0 - 400);
     expect(h.speak).toHaveBeenCalledWith("Go!");
@@ -1456,6 +1469,7 @@ describe("interrupted manual distance entry", () => {
     await act(async () =>
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }))
     );
+    await skipCountdown();
     h.gps.error = "Permission denied";
     view.rerender(tree());
     // The page's GPS failure action starts a fresh manual entry.
@@ -1570,6 +1584,7 @@ describe("manual structured coaching through the real player", () => {
         })
       );
     });
+    await skipCountdown();
     return view;
   }
 

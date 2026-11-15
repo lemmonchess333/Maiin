@@ -21,6 +21,10 @@
  *     sensors run from the tap (so Motion & Fitness is asked for while GPS
  *     is found), but a stop they saw then pauses nothing, and a walk to
  *     the start line then does not hold the clock running.
+ *
+ * Start counts 3-2-1 first (Run27 (1)), and the rows above skip it with a
+ * tap at the instant of Start, as a runner can: the clock's start is Go.
+ * The countdown's own rows are at the end.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -353,6 +357,7 @@ describe(
       // Let the permission read land, as the page's first render does.
       await act(async () => {});
       await tap("Easy run");
+      await tap("Start now");
       expect(screen.getByText("Finding GPS")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Start anyway" })
@@ -374,7 +379,7 @@ describe(
       expect(storedStart()).toBe(T0 + 8000);
     });
 
-    it("(2) starts at the tap when a good fix is already in hand, with no waiting screen", async () => {
+    it("(2) starts at Go when a good fix is already in hand, with no waiting screen", async () => {
       open();
       await act(async () => {});
       // The run screen watches location before Start, never asking.
@@ -383,6 +388,7 @@ describe(
       expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
       wait(3000);
       await tap("Easy run");
+      await tap("Start now");
       expect(screen.queryByText("Finding GPS")).toBeNull();
       expect(clock()).toBe("0:00");
       // The run's own watch has taken over.
@@ -399,6 +405,7 @@ describe(
       open();
       await act(async () => {});
       await tap("Easy run");
+      await tap("Start now");
       wait(5000);
       await tap("Start anyway");
       expect(screen.queryByText("Finding GPS")).toBeNull();
@@ -431,6 +438,7 @@ describe(
       open();
       await act(async () => {});
       await tap("Easy run");
+      await tap("Start now");
       wait(3000);
       deliver(fix(0, 40, T0 + 3000));
       wait(3000);
@@ -446,6 +454,7 @@ describe(
       open("/run?template=run_walk_1");
       await act(async () => {});
       await tap("Start run");
+      await tap("Start now");
       expect(screen.getByText("Finding GPS")).toBeInTheDocument();
       wait(4000);
       const fixAt = T0 + 4000;
@@ -482,6 +491,7 @@ describe(
       open("/run?template=run_walk_1");
       await act(async () => {});
       await tap("Start run");
+      await tap("Start now");
       wait(4000);
       // Nothing goes to the wrist while GPS is being found.
       expect(h.published).toEqual([]);
@@ -527,11 +537,12 @@ describe(
       }
     });
 
-    it("(6) a treadmill run never shows Finding GPS, and its clock starts at once", async () => {
+    it("(6) a treadmill run never shows Finding GPS, and its clock starts at Go", async () => {
       open();
       await act(async () => {});
       await tap("More options");
       await tap("Start on the treadmill");
+      await tap("Start now");
       expect(screen.queryByText("Finding GPS")).toBeNull();
       expect(screen.queryByRole("button", { name: "Start anyway" })).toBeNull();
       expect(screen.getByLabelText("Elapsed time")).toBeInTheDocument();
@@ -547,6 +558,7 @@ describe(
       // Never watched before Start: a warm-up is never the ask.
       expect(h.watches).toEqual([]);
       await tap("Easy run");
+      await tap("Start now");
       act(() =>
         h.watches[0].onError({
           code: 1,
@@ -579,8 +591,10 @@ describe(
       open();
       await act(async () => {});
       await tap("Easy run");
-      // The sensors run from the tap, so Motion & Fitness is asked for now.
+      // The sensors run from the tap, through the countdown, so Motion &
+      // Fitness is asked for now (Run27 call 2).
       expect(h.motionSessions.at(-1)).toEqual(expect.any(String));
+      await tap("Start now");
       wait(20_000);
       expect(clock()).toBeNull();
       const fixAt = T0 + 20_000;
@@ -625,6 +639,7 @@ describe(
       open();
       await act(async () => {});
       await tap("Easy run");
+      await tap("Start now");
       wait(20_000);
       const fixAt = T0 + 20_000;
       deliver(fix(0, 5, fixAt, 0));
@@ -643,3 +658,123 @@ describe(
     });
   }
 );
+
+/* Run27 (1): Start counts 3-2-1, and a tap skips it. At Go a GPS run's clock
+   starts with a fix within 20 m in hand (gpsStart.ts), or "Finding GPS"
+   carries on as above; a run with no GPS starts its clock. */
+describe("the countdown before the clock (Run27 (1))", () => {
+  const countdown = () =>
+    screen.queryByRole("button", { name: "Start now" })?.textContent ?? null;
+
+  it("counts 3, 2, 1 with nothing running, and the clock starts at Go from 0:00", async () => {
+    open();
+    await act(async () => {});
+    deliver(fix(0, 8, T0));
+    wait(1000);
+    await tap("Easy run");
+    expect(countdown()).toContain("3");
+    expect(clock()).toBeNull();
+    expect(screen.queryByText("Finding GPS")).toBeNull();
+    wait(1000);
+    expect(countdown()).toContain("2");
+    wait(1000);
+    expect(countdown()).toContain("1");
+    // Nothing has started: no clock, no start stored, nothing said.
+    expect(clock()).toBeNull();
+    expect(storedStart()).toBeUndefined();
+    expect(h.spoken).toEqual([]);
+    wait(1000);
+    // Go, three seconds after the tap.
+    expect(countdown()).toBeNull();
+    expect(clock()).toBe("0:00");
+    expect(storedStart()).toBe(T0 + 4000);
+    // The cue engine has no countdown, so the voice says Go only.
+    expect(h.spoken).toEqual(["Go!"]);
+    wait(5000);
+    expect(clock()).toBe("0:05");
+  });
+
+  it("a tap on the countdown skips the rest of it", async () => {
+    open();
+    await act(async () => {});
+    deliver(fix(0, 8, T0));
+    await tap("Easy run");
+    wait(1000);
+    expect(countdown()).toContain("2");
+    await tap("Start now");
+    expect(countdown()).toBeNull();
+    expect(clock()).toBe("0:00");
+    expect(storedStart()).toBe(T0 + 1000);
+    // The second it would have ended on starts nothing again.
+    wait(3000);
+    expect(clock()).toBe("0:03");
+    expect(storedStart()).toBe(T0 + 1000);
+    expect(h.spoken).toEqual(["Go!"]);
+  });
+
+  it("starts at Go on a good fix the screen's watch found during the countdown", async () => {
+    open();
+    await act(async () => {});
+    // No fix yet at Start: the watch goes on through the countdown.
+    await tap("Easy run");
+    expect(h.watches.map((w) => [w.purpose, w.cleared])).toEqual([
+      ["warm", false],
+    ]);
+    wait(1500);
+    deliver(fix(0, 12, T0 + 1500));
+    wait(1500);
+    // Go at T0 + 3 s with that fix in hand: no Finding GPS.
+    expect(screen.queryByText("Finding GPS")).toBeNull();
+    expect(clock()).toBe("0:00");
+    expect(storedStart()).toBe(T0 + 3000);
+    // The run's own watch takes over at Go.
+    expect(h.watches.map((w) => [w.purpose, w.cleared])).toEqual([
+      ["warm", true],
+      [undefined, false],
+    ]);
+    const run = finish();
+    expect(run.points[0]).toMatchObject({ timestamp: T0 + 3000, accuracy: 12 });
+  });
+
+  it("with no good fix by Go, Finding GPS carries on, and the clock waits for one", async () => {
+    open();
+    await act(async () => {});
+    deliver(fix(0, 40, T0));
+    await tap("Easy run");
+    // A 40 m fix is not good enough, but the countdown runs first all the
+    // same: "Finding GPS" comes after Go, not instead of the 3-2-1.
+    wait(2900);
+    expect(countdown()).toContain("1");
+    expect(screen.queryByText("Finding GPS")).toBeNull();
+    wait(100);
+    expect(countdown()).toBeNull();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start anyway" })).toBeVisible();
+    expect(clock()).toBeNull();
+    expect(storedStart()).toBeUndefined();
+    expect(h.spoken).toEqual([]);
+    wait(2000);
+    deliver(fix(0, 15, T0 + 5000));
+    expect(clock()).toBe("0:00");
+    expect(storedStart()).toBe(T0 + 5000);
+    expect(h.spoken).toEqual(["Go!"]);
+  });
+
+  it("a treadmill run counts down too, then starts", async () => {
+    open();
+    await act(async () => {});
+    await tap("More options");
+    await tap("Start on the treadmill");
+    expect(countdown()).toContain("3");
+    expect(screen.queryByLabelText("Elapsed time")).toBeNull();
+    wait(2000);
+    expect(screen.queryByLabelText("Elapsed time")).toBeNull();
+    expect(storedStart()).toBeUndefined();
+    wait(1000);
+    expect(countdown()).toBeNull();
+    expect(screen.queryByText("Finding GPS")).toBeNull();
+    expect(screen.getByLabelText("Elapsed time")).toBeInTheDocument();
+    expect(storedStart()).toBe(T0 + 3000);
+    expect(h.spoken).toEqual(["Go!"]);
+  });
+});

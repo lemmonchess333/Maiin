@@ -398,6 +398,19 @@ async function tap(name: string) {
   });
 }
 
+/** Run27 (1): Start counts 3-2-1 first; the runner taps it away. A start
+ *  from Home comes once the weather is read, so it may take `timeout`. */
+async function skipCountdown(timeout?: number) {
+  const countdown = await screen.findByRole(
+    "button",
+    { name: "Start now" },
+    timeout ? { timeout } : undefined
+  );
+  await act(async () => {
+    fireEvent.click(countdown);
+  });
+}
+
 /** The tempo's pace from the eased table: 6–8% slower on HOT. */
 function easedTempoPace() {
   const table = paceTableFromFitness(FITNESS);
@@ -439,6 +452,7 @@ describe("a hot day, started from Home", () => {
     h.weather = async () => HOT;
     await open(HOME_TEMPO);
     await tap("The run's card");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -458,6 +472,7 @@ describe("a hot day, started from Home", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Range 5:38–5:45 /km")).toBeInTheDocument();
     await tap("The run's card");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -473,6 +488,7 @@ describe("a hot day, started from Home", () => {
     await tap("Adjust for heat");
     await tap("Clear adjustment");
     await tap("The run's card");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -486,6 +502,7 @@ describe("a hot day, started from Home", () => {
     h.weather = async () => HOT;
     await open(HOME_TEMPO);
     await tap("Run easy instead");
+    await skipCountdown();
     expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     await finishOnTheTreadmill();
     expect(
@@ -501,6 +518,7 @@ describe("a hot day, started from Home", () => {
     h.weather = async () => HOT;
     await open(`/run?template=${id}&scheduledRunId=runday_today&start=1`);
     await tap("Run it all easy");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -526,7 +544,8 @@ describe("a hot day, started from Home", () => {
     planToday("tempo_30");
     h.weather = async () => MILD;
     await open(HOME_TEMPO);
-    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
+    await skipCountdown();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
     await finishOnTheTreadmill();
     expect(
@@ -540,7 +559,8 @@ describe("a hot day, started from Home", () => {
     planToday("tempo_30");
     h.weather = async () => null;
     await open(HOME_TEMPO);
-    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
+    await skipCountdown();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
   });
 
@@ -550,11 +570,8 @@ describe("a hot day, started from Home", () => {
     await open(HOME_TEMPO);
     expect(h.gpsCalls).not.toContain("start");
     expect(h.launchCardRenders).toBe(0);
-    expect(
-      await screen.findByText("Finding GPS", undefined, {
-        timeout: HEAT_CHECK_MS + 2000,
-      })
-    ).toBeInTheDocument();
+    await skipCountdown(HEAT_CHECK_MS + 2000);
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
   });
 });
@@ -618,7 +635,8 @@ describe("a hot day with nothing to adjust", () => {
     planToday("easy_30");
     h.weather = async () => HOT;
     await open(HOME_EASY);
-    expect(await screen.findByText("Finding GPS")).toBeInTheDocument();
+    await skipCountdown();
+    expect(screen.getByText("Finding GPS")).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
     await finishOnTheTreadmill();
     expect(
@@ -641,6 +659,7 @@ describe("an extreme day", () => {
     ).toBeInTheDocument();
     expect(h.gpsCalls).not.toContain("start");
     await tap("The run's card");
+    await skipCountdown();
     expect(screen.getByText("Finding GPS")).toBeInTheDocument();
   });
 
@@ -654,6 +673,7 @@ describe("an extreme day", () => {
       screen.getByText("Adjusted for heat: no pace targets, so run by feel.")
     ).toBeInTheDocument();
     await tap("The run's card");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(
       screen.getByText(
@@ -681,6 +701,7 @@ describe("a heart-rate ceiling, from a live source and a measured max", () => {
     ).toBeInTheDocument();
     h.bpm = 178;
     await tap("The run's card");
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await vi.waitFor(() =>
       expect(h.spoken).toContain("Heart rate over 171. Ease off in the heat.")
@@ -699,6 +720,7 @@ describe("a heart-rate ceiling, from a live source and a measured max", () => {
     await open(HOME_TEMPO);
     await tap("Adjust for heat");
     await tap("The run's card");
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await saveOnTheTreadmill("5");
     expect(h.spoken.filter((line) => /Heart rate/.test(line))).toEqual([]);
@@ -736,6 +758,7 @@ describe("an easy run on heart rate, on a hot day", () => {
       screen.getByText("Adjusted for heat: keep your heart rate under 133 bpm.")
     ).toBeInTheDocument();
     await tap("The run's card");
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await vi.waitFor(() =>
       expect(h.spoken).toContain("Heart rate over 133. Ease off in the heat.")
@@ -749,6 +772,7 @@ describe("an easy run on heart rate, on a hot day", () => {
     await open(HOME_EASY);
     await tap("Adjust for heat");
     await tap("The run's card");
+    await skipCountdown();
     await finishOnTheTreadmill();
     expect(screen.getByText(/hot day · adjusted/)).toBeInTheDocument();
     expect(h.easyHeartRate).not.toHaveBeenCalled();
@@ -759,6 +783,7 @@ describe("an easy run on heart rate, on a hot day", () => {
     h.weather = async () => HOT;
     await open(HOME_EASY);
     await tap("The run's card");
+    await skipCountdown();
     fireEvent.click(screen.getByRole("button", { name: RUN.gpsTreadmill }));
     await vi.waitFor(() => expect(h.easyHeartRate).toHaveBeenCalled());
     expect(h.easyHeartRate.mock.calls[0].slice(0, 2)).toEqual([150, 133]);

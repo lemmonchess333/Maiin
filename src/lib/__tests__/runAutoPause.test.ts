@@ -12,10 +12,14 @@ import {
   AUTO_PAUSE_IDLE,
   EMPTY_MOTION,
   GPS_OVERRIDE_HOLD_MS,
+  GPS_STEADY_ACCURACY_M,
+  GPS_STEADY_HOLD_MS,
   autoPauseEvidence,
   foldMotion,
   footState,
   gpsSpeed,
+  gpsStraightness,
+  gpsTrail,
   motionFrom,
   stepAutoPause,
   type AutoPauseReason,
@@ -89,9 +93,18 @@ describe("GPS evidence", () => {
 type Second = number;
 const ms = (s: Second) => NOW + Math.round(s * 1000);
 
+/** Metres east and north of where the timeline starts. */
+type Where = [east: number, north: number];
+
 interface Timeline {
-  /** One fix a second from `from` to `to` inclusive. */
-  fixes: { at: Second; speed: number | null; accuracy: number }[];
+  /** One fix a second from `from` to `to` inclusive, where it was taken
+   *  (on the spot unless a row says). */
+  fixes: {
+    at: Second;
+    speed: number | null;
+    accuracy: number;
+    where?: Where;
+  }[];
   samples: { at: Second; sample: MotionSample }[];
   /** Seconds the session player spends in a recovery segment. */
   recovery: [Second, Second][];
@@ -107,13 +120,15 @@ function gps(
   from: Second,
   to: Second,
   speed: number | null | ((s: Second) => number | null),
-  accuracy = 5
+  accuracy = 5,
+  where?: (s: Second) => Where
 ) {
   for (let s = from; s <= to; s++)
     t.fixes.push({
       at: s,
       speed: typeof speed === "function" ? speed(s) : speed,
       accuracy,
+      ...(where ? { where: where(s) } : {}),
     });
   return t;
 }
@@ -162,17 +177,32 @@ interface Change {
   reason?: AutoPauseReason;
 }
 
-const toFix = (f: Timeline["fixes"][number]): GPSPoint => ({
-  ...fix,
-  timestamp: ms(f.at),
-  speed: f.speed,
-  accuracy: f.accuracy,
-});
+/** Metres in a degree of latitude, by gps.ts's haversine. */
+const M_PER_DEG = (6371000 * Math.PI) / 180;
+
+const toFix = (f: Timeline["fixes"][number]): GPSPoint => {
+  // At the equator, where a degree of longitude is a degree of latitude.
+  const [east, north] = f.where ?? [0, 0];
+  const lat = north / M_PER_DEG;
+  const lon = east / M_PER_DEG;
+  return {
+    ...fix,
+    ...(f.where ? { lat, lon, rawLat: lat, rawLon: lon } : {}),
+    timestamp: ms(f.at),
+    speed: f.speed,
+    accuracy: f.accuracy,
+  };
+};
 
 /** The new rule, stepped as Run.tsx steps it: on each fix and motion
- *  sample as it arrives, and when a pending window is due. `motion: false`
- *  is the web, with no motion source. */
-function newRun(t: Timeline, { motion = true } = {}): Change[] {
+ *  sample as it arrives, and when a pending window is due, with the recent
+ *  fixes kept as Run.tsx keeps them (`gpsTrail`). `motion: false` is the
+ *  web, with no motion source; `trail: false` is the rule before Run27 (5),
+ *  which read no steady heading. */
+function newRun(
+  t: Timeline,
+  { motion = true, trail: keepTrail = true } = {}
+): Change[] {
   type Arrival =
     { at: number; fix: GPSPoint } | { at: number; sample: MotionSample };
   const arrivals: Arrival[] = [
@@ -183,14 +213,17 @@ function newRun(t: Timeline, { motion = true } = {}): Change[] {
   ].sort((a, b) => a.at - b.at);
   let state: AutoPauseState = AUTO_PAUSE_IDLE;
   let latest: GPSPoint | null = null;
+  let trail: GPSPoint[] = [];
   let reading: MotionReading | null = null;
   let recheckAt: number | null = null;
   const changes: Change[] = [];
   const step = (now: number) => {
     const s = (now - NOW) / 1000;
+    if (keepTrail) trail = gpsTrail(trail, latest, now);
     const result = stepAutoPause(state, {
       now,
       gps: latest,
+      trail,
       motion: reading,
       inRecovery: t.recovery.some(([a, b]) => s >= a && s < b),
     });
@@ -515,6 +548,124 @@ describe("auto-pause decision table", () => {
     expect(kinds(newRun(t))).toEqual([]);
   });
 
+  /* Run27 (5): a phone fixed to a buggy or a wheelchair reads still while
+     it is pushed at a walk, and feels no steps. GPS at 1 m/s or more held
+     for 10 s on a steady heading starts its clock again, and keeps it
+     running; drift at a crossing, which wanders, does not. */
+  describe("a steady heading over a still phone (Run27 (5))", () => {
+    /** The phone at rest from the start: the pedometer's pause and the
+     *  classifier's stationary, GPS on the spot until `from`, so the clock
+     *  stops 2 s in. */
+    function stillPhone(end: Second, from: Second): Timeline {
+      const t = timeline(end);
+      stepEvent(t, 0.5, false);
+      activity(t, 1, "stationary");
+      return gps(t, 0, from - 1, 0);
+    }
+    /** About a metre of error across the line of travel, as fixes have. */
+    const wobble = (s: Second) => 0.8 * Math.sin(1.7 * s);
+
+    it("pushed off at 1.4 m/s in a straight line: restarts 10 s after it sets off, and stays running (it stayed paused before)", () => {
+      const t = stillPhone(180, 60);
+      gps(t, 60, 179, 1.4, 5, (s) => [wobble(s), 1.4 * (s - 60)]);
+
+      const changes = newRun(t);
+      expect(kinds(changes)).toEqual(["pause@2", "resume@70"]);
+      expect(changes[1].reason).toBe("gps-steady");
+      expect(GPS_STEADY_HOLD_MS).toBe(10_000);
+      // The rule before Run27 (5): 1.4 m/s is under the 2.5 m/s a still
+      // phone needed, so the clock stood still for the whole push.
+      expect(kinds(newRun(t, { trail: false }))).toEqual(["pause@2"]);
+    });
+
+    it("on a gentle bend, through a slow fix or two: restarts all the same", () => {
+      const t = stillPhone(150, 60);
+      // A quarter turn over the minute, on a 40 m radius, at 1.2 m/s; one
+      // fix in five reads 0.8 m/s, which a fix under 1 m/s is allowed.
+      const theta = (s: Second) => (1.2 * (s - 60)) / 40;
+      gps(
+        t,
+        60,
+        149,
+        (s) => (s % 5 === 0 ? 0.8 : 1.25),
+        5,
+        (s) => [40 - 40 * Math.cos(theta(s)), 40 * Math.sin(theta(s))]
+      );
+      expect(kinds(newRun(t))).toEqual(["pause@2", "resume@70"]);
+    });
+
+    it("drift at a crossing, 1 to 2 m/s that wanders: stays paused, where the same speeds in a straight line keep the clock running", () => {
+      const drift = [1.9, 1.2, 1.8, 1.4, 2, 1.1, 1.6, 1.3];
+      const speed = (s: Second) => (s < 60 ? 3 : drift[s % drift.length]);
+      /** The lights row, with the fixes somewhere: a minute north at
+       *  3 m/s, then the phone still from 64. */
+      const crossing = (where: (s: Second) => Where) => {
+        const t = runningMinute(150);
+        steps(t, 60.5, 60.5, 2.8);
+        stepEvent(t, 61.3, false);
+        activity(t, 64, "stationary");
+        gps(t, 60, 149, speed);
+        for (const f of t.fixes) f.where = where(f.at);
+        return t;
+      };
+      // Stopped at 180 m north, the fix wanders about the spot a few
+      // metres each way, turning back on itself.
+      const wanders = crossing((s) =>
+        s < 60
+          ? [0, 3 * s]
+          : [
+              4 * Math.sin(0.9 * s) + 1.5 * Math.sin(2.3 * s),
+              180 + 3 * Math.cos(0.7 * s) + 1.5 * Math.cos(1.9 * s),
+            ]
+      );
+      expect(kinds(newRun(wanders))).toEqual(["pause@68"]);
+
+      // The control: the same speeds, the fixes going where they say, as
+      // a phone on a buggy pushed on from the lights would.
+      let north = 0;
+      const along: Where[] = [[wobble(0), 0]];
+      for (let s = 1; s <= 149; s++) {
+        north += (speed(s - 1) + speed(s)) / 2;
+        along[s] = [wobble(s), north];
+      }
+      const straight = crossing((s) => along[s]);
+      expect(kinds(newRun(straight))).toEqual([]);
+      expect(kinds(newRun(straight, { trail: false }))).toEqual(["pause@68"]);
+    });
+
+    it("fixes rougher than 15 m show no heading: a push on them waits for 2.5 m/s or a step, as before", () => {
+      const t = stillPhone(150, 60);
+      gps(t, 60, 149, 1.4, 20, (s) => [wobble(s), 1.4 * (s - 60)]);
+      expect(GPS_STEADY_ACCURACY_M).toBe(15);
+      expect(kinds(newRun(t))).toEqual(["pause@2"]);
+    });
+
+    it("a fix that reads standing, or two missed fixes, starts the 10 s again", () => {
+      const t = stillPhone(150, 60);
+      // A stop at the kerb at 75, and GPS gone for 3 s at 100.
+      gps(
+        t,
+        60,
+        99,
+        (s) => (s === 75 ? 0.2 : 1.4),
+        5,
+        (s) => [0, 1.4 * (s - 60)]
+      );
+      gps(t, 103, 149, 1.4, 5, (s) => [0, 1.4 * (s - 60)]);
+      // Steady from 60, from 76 past the kerb, and from 103. Nothing new
+      // arrives in the gap, so the clock runs on until the first fix after
+      // it opens a new hold, as the phone still reads still.
+      expect(kinds(newRun(t))).toEqual([
+        "pause@2",
+        "resume@70",
+        "pause@77",
+        "resume@86",
+        "pause@105",
+        "resume@113",
+      ]);
+    });
+  });
+
   it("the web, with no motion source, keeps the GPS-only rule on every row outside a recovery", () => {
     const rows: Timeline[] = [];
     const crossing = runningMinute(150);
@@ -660,6 +811,61 @@ describe("the motion reading", () => {
     );
     expect(r.available).toBe(false);
     expect(footState(r, ms(1), NOW)).toBe("unknown");
+  });
+});
+
+describe("steady movement's parts (Run27 (5))", () => {
+  /** Fixes once a second from 0 to `to`, at `where(s)`, `speed` m/s. */
+  const fixes = (
+    to: Second,
+    where: (s: Second) => Where,
+    speed: (s: Second) => number = () => 1.4,
+    accuracy = 5
+  ) => {
+    const t = timeline(to);
+    gps(t, 0, to, speed, accuracy, where);
+    return t.fixes.map(toFix);
+  };
+  const trailOf = (points: GPSPoint[]) =>
+    points.reduce<GPSPoint[]>(
+      (trail, p) => gpsTrail(trail, p, p.timestamp),
+      []
+    );
+
+  it("keeps the fixes a hold ending now could need, each once, in order", () => {
+    const points = fixes(30, (s) => [0, 1.4 * s]);
+    const trail = trailOf(points);
+    // 12.5 s back: the 10 s hold and one fix's age.
+    expect(trail.map((p) => (p.timestamp - NOW) / 1000)).toEqual([
+      18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    ]);
+    expect(gpsTrail(trail, trail.at(-1)!, ms(30))).toHaveLength(13);
+    expect(gpsTrail(trail, points[25], ms(30))).toHaveLength(13);
+  });
+
+  it("reads a straight push as straight, and the same speeds going out and back as not", () => {
+    const straight = trailOf(fixes(20, (s) => [0, 1.4 * s]));
+    expect(gpsStraightness(straight, ms(20))).toBeCloseTo(1, 5);
+    const outAndBack = trailOf(
+      fixes(20, (s) => [0, 1.4 * (s <= 15 ? s : 30 - s)])
+    );
+    expect(gpsStraightness(outAndBack, ms(20))).toBeLessThan(0.3);
+  });
+
+  it("reads nothing until 10 s are held, or with a fix reading standing, or fixes rougher than 15 m", () => {
+    const along = (s: Second): Where => [0, 1.4 * s];
+    expect(gpsStraightness(trailOf(fixes(9, along)), ms(9))).toBeNull();
+    expect(gpsStraightness(trailOf(fixes(10, along)), ms(10))).not.toBeNull();
+    const kerb = fixes(20, along, (s) => (s === 15 ? 0.4 : 1.4));
+    expect(gpsStraightness(trailOf(kerb), ms(20))).toBeNull();
+    // 0.6 m/s is no evidence either way: it does not end the hold.
+    const slow = fixes(20, along, (s) => (s === 15 ? 0.6 : 1.4));
+    expect(gpsStraightness(trailOf(slow), ms(20))).not.toBeNull();
+    expect(
+      gpsStraightness(trailOf(fixes(20, along, () => 1.4, 16)), ms(20))
+    ).toBeNull();
+    // Stale by the time it is read.
+    expect(gpsStraightness(trailOf(fixes(20, along)), ms(23))).toBeNull();
   });
 });
 

@@ -5164,6 +5164,66 @@ activity recorded without pauses, takes out stretches below a speed
 threshold that last more than 15 s. Two phones on the same run can read
 different times for that reason alone.
 
+## The 3-2-1, and a pushed phone that reads still (Run27 calls 1 and 5, 2026-11-15)
+
+Affects: every run's start (Run27 (1): `useStartCountdown`,
+`StartCountdown`, the reducer's `countdown`; the run screen keeps watching
+location through it, and Go starts the clock on a fix within 20 m in hand
+or goes on to "Finding GPS"), and auto-pause over a still phone (Run27 (5):
+`gpsTrail`, `gpsStraightness` and `steadyMovement` in
+`src/lib/runAutoPause.ts`). Page tests drive the countdown with a faked
+location source; the steady heading's numbers come from the synthetic GPS
+bench (`runAutoPause.bench.test.ts`), whose error models are assumptions.
+Only a phone says how they behave outside.
+
+- [ ] **The countdown, warm.** Outdoors, wait for "GPS ready" on a run's
+      card, then tap Start. Passing: 3, 2, 1 fill the dark screen with
+      "Tap to start now" under them, each digit settling in (still, with
+      Reduce Motion on); nothing is spoken until "Go!" at the end, and the
+      clock reads 0:00 then counts. The finish screen's start time is Go,
+      three seconds after the tap.
+- [ ] **A tap skips it.** Tap the screen on "2". Passing: the run starts at
+      the tap, "Go!" is spoken once, and nothing happens a second later.
+- [ ] **The countdown, cold.** With the phone just unlocked and no app
+      having used location for a while, tap Start at once. Passing: the
+      countdown, then "Finding GPS" with Start anyway, exactly as before;
+      "Go!" and 0:00 come with the first good fix. Note how often a cold
+      start's fix arrives during the three seconds, so no "Finding GPS"
+      shows at all.
+- [ ] **A treadmill run.** Start a run with "On a treadmill". Passing: the
+      countdown, then the treadmill screen at 0:00 with "Go!".
+- [ ] **Home's Start.** Start the day's run from Home. Passing: the run
+      screen opens on the countdown, which runs out by itself.
+- [ ] **The prompts over it.** On a fresh install, start an outdoor run
+      with auto-pause on. Note where the Location and Motion & Fitness
+      prompts appear (over the countdown, or over "Finding GPS"), and
+      whether the countdown carries on under one; answering either way
+      must still start the run.
+- [ ] **Left mid-count.** Tap Start, leave the app on "2" for ten seconds,
+      and come back. Passing: the run starts when you come back, not ten
+      seconds before, and its clock reads 0:00 then.
+- [ ] **Large text and a small phone.** At the largest text size, and on a
+      320 px wide phone if one is to hand, the digit and its line fit the
+      screen.
+- [ ] **A buggy or a wheelchair.** Fix the phone to a buggy or a chair (a
+      cup holder or a mount), start an outdoor run with auto-pause on, and
+      push at an ordinary walk for two minutes on an open path, with one
+      stop of 30 s. Passing: the clock pauses at the start, starts again
+      about 10 s after you push off and keeps running while you walk on;
+      the stop pauses it within a few seconds, and pushing on starts it
+      about 10 s later. Note the GPS accuracy the map's chip shows: below
+      15 m is where this works; rougher, a walking push waits for 2.5 m/s
+      or a step, as before.
+- [ ] **Crossings, with the phone still.** On a city run, stand at four
+      crossings for 30 to 60 s each with the phone still in a hand or a
+      pocket. Passing: "Auto-paused" stays while you stand, between tall
+      buildings too, and the clock starts at your first steps. Count any
+      restart while standing. On the bench a still phone restarted at
+      least once in 13 of 20 two-minute stands under its rough ±10 m error
+      (4 s of clock a stand on average) and in 1 of 20 under the smooth
+      one, so more than one restart in four stops is worth filing with
+      the run's GPX.
+
 ## Run start: the clock waits for the first good fix (2026-11-14)
 
 Affects: every GPS run's start (Run25 call 2; `src/lib/gpsStart.ts`,
@@ -5171,8 +5231,8 @@ Affects: every GPS run's start (Run25 call 2; `src/lib/gpsStart.ts`,
 screen's "Finding GPS" in `src/pages/Run.tsx`). The run screen watches
 location from the moment it opens, before Start (a foreground-only watch
 that never asks for location), and a GPS run's clock, distance and steps
-start on the first fix within 20 m, or at the tap of Start when such a fix
-from the last 10 s is in hand. There is no 3-2-1 any more. The unit tests
+start on the first fix within 20 m, or at Go when such a fix from the
+last 10 s is in hand (Start counts 3-2-1 first, Run27 (1), above). The unit tests
 drive a faked location source; only a phone says how often iOS gives a
 fix within 20 m, and how soon.
 

@@ -139,11 +139,14 @@ import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
 import {
   AUTO_PAUSE_IDLE,
+  gpsTrail,
   motionFrom,
   stepAutoPause,
   type AutoPauseState,
 } from "@/lib/runAutoPause";
 import { useRunMotion } from "@/hooks/useRunMotion";
+import { useStartCountdown } from "@/hooks/useStartCountdown";
+import StartCountdown from "@/components/run/StartCountdown";
 import {
   isRunWalkTemplateId,
   RUN_TEMPLATES,
@@ -490,11 +493,12 @@ export default function Run() {
      (`heatHeartRateCueDue`). */
   const heatHrSpokeAtRef = useRef<number | null>(null);
   /* Location is watched from the moment the run screen opens, before
-     Start, and the setup screen shows the signal, so Start usually finds
-     the fix that starts the clock in hand (useGpsWarmup, Run25 call 2).
-     Never before location is allowed: a warm-up must not be the ask. */
+     Start and through the countdown, and the setup screen shows the
+     signal, so Go usually finds the fix that starts the clock in hand
+     (useGpsWarmup, Run25 call 2, Run27 (1)). Never before location is
+     allowed: a warm-up must not be the ask. */
   const showSetupSignal = useGpsWarmup({
-    active: phase === "waiting",
+    active: phase === "waiting" || phase === "countdown",
     permissionState: gps.permissionState,
     warm: gps.warm,
     cool: gps.cool,
@@ -1218,6 +1222,27 @@ export default function Run() {
     haptic("heavy");
   };
 
+  /* Go, when the countdown is done or skipped (Run27 (1)). A run with no
+     GPS starts its clock now. A GPS run's clock starts on a fix within
+     GPS_START_ACCURACY_M (gpsStart.ts, Run25 call 2): one in hand from the
+     run screen's watch starts it now; without one the run waits on
+     "Finding GPS" for it, or for Start anyway. */
+  const handleGo = (at: number) => {
+    if (!runConfig) return;
+    if (requiresManualDistance(runConfig)) {
+      dispatch({ type: "START_MANUAL" });
+      stampRunStart(at);
+      timer.start(at);
+      audioCues.speak("Go!");
+      haptic("heavy");
+      return;
+    }
+    const fixInHand = gps.startAwaitingFix(at);
+    dispatch({ type: "START_GPS", fixInHand });
+    if (fixInHand) startGpsClock(at);
+  };
+  const countdown = useStartCountdown(handleGo);
+
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
     if (!uid || (user && auth.currentUser?.uid !== uid)) return;
@@ -1266,8 +1291,8 @@ export default function Run() {
     watchLastStatusCheckRef.current = 0;
     watchPhaseRef.current = "running";
     watchCommandLedgerRef.current.clear();
-    // Persist the identity before GPS is found. A crash while the run
-    // waits for it can safely resume as a paused, zero-second run.
+    // Persist the identity before the countdown and GPS. A crash while the
+    // run waits for either can safely resume as a paused, zero-second run.
     setSnapshotWriteFailed(
       !writeStoredRun(uid, {
         v: RUN_RESUME_SCHEMA_VERSION,
@@ -1288,21 +1313,9 @@ export default function Run() {
       kind: "run",
       offPlan: planDecision.metadata.offPlan,
     });
-    if (requiresManualDistance(finalConfig)) {
-      dispatch({ type: "START_MANUAL" });
-      recordingStartedAtRef.current = Date.now();
-      timer.start();
-      haptic("heavy");
-      return;
-    }
-    /* Run25 call 2: the clock starts on a fix within GPS_START_ACCURACY_M
-       (gpsStart.ts). One in hand from the run screen's watch starts it
-       now; without one the run waits on "Finding GPS" for it, or for
-       Start anyway. */
-    const tappedAt = Date.now();
-    const fixInHand = gps.startAwaitingFix(tappedAt);
-    dispatch({ type: "START_GPS", fixInHand });
-    if (fixInHand) startGpsClock(tappedAt);
+    // Run27 (1): 3-2-1, then Go (handleGo).
+    dispatch({ type: "COUNTDOWN" });
+    countdown.begin();
   };
 
   /* Start anyway, on "Finding GPS": the clock starts at the tap, and the
@@ -1940,15 +1953,20 @@ export default function Run() {
      sensors decide when the clock stops by itself and starts again. The
      sensors run from Start to the finish of an outdoor run with
      auto-pause on, so Motion & Fitness is asked for beside location,
-     while GPS is still being found. Auto-pause itself comes into play
-     only with the clock (phase active, Run25 call 2), and reads only what
-     the sensors saw from the clock's start (`motionFrom`), so nothing they
-     saw while GPS was found pauses the run or holds it running. */
+     through the countdown and while GPS is still being found. Auto-pause
+     itself comes into play only with the clock (phase active, Run25 call
+     2), and reads only what the sensors saw from the clock's start
+     (`motionFrom`), so nothing they saw while GPS was found pauses the run
+     or holds it running. On a still phone it reads the recent fixes too
+     (`gpsTrail`), for a steady heading (Run27 (5)). */
   const motionSessionId =
     activeSessionId &&
     runConfig?.autoPause &&
     isOutdoorGpsRun(runConfig) &&
-    (phase === "acquiring" || phase === "active" || phase === "paused")
+    (phase === "countdown" ||
+      phase === "acquiring" ||
+      phase === "active" ||
+      phase === "paused")
       ? activeSessionId
       : null;
   const runMotion = useRunMotion(motionSessionId);
@@ -1956,6 +1974,8 @@ export default function Run() {
   // The truth for the next step, read synchronously; `autoPaused` is its
   // copy for rendering.
   const autoPauseRef = useRef<AutoPauseState>(AUTO_PAUSE_IDLE);
+  // The recent fixes a steady heading is read from (Run27 (5)).
+  const autoPauseTrailRef = useRef<GPSPoint[]>([]);
   // Bumped when a pending window is due, to step again with nothing new.
   const [autoPauseRecheck, setAutoPauseRecheck] = useState(0);
 
@@ -1976,11 +1996,19 @@ export default function Run() {
         ...AUTO_PAUSE_IDLE,
         paused: autoPauseRef.current.paused,
       };
+      autoPauseTrailRef.current = [];
       return;
     }
+    const now = Date.now();
+    autoPauseTrailRef.current = gpsTrail(
+      autoPauseTrailRef.current,
+      gps.currentPoint,
+      now
+    );
     const step = stepAutoPause(autoPauseRef.current, {
-      now: Date.now(),
+      now,
       gps: gps.currentPoint,
+      trail: autoPauseTrailRef.current,
       // The run's evidence starts with its clock (Run25 call 2).
       motion: motionFrom(runMotion, recordingStartedAtRef.current),
       inRecovery,
@@ -2772,6 +2800,13 @@ export default function Run() {
             />
           )}
         </>
+      )}
+
+      {phase === "countdown" && (
+        <StartCountdown
+          seconds={countdown.seconds ?? 1}
+          onSkip={countdown.skip}
+        />
       )}
 
       {phase === "acquiring" &&

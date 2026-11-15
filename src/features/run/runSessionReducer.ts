@@ -16,6 +16,12 @@
  * Phases:
  *   'waiting'    — initial; setup modal open. No timer / GPS in
  *                  flight.
+ *   'countdown'  — Start tapped: 3-2-1 on screen, a tap skips it
+ *                  (Run27 (1), useStartCountdown). Nothing is
+ *                  recorded and no clock runs. At Go a GPS run starts
+ *                  its clock if a fix within GPS_START_ACCURACY_M is in
+ *                  hand, or goes on to 'acquiring'; any other run
+ *                  starts its clock.
  *   'acquiring'  — outdoor GPS run started, its clock not yet: the
  *                  screen says "Finding GPS" until a fix within
  *                  GPS_START_ACCURACY_M arrives (Run25 call 2,
@@ -38,24 +44,27 @@
  * button lives in RunBottomSheet which only renders for those two
  * phases. acquiring uses `CANCEL_ACQUIRING` to bail out instead.
  *
- * There is no countdown. A GPS run's clock starts at the instant of its
- * first good fix, or of the tap of Start when that fix is already in hand
- * (Run25 call 2), and a 3-2-1 before it would either count seconds that
- * were not run or move the start off the fix it is measured from.
+ * The countdown comes before the clock, never inside it (Run27 (1)): a GPS
+ * run's clock starts at Go with a good fix in hand, or at the instant of
+ * its first good fix after Go (Run25 call 2), so it counts no second of
+ * the 3-2-1 and its start stays on the fix it is measured from.
  */
 
 export type RunPhase =
-  "waiting" | "acquiring" | "active" | "paused" | "finished";
+  "waiting" | "countdown" | "acquiring" | "active" | "paused" | "finished";
 
 export type RunSessionAction =
-  /* Non-GPS path (treadmill, intervals, strength, manual). Skips
-     the acquiring phase entirely because there's no GPS lock to
-     wait for. */
+  /* Start tapped: the 3-2-1 before the run (Run27 (1)). Waiting →
+     countdown. */
+  | { type: "COUNTDOWN" }
+  /* Go, on a run with no GPS (treadmill, indoor, manual distance): its
+     clock starts. Countdown → active, skipping the acquiring phase
+     entirely because there's no GPS lock to wait for. */
   | { type: "START_MANUAL" }
-  /* Outdoor GPS path. With a good fix already in hand (the run screen
-     watches location before Start) the clock starts now: waiting →
-     active. Without one: waiting → acquiring, until GPS_ACQUIRED or
-     START_ANYWAY. */
+  /* Go, on an outdoor GPS run. With a good fix already in hand (the run
+     screen watches location before Start and through the countdown) the
+     clock starts at Go: countdown → active. Without one: countdown →
+     acquiring, until GPS_ACQUIRED or START_ANYWAY. */
   | { type: "START_GPS"; fixInHand: boolean }
   /* The first fix within GPS_START_ACCURACY_M landed, and the clock
      starts on it. Acquiring → active. */
@@ -92,11 +101,14 @@ export function runSessionReducer(
   action: RunSessionAction
 ): RunPhase {
   switch (action.type) {
-    case "START_MANUAL":
+    case "COUNTDOWN":
       if (state !== "waiting") return state;
+      return "countdown";
+    case "START_MANUAL":
+      if (state !== "countdown") return state;
       return "active";
     case "START_GPS":
-      if (state !== "waiting") return state;
+      if (state !== "countdown") return state;
       return action.fixInHand ? "active" : "acquiring";
     case "GPS_ACQUIRED":
     case "START_ANYWAY":
