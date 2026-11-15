@@ -272,12 +272,23 @@ test.describe("large text", () => {
       await page.getByLabel("What did you eat").blur();
 
       // A diary row's sheet, with the day's line and Copy to another day,
-      // and the copy sheet it opens.
+      // and the copy sheet it opens, from yesterday's diary: seed:rich logs
+      // meals on the five days up to the one it ran on, so yesterday has
+      // them whether or not the run has crossed midnight since it seeded,
+      // as the edit sheet below reads it. A run seeded at 23:46 on 14
+      // November 2026 reached this step after midnight and found today's
+      // diary empty at 320 px.
+      const yesterday = await page.evaluate(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      });
+      await page.goto(`food?date=${yesterday}`);
+      const diaryRow = page.getByRole("button", { name: /^Edit / }).first();
+      await ready(page, diaryRow);
       await page.waitForTimeout(600);
-      await page
-        .getByRole("button", { name: /^Edit / })
-        .first()
-        .click();
+      await diaryRow.click();
       const copy = page.getByRole("button", { name: "Copy to another day" });
       await copy.waitFor({ state: "visible", timeout: 20_000 });
       await page.waitForTimeout(800);
