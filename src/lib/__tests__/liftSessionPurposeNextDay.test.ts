@@ -117,3 +117,34 @@ describe("a leg session the day before a long run or a key session", () => {
     expect(raceWeek).not.toContain("next day");
   });
 });
+
+/* Run27 (19): an ultra's back-to-back run is an easy run by type, and
+   the lifting treats it as a long run: a leg session the day before one
+   says so, as before the long run. */
+describe("a leg session the day before an ultra's back-to-back run", () => {
+  const backToBack = (over: Partial<ScheduledRunDay> = {}) =>
+    run({ type: "easy", templateId: "back_to_back_90", ...over });
+
+  it("names the back-to-back run", () => {
+    expect(why(legs, [backToBack()])).toContain(
+      "Your back-to-back run is the next day, and heavy leg work can leave your legs tired for it."
+    );
+    // A back-to-back made shorter keeps its family (`sameTimeOnFeetFamily`).
+    expect(why(legs, [backToBack({ userOverride: "back_to_back_60" })])).toBe(
+      why(legs, [backToBack()])
+    );
+  });
+
+  it("says nothing before a skipped one, or on a session without leg lifts", () => {
+    expect(why(legs, [backToBack({ status: "skipped" })])).not.toContain(
+      "next day"
+    );
+    expect(why(upper, [backToBack()])).not.toContain("next day");
+  });
+
+  it("still says nothing before an easy run that is not one", () => {
+    expect(
+      why(legs, [run({ type: "easy", templateId: "easy_90" })])
+    ).not.toContain("next day");
+  });
+});

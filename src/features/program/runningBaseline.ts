@@ -6,6 +6,7 @@ import {
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
 import {
+  isLongRunTemplate,
   isRunWalkTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
@@ -295,16 +296,14 @@ export function fitWeekToRunningBaseline(
       return sum + (t && t.type !== "race" ? minutes(t) : 0);
     }, 0);
   /** The long run's day, by what the plan put there. Run26 (2): an
-   *  ultra's back-to-back run is a second long run, held to the long run's
-   *  climb rather than the rest of the week's, whose ten minutes a week
-   *  would never let one in; the week's own hold (Run24 (6)) still bounds
-   *  the week it is in. */
-  const isLongRow = (row: ScheduledRunDay) => {
-    const planned = templateOf(
-      row.trainingBasis?.originalTemplateId ?? row.templateId
+   *  ultra's back-to-back run is a second long run (`isLongRunTemplate`),
+   *  held to the long run's climb rather than the rest of the week's, whose
+   *  ten minutes a week would never let one in; the week's own hold (Run24
+   *  (6)) still bounds the week it is in. */
+  const isLongRow = (row: ScheduledRunDay) =>
+    isLongRunTemplate(
+      templateOf(row.trainingBasis?.originalTemplateId ?? row.templateId)
     );
-    return planned?.type === "long" || !!planned?.config.backToBack;
-  };
   // A week with no long run gives its runs the long run's minutes too: a
   // lead-in. A taper or race week does not (`cutting`): there the five
   // 30-minute runs after a build of five 20s were the long run's minutes
