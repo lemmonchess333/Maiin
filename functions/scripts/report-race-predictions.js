@@ -18,7 +18,11 @@
  * the race started: the first, each change (a pace update, first paces
  * after a time trial), and the one in force going into race week, each
  * with the weeks of the plan done when it was made. The time run is the
- * run's own recorded time, as the run summary shows it.
+ * race's elapsed time, `recordingEndedAt` less `recordingStartedAt`, as the
+ * run summary compares it (Run28 call 4: a race is on elapsed time, as
+ * Strava times a run tagged Race); a run saved without both stamps is read
+ * on its `duration`. The app's copy of the rule is `src/lib/runElapsed.ts`,
+ * pinned by `src/lib/__tests__/racePrediction.cross.test.ts`.
  *
  * How a prediction is scored (standard forecasting practice; Hyndman and
  * Athanasopoulos, Forecasting: Principles and Practice, 3rd ed., section
@@ -88,10 +92,37 @@ function finite(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+/** An instant as epoch ms: a number, a Date, an Admin SDK Timestamp, or a
+ *  Timestamp read back as `{ seconds, nanoseconds }`. Null otherwise. */
+function epochMs(value) {
+  let ms = null;
+  if (typeof value === "number") ms = value;
+  else if (value instanceof Date) ms = value.getTime();
+  else if (value && typeof value === "object") {
+    if (typeof value.toMillis === "function") ms = value.toMillis();
+    else if (typeof value.seconds === "number")
+      ms =
+        value.seconds * 1000 +
+        (typeof value.nanoseconds === "number" ? value.nanoseconds / 1e6 : 0);
+  }
+  return typeof ms === "number" && Number.isFinite(ms) && ms > 0 ? ms : null;
+}
+
+/** The race's time in seconds: its elapsed time, whole seconds from
+ *  `recordingStartedAt` to `recordingEndedAt`, else its `duration`; null
+ *  for neither. */
+function raceSeconds(run) {
+  const start = epochMs(run.recordingStartedAt);
+  const end = epochMs(run.recordingEndedAt);
+  if (start !== null && end !== null && end > start)
+    return Math.floor((end - start) / 1000);
+  return finite(run.duration);
+}
+
 /**
  * A goal race as the report reads it from a run document, or null for a
  * run it cannot score: no record (or one of another version), a run saved
- * anyway, no recorded time. Its predictions are in the order recorded.
+ * anyway, no recorded time (`raceSeconds`). Its predictions are in the order recorded.
  */
 function goalRaceEntry(run) {
   if (!run || typeof run !== "object") return null;
@@ -99,7 +130,7 @@ function goalRaceEntry(run) {
   if (!record || record.v !== 1 || !DISTANCES.includes(record.distance))
     return null;
   if (run.isInvalid === true || run.savedAnyway === true) return null;
-  const ranS = finite(run.duration);
+  const ranS = raceSeconds(run);
   if (ranS === null || ranS <= 0) return null;
   const predictions = (
     Array.isArray(record.predictions) ? record.predictions : []
@@ -338,6 +369,7 @@ module.exports = {
   WEEK_CHECKPOINTS,
   parseArgs,
   goalRaceEntry,
+  raceSeconds,
   percentError,
   predictionAfterWeeks,
   summarise,

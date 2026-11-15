@@ -6,6 +6,9 @@ export interface RunStat {
   value: string;
   /** Set small beside the figure ("/km", "m", "kcal"). */
   unit?: string;
+  /** A second figure under the first, as a line of text: the elapsed time
+   *  under the moving time (Run28 call 2). */
+  detail?: { label: string; value: string };
 }
 
 /**
@@ -50,6 +53,14 @@ export default function RunStatGrid({ stats }: { stats: RunStat[] }) {
                 </>
               )}
             </p>
+            {stat.detail && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {stat.detail.label}{" "}
+                <span className="font-mono tabular-nums font-semibold text-foreground">
+                  {stat.detail.value}
+                </span>
+              </p>
+            )}
           </div>
         ))}
       </div>

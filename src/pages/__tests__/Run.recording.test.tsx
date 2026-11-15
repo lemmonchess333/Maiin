@@ -37,7 +37,7 @@ import {
 import { sessionPlayerSignature } from "@/lib/sessionPlayerCheckpoint";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { GPSPoint } from "@/lib/gps";
+import { totalDistance, type GPSPoint } from "@/lib/gps";
 
 const h = vi.hoisted(() => ({
   gps: {
@@ -1229,6 +1229,102 @@ describe("the figures a pause must not move", () => {
     h.gps.distance = 87;
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     expect(screen.getByText("gaps 0 · good")).toBeInTheDocument();
+  });
+});
+
+describe("a run with auto-pause off keeps its moving time (Run28 call 1)", () => {
+  /** An outdoor run with auto-pause off whose clock started at T0, saved
+   *  before its first point, so nothing restored holds it. */
+  async function startOffRun() {
+    const snapshot: StoredRun = {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: {
+        activityType: "easy",
+        autoPause: false,
+        audioCues: true,
+        audioCueFrequency: "every_km",
+        paceAlerts: false,
+        voiceRate: 0.9,
+        displayStats: ["pace", "distance", "time"],
+        target: { type: "none" },
+        planMetadata: freeformPlanMetadata("freeform"),
+      },
+      startedAt: T0,
+      recordingStartedAt: T0,
+      lastWriteAt: T0,
+      accumulatedSeconds: 0,
+      isRunning: true,
+      phase: "active",
+      points: [],
+    };
+    expect(writeStoredRun("recording-test", snapshot)).toBe(true);
+    const view = render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Resume run" }));
+    });
+    return view;
+  }
+
+  /** One fix a second: 60 s at 3 m/s, 40 s standing at a crossing, 60 s
+   *  at 3 m/s. The trace keeps the running fixes, as useGPS keeps none
+   *  that has not moved a step. */
+  function runWithAStop(view: ReturnType<typeof render>) {
+    const trace: GPSPoint[] = [];
+    let metres = 0;
+    for (let second = 0; second < 160; second++) {
+      const standing = second >= 60 && second < 100;
+      const fix = { ...point(metres, Date.now()), speed: standing ? 0.2 : 3 };
+      h.gps.currentPoint = fix;
+      if (!standing) {
+        trace.push(fix);
+        metres += 3;
+      }
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    h.gps.points = trace;
+    h.gps.distance = totalDistance(trace);
+    // The clock ran through the stop: auto-pause was off.
+    h.timer.elapsed = 160;
+    view.rerender(tree());
+    return trace;
+  }
+
+  const payload = () =>
+    JSON.parse(screen.getByTestId("finish-payload").textContent!) as {
+      elapsed: number;
+      distance: number;
+      points: GPSPoint[];
+      recordingStartedAt: number;
+      finishedAt: number;
+    };
+
+  it("hands the summary the trace's moving time, the stop in its points, the distance unchanged", async () => {
+    const view = await startOffRun();
+    const trace = runWithAStop(view);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = payload();
+    // The stop's 40 s, less the 5 s auto-pause waits before it stops.
+    expect(finish.elapsed).toBe(160 - 35);
+    expect(finish.distance).toBe(totalDistance(trace));
+    expect(totalDistance(finish.points)).toBe(totalDistance(trace));
+    const firstAfter = finish.points.find((p) => p.timestamp === T0 + 100_000)!;
+    expect(firstAfter.pausedMs).toBe(35_000);
+    // The elapsed time is there to be shown beside it: start to finish.
+    expect((finish.finishedAt - finish.recordingStartedAt) / 1000).toBe(160);
+    // A relaunch reopens the review on the same trace.
+    expect(readStoredRun("recording-test")?.points).toEqual(finish.points);
+  });
+
+  it("keeps the timer for a run paused by hand", async () => {
+    const view = await startOffRun();
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    const trace = runWithAStop(view);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = payload();
+    expect(finish.elapsed).toBe(160);
+    expect(finish.points).toEqual(trace);
   });
 });
 

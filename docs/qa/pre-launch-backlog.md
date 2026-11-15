@@ -5572,6 +5572,47 @@ recording on the same phone or a second one) beside Tropos's duration.
       crossing. Passing: the Watch shows Paused, and its Resume restarts
       the clock.
 
+## Time as Strava keeps it: moving time with auto-pause off, elapsed time shown (Run28, 2026-11-15)
+
+Affects: the finish of a run recorded with auto-pause off and no manual
+pause (`src/lib/runMovingTime.ts`, wired in `src/pages/Run.tsx`'s finish):
+its saved duration, average pace and splits are its moving time, the
+GPS-only auto-pause rule replayed over the fixes the run screen saw, and its
+distance is unchanged. The finish screen and the run's page show "Elapsed
+time" under "Moving time" when the two are a minute or more apart
+(`src/lib/runElapsed.ts`); best efforts are timed on elapsed time, and the
+goal race's time is its elapsed time. The replay is unit-tested on traces
+built in code and the page wiring with a stubbed GPS; how a real phone's
+fixes read at a crossing (their speed, how many become points) only a run
+outside shows. Record Strava on the same run (the same phone or a second
+one) for each row.
+
+- [ ] **Two stops at lights, auto-pause off.** Turn auto-pause off in the
+      run setup and run 3 km or more with two stops of about 40 s at
+      lights, the phone in a pocket or armband, without touching Pause.
+      Passing: the finish screen's Moving time is within 15 s of Strava's
+      moving time, its Elapsed time within 5 s of Strava's elapsed time,
+      and the distance within 1% of Strava's. Write all four down. The
+      run's page shows the same two figures after saving.
+- [ ] **The splits.** On the same run, the kilometre with a stop in it.
+      Passing: its split is within 15 s of Strava's split for that
+      kilometre, not 35 s slower.
+- [ ] **No stops.** A run of 2 km or more with auto-pause off and no
+      stops. Passing: one figure, "Time", and it matches Strava's moving
+      time within 5 s.
+- [ ] **A manual pause.** Auto-pause off, one stop, and one Pause tapped
+      by hand. Passing: the time is the clock's, as Strava keeps a run
+      with a pause on its timer, and Elapsed time shows if the pause was a
+      minute or more.
+- [ ] **Best efforts.** On a run with a stop inside its fastest
+      kilometre, the 1K under Best efforts. Passing: within 5 s of Strava's
+      best 1K, the stop counted in both.
+- [ ] **Large text.** At the largest text size, the finish screen and the
+      run's page with both times shown. Passing: "Elapsed time" and its
+      figure wrap inside the time's cell and nothing runs past the card.
+      (The large-text capture spec needs the emulator rig, which this
+      change's checkout could not run.)
+
 ## Apple Watch companion: device acceptance kit (2026-11-14)
 
 The last step before `WATCH_RUN_RELEASE_ENABLED` and

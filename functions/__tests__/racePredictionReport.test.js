@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 const {
   parseArgs,
   goalRaceEntry,
+  raceSeconds,
   percentError,
   predictionAfterWeeks,
   summarise,
@@ -153,6 +154,37 @@ describe("goal-race prediction report", () => {
     expect(goalRaceEntry(run).predictions).toEqual([
       { predictedS: 3000, weeksDone: 0, planWeeks: 12 },
     ]);
+  });
+
+  it("reads the race's time as its elapsed time, else its duration (Run28 call 4)", () => {
+    const start = Date.parse("2027-03-28T09:00:00.000Z");
+    // Moving 49:10, but 50:40 from the clock's start to the finish.
+    const end = start + (50 * 60 + 40) * 1000 + 600;
+    const asAdmin = (ms) => ({ toMillis: () => ms });
+    const asRead = (ms) => ({
+      seconds: Math.floor(ms / 1000),
+      nanoseconds: (ms % 1000) * 1e6,
+    });
+    for (const stamp of [asAdmin, asRead]) {
+      const run = raceRun("10k", 2950, [p(3002, 0, 12)], {
+        recordingStartedAt: stamp(start),
+        recordingEndedAt: stamp(end),
+      });
+      expect(raceSeconds(run)).toBe(3040);
+      expect(goalRaceEntry(run).ranS).toBe(3040);
+    }
+    // Without both stamps, or with the end not after the start: duration.
+    expect(
+      raceSeconds({ duration: 2950, recordingStartedAt: asAdmin(start) })
+    ).toBe(2950);
+    expect(
+      raceSeconds({
+        duration: 2950,
+        recordingStartedAt: asAdmin(end),
+        recordingEndedAt: asAdmin(start),
+      })
+    ).toBe(2950);
+    expect(raceSeconds({})).toBeNull();
   });
 
   it("takes the prediction that stood after N weeks: the latest made by then", () => {

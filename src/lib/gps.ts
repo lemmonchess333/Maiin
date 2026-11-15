@@ -353,8 +353,13 @@ export interface GPSPoint {
    * recording. Nothing is recorded while the clock is held (useGPS), so
    * only differences mean anything: the MOVING time between two points is
    * their timestamp difference less their `pausedMs` difference
-   * (`movingClockMs`). That is how a split, a best effort and the live pace
-   * leave out ten minutes at a crossing, as Strava's do.
+   * (`movingClockMs`). That is how a split and the live pace leave out ten
+   * minutes at a crossing, as Strava's do. Best efforts are on the wall
+   * clock (`detectBestEfforts`, Run28 call 3).
+   *
+   * A run recorded with auto-pause off carries the holds auto-pause would
+   * have made, set at the finish (`runMovingTime.ts`, Run28 call 1); its
+   * points recorded inside one are kept.
    *
    * Cumulative rather than per-gap so it survives `sampleRoute` thinning
    * the saved trace: any two surviving points still subtract correctly.
@@ -912,10 +917,12 @@ export function isImpossibleStep(metres: number, seconds: number): boolean {
 
 /**
  * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
- * stretch ending there that covers the distance, timed on the MOVING clock
- * (`movingClockMs`) and measured through `segmentMetres` — so a stretch
- * that waited at a crossing is timed without the wait, and a line drawn
- * across a pause cannot carry a stretch past the distance in no time.
+ * stretch ending there that covers the distance, timed on ELAPSED time,
+ * the wall clock between its fixes (Run28 call 3), as Strava times best
+ * efforts: a wait at a crossing inside a stretch counts in its time, as a
+ * pause does. Measured through `segmentMetres`, the rule the run's distance
+ * counts with, so a line drawn across a pause carries no more metres than
+ * the time running either side of it could have.
  *
  * No stretch spans a step faster than any runner (`isImpossibleStep`). A
  * 2.85 km run at 8:51 /km, with kilometres of 9:33 and 11:20, listed a
@@ -936,20 +943,20 @@ export function detectBestEfforts(
   const n = points.length;
   if (n < 2) return results;
 
-  // Credited distance and moving clock at each point. The clock never steps
-  // back, so no stretch can time out negative on a corrected phone clock.
-  // `impossible[i]`: the step into point i is faster than any runner.
+  // Credited distance and the wall clock at each point. The clock never
+  // steps back, so no stretch can time out negative on a corrected phone
+  // clock. `impossible[i]`: the step into point i is faster than any runner.
   const cum = new Array<number>(n);
   const clock = new Array<number>(n);
   const impossible = new Array<boolean>(n).fill(false);
   cum[0] = 0;
-  clock[0] = movingClockMs(points[0]);
+  clock[0] = points[0].timestamp;
   for (let i = 1; i < n; i++) {
     const metres = points[i].breakBefore
       ? 0
       : segmentMetres(points[i - 1], points[i]);
     cum[i] = cum[i - 1] + metres;
-    clock[i] = Math.max(clock[i - 1], movingClockMs(points[i]));
+    clock[i] = Math.max(clock[i - 1], points[i].timestamp);
     impossible[i] = isImpossibleStep(metres, (clock[i] - clock[i - 1]) / 1000);
   }
 
