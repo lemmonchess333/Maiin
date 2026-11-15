@@ -218,6 +218,14 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // reading the deletion state in their transaction; the executor sweeps
   // the credits (USER_SUBCOLLECTIONS, userPulseCredits).
   "match /pulse/{dateKey}",
+  // Run27 call 11: a Space's members' sessions and its week. No client
+  // writes either. The rows route a public post to the Spaces its author
+  // is in, and the week is a figure that names no one; the triggers that
+  // write them read the deletion state in their transaction, and the
+  // executor removes the account's rows (spaceSessionRows) and its week
+  // credits (USER_SUBCOLLECTIONS, userSpaceWeeks).
+  "match /sessions/{activityId}",
+  "match /weeks/{weekKey}",
   // Run26 call 3: segments. No client writes any of these: the segment
   // callables are actor-locked and read the deletion state in their
   // transaction, as do the run triggers that write efforts and board

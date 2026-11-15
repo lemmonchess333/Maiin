@@ -61,6 +61,9 @@ const HOLDS_NO_ONE: Record<string, string> = {
   // Soc15: the live pulse. Each person's credits are userPulseCredits.
   pulse:
     "pulse/{day}: how many sessions were saved for a day across Tropos, a count",
+  // Run27 call 11: a Space's week. Each member's credits are userSpaceWeeks.
+  weeks:
+    "spaces/{spaceId}/weeks/{weekKey}: how many members of a Space trained in a week, their sessions and metres, counted from the credits, so a deleted account drops out on the next count",
 };
 
 function files(dir: string, keep: (path: string) => boolean): string[] {

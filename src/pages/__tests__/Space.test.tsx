@@ -7,7 +7,10 @@
  *   - membership is one small control: Join, or Joined with a confirmed
  *     Leave, and each writes or deletes the member document;
  *   - an empty space offers the member their last session, and the
- *     composer opens with it attached.
+ *     composer opens with it attached;
+ *   - Share hands the Space's link to the share sheet, or copies it;
+ *   - the week's figures show once enough members trained, and the
+ *     Sessions view lists the members' public sessions (Run27 call 11).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
@@ -42,7 +45,18 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => "viewer",
 }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
-  useBlockedUsers: () => ({ blocked: new Set(), addBlocked: vi.fn() }),
+  useBlockedUsers: () => ({
+    blocked: new Set(),
+    ready: true,
+    addBlocked: vi.fn(),
+  }),
+}));
+// Run27 call 11: a session's card has its own suite; here it only says
+// whose session rendered.
+vi.mock("@/components/social/ActivityCard", () => ({
+  default: ({ feedItem }: { feedItem: { authorName: string } }) => (
+    <article data-testid="session-card">{feedItem.authorName}</article>
+  ),
 }));
 vi.mock("@/features/spaces/useRecentSessions", () => ({
   useRecentSessions: () => h.sessions,
@@ -83,6 +97,7 @@ import {
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { toast } from "@/lib/toast";
+import { localWeekKey } from "@/lib/dateHelpers";
 
 const SPACE = "spaces/womens-running";
 const MEMBER_DOC = `${SPACE}/members/viewer`;
@@ -512,5 +527,127 @@ describe("race identity (SOC-P2f)", () => {
       expect(readDoc(PUBLIC_PROFILE)?.trainingForSpaceId).toBeNull()
     );
     expect(toggle).toHaveAttribute("aria-checked", "false");
+  });
+});
+
+describe("Run27 call 11: sharing, the week and the members' sessions", () => {
+  afterEach(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: undefined,
+    });
+  });
+
+  it("Share hands the Space's link to the share sheet", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: share,
+    });
+    renderSpace();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Share Women's Running" })
+    );
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+    expect(share.mock.calls[0][0].url).toBe(
+      "https://troposfit.com/space/womens-running"
+    );
+  });
+
+  it("with no share sheet, Share copies the link and says so", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderSpace();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Share Women's Running" })
+    );
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(
+        "https://troposfit.com/space/womens-running"
+      )
+    );
+    expect(toast.success).toHaveBeenCalledWith("Link copied.");
+  });
+
+  it("shows the week's figures once enough members trained, naming no one", async () => {
+    seedFirestore({
+      [`${SPACE}/weeks/${localWeekKey(NOW)}`]: {
+        weekKey: localWeekKey(NOW),
+        members: 38,
+        sessions: 127,
+        meters: 412_300,
+        updatedAt: at(NOW),
+      },
+    });
+    renderSpace();
+    expect(await screen.findByTestId("space-week")).toHaveTextContent(
+      "38 members trained this week: 127 sessions, 412 km"
+    );
+  });
+
+  it("shows nothing for a quiet week", async () => {
+    seedFirestore({
+      [`${SPACE}/weeks/${localWeekKey(NOW)}`]: {
+        weekKey: localWeekKey(NOW),
+        quiet: true,
+        updatedAt: at(NOW),
+      },
+      [`${SPACE}/posts/p1`]: PRIYA,
+    });
+    renderSpace();
+    await screen.findByText(/Priya S\./);
+    expect(screen.queryByTestId("space-week")).toBeNull();
+  });
+
+  it("Sessions lists the members' public sessions and keeps the choice in the address", async () => {
+    function Where() {
+      return <output data-testid="where">{useLocation().search}</output>;
+    }
+    seedFirestore({
+      [`${SPACE}/posts/p1`]: PRIYA,
+      [`${SPACE}/sessions/run1`]: {
+        activityId: "run1",
+        authorId: "maya-uid",
+        createdAt: at(new Date(2026, 8, 23, 7)),
+      },
+      "activities/run1": {
+        authorId: "maya-uid",
+        authorName: "Maya",
+        type: "run",
+        visibility: "public",
+        distance: 8000,
+        kudosCount: 0,
+        commentCount: 0,
+        createdAt: at(new Date(2026, 8, 23, 7)),
+      },
+    });
+    render(
+      <MemoryRouter initialEntries={["/space/womens-running"]}>
+        <Routes>
+          <Route
+            path="/space/:spaceId"
+            element={
+              <>
+                <Space />
+                <Where />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+    await screen.findByText(/Priya S\./);
+    expect(screen.queryByTestId("session-card")).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Sessions" }));
+    expect(await screen.findByTestId("session-card")).toHaveTextContent("Maya");
+    // The posts make way for the sessions.
+    expect(screen.queryByTestId("space-post")).toBeNull();
+    expect(screen.getByTestId("where")).toHaveTextContent("view=sessions");
+    fireEvent.click(screen.getByRole("radio", { name: "Posts" }));
+    expect(await screen.findByTestId("space-post")).toBeInTheDocument();
+    expect(screen.getByTestId("where")).toHaveTextContent("");
   });
 });

@@ -69,11 +69,20 @@ class AdminSdk {
   }
 
   /** `admin.firestore()`, with the Firestore classes on it:
-   *  `admin.firestore.FieldValue`, `.Timestamp`, `.FieldPath`. */
+   *  `admin.firestore.FieldValue`, `.Timestamp`, `.FieldPath`,
+   *  `.AggregateField`. */
   get firestore() {
     const load = () => require("firebase-admin/firestore");
-    const { FieldPath, FieldValue, Filter, GeoPoint, Timestamp } = load();
+    const {
+      AggregateField,
+      FieldPath,
+      FieldValue,
+      Filter,
+      GeoPoint,
+      Timestamp,
+    } = load();
     return Object.assign(serviceGetter(load, "getFirestore"), {
+      AggregateField,
       FieldPath,
       FieldValue,
       Filter,

@@ -397,6 +397,37 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/activities/{activityId}",
   },
+  // Run27 call 11: a post created public, made public, narrowed, flagged or
+  // deleted moves its rows in the Spaces its author is in (lib/spaceFeed.js).
+  onActivitySpaceRows: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
+  // Run27 call 11: a join or a leave brings the member's public posts and
+  // their week into a Space or takes them out (lib/spaceFeed.js,
+  // lib/spaceWeeks.js).
+  onSpaceMemberWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/spaces/{spaceId}/members/{uid}",
+  },
+  // Run27 call 11: a restriction set or lifted takes a member out of every
+  // Space's sessions and weeks, or brings them back.
+  onRestrictionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/globalRestrictedUids/{uid}",
+  },
   onActivityDeleted: {
     kind: "event",
     maxInstances: 50,

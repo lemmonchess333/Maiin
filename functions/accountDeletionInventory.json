@@ -407,6 +407,23 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "userSpaceWeeks",
+      "domain": "A_private",
+      "type": "userSubcollection",
+      "path": "users/{uid}/spaceWeeks",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "A Space's week credits (functions/lib/spaceWeeks.js, Run27 call 11): one per Space and week the account trained in, with its sessions and metres. Server-written only by the session triggers, the join and leave trigger and the restriction trigger, which read the deletion freeze in the transaction that writes; rules deny every client read and write. In USER_SUBCOLLECTIONS. The Space's week (spaces/{spaceId}/weeks/{weekKey}) carries no one's id and is counted again on the next change.",
+      "testCoverageKey": "smoke::userSubcollections::spaceWeeks",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
       "key": "userMedals",
       "domain": "A_private",
       "type": "userSubcollection",
@@ -1199,6 +1216,25 @@
       "testCoverageKey": "unit::accountDeletion.spacesCleanup.posts",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
+    },
+    {
+      "key": "spaceSessionRows",
+      "domain": "E_fanout",
+      "type": "collectionGroupByField",
+      "collectionGroup": "sessions",
+      "where": ["authorId", "==", "{uid}"],
+      "pathFilter": "spaces/*/sessions",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "userContent",
+      "strategy": "deleteCollectionGroupInBatches",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "The routing rows that put the account's public posts in each Space's list of members' sessions (spaces/{spaceId}/sessions/{activityId}: the post's id, its author and when it was made; functions/lib/spaceFeed.js, Run27 call 11). Server-only writes; every signed-in person reads them. Each goes when its post is deleted (onActivitySpaceRows) or its author leaves the Space; the social step also queries sessions.authorId across all Spaces, a left one included, and path-filters (collection-group index in firestore.indexes.json).",
+      "testCoverageKey": "unit::accountDeletion.spaceSessionRows",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js"
     },
     {
       "key": "spacePhotosStorage",

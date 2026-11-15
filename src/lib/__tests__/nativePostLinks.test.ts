@@ -32,6 +32,36 @@ beforeEach(() => {
   h.launch.mockReset().mockResolvedValue(undefined);
 });
 
+describe("which links open a Space (Run27 call 11)", () => {
+  it.each([
+    [
+      "https://troposfit.com/space/brighton-marathon",
+      "/space/brighton-marathon",
+    ],
+    ["https://troposfit.com/space/runners/", "/space/runners"],
+    [
+      "https://troposfit.com/space/runners?utm_source=messages",
+      "/space/runners",
+    ],
+  ])("opens %s", async (url, route) => {
+    const { nativePostRoute } = await import("../nativePostLinks");
+    expect(nativePostRoute(url)).toBe(route);
+  });
+
+  it.each([
+    "https://troposfit.com/space/",
+    "https://troposfit.com/space/Runners",
+    "https://troposfit.com/space/runners/post/p1",
+    "https://troposfit.com/space/run%2F..%2Fsettings",
+    "https://evil.example/space/runners",
+    "http://troposfit.com/space/runners",
+    `https://troposfit.com/space/${"a".repeat(65)}`,
+  ])("refuses %s", async (url) => {
+    const { nativePostRoute } = await import("../nativePostLinks");
+    expect(nativePostRoute(url)).toBeNull();
+  });
+});
+
 describe("which links open a post", () => {
   it.each([POST, `${POST}/`, `${POST}?utm_source=messages#top`])(
     "opens %s",

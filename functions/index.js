@@ -53,6 +53,8 @@ const leagueRules = require("./lib/leagueRules");
 const medals = require("./lib/medals");
 // Soc15: plan groups, how many people are training for each race.
 const raceCohorts = require("./lib/raceCohorts");
+const spaceFeed = require("./lib/spaceFeed");
+const spaceWeeks = require("./lib/spaceWeeks");
 const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
@@ -4853,6 +4855,85 @@ exports.dailyRaceCohortRecount = functions
   );
 
 // ══════════════════════════════════════════════
+// A Space's members' sessions and its week (Run27 call 11)
+// ══════════════════════════════════════════════
+//
+// `spaces/{spaceId}/sessions/{activityId}` routes a member's public post to
+// the Spaces they are in (lib/spaceFeed.js). `spaces/{spaceId}/weeks/{weekKey}`
+// is the Space's week in figures that name no one, counted from each
+// member's credit in `users/{uid}/spaceWeeks` (lib/spaceWeeks.js). Both are
+// written only here and by the session triggers, and each writer reads the
+// facts again, so a retried or doubled delivery writes the same thing.
+
+/**
+ * A post created public, made public, narrowed, flagged or deleted: its
+ * rows in the Spaces match what is true of it now. Every other write (a
+ * prop, a comment count, a map image) returns before reading anything.
+ *
+ * Not held back for an account being deleted: it reads the deletion freeze
+ * in its transaction and then only removes rows.
+ */
+exports.onActivitySpaceRows = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("activities/{activityId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (
+      !spaceFeed.activityWriteMayMoveRows(
+        change.before.exists ? change.before.data() : null,
+        change.after.exists ? change.after.data() : null
+      )
+    )
+      return null;
+    await spaceFeed.syncActivityRows(db, context.params.activityId);
+    return null;
+  });
+
+/**
+ * A join or a leave (the member document is the app's own write, and
+ * account deletion's): the member's public posts come into the Space or go
+ * from it, and their week counts in it or stops counting. A rewrite of the
+ * same membership (a resynced name or photo) changes neither.
+ */
+exports.onSpaceMemberWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("spaces/{spaceId}/members/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (change.before.exists === change.after.exists) return null;
+    const { spaceId, uid } = context.params;
+    const steps = triggerSteps(`onSpaceMemberWritten ${spaceId}/${uid}`);
+    await steps.run("sessions", () => spaceFeed.syncMemberRows(db, spaceId, uid));
+    await steps.run("week", () => spaceWeeks.syncMemberWeeks(db, spaceId, uid));
+    steps.settle();
+    return null;
+  });
+
+/**
+ * A restriction set or lifted (resolveReport, liftRestriction): a
+ * restricted account reaches no one (S4e), so its posts leave every
+ * Space's list and its sessions stop counting in every Space's week; once
+ * lifted, its recent public posts and this week come back.
+ */
+exports.onRestrictionWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("globalRestrictedUids/{uid}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (change.before.exists === change.after.exists) return null;
+    const { uid } = context.params;
+    const steps = triggerSteps(`onRestrictionWritten ${uid}`);
+    await steps.run("sessions", () =>
+      change.after.exists
+        ? spaceFeed.removeAuthorRows(db, uid)
+        : spaceFeed.restoreAuthorRows(db, uid)
+    );
+    await steps.run("weeks", () => spaceWeeks.syncAuthorWeeks(db, uid));
+    steps.settle();
+    return null;
+  });
+
+// ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
 // ══════════════════════════════════════════════
 //
@@ -5746,6 +5827,10 @@ exports.onWorkoutCreated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data();
     // Which day this session belongs to — the workout's own local date,
     // NOT trigger delivery time. Drives challenge-window attribution.
@@ -5924,6 +6009,10 @@ exports.onRunCreated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data();
     // The run's own local day — drives challenge-window attribution, so a
     // run flushed offline in a later month still credits the right window.
@@ -6264,6 +6353,10 @@ exports.onWorkoutUpdated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -6310,6 +6403,10 @@ exports.onRunUpdated = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     // A renamed run's post takes the new name (lib/runRename), read from
     // the current documents, so a retry writes it once.
     if (
@@ -6397,6 +6494,10 @@ exports.onWorkoutDeleted = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     // Each reversal runs whatever happens to the other, and a failure
     // fails the event so failurePolicy delivers it again. The source is
     // already gone, so nothing else would ever re-fire: caught and logged,
@@ -6473,6 +6574,10 @@ exports.onRunDeleted = functions
     // Soc15 call 3: their standing in this week's league group, if they
     // are in one. Recomputed from the sessions, so a retry is safe.
     await leagues.refreshLeagueStanding(db, uid, sessionDays);
+    // Run27 call 11: their credit in each Space they are in, for the
+    // session's week, and those Spaces' weeks counted again. Recounted from
+    // the sessions, so a retry is safe.
+    await spaceWeeks.refreshMemberWeeks(db, uid, sessionDays);
     const data = snap.data() || {};
     // No isVolumeEligibleRun re-check here, unlike the create side. An
     // ineligible run never credited, so it has no markers and every
