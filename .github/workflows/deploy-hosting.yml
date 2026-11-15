@@ -89,6 +89,14 @@ jobs:
           # price and no buy button (canSellInThisBuild). Hosting only: the
           # GitHub Pages preview does not sell.
           VITE_REVENUECAT_WEB_PURCHASE_TOKEN: ${{ vars.REVENUECAT_WEB_PURCHASE_TOKEN }}
+          # The signed iPhone app's application-identifier prefix, so
+          # troposfit.com's invite, post and Space links open the app
+          # (docs/ios-invite-links.md). It is the Team ID: the signing log of
+          # deploy-ios run 43682416087 (15 Nov 2026) shows the app as
+          # "***.com.tropos.app", masked exactly as APPLE_TEAM_ID is, where a
+          # legacy prefix would print in clear. A repository variable of the
+          # same name overrides it. Unset, no association file is built.
+          IOS_APP_ID_PREFIX: ${{ vars.IOS_APP_ID_PREFIX || secrets.APPLE_TEAM_ID }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |

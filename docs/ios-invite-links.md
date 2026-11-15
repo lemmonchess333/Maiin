@@ -14,6 +14,8 @@ Browser welcome/sign-up shows the selectable code and an explicit Copy invite co
 4. Deploy the Hosting artifact only after approval. Confirm `https://troposfit.com/apple-app-site-association` returns the expected JSON, HTTP 200, `application/json`, and no redirect or sign-in. It must be the real file, not the SPA HTML fallback. Verify the Apple CDN has refreshed the association. Firebase’s existing dotfile ignore is unchanged because this uses Apple’s supported root location.
 5. Release a newly signed iPhone build only after approval. Existing installed versions do not gain the entitlement or listener from a web deployment. DNS, Apple settings, profiles, CI settings and deployments have not been changed here.
 
+Status, 15 November 2026 (the owner's word to set it): steps 1 to 3 are done. The signed app already carries the capability: the signing log of deploy-ios run 43682416087 shows `com.apple.developer.associated-domains` with `applinks:troposfit.com`, and the app as `***.com.tropos.app`, its prefix masked exactly as the `APPLE_TEAM_ID` secret is (a legacy prefix would print in clear). The Hosting build now takes `IOS_APP_ID_PREFIX` from a repository variable of that name or, failing one, from `APPLE_TEAM_ID` (`deploy-hosting.yml`). Step 4 is the next Hosting deploy; step 5, a device with a build signed since run 43682416087.
+
 ## Physical-device acceptance
 
 Use synthetic accounts/codes. Do not test with customer accounts or media.

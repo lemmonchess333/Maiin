@@ -50,11 +50,15 @@ export function universalLinksPlugin(
     name: "tropos-universal-links",
     apply: "build",
     generateBundle() {
-      if (!isFirebaseHosting || !prefix) return;
+      // The Hosting deploy passes the APPLE_TEAM_ID secret, which the iPhone
+      // build also strips of whitespace before use (deploy-ios.yml): a
+      // pasted newline must not fail every website deploy.
+      const value = prefix?.replace(/\s/g, "");
+      if (!isFirebaseHosting || !value) return;
       this.emitFile({
         type: "asset",
         fileName: "apple-app-site-association",
-        source: JSON.stringify(appleAppSiteAssociation(prefix)),
+        source: JSON.stringify(appleAppSiteAssociation(value)),
       });
     },
   };
