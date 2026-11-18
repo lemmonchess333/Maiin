@@ -60,13 +60,23 @@ updates:
       - dependency-name: "@eslint/js"
         update-types: ["version-update:semver-major"]
       # Patched packages (patches/, applied by patch-package on install).
-      # A patch is cut against one exact version, so any update makes
-      # `npm ci` fail on a patch that no longer applies, and the group it
-      # rides in fails with it. Each waits until its patch is re-cut
-      # against the new version in the same pull request; then lift its
-      # entry. dependabotGroups.test.ts holds one entry per patch file.
+      # A patch is cut against one exact version. patch-package only warns
+      # while it still applies to a new one, but once it does not, `npm ci`
+      # fails, and so does the group the update rides in. Each waits until
+      # its patch is re-cut against the new version in the same pull
+      # request; then lift its entry. Ignored by update type rather than by
+      # name alone, so that security updates still open.
+      # dependabotGroups.test.ts holds one entry per patch file.
       - dependency-name: "@capacitor-firebase/authentication"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
       - dependency-name: "capacitor-live-activities"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       # Bundle each ecosystem's updates together, so one PR carries the
       # whole update rather than several separate PRs that all need to
@@ -118,9 +128,10 @@ updates:
           - "*"
 
   # Cloud Functions package — plain JS / Node 22 (functions/package.json engines)
-  # Minor and patch only, in one PR. A major here (firebase-admin,
-  # firebase-functions, stripe) is a migration done by hand against
-  # docs/agents/functions-deploy.md, not a bump to auto-merge.
+  # Minor and patch in one PR. A major (firebase-admin, firebase-functions,
+  # stripe) still opens its own, rarely, and waits for a person: it is a
+  # migration to do against docs/agents/functions-deploy.md, and
+  # dependabot-auto-merge.yml merges minor and patch only.
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
@@ -135,9 +146,6 @@ updates:
     labels:
       - "dependencies"
       - "functions"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
     groups:
       functions-minor-and-patch:
         update-types: ["minor", "patch"]

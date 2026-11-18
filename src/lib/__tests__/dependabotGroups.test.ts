@@ -7,8 +7,7 @@
  *    the iOS app builds with plugins on two Capacitor majors;
  *  - a patched package is offered an update, and `npm ci` fails on a
  *    patch that no longer applies, taking its whole group with it;
- *  - a functions major is offered as a bump to auto-merge, when it is a
- *    migration;
+ *  - a major is merged without a person reading it;
  *  - the ecosystems open on the same morning again.
  *
  * Text, as the other workflow guards read their YAML.
@@ -55,16 +54,22 @@ function patterns(group: string): RegExp[] {
   );
 }
 
-/** The ignore entries: dependency name and its update types, if any. */
-function ignores(text: string): { name: string; types: string | null }[] {
+/** The ignore entries: dependency name and its update types, written
+ *  inline (`["a", "b"]`) or as a list. */
+function ignores(text: string): { name: string; types: string[] }[] {
   const block = text.match(/^ {4}ignore:\n([\s\S]*?)(?=^ {4}\S)/m)?.[1] ?? "";
   return block
-    .split(/^ {6}- /m)
+    .split(/^ {6}- (?=dependency-name)/m)
     .slice(1)
-    .map((item) => ({
-      name: item.match(/dependency-name: "([^"]+)"/)?.[1] ?? "",
-      types: item.match(/update-types: (\[.*\])/)?.[1] ?? null,
-    }));
+    .map((item) => {
+      const inline = item.match(/update-types: \[(.*)\]/)?.[1];
+      const listed = item.match(/update-types:\s*\n((?: {10}- .*\n?)+)/)?.[1];
+      const raw = inline ?? listed ?? "";
+      return {
+        name: item.match(/dependency-name: "([^"]+)"/)?.[1] ?? "",
+        types: [...raw.matchAll(/"([^"]+)"/g)].map((m) => m[1]).sort(),
+      };
+    });
 }
 
 describe("the capacitor group holds every native plugin", () => {
@@ -114,15 +119,18 @@ describe("a patched package is never offered an update", () => {
     expect(patched).toContain("@capacitor-firebase/authentication");
   });
 
-  it("ignores every version of each, until its patch is re-cut", () => {
+  it("ignores every major, minor and patch update of each, until its patch is re-cut", () => {
+    /* By update type, not by name alone: a name-only ignore may also
+       stop security updates, and this must not. */
     const rules = ignores(root);
     for (const name of patched) {
       const rule = rules.find((r) => r.name === name);
       expect(rule, `${name} has a patch and no ignore entry`).toBeDefined();
-      expect(
-        rule!.types,
-        `${name}'s ignore must cover every update`
-      ).toBeNull();
+      expect(rule!.types, name).toEqual([
+        "version-update:semver-major",
+        "version-update:semver-minor",
+        "version-update:semver-patch",
+      ]);
     }
   });
 });
@@ -143,10 +151,8 @@ describe("the catch-all groups", () => {
       expect(text).toContain('update-types: ["minor", "patch"]');
   });
 
-  it("give functions minor and patch only, and never a major", () => {
-    expect(ignores(functions)).toEqual([
-      { name: "*", types: '["version-update:semver-major"]' },
-    ]);
+  it("give functions one minor and patch group, and leave its majors to open alone", () => {
+    expect(ignores(functions)).toEqual([]);
     const [[, group]] = groups(functions);
     expect(group).toContain('update-types: ["minor", "patch"]');
   });
@@ -155,6 +161,17 @@ describe("the catch-all groups", () => {
     const [[, group]] = groups(actions);
     expect(group).toContain('update-types: ["minor", "patch"]');
   });
+});
+
+it("auto-merges minor and patch updates only, so a grouped major waits for a person", () => {
+  const autoMerge = read(".github/workflows/dependabot-auto-merge.yml")
+    .split("\n")
+    .filter((line) => !/^\s*#/.test(line))
+    .join("\n");
+  expect(autoMerge).toContain(
+    "if: ${{ steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor' }}"
+  );
+  expect(autoMerge.match(/gh pr merge --auto/g)).toHaveLength(1);
 });
 
 it("opens each ecosystem on its own day", () => {
