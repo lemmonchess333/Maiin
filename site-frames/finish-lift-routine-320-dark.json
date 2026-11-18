@@ -1,0 +1,34 @@
+{
+  "viewport": {
+    "width": 320,
+    "height": 852
+  },
+  "object": {
+    "widthShare": 0.613,
+    "top": 188,
+    "heightShare": 0.21
+  },
+  "textSizes": [
+    {
+      "size": 77,
+      "sample": "2,295"
+    },
+    {
+      "size": 20,
+      "sample": "Pull A done"
+    },
+    {
+      "size": 16,
+      "sample": "kg lifted in"
+    },
+    {
+      "size": 14,
+      "sample": "Wed"
+    },
+    {
+      "size": 12,
+      "sample": "Your week so far"
+    }
+  ],
+  "largestToNext": 3.85
+}
