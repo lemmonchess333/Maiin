@@ -4,13 +4,12 @@ Load this when the user asks a question against an existing graph, or runs `/gra
 
 Two traversal modes - choose based on the question:
 
-| Mode          | Flag     | Best for                                                           |
-| ------------- | -------- | ------------------------------------------------------------------ |
+| Mode | Flag | Best for |
+|------|------|----------|
 | BFS (default) | _(none)_ | "What is X connected to?" - broad context, nearest neighbors first |
-| DFS           | `--dfs`  | "How does X reach Y?" - trace a specific chain or dependency path  |
+| DFS | `--dfs` | "How does X reach Y?" - trace a specific chain or dependency path |
 
 First check the graph exists:
-
 ```bash
 $(cat graphify-out/.graphify_python) -c "
 from pathlib import Path
@@ -19,7 +18,6 @@ if not Path('graphify-out/graph.json').exists():
     raise SystemExit(1)
 "
 ```
-
 If it fails, stop and tell the user to run `/graphify <path>` first.
 
 ### Step 0 — Constrained query expansion (REQUIRED before traversal)
@@ -29,7 +27,6 @@ graphify's `query` CLI matches nodes via case-folded substring + IDF — there i
 Fix this **without inventing tokens** by expanding the query against the actual graph vocabulary first:
 
 1. Extract the token vocabulary from node labels:
-
 ```bash
 $(cat graphify-out/.graphify_python) -c "
 import json, re
@@ -56,11 +53,9 @@ print(f'vocab: {len(vocab)} tokens')
    - Morphology: "handlers" maps to `handler` IFF present; "todos" maps to `todo` IFF present.
 
 3. Print the selection explicitly to the user before running the query, so the expansion is auditable:
-
 ```
 Query expanded to (from graph vocab, N tokens): [token1, token2, ...]
 ```
-
 If the list is empty, say so plainly and stop — do not proceed to traversal.
 
 ### Step 1 — Traversal
@@ -68,7 +63,6 @@ If the list is empty, say so plainly and stop — do not proceed to traversal.
 Build the **expanded query string** by joining the selected tokens with spaces. Use this string as `QUESTION` below — NOT the original user question. (The original question is preserved only for `save-result` at the end.)
 
 Prefer the CLI when it is installed:
-
 ```bash
 graphify query "QUESTION"
 # or: graphify query "QUESTION" --dfs --budget 3000
@@ -86,7 +80,6 @@ If the CLI is unavailable, load `graphify-out/graph.json` and run the traversal 
 $(cat graphify-out/.graphify_python) -c "
 import sys, json
 from networkx.readwrite import json_graph
-import networkx as nx
 from pathlib import Path
 
 data = json.loads(Path('graphify-out/graph.json').read_text(encoding='utf-8'))
@@ -111,7 +104,6 @@ if not start_nodes:
     sys.exit(0)
 
 subgraph_nodes = set()
-subgraph_edges = []
 
 if mode == 'dfs':
     # DFS: follow one path as deep as possible before backtracking.
@@ -127,7 +119,6 @@ if mode == 'dfs':
         for neighbor in G.neighbors(node):
             if neighbor not in visited:
                 stack.append((neighbor, depth + 1))
-                subgraph_edges.append((node, neighbor))
 else:
     # BFS: explore all neighbors layer by layer up to depth 3.
     frontier = set(start_nodes)
@@ -138,9 +129,19 @@ else:
             for neighbor in G.neighbors(n):
                 if neighbor not in subgraph_nodes:
                     next_frontier.add(neighbor)
-                    subgraph_edges.append((n, neighbor))
         subgraph_nodes.update(next_frontier)
         frontier = next_frontier
+
+# Traversal chooses the nodes; collect relationships separately so seed edges,
+# cycles, and cross-links are not lost just because both endpoints were visited.
+# Taking the induced subgraph also keeps edges to nodes beyond the depth limit
+# out of the result. data=True retains each edge's own attributes, including
+# distinct parallel relationships in a MultiGraph.
+subgraph_edges = [
+    (u, v, edge_data)
+    for u, v, edge_data in G.subgraph(subgraph_nodes).edges(data=True)
+    if u != v
+]
 
 # Token-budget aware output: rank by relevance, cut at budget (~4 chars/token)
 token_budget = BUDGET  # default 2000
@@ -157,10 +158,9 @@ lines = [f'Traversal: {mode.upper()} | Start: {[G.nodes[n].get(\"label\",n) for 
 for nid in ranked_nodes:
     d = G.nodes[nid]
     lines.append(f'  NODE {d.get(\"label\", nid)} [src={d.get(\"source_file\",\"\")} loc={d.get(\"source_location\",\"\")}]')
-for u, v in subgraph_edges:
+for u, v, edge_data in subgraph_edges:
     if u in subgraph_nodes and v in subgraph_nodes:
-        _raw = G[u][v]; d = next(iter(_raw.values()), {}) if isinstance(G, nx.MultiGraph) else _raw
-        lines.append(f'  EDGE {G.nodes[u].get(\"label\",u)} --{d.get(\"relation\",\"\")} [{d.get(\"confidence\",\"\")}]--> {G.nodes[v].get(\"label\",v)}')
+        lines.append(f'  EDGE {G.nodes[u].get(\"label\",u)} --{edge_data.get(\"relation\",\"\")} [{edge_data.get(\"confidence\",\"\")}]--> {G.nodes[v].get(\"label\",v)}')
 
 output = '\n'.join(lines)
 if len(output) > char_budget:
@@ -170,6 +170,8 @@ print(output)
 ```
 
 Replace `QUESTION` with the **expanded** query string, `MODE` with `bfs` or `dfs`, and `BUDGET` with the token budget (default `2000`, or whatever `--budget N` specifies). Then answer based on the subgraph output above, using only what the graph contains.
+
+**Bypass check (hub/bridge questions only, #4426).** If the question is about why a node bridges communities or has unusually many edges (a hub/god node), the neighbour listing above only shows code that already has an edge to it — it cannot show code that does the hub's job without ever calling it. Before finalizing the answer: pick one or two literal, distinctive things the hub does (a hard-coded constant it wraps, a specific string it returns, the exact computation in its body), then grep the corpus for that literal text in files that have **no edge** to the hub node in the subgraph above. Report any hits separately, labeled "Bypasses", distinct from the normal neighbour list — each is a file that reimplements the hub instead of using it. Also check whether the hub's own community label names a different node: a shared utility is often clustered into its heaviest consumer's community, so the label can read as if that consumer were the bridge. If so, say so plainly in the answer rather than letting the label stand unquestioned.
 
 After writing the answer, save it back into the graph so it improves future queries. Include the expanded tokens inside the `--answer` text (e.g. `"Expanded from original query via vocab: [tokens]. Then traversed..."`) so the next `--update` extracts the expansion history as a graph node:
 
@@ -181,11 +183,11 @@ Replace `ORIGINAL_QUESTION` with the user's verbatim question, `ANSWER` with you
 
 **Work memory (self-improving loop).** Add an `--outcome` so future sessions learn from this one — append `--outcome useful|dead_end|corrected` to the `save-result` command (and `--correction "the right answer"` when correcting):
 
-- `useful` — the cited nodes answered the question well (they become _preferred sources_).
+- `useful` — the cited nodes answered the question well (they become *preferred sources*).
 - `dead_end` — the question/path led nowhere; don't re-derive it next time.
 - `corrected` — the saved answer was wrong; `--correction` records what was right.
 
-At the **start** of graph work, refresh and read the lessons: run `graphify reflect --if-stale` (cheap, deterministic, no LLM; `--if-stale` makes it a no-op when `LESSONS.md` is already newer than every input, e.g. when the git hook just refreshed it), then read `graphify-out/reflections/LESSONS.md`. It lists **preferred sources** (start there), **known dead ends** (skip them), and prior **corrections**. Running `reflect` yourself keeps the lessons current even without the git hook installed; if the post-commit hook _is_ installed, `--if-stale` means your session-start run costs almost nothing.
+At the **start** of graph work, refresh and read the lessons: run `graphify reflect --if-stale` (cheap, deterministic, no LLM; `--if-stale` makes it a no-op when `LESSONS.md` is already newer than every input, e.g. when the git hook just refreshed it), then read `graphify-out/reflections/LESSONS.md`. It lists **preferred sources** (start there), **known dead ends** (skip them), and prior **corrections**. Running `reflect` yourself keeps the lessons current even without the git hook installed; if the post-commit hook *is* installed, `--if-stale` means your session-start run costs almost nothing.
 
 ---
 
