@@ -16,6 +16,8 @@ import { MemoryRouter } from "react-router-dom";
 
 const h = vi.hoisted(() => ({
   streak: 12,
+  longest: 21,
+  earned: ["first_step", "three_day", "week_warrior"] as string[],
   active: new Set<string>(),
   bridged: [] as string[],
   rested: [] as string[],
@@ -26,6 +28,8 @@ vi.mock("../useStreaks", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../useStreaks")>()),
   useStreaks: () => ({
     currentStreak: h.streak,
+    longestStreak: h.longest,
+    allBadges: h.earned.map((id) => ({ id, earnedAt: "2026-10-01" })),
     activeDates: h.active,
     bridgedDates: h.bridged,
     restDates: h.rested,
@@ -48,6 +52,8 @@ function open() {
 
 beforeEach(() => {
   h.streak = 12;
+  h.longest = 21;
+  h.earned = ["first_step", "three_day", "week_warrior"];
   // 16 to 27 October, with the 26th covered.
   h.active = new Set(
     Array.from({ length: 12 }, (_, i) => `2026-10-${String(16 + i)}`).filter(
@@ -175,5 +181,68 @@ describe("StreakSheet", () => {
     expect(
       within(sheet).getByText("Tuesday 27 October, today")
     ).toBeInTheDocument();
+  });
+
+  describe("the count against something (DS5 rule 46)", () => {
+    it("shows the longest streak and how far off beating it is", () => {
+      open();
+      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
+      expect(within(sheet).getByText("Longest")).toBeInTheDocument();
+      expect(sheet.textContent).toContain("21 days");
+      expect(sheet.textContent).toContain("10 days to beat it");
+    });
+
+    it("says when this streak is the longest", () => {
+      h.longest = 12;
+      open();
+      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
+      expect(within(sheet).getByText("This streak")).toBeInTheDocument();
+      expect(sheet.textContent).not.toMatch(/to beat it/);
+    });
+
+    it("names the next tier, its badge and the days to it, drawn locked with its progress", () => {
+      open();
+      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
+      expect(within(sheet).getByText("Next")).toBeInTheDocument();
+      expect(within(sheet).getByText("Two Week Wonder")).toBeInTheDocument();
+      expect(sheet.textContent).toContain("14 days");
+      expect(sheet.textContent).toContain("2 days to go");
+      const art = sheet.querySelector("[data-next-tier]");
+      expect(art?.getAttribute("data-next-tier")).toBe("locked");
+    });
+
+    it("draws a tier already held as earned, with no progress ring", () => {
+      // Longest 40, five days into a new streak: Week Warrior is two days
+      // off and was earned on the long one.
+      h.streak = 5;
+      h.longest = 40;
+      h.earned = ["first_step", "three_day", "week_warrior", "two_week"];
+      h.active = new Set(
+        Array.from({ length: 5 }, (_, i) => `2026-10-${String(23 + i)}`)
+      );
+      h.bridged = [];
+      open();
+      const sheet = screen.getByRole("dialog", { name: "5-day streak" });
+      expect(within(sheet).getByText("Week Warrior")).toBeInTheDocument();
+      expect(sheet.textContent).toContain("2 days to go");
+      const art = sheet.querySelector("[data-next-tier]");
+      expect(art?.getAttribute("data-next-tier")).toBe("earned");
+      expect(art?.querySelector("svg circle")).toBeNull();
+    });
+
+    it("past the last tier, shows the longest alone", () => {
+      h.streak = 400;
+      h.longest = 400;
+      open();
+      const sheet = screen.getByRole("dialog", { name: "400-day streak" });
+      expect(within(sheet).queryByText("Next")).toBeNull();
+      expect(within(sheet).getByText("This streak")).toBeInTheDocument();
+    });
+
+    it("never draws it in gold, which means a new best", () => {
+      open();
+      const sheet = screen.getByRole("dialog", { name: "12-day streak" });
+      expect(sheet.innerHTML).not.toMatch(/achievement/);
+    });
   });
 });

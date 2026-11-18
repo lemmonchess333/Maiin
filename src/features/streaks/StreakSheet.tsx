@@ -7,6 +7,8 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import { cn } from "@/lib/utils";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { STREAK_WINDOW_DAYS, useStreaks } from "./useStreaks";
+import { streakStanding } from "./streakStanding";
+import StreakStandingBand from "./StreakStandingBand";
 import {
   coveredDayLine,
   earliestStreakMonth,
@@ -52,11 +54,20 @@ export default function StreakSheet({
 }) {
   const {
     currentStreak,
+    longestStreak,
+    allBadges,
     activeDates,
     bridgedDates,
     restDates,
     coversRestDays,
   } = useStreaks();
+  const standing = streakStanding(
+    currentStreak,
+    longestStreak,
+    new Set(
+      (allBadges ?? []).filter((badge) => badge.earnedAt).map((b) => b.id)
+    )
+  );
   const todayKey = useLocalDateKey();
   const current = monthOf(todayKey);
   const earliest = earliestStreakMonth(todayKey, STREAK_WINDOW_DAYS);
@@ -87,6 +98,8 @@ export default function StreakSheet({
         {reassurance && (
           <p className="text-sm text-foreground">{reassurance}</p>
         )}
+
+        <StreakStandingBand standing={standing} current={currentStreak} />
 
         {/* A container for the days: under 13em of it (double text on a
             narrow phone) a day's number steps down a size, so two digits
