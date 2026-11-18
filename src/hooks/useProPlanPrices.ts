@@ -30,10 +30,15 @@ export interface ProPlanPrices {
  * needs the same offering, so a paywall without its prices has nothing it
  * could sell anyway.
  *
+ * `appUserID` is the signed-in account. When RevenueCat isn't set up (its
+ * set-up at sign-in failed and stopped trying), the read and Try again set
+ * it up as that account, as a purchase does, so the paywall is not left
+ * without prices, and so without a buy button, for the rest of the session.
+ *
  * On the web the pound plans are the prices (RevenueCat runs only in the
  * iOS shell), from the first render.
  */
-export function useProPlanPrices(): ProPlanPrices {
+export function useProPlanPrices(appUserID?: string | null): ProPlanPrices {
   const fromStore = isRevenueCatEnabled();
   const [state, setState] = useState<{
     plans: ProPlan[] | null;
@@ -44,7 +49,7 @@ export function useProPlanPrices(): ProPlanPrices {
   useEffect(() => {
     if (!fromStore) return;
     let cancelled = false;
-    void rcGetLocalizedPrices().then((prices) => {
+    void rcGetLocalizedPrices(appUserID).then((prices) => {
       if (cancelled) return;
       // `localizePlans` hands back the pound plans when the offering is
       // missing a plan or mixes currencies: no App Store price to print.
@@ -63,7 +68,7 @@ export function useProPlanPrices(): ProPlanPrices {
     return () => {
       cancelled = true;
     };
-  }, [fromStore, attempt]);
+  }, [fromStore, attempt, appUserID]);
 
   const retry = useCallback(() => {
     setState({ plans: null, failed: false });

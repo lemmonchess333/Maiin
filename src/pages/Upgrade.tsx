@@ -192,7 +192,7 @@ export default function Upgrade() {
     plans,
     failed: pricesFailed,
     retry: retryPrices,
-  } = useProPlanPrices();
+  } = useProPlanPrices(user?.uid);
   const selected = plans ? findPlan(plans, selectedPlan) : null;
   const withTrial = offersTrial(
     accountTrialEligible,
@@ -629,7 +629,9 @@ export default function Upgrade() {
             </Button>
           </div>
 
-          {onSale && (
+          {/* Renewal terms belong under a price: with none yet there is
+              nothing for them to qualify. */}
+          {onSale && plans && (
             <p className="text-micro text-muted-foreground text-center leading-snug">
               {withTrial
                 ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`

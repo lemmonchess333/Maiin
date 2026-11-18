@@ -53,8 +53,8 @@ const configuredOnce = new Promise<void>((resolve) => {
 export const STORE_READ_TIMEOUT_MS = 10_000;
 
 /** Resolves with `value` after `ms`, unless `work` settles first. */
-function within<T>(work: Promise<T>, ms: number, value: T): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
+function within<T, F>(work: Promise<T>, ms: number, value: F): Promise<T | F> {
+  return new Promise<T | F>((resolve, reject) => {
     const timer = setTimeout(() => resolve(value), ms);
     work.then(
       (result) => {
@@ -77,6 +77,27 @@ async function whenConfigured(): Promise<boolean> {
   await within(configuredOnce, STORE_READ_TIMEOUT_MS, undefined);
   return configured;
 }
+
+/**
+ * Whether the SDK is set up for a read, setting it up as `appUserID` when
+ * it is not, the way a purchase does (`boundTo`). Sign-in's set-up
+ * (`useRevenueCatIdentity`) tries for five minutes and then stops, so a
+ * read that only waited for it would fail for the rest of the session.
+ * With no account to set up as, it waits for sign-in; the caller bounds
+ * the wait.
+ */
+async function setUpForRead(appUserID?: string | null): Promise<boolean> {
+  if (configured) return true;
+  if (appUserID) {
+    await configureRevenueCat(appUserID);
+    return configured;
+  }
+  await configuredOnce;
+  return configured;
+}
+
+/** What `within` hands back when the store's read ran out of time. */
+const TIMED_OUT = Symbol("timed out");
 
 /**
  * One RevenueCat call, timed into the step list a stalled or failed
@@ -374,32 +395,42 @@ export async function rcRestore(): Promise<RcRestoreOutcome> {
 
 /**
  * Apple-localized prices keyed by product id from the current Offering, or
- * null when RC is disabled, the SDK isn't set up in time, the offerings
- * are unavailable or the store takes longer than `STORE_READ_TIMEOUT_MS`.
+ * null when RC is disabled, the SDK can't be set up, the offerings are
+ * unavailable or the whole read takes longer than `STORE_READ_TIMEOUT_MS`.
  * Each carries the string Apple's sheet shows AND the number and currency
  * behind it, e.g. `{"com.tropos.app.pro.monthly": {priceString: "$4.99",
  * price: 4.99, currencyCode: "USD"}}`, so the paywall can work out its
  * per-week figures and the saving in the storefront's currency. On the
  * iPhone the paywall prints these or no price at all (`useProPlanPrices`),
  * so null is a paywall that says the store didn't answer.
+ *
+ * `appUserID` is the signed-in account: when the SDK is not set up, the
+ * read sets it up as that account (`setUpForRead`), so a paywall's Try
+ * again works after sign-in's own set-up has stopped trying.
  */
-export async function rcGetLocalizedPrices(): Promise<Record<
-  string,
-  StorePrice
-> | null> {
+export async function rcGetLocalizedPrices(
+  appUserID?: string | null
+): Promise<Record<string, StorePrice> | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
-    if (!(await whenConfigured())) return null;
-    const { Purchases } = await loadPurchases();
+    // One budget for the set-up and the store's answer together, so a
+    // paywall's placeholder waits STORE_READ_TIMEOUT_MS at most, not that
+    // for each step.
     const offerings = await within(
-      step("plans for the prices", () => Purchases.getOfferings()),
+      (async () => {
+        if (!(await setUpForRead(appUserID))) return null;
+        const { Purchases } = await loadPurchases();
+        return step("plans for the prices", () => Purchases.getOfferings());
+      })(),
       STORE_READ_TIMEOUT_MS,
-      null
+      TIMED_OUT
     );
-    if (!offerings) {
-      logger.error("[RevenueCat] offerings fetch timed out");
+    if (offerings === TIMED_OUT) {
+      logger.error("[RevenueCat] prices read timed out");
       return null;
     }
+    // Not set up: configureRevenueCat has logged why.
+    if (!offerings) return null;
     const packages = offerings.current?.availablePackages;
     if (!packages || packages.length === 0) return null;
     const prices: Record<string, StorePrice> = {};

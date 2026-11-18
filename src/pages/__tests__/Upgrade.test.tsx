@@ -729,6 +729,8 @@ describe("Upgrade — on the iPhone, only the App Store's prices", () => {
     expect(screen.getByText("Getting prices from the App Store")).toBeTruthy();
     expect(container.textContent).not.toMatch(/£|\$/);
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    // Renewal terms qualify a price; with none on the page they don't show.
+    expect(screen.queryByText(/Renews automatically/)).toBeNull();
     // The way out and the legal links stay.
     expect(screen.getByRole("button", { name: "Not now" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /^Terms/ })).toBeTruthy();
@@ -742,8 +744,15 @@ describe("Upgrade — on the iPhone, only the App Store's prices", () => {
     ).toBeTruthy();
     expect(container.textContent).not.toContain("£");
     expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    expect(screen.queryByText(/Renews automatically/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(retryPricesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("prints the renewal terms once the App Store's prices are there", () => {
+    plansMock.mockReturnValue(PRO_PLANS);
+    renderPage();
+    expect(screen.getByText(/Renews automatically/)).toBeTruthy();
   });
 });
 
