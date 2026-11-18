@@ -4,8 +4,8 @@
  *
  * What it must never do is put a pound figure beside a price in another
  * currency. It used to swap in Apple's price STRING and keep everything
- * else, so a US storefront read "$39.99/year" over "≈ £0.67/wk", the CTA
- * said "Start Pro — £34.99/yr" (it looked the price up by id), and a plan
+ * else, so a US storefront read "$39.99/year" over "≈ £0.77/wk", the CTA
+ * said "Start Pro — £39.99/yr" (it looked the price up by id), and a plan
  * missing from the offering stayed in pounds beside one in dollars.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -86,7 +86,7 @@ describe("useProPlanPrices", () => {
     });
 
     expect(storePrices).toHaveBeenCalledTimes(1);
-    expect(result.current.map((p) => p.price)).toEqual(["£3.99", "£34.99"]);
+    expect(result.current.map((p) => p.price)).toEqual(["£6.99", "£39.99"]);
     expect(result.current).toBe(PRO_PLANS);
   });
 });

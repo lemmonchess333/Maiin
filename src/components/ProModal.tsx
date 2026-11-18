@@ -128,7 +128,7 @@ interface Props {
   featureKey?: ProFeatureKey;
   /** Pre-select a plan when the modal opens. Defaults to the
    *  recommended plan (DEFAULT_PLAN). Used by entry points that
-   *  want a specific plan focused — e.g. a "Save 27% with yearly"
+   *  want a specific plan focused — e.g. a "Save 52% with yearly"
    *  promo could pass "yearly" explicitly. */
   initialPlan?: PlanId;
 }
