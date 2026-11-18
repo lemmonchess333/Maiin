@@ -270,10 +270,9 @@ describe("createReport — how many alerts go", () => {
     const now = Date.now();
     const db = useMemoryFirestore({
       ...spaceCommentSeed(),
-      // Everyone's alerts today, one short of the day's number.
-      "rateLimits/reportalert_all_reportAlertAll": {
-        timestamps: Array.from({ length: 49 }, (_, i) => now - i * 60_000),
-      },
+      // Everyone's alerts today (the UTC day), one short of the day's number.
+      [`rateLimits/reportalert_all_${new Date(now).toISOString().slice(0, 10)}`]:
+        { count: 49 },
     });
     const fetchMock = vi.fn(async () => ({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
@@ -281,7 +280,7 @@ describe("createReport — how many alerts go", () => {
     await createReport.run(SPACE_COMMENT_REPORT, REPORTER);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).html).toContain(
-      "This is the last alert for a while."
+      "This is the last alert until midnight UTC."
     );
 
     await createReport.run(SPACE_COMMENT_REPORT, {

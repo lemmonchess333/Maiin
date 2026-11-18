@@ -7792,6 +7792,7 @@ exports.createReport = functions
     // fifty from everyone (reportAlert.alertAllowance); past that the
     // report waits in the queue without an email.
     const allowance = await reportAlert.alertAllowance({
+      firestore,
       reporterUid: context.auth.uid,
       isLimited: isRateLimited,
     });
