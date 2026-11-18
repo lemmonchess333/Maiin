@@ -444,6 +444,34 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     }
   });
 
+  it("launches the pull requests' build on the iPhone Duo simulator, each display shot", () => {
+    // Objective 4 of the Duo track: where the runner's Xcode has an iPhone
+    // Duo simulator, a CI job builds and screenshots on it. Xcode 27.1 has
+    // one, with both displays in one device; the iPhone the other launch
+    // picks is never the Duo.
+    const compile = read(".github/workflows/ios-native-compile.yml");
+    const at = (name: string) => compile.indexOf(`- name: ${name}\n`);
+    const phone = at("Launch the standard build on a simulator");
+    const duo = at("Launch the standard build on the iPhone Duo simulator");
+    expect(phone).toBeGreaterThan(-1);
+    expect(duo).toBeGreaterThan(phone);
+    expect(compile.slice(phone, duo)).toContain(
+      'not d["name"].startswith("iPhone Duo")'
+    );
+    const step = compile.slice(duo, compile.indexOf("\n      - ", duo + 1));
+    expect(step).toContain('t["name"] == "iPhone Duo"');
+    expect(step).toContain('screenshot --display="$NUMBER"');
+    expect(step).toContain("python3 scripts/verify_ios_launch.py");
+    expect(step).toContain('kill -0 "$PID"');
+    expect(compile).toMatch(
+      /name: ios-simulator-duo\n\s*path: \$\{\{ runner\.temp \}\}\/duo-\*\.png/
+    );
+    // Before the pilot's build replaces the standard one it installs.
+    expect(duo).toBeLessThan(
+      at("Compile the connected training pilot for simulator")
+    );
+  });
+
   it("signs every app target with its imported profile, never from the xcodebuild command line", () => {
     // The committed project signs automatically. On a runner with no Apple
     // account that looks for a development profile that never exists, so

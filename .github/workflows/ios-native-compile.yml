@@ -183,6 +183,110 @@ jobs:
           path: ${{ runner.temp }}/launch.png
           retention-days: 7
           if-no-files-found: ignore
+      - name: Launch the standard build on the iPhone Duo simulator
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app"
+          # Xcode 27.1 brings the iPhone Duo's simulator, both displays in
+          # one device. The Duo on the newest runtime the SDK covers, made
+          # there when the image has none; a named failure when this Xcode
+          # has no Duo at all, so a step back to an older Xcode says so.
+          SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          UDID=$(SDK="$SDK" python3 -c '
+          import json, os, re, subprocess, sys
+          def listed(kind, *only):
+              out = subprocess.check_output(["xcrun", "simctl", "list", kind, *only, "--json"])
+              return json.loads(out)[kind]
+          def version(identifier):
+              m = re.search(r"\.iOS-(\d+)-(\d+)", identifier)
+              return (int(m.group(1)), int(m.group(2))) if m else None
+          duo = next((t["identifier"] for t in listed("devicetypes") if t["name"] == "iPhone Duo"), None)
+          if duo is None:
+              sys.exit("::error::This Xcode has no iPhone Duo simulator")
+          sdk = tuple(int(p) for p in os.environ["SDK"].split(".")[:2])
+          made = sorted(
+              (version(runtime), d["udid"])
+              for runtime, ds in listed("devices", "available").items()
+              if version(runtime) and version(runtime) <= sdk
+              for d in ds if d.get("deviceTypeIdentifier", duo) == duo and d["name"].startswith("iPhone Duo")
+          )
+          if made:
+              print(made[-1][1])
+              sys.exit(0)
+          runtimes = sorted(
+              (version(r["identifier"]), r["identifier"])
+              for r in listed("runtimes") if r.get("isAvailable", True)
+              and version(r["identifier"]) and version(r["identifier"]) <= sdk
+              and duo in [t["identifier"] for t in r.get("supportedDeviceTypes", [])]
+          )
+          if not runtimes:
+              sys.exit("::error::No iOS runtime on this runner runs the iPhone Duo simulator")
+          print(subprocess.check_output(
+              ["xcrun", "simctl", "create", "iPhone Duo", duo, runtimes[-1][1]], text=True
+          ).strip())
+          ')
+          xcrun simctl list devices | grep "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          LAUNCHED=$(xcrun simctl launch "$UDID" com.tropos.app)
+          echo "$LAUNCHED"
+          PID="${LAUNCHED##* }"
+          sleep 25
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::The app was no longer running on the iPhone Duo 25 s after launch"
+            exit 1
+          fi
+          # A screenshot of a device with two displays has to name one, and
+          # simctl lists them when it is not told ("--display=1 LCD
+          # (primary) 1398x2034"). Each is shot; the one the simulator is
+          # showing has to have the app drawing on it.
+          LISTED=$(xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/duo-any.png" 2>&1 || true)
+          DISPLAYS=$(printf '%s\n' "$LISTED" | grep -oE -- '--display=[0-9]+[[:space:]].*[0-9]+x[0-9]+' || true)
+          if [ -z "$DISPLAYS" ]; then
+            echo "$LISTED"
+            echo "::error::simctl listed no displays for the iPhone Duo"
+            exit 1
+          fi
+          LIT=0
+          {
+            echo "### The iPhone Duo simulator"
+            echo
+            echo "| Display | Size (px) | After launch |"
+            echo "| --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          while read -r LINE; do
+            NUMBER=$(printf '%s' "$LINE" | sed -E 's/^--display=([0-9]+).*/\1/')
+            SIZE=$(printf '%s' "$LINE" | grep -oE '[0-9]+x[0-9]+$')
+            case "$SIZE" in
+              1398x2034 | 2034x1398) NAME=outer ;;
+              2007x2853 | 2853x2007) NAME=inner ;;
+              *) NAME="display-$NUMBER" ;;
+            esac
+            SHOT="$RUNNER_TEMP/duo-$NAME.png"
+            echo "The $NAME display ($SIZE):"
+            xcrun simctl io "$UDID" screenshot --display="$NUMBER" "$SHOT" < /dev/null
+            if python3 scripts/verify_ios_launch.py --screenshot "$SHOT"; then
+              LIT=$((LIT + 1))
+              SEEN="the app drawing"
+            else
+              SEEN="dark"
+            fi
+            echo "| $NAME ($NUMBER) | $SIZE | $SEEN |" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$DISPLAYS"
+          xcrun simctl shutdown "$UDID"
+          if [ "$LIT" -eq 0 ]; then
+            echo "::error::Neither of the iPhone Duo's displays shows the app 25 s after launch"
+            exit 1
+          fi
+      - name: Keep the iPhone Duo screenshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-simulator-duo
+          path: ${{ runner.temp }}/duo-*.png
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Compile the connected training pilot for simulator
         run: |
           set -euo pipefail

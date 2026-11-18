@@ -300,7 +300,13 @@ fails if the app is not running and drawing 25 seconds later
 (`ios/App/App/SceneDelegate.swift`, required of iOS 27 SDK builds, see
 `docs/ios/iphone-duo.md`), and a scene wired wrongly launches to a black
 screen that a compile cannot see. The screenshot is kept as the run's
-`ios-simulator-launch` artifact. Nothing else is exercised. A green compile
+`ios-simulator-launch` artifact. That phone is never the iPhone Duo, whose
+two displays make a screenshot name one. The Duo gets a launch of its own
+(Xcode 27.1 carries its simulator): the same build, running 25 seconds
+later, a screenshot of each display, and at least one of them showing the
+app. The job summary says which, and the screenshots are the
+`ios-simulator-duo` artifact. The step fails by name if a later image's
+Xcode has no Duo. Nothing else is exercised. A green compile
 is required before this gate is considered ready for the signed TestFlight
 and paired-device checks below.
 
