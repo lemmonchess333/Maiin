@@ -5,8 +5,10 @@ waits, and screenshots the simulator. The UIScene life cycle
 (ios/App/App/SceneDelegate.swift, required of iOS 27 SDK builds) is wiring
 a compile cannot check: a scene delegate the manifest names wrongly, or a
 scene with no window, launches to a black screen while the process stays
-up. Any lit pixel means a window is drawing: the launch mark, the web
-view's boot screen, or the welcome screen past it.
+up. A window drawing anything lights the middle of the screen: the launch
+mark, the web view's boot screen, or the welcome screen past it. Only the
+middle band is read, since the system draws the status bar and the home
+indicator over a screen with no window too.
 
 Reads 8-bit PNGs (what `simctl io screenshot` writes) with the standard
 library only, so the macOS runner needs nothing installed.
@@ -21,6 +23,11 @@ import zlib
 # A pixel is lit when a channel is above this: the app's own page colour,
 # #0e0e11, is not, so a window showing nothing but the page is "dark".
 LIT = 40
+# The share of the height left out at the top (the status bar and the
+# Dynamic Island, about 54 of 852 pt) and at the bottom (the home
+# indicator), with room to spare.
+TOP_BAND = 0.10
+BOTTOM_BAND = 0.06
 
 
 def decode_png(data):
@@ -76,12 +83,15 @@ def decode_png(data):
 
 
 def lit_share(data, step=4):
-    """The share of pixels, sampled every `step` in each direction, with a
-    colour channel above LIT (alpha is not a colour)."""
+    """The share of pixels in the middle band, sampled every `step` in
+    each direction, with a colour channel above LIT (alpha is not a
+    colour)."""
     width, height, channels, rows = decode_png(data)
     colour = min(channels, 3)
     lit = total = 0
-    for y in range(0, height, step):
+    top = int(height * TOP_BAND)
+    bottom = height - int(height * BOTTOM_BAND)
+    for y in range(top, bottom, step):
         row = rows[y]
         for x in range(0, width, step):
             px = row[x * channels : x * channels + colour]

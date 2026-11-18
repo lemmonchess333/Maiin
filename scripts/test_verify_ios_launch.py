@@ -64,11 +64,20 @@ class LaunchScreenshotTests(unittest.TestCase):
         share = verifier.lit_share(png(40, 80, PAGE, mark=(12, 30, 16, WHITE)))
         self.assertGreater(share, 0.05)
 
+    def test_a_status_bar_over_a_black_screen_is_dark(self):
+        # A scene with no window: the system's clock and battery glyphs in
+        # the top band, the home indicator at the foot, black between.
+        clock = png(40, 80, (0, 0, 0, 255), mark=(2, 1, 5, WHITE))
+        self.assertEqual(verifier.lit_share(clock, step=1), 0.0)
+        indicator = png(40, 80, (0, 0, 0, 255), mark=(15, 77, 3, WHITE))
+        self.assertEqual(verifier.lit_share(indicator, step=1), 0.0)
+
     def test_filters_and_rgb_decode_alike(self):
         for filt in (0, 1, 2):
             for channels in (3, 4):
                 data = png(24, 24, PAGE, mark=(4, 4, 8, WHITE), channels=channels, filt=filt)
-                self.assertAlmostEqual(verifier.lit_share(data, step=1), 64 / 576)
+                # The 24-row frame's middle band is rows 2 to 22: 21 rows.
+                self.assertAlmostEqual(verifier.lit_share(data, step=1), 64 / (21 * 24))
 
     def test_main_fails_a_black_launch_and_passes_a_drawn_one(self):
         with tempfile.TemporaryDirectory() as tmp:

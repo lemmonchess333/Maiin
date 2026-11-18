@@ -83,14 +83,21 @@ jobs:
           plutil -replace GOOGLE_APP_ID -string "1:123456789012:ios:0123456789abcdef012345" "$PLIST"
           plutil -replace GCM_SENDER_ID -string "123456789012" "$PLIST"
           plutil -replace API_KEY -string "AIzaSyA00000000000000000000000000000000" "$PLIST"
+          # The newest iOS runtime's iPhones, by version number, then the
+          # first by name, so the same runner image picks the same phone.
           UDID=$(xcrun simctl list devices available --json | python3 -c '
-          import json, sys
+          import json, re, sys
           devices = json.load(sys.stdin)["devices"]
+          def version(runtime):
+              m = re.search(r"\.iOS-(\d+)-(\d+)", runtime)
+              return (int(m.group(1)), int(m.group(2))) if m else None
           phones = sorted(
-              (runtime, d["udid"]) for runtime, ds in devices.items()
-              if ".iOS-" in runtime for d in ds if d["name"].startswith("iPhone")
+              (version(runtime), d["name"], d["udid"])
+              for runtime, ds in devices.items() if version(runtime)
+              for d in ds if d["name"].startswith("iPhone")
           )
-          print(phones[-1][1])
+          newest = phones[-1][0]
+          print(next(p for p in phones if p[0] == newest)[2])
           ')
           xcrun simctl list devices | grep "$UDID"
           xcrun simctl boot "$UDID"
