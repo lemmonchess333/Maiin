@@ -21,13 +21,17 @@ export const WEBSITE_OUTPUT = "index.html";
 /** Builds `website.html` as the output's index.html when `enabled` (a
  *  Firebase Hosting build), and does nothing otherwise. */
 export function websiteEntryPlugin(root: string, enabled: boolean): Plugin {
+  let ssr = false;
   return {
     name: "tropos-website-entry",
     apply: "build",
     // After Vite's own HTML plugin, which adds the page to the bundle.
     enforce: "post",
-    config() {
-      if (!enabled) return;
+    config(_config, env) {
+      // The build that draws each page at build time (prerender.ts) is a
+      // server build of its own entry, not the page.
+      ssr = env?.isSsrBuild === true;
+      if (!enabled || ssr) return;
       return {
         build: {
           rolldownOptions: {
@@ -37,7 +41,7 @@ export function websiteEntryPlugin(root: string, enabled: boolean): Plugin {
       };
     },
     generateBundle(_options, bundle) {
-      if (!enabled) return;
+      if (!enabled || ssr) return;
       const page = bundle[WEBSITE_HTML];
       if (!page || page.type !== "asset") {
         this.error(`the Hosting build made no ${WEBSITE_HTML}`);

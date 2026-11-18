@@ -16,9 +16,10 @@ type Bundle = Record<
   { type: "asset" | "chunk"; fileName: string; source?: string }
 >;
 
-function callConfig(plugin: Plugin) {
-  const hook = plugin.config as (() => unknown) | undefined;
-  return hook?.();
+function callConfig(plugin: Plugin, env?: { isSsrBuild?: boolean }) {
+  const hook = plugin.config as
+    ((config: unknown, env?: { isSsrBuild?: boolean }) => unknown) | undefined;
+  return hook?.({}, env);
 }
 
 function generate(plugin: Plugin, bundle: Bundle) {
@@ -83,6 +84,13 @@ describe("websiteEntryPlugin", () => {
     const emitFile = generate(plugin, bundle);
     expect(emitFile).not.toHaveBeenCalled();
     expect(Object.keys(bundle)).toEqual([WEBSITE_OUTPUT]);
+  });
+
+  it("leaves the server build that draws each page alone (prerender.ts)", () => {
+    const plugin = websiteEntryPlugin("/repo", true);
+    expect(callConfig(plugin, { isSsrBuild: true })).toBeUndefined();
+    const emitFile = generate(plugin, {});
+    expect(emitFile).not.toHaveBeenCalled();
   });
 
   it("is on for the Hosting build only, as the association file is", () => {

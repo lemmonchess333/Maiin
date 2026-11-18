@@ -28,6 +28,7 @@ import {
 } from "../../../scripts/website/hostingResolve";
 import { ASSOCIATION_PATHS } from "../../../scripts/ios/universal-links";
 import { WEBSITE_OUTPUT } from "../../../scripts/website/websiteEntry";
+import { SITE_PAGES } from "@/website/sitePages";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -67,11 +68,23 @@ const hosting = (
   }
 ).hosting;
 
-/** What the Hosting build deploys at its root: the website's page,
- *  `public/` as Vite copies it, and the association file the deploy
- *  builds (`IOS_APP_ID_PREFIX`). Hashed assets are left out. */
+/** Where the build writes a page drawn at build time
+ *  (scripts/website/prerender.ts). */
+function pageFile(path: string): string {
+  return path === "/" ? WEBSITE_OUTPUT : `${path.slice(1)}/index.html`;
+}
+
+/** What the Hosting build deploys at its root: the website's page and the
+ *  pages drawn at build time, `public/` as Vite copies it, and the
+ *  association file the deploy builds (`IOS_APP_ID_PREFIX`). Hashed assets
+ *  are left out. */
 function deployedFiles(): Set<string> {
-  const files = new Set<string>([WEBSITE_OUTPUT, ...ASSOCIATION_PATHS]);
+  const files = new Set<string>([
+    ...SITE_PAGES.map((page) => pageFile(page.path)),
+    "sitemap.xml",
+    "robots.txt",
+    ...ASSOCIATION_PATHS,
+  ]);
   (function walk(dir: string, rel: string) {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
@@ -87,7 +100,9 @@ const files = deployedFiles();
 type Page =
   | { page: "landing"; note?: RegExp; invite?: boolean }
   | { page: "post" }
-  | { page: "legal"; heading: string };
+  | { page: "legal"; heading: string }
+  | { page: "site"; heading: string }
+  | { page: "notFound" };
 
 interface Kept {
   address: string;
@@ -121,20 +136,81 @@ const KEPT: Kept[] = [
   {
     address: "/privacy",
     from: "the App Store listing; the app's legal links",
-    hosting: WEBSITE,
+    hosting: { kind: "file", file: "privacy/index.html" },
     shows: { page: "legal", heading: "Privacy Policy" },
   },
   {
     address: "/terms",
     from: "the App Store listing; the app's legal links",
-    hosting: WEBSITE,
+    hosting: { kind: "file", file: "terms/index.html" },
     shows: { page: "legal", heading: "Terms of Service" },
   },
   {
     address: "/support",
     from: "the App Store's Support URL",
-    hosting: WEBSITE,
+    hosting: { kind: "file", file: "support/index.html" },
     shows: { page: "legal", heading: "Support" },
+  },
+  {
+    address: "/privacy/",
+    from: "a link written with a trailing slash",
+    hosting: { kind: "redirect", destination: "/privacy" },
+  },
+  {
+    address: "/lifting",
+    from: "the website's own pages (docs/website/design.md)",
+    hosting: { kind: "file", file: "lifting/index.html" },
+    shows: {
+      page: "site",
+      heading: "Strength sessions built around your week",
+    },
+  },
+  {
+    address: "/running",
+    from: "the website's own pages",
+    hosting: { kind: "file", file: "running/index.html" },
+    shows: { page: "site", heading: "From your first 5K to a marathon" },
+  },
+  {
+    address: "/social",
+    from: "the website's own pages",
+    hosting: { kind: "file", file: "social/index.html" },
+    shows: { page: "site", heading: "Train with the people you know" },
+  },
+  {
+    address: "/pro",
+    from: "the website's own pages",
+    hosting: { kind: "file", file: "pro/index.html" },
+    shows: { page: "site", heading: "What Pro adds" },
+  },
+  {
+    address: "/about",
+    from: "the website's own pages",
+    hosting: { kind: "file", file: "about/index.html" },
+    shows: { page: "site", heading: "One plan for lifting, running and food" },
+  },
+  {
+    address: "/press",
+    from: "the website's own pages",
+    hosting: { kind: "file", file: "press/index.html" },
+    shows: { page: "site", heading: "Writing about Tropos" },
+  },
+  {
+    address: "/sitemap.xml",
+    from: "robots.txt, for search engines",
+    hosting: { kind: "file", file: "sitemap.xml" },
+  },
+  {
+    address: "/history/sessions",
+    from: "a link to the old web app's pages",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
+  },
+  {
+    address: "/blog",
+    from: "nowhere: an address nothing hands out",
+    hosting: WEBSITE,
+    shows: { page: "notFound" },
   },
   {
     address: "/activity/run1",
@@ -186,8 +262,8 @@ const KEPT: Kept[] = [
   {
     address: "/food?from=widget",
     from: "the food widget's tap; iOS hands it to the app",
-    hosting: WEBSITE,
-    shows: { page: "landing" },
+    hosting: { kind: "file", file: "food/index.html" },
+    shows: { page: "site", heading: "Eat for the plan you’re on" },
   },
   {
     address: "/.well-known/apple-app-site-association",
@@ -269,8 +345,29 @@ describe("Firebase Hosting answers every kept address", () => {
   });
 
   it("serves nothing of the app: no address reaches an app page", () => {
-    for (const address of ["/settings", "/program", "/food", "/onboarding"]) {
+    for (const address of ["/settings", "/program", "/onboarding"]) {
       expect(resolveHosting(hosting, files, address)).toEqual(WEBSITE);
+    }
+    // The app's Food and Social tabs share their addresses with the
+    // website's own Food and Social pages.
+    expect(resolveHosting(hosting, files, "/food")).toEqual({
+      kind: "file",
+      file: "food/index.html",
+    });
+  });
+
+  it("serves each page drawn at build time at its address, without a trailing slash", () => {
+    for (const page of SITE_PAGES) {
+      expect(resolveHosting(hosting, files, page.path)).toEqual({
+        kind: "file",
+        file: pageFile(page.path),
+      });
+      if (page.path !== "/") {
+        expect(resolveHosting(hosting, files, `${page.path}/`)).toEqual({
+          kind: "redirect",
+          destination: page.path,
+        });
+      }
     }
   });
 });
@@ -285,6 +382,30 @@ describe("the website's page at each address", () => {
         await screen.findByRole("heading", { level: 1, name: shows.heading })
       ).toBeInTheDocument();
       expect(screen.queryByText(/Get started/)).toBeNull();
+      return;
+    }
+    if (shows?.page === "site") {
+      expect(
+        await screen.findByRole("heading", { level: 1, name: shows.heading })
+      ).toBeInTheDocument();
+      // Apple's badge once a page, and every page leads to it.
+      const badges = screen.getAllByRole("link", {
+        name: "Download on the App Store",
+      });
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveAttribute("href", APP_STORE_URL);
+      return;
+    }
+    if (shows?.page === "notFound") {
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "There’s no page at this address",
+        })
+      ).toBeInTheDocument();
+      expect(
+        document.head.querySelector('meta[name="robots"]')
+      ).toHaveAttribute("content", "noindex");
       return;
     }
     if (shows?.page === "post") {

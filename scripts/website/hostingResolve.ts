@@ -7,7 +7,12 @@
  * Hosting's order (Firebase docs, "Configure Hosting behavior", priority
  * order): reserved `/__/` paths, then redirects, then an exact match in the
  * deployed files, then the rewrites in the order written, then 404. A
- * directory's address takes its index.html. Globs: `**` is any run of
+ * directory's address takes its index.html, and `trailingSlash` decides
+ * which spelling of it is served and which is sent there: unset, `/about`
+ * is sent to `/about/`; false (troposfit.com's), `/about/` is sent to
+ * `/about`. An address that matches no file keeps its slash either way
+ * and goes on to the rewrites. Checked against the Hosting emulator
+ * (firebase-tools 14) on 18 November 2026. Globs: `**` is any run of
  * characters, `*` any run within one segment, and `<dir>/**` also takes
  * `<dir>` itself.
  */
@@ -24,6 +29,7 @@ export interface HostingHeaderRule {
 }
 
 export interface HostingConfig {
+  trailingSlash?: boolean;
   redirects?: { source: string; destination: string; type?: number }[];
   rewrites?: HostingRewrite[];
   headers?: HostingHeaderRule[];
@@ -73,10 +79,21 @@ export function resolveHosting(
     }
   }
   const relative = decodeURIComponent(pathname).replace(/^\/+/, "");
-  const exact = relative.endsWith("/") || relative === "" ? null : relative;
-  const index = `${relative.replace(/\/?$/, "/")}index.html`.replace(/^\//, "");
-  if (exact && files.has(exact)) return { kind: "file", file: exact };
-  if (files.has(index)) return { kind: "file", file: index };
+  const slashed = relative.endsWith("/");
+  const bare = relative.replace(/\/+$/, "");
+  const index = bare === "" ? "index.html" : `${bare}/index.html`;
+  if (!slashed && bare !== "" && files.has(bare)) {
+    return { kind: "file", file: bare };
+  }
+  if (files.has(index)) {
+    if (bare !== "" && config.trailingSlash === false && slashed) {
+      return { kind: "redirect", destination: `/${bare}` };
+    }
+    if (bare !== "" && config.trailingSlash !== false && !slashed) {
+      return { kind: "redirect", destination: `/${bare}/` };
+    }
+    return { kind: "file", file: index };
+  }
   for (const rewrite of config.rewrites ?? []) {
     if (!globToRegExp(rewrite.source).test(pathname)) continue;
     if (rewrite.function) {
