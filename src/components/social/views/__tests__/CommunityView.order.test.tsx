@@ -14,9 +14,9 @@
  *              card alone.
  *   Discover   races and Spaces, then the challenges not joined.
  *
- * All of that with enough people training on Tropos (App1 Q6, seeded
- * below); at small numbers the page is the person's own: what they joined
- * and their Circles, with nothing offered.
+ * All of it from the first day (App1 Q6): with no league counted and
+ * almost nobody in any challenge or Space, the page is the same page, and
+ * each room that is still small says it is filling up.
  */
 import {
   afterEach,
@@ -32,7 +32,6 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
   within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -42,7 +41,6 @@ import type { SpaceDirectoryEntry } from "@/features/spaces/useSpacesDirectory";
 import { loadWordFilter } from "@/lib/wordFilter";
 import {
   flushSnapshots,
-  readsAt,
   resetFirestore,
   seedFirestore,
 } from "@/test/firestoreHarness";
@@ -150,11 +148,9 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-09-11T12:00:00Z"));
   resetFirestore();
   circlesHook.circles = [];
+  SPACE.memberCount = null;
   seedFirestore({
     "users/me": h.profile,
-    // Twelve people in the league trained lately: enough for Together to
-    // offer its challenges, the league and Spaces.
-    "leagueStatus/current": { joined: 12 },
     "challenges/weekly-2026-09-07": {
       name: "Weekly Warrior",
       description: "Train twice this week",
@@ -410,35 +406,33 @@ describe("the page's one filled button", () => {
   });
 });
 
-describe("at small numbers", () => {
-  it("is the person's own: their Circles, with no challenge, league or Space offered", async () => {
-    seedFirestore({ "leagueStatus/current": { joined: 3 } });
-    const { container } = render(
-      <MemoryRouter>
-        <CommunityView active uid="me" refreshRef={{ current: null }} />
-      </MemoryRouter>
-    );
-    await flushSnapshots();
-    // Anchor: the count of people was read and the page has stopped
-    // loading.
-    await waitFor(() =>
-      expect(readsAt("leagueStatus/current").length).toBeGreaterThan(0)
-    );
-    await waitFor(() =>
-      expect(container.querySelector(".motion-safe\\:animate-pulse")).toBeNull()
-    );
-    await flushSnapshots();
+describe("on a new Tropos (App1 Q6)", () => {
+  it("offers every room, and each that is still small says so", async () => {
+    SPACE.memberCount = 0;
+    await openTogether();
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((el) => el.textContent)
-    ).toEqual(["Circles"]);
+    ).toEqual(["This week", "Circles", "Discover"]);
+    // The weekly challenge, no one in it yet: under its name.
+    const band = document.querySelector(
+      "[data-challenge-medal-band]"
+    ) as HTMLElement;
+    expect(within(band).getByText("Weekly Warrior")).toBeInTheDocument();
+    expect(within(band).getByText("Filling up")).toBeInTheDocument();
+    // The league, which the server has not counted anyone for.
     expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
-    ).toBeNull();
+      await screen.findByText("The league starts once 10 people have joined.")
+    ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Join the league" })
-    ).toBeNull();
-    expect(screen.queryByText("Runners")).toBeNull();
-    // With no Circle, the page's one filled button is Start a circle.
-    expect(filledButtons()).toEqual(["Start a circle"]);
+      screen.getByRole("button", { name: "Join the league" })
+    ).toBeInTheDocument();
+    // A Space with no members yet.
+    expect(
+      screen.getByRole("link", { name: "Runners space" }).textContent
+    ).toContain("Filling up");
+    // The challenges not joined.
+    expect(
+      screen.getByRole("list", { name: "Challenges to join" })
+    ).toBeInTheDocument();
   });
 });

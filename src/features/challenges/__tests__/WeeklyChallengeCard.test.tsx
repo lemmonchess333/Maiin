@@ -161,3 +161,36 @@ describe("WeeklyChallengeCard — the challenge's own leaders", () => {
     expect(screen.queryByText(/Follow people/)).toBeNull();
   });
 });
+
+/* App1 Q6: the card is offered from a person's first day, however few
+   have joined, and says who is in it under its name. */
+describe("WeeklyChallengeCard — who has joined", () => {
+  const band = () =>
+    document.querySelector("[data-challenge-medal-band]") as HTMLElement;
+
+  it("says it is filling up under 3, with Join still offered", () => {
+    card({
+      weekly: { ...weekly, participantCount: 0 } as Challenge,
+      joined: false,
+      progress: undefined,
+      leaderboard: [],
+    });
+    expect(within(band()).getByText("Filling up")).toBeInTheDocument();
+    expect(band().textContent).not.toMatch(/joined/);
+    expect(
+      screen.getByRole("button", { name: "Join weekly challenge" })
+    ).toBeInTheDocument();
+  });
+
+  it("says so to someone in it too, with no count of two", () => {
+    card({ weekly: { ...weekly, participantCount: 2 } as Challenge });
+    expect(within(band()).getByText("Filling up")).toBeInTheDocument();
+    expect(band().textContent).not.toMatch(/2 joined/);
+  });
+
+  it("counts them from 3", () => {
+    card({ weekly: { ...weekly, participantCount: 3 } as Challenge });
+    expect(band().textContent).toContain("3 joined");
+    expect(within(band()).queryByText("Filling up")).toBeNull();
+  });
+});

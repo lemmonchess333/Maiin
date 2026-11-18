@@ -5,9 +5,9 @@
  * (2026-10-01; two selects before). The Feed's compact row, and the Q6
  * gate that kept races out of it, went the same day with the row.
  *
- * All of that with enough people training on Tropos. Below that (App1
- * Q6), the directory draws only the Spaces the person joined, and nothing
- * when they joined none.
+ * Every Space is offered from a person's first day, however few people
+ * are on Tropos (App1 Q6): one under the member count's floor says it is
+ * filling up.
  *
  * Search (Run27 call 11): a query finds Spaces by name, or a race by its
  * city, among every Space and race whatever the chips say, and its
@@ -52,13 +52,6 @@ vi.mock("@/components/ui/BottomSheet", () => ({
     ) : null,
 }));
 
-const people = vi.hoisted(() => ({
-  enough: true as boolean | null,
-}));
-vi.mock("@/hooks/useEnoughPeople", () => ({
-  useEnoughPeople: () => people.enough,
-}));
-
 import SpacesDirectory from "../SpacesDirectory";
 
 const INTEREST: SpaceDirectoryEntry = {
@@ -97,7 +90,6 @@ const RACE: SpaceDirectoryEntry = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  people.enough = true;
   mockUseSpacesDirectory.mockReturnValue({
     entries: [INTEREST, RACE],
     upcomingRaces: [RACE.def],
@@ -156,24 +148,33 @@ describe("SpacesDirectory — Races & Events", () => {
     }
   });
 
-  it("an interest card shows a real member count, and nothing below the gate", () => {
-    const small: SpaceDirectoryEntry = {
+  it("an interest card shows a real member count from 5, and says it is filling up under 5 (App1 Q6)", () => {
+    const at = (id: string, name: string, memberCount: number | null) => ({
       ...INTEREST,
-      def: { ...INTEREST.def, id: "strength", name: "Strength" },
-      memberCount: 2,
-    };
+      def: { ...INTEREST.def, id, name },
+      memberCount,
+    });
     mockUseSpacesDirectory.mockReturnValue({
-      entries: [INTEREST, small],
+      entries: [
+        INTEREST,
+        at("five", "Five", 5),
+        at("four", "Four", 4),
+        at("empty", "Empty", 0),
+        at("unknown", "Unknown", null),
+      ],
       upcomingRaces: [],
       refresh: vi.fn(),
     });
     renderDirectory();
-    expect(
-      screen.getByRole("link", { name: "Runners space" }).textContent
-    ).toContain("12 members");
-    const smallCard = screen.getByRole("link", { name: "Strength space" });
-    expect(smallCard.textContent).toBe("Strength");
-    expect(screen.queryByText(/New space/)).not.toBeInTheDocument();
+    const card = (name: string) =>
+      screen.getByRole("link", { name: `${name} space` }).textContent;
+    expect(card("Runners")).toBe("Runners12 members");
+    expect(card("Five")).toBe("Five5 members");
+    expect(card("Four")).toBe("FourFilling up");
+    expect(card("Empty")).toBe("EmptyFilling up");
+    // A count still being read, or one that failed, claims neither.
+    expect(card("Unknown")).toBe("Unknown");
+    expect(screen.queryByText(/0 members|4 members/)).toBeNull();
   });
 
   it("races row collapses when no upcoming races are in the entries", () => {
@@ -260,55 +261,27 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
 });
 
-describe("SpacesDirectory at small numbers", () => {
-  beforeEach(() => {
-    people.enough = false;
-  });
-
-  it("draws nothing when the person joined no Space", () => {
-    const { container } = renderDirectory();
-    // Anchor: the directory was asked for its Spaces, and had two to offer.
-    expect(mockUseSpacesDirectory).toHaveBeenCalled();
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("draws the Spaces the person joined, as theirs, with nothing to browse", () => {
+describe("SpacesDirectory on a new Tropos (App1 Q6)", () => {
+  it("offers every Space and race to someone in none, with the chips and search", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [
-        { ...INTEREST, joined: true },
-        RACE,
-        {
-          ...INTEREST,
-          def: { ...INTEREST.def, id: "lifters", name: "Lifters" },
-          memberCount: 40,
-        },
+        { ...INTEREST, memberCount: 0 },
+        { ...RACE, memberCount: 0 },
       ],
       upcomingRaces: [RACE.def],
       refresh: vi.fn(),
     });
     renderDirectory();
     expect(
-      screen.getByRole("heading", { name: "Your spaces" })
+      screen.getByRole("heading", { name: "Races & events" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Runners")).toBeInTheDocument();
-    // Neither the race nor a busy Space the person is not in is offered.
-    expect(screen.queryByText("Great North Run")).toBeNull();
-    expect(screen.queryByText("Lifters")).toBeNull();
-    expect(
-      screen.queryByRole("heading", { name: "Races & events" })
-    ).toBeNull();
-    expect(screen.queryByRole("radio")).toBeNull();
-  });
-
-  it("keeps a race the person joined", () => {
-    mockUseSpacesDirectory.mockReturnValue({
-      entries: [INTEREST, { ...RACE, joined: true }],
-      upcomingRaces: [RACE.def],
-      refresh: vi.fn(),
-    });
-    renderDirectory();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
-    expect(screen.queryByText("Runners")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Runners space" }).textContent
+    ).toBe("RunnersFilling up");
+    expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
+    expect(screen.getByRole("searchbox")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Your spaces" })).toBeNull();
   });
 });
 
@@ -369,16 +342,5 @@ describe("searching Spaces (Run27 call 11)", () => {
     expect(
       screen.getByRole("heading", { name: "Races & events" })
     ).toBeInTheDocument();
-  });
-
-  it("is not offered while there is nothing to browse", () => {
-    people.enough = false;
-    mockUseSpacesDirectory.mockReturnValue({
-      entries: [{ ...INTEREST, joined: true }],
-      upcomingRaces: [RACE.def],
-      refresh: vi.fn(),
-    });
-    renderDirectory();
-    expect(screen.queryByRole("searchbox")).toBeNull();
   });
 });
