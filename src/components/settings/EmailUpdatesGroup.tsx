@@ -106,7 +106,13 @@ export default function EmailUpdatesGroup({
   return (
     <SettingsGroup
       title="Email"
-      footer={emailFooter(user?.email, !!user?.emailVerified)}
+      footer={
+        /* An address is one long word: it wraps anywhere rather than run
+           past the screen at a large text size. */
+        <span className="[overflow-wrap:anywhere]">
+          {emailFooter(user?.email, !!user?.emailVerified)}
+        </span>
+      }
     >
       {EMAIL_KINDS.map((kind) => (
         <SettingsRow
