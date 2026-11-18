@@ -2,7 +2,7 @@ import pullUp from "@/assets/welcome/welcome-4-pull-up.webp";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** How Tropos treats the people who use it, each true of the app on main
  *  and said in its own terms (the Privacy Policy, Food9, the league's
@@ -31,7 +31,7 @@ const PROMISES = [
  * runs it (the operator the Terms name, section 12).
  */
 export default function About() {
-  usePageHead(sitePage("about"));
+  usePageHead(sitePageHead(sitePage("about")));
   return (
     <SiteLayout>
       <section className="site-container grid gap-10 pt-6 pb-14 md:grid-cols-[1.3fr_1fr] md:items-center md:pt-12 lg:pb-20">

@@ -14,7 +14,7 @@ import homeToday from "@/website/screens/home-today.webp";
 import liftDay from "@/website/screens/lift-day.webp";
 import trainRun from "@/website/screens/train-run.webp";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** The paragraph to quote, short and long, in the App Store listing's
  *  words (docs/app-store/listing.md). */
@@ -122,7 +122,7 @@ const COLOURS = [
  * offered: their Unsplash+ licence is Tropos’s, not a publication's.
  */
 export default function Press() {
-  usePageHead(sitePage("press"));
+  usePageHead(sitePageHead(sitePage("press")));
   return (
     <SiteLayout>
       <section className="site-container pt-6 pb-10 md:pt-12">

@@ -13,6 +13,7 @@ import homeToday from "@/website/screens/home-today.webp";
 import challengeBoard from "@/website/screens/challenge-board.webp";
 import { sitePage } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
+import { landingHead } from "@/website/websiteHead";
 import { landingContext, type LandingContext } from "@/website/websiteAddress";
 
 const SPORTS = [
@@ -73,7 +74,13 @@ function useLandingContext(): LandingContext {
  * the one that brought the visitor.
  */
 export default function Home() {
-  usePageHead(sitePage("home"));
+  const { pathname, search } = useLocation();
+  const home = sitePage("home");
+  usePageHead({
+    title: home.title,
+    description: home.description,
+    ...landingHead(pathname, search),
+  });
   const { invite, note } = useLandingContext();
 
   return (
@@ -85,20 +92,20 @@ export default function Home() {
             {note === "checkoutDone" && (
               <div
                 role="status"
-                className="flex items-start gap-2.5 p-3 rounded-xl bg-success/10 border border-success/20 text-sm font-medium"
+                className="flex items-start gap-2.5 p-3 rounded-xl bg-stage-raised border border-success/30 text-sm font-medium"
               >
                 <CircleCheck
                   className="size-4 shrink-0 mt-0.5 text-success-strong"
                   aria-hidden="true"
                 />
                 <span>
-                  Payment received. Pro is on for your account in the Tropos
+                  If you just paid, Pro is on for your account in the Tropos
                   app.
                 </span>
               </div>
             )}
             {note === "space" && (
-              <p className="text-sm font-semibold">
+              <p className="p-3 rounded-xl bg-stage-raised text-sm font-semibold">
                 Get Tropos on your iPhone to open this Space.
               </p>
             )}

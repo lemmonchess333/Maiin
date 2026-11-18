@@ -7,7 +7,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import foodDay from "@/website/screens/food-day.webp";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** The food drawings the diary uses, from public/food-art/ (192 px, so
  *  shown at 96 px or less). */
@@ -29,7 +29,7 @@ const FOODS = [
  * phone, and only once the person has said yes), water and weight.
  */
 export default function Food() {
-  usePageHead(sitePage("food"));
+  usePageHead(sitePageHead(sitePage("food")));
   return (
     <SiteLayout>
       <ArtHero

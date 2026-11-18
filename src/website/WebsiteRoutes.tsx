@@ -6,7 +6,7 @@ import Home from "@/website/pages/Home";
 import NotFound from "@/website/pages/NotFound";
 import { WEBSITE_PAGE_MODULES } from "@/website/pageModules";
 import { sitePage, websiteRoute } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /* Home and the 404 are in the first script; each other page is fetched
    when its address is opened, so Home, the page most visitors see,
@@ -35,7 +35,7 @@ function Legal({
   page: "privacy" | "terms" | "support";
   children: ReactNode;
 }) {
-  usePageHead(sitePage(page));
+  usePageHead(sitePageHead(sitePage(page)));
   return <SiteLayout>{children}</SiteLayout>;
 }
 

@@ -5,7 +5,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import liftDay from "@/website/screens/lift-day.webp";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** A few of the drawn form guides, from public/form-art/. */
 const GUIDES = [
@@ -23,7 +23,7 @@ const GUIDES = [
  * is one the App Store listing makes (docs/app-store/listing.md).
  */
 export default function Lifting() {
-  usePageHead(sitePage("lifting"));
+  usePageHead(sitePageHead(sitePage("lifting")));
   return (
     <SiteLayout>
       <ArtHero

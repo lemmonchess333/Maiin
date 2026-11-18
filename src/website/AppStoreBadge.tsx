@@ -14,7 +14,7 @@ import { APP_STORE_URL } from "@/lib/publicLinks";
  * grey border is part of it; at least 40 px tall on screen; clear space
  * of a quarter of its height, with nothing inside it; one badge per
  * layout, below the main message; and a credit for Apple's marks
- * (`APPLE_CREDIT`). It is 48 px tall here (a Tropos choice: legible
+ * (`APPLE_CREDIT`), iPhone among them since the page names it. It is 48 px tall here (a Tropos choice: legible
  * and not the page's largest thing), so its clear space is 12 px.
  */
 export const BADGE_HEIGHT_PX = 48;
@@ -27,7 +27,7 @@ export const BADGE_CLEAR_SPACE_PX = BADGE_HEIGHT_PX / 4;
 
 /** The credit Apple asks for wherever the badge is used. */
 export const APPLE_CREDIT =
-  "Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries and regions. App Store is a service mark of Apple Inc.";
+  "Apple, the Apple logo, and iPhone are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc.";
 
 /** The badge with its clear space above and below it. Beside it there is
  *  nothing: the page's margin on its left, the empty row on its right. */

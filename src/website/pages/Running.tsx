@@ -5,7 +5,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import trainRun from "@/website/screens/train-run.webp";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** The goals a run plan is built for (the listing's race plans). */
 const GOALS = ["5K", "10K", "Half marathon", "Marathon"] as const;
@@ -16,7 +16,7 @@ const GOALS = ["5K", "10K", "Half marathon", "Marathon"] as const;
  * first week (Q85, Run27 (18), `FREE_KEEPS`), and the page says so.
  */
 export default function Running() {
-  usePageHead(sitePage("running"));
+  usePageHead(sitePageHead(sitePage("running")));
   return (
     <SiteLayout>
       <ArtHero

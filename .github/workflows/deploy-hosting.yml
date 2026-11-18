@@ -101,7 +101,8 @@ jobs:
           # deploy-ios run 43682416087 (15 Nov 2026) shows the app as
           # "***.com.tropos.app", masked exactly as APPLE_TEAM_ID is, where a
           # legacy prefix would print in clear. A repository variable of the
-          # same name overrides it. Unset, no association file is built.
+          # same name overrides it. Unset, the build fails (App1 Q52): without
+          # this file Hosting serves Firebase's own, which claims every path.
           IOS_APP_ID_PREFIX: ${{ vars.IOS_APP_ID_PREFIX || secrets.APPLE_TEAM_ID }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy

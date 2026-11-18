@@ -8,7 +8,9 @@ import { lookupInviterName } from "@/website/inviterName";
  * A friend's invite on the website (Soc15): who sent it, once the server
  * says, and the code to copy before installing, because an iPhone does
  * not carry it from the browser into the app (docs/ios-invite-links.md).
- * The words are the signed-out welcome's (`InviteNote`), less its sign-up.
+ * The words are the signed-out welcome's (`InviteNote`), less its sign-up,
+ * on an opaque card (`--stage-raised`) rather than the note's tint, since
+ * here it sits over the photographs.
  */
 export default function WebsiteInvite({ code }: { code: string }) {
   const [inviter, setInviter] = useState<{
@@ -48,7 +50,7 @@ export default function WebsiteInvite({ code }: { code: string }) {
   };
 
   return (
-    <div className="p-[12px] rounded-xl bg-primary/8 border border-primary/15 text-sm">
+    <div className="p-[12px] rounded-xl bg-stage-raised border border-primary/20 text-sm">
       <div className="flex items-start gap-2.5">
         <UserPlus
           className="size-4 shrink-0 mt-0.5 text-lifting-strong"

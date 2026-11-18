@@ -11,7 +11,7 @@ import AppStoreBadge from "@/website/AppStoreBadge";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 const YEARLY = findPlan(PRO_PLANS, "yearly");
 const MONTHLY = findPlan(PRO_PLANS, "monthly");
@@ -45,7 +45,7 @@ const QUESTIONS = [
  * payment (App1 Q77, option 4 of #3375).
  */
 export default function Pro() {
-  usePageHead(sitePage("pro"));
+  usePageHead(sitePageHead(sitePage("pro")));
   return (
     <SiteLayout>
       <section className="site-container grid gap-10 pt-6 pb-14 md:grid-cols-[1.1fr_1fr] md:items-start md:pt-12 lg:pb-24">

@@ -8,6 +8,10 @@ import { describe, expect, it } from "vitest";
 import { renderPage } from "@/website/prerender";
 import { SITE_PAGES } from "@/website/sitePages";
 import { APP_STORE_URL } from "@/lib/publicLinks";
+import { websitePublicFiles } from "./websiteEntry";
+
+/** What the Hosting build ships of public/. */
+const SHIPPED = new Set(websitePublicFiles(`${process.cwd()}/public`));
 
 /** The words a person reads: the markup's text, tags and attributes out. */
 function textOf(html: string): string {
@@ -48,6 +52,15 @@ describe("each page drawn at build time", () => {
     const legal = ["support", "privacy", "terms"].includes(page.key);
     expect(badges).toHaveLength(legal ? 0 : 1);
     expect(html).toContain(`href="${APP_STORE_URL}"`);
+    // Every picture it names from public/ ships with the website, which
+    // carries only the files it uses (`WEBSITE_PUBLIC_ART`).
+    for (const [, path] of html.matchAll(
+      /(?:src|srcSet|srcset)="\/([^"/][^"]*)"/g
+    )) {
+      // Bundled pictures: hashed under assets/ in a build, src/ in a test.
+      if (/^(assets|src)\//.test(path)) continue;
+      expect(SHIPPED.has(path), `${page.path} draws /${path}`).toBe(true);
+    }
   });
 
   it("draws the 404 for an address that is not a page", async () => {

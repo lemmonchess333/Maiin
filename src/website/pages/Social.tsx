@@ -8,7 +8,7 @@ import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import challengeBoard from "@/website/screens/challenge-board.webp";
 import { sitePage } from "@/website/sitePages";
-import { usePageHead } from "@/website/usePageHead";
+import { sitePageHead, usePageHead } from "@/website/usePageHead";
 
 /** One challenge's three medals, from public/medals/. */
 const MEDALS = ["bronze", "silver", "gold"] as const;
@@ -22,7 +22,7 @@ const MEDALS = ["bronze", "silver", "gold"] as const;
  * as a busy one.
  */
 export default function Social() {
-  usePageHead(sitePage("social"));
+  usePageHead(sitePageHead(sitePage("social")));
   return (
     <SiteLayout>
       <ArtHero
