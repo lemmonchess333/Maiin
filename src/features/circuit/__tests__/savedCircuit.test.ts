@@ -38,7 +38,11 @@ describe("savedCircuitFrom (Circ1 (4), (B))", () => {
       finished: true,
       effort: "right",
     });
-    expect(saved.moves).toEqual(circuit.moves);
+    // Each move says what kind of step it is and its target's unit, so a
+    // later build can store other steps beside it (Hyb1).
+    expect(saved.moves).toEqual(
+      circuit.moves.map((move) => ({ kind: "move", unit: "seconds", ...move }))
+    );
   });
 
   it("leaves out an effort that was not given", () => {
@@ -65,6 +69,22 @@ describe("readSavedCircuit", () => {
     ["a string", "circuit"],
     ["no id", { ...saved, circuitId: "" }],
     ["an unknown kind", { ...saved, kind: "tabata" }],
+    // v2's kinds are not v1's to read (Circ1 STATUS, later (2)).
+    ["a kind from a later build", { ...saved, kind: "amrap" }],
+    [
+      "a sided flag that is not true",
+      {
+        ...saved,
+        moves: [
+          {
+            exerciseId: "db-row",
+            name: "Dumbbell Row",
+            impact: "low",
+            sided: "yes",
+          },
+        ],
+      },
+    ],
     ["an unknown kit", { ...saved, kit: "garage" }],
     ["an unknown length", { ...saved, minutes: 15 }],
     ["a text impact flag", { ...saved, lowImpact: "no" }],
@@ -85,12 +105,55 @@ describe("readSavedCircuit", () => {
       },
     ],
     ["an unknown effort", { ...saved, effort: "brutal" }],
+    [
+      "a move that is not a move",
+      { ...saved, moves: [{ ...saved.moves[0], kind: "run" }] },
+    ],
+    [
+      "a target in another unit",
+      { ...saved, moves: [{ ...saved.moves[0], unit: "metres" }] },
+    ],
+    [
+      "a negative load",
+      { ...saved, moves: [{ ...saved.moves[0], loadKg: -5 }] },
+    ],
     ["no finished flag", { ...saved, finished: undefined }],
   ];
   for (const [what, value] of broken)
     it(`refuses ${what}`, () => {
       expect(readSavedCircuit(value)).toBeNull();
     });
+});
+
+describe("a one-sided move", () => {
+  it("keeps its flag through the save", () => {
+    const withRow = builtInCircuit({ kit: "home_gym", minutes: 20 });
+    expect(withRow.moves.some((move) => move.sided)).toBe(true);
+    const stored = savedCircuitFrom(withRow, {
+      intervalsDone: 20,
+      roundsDone: 4,
+      workSecondsDone: 800,
+      activeSeconds: 1180,
+      finished: true,
+    });
+    expect(readSavedCircuit(JSON.parse(JSON.stringify(stored)))?.moves).toEqual(
+      withRow.moves.map((move) => ({ kind: "move", unit: "seconds", ...move }))
+    );
+  });
+});
+
+describe("a held load", () => {
+  it("is read when a later build stores one", () => {
+    const loaded = {
+      ...saved,
+      moves: [{ ...saved.moves[0], loadKg: 16 }],
+    };
+    expect(readSavedCircuit(loaded)?.moves[0]).toMatchObject({
+      kind: "move",
+      unit: "seconds",
+      loadKg: 16,
+    });
+  });
 });
 
 describe("workoutCircuit", () => {

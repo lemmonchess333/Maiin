@@ -6,6 +6,7 @@ import {
   circuitKit,
   circuitMove,
   circuitMoveAllowed,
+  circuitStartersFor,
   harderCircuitMove,
 } from "../circuitMoves";
 
@@ -62,16 +63,40 @@ describe("the circuit move pool (Circ1 (9))", () => {
     expect(circuitKit("full_gym")).toBe("full_gym");
   });
 
-  it("leaves out the circuit-only exclusions (Circ1 (H))", () => {
+  it("leaves out the circuit-only exclusions (Circ1 (H), STATUS later (3))", () => {
     const allowed = (id: string, injury: string) =>
       circuitMoveAllowed(id, { kit: "full_gym", injuries: [injury] });
-    for (const injury of ["knee", "wrist", "lower_back", "shoulder"])
+    for (const injury of ["knee", "wrist", "lower_back", "shoulder", "elbow"])
       expect(allowed("burpees", injury), injury).toBe(false);
-    expect(allowed("burpees", "elbow")).toBe(true);
     expect(allowed("mountain-climbers", "wrist")).toBe(false);
-    expect(allowed("mountain-climbers", "knee")).toBe(true);
     for (const id of ["kettlebell-swing", "bicycle-crunch", "russian-twist"])
       expect(allowed(id, "lower_back"), id).toBe(false);
+    // An injury option's words hold: knee leaves out squats, lunges and
+    // mountain climbers; shoulder every push-up; elbow push-ups and
+    // burpees.
+    for (const id of [
+      "goblet-squat",
+      "bodyweight-squat",
+      "bodyweight-lunge",
+      "mountain-climbers",
+    ])
+      expect(allowed(id, "knee"), id).toBe(false);
+    for (const id of ["push-ups", "pike-push-up", "diamond-push-ups"]) {
+      expect(allowed(id, "shoulder"), id).toBe(false);
+      expect(allowed(id, "elbow"), id).toBe(false);
+    }
+    expect(allowed("glute-bridge", "knee")).toBe(true);
+    expect(allowed("plank", "shoulder")).toBe(true);
+  });
+
+  it("opens a slot on its easiest move, keeping step-ups for the ladder", () => {
+    expect(circuitStartersFor("push", { kit: "minimal" })).toEqual([
+      "push-ups",
+    ]);
+    expect(circuitStartersFor("push", { kit: "home_gym" })).toEqual([
+      "push-ups",
+      "db-shoulder-press",
+    ]);
   });
 
   it("leaves out a jump at low impact", () => {
@@ -110,5 +135,6 @@ describe("the circuit move pool (Circ1 (9))", () => {
       name: byId.get("push-ups")!.name,
       impact: "low",
     });
+    expect(circuitMove("db-row")).toMatchObject({ sided: true });
   });
 });

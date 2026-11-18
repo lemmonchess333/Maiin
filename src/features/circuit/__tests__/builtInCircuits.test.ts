@@ -9,9 +9,10 @@ import {
 import {
   CIRCUIT_MOVES,
   circuitMoveAllowed,
-  circuitMovesFor,
+  circuitStartersFor,
   type CircuitSlot,
 } from "../circuitMoves";
+import { contraindicatedFor } from "@/features/program/injurySubstitutions";
 import { circuitSeconds } from "../circuitSteps";
 import type { CircuitKit } from "../circuitTypes";
 import type { InjuryCategory } from "@/features/program/injurySubstitutions";
@@ -82,10 +83,18 @@ describe("built-in circuits (Circ1 (14), (F))", () => {
             // Distinct while the pool allows; with too few, a move
             // repeats rather than one that is ruled out (H).
             const allowed = new Set(
-              SLOTS.flatMap((slot) => circuitMovesFor(slot, filter))
+              SLOTS.flatMap((slot) => circuitStartersFor(slot, filter))
             );
             const distinct = new Set(ids).size;
             expect(distinct, where).toBe(Math.min(ids.length, allowed.size));
+            // A repeat never follows itself, and with three moves or more
+            // none ends one round and starts the next.
+            if (distinct >= 2)
+              ids.forEach((id, i) => {
+                if (i > 0) expect(id, `${where} @${i}`).not.toBe(ids[i - 1]);
+              });
+            if (distinct >= 3)
+              expect(ids[ids.length - 1], where).not.toBe(ids[0]);
           }
         });
 
@@ -161,6 +170,68 @@ describe("built-in circuits (Circ1 (14), (F))", () => {
           `${kit} ${minutes}`
         ).toBe(true);
       }
+  });
+
+  it("holds every injury option's words, one at a time and all together, on no kit (STATUS later (3))", () => {
+    for (const injuries of [...INJURIES.map((injury) => [injury]), INJURIES]) {
+      for (const minutes of CIRCUIT_MINUTES)
+        for (const lowImpact of [false, true]) {
+          const circuit = builtInCircuit({
+            kit: "minimal",
+            minutes,
+            lowImpact,
+            injuries,
+          });
+          const where = `${injuries.join(",")} ${minutes} ${lowImpact}`;
+          // The pool never empties: repeats fill a short one.
+          expect(circuit.moves, where).toHaveLength(MOVES_IN_A_ROUND[minutes]);
+          for (const { exerciseId } of circuit.moves) {
+            const avoid = CIRCUIT_MOVES[exerciseId].avoid ?? [];
+            expect(
+              injuries.filter((injury) => avoid.includes(injury)),
+              `${where} ${exerciseId}`
+            ).toEqual([]);
+            expect(contraindicatedFor(exerciseId, injuries), where).toEqual([]);
+          }
+        }
+    }
+    const ids = (injuries: string[]) =>
+      builtInCircuits({ kit: "minimal", injuries }).flatMap((circuit) =>
+        circuit.moves.map((move) => move.exerciseId)
+      );
+    for (const id of [
+      "bodyweight-squat",
+      "bodyweight-lunge",
+      "mountain-climbers",
+    ])
+      expect(ids(["knee"]), id).not.toContain(id);
+    for (const id of ["push-ups", "pike-push-up", "diamond-push-ups"])
+      expect(ids(["shoulder"]), id).not.toContain(id);
+    for (const id of ["push-ups", "burpees"])
+      expect(ids(["elbow"]), id).not.toContain(id);
+  });
+
+  it("opens a beginner on the easy push-up, never a step-up", () => {
+    for (const minutes of CIRCUIT_MINUTES) {
+      const ids = builtInCircuit({ kit: "minimal", minutes }).moves.map(
+        (move) => move.exerciseId
+      );
+      expect(ids, String(minutes)).toContain("push-ups");
+      expect(ids).not.toContain("pike-push-up");
+      expect(ids).not.toContain("diamond-push-ups");
+    }
+  });
+
+  it("marks the one-sided moves, so the runner can say when to switch", () => {
+    const sided = Object.entries(CIRCUIT_MOVES)
+      .filter(([, move]) => move.sided)
+      .map(([id]) => id)
+      .sort();
+    expect(sided).toEqual(["db-row", "single-leg-calf-raise"]);
+    const row = builtInCircuit({ kit: "home_gym", minutes: 20 }).moves.find(
+      (move) => move.exerciseId === "db-row"
+    );
+    expect(row?.sided).toBe(true);
   });
 
   it("gives the three lengths different circuits, not one at three sizes", () => {

@@ -21,14 +21,20 @@ export interface CircuitStep {
   interval: number;
 }
 
+/** What a circuit's clock is made of. */
+type CircuitClock = Pick<
+  Circuit,
+  "moves" | "rounds" | "workSeconds" | "restSeconds"
+>;
+
 /** How many work intervals a circuit holds. */
-export function circuitIntervals(circuit: Circuit): number {
+export function circuitIntervals(circuit: CircuitClock): number {
   return circuit.rounds * circuit.moves.length;
 }
 
 /** A circuit's clock time in seconds, without the count in: every
  *  interval's work, and the rest between them. No rest follows the last. */
-export function circuitSeconds(circuit: Circuit): number {
+export function circuitSeconds(circuit: CircuitClock): number {
   const intervals = circuitIntervals(circuit);
   if (intervals === 0) return 0;
   return (
@@ -95,7 +101,12 @@ export function circuitSegments(
         : step.kind === "rest"
           ? "recovery"
           : "warmup",
-    label: step.kind === "work" ? step.move.name : "Rest",
+    label:
+      step.kind === "work"
+        ? step.move.name
+        : step.kind === "rest"
+          ? "Rest"
+          : "Get ready",
     instruction:
       step.kind === "work" ? step.move.name : `Next: ${step.move.name}`,
     target: { kind: "duration", seconds: step.seconds },
@@ -104,42 +115,69 @@ export function circuitSegments(
   }));
 }
 
-/** What of a circuit has been done at a point on the timer. */
+/** What of a circuit was done. */
 export interface CircuitProgress {
-  /** Work intervals finished. */
+  /** Work intervals run in full. */
   intervalsDone: number;
-  /** Rounds finished, every move of each. */
+  /** Rounds with every interval run in full. */
   roundsDone: number;
-  /** Seconds worked, the interval under way included. */
+  /** Seconds of work run, an interval cut short included. */
   workSecondsDone: number;
-  /** Every interval finished. */
+  /** Every interval run in full: the circuit was done, not skipped to
+   *  its end. */
   complete: boolean;
 }
 
 /**
- * Progress from where the player stands: the index of its live step (the
- * steps' length once complete) and the seconds into it.
+ * The seconds the runner spent in each step, from the moments the
+ * session player started them (its checkpoint's `segmentStarts`) and the
+ * clock now. A step not reached ran none; a step skipped ran only until
+ * the skip.
+ */
+export function stepSecondsRan(
+  starts: readonly { elapsed: number }[],
+  stepCount: number,
+  now: number
+): number[] {
+  return Array.from({ length: stepCount }, (_, i) => {
+    const from = starts[i];
+    if (!from) return 0;
+    const to = starts[i + 1]?.elapsed ?? now;
+    return Math.max(0, to - from.elapsed);
+  });
+}
+
+/**
+ * What of a circuit was done, from the seconds run in each step: only
+ * work actually run counts, so skipping to the end is not finishing it
+ * (and does not climb the ladder). Tropos heuristic: an interval is done
+ * when its whole work ran; one cut short adds its seconds and no more.
  */
 export function circuitProgress(
   circuit: Circuit,
   steps: readonly CircuitStep[],
-  index: number,
-  secondsIntoStep: number
+  ranSeconds: readonly number[]
 ): CircuitProgress {
+  const doneByRound = new Map<number, number>();
+  let intervalsDone = 0;
+  let workSecondsDone = 0;
+  steps.forEach((step, i) => {
+    if (step.kind !== "work") return;
+    const ran = Math.max(0, Math.min(step.seconds, ranSeconds[i] ?? 0));
+    workSecondsDone += ran;
+    if (ran < step.seconds) return;
+    intervalsDone += 1;
+    doneByRound.set(step.round, (doneByRound.get(step.round) ?? 0) + 1);
+  });
   const moves = circuit.moves.length;
-  const passed = steps.slice(0, Math.max(0, index));
-  const finishedWork = passed.filter((step) => step.kind === "work");
-  const live = index >= 0 && index < steps.length ? steps[index] : null;
-  const liveWork =
-    live?.kind === "work"
-      ? Math.max(0, Math.min(live.seconds, Math.floor(secondsIntoStep)))
-      : 0;
-  const intervalsDone = finishedWork.length;
+  const roundsDone = [...doneByRound.values()].filter(
+    (done) => moves > 0 && done === moves
+  ).length;
+  const total = circuitIntervals(circuit);
   return {
     intervalsDone,
-    roundsDone: moves > 0 ? Math.floor(intervalsDone / moves) : 0,
-    workSecondsDone:
-      finishedWork.reduce((sum, step) => sum + step.seconds, 0) + liveWork,
-    complete: steps.length > 0 && index >= steps.length,
+    roundsDone,
+    workSecondsDone: Math.floor(workSecondsDone),
+    complete: total > 0 && intervalsDone === total,
   };
 }

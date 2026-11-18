@@ -7,6 +7,7 @@ import {
   circuitSeconds,
   circuitSegments,
   circuitSteps,
+  stepSecondsRan,
 } from "../circuitSteps";
 import type { Circuit } from "../circuitTypes";
 
@@ -69,22 +70,24 @@ describe("circuitSteps (Circ1 (10))", () => {
 describe("circuitSegments: what the session player plays", () => {
   const segments = circuitSegments(tenMinute);
 
-  it("plays work as hard and a rest as recovery, each for its seconds", () => {
+  it("plays the count in, work and rest as their own kinds, each for its seconds", () => {
+    expect(segments.slice(0, 3).map((segment) => segment.type)).toEqual([
+      "warmup",
+      "hard",
+      "recovery",
+    ]);
+    expect(segments.slice(0, 3).map((segment) => segment.label)).toEqual([
+      "Get ready",
+      tenMinute.moves[0].name,
+      "Rest",
+    ]);
     const steps = circuitSteps(tenMinute);
     expect(segments).toHaveLength(steps.length);
     segments.forEach((segment, index) => {
-      const step = steps[index];
       expect(segment.target).toEqual({
         kind: "duration",
-        seconds: step.seconds,
+        seconds: steps[index].seconds,
       });
-      expect(segment.type).toBe(
-        step.kind === "work"
-          ? "hard"
-          : step.kind === "rest"
-            ? "recovery"
-            : "warmup"
-      );
     });
   });
 
@@ -102,46 +105,78 @@ describe("circuitSegments: what the session player plays", () => {
   });
 });
 
-describe("circuitProgress", () => {
+describe("circuitProgress: only work actually run counts", () => {
   const steps = circuitSteps(tenMinute);
+  const full = steps.map((step) => step.seconds);
+  const workIndices = steps
+    .map((step, i) => (step.kind === "work" ? i : -1))
+    .filter((i) => i >= 0);
 
-  it("is nothing during the count in", () => {
-    expect(circuitProgress(tenMinute, steps, 0, 5)).toEqual({
+  it("is nothing before any work ran", () => {
+    expect(circuitProgress(tenMinute, steps, [])).toEqual({
       intervalsDone: 0,
       roundsDone: 0,
       workSecondsDone: 0,
       complete: false,
     });
-    expect(circuitProgress(tenMinute, steps, -1, 0).intervalsDone).toBe(0);
   });
 
-  it("counts the live interval's seconds, held to its length", () => {
-    expect(circuitProgress(tenMinute, steps, 1, 12.7).workSecondsDone).toBe(12);
-    expect(circuitProgress(tenMinute, steps, 1, 99).workSecondsDone).toBe(40);
-  });
-
-  it("counts an interval once its rest begins", () => {
-    expect(circuitProgress(tenMinute, steps, 2, 0)).toMatchObject({
-      intervalsDone: 1,
-      roundsDone: 0,
-      workSecondsDone: 40,
-    });
-  });
-
-  it("counts a round once its last move is done", () => {
-    // Steps: ready, then work/rest pairs; the fifth work is index 9.
-    expect(circuitProgress(tenMinute, steps, 9, 39).roundsDone).toBe(0);
-    expect(circuitProgress(tenMinute, steps, 10, 0).roundsDone).toBe(1);
-  });
-
-  it("is complete only past the last step", () => {
-    const last = steps.length - 1;
-    expect(circuitProgress(tenMinute, steps, last, 39).complete).toBe(false);
-    expect(circuitProgress(tenMinute, steps, steps.length, 0)).toEqual({
+  it("is complete when every interval ran in full", () => {
+    expect(circuitProgress(tenMinute, steps, full)).toEqual({
       intervalsDone: 10,
       roundsDone: 2,
       workSecondsDone: 400,
       complete: true,
     });
+  });
+
+  it("is not complete when the end was reached by skipping", () => {
+    // Every step passed, none of it run: skipped to the end.
+    const skipped = steps.map(() => 0);
+    expect(circuitProgress(tenMinute, steps, skipped)).toEqual({
+      intervalsDone: 0,
+      roundsDone: 0,
+      workSecondsDone: 0,
+      complete: false,
+    });
+    // One interval cut short: its seconds count, it is not done, and
+    // neither is its round or the circuit.
+    const cut = [...full];
+    cut[workIndices[7]] = 25;
+    expect(circuitProgress(tenMinute, steps, cut)).toEqual({
+      intervalsDone: 9,
+      roundsDone: 1,
+      workSecondsDone: 385,
+      complete: false,
+    });
+  });
+
+  it("counts a round once each of its moves ran in full", () => {
+    const firstRound = full.map((seconds, i) =>
+      i <= workIndices[4] ? seconds : 0
+    );
+    expect(circuitProgress(tenMinute, steps, firstRound)).toMatchObject({
+      intervalsDone: 5,
+      roundsDone: 1,
+      complete: false,
+    });
+  });
+
+  it("holds a step's seconds to its length", () => {
+    const over = full.map((seconds) => seconds + 30);
+    expect(circuitProgress(tenMinute, steps, over).workSecondsDone).toBe(400);
+  });
+});
+
+describe("stepSecondsRan: what the player's step starts say was run", () => {
+  it("measures each step from its start to the next, and the live one to now", () => {
+    const starts = [{ elapsed: 0 }, { elapsed: 10 }, { elapsed: 50 }];
+    expect(stepSecondsRan(starts, 4, 62)).toEqual([10, 40, 12, 0]);
+  });
+
+  it("gives a skipped step only the time before the skip", () => {
+    // Skipped 12 s into the first work interval.
+    const starts = [{ elapsed: 0 }, { elapsed: 10 }, { elapsed: 22 }];
+    expect(stepSecondsRan(starts, 3, 30)).toEqual([10, 12, 8]);
   });
 });
