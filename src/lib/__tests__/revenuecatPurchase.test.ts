@@ -422,5 +422,60 @@ describe("rcGetLocalizedPrices", () => {
       expect(await prices).toBeNull();
       expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
     });
+
+    it("waits one budget for the set-up and the store's answer together, not one each", async () => {
+      // The wait for sign-in and the offerings fetch each had their own
+      // 10 s, so a set-up that came late held the placeholder for 20 s.
+      vi.useFakeTimers();
+      mockPurchases.getOfferings.mockReturnValue(new Promise(() => {}));
+      const mod = await loadModule();
+      let settled = false;
+      const prices = mod.rcGetLocalizedPrices().then((p) => {
+        settled = true;
+        return p;
+      });
+      await vi.advanceTimersByTimeAsync(mod.STORE_READ_TIMEOUT_MS - 1_000);
+      await mod.configureRevenueCat(UID);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(settled).toBe(true);
+      expect(await prices).toBeNull();
+    });
+  });
+
+  it("sets the SDK up as the signed-in account when sign-in's set-up failed and stopped trying", async () => {
+    // useRevenueCatIdentity tries four times in five minutes, then stops.
+    // A read that only waited for it gave the paywall no prices, and so no
+    // buy button, for the rest of the session.
+    mockPurchases.configure.mockRejectedValue(new Error("network"));
+    mockPurchases.getOfferings.mockResolvedValue(
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "$4.99",
+            price: 4.99,
+            currencyCode: "USD",
+          },
+        },
+      ])
+    );
+    const { rcGetLocalizedPrices, rcLogIn } = await loadModule();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      expect(await rcLogIn(UID)).toBe(false);
+    }
+
+    mockPurchases.configure.mockResolvedValue(undefined);
+    expect((await rcGetLocalizedPrices(UID))?.[PID]?.priceString).toBe("$4.99");
+    expect(mockPurchases.configure).toHaveBeenLastCalledWith({
+      apiKey: "appl_test_key",
+      appUserID: UID,
+    });
+  });
+
+  it("says no prices when the set-up it starts fails, without waiting out the budget", async () => {
+    mockPurchases.configure.mockRejectedValue(new Error("network"));
+    const { rcGetLocalizedPrices } = await loadModule();
+    expect(await rcGetLocalizedPrices(UID)).toBeNull();
+    expect(mockPurchases.getOfferings).not.toHaveBeenCalled();
   });
 });

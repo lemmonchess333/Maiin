@@ -185,14 +185,14 @@ export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
   // The App Store's prices on the RC build, and no price until they come;
-  // the pound plans on the web (IAP slice 3, #1099). Every price on the
-  // page is read from these plans, never looked up by id, so it is all in
-  // one currency.
+  // the pound plans on the web (IAP slice 3, #1099; Guideline 3.1.2).
+  // Every price on the page is read from these plans, never looked up by
+  // id, so it is all in one currency.
   const {
     plans,
     failed: pricesFailed,
     retry: retryPrices,
-  } = useProPlanPrices();
+  } = useProPlanPrices(user?.uid);
   const selected = plans ? findPlan(plans, selectedPlan) : null;
   const withTrial = offersTrial(
     accountTrialEligible,
@@ -629,7 +629,9 @@ export default function Upgrade() {
             </Button>
           </div>
 
-          {onSale && (
+          {/* Renewal terms belong under a price: with none yet there is
+              nothing for them to qualify. */}
+          {onSale && plans && (
             <p className="text-micro text-muted-foreground text-center leading-snug">
               {withTrial
                 ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`

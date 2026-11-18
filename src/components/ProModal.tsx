@@ -150,16 +150,17 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   }
   const { loading, error, notice, startCheckout, requiresSignIn } =
     useProCheckout();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   // The App Store's prices on the RC build, and no price until they come;
-  // the pound plans on the web (IAP slice 3, #1099), so the displayed
-  // price matches Apple's sheet, a mismatch being an App Review flag. The CTA, the timeline and the disclosure all
-  // read the selected plan from these, never by id.
+  // the pound plans on the web (IAP slice 3, #1099; Guideline 3.1.2), so
+  // the displayed price matches Apple's sheet, a mismatch being an App
+  // Review flag. The CTA, the timeline and the disclosure all read the
+  // selected plan from these, never by id.
   const {
     plans,
     failed: pricesFailed,
     retry: retryPrices,
-  } = useProPlanPrices();
+  } = useProPlanPrices(user?.uid);
   const selected = plans ? findPlan(plans, selectedPlan) : null;
   const storeTrialEligibility = useStoreTrialEligibility();
 
