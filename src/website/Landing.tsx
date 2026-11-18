@@ -33,7 +33,7 @@ export default function Landing() {
               className="flex items-start gap-2.5 p-3 rounded-xl bg-success/10 border border-success/20 text-sm font-medium text-stage-foreground"
             >
               <CircleCheck
-                className="size-4 shrink-0 mt-0.5 text-success"
+                className="size-4 shrink-0 mt-0.5 text-success-strong"
                 aria-hidden="true"
               />
               <span>

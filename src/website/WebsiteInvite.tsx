@@ -51,7 +51,7 @@ export default function WebsiteInvite({ code }: { code: string }) {
     <div className="p-[12px] rounded-xl bg-primary/8 border border-primary/15 text-sm">
       <div className="flex items-start gap-2.5">
         <UserPlus
-          className="size-4 shrink-0 mt-0.5 text-primary"
+          className="size-4 shrink-0 mt-0.5 text-lifting-strong"
           aria-hidden="true"
         />
         <div className="min-w-0 flex-1">
