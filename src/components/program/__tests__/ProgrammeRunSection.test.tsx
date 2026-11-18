@@ -939,6 +939,29 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
   });
 
+  /* TrainWk1 call 2: a session opens its own page. The card's ⋯ opened
+     the day's sheet; it opens the run's page, which holds the same
+     actions, and nothing of the sheet is left on the tab. */
+  it("opens the run's own page from the card's ⋯", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Manage session" }));
+    expect(navigateMock).toHaveBeenLastCalledWith(`/program/run/${TODAY_KEY}`);
+    expect(screen.queryByText("Manage run")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("draws the runner on the run card, the fast stride for a tempo", () => {
     const runnerOnCard = () =>
       screen

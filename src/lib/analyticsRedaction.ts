@@ -136,6 +136,7 @@ const ROUTE_WORDS = new Set([
   "privacy",
   "program",
   "plan",
+  "lift",
   "review",
   "routine",
   "run",
