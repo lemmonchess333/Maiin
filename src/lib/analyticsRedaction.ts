@@ -115,6 +115,7 @@ const ROUTE_WORDS = new Set([
   "admin",
   "moderation",
   "dev",
+  "badge-directions",
   "badge-seal",
   "brand-bakeoff",
   "break-food",
