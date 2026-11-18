@@ -10,6 +10,7 @@ import {
   APP_ADDRESS_PREFIXES,
   SITE_PAGES,
   prerenderedKeyFor,
+  takesOverHtml,
   websiteRoute,
 } from "@/website/sitePages";
 
@@ -84,5 +85,28 @@ describe("websiteRoute", () => {
         prefix
       ).toBe(true);
     }
+  });
+});
+
+describe("takesOverHtml", () => {
+  it("takes over the HTML written for the page the address draws", () => {
+    expect(takesOverHtml("/", "home")).toBe(true);
+    expect(takesOverHtml("/lifting", "lifting")).toBe(true);
+    expect(takesOverHtml("/lifting/", "lifting")).toBe(true);
+    expect(takesOverHtml("/space/brighton", "home")).toBe(true);
+    expect(takesOverHtml("/no-such-page", "notFound")).toBe(true);
+  });
+
+  it("draws afresh over HTML written for another page", () => {
+    // A shared post arrives as Home's HTML with the post's data.
+    expect(takesOverHtml("/activity/run1", "home")).toBe(false);
+    expect(takesOverHtml("/lifting", "home")).toBe(false);
+    expect(takesOverHtml("/no-such-page", "home")).toBe(false);
+    expect(takesOverHtml("/", "notFound")).toBe(false);
+    expect(takesOverHtml("/", undefined)).toBe(false);
+  });
+
+  it("calls a bare /activity a 404, as Hosting does", () => {
+    expect(websiteRoute("/activity")).toEqual({ kind: "notFound" });
   });
 });

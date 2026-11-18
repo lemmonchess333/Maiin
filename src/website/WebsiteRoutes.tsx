@@ -36,7 +36,7 @@ function Legal({
   children: ReactNode;
 }) {
   usePageHead(sitePageHead(sitePage(page)));
-  return <SiteLayout>{children}</SiteLayout>;
+  return <SiteLayout ownMain>{children}</SiteLayout>;
 }
 
 function Post() {

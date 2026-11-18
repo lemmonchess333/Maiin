@@ -164,7 +164,6 @@ export const NOT_FOUND_TITLE = "Page not found · Tropos";
  * to App.tsx, so a route added to the app is kept here too.
  */
 export const APP_ADDRESS_PREFIXES: readonly string[] = [
-  "/activity",
   "/admin",
   "/diagnostics",
   "/dev",
@@ -210,6 +209,24 @@ export function websiteRoute(pathname: string): WebsiteRoute {
     (prefix) => path === prefix || path.startsWith(`${prefix}/`)
   );
   return app ? { kind: "appAddress" } : { kind: "notFound" };
+}
+
+/**
+ * Whether the browser takes over the HTML it was sent for `pathname`
+ * (`hydrateRoot`) or draws the page afresh: only when the HTML was written
+ * for the page this address draws (`written`, its `#root` `data-page`).
+ * Home's HTML arrives for a shared post too (publicPostPage fills it), and
+ * the 404's for any unknown address.
+ */
+export function takesOverHtml(
+  pathname: string,
+  written: string | undefined
+): boolean {
+  if (!written) return false;
+  const route = websiteRoute(pathname);
+  const drawn =
+    route.kind === "notFound" ? "notFound" : prerenderedKeyFor(pathname);
+  return written === drawn;
 }
 
 /**

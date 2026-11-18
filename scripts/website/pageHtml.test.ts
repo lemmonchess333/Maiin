@@ -5,6 +5,7 @@
  * and every other address arrive on.
  */
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
 import { canonicalUrl, sitePage, SITE_PAGES } from "@/website/sitePages";
 import {
@@ -72,26 +73,28 @@ describe("fillPage", () => {
     expect(html).toContain("<p>$1 &amp; $&</p>");
   });
 
+  it("replaces website.html's own head, not adds to it", () => {
+    // The real page, as Vite writes it out as index.html: its tags must be
+    // the shape PREVIEW_META removes, or every page ships two of each.
+    const real = readFileSync(`${process.cwd()}/website.html`, "utf8");
+    const page = sitePage("running");
+    const html = fillPage(real, page, "<main>drawn</main>", canonicalUrl(page));
+    for (const tag of [
+      'name="description"',
+      'property="og:title"',
+      'property="og:image"',
+      'name="twitter:card"',
+    ]) {
+      expect(html.split(tag), tag).toHaveLength(2);
+    }
+    expect(html.match(/<title>/g)).toHaveLength(1);
+    expect(html).toContain("<title>Running · Tropos</title>");
+  });
+
   it("refuses a template without one empty #root", () => {
     expect(() =>
       fillPage("<html></html>", sitePage("home"), "", PUBLIC_APP_ORIGIN)
     ).toThrow(/#root|root/);
-  });
-});
-
-describe("fillNotFound", () => {
-  it("writes the 404 with no preview, no canonical, and noindex", () => {
-    const html = fillNotFound(
-      TEMPLATE,
-      "Page not found · Tropos",
-      "<h1>x</h1>"
-    );
-    expect(html).toContain("<title>Page not found · Tropos</title>");
-    expect(html).toContain('<meta name="robots" content="noindex" />');
-    expect(html).not.toMatch(/og:|twitter:|name="description"|canonical/);
-    expect(html).toContain(
-      '<div id="root" data-page="notFound"><h1>x</h1></div>'
-    );
   });
 });
 

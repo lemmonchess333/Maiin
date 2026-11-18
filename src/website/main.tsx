@@ -22,7 +22,7 @@ import "@/index.css";
 import "@/website/website.css";
 import WebsiteRoutes from "@/website/WebsiteRoutes";
 import { WEBSITE_PAGE_MODULES } from "@/website/pageModules";
-import { prerenderedKeyFor, websiteRoute } from "@/website/sitePages";
+import { takesOverHtml, websiteRoute } from "@/website/sitePages";
 
 const container = document.getElementById("root")!;
 const app = (
@@ -41,10 +41,7 @@ async function start() {
   if (key && key !== "home") {
     await WEBSITE_PAGE_MODULES[key]().catch(() => undefined);
   }
-  const written = container.dataset.page;
-  const drawn =
-    route.kind === "notFound" ? "notFound" : prerenderedKeyFor(pathname);
-  if (written && written === drawn) {
+  if (takesOverHtml(pathname, container.dataset.page)) {
     hydrateRoot(container, app);
     return;
   }

@@ -17,14 +17,26 @@ import WebsiteRoutes from "@/website/WebsiteRoutes";
 
 export { NOT_FOUND_TITLE, SITE_PAGES, canonicalUrl } from "@/website/sitePages";
 
-/** The HTML inside `#root` for the page at `path`. */
+/**
+ * The HTML inside `#root` for the page at `path`. A page that throws while
+ * it is drawn would otherwise come out as the routes' blank fallback with
+ * no error at all (React hands it to the browser to retry), so any error
+ * fails the build here instead.
+ */
 export async function renderPage(path: string): Promise<string> {
+  const errors: unknown[] = [];
   const { prelude } = await prerenderToNodeStream(
     <StaticRouter location={path}>
       <WebsiteRoutes />
-    </StaticRouter>
+    </StaticRouter>,
+    { onError: (error) => void errors.push(error) }
   );
   const chunks: Buffer[] = [];
   for await (const chunk of prelude) chunks.push(Buffer.from(chunk));
+  if (errors.length > 0) {
+    throw new Error(`${path} failed to draw: ${String(errors[0])}`, {
+      cause: errors[0],
+    });
+  }
   return Buffer.concat(chunks).toString("utf8");
 }

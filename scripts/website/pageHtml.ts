@@ -63,8 +63,8 @@ export function fillPage(
   ].join("\n    ");
   return template
     .replace(PREVIEW_META, "")
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`)
-    .replace("</head>", `    ${tags}\n  </head>`)
+    .replace(/<title>[\s\S]*?<\/title>/, () => `<title>${title}</title>`)
+    .replace("</head>", () => `    ${tags}\n  </head>`)
     .replace(
       ROOT,
       () => `<div id="root" data-page="${page.key}">${body}</div>`

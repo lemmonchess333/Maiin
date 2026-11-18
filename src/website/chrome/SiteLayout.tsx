@@ -10,16 +10,24 @@ import SiteHeader from "@/website/chrome/SiteHeader";
 export default function SiteLayout({
   children,
   overPhoto = false,
+  ownMain = false,
 }: {
   children: ReactNode;
   overPhoto?: boolean;
+  /** The page draws its own <main> (the app's legal pages do), so the
+   *  layout's is a plain box: a page has one main landmark. */
+  ownMain?: boolean;
 }) {
+  const Main = ownMain ? "div" : "main";
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <SiteHeader overPhoto={overPhoto} />
-      <main id="main" className="flex-1 overflow-x-clip">
+      <Main
+        id={ownMain ? undefined : "main"}
+        className="flex-1 overflow-x-clip"
+      >
         {children}
-      </main>
+      </Main>
       <SiteFooter />
     </div>
   );

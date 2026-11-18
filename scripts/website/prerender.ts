@@ -64,9 +64,18 @@ const server = (await import(
   canonicalUrl: (page: SitePage) => string;
 };
 
+/** A page drawn whole: one headline, and no part React left for the
+ *  browser to draw again (`<!--$!-->`, a boundary that failed). */
+function assertDrawn(path: string, body: string): void {
+  if (body.includes("<!--$!-->") || body.match(/<h1[\s>]/g)?.length !== 1) {
+    throw new Error(`prerender: ${path} did not draw whole`);
+  }
+}
+
 const template = readFileSync(join(dist, "index.html"), "utf8");
 for (const page of server.SITE_PAGES) {
   const body = await server.renderPage(page.path);
+  assertDrawn(page.path, body);
   const html = fillPage(template, page, body, server.canonicalUrl(page));
   const file =
     page.path === "/"
@@ -76,15 +85,13 @@ for (const page of server.SITE_PAGES) {
   writeFileSync(file, html);
 }
 
-// The 404, over public/404.html (the GitHub Pages preview's redirect,
-// which means nothing on Hosting). Any address with no page here draws it.
+// The 404. Any address with no page here and none of the app's own draws
+// it, with a 404 status.
+const notFound = await server.renderPage("/404");
+assertDrawn("/404", notFound);
 writeFileSync(
   join(dist, "404.html"),
-  fillNotFound(
-    template,
-    server.NOT_FOUND_TITLE,
-    await server.renderPage("/404")
-  )
+  fillNotFound(template, server.NOT_FOUND_TITLE, notFound)
 );
 
 writeFileSync(
