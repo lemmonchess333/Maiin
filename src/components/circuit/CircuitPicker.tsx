@@ -77,7 +77,7 @@ export default function CircuitPicker({
                 variant="ghost"
                 fullWidth
                 onClick={() => onChoose(circuit)}
-                className="min-h-[56px] justify-start gap-[12px] bg-card p-[12px] text-left font-normal card-shadow hover:bg-card active:scale-[0.98]"
+                className="min-h-[56px] justify-start gap-[12px] bg-card p-[12px] text-left font-normal card-shadow hover:bg-card"
               >
                 <ExerciseThumb
                   exerciseId={circuit.moves[0]?.exerciseId ?? ""}
