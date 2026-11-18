@@ -52,11 +52,12 @@ Firebase's website.
 
 A TestFlight archive needs one Apple Distribution certificate and an App
 Store provisioning profile for each app and extension target: today the
-iPhone app and the Watch app. The workflow reads that list from the project
-(`scripts/ios_signed_targets.py`, its first step), so a target added later,
-such as the Live Activity widget extension
-([run-live-activity.md](run-live-activity.md)), is signed, checked and
-exported with no change to the workflow. It gets the certificate and
+iPhone app, the Watch app and the Live Activity widget extension
+([run-live-activity.md](run-live-activity.md)), which also holds the Home
+Screen and Lock Screen widgets (Wid1) and shares the App Group
+`group.com.tropos.app` with the app. The workflow reads that list from the
+project (`scripts/ios_signed_targets.py`, its first step), so a target added
+later is signed, checked and exported with no change to the workflow. It gets the certificate and
 profiles one of two ways:
 
 - **From the API key (the default).** With none of the four

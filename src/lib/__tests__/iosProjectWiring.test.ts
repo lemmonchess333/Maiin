@@ -665,10 +665,57 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     ).toContain(group);
     for (const layout of [
       "src/lib/runLiveActivity.ts",
-      "src/lib/restLiveActivity.ts",
+      "src/lib/liftLiveActivity.ts",
     ]) {
       expect(read(layout)).not.toMatch(/\bappGroup\b/);
     }
+    // The Home Screen widgets keep their snapshot and queued drinks in the
+    // same group (Wid1), named once on each side.
+    expect(read("ios/App/LiveActivities/HomeWidgetStore.swift")).toContain(
+      'static let appGroup = "group.com.tropos.app"'
+    );
+    expect(read("src/lib/homeWidgetContract.ts")).toContain(
+      'HOME_WIDGET_APP_GROUP = "group.com.tropos.app"'
+    );
+  });
+
+  it("builds the Home Screen widgets into the Live Activity extension, with its privacy manifest", () => {
+    // Wid1 call 3: the widgets live in the extension the Live Activities
+    // already ship in, so no new App ID, capability or profile is needed.
+    const target = pbxproj.match(
+      /\/\* LiveActivitiesExtension \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    expect(target).not.toBeNull();
+    const phaseFiles = (name: string) => {
+      const id = target![1].match(
+        new RegExp(`(${OBJECT_ID.source}) /\\* ${name} \\*/`)
+      )![1];
+      const phase = pbxproj.match(
+        new RegExp(
+          `${id} /\\* ${name} \\*/ = \\{[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+        )
+      )![1];
+      return [...phase.matchAll(/\/\* (.+?) in \w+ \*\//g)].map((m) => m[1]);
+    };
+    const swift = readdirSync(resolve(repoRoot, "ios/App/LiveActivities"))
+      .filter((name) => name.endsWith(".swift"))
+      .sort();
+    expect(swift).toEqual(
+      expect.arrayContaining([
+        "FoodWidget.swift",
+        "LogDrinkIntent.swift",
+        "StreakWidget.swift",
+        "TodayWidget.swift",
+      ])
+    );
+    expect(phaseFiles("Sources").sort()).toEqual(swift);
+    expect(phaseFiles("Resources").sort()).toEqual([
+      "Assets.xcassets",
+      "PrivacyInfo.xcprivacy",
+    ]);
+    const bundle = read("ios/App/LiveActivities/LiveActivitiesBundle.swift");
+    for (const widget of ["TodayWidget()", "StreakWidget()", "FoodWidget()"])
+      expect(bundle).toContain(widget);
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
@@ -739,8 +786,26 @@ describe("iOS project wiring — the app's own plugins", () => {
   it("compiles every Swift file in the app's folder into the app", () => {
     // A file left out builds green and ships nothing: its plugin is then
     // missing at run time, which the web side reads as an older shell.
+    // The one file from elsewhere is the widgets' App Group store, which
+    // the app and the widget extension compile from the extension's folder
+    // so the two read and write the very same keys (Wid1).
     expect(appSwift).toContain("MotionActivityPlugin.swift");
-    expect([...compiledSourcePaths()].sort()).toEqual([...appSwift].sort());
+    expect([...compiledSourcePaths()].sort()).toEqual(
+      [...appSwift, "HomeWidgetStore.swift"].sort()
+    );
+    const storeRefs = new Set(
+      [
+        ...pbxproj.matchAll(
+          /\/\* HomeWidgetStore\.swift in Sources \*\/ = \{isa = PBXBuildFile; fileRef = ([0-9A-F]{24})/g
+        ),
+      ].map((m) => m[1])
+    );
+    expect(storeRefs.size).toBe(1);
+    expect(
+      existsSync(
+        resolve(repoRoot, "ios/App/LiveActivities/HomeWidgetStore.swift")
+      )
+    ).toBe(true);
   });
 
   it("registers every app plugin with the bridge, under the name the web side asks for", () => {
@@ -756,8 +821,10 @@ describe("iOS project wiring — the app's own plugins", () => {
       ])
       .map(([, cls, jsName]) => ({ cls, jsName }));
     // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
+    // HomeWidgets: the Home Screen widgets' snapshot and queued drinks (Wid1).
     expect(plugins.map((p) => p.jsName).sort()).toEqual([
       "HeartRateSensor",
+      "HomeWidgets",
       "MotionActivity",
       "WatchRun",
     ]);
@@ -765,6 +832,7 @@ describe("iOS project wiring — the app's own plugins", () => {
       expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
       const callers = [
         "src/lib/heartRateSensorBridge.ts",
+        "src/lib/homeWidgets.ts",
         "src/lib/runMotionSource.ts",
         "src/lib/watchRunBridge.ts",
       ].filter((file) =>

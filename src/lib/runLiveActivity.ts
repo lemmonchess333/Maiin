@@ -37,6 +37,10 @@ import {
   loadLiveActivities,
 } from "@/lib/liveActivities";
 import { POSE_HEIGHT_PT, poseAt } from "@/lib/liveActivityArt";
+import {
+  liveActivitiesOn,
+  onLiveActivitiesSetting,
+} from "@/lib/liveActivitySetting";
 import { THEME } from "@/lib/theme";
 /* Type-only — erased at build, zero web-bundle cost (the runtime import
    below stays dynamic). */
@@ -77,6 +81,7 @@ let lastUpdateAt = 0;
 let lastPayloadKey = "";
 /** Updates sent while the run was moving, which is what turns the pose. */
 let movingUpdates = 0;
+let listening = false;
 
 type Hex = `#${string}`;
 
@@ -314,6 +319,16 @@ export async function startRunActivity(data: RunActivityData): Promise<void> {
 }
 
 async function beginRunActivity(data: RunActivityData): Promise<void> {
+  // Turned off in Settings (Wid2 call 6): no card for this run.
+  if (!liveActivitiesOn()) return;
+  if (!listening) {
+    listening = true;
+    // Turned off mid-run: the card goes (the switch ends every card), and
+    // this module forgets it, so the run's updates reach nothing.
+    onLiveActivitiesSetting(() => {
+      if (!liveActivitiesOn()) void endRunActivity();
+    });
+  }
   try {
     const plugin = (await loadLiveActivities())?.plugin;
     if (!plugin) return;

@@ -85,7 +85,9 @@ export type SettingsToggle =
   /** Use Watch for runs (connected training): `"on"`, `"off"`, or
    *  `"on:failed"` when the paired Watch could not be switched on, so the
    *  stream counts connection attempts as well as connections. */
-  | "watch_runs";
+  | "watch_runs"
+  /** The Live Activities switch (Wid2 call 6): `"on"` or `"off"`. */
+  | "live_activities";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user
