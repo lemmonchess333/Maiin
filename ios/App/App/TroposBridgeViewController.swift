@@ -9,5 +9,6 @@ final class TroposBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(WatchRunPlugin())
         bridge?.registerPluginInstance(HeartRateSensorPlugin())
         bridge?.registerPluginInstance(MotionActivityPlugin())
+        bridge?.registerPluginInstance(HomeWidgetsPlugin())
     }
 }

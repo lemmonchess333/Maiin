@@ -105,10 +105,7 @@ export default function WorkoutRestTimer({
   }, [startedAt, target, exerciseName]);
 
   // The rest outside the app: the tab's title, and the lock screen.
-  useEffect(
-    () => showRestOutside({ startedAt, target, exerciseName }),
-    [startedAt, target, exerciseName]
-  );
+  useEffect(() => showRestOutside({ startedAt, target }), [startedAt, target]);
 
   useEffect(() => {
     if (seconds >= target && !chimeFired.current) {

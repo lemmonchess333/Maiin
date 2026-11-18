@@ -8,10 +8,11 @@
  *   repaint pulse does not (`useElapsedSeconds`), and it reads the time
  *   left from the rest's start each tick, so a throttled timer is late,
  *   never wrong. The title goes back as the rest ends.
- * - On the phone, the lock screen's Live Activity (`restLiveActivity.ts`),
- *   drawn by the `LiveActivitiesExtension` widget (iOS 16.2 or later).
- *   Loaded only on a phone, so the web never fetches it. The rest-end
- *   notification (`restTimerNotification.ts`) is separate.
+ * - On the phone, the lift's Live Activity turns to the rest
+ *   (`liftLiveActivity.ts`, Wid2 call 2), drawn by the
+ *   `LiveActivitiesExtension` widget (iOS 16.2 or later). Loaded only on a
+ *   phone, so the web never fetches it. The rest-end notification
+ *   (`restTimerNotification.ts`) is separate.
  */
 import { isNativePlatform } from "@/lib/platform";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
@@ -35,7 +36,6 @@ export function showRestOutside(rest: {
   startedAt: number;
   /** The rest's length, in seconds. */
   target: number;
-  exerciseName?: string;
 }): () => void {
   const before = document.title;
   const show = () => {
@@ -48,13 +48,12 @@ export function showRestOutside(rest: {
   const token = {};
   shown = token;
   const native = isNativePlatform()
-    ? import("@/lib/restLiveActivity").catch(() => null)
+    ? import("@/lib/liftLiveActivity").catch(() => null)
     : null;
   void native?.then((activity) => {
     if (shown === token)
-      void activity?.startRestActivity({
+      void activity?.showLiftRest({
         endsAt: rest.startedAt + rest.target * 1000,
-        exerciseName: rest.exerciseName,
       });
   });
   return () => {
@@ -64,7 +63,7 @@ export function showRestOutside(rest: {
     shown = null;
     void native?.then((activity) => {
       // A rest shown since takes this one's place itself.
-      if (shown === null) void activity?.endRestActivity();
+      if (shown === null) void activity?.showLiftRest(null);
     });
   };
 }
