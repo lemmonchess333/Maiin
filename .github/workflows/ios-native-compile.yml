@@ -86,7 +86,9 @@ jobs:
           # An iPhone on the newest iOS runtime the selected Xcode's SDK
           # covers (a beta runtime newer than the SDK is passed over), by
           # version number, then the first by name, so the same image picks
-          # the same phone.
+          # the same phone. Not the iPhone Duo: it has two displays, so a
+          # screenshot has to name one, and it is launched on its own where
+          # the image has it.
           SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
           UDID=$(xcrun simctl list devices available --json | SDK="$SDK" python3 -c '
           import json, os, re, sys
@@ -99,6 +101,7 @@ jobs:
               (version(runtime), d["name"], d["udid"])
               for runtime, ds in devices.items() if version(runtime)
               for d in ds if d["name"].startswith("iPhone")
+              and not d["name"].startswith("iPhone Duo")
           )
           if not phones:
               sys.exit("no iPhone simulator is available on this runner")
