@@ -43,7 +43,7 @@ export default function ArtHero({
           className={
             picture
               ? "art-hero-frame"
-              : "art-hero-picture max-h-[42svh] md:max-h-none"
+              : "art-hero-picture max-h-[34svh] md:max-h-none"
           }
           style={{ ["--art-light" as string]: `var(--${light})` }}
         >

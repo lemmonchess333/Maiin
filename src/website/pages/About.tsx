@@ -13,7 +13,7 @@ const PROMISES = [
     body: "A week is measured against your plan and your usual week, and a league against your own plan, not against people who train twice as much.",
   },
   {
-    title: "Meal photos stay on your phone",
+    title: "Meal photos are stored only on your phone",
     body: "A photo goes to Google’s Gemini to be read only once you’ve said yes, and Tropos keeps it on your phone, never on a server.",
   },
   {

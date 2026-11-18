@@ -12,7 +12,6 @@ import challengeBoard from "@/website/screens/challenge-board.webp";
 import foodDay from "@/website/screens/food-day.webp";
 import homeToday from "@/website/screens/home-today.webp";
 import liftDay from "@/website/screens/lift-day.webp";
-import progressScore from "@/website/screens/progress-score.webp";
 import trainRun from "@/website/screens/train-run.webp";
 import { sitePage } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
@@ -92,11 +91,6 @@ const SCREENS = [
     href: foodDay,
     name: "tropos-food.webp",
     label: "Food: the day’s target and log",
-  },
-  {
-    href: progressScore,
-    name: "tropos-analytics.webp",
-    label: "Analytics: the weekly score",
   },
   {
     href: challengeBoard,
@@ -187,7 +181,7 @@ export default function Press() {
             The lockup is the mark beside the name. Keep the mark in brand
             purple, and don’t stretch, recolour or redraw either.
           </p>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {FILES.map((file) => (
               <li
                 key={file.name}
@@ -249,7 +243,7 @@ export default function Press() {
             Captured from the app on a demo account: the names and numbers on
             them are made up.
           </p>
-          <ul className="mt-8 grid gap-4 grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-8 grid items-start gap-4 grid-cols-2 lg:grid-cols-5">
             {SCREENS.map((screen) => (
               <li key={screen.name}>
                 <a
@@ -262,7 +256,7 @@ export default function Press() {
                     alt=""
                     loading="lazy"
                     decoding="async"
-                    className="w-full aspect-[3/4] object-cover object-top rounded-2xl"
+                    className="w-full h-auto rounded-2xl"
                   />
                   <span className="mt-3 flex items-start justify-between gap-2 text-sm font-semibold">
                     {screen.label}

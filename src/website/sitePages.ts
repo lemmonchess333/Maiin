@@ -115,7 +115,7 @@ export const SITE_PAGES: readonly SitePage[] = [
     path: "/support",
     title: "Support · Tropos",
     description:
-      "Get help with Tropos: email support, sign-in problems and how to delete your account.",
+      "Get help with Tropos: how to reach support, what to send with a problem and what to do when you can’t sign in.",
     image: "/og/home.jpg",
     inSitemap: true,
   },

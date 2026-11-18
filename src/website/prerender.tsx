@@ -15,7 +15,7 @@ import { prerenderToNodeStream } from "react-dom/static";
 import { StaticRouter } from "react-router-dom";
 import WebsiteRoutes from "@/website/WebsiteRoutes";
 
-export { SITE_PAGES, canonicalUrl } from "@/website/sitePages";
+export { NOT_FOUND_TITLE, SITE_PAGES, canonicalUrl } from "@/website/sitePages";
 
 /** The HTML inside `#root` for the page at `path`. */
 export async function renderPage(path: string): Promise<string> {

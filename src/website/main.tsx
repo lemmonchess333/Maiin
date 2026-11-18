@@ -7,9 +7,10 @@
  * worker of its own; the GitHub Pages build is still the whole app.
  *
  * A page whose HTML was written for this address is taken over as it is
- * (`hydrateRoot`). Any other (a shared post, which arrives as Home's HTML
- * with the post's data, or the 404) is drawn afresh, once its page's
- * script is in, so the routes' blank fallback never shows.
+ * (`hydrateRoot`): each page, Home for an address of the app's own, and
+ * the 404 (Hosting's 404.html). A shared post, which arrives as Home's
+ * HTML with the post's data, is drawn afresh, once its page's script is
+ * in, so the routes' blank fallback never shows.
  */
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
@@ -41,7 +42,9 @@ async function start() {
     await WEBSITE_PAGE_MODULES[key]().catch(() => undefined);
   }
   const written = container.dataset.page;
-  if (written && written === prerenderedKeyFor(pathname)) {
+  const drawn =
+    route.kind === "notFound" ? "notFound" : prerenderedKeyFor(pathname);
+  if (written && written === drawn) {
     hydrateRoot(container, app);
     return;
   }

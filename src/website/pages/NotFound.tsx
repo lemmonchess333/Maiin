@@ -9,16 +9,14 @@ import { usePageHead } from "@/website/usePageHead";
 /**
  * The 404: an address that is neither a page of the website nor one the
  * app handed out (`websiteRoute`). It stands on the welcome's
- * photographs, as Home does, so a page that arrives as Home's HTML and
- * becomes this one keeps its picture. Hosting answers it 200 (its last
- * rewrite sends every address to index.html), so it asks search engines
- * not to keep it.
+ * photographs, as Home does. Hosting serves it as 404.html with a 404
+ * status (scripts/website/prerender.ts writes it), and it asks search
+ * engines not to keep it, in its HTML and when the browser moves to it.
  */
 export default function NotFound() {
-  usePageHead({ title: NOT_FOUND_TITLE });
+  usePageHead({ title: NOT_FOUND_TITLE, noindex: true });
   return (
     <SiteLayout overPhoto>
-      <meta name="robots" content="noindex" />
       <section className="home-hero" aria-labelledby="not-found-title">
         <HeroPhotos />
         <div className="site-container home-hero-copy">

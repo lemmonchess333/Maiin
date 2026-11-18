@@ -89,7 +89,7 @@ export default function Food() {
         checkClass="text-nutrition-strong"
         points={[
           PRO_INCLUDES[0],
-          "Typed meals read by AI, which knows more than the built-in list",
+          "Typed meals read by AI, which handles more than the built-in food list",
         ]}
         picture={
           <div className="rounded-[24px] bg-card card-shadow p-6 space-y-4">
@@ -112,7 +112,7 @@ export default function Food() {
       </Feature>
 
       <Feature
-        title="Water and weight, without the noise"
+        title="Water and weight on Home"
         checkClass="text-nutrition-strong"
         points={[
           "A glass of water logged from Home",

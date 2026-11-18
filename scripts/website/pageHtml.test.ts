@@ -7,7 +7,13 @@
 import { describe, expect, it } from "vitest";
 import { PUBLIC_APP_ORIGIN } from "@/lib/publicLinks";
 import { canonicalUrl, sitePage, SITE_PAGES } from "@/website/sitePages";
-import { SITE_ORIGIN, fillPage, robotsTxt, sitemapXml } from "./pageHtml";
+import {
+  SITE_ORIGIN,
+  fillNotFound,
+  fillPage,
+  robotsTxt,
+  sitemapXml,
+} from "./pageHtml";
 
 const TEMPLATE = `<!doctype html>
 <html lang="en-GB">
@@ -70,6 +76,38 @@ describe("fillPage", () => {
     expect(() =>
       fillPage("<html></html>", sitePage("home"), "", PUBLIC_APP_ORIGIN)
     ).toThrow(/#root|root/);
+  });
+});
+
+describe("fillNotFound", () => {
+  it("writes the 404 with no preview, no canonical, and noindex", () => {
+    const html = fillNotFound(
+      TEMPLATE,
+      "Page not found · Tropos",
+      "<h1>x</h1>"
+    );
+    expect(html).toContain("<title>Page not found · Tropos</title>");
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+    expect(html).not.toMatch(/og:|twitter:|name="description"|canonical/);
+    expect(html).toContain(
+      '<div id="root" data-page="notFound"><h1>x</h1></div>'
+    );
+  });
+});
+
+describe("fillNotFound", () => {
+  it("writes the 404 with no preview, no canonical, and noindex", () => {
+    const html = fillNotFound(
+      TEMPLATE,
+      "Page not found · Tropos",
+      "<h1>x</h1>"
+    );
+    expect(html).toContain("<title>Page not found · Tropos</title>");
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+    expect(html).not.toMatch(/og:|twitter:|name="description"|canonical/);
+    expect(html).toContain(
+      '<div id="root" data-page="notFound"><h1>x</h1></div>'
+    );
   });
 });
 

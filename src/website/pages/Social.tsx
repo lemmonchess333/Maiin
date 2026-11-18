@@ -79,6 +79,7 @@ export default function Social() {
       >
         <p>
           Join a challenge and the sessions you already log count toward it.
+          Challenges open once at least 10 people are training on Tropos.
         </p>
         <ul className="flex gap-3 pt-2" aria-hidden="true">
           {MEDALS.map((tier) => (
@@ -121,7 +122,8 @@ export default function Social() {
       >
         <p>
           Join one if you want a stake in the week. Three sessions done of three
-          planned beats six runs half done.
+          planned beats six runs half done. Leagues open once at least 10 people
+          are training on Tropos.
         </p>
       </Feature>
 
@@ -139,9 +141,8 @@ export default function Social() {
           for, or one for a way of training you like.
         </p>
         <p className="text-base">
-          Challenges, the league and Spaces open once at least 10 people are
-          training on Tropos. Circles, the feed and following work from your
-          first day.
+          Spaces open once at least 10 people are training on Tropos. Circles,
+          the feed and following work from your first day.
         </p>
       </Feature>
 

@@ -11,13 +11,14 @@
  * with that page's title, description, canonical address and preview
  * tags: Home over `dist/index.html`, every other page as
  * `dist/<page>/index.html`, which firebase.json's `trailingSlash: false`
- * serves at `/<page>`. Then sitemap.xml, robots.txt and the preview
- * pictures (`src/website/og/`).
+ * serves at `/<page>`. Then the 404 (`404.html`, which Hosting serves with
+ * a 404 status), sitemap.xml, robots.txt and the preview pictures
+ * (`src/website/og/`).
  *
- * `dist/index.html` stays the page Hosting sends for every other address
- * (firebase.json's last rewrite) and the page publicPostPage fills with a
- * shared post (functions/lib/publicPost.js), so it keeps no canonical
- * address: a post's page would otherwise name Home as itself.
+ * `dist/index.html` stays the page Hosting sends for every address of the
+ * app's own (firebase.json's last rewrite) and the page publicPostPage
+ * fills with a shared post (functions/lib/publicPost.js), so it keeps no
+ * canonical address: a post's page would otherwise name Home as itself.
  */
 import { build } from "vite";
 import {
@@ -30,7 +31,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { SitePage } from "../../src/website/sitePages";
-import { fillPage, robotsTxt, sitemapXml } from "./pageHtml";
+import { fillNotFound, fillPage, robotsTxt, sitemapXml } from "./pageHtml";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const dist = join(root, "dist");
@@ -59,6 +60,7 @@ const server = (await import(
 )) as {
   renderPage: (path: string) => Promise<string>;
   SITE_PAGES: readonly SitePage[];
+  NOT_FOUND_TITLE: string;
   canonicalUrl: (page: SitePage) => string;
 };
 
@@ -73,6 +75,17 @@ for (const page of server.SITE_PAGES) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, html);
 }
+
+// The 404, over public/404.html (the GitHub Pages preview's redirect,
+// which means nothing on Hosting). Any address with no page here draws it.
+writeFileSync(
+  join(dist, "404.html"),
+  fillNotFound(
+    template,
+    server.NOT_FOUND_TITLE,
+    await server.renderPage("/404")
+  )
+);
 
 writeFileSync(
   join(dist, "sitemap.xml"),

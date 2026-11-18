@@ -216,6 +216,21 @@
     );
   pointer-events: none;
 }
+@media (min-width: 768px) {
+  .home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to right,
+      rgb(0 0 0 / 0.72) 0,
+      rgb(0 0 0 / 0.5) 34%,
+      rgb(0 0 0 / 0) 62%
+    );
+    pointer-events: none;
+  }
+}
 .home-hero-copy {
   padding-bottom: calc(var(--safe-bottom) + 32px);
 }
@@ -254,7 +269,8 @@
   );
 }
 .art-hero-picture img {
-  position: relative;
+  position: absolute;
+  inset: 7%;
   width: 86%;
   height: 86%;
   object-fit: contain;
@@ -286,7 +302,7 @@
    middle. */
 @media (max-width: 767px) {
   .art-hero-frame > * {
-    max-height: 40svh;
+    max-height: 34svh;
   }
   .art-hero-frame .app-screen {
     max-width: 16rem;
@@ -309,6 +325,11 @@
     0 0 0 1px hsl(0 0% 100% / 0.1),
     0 1px 0 0 hsl(0 0% 100% / 0.14) inset,
     0 30px 60px -20px hsl(0 0% 0% / 0.7);
+}
+@media (min-width: 1024px) {
+  .app-screen {
+    max-width: 24rem;
+  }
 }
 .app-screen img {
   display: block;
@@ -334,9 +355,12 @@
     transparent
   );
 }
+.sport-card-art {
+  overflow: hidden;
+}
 .sport-card-art img {
   position: relative;
-  height: 100%;
+  height: 11rem;
   width: auto;
   max-width: 100%;
   object-fit: contain;

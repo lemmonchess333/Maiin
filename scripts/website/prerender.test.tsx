@@ -50,6 +50,12 @@ describe("each page drawn at build time", () => {
     expect(html).toContain(`href="${APP_STORE_URL}"`);
   });
 
+  it("draws the 404 for an address that is not a page", async () => {
+    const html = await renderPage("/404");
+    expect(textOf(html)).toContain("There’s no page at this address");
+    expect(html.match(/alt="Download on the App Store"/g)).toHaveLength(1);
+  });
+
   it.each(
     SITE_PAGES.filter((p) => !["privacy", "terms", "support"].includes(p.key))
   )("$path speaks in the house voice", async (page) => {

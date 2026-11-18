@@ -28,7 +28,7 @@ import {
 } from "../../../scripts/website/hostingResolve";
 import { ASSOCIATION_PATHS } from "../../../scripts/ios/universal-links";
 import { WEBSITE_OUTPUT } from "../../../scripts/website/websiteEntry";
-import { SITE_PAGES } from "@/website/sitePages";
+import { APP_ADDRESS_PREFIXES, SITE_PAGES } from "@/website/sitePages";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -209,8 +209,14 @@ const KEPT: Kept[] = [
   {
     address: "/blog",
     from: "nowhere: an address nothing hands out",
-    hosting: WEBSITE,
+    hosting: { kind: "404" },
     shows: { page: "notFound" },
+  },
+  {
+    address: "/settings",
+    from: "the old web app's Settings, its section list",
+    hosting: WEBSITE,
+    shows: { page: "landing" },
   },
   {
     address: "/activity/run1",
@@ -354,6 +360,40 @@ describe("Firebase Hosting answers every kept address", () => {
       kind: "file",
       file: "food/index.html",
     });
+  });
+
+  it("sends every one of the app's addresses to Home's page, and nothing else", () => {
+    // firebase.json's last rewrite is built from the same list the routes
+    // read (`APP_ADDRESS_PREFIXES`, pinned to App.tsx by sitePages.test.ts);
+    // a shared post has its own rewrite, to the function, ahead of it.
+    const rule = hosting.rewrites?.at(-1);
+    const names = APP_ADDRESS_PREFIXES.filter((p) => p !== "/activity").map(
+      (p) => p.slice(1)
+    );
+    expect(rule).toEqual({
+      regex: `^/(?:${names.join("|")})(?:/.*)?$`,
+      destination: "/index.html",
+    });
+    for (const prefix of APP_ADDRESS_PREFIXES.filter(
+      (p) => p !== "/activity"
+    )) {
+      for (const address of [prefix, `${prefix}/x`, `${prefix}/x/y`]) {
+        expect(resolveHosting(hosting, files, address), address).toEqual(
+          WEBSITE
+        );
+      }
+      expect(resolveHosting(hosting, files, `${prefix}x`)).toEqual({
+        kind: "404",
+      });
+    }
+  });
+
+  it("answers an address nothing hands out with the 404", () => {
+    for (const address of ["/blog", "/login", "/lifting/old", "/Maiin/"]) {
+      expect(resolveHosting(hosting, files, address), address).toEqual({
+        kind: "404",
+      });
+    }
   });
 
   it("serves each page drawn at build time at its address, without a trailing slash", () => {

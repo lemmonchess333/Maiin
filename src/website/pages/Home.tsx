@@ -208,7 +208,7 @@ export default function Home() {
         points={[
           "Props and comments on the sessions you share",
           "Circles of up to 8, with meet-ups for a run or a lift",
-          "Weekly challenges, and a league scored against your own plan",
+          "Challenges and a weekly league, once 10 people train on Tropos",
         ]}
         picture={
           <AppScreen
@@ -236,7 +236,7 @@ export default function Home() {
           <div>
             <p className="site-kicker text-lifting-strong">Tropos Pro</p>
             <h2 id="pro-title" className="site-h2 mt-2">
-              More done for you, when you want it
+              What Pro adds
             </h2>
             <p className="site-lede mt-4 text-muted-foreground">
               Your plan, 5K and 10K race plans, run tracking, and typed and

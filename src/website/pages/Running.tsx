@@ -73,7 +73,7 @@ export default function Running() {
         points={[
           "Spoken splits and pace alerts while you run",
           "Plan a route and run it again against your last time",
-          "Mileage on each pair of shoes",
+          "Segments timed against the people you follow",
         ]}
         picture={
           <div
@@ -96,7 +96,7 @@ export default function Running() {
       >
         <p>
           GPS runs with pace, splits, elevation and a route map coloured by
-          pace.
+          pace, and the mileage on each pair of shoes.
         </p>
       </Feature>
 
@@ -106,7 +106,7 @@ export default function Running() {
         points={[
           "Hide the start and end of the runs you share",
           "Privacy zones around the places you choose",
-          "Segments timed against the people you follow",
+          "Share with your followers, with everyone or not at all",
         ]}
       >
         <p>

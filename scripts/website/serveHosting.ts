@@ -158,6 +158,11 @@ createServer((req, res) => {
     );
     return;
   }
+  if (answer.kind === "404" && files.has("404.html")) {
+    res.writeHead(404, { "Content-Type": TYPES[".html"] });
+    res.end(readFileSync(join(dist, "404.html")));
+    return;
+  }
   res.writeHead(answer.kind === "reserved" ? 501 : 404).end();
 }).listen(port, () => {
   console.log(`troposfit.com's Hosting build on http://localhost:${port}`);

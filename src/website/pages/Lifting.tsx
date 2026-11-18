@@ -4,7 +4,6 @@ import Feature from "@/website/blocks/Feature";
 import GetTheApp from "@/website/blocks/GetTheApp";
 import SiteLayout from "@/website/chrome/SiteLayout";
 import liftDay from "@/website/screens/lift-day.webp";
-import progressScore from "@/website/screens/progress-score.webp";
 import { sitePage } from "@/website/sitePages";
 import { usePageHead } from "@/website/usePageHead";
 
@@ -107,14 +106,6 @@ export default function Lifting() {
           "A map of the muscles you’ve trained",
           "A review of each week",
         ]}
-        picture={
-          <AppScreen
-            src={progressScore}
-            alt="Tropos’s Analytics: a weekly performance score of 92, its trend over a month, and the last 30 days, 15 sessions, 52.8k kg lifted and 44 km run."
-            width={786}
-            height={1540}
-          />
-        }
       >
         <p>
           A weekly score from 0 to 100 says how your training went, and

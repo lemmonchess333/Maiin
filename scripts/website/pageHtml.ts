@@ -71,6 +71,30 @@ export function fillPage(
     );
 }
 
+/**
+ * `template` as the 404, which Hosting serves with a 404 status for any
+ * address firebase.json does not send elsewhere: the page drawn, its
+ * title, no description, preview or canonical address, and a word to
+ * search engines not to keep it.
+ */
+export function fillNotFound(
+  template: string,
+  title: string,
+  body: string
+): string {
+  if (template.split(ROOT).length !== 2) {
+    throw new Error(`the template has no single ${ROOT}`);
+  }
+  return template
+    .replace(PREVIEW_META, "")
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+    .replace(
+      "</head>",
+      `    <meta name="robots" content="noindex" />\n  </head>`
+    )
+    .replace(ROOT, () => `<div id="root" data-page="notFound">${body}</div>`);
+}
+
 /** sitemap.xml: every page the table lists for it, by its canonical
  *  address. */
 export function sitemapXml(

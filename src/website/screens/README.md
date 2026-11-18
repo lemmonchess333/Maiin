@@ -16,7 +16,6 @@ screen changes; keep the name, and change its row.
 | ---------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `home-today.webp`      | `docs/visual-audit/trim-2026-11-11/home-top-after-393-dark.webp`                             | Home: today's lift, its drawing, the week      |
 | `food-day.webp`        | `docs/visual-audit/food-2026-11-11/built-6-wheel-after-393-dark.webp`                        | Food: the calories left, macros, the food log  |
-| `progress-score.webp`  | `docs/visual-audit/trim-2026-11-11/score-overview-after-393-dark.webp`                       | Analytics: the weekly score and 30 days        |
 | `lift-day.webp`        | `docs/visual-audit/lift22-2026-11-12/after-dark.webp`                                        | Train: a lift day's exercises, with a superset |
 | `challenge-board.webp` | `docs/visual-audit/trim-2026-11-11/board-weekly-after-393-dark.webp`                         | Together: a weekly challenge's board           |
 | `train-run.webp`       | `docs/visual-audit/plan-photos-2026-11-13/train-race-band.webp` (dark half, its left 392 px) | Train: the next run and the race plan          |

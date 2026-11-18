@@ -61,7 +61,7 @@ export default function Support() {
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
               <li>What you were doing when it happened</li>
               <li>What you expected vs. what you saw (screenshots help)</li>
-              <li>Your device and whether you use the app or the website</li>
+              <li>Your iPhone model and its iOS version</li>
               <li>The email address on your Tropos account</li>
             </ul>
           </section>
@@ -75,8 +75,8 @@ export default function Support() {
               <span className="text-foreground font-medium">
                 Forgot password
               </span>{" "}
-              on the sign-in screen — it works for Google and Apple accounts too
-              (it emails you a link that sets a password). Still stuck? Email us
+              on the sign-in screen. It works for Google and Apple accounts too:
+              it emails you a link that sets a password. Still stuck? Email us
               from the address on your account.
             </p>
           </section>

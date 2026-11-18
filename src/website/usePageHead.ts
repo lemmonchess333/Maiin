@@ -19,10 +19,14 @@ function headElement<T extends HTMLElement>(
  * The page's first HTML already carries them (`scripts/website/
  * prerender.ts`); this is for the moves after it. A page with no entry
  * in the table (a shared post, the 404) passes its own title and nothing
- * else, and the canonical address is taken away.
+ * else, and the canonical address is taken away; the 404 asks search
+ * engines not to keep it (`noindex`).
  */
-export function usePageHead(page: SitePage | { title: string }): void {
+export function usePageHead(
+  page: SitePage | { title: string; noindex?: boolean }
+): void {
   const title = page.title;
+  const noindex = "noindex" in page && page.noindex === true;
   const description = "description" in page ? page.description : null;
   const canonical = "path" in page ? canonicalUrl(page) : null;
   useEffect(() => {
@@ -46,5 +50,17 @@ export function usePageHead(page: SitePage | { title: string }): void {
         return made;
       }).href = canonical;
     }
-  }, [title, description, canonical]);
+    const robots = document.head.querySelector<HTMLMetaElement>(
+      'meta[name="robots"]'
+    );
+    if (!noindex) {
+      robots?.remove();
+    } else {
+      headElement('meta[name="robots"]', () => {
+        const meta = document.createElement("meta");
+        meta.name = "robots";
+        return meta;
+      }).content = "noindex";
+    }
+  }, [title, description, canonical, noindex]);
 }

@@ -13,12 +13,15 @@
  * `/about`. An address that matches no file keeps its slash either way
  * and goes on to the rewrites. Checked against the Hosting emulator
  * (firebase-tools 14) on 18 November 2026. Globs: `**` is any run of
- * characters, `*` any run within one segment, and `<dir>/**` also takes
- * `<dir>` itself.
+ * characters and `*` any run within one segment; `<dir>/**` does not take
+ * `<dir>` itself (the emulator answers `/settings` 404 under a lone
+ * `/settings/**`). A rule may give a `regex` (RE2) in place of a glob.
+ * Nothing matched is Hosting's 404, which serves the deployed 404.html.
  */
 
 export interface HostingRewrite {
-  source: string;
+  source?: string;
+  regex?: string;
   destination?: string;
   function?: { functionId: string; region?: string };
 }
@@ -44,8 +47,7 @@ export type HostingAnswer =
 
 /** A Hosting glob as a regular expression over a path. */
 export function globToRegExp(glob: string): RegExp {
-  const tail = glob.endsWith("/**");
-  const body = tail ? glob.slice(0, -3) : glob;
+  const body = glob;
   let pattern = "";
   for (let i = 0; i < body.length; i++) {
     const ch = body[i];
@@ -58,7 +60,13 @@ export function globToRegExp(glob: string): RegExp {
       pattern += ch.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
     }
   }
-  return new RegExp(`^${pattern}${tail ? "(?:/.*)?" : ""}$`);
+  return new RegExp(`^${pattern}$`);
+}
+
+/** A rewrite's own pattern: its `regex`, or its `source` glob. */
+function ruleRegExp(rule: { source?: string; regex?: string }): RegExp {
+  if (rule.regex) return new RegExp(rule.regex);
+  return globToRegExp(rule.source ?? "");
 }
 
 /**
@@ -95,7 +103,7 @@ export function resolveHosting(
     return { kind: "file", file: index };
   }
   for (const rewrite of config.rewrites ?? []) {
-    if (!globToRegExp(rewrite.source).test(pathname)) continue;
+    if (!ruleRegExp(rewrite).test(pathname)) continue;
     if (rewrite.function) {
       return {
         kind: "function",
