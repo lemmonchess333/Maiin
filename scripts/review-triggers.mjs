@@ -559,7 +559,7 @@ export function main(argv = process.argv.slice(2), git = defaultGit) {
       for (const w of warnings) console.log(`::warning::${w}`);
       for (const t of result.touched) {
         console.log(
-          `::warning file=${t.path}::This change edits a gate file (${GATE_MANIFEST_PATH}, read from the base). A check the change can edit is a check it can switch off: review this file's diff on its own.`
+          `::warning file=${t.path}::This change edits a gate file listed in ${GATE_MANIFEST_PATH}. A check the change can edit is a check it can switch off: review this file's diff on its own.`
         );
       }
       const summary = process.env.GITHUB_STEP_SUMMARY;
