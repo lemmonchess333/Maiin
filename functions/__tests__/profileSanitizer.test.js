@@ -368,18 +368,18 @@ describe("sanitizeProfileData — birthYear", () => {
   const NOW = new Date("2026-11-13T12:00:00Z");
   const kept = (value) => cleanBirthYear(value, NOW);
 
-  it("keeps a year from this year less 120 to this year less 16", () => {
+  it("keeps a year from this year less 120 to this year less 18", () => {
     expect(kept(1990)).toBe(1990);
-    expect(kept(2010)).toBe(2010);
+    expect(kept(2008)).toBe(2008);
     expect(kept(1906)).toBe(1906);
   });
 
   it("keeps one year more at the young end, for a time zone already in 2027", () => {
-    expect(kept(2011)).toBe(2011);
+    expect(kept(2009)).toBe(2009);
   });
 
   it("drops a year past those, and anything not a whole year", () => {
-    for (const value of [2012, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
+    for (const value of [2010, 2026, 2030, 1905, 1990.5, "1990", null, NaN])
       expect(kept(value)).toBeUndefined();
   });
 
@@ -401,11 +401,11 @@ describe("sanitizeProfileData — numeric fields", () => {
   });
 
   it("drops out-of-range numbers (security: server-side enforcement)", () => {
-    // Client UI blocks <16 / >120 age; this path is for callers
+    // Client UI blocks <18 / >120 age; this path is for callers
     // that bypass the client (direct API calls). Pin that the
     // server gate is the actual enforcement.
     const out = sanitizeProfileData({
-      age: 15,
+      age: 17,
       weightKg: 5,
       heightCm: 50,
     });

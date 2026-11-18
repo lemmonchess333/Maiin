@@ -21,7 +21,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: October 2026
+            Last updated: November 2026
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export default function TermsOfService() {
               2. Eligibility
             </h2>
             <p>
-              You must be at least 16 years old to use Tropos. By using the App,
+              You must be at least 18 years old to use Tropos. By using the App,
               you represent that you meet this age requirement.
             </p>
           </section>

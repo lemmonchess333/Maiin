@@ -1624,7 +1624,7 @@ describe("the year of birth", () => {
   const yearField = () =>
     screen.getByRole("textbox", { name: SETUP.birthYear });
   const continueButton = () => screen.getByRole("button", { name: "Continue" });
-  const underSixteen = "You need to be at least 16 to use Tropos.";
+  const underEighteen = "You need to be at least 18 to use Tropos.";
   const atAboutYou = () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
@@ -1649,12 +1649,12 @@ describe("the year of birth", () => {
     expect(continueButton()).toBeEnabled();
   });
 
-  it("takes this year less 16, and refuses the year after with the gate's line", () => {
+  it("takes this year less 18, and refuses the year after with the gate's line", () => {
     atAboutYou();
-    enter(String(year - 15));
-    expect(screen.getByRole("alert")).toHaveTextContent(underSixteen);
+    enter(String(year - 17));
+    expect(screen.getByRole("alert")).toHaveTextContent(underEighteen);
     expect(continueButton()).toBeDisabled();
-    enter(String(year - 16));
+    enter(String(year - 18));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(continueButton()).toBeEnabled();
   });

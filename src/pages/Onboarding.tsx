@@ -455,7 +455,7 @@ export default function Onboarding() {
   const trainingWhy = draft?.trainingWhy ?? "";
   const currentDate = useLocalDateKey();
   /* The year of birth, checked in the year's terms (src/lib/age.ts): this
-     year less 16 or earlier passes, and a later year is refused with the
+     year less 18 or earlier passes, and a later year is refused with the
      age gate's line. */
   const birthYear = parseBirthYear(birthYearText);
   const birthYearIssue =

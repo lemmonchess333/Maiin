@@ -538,7 +538,8 @@ service cloud.firestore {
        born, which their age is worked out from for calories and
        heart-rate zones. Settings → Profile writes it; setup sends it
        through completeOnboarding. A whole year from this year less 120 to
-       this year less 16. The young end takes one year more, here and in
+       this year less 18 (Biz1 call 4; 16 before it). The young end takes
+       one year more, here and in
        profileSanitizer.js's cleanBirthYear only: request.time is UTC, and
        at New Year a person's own year can already be the next one, which
        the app (holding the exact limit) counts on. `null` passes, as for
@@ -550,7 +551,7 @@ service cloud.firestore {
         || v == null
         || (
           v is int
-          && v <= request.time.year() - 15
+          && v <= request.time.year() - 17
           && v >= request.time.year() - 120
         );
     }
