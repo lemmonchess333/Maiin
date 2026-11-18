@@ -159,7 +159,7 @@ describe("the bar's rim on dark is the card's lit edge at its size", () => {
 
   it("its hairline of light parts from the page as a card's top edge does", () => {
     // A card's lit edge is about 1.55:1 against the page (tokens.css).
-    // The bar's measured about 1.2:1 at the top before this.
+    // The bar's measured 1.37:1 at the top before this.
     const hairline = whiteOver(whiteAlpha(dark, "nav-frost-highlight"), solid);
     expect(contrast(hairline, page)).toBeGreaterThanOrEqual(1.5);
   });

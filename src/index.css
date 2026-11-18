@@ -432,9 +432,9 @@
   --glass-bg: rgba(18, 18, 22, 0.97);
   /* The tab bar's rim on dark: the card's lit edge at the bar's size
      (DS6, DESIGN_GUIDE §14o), a faint outline all round and a hairline of
-     light along the top. At 7% and 10% the top measured about 1.2:1
+     light along the top. At 7% and 10% the hairline measured 1.37:1
      against the page, where a card's lit edge is about 1.55:1; at 8% and
-     14% the hairline is about 1.55:1 too. */
+     14% it is 1.55:1 too. */
   --glass-border: rgba(255, 255, 255, 0.08);
   --surface-solid: #151519;
   /* The direction the inline literal always assumed — correct here only. */
