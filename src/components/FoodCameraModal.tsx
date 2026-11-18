@@ -1262,12 +1262,13 @@ export default function FoodCameraModal({
             <p className="text-sm text-muted-foreground leading-relaxed">
               {deniedCopy}
             </p>
-            {/* The iPhone app is not a web page: it names the phone's
-                Settings, and only the web build names the browser's. */}
+            {/* The app is not a web page: it names Settings (an iPhone's,
+                an iPad's running the iPhone app, or later an Android
+                phone's), and only the web build names the browser's. */}
             {cameraState === "denied" && (
               <p className="text-xs text-muted-foreground leading-relaxed pt-1">
                 {isNativePlatform()
-                  ? "To turn it back on, allow the camera for Tropos in your phone’s Settings."
+                  ? "To turn it back on, allow the camera for Tropos in Settings."
                   : "To turn it back on, allow the camera for Tropos in your browser’s settings."}
               </p>
             )}

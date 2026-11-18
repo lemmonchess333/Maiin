@@ -62,12 +62,12 @@ afterEach(() => {
 });
 
 describe("FoodCameraModal: camera access refused", () => {
-  it("in the iPhone app, names the phone's Settings and no browser", async () => {
+  it("in the app, names Settings and no browser", async () => {
     nativeMock.mockReturnValue(true);
     const { container } = render(<FoodCameraModal {...props} />);
     expect(
       await screen.findByText(
-        "To turn it back on, allow the camera for Tropos in your phone’s Settings."
+        "To turn it back on, allow the camera for Tropos in Settings."
       )
     ).toBeTruthy();
     expect(container.textContent).not.toMatch(/browser/i);
