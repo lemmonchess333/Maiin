@@ -47,6 +47,7 @@ src/
 │   └── social/         # Social feed, activity cards
 ├── features/           # Feature modules (see "Feature Modules" below)
 │   ├── challenges/     # Challenge system
+│   ├── circuit/        # Circuit mode: moves, built-in circuits, the ladder (Circ1)
 │   ├── goalSpace/      # Goal Spaces / Circles
 │   ├── league/         # Weekly leagues: the card, the page, the reveal (Soc15 call 3)
 │   ├── program/        # Workout program engine (engine, templates, scheduler)
@@ -250,6 +251,20 @@ the client's copy of `functions/lib/leagueRules.js` (pinned by
 - `variationBank.ts` — Exercise variation database
 - `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
 - `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
+
+### circuit/
+
+Circuit mode (Circ1): a way of lifting measured in work per minute, saved
+as a workout with `format: "circuit"`, never a third sport (ADR-0002's two
+kinds stand). Pure logic, no Firestore: `circuitTypes.ts` (the vocabulary),
+`circuitMoves.ts` (the move pool: released art ∩ kit tier ∩ injuries, each
+high or low impact), `builtInCircuits.ts` (six per kit tier: 10, 20 and 30
+minutes, standard 40/20 and low impact 30/30), `circuitSteps.ts` (the
+timer's steps as `useSessionPlayer` segments), `circuitDose.ts` (the
+Easy / Right / Hard ladder), `circuitRules.ts` (the 7-minute rule, the
+Compendium burn, a best) and `savedCircuit.ts` (the stored shape and its
+checked reader, `workoutCircuit`). A circuit's moves live in
+`workout.circuit.moves` and its `exercises` stay empty (Circ1 (B)).
 
 ## Custom Hooks (src/hooks/)
 
