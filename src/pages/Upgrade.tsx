@@ -69,6 +69,7 @@ import {
   manageSubscription,
 } from "@/lib/purchaseProvider";
 import ProNotOnSale from "@/components/paywall/ProNotOnSale";
+import PlanPricesPending from "@/components/paywall/PlanPricesPending";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialDetails from "@/components/TrialDetails";
 import { runningTrial } from "@/lib/subscriptionTrial";
@@ -183,11 +184,16 @@ export default function Upgrade() {
   const [beat, setBeat] = useState<Beat>("offer");
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
-  // Apple-localized prices on the RC build; hardcoded proPlans fallback
-  // elsewhere (IAP slice 3, #1099). Every price on the page is read from
-  // these plans, never looked up by id, so it is all in one currency.
-  const plans = useProPlanPrices();
-  const selected = findPlan(plans, selectedPlan);
+  // The App Store's prices on the RC build, and no price until they come;
+  // the pound plans on the web (IAP slice 3, #1099; launch audit
+  // 2026-11-18). Every price on the page is read from these plans, never
+  // looked up by id, so it is all in one currency.
+  const {
+    plans,
+    failed: pricesFailed,
+    retry: retryPrices,
+  } = useProPlanPrices();
+  const selected = plans ? findPlan(plans, selectedPlan) : null;
   const withTrial = offersTrial(
     accountTrialEligible,
     storeTrialEligibility,
@@ -568,6 +574,8 @@ export default function Upgrade() {
               until the person picks another on the plans beat. */}
           {!onSale ? (
             <ProNotOnSale />
+          ) : !plans || !selected ? (
+            <PlanPricesPending failed={pricesFailed} onRetry={retryPrices} />
           ) : withTrial ? (
             <div className="space-y-1 text-center">
               <p className="text-base font-bold text-foreground text-balance">
@@ -592,7 +600,7 @@ export default function Upgrade() {
           <div className="space-y-2">
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
-            {onSale && (
+            {onSale && plans && (
               <Button
                 variant="neutral"
                 size="lg"
@@ -624,7 +632,7 @@ export default function Upgrade() {
       )}
 
       {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
-      {canBuy && onSale && beat === "plans" && (
+      {canBuy && onSale && plans && selected && beat === "plans" && (
         <section className="space-y-4" aria-labelledby="pro-plans-heading">
           <div className="space-y-1">
             <h1
