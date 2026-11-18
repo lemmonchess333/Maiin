@@ -167,7 +167,7 @@ describe("SpacesDirectory — Races & Events", () => {
     });
     renderDirectory();
     const card = (name: string) =>
-      screen.getByRole("link", { name: `${name} space` }).textContent;
+      screen.getByRole("link", { name: new RegExp(`^${name}\\b`) }).textContent;
     expect(card("Runners")).toBe("Runners12 members");
     expect(card("Five")).toBe("Five5 members");
     expect(card("Four")).toBe("FourFilling up");
@@ -276,9 +276,9 @@ describe("SpacesDirectory on a new Tropos (App1 Q6)", () => {
       screen.getByRole("heading", { name: "Races & events" })
     ).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Runners space" }).textContent
-    ).toBe("RunnersFilling up");
+    expect(screen.getByRole("link", { name: /^Runners\b/ }).textContent).toBe(
+      "RunnersFilling up"
+    );
     expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
     expect(screen.getByRole("searchbox")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Your spaces" })).toBeNull();

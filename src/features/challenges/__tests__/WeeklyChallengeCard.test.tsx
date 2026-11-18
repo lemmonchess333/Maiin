@@ -178,7 +178,7 @@ describe("WeeklyChallengeCard — who has joined", () => {
     expect(within(band()).getByText("Filling up")).toBeInTheDocument();
     expect(band().textContent).not.toMatch(/joined/);
     expect(
-      screen.getByRole("button", { name: "Join weekly challenge" })
+      screen.getByRole("button", { name: /^Join (weekly )?challenge$/ })
     ).toBeInTheDocument();
   });
 

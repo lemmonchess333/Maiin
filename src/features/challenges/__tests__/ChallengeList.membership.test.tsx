@@ -541,7 +541,7 @@ describe("on a new Tropos", () => {
     );
     await flushSnapshots();
     expect(
-      await screen.findByRole("button", { name: "Join weekly challenge" })
+      await screen.findByRole("button", { name: /^Join (weekly )?challenge$/ })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "This week" })

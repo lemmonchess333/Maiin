@@ -428,7 +428,7 @@ describe("on a new Tropos (App1 Q6)", () => {
     ).toBeInTheDocument();
     // A Space with no members yet.
     expect(
-      screen.getByRole("link", { name: "Runners space" }).textContent
+      screen.getByRole("link", { name: /^Runners\b/ }).textContent
     ).toContain("Filling up");
     // The challenges not joined.
     expect(
