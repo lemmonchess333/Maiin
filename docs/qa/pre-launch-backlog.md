@@ -2652,6 +2652,55 @@ What is genuinely left is operator-only — there is no code change pending:
       the **Description** footer and the **Support URL** field. Do NOT submit
       with placeholder links.
 
+## App Review submission checks (launch audit, 2026-11-18)
+
+What `docs/app-store/review-risk-audit.md` found that only the owner, a
+console or a phone can settle before the first submission. The paste-in
+answers are in `docs/app-store/submission-pack.md`.
+
+- [ ] **Decide how a reviewer's test purchase turns Pro on** (2.1(b)). A
+      sandbox purchase grants Pro only to the uids in
+      `REVENUECAT_SANDBOX_UIDS` (`functions/lib/revenueCatEntitlement.js`).
+      Either keep that and put the demo account's uid on it, or let App
+      Store sandbox purchases through for every account (the audit has
+      both). Passing: on a TestFlight build signed in as the demo account,
+      buy Monthly, and the Food camera's photo scan opens without a Pro
+      offer.
+- [ ] **Apple accounts can delete themselves** (5.1.1(v)). Firebase console
+      → Authentication → Sign-in method → Apple: the OAuth code flow is
+      filled in (Services ID, Apple Team ID, Key ID, private key). Then on a
+      TestFlight build, sign up with a disposable Apple ID, Settings →
+      Account → Delete account → Confirm with Apple. Passing: the account is
+      deleted, and Settings → Apple ID → Sign-In & Security → Sign in with
+      Apple no longer lists Tropos.
+- [ ] **The app on an iPad** (2.1, 4.0). Install the TestFlight build on an
+      iPad, where it runs as an iPhone app. Passing: Home, a bottom sheet,
+      the Pro page and its purchase sheet, and a run's setup screen draw
+      inside the window with nothing cut off.
+- [ ] **A video for the background modes** (2.5.4). Record a phone pairing a
+      heart-rate strap in Settings → Run plan, then a run with the screen
+      locked for two minutes, ending on the summary's route and heart rate.
+      Keep it to attach if App Review asks why the app declares
+      `location` and `bluetooth-central`.
+- [ ] **The demo account** (2.1(a)). Setup finished, email verified, a few
+      weeks of workouts, runs, meals and weigh-ins, following someone, and a
+      member of one Space, joined from the Space's link while Spaces are
+      still quiet (`src/lib/enoughPeople.ts`). Its uid is on
+      `REVENUECAT_SANDBOX_UIDS` (if the guard stays) and
+      `DISCOVERY_HIDDEN_UIDS`, then a Deploy production run.
+- [ ] **App Store Connect's new questions.** App Compliance → Regulated
+      Medical Devices: No. Age rating: the social media questions and the
+      Shared Location descriptor, as the pack answers them.
+- [ ] **The version matches the build.** `package.json` (1.2.0 on
+      2026-11-18) is the version `deploy-ios.yml` stamps; the App Store
+      Connect version must be the same.
+- [ ] **The public pages after PR #3375.** Once troposfit.com shows the App
+      Store page, `/privacy`, `/terms` and `/support` still open signed out
+      on the phone's browser.
+- [ ] **Texas SB 2420.** A legal call on whether Tropos, rated 16+, must read
+      Apple's Declared Age Range API for accounts in Texas (and Utah and
+      Louisiana as their laws start).
+
 ## Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
 Distribution decision: Tropos ships **App Store now + Google Play later; no web billing is sold**. The working Stripe backend (checkout → webhook → tier, hardened in #822) is **kept dormant, NOT torn out** — Apple takes 15–30% vs Stripe's ~3%, so web billing is the single biggest future margin lever and pre-launch is the wrong moment to foreclose it. Do NOT build `createStripeBillingPortal` (the web Manage button's never-defined callable — it never fires on iOS, where the native branch redirects to Apple's subscriptions page) and do NOT start the ~46-file teardown; revisit removal only if still App-Store-only well after real revenue. Two known costs of dormancy, accepted: functions deploys require `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` to stay provisioned (closing the Stripe account needs a code change first), and billing-adjacent PRs keep threading Stripe branches.
