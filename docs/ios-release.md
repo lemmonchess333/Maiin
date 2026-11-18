@@ -302,9 +302,10 @@ fails if the app is not running and drawing 25 seconds later
 screen that a compile cannot see. The screenshot is kept as the run's
 `ios-simulator-launch` artifact. That phone is never the iPhone Duo, whose
 two displays make a screenshot name one. The Duo gets a launch of its own
-(Xcode 27.1 carries its simulator): the same build, running 25 seconds
-later, a screenshot of each display, and at least one of them showing the
-app. The job summary says which, and the screenshots are the
+(Xcode 27.1 carries its simulator): each display is shot before the launch
+and 25 seconds after it, the app has to be running, and the display that
+showed the home screen has to show the app (a folded-away display stays
+dark). The job summary has the table, and the screenshots are the
 `ios-simulator-duo` artifact. The step fails by name if a later image's
 Xcode has no Duo. Nothing else is exercised. A green compile
 is required before this gate is considered ready for the signed TestFlight

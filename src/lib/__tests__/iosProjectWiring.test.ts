@@ -460,7 +460,12 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
     const step = compile.slice(duo, compile.indexOf("\n      - ", duo + 1));
     expect(step).toContain('t["name"] == "iPhone Duo"');
-    expect(step).toContain('screenshot --display="$NUMBER"');
+    expect(step).toContain('screenshot --display="$1"');
+    // The display showing the home screen before the launch has to show
+    // the app after it, so a black scene beside a lit system screen fails.
+    expect(step).toMatch(
+      /before the launch:[\s\S]*simctl launch[\s\S]*MISSING=/
+    );
     expect(step).toContain("python3 scripts/verify_ios_launch.py");
     expect(step).toContain('kill -0 "$PID"');
     expect(compile).toMatch(
