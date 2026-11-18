@@ -66,6 +66,55 @@ jobs:
           python3 scripts/verify_ios_watch.py --unsigned \
             --app "$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app" \
             --expected-connected-training NO
+      # The scene life cycle (ios/App/App/SceneDelegate.swift, required of
+      # iOS 27 SDK builds) is wiring a compile cannot check: a scene
+      # delegate the manifest names wrongly, or a scene with no window,
+      # launches to a black screen while the process stays up. So the
+      # standard build is launched on a simulator, before the pilot build
+      # replaces it, and must still be running and drawing after 25 s.
+      # The compile-only Firebase plist is given IDs in Firebase's own
+      # formats inside the built app, so its checks at launch pass; nothing
+      # it sends can reach a project.
+      - name: Launch the standard build on a simulator
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/tropos-ios-build/Build/Products/Release-iphonesimulator/App.app"
+          PLIST="$APP/GoogleService-Info.plist"
+          plutil -replace GOOGLE_APP_ID -string "1:123456789012:ios:0123456789abcdef012345" "$PLIST"
+          plutil -replace GCM_SENDER_ID -string "123456789012" "$PLIST"
+          plutil -replace API_KEY -string "AIzaSyA00000000000000000000000000000000" "$PLIST"
+          UDID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          phones = sorted(
+              (runtime, d["udid"]) for runtime, ds in devices.items()
+              if ".iOS-" in runtime for d in ds if d["name"].startswith("iPhone")
+          )
+          print(phones[-1][1])
+          ')
+          xcrun simctl list devices | grep "$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP"
+          LAUNCHED=$(xcrun simctl launch "$UDID" com.tropos.app)
+          echo "$LAUNCHED"
+          PID="${LAUNCHED##* }"
+          sleep 25
+          xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/launch.png"
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "::error::The app was no longer running 25 s after launch"
+            exit 1
+          fi
+          python3 scripts/verify_ios_launch.py --screenshot "$RUNNER_TEMP/launch.png"
+          xcrun simctl shutdown "$UDID"
+      - name: Keep the launch screenshot
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-simulator-launch
+          path: ${{ runner.temp }}/launch.png
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Compile the connected training pilot for simulator
         run: |
           set -euo pipefail
