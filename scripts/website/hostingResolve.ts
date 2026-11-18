@@ -10,6 +10,14 @@
  * directory's address takes its index.html. Globs: `**` is any run of
  * characters, `*` any run within one segment, and `<dir>/**` also takes
  * `<dir>` itself.
+ *
+ * What it does not model: `ignore` (the caller passes the files that
+ * deploy), `cleanUrls`, `trailingSlash`, `i18n`, and any rewrite or
+ * redirect but a `source` glob to a `destination` or a function by
+ * `functionId`. It throws on a config that uses any of those, rather than
+ * answer for an address Hosting would answer differently: a `run` or
+ * `dynamicLinks` rewrite above the catch-all would take every address,
+ * and a resolver that skipped it would still say the website answers.
  */
 
 export interface HostingRewrite {
@@ -27,6 +35,7 @@ export interface HostingConfig {
   redirects?: { source: string; destination: string; type?: number }[];
   rewrites?: HostingRewrite[];
   headers?: HostingHeaderRule[];
+  [key: string]: unknown;
 }
 
 export type HostingAnswer =
@@ -55,6 +64,48 @@ export function globToRegExp(glob: string): RegExp {
   return new RegExp(`^${pattern}${tail ? "(?:/.*)?" : ""}$`);
 }
 
+/** Throws when `config` uses anything `resolveHosting` does not model. */
+export function assertModelled(config: HostingConfig): void {
+  const unmodelled = ["cleanUrls", "trailingSlash", "i18n"].filter(
+    (key) => key in config
+  );
+  if (unmodelled.length) {
+    throw new Error(`resolveHosting does not model ${unmodelled.join(", ")}`);
+  }
+  for (const redirect of config.redirects ?? []) {
+    const keys = Object.keys(redirect).sort().join(",");
+    if (
+      typeof redirect.source !== "string" ||
+      typeof redirect.destination !== "string" ||
+      !["destination,source", "destination,source,type"].includes(keys)
+    ) {
+      throw new Error(
+        `resolveHosting does not model the redirect ${JSON.stringify(redirect)}`
+      );
+    }
+  }
+  for (const rewrite of config.rewrites ?? []) {
+    const keys = Object.keys(rewrite).sort().join(",");
+    const fn = rewrite.function as unknown;
+    const functionShape =
+      keys === "function,source" &&
+      typeof fn === "object" &&
+      fn !== null &&
+      typeof (fn as { functionId?: unknown }).functionId === "string" &&
+      Object.keys(fn).every((k) => ["functionId", "region"].includes(k));
+    const destinationShape =
+      keys === "destination,source" && typeof rewrite.destination === "string";
+    if (
+      typeof rewrite.source !== "string" ||
+      !(functionShape || destinationShape)
+    ) {
+      throw new Error(
+        `resolveHosting does not model the rewrite ${JSON.stringify(rewrite)}`
+      );
+    }
+  }
+}
+
 /**
  * What answers `pathname` (no query string), given the deployed files as
  * paths relative to the public folder ("index.html", "legal/terms.html").
@@ -64,6 +115,7 @@ export function resolveHosting(
   files: ReadonlySet<string>,
   pathname: string
 ): HostingAnswer {
+  assertModelled(config);
   if (pathname === "/__" || pathname.startsWith("/__/")) {
     return { kind: "reserved" };
   }
@@ -86,10 +138,8 @@ export function resolveHosting(
         region: rewrite.function.region ?? "us-central1",
       };
     }
-    if (rewrite.destination) {
-      const file = rewrite.destination.replace(/^\/+/, "");
-      return files.has(file) ? { kind: "file", file } : { kind: "404" };
-    }
+    const file = (rewrite.destination ?? "").replace(/^\/+/, "");
+    return files.has(file) ? { kind: "file", file } : { kind: "404" };
   }
   return { kind: "404" };
 }

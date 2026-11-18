@@ -151,7 +151,7 @@ planned sessions read `daysPerWeek`, written once at setup.
     (Q77), which started from the signed-in web app. The owner is
     choosing between a signed-in Pro corner on the website and an
     anonymous purchase the iPhone app redeems; until then
-    `/upgrade?checkout=success` says the payment went through.
+    `/upgrade?checkout=success` says Pro is on in the app if they just paid.
 53. What people rely on is "my next session is ready"; the streak supports
     it.
 54. A ladder for someone who stops (about day 3, 7, 14 and 30), then

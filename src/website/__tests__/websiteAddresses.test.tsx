@@ -27,7 +27,11 @@ import {
   type HostingConfig,
 } from "../../../scripts/website/hostingResolve";
 import { ASSOCIATION_PATHS } from "../../../scripts/ios/universal-links";
-import { WEBSITE_OUTPUT } from "../../../scripts/website/websiteEntry";
+import {
+  RETIRED_WORKER_PATHS,
+  WEBSITE_OUTPUT,
+  websitePublicFiles,
+} from "../../../scripts/website/websiteEntry";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -67,20 +71,17 @@ const hosting = (
   }
 ).hosting;
 
-/** What the Hosting build deploys at its root: the website's page,
- *  `public/` as Vite copies it, and the association file the deploy
- *  builds (`IOS_APP_ID_PREFIX`). Hashed assets are left out. */
+/** What the Hosting build deploys (scripts/website/websiteEntry.ts): the
+ *  website's page, the website's part of `public/`, the worker that
+ *  retires the app's, and the association file the deploy builds
+ *  (`IOS_APP_ID_PREFIX`). Hashed assets are left out. */
 function deployedFiles(): Set<string> {
-  const files = new Set<string>([WEBSITE_OUTPUT, ...ASSOCIATION_PATHS]);
-  (function walk(dir: string, rel: string) {
-    for (const name of readdirSync(dir)) {
-      const full = join(dir, name);
-      const path = rel ? `${rel}/${name}` : name;
-      if (statSync(full).isDirectory()) walk(full, path);
-      else files.add(path);
-    }
-  })(join(repoRoot, "public"), "");
-  return files;
+  return new Set<string>([
+    WEBSITE_OUTPUT,
+    ...ASSOCIATION_PATHS,
+    ...websitePublicFiles(join(repoRoot, "public")),
+    ...RETIRED_WORKER_PATHS,
+  ]);
 }
 const files = deployedFiles();
 
@@ -154,10 +155,16 @@ const KEPT: Kept[] = [
     shows: { page: "landing", note: /open this Space/ },
   },
   {
+    address: "/space/brighton-marathon/post/p1",
+    from: "a Space post's in-app address (SpacePost.tsx)",
+    hosting: WEBSITE,
+    shows: { page: "landing", note: /open this Space/ },
+  },
+  {
     address: "/upgrade?checkout=success",
     from: "RevenueCat's Purchase Link return (revenuecat-setup.md Part W)",
     hosting: WEBSITE,
-    shows: { page: "landing", note: /Payment received/ },
+    shows: { page: "landing", note: /If you just paid/ },
   },
   {
     address: "/upgrade",
@@ -226,8 +233,13 @@ const KEPT: Kept[] = [
   },
   {
     address: "/sw.js",
-    from: "a browser that opened the web app here before",
+    from: "a browser that used the web app here: the worker that retires it",
     hosting: { kind: "file", file: "sw.js" },
+  },
+  {
+    address: "/firebase-messaging-sw.js",
+    from: "an older registration of the web app's push worker: retired too",
+    hosting: { kind: "file", file: "firebase-messaging-sw.js" },
   },
 ];
 
@@ -266,6 +278,31 @@ describe("Firebase Hosting answers every kept address", () => {
     // The function fetches Hosting's /index.html, which is the website.
     expect(source).toContain("`${PUBLIC_ORIGIN}/index.html`");
     expect(resolveHosting(hosting, files, "/index.html")).toEqual(WEBSITE);
+  });
+
+  it("refuses a config it cannot answer for, rather than say the website answers", () => {
+    // A Cloud Run rewrite above the catch-all would take every address.
+    const withRun = {
+      ...hosting,
+      rewrites: [
+        { source: "**", run: { serviceId: "site" } },
+        ...(hosting.rewrites ?? []),
+      ],
+    } as unknown as HostingConfig;
+    expect(() => resolveHosting(withRun, files, "/")).toThrow(/rewrite/);
+    expect(() =>
+      resolveHosting({ ...hosting, cleanUrls: true }, files, "/privacy")
+    ).toThrow(/cleanUrls/);
+    expect(() =>
+      resolveHosting(
+        {
+          ...hosting,
+          rewrites: [{ source: "/x", function: "legacyName" }],
+        } as unknown as HostingConfig,
+        files,
+        "/x"
+      )
+    ).toThrow(/rewrite/);
   });
 
   it("serves nothing of the app: no address reaches an app page", () => {
@@ -337,28 +374,65 @@ describe("the website's page at each address", () => {
     ]) {
       expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
     }
-    // Apple's credit, which its badge rules ask for.
+    // Apple's credit, which its badge rules ask for, iPhone among the marks.
     expect(screen.getByText(/App Store is a service mark of Apple Inc/)).toBe(
-      screen.getByText(/Apple and the Apple logo are trademarks/)
+      screen.getByText(/Apple, the Apple logo, and iPhone are trademarks/)
     );
+  });
+
+  it("names the front page as the canonical copy, and keeps the app's account addresses out of search", async () => {
+    const head = () => ({
+      canonical: document.head
+        .querySelector('link[rel="canonical"]')
+        ?.getAttribute("href"),
+      robots: document.head
+        .querySelector('meta[name="robots"]')
+        ?.getAttribute("content"),
+    });
+    renderAt("/");
+    await screen.findByRole("heading", { level: 1 });
+    expect(head()).toEqual({ canonical: undefined, robots: undefined });
+    cleanup();
+
+    renderAt("/space/brighton-marathon");
+    await screen.findByRole("heading", { level: 1 });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/",
+      robots: undefined,
+    });
+    cleanup();
+
+    for (const address of ["/upgrade?checkout=success", "/settings/account"]) {
+      renderAt(address);
+      await screen.findByRole("heading", { level: 1 });
+      expect(head(), address).toEqual({
+        canonical: "https://troposfit.com/",
+        robots: "noindex",
+      });
+      cleanup();
+    }
+    // Gone with the page.
+    expect(head()).toEqual({ canonical: undefined, robots: undefined });
   });
 
   it("says nothing of a Space or a payment where none brought the visitor", async () => {
     renderAt("/upgrade?checkout=cancelled");
     await screen.findByRole("heading", { level: 1 });
-    expect(screen.queryByText(/Payment received/)).toBeNull();
+    expect(screen.queryByText(/If you just paid/)).toBeNull();
     expect(screen.queryByText(/open this Space/)).toBeNull();
   });
 });
 
-/** Every troposfit.com address the code names, outside its tests: the
- *  web and server code, and the iPhone app's own (its widgets' links). */
+/** Every troposfit.com address the code names or builds from an origin
+ *  constant, outside its tests: the web and server code, and the iPhone
+ *  app's own (its widgets' links). */
 function addressesInCode(): string[] {
   const roots = ["src", "functions/lib", "functions/email", "ios/App"];
   const found = new Set<string>();
   const scan = (text: string) => {
+    // A literal address, or one built from an origin constant.
     for (const m of text.matchAll(
-      /https:\/\/(?:www\.)?troposfit\.com(\/[^\s"'`<>)${]*)?/g
+      /(?:https:\/\/(?:www\.)?troposfit\.com|\$\{(?:PUBLIC_APP_ORIGIN|PUBLIC_ORIGIN|HOME_WIDGET_LINK_ORIGIN)\})(\/[^\s"'`<>)${]*)?/g
     )) {
       found.add(m[1] ?? "/");
     }
