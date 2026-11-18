@@ -208,6 +208,23 @@ describe("a follow request made again", () => {
     expect(firestore.data.get(path)).toEqual(told);
   });
 
+  it("still tells the person asked when the asker joins from their invite", async () => {
+    await request("source-A", firstTime);
+    deliveryTime = { seconds: SECONDS + 20, nanoseconds: 0 };
+    await onFollowRequestCreated.run(
+      source(
+        `followRequests/${TO}/users/${FROM}`,
+        { fromInvite: true },
+        nextTime
+      ),
+      { eventId: "source-invite", params: { uid: TO, requesterUid: FROM } }
+    );
+    expect(firestore.data.get(path)).toMatchObject({
+      fromInvite: true,
+      createdAt: deliveryTime,
+    });
+  });
+
   it("is news again a day after the last one", async () => {
     await request("source-A", firstTime);
     later(DAY_MS);

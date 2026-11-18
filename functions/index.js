@@ -9921,7 +9921,9 @@ async function sendFollowNotice({
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
       sourceEvent,
-      ...(type === "follow_request"
+      // A request made by joining from an invite is told whatever came
+      // before it: it is the one notice of the join, and its words differ.
+      ...(type === "follow_request" && !fromInvite
         ? { quietForMs: FOLLOW_REQUEST_QUIET_MS }
         : {}),
     });
