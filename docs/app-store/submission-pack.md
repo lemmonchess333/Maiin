@@ -213,24 +213,24 @@ Google Signals is off in the Firebase console.
 
 ### Data linked to you
 
-| Category         | Data type             | Purposes                     | What it is                                                                                                                                                                                     |
-| ---------------- | --------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Contact info     | Name                  | App functionality            | The display name, shown to other people on posts and the profile                                                                                                                               |
-| Contact info     | Email address         | App functionality            | Sign-in, and the verification and password-reset emails (sent through Resend)                                                                                                                  |
-| Health & fitness | Health                | App functionality, analytics | Weight, height, sex, age range, goal weight, injury limits, max heart rate, the activity level, the food diary and calorie targets. Some figures, such as macro shares, reach Google Analytics |
-| Health & fitness | Fitness               | App functionality, analytics | Workouts, runs, the training plan, segments, records, streaks and badges. Weekly totals and the performance score reach Google Analytics                                                       |
-| Location         | Precise location      | App functionality            | Run routes, privacy zones, saved routes and segments                                                                                                                                           |
-| Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                                                            |
-| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos. Meal photos are analysed by Google and not kept on any server                                                                                   |
-| User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, meet-ups, segment and Circle names, reports and meal descriptions                                                                                 |
-| Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                                                 |
-| Identifiers      | Device ID             | App functionality, analytics | The push token the phone registers so notifications reach it (Firebase Cloud Messaging), and Google Analytics' app-instance ID                                                                 |
-| Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                                                        |
-| Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                                                     |
-| Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                                                     |
-| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)                                  |
-| Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                                                     |
-| Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                                                         |
+| Category         | Data type             | Purposes                     | What it is                                                                                                                                                                                         |
+| ---------------- | --------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contact info     | Name                  | App functionality            | The display name, shown to other people on posts and the profile                                                                                                                                   |
+| Contact info     | Email address         | App functionality            | Sign-in, and the verification and password-reset emails (sent through Resend)                                                                                                                      |
+| Health & fitness | Health                | App functionality, analytics | Weight, height, sex, year of birth, goal weight, injury limits, max heart rate, the activity level, the food diary and calorie targets. Some figures, such as macro shares, reach Google Analytics |
+| Health & fitness | Fitness               | App functionality, analytics | Workouts, runs, the training plan, segments, records, streaks and badges. Weekly totals and the performance score reach Google Analytics                                                           |
+| Location         | Precise location      | App functionality            | Run routes, privacy zones, saved routes and segments                                                                                                                                               |
+| Location         | Coarse location       | Analytics                    | The city and country Google Analytics works out from the IP address                                                                                                                                |
+| User content     | Photos or videos      | App functionality            | Profile, progress, post and Space post photos. Meal photos are analysed by Google and not kept on any server                                                                                       |
+| User content     | Other user content    | App functionality            | Posts, comments, captions, notes, check-ins, meet-ups, segment and Circle names, reports and meal descriptions                                                                                     |
+| Identifiers      | User ID               | App functionality            | The account ID, which is also the customer ID RevenueCat holds                                                                                                                                     |
+| Identifiers      | Device ID             | App functionality, analytics | The push token the phone registers so notifications reach it (Firebase Cloud Messaging), and Google Analytics' app-instance ID                                                                     |
+| Purchases        | Purchase history      | App functionality            | Subscription status, product and expiry                                                                                                                                                            |
+| Usage data       | Product interaction   | App functionality, analytics | Screens and actions sent to Google Analytics, and social actions such as props and follows                                                                                                         |
+| Usage data       | Other usage data      | App functionality, analytics | Last active time, AI scan counts, settings                                                                                                                                                         |
+| Diagnostics      | Crash data            | App functionality            | Crash reports saved to the account (`src/lib/errorReporting.ts`); on iOS also sent to Firebase Crashlytics with the account uid (`src/lib/crashReporting.ts`)                                      |
+| Diagnostics      | Performance data      | Analytics                    | Screen load times sent to Google Analytics                                                                                                                                                         |
+| Diagnostics      | Other diagnostic data | App functionality            | Error reports with the device model and system version                                                                                                                                             |
 
 Google Analytics data carries no account ID (the code never calls
 `setUserId`), so "not linked" is defensible for the coarse location and
@@ -313,7 +313,7 @@ AI food analysis
 A meal or label photo, or a typed meal (Pro), goes to Google's Gemini on Vertex AI only after the user allows it on a sheet that names Google. Results are checked before they are logged. Photos are kept on the phone for 90 days for the diary, never on our servers. It can be switched off in Settings > Social & privacy.
 
 Apple Health
-Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. The binary holds an Apple Watch companion and a Health workout export, both off in this build; they will come in a later version.
+Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. This build embeds no Apple Watch app and saves no workouts to Health: the Watch app goes only into a separate test build, and saving runs to Health is switched off when this one is built. The Health write purpose string is there because the Health plugin carries a write call, and it says Tropos adds nothing to Health.
 
 Background modes
 Location: a GPS run asks for location as it starts and keeps recording with the screen locked; iOS may later offer Always. Treadmill and manual runs need no location. Bluetooth: Settings > Run plan pairs a heart-rate strap, read during a run with the screen locked.
@@ -387,12 +387,14 @@ Dynamic Island, medium display", and fills that from a "Face ID, large
 display" set when it has none of its own; the large Dynamic Island class
 falls back to the same set
 ([screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)).
-So the pack has two sets, each of eight frames in listing order:
+So there are two sets, each of eight frames in listing order. Neither is
+committed here: the capture spec writes them, under these names, to
+`screenshots/`:
 
-| Folder                            | App Store Connect class             | Pixels      | Phone it lays out as |
-| --------------------------------- | ----------------------------------- | ----------- | -------------------- |
-| `docs/app-store/screenshots/6.9/` | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
-| `docs/app-store/screenshots/6.5/` | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
+| Files                                     | App Store Connect class             | Pixels      | Phone it lays out as |
+| ----------------------------------------- | ----------------------------------- | ----------- | -------------------- |
+| `screenshots/app-store-01-home.png` …     | iPhone 6.9" (Dynamic Island, large) | 1320 x 2868 | iPhone 16 Pro Max    |
+| `screenshots/app-store-6.5-01-home.png` … | iPhone 6.5" (Face ID, large)        | 1242 x 2688 | iPhone 11 Pro Max    |
 
 | #   | Frame          | Shows                                                                |
 | --- | -------------- | -------------------------------------------------------------------- |
@@ -412,12 +414,12 @@ no frame shows a price (2.3.14 rules prices out of creative assets; keep
 them out of these too). Spaces, challenges and leagues are in no frame,
 since a new account at launch won't see them.
 
-To take them again from a later build: run App Screenshots (Actions →
-App Screenshots → Run workflow, on the branch to capture), fetch the
-`app-screenshots` branch, and copy `screenshots/app-store-*.png` (6.9") and
-`screenshots/app-store-6.5-*.png` (6.5") into the folders above. Upload the
-iPhone build's own screenshots instead if you prefer: they would show the
-real status bar.
+To get them: run App Screenshots (Actions → App Screenshots → Run
+workflow, on the branch to capture), which commits the frames to the
+`app-screenshots` branch. Fetch it and upload `screenshots/app-store-0*.png`
+as the 6.9" set and `screenshots/app-store-6.5-0*.png` as the 6.5" set.
+Upload the iPhone build's own screenshots instead if you prefer: they would
+show the real status bar.
 
 ## Before submitting
 
