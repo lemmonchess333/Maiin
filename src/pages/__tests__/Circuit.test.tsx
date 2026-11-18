@@ -227,6 +227,8 @@ describe("the finish (Circ1 (11), (A))", () => {
       name: /^10-minute circuit\s?10 min/,
     });
     expect(row).toHaveTextContent("45 s on, 15 s off");
+    // Today's level, and the last time it was done.
+    expect(row).toHaveTextContent("Level 2 · last time 1 May, felt easy");
   });
 
   it("saves nothing under 7 minutes, and says so before it ends", async () => {

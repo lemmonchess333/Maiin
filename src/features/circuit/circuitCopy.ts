@@ -5,9 +5,12 @@
  * fitness in less time or with no kit (Circ1 (1)), and never for the
  * weight it takes off: the deficit does that, not the method.
  */
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatDayMonth } from "@/utils/formatters";
 import { CIRCUIT_MIN_SECONDS } from "./circuitRules";
 import { circuitSeconds, type CircuitStep } from "./circuitSteps";
 import type { Circuit, CircuitEffort, CircuitKit } from "./circuitTypes";
+import type { SavedCircuit } from "./savedCircuit";
 
 /** What a circuit asks for, by kit tier (Circ1 (D)). */
 export function circuitKitLine(kit: CircuitKit): string {
@@ -108,3 +111,45 @@ export const CIRCUIT_SIDED_LINE = "Switch sides halfway";
 
 /** What is said halfway through a one-sided move. */
 export const CIRCUIT_SWITCH_CUE = "Switch sides.";
+
+/** "Level 2": a rung as the person reads it, counted from 1. */
+export function circuitLevelWords(level: number): string {
+  return `Level ${Math.max(0, Math.floor(level)) + 1}`;
+}
+
+const FELT: Record<CircuitEffort, string> = {
+  easy: "felt easy",
+  right: "felt right",
+  hard: "felt hard",
+};
+
+/** Under a circuit on the picker: today's level and the last time,
+ *  "Level 2 · last time 12 Nov, felt easy". */
+export function circuitLastTimeLine(
+  today: Pick<Circuit, "level">,
+  last: { day: string; saved: Pick<SavedCircuit, "effort"> }
+): string {
+  const when = formatDayMonth(parseLocalDate(last.day));
+  const felt = last.saved.effort ? `, ${FELT[last.saved.effort]}` : "";
+  return `${circuitLevelWords(today.level)} · last time ${when}${felt}`;
+}
+
+/** A saved circuit in History: "20 min", "4 rounds", "5 moves". */
+export function circuitHistorySummary(
+  saved: Pick<SavedCircuit, "roundsDone" | "moves" | "activeSeconds">
+): string[] {
+  const minutes = circuitMinutes(saved.activeSeconds);
+  const moves = saved.moves.length;
+  return [
+    `${minutes} min`,
+    `${saved.roundsDone} ${saved.roundsDone === 1 ? "round" : "rounds"}`,
+    `${moves} ${moves === 1 ? "move" : "moves"}`,
+  ];
+}
+
+/** How the person said it felt, for a saved circuit's page. */
+export function circuitFeltWords(effort: CircuitEffort | undefined): string {
+  return effort
+    ? `${FELT[effort][0].toUpperCase()}${FELT[effort].slice(1)}`
+    : "No rating";
+}

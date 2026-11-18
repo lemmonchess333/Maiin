@@ -3,6 +3,10 @@ import { builtInCircuit } from "../builtInCircuits";
 import {
   CIRCUIT_EFFORTS,
   circuitEndLine,
+  circuitFeltWords,
+  circuitHistorySummary,
+  circuitLastTimeLine,
+  circuitLevelWords,
   circuitKitLine,
   circuitMinutes,
   circuitPlaceLine,
@@ -73,5 +77,37 @@ describe("circuit mode's words", () => {
       "Right",
       "Hard",
     ]);
+  });
+});
+
+describe("circuit history's words", () => {
+  it("says the level from 1, and the last time with how it felt", () => {
+    expect(circuitLevelWords(0)).toBe("Level 1");
+    expect(circuitLevelWords(3)).toBe("Level 4");
+    expect(
+      circuitLastTimeLine(
+        { level: 1 },
+        { day: "2026-11-12", saved: { effort: "right" } }
+      )
+    ).toBe("Level 2 · last time 12 Nov, felt right");
+    expect(
+      circuitLastTimeLine({ level: 0 }, { day: "2026-11-02", saved: {} })
+    ).toBe("Level 1 · last time 2 Nov");
+  });
+
+  it("sums a saved circuit up for History and says how it felt", () => {
+    expect(
+      circuitHistorySummary({
+        roundsDone: 1,
+        moves: circuit.moves.slice(0, 1).map((move) => ({
+          kind: "move" as const,
+          unit: "seconds" as const,
+          ...move,
+        })),
+        activeSeconds: 600,
+      })
+    ).toEqual(["10 min", "1 round", "1 move"]);
+    expect(circuitFeltWords("hard")).toBe("Felt hard");
+    expect(circuitFeltWords(undefined)).toBe("No rating");
   });
 });

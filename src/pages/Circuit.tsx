@@ -22,7 +22,9 @@ import {
   CIRCUIT_HISTORY_WORKOUTS,
   circuitForToday,
   circuitReward,
+  lastTimeOf,
   savedCircuits,
+  type DatedCircuit,
 } from "@/features/circuit/circuitHistory";
 import { circuitKit } from "@/features/circuit/circuitMoves";
 import { circuitCounts } from "@/features/circuit/circuitRules";
@@ -40,7 +42,6 @@ import {
   stepSecondsRan,
 } from "@/features/circuit/circuitSteps";
 import type { Circuit as CircuitShape } from "@/features/circuit/circuitTypes";
-import type { SavedCircuit } from "@/features/circuit/savedCircuit";
 import { useAudioCues } from "@/hooks/useAudioCues";
 import { useRunTimer } from "@/hooks/useRunTimer";
 import { useSessionPlayer } from "@/hooks/useSessionPlayer";
@@ -82,12 +83,12 @@ export default function Circuit() {
   const injuries = profile?.injuries;
 
   // The person's recent circuits, newest first: null until read.
-  const [history, setHistory] = useState<SavedCircuit[] | null>(null);
+  const [history, setHistory] = useState<DatedCircuit[] | null>(null);
   const uid = user?.uid;
   useEffect(() => {
     if (!uid) return;
     let live = true;
-    const settle = (circuits: SavedCircuit[]) => {
+    const settle = (circuits: DatedCircuit[]) => {
       if (live) setHistory((current) => current ?? circuits);
     };
     const wait = window.setTimeout(() => settle([]), HISTORY_WAIT_MS);
@@ -103,13 +104,14 @@ export default function Circuit() {
     };
   }, [uid]);
 
-  const circuits = useMemo(
+  const offers = useMemo(
     () =>
       history === null
         ? null
-        : builtInCircuits({ kit, injuries }).map((base) =>
-            circuitForToday(base, history, injuries)
-          ),
+        : builtInCircuits({ kit, injuries }).map((base) => ({
+            circuit: circuitForToday(base, history, injuries),
+            last: lastTimeOf(base.id, history),
+          })),
     [history, kit, injuries]
   );
 
@@ -295,7 +297,7 @@ export default function Circuit() {
   if (!circuit || phase === "picking")
     return (
       <CircuitPicker
-        circuits={circuits}
+        offers={offers}
         kit={kit}
         onChoose={choose}
         onClose={() => navigate("/program", { replace: true })}

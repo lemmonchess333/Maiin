@@ -43,7 +43,12 @@ import {
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
+import {
+  countFigure,
+  durationFigure,
+  setsFigure,
+  workFigure,
+} from "@/lib/liftFigures";
 import {
   SET_TYPE_COPY,
   asSetType,
@@ -57,6 +62,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
+import CircuitRecord from "@/components/circuit/CircuitRecord";
+import { workoutCircuit } from "@/features/circuit/savedCircuit";
 import SetTypeChip from "@/components/workout/SetTypeChip";
 import SupersetTag from "@/components/workout/SupersetTag";
 
@@ -313,13 +320,23 @@ function WorkoutDetailContent() {
         : n + workingSets(ex).reduce((t, set) => t + (set.reps || 0), 0),
     0
   );
+  /* A circuit (Circ1) is a lift with no sets: its moves are in
+     `circuit`. It reads as its minutes, rounds and moves, and offers
+     neither a correction of sets nor a lift's share card. */
+  const circuit = workoutCircuit(workout);
   /* The finish screen's three figures, written by the same rule
      (`liftFigures`), so the page you come back to says what it said. */
-  const figures = [
-    durationFigure(workout.durationMinutes ?? 0),
-    workFigure(tonnage, totalReps, liftUnit),
-    setsFigure(totalSets),
-  ];
+  const figures = circuit
+    ? [
+        durationFigure(workout.durationMinutes ?? 0),
+        countFigure(circuit.roundsDone, "round", "rounds"),
+        countFigure(circuit.moves.length, "move", "moves"),
+      ]
+    : [
+        durationFigure(workout.durationMinutes ?? 0),
+        workFigure(tonnage, totalReps, liftUnit),
+        setsFigure(totalSets),
+      ];
 
   const title = workoutTitle(workout);
   const routineExercises = workoutExercisesToRoutine(exercises);
@@ -360,19 +377,23 @@ function WorkoutDetailContent() {
               a line beside the button. */}
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-[min(100%,8rem)] flex-1">
-              <p className="text-sm font-bold text-lifting-strong">Lift</p>
+              <p className="text-sm font-bold text-lifting-strong">
+                {circuit ? "Circuit" : "Lift"}
+              </p>
               <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words hyphens-auto">
                 {title}
               </h1>
             </div>
-            <Button
-              variant="secondary"
-              onClick={() => setCardOpen(true)}
-              leftIcon={<Share2 className="size-4" aria-hidden="true" />}
-              className="ml-auto shrink-0"
-            >
-              Share
-            </Button>
+            {!circuit && (
+              <Button
+                variant="secondary"
+                onClick={() => setCardOpen(true)}
+                leftIcon={<Share2 className="size-4" aria-hidden="true" />}
+                className="ml-auto shrink-0"
+              >
+                Share
+              </Button>
+            )}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
@@ -391,33 +412,38 @@ function WorkoutDetailContent() {
           </div>
         </div>
 
-        {/* The session's sets — the thing no other surface shows. */}
-        <section aria-labelledby="workout-exercises" className="space-y-2">
-          <SectionHeading id="workout-exercises">Exercises</SectionHeading>
-          {exercises.length === 0 ? (
-            <EmptyState
-              compact
-              icon={Dumbbell}
-              headline="No exercises recorded"
-              sub="This session was saved without any logged sets."
-            />
-          ) : (
-            exercises.map((ex, i) => (
-              <ExerciseRecord
-                key={`${ex.exerciseId}-${i}`}
-                exercise={ex}
-                bests={bests?.doc === workout ? bests.sets.get(i) : undefined}
+        {/* The session's sets — the thing no other surface shows. A
+            circuit's moves stand in their place. */}
+        {circuit ? (
+          <CircuitRecord circuit={circuit} />
+        ) : (
+          <section aria-labelledby="workout-exercises" className="space-y-2">
+            <SectionHeading id="workout-exercises">Exercises</SectionHeading>
+            {exercises.length === 0 ? (
+              <EmptyState
+                compact
+                icon={Dumbbell}
+                headline="No exercises recorded"
+                sub="This session was saved without any logged sets."
               />
-            ))
-          )}
-        </section>
+            ) : (
+              exercises.map((ex, i) => (
+                <ExerciseRecord
+                  key={`${ex.exerciseId}-${i}`}
+                  exercise={ex}
+                  bests={bests?.doc === workout ? bests.sets.get(i) : undefined}
+                />
+              ))
+            )}
+          </section>
+        )}
 
         {/* Secondary share destinations. The image card is the header
             action (it's the one that leaves the app); these two publish
             INSIDE Tropos and read as distinct decisions, so they stay
             named rather than hidden behind a generic picker. */}
         <div className="space-y-2 pt-1">
-          {user && (
+          {user && !circuit && (
             <Button
               fullWidth
               variant="secondary"
@@ -439,7 +465,7 @@ function WorkoutDetailContent() {
               Save as routine
             </Button>
           )}
-          {sharedActivityId ? (
+          {circuit ? null : sharedActivityId ? (
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
             // one session, so this is a state, not a disabled button.
