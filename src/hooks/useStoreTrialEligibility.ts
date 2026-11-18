@@ -12,9 +12,11 @@ type ByPlan = Record<PlanId, StoreTrialEligibility>;
 /** The App Store's answer, asked once and shared by every offer on screen,
  *  so two buttons on one page can never disagree while each waits for its
  *  own answer, and a page of offers makes one native call, not one each.
- *  A check that gave no answer is forgotten, so the next offer asks again.
- *  The answer only changes when the Apple ID takes a trial, and a Pro
- *  member is offered none. */
+ *  A check that gave no answer, or "unknown" for either plan, is used by
+ *  the offers that asked and then forgotten, so the next offer asks again:
+ *  "unknown" is RevenueCat not being able to tell yet, not Apple's answer.
+ *  A definite answer only changes when the Apple ID takes a trial, and a
+ *  Pro member is offered none. */
 let shared: Promise<ByPlan | null> | null = null;
 
 function askStore(): Promise<ByPlan | null> {
@@ -24,10 +26,14 @@ function askStore(): Promise<ByPlan | null> {
         shared = null;
         return null;
       }
-      return {
+      const byPlan: ByPlan = {
         monthly: byProduct[APPLE_PRODUCT_IDS.monthly] ?? "unknown",
         yearly: byProduct[APPLE_PRODUCT_IDS.yearly] ?? "unknown",
       };
+      if (byPlan.monthly === "unknown" || byPlan.yearly === "unknown") {
+        shared = null;
+      }
+      return byPlan;
     }
   );
   return shared;
