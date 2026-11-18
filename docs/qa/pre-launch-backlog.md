@@ -1850,7 +1850,14 @@ Once `claude/duo-uiscene` is merged, on any iPhone (a TestFlight build):
       from the phone fires at its time.
 
 Once the app is built with the iOS 27.1 SDK (owner decision A in
-`docs/ios/iphone-duo.md`), on an iPhone Duo:
+`docs/ios/iphone-duo.md`, approved 18 November 2026):
+
+- [ ] **The first TestFlight build from Xcode 27.1**: `deploy-ios.yml`'s
+      log names Xcode 27.1 and iOS SDK 27.1 or later, App Store Connect
+      accepts the upload, and it installs and opens on any iPhone with no
+      change from the last iOS 26 SDK build.
+
+On an iPhone Duo:
 
 - [ ] **The outer display fills the screen** beside the side column: no
       content under the status bar or the camera, no empty band at the top

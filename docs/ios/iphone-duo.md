@@ -25,8 +25,9 @@ the shell's safe areas, or a screen's layout on wide screens.
 3. **Build with the iOS 27.1 SDK.** Only a 27.1 build "will extend to use the
    full display" [PREP]. From April 2027 every upload must use the iOS 27
    SDK [NEWS] and every app built with the 27.1 SDK must carry Duo
-   screenshots [SHOTS]. This changes the release toolchain in
-   `deploy-ios.yml`, so it is an owner decision (below).
+   screenshots [SHOTS]. The owner approved it on 18 November 2026 (owner
+   decision A below): `claude/duo-sdk-27-1` moves both iOS workflows to
+   Xcode 27.1.
 4. **The web layout is ready for the Duo's sizes.** On the inner display
    open on its side, Home, a workout and a run are drawn in two panes with
    the gap on the fold; the outer display stays a phone; folding mid-workout
@@ -333,7 +334,10 @@ Owner decisions:
   `ios-native-compile.yml` move to a runner with Xcode 27.1 (GitHub's
   `xcode-27` image had it as a release candidate on 18 November 2026) after
   `claude/duo-uiscene` is proven on a device. Duo screenshots are then
-  required for submissions.
+  required for submissions. **Approved by the owner, 18 November 2026:**
+  `claude/duo-sdk-27-1` runs both workflows on `xcode-27` and selects
+  Xcode 27.1 by name (`scripts/verify_ios_xcode.py`), stacked on the
+  UIScene branch.
 - **B. A side rail instead of the bottom tab bar** on the outer display and
   the inner display in landscape, as the HIG moves system tab bars. Not
   built; decision 3 is the current answer.
