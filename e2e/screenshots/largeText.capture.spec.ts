@@ -26,6 +26,8 @@
  * in both sheets that show it; and the In progress strip on Home and on
  * Train, for a programme workout and for a saved routine's; and an empty
  * workout's review, with the sheets that say when it started and name it.
+ * And circuit mode: its picker, a circuit at work and at rest, its end
+ * question and its finish.
  *
  * And the training plan's week and all sessions: the plan page, its week
  * reset (as opened, and after a week that felt like a bit much) with the
@@ -54,6 +56,12 @@ import { emulatorActive } from "../helpers/emulator";
 import { SETUP } from "../../src/test/journeyScreens";
 import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 
 const WIDTHS = [393, 320] as const;
@@ -1183,6 +1191,44 @@ test.describe("large text", () => {
         .waitFor({ timeout: 10_000 });
       await page.waitForTimeout(600);
       await measure(page, "rename-sheet", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* Circuit mode (Circ1), on a clock the spec moves on
+       (helpers/circuit.ts). Nothing is saved. */
+    test(`a circuit at ${width}px`, async ({ page }) => {
+      test.setTimeout(240_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+
+      await openCircuit(page);
+      await ready(page, page.getByRole("heading", { name: "Circuit" }));
+      await measure(page, "circuit-picker", width, found);
+
+      await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+      await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+      await measure(page, "circuit-work", width, found);
+      await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+      await measure(page, "circuit-rest", width, found);
+
+      await page.getByRole("button", { name: "End circuit" }).click();
+      const ask = page.getByRole("alertdialog");
+      const keepGoing = ask.getByRole("button", { name: "Keep going" });
+      await keepGoing.waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-end-question", width, found);
+      await keepGoing.click();
+      await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+      // On past the circuit's 10 minutes: it finishes by itself.
+      await runCircuitClock(page, 600);
+      await page
+        .getByText("How did it feel?")
+        .waitFor({ state: "visible", timeout: 20_000 });
+      await page.waitForTimeout(600);
+      await measure(page, "circuit-finish", width, found);
 
       expect(found).toEqual([]);
     });

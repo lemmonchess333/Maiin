@@ -72,9 +72,10 @@ describe("savedCircuits", () => {
   it("keeps the day first, whatever the save times say", () => {
     const older = workout("2026-11-09", 20 * 3600, { effort: "easy" });
     const newer = workout("2026-11-10", 8 * 3600, { effort: "hard" });
-    expect(
-      savedCircuits([older, newer]).map((saved) => saved.effort)
-    ).toEqual(["hard", "easy"]);
+    expect(savedCircuits([older, newer]).map((saved) => saved.effort)).toEqual([
+      "hard",
+      "easy",
+    ]);
   });
 });
 

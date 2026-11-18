@@ -37,11 +37,7 @@ export async function runCircuitClock(page: Page, seconds: number) {
 }
 
 /** Moves the clock on until `shown` is on screen, for at most `limit` s. */
-export async function runCircuitUntil(
-  page: Page,
-  shown: Locator,
-  limit = 120
-) {
+export async function runCircuitUntil(page: Page, shown: Locator, limit = 120) {
   for (let ran = 0; ran < limit; ran += STEP) {
     if (await shown.isVisible().catch(() => false)) return;
     await runCircuitClock(page, STEP);
