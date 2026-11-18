@@ -8,8 +8,9 @@
  * is the superman hold, and setup says so where the setup is chosen. A
  * doorway pull-up bar adds pulling: the setup asks "A pull-up bar", off
  * until the person turns it on, and with it the plan takes pull-ups,
- * chin-ups and the hanging leg raise (`ownedKit` in `matchTemplate.ts`)
- * and has its Pull days (`plansNoPull`).
+ * chin-ups and the hanging leg raise (`ownedKit` in `matchTemplate.ts`),
+ * on its upper and full-body days: five or six days still build no Pull
+ * day (`buildsNoPullDay`).
  *
  * The list below stays floor moves whatever the bar answer: the bar's
  * three are added beside it, not to it, so a circuit drawn from the floor

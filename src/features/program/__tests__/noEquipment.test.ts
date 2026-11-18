@@ -35,6 +35,7 @@ import {
   capSupermanVolume,
   noEquipmentPullNote,
 } from "../noEquipment";
+import { buildsNoPullDay } from "../programLabels";
 import type { PrimaryGoal, ProgramExercise, WorkoutDay } from "../programTypes";
 
 const repoRoot = resolve(
@@ -592,7 +593,9 @@ describe("a no-equipment plan with a doorway pull-up bar", () => {
         }
   });
 
-  it("pulls past beginner, and five or six days get their Pull days back", () => {
+  // The owner's answer to the print: five or six days keep upper / lower and
+  // full body with a bar; a bar's three lifts couldn't fill two Pull days.
+  it("pulls past beginner, on the upper and full-body days, with no Pull day", () => {
     for (const goal of GOALS)
       for (const level of ["intermediate", "advanced"])
         for (const days of DAYS) {
@@ -605,13 +608,11 @@ describe("a no-equipment plan with a doorway pull-up bar", () => {
             ),
             at
           ).toBe(true);
-          if (days >= 5) {
-            expect(splitType, at).not.toBe("upper_lower_fb");
-            expect(
-              workouts.some((day) => /^Pull\b/.test(day.dayName)),
-              at
-            ).toBe(true);
-          }
+          if (days >= 5) expect(splitType, at).toBe("upper_lower_fb");
+          expect(
+            workouts.some((day) => /^Pull\b/.test(day.dayName)),
+            at
+          ).toBe(false);
         }
   });
 
@@ -635,7 +636,10 @@ describe("a no-equipment plan with a doorway pull-up bar", () => {
       }
   });
 
-  it("runs the floor split only for a week with nothing to pull with", () => {
+  it("runs the floor split only for a setup with no Pull day", () => {
+    expect(buildsNoPullDay("no_equipment")).toBe(true);
+    for (const equipment of ["full_gym", "home_gym", "minimal", undefined])
+      expect(buildsNoPullDay(equipment), String(equipment)).toBe(false);
     expect(chooseSplit(5, true)).toBe("upper_lower_fb");
     expect(chooseSplit(6, true)).toBe("upper_lower_fb");
     expect(chooseSplit(4, true)).toBe("upper_lower");

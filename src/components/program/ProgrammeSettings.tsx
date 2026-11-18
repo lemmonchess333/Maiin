@@ -76,7 +76,7 @@ import {
   represcribeWorkouts,
 } from "@/features/program/represcribe";
 import {
-  plansNoPull,
+  buildsNoPullDay,
   pullUpBarWhenChosen,
   takesBarbellAtHome,
   takesPullUpBar,
@@ -521,12 +521,8 @@ export default function ProgrammeSettings({
   // rather than implying control the generation doesn't grant.
   // A save at the same lift days keeps the week's structure (Pgm5), so the
   // split and its reason are the saved setup's until the days change.
-  const draftNoPull = plansNoPull(equipment, pullUpBar, experience);
-  const savedNoPull = plansNoPull(
-    saved.equipment,
-    saved.pullUpBar,
-    saved.experience
-  );
+  const draftNoPull = buildsNoPullDay(equipment);
+  const savedNoPull = buildsNoPullDay(saved.equipment);
   const generatedSplitLabel = splitLabel(chooseSplit(liftDays, draftNoPull));
   // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
   // structure (programState.splitType); fall back to what the engine would

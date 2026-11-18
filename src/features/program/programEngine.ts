@@ -82,7 +82,7 @@ import {
   takesBodyweightFloor,
 } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
-import { plansNoPull } from "./programLabels";
+import { buildsNoPullDay } from "./programLabels";
 import { capSupermanVolume, withHoldRanges } from "./noEquipment";
 import { MAX_HOLD_SECONDS } from "./repUnits";
 import {
@@ -403,11 +403,10 @@ export const PERFORMANCE_HISTORY_CAP = 10;
 ================================ */
 
 /**
- * A plan with nothing to pull on (`plansNoPull`: no equipment, and no
- * pull-up bar the person is given) has no Pull day to build, so a week of
- * five or six days runs upper / lower twice and the rest as full-body days,
- * every muscle still about twice a week (Lift4 (11)). Two to four days build
- * as any setup's do.
+ * A setup that builds no Pull day (`buildsNoPullDay`: no equipment, with or
+ * without a doorway bar) runs a week of five or six days as upper / lower
+ * twice and the rest as full-body days, every muscle still about twice a
+ * week (Lift4 (11)). Two to four days build as any setup's do.
  */
 export function chooseSplit(weeklyTarget: number, noPull = false): SplitType {
   if (noPull && Math.min(6, weeklyTarget) >= 5) return "upper_lower_fb";
@@ -2151,7 +2150,7 @@ export function generateProgram(
 
   const splitType = chooseSplit(
     weeklyTarget,
-    plansNoPull(limits?.equipment, limits?.pullUpBar, experience)
+    buildsNoPullDay(limits?.equipment)
   );
 
   const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
@@ -2207,9 +2206,9 @@ export function generateProgram(
         break;
       }
       case "upper_lower_fb":
-        // No equipment and nothing to pull on, five or six days (Lift4
-        // (11)): upper / lower twice, then the full-body days, which start
-        // at week position 4 (the same offset rule as `ppl_ul`).
+        // No equipment, five or six days (Lift4 (11)): upper / lower twice,
+        // then the full-body days, which start at week position 4 (the same
+        // offset rule as `ppl_ul`).
         workouts = [
           ...buildUpperLower(profile, existingWorkouts, experience),
           ...buildFullBody(

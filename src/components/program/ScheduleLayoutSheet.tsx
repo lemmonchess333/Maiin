@@ -38,7 +38,7 @@ import { previewWeekLayout } from "@/lib/weekReset";
 import { weekPosition } from "@/lib/dateHelpers";
 import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
-import { plansNoPull } from "@/features/program/programLabels";
+import { buildsNoPullDay } from "@/features/program/programLabels";
 import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
@@ -487,11 +487,7 @@ function ScheduleLayoutSheetBody({
                 {splitLabel(
                   chooseSplit(
                     pendingLiftDays,
-                    plansNoPull(
-                      profile?.equipment,
-                      profile?.pullUpBar,
-                      profile?.experience
-                    )
+                    buildsNoPullDay(profile?.equipment)
                   )
                 )}
               </span>{" "}

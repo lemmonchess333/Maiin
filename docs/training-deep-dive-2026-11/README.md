@@ -467,6 +467,9 @@ None of these has a lock in the way. Sizes are S (under a day) or M.
 STATUS 2026-11-18: defect 12 is built on `claude/lift4-no-equipment`, a
 draft until the owner answers its print, `no-equipment-print.md` (Pgm9). That
 print also carries the Minimal and Home gym weeks the same STATUS moves.
+STATUS 2026-11-18, later: the owner accepted the print with two changes (five
+and six days keep upper / lower and full body with a bar; the inverted row
+needs a barbell and a rack at home), and it is reprinted with them.
 
 ### Step 2. The lifting session, rebuilt to size
 

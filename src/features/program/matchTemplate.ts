@@ -335,6 +335,15 @@ export const PULL_UP_BAR_EXERCISE_IDS: ReadonlySet<string> = new Set([
   "leg-raise",
 ]);
 
+/**
+ * The bodyweight lifts that need a bar at waist height: a barbell in a
+ * rack, at home. The inverted row is under one, or under a table, which no
+ * plan counts on (Lift4 (11), the owner's answer to its print: "who's going
+ * to pull the table?"). So a home gym or a Minimal plan has it only with
+ * "A barbell and a rack", and without one the slot takes a dumbbell row.
+ */
+export const RACK_EXERCISE_IDS: ReadonlySet<string> = new Set(["inverted-row"]);
+
 /** The end of the note a lift swapped for the kit carries in a plan the
  *  person has: "Swapped from Barbell Row — not available with your
  *  equipment." */
@@ -366,10 +375,11 @@ export function withoutKitSwapNotes(
 
 /**
  * What a person can do with their kit: their equipment tier's, a barbell
- * with a rack when they said they have one at home, and the pull-ups,
- * chin-ups and hanging leg raise only with a pull-up bar (Lift4 (11): "what
- * do you have?"); or, with no equipment, the floor moves that setup names,
- * and the bar's three when they said they have a doorway bar.
+ * with a rack when they said they have one at home (and with it the
+ * inverted row, `RACK_EXERCISE_IDS`), and the pull-ups, chin-ups and
+ * hanging leg raise only with a pull-up bar (Lift4 (11): "what do you
+ * have?"); or, with no equipment, the floor moves that setup names, and the
+ * bar's three when they said they have a doorway bar.
  * Undefined means everything (a full gym, or an unknown tier). An exercise
  * the catalogue doesn't know (a custom one) can't be judged, so it passes.
  */
@@ -390,6 +400,7 @@ function ownedKit(
   const kit = barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
   return (id) => {
     if (!bar && PULL_UP_BAR_EXERCISE_IDS.has(id)) return false;
+    if (!barbellAtHome && RACK_EXERCISE_IDS.has(id)) return false;
     const eq = getExerciseById(id)?.equipment;
     return eq === undefined || kit.has(eq);
   };
@@ -524,8 +535,9 @@ export function applyEquipmentFilterToWorkouts(
       options.filter((o) => eligible(o) && offerableTo(experience, o))
     );
     // At home a beginner's scalable vertical pulls need a cable. Prefer
-    // the inverted row, then another available row if it already occupies
-    // this day. With only the inverted-row fallback, a five/six-day plan
+    // the inverted row where a rack is there to row under
+    // (`RACK_EXERCISE_IDS`), then another available row: a dumbbell row
+    // without one, or if the inverted row already occupies this day. With only the inverted-row fallback, a five/six-day plan
     // whose pull day already held it restored unassisted pull-ups through
     // the ungated fallback below. A row's load/angle can be reduced; a
     // pull-up's whole-body minimum cannot. Injury and equipment checks
@@ -540,8 +552,13 @@ export function applyEquipmentFilterToWorkouts(
         ...exerciseBank.horizontal_pull.filter((o) => o.id === "inverted-row"),
         ...exerciseBank.horizontal_pull.filter((o) => o.id !== "inverted-row"),
       ].filter(eligible);
+      // No row more than twice a week (`weekLifts`), as every other pick:
+      // with no inverted row, the dumbbell row is the first choice on every
+      // pull slot and would otherwise land on a third day.
+      const atLevel = rows.filter((o) => offerableTo(experience, o));
       const row =
-        rows.find((o) => offerableTo(experience, o)) ??
+        atLevel.find((o) => week.underCap(o.id)) ??
+        atLevel[0] ??
         rows.find((o) => !o.bodyweightFloor);
       if (row) return swapTo(row.id);
     }

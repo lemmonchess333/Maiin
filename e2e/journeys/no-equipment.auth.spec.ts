@@ -5,8 +5,8 @@
  * `completeOnboarding` stores the plan. Every exercise in it is one the
  * floor allows (`noEquipment.ts`), its back work is the superman hold,
  * it has no pull, and Train shows the first session as stored. With "A
- * pull-up bar" turned on, the plan pulls, and five days get their Pull
- * days back.
+ * pull-up bar" turned on, the plan pulls on its upper and full-body days,
+ * and five days still have no Pull day.
  */
 import { test, expect } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
@@ -71,7 +71,7 @@ test("No equipment: a week of floor work, with no pull", async ({ page }) => {
   }
 });
 
-test("No equipment with a doorway bar: pull-ups, and Pull days at five days", async ({
+test("No equipment with a doorway bar: pull-ups, and still no Pull day at five days", async ({
   page,
 }) => {
   test.skip(!emulatorActive, "needs the local emulators");
@@ -111,8 +111,10 @@ test("No equipment with a doorway bar: pull-ups, and Pull days at five days", as
       )
     ).toEqual([]);
     expect(ids).toContain("pull-ups");
-    expect(state.splitType).toBe("ppl_ul");
-    expect(state.workouts.some((day) => /^Pull/.test(day.dayName))).toBe(true);
+    // The bar's pull-ups go on the upper and full-body days: five days keep
+    // upper / lower and full body (the owner's answer to the print).
+    expect(state.splitType).toBe("upper_lower_fb");
+    expect(state.workouts.some((day) => /^Pull/.test(day.dayName))).toBe(false);
 
     await expectTrainShowsSession(page, state.workouts[nextUpIndex(state)]);
     expect(pageErrors(page)).toEqual([]);

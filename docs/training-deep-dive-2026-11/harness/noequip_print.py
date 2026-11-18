@@ -3,7 +3,7 @@
 order, sets and reps, and the app's minutes, today beside new.
 
 Usage: python3 noequip_print.py main.json new.json SECTION
-SECTION is general, beginner, strength, minimal or floor.
+SECTION is general, beginner, strength, minimal, beginner_home or floor.
 """
 import json
 import sys
@@ -92,6 +92,11 @@ def main(main_path, new_path, section):
     elif section == "minimal":
         change("Minimal, 4 days, no bar", "minimal", "general", "intermediate", 45, 4, False)
         change("Minimal, 6 days, no bar", "minimal", "general", "intermediate", 45, 6, False)
+    elif section == "beginner_home":
+        change(
+            "Minimal or Home gym, beginner, 3 days, with the bar or never asked",
+            "minimal", "general", "beginner", 45, 3, None,
+        )
     elif section == "floor":
         change(
             "Home gym, Get stronger, 4 days, 60 min, with the bar",

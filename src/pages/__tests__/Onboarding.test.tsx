@@ -659,7 +659,9 @@ describe("inspect the generated week", () => {
       splitType: string;
       workouts: WorkoutDay[];
     };
-    expect(plan.splitType).toBe("ppl_ul");
+    // Five days build no Pull day with no equipment, bar or no bar (the
+    // owner's answer to the print); the bar's pull-ups go on other days.
+    expect(plan.splitType).toBe("upper_lower_fb");
     expect(
       plan.workouts.some((day) =>
         day.exercises.some((e) => e.exerciseId === "pull-ups")

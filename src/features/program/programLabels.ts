@@ -132,8 +132,9 @@ export function hasPullUpBar(
  * Whether a plan has nothing to pull with: no equipment, and no pull-up bar
  * a person at their level is given. A beginner with only a bar has none
  * either: pull-ups and chin-ups aren't a beginner's (the bodyweight-floor
- * rule, `experienceModel.ts`), and the floor has no row. Such a plan builds
- * no Pull day (`chooseSplit`), and its back work is the superman hold.
+ * rule, `experienceModel.ts`), and the floor has no row. Its back work is
+ * the superman hold, and setup says so under the bar switch
+ * (`noEquipmentPullNote`).
  */
 export function plansNoPull(
   equipment: string | undefined,
@@ -144,4 +145,16 @@ export function plansNoPull(
   return (
     !hasPullUpBar(equipment, answer) || toExperience(experience) === "beginner"
   );
+}
+
+/**
+ * Whether a setup builds no Pull day: no equipment, with or without a
+ * doorway bar (Lift4 (11), the owner's answer to its print). Five or six
+ * days run upper / lower twice and full-body days (`chooseSplit`); with a
+ * bar, its pull-ups, chin-ups and hanging leg raise go on the upper and
+ * full-body days. A bar's three lifts can't fill two Pull days: printed,
+ * the second was the superman hold and pull-ups, two lifts in 15 minutes.
+ */
+export function buildsNoPullDay(equipment: string | undefined): boolean {
+  return equipment === "no_equipment";
 }
