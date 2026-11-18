@@ -110,7 +110,7 @@ describe("eligibility (Q6 amended)", () => {
   });
 });
 
-describe("headline (PI collapse + delta suppression)", () => {
+describe("headline: the verdict in words, no number (App1 Q12)", () => {
   const perf = { pi: 68.4, loadBand: "moderate", deloadRecommended: false };
 
   it("collapses for a zero-training week even when a perf doc exists", () => {
@@ -125,7 +125,7 @@ describe("headline (PI collapse + delta suppression)", () => {
     expect(r?.headline).toBeNull();
   });
 
-  it("renders PI (rounded) with delta when prior week has a PI", () => {
+  it("carries the verdict and no score: the score is shown on Progress alone", () => {
     const r = buildWeeklyReview(
       base({
         workouts: [{ date: "2026-06-23", tonnageKg: 5000 }],
@@ -133,11 +133,18 @@ describe("headline (PI collapse + delta suppression)", () => {
         prevPi: 62,
       })
     );
-    expect(r?.headline?.pi).toBe(68);
-    expect(r?.headline?.delta).toBe(6);
+    // 68.4 against 62 rounds to a change of 6, which picks the verdict.
+    expect(r?.headline).toEqual({
+      verdict: verdictFor({
+        delta: 6,
+        loadBand: "moderate",
+        deloadRecommended: false,
+      }),
+      deload: false,
+    });
   });
 
-  it("suppresses delta when the prior week has no PI (no vacation spikes)", () => {
+  it("reads no change when the prior week has no PI (no vacation spikes)", () => {
     const r = buildWeeklyReview(
       base({
         workouts: [{ date: "2026-06-23", tonnageKg: 5000 }],
@@ -145,10 +152,16 @@ describe("headline (PI collapse + delta suppression)", () => {
         prevPi: null,
       })
     );
-    expect(r?.headline?.delta).toBeNull();
+    expect(r?.headline?.verdict).toBe(
+      verdictFor({
+        delta: null,
+        loadBand: "moderate",
+        deloadRecommended: false,
+      })
+    );
   });
 
-  it("deload week: negative delta suppressed, verdict says by-design", () => {
+  it("deload week: never claims the week was intended", () => {
     const r = buildWeeklyReview(
       base({
         workouts: [{ date: "2026-06-23", tonnageKg: 2000 }],
@@ -156,23 +169,12 @@ describe("headline (PI collapse + delta suppression)", () => {
         prevPi: 68,
       })
     );
-    expect(r?.headline?.delta).toBeNull();
     expect(r?.headline?.deload).toBe(true);
-    /* The suppression stays (Rev1) — not framing a PI drop as a loss is a
-       choice about emphasis. The VERDICT must not go further and claim
-       the week was intended: the app cannot know that. */
+    /* Not framing a drop as a loss is a choice about emphasis (Rev1). The
+       VERDICT must not go further and claim the week was intended: the
+       app cannot know that. */
     expect(r?.headline?.verdict).not.toMatch(/by design/i);
-  });
-
-  it("deload week keeps a POSITIVE delta", () => {
-    const r = buildWeeklyReview(
-      base({
-        workouts: [{ date: "2026-06-23", tonnageKg: 2000 }],
-        perf: { pi: 70, loadBand: "deload", deloadRecommended: true },
-        prevPi: 65,
-      })
-    );
-    expect(r?.headline?.delta).toBe(5);
+    expect(r?.headline?.verdict).not.toMatch(/softer/i);
   });
 });
 
@@ -240,8 +242,11 @@ describe("verdict templates (no AI)", () => {
       loadBand: "overreach",
       deloadRecommended: true,
     });
-    expect(v).toMatch(/high/i);
-    expect(v).not.toMatch(/a light week|lighter week/i);
+    // About the person and their usual week, never "load" (house voice).
+    expect(v).toBe(
+      "You trained more than your usual week, so this is a good week to ease off."
+    );
+    expect(v).not.toMatch(/a light week|lighter week|load/i);
   });
 
   it("uses only bands computeLoadBand can emit", () => {
@@ -604,5 +609,23 @@ describe("the week the account began", () => {
         })
       );
     }
+  });
+});
+
+describe("verdict words (house voice)", () => {
+  it("joins two statements with a full stop, never an em dash", () => {
+    for (const args of [
+      { delta: -10, loadBand: "deload", deloadRecommended: false },
+      { delta: -7, loadBand: "moderate", deloadRecommended: false },
+      { delta: 2, loadBand: "overreach", deloadRecommended: true },
+    ]) {
+      expect(verdictFor(args), JSON.stringify(args)).not.toMatch(/\u2014/);
+    }
+    expect(
+      verdictFor({ delta: -10, loadBand: "deload", deloadRecommended: false })
+    ).toBe("A light week. The plan picks up from here.");
+    expect(
+      verdictFor({ delta: -7, loadBand: "moderate", deloadRecommended: false })
+    ).toBe("A softer week. This week’s plan resets the rhythm.");
   });
 });

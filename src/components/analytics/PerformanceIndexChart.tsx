@@ -67,8 +67,10 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
+        {/* One name for the 0–100 number on Progress: "your score" (App1
+            Q10), in sentence case. */}
         <h3 className="text-base font-bold text-foreground">
-          Performance Index
+          Your score by week
         </h3>
         <span className="text-xs font-mono tabular-nums text-muted-foreground">
           0–100 · {data.length} {data.length === 1 ? "score" : "scores"}
@@ -77,7 +79,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart
-          aria-label="Performance Index over recent weeks, scored 0 to 100"
+          aria-label="Your score over recent weeks, 0 to 100"
           data={data}
           /* No NEGATIVE left margin. Pulling the plot 10px left reclaims
              gutter on a chart whose labels are short, and this one's are
@@ -199,7 +201,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             }}
             formatter={(value, name) => {
               const labels: Record<string, string> = {
-                pi: "PI",
+                pi: "Score",
                 liftLoad: "Lift load",
                 runLoad: "Run load",
                 recovery: "Recovery",

@@ -25,6 +25,7 @@ import {
   getEstablishingLine,
   performanceEmptyCopy,
   scoreWindowLabel,
+  takeMoreLine,
 } from "@/lib/performanceLine";
 import { performanceWeekBreakdown } from "@/lib/performanceWeekBreakdown";
 import { getCardColour } from "@/lib/performanceColour";
@@ -42,13 +43,15 @@ const EARLY_READ = "Early read";
 /* How to read the lead. "Usual week" is the engine's baseline, the active
  * weeks in the 28 days before the window (`performanceWeekBreakdown`), and
  * the verb is the engine's own verdict (PI1): only "Backing off" says to
- * ease off. So the card answers "can I take more?" with the engine's word
- * and adds no rule of its own: the score's band cannot say "room for more"
- * safely, since a week of one sport tops out in Steady however big it was
- * (LIFT-EV-10, `performanceLine.ts`). The windows are pinned to the engine
- * by `piExplainerWindow.test.ts`. */
+ * ease off. So the card answers "can I take more?" with the engine's word,
+ * on screen under the bars (`takeMoreLine`), and adds no rule of its own:
+ * the score's band cannot say "room for more" safely, since a week of one
+ * sport tops out in Steady however big it was (LIFT-EV-10,
+ * `performanceLine.ts`). "These" 7 days, because a score kept from before
+ * a break names an older window. The windows are pinned to the engine by
+ * `piExplainerWindow.test.ts`. */
 const LEAD_EXPLAINER =
-  "Your last 7 days of lifting and running, against your usual week: the average of the weeks you trained in the 4 before them. Backing off means ease off. Any other word means carry on with your plan.";
+  "These 7 days of lifting and running, against your usual week: the average of the weeks you trained in the 4 before them. Backing off means ease off. Any other word means carry on with your plan.";
 
 interface PerformanceSectionProps {
   /** Whether anything is logged at all: see `performanceEmptyCopy`. */
@@ -216,6 +219,13 @@ export default function PerformanceSection({
             <p className="text-sm text-muted-foreground">{line}</p>
           </div>
           <LoadAgainstUsual measures={measures} />
+          {/* Whether you can take more (Q10), in the engine's own terms. */}
+          <p
+            className="text-sm font-semibold text-foreground"
+            data-take-more=""
+          >
+            {takeMoreLine(establishing ? null : verb.state)}
+          </p>
         </Card>
       </ArrivalFade>
 

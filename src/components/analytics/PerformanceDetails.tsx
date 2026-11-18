@@ -93,7 +93,7 @@ function ScoreCard({
           scaleWithText
         >
           <p className="text-h2 font-extrabold font-figure tabular-nums leading-none text-foreground">
-            <span className="sr-only">Performance Index </span>
+            <span className="sr-only">Your score </span>
             {pi}
           </p>
         </ProgressRing>
@@ -362,18 +362,17 @@ export default function PerformanceDetails({
           unit=""
           accentColor={THEME.brand}
         />
-        {/* The window in the label is the window in the number.
+        {/* The window in the label is the window in the number, and
+            the number is "your score" as everywhere on Progress.
 
-            It read "Avg PI (12w)" over a mean of every fetched week, so
-            a user three weeks in was told twelve, and a user back from
-            a break had their silent weeks pulling the figure down. P2d
-            pins both halves by hand — "user with 5 weeks shows 5-week
-            average … honest about sample size", and "computed only
-            from weeks with confidence >= medium — inactive weeks
-            excluded". `performanceAverage` owns the arithmetic; this
+            P2d pins both halves by hand: "user with 5 weeks shows
+            5-week average … honest about sample size", and "computed
+            only from weeks with confidence >= medium — inactive weeks
+            excluded", so silent weeks back from a break never pull the
+            figure down. `performanceAverage` owns the arithmetic; this
             reads the count it actually used. */}
         <StatCard
-          label={`Avg PI (${avgWeeks}w)`}
+          label={`${avgWeeks}-week average`}
           value={avgPI === null ? "—" : String(avgPI)}
           unit={avgPI === null ? "" : "/100"}
           accentColor={THEME.brand}
@@ -408,11 +407,10 @@ export default function PerformanceDetails({
         </div>
       )}
 
-      {/* Rev1 — the Weekly Review's permanent way in, with the same
-          eligibility as the Home entry (hidden until the reviewed week
-          has content, so no dead row for a new account). It was one tap
-          from the overview on the Performance page and is one tap from
-          it here. */}
+      {/* Rev1: the weekly review's permanent way in, one tap from the
+          Progress overview, with the same eligibility as the Home entry
+          (hidden until the reviewed week has content, so no dead row for
+          a new account). */}
       <WeeklyReviewRow />
     </div>
   );

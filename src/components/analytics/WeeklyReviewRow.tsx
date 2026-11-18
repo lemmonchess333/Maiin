@@ -8,7 +8,7 @@ import { haptic } from "@/lib/haptic";
  * review while one exists — same eligibility gate as the Home entry
  * (F5: never a dead row leading a brand-new user to an empty review),
  * but NOT retired by the viewed state; the review stays reachable here
- * all week. Sits below the Hist6 PI-detail hero.
+ * all week. Sits at the foot of Progress's Score details.
  */
 export default function WeeklyReviewRow() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function WeeklyReviewRow() {
         <CalendarCheck className="size-4 text-primary" aria-hidden="true" />
       </div>
       <p className="min-w-0 flex-1 text-sm font-semibold text-foreground">
-        Weekly Review
+        Weekly review
       </p>
       <ChevronRight
         className="size-4 shrink-0 text-muted-foreground"

@@ -1095,6 +1095,9 @@ details are open on the Analytics overview), and a return to the app re-claims a
 twice a day rather than every time. The unit suites cover the logic; these
 need a device.
 
+_Note 2026-11-15 (App1 Q16): the training-load curve is gone, so it reads
+nothing anywhere; the rows below stand for the other reads._
+
 - [ ] **Push survives a day of returns, and sign-out still works.** On a
       TestFlight build with push on: leave and return to the app thirty or
       more times over a day, then sign out. Passing: sign-out completes, and
@@ -4779,6 +4782,13 @@ top of the Analytics overview, and "Score details" under it opens in place
 what the page held. The unit suites cover the words, the colours and the
 links; these need a phone.
 
+_Note 2026-11-15 (App1 Q10, Q16): the ring with the score, the six-week
+line and the training load's range pills described below have moved or
+gone. The ring is now the first card inside Score details, the six-week
+line and the load chart are gone, and the lead is the verdict over the
+bars. "The score in one place, one load model" below has the current
+checks; the link and tooltip rows here still apply._
+
 - [ ] **The ring holds its score at the largest text size.** With the
       phone's text size at its largest, open Analytics. Passing: the score
       sits inside the ring with room around it, the words wrap under the
@@ -5087,6 +5097,10 @@ A person's sessions, bests, lifetime totals and exports stay free.
 Unit-tested; the capture specs that film 6M and the details now sign the
 test user in as Pro for the length of the capture.
 
+_Note 2026-11-15 (App1 Q10, Q16): Score details now holds the 0–100 score
+itself, its 12-week chart and its average; the training load chart is
+gone. A free account sees the verdict and the bars, not the score._
+
 - [ ] **A free account on Analytics.** Passing: 6M and 1Y carry a small
       lock; tapping one opens the Pro page and leaves the range where it
       was; Score details shows "Pro" and opens the Pro page, not the fold.
@@ -5112,12 +5126,14 @@ is current: a free account's Progress shows the verdict, not the score.
 
 - [ ] **A free account on Progress.** Passing: the top card reads "Last 7
       days", a word such as Steady or Sharpening in large type, its line,
-      and Lifting and Running each with a bar and a tick at the usual
-      week; no 0–100 figure on the page; Score details shows "Pro".
+      Lifting and Running each with a bar and a tick at the usual week,
+      and under them "No sign to ease off. Carry on with your plan" (or
+      "Ease off this week rather than add more" under Backing off); no
+      0–100 figure on the page; Score details shows "Pro".
 - [ ] **A Pro account opens Score details.** Passing: "Your score" first,
-      the ring with the figure and "Last 7 days · out of 100", then the
-      twelve-week chart, Breakdown with the food logged, Load band and
-      average; no Training load card, and no Fitness, Fatigue or Form.
+      the ring with the figure and "Last 7 days · out of 100", then "Your
+      score by week", Breakdown with the food logged, Load band and the
+      week average; no Training load card, and no Fitness, Fatigue or Form.
 - [ ] **Larger text.** Settings → Accessibility → Larger Text at the
       largest step on a small iPhone. Passing: "Sharpening" stays one
       word, a little smaller, and nothing runs past the card's edge

@@ -222,6 +222,33 @@ describe("the lead: load against your usual (App1 Q10)", () => {
     }
   );
 
+  it.each([
+    ["a low week", 30, "low", false],
+    ["a steady week", 65, "moderate", false],
+    ["a high week", 77, "high", false],
+  ])(
+    "answers whether you can take more on screen for %s: no sign to ease off",
+    (_name, pi, band, deload) => {
+      /* Q10: "whether you can take more", on the card and not only
+         behind the ⓘ, in the engine's own terms: it says ease off or it
+         says nothing, and nothing is no licence to add to the plan. */
+      serve(history(pi as number, band as string, deload as boolean));
+      renderSection();
+      const line = lead().querySelector("[data-take-more]");
+      expect(line).toHaveTextContent(
+        "No sign to ease off. Carry on with your plan"
+      );
+    }
+  );
+
+  it("answers it for a week that says back off: ease off rather than add", () => {
+    serve(history(90, "overreach"));
+    renderSection();
+    expect(lead().querySelector("[data-take-more]")).toHaveTextContent(
+      "Ease off this week rather than add more"
+    );
+  });
+
   it("explains the usual week and the verdict from its heading, on a tap", () => {
     serve(history(72, "high"));
     renderSection();
@@ -258,10 +285,12 @@ describe("the lead names its window (App1 Q13)", () => {
 
   it("does not call the window this week in the verdict's line", () => {
     // The line reads under the window's name; a high week said "Load is
-    // high this week" there.
+    // high this week" there. It is about the person now, not "load".
     serve(history(77, "high"));
     renderSection();
-    expect(within(lead()).getByText("Load is high")).toBeInTheDocument();
+    expect(
+      within(lead()).getByText("You trained more than your usual week")
+    ).toBeInTheDocument();
   });
 });
 
@@ -283,7 +312,16 @@ describe("the lead while the baseline forms", () => {
     serve(COLD);
     renderSection();
     expect(within(lead()).getByText("16.2k kg")).toBeInTheDocument();
-    expect(within(lead()).queryByText(/usual week/)).toBeNull();
+    expect(within(lead()).queryByText(/usual week \d/)).toBeNull();
+    expect(screen.queryByTestId("against-usual-lifting")).toBeNull();
+  });
+
+  it("says when the usual week forms, in place of whether to take more", () => {
+    serve(COLD);
+    renderSection();
+    expect(lead().querySelector("[data-take-more]")).toHaveTextContent(
+      "Your usual week forms once you’ve trained in 3 of 4 weeks. Until then, follow your plan"
+    );
   });
 
   it("does not tell a first week to back off in amber", () => {
@@ -411,7 +449,7 @@ describe("the lead before there is a score", () => {
     expect(screen.getByText("No sessions logged yet")).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Your Performance will appear after your first logged session/i
+        /Your last 7 days against your usual week appear after your first session/i
       )
     ).toBeInTheDocument();
     expect(

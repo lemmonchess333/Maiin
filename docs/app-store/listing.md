@@ -109,7 +109,7 @@ Tropos Pro
 • A calorie target that adapts to what you log and how your weight moves.
 • Protein, carbs and fat that shift with each day's training.
 • Pace targets that move with your recent runs.
-• A performance score from 0 to 100 with what it's made of, and charts older than 3 months.
+• Your score from 0 to 100, with its 12-week chart and average, and charts older than 3 months.
 
 Pro is a monthly or yearly subscription, with a 7-day free trial for new subscribers. Payment is taken from your Apple Account when the trial ends, or when you subscribe if there is no trial. It renews automatically unless you cancel at least 24 hours before the end of the current period. Manage or cancel it in your Apple Account settings.
 

@@ -89,9 +89,7 @@ function normal(overrides: Record<string, unknown> = {}) {
     weekKey: "2026-06-29",
     range: { start: "2026-06-29", end: "2026-07-05" },
     headline: {
-      pi: 92,
-      delta: 2,
-      verdict: "Load has run high.",
+      verdict: "You trained more than your usual week.",
       deload: false,
     },
     training: {
@@ -228,11 +226,11 @@ describe("WeeklyReview — the recap as cards", () => {
        review printed it as well ("92 performance, up 2"), so one week's
        number was on two pages. */
     mockReview = normal();
-    const { container } = renderRecap();
-    expect(screen.getByText("Load has run high.")).toBeInTheDocument();
+    renderRecap();
+    expect(
+      screen.getByText("You trained more than your usual week.")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/performance/i)).toBeNull();
-    expect(container.textContent).not.toContain("92");
-    expect(container.textContent).not.toMatch(/\bup 2\b/);
   });
 
   it("shows the best moment: the lift, the figure, what it beat", () => {

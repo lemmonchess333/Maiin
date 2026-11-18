@@ -241,14 +241,9 @@ describe("PerformanceDetails", () => {
       expect(screen.getByText(factor)).toBeInTheDocument();
     }
     expect(screen.getByText("Load band")).toBeInTheDocument();
-    expect(screen.getByText(/^Avg PI \(\d+w\)$/)).toBeInTheDocument();
-  });
-
-  it("keeps one load model, the score's own: no minutes curve or its warnings (Q16)", () => {
-    renderWeeks(warm());
-    expect(screen.queryByText("Training load")).toBeNull();
-    expect(screen.queryByText(/Fitness|Fatigue|Form [+−-]?\d/)).toBeNull();
-    expect(screen.queryByText(/4-week base|near-identical load/)).toBeNull();
+    // One name for the number, "your score": the average is its own.
+    expect(screen.getByText(/^\d+-week average$/)).toBeInTheDocument();
+    expect(screen.queryByText(/\bPI\b|Performance Index/)).toBeNull();
   });
 
   it("does not repeat the lead's lifting and running against the usual week", () => {
@@ -358,12 +353,12 @@ describe("PerformanceDetails: the weekly review", () => {
     review.eligibility = "eligible";
     renderWeeks(warm());
     expect(
-      screen.getByRole("button", { name: "Weekly Review" })
+      screen.getByRole("button", { name: "Weekly review" })
     ).toBeInTheDocument();
   });
 
   it("shows no dead row before there is a week to review", () => {
     renderWeeks(warm());
-    expect(screen.queryByRole("button", { name: "Weekly Review" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Weekly review" })).toBeNull();
   });
 });

@@ -418,7 +418,7 @@ test.describe("analytics tab screenshots", () => {
       timeout: 15_000,
     });
     await expect(
-      page.getByRole("heading", { name: "Performance Index" })
+      page.getByRole("heading", { name: "Your score by week" })
     ).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: "Training load" })
@@ -434,7 +434,9 @@ test.describe("analytics tab screenshots", () => {
          that clips. An assertion against the card passes on the defect. */
     const card = page
       .locator("div.bg-card")
-      .filter({ has: page.getByRole("heading", { name: "Performance Index" }) })
+      .filter({
+        has: page.getByRole("heading", { name: "Your score by week" }),
+      })
       .first();
     const svg = card.locator("svg").first();
     const tick = svg.locator("text", { hasText: /^100$/ }).first();

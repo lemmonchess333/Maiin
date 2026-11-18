@@ -87,8 +87,10 @@ describe("the Performance Index explainer names the engine's windows", () => {
 });
 
 describe("the lead's explainer names the same windows", () => {
-  it("states the last 7 days against the usual week of the 4 before", () => {
-    expect(leadExplainer()).toContain(`last ${constant("WINDOW_DAYS")} days`);
+  it("states the 7 days against the usual week of the 4 before", () => {
+    // "These", not "your last": a score kept from before a break names an
+    // older window ("7 days to 2 Aug").
+    expect(leadExplainer()).toContain(`These ${constant("WINDOW_DAYS")} days`);
     expect(leadExplainer()).toContain(
       `the weeks you trained in the ${constant("BASELINE_DAYS") / 7} before them`
     );

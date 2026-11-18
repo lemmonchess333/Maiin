@@ -7,7 +7,8 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food, its meal menu and its manual entry and edit
+ * on a Monday, and the overview's Score details open for a Pro account),
+ * Food, its meal menu and its manual entry and edit
  * sheets, Social's
  * Together tab (again with a challenge's sheet open) and its feed
  * on Following and on Explore, a Space, a profile and its followers and
@@ -353,6 +354,28 @@ test.describe("large text", () => {
             );
           }
         }
+      } finally {
+        await setTestUserTier("free");
+      }
+
+      expect(found).toEqual([]);
+    });
+
+    /* Progress's Score details, open (App1 Q10): the score in its ring,
+       its window and its change, the 12-week chart, the breakdown with
+       the food logged and the 12-week average. They are Pro (Q84), so
+       the account is Pro for the pass, and the lead above them, whose
+       verdict steps down to the card's width, is measured with them. */
+    test(`Progress's Score details at ${width}px`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width, height: 852 });
+      await setTestUserTier("pro");
+      const found: string[] = [];
+      try {
+        await signInAsTestUser(page);
+        await page.goto("history?score=details");
+        await ready(page, page.getByRole("region", { name: "Your score" }));
+        await measure(page, "history-score-details", width, found);
       } finally {
         await setTestUserTier("free");
       }
