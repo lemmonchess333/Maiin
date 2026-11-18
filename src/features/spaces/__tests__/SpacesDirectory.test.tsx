@@ -135,7 +135,7 @@ describe("SpacesDirectory — Races & Events", () => {
     renderDirectory();
     expect(
       within(
-        screen.getByRole("link", { name: "Great North Run space" })
+        screen.getByRole("link", { name: /^Great North Run\b/ })
       ).getByText("Half marathon")
     ).toBeInTheDocument();
     expect(screen.getByText(/13 Sept? 2099/)).toBeInTheDocument();
@@ -169,9 +169,9 @@ describe("SpacesDirectory — Races & Events", () => {
     });
     renderDirectory();
     expect(
-      screen.getByRole("link", { name: "Runners space" }).textContent
+      screen.getByRole("link", { name: /^Runners\b/ }).textContent
     ).toContain("12 members");
-    const smallCard = screen.getByRole("link", { name: "Strength space" });
+    const smallCard = screen.getByRole("link", { name: /^Strength\b/ });
     expect(smallCard.textContent).toBe("Strength");
     expect(screen.queryByText(/New space/)).not.toBeInTheDocument();
   });
@@ -204,12 +204,10 @@ it("keeps filters visible through no matches and recovers across countries", asy
   }));
   renderDirectory();
   expect(
-    screen.queryByRole("link", { name: "Berlin Marathon space" })
+    screen.queryByRole("link", { name: /^Berlin Marathon\b/ })
   ).not.toBeInTheDocument();
   // The country chip names the default and opens its sheet.
-  fireEvent.click(
-    screen.getByRole("button", { name: "Country: United Kingdom" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Country: UK" }));
   fireEvent.click(
     within(screen.getByRole("radiogroup", { name: "Country" })).getByRole(
       "radio",
@@ -231,15 +229,13 @@ it("keeps filters visible through no matches and recovers across countries", asy
   expect(
     screen.getByRole("button", { name: "Country: Germany" })
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("link", { name: "Runners space" })
-  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /^Runners\b/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
   expect(
-    screen.getByRole("link", { name: "Berlin Marathon space" })
+    screen.getByRole("link", { name: /^Berlin Marathon\b/ })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
 });
 
@@ -254,7 +250,7 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   });
   renderDirectory();
   expect(
-    screen.getByRole("link", { name: "Great North Run space" })
+    screen.getByRole("link", { name: /^Great North Run\b/ })
   ).toBeInTheDocument();
   expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();

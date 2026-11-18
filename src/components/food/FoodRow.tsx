@@ -196,6 +196,13 @@ export default function FoodRow({
 
   const quantityLabel = formatQuantityLabel(group);
   const actionName = accessibleFoodName ?? group.foodName;
+  /* The row is named by what it shows, so its name starts with the
+     food's name as drawn (WCAG 2.5.3, Label in Name: Voice Control is
+     spoken to with the words on the screen). Where two rows would read
+     alike, the portion's details follow, unseen. */
+  const rowNameDetails = accessibleFoodName ? (
+    <span className="sr-only">, {accessibleFoodName}</span>
+  ) : null;
 
   /* Shared inner content (name, quantity/edited pills, kcal). The row
      used to open with a dot coloured by whichever macro gave the most
@@ -330,10 +337,10 @@ export default function FoodRow({
           <button
             type="button"
             onClick={onEdit}
-            aria-label={`Edit ${actionName}`}
             className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
             {rowInner}
+            {rowNameDetails}
           </button>
         ) : (
           <div className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5">
@@ -415,7 +422,6 @@ export default function FoodRow({
         transition={SETTLE}
         role="button"
         tabIndex={0}
-        aria-label={`Edit ${actionName}`}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -427,6 +433,7 @@ export default function FoodRow({
         )}
       >
         {rowInner}
+        {rowNameDetails}
       </motion.div>
     </motion.div>
   );

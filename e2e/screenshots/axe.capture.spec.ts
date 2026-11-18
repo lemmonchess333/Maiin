@@ -381,14 +381,18 @@ test.describe("axe", () => {
     await close(page);
 
     // A meal's edit sheet, from yesterday's diary (seed:rich logs meals on
-    // the five days up to the one it ran on).
+    // the five days up to the one it ran on). A row is named by what it
+    // shows, its calories among them; its Delete is not.
     const yesterday = await page.evaluate(() => {
       const d = new Date();
       d.setDate(d.getDate() - 1);
       const pad = (n: number) => String(n).padStart(2, "0");
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     });
-    const meal = page.getByRole("button", { name: /^Edit / }).first();
+    const meal = page
+      .locator("[data-food-row]")
+      .getByRole("button", { name: /^(?!Delete ).* kcal/ })
+      .first();
     await open(page, `food?date=${yesterday}`, meal);
     await meal.click();
     await dialog.waitFor();

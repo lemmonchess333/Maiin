@@ -396,7 +396,8 @@ describe("a restricted account (S4e)", () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: "Remove strong reaction" })
+        // Yours: the count leads the name, pressed says it is yours.
+        screen.getByRole("button", { name: "1 strong reaction", pressed: true })
       );
     });
     expect(H.toggleCommentReaction).toHaveBeenCalledWith(

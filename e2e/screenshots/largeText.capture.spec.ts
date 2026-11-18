@@ -569,7 +569,9 @@ test.describe("large text", () => {
           .or(page.getByText("You don’t follow anyone yet"))
           .or(
             page
-              .getByRole("button", { name: /^(Add a comment|View comments)$/ })
+              .getByRole("button", {
+                name: /^(Add a comment|View comments|[\d,.\s]+ comments?)$/,
+              })
               .first()
           )
       );

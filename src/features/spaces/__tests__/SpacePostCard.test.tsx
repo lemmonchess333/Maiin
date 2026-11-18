@@ -102,7 +102,9 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onToggleLike={onToggleLike}
       />
     );
-    const btn = screen.getByRole("button", { name: /give props/i });
+    // Named by the count it shows (WCAG 2.5.3).
+    const btn = screen.getByRole("button", { name: "2 props" });
+    expect(btn).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(btn);
     expect(onToggleLike).toHaveBeenCalledTimes(1);
   });
@@ -119,7 +121,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onToggleLike={() => {}}
       />
     );
-    const btn = screen.getByRole("button", { name: /remove props/i });
+    const btn = screen.getByRole("button", { name: "3 props" });
     expect(btn).toHaveAttribute("aria-pressed", "true");
     expect(btn.textContent).toContain("3");
   });
@@ -133,7 +135,7 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
         onRemoved={() => {}}
       />
     );
-    expect(screen.queryByRole("button", { name: /give props/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /props/i })).toBeNull();
     expect(screen.getByText("4")).toBeInTheDocument();
   });
 });

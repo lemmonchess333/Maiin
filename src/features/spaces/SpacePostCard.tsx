@@ -352,7 +352,17 @@ export default function SpacePostCard({
                 <button
                   type="button"
                   onClick={onToggleLike}
-                  aria-label={liked ? "Remove props" : "Give props"}
+                  /* With a count drawn beside the flame, the name starts
+                     with it ("5 props"), as Voice Control is spoken to
+                     with the words on the screen (WCAG 2.5.3); whether
+                     yours is among them is the pressed state. */
+                  aria-label={
+                    displayLikeCount > 0
+                      ? `${displayLikeCount} props`
+                      : liked
+                        ? "Remove props"
+                        : "Give props"
+                  }
                   aria-pressed={liked}
                   className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   style={liked ? { color: THEME.running } : undefined}
@@ -381,7 +391,11 @@ export default function SpacePostCard({
                   <button
                     type="button"
                     onClick={onOpenComments}
-                    aria-label="Comments"
+                    aria-label={
+                      displayCommentCount > 0
+                        ? `${displayCommentCount} ${displayCommentCount === 1 ? "comment" : "comments"}`
+                        : "Comments"
+                    }
                     className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   >
                     <MessageCircle className="size-4" aria-hidden />

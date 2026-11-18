@@ -52,8 +52,15 @@ function diary(meals: Meal[]) {
   );
 }
 
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/* A row is named by what it shows, the food's name first (WCAG 2.5.3,
+   Label in Name); its Delete is named "Delete …". */
 const rowFor = (name: string) =>
-  screen.queryByRole("button", { name: `Edit ${name}` });
+  screen.queryByRole("button", {
+    name: new RegExp(`^${escapeRegExp(name)}\\b`),
+  });
 
 beforeEach(() => {
   motionPref.reduce = false;
@@ -205,7 +212,7 @@ describe("FoodTimeline — portion identity", () => {
           onEdit={onEdit}
         />
       );
-      const rows = screen.getAllByRole("button", { name: /^Edit Oats(?:,|$)/ });
+      const rows = screen.getAllByRole("button", { name: /^Oats\b/ });
       expect(rows).toHaveLength(2);
       rows.forEach((row) => fireEvent.keyDown(row, { key: "Enter" }));
       expect(
@@ -248,7 +255,10 @@ describe("FoodTimeline — portion identity", () => {
         "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (2 cups)",
       ];
       labels.forEach((label) => {
-        const edit = screen.getByRole("button", { name: `Edit ${label}` });
+        // The row's own words, then the details that tell it apart.
+        const edit = screen.getByRole("button", {
+          name: new RegExp(`^Oats\\b.*, ${escapeRegExp(label)}$`),
+        });
         if (reduce) fireEvent.click(edit);
         else fireEvent.keyDown(edit, { key: "Enter" });
       });
@@ -280,7 +290,7 @@ describe("FoodTimeline — portion identity", () => {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Oats" }), {
+    fireEvent.keyDown(rowFor("Oats")!, {
       key: "Enter",
     });
     expect(onEdit).toHaveBeenCalledWith(

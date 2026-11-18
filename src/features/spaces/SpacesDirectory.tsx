@@ -131,7 +131,6 @@ function SpaceCard({
               background: `linear-gradient(150deg, ${accent}26 0%, ${accent}0C 55%, ${accent}14 100%)`,
             }
       }
-      aria-label={`${def.name} space`}
     >
       {/* Every photo card on the one dark shade (PhotoCaption's scrim),
           with no tint of its own, so the white words read alike on each. */}
@@ -151,49 +150,14 @@ function SpaceCard({
         />
       )}
 
-      {event && (
-        <span
-          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
-          }`}
-          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
-             register (photo-overlay text is white-over-dark-scrim in both
-             themes — THEME.scrim's rule): the previous white pill carried
-             the accent as ink, which measured 3.19:1 at this size on the
-             fixed white — in BOTH themes, since the pill never changed.
-             On the themed fallback card the tint stays and the ink takes
-             the accent's -strong step. */
-          style={
-            photo
-              ? undefined
-              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
-          }
-        >
-          <span>
-            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
-          </span>
-        </span>
-      )}
-
-      {joined && (
-        <span
-          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
-          }`}
-          style={
-            photo
-              ? undefined
-              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
-          }
-        >
-          <Check className="size-3" aria-hidden />
-          Joined
-        </span>
-      )}
-
-      {/* The name takes two lines before it gives way, on every card, so
+      {/* The card is named by its words, so the caption comes first in
+          the page's order and the Space's name leads its name, then the
+          tags drawn over the picture: Voice Control is spoken to with the
+          words on the screen (WCAG 2.5.3, Label in Name). The tags are
+          placed absolutely, so the order moves nothing on the card.
+          The name takes two lines before it gives way, on every card, so
           a long name wraps at a word rather than being cut on its first
-          line. The tags above sit over the caption's scrim (z-10), which
+          line. The tags below sit over the caption's scrim (z-10), which
           reaches them at larger text. */}
       <PhotoCaption onPhoto={!!photo} className="px-3.5">
         <p
@@ -241,6 +205,45 @@ function SpaceCard({
           </p>
         )}
       </PhotoCaption>
+      {event && (
+        <span
+          className={`absolute z-10 top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold ${
+            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
+          }`}
+          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
+             register (photo-overlay text is white-over-dark-scrim in both
+             themes — THEME.scrim's rule): the previous white pill carried
+             the accent as ink, which measured 3.19:1 at this size on the
+             fixed white — in BOTH themes, since the pill never changed.
+             On the themed fallback card the tint stays and the ink takes
+             the accent's -strong step. */
+          style={
+            photo
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
+          }
+        >
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
+        </span>
+      )}
+
+      {joined && (
+        <span
+          className={`absolute z-10 top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
+            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
+          }`}
+          style={
+            photo
+              ? undefined
+              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
+          }
+        >
+          <Check className="size-3" aria-hidden />
+          Joined
+        </span>
+      )}
     </Link>
   );
 }
