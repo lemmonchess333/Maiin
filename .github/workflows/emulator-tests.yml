@@ -393,6 +393,18 @@ jobs:
           firebase emulators:exec --only auth,firestore --project demo-tropos \
             'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run seed:season && npm run test:e2e -- capture.spec.ts --project=auth-emulator'
 
+      # Each frame's hash, in the log, so two runs can be compared without
+      # the frames: a layout change meant to leave the phone untouched
+      # (the iPhone Duo's wide layouts) shows its frames byte-identical,
+      # and any that moved by name. Maps, sheets and the wall-clock badge
+      # vary run to run on their own (docs/agents/capture-rig.md).
+      - name: List the frames' hashes
+        if: always()
+        run: |
+          if compgen -G "screenshots/*.png" > /dev/null; then
+            sha256sum screenshots/*.png | sed 's|  screenshots/|  |' | sort -k2
+          fi
+
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
