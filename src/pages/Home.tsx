@@ -1385,7 +1385,18 @@ export default function Home() {
       {/* Streak count stays in the header. Recovery remains available through
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
-      {/* DS4 Home: today's session as the hero, then the week under it,
+      {/* Two panes where the screen has room for two (the iPhone Duo's
+          inner display open in landscape, `split`): training on one side,
+          the day's food, water and weight and anything to answer on the
+          other, the gap on the fold. Both wrappers are always there and
+          carry the page's own 16px rhythm, so a phone draws exactly the
+          one column it did, a fold re-flows the same elements rather than
+          mounting new ones, and the reading order is the phone's. (The
+          stack's spacing stays on in the grid: it sets the first column's
+          foot 16px longer, which only the row's height can see.) */}
+      <div className="space-y-4 split:grid split:grid-cols-2 split:items-start split:gap-x-8">
+        <div className="space-y-4 min-w-0">
+          {/* DS4 Home: today's session as the hero, then the week under it,
           then food, water and weight, then how the week is going. The hero
           names the screen, so nothing above it carries a title; "This
           week" heads the summary at the foot.
@@ -1393,270 +1404,277 @@ export default function Home() {
           home-declutter 4a — sessions FIRST. Today's lift, run or rest is
           the page's primary action and leads. A group, so its name is
           one a screen reader can use: a name on a roleless div is not. */}
-      <motion.div
-        role="group"
-        aria-label="Today’s training"
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-      >
-        {heroPlaceholder ? (
-          // The hero's own height, so the week below it does not jump
-          // when the session lands.
-          <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />
-        ) : trainingUnavailable ? (
-          <Banner
-            variant="neutral"
-            title="Training isn’t ready"
-            description="Couldn’t load today’s training. Open your plan to try again."
-            action={
-              <Button variant="secondary" onClick={() => navigate("/program")}>
-                Open training plan
-              </Button>
-            }
-          />
-        ) : (
-          <TrackSectionView section="stacked_cta">
-            <SectionErrorBoundary sectionName="quick-actions">
-              <StackedCTACards
-                session={session}
-                liftReadiness={liftReadiness}
-                unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
-                liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
-                freeRunLine={freeRunLine}
-                runPlanLocked={runPlanLocked}
-                navigate={function (p: string) {
-                  closePeek();
-                  navigate(p);
-                }}
+          <motion.div
+            role="group"
+            aria-label="Today’s training"
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            {heroPlaceholder ? (
+              // The hero's own height, so the week below it does not jump
+              // when the session lands.
+              <div className="h-[420px] rounded-2xl bg-muted motion-safe:animate-pulse" />
+            ) : trainingUnavailable ? (
+              <Banner
+                variant="neutral"
+                title="Training isn’t ready"
+                description="Couldn’t load today’s training. Open your plan to try again."
+                action={
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate("/program")}
+                  >
+                    Open training plan
+                  </Button>
+                }
               />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        )}
-      </motion.div>
+            ) : (
+              <TrackSectionView section="stacked_cta">
+                <SectionErrorBoundary sectionName="quick-actions">
+                  <StackedCTACards
+                    session={session}
+                    liftReadiness={liftReadiness}
+                    unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
+                    liftUnit={resolveLiftUnit(profile?.liftingWeightUnit)}
+                    freeRunLine={freeRunLine}
+                    runPlanLocked={runPlanLocked}
+                    navigate={function (p: string) {
+                      closePeek();
+                      navigate(p);
+                    }}
+                  />
+                </SectionErrorBoundary>
+              </TrackSectionView>
+            )}
+          </motion.div>
 
-      {/* The week folds into the hero (DS4 call 5): a card one step down
+          {/* The week folds into the hero (DS4 call 5): a card one step down
           from it, the week's sessions done and the next one over seven
           segments, each a day that opens its peek. */}
-      {showWeekStrip && (
-        <motion.div
-          ref={weekStripRef}
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="space-y-3"
-        >
-          {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
+          {showWeekStrip && (
+            <motion.div
+              ref={weekStripRef}
+              variants={{
+                hidden: { opacity: 0, y: 12 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+              }}
+              className="space-y-3"
+            >
+              {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
             Isolated in a SectionErrorBoundary so a data-shape bug here
             degrades to a single "couldn't load" card (and still logs via
             captureError) instead of taking the whole Home page into
             RouteErrorBoundary. */}
-          <SectionErrorBoundary sectionName="week-strip">
-            <div
-              className={cardClasses({
-                size: "compact",
-                padded: false,
-                className: "space-y-2 px-4 pt-3.5 pb-3",
-              })}
-            >
-              <WeekSessions
-                done={weekSessionCount.done}
-                of={weekSessionCount.of}
-                next={nextSession}
-              />
-              <WeekStrip
-                todayKey={todayKey}
-                dayMap={weeklyDayMap}
-                profile={profile}
-                programState={programState}
-                claimMap={claimMap}
-                selectedDate={peekDate}
-                onDayTap={handleDayTap}
-                loggedLiftDates={loggedLiftDates}
-                extraRunDates={extraRunDates}
-                startKey={startKey}
-              />
-              {/* What the count above is made of, and the way into the
+              <SectionErrorBoundary sectionName="week-strip">
+                <div
+                  className={cardClasses({
+                    size: "compact",
+                    padded: false,
+                    className: "space-y-2 px-4 pt-3.5 pb-3",
+                  })}
+                >
+                  <WeekSessions
+                    done={weekSessionCount.done}
+                    of={weekSessionCount.of}
+                    next={nextSession}
+                  />
+                  <WeekStrip
+                    todayKey={todayKey}
+                    dayMap={weeklyDayMap}
+                    profile={profile}
+                    programState={programState}
+                    claimMap={claimMap}
+                    selectedDate={peekDate}
+                    onDayTap={handleDayTap}
+                    loggedLiftDates={loggedLiftDates}
+                    extraRunDates={extraRunDates}
+                    startKey={startKey}
+                  />
+                  {/* What the count above is made of, and the way into the
                   Weekly Review while one waits (Trim1 call 1). Both were
                   a "This week" card at the foot of Home, which read the
                   same counts as the line above the segments. */}
-              <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border pt-2.5">
-                <SectionErrorBoundary sectionName="week-summary">
-                  <WeekSummary counts={weekCounts} runner={planKind.runs} />
-                </SectionErrorBoundary>
-                <SectionErrorBoundary sectionName="weekly-review-entry">
-                  <WeeklyReviewEntry />
-                </SectionErrorBoundary>
-              </div>
-            </div>
-            <AnimatePresence>
-              {peekDate && (
-                <DayPeekCard
-                  dateKey={peekDate}
-                  todayKey={todayKey}
-                  profile={profile}
-                  programState={programState}
-                  claimMap={claimMap}
-                  extras={unclaimedByDate.get(peekDate) ?? []}
-                  workouts={peekW}
-                  dailyTotals={peekT}
-                  sessionsLoading={workoutsLoading || savedRunsLoading}
-                  rollingContexts={rollingContexts}
-                  onClose={function () {
-                    setPeekDate(null);
-                  }}
-                  onManage={function (dk) {
-                    setManageDate(dk);
-                  }}
-                />
-              )}
-            </AnimatePresence>
-          </SectionErrorBoundary>
-        </motion.div>
-      )}
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 border-t border-border pt-2.5">
+                    <SectionErrorBoundary sectionName="week-summary">
+                      <WeekSummary counts={weekCounts} runner={planKind.runs} />
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="weekly-review-entry">
+                      <WeeklyReviewEntry />
+                    </SectionErrorBoundary>
+                  </div>
+                </div>
+                <AnimatePresence>
+                  {peekDate && (
+                    <DayPeekCard
+                      dateKey={peekDate}
+                      todayKey={todayKey}
+                      profile={profile}
+                      programState={programState}
+                      claimMap={claimMap}
+                      extras={unclaimedByDate.get(peekDate) ?? []}
+                      workouts={peekW}
+                      dailyTotals={peekT}
+                      sessionsLoading={workoutsLoading || savedRunsLoading}
+                      rollingContexts={rollingContexts}
+                      onClose={function () {
+                        setPeekDate(null);
+                      }}
+                      onManage={function (dk) {
+                        setManageDate(dk);
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
+              </SectionErrorBoundary>
+            </motion.div>
+          )}
 
-      {/* Run9's starter goal reached: a plain Done under today's session,
+          {/* Run9's starter goal reached: a plain Done under today's session,
           with the next goal offered once (dismissed here or on Train). */}
-      {starterDone && profile?.starterGoal?.startedOn && (
-        <StarterDoneCard
-          startedOn={profile.starterGoal.startedOn}
-          navigate={navigate}
-        />
-      )}
+          {starterDone && profile?.starterGoal?.startedOn && (
+            <StarterDoneCard
+              startedOn={profile.starterGoal.startedOn}
+              navigate={navigate}
+            />
+          )}
 
-      {/* A new account's first seven days, under today's session: the
+          {/* A new account's first seven days, under today's session: the
           session is the day's action, this is what the week is for.
           Routed through the education lane so it doesn't stack with the
           explainer banners (#995). */}
-      {welcomeCard.visible && firstWeekState && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <FirstWeekCard
-            week={firstWeekState}
-            onDismiss={dismissCoachMarks}
-            onOpen={openFirstWeekItem}
-          />
-        </motion.div>
-      )}
-
-      {newBadge && !badgeOpen && (
-        <NewBadgeRow name={newBadge.name} onOpen={() => setBadgeOpen(true)} />
-      )}
-
-      {/* The week before a yearly Pro plan renews: the year, opened on tap
-          (App1 Q56). Renders nothing for anyone else. */}
-      <SectionErrorBoundary sectionName="year-recap">
-        <YearRecapRow />
-      </SectionErrorBoundary>
-
-      {/* Email accounts verify after the plan; this asks, under today's
-          session rather than above it. Renders nothing once verified. */}
-      <SectionErrorBoundary sectionName="verify-email">
-        <VerifyEmailBanner />
-      </SectionErrorBoundary>
-
-      {/* A reminder that went quiet after 3 went unopened, said once
-          (App1 Q62). Renders nothing otherwise. */}
-      <SectionErrorBoundary sectionName="reminders-quiet">
-        <RemindersQuietCard />
-      </SectionErrorBoundary>
-
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-      >
-        <TrackSectionView section="today_energy">
-          <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy
-              calories={todayIntake.calories}
-              protein={todayIntake.protein}
-              carbs={todayIntake.carbs}
-              fat={todayIntake.fat}
-              targets={effectiveTargets}
-              mealsLoading={mealsLoading}
-              mealsError={mealsError}
-              onRetryMeals={refreshMeals}
-              // Computed by useHomeData against the same protein target
-              // the macro figures show (HOME-TARGET-01).
-              postWorkoutNudge={postWorkoutNudge}
+          {welcomeCard.visible && firstWeekState && (
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 8 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+              }}
+            >
+              <FirstWeekCard
+                week={firstWeekState}
+                onDismiss={dismissCoachMarks}
+                onOpen={openFirstWeekItem}
+              />
+            </motion.div>
+          )}
+        </div>
+        <div className="space-y-4 min-w-0">
+          {newBadge && !badgeOpen && (
+            <NewBadgeRow
+              name={newBadge.name}
+              onOpen={() => setBadgeOpen(true)}
             />
+          )}
+
+          {/* The week before a yearly Pro plan renews: the year, opened on tap
+          (App1 Q56). Renders nothing for anyone else. */}
+          <SectionErrorBoundary sectionName="year-recap">
+            <YearRecapRow />
           </SectionErrorBoundary>
-        </TrackSectionView>
-      </motion.div>
 
-      {/* Water and weight share a row; items-stretch keeps the pair
+          {/* Email accounts verify after the plan; this asks, under today's
+          session rather than above it. Renders nothing once verified. */}
+          <SectionErrorBoundary sectionName="verify-email">
+            <VerifyEmailBanner />
+          </SectionErrorBoundary>
+
+          {/* A reminder that went quiet after 3 went unopened, said once
+          (App1 Q62). Renders nothing otherwise. */}
+          <SectionErrorBoundary sectionName="reminders-quiet">
+            <RemindersQuietCard />
+          </SectionErrorBoundary>
+
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <TrackSectionView section="today_energy">
+              <SectionErrorBoundary sectionName="today-intake">
+                <TodayEnergy
+                  calories={todayIntake.calories}
+                  protein={todayIntake.protein}
+                  carbs={todayIntake.carbs}
+                  fat={todayIntake.fat}
+                  targets={effectiveTargets}
+                  mealsLoading={mealsLoading}
+                  mealsError={mealsError}
+                  onRetryMeals={refreshMeals}
+                  // Computed by useHomeData against the same protein target
+                  // the macro figures show (HOME-TARGET-01).
+                  postWorkoutNudge={postWorkoutNudge}
+                />
+              </SectionErrorBoundary>
+            </TrackSectionView>
+          </motion.div>
+
+          {/* Water and weight share a row; items-stretch keeps the pair
           equal-height. */}
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-        className="grid grid-cols-2 gap-2 items-stretch"
-      >
-        <SectionErrorBoundary sectionName="water">
-          <WaterCard
-            compact
-            ml={waterMl}
-            targetMl={waterTargetMl}
-            servingMl={servingMl}
-            syncStatus={waterSyncStatus}
-            onRetry={retryWater}
-            drinks={waterDrinks}
-            onRemoveDrink={removeWaterDrink}
-            onLog={function (deltaMl) {
-              closePeek();
-              return logWater(deltaMl);
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
             }}
-          />
-        </SectionErrorBoundary>
-        <SectionErrorBoundary sectionName="weight">
-          <WeightTile
-            lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit}
-            onLogWeight={function () {
-              closePeek();
-              setShowWeightSheet(true);
-            }}
-            lastWeightDate={weightRelativeTime}
-            syncStatus={weightSyncStatus}
-            saveAnnouncement={weightAnnouncement}
-            loading={homeDataLoading}
-            hideNumber={profile?.hideWeightNumber}
-            weightTrend={weightTrend}
-          />
-        </SectionErrorBoundary>
-      </motion.div>
+            className="grid grid-cols-2 gap-2 items-stretch"
+          >
+            <SectionErrorBoundary sectionName="water">
+              <WaterCard
+                compact
+                ml={waterMl}
+                targetMl={waterTargetMl}
+                servingMl={servingMl}
+                syncStatus={waterSyncStatus}
+                onRetry={retryWater}
+                drinks={waterDrinks}
+                onRemoveDrink={removeWaterDrink}
+                onLog={function (deltaMl) {
+                  closePeek();
+                  return logWater(deltaMl);
+                }}
+              />
+            </SectionErrorBoundary>
+            <SectionErrorBoundary sectionName="weight">
+              <WeightTile
+                lastWeight={lastWeightInfo?.weight || null}
+                weightUnit={weightUnit}
+                onLogWeight={function () {
+                  closePeek();
+                  setShowWeightSheet(true);
+                }}
+                lastWeightDate={weightRelativeTime}
+                syncStatus={weightSyncStatus}
+                saveAnnouncement={weightAnnouncement}
+                loading={homeDataLoading}
+                hideNumber={profile?.hideWeightNumber}
+                weightTrend={weightTrend}
+              />
+            </SectionErrorBoundary>
+          </motion.div>
 
-      <div className="space-y-2" role="group" aria-label="Helpful tips">
-        {/* D7 — proactive recalibration check-in at natural seams (a few weeks
+          <div className="space-y-2" role="group" aria-label="Helpful tips">
+            {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
             after an earlier one was dismissed; gentle + dismiss-once. */}
-        {(() => {
-          const recal = recalibrationCheckIn({
-            weekNumber: programState?.weekNumber,
-          });
-          return recal ? (
-            <ContextualTipBanner
-              tipKey={recal.tipKey}
-              lanePriority={12}
-              title={recal.title}
-              description={recal.description}
-              ctaLabel="Edit plan"
-              ctaHref="/settings/lift-plan"
-              visible={true}
-            />
-          ) : null;
-        })()}
+            {(() => {
+              const recal = recalibrationCheckIn({
+                weekNumber: programState?.weekNumber,
+              });
+              return recal ? (
+                <ContextualTipBanner
+                  tipKey={recal.tipKey}
+                  lanePriority={12}
+                  title={recal.title}
+                  description={recal.description}
+                  ctaLabel="Edit plan"
+                  ctaHref="/settings/lift-plan"
+                  visible={true}
+                />
+              ) : null;
+            })()}
 
-        {/* What left this lane, and why, so none of it comes back by habit:
+            {/* What left this lane, and why, so none of it comes back by habit:
           - The goal-weight nudge (2026-07-20): an optional refinement, the
             app runs fine on the maintenance default.
           - "Your activity is already in your target" (Nutr1): the walk's
@@ -1670,6 +1688,8 @@ export default function Home() {
             to check the answer they had just given. The race-goal
             invitation: Train's Run tab carries the same card where run
             plans live, and this copy only worked on days 8 to 14. */}
+          </div>
+        </div>
       </div>
 
       {streakSheet !== "unopened" && (
