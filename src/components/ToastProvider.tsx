@@ -43,7 +43,7 @@ export function ToastProvider() {
         /* Solid where the blur cannot be drawn, and under Reduce
            Transparency: the media query where a browser has it, the
            attribute the app sets from the phone's own setting where it
-           does not (WebKit; src/lib/reducedTransparency.ts). */
+           does not (WebKit; #3398's reducedTransparency module sets it). */
         @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
           [data-sonner-toast],
           .dark [data-sonner-toast] {
