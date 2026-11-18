@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import PageShell from "@/components/ui/PageShell";
 import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
@@ -8,14 +8,27 @@ import { ProgramSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useProgramEngine } from "@/features/program/useProgramEngine";
 import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
+import { useBackOnce } from "@/hooks/useBackOnce";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useAuth } from "@/lib/auth";
-import { goBackOr } from "@/lib/backNavigation";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
-const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+/** A local date, as `YYYY-MM-DD`, that names a real day: "2026-13-45"
+ *  has the shape and would read as a day in February. */
+function isDateKey(raw: string | undefined): raw is string {
+  return (
+    !!raw &&
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) &&
+    localDateString(parseLocalDate(raw)) === raw
+  );
+}
 
 /** Train's Run tab on this run's day: where Back lands when the page was
  *  opened from outside the app. */
@@ -28,14 +41,14 @@ function trainFor(dateKey: string): string {
  * day's sheet held for it, as a page. The run and how it should feel, why
  * it is in the week, change it for this day, mark it done, skip it, move
  * it, restore a skipped one. Train's run card opens it from its ⋯; an
- * action that lands goes back there, as the sheet closed.
+ * action that lands goes back there, once, as the sheet closed.
  *
  * It reads the engine Train holds (`useProgramEngine`), so it opens with
  * the plan on screen and a change made here is the one Train shows.
  */
 export default function RunSession() {
   const { date } = useParams();
-  if (!date || !DATE_KEY.test(date)) {
+  if (!isDateKey(date)) {
     return <Navigate to="/program?tab=run" replace />;
   }
   // A new date is a new page: its move picker starts closed.
@@ -43,7 +56,6 @@ export default function RunSession() {
 }
 
 function RunSessionPage({ dateKey }: { dateKey: string }) {
-  const navigate = useNavigate();
   const {
     programState,
     loading,
@@ -73,7 +85,27 @@ function RunSessionPage({ dateKey }: { dateKey: string }) {
     () => formatShortWeekdayDayMonth(parseLocalDate(dateKey)),
     [dateKey]
   );
-  const back = () => goBackOr(navigate, trainFor(dateKey));
+  const back = useBackOnce(trainFor(dateKey));
+  // A page opens at its top: nothing resets the scroll between pages.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  /* Whether the day held a run when the page opened. A day with none goes
+     to Train's Run tab on that day, as a lift's page does for a day not in
+     the plan. Read once: a run moved off this day by the page's own Move
+     leaves through `back`, not through a redirect. */
+  const [openedEmpty, setOpenedEmpty] = useState<boolean | null>(null);
+  if (openedEmpty === null && programState) {
+    setOpenedEmpty(
+      resolveTrainingDayForDate({
+        dateKey,
+        profile,
+        programState,
+        currentWeekKey: localWeekKey(new Date()),
+        claimMap,
+      }).run.runDay === null
+    );
+  }
 
   if (loading) return <ProgramSkeleton />;
   if (!programState) {
@@ -85,6 +117,7 @@ function RunSessionPage({ dateKey }: { dateKey: string }) {
       />
     );
   }
+  if (openedEmpty) return <Navigate to={trainFor(dateKey)} replace />;
 
   return (
     <PageShell

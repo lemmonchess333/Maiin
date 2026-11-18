@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import PageShell from "@/components/ui/PageShell";
@@ -12,8 +12,8 @@ import { useProgramEngine } from "@/features/program/useProgramEngine";
 import { useLiftSession } from "@/features/program/useLiftSession";
 import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { useBackOnce } from "@/hooks/useBackOnce";
 import { useAuth } from "@/lib/auth";
-import { goBackOr } from "@/lib/backNavigation";
 import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { liftSessionPath } from "@/lib/sessionPages";
 
@@ -62,6 +62,11 @@ function LiftSessionPage({ dayIndex }: { dayIndex: number | null }) {
     viewingHistory: false,
   });
   const [reorderMode, setReorderMode] = useState(false);
+  const back = useBackOnce(trainFor(dayIndex ?? 0));
+  // A page opens at its top: nothing resets the scroll between pages.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (loading) return <ProgramSkeleton />;
   if (!programState) {
@@ -96,7 +101,7 @@ function LiftSessionPage({ dayIndex }: { dayIndex: number | null }) {
           to={trainFor(dayIndex)}
           onClick={(e) => {
             e.preventDefault();
-            goBackOr(navigate, trainFor(dayIndex));
+            back();
           }}
           className="inline-flex min-h-[44px] items-center gap-1 -ml-2 px-2"
         >

@@ -5,7 +5,7 @@
  * sheet closed. What each action does is `DayActionSheet.test.tsx`'s,
  * which draws the same content (`DayActionContent`).
  */
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
@@ -177,18 +177,121 @@ describe("a run's own page", () => {
     expect(screen.queryByText("Manage day")).not.toBeInTheDocument();
   });
 
-  it("says so on a day with no run", () => {
+  it("sends a day with no run to Train's Run tab on that day", () => {
     h.engine = engine([]);
     open(`/program/run/${today}`);
-    expect(
-      screen.getByText("No run scheduled for this day.")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("address")).toHaveTextContent(
+      `/program?tab=run&rday=${today}`
+    );
   });
 
-  it("sends an address that names no date to Train's Run tab", () => {
-    open("/program/run/next-tuesday");
-    expect(screen.getByTestId("address")).toHaveTextContent(
-      /^\/program\?tab=run$/
+  it("sends an address that names no real day to Train's Run tab", () => {
+    // The shape of a date, but no day: it would read as one in February.
+    for (const date of ["next-tuesday", "2026-13-45", "2026-02-30"]) {
+      const { unmount } = open(`/program/run/${date}`);
+      expect(screen.getByTestId("address"), date).toHaveTextContent(
+        /^\/program\?tab=run$/
+      );
+      unmount();
+    }
+  });
+
+  it("opens at its top", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    open(`/program/run/${today}`);
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    scrollTo.mockRestore();
+  });
+});
+
+/** A command held until the test lets it land. */
+function held() {
+  let land: (value: typeof APPLIED) => void = () => {};
+  const command = vi.fn(
+    () =>
+      new Promise<typeof APPLIED>((resolve) => {
+        land = resolve;
+      })
+  );
+  return { command, land: () => land(APPLIED) };
+}
+
+describe("going back from a run's page opened from Train", () => {
+  /* Home, then Train's Run tab, then the run's page, as the app's own
+     history holds them: Back goes one step, to Train. */
+  const train = `/program?tab=run&rday=${today}`;
+  function openFromTrain() {
+    return render(
+      <MemoryRouter
+        initialEntries={["/", train, `/program/run/${today}`]}
+        initialIndex={2}
+      >
+        <Routes>
+          <Route path="/" element={<Address />} />
+          <Route path="/program" element={<Address />} />
+          <Route
+            path="/program/run/:date"
+            element={
+              <>
+                <RunSession />
+                <Address />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
     );
+  }
+  beforeEach(() => {
+    // `cameFromInApp`: the router keeps each entry's place on it.
+    window.history.replaceState({ idx: 2 }, "");
+  });
+  afterEach(() => {
+    window.history.replaceState(null, "");
+  });
+
+  it("runs a skip tapped twice once, and lands on Train, not past it", async () => {
+    const skip = held();
+    h.engine = { ...engine([runDay()]), skipRunDay: skip.command };
+    openFromTrain();
+    const button = screen.getByRole("button", { name: "Skip this run" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
+    skip.land();
+    await waitFor(() =>
+      expect(screen.getByTestId("address")).toHaveTextContent(train)
+    );
+    // Settled there: nothing goes back a second time.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("address")).toHaveTextContent(train);
+    expect(skip.command).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes back once when Back comes before the skip lands", async () => {
+    const skip = held();
+    h.engine = { ...engine([runDay()]), skipRunDay: skip.command };
+    openFromTrain();
+    fireEvent.click(screen.getByRole("button", { name: "Skip this run" }));
+    fireEvent.click(screen.getByRole("link", { name: "Train" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("address")).toHaveTextContent(train)
+    );
+    skip.land();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("address")).toHaveTextContent(train);
+    expect(skip.command).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes back once for a second tap on Train", async () => {
+    openFromTrain();
+    const link = screen.getByRole("link", { name: "Train" });
+    fireEvent.click(link);
+    fireEvent.click(link);
+    await waitFor(() =>
+      expect(screen.getByTestId("address")).toHaveTextContent(train)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("address")).toHaveTextContent(train);
   });
 });

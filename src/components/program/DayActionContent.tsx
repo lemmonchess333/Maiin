@@ -29,7 +29,7 @@ import LiftPurpose from "@/components/program/LiftPurpose";
  * what's training for the given date.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
 import Select from "@/components/ui/Select";
@@ -180,6 +180,24 @@ export default function DayActionContent({
   const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
   const [showMovePicker, setShowMovePicker] = useState(false);
+  /* One action at a time, and each once: its buttons are disabled while
+     its command is on its way, so a second tap cannot run it again or,
+     on a run's page, go back twice and past Train. The ref holds it
+     between two taps that land before the disabled state draws. */
+  const acting = useRef(false);
+  const [pending, setPending] = useState(false);
+  const act = async (command: () => Promise<unknown>) => {
+    if (acting.current) return;
+    acting.current = true;
+    setPending(true);
+    try {
+      await command();
+      onClose();
+    } finally {
+      acting.current = false;
+      setPending(false);
+    }
+  };
   // The resolver is the single source of truth for what training
   // exists on this date. Same call Home and Programme Today make
   // (PR-0c), so the sheet inherits the date/weekKey-aware runDay
@@ -578,12 +596,14 @@ export default function DayActionContent({
                   {!isRaceTemplate && (
                     <button
                       type="button"
-                      onClick={async () => {
-                        if (run.runDay?.id) {
-                          await markManualComplete(run.runDay.id);
-                        }
-                        onClose();
-                      }}
+                      disabled={pending}
+                      onClick={() =>
+                        void act(async () => {
+                          if (run.runDay?.id) {
+                            await markManualComplete(run.runDay.id);
+                          }
+                        })
+                      }
                       className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
                     >
                       <Check
@@ -613,24 +633,24 @@ export default function DayActionContent({
                     <>
                       <button
                         type="button"
-                        onClick={async () => {
-                          await skipRunDay(
-                            run.runDay!.id ?? run.runDay!.dayIndex
-                          );
-                          onClose();
-                        }}
+                        disabled={pending}
+                        onClick={() =>
+                          void act(() =>
+                            skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex)
+                          )
+                        }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
                         DNF — Started but didn’t finish
                       </button>
                       <button
                         type="button"
-                        onClick={async () => {
-                          await skipRunDay(
-                            run.runDay!.id ?? run.runDay!.dayIndex
-                          );
-                          onClose();
-                        }}
+                        disabled={pending}
+                        onClick={() =>
+                          void act(() =>
+                            skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex)
+                          )
+                        }
                         className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                       >
                         DNS — Didn’t start
@@ -640,12 +660,12 @@ export default function DayActionContent({
                   {run.isStartable && !isRaceTemplate && (
                     <button
                       type="button"
-                      onClick={async () => {
-                        await skipRunDay(
-                          run.runDay!.id ?? run.runDay!.dayIndex
-                        );
-                        onClose();
-                      }}
+                      disabled={pending}
+                      onClick={() =>
+                        void act(() =>
+                          skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex)
+                        )
+                      }
                       className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
                     >
                       Skip this run
@@ -698,15 +718,16 @@ export default function DayActionContent({
                                 <button
                                   key={opt.dayIndex}
                                   type="button"
-                                  disabled={!opt.available}
+                                  disabled={!opt.available || pending}
                                   aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
-                                  onClick={async () => {
-                                    await moveRunDay(
-                                      run.runDay!.id ?? run.runDay!.dayIndex,
-                                      opt.dayIndex
-                                    );
-                                    onClose();
-                                  }}
+                                  onClick={() =>
+                                    void act(() =>
+                                      moveRunDay(
+                                        run.runDay!.id ?? run.runDay!.dayIndex,
+                                        opt.dayIndex
+                                      )
+                                    )
+                                  }
                                   className={cn(
                                     "min-h-[44px] rounded-lg text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-transform",
                                     opt.available
@@ -745,10 +766,12 @@ export default function DayActionContent({
             {(run.status === "skipped" || run.status === "race_no_show") && (
               <button
                 type="button"
-                onClick={async () => {
-                  await restoreRunDay(run.runDay!.id ?? run.runDay!.dayIndex);
-                  onClose();
-                }}
+                disabled={pending}
+                onClick={() =>
+                  void act(() =>
+                    restoreRunDay(run.runDay!.id ?? run.runDay!.dayIndex)
+                  )
+                }
                 className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <RotateCcw className="size-4" style={{ color: THEME.brand }} />
@@ -806,10 +829,8 @@ export default function DayActionContent({
           {lift.isStartable && (
             <button
               type="button"
-              onClick={async () => {
-                await skipWorkoutDay(lift.index!);
-                onClose();
-              }}
+              disabled={pending}
+              onClick={() => void act(() => skipWorkoutDay(lift.index!))}
               className={cn(
                 "w-full py-3 rounded-xl text-sm font-bold",
                 "bg-destructive/10 text-destructive-strong active:scale-[0.97] transition-transform"
@@ -825,10 +846,8 @@ export default function DayActionContent({
           {lift.status === "skipped" && lift.index !== null && (
             <button
               type="button"
-              onClick={async () => {
-                await restoreWorkoutDay(lift.index!);
-                onClose();
-              }}
+              disabled={pending}
+              onClick={() => void act(() => restoreWorkoutDay(lift.index!))}
               className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
             >
               <RotateCcw className="size-4" style={{ color: THEME.brand }} />

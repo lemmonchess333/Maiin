@@ -150,8 +150,10 @@ code can hold that it should not, and what would make it explicit.
 
 `src/pages/Food.tsx` (40 `useState`, 15 of them booleans),
 `src/components/social/CirclesSection.tsx` (26 and 10),
-`src/pages/Program.tsx` (23 and 8), `src/components/social/ActivityCard.tsx`
-(13 and 7). Mostly independent open-or-closed flags for sheets, not one
+`src/pages/Program.tsx` (10 and 5, since its day's session moved to
+`src/components/program/LiftSessionView.tsx`, 7 and 3, and
+`src/features/program/useLiftSession.ts`, 5 and 1, in TrainWk1 step 3),
+`src/components/social/ActivityCard.tsx` (13 and 7). Mostly independent open-or-closed flags for sheets, not one
 machine. ADR-0001 holds: do not split a page for its length. Where two flags
 can never both be true (two sheets over one screen), one union of "which sheet
 is open" removes the combination.

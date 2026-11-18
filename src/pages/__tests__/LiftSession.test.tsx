@@ -4,7 +4,7 @@
  * person could do to it there. It reads the engine the `/program` route
  * holds (`useProgramEngine`), mocked here.
  */
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { ComponentProps } from "react";
@@ -232,5 +232,56 @@ describe("a lift's own page", () => {
   it("sends a day the plan does not have to Train", () => {
     open("/program/lift/9");
     expect(screen.getByTestId("address")).toHaveTextContent(/^\/program$/);
+  });
+
+  it("opens at its top", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    open("/program/lift/0");
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    scrollTo.mockRestore();
+  });
+});
+
+describe("going back from a lift's page opened from Train", () => {
+  /* Home, then Train on that day, then the lift's page, as the app's own
+     history holds them: Back goes one step, to Train. */
+  const train = "/program?tab=lift&day=1";
+  beforeEach(() => {
+    // `cameFromInApp`: the router keeps each entry's place on it.
+    window.history.replaceState({ idx: 2 }, "");
+  });
+  afterEach(() => {
+    window.history.replaceState(null, "");
+  });
+
+  it("goes back one step, to Train, however often Train is tapped", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={["/", train, "/program/lift/1"]}
+        initialIndex={2}
+      >
+        <Routes>
+          <Route path="/" element={<Address />} />
+          <Route path="/program" element={<Address />} />
+          <Route
+            path="/program/lift/:day"
+            element={
+              <>
+                <LiftSession />
+                <Address />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+    const link = screen.getByRole("link", { name: "Train" });
+    fireEvent.click(link);
+    fireEvent.click(link);
+    await waitFor(() =>
+      expect(screen.getByTestId("address")).toHaveTextContent(train)
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByTestId("address")).toHaveTextContent(train);
   });
 });
