@@ -152,7 +152,10 @@ describe("the circuit runner (Circ1 (10))", () => {
 describe("the finish (Circ1 (11), (A))", () => {
   it("saves a finished circuit with its one tap, then goes back to Train", async () => {
     await startTenMinute();
-    await seconds(590);
+    // Into the first work interval a second at a time, then on the clock
+    // to the end of the circuit's 590 s.
+    await seconds(12);
+    await jump(577);
     expect(screen.getByText("Circuit done")).toBeInTheDocument();
     // A first circuit is the reward register (DS4 call 3).
     expect(screen.getByText("first")).toBeInTheDocument();
