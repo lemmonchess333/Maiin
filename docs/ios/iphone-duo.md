@@ -337,10 +337,12 @@ Owner decisions:
 - **B. A side rail instead of the bottom tab bar** on the outer display and
   the inner display in landscape, as the HIG moves system tab bars. Not
   built; decision 3 is the current answer.
-- **C. Two-pane layouts for more screens.** History, Food and Social keep the
-  phone's column, centred, on the inner display. Candidates: Food's diary
-  beside its day's totals, History's charts in a grid, Social's feed beside
-  a post.
+- **C. Two-pane layouts for more screens.** History, Food, Social, Settings,
+  the run's setup and an indoor run keep the phone's column, centred, on the
+  inner display. Open flat that reads as one column; partly folded, the
+  column sits across the crease, which is the case Tropos decision 1 avoids
+  for the three two-pane screens. Candidates: Food's diary beside its day's
+  totals, History's charts in a grid, Social's feed beside a post.
 
 ## Sources
 
