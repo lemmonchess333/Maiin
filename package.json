@@ -45,6 +45,7 @@
     "seed:liftreturn": "tsx --tsconfig tsconfig.app.json scripts/seed-liftreturn-capture.ts",
     "seed:season": "tsx --tsconfig tsconfig.app.json scripts/seed-season-athlete.ts",
     "seed:review": "tsx --tsconfig tsconfig.app.json scripts/seed-review-user.ts",
+    "stamps": "node scripts/verify-gate/stamps.mjs",
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "art:cutouts": "node --import tsx scripts/art/cut-out-form-art.ts",
     "art:releases": "node --import tsx scripts/art/gen-form-art-releases.ts",
