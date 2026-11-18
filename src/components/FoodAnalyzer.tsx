@@ -1160,7 +1160,7 @@ export default function FoodAnalyzer({
         {activeResult && (
           <>
             <div className="flex justify-center pt-3 pb-1">
-              <div className="h-1 w-10 rounded-full bg-border" />
+              <div className="h-1 w-10 rounded-full sheet-handle" />
             </div>
             <div
               data-testid="scan-result-sheet"

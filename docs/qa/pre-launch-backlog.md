@@ -4635,6 +4635,35 @@ are checked on the first TestFlight build that carries it.
       the first check. Passing: sheets and screens still appear and
       close, with a fade in place of the slide.
 
+## Glass toasts, and the sheet's lit rim and handle (DS6 step 4, 2026-11-18)
+
+Affects: every toast (`ToastProvider`: the card's colour at 92% on
+light and 88% on dark over a static blur, the lit edge on dark) and every
+sheet (`BottomSheet`, the sheets that draw their own handle, and Train's
+plan options sheet: a hairline of light along the top on dark, and a grab
+handle in the secondary grey at 45%). Sheets stay solid: a blur under
+them measured as nothing. The captures were the real components in a
+harness page on a desktop Chrome at 1x, the scale at which it draws a
+backdrop blur.
+
+- [ ] **A toast over a busy screen.** On a TestFlight build, delete a meal
+      on Food so its Undo toast shows over the diary, in both themes.
+      Passing: the toast's words read as clearly as before, what is behind
+      it shows only as a soft blur, and in dark mode a thin lighter line
+      runs along its top edge.
+- [ ] **Two toasts.** Trigger two toasts in a row (a deleted meal, then
+      another). Passing: the one behind does not show through the front
+      one's words.
+- [ ] **An older iPhone.** On iOS 15, 16 or 17, if one is to hand, show a
+      toast. Passing: it reads as well as on iOS 18, blur or no blur.
+- [ ] **Reduce Transparency.** With it on (Settings → Accessibility →
+      Display & Text Size), show a toast. Passing: the toast is solid.
+      This needs #3398's plugin on the build.
+- [ ] **Sheets.** Open the streak's sheet from Home and an exercise's
+      menu in a workout, in dark mode. Passing: a thin lighter line
+      follows the sheet's rounded top, no sheet shows two lines there, and
+      the grab handle can be seen in both themes.
+
 ## Food leads with the calorie wheel (Food11, 2026-11-11)
 
 Affects: the Food page (`Food.tsx`, `FoodHeroCard`, `CalorieRing`,

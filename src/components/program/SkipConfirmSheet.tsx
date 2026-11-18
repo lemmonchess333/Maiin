@@ -36,7 +36,7 @@ export default function SkipConfirmSheet({
     >
       <div className="px-5 pb-6 pt-3">
         {/* Drag handle */}
-        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        <div className="w-9 h-1 rounded-full sheet-handle mx-auto" />
 
         <div className="mt-5 space-y-2">
           <p className="text-base font-semibold text-foreground">

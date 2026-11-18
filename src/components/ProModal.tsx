@@ -257,7 +257,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           sr-only Drawer.Title + Drawer.Description for SRs. */}
       <div className="relative shrink-0 px-5 pt-3 pb-2">
         <div
-          className="w-10 h-1 rounded-full bg-border mx-auto"
+          className="w-10 h-1 rounded-full sheet-handle mx-auto"
           aria-hidden="true"
         />
         <button
