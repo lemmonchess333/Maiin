@@ -21,12 +21,15 @@ import { createHash } from "node:crypto";
 import {
   closeSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer, request } from "node:http";
@@ -399,6 +402,7 @@ const BUILD_INPUTS = [
   "scripts/art",
   "scripts/ios",
   "scripts/first-paint-fonts.ts",
+  "scripts/verify/vite.verify.config.ts",
   "index.html",
   "vite.config.ts",
   "package-lock.json",
@@ -444,9 +448,28 @@ export function build(log: Log, force = false): { hash: string; ms: number } {
   }
   const started = Date.now();
   log(`build: ${hash} (vite build --mode=test)`);
+  /* A failed build must not leave the last build's state claiming this
+     output; the hash is written only after the output is whole. */
+  rmSync(join(STATE_DIR, "build.json"), { force: true });
+  /* Take the links out before Vite empties the folder, so emptying it can
+     never reach through one into public/. */
+  if (existsSync(DIST_DIR))
+    for (const name of readdirSync(DIST_DIR)) {
+      const at = join(DIST_DIR, name);
+      if (lstatSync(at).isSymbolicLink()) unlinkSync(at);
+    }
   const out = spawnSync(
     "npx",
-    ["vite", "build", "--mode=test", "--outDir", DIST_DIR, "--emptyOutDir"],
+    [
+      "vite",
+      "build",
+      "--config",
+      join(ROOT, "scripts", "verify", "vite.verify.config.ts"),
+      "--mode=test",
+      "--outDir",
+      DIST_DIR,
+      "--emptyOutDir",
+    ],
     {
       cwd: ROOT,
       env: { ...process.env, ...BUILD_ENV },
@@ -458,8 +481,23 @@ export function build(log: Log, force = false): { hash: string; ms: number } {
       "BUILD",
       `vite build failed:\n${`${out.stdout}${out.stderr}`.trim().split("\n").slice(-20).join("\n")}`
     );
+  linkPublic();
   writeState("build.json", { hash });
   return { hash, ms: Date.now() - started };
+}
+
+/**
+ * Links each entry of public/ into the build output, which the verify
+ * build does not copy (`vite.verify.config.ts`). The links point at the
+ * reviewed files; nothing writes through them, because the build's
+ * frame-shrinking step runs before they exist and finds no frames.
+ */
+export function linkPublic(): void {
+  const pub = join(ROOT, "public");
+  for (const name of readdirSync(pub)) {
+    const at = join(DIST_DIR, name);
+    if (!existsSync(at)) symlinkSync(join(pub, name), at);
+  }
 }
 
 /* ── Preview ───────────────────────────────────────────────────── */

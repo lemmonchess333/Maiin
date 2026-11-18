@@ -142,9 +142,14 @@ export const FEATURES: Feature[] = [
     steps: [
       { goto: "" },
       { click: { role: "button", name: "Sign in", exact: true } },
+      /* The two forms share their fields, so the heading and the submit
+         button are what tell them apart: a Sign in that opened sign-up
+         passed the fields alone (planted 2026-11-18). */
+      { see: { role: "heading", name: "Welcome back", level: 1 } },
       { see: { css: "#login-email" } },
       { see: { css: "#login-password" } },
       { see: { css: 'button[type="submit"]' } },
+      { absent: { role: "button", name: /create account/i } },
     ],
     expected:
       "The drawn lifter facing the reader, the email and password fields, " +
@@ -159,6 +164,7 @@ export const FEATURES: Feature[] = [
     steps: [
       { goto: "" },
       { click: { role: "button", name: "Get started", exact: true } },
+      { see: { role: "heading", name: "Create your account", level: 1 } },
       { see: { css: "#login-email" } },
       { see: { role: "button", name: /create account/i } },
     ],
