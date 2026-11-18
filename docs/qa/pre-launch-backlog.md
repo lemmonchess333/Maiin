@@ -1764,15 +1764,15 @@ production account.
       pulling without something to pull on…"; Small plates is not offered
       with No equipment.
 - [ ] **The answer is stored in production.** After setup with No
-      equipment and the bar on, the console shows `equipment:
-    "no_equipment"` and `pullUpBar: true` on `users/{uid}`; turning the
-      bar off in Settings → Lift plan saves without a refusal and the plan
-      loses its pull-ups.
+      equipment and the bar on, the console shows
+      `equipment: "no_equipment"` and `pullUpBar: true` on `users/{uid}`;
+      turning the bar off in Settings → Lift plan saves without a refusal
+      and the plan loses its pull-ups.
 - [ ] **A No equipment session.** The first session's hint has no word
       about weights; finishing every set of push-ups at the target moves
-      the next session's target up one rep, past the range, and no "add
-      load" note appears; a superman hold logged at its target moves up 5
-      seconds.
+      the next session's target up one rep, on past the top of its range,
+      and no "add load" note appears; a superman hold logged at its target
+      moves up 5 seconds.
 
 ## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
 
