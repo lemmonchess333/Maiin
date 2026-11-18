@@ -112,7 +112,7 @@ function AccountSectionContent({
   // A subscription bought on the website (RevenueCat Billing): deleting the
   // account does not cancel it, and Tropos has no way to from here, so it
   // kept renewing on a card for an account that no longer existed
-  // (security audit O3, docs/agents/security-audit-2026-11.md). A legacy
+  // (November 2026 security audit, item O3, in PR #3411). A legacy
   // Stripe Checkout subscription carries its own id and is cancelled by
   // the deletion itself (functions/lib/accountDeletionRetry.js).
   // Read from the RevenueCat record the server keeps: a website store, the
