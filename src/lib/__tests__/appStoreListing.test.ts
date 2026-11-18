@@ -226,9 +226,11 @@ describe("App Store listing: claims the code can contradict", () => {
   });
 
   it("names every Pro gate in the description's Pro list (Guideline 2.3.2)", () => {
-    // PRO_INCLUDES is the paywall's list of every runtime Pro gate. A gate
-    // added there and missing here sells a free-looking feature that asks
-    // for money. Read as source: the module imports the subscription caps.
+    // PRO_INCLUDES is the paywall's list of Pro gates. A gate added there
+    // and missing here sells a free-looking feature that asks for money.
+    // AI reading of typed meals (the `text_ai` cap, subscription.ts) is a
+    // gate the list leaves out, so it is asserted on its own. Read as
+    // source: the module imports the subscription caps.
     const copy = read("../../components/paywall/proIncludesCopy.ts");
     const list = copy
       .split("export const PRO_INCLUDES")[1]
@@ -248,8 +250,10 @@ describe("App Store listing: claims the code can contradict", () => {
       /Readiness from your sleep and heart rate/,
       /older than 3 months, your training load and your score's details/,
       /half marathon or longer, after their first week/,
+      /Typed meals read by AI/,
     ])
       expect(pro).toMatch(gate);
+    expect(read("../subscription.ts")).toMatch(/pro:\s*\{\s*text_ai:/);
   });
 
   it("does not sell a marathon plan as free, which is Pro after week 1", () => {

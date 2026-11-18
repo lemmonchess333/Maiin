@@ -60,9 +60,10 @@ A lifting and running plan that fits your week, and a daily calorie target worke
 Up to 4,000 characters. The two links at the end are required for
 auto-renewable subscriptions (Guideline 3.1.2), and both must open
 without signing in. Guideline 2.3.2 asks it to say which features need a
-purchase: the Tropos Pro list is every Pro gate in the app
-(`src/components/paywall/proIncludesCopy.ts`), and the race plan in
-screenshot 6 is a half marathon, Pro after its first week.
+purchase: the Tropos Pro list is every gate on the paywall's own list
+(`src/components/paywall/proIncludesCopy.ts`) plus AI reading of typed
+meals, and the race plan in screenshot 6 is a half marathon, Pro after
+its first week.
 
 <!-- field: description -->
 
@@ -293,7 +294,7 @@ submit; the 24-hour promise is yours to keep.
 ```text
 Tropos is a training and food app. Setup asks about goals, training days, equipment and experience, builds a weekly lifting and running plan and a daily calorie target, then opens Home.
 
-The demo account has finished setup and has several weeks of workouts, runs and meals. Its email is verified, so posting and commenting work. Please make test purchases on this account: a sandbox purchase turns Pro on only for the accounts we list for testing.
+The demo account has finished setup, several weeks of logs and a verified email. Please make test purchases on this account: a sandbox purchase turns Pro on only for the accounts we list for testing.
 
 Where to find things
 - Today's session: the card at the top of Home. Start opens the workout.
@@ -306,7 +307,7 @@ Where to find things
 - Privacy Policy, Terms and support: Settings > Support & legal.
 
 Pro and In-App Purchase
-Monthly and yearly auto-renewable subscriptions, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive running paces, readiness from Apple Health, charts older than 3 months, and plans for a half marathon or longer after their first week. Everything else is free.
+Monthly and yearly auto-renewable subscriptions, with a 7-day free trial for new subscribers. Pro adds meal logging from a photo, AI reading of typed meals, an adaptive calorie target, macros that follow the day's training, adaptive running paces, readiness from Apple Health, charts older than 3 months, the training load, the score's details, and plans for a half marathon or longer after their first week. Everything else is free.
 
 AI food analysis
 A meal or label photo, or a typed meal (Pro), goes to Google's Gemini on Vertex AI only after the user allows it on a sheet that names Google. Results are checked before they are logged. Photos are kept on the phone for 90 days for the diary, never on our servers. It can be switched off in Settings > Social & privacy.
@@ -315,7 +316,7 @@ Apple Health
 Tropos reads steps, and with Pro sleep, resting heart rate and HRV, to check the activity level the calorie target assumes and to say how ready the user is for today's session. They are read on the phone, never stored on our servers or used for advertising, and Tropos writes nothing to Health. The binary holds an Apple Watch companion and a Health workout export, both off in this build; they will come in a later version.
 
 Background modes
-Location: a GPS run keeps recording with the screen locked, so a run asks for location as it starts, then for Always access. Treadmill and manual runs need no location. Bluetooth: Settings > Run plan pairs a heart-rate strap, read during a run with the screen locked.
+Location: a GPS run asks for location as it starts and keeps recording with the screen locked; iOS may later offer Always. Treadmill and manual runs need no location. Bluetooth: Settings > Run plan pairs a heart-rate strap, read during a run with the screen locked.
 
 Live Activities and widgets
 A run or a lift shows on the Lock Screen and in the Dynamic Island while under way (switch in Settings > Notifications). The Today, Streak and Today's food widgets show the session, the streak and calories left.
