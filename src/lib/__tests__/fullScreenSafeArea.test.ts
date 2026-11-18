@@ -45,6 +45,8 @@ const OUTSIDE_LAYOUT: Record<string, string> = {
   "/review": "components/review/RecapStory.tsx",
   "/run": "pages/Run.tsx",
   "/run-summary": "pages/RunSummary.tsx",
+  // Circuit mode (Circ1): its picker, runner and finish each pad themselves.
+  "/circuit": "components/circuit/CircuitRunner.tsx",
   "/diagnostics": "pages/Diagnostics.tsx",
   "/admin/moderation": "pages/AdminModeration.tsx",
   // During setup, the account page renders in App.tsx's own padded <main>.
