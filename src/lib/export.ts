@@ -36,22 +36,21 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     }[];
   };
   for (const w of workouts) {
-    // A circuit (Circ1) has no sets: each move is a row for each round
-    // done, its seconds of work under Reps, as a timed hold's are.
+    // A circuit (Circ1) has no sets, and is one session: one row, its
+    // name, the rounds done under Set and the session's seconds under
+    // Reps, as a timed hold's seconds are.
     const circuit = workoutCircuit(w);
     if (circuit) {
-      for (let round = 1; round <= circuit.roundsDone; round++)
-        for (const move of circuit.moves)
-          rows.push(
-            [
-              csvCell(w.date),
-              csvCell(move.name, true),
-              csvCell(round),
-              csvCell(move.loadKg ?? 0),
-              csvCell(circuit.workSeconds),
-              csvCell("circuit"),
-            ].join(",")
-          );
+      rows.push(
+        [
+          csvCell(w.date),
+          csvCell(circuit.name, true),
+          csvCell(circuit.roundsDone),
+          csvCell(0),
+          csvCell(circuit.activeSeconds),
+          csvCell("circuit"),
+        ].join(",")
+      );
       continue;
     }
     for (const ex of w.exercises as unknown as ExportedExercise[]) {
