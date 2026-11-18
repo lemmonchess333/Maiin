@@ -428,10 +428,14 @@ export default function WaterCard({
                   {splitWaterVolume(ml).unit}
                 </span>
               </span>
-              <span className="sr-only">
-                {spokenVolume(ml)} logged. Add water — choose a container size.
-              </span>
             </p>
+            {/* The spoken reading sits beside the figure, not inside it, so
+                the figure's paragraph holds the number and its unit alone
+                ("750ml"), which is what the water spec reads frame by frame
+                (waterFlash.auth.spec.ts). The name is the same either way. */}
+            <span className="sr-only">
+              {spokenVolume(ml)} logged. Add water — choose a container size.
+            </span>
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
@@ -589,10 +593,14 @@ export default function WaterCard({
                   {splitWaterVolume(ml).unit}
                 </span>
               </span>
-              <span className="sr-only">
-                {spokenVolume(ml)} logged. Add water — choose a container size.
-              </span>
             </p>
+            {/* The spoken reading sits beside the figure, not inside it, so
+                the figure's paragraph holds the number and its unit alone
+                ("750ml"), which is what the water spec reads frame by frame
+                (waterFlash.auth.spec.ts). The name is the same either way. */}
+            <span className="sr-only">
+              {spokenVolume(ml)} logged. Add water — choose a container size.
+            </span>
           </div>
         </button>
         {controls}
