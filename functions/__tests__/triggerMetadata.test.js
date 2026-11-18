@@ -575,6 +575,11 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["RESEND_API_KEY"],
   },
+  setEmailConsent: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   weeklyFellBehindCheck: {
     kind: "schedule",
     maxInstances: 1,
