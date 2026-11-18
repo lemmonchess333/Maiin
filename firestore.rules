@@ -2175,6 +2175,12 @@ service cloud.firestore {
     // private or followers-only activity. This mirrors the parent
     // activities/{id} read relation exactly (public / owner / accepted
     // follower). References only the parent activity + one follower doc.
+    /* A post's props and comments are refused across a block either way,
+       public posts included, as a single read of the post is (Polish3 call
+       1). The post's id is in the path, so unlike a query over posts this
+       can be checked for the list as well as for one row. Before, someone
+       its author blocked could still read who gave a public post props and
+       every comment on it, holding only its id. */
     function canReadActivityChild(activityId) {
       let activityPath =
         /databases/$(database)/documents/activities/$(activityId);
@@ -2182,15 +2188,18 @@ service cloud.firestore {
       return request.auth != null
         && exists(activityPath)
         && (
-          get(activityPath).data.visibility == 'public'
-          || get(activityPath).data.authorId == request.auth.uid
+          get(activityPath).data.authorId == request.auth.uid
           || (
-            get(activityPath).data.visibility == 'followers'
-            && exists(
-              /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
+            !blockExistsBetween(get(activityPath).data.authorId, request.auth.uid)
+            && (
+              get(activityPath).data.visibility == 'public'
+              || (
+                get(activityPath).data.visibility == 'followers'
+                && exists(
+                  /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
+                )
+              )
             )
-            // The parent's block check: a follow edge can outlive a block.
-            && !blockExistsBetween(get(activityPath).data.authorId, request.auth.uid)
           )
         );
     }
