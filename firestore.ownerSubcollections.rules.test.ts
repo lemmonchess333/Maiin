@@ -145,6 +145,42 @@ suite(
       }
     );
 
+    /* hourlyPropsBundle reads every settings document whose
+       `propsBundleDueAt` has passed, a thousand at a time, oldest first.
+       A thousand such documents under one account kept every real bundle
+       out of that read, so the field is the server's, and so are the
+       bundle and the push budget themselves. */
+    describe("the props bundle and the push budget: server writes only", () => {
+      it.each(["propsBundle", "pushBudget"])(
+        "the owner reads %s and cannot create, change or delete it",
+        async (name) => {
+          const path = `users/${OWNER}/settings/${name}`;
+          const ref = doc(asOwner(), path);
+          await assertFails(setDoc(ref, { entries: [] }));
+          await seed(path, { day: "2026-11-18", count: 1 });
+          await assertSucceeds(getDoc(ref));
+          await assertFails(updateDoc(ref, { count: 0 }));
+          await assertFails(deleteDoc(ref));
+          await assertFails(getDoc(doc(asOther(), path)));
+        }
+      );
+
+      it("no settings document of the owner's may carry a bundle's due time", async () => {
+        const due = new Date(0);
+        for (const name of ["push", "p0", "reminders"]) {
+          await assertFails(
+            setDoc(doc(asOwner(), `users/${OWNER}/settings/${name}`), {
+              propsBundleDueAt: due,
+            })
+          );
+        }
+        const ref = doc(asOwner(), `users/${OWNER}/settings/push`);
+        await assertSucceeds(setDoc(ref, { enabled: true }));
+        await assertFails(updateDoc(ref, { propsBundleDueAt: due }));
+        await assertSucceeds(updateDoc(ref, { enabled: false }));
+      });
+    });
+
     describe("owner-only subcollections — owner reads and writes, nobody else", () => {
       const OWNER_WRITABLE = [
         "progressPhotos",
