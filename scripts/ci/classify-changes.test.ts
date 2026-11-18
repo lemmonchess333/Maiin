@@ -57,9 +57,9 @@ const changedFiles = script.changedFiles as (
 const MAX_RELATED = script.MAX_RELATED as number;
 const VITEST_COLLECTS = variant.VITEST_COLLECTS as RegExp[];
 const missedTests = variant.missedTests as (
-  changes: Change[],
+  inputs: string[],
   ran: string[]
-) => { changedTests: string[]; missed: string[] };
+) => { expected: string[]; missed: string[] };
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const changed = (...paths: string[]): Change[] =>
@@ -73,10 +73,7 @@ describe("app", () => {
       "docs, any kind of file",
       ["docs/qa/pre-launch-backlog.md", "docs/x/scores.json"],
     ],
-    [
-      "markdown anywhere",
-      ["functions/R1A-DECISION-LOG.md", "src/assets/welcome/README.md"],
-    ],
+    ["markdown at the root", ["README.md", "GLOSSARY.md"]],
     [
       "the iOS project with its doc",
       ["ios/App/App/AppDelegate.swift", "docs/ios-release.md"],
@@ -99,6 +96,9 @@ describe("app", () => {
     ["the service worker", ["public/sw.js"]],
     ["index.html", ["index.html"]],
     ["a README that is not markdown", ["src/assets/welcome/README.txt"]],
+    ["markdown beside the server", ["functions/README.md"]],
+    ["markdown beside the app", ["src/assets/welcome/README.md"]],
+    ["the pull request template", [".github/PULL_REQUEST_TEMPLATE.md"]],
     ["a skill", [".claude/skills/pr/SKILL.yaml"]],
     ["a lookalike of ios/", ["iosfoo/thing.ts"]],
     ["a lookalike of docs/", ["docsish/x.ts"]],
@@ -253,8 +253,8 @@ describe("relatedInputs", () => {
     ]);
   });
 
-  it("leaves a deleted file out of the list and out of the search", () => {
-    let asked: string[] = ["not called"];
+  it("leaves a deleted file out of the list, and still searches for it", () => {
+    let asked: string[] = [];
     const inputs = relatedInputs(
       [
         { path: "src/lib/gone.ts", deleted: true },
@@ -264,24 +264,20 @@ describe("relatedInputs", () => {
         listDir,
         readersOf: (needles) => {
           asked = needles;
-          return [];
+          return ["src/lib/__tests__/goneReader.test.ts"];
         },
       }
     );
-    expect(inputs).toEqual(["src/lib/kept.ts"]);
-    expect(asked).toEqual(["src/lib/kept.ts", "kept.ts"]);
-  });
-
-  it("does not search when nothing that changed is left", () => {
-    let called = false;
-    relatedInputs([{ path: "src/lib/gone.ts", deleted: true }], {
-      listDir,
-      readersOf: () => {
-        called = true;
-        return [];
-      },
-    });
-    expect(called).toBe(false);
+    expect(asked).toEqual([
+      "src/lib/gone.ts",
+      "gone.ts",
+      "src/lib/kept.ts",
+      "kept.ts",
+    ]);
+    expect(inputs).toEqual([
+      "src/lib/__tests__/goneReader.test.ts",
+      "src/lib/kept.ts",
+    ]);
   });
 });
 
@@ -308,6 +304,19 @@ describe("needsFunctions", () => {
     expect(
       needsFunctions(changed("functions/package-lock.json"), "related", none)
     ).toBe(true);
+  });
+
+  it("asks about deleted files too", () => {
+    let asked: string[] = [];
+    needsFunctions(
+      [{ path: "firestore.rules", deleted: true }],
+      "related",
+      (n) => {
+        asked = n;
+        return [];
+      }
+    );
+    expect(asked).toEqual(["firestore.rules"]);
   });
 
   it("runs it for a file a functions test reads, and not otherwise", () => {
@@ -417,33 +426,38 @@ describe("reading git", () => {
   );
 });
 
-describe("a related run that left out a changed test fails", () => {
-  it("names the changed test files vitest collects that did not run", () => {
-    const changes: Change[] = [
-      ...changed(
-        "src/lib/__tests__/a.test.ts",
-        "src/pages/__tests__/B.test.tsx",
-        "scripts/ci/c.test.ts",
-        "firestore.rules.test.ts",
-        "e2e/smoke.spec.ts",
-        "functions/__tests__/d.test.js",
-        "scripts/rollover-deployed-challenges.test.mjs"
-      ),
-      { path: "src/lib/__tests__/gone.test.ts", deleted: true },
+describe("a related run that left out a test it selected fails", () => {
+  it("names every selected test file vitest collects that did not run", () => {
+    const inputs = [
+      "src/lib/__tests__/a.test.ts",
+      "src/pages/__tests__/B.test.tsx",
+      "scripts/ci/c.test.ts",
+      "firestore.rules.test.ts",
+      "src/lib/__tests__/claudeMdFreshness.test.ts",
+      "e2e/smoke.spec.ts",
+      "functions/__tests__/d.test.js",
+      "scripts/rollover-deployed-challenges.test.mjs",
+      "src/lib/timeAgo.ts",
+      "CLAUDE.md",
     ];
     expect(
-      missedTests(changes, [
+      missedTests(inputs, [
         "src/lib/__tests__/a.test.ts",
         "scripts/ci/c.test.ts",
       ])
     ).toEqual({
-      changedTests: [
+      expected: [
         "src/lib/__tests__/a.test.ts",
         "src/pages/__tests__/B.test.tsx",
         "scripts/ci/c.test.ts",
         "firestore.rules.test.ts",
+        "src/lib/__tests__/claudeMdFreshness.test.ts",
       ],
-      missed: ["src/pages/__tests__/B.test.tsx", "firestore.rules.test.ts"],
+      missed: [
+        "src/pages/__tests__/B.test.tsx",
+        "firestore.rules.test.ts",
+        "src/lib/__tests__/claudeMdFreshness.test.ts",
+      ],
     });
   });
 

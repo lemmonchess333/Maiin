@@ -78,14 +78,24 @@ describe("the required checks cannot be skipped by what changed", () => {
     );
   });
 
-  it("`unit` has no needs and no if", () => {
+  it("`unit` has no needs, and no if on the job or on any step", () => {
+    /* A step-level `if: ${{ false }}` on the suite skips the suite and
+       leaves the job green. `unit` has no conditional step, so none is
+       allowed; one added on purpose belongs in an allowlist here, with
+       its reason. */
     const unit = ci.get("unit")!;
     expect(unit).not.toMatch(/^ {4}needs:/m);
-    expect(unit).not.toMatch(/^ {4}if:/m);
+    expect(unit.match(/^\s*(- )?if:/gm)).toBeNull();
   });
 
-  it("`emulator-tests` has no if unless it is the fail-open gate", () => {
+  it("`emulator-tests` needs nothing but `changes`, and has no if but the fail-open gate", () => {
+    /* A need on any other job makes the required check wait on, and be
+       skipped with, a job nothing requires. */
     const job = emulator.get("emulator-tests")!;
+    const scalar = job.match(/^ {4}needs:\s*(\S.*)$/m)?.[1];
+    const list = job.match(/^ {4}needs:\s*\n((?: {6}- .*\n)+)/m)?.[1];
+    if (scalar) expect(scalar.trim()).toBe("changes");
+    if (list) expect(list.trim()).toBe("- changes");
     const cond = job.match(/^ {4}(if:.*)$/m)?.[1];
     if (cond) expect(cond).toBe(GATE);
   });
@@ -190,6 +200,20 @@ describe("the scheduled full runs and their issue", () => {
     expect(issue).toMatch(/^ {4}timeout-minutes: \d+/m);
     expect(issue).toMatch(/^ {4}permissions:\n {6}issues: write\n/m);
     expect(issue).toContain("--label ready-for-agent");
+    /* Green only when every need is `success`: a timeout reports
+       `cancelled` and a skip tested nothing, and both are red. */
+    expect(issue).toContain("RESULTS: ${{ join(needs.*.result, ' ') }}");
+    expect(issue).toContain(
+      'for r in $RESULTS; do [ "$r" = success ] || red=true; done'
+    );
+    expect(issue).toContain('[ -n "$RESULTS" ] || red=true');
+    expect(issue).not.toMatch(/contains\(needs\.\*\.result/);
+    for (const conclusion of ["failure", "cancelled", "timed_out"])
+      expect(issue).toContain(`.conclusion == "${conclusion}"`);
+    /* No `head` under pipefail (SIGPIPE), and lines cut short of
+       GitHub's issue body limit. */
+    expect(issue).toContain("sed -n '1,40p' | cut -c1-160");
+    expect(issue).not.toMatch(/\|\s*head\b/);
     expect(issue).not.toContain("actions/checkout");
     for (const job of [
       "unit",

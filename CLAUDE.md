@@ -388,8 +388,9 @@ request each variant below runs the tests its changes reach (`vitest
 related` on the changed files, plus every test whose text names one:
 `scripts/ci/variant-suite.mjs`), the whole suite when a change can reach
 any test without an import (dependencies, test config and setup,
-`__mocks__`, `scripts/ci`, `ci.yml`), and does not run when only docs,
-plan files or `ios/` changed (`scripts/ci/classify-changes.mjs`). Twice a
+`__mocks__`, `scripts/ci`, `ci.yml`), and does not run when only
+root-level markdown, `docs/`, plan files or `ios/` changed
+(`scripts/ci/classify-changes.mjs`). Twice a
 day every variant runs the whole suite on main, and a red scheduled run
 opens or updates one `ready-for-agent` issue naming the commits since the
 last green one. Each variant exists because the single-condition run had

@@ -18,8 +18,9 @@
 // `functions=true|false` to $GITHUB_OUTPUT for the steps after it.
 //
 // A related run must not pass by running nothing it should have: it fails
-// if a changed test file vitest would collect is not among the files it
-// ran. The step summary says how many it ran, of how many.
+// if a test file it selected (changed, beside a changed fixture, or naming
+// a changed file) that vitest would collect is not among the files it ran.
+// The step summary says how many it ran, of how many.
 //
 // Usage: SUITE_MODE=related node scripts/ci/variant-suite.mjs [vitest args]
 
@@ -55,16 +56,17 @@ export const VITEST_COLLECTS = [
 const TEST_FILE = /\.test\.(ts|tsx|js|mjs|cjs|jsx)$/;
 
 /**
- * The changed test files vitest would collect, and those of them a run
- * left out. `ran` holds the repo-relative files the run reported.
+ * The selected test files vitest would collect, and those of them a run
+ * left out. `inputs` is everything handed to `vitest related` (changed
+ * files, fixture neighbours, reader tests); `ran` holds the repo-relative
+ * files the run reported.
  */
-export function missedTests(changes, ran) {
-  const changedTests = changes
-    .filter((c) => !c.deleted)
-    .map((c) => c.path)
-    .filter((p) => VITEST_COLLECTS.some((re) => re.test(p)));
+export function missedTests(inputs, ran) {
+  const expected = inputs.filter((p) =>
+    VITEST_COLLECTS.some((re) => re.test(p))
+  );
   const seen = new Set(ran);
-  return { changedTests, missed: changedTests.filter((p) => !seen.has(p)) };
+  return { expected, missed: expected.filter((p) => !seen.has(p)) };
 }
 
 /** Tracked files under `pathspecs` whose text holds any of `needles`. */
@@ -175,7 +177,7 @@ async function main() {
     const json = JSON.parse(readFileSync(report, "utf8"));
     ran = (json.testResults ?? []).map((r) => relative(root, r.name));
   }
-  const { changedTests, missed } = missedTests(changes, ran);
+  const { expected, missed } = missedTests(inputs, ran);
 
   summary(
     [
@@ -184,13 +186,13 @@ async function main() {
         ? `Affected ${affected[1]} of ${affected[2]} test files.`
         : `Ran ${ran.length} test files.`,
       missed.length
-        ? `Changed test files NOT run: ${missed.join(", ")}`
-        : `Every changed test file ran (${changedTests.length}).`,
+        ? `Selected test files NOT run: ${missed.join(", ")}`
+        : `Every selected test file ran (${expected.length}).`,
     ].join("\n\n")
   );
   if (missed.length) {
     console.error(
-      `::error::a related run left out changed test files it should have run: ${missed.join(", ")}`
+      `::error::a related run left out test files it selected: ${missed.join(", ")}`
     );
     process.exitCode = 1;
   }

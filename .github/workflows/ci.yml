@@ -72,8 +72,9 @@ jobs:
   # classify-changes.mjs), on a sparse, blob-less checkout so it costs a
   # few seconds: no setup-node (the runner's own node runs it), no npm ci.
   #
-  #   app   false when every changed file is documentation, a plan file or
-  #         the native iOS project. The unit variants then do not run;
+  #   app   false when every changed file is documentation (markdown at
+  #         the root, anything under docs/), a plan file or the native iOS
+  #         project. The unit variants then do not run;
   #         `unit` does, whole, as on every pull request, and it holds the
   #         tests that read those files as text. A plan-file lock skips
   #         the eight variant jobs.
@@ -613,16 +614,22 @@ jobs:
       - name: Open, update or close the issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FAILED: ${{ contains(needs.*.result, 'failure') }}
+          # Green only when every job it needs succeeded. A timeout
+          # reports `cancelled`, and a skipped job tested nothing, so
+          # anything but `success` is red.
+          RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
           set -euo pipefail
+          red=false
+          [ -n "$RESULTS" ] || red=true
+          for r in $RESULTS; do [ "$r" = success ] || red=true; done
           title="Scheduled CI failing on main"
           repo="$GITHUB_REPOSITORY"
           run_url="$GITHUB_SERVER_URL/$repo/actions/runs/$GITHUB_RUN_ID"
           existing=$(gh issue list --repo "$repo" --state open \
             --search "\"$title\" in:title" --json number,title \
             --jq "map(select(.title == \"$title\"))[0].number // empty")
-          if [ "$FAILED" != "true" ]; then
+          if [ "$red" = false ]; then
             if [ -n "$existing" ]; then
               gh issue comment "$existing" --repo "$repo" \
                 --body "Green again on $GITHUB_SHA: $run_url"
@@ -634,7 +641,7 @@ jobs:
             "repos/$repo/actions/workflows/ci.yml/runs?branch=main&event=schedule&status=success&per_page=1" \
             --jq '.workflow_runs[0].head_sha // empty')
           failed_jobs=$(gh api "repos/$repo/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" \
-            --jq '.jobs[] | select(.conclusion == "failure") | "\(.id)\t\(.name)"')
+            --jq '.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | "\(.id)\t\(.name) (\(.conclusion))"')
           body="$RUNNER_TEMP/issue.md"
           {
             echo "The scheduled CI run on main failed: $run_url"
@@ -660,7 +667,7 @@ jobs:
               { gh api "repos/$repo/actions/jobs/$id/logs" 2>/dev/null || true; } \
                 | sed -E 's/^[0-9T:.Z-]+ //; s/\x1b\[[0-9;]*m//g' \
                 | { grep -E '^ *(FAIL|×) ' || echo "(no test names in the log; read the job)"; } \
-                | sort -u | head -40
+                | sort -u | sed -n '1,40p' | cut -c1-160
               echo '```'
             done <<< "$failed_jobs"
           } > "$body"

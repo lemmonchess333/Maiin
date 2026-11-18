@@ -4,11 +4,14 @@
 // Two callers. ci.yml's `changes` job runs it bare, on a sparse,
 // blob-less checkout, for two answers every later job reads:
 //
-//   app   false only when EVERY changed file is documentation, a plan
-//         file or the native iOS project. Nothing the web build, the
-//         emulator suites or a browser spec reads lives there; the tests
-//         that read those files as text run in `unit`, which runs the
-//         whole suite on every pull request regardless.
+//   app   false only when EVERY changed file is documentation (markdown
+//         at the repository's root, anything under docs/), a plan file or
+//         the native iOS project. Nothing the web build, the emulator
+//         suites or a browser spec reads lives there; the tests that read
+//         those files as text run in `unit`, which runs the whole suite on
+//         every pull request regardless. Markdown elsewhere (a README
+//         beside code in src/ or functions/) counts as app: it sits where
+//         a build or a test may read it.
 //   mode  "related" when each unit variant may run only the tests a
 //         change reaches; "full" when a change can reach every test
 //         without an import (dependencies, the test config and setup,
@@ -39,7 +42,12 @@ import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /** Changes outside everything but `unit` (see `app` above). */
-export const NOT_APP = [/\.md$/, /^docs\//, /^\.claude\/plans\//, /^ios\//];
+export const NOT_APP = [
+  /^[^/]+\.md$/,
+  /^docs\//,
+  /^\.claude\/plans\//,
+  /^ios\//,
+];
 
 /** Changes that can reach any test without an import. */
 export const RUN_EVERYTHING = [
@@ -102,9 +110,9 @@ export function needlesFor(paths) {
  *  - for a changed fixture a test reads as text (under `__tests__`, not a
  *    module), the test files in the nearest directory above it that has
  *    any;
- *  - every test file whose text names a changed path or its file name
- *    (`readersOf`), since a test that reads a file through readFileSync
- *    or createRequire is not in the graph.
+ *  - every test file whose text names a changed path or its file name,
+ *    deleted ones included (`readersOf`), since a test that reads a file
+ *    through readFileSync or createRequire is not in the graph.
  *
  * `listDir(dir)` gives a directory's entry names ([] if none) and
  * `readersOf(needles)` the test files containing any of them.
@@ -130,8 +138,11 @@ export function relatedInputs(changes, { listDir, readersOf }) {
       dir = dirname(dir);
     }
   }
-  if (live.length) {
-    for (const reader of readersOf(needlesFor(live))) out.add(reader);
+  // A deleted file is searched for too: a test that still reads it has to
+  // run, and fail, in the variants as well as in `unit`.
+  const all = changes.map((c) => c.path);
+  if (all.length) {
+    for (const reader of readersOf(needlesFor(all))) out.add(reader);
   }
   return [...out].sort();
 }
@@ -147,8 +158,8 @@ export function needsFunctions(changes, mode, functionsReadersOf) {
   if (mode !== "related" || !Array.isArray(changes) || !changes.length)
     return true;
   if (changes.some((c) => c.path.startsWith("functions/"))) return true;
-  const live = changes.filter((c) => !c.deleted).map((c) => c.path);
-  return live.length > 0 && functionsReadersOf(needlesFor(live)).length > 0;
+  const all = changes.map((c) => c.path);
+  return functionsReadersOf(needlesFor(all)).length > 0;
 }
 
 /** Parses `git diff --name-status --no-renames` output. */
