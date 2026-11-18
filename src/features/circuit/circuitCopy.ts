@@ -63,12 +63,12 @@ export function circuitMinutes(activeSeconds: number): number {
 
 const MIN_MINUTES = CIRCUIT_MIN_SECONDS / 60;
 
-/** The end question's line (Circ1 (A)): what was done, and whether it is
- *  saved. */
+/** The end question's line (Circ1 (A)): what was done, and whether it
+ *  can be saved. Nothing is saved until the finish's Save. */
 export function circuitEndLine(activeSeconds: number, saves: boolean): string {
   const done = `You’ve done ${circuitMinutes(activeSeconds)} min.`;
   return saves
-    ? `${done} It’s saved as it stands.`
+    ? `${done} You can save it as it stands.`
     : `${done} A circuit saves from ${MIN_MINUTES} min, so this one won’t be saved.`;
 }
 

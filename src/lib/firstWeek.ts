@@ -1,5 +1,7 @@
 import { parseLocalDate } from "@/lib/dateHelpers";
 import type { Workout } from "@/lib/savedWorkouts";
+import { circuitCounts } from "@/features/circuit/circuitRules";
+import { CIRCUIT_FORMAT } from "@/features/circuit/savedCircuit";
 
 /**
  * A new account's first seven days, as Home's "Your first week" card
@@ -60,12 +62,16 @@ function accountDay(startKey: string, todayKey: string): number {
   return daysBetween(startKey, todayKey) + 1;
 }
 
-/** A session counts only after a performed set or timed exercise was saved.
- * This mirrors the server-side activation outcome; an empty workout document
- * must never tick a first-week task. */
+/** A session counts only after a performed set or timed exercise was saved,
+ * or a circuit that ran 7 minutes or more, as the streak counts one (Circ1
+ * (6)); a circuit's moves are not exercises (Circ1 (B)). This mirrors the
+ * server-side activation outcome; an empty workout document must never
+ * tick a first-week task. */
 export function isFirstWeekWorkoutEligible(
-  workout: Pick<Workout, "exercises">
+  workout: Pick<Workout, "exercises" | "format" | "circuit">
 ): boolean {
+  if (workout?.format === CIRCUIT_FORMAT)
+    return circuitCounts(Number(workout.circuit?.activeSeconds));
   return (
     Array.isArray(workout?.exercises) &&
     workout.exercises.some(

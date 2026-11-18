@@ -48,6 +48,7 @@ import { useSessionPlayer } from "@/hooks/useSessionPlayer";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
 import { useAuth } from "@/lib/auth";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { completeCircuit } from "@/lib/circuitCompletion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
@@ -58,6 +59,15 @@ import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
  *  hang, and a circuit should never wait on it. */
 const HISTORY_WAIT_MS = 4000;
 
+/** The person's recent circuits: still being read, read (newest first),
+ *  or unknown, when the read failed or outlasted the wait. Unknown is not
+ *  none: it offers each circuit at its first rung and never a first
+ *  circuit's reward. */
+type CircuitHistory =
+  | { status: "reading" }
+  | { status: "unknown" }
+  | { status: "read"; circuits: DatedCircuit[] };
+
 /**
  * Circuit mode (Circ1): pick one of your six built-in circuits, run it on
  * the clock, say how it felt, save it as a workout. Full screen, without
@@ -67,9 +77,12 @@ const HISTORY_WAIT_MS = 4000;
  * (7)). The timer is the run's: `useRunTimer` keeps a clock that pauses,
  * and `useSessionPlayer` walks the circuit's steps as a run's segments
  * (Circ1 (10)). Each step ends on the clock, not on the tick that noticed
- * (`stepEndsPassed`), so a circuit whose screen slept picks up where the
- * clock says it is. What was done is measured from the seconds each step
- * really ran, so skipping to the end is not finishing. The states are
+ * (`stepEndsPassed`), so a step that ended while the screen looked away
+ * ends on time. Back from away with more than one step gone, the circuit
+ * pauses where it was left and none of the time away counts: nobody was
+ * following it, so a circuit left in the background is never finished.
+ * What was done is measured from the seconds each step really ran, so
+ * skipping to the end is not finishing. The states are
  * `circuitSession.ts`'s.
  */
 export default function Circuit() {
@@ -82,21 +95,32 @@ export default function Circuit() {
   const kit = circuitKit(profile?.equipment);
   const injuries = profile?.injuries;
 
-  // The person's recent circuits, newest first: null until read.
-  const [history, setHistory] = useState<DatedCircuit[] | null>(null);
+  const [history, setHistory] = useState<CircuitHistory>({
+    status: "reading",
+  });
+  // Until a circuit is chosen, a read that lands after the wait replaces
+  // the wait's answer: the offers move to their rungs. Once one is chosen,
+  // the history it was chosen from stands.
+  const pickingRef = useRef(true);
   const uid = user?.uid;
   useEffect(() => {
     if (!uid) return;
     let live = true;
-    const settle = (circuits: DatedCircuit[]) => {
-      if (live) setHistory((current) => current ?? circuits);
+    const unknown = () => {
+      if (live)
+        setHistory((current) =>
+          current.status === "reading" ? { status: "unknown" } : current
+        );
     };
-    const wait = window.setTimeout(() => settle([]), HISTORY_WAIT_MS);
+    const wait = window.setTimeout(unknown, HISTORY_WAIT_MS);
     fetchSavedWorkouts(uid, { latest: CIRCUIT_HISTORY_WORKOUTS })
-      .then((workouts) => settle(savedCircuits(workouts)))
+      .then((workouts) => {
+        if (live && pickingRef.current)
+          setHistory({ status: "read", circuits: savedCircuits(workouts) });
+      })
       .catch((error) => {
         logger.warn("[Circuit] history read failed", error);
-        settle([]);
+        unknown();
       });
     return () => {
       live = false;
@@ -106,12 +130,15 @@ export default function Circuit() {
 
   const offers = useMemo(
     () =>
-      history === null
+      history.status === "reading"
         ? null
-        : builtInCircuits({ kit, injuries }).map((base) => ({
-            circuit: circuitForToday(base, history, injuries),
-            last: lastTimeOf(base.id, history),
-          })),
+        : builtInCircuits({ kit, injuries }).map((base) => {
+            const known = history.status === "read" ? history.circuits : [];
+            return {
+              circuit: circuitForToday(base, known, injuries),
+              last: lastTimeOf(base.id, known),
+            };
+          }),
     [history, kit, injuries]
   );
 
@@ -127,6 +154,7 @@ export default function Circuit() {
   const stepSeconds = useMemo(() => steps.map((step) => step.seconds), [steps]);
 
   const timer = useRunTimer();
+  const { rehydrate: setClock, recalcNow } = timer;
   const player = useSessionPlayer(segments, "manual");
   const [voice, setVoice] = useState(true);
   const audio = useAudioCues(voice, "off");
@@ -146,6 +174,7 @@ export default function Circuit() {
       haptic("light");
       startedAtRef.current = Date.now();
       lastTickRef.current = 0;
+      pickingRef.current = false;
       dispatch({ type: "choose", circuit: chosen });
       void wakeLock.request();
     },
@@ -161,22 +190,42 @@ export default function Circuit() {
   }, [phase, segments, player, timer]);
 
   // Each second: end every step the clock has passed, then tell the player
-  // where the clock is.
+  // where the clock is. While the page is hidden nothing moves on; the
+  // way back judges the time away. One step ended meanwhile (a glance at
+  // a message) ends on time; more than one, and the circuit pauses at the
+  // last second it was followed, with the clock put back there.
   useEffect(() => {
-    if (!running) return;
+    if (!running || document.visibilityState === "hidden") return;
     const { index, phaseElapsed } = player.state;
     if (index < 0 || index >= stepSeconds.length) return;
     const stepStartedAt = lastTickRef.current - phaseElapsed;
-    for (const end of stepEndsPassed(
+    const ends = stepEndsPassed(
       stepSeconds,
       index,
       stepStartedAt,
       timer.elapsed
-    ))
-      player.skip(end, 0);
+    );
+    if (ends.length > 1) {
+      setClock({ accumulatedSeconds: lastTickRef.current, isRunning: false });
+      void wakeLock.release();
+      dispatch({ type: "pause" });
+      return;
+    }
+    for (const end of ends) player.skip(end, 0);
     player.tick(timer.elapsed, 0);
     lastTickRef.current = timer.elapsed;
-  }, [running, timer.elapsed, player, stepSeconds]);
+  }, [running, timer.elapsed, player, stepSeconds, setClock, wakeLock]);
+
+  // Back on the page, the clock is read at once rather than on its next
+  // second, so the time away is judged before anything is drawn.
+  useEffect(() => {
+    if (!running) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") recalcNow();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [running, recalcNow]);
 
   // Each step says itself as it starts; a one-sided move says when to
   // switch, once, halfway.
@@ -216,11 +265,17 @@ export default function Circuit() {
     dispatch({ type: "complete" });
   }, [player.isComplete, phase, timer, audio, wakeLock]);
 
-  // The count in is not part of the circuit's minutes (Circ1 (K)).
+  // The count in is not part of the circuit's minutes (Circ1 (K)), and
+  // neither is any clock past the last step's end: a clock that jumps past
+  // it is time after the circuit.
   const starts = player.checkpoint?.segmentStarts;
   const countInEnd = starts?.[1]?.elapsed;
+  const clockEnd = Math.min(
+    timer.elapsed,
+    starts?.[steps.length]?.elapsed ?? timer.elapsed
+  );
   const activeSeconds =
-    countInEnd === undefined ? 0 : Math.max(0, timer.elapsed - countInEnd);
+    countInEnd === undefined ? 0 : Math.max(0, clockEnd - countInEnd);
   const saves = circuitCounts(activeSeconds);
 
   // What was done: only the work each step really ran.
@@ -236,22 +291,33 @@ export default function Circuit() {
     [circuit, steps, starts, timer.elapsed]
   );
 
+  // The screen is held on only while the clock runs.
   const pause = () => {
     timer.pause();
+    void wakeLock.release();
     dispatch({ type: "pause" });
   };
   const resume = () => {
     timer.resume();
+    void wakeLock.request();
     dispatch({ type: "resume" });
   };
   const askEnd = () => {
     timer.pause();
+    void wakeLock.release();
     dispatch({ type: "askEnd" });
   };
   const keepGoing = () => {
     timer.resume();
+    void wakeLock.request();
     dispatch({ type: "keepGoing" });
   };
+  // Back (the browser's, or a phone's) during a circuit asks before it
+  // leaves, as the end button does; sticky, so a second back after Keep
+  // going asks again.
+  useBackDismiss(phase === "running" || phase === "paused", askEnd, {
+    sticky: true,
+  });
   const leave = () => {
     void wakeLock.release();
     dispatch({ type: "discard" });
@@ -312,7 +378,9 @@ export default function Circuit() {
         roundsDone={progress?.roundsDone ?? 0}
         activeSeconds={activeSeconds}
         saves={saves}
-        reward={history ? circuitReward(history) : null}
+        reward={
+          history.status === "read" ? circuitReward(history.circuits) : null
+        }
         effort={session.effort}
         saving={phase !== "finish"}
         error={session.error}

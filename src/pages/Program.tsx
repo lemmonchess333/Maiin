@@ -67,9 +67,6 @@ import WorkoutSession from "@/components/WorkoutSession";
 const EmptyWorkoutEntry = lazyRetry(
   () => import("@/components/program/EmptyWorkoutEntry")
 );
-const CircuitEntry = lazyRetry(
-  () => import("@/components/program/CircuitEntry")
-);
 const SavedRoutinesSection = lazyRetry(
   () => import("@/components/program/SavedRoutinesSection")
 );
@@ -2227,12 +2224,10 @@ function ProgramInner() {
           away from the fields that fix it. Expanded it is a plan-quality
           readout, and the lift editor is where the days it rates are
           edited. */}
-      {/* An empty workout (Mob1 call 1): a lift with no plan day; a
-          circuit (Circ1 (8)) beside it. */}
+      {/* An empty workout (Mob1 call 1): a lift with no plan day. */}
       {activeTab === "lift" && (
         <Suspense fallback={null}>
           <EmptyWorkoutEntry />
-          <CircuitEntry />
           <SavedRoutinesSection />
         </Suspense>
       )}

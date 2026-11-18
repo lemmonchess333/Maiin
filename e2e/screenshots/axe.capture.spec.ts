@@ -18,7 +18,8 @@
  * each with its comments sheet, and a Space post that is not there; the
  * In progress strip on Home and Train for a programme workout and for a
  * routine's; and, as other seeded accounts, a runner's welcome back and a
- * Circle's invite code live and expired.
+ * Circle's invite code live and expired. And circuit mode: its picker, a
+ * circuit at work and at rest, its end question and its finish.
  * Everything is measured in the light theme the seeded account keeps and
  * again in dark.
  *
@@ -34,6 +35,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
+import {
+  openCircuit,
+  runCircuitClock,
+  runCircuitUntil,
+  TEN_MINUTE_CIRCUIT,
+} from "../helpers/circuit";
 import { emulatorActive } from "../helpers/emulator";
 
 test.use({
@@ -504,6 +511,41 @@ test.describe("axe", () => {
     await check(page, "home-in-progress-routine", found);
     await open(page, "program", strip(/^Push day in progress$/));
     await check(page, "train-in-progress-routine", found);
+
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  /* Circuit mode (Circ1): the picker, a circuit at work and at rest, the
+     end question, and the finish of one run to its end, on a clock the
+     spec moves on (helpers/circuit.ts). Nothing is saved. */
+  test("a circuit", async ({ page }) => {
+    test.setTimeout(240_000);
+    const found: Finding[] = [];
+
+    await openCircuit(page);
+    await settle(page, page.getByRole("heading", { name: "Circuit" }));
+    await check(page, "circuit-picker", found);
+
+    await page.getByRole("button", { name: TEN_MINUTE_CIRCUIT }).click();
+    await runCircuitUntil(page, page.getByText("Work", { exact: true }));
+    await check(page, "circuit-work", found);
+    await runCircuitUntil(page, page.getByText("Rest", { exact: true }));
+    await check(page, "circuit-rest", found);
+
+    await page.getByRole("button", { name: "End circuit" }).click();
+    const ask = page.getByRole("alertdialog");
+    await sheetReady(page, ask.getByRole("button", { name: "Keep going" }));
+    await check(page, "circuit-end-question", found, '[role="alertdialog"]');
+    await ask.getByRole("button", { name: "Keep going" }).click();
+    await expect(ask).toHaveCount(0, { timeout: 10_000 });
+
+    // On past the circuit's 10 minutes: it finishes by itself.
+    await runCircuitClock(page, 600);
+    await page
+      .getByText("How did it feel?")
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(600);
+    await check(page, "circuit-finish", found);
 
     expect(unaccepted(found)).toEqual([]);
   });

@@ -67,9 +67,11 @@ export default function CircuitRunner({
         <p className="min-w-0 text-center text-sm text-muted-foreground">
           {circuitPlaceLine(circuit, step)}
         </p>
+        {/* One name, its state in aria-pressed: a name that changes with
+            the state reads as two buttons. */}
         <IconButton
-          aria-label={voice ? "Mute the voice" : "Turn the voice on"}
-          aria-pressed={!voice}
+          aria-label="Voice"
+          aria-pressed={voice}
           variant="ghost"
           icon={
             voice ? (

@@ -23,14 +23,48 @@ export interface DatedCircuit {
   saved: SavedCircuit;
 }
 
-/** The circuits among saved workouts, in the order given (newest first). */
+/** A saved workout, as far as the circuit history reads it. */
+interface WorkoutRecord {
+  date?: unknown;
+  createdAt?: unknown;
+  format?: unknown;
+  circuit?: unknown;
+}
+
+/** When a workout was saved, in ms, or 0 when it does not say. */
+function savedAtMs(createdAt: unknown): number {
+  if (!createdAt || typeof createdAt !== "object") return 0;
+  const at = createdAt as { toMillis?: unknown; seconds?: unknown };
+  if (typeof at.toMillis === "function") return Number(at.toMillis()) || 0;
+  return typeof at.seconds === "number" ? at.seconds * 1000 : 0;
+}
+
+/**
+ * The circuits among saved workouts, newest first: by day, then by when
+ * each was saved. The read orders by day alone, and two circuits on one
+ * day come back in no set order, so the ladder would read them either way
+ * round.
+ */
 export function savedCircuits(
-  workouts: readonly { date: string; format?: unknown; circuit?: unknown }[]
+  workouts: readonly WorkoutRecord[]
 ): DatedCircuit[] {
+  const day = (workout: WorkoutRecord) =>
+    typeof workout.date === "string" ? workout.date : "";
   const circuits: DatedCircuit[] = [];
-  for (const workout of workouts) {
+  for (const { workout } of workouts
+    .map((workout, index) => ({ workout, index }))
+    .sort(
+      (a, b) =>
+        (day(a.workout) < day(b.workout)
+          ? 1
+          : day(a.workout) > day(b.workout)
+            ? -1
+            : 0) ||
+        savedAtMs(b.workout.createdAt) - savedAtMs(a.workout.createdAt) ||
+        a.index - b.index
+    )) {
     const saved = workoutCircuit(workout);
-    if (saved) circuits.push({ day: workout.date, saved });
+    if (saved) circuits.push({ day: day(workout), saved });
   }
   return circuits;
 }
