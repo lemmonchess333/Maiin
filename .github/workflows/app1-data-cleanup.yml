@@ -7,20 +7,25 @@ name: App1 data cleanup
 #   - the plan's 7 retired fields and the profile's retired fields, counted,
 #     and stripped only when asked (stripRetiredProgramFields.js and
 #     stripRetiredProfileFields.js, each a dry run without --apply).
+#   - the accounts still on the structured run mode, moved to free running
+#     only when asked, as the app moves one when it is opened
+#     (moveStructuredRunMode.js; for accounts nobody opens again, such as an
+#     old test account: owner, 18 Nov 2026).
 # Every script prints counts and checkpoint paths, never anything else about
 # an account. Run it only once Deploy production has shipped App1 (the
 # release that stopped writing the fields), as the scripts' headers say.
 #
 # Run it from the Actions tab (Apply strips; left off, it only counts), or
 # add a dated line to .github/app1-data-cleanup.request on main: a line that
-# starts with "apply" strips, any other line only counts. After a strip it
-# counts again and fails if a plan or profile still holds a retired field.
+# starts with "apply" strips and moves, any other line only counts. After
+# that it counts again and fails if a plan or profile still holds a retired
+# field or an account is still on the structured run mode.
 
 on:
   workflow_dispatch:
     inputs:
       apply:
-        description: "Strip the retired fields (left off, it only counts)"
+        description: "Strip the retired fields and move structured accounts (left off, it only counts)"
         type: boolean
         default: false
   # A new line in the request file on main. Only main, which is also the
@@ -77,6 +82,14 @@ jobs:
       - name: Count the accounts on the structured run mode
         run: node functions/scripts/countStructuredRunMode.js adaptive-fitness-af8bb
 
+      - name: The accounts left on the structured run mode
+        env:
+          APPLY: ${{ steps.mode.outputs.apply }}
+        run: |
+          set -euo pipefail
+          if [ "$APPLY" = "true" ]; then flag=--apply; else flag=; fi
+          node functions/scripts/moveStructuredRunMode.js --project adaptive-fitness-af8bb $flag
+
       - name: The plan's retired fields
         env:
           APPLY: ${{ steps.mode.outputs.apply }}
@@ -101,3 +114,5 @@ jobs:
           node functions/scripts/stripRetiredProfileFields.js --project adaptive-fitness-af8bb | tee profiles.txt
           grep -q '^DRY RUN: 0 of ' plans.txt || { echo "::error::A plan still carries a retired field."; exit 1; }
           grep -q '^DRY RUN: 0 of ' profiles.txt || { echo "::error::A profile still holds a retired field."; exit 1; }
+          node functions/scripts/countStructuredRunMode.js adaptive-fitness-af8bb | tee structured.txt
+          grep -q '^No account holds the structured run mode' structured.txt || { echo "::error::An account is still on the structured run mode."; exit 1; }
