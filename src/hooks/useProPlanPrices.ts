@@ -23,12 +23,11 @@ export interface ProPlanPrices {
  * it, and everything worked out from a price (the per-week anchors, the
  * "Save N%" on the yearly card) in that currency (`localizePlans`). Until
  * those arrive the paywall prints no price at all, and if they can't be
- * read it says so and offers to try again. It used to print the pound
- * plans meanwhile, and keep them when the store didn't answer, so a
- * reviewer on the US storefront could read "£34.99 a year" above a sheet
- * charging dollars (Guideline 3.1.2, launch audit 2026-11-18). A purchase
- * needs the same offering, so a paywall without its prices has nothing it
- * could sell anyway.
+ * read it says so and offers to try again. Pound plans printed meanwhile,
+ * or kept when the store didn't answer, would let a reviewer on the US
+ * storefront read "£34.99 a year" above a sheet charging dollars
+ * (Guideline 3.1.2). A purchase needs the same offering, so a paywall
+ * without its prices has nothing it could sell anyway.
  *
  * `appUserID` is the signed-in account. When RevenueCat isn't set up (its
  * set-up at sign-in failed and stopped trying), the read and Try again set
