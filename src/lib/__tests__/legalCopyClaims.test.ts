@@ -144,6 +144,42 @@ describe("the collection inventory is complete", () => {
     expect(sectionOne).toMatch(/Meal Photos/);
     expect(sectionOne).toMatch(/Progress Photos/);
   });
+
+  it("names the notification token and who delivers it, while the app registers one", () => {
+    // The phone hands Tropos a push token, which the server keeps on the
+    // account to send to (claimPushDeviceToken). The policy named every
+    // other service the app calls and not this one (launch audit,
+    // 2026-11-18; Guideline 5.1.1(i)).
+    const registers = /claimPushDeviceToken/.test(
+      read("../pushNotifications.ts")
+    );
+    expect(registers).toBe(true);
+    const sectionOne = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("1. Information We Collect"),
+      PRIVACY_PROSE.indexOf("2. How We Use Your Data")
+    );
+    expect(sectionOne).toMatch(/Notification Token/);
+    expect(PRIVACY_PROSE).toMatch(/Firebase Cloud Messaging/);
+    expect(PRIVACY_PROSE).toMatch(/Apple Push Notification service/);
+  });
+
+  it("names every kind of upload Cloud Vision screens", () => {
+    // photoScreen.js screens four paths. The policy listed three of them
+    // and left out the map image of a shared run.
+    const screen = read("../../../functions/lib/photoScreen.js");
+    expect(screen).toContain("route-maps");
+    const vision = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("Photo checks (Google Cloud Vision)")
+    ).slice(0, 600);
+    for (const kind of [
+      "profile photo",
+      "session you share",
+      "Space post",
+      "map image of a run",
+    ]) {
+      expect(vision, kind).toContain(kind);
+    }
+  });
 });
 
 describe("the data controller is identified", () => {

@@ -199,6 +199,15 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
+                  Notification Token (optional):
+                </strong>{" "}
+                if you allow notifications, the token your phone or browser
+                gives Tropos so that notifications reach that device, and
+                whether it is an iPhone or a browser. Signing out on the device
+                removes it from your account.
+              </li>
+              <li>
+                <strong className="text-foreground">
                   Crash and Error Reports:
                 </strong>{" "}
                 error messages and where in the app they happened, and in the
@@ -449,18 +458,21 @@ export default function PrivacyPolicy() {
                 Cloud Storage (progress, profile, post and Space photos), Cloud
                 Functions (our server code), App Check (which checks that
                 requests come from the real app; on the web it uses reCAPTCHA),
-                Google Analytics for Firebase (usage analytics, section 2) and,
-                in the iPhone app, Firebase Crashlytics (crash reports, below).
+                Firebase Cloud Messaging (which delivers notifications to your
+                phone or browser), Google Analytics for Firebase (usage
+                analytics, section 2) and, in the iPhone app, Firebase
+                Crashlytics (crash reports, below).
               </li>
               <li>
                 <strong className="text-foreground">
                   Photo checks (Google Cloud Vision):
                 </strong>{" "}
                 a photo you set as your profile photo, add to a session you
-                share or attach to a Space post is checked by Google Cloud
-                Vision’s SafeSearch before other people can see it, and a photo
-                with nudity is deleted. Google processes the photo only to
-                return the check and does not use it to train its models.
+                share or attach to a Space post, and the map image of a run you
+                share, is checked by Google Cloud Vision’s SafeSearch before
+                other people can see it, and a photo with nudity is deleted.
+                Google processes the photo only to return the check and does not
+                use it to train its models.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -491,8 +503,10 @@ export default function PrivacyPolicy() {
                 Apple (if you use it), Apple Health (optional steps, sleep and
                 heart for readiness, run heart rate and workout export; section
                 8), In-App Purchase (Pro bought in the app; Apple handles the
-                payment) and App Attest (which confirms that requests come from
-                the real app on your iPhone).
+                payment), the Apple Push Notification service (notifications on
+                your iPhone, through Firebase Cloud Messaging) and App Attest
+                (which confirms that requests come from the real app on your
+                iPhone).
               </li>
               <li>
                 <strong className="text-foreground">RevenueCat:</strong> manages
@@ -582,26 +596,26 @@ export default function PrivacyPolicy() {
               connect steps, Tropos reads your daily step count on your phone.
               With Pro, it compares last week’s average with the activity level
               your calorie target assumes, and offers to change the level when
-              they differ; nothing changes unless you accept. The step count is
-              not stored or sent to Tropos. With Pro, if you add sleep and
-              heart, Tropos reads your sleep, resting heart rate and heart rate
-              variability for the last four weeks to say how ready you are for
-              today’s session. They are read on your phone each time and are not
-              stored or sent to Tropos. If you use Apple Watch runs, Tropos
-              reads heart rate during that run to show a live reading and
-              calculate a run summary. The Watch reads it through a workout
-              session, and Apple asks an app that runs one for permission to
-              save workouts as well; the Watch saves none. Raw heart rate
-              samples are held on your device until you save or discard the run;
-              a saved run can include average and maximum heart rate and time in
-              heart rate zones. Those values are not used to change calorie
-              targets or sent to product analytics. If you separately turn on
-              workout export, Tropos writes a completed run to Apple Health
-              after it is saved to your account. The exported workout contains
-              its time, distance and estimated energy, without a GPS route.
-              Tropos does not import Apple Health workouts into your training
-              plan. You can change either choice in Tropos settings and remove
-              Apple Health access in the Health app.
+              they differ; nothing changes unless you accept, and then only the
+              new activity level is saved. The step count is not stored or sent
+              to Tropos. With Pro, if you add sleep and heart, Tropos reads your
+              sleep, resting heart rate and heart rate variability for the last
+              four weeks to say how ready you are for today’s session. They are
+              read on your phone each time and are not stored or sent to Tropos.
+              If you use Apple Watch runs, Tropos reads heart rate during that
+              run to show a live reading and calculate a run summary. The Watch
+              reads it through a workout session, and Apple asks an app that
+              runs one for permission to save workouts as well; the Watch saves
+              none. Raw heart rate samples are held on your device until you
+              save or discard the run; a saved run can include average and
+              maximum heart rate and time in heart rate zones. Those values are
+              not used to change calorie targets or sent to product analytics.
+              If you separately turn on workout export, Tropos writes a
+              completed run to Apple Health after it is saved to your account.
+              The exported workout contains its time, distance and estimated
+              energy, without a GPS route. Tropos does not import Apple Health
+              workouts into your training plan. You can change either choice in
+              Tropos settings and remove Apple Health access in the Health app.
             </p>
             <p>
               <strong className="text-foreground">Heart rate sensor.</strong> If
