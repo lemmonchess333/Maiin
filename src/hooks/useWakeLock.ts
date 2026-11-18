@@ -1,7 +1,14 @@
 import { useEffect, useRef, useCallback } from "react";
 import { isNativePlatform } from "@/lib/platform";
 
-export function useWakeLock() {
+export interface WakeLockOptions {
+  /** Ask on the native shell too. A circuit (Circ1 (10)) has no
+   *  background service to keep it going, and its timer is its screen, so
+   *  it asks wherever the web view offers a lock. */
+  onNative?: boolean;
+}
+
+export function useWakeLock({ onNative = false }: WakeLockOptions = {}) {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   // Guards the async acquisition gap. request() is called from several places
   // that can fire on the SAME visibilitychange (useWakeLock's own handler +
@@ -17,7 +24,7 @@ export function useWakeLock() {
     // screen awake would only burn battery for no tracking benefit (the doc's
     // "keep useWakeLock only on the web path"). Web keeps the lock so the
     // foreground-only web watcher isn't killed by the screen sleeping.
-    if (isNativePlatform()) return false;
+    if (isNativePlatform() && !onNative) return false;
     if (!("wakeLock" in navigator)) return false;
     if (wakeLockRef.current || acquiringRef.current) return false;
     acquiringRef.current = true;
@@ -33,7 +40,7 @@ export function useWakeLock() {
     } finally {
       acquiringRef.current = false;
     }
-  }, []);
+  }, [onNative]);
 
   const release = useCallback(async () => {
     if (wakeLockRef.current) {

@@ -216,15 +216,13 @@ describe("ProgrammeSettings — the lifting editor (Section-Split)", () => {
       eventSpaceId: "the-big-half",
       targetTimeS: 6300,
     };
-    setup(
-      {
-        runMode: "race_prep",
-        raceGoal,
-        weeklyRunDaysTarget: 3,
-        runVolume: "lighter",
-        runDifficulty: "harder",
-      }
-    );
+    setup({
+      runMode: "race_prep",
+      raceGoal,
+      weeklyRunDaysTarget: 3,
+      runVolume: "lighter",
+      runDifficulty: "harder",
+    });
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));

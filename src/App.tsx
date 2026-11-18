@@ -199,6 +199,7 @@ const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const EmptyWorkout = lazyRetry(() => import("@/pages/EmptyWorkout"));
+const Circuit = lazyRetry(() => import("@/pages/Circuit"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const FollowList = lazyRetry(() => import("@/pages/FollowList"));
 // Soc15 call 3: the weekly league, opened from its card on Social.
@@ -1067,6 +1068,15 @@ function SignedInRoutes({
                         element={
                           <RouteErrorBoundary>
                             <Run />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      {/* Circuit mode (Circ1): full screen, as a run is. */}
+                      <Route
+                        path="/circuit"
+                        element={
+                          <RouteErrorBoundary>
+                            <Circuit />
                           </RouteErrorBoundary>
                         }
                       />

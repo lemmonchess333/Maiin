@@ -143,3 +143,29 @@ export function circuitProgress(
     complete: steps.length > 0 && index >= steps.length,
   };
 }
+
+/**
+ * The moments, on the session clock, at which steps ended between where
+ * the player stands and now: the live step's end, then each step's after
+ * it, while they fall at or before `now`. The page skips the player to
+ * each in turn, so a step ends on time even when the clock jumped (the
+ * screen slept, the app was away) rather than at the late tick that
+ * noticed. The session player itself starts the next step at the tick it
+ * sees, which is right for a run and loses the gap for a circuit.
+ */
+export function stepEndsPassed(
+  stepSeconds: readonly number[],
+  index: number,
+  stepStartedAt: number,
+  now: number
+): number[] {
+  const ends: number[] = [];
+  if (index < 0) return ends;
+  let at = stepStartedAt;
+  for (let i = index; i < stepSeconds.length; i++) {
+    at += Math.max(0, stepSeconds[i]);
+    if (at > now) break;
+    ends.push(at);
+  }
+  return ends;
+}

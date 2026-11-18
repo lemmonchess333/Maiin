@@ -105,7 +105,10 @@ const PHASE_LABEL: Record<RepPhase, string> = {
 
 /** Movement-specific cues where the generic direction omits essential form
  * or describes the wrong path. */
-const MOVEMENT_PHASE_LABEL: Record<string, Partial<Record<RepPhase, string>>> = {
+const MOVEMENT_PHASE_LABEL: Record<
+  string,
+  Partial<Record<RepPhase, string>>
+> = {
   "front-squat": {
     drive: "Stand tall with elbows high",
     eccentric: "Squat down with elbows high",

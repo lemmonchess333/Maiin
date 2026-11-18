@@ -7,6 +7,7 @@ import {
   circuitSeconds,
   circuitSegments,
   circuitSteps,
+  stepEndsPassed,
 } from "../circuitSteps";
 import type { Circuit } from "../circuitTypes";
 
@@ -143,5 +144,37 @@ describe("circuitProgress", () => {
       workSecondsDone: 400,
       complete: true,
     });
+  });
+});
+
+describe("stepEndsPassed: steps end on the clock", () => {
+  const seconds = [10, 40, 20, 40];
+
+  it("ends nothing while the live step runs", () => {
+    expect(stepEndsPassed(seconds, 0, 0, 9)).toEqual([]);
+    expect(stepEndsPassed(seconds, 1, 10, 49)).toEqual([]);
+  });
+
+  it("ends a step at its own end, not the tick that noticed", () => {
+    expect(stepEndsPassed(seconds, 0, 0, 10)).toEqual([10]);
+    expect(stepEndsPassed(seconds, 0, 0, 11)).toEqual([10]);
+  });
+
+  it("ends every step a jump of the clock passed over", () => {
+    // The screen slept from 5 s to 75 s: the count in, the first work
+    // and the rest after it all ended while it was dark.
+    expect(stepEndsPassed(seconds, 0, 0, 75)).toEqual([10, 50, 70]);
+    expect(stepEndsPassed(seconds, 0, 0, 500)).toEqual([10, 50, 70, 110]);
+  });
+
+  it("starts from the live step's own start", () => {
+    // Skipped into the rest at 30 s: it ends 20 s later, at 50 s.
+    expect(stepEndsPassed(seconds, 2, 30, 49)).toEqual([]);
+    expect(stepEndsPassed(seconds, 2, 30, 50)).toEqual([50]);
+  });
+
+  it("ends nothing before the player starts or once it is complete", () => {
+    expect(stepEndsPassed(seconds, -1, 0, 100)).toEqual([]);
+    expect(stepEndsPassed(seconds, 4, 110, 200)).toEqual([]);
   });
 });
