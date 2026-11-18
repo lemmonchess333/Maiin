@@ -137,7 +137,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // its Lift plan row's icon with it.
   // 2026-11-12: 16 → 15. The friends board's card went (Trim1 call
   // 3(a)), and its volume board's dumbbell icon with it.
-  lifting: 15, // Redesign consolidates onboarding option icons.
+  // 2026-11-18: 15 → 16. A circuit's feed post (Circ1): its rounds, a
+  // text-2xl extrabold numeral where a lift's volume numeral stands, at
+  // the large-text bar as that one is.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
