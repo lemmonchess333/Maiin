@@ -357,7 +357,13 @@ async function fetchLifetimeData(uid) {
 /**
  * Whether a saved workout is a circuit (Circ1 (4)): the marker the client
  * writes and its `workoutCircuit` reads. Only the marker matters here; the
- * circuit's own fields are the client's to read.
+ * circuit's own fields are the client's to read. The match is exact: a
+ * workout with no marker, or any other value, is a lift.
+ *
+ * Circ1 call 6's v2 ("a planned lift done as a circuit counts as that
+ * lift") will save a planned lift that carries this marker, and this
+ * filter will then leave it out of lift load too. Whether such a lift
+ * keeps its tonnage and hard sets is for v2's own lock to decide here.
  */
 function isCircuitWorkout(w) {
   return Boolean(w) && w.format === "circuit";
