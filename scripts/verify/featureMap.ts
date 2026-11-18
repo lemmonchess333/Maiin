@@ -45,6 +45,7 @@ export type Target =
         | "group"
         | "heading"
         | "link"
+        | "list"
         | "navigation"
         | "radio"
         | "region";
@@ -437,13 +438,19 @@ export const FEATURES: Feature[] = [
       "src/utils/calorieBalance.ts",
     ],
     route: "/history",
-    steps: (["lifting", "running", "body", "food"] as const).flatMap(
-      (view): Step[] => [
-        { goto: `history?view=${view}` },
-        { see: { role: "heading", name: "Progress", level: 1 } },
-        { see: mainNav },
-      ]
-    ),
+    steps: [
+      ...(["lifting", "running", "body", "food"] as const).flatMap(
+        (view): Step[] => [
+          { goto: `history?view=${view}` },
+          { see: { role: "heading", name: "Progress", level: 1 } },
+          { see: mainNav },
+        ]
+      ),
+      /* Lifting's exercise rows, which only loaded sessions draw (the
+         link largeText.capture follows into an exercise's history). */
+      { goto: "history?view=lifting" },
+      { see: { css: 'a[href*="/history/exercise/"]' }, timeoutMs: 30_000 },
+    ],
     expected:
       "Each page's charts drawn from the seeded sessions, meals and " +
       "weigh-ins, none past the screen's edge.",
@@ -487,6 +494,9 @@ export const FEATURES: Feature[] = [
     route: "/workout/:workoutId",
     steps: [
       { goto: "workout/rich-w0" },
+      /* Share is drawn only once the workout has loaded: an h1 alone
+         would pass on an error card. */
+      { see: { role: "button", name: "Share", exact: true } },
       { see: { role: "heading", level: 1 } },
     ],
     expected:
@@ -563,7 +573,8 @@ export const FEATURES: Feature[] = [
       { goto: "settings/profile" },
       { click: { role: "button", name: "See your profile as others do" } },
       { url: /\/user\// },
-      { see: { role: "heading", level: 1 } },
+      /* The seeded account's public name (`seed-e2e-user.ts`). */
+      { see: { role: "heading", name: /^E2E Test/, level: 1 } },
     ],
     expected:
       "The profile others see: name and photo, the follow counts, the " +
@@ -594,15 +605,21 @@ export const FEATURES: Feature[] = [
     needs: "signed-in",
     sources: ["src/pages/FollowList.tsx", "src/hooks/useFollowState.ts"],
     route: "/followers",
+    /* The heading draws before the list loads, and over its error card
+       too, so each list is anchored on what only a loaded list shows:
+       its rows, or the empty state. seed:rich makes the account follow
+       one person (Maya) and gives it no followers. */
     steps: [
       { goto: "followers" },
-      { see: { role: "heading", level: 1 } },
+      { see: { role: "heading", name: "Followers", level: 1, exact: true } },
+      { see: { text: "No followers yet", exact: true } },
       { goto: "following" },
-      { see: { role: "heading", level: 1 } },
+      { see: { role: "heading", name: "Following", level: 1, exact: true } },
+      { see: { role: "list", name: "Following" } },
     ],
     expected:
-      "Each list under its heading, every row a person with a way to " +
-      "their profile; Remove follower on the followers list.",
+      "Followers' empty state (the seeded account has none) and the one " +
+      "person it follows, Maya, as a row that opens her profile.",
   },
   {
     id: "league",

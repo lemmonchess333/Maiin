@@ -261,7 +261,16 @@ export async function emulatorsUp(
 ): Promise<Emulators> {
   const state = readState<EmulatorState>("emulators.json");
   const [a, f] = await Promise.all([authUp(), firestoreUp()]);
-  if (a && (f || !firestore)) {
+  /* Firestore already failed to start in this rig's lifetime, and nothing
+     has changed since (no jar has appeared): asking again costs seconds
+     and gets the same answer, so reuse the Auth-only rig. */
+  const knownMissing =
+    a &&
+    !f &&
+    !!state?.diagnosis &&
+    alive(state.pid) &&
+    !pre.firestoreJarCached;
+  if (a && (f || !firestore || knownMissing)) {
     const lifetime = state && alive(state.pid) ? state.startedAt : "external";
     log(`emulators: reusing (auth ${a}, firestore ${f})`);
     return {

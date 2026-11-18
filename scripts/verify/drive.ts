@@ -165,18 +165,26 @@ async function runStep(page: Page, base: string, step: Step): Promise<void> {
     });
     return;
   }
+  /* `visible: true` before `first()`: a page often holds a hidden copy of
+     a control (a closed sheet's, a sr-only label), and the first match
+     being hidden must not fail a step the person can see done. */
   if ("click" in step) {
-    await all(page, step.click).first().click({ timeout: DEFAULT_TIMEOUT });
+    await all(page, step.click)
+      .filter({ visible: true })
+      .first()
+      .click({ timeout: DEFAULT_TIMEOUT });
     return;
   }
   if ("fill" in step) {
     await all(page, step.fill)
+      .filter({ visible: true })
       .first()
       .fill(step.value, { timeout: DEFAULT_TIMEOUT });
     return;
   }
   if ("see" in step) {
     await all(page, step.see)
+      .filter({ visible: true })
       .first()
       .waitFor({
         state: "visible",
