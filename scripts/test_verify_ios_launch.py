@@ -92,6 +92,14 @@ class LaunchScreenshotTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             verifier.decode_png(b"not a png")
 
+    def test_main_tells_an_unreadable_shot_from_a_dark_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            garbled = Path(tmp) / "garbled.png"
+            garbled.write_bytes(b"not a png")
+            missing = Path(tmp) / "missing.png"
+            self.assertEqual(verifier.main(["--screenshot", str(garbled)]), 2)
+            self.assertEqual(verifier.main(["--screenshot", str(missing)]), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

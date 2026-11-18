@@ -11,7 +11,10 @@ middle band is read, since the system draws the status bar and the home
 indicator over a screen with no window too.
 
 Reads 8-bit PNGs (what `simctl io screenshot` writes) with the standard
-library only, so the macOS runner needs nothing installed.
+library only, so the macOS runner needs nothing installed. Exits 0 when the
+screen is lit, 1 when it is dark and 2 when the screenshot cannot be read,
+so a caller that allows a dark screen (the iPhone Duo's folded-away
+display) still stops on a file it could not check.
 """
 
 import argparse
@@ -111,7 +114,11 @@ def main(argv=None):
         help="the least share of lit pixels a drawing window shows",
     )
     args = parser.parse_args(argv)
-    share = lit_share(args.screenshot.read_bytes())
+    try:
+        share = lit_share(args.screenshot.read_bytes())
+    except (OSError, ValueError, struct.error, zlib.error) as error:
+        print(f"Could not read {args.screenshot}: {error}", file=sys.stderr)
+        return 2
     print(f"{share:.2%} of the screen is lit")
     if share < args.min_lit:
         print(
