@@ -18,6 +18,7 @@ display) still stops on a file it could not check.
 """
 
 import argparse
+from collections import Counter
 from pathlib import Path
 import struct
 import sys
@@ -26,6 +27,7 @@ import zlib
 # A pixel is lit when a channel is above this: the app's own page colour,
 # #0e0e11, is not, so a window showing nothing but the page is "dark".
 LIT = 40
+PAGE = (0x0E, 0x0E, 0x11)
 # The share of the height left out at the top (the status bar and the
 # Dynamic Island, about 54 of 852 pt) and at the bottom (the home
 # indicator), with room to spare.
@@ -85,23 +87,57 @@ def decode_png(data):
     return width, height, channels, rows
 
 
-def lit_share(data, step=4):
-    """The share of pixels in the middle band, sampled every `step` in
-    each direction, with a colour channel above LIT (alpha is not a
-    colour)."""
+def middle_band(data, step=4):
+    """The colours (r, g, b) of the middle band's pixels, sampled every
+    `step` in each direction (alpha is not a colour)."""
     width, height, channels, rows = decode_png(data)
-    colour = min(channels, 3)
-    lit = total = 0
+    colour = 1 if channels < 3 else 3  # grey, or grey and alpha: one colour
     top = int(height * TOP_BAND)
     bottom = height - int(height * BOTTOM_BAND)
     for y in range(top, bottom, step):
         row = rows[y]
         for x in range(0, width, step):
-            px = row[x * channels : x * channels + colour]
-            total += 1
-            if max(px) > LIT:
-                lit += 1
+            px = tuple(row[x * channels : x * channels + colour])
+            yield px * 3 if colour == 1 else px
+
+
+def lit_share(data, step=4):
+    """The share of the middle band's sampled pixels with a colour channel
+    above LIT."""
+    lit = total = 0
+    for px in middle_band(data, step):
+        total += 1
+        if max(px) > LIT:
+            lit += 1
     return lit / total if total else 0.0
+
+
+def commonest(data, step=4):
+    """The middle band's most common colour, which tells a dark screen's
+    cause: black is no window at all, the page colour is the web view up
+    with nothing drawn on it."""
+    counts = Counter(middle_band(data, step))
+    return counts.most_common(1)[0][0] if counts else (0, 0, 0)
+
+
+def near(colour, target, tolerance=4):
+    return all(abs(a - b) <= tolerance for a, b in zip(colour, target))
+
+
+def dark_reason(colour):
+    if near(colour, (0, 0, 0), 3):
+        return (
+            "The app launched to a black screen: no window is drawing. "
+            "Check the scene manifest in Info.plist and SceneDelegate.swift."
+        )
+    if near(colour, PAGE):
+        return (
+            "The web view is up, showing the page's background with nothing "
+            "on it: the web app did not mount. Check the app's log for a "
+            "JavaScript error, and that the bundle was built with a Firebase "
+            "config."
+        )
+    return "The middle of the screen is dark: nothing is drawn there."
 
 
 def main(argv=None):
@@ -115,17 +151,18 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     try:
-        share = lit_share(args.screenshot.read_bytes())
+        data = args.screenshot.read_bytes()
+        share = lit_share(data)
+        colour = commonest(data)
     except (OSError, ValueError, struct.error, zlib.error) as error:
         print(f"Could not read {args.screenshot}: {error}", file=sys.stderr)
         return 2
-    print(f"{share:.2%} of the screen is lit")
+    print(
+        f"{share:.2%} of the screen is lit; its middle is mostly "
+        "#{:02x}{:02x}{:02x}".format(*colour)
+    )
     if share < args.min_lit:
-        print(
-            "The app launched to a dark screen: no window is drawing. "
-            "Check the scene manifest in Info.plist and SceneDelegate.swift.",
-            file=sys.stderr,
-        )
+        print(dark_reason(colour), file=sys.stderr)
         return 1
     return 0
 

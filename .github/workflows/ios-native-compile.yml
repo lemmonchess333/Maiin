@@ -93,6 +93,17 @@ jobs:
           fi
       - name: Build Capacitor bundle and sync native project
         run: npm run build:ios
+        # Placeholders, as the plist above: the web app sets up Firebase
+        # Auth as it loads, and Auth refuses an empty API key, so a bundle
+        # built without one never mounts and the launch check below sees
+        # only the page's background. Nothing calls Firebase before sign-in.
+        env:
+          VITE_FIREBASE_API_KEY: compile-only-key
+          VITE_FIREBASE_AUTH_DOMAIN: compile-only.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: compile-only
+          VITE_FIREBASE_STORAGE_BUCKET: compile-only.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: "1:123456789:web:compileonly"
       # The same project builds both kinds of TestFlight build: a standard
       # one, which embeds no Watch app and carries the short Health text, and
       # the pilot, which overrides the release gate exactly as deploy-ios.yml
@@ -173,7 +184,12 @@ jobs:
             echo "::error::The app was no longer running 25 s after launch"
             exit 1
           fi
-          python3 scripts/verify_ios_launch.py --screenshot "$RUNNER_TEMP/launch.png"
+          if ! python3 scripts/verify_ios_launch.py --screenshot "$RUNNER_TEMP/launch.png"; then
+            echo "The app's log since it was installed:"
+            xcrun simctl spawn "$UDID" log show --last 5m --style compact \
+              --predicate 'process == "App"' | tail -n 120 || true
+            exit 1
+          fi
           xcrun simctl shutdown "$UDID"
       - name: Keep the launch screenshot
         if: always()
