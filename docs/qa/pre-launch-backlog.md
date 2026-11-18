@@ -1914,6 +1914,26 @@ such upload again, for a client that skips the callable
       list photos; confirm Google Cloud Vision needs no change there (it
       processes them for the app, not for tracking).
 
+## A day's budget of photo screens (security audit, 2026-11-18)
+
+Affects: `screenUploadedPhoto` and `screenPhoto` (`functions/index.js`,
+`functions/lib/photoScreen.js`). Each account's uploads to the screened
+folders are screened at most 100 a day by the trigger and 100 a day by the
+callable; an upload past that, or one Vision could not screen within a day
+of retries, is deleted unscreened. Only production shows the retries and
+the logs.
+
+- [ ] **The trigger is retried.** After Deploy production runs for this
+      change, the Firebase console shows `screenUploadedPhoto` with
+      "Retry on failure" on.
+- [ ] **A real photo is kept.** Post a Space photo and a shared
+      session's photo. Passing: both show, and the functions log has no
+      `screenUploadedPhoto.deletedUnscreened` line for them.
+- [ ] **Until Cloud Vision is on** (the section above), expect
+      `screenUploadedPhoto.failed` on each upload and, a day later,
+      `screenUploadedPhoto.deletedUnscreened` with
+      `unscreened-after-retries`. The app posts no such photo either way.
+
 ## User content moderation for App Review 1.2 (2026-10-04)
 
 Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,
