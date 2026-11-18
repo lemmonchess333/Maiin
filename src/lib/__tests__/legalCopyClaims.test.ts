@@ -166,18 +166,27 @@ describe("the collection inventory is complete", () => {
   it("names every kind of upload Cloud Vision screens", () => {
     // photoScreen.js screens four paths. The policy listed three of them
     // and left out the map image of a shared run.
+    // Each screened path, with the words the policy names it by. A fifth
+    // path fails here until the policy names it.
+    const NAMED: Record<string, string> = {
+      "space-photos": "Space post",
+      "profile-photos": "profile photo",
+      "route-maps": "map image of a run",
+      "post-photos": "session you share",
+    };
     const screen = read("../../../functions/lib/photoScreen.js");
-    expect(screen).toContain("route-maps");
+    const paths = [
+      ...screen
+        .split("const SCREENED_PATHS = [")[1]
+        .split("];")[0]
+        .matchAll(/\^([a-z-]+)\\\//g),
+    ].map((m) => m[1]);
+    expect(paths.sort()).toEqual(Object.keys(NAMED).sort());
     const vision = PRIVACY_PROSE.slice(
       PRIVACY_PROSE.indexOf("Photo checks (Google Cloud Vision)")
     ).slice(0, 600);
-    for (const kind of [
-      "profile photo",
-      "session you share",
-      "Space post",
-      "map image of a run",
-    ]) {
-      expect(vision, kind).toContain(kind);
+    for (const path of paths) {
+      expect(vision, path).toContain(NAMED[path]);
     }
   });
 });
