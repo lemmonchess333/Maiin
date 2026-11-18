@@ -1,20 +1,26 @@
 import { useId } from "react";
+import FinishHero from "@/components/workout/FinishHero";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
 import {
   CIRCUIT_EFFORTS,
+  circuitFinishCaption,
   circuitMinutes,
+  circuitRewardLine,
   circuitTooShortLine,
 } from "@/features/circuit/circuitCopy";
 import type { Circuit, CircuitEffort } from "@/features/circuit/circuitTypes";
+import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { cn } from "@/lib/utils";
 
 /**
- * The end of a circuit (Circ1 (11), (2), (A)): a calm summary, since a
- * timed circuit has no best and a routine session gets no full screen
- * (DS4 call 3), with the rounds, the minutes and the moves; then the one
- * tap for how it felt, which steers the ladder (Circ1 (7)), and Save.
- * A circuit under 7 minutes says so and saves nothing.
+ * The end of a circuit (Circ1 (11), (2), (A)), on the lift finish's own
+ * hero (`FinishHero`): the circuit's first move drawn as its picture, its
+ * name, the minutes as the one display figure, and the rounds and moves
+ * under them. A first circuit is the reward register, in lifting's colour
+ * with confetti (DS4 call 3); any other is the calm summary. Then the one
+ * tap for how it felt, which steers the ladder (Circ1 (7)), and Save. A
+ * circuit under 7 minutes says so and saves nothing.
  */
 export default function CircuitFinish({
   circuit,
@@ -22,6 +28,7 @@ export default function CircuitFinish({
   roundsDone,
   activeSeconds,
   saves,
+  reward,
   effort,
   saving,
   error,
@@ -35,6 +42,8 @@ export default function CircuitFinish({
   activeSeconds: number;
   /** Ran 7 minutes or more (Circ1 (A)). */
   saves: boolean;
+  /** A first circuit, or a best where the kind has one. */
+  reward: "first" | "best" | null;
   effort?: CircuitEffort;
   saving: boolean;
   error?: string;
@@ -44,54 +53,41 @@ export default function CircuitFinish({
 }) {
   const feelId = useId();
   const minutes = circuitMinutes(activeSeconds);
-  const figures = [
-    { value: roundsDone, unit: roundsDone === 1 ? "round" : "rounds" },
-    { value: minutes, unit: "min" },
-    {
-      value: circuit.moves.length,
-      unit: circuit.moves.length === 1 ? "move" : "moves",
-    },
-  ];
+  const lead = circuit.moves[0];
+  const cutout = lead ? getFormArtCutout(lead.exerciseId) : null;
+  const tone = saves && reward ? "lifting" : null;
   return (
     <div
       className="min-h-dvh bg-background px-[16px]"
       style={{
-        paddingTop: "calc(var(--safe-top) + 24px)",
+        paddingTop: "calc(var(--safe-top) + 16px)",
         paddingBottom: "calc(var(--safe-bottom) + 24px)",
       }}
     >
       <main className="mx-auto flex max-w-lg flex-col gap-[20px]">
-        <header className="flex items-center gap-[12px]">
-          <ExerciseThumb
-            exerciseId={circuit.moves[0]?.exerciseId ?? ""}
-            className="size-[72px] rounded-2xl"
-          />
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-lifting-strong">
-              {finished ? "Circuit done" : "Circuit ended"}
-            </p>
-            <h1 className="break-words text-2xl font-bold text-foreground">
-              {circuit.name}
-            </h1>
-          </div>
-        </header>
-
-        <dl className="grid grid-cols-3 gap-[8px]">
-          {figures.map((figure) => (
-            <div
-              key={figure.unit}
-              className="rounded-xl bg-card p-[12px] text-center card-shadow"
-            >
-              <dt className="sr-only">{figure.unit}</dt>
-              <dd className="text-2xl font-bold tabular-nums text-foreground">
-                {figure.value}
-              </dd>
-              <dd className="text-xs text-muted-foreground" aria-hidden="true">
-                {figure.unit}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <FinishHero
+          kicker={finished ? "Circuit done" : "Circuit ended"}
+          tone={tone}
+          confetti={tone !== null}
+          picture={
+            cutout ? (
+              <img
+                src={formArtCutoutUrl(cutout)}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                decoding="async"
+                className="exercise-drawing h-full max-h-80 w-[min(70%,17rem)] object-contain"
+              />
+            ) : undefined
+          }
+          title={circuit.name}
+          titleLevel={1}
+          figure={{ value: String(minutes) }}
+          caption={circuitFinishCaption(roundsDone, circuit.moves.length)}
+          line={saves && reward ? circuitRewardLine(reward) : null}
+          lineIcon={tone ? "trophy" : null}
+        />
 
         <ul className="space-y-[6px]" aria-label="Moves">
           {circuit.moves.map((move, index) => (

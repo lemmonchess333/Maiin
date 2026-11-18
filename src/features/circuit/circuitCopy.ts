@@ -6,7 +6,7 @@
  * weight it takes off: the deficit does that, not the method.
  */
 import { CIRCUIT_MIN_SECONDS } from "./circuitRules";
-import type { CircuitStep } from "./circuitSteps";
+import { circuitSeconds, type CircuitStep } from "./circuitSteps";
 import type { Circuit, CircuitEffort, CircuitKit } from "./circuitTypes";
 
 /** What a circuit asks for, by kit tier (Circ1 (D)). */
@@ -16,10 +16,13 @@ export function circuitKitLine(kit: CircuitKit): string {
   return "Bodyweight only";
 }
 
-/** "5 moves · 2 rounds · 40 s on, 20 s off". */
+/** "10 min · 5 moves · 2 rounds · 40 s on, 20 s off": the circuit as it
+ *  runs today, its rung's extra round and work included. The minutes are
+ *  its clock, without the count in. */
 export function circuitShapeLine(circuit: Circuit): string {
   const moves = circuit.moves.length;
   return [
+    `${circuitMinutes(circuitSeconds(circuit))} min`,
     `${moves} ${moves === 1 ? "move" : "moves"}`,
     `${circuit.rounds} ${circuit.rounds === 1 ? "round" : "rounds"}`,
     `${circuit.workSeconds} s on, ${circuit.restSeconds} s off`,

@@ -24,7 +24,11 @@ describe("circuit mode's words", () => {
       "Bodyweight, dumbbells and a kettlebell"
     );
     expect(circuitShapeLine(circuit)).toBe(
-      "5 moves · 2 rounds · 40 s on, 20 s off"
+      "10 min · 5 moves · 2 rounds · 40 s on, 20 s off"
+    );
+    // At a rung with an extra round, the minutes say so.
+    expect(circuitShapeLine({ ...circuit, rounds: 3 })).toBe(
+      "15 min · 5 moves · 3 rounds · 40 s on, 20 s off"
     );
   });
 
