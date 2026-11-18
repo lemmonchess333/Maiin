@@ -178,6 +178,8 @@ suite(
         await assertSucceeds(setDoc(ref, { enabled: true }));
         await assertFails(updateDoc(ref, { propsBundleDueAt: due }));
         await assertSucceeds(updateDoc(ref, { enabled: false }));
+        // An ordinary settings document is still the owner's to delete.
+        await assertSucceeds(deleteDoc(ref));
       });
     });
 
