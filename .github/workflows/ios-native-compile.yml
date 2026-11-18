@@ -325,10 +325,20 @@ jobs:
               AFTER="the app drawing"
             else
               AFTER=dark
-              if [ "$BEFORE" != dark ]; then MISSING="$MISSING $NAME"; fi
+              if [ "$BEFORE" != dark ]; then
+                MISSING="$MISSING $NAME"
+                cat "$RUNNER_TEMP/duo-$NAME.png.err"
+              elif [ -z "$SHOWING" ]; then
+                cat "$RUNNER_TEMP/duo-$NAME.png.err"
+              fi
             fi
             echo "| $NAME ($NUMBER) | $SIZE | $BEFORE | $AFTER |" >> "$GITHUB_STEP_SUMMARY"
           done <<< "$DISPLAYS"
+          if ! kill -0 "$PID" 2>/dev/null || [ -n "$MISSING" ] || [ -z "$DRAWING" ]; then
+            echo "The app's log since it was installed:"
+            xcrun simctl spawn "$UDID" log show --last 5m --style compact \
+              --predicate 'process == "App"' | tail -n 120 || true
+          fi
           if ! kill -0 "$PID" 2>/dev/null; then
             echo "::error::The app was no longer running on the iPhone Duo 25 s after launch"
             exit 1
