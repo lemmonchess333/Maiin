@@ -58,13 +58,13 @@ jobs:
           GCLOUD_PROJECT: demo-tropos
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run seed:season && npx playwright test -c playwright.site-captures.config.ts --project=auth-emulator --workers=1 --retries=0 e2e/screenshots/app-store.capture.spec.ts e2e/screenshots/together.screens.capture.spec.ts e2e/screenshots/circles.screens.capture.spec.ts e2e/screenshots/space.screens.capture.spec.ts e2e/screenshots/review.screens.capture.spec.ts e2e/screenshots/upgrade.screens.capture.spec.ts e2e/screenshots/finish-screens.capture.spec.ts e2e/screenshots/run-finish.capture.spec.ts e2e/screenshots/races.screens.capture.spec.ts'
+            'npm run seed:e2e && npm run seed:rich && npm run seed:circles && npm run seed:experience && npm run seed:fellbehind && npm run seed:liftreturn && npm run seed:season && npx playwright test -c playwright.site-captures.config.ts --project=auth-emulator --workers=1 --retries=0 e2e/screenshots/food-suggestions.screens.capture.spec.ts e2e/screenshots/food-delight.screens.capture.spec.ts e2e/screenshots/easier.screens.capture.spec.ts e2e/screenshots/analytics.screens.capture.spec.ts e2e/screenshots/nutrition-breakdown.screens.capture.spec.ts'
       - name: Commit the frames to this branch
         run: |
           if [ -z "$(ls -A screenshots 2>/dev/null)" ]; then echo "no frames"; exit 0; fi
           git config user.name "tropos-screenshot-bot"
           git config user.email "bot@tropos.local"
-          rm -rf site-frames && mkdir site-frames && cp -r screenshots/. site-frames/
-          git add -f site-frames/
+          mkdir -p site-frames/round2 && cp -r screenshots/. site-frames/round2/
+          git add -f site-frames/round2/
           git commit -m "Website captures [frames] [skip ci]" || exit 0
           git push origin HEAD:claude/site-captures
