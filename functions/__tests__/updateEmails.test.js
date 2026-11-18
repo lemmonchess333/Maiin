@@ -58,6 +58,8 @@ function makeDeps(nowMs) {
     nowMs,
     clock: () => 0,
     sleep: async () => {},
+    // Start the list of accounts at its beginning.
+    pivot: "",
     logger: { warn: vi.fn(), error: vi.fn(), log: vi.fn() },
     shouldProceed: vi.fn(async () => true),
     getAccount: vi.fn(async (uid) => accounts[uid] ?? null),
@@ -209,6 +211,33 @@ describe("the weekly review email", () => {
     expect(deps.getAccount).not.toHaveBeenCalled();
   });
 
+  it("does not go to an account whose uid cannot make a working link", async () => {
+    seed({ "users/sam.old": userDoc(), ...activeWeek("sam.old") });
+    accounts["sam.old"] = accounts.sam;
+    const outcomes = await _internals.runSweep(deps);
+    expect(deps.sendEmail).not.toHaveBeenCalled();
+    expect(outcomes["weeklyReview:no-link"]).toBe(1);
+  });
+
+  it("says a planned run marked done by hand, apart from what was saved", async () => {
+    seed({
+      "users/sam": userDoc({ lastActiveAt: seconds(MONDAY_8AM - 9 * DAY_MS) }),
+      "users/sam/programState/current": {
+        manualCompletions: {
+          r1: { completedAt: seconds(Date.UTC(2026, 10, 12, 18, 0)) },
+          // Marked in the week before: not this week's.
+          r0: { completedAt: seconds(Date.UTC(2026, 10, 5, 18, 0)) },
+        },
+      },
+    });
+    await _internals.runSweep(deps);
+    expect(weekly()).toHaveLength(1);
+    expect(deps.sendEmail.mock.calls[0][0].text).toContain(
+      "You marked 1 planned run done."
+    );
+    expect(deps.sendEmail.mock.calls[0][0].text).not.toContain("You saved");
+  });
+
   it("does not go without a time zone", async () => {
     seed({ "users/sam": userDoc({ timezone: null }), ...activeWeek("sam") });
     await _internals.runSweep(deps);
@@ -285,6 +314,33 @@ describe("when Resend refuses", () => {
     );
   });
 
+  it("a retry that cannot go keeps the time of its first attempt", async () => {
+    deps.sendEmail.mockRejectedValueOnce(new Error("socket hang up"));
+    await _internals.runSweep(deps);
+    const first = db.data.get("users/ali/settings/emailState").weeklyReview;
+    expect(first.state).toBe("pending");
+    // An hour on, the allowance is gone: nothing goes, and the record of
+    // the first attempt stays.
+    budget = 0;
+    deps = makeDeps(MONDAY_8AM + 60 * 60_000);
+    await _internals.runSweep(deps);
+    expect(deps.sendEmail).not.toHaveBeenCalled();
+    expect(db.data.get("users/ali/settings/emailState").weeklyReview).toEqual(
+      first
+    );
+  });
+
+  it("starts each run somewhere new, so the allowance does not always leave out the same people", async () => {
+    budget = 1;
+    deps.pivot = "m";
+    await _internals.runSweep(deps);
+    expect(weekly().map(([m]) => m.to)).toEqual(["sam@example.com"]);
+    budget = 1;
+    deps = makeDeps(MONDAY_8AM + 60 * 60_000);
+    await _internals.runSweep(deps);
+    expect(weekly().map(([m]) => m.to)).toEqual(["ali@example.com"]);
+  });
+
   it("the day's allowance used up: lets the claim go and stops the run", async () => {
     budget = 1;
     const outcomes = await _internals.runSweep(deps);
@@ -297,13 +353,15 @@ describe("when Resend refuses", () => {
 });
 
 describe("the emails after a break", () => {
+  /** When the last session was, `days` before Monday, at 18:00. */
+  const sessionAt = (days) => MONDAY_8AM - days * DAY_MS + 10 * 3_600_000;
   /** Someone whose last session was `days` ago, at 18:00, who chose only
    *  the emails after a break. */
   function awayFor(days, extra = {}) {
     seed({
       "users/ali": userDoc({
         emailConsent: { winBack: { ...YES } },
-        lastActiveAt: seconds(MONDAY_8AM - days * DAY_MS + 10 * 3_600_000),
+        lastActiveAt: seconds(sessionAt(days)),
         ...extra,
       }),
     });
@@ -313,7 +371,7 @@ describe("the emails after a break", () => {
   it("day 14: the first email, keyed to the break", async () => {
     awayFor(14);
     await _internals.runSweep(deps);
-    expect(sent()).toEqual(["winBack/ali/2026-11-02/14"]);
+    expect(sent()).toEqual([`winBack/ali/${sessionAt(14)}/14`]);
     expect(deps.sendEmail.mock.calls[0][0].subject).toBe(
       "Your plan is here when you want it"
     );
@@ -333,7 +391,7 @@ describe("the emails after a break", () => {
       deps = makeDeps(MONDAY_8AM + later * DAY_MS);
       await _internals.runSweep(deps);
       if (later === 16) {
-        expect(sent()).toEqual(["winBack/ali/2026-11-02/30"]);
+        expect(sent()).toEqual([`winBack/ali/${sessionAt(14)}/30`]);
         expect(deps.sendEmail.mock.calls[0][0].subject).toBe(
           "Your plan is still here"
         );
@@ -354,7 +412,38 @@ describe("the emails after a break", () => {
     awayFor(40);
     meals.ali = MONDAY_8AM - 14 * DAY_MS;
     await _internals.runSweep(deps);
-    expect(sent()).toEqual(["winBack/ali/2026-11-02/14"]);
+    expect(sent()).toEqual([`winBack/ali/${meals.ali}/14`]);
+  });
+
+  it("a planned run marked done by hand since counts as logging", async () => {
+    awayFor(20);
+    db.data.set("users/ali/programState/current", {
+      manualCompletions: {
+        r1: { completedAt: seconds(MONDAY_8AM - 3 * DAY_MS) },
+      },
+    });
+    await _internals.runSweep(deps);
+    expect(sent()).toEqual([]);
+  });
+
+  it("a change of time zone is not a new break: day 14 goes once", async () => {
+    // Last session at 23:30 in London on 1 November.
+    const last = Date.UTC(2026, 10, 1, 23, 30);
+    seed({
+      "users/ali": userDoc({
+        emailConsent: { winBack: { ...YES } },
+        lastActiveAt: seconds(last),
+      }),
+    });
+    deps = makeDeps(Date.UTC(2026, 10, 15, 8, 0));
+    await _internals.runSweep(deps);
+    expect(sent()).toEqual([`winBack/ali/${last}/14`]);
+    // They fly east: in Kolkata the same instant is already 2 November.
+    const user = db.data.get("users/ali");
+    db.data.set("users/ali", { ...user, timezone: "Asia/Kolkata" });
+    deps = makeDeps(Date.UTC(2026, 10, 17, 3, 0));
+    await _internals.runSweep(deps);
+    expect(sent()).toEqual([]);
   });
 
   it("nothing for someone who has never logged anything", async () => {
@@ -385,7 +474,7 @@ describe("the emails after a break", () => {
     });
     deps = makeDeps(MONDAY_8AM + 16 * DAY_MS);
     await _internals.runSweep(deps);
-    expect(sent()).toEqual(["winBack/ali/2026-11-18/14"]);
+    expect(sent()).toEqual([`winBack/ali/${MONDAY_8AM + 2 * DAY_MS}/14`]);
   });
 });
 
@@ -415,16 +504,41 @@ describe("the daily allowance", () => {
   });
 
   it("is system/config.emailUpdatesPerDay when the owner set one, else 60", async () => {
-    expect(await _internals.budgetPerDay(memoryFirestore())).toBe(60);
+    const perDay = async (config) =>
+      (
+        await _internals.emailConfig(
+          memoryFirestore(config ? { "system/config": config } : {})
+        )
+      ).perDay;
+    expect(await perDay(null)).toBe(60);
+    expect(await perDay({ emailUpdatesPerDay: 900 })).toBe(900);
+    expect(await perDay({ emailUpdatesPerDay: "lots" })).toBe(60);
+  });
+});
+
+describe("the sender's postal address (CAN-SPAM)", () => {
+  it("is read from system/config.emailPostalAddress, and none without it", async () => {
     expect(
-      await _internals.budgetPerDay(
-        memoryFirestore({ "system/config": { emailUpdatesPerDay: 900 } })
-      )
-    ).toBe(900);
+      (await _internals.emailConfig(memoryFirestore())).postalAddress
+    ).toBeNull();
     expect(
-      await _internals.budgetPerDay(
-        memoryFirestore({ "system/config": { emailUpdatesPerDay: "lots" } })
-      )
-    ).toBe(60);
+      (
+        await _internals.emailConfig(
+          memoryFirestore({
+            "system/config": { emailPostalAddress: " 1 High Street, London " },
+          })
+        )
+      ).postalAddress
+    ).toBe("1 High Street, London");
+  });
+
+  it("goes in every email's footer once set", async () => {
+    deps.postalAddress = "1 High Street, London";
+    await _internals.runSweep(deps);
+    const [message] = deps.sendEmail.mock.calls[0];
+    expect(message.text).toContain(
+      "Sent by Tropos, 1 High Street, London. Questions: support@troposfit.com"
+    );
+    expect(message.html).toContain("Sent by Tropos, 1 High Street, London.");
   });
 });

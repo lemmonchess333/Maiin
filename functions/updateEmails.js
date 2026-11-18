@@ -82,19 +82,27 @@ function millisOf(value) {
 
 /* ── The send record on users/{uid}/settings/emailState ─────────────────
    One entry per email: the weekly review's for one week (`key` is its
-   Monday), the ladder's for one break (`anchor`, the day of the last thing
-   logged) with an entry per step. An entry is "pending" from the claim
-   until Resend answers, then "sent" or "failed"; a pending one whose answer
-   never came is tried again with the same idempotency key. */
+   Monday), the ladder's for one break with an entry per step. A break is
+   named by the instant of the last thing logged (`anchorMs`), not its
+   day: a day depends on the time zone, and a person who flies east would
+   otherwise start a new break and get its first email again. An entry is
+   "pending" from the claim until Resend answers, then "sent" or "failed";
+   a pending one whose answer never came is tried again with the same
+   idempotency key. */
+
+function ladderKey(key) {
+  const [anchorMs, step] = key.split("/");
+  return { anchorMs: Number(anchorMs), step };
+}
 
 function entryOf(state, kind, key) {
   if (kind === "weeklyReview") {
     const entry = state.weeklyReview;
     return entry && entry.key === key ? entry : null;
   }
-  const [anchor, step] = key.split("/");
+  const { anchorMs, step } = ladderKey(key);
   const ladder = state.winBack;
-  return ladder && ladder.anchor === anchor && ladder.steps
+  return ladder && ladder.anchorMs === anchorMs && ladder.steps
     ? ladder.steps[step] || null
     : null;
 }
@@ -104,20 +112,21 @@ function withEntry(state, kind, key, entry) {
   if (kind === "weeklyReview") {
     return entry ? { key, ...entry } : null;
   }
-  const [anchor, step] = key.split("/");
+  const { anchorMs, step } = ladderKey(key);
   const ladder = state.winBack;
   const steps =
-    ladder && ladder.anchor === anchor && ladder.steps
+    ladder && ladder.anchorMs === anchorMs && ladder.steps
       ? { ...ladder.steps }
       : {};
   if (entry) steps[step] = entry;
   else delete steps[step];
-  return { anchor, steps };
+  return { anchorMs, steps };
 }
 
 /**
  * Claim one send, in a transaction that reads the yes again. Returns
- * `{ token }` (the unsubscribe token, made here with the first email) or
+ * `{ token, previous }` (the unsubscribe token, made here with the first
+ * email, and the entry the claim replaced, which a release puts back) or
  * `{ skip }`, why not.
  */
 async function claimSend(db, uid, kind, key, nowMs) {
@@ -143,10 +152,7 @@ async function claimSend(db, uid, kind, key, nowMs) {
         return { skip: "in-flight" };
       }
     }
-    const token = emailUnsubscribe.readUnsubscribeQuery({
-      u: uid,
-      t: state.unsubscribeToken,
-    })
+    const token = emailUnsubscribe.isToken(state.unsubscribeToken)
       ? state.unsubscribeToken
       : emailUnsubscribe.newUnsubscribeToken();
     tx.set(
@@ -161,11 +167,16 @@ async function claimSend(db, uid, kind, key, nowMs) {
       },
       { merge: true }
     );
-    return { token };
+    return { token, previous: entry };
   });
 }
 
-/** Settle a claimed send: "sent", "failed", or null to let it go. */
+/**
+ * Settle a claimed send: "sent" or "failed", or `{ release: previous }` to
+ * let it go (nothing was sent): the entry it replaced comes back, so a
+ * retry keeps the time of its first attempt and Resend's 24 hours are
+ * still counted from it; a first attempt leaves nothing behind.
+ */
 async function settleSend(db, uid, kind, key, outcome) {
   const stateRef = db
     .collection("users")
@@ -184,7 +195,9 @@ async function settleSend(db, uid, kind, key, outcome) {
           state,
           kind,
           key,
-          outcome ? { ...entry, state: outcome } : null
+          typeof outcome === "string"
+            ? { ...entry, state: outcome }
+            : outcome.release || null
         ),
       },
       { merge: true }
@@ -207,7 +220,8 @@ function sendFailure(err) {
   return "retry";
 }
 
-/** The saved sessions and meals of `week`. */
+/** The saved sessions and meals of `week`, and the plan's runs marked
+ *  done by hand. */
 async function readWeek(db, uid, week) {
   const user = db.collection("users").doc(uid);
   const inWeek = (name) =>
@@ -217,12 +231,44 @@ async function readWeek(db, uid, week) {
       .where("date", "<=", week.end)
       .get()
       .then((snap) => snap.docs.map((d) => d.data() || {}));
-  const [workouts, runs, meals] = await Promise.all([
+  const [workouts, runs, meals, plan] = await Promise.all([
     inWeek("workouts"),
     inWeek("runs"),
     inWeek("meals"),
+    user.collection("programState").doc("current").get(),
   ]);
-  return { workouts, runs, meals };
+  return {
+    workouts,
+    runs,
+    meals,
+    markedDoneMs: markedDoneTimes(plan.exists ? plan.data() : null),
+  };
+}
+
+/** When each of the plan's runs was marked done by hand
+ *  (`programState.manualCompletions`, the app's Mark done). */
+function markedDoneTimes(programState) {
+  const map =
+    programState &&
+    programState.manualCompletions &&
+    typeof programState.manualCompletions === "object"
+      ? programState.manualCompletions
+      : {};
+  return Object.values(map)
+    .map((entry) => millisOf(entry && entry.completedAt))
+    .filter((ms) => ms !== null);
+}
+
+/** The latest of the times the plan's runs were marked done, or null. */
+async function latestMarkedDoneMs(db, uid) {
+  const plan = await db
+    .collection("users")
+    .doc(uid)
+    .collection("programState")
+    .doc("current")
+    .get();
+  const times = markedDoneTimes(plan.exists ? plan.data() : null);
+  return times.length > 0 ? Math.max(...times) : null;
 }
 
 /**
@@ -248,6 +294,7 @@ async function dueEmail(kind, uid, data, deps) {
         const figures = weeklyReviewEmail.weekFigures({
           ...(await readWeek(deps.db, uid, week)),
           week,
+          timezone,
         });
         if (!weeklyReviewEmail.hasFigures(figures)) return null;
         return (unsubscribe) =>
@@ -256,13 +303,15 @@ async function dueEmail(kind, uid, data, deps) {
             week,
             unit: data.preferredDistanceUnit === "mi" ? "mi" : "km",
             unsubscribe,
+            postalAddress: deps.postalAddress,
           });
       },
     };
   }
 
-  // The ladder: the last thing logged. A recent session settles it with
-  // no reads; otherwise the latest meal is read too.
+  // The ladder: the last thing logged, a saved session, a meal or a planned
+  // run marked done by hand. A recent session settles it with no reads;
+  // otherwise the latest meal and the plan are read too.
   const today = localDateKeyInTz(now, timezone);
   const sessionMs = millisOf(data.lastActiveAt);
   const daysSince = (ms) =>
@@ -271,19 +320,23 @@ async function dueEmail(kind, uid, data, deps) {
   if (sessionMs !== null && daysSince(sessionMs) < firstStep) {
     return { skip: "not-due" };
   }
-  const anchorMs = winBackEmail.lastLoggedMs(
-    sessionMs,
-    await deps.latestMealMs(deps.db, uid)
-  );
+  const [mealMs, markedMs] = await Promise.all([
+    deps.latestMealMs(deps.db, uid),
+    latestMarkedDoneMs(deps.db, uid),
+  ]);
+  const anchorMs = winBackEmail.lastLoggedMs(sessionMs, mealMs, markedMs);
   if (anchorMs === null) return { skip: "never-logged" };
   const daysAway = daysSince(anchorMs);
   const step = winBackEmail.winBackStepDue(daysAway, []);
   if (step === null) return { skip: "not-due" };
-  const anchor = localDateKeyInTz(new Date(anchorMs), timezone);
   return {
-    key: `${anchor}/${step}`,
+    key: `${anchorMs}/${step}`,
     prepare: async () => (unsubscribe) =>
-      winBackEmail.buildWinBackEmail({ step, unsubscribe }),
+      winBackEmail.buildWinBackEmail({
+        step,
+        unsubscribe,
+        postalAddress: deps.postalAddress,
+      }),
   };
 }
 
@@ -291,6 +344,8 @@ async function dueEmail(kind, uid, data, deps) {
 async function emailOne(kind, uid, data, deps) {
   const due = await dueEmail(kind, uid, data, deps);
   if (due.skip) return due.skip;
+  // An email goes only with a link that works (lib/emailUnsubscribe.js).
+  if (!emailUnsubscribe.isLinkableUid(uid)) return "no-link";
   if (!(await deps.shouldProceed(deps.db, uid))) return "account-deleting";
   const account = await deps.getAccount(uid);
   if (!account || !account.email) return "no-email";
@@ -302,7 +357,7 @@ async function emailOne(kind, uid, data, deps) {
   const claim = await claimSend(deps.db, uid, kind, due.key, deps.nowMs);
   if (claim.skip) return claim.skip;
   if (!(await deps.claimBudget())) {
-    await settleSend(deps.db, uid, kind, due.key, null);
+    await settleSend(deps.db, uid, kind, due.key, { release: claim.previous });
     return "budget";
   }
   const link = layout.unsubscribeUrl(uid, claim.token);
@@ -327,7 +382,9 @@ async function emailOne(kind, uid, data, deps) {
       return "sent";
     }
     if (failure === "stop") {
-      await settleSend(deps.db, uid, kind, due.key, null);
+      await settleSend(deps.db, uid, kind, due.key, {
+        release: claim.previous,
+      });
       return "stop";
     }
     if (failure === "failed") {
@@ -340,6 +397,36 @@ async function emailOne(kind, uid, data, deps) {
   return "sent";
 }
 
+/**
+ * The accounts that said yes to `kind`, a page at a time, in id order from
+ * `pivot` round to it again. Each run starts somewhere new, so when the
+ * day's allowance or the time limit ends a run early, it is not the same
+ * people left out every time.
+ */
+async function* consentingAccounts(db, kind, pivot) {
+  const base = db
+    .collection("users")
+    .where(`emailConsent.${kind}.on`, "==", true)
+    .orderBy("__name__")
+    // Only what deciding needs: the yes is read again in the claim.
+    .select("timezone", "lastActiveAt", "preferredDistanceUnit");
+  for (const pass of ["from-pivot", "to-pivot"]) {
+    let cursor =
+      pass === "from-pivot" ? db.collection("users").doc(pivot) : null;
+    for (;;) {
+      let query = base.limit(PAGE_SIZE);
+      if (cursor) query = query.startAfter(cursor);
+      const page = await query.get();
+      for (const doc of page.docs) {
+        if (pass === "to-pivot" && doc.id > pivot) return;
+        yield doc;
+      }
+      if (page.docs.length < PAGE_SIZE) break;
+      cursor = page.docs[page.docs.length - 1];
+    }
+  }
+}
+
 /** One run: each email, every account that said yes to it. */
 async function runSweep(deps) {
   const started = deps.clock();
@@ -348,37 +435,26 @@ async function runSweep(deps) {
     outcomes[code] = (outcomes[code] || 0) + 1;
   };
   for (const kind of emailConsent.EMAIL_KINDS) {
-    let cursor = null;
-    for (;;) {
-      let query = deps.db
-        .collection("users")
-        .where(`emailConsent.${kind}.on`, "==", true)
-        .limit(PAGE_SIZE);
-      if (cursor) query = query.startAfter(cursor);
-      const page = await query.get();
-      for (const doc of page.docs) {
-        if (deps.clock() - started > TIME_LIMIT_MS) {
-          note("stopped-at-time-limit");
-          return outcomes;
-        }
-        let outcome;
-        try {
-          outcome = await emailOne(kind, doc.id, doc.data() || {}, deps);
-        } catch (err) {
-          outcome = "error";
-          deps.logger.error("hourlyEmailSweep: email failed", {
-            uid: doc.id,
-            kind,
-            error: redact(err && err.message),
-          });
-        }
-        if (outcome === "not-now") continue;
-        note(`${kind}:${outcome}`);
-        if (outcome === "stop" || outcome === "budget") return outcomes;
-        if (outcome === "sent") await deps.sleep(SEND_SPACING_MS);
+    for await (const doc of consentingAccounts(deps.db, kind, deps.pivot)) {
+      if (deps.clock() - started > TIME_LIMIT_MS) {
+        note("stopped-at-time-limit");
+        return outcomes;
       }
-      if (page.docs.length < PAGE_SIZE) break;
-      cursor = page.docs[page.docs.length - 1];
+      let outcome;
+      try {
+        outcome = await emailOne(kind, doc.id, doc.data() || {}, deps);
+      } catch (err) {
+        outcome = "error";
+        deps.logger.error("hourlyEmailSweep: email failed", {
+          uid: doc.id,
+          kind,
+          error: redact(err && err.message),
+        });
+      }
+      if (outcome === "not-now") continue;
+      note(`${kind}:${outcome}`);
+      if (outcome === "stop" || outcome === "budget") return outcomes;
+      if (outcome === "sent") await deps.sleep(SEND_SPACING_MS);
     }
   }
   return outcomes;
@@ -430,19 +506,35 @@ function dailyBudget(db, nowMs, perDay) {
     });
 }
 
-/** The allowance: system/config.emailUpdatesPerDay, else the default. */
-async function budgetPerDay(db) {
+/**
+ * The owner's settings for these emails, on `system/config` (set in the
+ * Firestore console, no deploy): `emailUpdatesPerDay`, the day's allowance
+ * (the default without it), and `emailPostalAddress`, Tropos's postal
+ * address for every footer (none without it).
+ */
+async function emailConfig(db) {
+  let data = {};
   try {
     const snap = await db.collection("system").doc("config").get();
-    const value = snap.exists ? snap.data().emailUpdatesPerDay : undefined;
-    return Number.isInteger(value) && value >= 0 ? value : DEFAULT_DAILY_BUDGET;
+    data = snap.exists ? snap.data() || {} : {};
   } catch {
-    return DEFAULT_DAILY_BUDGET;
+    data = {};
   }
+  const perDay = data.emailUpdatesPerDay;
+  const address = data.emailPostalAddress;
+  return {
+    perDay:
+      Number.isInteger(perDay) && perDay >= 0 ? perDay : DEFAULT_DAILY_BUDGET,
+    postalAddress:
+      typeof address === "string" && address.trim()
+        ? address.trim().slice(0, 200)
+        : null,
+  };
 }
 
 async function productionDeps(nowMs) {
   const db = admin.firestore();
+  const config = await emailConfig(db);
   return {
     db,
     nowMs,
@@ -457,7 +549,10 @@ async function productionDeps(nowMs) {
       ),
     getAccount: authAccount,
     latestMealMs,
-    claimBudget: dailyBudget(db, nowMs, await budgetPerDay(db)),
+    claimBudget: dailyBudget(db, nowMs, config.perDay),
+    postalAddress: config.postalAddress,
+    // Where this run starts in the list of accounts (consentingAccounts).
+    pivot: emailUnsubscribe.newUnsubscribeToken().slice(0, 20),
     sendEmail: sendViaResend,
   };
 }
@@ -518,7 +613,9 @@ exports._internals = {
   dueEmail,
   emailOne,
   runSweep,
+  consentingAccounts,
+  markedDoneTimes,
   dailyBudget,
-  budgetPerDay,
+  emailConfig,
   redact,
 };

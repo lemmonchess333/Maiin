@@ -76,6 +76,7 @@ describe("weekFigures", () => {
       lifts: 2,
       runs: 2,
       distanceM: 14200,
+      markedDone: 0,
       foodDays: 2,
     });
     expect(review.hasFigures(figures)).toBe(true);

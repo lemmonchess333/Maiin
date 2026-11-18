@@ -1745,16 +1745,25 @@ device, or a real inbox.
 - [ ] **Apple's relay.** The trial reminder section's Hide My Email check
       covers these emails too: same sender, same relay registration.
 - [ ] **The App Store privacy label.** App Store Connect → App Privacy:
-      add "Developer's Advertising or Marketing" to Email Address, Health,
-      Fitness and Other Usage Data, as `docs/app-store/listing.md` and
+      add "Developer's Advertising or Marketing" to Email Address and Other
+      Usage Data, as `docs/app-store/listing.md` and
       `ios/App/App/PrivacyInfo.xcprivacy` now say. The emails are
       marketing in the ICO's reading, and Apple's purpose names "sending
-      marketing communications directly to your users".
+      marketing communications directly to your users"; the emails after a
+      break are timed by when the person last logged. The weekly review's
+      figures are the person's own, sent to them at their request, so
+      Health and Fitness stay app functionality and analytics. App Review
+      Guideline 5.1.3 lets fitness data be used, with permission, to help
+      someone manage their health and nothing else: a reviewer may ask, and
+      the answer is the opt-in.
 - [ ] **The sender's details.** PECR regulation 23 asks each email to say
       who sent it and give an address that answers; each says "Sent by
-      Tropos" with support@troposfit.com. If Tropos is a company, its
-      registered name and number belong in that footer too (UK Companies
-      Act), an owner fact the code does not have.
+      Tropos" with support@troposfit.com. The US (CAN-SPAM) also asks a
+      commercial email for a postal address: set it as
+      `system/config.emailPostalAddress` (a string, in the Firestore
+      console) and the next hour's emails carry it in the footer ("Sent by
+      Tropos, …"); no deploy is needed. If Tropos is a company, its
+      registered name and number belong there too (UK Companies Act).
 - [ ] **The first weekly review.** On the first Monday after this ships,
       with the opt-in turned on for a test account that logged something
       the week before: the email arrives at 08:00 local from

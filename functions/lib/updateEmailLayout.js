@@ -56,13 +56,21 @@ function appUrl(path) {
   return url.toString();
 }
 
+/** Who sent it: Tropos, and its postal address once the owner has set one
+ *  (`system/config.emailPostalAddress`, read by the sweep). US law asks a
+ *  commercial email for one (CAN-SPAM); the code does not know it. */
+function senderLine(postalAddress) {
+  const address = typeof postalAddress === "string" ? postalAddress.trim() : "";
+  return address ? `Sent by Tropos, ${address}.` : "Sent by Tropos.";
+}
+
 /** The last lines of every email: why it came, how to stop it, and who
  *  sent it. */
-function footerLines(reason, unsubscribe) {
+function footerLines(reason, unsubscribe, postalAddress) {
   return [
     reason,
     `To stop these emails, unsubscribe here: ${unsubscribe}. You can also change them in Tropos, under Settings, then Notifications.`,
-    `Sent by Tropos. Questions: ${SUPPORT_EMAIL}`,
+    `${senderLine(postalAddress)} Questions: ${SUPPORT_EMAIL}`,
   ];
 }
 
@@ -80,6 +88,7 @@ const LINK = "color:#6560C8;word-break:break-all;";
  * @param {{ label: string, url: string }} args.button
  * @param {string} args.reason - why this email came
  * @param {string} args.unsubscribe - the person's unsubscribe link
+ * @param {string} [args.postalAddress] - Tropos's, when the owner set one
  * @returns {{ text: string, html: string }}
  */
 function renderEmail({
@@ -89,8 +98,9 @@ function renderEmail({
   button,
   reason,
   unsubscribe,
+  postalAddress,
 }) {
-  const footer = footerLines(reason, unsubscribe);
+  const footer = footerLines(reason, unsubscribe, postalAddress);
   const text = [
     ...(kicker ? [kicker] : []),
     heading,
@@ -105,7 +115,7 @@ function renderEmail({
   const footerHtml = [
     `<p style="${SMALL}">${escapeHtml(footer[0])}</p>`,
     `<p style="${SMALL}">To stop these emails, <a href="${escapeHtml(unsubscribe)}" style="${LINK}">unsubscribe</a>. You can also change them in Tropos, under Settings, then Notifications.</p>`,
-    `<p style="${SMALL}">Sent by Tropos. Questions: <a href="mailto:${SUPPORT_EMAIL}" style="${LINK}">${SUPPORT_EMAIL}</a></p>`,
+    `<p style="${SMALL}">${escapeHtml(senderLine(postalAddress))} Questions: <a href="mailto:${SUPPORT_EMAIL}" style="${LINK}">${SUPPORT_EMAIL}</a></p>`,
   ].join("\n            ");
   const html = `<!doctype html>
 <html>

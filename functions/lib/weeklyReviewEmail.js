@@ -12,9 +12,11 @@
  *
  *   lifts, runs, distance  weekTally.tallyWeek, the league's count of saved
  *                          sessions, pinned to the app's `weekDone` by
- *                          weekTally.cross.test.ts. The words say "saved",
- *                          because a planned run marked done by hand counts
- *                          on the review and not here.
+ *                          weekTally.cross.test.ts. The words say "saved":
+ *                          a planned run marked done by hand is said apart
+ *                          ("You marked 1 planned run done"), by the day it
+ *                          was marked, since the review counts it by the
+ *                          day the plan held it on.
  *   food days              a day whose active meals reach 800 kcal
  *                          (FULL_FOOD_DAY_KCAL, the score's copy of
  *                          foodDay.ts), as the review counts its days
@@ -80,24 +82,40 @@ function foodDaysIn(meals, week) {
   return days;
 }
 
-/** The week's figures from its saved sessions and meals. */
-function weekFigures({ workouts, runs, meals, week }) {
+/**
+ * The week's figures from its saved sessions and meals, and the plan's
+ * runs marked done by hand in it (`markedDoneMs`, when each was marked,
+ * read as a day where the person is). A run marked done is counted apart:
+ * it was not saved, and the review counts it by the day the plan held it
+ * on, which this does not read.
+ */
+function weekFigures({ workouts, runs, meals, week, markedDoneMs = [], timezone }) {
   const inWeek = (doc) =>
-    doc && typeof doc.date === "string" &&
+    doc &&
+    typeof doc.date === "string" &&
     doc.date >= week.start &&
     doc.date <= week.end;
   const tally = tallyWeek(workouts.filter(inWeek), runs.filter(inWeek));
+  const markedDone = markedDoneMs.filter((ms) => {
+    const day = localDateKeyInTz(new Date(ms), timezone);
+    return day !== null && day >= week.start && day <= week.end;
+  }).length;
   return {
     lifts: tally.lifts,
     runs: tally.runs,
     distanceM: tally.distanceM,
+    markedDone,
     foodDays: foodDaysIn(meals, week),
   };
 }
 
 /** Whether the week has anything to say. */
 function hasFigures(figures) {
-  return figures.lifts + figures.runs > 0 || figures.foodDays > 0;
+  return (
+    figures.lifts + figures.runs > 0 ||
+    (figures.markedDone || 0) > 0 ||
+    figures.foodDays > 0
+  );
 }
 
 /** Month names as the review page shows them (en-GB, short). */
@@ -140,6 +158,11 @@ function weekLines(figures, unit) {
     }
     lines.push(line);
   }
+  if ((figures.markedDone || 0) > 0) {
+    lines.push(
+      `You marked ${count(figures.markedDone, "planned run", "planned runs")} done.`
+    );
+  }
   if (figures.foodDays > 0) {
     lines.push(`You logged food on ${figures.foodDays} of 7 days.`);
   }
@@ -150,13 +173,20 @@ function weekLines(figures, unit) {
  * The email for one person's week.
  *
  * @param {object} args
- * @param {{ lifts: number, runs: number, distanceM: number, foodDays: number }} args.figures
+ * @param {{ lifts: number, runs: number, distanceM: number, markedDone?: number, foodDays: number }} args.figures
  * @param {{ start: string, end: string }} args.week
  * @param {"km" | "mi"} [args.unit]
  * @param {string} args.unsubscribe - the person's unsubscribe link
+ * @param {string} [args.postalAddress]
  * @returns {{ subject: string, text: string, html: string }}
  */
-function buildWeeklyReviewEmail({ figures, week, unit, unsubscribe }) {
+function buildWeeklyReviewEmail({
+  figures,
+  week,
+  unit,
+  unsubscribe,
+  postalAddress,
+}) {
   const range = weekRangeLabel(week);
   const { text, html } = renderEmail({
     heading: "Your week, reviewed",
@@ -169,6 +199,7 @@ function buildWeeklyReviewEmail({ figures, week, unit, unsubscribe }) {
     reason:
       "You’re getting this because you chose the weekly review email in Tropos. It comes on a Monday after a week you logged something.",
     unsubscribe,
+    postalAddress,
   });
   return { subject: `Your week, reviewed: ${range}`, text, html };
 }

@@ -36,6 +36,17 @@ function newUnsubscribeToken() {
   return crypto.randomBytes(32).toString("base64url");
 }
 
+/** Whether `uid` can go in a link: an account whose uid cannot is sent no
+ *  email, since its link could not stop one. Firebase's own uids can. */
+function isLinkableUid(uid) {
+  return typeof uid === "string" && UID.test(uid);
+}
+
+/** Whether `token` has a token's shape. */
+function isToken(token) {
+  return typeof token === "string" && TOKEN.test(token);
+}
+
 /** The uid and token from a link's query, or null when either is not one. */
 function readUnsubscribeQuery(query) {
   const uid = query && typeof query.u === "string" ? query.u : "";
@@ -198,6 +209,8 @@ async function handleUnsubscribe({ method, query, action, db, at }) {
 
 module.exports = {
   newUnsubscribeToken,
+  isLinkableUid,
+  isToken,
   readUnsubscribeQuery,
   tokensMatch,
   unsubscribe,

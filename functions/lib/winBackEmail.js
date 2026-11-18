@@ -10,7 +10,10 @@
  *
  *   the anchor   the last thing the person logged: a saved session (the
  *                server's `lastActiveAt`, stamped by the workout and run
- *                triggers) or a meal (its `createdAt`), whichever is later.
+ *                triggers), a meal (its `createdAt`) or a planned run
+ *                marked done by hand (`programState.manualCompletions`),
+ *                whichever is latest. The break is named by that instant,
+ *                not its day, so a change of time zone is not a new break.
  *                A person who has never logged anything has not stopped
  *                anything, so the ladder leaves them be; setup's first week
  *                is Home's to answer.
@@ -83,9 +86,10 @@ const REASON =
  * @param {object} args
  * @param {14 | 30} args.step
  * @param {string} args.unsubscribe - the person's unsubscribe link
+ * @param {string} [args.postalAddress]
  * @returns {{ subject: string, text: string, html: string }}
  */
-function buildWinBackEmail({ step, unsubscribe }) {
+function buildWinBackEmail({ step, unsubscribe, postalAddress }) {
   const button = { label: "Open Tropos", url: appUrl("/") };
   if (step === 30) {
     const { text, html } = renderEmail({
@@ -98,6 +102,7 @@ function buildWinBackEmail({ step, unsubscribe }) {
       button,
       reason: REASON,
       unsubscribe,
+      postalAddress,
     });
     return { subject: "Your plan is still here", text, html };
   }
@@ -110,6 +115,7 @@ function buildWinBackEmail({ step, unsubscribe }) {
     button,
     reason: REASON,
     unsubscribe,
+    postalAddress,
   });
   return { subject: "Your plan is here when you want it", text, html };
 }

@@ -99,16 +99,17 @@ const APP = "NSPrivacyCollectedDataTypePurposeAppFunctionality";
 const ANALYTICS = "NSPrivacyCollectedDataTypePurposeAnalytics";
 /** Apple's "Developer's Advertising or Marketing": the weekly review and the
  *  emails after a break a person can choose (App1 Q55) are marketing in the
- *  ICO's reading, sent to the address, carrying the week's sessions and
- *  food days, and timed by when the person last logged. */
+ *  ICO's reading, sent to the address, and the emails after a break are
+ *  timed by when the person last logged. The weekly review's figures are the
+ *  person's own, sent to them at their request: app functionality. */
 const MARKETING = "NSPrivacyCollectedDataTypePurposeDeveloperAdvertising";
 
 /** The agreed declaration: type → purposes. */
 const DECLARED: Record<string, string[]> = {
   Name: [APP],
   EmailAddress: [APP, MARKETING],
-  Health: [APP, ANALYTICS, MARKETING],
-  Fitness: [APP, ANALYTICS, MARKETING],
+  Health: [APP, ANALYTICS],
+  Fitness: [APP, ANALYTICS],
   PreciseLocation: [APP],
   CoarseLocation: [ANALYTICS],
   PhotosorVideos: [APP],
