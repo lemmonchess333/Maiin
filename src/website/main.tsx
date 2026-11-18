@@ -22,7 +22,11 @@ import "@/index.css";
 import "@/website/website.css";
 import WebsiteRoutes from "@/website/WebsiteRoutes";
 import { WEBSITE_PAGE_MODULES } from "@/website/pageModules";
-import { takesOverHtml, websiteRoute } from "@/website/sitePages";
+import {
+  takesOverHtml,
+  websiteRoute,
+  withoutIndexFile,
+} from "@/website/sitePages";
 
 const container = document.getElementById("root")!;
 const app = (
@@ -34,7 +38,15 @@ const app = (
 );
 
 async function start() {
-  const { pathname } = window.location;
+  const { pathname: served, search, hash } = window.location;
+  const pathname = withoutIndexFile(served);
+  if (pathname !== served) {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      pathname + search + hash
+    );
+  }
   const route = websiteRoute(pathname);
   const key =
     route.kind === "post" ? "post" : route.kind === "page" ? route.key : null;

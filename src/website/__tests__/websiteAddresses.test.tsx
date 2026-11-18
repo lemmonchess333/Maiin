@@ -443,6 +443,14 @@ describe("Firebase Hosting answers every kept address", () => {
           destination: page.path,
         });
       }
+      // Its file's own name serves the same file, which the browser then
+      // takes over at the page's address (`withoutIndexFile`).
+      const named =
+        page.path === "/" ? "/index.html" : `${page.path}/index.html`;
+      expect(resolveHosting(hosting, files, named), named).toEqual({
+        kind: "file",
+        file: pageFile(page.path),
+      });
     }
   });
 });

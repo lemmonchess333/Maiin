@@ -194,6 +194,18 @@ export type WebsiteRoute =
   | { kind: "appAddress" }
   | { kind: "notFound" };
 
+/**
+ * The address without the file's name a page is also reached by:
+ * Hosting serves `/lifting/index.html` and `/index.html` as the files they
+ * name, which are Lifting's and Home's pages, so the browser writes
+ * `/lifting` and `/` in their place (`main.tsx`) and takes the page over
+ * rather than draw the 404 on it.
+ */
+export function withoutIndexFile(pathname: string): string {
+  const stripped = pathname.replace(/\/index\.html$/, "");
+  return stripped === "" ? "/" : stripped;
+}
+
 /** The address without its trailing slashes ("/" stays "/"). */
 export function normalisePath(pathname: string): string {
   const trimmed = pathname.replace(/\/+$/, "");

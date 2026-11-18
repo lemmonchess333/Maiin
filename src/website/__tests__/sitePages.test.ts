@@ -12,6 +12,7 @@ import {
   prerenderedKeyFor,
   takesOverHtml,
   websiteRoute,
+  withoutIndexFile,
 } from "@/website/sitePages";
 
 const root = process.cwd();
@@ -108,5 +109,19 @@ describe("takesOverHtml", () => {
 
   it("calls a bare /activity a 404, as Hosting does", () => {
     expect(websiteRoute("/activity")).toEqual({ kind: "notFound" });
+  });
+
+  it("takes a page over at its file's own name, which Hosting serves as it is", () => {
+    // /lifting/index.html is Lifting's file: the browser writes /lifting in
+    // its place (main.tsx) rather than draw the 404 on the page.
+    for (const page of SITE_PAGES) {
+      const file =
+        page.path === "/" ? "/index.html" : `${page.path}/index.html`;
+      expect(withoutIndexFile(file), file).toBe(page.path);
+      expect(takesOverHtml(withoutIndexFile(file), page.key), file).toBe(true);
+    }
+    expect(withoutIndexFile("/lifting")).toBe("/lifting");
+    expect(withoutIndexFile("/404.html")).toBe("/404.html");
+    expect(withoutIndexFile("/settings/index.html")).toBe("/settings");
   });
 });
