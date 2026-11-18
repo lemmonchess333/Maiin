@@ -51,8 +51,9 @@ export const SCREENS = {
   },
   food: {
     src: food,
-    ...TALL,
-    alt: `The Food screen: 1,175 ${CALORIE_UNIT} left of 2,350, with protein, carbs and fat left, and the meals logged today.`,
+    width: 660,
+    height: 1425,
+    alt: `The Food screen: 410 ${CALORIE_UNIT} left of 2,200, with protein, carbs and fat left, and four meals logged today.`,
   },
   progress: {
     src: progress,
