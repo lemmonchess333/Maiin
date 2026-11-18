@@ -4817,6 +4817,29 @@ suites cover the fold, the links and who sees what; these need a phone.
       collection. Passing: the three streak figures and the badge tiles
       wrap inside the screen, and nothing is cut off.
 
+## The badges, redrawn as SVG (DS4 call 4, 2026-11-18)
+
+The 30 badges are drawn as SVG in the "Lit enamel" direction (dark enamel
+in the tier's metal, the family's sign lit in its colour, the number in
+the display cut), each with a grey drawing for not yet earned
+(`public/badges/<id>.svg`, `<id>-locked.svg`, `npm run art:badges`). The
+art test holds the files to the drawing; captured in Chromium at 56, 64
+and 120 px in both themes. WKWebView has not drawn them.
+
+- [ ] **The shelf and the grid draw crisply.** Open your profile, then
+      "See all". Passing: every badge is sharp at its size, the numbers
+      read ("42.2" and "365" included), and the grey ones step back on
+      both themes without vanishing.
+- [ ] **The reveal.** Earn a badge (or open `/dev/badge-seal` on a debug
+      build) and break the seal. Passing: the badge appears crisp at full
+      size, with its tier's glow on dark and a plain shadow on light.
+- [ ] **A slow phone.** On the oldest supported iPhone, scroll the whole
+      collection. Passing: no badge draws late or flickers; the SVGs carry
+      a blur each, and thirty in a grid should cost nothing visible.
+- [ ] **Offline, on the web.** In the web build, open the collection
+      once, go offline and open it again. Passing: the badges come from
+      the service worker's cache. (On the phone the files are in the app.)
+
 ## Settings lists the two plan editors; four pages fold away (Trim1 calls 2 and 7, 2026-11-11)
 
 Affects: the Settings list (ten rows, from twelve), Lift plan (the rest

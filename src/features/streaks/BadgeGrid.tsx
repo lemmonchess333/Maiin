@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import {
   BADGE_ART,
+  BADGE_ART_LOCKED,
   BADGE_ICONS,
   CATEGORY_LABELS,
   TIER_COLORS,
@@ -136,6 +137,7 @@ export function BadgeGrid() {
                 earned={false}
                 size={60}
                 imageSrc={BADGE_ART[next.def.id]}
+                lockedImageSrc={BADGE_ART_LOCKED[next.def.id]}
               />
             </div>
           </div>
@@ -253,9 +255,9 @@ export function BadgeGrid() {
                        four ways against the real asset: dropping the filter
                        keeps the box, dropping the wash removes it.
                        Earned still reads as earned three other ways — the
-                       tier glow BadgeHex puts on the art itself, the
-                       foreground name colour, and the date in place of a
-                       progress bar. */
+                       art's own colour (the grey drawing is the badge not
+                       yet earned, DS4 call 4), the foreground name colour,
+                       and the date in place of a progress bar. */
                     style={{ transformStyle: "preserve-3d" }}
                   >
                     <div className="flex items-center justify-center py-1 mb-2">
@@ -265,6 +267,7 @@ export function BadgeGrid() {
                         earned={earned}
                         size={64}
                         imageSrc={BADGE_ART[badge.id]}
+                        lockedImageSrc={BADGE_ART_LOCKED[badge.id]}
                       />
                     </div>
 

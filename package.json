@@ -51,6 +51,8 @@
     "art:run-poses": "node --import tsx scripts/art/cut-out-run-poses.ts",
     "art:live-activity": "node --import tsx scripts/art/live-activity-art.ts",
     "art:food": "node --import tsx scripts/art/cut-out-food-art.ts",
+    "art:badges": "node --import tsx scripts/art/draw-badges.ts",
+    "art:badge-numerals": "python3 scripts/art/badge-numerals.py && prettier --write src/features/streaks/badgeArt/numerals.data.ts",
     "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts",
     "races:refresh": "tsx scripts/refresh-race-dates.ts",
     "races:check": "tsx scripts/check-race-dates.ts"

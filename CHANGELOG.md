@@ -40,6 +40,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **The badges are redrawn in Tropos's own art.** Each keeps its hexagon and
+  its metal, and now carries its sign in its sport's colour and the number it
+  is for (7 days, 5K, 42.2). A badge not yet earned is the same drawing in
+  grey.
 - **Sessions share automatically once you say so.** The first time you finish
   a run or workout, the finish screen asks once: share with followers, share
   publicly, or don't share. After that each session posts with no sheet, and

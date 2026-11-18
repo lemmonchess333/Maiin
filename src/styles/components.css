@@ -139,22 +139,32 @@
   }
 }
 
-/* ─── LOCKED BADGE ARTWORK — theme-aware contrast ────────────
-   The bespoke badge art is a light silver metallic. Grayscaled + dimmed for
-   the "not earned yet" state it reads fine on the DARK card, but on the WHITE
-   light-mode card it washed out to near-invisible (the running/nutrition
-   locked badges read as blank tiles). Light mode darkens the art (brightness
-   < 1) so it registers on white; dark keeps the original faint treatment.
-   Earned art keeps its inline, size-dependent tier-glow filter — only the
-   static locked case is themed here. Applied by BadgeHex's image branch. */
+/* ─── BADGE ARTWORK — earned glow and not yet earned, per theme ──
+   Applied by BadgeHex's image branch (DS4 call 4).
+   Not yet earned: the art is its own drawing in greys
+   (public/badges/<id>-locked.svg), the same file on both cards, so the
+   theme sets only how far it steps back. The grey enamel is a dark object
+   on the white card, where it would out-weigh earned art at full strength;
+   on the dark card it stays nearer full so its rim still reads.
+   `.badge-art-greyed` is for art with no drawn grey: CSS greys it.
+   Earned, from the reveal's size: a soft shadow everywhere and the tier's
+   glow on dark only (BadgeHex sets the two custom properties). Below that
+   size BadgeHex gives earned art an inline shadow and no glow. */
 .badge-art-locked {
-  opacity: 0.9;
-  filter: grayscale(0.85) brightness(0.68)
-    drop-shadow(0 1px 3px rgba(0, 0, 0, 0.16));
+  opacity: 0.55;
 }
 .dark .badge-art-locked {
-  opacity: 0.68;
-  filter: grayscale(0.8) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+  opacity: 0.8;
+}
+.badge-art-greyed {
+  filter: grayscale(1);
+}
+.badge-art-glow {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22));
+}
+.dark .badge-art-glow {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22))
+    drop-shadow(0 0 var(--badge-glow-size) var(--badge-glow));
 }
 
 /* ─── PRESSABLE (tap feedback) ──────────────────────────────── */

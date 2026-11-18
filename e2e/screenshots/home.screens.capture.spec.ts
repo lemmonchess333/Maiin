@@ -52,7 +52,8 @@ test.describe("app screenshots", () => {
   });
 
   async function shoot(page: Page, name: string) {
-    /* Badge art is raster (`BADGE_ART[badge.id]` through `BadgeHex`), and
+    /* Badge art is an image (`BADGE_ART[badge.id]` through `BadgeHex`;
+       raster when this was written, SVG since DS4 call 4), and
        `badges-grid-dark` had churned in EVERY capture — 1.70%, 1.46%,
        1.21% — regardless of what changed in the app. Read the diff mask
        rather than guessing: three changed bands, each 62-64px tall, and

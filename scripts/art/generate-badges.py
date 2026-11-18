@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Regenerate the 30 badge medals so they match the seal (docs/badges/ART_BRIEF.md).
 
+RETIRED for the badges on 18 November 2026 (DS4 call 4): they are drawn as
+SVG by `npm run art:badges` (scripts/art/draw-badges.ts), and the WebPs this
+writes are read by nothing. Kept as the record of how the medal set and its
+seal were made.
+
 Pipeline, all through gemini-image.py (key from GEMINI_API_KEY only) and
 key-hexagon.py:
 

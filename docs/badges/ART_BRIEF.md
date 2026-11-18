@@ -1,5 +1,32 @@
 # Badge artwork — art-direction brief + Nano Banana prompts
 
+## Since 18 November 2026: drawn, not generated (DS4 call 4)
+
+The 30 badges are SVG drawn from code, in the "Lit enamel" direction chosen
+in the dev lab (`/dev/badge-directions`, PR #3393): the hexagon in the
+tier's metal round a face of dark enamel, the family's sign as filled forms
+lit in its colour (purple lifting and the brand, coral running, orange
+food, teal water, gold a new best), the number the badge is for in the
+display cut, and a grey drawing for the badge not yet earned.
+
+- `src/features/streaks/badgeArt/catalogue.ts`: each badge's family, sign
+  and number. A series shares its sign (the flame, the route, the plates).
+- `src/features/streaks/badgeArt/draw.ts`: the drawing.
+- `src/features/streaks/badgeArt/numerals.data.ts`: the display cut's
+  outlines (Archivo, wdth 125, wght 900, italic), written by
+  `npm run art:badge-numerals`, so an `<img>` needs no web font.
+- `npm run art:badges` writes `public/badges/<id>.svg` and
+  `<id>-locked.svg`; `badgeArtFiles.test.ts` fails when a file is not what
+  it would write, when a grey drawing holds a colour, or past 6 kB a file.
+- The file names carry no version, as the WebPs' did not: on the web, a
+  later redraw shows the old art once after an update, until the service
+  worker's stale-while-revalidate fetch brings the new file.
+
+The seals (`seal_<tier>.webp`) are still the Gemini art below. Everything
+under this heading's siblings describes the medal set the drawing replaced,
+kept for the seal and as history: `scripts/art/generate-badges.py` would
+write WebPs that nothing reads now.
+
 Goal: replace the lucide-icon-in-a-hex with a cohesive set of premium,
 illustrated badge medals, so earning one feels like Opal/Apple-Fitness, not a
 greyscale icon grid. The render seam is already wired — this doc is how to

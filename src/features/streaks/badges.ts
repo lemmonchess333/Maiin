@@ -58,17 +58,18 @@ export const BADGE_ICONS: Record<string, LucideIcon> = {
 };
 
 /**
- * Bespoke artwork per badge id → a committed WebP under public/badges/
- * (AI-generated via the pipeline in docs/badges/ART_BRIEF.md). BadgeHex renders
- * the image when present and falls back to the lucide metallic hex when absent,
- * so the catalogue can be illustrated incrementally and still render cleanly.
+ * Each badge's art (DS4 call 4): an SVG for the badge earned and one for
+ * it not yet earned, drawn by `npm run art:badges` from
+ * src/features/streaks/badgeArt/draw.ts into public/badges/. BadgeHex
+ * draws the image when there is one and falls back to the lucide metallic
+ * hex when there is none.
  *
  * Paths are prefixed with `import.meta.env.BASE_URL` (NOT a hardcoded `/Maiin/`)
  * so they resolve on BOTH the web build (`/Maiin/`) and the native Capacitor
  * shell (`/`) — a hardcoded base would 404 the art on iOS.
  *
- * To add/remove a badge's art: drop its `<id>.webp` in public/badges/ and add
- * its id to BADGE_ART_IDS below.
+ * To add a badge's art: give it a spec in badgeArt/catalogue.ts, add its
+ * id to BADGE_ART_IDS below and run `npm run art:badges`.
  */
 const BADGE_ART_IDS = [
   "first_step",
@@ -103,10 +104,17 @@ const BADGE_ART_IDS = [
   "ultimate_athlete",
 ] as const;
 
+/** The art for a badge earned. */
 export const BADGE_ART: Record<string, string> = Object.fromEntries(
+  BADGE_ART_IDS.map((id) => [id, `${import.meta.env.BASE_URL}badges/${id}.svg`])
+);
+
+/** The same art for the badge not yet earned: the drawing in greys, with
+ *  no light in it (§14m rule 27). */
+export const BADGE_ART_LOCKED: Record<string, string> = Object.fromEntries(
   BADGE_ART_IDS.map((id) => [
     id,
-    `${import.meta.env.BASE_URL}badges/${id}.webp`,
+    `${import.meta.env.BASE_URL}badges/${id}-locked.svg`,
   ])
 );
 

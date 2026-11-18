@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BadgeTier } from "./badges";
 import { THEME } from "@/lib/theme";
@@ -53,13 +53,21 @@ interface BadgeHexProps {
   earned: boolean;
   size?: number;
   className?: string;
-  /** Optional pre-rendered badge artwork (e.g. AI-generated, committed to
-   *  public/badges/<id>.webp). When set, the image IS the badge — the SVG
-   *  hex + lucide icon are the fallback for badges without bespoke art, so
-   *  the catalogue can adopt artwork incrementally. Locked badges desaturate
-   *  + dim the artwork to keep the earned/locked read. */
+  /** The badge's art (public/badges/<id>.svg, BADGE_ART). When set, the
+   *  image IS the badge; the SVG hex and lucide icon are the fallback for
+   *  a badge with no art. */
   imageSrc?: string;
+  /** The same art drawn not yet earned (<id>-locked.svg,
+   *  BADGE_ART_LOCKED), shown while `earned` is false. Without it the
+   *  earned art is greyed by CSS instead. */
+  lockedImageSrc?: string;
 }
+
+/** The size from which earned art carries its tier's glow: the reveal's
+ *  120 px. On the shelf and in the grid the art's own colour says earned,
+ *  and a second glow round a small badge read as neon (§14o; the design
+ *  advisor's review of DS4 call 4). */
+const GLOW_FROM_SIZE = 96;
 
 export function BadgeHex({
   Icon,
@@ -68,6 +76,7 @@ export function BadgeHex({
   size = 56,
   className,
   imageSrc,
+  lockedImageSrc,
 }: BadgeHexProps) {
   // useId so multiple BadgeHexes on the same page get unique gradient ids —
   // without this the last-rendered instance's gradient would overwrite all
@@ -77,39 +86,44 @@ export function BadgeHex({
   const iconSize = Math.round(size * 0.42);
 
   if (imageSrc) {
-    /* Phase-4 render-site fix (visual audit):
-       — Earned art carries a tier-tinted glow ON the badge itself (the old
-         card-level box-shadow barely registered at grid size). Static,
-         size-dependent filter, so it stays inline.
-       — LOCKED art contrast is theme-dependent, so its opacity + filter live
-         in the `.badge-art-locked` CSS class (light/dark split). The bespoke
-         silver art grayscales to a light grey that WASHED OUT on the white
-         light-mode card (running/nutrition locked badges read as near-blank);
-         light mode now darkens it so it registers on white, while dark keeps
-         the original faint treatment (silver on the dark card already reads).
-         Locked still keeps a trace of its metal (grayscale <1) so the grid
-         doesn't become a wall of grey ghosts. */
+    /* Earned art keeps a soft shadow at every size; from the reveal's size
+       it also carries its tier's glow, on dark only (`.badge-art-glow`:
+       on the white card a coloured halo read as a smudge). Art not yet
+       earned is its own drawing in greys (`lockedImageSrc`), and its
+       opacity follows the theme (`.badge-art-locked`) so it steps back on
+       both cards; without a drawing the earned art is greyed by CSS
+       (`.badge-art-greyed`). */
+    const glow = earned && size >= GLOW_FROM_SIZE;
+    const classes = [
+      className,
+      earned ? (glow ? "badge-art-glow" : null) : "badge-art-locked",
+      !earned && !lockedImageSrc ? "badge-art-greyed" : null,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const glowStyle = {
+      "--badge-glow": `${TIER_GLOW[tier]}59`,
+      "--badge-glow-size": `${Math.round(size * 0.14)}px`,
+    } as CSSProperties;
     return (
       <div
-        className={
-          earned
-            ? className
-            : [className, "badge-art-locked"].filter(Boolean).join(" ")
-        }
+        className={classes || undefined}
         style={{
           width: size,
           height: size,
           ...(earned
-            ? {
-                opacity: 1,
-                filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.22)) drop-shadow(0 0 ${Math.max(6, Math.round(size * 0.14))}px ${TIER_GLOW[tier]}59)`,
-              }
+            ? glow
+              ? glowStyle
+              : {
+                  opacity: 1,
+                  filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.22))",
+                }
             : null),
         }}
         aria-hidden="true"
       >
         <img
-          src={imageSrc}
+          src={earned ? imageSrc : (lockedImageSrc ?? imageSrc)}
           alt=""
           width={size}
           height={size}
