@@ -126,6 +126,9 @@ export function getAdjustedTargets(
     carbs = 0;
     aggressive = true;
   }
+  // A remainder from -0.5 to 0 rounds to -0, which a number formatter
+  // prints as "-0"; splitMacrosForTarget's Math.max gives 0.
+  if (Object.is(carbs, -0)) carbs = 0;
 
   return {
     calories,
