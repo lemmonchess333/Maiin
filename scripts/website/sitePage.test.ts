@@ -81,6 +81,12 @@ describe("writing a page into the built template", () => {
     expect(html).toContain('<script src="/assets/website.js"></script>');
   });
 
+  it("writes a page's words as they are, dollar signs and all", () => {
+    const markup = "<p>$& $' $` $$ £9.99</p>";
+    const html = writePage(template, LIFTING, markup, ORIGIN);
+    expect(html).toContain(`data-page="/lifting">${markup}</div>`);
+  });
+
   it("refuses a template without its markers", () => {
     expect(() => writePage("<html></html>", LIFTING, "", ORIGIN)).toThrow(
       /site:head/

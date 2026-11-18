@@ -115,10 +115,10 @@ export function writePage(
   const head = `${HEAD_START}\n    ${pageHead(page, origin, appStoreId)}\n    ${HEAD_END}`;
   const root = `<div id="root" data-page="${escapeAttr(page.path)}">${markup}</div>`;
   return (
-    template.slice(0, start) +
-    head +
-    template.slice(end + HEAD_END.length)
-  ).replace(ROOT_EMPTY, root);
+    (template.slice(0, start) + head + template.slice(end + HEAD_END.length))
+      // A function, so a "$&" or "$'" in a page's words stays as written.
+      .replace(ROOT_EMPTY, () => root)
+  );
 }
 
 /** sitemap.xml for the pages a search engine is told about. */

@@ -34,6 +34,9 @@ interface Check {
   noindex?: boolean;
   /** The answer's status, when it is not 200. */
   status?: number;
+  /** Whether React draws the page, in place of the page Hosting wrote
+   *  (`writtenFits`): the root's `data-page` is gone once it has. */
+  drawn?: boolean;
 }
 
 const HOME_H1 = "Your training and food, planned together";
@@ -74,19 +77,25 @@ const CHECKS: readonly Check[] = [
     name: "invite",
     h1: HOME_H1,
     shows: /invited you to Tropos/,
+    drawn: true,
   },
   {
     address: "/space/brighton-marathon",
     h1: HOME_H1,
     shows: /open this Space/,
+    drawn: true,
   },
   {
     address: "/upgrade?checkout=success",
     h1: "What Pro adds",
     shows: /If you just paid/,
     noindex: true,
+    drawn: true,
   },
   { address: "/upgrade", h1: "What Pro adds" },
+  { address: "/upgrade/", h1: "What Pro adds" },
+  { address: "/index.html", h1: HOME_H1 },
+  { address: "/pro/index.html", h1: "What Pro adds" },
   { address: "/history", h1: HOME_H1 },
   { address: "/space", h1: HOME_H1 },
   { address: "/settings/account", h1: HOME_H1, noindex: true },
@@ -98,7 +107,13 @@ const CHECKS: readonly Check[] = [
     h1: "A lifting plan for the days you have",
     lands: "/lifting",
   },
-  { address: "/activity/run1", h1: /.+/ },
+  // The post's card, never the home page's file that carries its preview:
+  // here the post cannot be read, so it says so.
+  {
+    address: "/activity/run1",
+    h1: /^(Couldn’t load this post|This post isn’t available|.+’s (run|lift))$/,
+    drawn: true,
+  },
 ];
 
 /** A request the sandbox or a test machine cannot make: the invite's
@@ -127,6 +142,17 @@ async function checkOne(page: Page, origin: string, check: Check) {
     problems.push(`status ${response?.status()}`);
   if (check.lands && new URL(page.url()).pathname !== check.lands)
     problems.push(`landed on ${page.url()}`);
+  if (check.drawn) {
+    // React has drawn the address's own page once the written mark is gone
+    // and a headline stands in the root again.
+    await page
+      .locator("#root:not([data-page]) h1")
+      .first()
+      .waitFor({ timeout: 10_000 })
+      .catch(() => problems.push("React did not draw the page"));
+  } else if ((await page.locator("#root[data-page]").count()) !== 1) {
+    problems.push("the written page was replaced");
+  }
   const h1 = page.locator("h1");
   await h1.first().waitFor({ timeout: 10_000 });
   if ((await h1.count()) !== 1) problems.push(`${await h1.count()} h1s`);

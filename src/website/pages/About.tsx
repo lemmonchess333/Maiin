@@ -16,7 +16,7 @@ const HOLDS: readonly { heading: string; line: string }[] = [
   },
   {
     heading: "You choose who sees what",
-    line: "Each session is shared with your followers, made public or kept to yourself, and every follower is someone you accepted.",
+    line: "Each session is shared with your followers, made public or kept to yourself, and every follower is someone you accepted, unless you turn Approve followers off.",
   },
   {
     heading: "Nothing to buy to save a streak",

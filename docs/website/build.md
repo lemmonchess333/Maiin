@@ -105,8 +105,9 @@ Runna's do, and Home stays one screen of promise and a few of proof.
 When React draws the home page for an address (below), the opening also
 carries that address's line: a friend's invite and the code to copy, or
 "Get Tropos on your iPhone to open this Space." These are #3375's,
-unchanged. #3375's "Payment received." line moved with `/upgrade` to the
-Pro page.
+unchanged. #3375's line for the checkout's return moved with `/upgrade`
+to the Pro page, as "If you just paid, Pro is on for your account in the
+Tropos app." (the parameter is unsigned, so the line claims no payment).
 
 ### Lifting (purple)
 
@@ -116,7 +117,8 @@ last time.", beside Home's lift. A row of four numbers: 2 to 6 sessions a
 week, over 150 exercises each with a drawn guide, 45 or 30 minute
 versions, 5 sore spots worked around. Then: Split to suit your week (the
 split from the day count: full body on 2 or 3, upper and lower on 4,
-push, pull and legs on 5 or 6), Every set arrives filled in, A drawing
+push, pull and legs with an upper and a lower day on 5, push, pull and
+legs twice on 6), Every set arrives filled in, A drawing
 for every exercise (eight of the drawn guides), four cards for a short
 day or a sore one (Short on time?, Easier today, a lighter week, around a
 sore spot), and New bests marked as you lift (the finish screen's new
@@ -175,8 +177,8 @@ you are." Three questions: can I buy Pro on this website (no; in the app,
 through the App Store), how do I cancel, what happens to my plan if Pro
 ends (the app's "Free keeps…" sentence, `FREE_KEEPS`). Every line is read
 from the app's code, so the website cannot show a different price or
-list. It is also the page at `/upgrade`, with "Payment received." when
-the checkout returns there. Closing: "Try Pro free for 7 days".
+list. It is also the page at `/upgrade`, with "If you just paid, Pro is
+on for your account in the Tropos app." when the checkout returns there. Closing: "Try Pro free for 7 days".
 
 ### About
 
@@ -218,7 +220,7 @@ Every address #3375 keeps still answers. These change, by design:
 | ---------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `/food`, `/food?from=widget`                   | the App Store page                           | the Food page (a widget's tap is still handed to the app by iOS)                           |
 | `/social`                                      | the App Store page                           | the Social page                                                                            |
-| `/upgrade`, `/upgrade?checkout=success`        | the App Store page, with "Payment received." | the Pro page, with "Payment received." (someone following an upgrade link wants the price) |
+| `/upgrade`, `/upgrade?checkout=success`        | the App Store page, with the checkout's line | the Pro page, with "If you just paid…" (someone following an upgrade link wants the price) |
 | `/lifting/` and any page with a slash          | the App Store page                           | a redirect to the page without it                                                          |
 | an address the app never had (`/no-such-page`) | the App Store page, status 200               | Not found, status 404                                                                      |
 
@@ -245,12 +247,21 @@ page. `APP_ADDRESS_ROOTS` in `websiteAddress.ts` lists the roots, and
   (checked against the Hosting emulator). It also writes `sitemap.xml`,
   `robots.txt`, `404.html`, the preview pictures (`/og/`) and the press
   kit's files (`/press-kit/`).
-- **A written page loads no framework.** `main.tsx` is 7 kB: on a page
-  written for its address it only starts the home page's photo fade, a
-  few lines of plain script. React is fetched only to draw what no file
-  holds: an invite's code, a Space's line, the checkout's return, a shared
-  post (`publicPostPage` still answers with the home page's file and its
-  data block), and Not found.
+- **A written page loads no framework.** The entry script is about 8 kB:
+  on a page written for its address it only starts the home page's photo
+  fade, a few lines of plain script. React is fetched only to draw what no
+  file holds: an invite's code, a Space's line, the checkout's return and
+  a shared post (`writtenFits`, `websiteAddress.ts`). The missing page is
+  written too (`404.html`). For an invite, a Space and the checkout's
+  return, React draws the written page again with its line, so that page
+  stays until it does; a shared post is another page, so the home page's
+  file it arrives in is cleared at once. A reader without script still
+  sees the home page's words at a post's address, under the post's own
+  preview: `publicPostPage` fetches that file, and giving it a bare one is
+  a functions change, out of this work.
+- **The phone menu is a disclosure** (`<details>`), so it opens without
+  script; Escape and a tap outside do not close it, which a written page
+  with no script cannot offer.
 - **The home page's file also answers the app's old addresses and a
   shared post** (`publicPostPage` fetches `/index.html`), so it names no
   canonical address and carries no Smart App Banner: the function swaps
@@ -345,7 +356,7 @@ first captures; the review's other findings were fixed in the build.
    advisor's condition that no page runs on text alone, so a run of things
    with no screen of their own is a grid of cards.
 2. **`/upgrade` opens the Pro page** (#3375 sent it to the App Store
-   page), with "Payment received." when the checkout returns: someone
+   page), with "If you just paid…" when the checkout returns: someone
    following an upgrade link wants the price, and the home page has none.
 3. **Social says that leagues, challenges and Spaces appear once enough
    people train**, in the league's own section at body size, beside the

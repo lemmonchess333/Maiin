@@ -6,9 +6,9 @@ import { SITE_NAV } from "@/website/site/pages";
 /**
  * An address troposfit.com does not have. Every address the app or its
  * links ever handed out lands on a page of its own or on the home page
- * (`websiteAddress.ts`), so this is a mistyped or made-up one. Hosting's
- * last rewrite answers it with the home page's file, so the page says
- * "not found" and the build's 404.html carries a noindex.
+ * (`websiteAddress.ts`), so this is a mistyped or made-up one. Hosting
+ * answers it with the build's 404.html, this page written with a noindex,
+ * and a status of 404.
  */
 export default function NotFoundPage() {
   return (

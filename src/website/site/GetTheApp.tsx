@@ -4,7 +4,8 @@ import AppStoreBadge from "@/website/AppStoreBadge";
  * The foot of a page, where every page ends: a line on what the first
  * minutes in the app give you, and Apple's badge, which a page carries
  * once (Apple: "one App Store badge per layout"). The home page carries
- * its badge at the top instead, and ends on `HomeClose`.
+ * its badge at the top instead, and ends on a plain link to the App
+ * Store.
  */
 export default function GetTheApp({
   heading,

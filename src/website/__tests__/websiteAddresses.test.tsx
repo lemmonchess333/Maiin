@@ -34,7 +34,11 @@ import {
 } from "../../../scripts/website/websiteEntry";
 import { SITE_ART_FILES } from "@/website/site/art";
 import { SITE_PAGES, sitePageFile } from "@/website/site/pages";
-import { APP_ADDRESS_ROOTS } from "@/website/websiteAddress";
+import {
+  APP_ADDRESS_ROOTS,
+  isPostAddress,
+  writtenFits,
+} from "@/website/websiteAddress";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -106,6 +110,9 @@ interface Kept {
   hosting: HostingAnswer;
   /** What the website draws, for an address its page answers. */
   shows?: Page;
+  /** Whether React draws it: what Hosting wrote is not the page as it
+   *  stands (`writtenFits`). Otherwise the written page is left as it is. */
+  drawn?: true;
 }
 
 const WEBSITE: HostingAnswer = { kind: "file", file: WEBSITE_OUTPUT };
@@ -128,6 +135,7 @@ const KEPT: Kept[] = [
     from: "appInviteUrl(code), Soc15; a universal link",
     hosting: WEBSITE,
     shows: { page: "landing", invite: true },
+    drawn: true,
   },
   {
     address: "/privacy",
@@ -152,6 +160,7 @@ const KEPT: Kept[] = [
     from: "publicPostUrl(id), App1 Q51; a universal link",
     hosting: POST_FUNCTION,
     shows: { page: "post" },
+    drawn: true,
   },
   {
     address: "/activity/run1?format=json",
@@ -163,22 +172,31 @@ const KEPT: Kept[] = [
     from: "publicSpaceUrl(id), Run27 call 11; a universal link",
     hosting: WEBSITE,
     shows: { page: "landing", note: /open this Space/ },
+    drawn: true,
   },
   {
     address: "/space/brighton-marathon/post/p1",
     from: "a Space post's in-app address (SpacePost.tsx)",
     hosting: WEBSITE,
     shows: { page: "landing", note: /open this Space/ },
+    drawn: true,
   },
   {
     address: "/upgrade?checkout=success",
     from: "RevenueCat's Purchase Link return (revenuecat-setup.md Part W)",
     hosting: page("pro/index.html"),
     shows: { page: "site", heading: "What Pro adds", note: /If you just paid/ },
+    drawn: true,
   },
   {
     address: "/upgrade",
     from: "the web paywall's address; the app's Pro page",
+    hosting: page("pro/index.html"),
+    shows: { page: "site", heading: "What Pro adds" },
+  },
+  {
+    address: "/upgrade/",
+    from: "the app's Pro address written with a slash",
     hosting: page("pro/index.html"),
     shows: { page: "site", heading: "What Pro adds" },
   },
@@ -230,6 +248,7 @@ const KEPT: Kept[] = [
     address: "/index.html",
     from: "publicPostPage's page (shellLoader)",
     hosting: WEBSITE,
+    shows: { page: "landing" },
   },
   {
     address: "/icons/icon-512x512.png",
@@ -361,6 +380,49 @@ describe("Firebase Hosting answers every kept address", () => {
     );
     const roots = rule?.source.match(/^\/@\(([^)]+)\)\{,\/\*\*\}$/)?.[1];
     expect(roots?.split("|").sort()).toEqual(expected);
+  });
+});
+
+/** The page in what Hosting answers with, as the root's `data-page` names
+ *  it: a shared post's function sends the home page's file. */
+function writtenPage(answer: HostingAnswer): string | undefined {
+  if (answer.kind === "404") return "/404";
+  if (answer.kind === "function") return "/";
+  if (answer.kind !== "file") return undefined;
+  if (answer.file === WEBSITE_OUTPUT) return "/";
+  const own = /^(.+)\/index\.html$/.exec(answer.file);
+  return own ? `/${own[1]}` : undefined;
+}
+
+describe("what a written page leaves to React (main.tsx)", () => {
+  it.each(KEPT.filter((k) => k.shows))(
+    "$address",
+    ({ address, hosting: answer, drawn }) => {
+      const url = new URL(address, PUBLIC_APP_ORIGIN);
+      expect(writtenFits(writtenPage(answer), url.pathname, url.search)).toBe(
+        !drawn
+      );
+    }
+  );
+
+  it("leaves a page served from its own file as it is", () => {
+    for (const page of SITE_PAGES) {
+      const file = `/${sitePageFile(page)}`;
+      expect(writtenFits(page.path, file, ""), file).toBe(true);
+      if (page.kind !== "notFound") {
+        expect(writtenFits(page.path, page.path, ""), page.path).toBe(true);
+      }
+    }
+  });
+
+  it("draws an address no file was written for", () => {
+    expect(writtenFits(undefined, "/", "")).toBe(false);
+    expect(writtenFits("/lifting", "/running", "")).toBe(false);
+  });
+
+  it("clears the home page's file only for a shared post", () => {
+    const drawn = KEPT.filter((k) => k.drawn).map((k) => pathOf(k.address));
+    expect(drawn.filter(isPostAddress)).toEqual(["/activity/run1"]);
   });
 });
 

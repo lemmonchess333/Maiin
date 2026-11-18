@@ -153,9 +153,10 @@ export function indexedPages(): SitePage[] {
   return SITE_PAGES.filter((page) => page.kind !== "notFound");
 }
 
-/** An address without its query, its hash or a trailing slash. */
+/** An address without a trailing slash, or the `/index.html` of the file
+ *  Hosting also serves it from (`/pro/index.html` is the Pro page). */
 export function normalisePath(pathname: string): string {
-  const trimmed = pathname.replace(/\/+$/, "");
+  const trimmed = pathname.replace(/(\/index\.html)?\/*$/, "");
   return trimmed === "" ? "/" : trimmed;
 }
 

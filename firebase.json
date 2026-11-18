@@ -12,7 +12,7 @@
         }
       },
       {
-        "source": "/upgrade",
+        "source": "/upgrade{,/}",
         "destination": "/pro/index.html"
       },
       {

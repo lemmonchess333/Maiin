@@ -243,34 +243,42 @@
 }
 
 /* A row of app screens that scrolls sideways on a phone and sits in a
-   row of three on a wide window. */
+   row of three on a wide window. The scrolling box is the region the
+   keyboard reaches; the list inside it carries its own side margins, so
+   the last screen stops as far from the edge as the first. */
 .site-strip {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: min(72vw, 17.5rem);
-  gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  padding-inline: 16px;
   margin-inline: -16px;
   padding-bottom: 8px;
 }
 .site-strip::-webkit-scrollbar {
   display: none;
 }
-.site-strip > * {
+.site-strip-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(72vw, 17.5rem);
+  gap: 16px;
+  width: max-content;
+  padding-inline: 16px;
+}
+.site-strip-row > * {
   scroll-snap-align: center;
 }
 @media (min-width: 1024px) {
   .site-strip {
+    overflow: visible;
+    margin-inline: 0;
+  }
+  .site-strip-row {
     grid-auto-flow: row;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-auto-columns: auto;
-    overflow: visible;
+    width: auto;
     gap: 32px;
     padding-inline: 0;
-    margin-inline: 0;
   }
 }
 

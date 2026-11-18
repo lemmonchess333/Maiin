@@ -14,6 +14,7 @@ export default function FactRow({
   return (
     <div className="mx-auto max-w-[70rem] px-4 lg:px-8">
       <dl
+        role="group"
         aria-label={label}
         className="grid grid-cols-2 gap-x-6 gap-y-8 border-y border-white/[0.06] py-8 lg:grid-cols-4"
       >

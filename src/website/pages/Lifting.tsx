@@ -49,8 +49,9 @@ export default function LiftingPage() {
       >
         <p>
           The split follows the days you lift: full body on 2 or 3, upper and
-          lower on 4, push, pull and legs on 5 or 6. Starting weights come from
-          your bodyweight and experience, in kilos or pounds.
+          lower on 4, push, pull and legs with an upper and a lower day on 5,
+          and push, pull and legs twice on 6. Starting weights come from your
+          bodyweight and experience, in kilos or pounds.
         </p>
         <p>
           Lifts go in order, so a missed day moves the next one along rather

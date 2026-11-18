@@ -30,7 +30,10 @@ export default function SiteLayout({
       </a>
       <SiteHeader current={current} overPhoto={overPhoto} />
       {ownMain ? (
-        <div id="main">{children}</div>
+        // Focusable, so Safari moves focus here with the skip link.
+        <div id="main" tabIndex={-1}>
+          {children}
+        </div>
       ) : (
         <main id="main">{children}</main>
       )}

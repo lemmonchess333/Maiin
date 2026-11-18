@@ -92,7 +92,7 @@ export default function HomePage({
           <HeroPhotos />
           <div className="site-hero-screen">
             <div className="site-light site-light-lifting">
-              <AppScreen screen={SCREENS.home} />
+              <AppScreen screen={SCREENS.home} eager />
             </div>
           </div>
         </div>
@@ -131,26 +131,29 @@ export default function HomePage({
         <p className="mt-3 max-w-xl text-[1.0625rem] leading-relaxed text-muted-foreground">
           Three screens you use most days: the session, the sets and the food.
         </p>
-        <ul
-          className="site-strip mt-10"
-          // It scrolls sideways on a phone, so it takes the keyboard too
-          // (axe, scrollable-region-focusable).
+        {/* It scrolls sideways on a phone, so it takes the keyboard too
+            (axe, scrollable-region-focusable), as a named region. */}
+        <div
+          role="region"
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
           aria-label="Three screens of the app"
+          className="site-strip mt-10"
         >
-          {DAY.map((step) => (
-            <li key={step.screen}>
-              <AppScreen screen={SCREENS[step.screen]} />
-              <h3 className="mt-5 text-lg font-bold text-foreground">
-                {step.heading}
-              </h3>
-              <p className="mt-1 text-base leading-relaxed text-muted-foreground">
-                {step.line}
-              </p>
-            </li>
-          ))}
-        </ul>
+          <ul className="site-strip-row">
+            {DAY.map((step) => (
+              <li key={step.screen}>
+                <AppScreen screen={SCREENS[step.screen]} />
+                <h3 className="mt-5 text-lg font-bold text-foreground">
+                  {step.heading}
+                </h3>
+                <p className="mt-1 text-base leading-relaxed text-muted-foreground">
+                  {step.line}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <FeatureSection
