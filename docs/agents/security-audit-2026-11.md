@@ -49,15 +49,15 @@ No High finding was found.
 
 ## Fixed, one draft PR each
 
-| ID  | Severity | Finding                                                                                                                                                                                                | Where (main)                                                                   | PR    |
-| --- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ----- |
-| S1  | Medium   | `deleteSegment` told the maker how many efforts everyone had on their segment, including never-shared runs, runs whose ends are in a privacy zone and runs by people who blocked them                  | `functions/index.js:6741`, `functions/lib/segments.js:780`                     | #3392 |
-| S2  | Medium   | One account could stop every props push: 1,000 owner-writable settings documents with `propsBundleDueAt` in 1970 fill the hourly sweep's read for good                                                 | `functions/index.js:4391`, `:4346`; `firestore.rules:884`                      | #3394 |
-| S3  | Medium   | Unbounded Cloud Vision spend through uploads (every upload to a screened folder is a paid screen, and Storage limits no account's uploads), and the upload trigger kept a photo whenever Vision failed | `functions/index.js:7671`, `:7632`; `storage.rules`                            | #3397 |
-| S4  | Medium   | Push spam by follow request: request, cancel, request again; each one rewrote the tray row and pushed, outside the push budget                                                                         | `functions/index.js:9997`, `:9888`, `:4270`; `firestore.rules:2311`            | #3400 |
-| S5  | Medium   | AI scans refunded on every failure, including an answer the person can make fail by typing a long list, so the 100-a-day cap stopped bounding Gemini spend                                             | `functions/index.js:1528`, `:1801`; `functions/lib/aiScanQuota.js:176`, `:185` | #3405 |
-| S6  | Medium   | Every report emailed the owner, no cap: one account could send 240 a day through the Resend allowance that password resets and verification share                                                      | `functions/index.js:7790`                                                      | #3407 |
-| S7  | Low      | A public post's props and comments were readable by someone its author blocked, though the post itself is refused across a block                                                                       | `firestore.rules:2178`                                                         | #3395 |
+| ID  | Severity | Finding                                                                                                                                                                                                                | Where (main)                                                                   | PR    |
+| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----- |
+| S1  | Medium   | `deleteSegment` told the maker how many efforts everyone had on their segment, including never-shared runs, runs whose ends are in a privacy zone and runs by people who blocked them                                  | `functions/index.js:6741`, `functions/lib/segments.js:780`                     | #3392 |
+| S2  | Medium   | One account could stop every props push: 1,000 owner-writable settings documents with `propsBundleDueAt` in 1970 fill the hourly sweep's read for good                                                                 | `functions/index.js:4391`, `:4346`; `firestore.rules:884`                      | #3394 |
+| S3  | Medium   | Unbounded Cloud Vision spend through uploads (every upload to a screened folder is a paid screen, and Storage limits no account's uploads), and the upload trigger kept a photo, with no retry, whenever Vision failed | `functions/index.js:7671`, `:7632`; `storage.rules`                            | #3397 |
+| S4  | Medium   | Push spam by follow request: request, cancel, request again; each one rewrote the tray row and pushed, outside the push budget                                                                                         | `functions/index.js:9997`, `:9888`, `:4270`; `firestore.rules:2311`            | #3400 |
+| S5  | Medium   | AI scans refunded on every failure, including an answer the person can make fail by typing a long list, so the 100-a-day cap stopped bounding Gemini spend                                                             | `functions/index.js:1528`, `:1801`; `functions/lib/aiScanQuota.js:176`, `:185` | #3405 |
+| S6  | Medium   | Every report emailed the owner, no cap: one account could send 240 a day through the Resend allowance that password resets and verification share                                                                      | `functions/index.js:7790`                                                      | #3407 |
+| S7  | Low      | A public post's props and comments were readable by someone its author blocked, though the post itself is refused across a block                                                                                       | `firestore.rules:2178`                                                         | #3395 |
 
 ### Reproduction and fix
 
@@ -84,10 +84,15 @@ each is a SafeSearch request at about $1.50 per 1,000 (the price
 trigger logged and kept the file, so a client that skipped the callable
 kept every photo uploaded meanwhile. Fix: 100 trigger screens and 100
 callable screens a rolling day per account (Tropos heuristic: four times a
-busy day's 25 uploads); past the budget, or after a day of failed retries,
-the upload is deleted unscreened. The trigger is now retried; an upload is
-counted once however often its event is delivered again, and an error
-reading the count is retried rather than read as over budget.
+busy day's 25 uploads). Past the budget, the upload is deleted unscreened.
+The trigger is now retried; an upload is counted once however often its
+event is delivered again, and an error reading the count is retried rather
+than read as over budget. A photo is never deleted because Vision failed
+(a coordinator decision on #3397, 18 November): an image Vision rejects as
+unreadable, or one too large to send, is deleted at once, and any other
+failure is retried for a day, after which the photo is kept, marked with
+custom metadata `screen: unscreened` and logged. A pass from the callable
+stops the trigger screening that file again or deleting it on budget.
 
 **S4.** From any unrestricted account, against someone who approves
 followers (the default): create `followRequests/{them}/users/{me}`, delete
@@ -179,7 +184,7 @@ are listed after the table.
 | O18 | Defer                                                      | S3 bounds the paid part; a sweep of files no post names is housekeeping                                                                                                                                                                                                                                                                      |
 | O19 | Accept                                                     | Two admin accounts; a stolen admin token is a bigger problem than this check                                                                                                                                                                                                                                                                 |
 | O20 | Fixed in #3400                                             | Direct follows get the same day's quiet as follow requests                                                                                                                                                                                                                                                                                   |
-| O21 | Defer                                                      | Efficiency, not exposure                                                                                                                                                                                                                                                                                                                     |
+| O21 | Fixed in #3397                                             | The callable records its pass per object generation, and the trigger neither screens that file again nor deletes it on budget                                                                                                                                                                                                                |
 | O22 | #3066 and #3067, as planned                                | Already open                                                                                                                                                                                                                                                                                                                                 |
 
 ### Needs the owner's accounts
