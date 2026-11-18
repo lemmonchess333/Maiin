@@ -27,6 +27,7 @@ evidence, with file and line for every code claim.
 | `build-plan.md`               | The slices that follow Lift21, and what the owner sees after each |
 | `panel-2-every-split.md`      | Slice 1: the sizing rules run on 96 setups, today beside new      |
 | `panel-3-supersets.md`        | Lift22: pairs in 30 and 45 minute plans, beside Lift21            |
+| `no-equipment-print.md`       | Lift4's No equipment setup, today beside new (Pgm9)               |
 | `evidence/`, `harness/`       | Printed plans, and the harnesses that regenerate everything       |
 
 ## 1. The answers
@@ -462,6 +463,10 @@ None of these has a lock in the way. Sizes are S (under a day) or M.
 | 12  | The "No equipment" preset decided on 9 November (Lift4 STATUS) is not on main                             | M    |
 | 13  | "Lighten leg sessions" is shown where it changes nothing                                                  | S    |
 | 14  | The same lift on two days keeps two unrelated weights (section 2.1)                                       | M    |
+
+STATUS 2026-11-18: defect 12 is built on `claude/lift4-no-equipment`, a
+draft until the owner answers its print, `no-equipment-print.md` (Pgm9). That
+print also carries the Minimal and Home gym weeks the same STATUS moves.
 
 ### Step 2. The lifting session, rebuilt to size
 
