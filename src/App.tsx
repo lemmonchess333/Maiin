@@ -249,6 +249,13 @@ const BadgeSealLab =
     ? lazyRetry(() => import("@/pages/dev/BadgeSealLab"))
     : null;
 
+// Dev-only badge directions lab (DS4 call 4): two ways to redraw the badges,
+// at the sizes the app shows them. Same build-time stripping.
+const BadgeDirectionsLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BadgeDirectionsLab"))
+    : null;
+
 // Dev-only break-social lab: the activity card and leaderboard row with
 // worst-case data behind a toggle. Same build-time stripping.
 const BreakSocialLab =
@@ -1141,6 +1148,16 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <BadgeSealLab />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                      )}
+                      {BadgeDirectionsLab && (
+                        <Route
+                          path="/dev/badge-directions"
+                          element={
+                            <RouteErrorBoundary>
+                              <BadgeDirectionsLab />
                             </RouteErrorBoundary>
                           }
                         />
