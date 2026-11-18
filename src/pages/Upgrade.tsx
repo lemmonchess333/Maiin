@@ -185,9 +185,9 @@ export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
   // The App Store's prices on the RC build, and no price until they come;
-  // the pound plans on the web (IAP slice 3, #1099; launch audit
-  // 2026-11-18). Every price on the page is read from these plans, never
-  // looked up by id, so it is all in one currency.
+  // the pound plans on the web (IAP slice 3, #1099). Every price on the
+  // page is read from these plans, never looked up by id, so it is all in
+  // one currency.
   const {
     plans,
     failed: pricesFailed,
