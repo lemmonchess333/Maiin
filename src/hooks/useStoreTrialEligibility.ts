@@ -33,8 +33,9 @@ function askStore(): Promise<ByPlan | null> {
   return shared;
 }
 
-/** Tests only: forget the shared answer. */
-export function forgetStoreTrialEligibility(): void {
+/** Tests only: forget the shared answer (the `__` marks a test hook for
+ *  symbolReachability.test.ts). */
+export function __resetStoreTrialEligibilityForTests(): void {
   shared = null;
 }
 

@@ -22,11 +22,11 @@ vi.mock("@/lib/revenuecat", () => ({
 }));
 
 import { useProCtaLabel } from "../useProCtaLabel";
-import { forgetStoreTrialEligibility } from "../useStoreTrialEligibility";
+import { __resetStoreTrialEligibilityForTests } from "../useStoreTrialEligibility";
 import { APPLE_PRODUCT_IDS } from "@/lib/purchaseProvider";
 
 function cleanupAndForget() {
-  forgetStoreTrialEligibility();
+  __resetStoreTrialEligibilityForTests();
   eligibilityMock.mockReset();
 }
 
@@ -41,7 +41,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   profileMock.mockReturnValue({});
   enabledMock.mockReturnValue(true);
-  forgetStoreTrialEligibility();
+  __resetStoreTrialEligibilityForTests();
 });
 
 /** Let the store's answer reach the hook's state before reading it, so a
