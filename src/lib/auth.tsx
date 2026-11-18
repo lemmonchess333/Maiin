@@ -81,13 +81,14 @@ import {
   PROFILE_REFRESH_WAIT_MS,
 } from "./profileRefresh";
 
-/** Set once any account signs in on this device; the signed-out screen
- *  reads it to tell a returning person from a new one. Device-level, not
- *  per account, and never cleared by signing out. */
+/** Set once any account signs in on this device, to tell a returning
+ *  person from a new one. Device-level, not per account, and never cleared
+ *  by signing out. */
 const SIGNED_IN_BEFORE_KEY = "tropos.signed_in_before";
 
-/** Whether any account has signed in on this device: Login opens on Sign
- *  in when one has, and on its welcome screen when none has. */
+/** Whether any account has signed in on this device: the signed-in shell
+ *  and Firestore are fetched early for it, and Login's funnel event says
+ *  so. Login opens on its welcome either way (DS9 STATUS). */
 // eslint-disable-next-line react-refresh/only-export-components
 export function hasSignedInOnThisDevice(): boolean {
   return readString(SIGNED_IN_BEFORE_KEY) === "1";
@@ -1491,6 +1492,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isNativePlatform()) {
         const { clearWatchRunAccountState } = await import("./watchRunBridge");
         await clearWatchRunAccountState();
+        // The Home Screen and Lock Screen widgets show the outgoing
+        // account's day until the next one's Home is drawn: take it off.
+        // Best effort, and it never throws.
+        const { clearHomeWidgets } = await import("./homeWidgets");
+        await clearHomeWidgets();
       }
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);

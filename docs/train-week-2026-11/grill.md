@@ -712,3 +712,18 @@ taste or appetite decides more than the evidence does:
 - "Sessions on days help people keep training" is my judgement from how
   the surveyed apps are built. I have no figure for it.
 - Nothing here has been drawn yet. The prototype is the next step.
+
+## Status
+
+- STATUS 2026-11-15: step 1 built. `src/lib/layOutWeek.ts` lays the week
+  out, read by nothing yet, on the prototype's `layOutWeek` and its own
+  choices, with the owner's two calls on what the prototype left open: the
+  full plan from day one for an account begun mid-week, and race week
+  counting only the lifts it asks for. Its unit tests are
+  `src/lib/__tests__/layOutWeek.test.ts`; the season test
+  (`src/features/program/__tests__/sim/layOutWeek.sim.test.ts`, Q54) lays
+  out every morning and evening of 50 simulated seasons (1,281 weeks,
+  17,710 layouts, 59,290 lift placements, 4,121 of Home's cards) and finds
+  no lift lost, shown twice or called missed. Not built: steps 2 to 8.
+  `trainingWeek.ts` and `functions/lib/leaguePlanned.js` still count race
+  week's rested lift days as planned; step 2 moves them.

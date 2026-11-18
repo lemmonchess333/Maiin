@@ -45,8 +45,11 @@ function LastUsed() {
 // and the others stay disabled.
 type LoadingAction = "email" | "google" | "apple" | "reset" | null;
 
-/** A first visit opens on the welcome screen; a device that has had an
- *  account opens on sign-in, as "Welcome back" is only true there. */
+/** Signed out, the app opens on the welcome screen, whoever used the phone
+ *  before, as Strava's and Nike's do (DS9 STATUS): "Sign in" under Get
+ *  started is the way back in. A screen with a message to give opens where
+ *  the message belongs, on sign-in: an account just deleted, an address
+ *  just changed. */
 type View = "welcome" | "signIn" | "signUp";
 
 /* A link inside the agreement sentence. Underlined, so it reads as a link
@@ -92,35 +95,6 @@ export default function Login() {
   const [lastMethod] = useState<SignInMethod | null>(() =>
     readLastSignInMethod()
   );
-  const [view, setView] = useState<View>(
-    () =>
-      returning?.view ??
-      (changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome")
-  );
-  const isSignUp = view === "signUp";
-  // The first rungs of the funnel: who sees the welcome screen, and who
-  // goes on to a form (lifecycleAnalytics' header has the order).
-  useEffect(() => {
-    trackLifecycle("auth_screen_viewed", {
-      screen:
-        view === "signIn"
-          ? "sign_in"
-          : view === "signUp"
-            ? "sign_up"
-            : "welcome",
-    });
-  }, [view]);
-  const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
-  const [email, setEmail] = useState(
-    () => returning?.email || changedEmail || ""
-  );
-  // Opening a legal page keeps the form for the way back.
-  const keepForm = () => {
-    writeSessionJson(LOGIN_FORM_KEY, { view, email });
-  };
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   /* Post-deletion confirmation (deletion QA 2026-07-27): the success toast
      fires in the same breath as signOut and is easy to miss during the
      auth-state transition — the observed failure mode was the user signing
@@ -133,6 +107,38 @@ export default function Login() {
     remove("tropos.account_deleted");
     return true;
   });
+  const [view, setView] = useState<View>(
+    () =>
+      returning?.view ?? (changedEmail || accountDeleted ? "signIn" : "welcome")
+  );
+  const isSignUp = view === "signUp";
+  // Whether this device has had an account, read once: the welcome opens
+  // for both, and the funnel's first rung tells them apart.
+  const [returningDevice] = useState(hasSignedInOnThisDevice);
+  // The first rungs of the funnel: who sees the welcome screen, and who
+  // goes on to a form (lifecycleAnalytics' header has the order).
+  useEffect(() => {
+    trackLifecycle("auth_screen_viewed", {
+      screen:
+        view === "signIn"
+          ? "sign_in"
+          : view === "signUp"
+            ? "sign_up"
+            : "welcome",
+      returningDevice,
+    });
+  }, [view, returningDevice]);
+  const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
+  const [email, setEmail] = useState(
+    () => returning?.email || changedEmail || ""
+  );
+  // Opening a legal page keeps the form for the way back.
+  const keepForm = () => {
+    writeSessionJson(LOGIN_FORM_KEY, { view, email });
+  };
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   // Neutral confirmation for the password-reset flow (shown in a calm banner,
   // not the destructive error one).
   const [notice, setNotice] = useState("");

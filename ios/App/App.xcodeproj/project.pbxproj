@@ -32,6 +32,17 @@
 		E10000000000000000000002 /* LiveActivitiesKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1000000000000000000000A /* LiveActivitiesKit */; };
 		E10000000000000000000003 /* LiveActivitiesExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E10000000000000000000005 /* LiveActivitiesExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E1000000000000000000001B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1000000000000000000001A /* Assets.xcassets */; };
+		D30000000000000000000065 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
+		D30000000000000000000066 /* HomeWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000002 /* HomeWidgetSnapshot.swift */; };
+		D30000000000000000000067 /* HomeWidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000003 /* HomeWidgetTimeline.swift */; };
+		D30000000000000000000068 /* WidgetChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000004 /* WidgetChrome.swift */; };
+		D30000000000000000000069 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000005 /* TodayWidget.swift */; };
+		D3000000000000000000006A /* StreakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000006 /* StreakWidget.swift */; };
+		D3000000000000000000006B /* FoodWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000007 /* FoodWidget.swift */; };
+		D3000000000000000000006C /* LogDrinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000008 /* LogDrinkIntent.swift */; };
+		D30000000000000000000109 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D3000000000000000000000B /* PrivacyInfo.xcprivacy */; };
+		D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3000000000000000000000A /* HomeWidgetsPlugin.swift */; };
+		D30000000000000000000022 /* HomeWidgetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000001 /* HomeWidgetStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,6 +118,16 @@
 		E10000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E10000000000000000000009 /* LiveActivities.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveActivities.entitlements; sourceTree = "<group>"; };
 		E1000000000000000000001A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D30000000000000000000001 /* HomeWidgetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetStore.swift; sourceTree = "<group>"; };
+		D30000000000000000000002 /* HomeWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetSnapshot.swift; sourceTree = "<group>"; };
+		D30000000000000000000003 /* HomeWidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetTimeline.swift; sourceTree = "<group>"; };
+		D30000000000000000000004 /* WidgetChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetChrome.swift; sourceTree = "<group>"; };
+		D30000000000000000000005 /* TodayWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000006 /* StreakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000007 /* FoodWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodWidget.swift; sourceTree = "<group>"; };
+		D30000000000000000000008 /* LogDrinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogDrinkIntent.swift; sourceTree = "<group>"; };
+		D3000000000000000000000B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		D3000000000000000000000A /* HomeWidgetsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetsPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +189,7 @@
 				A10000000000000000000004 /* HealthWorkoutStore.swift */,
 				A1BE47000000000000000001 /* HeartRateSensorPlugin.swift */,
 				A1000000000000000000000C /* MotionActivityPlugin.swift */,
+				D3000000000000000000000A /* HomeWidgetsPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -197,7 +219,16 @@
 			isa = PBXGroup;
 			children = (
 				E10000000000000000000004 /* LiveActivitiesBundle.swift */,
+				D30000000000000000000001 /* HomeWidgetStore.swift */,
+				D30000000000000000000002 /* HomeWidgetSnapshot.swift */,
+				D30000000000000000000003 /* HomeWidgetTimeline.swift */,
+				D30000000000000000000004 /* WidgetChrome.swift */,
+				D30000000000000000000005 /* TodayWidget.swift */,
+				D30000000000000000000006 /* StreakWidget.swift */,
+				D30000000000000000000007 /* FoodWidget.swift */,
+				D30000000000000000000008 /* LogDrinkIntent.swift */,
 				E10000000000000000000008 /* Info.plist */,
+				D3000000000000000000000B /* PrivacyInfo.xcprivacy */,
 				E10000000000000000000009 /* LiveActivities.entitlements */,
 				E1000000000000000000001A /* Assets.xcassets */,
 			);
@@ -345,6 +376,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1000000000000000000001B /* Assets.xcassets in Resources */,
+				D30000000000000000000109 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -372,6 +404,8 @@
 				B10000000000000000000004 /* HealthWorkoutStore.swift in Sources */,
 				B1BE47000000000000000001 /* HeartRateSensorPlugin.swift in Sources */,
 				B1000000000000000000000A /* MotionActivityPlugin.swift in Sources */,
+				D30000000000000000000021 /* HomeWidgetsPlugin.swift in Sources */,
+				D30000000000000000000022 /* HomeWidgetStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -380,6 +414,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				E10000000000000000000001 /* LiveActivitiesBundle.swift in Sources */,
+				D30000000000000000000065 /* HomeWidgetStore.swift in Sources */,
+				D30000000000000000000066 /* HomeWidgetSnapshot.swift in Sources */,
+				D30000000000000000000067 /* HomeWidgetTimeline.swift in Sources */,
+				D30000000000000000000068 /* WidgetChrome.swift in Sources */,
+				D30000000000000000000069 /* TodayWidget.swift in Sources */,
+				D3000000000000000000006A /* StreakWidget.swift in Sources */,
+				D3000000000000000000006B /* FoodWidget.swift in Sources */,
+				D3000000000000000000006C /* LogDrinkIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

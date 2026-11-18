@@ -8,6 +8,7 @@ import {
 import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import ActivityNotificationsGroup from "@/components/settings/ActivityNotificationsGroup";
+import LiveActivitiesGroup from "@/components/settings/LiveActivitiesGroup";
 
 export default function SettingsNotifications() {
   const meal = useMealReminders();
@@ -43,6 +44,8 @@ export default function SettingsNotifications() {
         updateReviewReminder={review.updatePrefs}
       />
       <ActivityNotificationsGroup />
+      {/* Wid2 call 6: a run's and a lift's card outside the app. */}
+      <LiveActivitiesGroup />
     </SettingsSection>
   );
 }

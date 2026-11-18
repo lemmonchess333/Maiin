@@ -203,6 +203,9 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useLiftLiveActivity } from "@/hooks/useLiftLiveActivity";
+import { sessionLeadArt } from "@/lib/formArtCutouts";
+import { liftArtFor } from "@/lib/liveActivityArt";
 // An exercise's menu (swap, skip, superset), loaded when it is first
 // opened: the workout screen's chunk has no room to spare.
 const ExerciseMenuSheet = lazyRetry(
@@ -1163,7 +1166,7 @@ export default function WorkoutSession({
      set, which ticking a set has already moved on, to the next exercise
      once this one is done or round a superset. A warm-up passed over is
      not it. */
-  const restNext = (() => {
+  const cursorSet = (() => {
     const at = isSetOutstanding(currentSets, currentSetIndex)
       ? { exerciseIndex: safeExIndex, setIndex: currentSetIndex }
       : nextIncompleteSet(setLogs, safeExIndex);
@@ -1171,12 +1174,47 @@ export default function WorkoutSession({
     const sets = at ? setLogs[at.exerciseIndex] : undefined;
     const set = at && sets ? sets[at.setIndex] : undefined;
     if (!at || !exercise || !sets || !set) return undefined;
-    return {
-      exerciseId: exercise.exerciseId,
-      name: setName(sets, at.setIndex),
-      load: nextSetLoad(set, exercise, liftUnit),
-    };
+    return { exercise, sets, set, setIndex: at.setIndex };
   })();
+  const restNext = cursorSet
+    ? {
+        exerciseId: cursorSet.exercise.exerciseId,
+        name: setName(cursorSet.sets, cursorSet.setIndex),
+        load: nextSetLoad(cursorSet.set, cursorSet.exercise, liftUnit),
+      }
+    : undefined;
+
+  /* The lift's Live Activity (Wid2 call 2): the session's drawing and the
+     set the cursor is on, from the first set to the finish, which takes
+     it away at once. A rest reaches it from the rest band. */
+  const leadArt = useMemo(
+    () => liftArtFor(sessionLeadArt(day.exercises)?.cutout.src),
+    [day.exercises]
+  );
+  const cursorTotal = cursorSet
+    ? setCounts(cursorSet.sets, cursorSet.setIndex).total
+    : 0;
+  const cursorOrdinal = cursorSet
+    ? setOrdinal(cursorSet.sets, cursorSet.setIndex)
+    : 0;
+  useLiftLiveActivity(
+    sessionComplete || day.exercises.length === 0
+      ? null
+      : {
+          name: dayLabel ?? liftDayLine(sessionName),
+          art: leadArt,
+          set:
+            cursorSet && restNext
+              ? {
+                  exerciseName: cursorSet.exercise.name,
+                  setLabel: `${restNext.name} of ${cursorTotal}`,
+                  load: restNext.load,
+                  fact: `${cursorOrdinal}/${cursorTotal}`,
+                }
+              : null,
+          setsDone: totalSetsCompleted,
+        }
+  );
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier

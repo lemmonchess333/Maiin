@@ -42,12 +42,13 @@
  * finish (closed after Apple's sheet, or a trial that turned paid with the
  * app shut) still counts, and counts once.
  *
- * Read the start of the funnel in that order: auth_screen_viewed (welcome)
- * → auth_screen_viewed (sign_up) → signup_completed → the onboarding steps
- * → onboarding_completed. Someone who closes the app part-way shows as the
- * step they reached and nothing after it: a phone does not say an app was
- * closed for good rather than paused, so `onboarding_abandoned` is sent
- * only for the exit the app can see, signing out of setup (A1b pin 4).
+ * Read the start of the funnel in that order: auth_screen_viewed (welcome,
+ * `returningDevice` false) → auth_screen_viewed (sign_up) →
+ * signup_completed → the onboarding steps → onboarding_completed. Someone
+ * who closes the app part-way shows as the step they reached and nothing
+ * after it: a phone does not say an app was closed for good rather than
+ * paused, so `onboarding_abandoned` is sent only for the exit the app can
+ * see, signing out of setup (A1b pin 4).
  */
 import { emit } from "./analyticsClient";
 
@@ -136,6 +137,10 @@ export type ReturnChoice =
 export interface LifecycleEventMetadata {
   /** auth_screen_viewed: which signed-out screen was shown. */
   screen?: "welcome" | "sign_in" | "sign_up";
+  /** auth_screen_viewed: whether an account has signed in on this device
+   *  before. Every signed-out visit opens on the welcome (DS9 STATUS), so
+   *  the funnel's first rung is the welcome with this false. */
+  returningDevice?: boolean;
   /** signup_completed: which auth provider created the account. */
   method?: SignupMethod;
   /** onboarding_step_* and onboarding_abandoned: stable step identifier
