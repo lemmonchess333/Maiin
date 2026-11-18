@@ -16,7 +16,7 @@ const read = (file: string) => readFileSync(resolve(DIR, file), "utf8");
 
 /** Per file: about 2 to 4 kB each today. */
 const FILE_BUDGET = 6 * 1024;
-/** All 60: 180 kB today, against 750 kB of the WebP set they replace. */
+/** All 60: 176 kB today, against the 692 kB of WebP they replace. */
 const SET_BUDGET = 220 * 1024;
 
 describe("badge art catalogue", () => {
