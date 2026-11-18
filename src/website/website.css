@@ -1,0 +1,280 @@
+/* troposfit.com's own layout (docs/website/build.md). Everything else
+   is the app's: its tokens, its two faces and its utilities (index.css).
+   The website is signed out, so it is dark, as the welcome is
+   (DESIGN_GUIDE §14p). Side margins are px, as the app's are. */
+
+/* The header floats over the page as it scrolls: glass on what floats
+   (§14o), with a lit rim along its foot, and a solid ground where
+   backdrop blur is missing or the reader asks for less transparency. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: hsl(var(--background) / 0.72);
+  -webkit-backdrop-filter: saturate(140%) blur(18px);
+  backdrop-filter: saturate(140%) blur(18px);
+  box-shadow: inset 0 -1px 0 hsl(0 0% 100% / 0.06);
+}
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .site-header {
+    background: hsl(var(--background));
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .site-header {
+    background: hsl(var(--background));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+/* Over the home page's photographs, on a phone, the header starts clear,
+   so the photograph runs to the top of the screen, as the welcome's does.
+   On a wide window the photographs stand in a panel below it. */
+@media (max-width: 1023px) {
+  .site-header[data-over-photo="true"] {
+    position: absolute;
+    inset: 0 0 auto 0;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+}
+
+/* The menu on a phone: a disclosure, so it opens without script. */
+.site-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.site-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.site-menu[open] > summary .site-menu-open {
+  display: none;
+}
+.site-menu:not([open]) > summary .site-menu-close {
+  display: none;
+}
+
+/* ─── The home page's opening: the welcome's photographs ───────────
+   On a phone it is the welcome (§14p): the photographs fill the screen
+   and fade from one to the next, the words sit at the foot on their own
+   dark ground. It stops a little short of the screen's foot, so the next
+   section's heading shows that the page goes on. On a wide window the
+   words take the left of the column and the photographs stand in a tall
+   panel on the right, since each is cut 9:19.5 for a phone and would
+   lose the face across a wide one, with Home's own screen standing in
+   front of the panel's edge: the first thing seen is the promise, the
+   people and the app. */
+.site-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: calc(100vh - 72px);
+  min-height: calc(100svh - 72px);
+  max-height: 60rem;
+  background: hsl(var(--stage));
+  color-scheme: dark;
+}
+.site-hero-visual {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.site-hero-photos {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: hsl(var(--stage));
+}
+.site-hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.site-hero-photo[data-shown="true"] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-hero-photo {
+    transition: none;
+  }
+}
+/* The top darkens under the header wherever a photograph is bright. */
+.site-hero-photos::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.45) 0,
+    rgb(0 0 0 / 0) 140px
+  );
+}
+.site-hero-screen {
+  display: none;
+}
+.site-hero-copy {
+  position: relative;
+  isolation: isolate;
+}
+/* The words' dark ground reaches the section's foot, under the badge. */
+.site-hero-copy::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -120px;
+  bottom: -40px;
+  left: -16px;
+  right: -16px;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0) 0,
+    rgb(0 0 0 / 0.42) 120px,
+    rgb(0 0 0 / 0.72) 230px,
+    rgb(0 0 0 / 0.86) 100%
+  );
+  pointer-events: none;
+}
+.site-hero-copy h1 {
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.45);
+}
+.site-hero-copy h1 + p {
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.5);
+}
+@media (min-width: 1024px) {
+  .site-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
+    column-gap: 7rem;
+    align-items: center;
+    max-width: 70rem;
+    min-height: 0;
+    max-height: none;
+    margin-inline: auto;
+    padding: 24px 32px 72px 32px;
+    background: hsl(var(--background));
+  }
+  .site-hero-visual {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    grid-column: 2;
+    grid-row: 1;
+    height: min(calc(100vh - 136px), 44rem);
+    min-height: 34rem;
+  }
+  .site-hero-photos {
+    border-radius: 24px;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.08),
+      0 0 0 1px hsl(0 0% 100% / 0.06);
+  }
+  .site-hero-photos::after {
+    background: none;
+  }
+  .site-hero-screen {
+    display: block;
+    position: absolute;
+    left: -6.5rem;
+    bottom: -2rem;
+    width: 13rem;
+  }
+  .site-hero-body {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .site-hero-copy::before {
+    display: none;
+  }
+  .site-hero-copy h1,
+  .site-hero-copy h1 + p {
+    text-shadow: none;
+  }
+}
+
+/* An app screen as it is on the phone: the screen alone, its corners
+   rounded, with no drawn phone around it (Apple's marketing guidelines
+   allow only its own bezels, and never a drawn copy of one). */
+.site-screen {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 9% / 4.15%;
+  box-shadow:
+    0 0 0 1px hsl(0 0% 100% / 0.1),
+    0 24px 60px -24px rgb(0 0 0 / 0.8);
+  background: hsl(var(--background));
+}
+
+/* One soft light of the section's colour behind its picture (§14o). */
+.site-light {
+  position: relative;
+  isolation: isolate;
+}
+.site-light::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -12% -18%;
+  background: radial-gradient(
+    closest-side,
+    hsl(var(--site-light) / 0.22),
+    hsl(var(--site-light) / 0)
+  );
+  pointer-events: none;
+}
+.site-light-lifting {
+  --site-light: var(--lifting);
+}
+.site-light-running {
+  --site-light: var(--running);
+}
+.site-light-food {
+  --site-light: var(--nutrition);
+}
+
+/* A row of app screens that scrolls sideways on a phone and sits in a
+   row of three on a wide window. */
+.site-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(72vw, 17.5rem);
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-inline: 16px;
+  margin-inline: -16px;
+  padding-bottom: 8px;
+}
+.site-strip::-webkit-scrollbar {
+  display: none;
+}
+.site-strip > * {
+  scroll-snap-align: center;
+}
+@media (min-width: 1024px) {
+  .site-strip {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-columns: auto;
+    overflow: visible;
+    gap: 32px;
+    padding-inline: 0;
+    margin-inline: 0;
+  }
+}
+
+/* Paragraphs in a section's words. */
+.site-prose p + p {
+  margin-top: 0.75rem;
+}

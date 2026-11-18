@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en-GB" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -39,47 +39,23 @@
       form-action 'self';
     "
     />
+    <!-- The page's own title, description, address and preview, which
+         scripts/website/prerender.ts writes for each page (sitePage.ts).
+         These are the home page's, for a build that has not been through
+         it. publicPostPage swaps the description and preview tags for a
+         post's own. -->
+    <!--site:head-->
+    <title>Tropos: your training and food, planned together</title>
     <meta
       name="description"
-      content="Tropos plans your lifting and running week with a daily calorie target that fits it. Get it on the App Store for iPhone."
+      content="Tropos plans your lifting and running week and sets a daily calorie target to fit it. An iPhone app, on the App Store."
     />
-    <meta property="og:site_name" content="Tropos" />
-    <meta property="og:title" content="Tropos" />
-    <meta
-      property="og:description"
-      content="Your training and food, planned together. Get Tropos on the App Store for iPhone."
-    />
-    <meta property="og:type" content="website" />
-    <meta
-      property="og:image"
-      content="https://troposfit.com/icons/icon-512x512.png"
-    />
-    <meta property="og:url" content="https://troposfit.com/" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Tropos" />
-    <meta
-      name="twitter:description"
-      content="Your training and food, planned together. Get Tropos on the App Store for iPhone."
-    />
-    <meta
-      name="twitter:image"
-      content="https://troposfit.com/icons/icon-512x512.png"
-    />
+    <!--/site:head-->
 
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-
-    <title>Tropos: your training and food, planned together</title>
   </head>
   <body>
-    <noscript
-      ><div style="padding: 2rem; text-align: center">
-        Tropos is an iPhone app. Get it on the App Store:
-        <a href="https://apps.apple.com/app/id6762416918"
-          >apps.apple.com/app/id6762416918</a
-        >
-      </div></noscript
-    >
     <div id="root"></div>
     <script type="module" src="/src/website/main.tsx"></script>
   </body>

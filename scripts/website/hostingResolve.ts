@@ -7,17 +7,19 @@
  * Hosting's order (Firebase docs, "Configure Hosting behavior", priority
  * order): reserved `/__/` paths, then redirects, then an exact match in the
  * deployed files, then the rewrites in the order written, then 404. A
- * directory's address takes its index.html. Globs: `**` is any run of
- * characters, `*` any run within one segment, and `<dir>/**` also takes
- * `<dir>` itself.
+ * directory's address takes its index.html, and `trailingSlash` decides
+ * the slash (Firebase docs, "trailingSlash"; checked against the Hosting
+ * emulator, firebase-tools 15.34.0): `false` serves `/lifting` from
+ * lifting/index.html and redirects `/lifting/` to it; unset, it is the
+ * other way round. Globs are `globToRegExp`'s.
  *
  * What it does not model: `ignore` (the caller passes the files that
- * deploy), `cleanUrls`, `trailingSlash`, `i18n`, and any rewrite or
- * redirect but a `source` glob to a `destination` or a function by
- * `functionId`. It throws on a config that uses any of those, rather than
- * answer for an address Hosting would answer differently: a `run` or
- * `dynamicLinks` rewrite above the catch-all would take every address,
- * and a resolver that skipped it would still say the website answers.
+ * deploy), `cleanUrls`, `i18n`, and any rewrite or redirect but a
+ * `source` glob to a `destination` or a function by `functionId`. It
+ * throws on a config that uses any of those, rather than answer for an
+ * address Hosting would answer differently: a `run` or `dynamicLinks`
+ * rewrite above the others would take every address, and a resolver that
+ * skipped it would still say the website answers.
  */
 
 export interface HostingRewrite {
@@ -32,6 +34,7 @@ export interface HostingHeaderRule {
 }
 
 export interface HostingConfig {
+  trailingSlash?: boolean;
   redirects?: { source: string; destination: string; type?: number }[];
   rewrites?: HostingRewrite[];
   headers?: HostingHeaderRule[];
@@ -45,30 +48,72 @@ export type HostingAnswer =
   | { kind: "function"; functionId: string; region: string }
   | { kind: "404" };
 
-/** A Hosting glob as a regular expression over a path. */
+/** A Hosting glob as a regular expression over a path: `**` is any run of
+ *  characters, `*` any run within one segment, `@(a|b)` one of its
+ *  choices and `{a,b}` one of its parts (extglob, which Hosting uses;
+ *  Firebase docs, "Configure Hosting behavior"). `/foo/**` does not take
+ *  `/foo` itself; the docs write `/foo{,/**}` for both, and the Hosting
+ *  emulator answers the same. */
 export function globToRegExp(glob: string): RegExp {
-  const tail = glob.endsWith("/**");
-  const body = tail ? glob.slice(0, -3) : glob;
+  return new RegExp(`^${globSource(glob)}$`);
+}
+
+function globSource(glob: string): string {
   let pattern = "";
-  for (let i = 0; i < body.length; i++) {
-    const ch = body[i];
-    if (ch === "*" && body[i + 1] === "*") {
+  for (let i = 0; i < glob.length; i++) {
+    const ch = glob[i];
+    if (ch === "*" && glob[i + 1] === "*") {
       pattern += ".*";
       i++;
     } else if (ch === "*") {
       pattern += "[^/]*";
+    } else if (ch === "@" && glob[i + 1] === "(") {
+      const close = matching(glob, i + 1, "(", ")");
+      const choices = splitTop(glob.slice(i + 2, close), "|");
+      pattern += `(?:${choices.map(globSource).join("|")})`;
+      i = close;
+    } else if (ch === "{") {
+      const close = matching(glob, i, "{", "}");
+      const parts = splitTop(glob.slice(i + 1, close), ",");
+      pattern += `(?:${parts.map(globSource).join("|")})`;
+      i = close;
     } else {
       pattern += ch.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
     }
   }
-  return new RegExp(`^${pattern}${tail ? "(?:/.*)?" : ""}$`);
+  return pattern;
+}
+
+/** Where the bracket opened at `open` closes. */
+function matching(glob: string, open: number, from: string, to: string) {
+  let depth = 0;
+  for (let i = open; i < glob.length; i++) {
+    if (glob[i] === from) depth++;
+    else if (glob[i] === to && --depth === 0) return i;
+  }
+  throw new Error(`Unclosed ${from} in ${glob}`);
+}
+
+/** `text` split at `separator`, outside any bracket. */
+function splitTop(text: string, separator: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(" || text[i] === "{") depth++;
+    else if (text[i] === ")" || text[i] === "}") depth--;
+    else if (text[i] === separator && depth === 0) {
+      parts.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(text.slice(start));
+  return parts;
 }
 
 /** Throws when `config` uses anything `resolveHosting` does not model. */
 export function assertModelled(config: HostingConfig): void {
-  const unmodelled = ["cleanUrls", "trailingSlash", "i18n"].filter(
-    (key) => key in config
-  );
+  const unmodelled = ["cleanUrls", "i18n"].filter((key) => key in config);
   if (unmodelled.length) {
     throw new Error(`resolveHosting does not model ${unmodelled.join(", ")}`);
   }
@@ -125,10 +170,20 @@ export function resolveHosting(
     }
   }
   const relative = decodeURIComponent(pathname).replace(/^\/+/, "");
-  const exact = relative.endsWith("/") || relative === "" ? null : relative;
-  const index = `${relative.replace(/\/?$/, "/")}index.html`.replace(/^\//, "");
+  const slashed = relative.endsWith("/");
+  const bare = relative.replace(/\/+$/, "");
+  const exact = slashed || relative === "" ? null : relative;
+  const index = bare === "" ? "index.html" : `${bare}/index.html`;
   if (exact && files.has(exact)) return { kind: "file", file: exact };
-  if (files.has(index)) return { kind: "file", file: index };
+  if (files.has(index)) {
+    if (bare !== "" && config.trailingSlash === false && slashed) {
+      return { kind: "redirect", destination: `/${bare}` };
+    }
+    if (bare !== "" && config.trailingSlash !== false && !slashed) {
+      return { kind: "redirect", destination: `/${bare}/` };
+    }
+    return { kind: "file", file: index };
+  }
   for (const rewrite of config.rewrites ?? []) {
     if (!globToRegExp(rewrite.source).test(pathname)) continue;
     if (rewrite.function) {

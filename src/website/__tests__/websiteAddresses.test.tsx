@@ -32,6 +32,9 @@ import {
   WEBSITE_OUTPUT,
   websitePublicFiles,
 } from "../../../scripts/website/websiteEntry";
+import { SITE_ART_FILES } from "@/website/site/art";
+import { SITE_PAGES, sitePageFile } from "@/website/site/pages";
+import { APP_ADDRESS_ROOTS } from "@/website/websiteAddress";
 
 const RUN: PublicPostView = {
   id: "run1",
@@ -71,15 +74,19 @@ const hosting = (
   }
 ).hosting;
 
-/** What the Hosting build deploys (scripts/website/websiteEntry.ts): the
- *  website's page, the website's part of `public/`, the worker that
- *  retires the app's, and the association file the deploy builds
+/** What the Hosting build deploys (scripts/website/websiteEntry.ts and
+ *  prerender.ts): the website's pages (the home page as index.html, each
+ *  other page as `<page>/index.html`, the missing page as 404.html), the
+ *  website's part of `public/` and the drawings its pages show, the worker
+ *  that retires the app's, and the association file the deploy builds
  *  (`IOS_APP_ID_PREFIX`). Hashed assets are left out. */
 function deployedFiles(): Set<string> {
   return new Set<string>([
     WEBSITE_OUTPUT,
     ...ASSOCIATION_PATHS,
+    ...SITE_PAGES.map(sitePageFile),
     ...websitePublicFiles(join(repoRoot, "public")),
+    ...SITE_ART_FILES.map((file) => file.slice(1)),
     ...RETIRED_WORKER_PATHS,
   ]);
 }
@@ -88,7 +95,9 @@ const files = deployedFiles();
 type Page =
   | { page: "landing"; note?: RegExp; invite?: boolean }
   | { page: "post" }
-  | { page: "legal"; heading: string };
+  | { page: "legal"; heading: string }
+  | { page: "site"; heading: string; note?: RegExp }
+  | { page: "notFound" };
 
 interface Kept {
   address: string;
@@ -100,6 +109,7 @@ interface Kept {
 }
 
 const WEBSITE: HostingAnswer = { kind: "file", file: WEBSITE_OUTPUT };
+const page = (file: string): HostingAnswer => ({ kind: "file", file });
 const POST_FUNCTION: HostingAnswer = {
   kind: "function",
   functionId: "publicPostPage",
@@ -122,19 +132,19 @@ const KEPT: Kept[] = [
   {
     address: "/privacy",
     from: "the App Store listing; the app's legal links",
-    hosting: WEBSITE,
+    hosting: page("privacy/index.html"),
     shows: { page: "legal", heading: "Privacy Policy" },
   },
   {
     address: "/terms",
     from: "the App Store listing; the app's legal links",
-    hosting: WEBSITE,
+    hosting: page("terms/index.html"),
     shows: { page: "legal", heading: "Terms of Service" },
   },
   {
     address: "/support",
     from: "the App Store's Support URL",
-    hosting: WEBSITE,
+    hosting: page("support/index.html"),
     shows: { page: "legal", heading: "Support" },
   },
   {
@@ -163,14 +173,14 @@ const KEPT: Kept[] = [
   {
     address: "/upgrade?checkout=success",
     from: "RevenueCat's Purchase Link return (revenuecat-setup.md Part W)",
-    hosting: WEBSITE,
-    shows: { page: "landing", note: /If you just paid/ },
+    hosting: page("pro/index.html"),
+    shows: { page: "site", heading: "What Pro adds", note: /If you just paid/ },
   },
   {
     address: "/upgrade",
-    from: "the web paywall's address",
-    hosting: WEBSITE,
-    shows: { page: "landing" },
+    from: "the web paywall's address; the app's Pro page",
+    hosting: page("pro/index.html"),
+    shows: { page: "site", heading: "What Pro adds" },
   },
   {
     address: "/settings/account",
@@ -193,8 +203,8 @@ const KEPT: Kept[] = [
   {
     address: "/food?from=widget",
     from: "the food widget's tap; iOS hands it to the app",
-    hosting: WEBSITE,
-    shows: { page: "landing" },
+    hosting: page("food/index.html"),
+    shows: { page: "site", heading: "Log food the way you’d say it" },
   },
   {
     address: "/.well-known/apple-app-site-association",
@@ -235,6 +245,17 @@ const KEPT: Kept[] = [
     address: "/sw.js",
     from: "a browser that used the web app here: the worker that retires it",
     hosting: { kind: "file", file: "sw.js" },
+  },
+  {
+    address: "/lifting/",
+    from: "a page's address written with a slash",
+    hosting: { kind: "redirect", destination: "/lifting" },
+  },
+  {
+    address: "/no-such-page",
+    from: "an address nothing ever handed out",
+    hosting: { kind: "404" },
+    shows: { page: "notFound" },
   },
   {
     address: "/firebase-messaging-sw.js",
@@ -305,10 +326,41 @@ describe("Firebase Hosting answers every kept address", () => {
     ).toThrow(/rewrite/);
   });
 
-  it("serves nothing of the app: no address reaches an app page", () => {
-    for (const address of ["/settings", "/program", "/food", "/onboarding"]) {
+  it("serves nothing of the app: an app address reaches a website page", () => {
+    for (const address of ["/settings", "/program", "/onboarding"]) {
       expect(resolveHosting(hosting, files, address)).toEqual(WEBSITE);
     }
+    expect(resolveHosting(hosting, files, "/food")).toEqual(
+      page("food/index.html")
+    );
+  });
+
+  it("answers every address the app had, and its pages below it", () => {
+    // Every `path=` in src/App.tsx, as troposfit.com handed them out while
+    // it served the app: each lands on a website page, never "not found".
+    const app = readFileSync(join(repoRoot, "src/App.tsx"), "utf8");
+    const paths = [...app.matchAll(/path="([^"*]+)"/g)].map((m) => m[1]);
+    expect(paths.length).toBeGreaterThan(30);
+    for (const path of paths) {
+      const concrete = path.replace(/:[A-Za-z]+/g, "x");
+      const root = concrete.split("/")[1] ?? "";
+      if (concrete === "/") continue;
+      expect(APP_ADDRESS_ROOTS.has(root), `${path}'s root`).toBe(true);
+      const answer = resolveHosting(hosting, files, concrete);
+      expect(answer.kind, `${concrete} answers`).not.toBe("404");
+    }
+  });
+
+  it("rewrites exactly the app's roots that have no page of their own", () => {
+    const own = new Set(
+      SITE_PAGES.map((p) => p.path.slice(1)).concat(["activity", "upgrade"])
+    );
+    const expected = [...APP_ADDRESS_ROOTS].filter((r) => !own.has(r)).sort();
+    const rule = (hosting.rewrites ?? []).find(
+      (r) => r.destination === "/index.html"
+    );
+    const roots = rule?.source.match(/^\/@\(([^)]+)\)\{,\/\*\*\}$/)?.[1];
+    expect(roots?.split("|").sort()).toEqual(expected);
   });
 });
 
@@ -322,6 +374,22 @@ describe("the website's page at each address", () => {
         await screen.findByRole("heading", { level: 1, name: shows.heading })
       ).toBeInTheDocument();
       expect(screen.queryByText(/Get started/)).toBeNull();
+      return;
+    }
+    if (shows?.page === "site") {
+      expect(
+        await screen.findByRole("heading", { level: 1, name: shows.heading })
+      ).toBeInTheDocument();
+      if (shows.note) expect(screen.getByText(shows.note)).toBeInTheDocument();
+      return;
+    }
+    if (shows?.page === "notFound") {
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "This page isn’t here",
+        })
+      ).toBeInTheDocument();
       return;
     }
     if (shows?.page === "post") {
@@ -364,7 +432,7 @@ describe("the website's page at each address", () => {
     }
   });
 
-  it("links the legal and support pages from the App Store page", async () => {
+  it("links the legal and support pages from the home page", async () => {
     renderAt("/");
     await screen.findByRole("heading", { level: 1 });
     for (const [name, href] of [
@@ -372,7 +440,8 @@ describe("the website's page at each address", () => {
       ["Terms of Service", "/terms"],
       ["Support", "/support"],
     ]) {
-      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
+      const links = screen.getAllByRole("link", { name });
+      expect(links.map((link) => link.getAttribute("href"))).toContain(href);
     }
     // Apple's credit, which its badge rules ask for, iPhone among the marks.
     expect(screen.getByText(/App Store is a service mark of Apple Inc/)).toBe(
@@ -402,15 +471,23 @@ describe("the website's page at each address", () => {
     });
     cleanup();
 
-    for (const address of ["/upgrade?checkout=success", "/settings/account"]) {
-      renderAt(address);
-      await screen.findByRole("heading", { level: 1 });
-      expect(head(), address).toEqual({
-        canonical: "https://troposfit.com/",
-        robots: "noindex",
-      });
-      cleanup();
-    }
+    renderAt("/settings/account");
+    await screen.findByRole("heading", { level: 1 });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/",
+      robots: "noindex",
+    });
+    cleanup();
+
+    // The app's paywall address is the Pro page, whose own address is the
+    // copy to index.
+    renderAt("/upgrade?checkout=success");
+    await screen.findByRole("heading", { level: 1 });
+    expect(head()).toEqual({
+      canonical: "https://troposfit.com/pro",
+      robots: "noindex",
+    });
+    cleanup();
     // Gone with the page.
     expect(head()).toEqual({ canonical: undefined, robots: undefined });
   });

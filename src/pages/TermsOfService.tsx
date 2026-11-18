@@ -1,10 +1,16 @@
 import LegalBack from "@/components/legal/LegalBack";
 
-export default function TermsOfService() {
+/** `showBack` is off on troposfit.com, whose header and the browser's own
+ *  Back do its job (src/website/pages/LegalPage.tsx). */
+export default function TermsOfService({
+  showBack = true,
+}: {
+  showBack?: boolean;
+} = {}) {
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <LegalBack />
+        {showBack && <LegalBack />}
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">

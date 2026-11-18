@@ -26,6 +26,49 @@
 import { normaliseInviteCode } from "@/lib/inviteCode";
 import { INVITE_PARAM } from "@/lib/publicLinks";
 
+/**
+ * The first part of every address the app has answered (every `path=` in
+ * src/App.tsx, pinned by websiteAddresses.test.tsx). Such an address was
+ * handed out or bookmarked while troposfit.com served the app, or comes
+ * from a widget's tap opened in a browser, so it lands on the home page
+ * (the App Store page, App1 Q52) and never on "not found". The website's
+ * own pages at `/food` and `/social` answer theirs first.
+ */
+export const APP_ADDRESS_ROOTS: ReadonlySet<string> = new Set([
+  "activity",
+  "admin",
+  "dev",
+  "diagnostics",
+  "empty-workout",
+  "followers",
+  "following",
+  "food",
+  "history",
+  "league",
+  "onboarding",
+  "privacy",
+  "program",
+  "review",
+  "routine",
+  "run",
+  "run-summary",
+  "segment",
+  "settings",
+  "social",
+  "space",
+  "support",
+  "terms",
+  "upgrade",
+  "user",
+  "workout",
+]);
+
+/** Whether `pathname` is one the app answered (`APP_ADDRESS_ROOTS`). */
+export function isAppAddress(pathname: string): boolean {
+  const first = pathname.replace(/^\/+/, "").split("/")[0];
+  return first === "" || APP_ADDRESS_ROOTS.has(first);
+}
+
 /** The line the App Store page adds for the address that brought someone. */
 export type LandingNote = "space" | "checkoutDone" | null;
 

@@ -53,10 +53,7 @@ import { useAuth } from "./auth";
  * Meal CTA on the Food page reads `image_ai.limit === 0` to render an
  * upgrade prompt instead of the camera button for free users.
  */
-export const DAILY_AI_LIMITS = {
-  free: { text_ai: 0, image_ai: 0 },
-  pro: { text_ai: 100, image_ai: 100 },
-} as const;
+export { DAILY_AI_LIMITS } from "./aiLimits";
 
 /**
  * @deprecated Pre-F1b shared monthly counter. Retained only for
@@ -166,9 +163,7 @@ export function hasLapsedOnboardingTrial(
  */
 export function isCheckoutTrialEligible(
   profile:
-    | Pick<UserProfile, "hasUsedTrial" | "trialExpiresAt">
-    | null
-    | undefined
+    Pick<UserProfile, "hasUsedTrial" | "trialExpiresAt"> | null | undefined
 ): boolean {
   if (!profile) return true;
   return !profile.hasUsedTrial && !profile.trialExpiresAt;

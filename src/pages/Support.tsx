@@ -12,7 +12,13 @@ declare const __APP_VERSION__: string;
  *    for signed-in users; a locked-out user needs a public path).
  * Static, no auth, mirrors the PrivacyPolicy/TermsOfService shell.
  */
-export default function Support() {
+/** `showBack` is off on troposfit.com, whose header and the browser's own
+ *  Back do its job (src/website/pages/LegalPage.tsx). */
+export default function Support({
+  showBack = true,
+}: {
+  showBack?: boolean;
+} = {}) {
   const version =
     typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const mailto = `mailto:support@troposfit.com?subject=${encodeURIComponent(
@@ -22,7 +28,7 @@ export default function Support() {
   return (
     <main className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <LegalBack />
+        {showBack && <LegalBack />}
 
         <div>
           <h1 className="text-xl font-extrabold text-foreground">Support</h1>
