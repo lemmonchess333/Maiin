@@ -23,7 +23,11 @@ nothing is left.
   decides what other people get.
 - A Claude Fable advisor reviewed the findings and the fix plan before any
   code was written; its review moved three fixes and added three findings
-  (S2, S7 and O6 below). Each PR records what it said.
+  (S2, S7 and O6 below). A second review read every diff and found four
+  more problems, each fixed on its branch: S3 counted a retried upload
+  again, S4 quieted a request that came from an invite, S5 dropped "didn't
+  use a scan" when nothing was charged, and S6's last email could be
+  followed by more. Each PR records both reviews.
 
 Limits. The Firestore emulator could not be downloaded in this session (the
 proxy refuses `storage.googleapis.com`), so the two rules PRs prove red and
@@ -81,8 +85,9 @@ trigger logged and kept the file, so a client that skipped the callable
 kept every photo uploaded meanwhile. Fix: 100 trigger screens and 100
 callable screens a rolling day per account (Tropos heuristic: four times a
 busy day's 25 uploads); past the budget, or after a day of failed retries,
-the upload is deleted unscreened. The trigger is now retried, and a limiter
-error is retried rather than read as over budget.
+the upload is deleted unscreened. The trigger is now retried; an upload is
+counted once however often its event is delivered again, and an error
+reading the count is retried rather than read as over budget.
 
 **S4.** From any unrestricted account, against someone who approves
 followers (the default): create `followRequests/{them}/users/{me}`, delete
@@ -91,7 +96,8 @@ it, create it again, in a loop. Each create rewrote
 `onNotificationItemWritten` pushes. Fix: `createNotification` gains
 `quietForMs`; a follow request row written in the last day is left as it
 is (Tropos heuristic: a day, as the props bundle's once a day), so no
-push and no unread.
+push and no unread. A request that comes from joining by invite is always
+told.
 
 **S5.** On a Pro or trial account, send `analyzeFoodText` a meal of about
 150 different foods. The answer runs past `maxOutputTokens` (8,192), comes
@@ -105,8 +111,9 @@ the quota itself is unchanged.
 verified email needed; reporting your own public post passes): 240 emails
 a day to the owner, from the allowance password resets, verification and
 trial reminders use. Fix: three alerts a rolling day per reporter and 50
-from everyone (Tropos heuristics); the 50th says it is the last for a
-while; reports past either are stored and queued as always.
+a UTC day from everyone (Tropos heuristics), one counter read and written
+in one transaction; the 50th says it is the last until midnight UTC;
+reports past either are stored and queued as always.
 
 **S7.** As someone the author blocked, `getDocs(collection(db, "kudos",
 postId, "users"))` or the same on `comments/{postId}/items` for a public
