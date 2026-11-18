@@ -160,7 +160,9 @@ describe("a no-equipment plan", () => {
         ).toEqual([]);
       }
     }
-  });
+    // Every goal, level and day count built from setup: a few seconds
+    // alone, more on a runner busy with the rest of the suite.
+  }, 30_000);
 
   it("has nothing that needs kit with an injury, and no empty day", () => {
     const injuries = [
@@ -437,7 +439,9 @@ describe("the superman hold's sets", () => {
               SUPERMAN_SETS_PER_WEEK
             );
           }
-  });
+    // Every goal, level and day count built from setup: a few seconds
+    // alone, more on a runner busy with the rest of the suite.
+  }, 30_000);
 
   it("keeps the hold where it's the day's back work, two sets each, in a new plan", () => {
     const day = (
@@ -591,7 +595,9 @@ describe("a no-equipment plan with a doorway pull-up bar", () => {
             `${goal}/${level}/${days}d`
           ).toEqual([]);
         }
-  });
+    // Every goal, level and day count built from setup: a few seconds
+    // alone, more on a runner busy with the rest of the suite.
+  }, 30_000);
 
   // The owner's answer to the print: five or six days keep upper / lower and
   // full body with a bar; a bar's three lifts couldn't fill two Pull days.
