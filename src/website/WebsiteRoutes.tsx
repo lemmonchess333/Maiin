@@ -65,7 +65,7 @@ function ScrollToTop() {
 }
 
 /**
- * troposfit.com's addresses (App1 Q52, the website’s design (#3428)): the
+ * troposfit.com's addresses (App1 Q52 and the website’s design): the
  * website's pages, a shared post's public page (Q51), the app's legal and
  * support pages, Home for every address of the app's own, and the 404.
  * firebase.json sends every address here but a shared post, which

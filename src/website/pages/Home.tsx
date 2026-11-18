@@ -68,7 +68,7 @@ function useLandingContext(): LandingContext {
 }
 
 /**
- * troposfit.com's Home (the website’s design, #3428): the welcome's
+ * troposfit.com's Home, as the website’s design draws it: the welcome's
  * photographs and its promise with the App Store badge, then the app
  * doing what it promises, the three sports, the people and Pro. Every
  * address of the app's own also lands here (App1 Q52), with a line for

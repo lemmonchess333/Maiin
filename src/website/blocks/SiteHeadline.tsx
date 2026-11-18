@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * A website page's one headline: the hero's words at the website's scale
- * (`.site-h1`, 36 px on a phone and 56 px wide; the website’s design (#3428),
+ * (`.site-h1`, 36 px on a phone and 56 px wide; the website’s design,
  * "The look"), not the app's page-title token, which a hero would read
  * as small print at 1440 px. Every website page draws its h1 here, so
  * `designSystemInvariants.test.ts` counts this file once, as it does the

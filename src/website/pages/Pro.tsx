@@ -43,7 +43,7 @@ const QUESTIONS = [
  * (`PRO_INCLUDES`), what stays free (`FREE_KEEPS`), and the price as the
  * app states it (`PRO_PLANS`, the pound prices the paywall shows until the
  * App Store's arrive). Nothing here sells: the website does not take
- * payment (App1 Q77, option 4 of #3375).
+ * payment (App1 Q77, option 4).
  */
 export default function Pro() {
   usePageHead(sitePageHead(sitePage("pro")));
