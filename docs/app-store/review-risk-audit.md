@@ -395,6 +395,22 @@ are recognised (`src/lib/appleRelay.ts:8-9`).
   `functions/index.js:3271`). Its Cloud Vision entry leaves out the run
   maps that are screened (`PrivacyPolicy.tsx:457-462`,
   `functions/lib/photoScreen.js:8`). Fixed in `claude/launch-privacy-policy-gaps`.
+  - STATUS 2026-11-18: the second review found the policy has more gaps
+    than this one, so "names every service except one" is wrong. It does
+    not say that public posts are open to anyone on the web, signed out
+    (`functions/lib/publicPost.js`); it does not mention segments; it says
+    "age range" where the app stores a year of birth; it does not name the
+    run map images stored in `route-maps/`, or Circle meet-ups; its Social
+    Activity entry leaves out hidden posts, blocks, league standings,
+    challenge places, medals, `invitedBy` and the race identity; it
+    describes Watch runs and workout export, which are off in the App Store
+    build; it lists food searches as collected where the privacy label says
+    not; and its Resend and error-report entries leave out that Resend also
+    carries moderation alert emails with the reported content, and that
+    error reports keep the page address and user agent.
+    `claude/launch-privacy-policy-gaps` fixes the push token, the screened
+    run maps and the age wording only. The rest of the policy text waits on
+    the owner.
 - **(ii) Permission and purpose strings: Pass.** Each string says what the
   data is for (`ios/App/App/Info.plist:43-67`). The Health write string
   says Tropos writes nothing, which is true of the App Store build
