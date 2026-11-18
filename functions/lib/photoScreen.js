@@ -51,6 +51,48 @@ const UPLOAD_SCREENS_PER_DAY = 100;
 const CALLABLE_SCREENS_PER_DAY = 100;
 const SCREEN_BUDGET_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Claims one of the owner's upload screens for today, once per event: a
+ * retried delivery of an upload already counted screens again without
+ * counting again. Without that, the retries of one upload while Vision was
+ * failing (backoff of minutes, for a day) spent the owner's whole day, and
+ * every photo they uploaded after it was deleted on arrival.
+ *
+ * Kept in the rate limiter's own collection and shape
+ * (`rateLimits/{owner}_photoUploadScreenDay`, `timestamps` and an
+ * `expiresAt` for its TTL), which account deletion already sweeps by the
+ * uid prefix, with the events counted beside them. Throws when the count
+ * cannot be read or written, so the trigger is delivered again rather than
+ * reading an outage as "over".
+ *
+ * @returns {Promise<boolean>} true to screen, false when over the day's number
+ */
+async function claimUploadScreen(db, { owner, eventId, now = Date.now() }) {
+  const ref = db.collection("rateLimits").doc(`${owner}_photoUploadScreenDay`);
+  const since = now - SCREEN_BUDGET_WINDOW_MS;
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = (snap.exists && snap.data()) || {};
+    const counted = (Array.isArray(data.timestamps) ? data.timestamps : [])
+      .filter((t) => typeof t === "number" && t > since);
+    const events = (Array.isArray(data.events) ? data.events : []).filter(
+      (e) => e && typeof e.id === "string" && typeof e.at === "number" && e.at > since
+    );
+    if (typeof eventId === "string" && events.some((e) => e.id === eventId))
+      return true;
+    if (counted.length >= UPLOAD_SCREENS_PER_DAY) return false;
+    counted.push(now);
+    if (typeof eventId === "string") events.push({ id: eventId, at: now });
+    tx.set(ref, {
+      timestamps: counted.slice(-UPLOAD_SCREENS_PER_DAY),
+      events: events.slice(-UPLOAD_SCREENS_PER_DAY),
+      updatedAt: new Date(now),
+      expiresAt: new Date(now + SCREEN_BUDGET_WINDOW_MS),
+    });
+    return true;
+  });
+}
+
 /** SafeSearch's likelihoods at which a photo is refused as nudity. */
 const REFUSED_ADULT_LIKELIHOODS = new Set(["LIKELY", "VERY_LIKELY"]);
 
@@ -162,6 +204,7 @@ async function screenStoredPhoto({
 
 module.exports = {
   CALLABLE_SCREENS_PER_DAY,
+  claimUploadScreen,
   SCREEN_BUDGET_WINDOW_MS,
   UPLOAD_SCREENS_PER_DAY,
   REFUSED_ADULT_LIKELIHOODS,

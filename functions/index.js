@@ -7648,7 +7648,7 @@ exports.screenPhoto = functions
     ) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "That's all the photos for today. Try again tomorrow."
+        "That's as many photos as can be checked in a day. Try again later."
       );
     }
     try {
@@ -7714,15 +7714,11 @@ exports.screenUploadedPhoto = functions
       });
     };
     try {
-      const overBudget = await rateLimiter.isRateLimited(
+      const withinBudget = await photoScreen.claimUploadScreen(
         admin.firestore(),
-        owner,
-        "photoUploadScreenDay",
-        photoScreen.UPLOAD_SCREENS_PER_DAY,
-        photoScreen.SCREEN_BUDGET_WINDOW_MS,
-        { throwOnError: true }
+        { owner, eventId: context.eventId }
       );
-      if (overBudget) {
+      if (!withinBudget) {
         await unscreened("daily-budget");
         return;
       }

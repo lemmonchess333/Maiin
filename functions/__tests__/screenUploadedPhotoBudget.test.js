@@ -75,7 +75,10 @@ function install(db, visionStatus = 200) {
 }
 
 const upload = { name: PATH, bucket: "bucket", generation: GENERATION };
-const at = (msAgo) => ({
+/** One delivery of an upload's event: the same `eventId` on every retry,
+ *  and the time the upload happened. */
+const at = (msAgo, eventId = "event-1") => ({
+  eventId,
   timestamp: new Date(Date.now() - msAgo).toISOString(),
 });
 const HOUR = 60 * 60 * 1000;
@@ -144,6 +147,28 @@ describe("screenUploadedPhoto", () => {
     // A retry past the day: still unscreened, so deleted.
     await screenUploadedPhoto.run(upload, at(25 * HOUR));
     expect(deleted).toEqual([{ path: PATH, generation: GENERATION }]);
+  });
+
+  it("counts an upload once however often its event is delivered again", async () => {
+    // A Vision outage: each delivery fails and is retried, minutes apart,
+    // for a day. Counted each time, one upload's retries spent the day,
+    // and the owner's next photo was deleted on arrival.
+    install(memoryFirestore({}), 503);
+    for (let i = 0; i < UPLOAD_SCREENS_PER_DAY + 1; i++) {
+      await expect(
+        screenUploadedPhoto.run(upload, at(HOUR, "outage-event"))
+      ).rejects.toThrow();
+    }
+    expect(deleted).toEqual([]);
+    expect(vision).toHaveBeenCalledTimes(UPLOAD_SCREENS_PER_DAY + 1);
+    // Vision is back: the next upload is screened and kept.
+    install(admin.firestore(), 200);
+    await screenUploadedPhoto.run(
+      { ...upload, name: `space-photos/${OWNER}/next.jpg` },
+      at(0, "next-event")
+    );
+    expect(vision).toHaveBeenCalledTimes(1);
+    expect(deleted).toEqual([]);
   });
 
   it("is delivered again when the day's count cannot be read, and deletes nothing", async () => {
