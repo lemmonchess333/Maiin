@@ -18,7 +18,10 @@
  *   - "Hide content" — mark resolved AND take the reported content out
  *     of the app: an activity is flagged and made private; a comment
  *     (activity or Space post) or a Space post is deleted. The server
- *     says which reports it can act on (`targetHideable`).
+ *     says which reports it can act on (`targetHideable`). On a segment
+ *     it reads "Remove segment": the segment goes as its maker's Delete
+ *     takes it, with every time anyone has on it. A segment's card names
+ *     its maker and links to its page.
  *   - "Restrict user" — mark resolved AND restrict the target's author
  *   - Restricted accounts, each with Lift (S4e, STATUS 2026-10-06). Once a
  *     restriction stops posts, comments, props and follows, a mistaken one
@@ -30,12 +33,14 @@
  * (pending/resolved), ban-user flow. Each is a small follow-up.
  */
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useUid } from "@/lib/auth";
 import { isAdminUid } from "@/lib/adminAuth";
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
-import type { ReportTargetType } from "@/lib/socialApi";
+import type { ReportCategory, ReportTargetType } from "@/lib/socialApi";
+import { REPORT_CATEGORY_OPTIONS } from "@/lib/reportCategories";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -58,6 +63,9 @@ interface ReportTarget {
   body?: string | null;
   spaceId?: string;
   postId?: string;
+  /** A reported segment's name, and its id for the link to its page. */
+  name?: string | null;
+  segmentId?: string;
   /** A reported post's photos (Soc15 call 2): the download URLs of its own
    *  uploads only, resolved by the server (functions/lib/postPhotos.js). */
   photos?: string[];
@@ -83,6 +91,10 @@ interface Report {
   reportedTargetType: string | null;
   reportedTargetId: string | null;
   reason: "spam" | "harassment" | "inappropriate" | "other";
+  /** What the reporter picked, from a server that sends it: the form's
+   *  category and its sub-reason ("Child safety"). */
+  category?: ReportCategory | null;
+  subReason?: string | null;
   details: string | null;
   createdAt: number | null;
   target: ReportTarget | null;
@@ -103,7 +115,18 @@ const TARGET_LABEL: Record<ReportTargetType, string> = {
   user: "Profile",
   space_post: "Space post",
   space_post_comment: "Space comment",
+  segment: "Segment",
 };
+
+/** The reason as the reporter picked it, as the alert email words it
+ *  ("Inappropriate content: Child safety"), or the legacy reason from a
+ *  report or server without the category. */
+function reasonText(report: Report): string {
+  const label =
+    REPORT_CATEGORY_OPTIONS.find((c) => c.value === report.category)?.label ??
+    REASON_LABEL[report.reason];
+  return report.subReason ? `${label}: ${report.subReason}` : label;
+}
 
 /** Whether Hide content applies. The server decides; a server older than
  *  `targetHideable` could hide activities only. */
@@ -164,6 +187,7 @@ function targetPreview(report: Report): string {
   if (report.targetType === "user") return t.displayName || "(user)";
   if (report.targetType === "space_post")
     return t.title || t.body || "(empty post)";
+  if (report.targetType === "segment") return t.name || "(segment)";
   return (
     t.caption ||
     t.workoutName ||
@@ -259,10 +283,13 @@ export default function AdminModeration() {
      Dismiss + Hide content. Restricting writes to globalRestrictedUids/
      {targetUid} atomically with the report resolution. */
   const resolveReport = async (
-    reportId: string,
+    report: Report,
     hideActivity: boolean,
     restrictUser: boolean = false
   ) => {
+    const { reportId } = report;
+    // A segment is removed, not hidden: it goes for everyone.
+    const hidden = report.targetType === "segment" ? "Removed" : "Hidden";
     setBusyReportId(reportId);
     try {
       const callable = httpsCallable<
@@ -272,10 +299,10 @@ export default function AdminModeration() {
       await callable({ reportId, hideActivity, restrictUser });
       const msg = restrictUser
         ? hideActivity
-          ? "Hidden, user restricted, and resolved."
+          ? `${hidden}, user restricted, and resolved.`
           : "User restricted and resolved."
         : hideActivity
-          ? "Hidden and resolved."
+          ? `${hidden} and resolved.`
           : "Resolved.";
       toast.success(msg);
       // Optimistic: drop the report from the visible list rather
@@ -369,7 +396,7 @@ export default function AdminModeration() {
                       {report.targetType
                         ? TARGET_LABEL[report.targetType]
                         : (report.reportedTargetType ?? "unknown")}{" "}
-                      · {REASON_LABEL[report.reason]}
+                      · {reasonText(report)}
                     </p>
                     <p className="text-caption font-mono tabular-nums text-muted-foreground mt-0.5">
                       {report.createdAt
@@ -414,6 +441,24 @@ export default function AdminModeration() {
                       Already flagged by auto-filter
                     </p>
                   )}
+                  {report.targetType === "segment" && report.target && (
+                    <>
+                      <p className="text-xs text-muted-foreground mt-1.5 break-words">
+                        Made by {report.target.authorName ?? "(no name)"}{" "}
+                        <span className="font-mono break-all">
+                          {report.target.authorId}
+                        </span>
+                      </p>
+                      {report.target.segmentId && (
+                        <Link
+                          to={`/segment/${report.target.segmentId}`}
+                          className="mt-1.5 inline-flex min-h-[44px] items-center text-sm font-semibold text-primary-strong underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                        >
+                          Open segment
+                        </Link>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {report.details && (
@@ -431,7 +476,7 @@ export default function AdminModeration() {
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => void resolveReport(report.reportId, false)}
+                    onClick={() => void resolveReport(report, false)}
                     className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-muted text-foreground active:scale-95 transition-transform disabled:opacity-50"
                   >
                     Dismiss
@@ -446,11 +491,13 @@ export default function AdminModeration() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => void resolveReport(report.reportId, true)}
+                      onClick={() => void resolveReport(report, true)}
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <EyeOff className="size-3.5" aria-hidden="true" />
-                      Hide content
+                      {report.targetType === "segment"
+                        ? "Remove segment"
+                        : "Hide content"}
                     </button>
                   )}
                   {/* Restrict user — writes globalRestrictedUids/{targetUid}
@@ -460,15 +507,19 @@ export default function AdminModeration() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() =>
-                        void resolveReport(report.reportId, false, true)
-                      }
+                      onClick={() => void resolveReport(report, false, true)}
                       aria-label="Restrict user — they can’t post, comment or follow anyone until the restriction is lifted."
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <UserX className="size-3.5" aria-hidden="true" />
                       Restrict user
                     </button>
+                  )}
+                  {canHide(report) && report.targetType === "segment" && (
+                    <p className="text-caption text-muted-foreground basis-full">
+                      Remove segment deletes it for everyone, with every time
+                      anyone has on it, as its maker’s Delete does.
+                    </p>
                   )}
                 </div>
               </li>
