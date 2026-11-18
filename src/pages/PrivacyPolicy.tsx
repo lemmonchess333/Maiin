@@ -81,7 +81,8 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Profile and Fitness Details:
                 </strong>{" "}
-                sex or gender, age range, height and weight, activity level and
+                sex or gender, year of birth (an older account may hold an age
+                or an age range instead), height and weight, activity level and
                 training experience, any injury limits you tell us about, your
                 maximum heart rate, your goals (including a goal weight), and
                 the details of any race you are training for, such as its

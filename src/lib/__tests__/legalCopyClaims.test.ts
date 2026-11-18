@@ -163,6 +163,17 @@ describe("the collection inventory is complete", () => {
     expect(PRIVACY_PROSE).toMatch(/Apple Push Notification service/);
   });
 
+  it("says the year of birth setup stores, not the age range it replaced", () => {
+    // Setup asks for a year of birth (App1 Q57); the policy still said
+    // "age range", which nothing writes now.
+    expect(read("../auth.tsx")).toMatch(/\bbirthYear\?: number;/);
+    const sectionOne = PRIVACY_PROSE.slice(
+      PRIVACY_PROSE.indexOf("1. Information We Collect"),
+      PRIVACY_PROSE.indexOf("2. How We Use Your Data")
+    );
+    expect(sectionOne).toMatch(/year of birth/);
+  });
+
   it("names every kind of upload Cloud Vision screens", () => {
     // photoScreen.js screens four paths. The policy listed three of them
     // and left out the map image of a shared run.
