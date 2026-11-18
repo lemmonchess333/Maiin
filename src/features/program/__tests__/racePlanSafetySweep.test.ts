@@ -81,9 +81,10 @@ const sched = (n: number): ScheduleDay[] =>
     type: day < n ? "run" : "rest",
   })) as ScheduleDay[];
 
-/** Long-run distance encoded in a template id (`long_25k` → 25). */
+/** Long-run distance encoded in a template id (`long_25k` → 25), its
+ *  race-pace twin's too (`long_24k_mp` → 24, Run24 (5)). */
 const longKmOf = (templateId: string): number => {
-  const m = /^long_(\d+)k$/.exec(templateId);
+  const m = /^long_(\d+)k(?:_h?mp)?$/.exec(templateId);
   return m ? parseInt(m[1], 10) : 0;
 };
 

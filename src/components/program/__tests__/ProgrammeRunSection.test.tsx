@@ -220,7 +220,6 @@ function makeProgramState(
     weekNumber: 1,
     splitType: "ppl",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: Date.now(),
     settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
@@ -832,6 +831,67 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     expect(
       screen.getByRole("region", { name: /Run training/i })
     ).toBeInTheDocument();
+  });
+});
+
+/* Run27 (18): an ultra plan is Pro after its first week, exactly as the
+   half and the marathon are (Q85); a 10K is free throughout. Today's
+   planned session on a free account offers Pro in place of Start from the
+   plan's second week (`currentWeek` 1). */
+describe("ProgrammeRunSection — the race plan's free week (Q85, Run27 (18))", () => {
+  beforeEachReset();
+
+  function renderPlan(distance: string, currentWeek: number) {
+    const props = raceProps(distance, "2099-04-18");
+    return renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState(
+          [
+            makeRunDay({
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ],
+          {
+            runPlan: {
+              mode: "race_prep",
+              raceGoal: { distance, targetDate: "2099-04-18" },
+              totalWeeks: 20,
+              currentWeek,
+            },
+          } as Partial<ProgramState>
+        )}
+      />
+    );
+  }
+
+  it("an ultra plan offers Pro at week 2 exactly as a marathon does, and a 10K doesn't", () => {
+    for (const distance of ["marathon", "50k", "50mi", "100k"]) {
+      const week1 = renderPlan(distance, 0);
+      expect(
+        screen.getByRole("button", { name: "Start run" })
+      ).toBeInTheDocument();
+      week1.unmount();
+
+      const week2 = renderPlan(distance, 1);
+      expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+      expect(
+        screen.getByText(
+          "After your free week, your race plan is part of Pro. Runs you record stay free."
+        )
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Try Pro free" }));
+      expect(navigateMock).toHaveBeenLastCalledWith("/upgrade?from=race_plan");
+      week2.unmount();
+    }
+
+    renderPlan("10k", 1);
+    expect(
+      screen.getByRole("button", { name: "Start run" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try Pro free" })).toBeNull();
   });
 });
 
@@ -2148,6 +2208,20 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
     expect(
       screen.getByRole("tablist", { name: "Run week" })
     ).toBeInTheDocument();
+    // Its card, where a race plan has its own, with the weeks ahead.
+    const card = screen.getByRole("region", { name: "Run plan" });
+    expect(card).toHaveTextContent("Plan, no race");
+    expect(
+      within(card).getByRole("heading", { name: "Keep fit" })
+    ).toBeInTheDocument();
+    expect(within(card).getByText("The weeks ahead")).toBeInTheDocument();
+    // No race plan's card, and the footer's Edit run plan stays the way in.
+    expect(
+      screen.queryByRole("region", { name: "Race plan" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Edit run plan/ })
+    ).toBeInTheDocument();
   });
 
   it("does NOT render for a race_prep user (freeform block hidden)", () => {
@@ -2713,5 +2787,72 @@ describe("ProgrammeRunSection — the 30-minute goal offered", () => {
       makeProgramState([], { runPlan: undefined })
     );
     expect(offer()).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — the lighter-week offer (Q11)", () => {
+  /* One lighter-week decision for both sports: Train hands the Run tab
+     the same offer the Lift tab draws, so a runner meets it where they
+     plan their runs. It leads the week's notices, before the race's own. */
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const OFFER = (
+    <section aria-label="Lighter week suggested">
+      You ran 30% more than your usual week.
+    </section>
+  );
+
+  it("draws the offer it is handed, ahead of the race's banners", () => {
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+    } as Partial<UserProfile>);
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+        lighterWeekNotice={OFFER}
+      />
+    );
+    const offer = screen.getByRole("region", {
+      name: "Lighter week suggested",
+    });
+    const elapsed = screen.getByText("Your race has passed");
+    expect(
+      offer.compareDocumentPosition(elapsed) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("draws it for a freeform runner too", () => {
+    renderSection(
+      { ...commonProps(), lighterWeekNotice: OFFER } as ReturnType<
+        typeof commonProps
+      >,
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.getByRole("region", { name: "Lighter week suggested" })
+    ).toBeInTheDocument();
+  });
+
+  it("draws nothing in its place without one", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState([makeRunDay({ status: "planned" })])
+    );
+    expect(
+      screen.queryByRole("region", { name: "Lighter week suggested" })
+    ).toBeNull();
   });
 });

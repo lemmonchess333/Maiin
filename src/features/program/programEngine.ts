@@ -10,7 +10,11 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import type { LiftUnit } from "@/lib/liftLoad";
-import { generateInstanceId, loweringOf } from "./programTypes";
+import {
+  generateInstanceId,
+  loweringOf,
+  withoutRetiredProgramKeys,
+} from "./programTypes";
 import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
@@ -2069,7 +2073,15 @@ export function generateProgram(
     injuries?: readonly string[];
     /** A barbell and a rack beside a home gym's kit. */
     barbellAtHome?: boolean;
-  }
+  },
+  /**
+   * Run27 (19): whether the plan's weekend holds an ultra's back-to-back
+   * runs beside its long run (`weekendHoldsBackToBacks`). Read with
+   * `weekSchedule`, for one thing: the session the day before the
+   * back-to-back is weighed as the one before the long run is (Lift13).
+   * Absent: no back-to-back.
+   */
+  backToBacks?: boolean
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -2268,7 +2280,7 @@ export function generateProgram(
   // now that the carry keys on day NAME rather than position — reordering
   // used to land a logged pull-up weight on bench press, which is what kept
   // this unbuilt.
-  workouts = orderForAdjacency(workouts, weekSchedule);
+  workouts = orderForAdjacency(workouts, weekSchedule, backToBacks);
 
   // Everything below still matches the saved plan POSITIONALLY, so realign it
   // to the order the week actually ended up in. Missing this is exactly the
@@ -3335,15 +3347,15 @@ export function advanceWeek(
     );
   }
 
-  // The retired per-muscle recovery session's list (Lift4 (13)): nothing
-  // reads it, so a stored one goes with this week. The return's weeks go
-  // once they are done.
+  // The retired keys a stored plan may carry (App1 Q24: the fatigue
+  // score, the adjustment rule's count, the plan's template and the
+  // recovery session's muscles) go with this week, so the rollover never
+  // writes one back. The return's weeks go once they are done.
   const {
-    recoveringMuscles: _retired,
     easingBack: _easing,
     raceWeek: _lastRaceWeek,
     ...kept
-  } = state;
+  } = withoutRetiredProgramKeys(state);
   return {
     ...kept,
     ...(easingLeft > 0 ? { easingBack: { weeksLeft: easingLeft } } : {}),

@@ -4,6 +4,14 @@
  * race-card anatomy (RACE chip, date + city), and the race filter chips
  * (2026-10-01; two selects before). The Feed's compact row, and the Q6
  * gate that kept races out of it, went the same day with the row.
+ *
+ * All of that with enough people training on Tropos. Below that (App1
+ * Q6), the directory draws only the Spaces the person joined, and nothing
+ * when they joined none.
+ *
+ * Search (Run27 call 11): a query finds Spaces by name, or a race by its
+ * city, among every Space and race whatever the chips say, and its
+ * results stand in for the rows until it is cleared.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
@@ -44,6 +52,13 @@ vi.mock("@/components/ui/BottomSheet", () => ({
     ) : null,
 }));
 
+const people = vi.hoisted(() => ({
+  enough: true as boolean | null,
+}));
+vi.mock("@/hooks/useEnoughPeople", () => ({
+  useEnoughPeople: () => people.enough,
+}));
+
 import SpacesDirectory from "../SpacesDirectory";
 
 const INTEREST: SpaceDirectoryEntry = {
@@ -82,6 +97,7 @@ const RACE: SpaceDirectoryEntry = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  people.enough = true;
   mockUseSpacesDirectory.mockReturnValue({
     entries: [INTEREST, RACE],
     upcomingRaces: [RACE.def],
@@ -242,4 +258,127 @@ it("keeps an expired race card visible with an honest awaiting-date label", () =
   ).toBeInTheDocument();
   expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
   expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
+});
+
+describe("SpacesDirectory at small numbers", () => {
+  beforeEach(() => {
+    people.enough = false;
+  });
+
+  it("draws nothing when the person joined no Space", () => {
+    const { container } = renderDirectory();
+    // Anchor: the directory was asked for its Spaces, and had two to offer.
+    expect(mockUseSpacesDirectory).toHaveBeenCalled();
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("draws the Spaces the person joined, as theirs, with nothing to browse", () => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [
+        { ...INTEREST, joined: true },
+        RACE,
+        {
+          ...INTEREST,
+          def: { ...INTEREST.def, id: "lifters", name: "Lifters" },
+          memberCount: 40,
+        },
+      ],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(
+      screen.getByRole("heading", { name: "Your spaces" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Runners")).toBeInTheDocument();
+    // Neither the race nor a busy Space the person is not in is offered.
+    expect(screen.queryByText("Great North Run")).toBeNull();
+    expect(screen.queryByText("Lifters")).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Races & events" })
+    ).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+  });
+
+  it("keeps a race the person joined", () => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [INTEREST, { ...RACE, joined: true }],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(screen.getByText("Great North Run")).toBeInTheDocument();
+    expect(screen.queryByText("Runners")).toBeNull();
+  });
+});
+
+describe("searching Spaces (Run27 call 11)", () => {
+  const BRIGHTON = spaceDef("brighton-marathon")!;
+  const search = () => screen.getByRole("searchbox", { name: "Search spaces" });
+
+  beforeEach(() => {
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [INTEREST, RACE],
+      // Every race, whatever the chips say: Brighton is not in the rows.
+      upcomingRaces: [RACE.def, BRIGHTON],
+      refresh: vi.fn(),
+    });
+  });
+
+  it("finds Brighton Marathon for “brighton”, and its results stand in for the rows", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "brighton" } });
+    const found = screen.getByRole("list", { name: "Spaces found" });
+    const link = within(found).getByRole("link", { name: /Brighton Marathon/ });
+    expect(link).toHaveAttribute("href", "/space/brighton-marathon");
+    expect(within(found).getAllByRole("listitem")).toHaveLength(1);
+    // The rows and their chips give way while a query stands.
+    expect(
+      screen.queryByRole("heading", { name: "Races & events" })
+    ).toBeNull();
+    expect(screen.queryByText("Runners")).toBeNull();
+    expect(screen.getByText("1 space found")).toBeInTheDocument();
+  });
+
+  it("is not fussy about case, and finds a race by its city", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "NEWCASTLE" } });
+    expect(
+      within(screen.getByRole("list", { name: "Spaces found" })).getByRole(
+        "link",
+        { name: /Great North Run/ }
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("says when nothing matches, and Clear search brings the rows back", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "zzz" } });
+    expect(screen.getByText("No matching spaces")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Clear search" })[0]);
+    expect(search()).toHaveValue("");
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
+  });
+
+  it("a single letter searches nothing yet", () => {
+    renderDirectory();
+    fireEvent.change(search(), { target: { value: "b" } });
+    expect(screen.queryByRole("list", { name: "Spaces found" })).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
+  });
+
+  it("is not offered while there is nothing to browse", () => {
+    people.enough = false;
+    mockUseSpacesDirectory.mockReturnValue({
+      entries: [{ ...INTEREST, joined: true }],
+      upcomingRaces: [RACE.def],
+      refresh: vi.fn(),
+    });
+    renderDirectory();
+    expect(screen.queryByRole("searchbox")).toBeNull();
+  });
 });

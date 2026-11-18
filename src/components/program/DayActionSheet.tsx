@@ -74,6 +74,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import {
   parseLocalDate,
@@ -90,6 +91,7 @@ import {
 } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import { Collapse } from "@/components/ui/Collapse";
@@ -154,6 +156,10 @@ interface DayActionSheetProps {
    *  Home's card offers, and a session done today keeps it on the sheet,
    *  done (`liftOnDate`). */
   sessionsOnDate?: ReadonlySet<string>;
+  /** A plan with no race date's weeks, by their Mondays
+   *  (`useRollingSessionContexts`, Run24 (3)): a run's reason in the plan's
+   *  terms. Home and Train pass them; without them such a run has none. */
+  rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null;
 }
 
 const NO_SESSIONS: ReadonlySet<string> = new Set();
@@ -175,6 +181,7 @@ export default function DayActionSheet({
   moveRunDay,
   scope = "day",
   sessionsOnDate = NO_SESSIONS,
+  rollingContexts = null,
 }: DayActionSheetProps) {
   const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
@@ -283,7 +290,8 @@ export default function DayActionSheet({
   // (then we just don't show the pill — the pace pill still stands alone).
   const selectedRunHr: string[] = (() => {
     if (!selectedRunTemplate) return [];
-    const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profile?.age ?? 0);
+    const maxHr =
+      profile?.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedRunTemplate.type,
       maxHr,
@@ -303,14 +311,16 @@ export default function DayActionSheet({
       currentWeek: rp?.currentWeek,
       totalWeeks: rp?.totalWeeks,
       shortBase: rp?.shortBase,
-      distance: (rp?.raceGoal?.distance ?? profile?.raceGoal?.distance) as
-        "5k" | "10k" | "half" | "marathon" | undefined,
+      distance: rp?.raceGoal?.distance ?? profile?.raceGoal?.distance,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey
       ),
       racePace: selectedRacePace?.kind,
       inRecovery: isRecoveryRunDay(rp, run.runDay.date),
+      rolling: run.runDay.weekKey
+        ? rollingContexts?.get(run.runDay.weekKey)
+        : null,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.

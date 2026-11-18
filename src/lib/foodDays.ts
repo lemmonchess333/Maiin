@@ -13,7 +13,12 @@
  * (`dailyNutrition`), because a lift day's target is not a rest day's. A
  * day with no snapshot is judged against nothing, and today is left out:
  * it is not over, and half a day of eating is not a miss.
+ *
+ * The days judged are food days (`foodDay.ts`), the days every screen
+ * counts: a day of a coffee and nothing else is not a day's eating, and
+ * judged it read as a day far under target.
  */
+import { isFoodDay } from "./foodDay";
 
 /** A day's target, as it stood that day. */
 export interface DayTarget {
@@ -35,16 +40,16 @@ export const MIN_WEEKEND_DAYS = 2;
 export const MIN_WEEKDAYS = 3;
 
 export interface FoodDaysReading {
-  /** Finished logged days with a calorie target, and how many were within
+  /** Finished food days with a calorie target, and how many were within
    *  the band of it. */
   calories: { onTarget: number; judged: number };
-  /** Finished logged days with a protein target, and how many met it. */
+  /** Finished food days with a protein target, and how many met it. */
   protein: { met: number; judged: number };
-  /** Average calories on logged weekend and weekdays, when there are
+  /** Average calories on weekend and weekday food days, when there are
    *  enough of each to compare. */
   weekendCalories: number | null;
   weekdayCalories: number | null;
-  /** Average protein a day over the finished logged days, or null before
+  /** Average protein a day over the finished food days, or null before
    *  there is one. The protein per kilogram row reads it, so it counts the
    *  same days as the rows beside it. */
   averageProtein: number | null;
@@ -82,8 +87,8 @@ export function foodDaysReading({
   const weekday: number[] = [];
   const dayProtein: number[] = [];
   for (const [date, day] of totals) {
-    // A day logged as nothing is a day not logged.
-    if (day.calories <= 0) continue;
+    // A day short of a food day is not a day of eating to judge.
+    if (!isFoodDay(day.calories)) continue;
     dayProtein.push(day.protein);
     const target = targets.get(date);
     if (target && target.calories > 0) {

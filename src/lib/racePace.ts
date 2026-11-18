@@ -8,7 +8,12 @@
  * It sits apart from `runPlanMetadata` so Home can read it without loading
  * the segment builders and their cue copy.
  */
-import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import {
+  getPhaseForWeek,
+  isTrailRace,
+  isUltraDistance,
+} from "@/features/program/runPlanTiming";
+import type { RaceDistance } from "@/features/program/programTypes";
 import type { RunPlan } from "@/features/program/runScheduler";
 import {
   paceTableFromFitness,
@@ -147,6 +152,9 @@ export function racePaceBlockKm(
  *   a half or marathon plan, once the run is 12 km or more, so it holds an
  *   easy majority and a block worth running. A taper long run stays easy
  *   (the taper cuts load).
+ * - `blocks`: a long run's blocks at the goal pace (Run24 (5)), the
+ *   session of its own a later build week holds in place of a plain long
+ *   run (`racePaceBlocks`).
  * - `tempo`: a tempo run's blocks at the goal pace, in place of the pace
  *   the runner's fitness would set: every taper tempo (race rhythm is what
  *   the taper's sharpening is for), and in the build every other one
@@ -163,7 +171,11 @@ export type RacePaceWork =
       /** Absent reads as a typed goal time. */
       source?: RacePaceSource;
     }
-  | { kind: "tempo"; goalPaceS: number; source?: RacePaceSource };
+  | { kind: "tempo"; goalPaceS: number; source?: RacePaceSource }
+  /** Run24 (5): a long run's blocks at race pace (`racePaceBlocks`), the
+   *  session the plan holds in place of a plain long run in a later build
+   *  week. */
+  | { kind: "blocks"; goalPaceS: number; source?: RacePaceSource };
 
 /**
  * Whether a build week's tempo runs at race pace (Run24 (9), deep dive D12):
@@ -193,6 +205,14 @@ export function racePaceWork(
       ? { kind: "tempo", goalPaceS: race.goalPaceS, source: race.source }
       : null;
   }
+  // Run24 (5): a long run with race-pace blocks runs them at its own
+  // race's pace, and never finishes at it as well. The plan holds one only
+  // in a build week, so its phase is not asked.
+  const blocks = tmpl.config.racePaceBlocks;
+  if (blocks)
+    return blocks.race === race.distance
+      ? { kind: "blocks", goalPaceS: race.goalPaceS, source: race.source }
+      : null;
   const km = tmpl.config.targetDistanceKm ?? 0;
   if (tmpl.type !== "long" || race.phase !== "build" || km < 12) return null;
   return {
@@ -207,8 +227,9 @@ export function racePaceWork(
 export interface RaceTargetProfile {
   runMode?: string | null;
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetTimeS?: number;
+    climbM?: number;
   } | null;
   runFitness?: RunFitnessInput | null;
 }
@@ -226,6 +247,9 @@ export function raceTargetFromProfile(
 ): RaceTarget | null {
   const goal = profile?.raceGoal;
   if (!goal) return null;
+  // Run26 (2): an ultra, and a race over hills, are run by effort: there is
+  // no race pace to train at.
+  if (isUltraDistance(goal.distance) || isTrailRace(goal)) return null;
   if (!goal.targetTimeS) {
     // Run24 (9): a marathon with no goal time runs its race-pace work at
     // the middle of the marathon band a confirmed benchmark gives

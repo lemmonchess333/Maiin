@@ -32,7 +32,8 @@ import { roleRepsFor } from "../roleTable";
 import { exerciseRole } from "../exerciseRole";
 import { represcribeWorkouts } from "../represcribe";
 import { getExerciseById } from "@/lib/exercises";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { liftIndexForDayOfWeek, type ScheduleDay } from "@/lib/scheduleUtils";
+import { longRunDayOf } from "../runPlacement";
 
 /** Lifts Monday, Thursday and Friday; runs Tuesday, Wednesday and Saturday
  *  (day 0 is Sunday). */
@@ -484,6 +485,87 @@ describe("buildPlan · lift programme", () => {
   });
 });
 
+/* ─── Run27 (19): the day before an ultra's back-to-back ───── */
+
+describe("buildPlan · no heavy legs the day before an ultra's back-to-back", () => {
+  /** An ultra 20 weeks out: its default week runs both weekend days, the
+   *  long run Sunday and the back-to-back beside it Saturday. */
+  const ultra = (over: Partial<PlanBuilderInput> = {}) =>
+    makeInput({
+      runMode: "race_prep",
+      weeklyRunDays: 4,
+      raceGoal: { distance: "50k", targetDate: "2026-10-03" },
+      ...over,
+    });
+  const FRIDAY = 5;
+  const SATURDAY = 6;
+  const onDay = (out: ReturnType<typeof buildPlan>, day: number) => {
+    const at = liftIndexForDayOfWeek(out.weekSchedule, day);
+    return at >= 0 ? out.programState.workouts[at] : null;
+  };
+  const heavyLegs = (day: ReturnType<typeof onDay>) =>
+    !!day?.exercises.some((e) => !e.isAccessory && loadsTheLegs(e));
+
+  it("puts an upper session on Friday and nothing on Saturday", () => {
+    const out = buildPlan(ultra());
+    expect(longRunDayOf(out.weekSchedule)).toBe(0);
+    expect(out.weekSchedule[SATURDAY].type).toBe("run");
+    expect(onDay(out, SATURDAY)).toBeNull();
+    const friday = onDay(out, FRIDAY);
+    expect(friday).not.toBeNull();
+    expect(friday!.exercises.some(loadsTheLegs)).toBe(false);
+  });
+
+  it("holds for every goal, level and kit on four and five lift days", () => {
+    const clashes: string[] = [];
+    for (const primaryGoal of [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "general",
+      "running",
+    ] as const)
+      for (const experience of [
+        "beginner",
+        "intermediate",
+        "advanced",
+      ] as const)
+        for (const equipment of ["full_gym", "home_gym", "minimal"] as const)
+          for (const liftDays of [4, 5])
+            for (const weeklyRunDays of [4, 5, 6]) {
+              const out = buildPlan(
+                ultra({
+                  primaryGoal,
+                  experience,
+                  equipment,
+                  liftDays,
+                  weeklyRunDays,
+                  preferredSplit: "auto",
+                })
+              );
+              if (onDay(out, SATURDAY) || heavyLegs(onDay(out, FRIDAY)))
+                clashes.push(
+                  `${primaryGoal} ${experience} ${equipment} ${liftDays}+${weeklyRunDays}`
+                );
+            }
+    expect(clashes).toEqual([]);
+  });
+
+  it("leaves a marathon's Friday on the same week as it was", () => {
+    // The ultra's week, kept for a marathon: its long run is Sunday and
+    // Saturday's run an easy one, so Friday is no long run's eve.
+    const week = buildPlan(ultra()).weekSchedule;
+    const out = buildPlan(
+      ultra({
+        raceGoal: { distance: "marathon", targetDate: "2026-10-03" },
+        weekSchedule: week,
+      })
+    );
+    expect(out.weekSchedule).toEqual(week);
+    expect(heavyLegs(onDay(out, FRIDAY))).toBe(true);
+  });
+});
+
 /* ─── validatePlanOutput ─────────────────────────────────────── */
 
 describe("validatePlanOutput", () => {
@@ -636,7 +718,6 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     durationWeeks: 8 as const,
     startDate: "2026-08-01",
     goalBefore: "hypertrophy" as const,
-    amnestyWeeksLeft: 3,
     weeklyLiftTarget: 4,
     anchorExerciseIds: ["squat"],
     why: "",
@@ -1184,7 +1265,6 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
         durationWeeks: 8,
         startDate: "2026-05-11",
         goalBefore: "hypertrophy",
-        amnestyWeeksLeft: 0,
       } as ProgramState["trainingBlock"],
     };
     const edited = buildPlan(

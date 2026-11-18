@@ -11,6 +11,7 @@ import {
   isRunWalkTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
+  sameTimeOnFeetFamily,
   RUN_WALK_TEMPLATE_IDS,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
@@ -233,6 +234,10 @@ export function newRunnerTemplate(
       !isRunWalkTemplateId(t.id) &&
       !RETIRED_RUN_TEMPLATE_IDS.has(t.id) &&
       !t.config.timeTrial &&
+      // Run26 (2): time on feet stays time on feet, a back-to-back a
+      // back-to-back, and no other run becomes either.
+      (sameTimeOnFeetFamily(original, t) ||
+        (!t.config.timeOnFeet && t.type === "easy")) &&
       minutes(t) <= most
   ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
   const rungs = qualityRungsFor(original);
@@ -241,9 +246,15 @@ export function newRunnerTemplate(
       rungs !== null
         ? rungs.includes(t.id)
         : t.type === original.type &&
-          Boolean(t.config.strides) === Boolean(original.config.strides)
+          Boolean(t.config.strides) === Boolean(original.config.strides) &&
+          // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+          Boolean(t.config.pickUps) === Boolean(original.config.pickUps) &&
+          // Run24 (5): nor does a plain long run gain race-pace blocks.
+          !t.config.racePaceBlocks
     ) ??
-    fitting.find((t) => t.type === "easy" && !t.config.strides) ??
+    fitting.find(
+      (t) => t.type === "easy" && !t.config.strides && !t.config.pickUps
+    ) ??
     null
   );
 }

@@ -15,6 +15,13 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import {
+  liftFinishAtOpen,
+  liftFinishTransition,
+  liftFinishView,
+  type LiftFinish,
+  type LiftFinishEvent,
+} from "@/lib/liftFinish";
 import { formatClock, formatDayMonthYear } from "@/utils/formatters";
 import {
   showsRpeByDefault,
@@ -41,7 +48,8 @@ import {
 } from "lucide-react";
 import type { Exercise } from "@/lib/exercises";
 import { exerciseAddedToday } from "@/features/program/sessionAdd";
-import { accountStartMs } from "@/lib/startDay";
+import { accountStartMs, startDayKey } from "@/lib/startDay";
+import AnniversaryGate from "@/components/workout/AnniversaryGate";
 import {
   cursorAfterRemoval,
   isAddedToday,
@@ -194,6 +202,9 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useLiftLiveActivity } from "@/hooks/useLiftLiveActivity";
+import { sessionLeadArt } from "@/lib/formArtCutouts";
+import { liftArtFor } from "@/lib/liveActivityArt";
 // An exercise's menu (swap, skip, superset), loaded when it is first
 // opened: the workout screen's chunk has no room to spare.
 const ExerciseMenuSheet = lazyRetry(
@@ -302,6 +313,11 @@ function weightToCheckAgainst(
   );
 }
 
+/** The newest saved workouts a session reads to start its rows from last
+ *  time. A read short of it holds every session, and the best-lift map is
+ *  built from it rather than read again (`loadLiftRecords`). */
+const RECENT_WORKOUTS = 50;
+
 /** How long a new best stays on screen: past the undo window (4 s), so
  *  the lifter can look up from the bar and still catch it. */
 const NEW_BEST_MOMENT_MS = 6000;
@@ -359,6 +375,9 @@ interface Props {
   onClose: () => void;
   /** Open the exact saved record returned by the completion writer. */
   onViewWorkout?: (workoutId: string) => void;
+  /** Open the food log for a recovery meal (`recoveryFoodPath`), offered
+   *  once the session is saved, as after a run (App1 Q30). */
+  onLogFood?: () => void;
   /** The account has never finished a workout: the guide's first-set hint
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
@@ -387,6 +406,7 @@ export default function WorkoutSession({
   onCompleteDay,
   onClose,
   onViewWorkout,
+  onLogFood,
   firstWorkout = false,
   hardRunBefore,
   resumeDraft = false,
@@ -395,7 +415,7 @@ export default function WorkoutSession({
   // Loads are stored in kg; the lifter reads and types them in this unit.
   const liftUnit = useLiftUnit();
   const [initialDay] = useState(incomingDay);
-  const { awardEventBadge, awardEventBadges, streakWithDay } = useStreaks();
+  const { streakWithDay } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
   // are positional over day.exercises, so a draft from a different
@@ -477,9 +497,6 @@ export default function WorkoutSession({
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
-  // CIRCLE-SESSION-01 — explicit Circle share from the completion
-  // screen. The sheet mounts ONLY while open so its Circle reads
-  // never fire unless the user taps "Share to circle".
   const resumeCursor = initialDraft
     ? nextIncompleteSet(initialDraft.setLogs, initialDraft.currentExIndex)
     : null;
@@ -578,12 +595,31 @@ export default function WorkoutSession({
     Record<number, { weight: number; reps: number }[]>
   >({});
   const notesInputRef = useRef<HTMLInputElement>(null);
-  const completionPendingRef = useRef(initialDraft?.completionPending ?? false);
-  /* The same flag as state, for what the screen draws (the finish screen's
-     Edit): the ref serves the handlers that must see it synchronously. */
-  const [completionPending, setCompletionPending] = useState(
-    initialDraft?.completionPending ?? false
+  /* Finishing and saving, as one state (`liftFinish.ts`, App1 Q20). The
+     ref is the same value for the handlers that must see a change before
+     the next render; `sendFinish` is the one place either is written, so
+     they cannot disagree. */
+  const [finish, setFinish] = useState<LiftFinish>(() =>
+    liftFinishAtOpen(initialDraft?.completionPending ?? false)
   );
+  const finishRef = useRef(finish);
+  const sendFinish = useCallback((event: LiftFinishEvent): LiftFinish => {
+    const next = liftFinishTransition(finishRef.current, event);
+    if (next !== finishRef.current) {
+      finishRef.current = next;
+      setFinish(next);
+    }
+    return next;
+  }, []);
+  /* What the screen draws, read from that one state. */
+  const {
+    finishScreen: sessionComplete,
+    completing,
+    saved,
+    saveStatus,
+    locked: completionPending,
+    workoutId: savedWorkoutId,
+  } = liftFinishView(finish);
   /* The set whose type sheet is open: tapping a set's badge opens it, as
      tapping the set number does in Hevy and MacroFactor. */
   const [typeSheet, setTypeSheet] = useState<number | null>(null);
@@ -677,7 +713,7 @@ export default function WorkoutSession({
       // The 50 newest workouts, including one finished on this phone that
       // has not synced yet: it is the last session even offline.
       if (recentWorkoutsRef.current?.uid !== uid) {
-        const read = fetchSavedWorkouts(uid, { latest: 50 });
+        const read = fetchSavedWorkouts(uid, { latest: RECENT_WORKOUTS });
         recentWorkoutsRef.current = { uid, read };
         read.catch(() => {
           if (recentWorkoutsRef.current?.read === read)
@@ -745,7 +781,10 @@ export default function WorkoutSession({
       // again, and the bests already set this session went with it.
       if (loadedRecordsRef.current) return;
       try {
-        const records = await loadLiftRecords(uid, recent);
+        const records = await loadLiftRecords(uid, {
+          workouts: recent,
+          latest: RECENT_WORKOUTS,
+        });
         loadedRecordsRef.current = records;
         recordBaseline.current = records.map;
         setSessionCounts(records.sessionCounts);
@@ -837,7 +876,7 @@ export default function WorkoutSession({
       !hasEnteredValues.current
     )
       return;
-    if (completionPendingRef.current) return;
+    if (liftFinishView(finishRef.current).locked) return;
     const stored = saveDraft({
       dayIndex,
       dayName: day.dayName,
@@ -889,7 +928,11 @@ export default function WorkoutSession({
       // the time this runs.
       queueMicrotask(() => {
         if (onScreen.current) return;
-        if (!hasRecoveryDraft.current || completionPendingRef.current) return;
+        if (
+          !hasRecoveryDraft.current ||
+          liftFinishView(finishRef.current).locked
+        )
+          return;
         if (!sessionUid || auth.currentUser?.uid !== sessionUid) return;
         // A programme day's and a routine's alike: both are offered back.
         toast.message("Workout kept", {
@@ -938,10 +981,6 @@ export default function WorkoutSession({
     };
   }, []);
 
-  // Session state
-  const [sessionComplete, setSessionComplete] = useState(
-    initialDraft?.completionPending ?? false
-  );
   /* Lift16: a set far past today's plan or the best for its reps waits
      for a yes. Kept after the question closes so the dialog's words
      hold while it animates out. */
@@ -951,18 +990,12 @@ export default function WorkoutSession({
     warn: SetValidationWarn;
   } | null>(null);
   const [askingJump, setAskingJump] = useState(false);
-  const [completing, setCompleting] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [savedWorkoutId, setSavedWorkoutId] = useState<string | null>(null);
   /* What the saved session's post says happened: the finish screen's
      reward or summary is picked from it (DS4 call 3). */
   const [finishMoments, setFinishMoments] = useState<PostMoment[] | null>(null);
   /* The first workout on an account that has run before: a first on the
      finish screen, though its post claims none. */
   const [finishFirstOfSport, setFinishFirstOfSport] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<
-    "queued" | "synced" | "needs-attention" | undefined
-  >(initialDraft?.completionPending ? "needs-attention" : undefined);
   const [shareAction, setShareAction] = useState<
     SessionShareAction | undefined
   >();
@@ -999,9 +1032,7 @@ export default function WorkoutSession({
         )
           return;
         clearDraft(initialDraft.completionId);
-        setSavedWorkoutId(snapshot.id);
-        setSaved(true);
-        setSaveStatus("synced");
+        sendFinish({ type: "acknowledged", workoutId: snapshot.id });
       } catch {
         // A missing server acknowledgement never removes the recovery copy.
       }
@@ -1009,7 +1040,7 @@ export default function WorkoutSession({
     return () => {
       cancelled = true;
     };
-  }, [initialDraft, user?.uid, draftScope, clearDraft]);
+  }, [initialDraft, user?.uid, draftScope, clearDraft, sendFinish]);
 
   /**
    * End the session — stamp its duration, THEN show the complete screen.
@@ -1031,8 +1062,8 @@ export default function WorkoutSession({
       // zero for sessions without a clock and estimates their duration.
       Math.max(1, (Date.now() - sessionStartedAt) / 1000) / 60
     );
-    setSessionComplete(true);
-  }, [sessionStartedAt]);
+    sendFinish({ type: "finish" });
+  }, [sessionStartedAt, sendFinish]);
 
   // Undo last set. PR E: extended with optional PR-context so undo
   // can revert the prMap mutation AND firedPRs entry, not just the
@@ -1129,7 +1160,7 @@ export default function WorkoutSession({
      set, which ticking a set has already moved on, to the next exercise
      once this one is done or round a superset. A warm-up passed over is
      not it. */
-  const restNext = (() => {
+  const cursorSet = (() => {
     const at = isSetOutstanding(currentSets, currentSetIndex)
       ? { exerciseIndex: safeExIndex, setIndex: currentSetIndex }
       : nextIncompleteSet(setLogs, safeExIndex);
@@ -1137,12 +1168,47 @@ export default function WorkoutSession({
     const sets = at ? setLogs[at.exerciseIndex] : undefined;
     const set = at && sets ? sets[at.setIndex] : undefined;
     if (!at || !exercise || !sets || !set) return undefined;
-    return {
-      exerciseId: exercise.exerciseId,
-      name: setName(sets, at.setIndex),
-      load: nextSetLoad(set, exercise, liftUnit),
-    };
+    return { exercise, sets, set, setIndex: at.setIndex };
   })();
+  const restNext = cursorSet
+    ? {
+        exerciseId: cursorSet.exercise.exerciseId,
+        name: setName(cursorSet.sets, cursorSet.setIndex),
+        load: nextSetLoad(cursorSet.set, cursorSet.exercise, liftUnit),
+      }
+    : undefined;
+
+  /* The lift's Live Activity (Wid2 call 2): the session's drawing and the
+     set the cursor is on, from the first set to the finish, which takes
+     it away at once. A rest reaches it from the rest band. */
+  const leadArt = useMemo(
+    () => liftArtFor(sessionLeadArt(day.exercises)?.cutout.src),
+    [day.exercises]
+  );
+  const cursorTotal = cursorSet
+    ? setCounts(cursorSet.sets, cursorSet.setIndex).total
+    : 0;
+  const cursorOrdinal = cursorSet
+    ? setOrdinal(cursorSet.sets, cursorSet.setIndex)
+    : 0;
+  useLiftLiveActivity(
+    sessionComplete || day.exercises.length === 0
+      ? null
+      : {
+          name: dayLabel ?? liftDayLine(sessionName),
+          art: leadArt,
+          set:
+            cursorSet && restNext
+              ? {
+                  exerciseName: cursorSet.exercise.name,
+                  setLabel: `${restNext.name} of ${cursorTotal}`,
+                  load: restNext.load,
+                  fact: `${cursorOrdinal}/${cursorTotal}`,
+                }
+              : null,
+          setsDone: totalSetsCompleted,
+        }
+  );
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -1237,7 +1303,7 @@ export default function WorkoutSession({
   const changeSetType = (exIdx: number, setIdx: number, type: SetType) => {
     const set = setLogs[exIdx]?.[setIdx];
     if (!set || set.type === type) return;
-    if (set.completed && (completionPendingRef.current || saved)) return;
+    if (set.completed && liftFinishView(finishRef.current).locked) return;
     hasEnteredValues.current = true;
     const next = setLogs.map((sets, ei) =>
       sets.map((entry, si) =>
@@ -1624,7 +1690,7 @@ export default function WorkoutSession({
     values: { weight: number; reps: number },
     confirmed: boolean
   ): Promise<SetValidationWarn | undefined> => {
-    if (!editingSet || completionPendingRef.current || saved)
+    if (!editingSet || liftFinishView(finishRef.current).locked)
       throw new Error("This workout is already being saved.");
     const correctionUid = user?.uid;
     const { exIdx, setIdx } = editingSet;
@@ -1683,7 +1749,7 @@ export default function WorkoutSession({
     setCurrentExIndex(exIdx);
     setCurrentSetIndex(setIdx);
     stopRest();
-    if (sessionComplete) setSessionComplete(false);
+    sendFinish({ type: "edit" });
     setLastCompleted(null);
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
   };
@@ -1930,9 +1996,9 @@ export default function WorkoutSession({
     };
   };
 
-  const finishPending = useRef(false);
   const handleFinish = async (decided?: SessionPrescription) => {
-    if (finishPending.current || saved) return;
+    // Nothing to save, or a save already running or done.
+    if (!liftFinishView(finishRef.current).canSave) return;
     const finishing = decided ?? prescription;
     // Asked once, before the save: whether to keep today's swaps.
     const asks = swapsToAsk(finishing);
@@ -1946,16 +2012,13 @@ export default function WorkoutSession({
       });
       return;
     }
-    finishPending.current = true;
-    setCompleting(true);
+    sendFinish({ type: "save" });
     const completionUid = user?.uid;
     // Keep the baseline paired with this render's PR map. History arriving
     // while the save awaits must not make its older map look complete.
     const loadedRecords = loadedRecordsRef.current;
 
     try {
-      completionPendingRef.current = true;
-      setCompletionPending(true);
       const recoveryStored = saveDraft({
         dayIndex,
         dayName: day.dayName,
@@ -1979,8 +2042,8 @@ export default function WorkoutSession({
       // The stable completionId makes a retry target the SAME workout doc.
       // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
       // for why this boundary matters and why it lives in a pure module.
-      // Computed once: the command carries it, and the Plate-Club check
-      // below scores exactly what the server will build from it.
+      // The server's Plate-Club badge scores the workout it builds from
+      // these same sets.
       const completionLogs = toCompletionSetLogs(setLogs);
       const receipt = await onCompleteDay(dayIndex, {
         completionId: completionIdRef.current,
@@ -2003,48 +2066,27 @@ export default function WorkoutSession({
       });
 
       // A callback from an outgoing account must never recreate its draft
-      // after sign-out, mark the next user's session saved, or award a badge.
+      // after sign-out or mark the next user's session saved.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
-      setSavedWorkoutId(receipt.workoutId);
       setFinishMoments(receipt.moments ?? null);
       setFinishFirstOfSport(isFirstOfSport(earlierSessionRef.current, "lift"));
       const queuedReceipt =
         receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
         clearDraft(completionIdRef.current);
-        setSaved(true);
-        setSaveStatus("synced");
-        if (firedPRs.size > 0) awardEventBadge("first_pr");
-        // Plate-Club (60 / 100 / 140 kg on a compound) is decided here, on
-        // the same completed sets the command just carried, so the seal
-        // cracks now rather than after onWorkoutCreated's round-trip —
-        // which was long enough for the owner to have left the screen. The
-        // server still awards it; the transaction behind awardEventBadges
-        // makes the second arrival a no-op whichever side that is. The
-        // rule loads on its own, after the save: nothing waits for it.
-        const exercises = day.exercises;
-        void import("@/features/streaks/liftWeightMilestones").then(
-          ({ exercisesForLiftBadges, liftWeightMilestoneBadges }) => {
-            if (completionUid && auth.currentUser?.uid !== completionUid)
-              return;
-            const lifts = liftWeightMilestoneBadges(
-              exercisesForLiftBadges(exercises, completionLogs)
-            );
-            if (lifts.length > 0) awardEventBadges(lifts);
-          }
-        );
+        sendFinish({ type: "acknowledged", workoutId: receipt.workoutId });
+        // The badges this workout earns (first_pr from its new bests, the
+        // Plate Club from its heaviest compound set, and the rest) are the
+        // server's to award once it is saved (App1 Q33, onWorkoutCreated);
+        // the reveal comes from its record.
       };
       if (queuedReceipt) {
-        setSaved(true);
-        setSaveStatus("queued");
+        sendFinish({ type: "savedLocally", workoutId: receipt.workoutId });
         void queuedReceipt.then((outcome) => {
           if (completionUid && auth.currentUser?.uid !== completionUid) return;
           if (outcome === "synced") acknowledge();
-          else {
-            setSaved(false);
-            setSaveStatus("needs-attention");
+          else if (sendFinish({ type: "failed" }).kind === "needsAttention")
             setShareAction(undefined);
-          }
         });
       } else acknowledge();
 
@@ -2102,13 +2144,16 @@ export default function WorkoutSession({
       // the session, or mint a new completion id — the user taps the (now
       // re-enabled) Save button again and hits the exact same workout doc.
       logger.error("[WorkoutSession] finish failed:", error);
-      setSaveStatus("needs-attention");
-      toast.error(
-        "Couldn’t save your workout. Your completed session is still here, so try again."
-      );
+      // Said only when it is so: a read on reopening may have found the
+      // workout on the server while this attempt was failing.
+      if (sendFinish({ type: "failed" }).kind === "needsAttention")
+        toast.error(
+          "Couldn’t save your workout. Your completed session is still here, so try again."
+        );
     } finally {
-      finishPending.current = false;
-      setCompleting(false);
+      // A save that came back to no answer (the account changed under
+      // it) is not left running: it waits for a retry.
+      if (finishRef.current.kind === "saving") sendFinish({ type: "failed" });
     }
   };
 
@@ -2141,8 +2186,6 @@ export default function WorkoutSession({
     setOriginalStartedAt(freshStart);
     stopRest();
     clearDraft();
-    completionPendingRef.current = false;
-    setCompletionPending(false);
     setShowResumePrompt(false);
   };
 
@@ -2212,7 +2255,7 @@ export default function WorkoutSession({
           share={shareAction}
           onFinish={() => void handleFinish()}
           onEdit={
-            !completionPending ? () => setSessionComplete(false) : undefined
+            !completionPending ? () => sendFinish({ type: "edit" }) : undefined
           }
           startedAt={originalStartedAt}
           onChangeStart={!completionPending ? changeStart : undefined}
@@ -2233,6 +2276,7 @@ export default function WorkoutSession({
               ? () => onViewWorkout(savedWorkoutId)
               : undefined
           }
+          onLogFood={onLogFood}
         />
         <KeepSwapSheet
           open={keepQuestion.open}
@@ -2242,6 +2286,26 @@ export default function WorkoutSession({
             setKeepQuestion((question) => ({ ...question, open: false }))
           }
         />
+        {/* The 50th or 100th session, or a year of Tropos, full screen
+            over the saved finish (App1 Q58). */}
+        {user?.uid && (
+          <AnniversaryGate
+            uid={user.uid}
+            session={
+              saved && savedWorkoutId
+                ? {
+                    id: savedWorkoutId,
+                    sport: "lift",
+                    day: sessionDay,
+                    counts: true,
+                    metres: 0,
+                  }
+                : null
+            }
+            startDay={startDayKey(profile?.createdAt)}
+            held={keepQuestion.open}
+          />
+        )}
       </Suspense>
     );
   }

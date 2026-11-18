@@ -130,7 +130,6 @@ beforeEach(() => {
       currentPhase: "base",
       splitType: "full_body",
       workouts: [],
-      fatigueScore: 0,
       updatedAt: 1,
     } as ProgramState,
     h.profile as unknown as UserProfile,

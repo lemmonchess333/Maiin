@@ -117,11 +117,13 @@ function withHold(run: GPSPoint[], at: number, heldMs: number): GPSPoint[] {
 }
 
 describe("moving time (property-based)", () => {
-  it("a hold of any length, anywhere, changes no split and no best effort", () => {
-    /* The runner stood still; nothing was recorded. Splits and best
-       efforts are about running, so they must come out exactly as if the
-       stop never happened — on the wall clock (the old code) every split
-       and effort spanning it grew by the whole hold. */
+  it("a hold of any length, anywhere, changes no split; a best effort is on the wall clock", () => {
+    /* The runner stood still; nothing was recorded. Splits are about
+       running, so they come out exactly as if the stop never happened.
+       Best efforts are on elapsed time (Run28 call 3), as Strava's are: a
+       hold inside one counts in its time, so the held run's efforts are
+       those of the same fixes with no hold marked, and none is faster
+       than the run without the stop. */
     const rnd = mulberry32(912);
     for (let i = 0; i < 300; i++) {
       const run = genRun(rnd, 400 + Math.floor(rnd() * 3000));
@@ -140,12 +142,15 @@ describe("moving time (property-based)", () => {
       });
       const d = totalDistance(run);
       expect(totalDistance(held)).toBeCloseTo(d, 6);
+      const unmarked = held.map(({ pausedMs: _held, ...p }) => p);
       expect(detectBestEfforts(held, d)).toEqual(
-        detectBestEfforts(run, d).map((e) => ({
-          ...e,
-          time: expect.closeTo(e.time, 6),
-        }))
+        detectBestEfforts(unmarked, d)
       );
+      const stopless = detectBestEfforts(run, d);
+      detectBestEfforts(held, d).forEach((e, k) => {
+        expect(e.label).toBe(stopless[k].label);
+        expect(e.time).toBeGreaterThanOrEqual(stopless[k].time - 1e-6);
+      });
     }
   });
 });

@@ -523,8 +523,17 @@ select.ds-input:focus {
   align-self: end;
   padding-right: min(var(--signin-clear), var(--signin-room));
 }
+/* The lifter's box has a width of its own: the flipbook's frame at 176px
+   tall, 121px (SignInFigure.test.tsx holds the two together). The grid's
+   auto column takes its width from this box, and must never ask the
+   drawing for it: the drawing is a box with an aspect ratio and a
+   percentage max-width (HeroMotion), and Safari's engine counts such a box
+   as 0px wide when a column measures it. On iPhone the column then closed
+   to nothing and only the light showed, as a sliver at the screen's
+   right edge. Both lengths go to nothing with `--signin-room`. */
 .signin-figure {
   position: relative;
+  width: min(121px, var(--signin-room));
   height: min(176px, var(--signin-room));
   display: flex;
   justify-content: center;
@@ -650,13 +659,6 @@ html.launching [data-brand-mark] {
   opacity: 0;
 }
 
-/* While the first-visit guide's mark is out of Home's header, leading the
-   walk (GuideWalk), the header shows none: the page has one mark, and it
-   is the one that is talking. */
-html.guiding [data-brand-mark] {
-  opacity: 0;
-}
-
 /* The white anatomical drawings keep their exact source palette. A small
    neutral edge shadow helps them read on light cards, including list-size
    cutouts; dark surfaces already provide the needed silhouette contrast. */
@@ -739,6 +741,13 @@ html.guiding [data-brand-mark] {
    two rows. */
 .ds-display-figure.ds-display-rest {
   font-size: clamp(64px, 18vw, 72px);
+}
+
+/* The run's 3-2-1 (Run27 (1), StartCountdown): one digit on the run
+   screen's dark stage, its one display element, at the top of the
+   register's 120 px on a 393 px phone and 96 px on a 320 px one. */
+.ds-display-figure.ds-display-countdown {
+  font-size: clamp(96px, 32vw, 120px);
 }
 
 /* The finish screen's reward light (DS4 §14m rules 13, 14, 31): one hue,

@@ -55,18 +55,21 @@ export interface SessionLift {
 /**
  * The map as a session starts with it.
  *
- * A stored map wins over a rebuild, because it only ever ratchets: a
- * rebuild from the recent window that misses the person's real best would
- * celebrate a lift worse than one they have already logged. So the window
- * fills in only the pieces a legacy map lacks. A stale map is rebuilt
- * whole, from the whole history.
+ * A stored map wins over a rebuild, because it only ever ratchets. Any
+ * piece it lacks (no map yet, or a legacy one) is built from the whole
+ * history, as a stale map is: built from the newest 50 sessions alone, it
+ * could miss the person's real best and celebrate a lift worse than one
+ * Bests lists (App1 Q15: what is celebrated is the record Bests shows). A
+ * complete stored map reads nothing more.
  *
  * `recent` is the newest saved workouts, which the session has already
- * read to prefill its weights.
+ * read to prefill its weights, and the `latest` it read them with. A read
+ * that came back short of its limit holds every session (a new account's
+ * does), so it is the history and nothing more is read.
  */
 export async function loadLiftRecords(
   uid: string,
-  recent: readonly Workout[]
+  recent?: { workouts: readonly Workout[]; latest: number }
 ): Promise<LiftRecords> {
   let stored: Partial<LiftRecords> & { invalidated?: boolean } = {};
   try {
@@ -87,9 +90,11 @@ export async function loadLiftRecords(
     };
   }
 
-  const history = (
-    stale ? await fetchSavedWorkouts(uid, { all: true }) : recent
-  ).map(projectForRecords);
+  const whole =
+    recent && recent.workouts.length < recent.latest
+      ? recent.workouts
+      : await fetchSavedWorkouts(uid, { all: true });
+  const history = whole.map(projectForRecords);
   return {
     map: kept.map ?? buildPRMap(history),
     sessionCounts: kept.sessionCounts ?? countSessions(history),

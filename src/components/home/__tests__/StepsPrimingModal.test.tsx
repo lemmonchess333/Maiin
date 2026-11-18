@@ -13,8 +13,14 @@ describe("StepsPrimingModal", function () {
     );
 
     expect(
-      screen.getByRole("dialog", { name: "Count your steps" })
+      screen.getByRole("dialog", { name: "Check your activity level" })
     ).toBeInTheDocument();
+    // It says what the steps are for: the offer on Food (Q31), not a
+    // count on Home, which went with the steps tile.
+    expect(
+      screen.getByText(/compares a week of your steps in Apple Health/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/on Home/)).toBeNull();
     // "Connect", not "Connect Apple Health": the long label wrapped onto
     // two lines in a half-width button at phone width, and the dialog's
     // description already names Apple Health.

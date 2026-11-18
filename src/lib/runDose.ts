@@ -1,4 +1,11 @@
-import { intervalRestSeconds, plannedRepeatPace } from "./intervalRest";
+import type { DistanceUnit } from "./distanceUnits";
+import {
+  intervalRestSeconds,
+  plannedIntervalPaceSPerKm,
+  plannedRepeatPace,
+} from "./intervalRest";
+import { distanceLabel } from "./runLabels";
+import { planningEasyPaceSPerKm, type RunFitnessInput } from "./runPaces";
 import type { RunTemplate } from "./workoutTemplates";
 
 type DoseTemplate = Pick<RunTemplate, "type" | "estimatedDuration" | "config">;
@@ -32,6 +39,22 @@ export function runMinutesLine(
   if (template.type !== "long" || !easyPaceSPerKm || !(easyPaceSPerKm > 0))
     return null;
   return `about ${Math.round((km * easyPaceSPerKm) / 60 / 5) * 5} min`;
+}
+
+/**
+ * The minutes a session with no distance takes, as its cards state them
+ * (`runMinutesLine`): an interval session's at the runner's own interval
+ * pace when a confirmed benchmark gives one, otherwise the template's.
+ * What a hot day's swap offers as an easy run (heatAdjustment.ts), so the
+ * easy run lasts as long as the session the card named.
+ */
+export function plannedSessionMinutes(
+  template: DoseTemplate,
+  intervalPaceSPerKm?: number | null
+): number {
+  return (
+    intervalMinutes(template, intervalPaceSPerKm) ?? template.estimatedDuration
+  );
 }
 
 /** An interval session's minutes at the runner's interval pace, its
@@ -71,4 +94,24 @@ export function runDoseLine(
   const km = template.config.targetDistanceKm;
   const minutes = runMinutesLine(template, easyPaceSPerKm, intervalPaceSPerKm);
   return km ? [`${km} km`, minutes].filter(Boolean).join(" · ") : minutes!;
+}
+
+/**
+ * A planned run's dose in the reader's unit, from their own paces: its
+ * distance in their unit and its minutes ("15 km · about 100 min"), or the
+ * minutes of a run with no distance (`runDoseLine`). Train's week and the
+ * weekly review's week ahead state a planned run this way.
+ */
+export function plannedRunDose(
+  template: DoseTemplate,
+  fitness: RunFitnessInput | null | undefined,
+  unit: DistanceUnit
+): string {
+  const easy = planningEasyPaceSPerKm(fitness);
+  const km = template.config.targetDistanceKm;
+  if (km)
+    return [distanceLabel(km * 1000, unit), runMinutesLine(template, easy)]
+      .filter(Boolean)
+      .join(" · ");
+  return runDoseLine(template, easy, plannedIntervalPaceSPerKm(fitness));
 }

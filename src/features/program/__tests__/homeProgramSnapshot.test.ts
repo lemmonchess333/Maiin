@@ -18,7 +18,6 @@ const clean = homeProgramSnapshot(
     currentPhase: "base",
     splitType: "full_body",
     workouts: [],
-    fatigueScore: 0,
     updatedAt: 1,
   } as ProgramState,
   profile,

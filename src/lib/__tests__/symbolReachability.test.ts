@@ -203,6 +203,11 @@ const KNOWN_ORPHAN_EXPORTS = [
   // that used to say so.
   "src/lib/backDismiss.ts:useBackDismissController",
 
+  // Staged seam: TrainWk1 builds the week's layout first, alone, and its
+  // step 2 has Home read it (the Train grill's Q52). The staleness guard
+  // evicts this entry when Home does.
+  "src/lib/layOutWeek.ts:layOutWeek",
+
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
@@ -211,7 +216,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/dataConfidence.ts:makeSuppressionBatch",
   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
   "src/lib/foodTrajectory.ts:computeTrajectory",
-  "src/lib/hrZones.ts:zoneDistribution",
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",

@@ -1,5 +1,14 @@
 import type { ScheduledRunDay } from "@/features/program/programTypes";
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import {
+  BACK_TO_BACK_MINUTES,
+  backToBackId,
+  RACE_PACE_LONG_LADDERS,
+  RUN_TEMPLATES,
+  sameTimeOnFeetFamily,
+  TIME_ON_FEET_LONG_MINUTES,
+  timeOnFeetLongId,
+  type RunTemplate,
+} from "@/lib/workoutTemplates";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -52,6 +61,8 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
   // easy — strides kept separate so a strides session stays a strides
   // session (the strides ARE the point; dropping them is a family change).
   ["easy_30_strides", "easy_40_strides", "easy_50_strides"],
+  // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+  ["easy_30_pickups", "easy_40_pickups", "easy_50_pickups"],
   ["tempo_20", "tempo_30", "tempo_40"],
   ["4x1k", "5x1k", "6x1k"],
   // Run24 (5): the session library's families, each a smaller dose of
@@ -83,6 +94,17 @@ export const DELOAD_LADDERS: readonly (readonly string[])[] = [
     "long_30k",
     "long_32k",
   ],
+  // Run24 (5): a long run with race-pace blocks steps down to a shorter
+  // one of its own race, and its first rung has nowhere to go.
+  RACE_PACE_LONG_LADDERS.marathon,
+  RACE_PACE_LONG_LADDERS.half,
+  // Run26 (2): a trail plan's climbs and downhill repeats, an ultra's or a
+  // trail race's long run in time on feet, and an ultra's back-to-back
+  // run, each a smaller dose of itself.
+  ["climbs_3x5min", "climbs_4x5min", "climbs_4x6min"],
+  ["downhill_5x60s", "downhill_6x90s", "downhill_6x2min"],
+  TIME_ON_FEET_LONG_MINUTES.map(timeOnFeetLongId),
+  BACK_TO_BACK_MINUTES.map(backToBackId),
 ];
 
 /**
@@ -121,6 +143,10 @@ function workKindOf(
     return `taper:${config.tempo ? "threshold" : config.repeatsAt}`;
   if (config.progression) return "progression";
   if (config.tempo) return "threshold";
+  // Run26 (2): climbs run comfortably hard and downhill repeats are their
+  // own work, never cut to hill repeats or a fartlek.
+  if (config.steadyClimbs) return "climbs";
+  if (config.downhill) return "downhill";
   if (config.uphill) return "hills";
   if (config.repeatsAt) return `repeats:${config.repeatsAt}`;
   return config.intervals ? "interval" : `other:${template.id}`;
@@ -142,6 +168,18 @@ export function shorteningRank(
   candidate: Pick<RunTemplate, "id" | "type" | "config">
 ): 0 | 1 | null {
   if (candidate.type !== original.type) return null;
+  // Run26 (2): time on feet stays time on feet, a back-to-back run a
+  // back-to-back run, and no other run becomes either.
+  if (!sameTimeOnFeetFamily(original, candidate)) return null;
+  // Run24 (5): a plain long run is never shortened to one with race-pace
+  // blocks; one with them to a shorter one of its own race first, else to
+  // a plain long run.
+  if (original.type === "long") {
+    const from = original.config.racePaceBlocks?.race ?? null;
+    const to = candidate.config.racePaceBlocks?.race ?? null;
+    if (to === null) return 0;
+    return to === from ? 1 : null;
+  }
   const kind = workKindOf(original);
   if (kind === null) return 0;
   if (workKindOf(candidate) !== kind) return null;
@@ -172,6 +210,16 @@ const longKmOf = (id: string): number | undefined => {
     ? template.config.targetDistanceKm
     : undefined;
 };
+/** Run26 (2): a long run in time on feet of 90 minutes or more steps down
+ *  30 minutes, about the 4 km a long run on the distance ladder steps at an
+ *  easy pace, and a shorter one 15, a rung. A Tropos heuristic. */
+const LONG_STEP_MINUTES = (minutes: number) => (minutes >= 90 ? 30 : 15);
+const longMinutesOf = (id: string): number | undefined => {
+  const template = RUN_TEMPLATES.find((t) => t.id === id);
+  return template?.type === "long" && template.config.timeOnFeet
+    ? template.config.targetDurationMinutes
+    : undefined;
+};
 
 /** The rung below `templateId`, or null when it is a floor / not laddered.
  *  A long run steps to the longest rung at or under its distance less
@@ -182,6 +230,15 @@ export function stepDownOneRung(templateId: string): string | null {
     const i = ladder.indexOf(templateId);
     if (i === 0) return null; // floor — nowhere below
     if (i < 0) continue;
+    const minutes = longMinutesOf(templateId);
+    if (minutes !== undefined) {
+      const target = minutes - LONG_STEP_MINUTES(minutes);
+      for (let j = i - 1; j >= 0; j--) {
+        const below = longMinutesOf(ladder[j]);
+        if (below !== undefined && below <= target) return ladder[j];
+      }
+      return ladder[0];
+    }
     const km = longKmOf(templateId);
     if (km === undefined) return ladder[i - 1];
     const target = km - LONG_STEP_KM(km);

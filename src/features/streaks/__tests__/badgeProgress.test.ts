@@ -1,11 +1,11 @@
 /**
- * Unit tests for badgeProgress.ts (the goal-gradient progress engine) + the
- * newly-earnable hybrid-frequency rules in badgeEarning.ts.
+ * Unit tests for badgeProgress.ts (the goal-gradient progress engine). The
+ * awards themselves are the server's (App1 Q33): functions/__tests__/
+ * badgeRules.test.js, pinned to these rings by badgeRules.cross.test.ts.
  */
 import { describe, it, expect } from "vitest";
 import { badgeProgress, nearestBadge } from "../badgeProgress";
-import { badgesToAward } from "../badgeEarning";
-import type { BadgeDef, EarnedBadge } from "../badges";
+import type { BadgeDef } from "../badges";
 
 // Local-midday anchor so date-fns `format` (local) is tz-stable.
 const TODAY = new Date(2026, 4, 20, 12, 0, 0); // 2026-05-20
@@ -206,34 +206,5 @@ describe("nearestBadge", () => {
     ];
     expect(nearestBadge(badges, ctx({ currentStreak: 0 }))).toBeNull();
     expect(nearestBadge(badges, ctx({ currentStreak: 9 }))).toBeNull();
-  });
-});
-
-describe("badgesToAward — hybrid-frequency badges (now earnable)", () => {
-  const badges = [
-    { id: "hybrid_athlete", earnedAt: null } as EarnedBadge,
-    { id: "iron_runner", earnedAt: null } as EarnedBadge,
-  ];
-
-  it("awards hybrid_athlete on a lift + a run within the week", () => {
-    const r = badgesToAward(badges, {
-      currentStreak: 0,
-      workouts: [liftOn("2026-05-20")],
-      runs: [runOn(19)],
-      today: TODAY,
-    });
-    expect(r).toContain("hybrid_athlete");
-    expect(r).not.toContain("iron_runner");
-  });
-
-  it("awards iron_runner with 3 lifts + 3 runs in the week", () => {
-    const r = badgesToAward(badges, {
-      currentStreak: 0,
-      workouts: ["2026-05-20", "2026-05-19", "2026-05-18"].map(liftOn),
-      runs: [20, 19, 18].map(runOn),
-      today: TODAY,
-    });
-    expect(r).toContain("iron_runner");
-    expect(r).toContain("hybrid_athlete");
   });
 });

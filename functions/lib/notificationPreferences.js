@@ -17,7 +17,11 @@
  *
  * `createNotification` (socialFanout.js) reads `users/{uid}.
  * notificationPreferences` and writes nothing for a kind that is off: a
- * switch that only hid the row would still let the row arrive.
+ * switch that only hid the row would still let the row arrive. The same
+ * switch decides the push (App1 Q18, socialPush.js): comments, follow
+ * requests, invites, league results and a meet-up's reminder (Run27 call
+ * 10) push as their row is written, and props come together once a day;
+ * the other kinds stay in the tray.
  *
  * The client keeps a copy of the switches and their defaults in
  * src/lib/notificationPreferences.ts so Settings shows what this file will
@@ -72,6 +76,13 @@ const CATEGORY_BY_TYPE = Object.freeze({
   circle_needs_support: "circles",
   circle_joined: "circles",
   circle_routine_shared: "circles",
+  // Run26 call 4: a meet-up planned in your Circle, or one you were in for
+  // called off. News from a Circle, so the Circles switch carries it.
+  circle_meetup: "circles",
+  circle_meetup_cancelled: "circles",
+  // Run27 call 10: a meet-up you're in starts in about 24 hours. The same
+  // switch, so turning Circles off stops it and its push.
+  circle_meetup_reminder: "circles",
   space_post_like: "spaces",
   space_post_comment: "spaces",
   invite_joined: "invites",

@@ -29,6 +29,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
+import { runModeWithPlan } from "@/features/program/programMaintenance";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { liftOnDate } from "@/lib/homeLift";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -48,6 +50,15 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import HeatPanel from "@/components/run/HeatPanel";
+import {
+  coolestHourLine,
+  heatLine,
+  HEAT_PREVIEW_LINE,
+} from "@/lib/heatAdjustment";
+import { deviceTemperatureUnit } from "@/lib/temperature";
+import { useHotDay } from "@/hooks/useHotDay";
+import { isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
 /* Closed when Home first draws, and it brings the bottom sheet (vaul and
    Radix) with it: it loads once the card has drawn, as Home's
@@ -178,6 +189,7 @@ export default function DayPeekCard({
   workouts,
   dailyTotals,
   sessionsLoading = false,
+  rollingContexts = null,
   onClose,
   onManage,
 }: {
@@ -208,6 +220,10 @@ export default function DayPeekCard({
    *  cold start a returning person who tapped a day before the reads
    *  landed was told they had done nothing. */
   sessionsLoading?: boolean;
+  /** A plan with no race date's weeks, by their Mondays
+   *  (`useRollingSessionContexts`, Run24 (3)): a run's reason in the plan's
+   *  terms. Home passes them; without them such a run has no reason. */
+  rollingContexts?: ReadonlyMap<string, RollingSessionContext> | null;
   workouts: {
     /** Firestore doc id — the /workout/:id destination for the lift row.
      *  Optional because callers historically passed a projection; a row
@@ -248,6 +264,28 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
+  /* Today's run still to do, on a hot or extreme day: the heat line, and
+     that the run can be adjusted for heat as it starts (heatAdjustment.ts).
+     The weather is read only for that run, and only once location is
+     allowed (`useHotDay`). */
+  const todayRunAhead =
+    dateKey === todayKey &&
+    resolved.run.runDay !== null &&
+    !resolved.run.isCompleted &&
+    resolved.run.status !== "none" &&
+    isScheduledRunStartable(resolved.run.status);
+  const heat = useHotDay(todayRunAhead);
+  const heatLineToday = heatLine(heat.weather);
+  /* And today's coolest hour still ahead, where one is meaningfully
+     cooler (Run26 (5)). */
+  const coolestToday =
+    heat.coolest && heat.weather
+      ? coolestHourLine(
+          heat.coolest,
+          heat.weather.temperature,
+          deviceTemperatureUnit()
+        )
+      : null;
   /* Today's lift is the one the today card offers (the programme's next),
      not the weekday's slot, so the peek and the card name one session. */
   const dayLift = liftOnDate({
@@ -372,8 +410,10 @@ export default function DayPeekCard({
         { racePace: runRacePace }
       )
     : null;
+  // Read through the programme as well as the profile: a plan with no
+  // race date keeps the profile on free running (Run24 (3)).
   const runPurpose =
-    runTemplate && profile?.runMode !== "freeform"
+    runTemplate && runModeWithPlan(profile, programState) !== "freeform"
       ? runSessionPresentation({
           type: runTemplate.type,
           templateId: runTemplate.id,
@@ -392,6 +432,9 @@ export default function DayPeekCard({
             programState?.runPlan,
             resolved.run.runDay?.date
           ),
+          rolling: resolved.run.runDay?.weekKey
+            ? rollingContexts?.get(resolved.run.runDay.weekKey)
+            : null,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -643,6 +686,14 @@ export default function DayPeekCard({
                   <RunPurpose>
                     <RunAbout about={runAbout} why={runPurpose} />
                   </RunPurpose>
+                  {todayRunAhead && heat.level !== "none" && heatLineToday && (
+                    <HeatPanel
+                      level={heat.level}
+                      line={heatLineToday}
+                      coolest={coolestToday}
+                      note={HEAT_PREVIEW_LINE}
+                    />
+                  )}
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

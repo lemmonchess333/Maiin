@@ -1,12 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   bestEfforts,
-  fastestStretch,
   longestRunIn,
   MIN_RUNS_TO_COMPARE,
   paceByRunKind,
   runningPageInsight,
-  SPLIT_MIN_SECONDS,
   type InsightRun,
 } from "../runInsights";
 import { parseRunSummary } from "@/hooks/useRunningStats";
@@ -133,27 +131,6 @@ describe("paceByRunKind", () => {
   });
 });
 
-describe("fastestStretch", () => {
-  it("finds the quickest whole kilometres in a row", () => {
-    expect(fastestStretch([300, 290, 280, 295, 310], 1)).toBe(280);
-    expect(fastestStretch([300, 290, 280, 295, 310], 2)).toBe(570);
-    expect(fastestStretch([300, 290, 280, 295, 310], 5)).toBe(1475);
-  });
-
-  it("needs the run to have gone that far", () => {
-    expect(fastestStretch([300, 290, 280, 295], 5)).toBeNull();
-  });
-
-  it("skips a stretch holding a kilometre no one ran", () => {
-    // A GPS jump: a 30-second kilometre.
-    const splits = [300, 30, 280, 295, 310, 305, 300];
-    expect(fastestStretch(splits, 1)).toBe(280);
-    // 280 + 295 + 310 + 305 + 300: the only five in a row without it.
-    expect(fastestStretch(splits, 5)).toBe(1490);
-    expect(fastestStretch([SPLIT_MIN_SECONDS - 1], 1)).toBeNull();
-  });
-});
-
 describe("bestEfforts", () => {
   const splits = (n: number, each: number) =>
     Array.from({ length: n }, () => each);
@@ -202,6 +179,17 @@ describe("bestEfforts", () => {
     const second = run(3, 5, 300, "easy", { kmSplitSeconds: splits(5, 300) });
     const rows = bestEfforts([second, first], WINDOW);
     expect(rows.find((r) => r.km === 5)?.allTime.runId).toBe(first.id);
+  });
+
+  it("takes a run's saved best effort over its splits (App1 Q15)", () => {
+    // The finish screen called 23:50 the fastest 5K, and Bests lists it;
+    // the splits, cut on the kilometre marks, make it 24:10.
+    const saved = run(3, 5.2, 290, "easy", {
+      kmSplitSeconds: splits(5, 290),
+      bestEfforts: [{ distance: 5000, time: 1430 }],
+    });
+    const fiveK = bestEfforts([saved], WINDOW).find((r) => r.km === 5);
+    expect(fiveK?.allTime.seconds).toBe(1430);
   });
 
   it("takes no effort from a run whose pace cannot be trusted", () => {

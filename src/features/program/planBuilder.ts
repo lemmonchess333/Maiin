@@ -54,6 +54,7 @@ import type {
   ProgramState,
   ProgramSettings,
   ScheduledRunDay,
+  RaceDistance,
   RunPlan,
   SplitType,
   WorkoutDay,
@@ -71,7 +72,7 @@ import {
   parseLocalDate,
   wholeWeeksBetween,
 } from "@/lib/dateHelpers";
-import { firstFullWeekKey } from "./runPlanTiming";
+import { firstFullWeekKey, weekendHoldsBackToBacks } from "./runPlanTiming";
 import { peakPlannedLongRunKm } from "./raceLongRunCheck";
 import {
   applyDeload,
@@ -204,10 +205,12 @@ export interface PlanBuilderInput {
   newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars. */
     eventName?: string;
+    /** Run26 (2): the race's total climb, metres (`isTrailRace`). */
+    climbM?: number;
     /** A2: optional goal finish time, seconds. Passed through to the
      *  profile; the scheduler does not consume it yet (goal-pace
      *  sessions are the follow-up slice). */
@@ -321,7 +324,7 @@ export interface PlanBuilderOutput {
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
     // the unified editor actually moves the user's targets. The CF write is
     // merge:true on a nested map, so this updates goal while preserving the
-    // existing startWeight / currentPhase. (The deleted ProgramSettingsPanel
+    // existing currentPhase. (The deleted ProgramSettingsPanel
     // synced this via regenerateProgram → updateProfile; the new path must
     // carry it explicitly.)
     program: { goal: Goal };
@@ -340,12 +343,15 @@ function buildWeekSchedule(
     | "weekSchedule"
     | "rollingGoal"
     | "existingState"
+    | "raceGoal"
   >
 ): ScheduleDay[] {
   return planWeekSchedule(
     input.liftDays,
     plannedRunDays(input),
-    input.weekSchedule
+    input.weekSchedule,
+    // Run26 (2): an ultra's long run and back-to-back run are a weekend's.
+    weekendHoldsBackToBacks(input.runMode, input.raceGoal)
   );
 }
 
@@ -428,6 +434,7 @@ type LiftProgramInput = Pick<
   | "runMode"
   | "weeklyRunDays"
   | "weekSchedule"
+  | "raceGoal"
   | "equipment"
   | "barbellAtHome"
   | "injuries"
@@ -487,7 +494,10 @@ function buildLiftProgram(input: LiftProgramInput): {
             equipment: input.equipment,
             injuries: input.injuries,
             barbellAtHome: input.barbellAtHome,
-          }
+          },
+          // Run27 (19): the day before an ultra's back-to-back run is
+          // kept as the day before the long run is.
+          weekendHoldsBackToBacks(input.runMode, input.raceGoal)
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
@@ -1243,10 +1253,6 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         : 1,
     splitType,
     workouts: weekWorkouts,
-    fatigueScore:
-      input.preserveHistory && input.existingState
-        ? input.existingState.fatigueScore
-        : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
     settings,
     weekHistory:

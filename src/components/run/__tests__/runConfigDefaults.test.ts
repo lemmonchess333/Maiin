@@ -12,6 +12,9 @@ import {
   buildTileConfig,
   pacePatchForType,
   chooserPaceFor,
+  heatLongSwapConfig,
+  heatSwapConfig,
+  withoutPaceTargets,
 } from "../runConfigDefaults";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { paceTableFromFitness } from "@/lib/runPaces";
@@ -214,5 +217,135 @@ describe("resolveRepeatType", () => {
         { distance: 5000, duration: 1800 },
       ])
     ).toBeNull();
+  });
+});
+
+/* Pgm8 (E8): a hot day's swap, the run being set up as an easy run of the
+   session's minutes. */
+describe("heatSwapConfig", () => {
+  const tempoLaunch = buildLaunchConfig(
+    {
+      prefill: {
+        activityType: "intervals",
+        intervals: {
+          reps: 5,
+          workDistance: 1000,
+          workPace: 270,
+          restDuration: 90,
+        },
+        segments: [
+          {
+            type: "hard",
+            label: "1 km hard",
+            instruction: "Hard",
+            target: { kind: "distance", meters: 1000 },
+          },
+        ],
+      },
+      metadata: meta,
+    },
+    false,
+    "shoe-1"
+  );
+
+  it("is an easy run of the minutes, set up as a planned easy run of that length is", () => {
+    const swapped = heatSwapConfig(tempoLaunch, 40);
+    expect(swapped.activityType).toBe("easy");
+    expect(swapped.target).toEqual({ type: "time", value: 2400 });
+    expect(swapped.segments).toEqual([
+      {
+        type: "easy",
+        label: "Easy 40 min",
+        instruction: "Conversational pace",
+        target: { kind: "duration", seconds: 2400 },
+        cue: "Easy running for 40 minutes. Keep it conversational.",
+      },
+    ]);
+  });
+
+  it("drops the session's own shape and keeps how and where it is recorded", () => {
+    const swapped = heatSwapConfig({ ...tempoLaunch, place: "treadmill" }, 40);
+    expect(swapped).not.toHaveProperty("intervals");
+    expect(swapped).not.toHaveProperty("guidedWorkout");
+    expect(swapped.shoeId).toBe("shoe-1");
+    expect(swapped.place).toBe("treadmill");
+    expect(swapped.audioCues).toBe(false);
+    expect(swapped.planMetadata).toBe(meta);
+  });
+
+  it("is a whole number of minutes, one at the least", () => {
+    expect(heatSwapConfig(tempoLaunch, 37.6).target.value).toBe(38 * 60);
+    expect(heatSwapConfig(tempoLaunch, 0).target.value).toBe(60);
+  });
+});
+
+/* A hot day's other swap, and the extreme day's effort-only run
+   (heatAdjustment.ts). */
+describe("heatLongSwapConfig / withoutPaceTargets", () => {
+  it("takes a long run's race-pace finish off, keeping its distance", () => {
+    const long = buildLaunchConfig(
+      {
+        prefill: {
+          activityType: "long",
+          target: { type: "distance", value: 16000 },
+          segments: [
+            {
+              type: "easy",
+              label: "Easy 12 km",
+              instruction: "Easy",
+              target: { kind: "distance", meters: 12000 },
+            },
+          ],
+        },
+        metadata: meta,
+      },
+      true
+    );
+    const swapped = heatLongSwapConfig(long);
+    expect(swapped.activityType).toBe("long");
+    expect(swapped.target).toEqual({ type: "distance", value: 16000 });
+    expect(swapped).not.toHaveProperty("segments");
+    expect(swapped.planMetadata).toBe(meta);
+  });
+
+  it("drops every pace from a prefill and keeps its shape", () => {
+    const stripped = withoutPaceTargets({
+      activityType: "intervals",
+      target: { type: "pace", value: 300 },
+      intervals: {
+        reps: 5,
+        workDistance: 1000,
+        workPace: 270,
+        restDuration: 90,
+      },
+      segments: [
+        {
+          type: "hard",
+          label: "1 km",
+          instruction: "Hard",
+          target: { kind: "distance", meters: 1000 },
+          paceTarget: 270,
+          pacePinned: true,
+        },
+      ],
+    });
+    expect(stripped.target).toEqual({ type: "none" });
+    expect(stripped.intervals).toEqual({
+      reps: 5,
+      workDistance: 1000,
+      restDuration: 90,
+    });
+    expect(stripped.segments).toEqual([
+      {
+        type: "hard",
+        label: "1 km",
+        instruction: "Hard",
+        target: { kind: "distance", meters: 1000 },
+      },
+    ]);
+    // A time or distance target is not a pace, and stays.
+    expect(
+      withoutPaceTargets({ target: { type: "time", value: 1800 } }).target
+    ).toEqual({ type: "time", value: 1800 });
   });
 });

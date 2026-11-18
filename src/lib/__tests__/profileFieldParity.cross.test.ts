@@ -30,6 +30,8 @@ import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 
 import { PROFILE_FIELD_REGISTRY } from "../profileFieldRegistry";
+import { VALID_RACE_DISTANCE } from "@/features/program/programTypes";
+import { MAX_RACE_CLIMB_M } from "@/features/program/runPlanTiming";
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +42,7 @@ const sanitizer = require(
 ) as {
   PROFILE_ALLOWED_FIELDS: readonly string[];
   SERVER_MANAGED_PROFILE_FIELDS: readonly string[];
+  RETIRED_PROFILE_FIELDS: readonly string[];
 };
 
 /** Parse the `allowedUserFields()` function body out of firestore.rules. */
@@ -68,8 +71,17 @@ function rulesAllowedFields(): Set<string> {
  */
 const DIRECT_WRITE_ONLY = new Set<string>(
   PROFILE_FIELD_REGISTRY.filter(
-    (e) => !e.sanitized && !e.serverGuarded && !e.serverOnly
+    (e) => !e.sanitized && !e.serverGuarded && !e.serverOnly && !e.retired
   ).map((e) => e.field)
+);
+
+/**
+ * In rules only because an older build may still send it (App1 Q24): no
+ * build writes it now, and the sanitiser drops it quietly
+ * (`RETIRED_PROFILE_FIELDS`). Derived from the registry, as above.
+ */
+const RETIRED = new Set<string>(
+  PROFILE_FIELD_REGISTRY.filter((e) => e.retired).map((e) => e.field)
 );
 
 /** In the sanitiser (CF write) but intentionally NOT directly client-writable.
@@ -93,12 +105,17 @@ describe("profile field-allowlist parity — rules ↔ sanitiser", () => {
     ).toEqual([]);
   });
 
-  it("every client-writable field (rules) is CF-sanitised, server-managed, or explicitly direct-only", () => {
+  it("every client-writable field (rules) is CF-sanitised, server-managed, retired, or explicitly direct-only", () => {
     const rules = [...rulesAllowedFields()];
     const allowed = new Set(sanitizer.PROFILE_ALLOWED_FIELDS);
     const server = new Set(sanitizer.SERVER_MANAGED_PROFILE_FIELDS);
+    const retired = new Set(sanitizer.RETIRED_PROFILE_FIELDS);
     const unclassified = rules.filter(
-      (f) => !allowed.has(f) && !server.has(f) && !DIRECT_WRITE_ONLY.has(f)
+      (f) =>
+        !allowed.has(f) &&
+        !server.has(f) &&
+        !retired.has(f) &&
+        !DIRECT_WRITE_ONLY.has(f)
     );
     expect(
       unclassified,
@@ -124,6 +141,9 @@ describe("profile field-allowlist parity — rules ↔ sanitiser", () => {
       orphanDirect,
       `Orphan DIRECT_WRITE_ONLY (no longer in rules)`
     ).toEqual([]);
+    // A retired field the sanitiser still validates was never retired.
+    const liveRetired = [...RETIRED].filter((f) => allowed.has(f));
+    expect(liveRetired, `Retired yet still CF-sanitised`).toEqual([]);
   });
 });
 
@@ -157,8 +177,49 @@ describe("race goal keys, rules ↔ sanitizer", () => {
         eventSpaceId: "london-marathon",
         targetTimeS: 2700,
         entry: "own",
+        climbM: 450,
       },
     }).raceGoal;
     expect(Object.keys(kept ?? {}).sort()).toEqual(rulesRaceGoalKeys());
+  });
+
+  /* Run26 (2): the distances a plan prepares for and the climb's bound, on
+     the engine, the rules and the sanitizer alike, so an ultra the app
+     offers is never refused on one path and kept on another. */
+  function rulesSource(): string {
+    const rules = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
+    const gate = rules.match(/function raceGoalValid\(\)[\s\S]*?\n {4}\}/);
+    if (!gate) throw new Error("could not locate raceGoalValid() in rules");
+    return gate[0];
+  }
+
+  it("takes the same distances as the engine on both paths", () => {
+    const listed = rulesSource().match(/g\.distance in \[([^\]]*)\]/);
+    if (!listed) throw new Error("could not locate the distance list");
+    const rulesDistances = [...listed[1].matchAll(/'([a-z0-9]+)'/g)]
+      .map((m) => m[1])
+      .sort();
+    expect(rulesDistances).toEqual([...VALID_RACE_DISTANCE].sort());
+    for (const distance of VALID_RACE_DISTANCE)
+      expect(
+        sanitize({ raceGoal: { distance, targetDate: "2027-06-19" } }).raceGoal,
+        distance
+      ).toEqual({ distance, targetDate: "2027-06-19" });
+  });
+
+  it("bounds the climb alike on both paths", () => {
+    const bound = rulesSource().match(/g\.climbM <= (\d+)/);
+    expect(Number(bound?.[1])).toBe(MAX_RACE_CLIMB_M);
+    const climbOf = (climbM: number) =>
+      (
+        sanitize({
+          raceGoal: { distance: "50k", targetDate: "2027-06-19", climbM },
+        }).raceGoal as { climbM?: number } | undefined
+      )?.climbM;
+    expect(climbOf(MAX_RACE_CLIMB_M)).toBe(MAX_RACE_CLIMB_M);
+    expect(climbOf(0)).toBe(0);
+    expect(climbOf(MAX_RACE_CLIMB_M + 1)).toBeUndefined();
+    expect(climbOf(-1)).toBeUndefined();
+    expect(climbOf(450.5)).toBeUndefined();
   });
 });

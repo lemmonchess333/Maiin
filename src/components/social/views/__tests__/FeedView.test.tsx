@@ -76,6 +76,12 @@ vi.mock("@/features/spaces/useSpacesDirectory", () => ({
     ready: true,
   }),
 }));
+/* Enough people training on Tropos for Spaces to be offered (App1 Q6),
+   unless a test says otherwise. */
+const people = vi.hoisted(() => ({ enough: true as boolean | null }));
+vi.mock("@/hooks/useEnoughPeople", () => ({
+  useEnoughPeople: () => people.enough,
+}));
 vi.mock("@/features/spaces/useCommunitiesFeed", () => ({
   MAX_SPACES_IN_FEED: 6,
   useCommunitiesFeed: () => mockCommunitiesFeed(),
@@ -181,6 +187,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   feedItems = [];
   directory.entries = JOINED_RUNNERS;
+  people.enough = true;
   social.restricted = false;
   social.people = [];
   social.suggestionsActive = [];
@@ -555,6 +562,38 @@ describe("FeedView — the Spaces source (SOC-P3a)", () => {
     const option = screen.getByRole("radio", { name: "Spaces" });
     expect(option).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByText(/my communities/i)).toBeNull();
+  });
+
+  it("is not offered while Tropos is too quiet for Spaces, to someone in none (App1 Q6)", () => {
+    people.enough = false;
+    directory.entries = [{ def: { id: "lifters" }, joined: false }];
+    setup();
+    // Anchor: the control is drawn, with the two sources that are offered.
+    expect(
+      screen.getByRole("radio", { name: "Following" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Explore" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Spaces" })).toBeNull();
+  });
+
+  it("stays for someone in a Space, however quiet Tropos is", () => {
+    people.enough = false;
+    setup();
+    expect(screen.getByRole("radio", { name: "Spaces" })).toBeInTheDocument();
+  });
+
+  it("stays while the count of people is still being read", () => {
+    people.enough = null;
+    directory.entries = [];
+    setup();
+    expect(screen.getByRole("radio", { name: "Spaces" })).toBeInTheDocument();
+  });
+
+  it("sends a link to the Spaces source that is not offered to Following", () => {
+    people.enough = false;
+    directory.entries = [];
+    const { selectFeedSubTab } = setup({ feedSubTab: "communities" });
+    expect(selectFeedSubTab).toHaveBeenCalledWith("following");
   });
 
   it("picking Spaces drives the URL-writing callback", () => {

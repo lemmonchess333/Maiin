@@ -29,6 +29,13 @@ function memoryFirestore(seed = {}) {
         for (const [field, v] of Object.entries(value)) {
           const keys = field.split(".");
           const last = keys.pop();
+          if (isFieldDelete(v)) {
+            // Deleting a field that is not there changes nothing, and
+            // makes no parent for it, as Firestore's does.
+            const parent = keys.reduce((obj, key) => obj?.[key], next);
+            if (parent && typeof parent === "object") delete parent[last];
+            continue;
+          }
           const parent = keys.reduce((obj, key) => (obj[key] ||= {}), next);
           parent[last] = isIncrement(v)
             ? (Number(parent[last]) || 0) + v.__increment
@@ -43,10 +50,13 @@ function memoryFirestore(seed = {}) {
         const next = merge ? { ...before } : {};
         for (const [field, v] of Object.entries(
           merge ? value : structuredClone(value)
-        ))
-          next[field] = isIncrement(v)
-            ? (Number(before[field]) || 0) + v.__increment
-            : v;
+        )) {
+          if (isFieldDelete(v)) delete next[field];
+          else
+            next[field] = isIncrement(v)
+              ? (Number(before[field]) || 0) + v.__increment
+              : v;
+        }
         data.set(ref.path, next);
       }
     }
@@ -123,6 +133,30 @@ function memoryFirestore(seed = {}) {
             readTime: { toMillis: () => readMs },
             data: () => ({ count: result.size }),
           };
+        },
+      }),
+      // An aggregation, as Firestore's aggregate(): a count and sums over
+      // the matching documents (AggregateField.count() and .sum(field)),
+      // read at a time later than the last read. A sum skips a value that
+      // is not a number, as Firestore's does.
+      aggregate: (spec) => ({
+        get: async () => {
+          const result = await q.get();
+          const readMs = (lastReadMs = Math.max(Date.now(), lastReadMs + 1));
+          const out = {};
+          for (const [name, field] of Object.entries(spec)) {
+            if (field.aggregateType === "count") out[name] = result.size;
+            else if (field.aggregateType === "sum")
+              out[name] = result.docs.reduce((sum, d) => {
+                const v = d.data()[field._field];
+                return typeof v === "number" ? sum + v : sum;
+              }, 0);
+            else
+              throw new Error(
+                `Unsupported aggregation: ${field.aggregateType}`
+              );
+          }
+          return { readTime: { toMillis: () => readMs }, data: () => out };
         },
       }),
       get: async () => {
@@ -222,4 +256,13 @@ function increment(n) {
 function isIncrement(v) {
   return !!v && typeof v === "object" && typeof v.__increment === "number";
 }
-module.exports = { memoryFirestore, increment };
+// A stand-in for FieldValue.delete(), for code that takes it as an argument:
+// `update` (a dotted path reaches into a map) and a merging `set` remove the
+// field, as Firestore does.
+function fieldDelete() {
+  return { __delete: true };
+}
+function isFieldDelete(v) {
+  return !!v && typeof v === "object" && v.__delete === true;
+}
+module.exports = { memoryFirestore, increment, fieldDelete };

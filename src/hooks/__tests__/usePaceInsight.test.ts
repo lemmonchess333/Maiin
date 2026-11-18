@@ -154,6 +154,10 @@ describe("usePaceInsightFromRuns — gating", () => {
     });
     expect(outcome).toBe("success");
     expect(authState.updateProfile).toHaveBeenCalled();
+    // Slower paces are free, so they are not kept as Pro's (App1 Q56).
+    expect(authState.updateProfile).not.toHaveBeenCalledWith(
+      expect.objectContaining({ proChanges: expect.anything() })
+    );
   });
 
   it("a Pro account takes faster paces with no lock", () => {
@@ -329,6 +333,13 @@ describe("usePaceInsightFromRuns — accept is honest", () => {
       }),
       { throwOnError: true }
     );
+    // Faster paces are Pro's, kept for what Pro did (App1 Q56) in a write
+    // of their own.
+    expect(authState.updateProfile).toHaveBeenCalledWith({
+      proChanges: [
+        expect.objectContaining({ kind: "paces", from: 42, to: 45 }),
+      ],
+    });
   });
 
   it("a failed persistence returns 'failure' (retryable)", async () => {

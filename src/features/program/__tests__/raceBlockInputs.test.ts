@@ -357,3 +357,57 @@ describe("a plan kept from before the inputs were", () => {
     ).toBeCloseTo(390, 0);
   });
 });
+
+describe("the block's pace, read from the runner's own running (Run24 (2), (4))", () => {
+  // Each of the month's weeks: a 40-minute easy run and a 100-minute long
+  // run at 6:30 /km, and a 45-minute session quicker on purpose, a 5 km
+  // time trial, a tempo or 1 km repeats, at about 4:50 /km overall.
+  const SESSIONS = [
+    { activityType: "intervals", templateId: "time_trial_5k" },
+    { activityType: "tempo", templateId: "tempo_30" },
+    { activityType: "intervals", templateId: "5x1k" },
+    { activityType: "intervals", templateId: "time_trial_5k" },
+  ];
+  const easy = (date: string, minutes: number): DatedRun => ({
+    date,
+    duration: minutes * 60,
+    distance: ((minutes * 60) / 390) * 1000,
+  });
+  const month: DatedRun[] = SESSIONS.flatMap((session, w) => [
+    easy(day(START, -7 * (w + 1) + 1), 40),
+    {
+      date: day(START, -7 * (w + 1) + 3),
+      duration: 45 * 60,
+      distance: 9300,
+      ...session,
+    },
+    easy(day(START, -7 * (w + 1) + 6), 100),
+  ]);
+  /** The same runs as the read had them before: no type, no session. */
+  const untyped = month.map(({ date, duration, distance }) => ({
+    date,
+    duration,
+    distance,
+  }));
+
+  it("leaves the time trials and the sessions out", () => {
+    const before = plan("half", 16, { recentRuns: untyped });
+    const after = plan("half", 16, { recentRuns: month });
+    // Before: the sessions read the runner 30 s/km quicker than their own
+    // running.
+    expect(before.blockInputs?.runsPaceSPerKm).toBeCloseTo(360, -1);
+    expect(after.blockInputs?.runsPaceSPerKm).toBeCloseTo(390, 0);
+    // So the block's first long run, the rung at or under their 100-minute
+    // longest run, was 16 km, 104 minutes at their own pace; now 14 km.
+    expect(longKm(before.weeks[0])).toBe(16);
+    expect(longKm(after.weeks[0])).toBe(14);
+  });
+
+  it("counts a run that names no session, a free run's among them", () => {
+    const free: DatedRun = { ...easy(week(-1), 30), activityType: "freerun" };
+    expect(
+      plan("half", 16, { recentRuns: [...usualRuns(START, 390), free] })
+        .blockInputs?.runsPaceSPerKm
+    ).toBeCloseTo(390, 0);
+  });
+});

@@ -30,7 +30,7 @@ import {
   type RunHistory,
   type RunMomentContext,
 } from "@/lib/postMoments";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { SavedRun } from "@/lib/savedRuns";
 import type { GPSPoint, Split } from "@/lib/gps";
 import type { RouteQuality } from "@/lib/routeQuality";
@@ -41,6 +41,7 @@ import { runNameOf } from "@/lib/runName";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import type { HeartRateSummary } from "@/lib/hrZones";
+import type { GoalRaceRecord } from "@/lib/racePrediction";
 
 /** A finished run, as the finish screen holds it. */
 export interface FinishedRun {
@@ -93,6 +94,10 @@ export interface FinishedRun {
    *  it is compared with, the streak, whether it is the first session.
    *  Read for the post's moments, never saved on the run. */
   moments?: RunMomentContext;
+  /** The goal race's predictions, when this run was the goal race
+   *  (`racePrediction.ts`): kept on the run so the race can be judged
+   *  against them once the plan has moved on. */
+  racePrediction?: GoalRaceRecord | null;
 }
 
 /** Privacy cuts change the route, not when the run started. Older callers
@@ -120,15 +125,18 @@ export function runDay(run: FinishedRun, now: Date = new Date()): string {
  * The earlier runs a run's moments compare it with: every saved run that
  * counts (`isVolumeEligible`: not invalid, not saved anyway), less the run
  * itself, once saved. Read from the history the finish screen already
- * holds.
+ * holds. The fastest times are compared across the outdoor runs Bests
+ * takes its fastest 1K, 5K and 10K from (`isPaceEligible`), so a run
+ * called the fastest yet holds that row on Bests (App1 Q15).
  */
 export function earlierRunHistory(
   runs: readonly SavedRun[],
   runId: string | null | undefined
 ): RunHistory {
-  return runHistoryOf(
-    runs.filter((run) => run.id !== runId && isVolumeEligible(run))
+  const counted = runs.filter(
+    (run) => run.id !== runId && isVolumeEligible(run)
   );
+  return runHistoryOf(counted, counted.filter(isPaceEligible));
 }
 
 /** The saved run, as `users/{uid}/runs/{id}` holds it. */
@@ -218,6 +226,10 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     planWeekIndex: plan.planWeekIndex,
     planTotalWeeks: plan.planTotalWeeks,
     scheduledRunId: plan.scheduledRunId,
+    // Only on the goal race, and never on a run saved anyway.
+    ...(run.racePrediction && !run.isInvalid
+      ? { racePrediction: run.racePrediction }
+      : {}),
   };
 }
 

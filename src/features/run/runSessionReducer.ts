@@ -13,15 +13,21 @@
  * migration PR — the goal here is to pin the transition rules with
  * exhaustive tests so the migration is mechanical, not exploratory.
  *
- * Phases (mirror src/pages/Run.tsx:44):
+ * Phases:
  *   'waiting'    — initial; setup modal open. No timer / GPS in
  *                  flight.
- *   'acquiring'  — outdoor GPS run started; waiting for the first
- *                  GPS fix. Can transition to 'countdown' (lock
- *                  acquired OR auto-skip after permission denied) or
- *                  'active' (manual fallback after 15s+ wait) or
- *                  back to 'waiting' (user cancelled).
- *   'countdown'  — 3-2-1 audio countdown before activity start.
+ *   'countdown'  — Start tapped: 3-2-1 on screen, a tap skips it
+ *                  (Run27 (1), useStartCountdown). Nothing is
+ *                  recorded and no clock runs. At Go a GPS run starts
+ *                  its clock if a fix within GPS_START_ACCURACY_M is in
+ *                  hand, or goes on to 'acquiring'; any other run
+ *                  starts its clock.
+ *   'acquiring'  — outdoor GPS run started, its clock not yet: the
+ *                  screen says "Finding GPS" until a fix within
+ *                  GPS_START_ACCURACY_M arrives (Run25 call 2,
+ *                  src/lib/gpsStart.ts). Leaves for 'active' on that
+ *                  fix, on Start anyway, or on a switch to manual
+ *                  distance; back to 'waiting' on Cancel.
  *   'active'     — run in progress (timer running, GPS streaming).
  *   'paused'     — user-paused (timer halted, GPS stopped on outdoor).
  *   'finished'   — terminal; navigates to RunSummary.
@@ -36,41 +42,41 @@
  * state unchanged (referentially equal — so React skips the render).
  * `FINISH` is accepted from `active` and `paused` only — the Finish
  * button lives in RunBottomSheet which only renders for those two
- * phases. acquiring/countdown use `CANCEL_ACQUIRING` to bail out
- * instead.
+ * phases. acquiring uses `CANCEL_ACQUIRING` to bail out instead.
+ *
+ * The countdown comes before the clock, never inside it (Run27 (1)): a GPS
+ * run's clock starts at Go with a good fix in hand, or at the instant of
+ * its first good fix after Go (Run25 call 2), so it counts no second of
+ * the 3-2-1 and its start stays on the fix it is measured from.
  */
 
 export type RunPhase =
-  | "waiting"
-  | "acquiring"
-  | "countdown"
-  | "active"
-  | "paused"
-  | "finished";
+  "waiting" | "countdown" | "acquiring" | "active" | "paused" | "finished";
 
 export type RunSessionAction =
-  /* Non-GPS path (treadmill, intervals, strength, manual). Skips
-     the acquiring phase entirely because there's no GPS lock to
-     wait for. */
+  /* Start tapped: the 3-2-1 before the run (Run27 (1)). Waiting →
+     countdown. */
+  | { type: "COUNTDOWN" }
+  /* Go, on a run with no GPS (treadmill, indoor, manual distance): its
+     clock starts. Countdown → active, skipping the acquiring phase
+     entirely because there's no GPS lock to wait for. */
   | { type: "START_MANUAL" }
-  /* Outdoor GPS path. Enters acquiring phase; the gps hook starts
-     fetching fixes and dispatches GPS_ACQUIRED when the first one
-     lands (or GPS_FAILED if permission was denied). */
-  | { type: "START_GPS" }
-  /* First GPS point landed. Acquiring → countdown. */
+  /* Go, on an outdoor GPS run. With a good fix already in hand (the run
+     screen watches location before Start and through the countdown) the
+     clock starts at Go: countdown → active. Without one: countdown →
+     acquiring, until GPS_ACQUIRED or START_ANYWAY. */
+  | { type: "START_GPS"; fixInHand: boolean }
+  /* The first fix within GPS_START_ACCURACY_M landed, and the clock
+     starts on it. Acquiring → active. */
   | { type: "GPS_ACQUIRED" }
-  /* GPS error (permission denied / unavailable). Acquiring →
-     countdown anyway — the user still gets a run, just without
-     the live trail. */
-  | { type: "GPS_FAILED" }
-  /* Manual fallback after the user waited 15s+ for a GPS lock that
-     never came (the "Switch to manual" button on the acquiring
-     screen). Acquiring → active directly, skipping countdown
-     because the user explicitly opted in. */
+  /* Start anyway on the "Finding GPS" screen: the clock starts at the
+     tap, and distance counts from the first fix the reading gate
+     passes. Acquiring → active. */
+  | { type: "START_ANYWAY" }
+  /* "Track without GPS" or "On a treadmill" on the acquiring screen:
+     the run becomes one of typed-in distance and its clock starts.
+     Acquiring → active. */
   | { type: "MANUAL_FALLBACK" }
-  /* Countdown timer hit 0. Countdown → active; the timer + audio
-     cues start in Run.tsx's effect that fires on this transition. */
-  | { type: "COUNTDOWN_DONE" }
   /* User tapped Pause. Active → paused. */
   | { type: "PAUSE" }
   /* User tapped Resume. Paused → active. */
@@ -84,7 +90,7 @@ export type RunSessionAction =
   | { type: "CANCEL_ACQUIRING" }
   /* Resume-from-snapshot path (interrupted-run recovery). The
      stored phase is either 'active' or 'paused'; restoring to
-     waiting/acquiring/countdown/finished would either be
+     waiting/acquiring/finished would either be
      meaningless or skip steps. */
   | { type: "RESUME_SNAPSHOT"; phase: "active" | "paused" };
 
@@ -95,21 +101,19 @@ export function runSessionReducer(
   action: RunSessionAction
 ): RunPhase {
   switch (action.type) {
-    case "START_MANUAL":
+    case "COUNTDOWN":
       if (state !== "waiting") return state;
+      return "countdown";
+    case "START_MANUAL":
+      if (state !== "countdown") return state;
       return "active";
     case "START_GPS":
-      if (state !== "waiting") return state;
-      return "acquiring";
+      if (state !== "countdown") return state;
+      return action.fixInHand ? "active" : "acquiring";
     case "GPS_ACQUIRED":
-    case "GPS_FAILED":
-      if (state !== "acquiring") return state;
-      return "countdown";
+    case "START_ANYWAY":
     case "MANUAL_FALLBACK":
       if (state !== "acquiring") return state;
-      return "active";
-    case "COUNTDOWN_DONE":
-      if (state !== "countdown") return state;
       return "active";
     case "PAUSE":
       if (state !== "active") return state;
@@ -119,8 +123,8 @@ export function runSessionReducer(
       return "active";
     case "FINISH":
       /* Finish control mounts in RunBottomSheet which only renders
-         for active|paused. acquiring/countdown bail via
-         CANCEL_ACQUIRING; waiting has no run; finished is terminal. */
+         for active|paused. acquiring bails via CANCEL_ACQUIRING;
+         waiting has no run; finished is terminal. */
       if (state !== "active" && state !== "paused") return state;
       return "finished";
     case "CANCEL_ACQUIRING":

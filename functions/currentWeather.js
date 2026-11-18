@@ -1,6 +1,10 @@
 /**
  * getCurrentWeather — the current weather for the pre-run strip
- * (RunSetupModal), from MET Norway, for signed-in users.
+ * (RunSetupModal) and the heat surfaces, with the next twelve hours' air
+ * temperature and dew point for today's coolest hour (Run26 (5)), from
+ * MET Norway, for signed-in users. The hours come from the same forecast,
+ * so they cost MET no second request, and they are an added field: an
+ * app that predates them ignores it.
  *
  * The phone never calls a weather service itself. This proxy asks MET
  * Norway, whose data may be used commercially and is credited in the app

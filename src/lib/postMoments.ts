@@ -18,6 +18,7 @@
  * No Firebase here, so the rules tests can read it.
  */
 import { epley1RMExact } from "./analytics";
+import { fastestEfforts, type EffortRun } from "./runEfforts";
 
 /** The most moments one post carries. */
 export const MAX_POST_MOMENTS = 3;
@@ -244,34 +245,34 @@ export interface RunHistory {
   count: number;
   /** The longest of them in metres; 0 with none. */
   longestMeters: number;
-  /** The fastest earlier best effort at each distance, in seconds, where
-   *  any earlier run timed one. */
+  /** The fastest earlier time at each of FASTEST_EFFORT_METERS, in
+   *  seconds, where any earlier run timed one. */
   fastestSeconds: Readonly<Record<number, number>>;
 }
 
 /**
- * The history the run moments read, from the earlier runs that count. A
- * run saved before best efforts were kept times none, so the fastest at a
- * distance comes from the runs that timed one.
+ * The history the run moments read, from the earlier runs that count.
+ * The fastest at each distance is each run's own time over it
+ * (`runEffortSeconds`: its saved best effort, else its splits), taken
+ * across `timed`, the runs Bests reads its fastest times from, so a run
+ * called the fastest yet is the one Bests lists (App1 Q15). Without
+ * `timed`, every run given.
  */
 export function runHistoryOf(
-  runs: readonly {
-    distance: number;
-    bestEfforts?: readonly { distance: number; time: number }[];
-  }[]
+  runs: readonly ({ distance: number } & EffortRun)[],
+  timed: readonly EffortRun[] = runs
 ): RunHistory {
   let longestMeters = 0;
-  const fastestSeconds: Record<number, number> = {};
   for (const run of runs) {
     if (isFiniteNumber(run.distance) && run.distance > longestMeters)
       longestMeters = run.distance;
-    for (const effort of run.bestEfforts ?? []) {
-      if (!isFiniteNumber(effort.time) || effort.time <= 0) continue;
-      const held = fastestSeconds[effort.distance];
-      if (held === undefined || effort.time < held)
-        fastestSeconds[effort.distance] = effort.time;
-    }
   }
+  const fastestSeconds: Record<number, number> = {};
+  for (const { meters, seconds } of fastestEfforts(
+    timed,
+    FASTEST_EFFORT_METERS
+  ))
+    fastestSeconds[meters] = seconds;
   return { count: runs.length, longestMeters, fastestSeconds };
 }
 

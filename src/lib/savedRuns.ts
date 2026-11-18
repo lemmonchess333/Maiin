@@ -45,6 +45,7 @@ import {
 import { sampleRoute, type RouteCoordinate } from "./routeSegments";
 import { pinnedWorkPace, type SessionSegment } from "./runSegments";
 import { isTreadmillRun } from "./runGuards";
+import { elapsedSecondsOf } from "./runElapsed";
 import type { RunPlace } from "@/types/run";
 
 export interface RunSummaryItem {
@@ -72,7 +73,7 @@ export interface RunSummaryItem {
    *  adaptive-intensity trigger + post-ease bounce check. Optional so
    *  existing item builders (tests, fixtures) stay assignable — the
    *  parser always sets it. */
-  paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | null;
+  paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | "heat" | null;
   routePreview?: RouteCoordinate[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
@@ -84,8 +85,15 @@ export interface RunSummaryItem {
   /** Each whole kilometre's time in seconds, in order, as the run saved
    *  them (`splits[].time`; a saved run's splits are always kilometres).
    *  Empty for a run that saved none: treadmill, manual, and runs from
-   *  before splits were kept. Analytics' fastest kilometres read these. */
+   *  before splits were kept. A run's time over 1, 5 or 10 km falls back
+   *  to these (`runEffortSeconds`). */
   kmSplitSeconds?: number[];
+  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
+   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
+   *  timed none, and for runs saved before they were kept. A new run's
+   *  post compares its own with them (Soc15), and Bests and the Running
+   *  page list the fastest (`runEffortSeconds`). */
+  bestEfforts?: { distance: number; time: number }[];
 }
 
 /** A saved run as every reader sees it. */
@@ -115,11 +123,18 @@ export interface SavedRun extends RunSummaryItem {
    *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
    *  goal was, not what the runner can do. */
   workPacePinned?: boolean;
-  /** The quickest 1K, 5K and 10K in the trace, as the run saved them
-   *  (`detectBestEfforts`): metres and seconds. Absent for a run that
-   *  timed none, and for runs saved before they were kept. A new run's
-   *  post compares its own with them (Soc15). */
-  bestEfforts?: { distance: number; time: number }[];
+  /** Run27 (14): the run started on a hot or extreme day, as the run
+   *  screen saved it with the run's config (`runConfig.hotDay`). Such a run
+   *  never lowers a benchmark (`heatHoldsBenchmark`). Absent on any other
+   *  day, and for a run whose weather could not be read. */
+  hotDay?: boolean;
+  /** Run28: seconds from the clock's start to the finish,
+   *  `recordingEndedAt` less `recordingStartedAt` (`runElapsed.ts`); absent
+   *  for a run saved without both. `duration` is the moving time. */
+  elapsedSeconds?: number;
+  /** Run28 call 4: the run was saved as the goal race, so it keeps its
+   *  `racePrediction`, and its time is its elapsed time. */
+  goalRace?: boolean;
 }
 
 /**
@@ -219,6 +234,10 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
   const date = isRunDateKey(data.date) ? data.date : undefined;
   const savedAt = toDate(data.createdAt) ?? completedAt;
   const bestEfforts = bestEffortsOf(data.bestEfforts);
+  const elapsedSeconds = elapsedSecondsOf(
+    data.recordingStartedAt,
+    data.recordingEndedAt
+  );
 
   return {
     id,
@@ -249,7 +268,8 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
       data.paceVerdictTone === "on" ||
       data.paceVerdictTone === "fast" ||
       data.paceVerdictTone === "easy-too-fast" ||
-      data.paceVerdictTone === "slow"
+      data.paceVerdictTone === "slow" ||
+      data.paceVerdictTone === "heat"
         ? data.paceVerdictTone
         : null,
     isInvalid: data.isInvalid === true,
@@ -276,7 +296,10 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     workPacePinned:
       Array.isArray(data.runConfig?.segments) &&
       pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
+    ...(data.runConfig?.hotDay === true ? { hotDay: true } : {}),
     ...(bestEfforts.length > 0 ? { bestEfforts } : {}),
+    ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
+    ...(data.racePrediction?.v === 1 ? { goalRace: true } : {}),
   };
 }
 
@@ -379,8 +402,10 @@ export function withQueuedRuns(
         const touched = (key: string) => Object.hasOwn(entry.data, key);
         if (!EXECUTION_FIELDS.some(touched))
           run.executionTarget = base.executionTarget ?? null;
-        if (!touched("runConfig"))
+        if (!touched("runConfig")) {
           run.workPacePinned = base.workPacePinned ?? false;
+          if (base.hotDay) run.hotDay = true;
+        }
         if (!touched("splits")) run.kmSplitSeconds = base.kmSplitSeconds;
         if (!touched("createdAt") && !touched("completedAt"))
           run.savedAtSeconds = base.savedAtSeconds;

@@ -10,13 +10,20 @@
  * safety. Pure and total — returns null rather than guessing when the
  * plan context is missing (freeform runs, extras, legacy docs).
  */
-import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import {
+  getPhaseForWeek,
+  isRoadDistance,
+  isUltraDistance,
+} from "@/features/program/runPlanTiming";
+import type { RaceDistance } from "@/features/program/programTypes";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import {
   isRunWalkTemplateId,
   isTimeTrialTemplateId,
   RUN_TEMPLATES,
 } from "@/lib/workoutTemplates";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
+import { longRunDistanceLabel } from "@/lib/runLabels";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -40,11 +47,16 @@ export interface SessionExplainerInput {
   /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
    *  that finishes at it rehearses race day, and a tempo at it practises
    *  the pace, in place of the reasons for a tempo at fitness pace. */
-  racePace?: "finish" | "tempo" | null;
+  racePace?: "finish" | "tempo" | "blocks" | null;
   /** The run is one of the recovery's, after race day (`isRecoveryRunDay`).
    *  The plan's week counter still points at race week then, so without
    *  this its runs read as race week's. */
   inRecovery?: boolean;
+  /** A plan with no race date's run (Run24 (3)): its week's place in the
+   *  plan (`rollingSessionContexts`). Its reasons are the plan's terms, a
+   *  climb to a long run that then holds, lighter weeks and time trials,
+   *  in place of a race plan's phases, which it has none of. */
+  rolling?: RollingSessionContext | null;
 }
 
 /**
@@ -104,8 +116,9 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   weekLabel: string | null;
 } {
   const purpose = runSessionExplainer(input);
-  // The recovery has no week of the race plan to name.
-  if (input.inRecovery) return { purpose, weekLabel: null };
+  // The recovery has no week of the race plan to name, and a plan with no
+  // race date has no phase.
+  if (input.inRecovery || input.rolling) return { purpose, weekLabel: null };
   if (
     !purpose ||
     input.currentWeek == null ||
@@ -117,7 +130,7 @@ export function runSessionPresentation(input: SessionExplainerInput): {
   const phase = getPhaseForWeek(
     input.currentWeek,
     input.totalWeeks,
-    input.distance as "5k" | "10k" | "half" | "marathon",
+    input.distance as RaceDistance,
     input.shortBase
   );
   return {
@@ -127,6 +140,21 @@ export function runSessionPresentation(input: SessionExplainerInput): {
 }
 
 const MEDIUM_LONG_IDS = new Set(["easy_60", "easy_75", "easy_90"]);
+
+/** Run24 (4): the plan's benchmark session, in a race plan or not. */
+const TIME_TRIAL_WHY =
+  "It finds your paces from what you can run now, and Tropos offers them after it.";
+
+/** A new runner's run-walk (Run20 (5)), in any week of any plan. The last
+ *  has one run, and no walks between. */
+function runWalkWhy(templateId: string): string {
+  const runs =
+    RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
+      .length ?? 0;
+  return runs === 1
+    ? "The last run-walk — what the weeks before it built up to."
+    : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
+}
 
 export function runSessionExplainer(
   input: SessionExplainerInput
@@ -142,6 +170,7 @@ export function runSessionExplainer(
   // A recovery week holds easy runs only. Any other run in it is the
   // person's own choice, with no reason of the plan's to give.
   if (input.inRecovery) return type === "easy" ? RECOVERY_RUN_WHY : null;
+  if (input.rolling) return rollingSessionWhy(input, input.rolling);
   if (
     currentWeek == null ||
     totalWeeks == null ||
@@ -150,10 +179,7 @@ export function runSessionExplainer(
     !Number.isInteger(totalWeeks) ||
     totalWeeks <= 0 ||
     currentWeek >= totalWeeks ||
-    (distance !== "5k" &&
-      distance !== "10k" &&
-      distance !== "half" &&
-      distance !== "marathon")
+    !(isRoadDistance(distance) || isUltraDistance(distance))
   ) {
     return null;
   }
@@ -170,14 +196,7 @@ export function runSessionExplainer(
   // and race week's included. The last has one run, and no walks between.
   // "Why this run" says what the session is in its own line (Run21 (3)), so
   // these give the reason only.
-  if (isRunWalkTemplateId(templateId)) {
-    const runs =
-      RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
-        .length ?? 0;
-    return runs === 1
-      ? "The last run-walk — what the weeks before it built up to."
-      : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
-  }
+  if (isRunWalkTemplateId(templateId)) return runWalkWhy(templateId);
 
   if (phase === "race") {
     if (type === "race") {
@@ -208,14 +227,27 @@ export function runSessionExplainer(
   }
 
   // Run24 (4): the plan's benchmark session.
-  if (isTimeTrialTemplateId(input.templateId)) {
-    return "It finds your paces from what you can run now, and Tropos offers them after it.";
-  }
+  if (isTimeTrialTemplateId(input.templateId)) return TIME_TRIAL_WHY;
   // Run24 (5): the session library's own reasons, where the type's would
   // say something the session isn't.
   const config = RUN_TEMPLATES.find((t) => t.id === templateId)?.config;
   if (config?.progression) {
     return "It finishes faster than it starts: the easy minutes build endurance, and the finish teaches you to run strong on tired legs.";
+  }
+  // Run26 (2): a trail plan's and an ultra's own sessions.
+  if (config?.steadyClimbs) {
+    return "Long climbs at a comfortably hard effort build the strength and the climbing your race asks for, by effort, not pace.";
+  }
+  if (config?.downhill) {
+    return "Your race goes down as much as it goes up. A few controlled descents now teach your legs to take the downhills, so they hurt less on race day.";
+  }
+  if (config?.backToBack) {
+    return "Back-to-back long runs teach your legs to keep going when they’re already tired, as they will be late in your race.";
+  }
+  if (type === "long" && config?.timeOnFeet && input.racePace !== "finish") {
+    return phase === "base"
+      ? "The long run anchors the week, by time on feet, and climbs a step at a time through the base."
+      : "The week’s anchor run, by time on feet: the hours your race asks of you, built a step at a time.";
   }
   if (config?.uphill) {
     return phase === "base"
@@ -224,6 +256,14 @@ export function runSessionExplainer(
   }
   if (config?.repeatsAt === "feel") {
     return "A light fartlek wakes up faster running by feel, at little cost, before the harder sessions start.";
+  }
+  // Run24 (5): a long run with blocks at race pace.
+  if (config?.racePaceBlocks) {
+    return "It rehearses race pace inside a long run, on tired legs: the rhythm, the fuelling and the focus race day asks for.";
+  }
+  // Run24 (8): a new runner's pick-ups, before the harder sessions.
+  if (config?.pickUps) {
+    return "Easy day with pick-ups: six short spells of faster running wake up your legs before the harder sessions start. Not a hard session.";
   }
   if (config?.repeatsAt === "5k" || config?.repeatsAt === "10k") {
     return "It teaches your legs what race pace feels like, so it’s familiar when it counts.";
@@ -261,4 +301,67 @@ export function runSessionExplainer(
   return weekHasQuality
     ? "Easy day — it makes the quality sessions work. If it feels too easy, it’s right."
     : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it’s right.";
+}
+
+/**
+ * Why a run is in a plan with no race date's week (Run24 (3), deep dive
+ * D7), in the plan's terms: a lighter week, one in four; a long run that
+ * climbs a step at a time to the plan's longest and then holds there; the
+ * week's one session; a time trial. Where the long run holds is read from
+ * the weeks the plan builds (`rollingSessionContexts`), never from the
+ * goal's horizon. No race and no phase is named: the plan has neither.
+ */
+function rollingSessionWhy(
+  input: SessionExplainerInput,
+  rolling: RollingSessionContext
+): string | null {
+  const { type, templateId, weekHasQuality } = input;
+  if (isRunWalkTemplateId(templateId)) return runWalkWhy(templateId);
+  if (isTimeTrialTemplateId(templateId)) return TIME_TRIAL_WHY;
+  const isEasyFamily = type === "easy";
+  if (rolling.lighter && type === "long")
+    return "A lighter week, one in every four: the long run steps back, so the three weeks before it can settle in.";
+  if (rolling.lighter && isEasyFamily)
+    return "A lighter week, one in every four: easier runs, so the three weeks before it can settle in.";
+  if (type === "long") {
+    if (!rolling.longRun)
+      return "The week’s anchor run. It climbs a step at a time, then holds.";
+    const top = longRunDistanceLabel(rolling.longRun.topKm, rolling.unit);
+    return rolling.longRun.holding
+      ? `The week’s anchor run, at the plan’s longest: it holds at ${top} from here.`
+      : `The week’s anchor run. It climbs a step at a time to ${top}, then holds there.`;
+  }
+  const config = RUN_TEMPLATES.find((t) => t.id === templateId)?.config;
+  const fasterAt5k = rolling.goal === "faster_5k";
+  if (type === "tempo")
+    return fasterAt5k
+      ? "A tempo raises the pace you can hold for longer, which a faster 5K is built on."
+      : "A tempo builds how long you can hold a steady, comfortably hard pace. The plan’s sessions take turns from week to week.";
+  if (type === "intervals") {
+    if (config?.progression)
+      return "It finishes faster than it starts: the easy minutes build endurance, and the finish teaches you to run strong on tired legs.";
+    if (config?.uphill)
+      return "Hill repeats build strength and power for running. The jog back down is part of the session.";
+    if (config?.repeatsAt === "feel")
+      return "A light fartlek: faster running by feel, at little cost.";
+    const workM = config?.intervals?.workDistance;
+    const short = typeof workM === "number" && workM < 1000;
+    if (fasterAt5k)
+      return short
+        ? "Short, quick repeats sharpen your speed, which is where a faster 5K comes from. The jog between them is part of the session."
+        : "Repeats at about 5K effort raise the pace you can hold over 5K. The recovery between them is part of the session.";
+    return short
+      ? "Short, quick repeats keep your legs fast at little cost. The jog between them is part of the session."
+      : "Fast repeats raise the pace you can hold. The recovery between them is part of the session.";
+  }
+  if (!isEasyFamily) return null;
+  if (MEDIUM_LONG_IDS.has(templateId))
+    return "The week’s medium-long run: extra easy running midweek, so the long run isn’t carrying the whole week.";
+  if (templateId.endsWith("_strides"))
+    return "Easy day with strides: relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
+  if (rolling.opening)
+    return "The plan’s first week: easy running to start from, before the weeks climb.";
+  return weekHasQuality
+    ? "Easy day: it makes the week’s session work. If it feels too easy, it’s right."
+    : "Most of the plan is easy running, and it all counts. If it feels too easy, it’s right.";
 }

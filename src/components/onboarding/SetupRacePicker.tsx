@@ -4,7 +4,10 @@ import {
   upcomingResolvedRaceDefs,
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
-import { isTrainableRaceEvent } from "@/features/spaces/spaceDefs";
+import {
+  isTrainableRaceEvent,
+  raceEventPlanDistance,
+} from "@/features/spaces/spaceDefs";
 import type { RaceDistance } from "@/lib/raceGoalPlanner";
 
 /** A race chosen from the list: what setup saves on the race goal. */
@@ -56,11 +59,12 @@ export default function SetupRacePicker({
       selectedDate={selectedDate}
       minDate={minDate}
       onPick={(def) => {
-        if (!def.event || !isTrainableRaceEvent(def.event)) return;
+        const distance = def.event ? raceEventPlanDistance(def.event) : null;
+        if (!def.event || !distance) return;
         onPick({
           id: def.id,
           name: def.name,
-          distance: def.event.distance,
+          distance,
           dateKey: def.event.dateKey,
         });
       }}

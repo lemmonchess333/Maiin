@@ -10,9 +10,14 @@ import { preloadTab } from "@/lib/preloadTab";
 vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => ({ isOnline: true, wasOffline: false }),
 }));
-const markSeen = vi.fn();
-vi.mock("@/hooks/useUnreadCount", () => ({
-  useUnreadCount: () => ({ count: 0, markSeen }),
+/* The tray's reader, as the Social tab's dot reads it: `unread` is what
+   the tray holds unread, and `markAllSeen` is what opening it calls. */
+const tray = vi.hoisted(() => ({ unread: 0, markAllSeen: vi.fn() }));
+vi.mock("@/hooks/useNotifications", () => ({
+  useNotifications: () => ({
+    unreadCount: tray.unread,
+    markAllSeen: tray.markAllSeen,
+  }),
 }));
 vi.mock("@/lib/offlineQueue", () => ({
   getQueueLength: () => 0,
@@ -219,5 +224,39 @@ describe("Layout — where the tab bar is not", () => {
 
     renderAt("/settings");
     expect(nav()).toBeInTheDocument();
+  });
+});
+
+describe("Layout — the Social tab's dot (App1 Q34)", () => {
+  beforeEach(() => {
+    window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+  });
+  afterEach(() => {
+    tray.unread = 0;
+    vi.clearAllMocks();
+  });
+
+  it("shows when the tray holds something unread, and says so", () => {
+    tray.unread = 3;
+    renderAt("/");
+    const social = screen.getByRole("link", { name: "Social, new activity" });
+    expect(social.querySelector("[data-new-activity]")).not.toBeNull();
+  });
+
+  it("is not there when the tray has nothing new", () => {
+    renderAt("/");
+    const social = screen.getByRole("link", { name: "Social" });
+    expect(social.querySelector("[data-new-activity]")).toBeNull();
+  });
+
+  it("stays after the tab is tapped: only opening the tray clears it", () => {
+    tray.unread = 1;
+    renderAt("/");
+    fireEvent.click(screen.getByRole("link", { name: "Social, new activity" }));
+    expect(screen.getByText("social")).toBeInTheDocument();
+    expect(tray.markAllSeen).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("link", { name: "Social, new activity" })
+    ).toBeInTheDocument();
   });
 });

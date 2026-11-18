@@ -42,6 +42,7 @@ import {
 } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
+  RaceDistance,
   ManualCompletion,
   ProgramState,
   RaceBlockInputs,
@@ -66,7 +67,11 @@ import {
 } from "./starterPlan";
 import { starterRunPlan, starterWeekFrom } from "./starterWeek";
 import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
-import { regenerateRollingPlan, rollingRunnerOf } from "./rollingWeek";
+import {
+  regenerateRollingPlan,
+  rollingLayoutOf,
+  rollingRunnerOf,
+} from "./rollingWeek";
 
 /**
  * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
@@ -92,9 +97,10 @@ function makeRunPlanRecord(
     shortBase: boolean;
   },
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     eventName?: string;
+    climbM?: number;
   },
   carry: { currentWeek?: number; totalWeeks?: number } = {}
 ): RunPlan {
@@ -159,9 +165,10 @@ export function regenerateRacePlan({
    *  ceiling to the nominal table, on the next weekly refresh. */
   profile: UserProfile;
   raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
+    distance: RaceDistance;
     targetDate: string;
     eventName?: string;
+    climbM?: number;
   };
   weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   weeklyRunDays: number;
@@ -453,8 +460,8 @@ export function nextRunWeek(
       runner: rollingRunnerOf(profile),
       goal: rollingGoal,
       planWeek: (runPlan?.currentWeek ?? 0) + 1,
-      weekSchedule,
-      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+      // As the weeks ahead read it (`rollingWeeksFrom`).
+      ...rollingLayoutOf(profile),
       currentDate: next.date,
       weekStart: next.weekStart,
       recentLayoff,

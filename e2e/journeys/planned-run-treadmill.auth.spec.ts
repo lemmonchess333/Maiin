@@ -76,7 +76,7 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       weightKg: 70,
       heightCm: 175,
       sex: "Female",
-      age: "25–34",
+      birthYear: 1995,
     });
     const savedProfile = (
       await emulatorAdmin().db.doc(`users/${account.uid}`).get()

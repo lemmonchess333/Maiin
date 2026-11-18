@@ -179,26 +179,33 @@ export const nativeLocationSource: LocationSource = {
       .catch(() => {});
   },
 
-  /* Continuous fixes that SURVIVE screen-lock / backgrounding. The
-     backgroundMessage/Title opt the watcher into background mode (omitting
-     them yields a foreground-only watcher). distanceFilter 0 = every fix,
+  /* Continuous fixes. A run's watch ("record") SURVIVES screen-lock /
+     backgrounding: the backgroundMessage/Title opt the watcher into
+     background mode (omitting them, as the warm watch does, yields a
+     foreground-only watcher). distanceFilter 0 = every fix,
      matching the web watch cadence the pace/splits math expects. Web
      PositionOptions don't translate (the OS owns accuracy/timeout here) and
      are deliberately ignored. */
-  watch(_options, onFix, onError) {
+  watch(_options, onFix, onError, purpose = "record") {
     let cleared = false;
     let id: string | null = null;
     const plugin = nativePlugin();
     if (plugin) {
       plugin
         .addWatcher(
-          {
-            backgroundTitle: BACKGROUND_TITLE,
-            backgroundMessage: BACKGROUND_MESSAGE,
-            requestPermissions: true,
-            stale: false,
-            distanceFilter: 0,
-          },
+          purpose === "warm"
+            ? /* The run screen before Start (Run25 call 2): fresh fixes
+                 only, never the permission ask, and no background message,
+                 so iOS keeps it to the foreground and shows no background
+                 location indicator for it. */
+              { requestPermissions: false, stale: false, distanceFilter: 0 }
+            : {
+                backgroundTitle: BACKGROUND_TITLE,
+                backgroundMessage: BACKGROUND_MESSAGE,
+                requestPermissions: true,
+                stale: false,
+                distanceFilter: 0,
+              },
           (pos, err) => {
             if (cleared) return;
             if (err) onError(toGeolocationError(err));

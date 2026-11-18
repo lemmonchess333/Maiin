@@ -27,7 +27,7 @@
  * entitlements the Sign in with Apple and HealthKit plugins need.
  */
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { appInfoPlistString, resolvedSetting } from "@/test/iosBuildSettings";
@@ -231,7 +231,7 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
         configuration
       );
       expect(standardShare).toBe(
-        "Tropos reads your step count from Health to show today's steps on Home, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
+        "Tropos reads your daily step count from Health to check the activity level your calorie target assumes, and, if you add them, your sleep, resting heart rate and heart rate variability to say how ready you are for today's session."
       );
       expect(standardUpdate).toBe(
         "Tropos does not add workouts or any other data to Health."
@@ -653,17 +653,69 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
       /DynamicActivityWidget\(\)/
     );
 
-    // Both carry the group the plugin names from the app's bundle ID.
-    expect(
-      read(
-        "node_modules/capacitor-live-activities/ios/Plugin/LiveActivities.swift"
-      )
-    ).toContain('"group.\\(bundleId).liveactivities"');
-    const group = "<string>group.com.tropos.app.liveactivities</string>";
+    // Both targets carry the one App Group the two App IDs hold on Apple's
+    // site, group.com.tropos.app, so the profiles the run makes from the API
+    // key match. The plugin's own group (group.<bundle id>.liveactivities)
+    // only serves its "appGroup" images, which no Tropos layout uses: the
+    // cards draw SF Symbols and the extension's own asset catalog.
+    const group = "<string>group.com.tropos.app</string>";
     expect(entitlements).toContain(group);
     expect(
       read("ios/App/LiveActivities/LiveActivities.entitlements")
     ).toContain(group);
+    for (const layout of [
+      "src/lib/runLiveActivity.ts",
+      "src/lib/liftLiveActivity.ts",
+    ]) {
+      expect(read(layout)).not.toMatch(/\bappGroup\b/);
+    }
+    // The Home Screen widgets keep their snapshot and queued drinks in the
+    // same group (Wid1), named once on each side.
+    expect(read("ios/App/LiveActivities/HomeWidgetStore.swift")).toContain(
+      'static let appGroup = "group.com.tropos.app"'
+    );
+    expect(read("src/lib/homeWidgetContract.ts")).toContain(
+      'HOME_WIDGET_APP_GROUP = "group.com.tropos.app"'
+    );
+  });
+
+  it("builds the Home Screen widgets into the Live Activity extension, with its privacy manifest", () => {
+    // Wid1 call 3: the widgets live in the extension the Live Activities
+    // already ship in, so no new App ID, capability or profile is needed.
+    const target = pbxproj.match(
+      /\/\* LiveActivitiesExtension \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+    );
+    expect(target).not.toBeNull();
+    const phaseFiles = (name: string) => {
+      const id = target![1].match(
+        new RegExp(`(${OBJECT_ID.source}) /\\* ${name} \\*/`)
+      )![1];
+      const phase = pbxproj.match(
+        new RegExp(
+          `${id} /\\* ${name} \\*/ = \\{[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+        )
+      )![1];
+      return [...phase.matchAll(/\/\* (.+?) in \w+ \*\//g)].map((m) => m[1]);
+    };
+    const swift = readdirSync(resolve(repoRoot, "ios/App/LiveActivities"))
+      .filter((name) => name.endsWith(".swift"))
+      .sort();
+    expect(swift).toEqual(
+      expect.arrayContaining([
+        "FoodWidget.swift",
+        "LogDrinkIntent.swift",
+        "StreakWidget.swift",
+        "TodayWidget.swift",
+      ])
+    );
+    expect(phaseFiles("Sources").sort()).toEqual(swift);
+    expect(phaseFiles("Resources").sort()).toEqual([
+      "Assets.xcassets",
+      "PrivacyInfo.xcprivacy",
+    ]);
+    const bundle = read("ios/App/LiveActivities/LiveActivitiesBundle.swift");
+    for (const widget of ["TodayWidget()", "StreakWidget()", "FoodWidget()"])
+      expect(bundle).toContain(widget);
   });
 
   it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
@@ -685,5 +737,173 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     // to create a secret for it.
     expect(guide).not.toContain("KEYCHAIN_PASSWORD");
     expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
+  });
+});
+
+/* ── The app's own native plugins ─────────────────────────────────── */
+
+/** Paths the App target's Sources phase compiles. */
+function compiledSourcePaths(): string[] {
+  const target = pbxproj.match(
+    /\/\* App \*\/ = \{\s*isa = PBXNativeTarget;[\s\S]*?buildPhases = \(([\s\S]*?)\);/
+  );
+  if (!target) throw new Error("no App PBXNativeTarget in project.pbxproj");
+  const sourcesId = target[1].match(
+    new RegExp(`(${OBJECT_ID.source}) /\\* Sources \\*/`)
+  )?.[1];
+  if (!sourcesId) throw new Error("App target has no Sources phase");
+  const phase = pbxproj.match(
+    new RegExp(
+      `${sourcesId} /\\* Sources \\*/ = \\{\\s*isa = PBXSourcesBuildPhase;[\\s\\S]*?files = \\(([\\s\\S]*?)\\);`
+    )
+  );
+  if (!phase) throw new Error("no PBXSourcesBuildPhase for the App target");
+  return [
+    ...phase[1].matchAll(new RegExp(`^\\s*(${OBJECT_ID.source}) /\\*`, "gm")),
+  ].map(([, id]) => {
+    const fileRefId = pbxproj.match(
+      new RegExp(
+        `^\\s*${id} /\\*[^\\n]*isa = PBXBuildFile; fileRef = (${OBJECT_ID.source})`,
+        "m"
+      )
+    )?.[1];
+    const path = pbxproj.match(
+      new RegExp(
+        `^\\s*${fileRefId} /\\*[^\\n]*isa = PBXFileReference;[^\\n]*path = "?([^";]+)"?;`,
+        "m"
+      )
+    )?.[1];
+    if (!path) throw new Error(`build file ${id} has no source path`);
+    return path;
+  });
+}
+
+describe("iOS project wiring — the app's own plugins", () => {
+  const appSwift = readdirSync(resolve(repoRoot, "ios/App/App")).filter((f) =>
+    f.endsWith(".swift")
+  );
+
+  it("compiles every Swift file in the app's folder into the app", () => {
+    // A file left out builds green and ships nothing: its plugin is then
+    // missing at run time, which the web side reads as an older shell.
+    // The one file from elsewhere is the widgets' App Group store, which
+    // the app and the widget extension compile from the extension's folder
+    // so the two read and write the very same keys (Wid1).
+    expect(appSwift).toContain("MotionActivityPlugin.swift");
+    expect([...compiledSourcePaths()].sort()).toEqual(
+      [...appSwift, "HomeWidgetStore.swift"].sort()
+    );
+    const storeRefs = new Set(
+      [
+        ...pbxproj.matchAll(
+          /\/\* HomeWidgetStore\.swift in Sources \*\/ = \{isa = PBXBuildFile; fileRef = ([0-9A-F]{24})/g
+        ),
+      ].map((m) => m[1])
+    );
+    expect(storeRefs.size).toBe(1);
+    expect(
+      existsSync(
+        resolve(repoRoot, "ios/App/LiveActivities/HomeWidgetStore.swift")
+      )
+    ).toBe(true);
+  });
+
+  it("registers every app plugin with the bridge, under the name the web side asks for", () => {
+    // Capacitor's package scanner finds package plugins only; an app
+    // target's plugin exists only once TroposBridgeViewController adds it.
+    const bridge = read("ios/App/App/TroposBridgeViewController.swift");
+    const plugins = appSwift
+      .map((file) => read(`ios/App/App/${file}`))
+      .flatMap((source) => [
+        ...source.matchAll(
+          /final class (\w+): CAPPlugin, CAPBridgedPlugin[\s\S]*?let jsName = "(\w+)"/g
+        ),
+      ])
+      .map(([, cls, jsName]) => ({ cls, jsName }));
+    // HeartRateSensor: a Bluetooth heart rate sensor (Run24 (12)).
+    // HomeWidgets: the Home Screen widgets' snapshot and queued drinks (Wid1).
+    expect(plugins.map((p) => p.jsName).sort()).toEqual([
+      "HeartRateSensor",
+      "HomeWidgets",
+      "MotionActivity",
+      "WatchRun",
+    ]);
+    for (const { cls, jsName } of plugins) {
+      expect(bridge).toContain(`bridge?.registerPluginInstance(${cls}())`);
+      const callers = [
+        "src/lib/heartRateSensorBridge.ts",
+        "src/lib/homeWidgets.ts",
+        "src/lib/runMotionSource.ts",
+        "src/lib/watchRunBridge.ts",
+      ].filter((file) =>
+        new RegExp(`registerPlugin<\\w+>\\("${jsName}"\\)`).test(read(file))
+      );
+      expect(callers).toHaveLength(1);
+    }
+  });
+});
+
+describe("iOS project wiring — the Bluetooth heart rate sensor", () => {
+  const plugin = read("ios/App/App/HeartRateSensorPlugin.swift");
+  const bridge = read("src/lib/heartRateSensorBridge.ts");
+
+  it("compiles the plugin into the app", () => {
+    const sources = compiledSourcePaths();
+    // Anchor: the parse found the files that were already there.
+    expect(sources).toContain("WatchRunPlugin.swift");
+    expect(sources).toContain("HeartRateSensorPlugin.swift");
+  });
+
+  it("registers it before the web view loads, under the name the web asks for", () => {
+    // An app-target plugin is not found by Capacitor's package scan.
+    expect(read("ios/App/App/TroposBridgeViewController.swift")).toMatch(
+      /registerPluginInstance\(HeartRateSensorPlugin\(\)\)/
+    );
+    const jsName = plugin.match(/let jsName = "([^"]+)"/)?.[1];
+    expect(jsName).toBe("HeartRateSensor");
+    expect(bridge).toContain(
+      `registerPlugin<HeartRateSensorPlugin>("${jsName}")`
+    );
+  });
+
+  it("implements every method the web calls", () => {
+    const iface = bridge.match(
+      /interface HeartRateSensorPlugin \{([\s\S]*?)\n\}/
+    );
+    expect(iface).not.toBeNull();
+    const called = [...iface![1].matchAll(/^\s{2}(\w+)\(/gm)]
+      .map((m) => m[1])
+      .filter((name) => name !== "addListener");
+    expect(called.length).toBeGreaterThanOrEqual(10);
+    for (const name of called) {
+      expect(plugin).toContain(`CAPPluginMethod(name: "${name}"`);
+      expect(plugin).toMatch(
+        new RegExp(`@objc func ${name}\\(_ call: CAPPluginCall\\)`)
+      );
+    }
+  });
+
+  it("emits only the events the web listens for", () => {
+    const emitted = new Set(
+      [...plugin.matchAll(/notifyListeners\("(\w+)"/g)].map((m) => m[1])
+    );
+    expect([...emitted].sort()).toEqual([
+      "reading",
+      "sensorFound",
+      "statusChanged",
+    ]);
+    for (const event of emitted) expect(bridge).toContain(`"${event}"`);
+  });
+
+  it("asks for Bluetooth with a purpose string and keeps a run's sensor in the background", () => {
+    // Apple: the key "is required if your app uses the device's Bluetooth
+    // interface", and the bluetooth-central mode wakes the app for a
+    // connected peripheral's updated values.
+    expect(infoPlist).toMatch(
+      /<key>NSBluetoothAlwaysUsageDescription<\/key>\s*<string>[^<]*heart rate sensor[^<]*<\/string>/
+    );
+    expect(infoPlist).toMatch(
+      /<key>UIBackgroundModes<\/key>\s*<array>\s*<string>location<\/string>\s*<string>bluetooth-central<\/string>\s*<\/array>/
+    );
   });
 });

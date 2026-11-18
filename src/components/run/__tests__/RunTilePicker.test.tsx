@@ -90,3 +90,27 @@ it("offers repeatable run help without starting or changing setup", () => {
   expect(onMoreOptions).not.toHaveBeenCalled();
   expect(onBack).not.toHaveBeenCalled();
 });
+
+describe("RunTilePicker on a hot day (heatAdjustment.ts)", () => {
+  const HOT_LINE =
+    "By a common rule of thumb, this heat slows the same effort by 2–3%.";
+
+  it("says it is hot under the tiles, with MET Norway's credit, and offers nothing to adjust", () => {
+    setup({ heat: { level: "hot", line: HOT_LINE } });
+    const note = screen.getByRole("note", { name: "Hot day" });
+    expect(note).toHaveTextContent(HOT_LINE);
+    expect(note).toHaveTextContent("Weather data from MET Norway");
+    // A free run has no planned targets to adjust and no session to swap.
+    expect(note.querySelector("button")).toBeNull();
+    // Under the tiles, so the note arriving never moves them.
+    const tile = screen.getByText("Free run");
+    expect(
+      tile.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("says nothing of heat on a mild day", () => {
+    setup();
+    expect(screen.queryByRole("note", { name: "Hot day" })).toBeNull();
+  });
+});

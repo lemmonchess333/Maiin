@@ -37,7 +37,7 @@ import {
 import { sessionPlayerSignature } from "@/lib/sessionPlayerCheckpoint";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { GPSPoint } from "@/lib/gps";
+import { totalDistance, type GPSPoint } from "@/lib/gps";
 
 const h = vi.hoisted(() => ({
   gps: {
@@ -48,25 +48,42 @@ const h = vi.hoisted(() => ({
     permissionState: "granted" as PermissionState,
   },
   gpsCalls: [] as string[],
-  preWarms: 0,
+  warms: 0,
+  cools: 0,
   pauseSince: [] as (number | undefined)[],
   timer: { isRunning: false, elapsed: 600 },
   unit: "mi" as "km" | "mi",
   timerPause: vi.fn(),
   timerResume: vi.fn(),
   timerStart: vi.fn(),
+  /** The phone's motion sensors' reading; null is the web's none. */
+  motion: null as import("@/lib/runAutoPause").MotionReading | null,
+  motionSessions: [] as (string | null)[],
   distanceCue: vi.fn(),
   timeCue: vi.fn(),
   speak: vi.fn(),
+  hr: { bpm: null as number | null, maxHr: 0 },
+  easyHeartRate: vi.fn(),
+  easyCeiling: vi.fn(),
 }));
 
 /* Stable across renders, as the real hook's useCallbacks are: the page's
    hold effect lists them as dependencies. */
 const gpsControls = {
-  preWarm: () => {
-    h.preWarms += 1;
+  warm: () => {
+    h.warms += 1;
   },
+  cool: () => {
+    h.cools += 1;
+  },
+  startAnyway: () => h.gpsCalls.push("startAnyway"),
   start: () => h.gpsCalls.push("start"),
+  // No fix in hand at Start, as the real hook says with none from the
+  // warm watch: the run waits on "Finding GPS" (Run25 call 2).
+  startAwaitingFix: () => {
+    h.gpsCalls.push("start");
+    return false;
+  },
   stop: () => h.gpsCalls.push("stop"),
   pause: (since?: number) => {
     h.gpsCalls.push("pause");
@@ -125,11 +142,17 @@ vi.mock("@/hooks/useRunTimer", () => ({
     getAccumulatedSeconds: () => h.timer.elapsed,
   }),
 }));
+vi.mock("@/hooks/useRunMotion", () => ({
+  useRunMotion: (sessionId: string | null) => {
+    h.motionSessions.push(sessionId);
+    return sessionId ? h.motion : null;
+  },
+}));
 vi.mock("@/hooks/useWakeLock", () => ({
   useWakeLock: () => ({ request: vi.fn(), release: vi.fn() }),
 }));
 vi.mock("@/hooks/useHeartRate", () => ({
-  useHeartRate: () => ({ bpm: null }),
+  useHeartRate: () => h.hr,
 }));
 vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
@@ -138,7 +161,8 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkDistanceCue: h.distanceCue,
     checkTimeCue: h.timeCue,
     checkPaceAlert: () => {},
-    checkEasyCeiling: () => {},
+    checkEasyCeiling: h.easyCeiling,
+    checkEasyHeartRate: h.easyHeartRate,
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),
@@ -289,6 +313,14 @@ function tree() {
   );
 }
 
+/** Run27 (1): Start counts 3-2-1 first; the runner taps it away, so the
+ *  run's clock starts at the instant of Start, as these rows expect. */
+async function skipCountdown() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Start now" }));
+  });
+}
+
 async function resumeFromSnapshot(
   phase: "active" | "paused",
   config: Partial<StoredRun["config"]> = {}
@@ -320,10 +352,13 @@ beforeEach(() => {
   h.gps.error = null;
   h.gps.permissionState = "granted";
   h.gpsCalls.length = 0;
-  h.preWarms = 0;
+  h.warms = 0;
+  h.cools = 0;
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
   h.timer.elapsed = 600;
+  h.motion = null;
+  h.motionSessions.length = 0;
   h.unit = "mi";
   h.timerPause.mockReset().mockImplementation(() => {
     h.timer.isRunning = false;
@@ -337,6 +372,9 @@ beforeEach(() => {
   h.distanceCue.mockReset();
   h.timeCue.mockReset();
   h.speak.mockReset();
+  h.hr = { bpm: null, maxHr: 0 };
+  h.easyHeartRate.mockReset();
+  h.easyCeiling.mockReset();
 });
 afterEach(async () => {
   await restoreRealTimers();
@@ -683,15 +721,18 @@ describe("a structured run's real player", () => {
   });
 });
 
-/* Mob2 finding 7: the setup screen warms the GPS and shows the signal
-   before Start, once location is allowed, and never asks for it. */
+/* Mob2 finding 7 and Run25 call 2: the run screen watches location before
+   Start and shows the signal, once location is allowed, and never asks for
+   it, so Start usually finds the fix that starts the clock in hand. */
 describe("the setup screen warms the GPS", () => {
-  it("shows the signal and warms while location is allowed", () => {
+  it("shows the signal and watches while location is allowed", () => {
     render(tree());
     expect(screen.getByRole("status")).toHaveTextContent("GPS ready");
-    expect(h.preWarms).toBe(1);
+    expect(h.warms).toBe(1);
+    // One watch, not a fix asked for every so often.
     act(() => vi.advanceTimersByTime(15_000));
-    expect(h.preWarms).toBe(2);
+    expect(h.warms).toBe(1);
+    expect(h.cools).toBe(0);
     // Warming is not the run: nothing is recording.
     expect(h.gpsCalls).toEqual([]);
   });
@@ -703,7 +744,7 @@ describe("the setup screen warms the GPS", () => {
     expect(screen.getByRole("button", { name: "Easy run" })).toBeVisible();
     expect(screen.queryByText("GPS ready")).toBeNull();
     act(() => vi.advanceTimersByTime(30_000));
-    expect(h.preWarms).toBe(0);
+    expect(h.warms).toBe(0);
   });
 
   it("stops warming once the run starts", async () => {
@@ -711,10 +752,13 @@ describe("the setup screen warms the GPS", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
-    const warmedBefore = h.preWarms;
+    await skipCountdown();
+    // The run's own watch takes over; the setup screen's stops.
+    expect(h.gpsCalls).toEqual(["start"]);
+    expect(h.cools).toBeGreaterThanOrEqual(1);
+    const warmedBefore = h.warms;
     act(() => vi.advanceTimersByTime(45_000));
-    // The start's own preWarm is the run's; the setup screen's stops.
-    expect(h.preWarms - warmedBefore).toBe(0);
+    expect(h.warms - warmedBefore).toBe(0);
   });
 });
 
@@ -732,6 +776,7 @@ describe("GPS acquisition recovery", () => {
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
       });
+      await skipCountdown();
       expect(h.timerStart).not.toHaveBeenCalled();
       expect(screen.queryByRole("button", { name: "Finish" })).toBeNull();
       const manual = screen.getByRole("button", { name: "Track without GPS" });
@@ -750,6 +795,7 @@ describe("GPS acquisition recovery", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     expect(
       screen.queryByRole("button", { name: "Track without GPS" })
     ).toBeNull();
@@ -766,6 +812,7 @@ describe("GPS acquisition recovery", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
+    await skipCountdown();
     expect(h.timerStart).not.toHaveBeenCalled();
     expect(
       readStoredRun("recording-test", Date.now())?.recordingStartedAt
@@ -774,13 +821,12 @@ describe("GPS acquisition recovery", () => {
     h.gps.error = null;
     h.gps.points = [point(0, Date.now())];
     view.rerender(tree());
-    for (let tick = 0; tick < 3; tick++) {
-      act(() => vi.advanceTimersByTime(1000));
-    }
+    // Run25 call 2: the clock starts on the fix, at once, with no 3-2-1
+    // after it; it was three seconds later.
     expect(h.timerStart).toHaveBeenCalledOnce();
     expect(
       readStoredRun("recording-test", Date.now())?.recordingStartedAt
-    ).toBe(T0 + 13_000);
+    ).toBe(T0 + 10_000);
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
     expect(
       screen.queryByRole("textbox", { name: "Distance covered" })
@@ -789,7 +835,7 @@ describe("GPS acquisition recovery", () => {
     const finish = JSON.parse(
       screen.getByTestId("finish-payload").textContent ?? "null"
     );
-    expect(finish.recordingStartedAt).toBe(T0 + 13_000);
+    expect(finish.recordingStartedAt).toBe(T0 + 10_000);
   });
 });
 
@@ -836,6 +882,44 @@ describe("a run-walk's announcements", () => {
     await resumeFromSnapshot("active");
     expect(h.distanceCue).toHaveBeenCalled();
     expect(h.timeCue).toHaveBeenCalled();
+  });
+});
+
+/* Run24 (12) with live heart rate: an easy run is held to the top of Zone 2
+   when there is a reading and a max to read it against, and to pace
+   otherwise. */
+describe("the easy cue's source", () => {
+  it("reads heart rate against the top of Zone 2 when there is a live reading", async () => {
+    h.hr = { bpm: 150, maxHr: 187 };
+    await resumeFromSnapshot("active");
+    expect(h.easyHeartRate).toHaveBeenCalledWith(150, 131, 600);
+    expect(h.easyCeiling).not.toHaveBeenCalled();
+  });
+
+  it("asks nothing of heart rate with no reading, or no max to read it against", async () => {
+    h.hr = { bpm: null, maxHr: 187 };
+    const first = await resumeFromSnapshot("active");
+    first.view.unmount();
+    h.hr = { bpm: 150, maxHr: 0 };
+    await resumeFromSnapshot("active");
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
+  });
+
+  it("is not a tempo's, nor a run-walk's", async () => {
+    h.hr = { bpm: 150, maxHr: 187 };
+    const tempo = await resumeFromSnapshot("active", { activityType: "tempo" });
+    tempo.view.unmount();
+    const runWalk = RUN_TEMPLATES.find((t) => t.id === "run_walk_1")!;
+    await resumeFromSnapshot("active", {
+      target: { type: "time", value: 29 * 60 },
+      segments: segmentsFromRunWalk(runWalk.config.runWalk!),
+      planMetadata: {
+        ...freeformPlanMetadata("freeform"),
+        planSource: "url_template",
+        actualTemplateId: "run_walk_1",
+      },
+    });
+    expect(h.easyHeartRate).not.toHaveBeenCalled();
   });
 });
 
@@ -922,27 +1006,24 @@ describe("the trace's clock follows the run's", () => {
     expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
   });
 
-  it("holds the trace through the 3-2-1 countdown and releases it at Go", async () => {
-    /* The first fix lands while acquiring and starts the countdown; the
-       timer starts at Go. Fixes in between (a runner shuffling to the
-       line) are not the run, and km 1 is not three seconds slower. */
-    h.gps.points = [point(0, T0)];
+  it("starts the clock on the first fix, with nothing held before it", async () => {
+    /* Run25 call 2: the first good fix starts the clock at its own time,
+       and there is no 3-2-1 after it, during which the trace was held: the
+       trace and the clock start together, so km 1 is not three seconds
+       slower. The release is the clock running, not a hold ending. */
+    h.gps.points = [point(0, T0 - 400)];
     render(tree());
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
     });
-    expect(h.gpsCalls).toEqual(["start", "pause"]);
-    // 3, 2, 1, Go — each second re-arms the next, so one step at a time.
-    for (let tick = 0; tick < 2; tick++) {
-      act(() => {
-        vi.advanceTimersByTime(1000);
-      });
-      expect(h.gpsCalls).toEqual(["start", "pause"]);
-    }
+    await skipCountdown();
+    expect(h.gpsCalls).toEqual(["start", "resume"]);
+    expect(h.timerStart).toHaveBeenCalledExactlyOnceWith(T0 - 400);
+    expect(h.speak).toHaveBeenCalledWith("Go!");
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(3000);
     });
-    expect(h.gpsCalls).toEqual(["start", "pause", "resume"]);
+    expect(h.gpsCalls).toEqual(["start", "resume"]);
   });
 
   it("holds the trace for a pause and releases it on resume", async () => {
@@ -978,6 +1059,135 @@ describe("the trace's clock follows the run's", () => {
     fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
     expect(h.timerResume).toHaveBeenCalledTimes(1);
     expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
+  });
+});
+
+describe("auto-pause with the phone's motion sensors", () => {
+  const still = (at: number): import("@/lib/runAutoPause").MotionReading => ({
+    available: true,
+    steps: 400,
+    stepAt: at - 10_000,
+    stepEvent: { at, moving: false },
+    risesSincePause: 0,
+    activity: { at, kind: "stationary" },
+  });
+
+  it("runs the sensors for an outdoor run with auto-pause on, and not with it off", async () => {
+    await resumeFromSnapshot("active");
+    expect(h.motionSessions.at(-1)).toEqual(expect.any(String));
+    cleanup();
+    h.motionSessions.length = 0;
+    await resumeFromSnapshot("active", { autoPause: false });
+    expect(h.motionSessions.every((id) => id === null)).toBe(true);
+  });
+
+  it("stops the clock 2 s after a still phone at a crossing, through GPS drift, and starts it at the first step", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    h.gpsCalls.length = 0;
+    act(() => vi.advanceTimersByTime(1000));
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      // Drift: 1.4 m/s, which GPS alone reads as moving.
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+    expect(h.gpsCalls).toEqual(["pause"]);
+    expect(
+      screen.getByText(/Auto-paused · start moving to resume/)
+    ).toBeInTheDocument();
+
+    // More drift restarts nothing.
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.8 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerResume).not.toHaveBeenCalled();
+
+    // The pedometer's resume event, before GPS has caught up.
+    h.motion = {
+      ...h.motion!,
+      stepEvent: { at: Date.now(), moving: true },
+    };
+    h.gps.currentPoint = { ...point(3, Date.now()), speed: 0.2 };
+    view.rerender(tree());
+    expect(h.timerResume).toHaveBeenCalledTimes(1);
+    expect(h.gpsCalls.slice(-1)).toEqual(["resume"]);
+    expect(screen.queryByText(/Auto-paused/)).toBeNull();
+  });
+
+  it("a Resume by hand while still standing is not undone by the stop it ended", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    act(() => vi.advanceTimersByTime(1000));
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+
+    // The phone's Pause then Carry on; the Watch's Resume during an
+    // auto-pause ends in the same handler.
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    expect(h.timerResume).toHaveBeenCalledTimes(1);
+    // The same still reading: from before the Resume, so not a new stop.
+    for (let second = 0; second < 6; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
+    // A new stop after it pauses again.
+    h.motion = still(Date.now());
+    for (let second = 0; second < 3; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 1.4 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(2);
+  });
+
+  it("never stops the clock while the plan has the runner in a recovery", async () => {
+    const { view } = await resumeFromSnapshot("active", {
+      segments: [
+        {
+          type: "recovery",
+          label: "Walk",
+          instruction: "Brisk walk, let your breathing settle",
+          target: { kind: "duration", seconds: 1200 },
+        },
+      ],
+    });
+    for (let second = 0; second < 8; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).not.toHaveBeenCalled();
+    expect(h.timer.isRunning).toBe(true);
+  });
+
+  it("stops it as before when the same standing is in a run segment", async () => {
+    const { view } = await resumeFromSnapshot("active", {
+      segments: [
+        {
+          type: "easy",
+          label: "Run",
+          instruction: "Easy, slow enough to talk",
+          target: { kind: "duration", seconds: 1200 },
+        },
+      ],
+    });
+    for (let second = 0; second < 5; second++) {
+      h.gps.currentPoint = { ...point(3, Date.now()), speed: 0 };
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerPause).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1019,6 +1229,102 @@ describe("the figures a pause must not move", () => {
     h.gps.distance = 87;
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     expect(screen.getByText("gaps 0 · good")).toBeInTheDocument();
+  });
+});
+
+describe("a run with auto-pause off keeps its moving time (Run28 call 1)", () => {
+  /** An outdoor run with auto-pause off whose clock started at T0, saved
+   *  before its first point, so nothing restored holds it. */
+  async function startOffRun() {
+    const snapshot: StoredRun = {
+      v: RUN_RESUME_SCHEMA_VERSION,
+      config: {
+        activityType: "easy",
+        autoPause: false,
+        audioCues: true,
+        audioCueFrequency: "every_km",
+        paceAlerts: false,
+        voiceRate: 0.9,
+        displayStats: ["pace", "distance", "time"],
+        target: { type: "none" },
+        planMetadata: freeformPlanMetadata("freeform"),
+      },
+      startedAt: T0,
+      recordingStartedAt: T0,
+      lastWriteAt: T0,
+      accumulatedSeconds: 0,
+      isRunning: true,
+      phase: "active",
+      points: [],
+    };
+    expect(writeStoredRun("recording-test", snapshot)).toBe(true);
+    const view = render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Resume run" }));
+    });
+    return view;
+  }
+
+  /** One fix a second: 60 s at 3 m/s, 40 s standing at a crossing, 60 s
+   *  at 3 m/s. The trace keeps the running fixes, as useGPS keeps none
+   *  that has not moved a step. */
+  function runWithAStop(view: ReturnType<typeof render>) {
+    const trace: GPSPoint[] = [];
+    let metres = 0;
+    for (let second = 0; second < 160; second++) {
+      const standing = second >= 60 && second < 100;
+      const fix = { ...point(metres, Date.now()), speed: standing ? 0.2 : 3 };
+      h.gps.currentPoint = fix;
+      if (!standing) {
+        trace.push(fix);
+        metres += 3;
+      }
+      view.rerender(tree());
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    h.gps.points = trace;
+    h.gps.distance = totalDistance(trace);
+    // The clock ran through the stop: auto-pause was off.
+    h.timer.elapsed = 160;
+    view.rerender(tree());
+    return trace;
+  }
+
+  const payload = () =>
+    JSON.parse(screen.getByTestId("finish-payload").textContent!) as {
+      elapsed: number;
+      distance: number;
+      points: GPSPoint[];
+      recordingStartedAt: number;
+      finishedAt: number;
+    };
+
+  it("hands the summary the trace's moving time, the stop in its points, the distance unchanged", async () => {
+    const view = await startOffRun();
+    const trace = runWithAStop(view);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = payload();
+    // The stop's 40 s, less the 5 s auto-pause waits before it stops.
+    expect(finish.elapsed).toBe(160 - 35);
+    expect(finish.distance).toBe(totalDistance(trace));
+    expect(totalDistance(finish.points)).toBe(totalDistance(trace));
+    const firstAfter = finish.points.find((p) => p.timestamp === T0 + 100_000)!;
+    expect(firstAfter.pausedMs).toBe(35_000);
+    // The elapsed time is there to be shown beside it: start to finish.
+    expect((finish.finishedAt - finish.recordingStartedAt) / 1000).toBe(160);
+    // A relaunch reopens the review on the same trace.
+    expect(readStoredRun("recording-test")?.points).toEqual(finish.points);
+  });
+
+  it("keeps the timer for a run paused by hand", async () => {
+    const view = await startOffRun();
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    const trace = runWithAStop(view);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    const finish = payload();
+    expect(finish.elapsed).toBe(160);
+    expect(finish.points).toEqual(trace);
   });
 });
 
@@ -1259,6 +1565,7 @@ describe("interrupted manual distance entry", () => {
     await act(async () =>
       fireEvent.click(screen.getByRole("button", { name: "Easy run" }))
     );
+    await skipCountdown();
     h.gps.error = "Permission denied";
     view.rerender(tree());
     // The page's GPS failure action starts a fresh manual entry.
@@ -1373,6 +1680,7 @@ describe("manual structured coaching through the real player", () => {
         })
       );
     });
+    await skipCountdown();
     return view;
   }
 

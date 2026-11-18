@@ -16,7 +16,9 @@
  *   template can't say; the type can.
  * - A race is a run started as one: the plan's race, or "Race" in the run
  *   chooser ("Race effort"), which is how a time trial or a parkrun is
- *   recorded (the app has no time-trial session). It is read whole.
+ *   recorded (the app has no time-trial session). It is read whole, on its
+ *   elapsed time, as Strava times a run tagged Race (Run28 call 4 and its
+ *   STATUS).
  * - A tempo is read by its work segments (`workPortion`), its
  *   blocks without the warm-up and
  *   cool-down. One that recorded none, started from the chooser with no
@@ -29,12 +31,17 @@
  *   and a fartlek's pick-ups are not.
  * - Every effort is first an outdoor GPS run with valid figures
  *   (`isPaceEligible`): a typed treadmill distance never sets a benchmark.
+ * - A run started on a hot or extreme day (`hotDay`, the run screen's
+ *   `RunConfig.hotDay`, saved with the run's config) is still an effort,
+ *   marked as one run in the heat: it may raise a benchmark and never
+ *   lowers one (Run27 (14), `heatHoldsBenchmark`).
  *
  * The benchmark the app derives (`useRunFitnessAutoDerive`), Pace Insight
  * (`usePaceInsight`) and the simulator all read efforts here, so they can't
  * drift apart.
  */
 import type { BenchmarkEffort } from "./runPaces";
+import { raceSeconds } from "./runElapsed";
 import { isPaceEligible } from "./runStatsEligibility";
 import { isTimeTrialTemplateId, RUN_TEMPLATES } from "./workoutTemplates";
 
@@ -75,6 +82,14 @@ export interface EffortRun {
   /** What was run, as the saved run names it: a time trial is read by its
    *  work as a race (Run24 (4)). */
   templateId?: string;
+  /** Run27 (14): started on a hot or extreme day (`RunConfig.hotDay`). */
+  hotDay?: boolean;
+  /** The run was saved as the goal race (it keeps its `racePrediction`).
+   *  Its time is its elapsed time (Run28 call 4). */
+  goalRace?: boolean;
+  /** Seconds from the clock's start to the finish (`runElapsed.ts`), for a
+   *  run saved with both stamps. */
+  elapsedSeconds?: number;
 }
 
 /** The effort a run was, or null when it was none. */
@@ -83,6 +98,7 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
   const source = {
     ...(run.id ? { id: run.id } : {}),
     ...(run.completedAt ? { completedAt: run.completedAt } : {}),
+    ...(run.hotDay === true ? { hotDay: true } : {}),
   };
   // Run24 (4), deep dive D4: the plan's time trial, read by its one work
   // segment as a race over that distance; the warm-up and cool-down around
@@ -99,11 +115,15 @@ export function benchmarkEffortOf(run: EffortRun): BenchmarkEffort | null {
     };
   }
   if (run.activityType === "race") {
-    if (!(run.distance >= MIN_RACE_METERS) || !(run.duration > 0)) return null;
+    // A race is read on its elapsed time, as Strava times a run tagged
+    // Race: the goal race (Run28 call 4) and any other race effort (its
+    // STATUS).
+    const timeS = raceSeconds(run.duration, run.elapsedSeconds);
+    if (!(run.distance >= MIN_RACE_METERS) || !(timeS > 0)) return null;
     return {
       kind: "race",
       distanceM: run.distance,
-      timeS: run.duration,
+      timeS,
       ...source,
     };
   }

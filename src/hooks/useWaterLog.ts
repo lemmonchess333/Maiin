@@ -200,6 +200,9 @@ export function useWaterLog(date?: string) {
       ? preferredServing
       : GLASS_ML;
   return {
+    /** The day these figures are for, "yyyy-MM-dd": `date`, or the clock's
+     *  today, which moves past midnight on the hook's own timer. */
+    day,
     ml: state.ml,
     target,
     loading: !!uid && snapshot?.key !== key,

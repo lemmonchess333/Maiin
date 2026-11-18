@@ -58,6 +58,9 @@ import {
   ACTIVITY_TYPES,
   buildLaunchConfig,
   buildTileConfig,
+  heatLongSwapConfig,
+  heatSwapConfig,
+  withoutPaceTargets,
 } from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
@@ -73,8 +76,10 @@ import {
 } from "../lib/runResumeStorage";
 import {
   createRunSessionIdentity,
+  identityStartedAt,
   type RunSessionIdentity,
 } from "@/lib/runSessionIdentity";
+import { isStartAccuracy } from "@/lib/gpsStart";
 import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
@@ -86,6 +91,7 @@ import {
   judgesEasyNow,
   judgesPaceNow,
   livePaceTarget,
+  pinnedWorkPace,
   segmentsFromGuided,
   segmentsFromIntervals,
 } from "../lib/runSegments";
@@ -103,6 +109,8 @@ import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import { useHeartRate } from "../hooks/useHeartRate";
+import { useHeartRateSensor } from "@/hooks/useHeartRateSensor";
+import { easyHeartRateCeiling } from "@/lib/hrZones";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
 import { useWatchRunSwitch } from "@/hooks/useWatchRunSwitch";
 import { isWatchRunLocallyDisabled } from "@/lib/connectedTrainingPrefs";
@@ -125,11 +133,29 @@ import {
   type WatchRunPhase,
 } from "@/lib/watchRunBridge";
 import { clearWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
+import { watchRunStep } from "@/lib/watchRunStep";
 import { CONNECTED_TRAINING_RELEASED } from "@/lib/connectedTrainingRelease";
 import { THEME } from "../lib/theme";
 import { gpsSignalBars } from "../lib/gpsSignal";
-import { runMotionState } from "@/lib/runAutoPause";
-import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
+import {
+  AUTO_PAUSE_IDLE,
+  motionFrom,
+  stepAutoPause,
+  type AutoPauseState,
+} from "@/lib/runAutoPause";
+import {
+  movingTimeOf,
+  type MovingFix,
+  type RecoveryWindow,
+} from "@/lib/runMovingTime";
+import { useRunMotion } from "@/hooks/useRunMotion";
+import { useStartCountdown } from "@/hooks/useStartCountdown";
+import StartCountdown from "@/components/run/StartCountdown";
+import {
+  isRunWalkTemplateId,
+  RUN_TEMPLATES,
+  runsByEffort,
+} from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
   isTreadmillRun,
@@ -140,6 +166,8 @@ import { computeRouteQuality } from "../lib/routeQuality";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { useBackDismiss } from "../lib/backDismiss";
 import { useProgram } from "../features/program/useProgram";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { useRacePlanLocked } from "@/hooks/useRacePlanLock";
 import {
   computePlanMetadata,
@@ -163,11 +191,45 @@ import {
 } from "../features/run/runSessionReducer";
 import {
   FIRST_RUN_CHECK_MS,
+  HEAT_CHECK_MS,
   START_ON_ARRIVAL_PARAM,
   startOnArrival,
+  type ArrivalHeat,
 } from "../features/run/startOnArrival";
+import { useHotDay } from "../hooks/useHotDay";
+import {
+  coolestHourLine,
+  easeBand,
+  heatAdjustedLine,
+  heatAdjustmentFor,
+  heatEasedPaceTable,
+  heatEasedRaceTarget,
+  heatHeartRateCue,
+  heatHeartRateCueDue,
+  heatLine,
+  heatSwapLine,
+  isHotDay,
+  isQualitySession,
+  HEAT_LONG_SWAP,
+  HEAT_LONG_SWAP_LINE,
+  HEAT_SWAP_START,
+} from "../lib/heatAdjustment";
+import { getHeartRateSource } from "../lib/heartRateSource";
+import { deviceTemperatureUnit } from "../lib/temperature";
+import { plannedSessionMinutes } from "../lib/runDose";
+import { plannedIntervalPaceSPerKm } from "../lib/intervalRest";
+import type {
+  HeatPanelAdjust,
+  HeatPanelSwap,
+} from "../components/run/HeatPanel";
+import type { RunSetupHeat } from "../components/run/RunSetupModal";
 import { haptic } from "../lib/haptic";
-import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
+import {
+  distanceLabel,
+  distanceValue,
+  paceBandLabel,
+  paceLabel,
+} from "../lib/runLabels";
 import {
   startRunActivity,
   updateRunActivity,
@@ -207,6 +269,19 @@ function sessionSegmentsFor(
   return config.activityType === "intervals" && config.intervals
     ? segmentsFromIntervals(config.intervals, unit, seed)
     : null;
+}
+
+/** What the finish replays auto-pause over when it was off (Run28 call 1,
+ *  `runMovingTime.ts`): the fixes, the recoveries, and whether the run was
+ *  ever paused by hand. */
+interface MovingEvidence {
+  fixes: MovingFix[];
+  recoveries: RecoveryWindow[];
+  pausedByHand: boolean;
+}
+
+function noMovingEvidence(): MovingEvidence {
+  return { fixes: [], recoveries: [], pausedByHand: false };
 }
 
 function discardStoredSession(
@@ -273,8 +348,13 @@ export default function Run() {
   // Nothing here completes a planned day: a saved run completes the day it
   // matches through the claims (useClaimMapForProgram). We only read programState +
   // loading here to drive the prefill memo.
-  const { programState, loading: programLoading } = useProgram();
-  // Q85: past a half or full marathon plan's free first week, a planned
+  const {
+    programState,
+    loading: programLoading,
+    recentLayoff,
+    recentRuns,
+  } = useProgram();
+  // Q85: past a half, marathon or ultra plan's free first week, a planned
   // training run opens as a free run (the race itself still starts).
   const runPlanLocked = useRacePlanLocked(programState?.runPlan);
   // A plan with no race date is a plan here, though the profile says free
@@ -300,7 +380,6 @@ export default function Run() {
   useEffect(() => {
     if (locked) unlockButtonRef.current?.focus();
   }, [locked]);
-  const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
@@ -417,13 +496,29 @@ export default function Run() {
     () =>
       searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
   );
-  /* The GPS warms while the setup screen is open, and the screen shows
-     the signal, so Start usually finds a fix waiting (useGpsWarmup).
-     Never before location is allowed: a warm-up must not be the ask. */
+  /* Heat (heatAdjustment.ts): the weather where the phone is, read once as
+     the page opens. On a hot day the planned run's card offers to adjust
+     it for heat (`heatAccepted`, this run only, cleared as easily) and any
+     swap, and a run started here on a hot day is never judged slow
+     afterwards (`RunConfig.hotDay`, set at the start, or at the finish
+     when the weather answered after the start). */
+  const heat = useHotDay();
+  const hotNow = isHotDay(heat.weather);
+  const startedThisVisitRef = useRef(false);
+  const [heatAccepted, setHeatAccepted] = useState(false);
+  /* The heart-rate ceiling's cue, spoken at most once a minute and a half
+     (`heatHeartRateCueDue`). */
+  const heatHrSpokeAtRef = useRef<number | null>(null);
+  /* Location is watched from the moment the run screen opens, before
+     Start and through the countdown, and the setup screen shows the
+     signal, so Go usually finds the fix that starts the clock in hand
+     (useGpsWarmup, Run25 call 2, Run27 (1)). Never before location is
+     allowed: a warm-up must not be the ask. */
   const showSetupSignal = useGpsWarmup({
-    active: phase === "waiting" && arrival === "done",
+    active: phase === "waiting" || phase === "countdown",
     permissionState: gps.permissionState,
-    preWarm: gps.preWarm,
+    warm: gps.warm,
+    cool: gps.cool,
   });
   const setupSignal = showSetupSignal ? (
     <GpsSignalChip
@@ -432,15 +527,18 @@ export default function Run() {
       pointCount={gps.gpsAccuracy === null ? 0 : 1}
       signalQuality={gps.signalQuality}
       onPage
+      ready={gps.gpsAccuracy !== null && isStartAccuracy(gps.gpsAccuracy)}
     />
   ) : null;
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
   const startedAtRef = useRef<number | null>(null);
-  // The first timer tick may be much later than Start while GPS acquires.
-  // Keep its wall time separately for an accurate Apple Health workout.
+  // The instant the run's clock started (Apple Health's workout start), or
+  // null until it has: a GPS run's clock waits for its first good fix.
   const recordingStartedAtRef = useRef<number | null>(null);
+  // What the finish replays auto-pause over, with it off (Run28 call 1).
+  const movingEvidenceRef = useRef<MovingEvidence>(noMovingEvidence());
   const identityRef = useRef<RunSessionIdentity | null>(null);
   const finishedRef = useRef(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -456,9 +554,13 @@ export default function Run() {
     !snapshotWriteFailed &&
     !!runConfig &&
     isOutdoorGpsRun(runConfig);
+  // A paired Bluetooth sensor reads any run, outdoors or on a treadmill,
+  // with or without the Watch.
+  const sensorPaired = !!useHeartRateSensor().status.paired;
+  const heartRateEligible = watchEligible || (sensorPaired && !!runConfig);
   const hr = useHeartRate({
     live: true,
-    enabled: watchEligible,
+    enabled: heartRateEligible,
     sessionId: activeSessionId,
     uid: user?.uid,
   });
@@ -633,12 +735,11 @@ export default function Run() {
     player.segments,
     player.current
   );
-  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`).
-  const judgingEasy = judgesEasyNow(
-    runConfig?.activityType,
-    player.segments,
-    player.current
-  );
+  // Run24 (12): an easy or a long run in its easy running (`judgesEasyNow`),
+  // unless it is held by effort (Run26 (2), `runsByEffort`).
+  const judgingEasy =
+    judgesEasyNow(runConfig?.activityType, player.segments, player.current) &&
+    !runsByEffort(runTemplateIdOf(runConfig?.planMetadata));
   // The bar's pace: none until the run has one to judge (Run20).
   const barPace = runConfig ? livePaceTarget(runConfig) : null;
   // A run-walk session (Run20 (5)) is running its steps. A run type picked
@@ -654,11 +755,18 @@ export default function Run() {
   const intervalBand = useMemo(() => {
     // Union of STRUCT-SESS-02 (band for intervals AND tempo) and RUN-EV-08
     // (prescription sites read the consent-gated table).
+    // A run adjusted for heat shows its eased band (heatAdjustment.ts).
     const type = runConfig?.activityType;
     if (type !== "intervals" && type !== "tempo") return undefined;
-    const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
+    const fitness = prescriptivePaceTableFromFitness(
+      profile?.runFitness ?? null
+    );
+    const adjustment = runConfig?.heatAdjustment;
+    const table = adjustment
+      ? heatEasedPaceTable(fitness, adjustment)
+      : fitness;
     return table ? resolveSessionPaces(type, table).band : undefined;
-  }, [runConfig?.activityType, profile?.runFitness]);
+  }, [runConfig?.activityType, runConfig?.heatAdjustment, profile?.runFitness]);
 
   // ─── Phase B1: programme prefill + context strip ─────────────────
   //
@@ -868,6 +976,25 @@ export default function Run() {
     const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
     return weekHoldsQuality(programState?.runDays, day?.weekKey);
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Run24 (3): a plan with no race date's weeks, for the pinned run's
+  // reason in the plan's terms.
+  const launchToday = useLocalDateKey();
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: launchToday,
+  });
+  const launchRolling = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return day?.weekKey ? (rollingContexts?.get(day.weekKey) ?? null) : null;
+  }, [
+    planDecision.metadata.scheduledRunId,
+    programState?.runDays,
+    rollingContexts,
+  ]);
   // Whether the pinned run is one of the recovery's, after race day.
   const launchInRecovery = useMemo(() => {
     const id = planDecision.metadata.scheduledRunId;
@@ -878,6 +1005,262 @@ export default function Run() {
     programState?.runDays,
     programState?.runPlan,
   ]);
+
+  /* The planned tempo or interval session's minutes, as its cards state
+     them, which a hot day offers as an easy run. Null for any other run. */
+  const heatSwapMinutes = useMemo(
+    () =>
+      launchWorkout && isQualitySession(launchWorkout.type)
+        ? plannedSessionMinutes(
+            launchWorkout,
+            plannedIntervalPaceSPerKm(profile?.runFitness)
+          )
+        : null,
+    [launchWorkout, profile?.runFitness]
+  );
+
+  /* ─── Heat: the planned run's offer (heatAdjustment.ts) ─────────────
+     What a hot day offers the run the page names: an adjustment (eased
+     paces from the T+DP rule of thumb, or a heart-rate ceiling where a
+     source is live and the max is measured), and a swap. The eased run is
+     the plan's own prefill built from the eased table, so its steps,
+     labels and cues all carry the eased paces; nothing is stored. */
+  // A sensor paired after the page opened counts too (`sensorPaired`).
+  const hrSourceAtOpen = useMemo(() => getHeartRateSource().available, []);
+  const hrLive = hrSourceAtOpen || sensorPaired;
+  const measuredMaxHr = profile?.maxHeartRate ?? null;
+  const heatOffer = useMemo(
+    () =>
+      launchWorkout
+        ? heatAdjustmentFor({
+            weather: heat.weather,
+            sessionType: launchWorkout.type,
+            measuredMaxHr,
+            hrLive,
+          })
+        : null,
+    [launchWorkout, heat.weather, measuredMaxHr, hrLive]
+  );
+  const heatPrefill = useMemo(() => {
+    if (!heatOffer || !launchWorkout) return null;
+    const result = computePlanMetadata({
+      displayUnit: unit,
+      profileRunMode,
+      todayDayIndex: new Date().getDay(),
+      todayDate: localDateString(),
+      runPlan: programState?.runPlan,
+      runDays: programState?.runDays,
+      urlTemplateId,
+      urlType,
+      urlScheduledRunId,
+      paceTable: heatEasedPaceTable(paceTable, heatOffer),
+      raceTarget: heatEasedRaceTarget(
+        raceTargetFromProfile({ raceGoal, runFitness }),
+        heatOffer
+      ),
+    });
+    // The same session as the plan's, or nothing to adjust.
+    if (result.metadata.actualTemplateId !== launchWorkout.id) return null;
+    const prefill = result.prefill as Partial<RunConfig>;
+    return heatOffer.effortOnly ? withoutPaceTargets(prefill) : prefill;
+  }, [
+    heatOffer,
+    launchWorkout,
+    unit,
+    profileRunMode,
+    programState?.runPlan,
+    programState?.runDays,
+    urlTemplateId,
+    urlType,
+    urlScheduledRunId,
+    paceTable,
+    raceGoal,
+    runFitness,
+  ]);
+  /* What the adjustment sets, for its line: a quality session's work pace
+     as a range, an easy or long run's easy limit, or, on an extreme day,
+     no pace at all. Null when the run has none of them to ease (no
+     confirmed benchmark, no goal pace), and then there is nothing to
+     offer unless a heart-rate ceiling is. */
+  const heatTarget = useMemo(() => {
+    if (!heatOffer || !launchWorkout) return null;
+    const workPace =
+      livePaceTarget(planDecision.prefill) ??
+      pinnedWorkPace(planDecision.prefill.segments);
+    if (isQualitySession(launchWorkout.type)) {
+      if (!workPace) return null;
+      return heatOffer.effortOnly
+        ? ({ kind: "none" } as const)
+        : ({
+            kind: "range",
+            pace: paceBandLabel(
+              easeBand([workPace, workPace], heatOffer),
+              unit
+            ),
+          } as const);
+    }
+    if (!paceTable) return null;
+    const eased = heatEasedPaceTable(paceTable, heatOffer);
+    return eased
+      ? ({ kind: "easyLimit", pace: paceLabel(eased.easy[0], unit) } as const)
+      : ({ kind: "none" } as const);
+  }, [heatOffer, launchWorkout, planDecision.prefill, paceTable, unit]);
+  const heatCanAdjust =
+    heatOffer !== null &&
+    heatPrefill !== null &&
+    (heatOffer.hrCeiling !== undefined || heatTarget !== null);
+  const heatAdjusted = heatAccepted && heatCanAdjust;
+  /* The swaps beside it: a tempo or interval session for an easy run of
+     its minutes, and a structured long run (a race-pace finish or race-pace
+     blocks, by pace or by effort) for easy running all the way. */
+  const structuredLongRun =
+    launchWorkout?.type === "long" &&
+    (planDecision.prefill.segments ?? []).some((step) => step.type !== "easy");
+  const heatSwapKind: "easy" | "longEasy" | null =
+    !hotNow || !launchWorkout
+      ? null
+      : heatSwapMinutes !== null
+        ? "easy"
+        : structuredLongRun
+          ? "longEasy"
+          : null;
+  /* The planned run as its Start begins it: adjusted for heat when the
+     runner said so. */
+  const plannedLaunchConfig = (): RunConfig => {
+    const base = buildLaunchConfig(
+      heatAdjusted && heatPrefill
+        ? { prefill: heatPrefill, metadata: planDecision.metadata }
+        : planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    return heatAdjusted && heatOffer
+      ? { ...base, heatAdjustment: heatOffer }
+      : base;
+  };
+  /* A swap starts the easy run at once, adjusted for heat as an easy run
+     of its own when the runner had adjusted the session. */
+  const startHeatSwap = (kind: "easy" | "longEasy") => {
+    const base = buildLaunchConfig(
+      planDecision,
+      profile?.audioCues !== false,
+      launchShoeId
+    );
+    const swapped =
+      kind === "easy" && heatSwapMinutes !== null
+        ? heatSwapConfig(base, heatSwapMinutes)
+        : heatLongSwapConfig(base);
+    const easyAdjustment = heatAdjusted
+      ? heatAdjustmentFor({
+          weather: heat.weather,
+          sessionType: swapped.activityType,
+          measuredMaxHr,
+          hrLive,
+        })
+      : null;
+    handleStart(
+      easyAdjustment ? { ...swapped, heatAdjustment: easyAdjustment } : swapped
+    );
+  };
+  const heatLineNow = heatLine(heat.weather);
+  /* Today's coolest hour still ahead, where one is meaningfully cooler
+     (Run26 (5)): on every surface the heat line shows on. */
+  const coolestNow =
+    heat.coolest && heat.weather
+      ? coolestHourLine(
+          heat.coolest,
+          heat.weather.temperature,
+          deviceTemperatureUnit()
+        )
+      : null;
+  const heatAdjust: HeatPanelAdjust | null =
+    heatCanAdjust && heatOffer
+      ? {
+          accepted: heatAdjusted,
+          adjustedLine: heatAdjustedLine(
+            heatOffer,
+            heatTarget ?? { kind: "none" }
+          ),
+          onAccept: () => setHeatAccepted(true),
+          onClear: () => setHeatAccepted(false),
+        }
+      : null;
+  const heatSwap: HeatPanelSwap | null =
+    heatSwapKind === "easy" && heatSwapMinutes !== null
+      ? {
+          line: heatSwapLine(heatSwapMinutes),
+          label: HEAT_SWAP_START,
+          onSwap: () => startHeatSwap("easy"),
+        }
+      : heatSwapKind === "longEasy"
+        ? {
+            line: HEAT_LONG_SWAP_LINE,
+            label: HEAT_LONG_SWAP,
+            onSwap: () => startHeatSwap("longEasy"),
+          }
+        : null;
+  /* The full setup's share of it: the same offer, which there changes the
+     run being set up rather than starting it. */
+  const setupHeat: RunSetupHeat | null =
+    hotNow && heatLineNow && heat.level !== "none"
+      ? {
+          level: heat.level,
+          line: heatLineNow,
+          coolest: coolestNow,
+          adjustment: heatCanAdjust ? heatOffer : null,
+          prefill: heatCanAdjust ? heatPrefill : null,
+          adjustedLine:
+            heatCanAdjust && heatOffer
+              ? heatAdjustedLine(heatOffer, heatTarget ?? { kind: "none" })
+              : "",
+          swapMinutes: heatSwapKind === "easy" ? heatSwapMinutes : null,
+          longSwap: heatSwapKind === "longEasy",
+        }
+      : null;
+
+  /* Run25 call 2: the run's clock starts at one instant, and every reader
+     of the run's start is given it: the timer, Apple Health's start
+     (`recordingStartedAt`), and the saved run's start and day (its
+     identity, made at the tap of Start, before the clock waited for GPS)
+     and the stored run's. The trace's first point carries it (useGPS), and
+     the session player, the cues, the Live Activity and the Watch begin as
+     the phase turns active with it. */
+  const stampRunStart = useCallback((at: number) => {
+    recordingStartedAtRef.current = at;
+    startedAtRef.current = at;
+    if (identityRef.current)
+      identityRef.current = identityStartedAt(identityRef.current, at);
+  }, []);
+  /** A GPS run's clock starts, once: on its first good fix, at the tap of
+   *  Start with that fix in hand, or on Start anyway. */
+  const startGpsClock = (at: number) => {
+    if (recordingStartedAtRef.current !== null) return;
+    stampRunStart(at);
+    timer.start(at);
+    audioCues.speak("Go!");
+    haptic("heavy");
+  };
+
+  /* Go, when the countdown is done or skipped (Run27 (1)). A run with no
+     GPS starts its clock now. A GPS run's clock starts on a fix within
+     GPS_START_ACCURACY_M (gpsStart.ts, Run25 call 2): one in hand from the
+     run screen's watch starts it now; without one the run waits on
+     "Finding GPS" for it, or for Start anyway. */
+  const handleGo = (at: number) => {
+    if (!runConfig) return;
+    if (requiresManualDistance(runConfig)) {
+      dispatch({ type: "START_MANUAL" });
+      stampRunStart(at);
+      timer.start(at);
+      audioCues.speak("Go!");
+      haptic("heavy");
+      return;
+    }
+    const fixInHand = gps.startAwaitingFix(at);
+    dispatch({ type: "START_GPS", fixInHand });
+    if (fixInHand) startGpsClock(at);
+  };
+  const countdown = useStartCountdown(handleGo);
 
   const handleStart = async (config: RunConfig) => {
     const uid = user?.uid ?? profile?.uid;
@@ -900,7 +1283,10 @@ export default function Run() {
     const finalConfig: RunConfig = {
       ...config,
       planMetadata: finalisedMetadata,
+      // A run started on a hot day is never judged slow afterwards.
+      ...(hotNow ? { hotDay: true } : {}),
     };
+    startedThisVisitRef.current = true;
     setRunConfig(finalConfig);
     // Phase B3: capture the original-start epoch so the periodic
     // write effect persists it in every snapshot. Resume re-uses
@@ -918,14 +1304,15 @@ export default function Run() {
     finishedRef.current = false;
     startedAtRef.current = startedAt;
     recordingStartedAtRef.current = null;
+    movingEvidenceRef.current = noMovingEvidence();
     setActiveSessionId(identity.sessionId);
     watchRevisionRef.current = 0;
     watchConnectedRef.current = false;
     watchLastStatusCheckRef.current = 0;
     watchPhaseRef.current = "running";
     watchCommandLedgerRef.current.clear();
-    // Persist the identity before GPS acquisition or the countdown. A crash
-    // during preparation can safely resume as a paused, zero-second run.
+    // Persist the identity before the countdown and GPS. A crash while the
+    // run waits for either can safely resume as a paused, zero-second run.
     setSnapshotWriteFailed(
       !writeStoredRun(uid, {
         v: RUN_RESUME_SCHEMA_VERSION,
@@ -946,16 +1333,19 @@ export default function Run() {
       kind: "run",
       offPlan: planDecision.metadata.offPlan,
     });
-    if (requiresManualDistance(finalConfig)) {
-      dispatch({ type: "START_MANUAL" });
-      recordingStartedAtRef.current = Date.now();
-      timer.start();
-      haptic("heavy");
-      return;
-    }
-    dispatch({ type: "START_GPS" });
-    gps.preWarm();
-    gps.start();
+    // Run27 (1): 3-2-1, then Go (handleGo).
+    dispatch({ type: "COUNTDOWN" });
+    countdown.begin();
+  };
+
+  /* Start anyway, on "Finding GPS": the clock starts at the tap, and the
+     trace takes the first fix the reading gate passes, so distance counts
+     from there. Not offered while location is refused, where no fix will
+     come and the run would record none. */
+  const handleStartAnyway = () => {
+    gps.startAnyway();
+    dispatch({ type: "START_ANYWAY" });
+    startGpsClock(Date.now());
   };
 
   // ─── Start on arrival (Home's run card) ──────────────────────────
@@ -998,6 +1388,30 @@ export default function Run() {
         ? "checking"
         : "not-due";
   const arrivalPlannedRun = launchWorkout !== null;
+  /* Heat: a planned run started from Home waits a moment for the weather
+     (Home reads it ahead, so it is usually known already). A hot day with
+     an adjustment or a swap to offer shows the run's card, whose offer is
+     a choice to make, and so does an extreme day, whose card says running
+     outside isn't advised; a free run waits for nothing, and shows the
+     picker only on an extreme day already known. */
+  const arrivalWaitsForHeat = launchWorkout !== null;
+  const [heatCheckOver, setHeatCheckOver] = useState(false);
+  useEffect(() => {
+    if (arrival !== "deciding" || !arrivalWaitsForHeat) return;
+    const t = setTimeout(() => setHeatCheckOver(true), HEAT_CHECK_MS);
+    return () => clearTimeout(t);
+  }, [arrival, arrivalWaitsForHeat]);
+  const heatFirst =
+    heat.level === "extreme" ||
+    (heat.level === "hot" && (heatCanAdjust || heatSwapKind !== null));
+  const arrivalHeat: ArrivalHeat =
+    heat.status === "read"
+      ? heatFirst
+        ? "show"
+        : "none"
+      : arrivalWaitsForHeat && !heatCheckOver
+        ? "checking"
+        : "none";
   const arrivalRouteToFollow = targetRoute != null;
   const arrivalState = location.state;
   useEffect(() => {
@@ -1010,6 +1424,7 @@ export default function Run() {
       routeToFollow: arrivalRouteToFollow,
       firstRunHint: arrivalFirstRunHint,
       plannedRun: arrivalPlannedRun,
+      heat: arrivalHeat,
     });
     if (decision === "wait") return;
     setSearchParams(
@@ -1031,6 +1446,7 @@ export default function Run() {
     arrivalRouteToFollow,
     arrivalFirstRunHint,
     arrivalPlannedRun,
+    arrivalHeat,
     arrivalState,
     setSearchParams,
   ]);
@@ -1044,7 +1460,7 @@ export default function Run() {
   //   3. Manual-distance edits (synchronous, including while paused).
   //
   // It's a no-op when there's no run in flight (runConfig null, or
-  // phase is waiting/acquiring/countdown/finished). The write itself
+  // phase is waiting/acquiring/finished). The write itself
   // is best-effort — writeStoredRun returns false on quota / private
   // mode but never throws.
   const writeSnapshot = useCallback(
@@ -1087,13 +1503,22 @@ export default function Run() {
     [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]
   );
 
-  const keepFinishedRun = (finish: StoredRunFinish) => {
+  /* The run's config as it finishes. A run started on this visit before
+     the weather answered takes the hot day now, when the read the page
+     opened with says hot: the config is not changed mid-run, where its
+     steps are being played. */
+  const configAtFinish = (config: RunConfig): RunConfig =>
+    !config.hotDay && hotNow && startedThisVisitRef.current
+      ? { ...config, hotDay: true }
+      : config;
+
+  const keepFinishedRun = (finish: StoredRunFinish, points: GPSPoint[]) => {
     const uid = profile?.uid;
     if (!uid || !runConfig || startedAtRef.current === null) return false;
     if (phase !== "active" && phase !== "paused") return false;
     const saved = writeStoredRun(uid, {
       v: RUN_RESUME_SCHEMA_VERSION,
-      config: runConfig,
+      config: configAtFinish(runConfig),
       ...(identityRef.current ? { identity: identityRef.current } : {}),
       watchRevision: watchRevisionRef.current,
       startedAt: startedAtRef.current,
@@ -1102,7 +1527,8 @@ export default function Run() {
         : {}),
       accumulatedSeconds: timer.getAccumulatedSeconds(),
       isRunning: false,
-      points: gps.getPoints(),
+      // The trace the review reads, its moving time's holds in it.
+      points,
       lastWriteAt: Date.now(),
       phase: "finished",
       finish,
@@ -1217,6 +1643,9 @@ export default function Run() {
     }
     startedAtRef.current = resumePrompt.startedAt;
     recordingStartedAtRef.current = resumePrompt.recordingStartedAt ?? null;
+    // Nothing before the app closed was kept: the restored trace's hold
+    // keeps its timer (`runMovingTime.ts`).
+    movingEvidenceRef.current = noMovingEvidence();
     const identity =
       resumePrompt.identity ??
       createRunSessionIdentity(
@@ -1360,40 +1789,19 @@ export default function Run() {
     return () => clearInterval(t);
   }, [phase]);
 
-  // Transition from acquiring to countdown when we get a GPS point
-  useEffect(() => {
-    if (phase === "acquiring" && gps.points.length > 0) {
-      const transition = () => {
-        dispatch({ type: "GPS_ACQUIRED" });
-        setCountdown(3);
-      };
-      transition();
-    }
-  }, [phase, gps.points.length]);
-
-  // Side-effects at "GO!" — wrapped in an effect event so the countdown
-  // effect below can depend ONLY on [phase, countdown]. Previously `timer`
-  // and `audioCues` were deps; both return fresh object references each
-  // render, so every re-render (and GPS fixes stream in during the countdown)
-  // cleared + restarted the 1s setTimeout — the countdown could stall and
-  // never reach the active phase.
-  const onCountdownGo = useEffectEvent(() => {
-    dispatch({ type: "COUNTDOWN_DONE" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
-    audioCues.speak("Go!");
-    haptic("heavy");
+  /* The first good fix starts the clock (Run25 call 2). While the run
+     waits, useGPS takes only a fix within GPS_START_ACCURACY_M as the
+     trace's first point, stamped when it was taken, so the clock starts on
+     that point's time and the trace, its splits and the clock agree. */
+  const startClockOnFix = useEffectEvent((at: number) => {
+    dispatch({ type: "GPS_ACQUIRED" });
+    startGpsClock(at);
   });
-
+  const firstPointAt = gps.points[0]?.timestamp ?? null;
   useEffect(() => {
-    if (phase !== "countdown") return;
-    if (countdown <= 0) {
-      onCountdownGo();
-      return;
-    }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [phase, countdown]);
+    if (phase === "acquiring" && firstPointAt !== null)
+      startClockOnFix(firstPointAt);
+  }, [phase, firstPointAt]);
 
   useEffect(() => {
     if (phase !== "active") return;
@@ -1421,7 +1829,24 @@ export default function Run() {
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
+    // Heat: a heart-rate ceiling, while beats arrive, governs in place of
+    // the paces (heatAdjustment.ts).
+    const heatCeiling = runConfig?.heatAdjustment?.hrCeiling ?? null;
+    const hrGoverns = heatCeiling !== null && hr.bpm !== null;
     if (
+      hrGoverns &&
+      heatHeartRateCueDue({
+        bpm: hr.bpm,
+        ceiling: heatCeiling,
+        now: Date.now(),
+        lastSpokeAt: heatHrSpokeAtRef.current,
+      })
+    ) {
+      audioCues.speak(heatHeartRateCue(heatCeiling));
+      heatHrSpokeAtRef.current = Date.now();
+    }
+    if (
+      !hrGoverns &&
       judgingPace &&
       runConfig?.target?.type === "pace" &&
       runConfig.target.value
@@ -1437,13 +1862,34 @@ export default function Run() {
     }
 
     // Run24 (12), deep dive D17: an easy or a long run going faster than
-    // easy, for a runner with a confirmed benchmark (`paceTable`, RUN-EV-08),
-    // in its easy running only (`judgesEasyNow`), never on a run-walk.
-    const easyFastEdge = paceTable?.easy[0];
-    if (easyFastEdge && !runWalkSession && judgingEasy) {
-      const currentPaceSec = rollingPaceSeconds(gps.points, 30);
-      if (currentPaceSec !== null) {
-        audioCues.checkEasyCeiling(currentPaceSec, easyFastEdge, timer.elapsed);
+    // easy, in its easy running only (`judgesEasyNow`), never on a run-walk.
+    // With a live heart rate and a max to read it against, heart rate
+    // judges it (`easyHeartRateCeiling`, the top of Zone 2); without one,
+    // pace does, for a runner with a confirmed benchmark (`paceTable`,
+    // RUN-EV-08). A run adjusted for heat is heat's to judge: its heart-rate
+    // ceiling while beats arrive (`hrGoverns`, the top of the same zone on
+    // an easy run, from a measured max only), else the eased easy pace, and
+    // none when adjusted to effort only. So the heat line and the easy
+    // heart-rate cue never both speak on one run.
+    const adjustedForHeat = !!runConfig?.heatAdjustment;
+    const easyTable = runConfig?.heatAdjustment
+      ? heatEasedPaceTable(paceTable, runConfig.heatAdjustment)
+      : paceTable;
+    const easyFastEdge = easyTable?.easy[0];
+    const easyHrCeiling =
+      hr.bpm != null && !adjustedForHeat ? easyHeartRateCeiling(hr.maxHr) : 0;
+    if (!hrGoverns && !runWalkSession && judgingEasy) {
+      if (hr.bpm != null && easyHrCeiling > 0) {
+        audioCues.checkEasyHeartRate(hr.bpm, easyHrCeiling, timer.elapsed);
+      } else if (easyFastEdge) {
+        const currentPaceSec = rollingPaceSeconds(gps.points, 30);
+        if (currentPaceSec !== null) {
+          audioCues.checkEasyCeiling(
+            currentPaceSec,
+            easyFastEdge,
+            timer.elapsed
+          );
+        }
       }
     }
 
@@ -1469,6 +1915,8 @@ export default function Run() {
     runWalkSession,
     paceTable,
     judgingEasy,
+    hr.bpm,
+    hr.maxHr,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1525,83 +1973,139 @@ export default function Run() {
     []
   );
 
-  const pauseIfStillStationary = useEffectEvent(() => {
-    // Re-read the latest accepted fix when the timer fires. A single low
-    // speed followed by GPS loss must not stop the run's moving clock.
-    if (runMotionState(gps.currentPoint, Date.now()) !== "stationary") return;
-    timerRef.current.pause();
-    setAutoPaused(true);
-  });
+  /* Auto-pause (runAutoPause.ts): GPS and, on iOS, the phone's motion
+     sensors decide when the clock stops by itself and starts again. The
+     sensors run from Start to the finish of an outdoor run with
+     auto-pause on, so Motion & Fitness is asked for beside location,
+     through the countdown and while GPS is still being found. Auto-pause
+     itself comes into play only with the clock (phase active, Run25 call
+     2), and reads only what the sensors saw from the clock's start
+     (`motionFrom`), so nothing they saw while GPS was found pauses the run
+     or holds it running. */
+  const motionSessionId =
+    activeSessionId &&
+    runConfig?.autoPause &&
+    isOutdoorGpsRun(runConfig) &&
+    (phase === "countdown" ||
+      phase === "acquiring" ||
+      phase === "active" ||
+      phase === "paused")
+      ? activeSessionId
+      : null;
+  const runMotion = useRunMotion(motionSessionId);
+  const inRecovery = phase === "active" && player.current?.type === "recovery";
+  // The truth for the next step, read synchronously; `autoPaused` is its
+  // copy for rendering.
+  const autoPauseRef = useRef<AutoPauseState>(AUTO_PAUSE_IDLE);
+  // Bumped when a pending window is due, to step again with nothing new.
+  const [autoPauseRecheck, setAutoPauseRecheck] = useState(0);
 
-  useEffect(() => {
+  const evaluateAutoPause = useEffectEvent(() => {
+    if (autoPauseTimer.current) {
+      clearTimeout(autoPauseTimer.current);
+      autoPauseTimer.current = null;
+    }
     const eligible =
       phase === "active" &&
       !!runConfig?.autoPause &&
       !requiresManualDistance(runConfig);
     if (!eligible) {
-      // Left the auto-pause-eligible state (paused, finished, config off) —
-      // cancel any pending pause.
-      if (autoPauseTimer.current) {
-        clearTimeout(autoPauseTimer.current);
-        autoPauseTimer.current = null;
-      }
+      /* Out of play (paused by hand, finished, auto-pause off): no window
+         stays open, and the next Go or Resume arms it afresh. An
+         auto-pause in force is Resume's to end. */
+      autoPauseRef.current = {
+        ...AUTO_PAUSE_IDLE,
+        paused: autoPauseRef.current.paused,
+      };
       return;
     }
-    const motion = runMotionState(gps.currentPoint, Date.now());
-    const stationary = motion === "stationary";
-    const moving = motion === "moving";
-
-    if (stationary && !autoPaused) {
-      // Arm the 5s stationary timer ONCE. This effect re-runs on every GPS fix
-      // (~1s); previously the cleanup cleared and re-armed the timeout each
-      // time, so it never reached 5 continuous seconds and auto-pause never
-      // fired. Only arm when nothing is pending; never clear-on-rerun.
-      if (!autoPauseTimer.current) {
-        autoPauseTimer.current = setTimeout(() => {
-          autoPauseTimer.current = null;
-          pauseIfStillStationary();
-        }, 5000);
-      }
-    } else {
-      // Moving again (or a brief non-stationary blip) — cancel a pending pause
-      // so a moving run isn't paused, and resume if we were auto-paused.
-      if (autoPauseTimer.current) {
-        clearTimeout(autoPauseTimer.current);
-        autoPauseTimer.current = null;
-      }
-      if (moving && autoPaused) {
-        timerRef.current.resume();
-        // Fixes arrive as state; resuming on the one that shows movement
-        // is this effect's job, and it settles in one extra render.
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-        setAutoPaused(false);
-      }
+    const step = stepAutoPause(autoPauseRef.current, {
+      now: Date.now(),
+      gps: gps.currentPoint,
+      // The run's evidence starts with its clock (Run25 call 2).
+      motion: motionFrom(runMotion, recordingStartedAtRef.current),
+      inRecovery,
+    });
+    autoPauseRef.current = step.state;
+    if (step.change === "pause") {
+      timerRef.current.pause();
+      setAutoPaused(true);
+    } else if (step.change === "resume") {
+      timerRef.current.resume();
+      setAutoPaused(false);
     }
-    // No cleanup here: React runs effect cleanup before EVERY re-run, so
-    // clearing the pending timeout in a cleanup is exactly what broke auto-pause
-    // (reset every ~1s). Teardown on unmount is handled by the effect below.
-  }, [gps.currentPoint, phase, autoPaused, runConfig]);
+    /* A window closes on time even when nothing new arrives: the
+       evidence is read again then, so a fix that went stale meanwhile
+       (a low speed, then GPS lost) stops nothing. Re-armed on every
+       step, as each one measures from when the evidence began, not from
+       when the timer was set. */
+    if (step.recheckAt !== null) {
+      autoPauseTimer.current = setTimeout(
+        () => setAutoPauseRecheck((n) => n + 1),
+        Math.max(0, step.recheckAt - Date.now())
+      );
+    }
+  });
 
-  // Unmount-only teardown for the auto-pause timer (the main effect above
-  // deliberately has no per-run cleanup).
+  useEffect(() => {
+    evaluateAutoPause();
+  }, [
+    gps.currentPoint,
+    runMotion,
+    phase,
+    autoPaused,
+    runConfig,
+    inRecovery,
+    autoPauseRecheck,
+  ]);
+
+  // Unmount-only teardown for the auto-pause recheck.
   useEffect(() => {
     return () => {
       if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
     };
   }, []);
 
+  /* Run28 call 1: with auto-pause off, the finish replays the GPS-only
+     auto-pause rule over the run (`runMovingTime.ts`), so it keeps what
+     that rule reads: every fix the screen saw while the clock ran, as
+     auto-pause would have read it (`gps.currentPoint`), when the plan was
+     in a recovery, which is never stopped, and whether the run was ever
+     paused by hand, which keeps its timer. In memory only. */
+  const movingFix = gps.currentPoint;
+  const keepsMovingFixes =
+    phase === "active" && !runConfig?.autoPause && isOutdoorGpsRun(runConfig);
+  useEffect(() => {
+    if (!keepsMovingFixes || !movingFix) return;
+    const fixes = movingEvidenceRef.current.fixes;
+    const last = fixes.at(-1);
+    if (last && movingFix.timestamp <= last.timestamp) return;
+    fixes.push({
+      timestamp: movingFix.timestamp,
+      speed: movingFix.speed,
+      accuracy: movingFix.accuracy,
+    });
+  }, [keepsMovingFixes, movingFix]);
+  useEffect(() => {
+    const windows = movingEvidenceRef.current.recoveries;
+    const open = windows.at(-1);
+    if (inRecovery && (!open || open.to !== null))
+      windows.push({ from: Date.now(), to: null });
+    else if (!inRecovery && open && open.to === null) open.to = Date.now();
+  }, [inRecovery]);
+  useEffect(() => {
+    if (phase === "paused") movingEvidenceRef.current.pausedByHand = true;
+  }, [phase]);
+
   /* The trace's clock follows the run's. While the run's clock is stopped
-     — the 3-2-1 countdown, a pause, an auto-pause — useGPS records nothing
+     — a pause, an auto-pause — useGPS records nothing
      and stamps the next point with the time held, so splits, best efforts
      and the live pace count moving time only, as `duration` always has
      (gps.ts `pausedMs`). Derived from the phase and `autoPaused`, the state
      that stands for the timer being stopped, rather than called beside
      each timer.pause(): a path added later cannot stop one clock and not
      the other. */
-  const clockHeld =
-    phase === "countdown" ||
-    phase === "paused" ||
-    (phase === "active" && autoPaused);
+  const clockHeld = phase === "paused" || (phase === "active" && autoPaused);
   const clockRunning = phase === "active" && !autoPaused;
   const heartClockRef = useRef<{
     uid: string;
@@ -1610,7 +2114,7 @@ export default function Run() {
   } | null>(null);
   useEffect(() => {
     const previous = heartClockRef.current;
-    if (!watchEligible || !activeSessionId || !user?.uid) {
+    if (!heartRateEligible || !activeSessionId || !user?.uid) {
       if (previous?.running)
         pauseMoving(previous.uid, previous.sessionId, Date.now());
       heartClockRef.current = null;
@@ -1630,7 +2134,7 @@ export default function Run() {
       sessionId: activeSessionId,
       running: clockRunning,
     };
-  }, [watchEligible, activeSessionId, user?.uid, clockRunning]);
+  }, [heartRateEligible, activeSessionId, user?.uid, clockRunning]);
   const watchPhase: WatchRunPhase | null =
     phase === "active"
       ? autoPaused
@@ -1639,6 +2143,17 @@ export default function Run() {
       : phase === "paused"
         ? "paused"
         : null;
+  // The structured run's live step, in the Run screen's own words, for the
+  // Watch to draw and buzz on (`watchRunStep`). Null on a run without steps.
+  const watchStep = () =>
+    watchRunStep({
+      segments: player.segments,
+      index: player.state.index,
+      phaseElapsed: player.state.phaseElapsed,
+      phaseDistanceCovered: player.state.phaseDistanceCovered,
+      unit,
+      band: intervalBand,
+    });
   const publishWatchBeat = (sessionId: string, phase: WatchRunPhase) => {
     void publishWatchRunSnapshot({
       sessionId,
@@ -1649,6 +2164,7 @@ export default function Run() {
       paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
       recordedAtMs: Date.now(),
       unit,
+      step: watchStep(),
     }).then(async (accepted) => {
       if (!accepted || watchConnectedRef.current) return;
       const now = Date.now();
@@ -1671,27 +2187,36 @@ export default function Run() {
   // second while running, every five while paused. Publishing from a render
   // effect sent two or three a second, each one a native state-file write,
   // and none at all while paused, which left the Watch's controls greyed.
+  const publishWatchNow = () => {
+    const identity = identityRef.current;
+    if (
+      !watchEligible ||
+      !identity ||
+      identity.sessionId !== activeSessionId ||
+      identity.uid !== user?.uid ||
+      !watchPhase
+    )
+      return;
+    if (watchPhaseRef.current !== watchPhase) {
+      watchPhaseRef.current = watchPhase;
+      watchRevisionRef.current += 1;
+      writeSnapshot(watchPhase === "paused" ? "paused" : "active");
+    }
+    publishWatchBeat(identity.sessionId, watchPhase);
+  };
   useWatchSnapshotBeat(
     watchEligible && user?.uid ? watchPhase : null,
     activeSessionId ?? null,
-    () => {
-      const identity = identityRef.current;
-      if (
-        !watchEligible ||
-        !identity ||
-        identity.sessionId !== activeSessionId ||
-        identity.uid !== user?.uid ||
-        !watchPhase
-      )
-        return;
-      if (watchPhaseRef.current !== watchPhase) {
-        watchPhaseRef.current = watchPhase;
-        watchRevisionRef.current += 1;
-        writeSnapshot(watchPhase === "paused" ? "paused" : "active");
-      }
-      publishWatchBeat(identity.sessionId, watchPhase);
-    }
+    publishWatchNow
   );
+  // A new step reaches the Watch at once rather than on the next beat (five
+  // seconds apart while paused, where Skip step can still move it), so the
+  // wrist's haptic lands with the phone's cue.
+  const publishWatchStepChange = useEffectEvent(publishWatchNow);
+  const watchStepIndex = player.state.index;
+  useEffect(() => {
+    if (watchStepIndex >= 0) publishWatchStepChange();
+  }, [watchStepIndex]);
   const { pause: holdTrace, resume: releaseTrace } = gps;
   useEffect(() => {
     if (clockHeld) holdTrace();
@@ -1742,7 +2267,23 @@ export default function Run() {
     // RunSummary with its original run ID and stopped clock.
     const finishedAt = Date.now();
     const finalDistance = distanceOverride ?? gps.distance;
-    const points = requiresManualDistance(runConfig) ? [] : gps.getPoints();
+    /* The run's moving time (Run28 call 1): with auto-pause off, read from
+       its trace, whose points then carry the stops it would have paused
+       for; otherwise its timer. The summary, the save and the post all
+       read these points and seconds. */
+    const evidence = movingEvidenceRef.current;
+    const moving = movingTimeOf({
+      points: requiresManualDistance(runConfig) ? [] : gps.getPoints(),
+      fixes: evidence.fixes,
+      recoveries: evidence.recoveries,
+      startedAt: recordingStartedAtRef.current,
+      finishedAt,
+      elapsedSeconds: timer.elapsed,
+      autoPause: !!runConfig?.autoPause,
+      outdoorGps: isOutdoorGpsRun(runConfig),
+      pausedByHand: evidence.pausedByHand,
+    });
+    const points = moving.points;
 
     // PR H (audit P1 #9): compute route-quality metrics at finish.
     // Only meaningful for outdoor GPS runs — treadmill / manual
@@ -1767,7 +2308,7 @@ export default function Run() {
       finishedAt,
       watchCompanionUsed: watchConnectedRef.current,
       distance: finalDistance,
-      elapsed: timer.elapsed,
+      elapsed: moving.seconds,
       splits: calculateSplits(points, SPLIT_LAP_IS_METRIC),
       elevationGain: totalElevationGain(points),
       intervalData:
@@ -1782,7 +2323,7 @@ export default function Run() {
     };
     const previousRevision = watchRevisionRef.current;
     if (watchEligible && identityRef.current) watchRevisionRef.current += 1;
-    const persisted = keepFinishedRun(finish);
+    const persisted = keepFinishedRun(finish, points);
     if (requireDurable && !persisted) {
       watchRevisionRef.current = previousRevision;
       return false;
@@ -1800,7 +2341,7 @@ export default function Run() {
         "GPS never locked on — your time is saved, but there’s no route or distance for this one."
       );
     }
-    if (watchEligible && identityRef.current && user?.uid)
+    if (heartRateEligible && identityRef.current && user?.uid)
       finishMoving(user.uid, identityRef.current.sessionId, finishedAt);
     timer.pause();
     gps.stop();
@@ -1836,7 +2377,7 @@ export default function Run() {
            rewrites a run. */
         splits: finish.splits,
         elevationGain: finish.elevationGain,
-        runConfig,
+        runConfig: runConfig ? configAtFinish(runConfig) : runConfig,
         intervalData: finish.intervalData,
         routeQuality: finish.routeQuality,
         // What the session's work segments covered, which the summary
@@ -1871,6 +2412,7 @@ export default function Run() {
        run under an "Auto-paused" banner with the trace still held, until
        the runner moved; cleared, auto-pause re-arms as normal if they are
        still standing. */
+    autoPauseRef.current = AUTO_PAUSE_IDLE;
     setAutoPaused(false);
     dispatch({ type: "RESUME" });
   };
@@ -1879,6 +2421,12 @@ export default function Run() {
     const previous = watchCommandLedgerRef.current.get(command);
     if (previous) {
       void acknowledgeWatchRunCommand(previous);
+      trackLifecycleEvent("watch_command_answered", {
+        watchAction: command.action,
+        accepted: previous.accepted,
+        repeated: true,
+        ...(previous.reason ? { rejection: previous.reason } : {}),
+      });
       return;
     }
     const identity = identityRef.current;
@@ -1938,6 +2486,7 @@ export default function Run() {
             paceSecondsPerKm: rollingPaceSeconds(gps.points, 30),
             recordedAtMs: Date.now(),
             unit,
+            step: watchStep(),
           });
         }
       }
@@ -1952,6 +2501,12 @@ export default function Run() {
     };
     watchCommandLedgerRef.current.remember(ack);
     void acknowledgeWatchRunCommand(ack);
+    // Aggregate only: the action and its answer, never the run or session.
+    trackLifecycleEvent("watch_command_answered", {
+      watchAction: command.action,
+      accepted,
+      ...(ack.reason ? { rejection: ack.reason } : {}),
+    });
   });
   useEffect(() => {
     if (!watchEligible || !activeSessionId) return;
@@ -1986,7 +2541,8 @@ export default function Run() {
 
        audioCues.prime() / wakeLock.request() were called when the run
        originally entered the acquiring phase and don't need to fire
-       again. */
+       again. The clock starts now, and the run's start with it: the
+       seconds spent finding GPS are not the run's (Run25 call 2). */
     gps.stop();
     replaceManualDistanceDraft(null);
     setRunConfig((prev) =>
@@ -2001,10 +2557,11 @@ export default function Run() {
         : prev
     );
     dispatch({ type: "MANUAL_FALLBACK" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
+    const at = Date.now();
+    if (recordingStartedAtRef.current === null) stampRunStart(at);
+    timer.start(at);
     haptic("heavy");
-  }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
+  }, [gps, timer, sessionSegments, replaceManualDistanceDraft, stampRunStart]);
 
   const handleMoveToTreadmill = useCallback(() => {
     /* On a treadmill after all. A run from Home's Start never passes the
@@ -2016,10 +2573,11 @@ export default function Run() {
     replaceManualDistanceDraft(null);
     setRunConfig((prev) => (prev ? { ...prev, place: "treadmill" } : prev));
     dispatch({ type: "MANUAL_FALLBACK" });
-    recordingStartedAtRef.current ??= Date.now();
-    timer.start();
+    const at = Date.now();
+    if (recordingStartedAtRef.current === null) stampRunStart(at);
+    timer.start(at);
     haptic("heavy");
-  }, [gps, timer, replaceManualDistanceDraft]);
+  }, [gps, timer, replaceManualDistanceDraft, stampRunStart]);
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -2177,6 +2735,7 @@ export default function Run() {
                   weekHasQuality: launchWeekHasQuality,
                   racePace: launchRacePace?.kind,
                   inRecovery: launchInRecovery,
+                  rolling: launchRolling,
                 }).purpose
               }
               prefill={planDecision.prefill}
@@ -2184,19 +2743,27 @@ export default function Run() {
               isExtra={isExtraLaunch}
               selectedShoeId={launchShoeId}
               onSelectShoe={setLaunchShoeId}
-              onStart={() =>
-                handleStart(
-                  buildLaunchConfig(
-                    planDecision,
-                    profile?.audioCues !== false,
-                    launchShoeId
-                  )
-                )
-              }
+              onStart={() => handleStart(plannedLaunchConfig())}
               onCustomize={() => setForceModal(true)}
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
+              heat={
+                hotNow && heatLineNow && heat.level !== "none"
+                  ? {
+                      level: heat.level,
+                      line: heatLineNow,
+                      coolest: coolestNow,
+                      adjust: heatAdjust,
+                      swap: heatSwap,
+                    }
+                  : null
+              }
+              paceRange={
+                heatAdjusted && heatTarget?.kind === "range"
+                  ? heatTarget.pace
+                  : null
+              }
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -2241,6 +2808,7 @@ export default function Run() {
                     ? runSessionName(launchWorkout, launchRacePace, unit)
                     : undefined
                 }
+                heat={setupHeat}
                 savedPreferences={{
                   autoPause: true,
                   audioCues: profile?.audioCues !== false,
@@ -2280,9 +2848,25 @@ export default function Run() {
               onHelp={() => setRunHelpRequest((request) => request + 1)}
               onBack={leaveSetup}
               gpsSignal={setupSignal}
+              heat={
+                hotNow && heatLineNow && heat.level !== "none"
+                  ? {
+                      level: heat.level,
+                      line: heatLineNow,
+                      coolest: coolestNow,
+                    }
+                  : null
+              }
             />
           )}
         </>
+      )}
+
+      {phase === "countdown" && (
+        <StartCountdown
+          seconds={countdown.seconds ?? 1}
+          onSkip={countdown.skip}
+        />
       )}
 
       {phase === "acquiring" &&
@@ -2368,13 +2952,11 @@ export default function Run() {
               </div>
 
               {/* A refusal is not a search: no signal will arrive until
-                  location is turned back on, so it gets its own words. */}
+                  location is turned back on, so it gets its own words.
+                  Otherwise the run is waiting for the fix its clock starts
+                  on (Run25 call 2). */}
               <p className="text-white font-semibold text-lg mb-1">
-                {locationDenied
-                  ? "Location is off for Tropos"
-                  : quality === "strong" || quality === "good"
-                    ? "GPS locked"
-                    : "Acquiring GPS…"}
+                {locationDenied ? "Location is off for Tropos" : "Finding GPS"}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
@@ -2409,24 +2991,62 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
-                  /* Replaces the old "Start without GPS" CTA. That one
-                   started an outdoor run with zero GPS fixes \u2014 the
-                   canonical 0km production bug. This sends the user
-                   to manual distance entry (TreadmillMode) instead so
-                   they record a real time and add distance after. */
+                {!locationDenied && (
+                  /* Run25 call 2: the clock starts now rather than on a
+                     good fix; the run still records GPS, and its distance
+                     counts from the first fix the reading gate passes.
+                     Not while location is refused, where none will come:
+                     that run is Track without GPS's, which records a time
+                     and asks for the distance. A run started anyway that
+                     never finds a fix finishes as any unlocked GPS run
+                     does, with the finish's "GPS never locked on" and the
+                     validity rule's verdict on its distance. */
                   <div className="w-full">
-                    <button
-                      type="button"
-                      onClick={handleSwitchToManual}
-                      className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
-                      style={{
-                        background: THEME.running,
-                        color: "hsl(var(--stage))",
-                      }}
+                    <Button
+                      variant="sport"
+                      size="lg"
+                      fullWidth
+                      onClick={handleStartAnyway}
+                      className="rounded-2xl"
                     >
-                      Track without GPS
-                    </button>
+                      Start anyway
+                    </Button>
+                    <p
+                      className="text-xs text-center mt-2"
+                      style={{ color: "rgba(255,255,255,0.5)" }}
+                    >
+                      Your run starts by itself when GPS finds you.
+                    </p>
+                  </div>
+                )}
+                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
+                  /* Manual distance entry (TreadmillMode): a real time now,
+                     the distance typed in after. With location refused it
+                     is the way to run and the one filled button; beside
+                     Start anyway it is the quieter choice. */
+                  <div className="w-full">
+                    {locationDenied ? (
+                      <button
+                        type="button"
+                        onClick={handleSwitchToManual}
+                        className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
+                        style={{
+                          background: THEME.running,
+                          color: "hsl(var(--stage))",
+                        }}
+                      >
+                        Track without GPS
+                      </button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        fullWidth
+                        onClick={handleSwitchToManual}
+                        className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                      >
+                        Track without GPS
+                      </Button>
+                    )}
                     <p
                       className="text-xs text-center mt-2"
                       style={{ color: "rgba(255,255,255,0.5)" }}
@@ -2460,17 +3080,6 @@ export default function Run() {
             </div>
           );
         })()}
-
-      {phase === "countdown" && (
-        <div
-          className="h-full flex items-center justify-center text-white"
-          style={{ backgroundColor: THEME.bg }}
-        >
-          <span className="text-9xl font-bold motion-safe:animate-pulse">
-            {countdown || "GO!"}
-          </span>
-        </div>
-      )}
 
       {(phase === "active" || phase === "paused") &&
         requiresManualDistance(runConfig) && (

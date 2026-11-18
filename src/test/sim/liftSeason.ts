@@ -48,7 +48,9 @@ import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 import { liftWorkoutExercises, liftWorkoutId } from "@/lib/liftCompletion";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import type { OnboardingDraft } from "@/lib/onboardingDraft";
-import { todaySession } from "@/lib/todaySession";
+import { todaySession, type TodaySession } from "@/lib/todaySession";
+import type { SavedRun } from "@/lib/savedRuns";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
   markDayDone,
   workoutCompletionDayIdentity,
@@ -80,6 +82,7 @@ import {
   type Goal,
   type ProgramExercise,
   type ProgramState,
+  type RaceDistance,
 } from "@/features/program/programTypes";
 import {
   applySessionProgression,
@@ -209,6 +212,13 @@ export interface PersonActions {
   longRunOn?: number;
   /** "Not now" on the fell-behind sheet (`dismissFellBehindPrompt`). */
   dismissesFellBehind?: boolean;
+  /** Start on Train, on this share of the days Home's card offers no lift
+   *  to start (a rest day, a run day, a lift day already done): the next
+   *  lift, done on a day the plan did not give it. */
+  liftsOnOtherDays?: number;
+  /** A session outside the plan, an empty workout or a routine, saved on
+   *  this share of the days they train or not (it moves no plan). */
+  outsidePlan?: number;
 }
 
 export interface SeasonOptions {
@@ -245,6 +255,26 @@ export interface SeasonOptions {
     profile: UserProfile;
     recentRuns: readonly DatedRun[] | null;
   }) => void;
+  /** The plan and the saved sessions twice each day the app is opened: in
+   *  the morning, with Home's card, after the rollover and the app's own
+   *  skips and before any training; and in the evening, after it. For a
+   *  test of what a screen lays out from them (TrainWk1's `layOutWeek`);
+   *  it changes nothing. */
+  observeDay?: (day: ObservedDay) => void;
+}
+
+/** What `observeDay` sees. */
+export interface ObservedDay {
+  moment: "morning" | "evening";
+  date: string;
+  state: ProgramState;
+  profile: UserProfile;
+  /** The saved lift sessions, each one's id and day. */
+  workouts: readonly { id: string; date: string }[];
+  runs: readonly SavedRun[];
+  claimMap: Map<string, ClaimState>;
+  /** Home's card in the morning. */
+  card: TodaySession | null;
 }
 
 /** A plan the app doesn't build, for a measured comparison. `start`
@@ -937,6 +967,22 @@ export function simulateLiftSeason(
       season.events.push(`${at}: ${what}`);
       return true;
     };
+    /** The day as `observeDay` sees it. */
+    const observe = (
+      moment: ObservedDay["moment"],
+      date: string,
+      card: TodaySession | null
+    ) =>
+      options.observeDay?.({
+        moment,
+        date,
+        state,
+        profile,
+        workouts: saved,
+        runs: runSide?.saved ?? [],
+        claimMap: runSide?.claims(state, date) ?? new Map(),
+        card,
+      });
     const running = persona.running;
     const runSide = running
       ? new RunSide(persona.name, running, options.seed, options.runnerVariant)
@@ -1067,6 +1113,7 @@ export function simulateLiftSeason(
           lifetimeRuns: runSide?.saved.length ?? 0,
           lifetimeMeals: 0,
         });
+        observe("morning", date, card);
         const raceDate = state.runPlan?.raceGoal?.targetDate;
         if (
           runSide &&
@@ -1226,7 +1273,37 @@ export function simulateLiftSeason(
               );
           }
         }
+        // Start on Train on a day Home's card offers no lift to start: the
+        // cursor's next, done where the plan did not put it.
+        const elsewhere = persona.actions?.liftsOnOtherDays;
+        if (
+          !resting &&
+          elsewhere !== undefined &&
+          !(lift && lift.status === "planned") &&
+          lifter.chance(elsewhere)
+        ) {
+          const index = nextUpIndex(state);
+          if (index >= 0) {
+            const result = runSession(state, index, date, card.restContext);
+            state = result.state;
+            if (result.session) {
+              season.sessions.push(result.session);
+              done++;
+              season.events.push(
+                `${date}: started ${state.workouts[index].dayName} from Train`
+              );
+              if (isLowerBodyDay(state.workouts[index] ?? { exercises: [] }))
+                legDays.push(date);
+            }
+          }
+        }
+        const outside = persona.actions?.outsidePlan;
+        if (!resting && outside !== undefined && lifter.chance(outside)) {
+          saved.unshift({ id: `outside-${date}`, date, exercises: [] });
+          season.events.push(`${date}: a session outside the plan`);
+        }
         if (!persona.runsFirst) runToday();
+        observe("evening", date, null);
       }
 
       runSide?.runner.endDay();
@@ -1428,7 +1505,7 @@ export function simulateLiftSeason(
                 ? getPhaseForWeek(
                     plan.currentWeek,
                     plan.totalWeeks,
-                    distance as "5k" | "10k" | "half" | "marathon",
+                    distance as RaceDistance,
                     plan.shortBase
                   )
                 : null,

@@ -118,8 +118,6 @@ vi.mock("@/hooks/useStoreTrialEligibility", async (importOriginal) => ({
 }));
 
 import Upgrade from "../Upgrade";
-// The E2E journeys end setup on these two (src/test/journeyScreens.ts).
-import { OFFER } from "@/test/journeyScreens";
 import { PRO_PLANS, localizePlans, type ProPlan } from "@/lib/proPlans";
 
 function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
@@ -276,7 +274,7 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
 
 describe("Upgrade — checkout uses selected plan (the original bug)", () => {
   it("default checkout sends 'yearly' (no plan change)", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
@@ -289,7 +287,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     // This is the regression test for the pre-fix bug: tapping
     // Monthly used to silently start a Yearly checkout because
     // the plan tile opened ProModal which defaulted to Yearly.
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPlans();
     const monthly = screen
       .getAllByRole("radio")
@@ -304,8 +302,8 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
 
   it("inline error renders as role=alert when checkout fails", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
-      error: "Card declined.",
+      kind: "failed",
+      message: "Card declined.",
     });
     renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -315,7 +313,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
 
   it("a purchase the store took shows a note, not an error", async () => {
     purchaseMock.mockResolvedValueOnce({
-      success: false,
+      kind: "pending",
       pending: "approval",
     });
     renderPlans();
@@ -332,7 +330,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     // sends successPath / cancelPath strings; it sends a single
     // closed-set entryPoint token that the server resolves to a
     // full URL on its side.
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
@@ -372,7 +370,8 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       "Running paces that speed up as your races and sessions show you’re fitter",
       "Readiness from your sleep and heart rate in Apple Health",
       "Charts older than 3 months, your training load and your score’s details",
-      "Half and full marathon plans, after their first week",
+      // Run27 (18): the ultras are Pro after week 1 too.
+      "Plans for a half marathon or longer, after their first week",
     ]);
     const freeKeeps = screen.getByText(
       "Free keeps your training plan, 5K and 10K race plans, run tracking, and typed and barcode food logging."
@@ -581,7 +580,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
   it("from onboarding, the offer is headed by the plan just made", () => {
     renderPage("/upgrade?from=onboarding");
     expect(
-      screen.getByRole("heading", { name: OFFER.ready })
+      screen.getByRole("heading", { name: "Your plan is ready" })
     ).toBeInTheDocument();
     expect(
       screen.getByText(/^Pro logs your meals from a photo/)
@@ -744,7 +743,7 @@ describe("Upgrade — where 'not now' goes", () => {
 
   it("from onboarding, 'Continue with Free' lands where it was sent, at the top", () => {
     renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
-    fireEvent.click(screen.getByRole("button", { name: OFFER.free }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent(
       "/program?tab=run"
     );
@@ -768,7 +767,7 @@ describe("Upgrade — where 'not now' goes", () => {
   });
 
   it("checkout from the trial-ended prompt is attributed to it", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPage("/upgrade?from=trial_end");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -777,7 +776,7 @@ describe("Upgrade — where 'not now' goes", () => {
   });
 
   it("checkout from Home's trial countdown strip is attributed to it", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPage("/upgrade?from=trial_strip");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -786,7 +785,7 @@ describe("Upgrade — where 'not now' goes", () => {
   });
 
   it("checkout from Home's Pro strip is attributed to it", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPage("/upgrade?from=home_strip");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -795,7 +794,7 @@ describe("Upgrade — where 'not now' goes", () => {
   });
 
   it("checkout from a Settings entry is attributed to Settings", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPage("/upgrade?from=settings");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -804,7 +803,7 @@ describe("Upgrade — where 'not now' goes", () => {
   });
 
   it("checkout from the Food entry is attributed to the Food page", async () => {
-    purchaseMock.mockResolvedValueOnce({ success: true });
+    purchaseMock.mockResolvedValueOnce({ kind: "bought" });
     renderPage("/upgrade?from=food");
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));

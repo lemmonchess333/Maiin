@@ -51,6 +51,10 @@ const PLANNED_RACE_DISTANCE_METERS = Object.freeze({
   "10k": 10000,
   half: 21097,
   marathon: 42195,
+  // Run26 (2): the ultras. 50 miles is 80,467 m.
+  "50k": 50000,
+  "50mi": 80467,
+  "100k": 100000,
 });
 
 /** Post-race easy weeks, by race-goal distance key. Mirrors the
@@ -63,6 +67,12 @@ const RECOVERY_WEEKS_BY_DISTANCE = Object.freeze({
   "10k": 2,
   half: 3,
   marathon: 4,
+  // Run26 (2): the scheduler's `recoveryWeeksForDistance`, Tropos
+  // heuristics anchored on Millet et al. 2011 (PLoS ONE 6:e17059): after a
+  // 166 km mountain race the legs' strength came back by sixteen days.
+  "50k": 4,
+  "50mi": 5,
+  "100k": 5,
 });
 
 /** Planned distance for a race-goal key, or 0 when unknown/unset.
@@ -125,7 +135,7 @@ function recoveryWeeksFor(distanceKey) {
  * distance (rejected); the recovery-entry copy skipped the type check
  * when planned was 0 (accepted). This module takes the sweep's stricter
  * reading. The divergence is unreachable in production: `plannedDistanceFor`
- * returns 0 only for a distance key outside {5k,10k,half,marathon}, and
+ * returns 0 only for a distance key outside the race goal's, and
  * `raceGoal.distance` is a closed enum, so planned is always > 0 on a
  * real doc. Recorded rather than silently resolved.
  */

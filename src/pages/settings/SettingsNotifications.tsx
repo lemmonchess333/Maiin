@@ -8,7 +8,7 @@ import {
 import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import ActivityNotificationsGroup from "@/components/settings/ActivityNotificationsGroup";
-import { isRemotePushOffered } from "@/lib/pushNotifications";
+import LiveActivitiesGroup from "@/components/settings/LiveActivitiesGroup";
 
 export default function SettingsNotifications() {
   const meal = useMealReminders();
@@ -19,20 +19,14 @@ export default function SettingsNotifications() {
     reminders: workoutReminders,
     updateReminders: updateWorkoutReminders,
   } = workout;
-  const { prefs: streakReminder, updatePrefs: updateStreakReminder } =
-    useStreakReminder();
-  const { prefs: reviewReminder, updatePrefs: updateReviewReminder } =
-    useReviewReminder();
+  const streak = useStreakReminder();
+  const review = useReviewReminder();
 
   return (
     <SettingsSection
       title="Notifications"
-      /* The native app has no push switch (isRemotePushOffered). */
-      subtitle={
-        isRemotePushOffered()
-          ? "Reminders, push and activity"
-          : "Reminders and activity"
-      }
+      /* No push switch: the app picks how each reminder goes (App1 Q26). */
+      subtitle="Reminders and activity"
       section="notifications"
     >
       <NotificationsSection
@@ -43,12 +37,15 @@ export default function SettingsNotifications() {
         updateMealReminders={updateMealReminders}
         workoutReminders={workoutReminders}
         updateWorkoutReminders={updateWorkoutReminders}
-        streakReminder={streakReminder}
-        updateStreakReminder={updateStreakReminder}
-        reviewReminder={reviewReminder}
-        updateReviewReminder={updateReviewReminder}
+        streakReminder={streak.prefs}
+        updateStreakReminder={streak.updatePrefs}
+        remindersLoading={streak.loading || review.loading}
+        reviewReminder={review.prefs}
+        updateReviewReminder={review.updatePrefs}
       />
       <ActivityNotificationsGroup />
+      {/* Wid2 call 6: a run's and a lift's card outside the app. */}
+      <LiveActivitiesGroup />
     </SettingsSection>
   );
 }

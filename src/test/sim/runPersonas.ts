@@ -379,6 +379,70 @@ export const OWNER_MARATHON: LiftPersona = {
   },
 };
 
+/** Run26 (2): a regular runner who lifts twice a week, on four runs and
+ *  about 50 km a week, with a 50K over hills twenty weeks out: 1,500 m of
+ *  climb, 30 m a km, so a trail plan with downhill running. Their longest
+ *  run lately is 20 km. */
+export const TRAIL_50K: LiftPersona = {
+  name: "trail-50k",
+  answers: {
+    trainingActivity: "both",
+    primaryGoal: "general",
+    daysPerWeek: 2,
+    experience: "intermediate",
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 4,
+    raceDistance: "50k",
+    raceClimbM: 1500,
+    raceTargetDate: fromStart(19, 5),
+  },
+  nutrition: "recomp",
+  lifter: INTERMEDIATE_LIFTER,
+  sessionShare: 0.85,
+  calibrates: true,
+  tracked: BIG_FOUR,
+  running: {
+    runner: {
+      vdot: 42,
+      weeklyMinutes: 300,
+      runningWeeks: 150,
+      longestRunKm: 20,
+      lifts: true,
+    },
+    runShare: 0.9,
+    benchmark: raceAt(42, 10000),
+  },
+};
+
+/** Run26 (2): a road runner on five runs a week, about 60 km, with a flat
+ *  100K twenty-four weeks out, so a rolling base comes before the 20-week
+ *  block. Their longest run lately is 26 km. */
+export const ROAD_100K: LiftPersona = {
+  name: "road-100k",
+  answers: {
+    ...RUNNING_ONLY,
+    runFrequency: "regular",
+    runMode: "race_prep",
+    weeklyRunDays: 5,
+    raceDistance: "100k",
+    raceTargetDate: fromStart(23, 5),
+    experience: "advanced",
+  },
+  nutrition: "recomp",
+  ...NO_LIFTING,
+  running: {
+    runner: {
+      vdot: 47,
+      weeklyMinutes: 330,
+      runningWeeks: 260,
+      longestRunKm: 26,
+    },
+    runShare: 0.9,
+    benchmark: raceAt(47, 21097.5),
+  },
+};
+
 export const HYBRID_3_4_TRIM = hybrid34(true);
 export const HYBRID_3_4_NO_TRIM = hybrid34(false);
 export const HYBRID_2_3_TRIM = hybrid23(true);
@@ -403,3 +467,13 @@ export const RUN_PERSONAS: readonly { persona: LiftPersona; weeks: number }[] =
     { persona: HYBRID_2_3_NO_TRIM, weeks: 17 },
     { persona: OWNER_MARATHON, weeks: 33 },
   ];
+
+/** Run26 (2): the ultra and trail personas, each through its race, its
+ *  recovery weeks (4 after a 50K, 5 after a 100K) and the week after. */
+export const ULTRA_PERSONAS: readonly {
+  persona: LiftPersona;
+  weeks: number;
+}[] = [
+  { persona: TRAIL_50K, weeks: 25 },
+  { persona: ROAD_100K, weeks: 30 },
+];

@@ -1,4 +1,5 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { weekDone } from "@/lib/trainingWeek";
 import { plannedIntervalPaceSPerKm, withPlannedRest } from "@/lib/intervalRest";
 import {
   isRunCoachingEligible,
@@ -71,7 +72,14 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
  *     (the focused run-plan editor).
  */
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
@@ -133,6 +141,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneShortLabel } from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -162,8 +171,12 @@ import {
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import RaceWeeksAhead from "./RaceWeeksAhead";
+import RollingPlanCard from "./RollingPlanCard";
 import type { DatedRun, LayoffClass } from "@/features/program/layoffDetection";
-import type { RaceDistance } from "@/lib/raceDayPlan";
+import {
+  isRoadDistance,
+  sizesLongRunsInTime,
+} from "@/features/program/runPlanTiming";
 import {
   isRecoveryRunDay,
   runSessionPresentation,
@@ -206,6 +219,7 @@ import {
   runModeWithPlan,
 } from "@/features/program/programMaintenance";
 import { ROLLING_GOAL_NAMES } from "@/features/program/rollingPlan";
+import { useRollingSessionContexts } from "@/features/program/useRollingSessionContexts";
 import {
   goalDayName,
   goalDayQuestion,
@@ -213,6 +227,7 @@ import {
 } from "@/lib/raceGoalEntry";
 import type {
   ProgramState,
+  RaceDistance,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 
@@ -272,6 +287,12 @@ interface ProgrammeRunSectionProps {
   /** The recent runs read with it (`useProgram`'s `recentRuns`), whose
    *  pace the weeks ahead size a running starting point's climb at. */
   recentRuns?: readonly DatedRun[] | null;
+  /** Train's lighter-week offer while it shows (`DeloadBanner`, from the
+   *  one decision `lighterWeekOffer` makes for both sports, whole-app
+   *  grill Q11): first among the week's notices. While it shows, the
+   *  ease-week nudge waits, one advice notice at a time, since a lighter
+   *  week shortens the runs too. */
+  lighterWeekNotice?: ReactNode;
 }
 
 /** Two actions in a wrapping row: side by side while both labels fit on
@@ -301,6 +322,7 @@ export default function ProgrammeRunSection({
   dismissFellBehindPrompt,
   recentLayoff,
   recentRuns,
+  lighterWeekNotice = null,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -410,6 +432,15 @@ export default function ProgrammeRunSection({
   // plan, its week and its Start, as the retired structured week did.
   const currentMode = runModeWithPlan(profile, programState);
   const rollingGoal = rollingGoalOf(programState, profile);
+  // Its weeks' places in the plan, for each run's "Why this run" here and
+  // on the day's sheet.
+  const rollingContexts = useRollingSessionContexts({
+    profile,
+    programState,
+    recentLayoff,
+    recentRuns,
+    today: todayKeyDerivation,
+  });
   /* R4 — read the run plan through the resolver, not the mirror.
    *
    * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
@@ -427,8 +458,9 @@ export default function ProgrammeRunSection({
   // distance ("Your 10K") rather than "Race day".
   const ownGoal = raceGoalEntry(raceGoal) === "own";
   const goalDay = goalDayName(raceGoal);
-  // Q85: a half or full marathon plan past its free first week. Today's
-  // planned session offers Pro; the race itself and free runs still start.
+  // Q85, Run27 (18): a half, marathon or ultra plan past its free first
+  // week. Today's planned session offers Pro; the race itself and free runs
+  // still start.
   const planLocked = useRacePlanLocked(programState?.runPlan);
   const proCtaLabel = useProCtaLabel();
   const raceCompressed = !!programState?.runPlan?.compressed;
@@ -751,7 +783,10 @@ export default function ProgrammeRunSection({
   );
   const dismissalScope = `${profile.uid}:${localWeekKey(parseLocalDate(todayKeyDerivation))}`;
   const easeNudgeVisible =
-    easeNudge.show && easeNudgeDismissed !== dismissalScope;
+    easeNudge.show &&
+    easeNudgeDismissed !== dismissalScope &&
+    // One advice notice at a time: the lighter week shortens the runs too.
+    !lighterWeekNotice;
   // A6: trigger-aware counts — the card copy branches on which signal
   // fired (user-authored ratings vs measured pace misses).
   const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
@@ -955,6 +990,9 @@ export default function ProgrammeRunSection({
             programState?.runPlan,
             selectedRun.runDay.date
           ),
+          rolling: selectedRun.runDay.weekKey
+            ? rollingContexts?.get(selectedRun.runDay.weekKey)
+            : null,
         })
       : { purpose: null, weekLabel: null };
   // Non-breaking spaces: on a narrow card the eyebrow breaks before the
@@ -996,7 +1034,8 @@ export default function ProgrammeRunSection({
   // neither, so the card just shows pace/type as before.
   const selectedHrItems: string[] = (() => {
     if (!selectedTemplate) return [];
-    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
+    const maxHr =
+      profile.maxHeartRate ?? maxHrFromAge(profileAge(profile) ?? 0);
     const band = targetZoneForRun(
       selectedTemplate.type,
       maxHr,
@@ -1060,6 +1099,13 @@ export default function ProgrammeRunSection({
   const lastRun = runs[0] ?? null;
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+  // The week's runs and distance as every week counts them (`weekDone`,
+  // trainingWeek.ts); the bin above keeps the week's pace.
+  const thisWeekDone = weekDone({
+    weekKey: thisWeekKey,
+    workouts: [],
+    runs,
+  });
 
   // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
   // target or progress bar (that's the structure the model deliberately
@@ -1117,7 +1163,7 @@ export default function ProgrammeRunSection({
         toast.success(
           realignResultMessage({
             timing: result.timing,
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             totalWeeks: result.totalWeeks,
           })
         );
@@ -1136,6 +1182,10 @@ export default function ProgrammeRunSection({
   // The week's notices, drawn under the session card in every mode (DS4).
   const weekNotices = (
     <>
+      {/* The lighter-week offer, the one decision for both sports (Q11):
+          a week-level warning, so first. */}
+      {lighterWeekNotice}
+
       {/* Run7 Q6 + Q10: the banners, in severity-urgency order (warnings
           before info), on the shared <Banner> primitive — info = coral 6%,
           warning = amber 8%, no error variant (errors are toasts).
@@ -1479,13 +1529,12 @@ export default function ProgrammeRunSection({
                 <div>
                   <SectionLabel>This week</SectionLabel>
                   <div className="mt-2 grid grid-cols-3 divide-x divide-border">
-                    {/* `totalDistance` is stored KILOMETRES, so it goes
-                        through `storedKmLabel` into the reader's unit. A
-                        bare `km` once showed a miles reader the metric
-                        figure beside a converted pace. */}
+                    {/* `storedKmLabel` takes KILOMETRES into the reader's
+                        unit. A bare `km` once showed a miles reader the
+                        metric figure beside a converted pace. */}
                     <StatFigure
                       value={storedKmLabel(
-                        thisWeek.totalDistance,
+                        thisWeekDone.metres / 1000,
                         unit,
                         false,
                         1
@@ -1493,8 +1542,8 @@ export default function ProgrammeRunSection({
                       unit={distanceUnitLabel(unit)}
                     />
                     <StatFigure
-                      value={String(thisWeek.runCount)}
-                      unit={thisWeek.runCount === 1 ? "run" : "runs"}
+                      value={String(thisWeekDone.runs)}
+                      unit={thisWeekDone.runs === 1 ? "run" : "runs"}
                     />
                     <StatFigure
                       value={
@@ -1859,7 +1908,7 @@ export default function ProgrammeRunSection({
                      is "What it is", in "Why this run" below. */
                   description={
                     selectedLocked
-                      ? "Week 2 on of your race plan is part of Pro. Runs you record stay free."
+                      ? "After your free week, your race plan is part of Pro. Runs you record stay free."
                       : selectedTemplate
                         ? runSessionAbout(selectedTemplate, {
                             racePace: selectedRacePace,
@@ -2014,6 +2063,19 @@ export default function ProgrammeRunSection({
           {/* The starter goal's week, where a race plan has its card. */}
           {starterView && <StarterGoalCard progress={starterView} />}
 
+          {/* Run24 (3): a plan with no race date's card, where a race plan
+              has its own, with the weeks ahead. */}
+          {currentMode === "rolling" && rollingGoal && (
+            <RollingPlanCard
+              goal={rollingGoal}
+              profile={profile}
+              programState={programState}
+              recentLayoff={recentLayoff}
+              recentRuns={recentRuns}
+              today={todayKeyDerivation}
+            />
+          )}
+
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /
               race-recent heroes stay on top. */}
@@ -2085,12 +2147,16 @@ export default function ProgrammeRunSection({
               `targetTimeS` reads the PROFILE copy — the canonical store for
               the goal time (runPlan.raceGoal is the schedule's snapshot and
               doesn't carry it). */}
+          {/* Run26 (2): an ultra or a trail race is run by effort, so it
+              gets no pace table. */}
           {currentMode === "race_prep" &&
             raceGoal &&
+            isRoadDistance(raceGoal.distance) &&
+            !sizesLongRunsInTime(raceGoal) &&
             !raceElapsed &&
             raceCockpitVM && (
               <RaceDayPlanCard
-                distance={raceGoal.distance as RaceDistance}
+                distance={raceGoal.distance}
                 targetTimeS={profile.raceGoal?.targetTimeS ?? null}
                 runFitness={profile.runFitness ?? null}
                 currentWeek={programState?.runPlan?.currentWeek ?? null}
@@ -2197,6 +2263,7 @@ export default function ProgrammeRunSection({
         restoreRunDay={restoreRunDay}
         restoreWorkoutDay={restoreWorkoutDay}
         moveRunDay={moveRunDay}
+        rollingContexts={rollingContexts}
       />
 
       {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
@@ -2209,7 +2276,7 @@ export default function ProgrammeRunSection({
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{
-            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            distance: raceGoal.distance as RaceDistance,
             targetDate: raceGoal.targetDate,
           }}
           applyEaseWeek={applyEaseWeek}

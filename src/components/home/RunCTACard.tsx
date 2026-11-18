@@ -27,6 +27,9 @@ import {
 import InProgressStrip from "@/components/session/InProgressStrip";
 import SessionHero from "@/components/home/SessionHero";
 import type { SessionInProgress } from "@/lib/sessionsInFlight";
+import { useEffect } from "react";
+import { getCurrentWeather } from "@/lib/weather";
+import { isHeatAdjustable } from "@/lib/heatAdjustment";
 
 /**
  * Today's run, as Home's hero (DS4; `SessionHero` draws it). Twin of
@@ -79,9 +82,9 @@ export default function RunCTACard({
   /** A free run's line (`freeRunHeroLine`): this week's distance against
    *  last week's. Drawn only where no planned run is named. */
   freeLine?: HeroLine | null;
-  /** The half or full marathon plan has passed its free first week
-   *  (whole-app grill Q85): the button offers Pro instead of Start, with
-   *  its words. The race itself still starts. */
+  /** The half, marathon or ultra plan has passed its free first week
+   *  (whole-app grill Q85, Run27 (18)): the button offers Pro instead of
+   *  Start, with its words. The race itself still starts. */
   planLocked?: { cta: string; raceName: string } | null;
   /** `compact`: the second session of a day with two, under the hero. */
   variant?: "hero" | "compact";
@@ -120,7 +123,8 @@ export default function RunCTACard({
   const line: HeroLine | null = locked
     ? {
         title: `Your ${planLocked?.raceName ?? "race"} plan continues with Pro`,
-        detail: "Week 2 on is part of Pro. Runs you record stay free.",
+        detail:
+          "After your free week, the plan is part of Pro. Runs you record stay free.",
         mark: "run",
       }
     : tmpl
@@ -130,6 +134,19 @@ export default function RunCTACard({
           unit
         )
       : freeLine;
+
+  /* A planned run to start today reads the weather now, so the run page
+     finds it known and, on a hot day, shows the run's card with its heat
+     offer instead of starting (startOnArrival) without a wait. The hero
+     itself says nothing of it. */
+  const readsWeather =
+    startable && !inProgress && !locked && isHeatAdjustable(tmpl?.type);
+  useEffect(
+    function () {
+      if (readsWeather) void getCurrentWeather();
+    },
+    [readsWeather]
+  );
 
   const offerPro = function () {
     haptic();

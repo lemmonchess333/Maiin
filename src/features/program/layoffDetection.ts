@@ -43,6 +43,7 @@
  * generator, which is the only place that knows what a week should contain.
  */
 import { isVolumeEligible, type RunRecord } from "@/lib/runStatsEligibility";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   addLocalDays,
   localDateString,
@@ -96,6 +97,39 @@ export type LayoffClass = "none" | "gap" | "detrained";
 export interface DatedRun extends RunRecord {
   /** Local "YYYY-MM-DD". */
   date?: string;
+  /** What was run, as the saved run names it (`SavedRun.templateId`). */
+  templateId?: string;
+  /** The run's work was at a pace the plan pinned (`SavedRun
+   *  .workPacePinned`): a goal-pace tempo, a long run's race-pace work. */
+  workPacePinned?: boolean;
+}
+
+/** The kinds of run whose pace is quicker than the runner's own on
+ *  purpose. */
+const SESSION_TYPES: ReadonlySet<string> = new Set([
+  "race",
+  "tempo",
+  "intervals",
+]);
+
+/**
+ * Run24 (2), (4): whether a run's pace is the pace the runner runs most of
+ * their running at, the one a race block is sized at (`recentPace`). Not a
+ * race, a time trial, a tempo or an interval session, by the run's own type
+ * or its plan's session, whose average is quicker on purpose, nor a run
+ * whose work was at a pace the plan pinned. A run that names neither, a
+ * free run among them, counts. Read with all the runs, a month of an easy
+ * run, a long run and a time trial or a session each week read the runner
+ * 30 s/km quicker than their own running, and started the block's long
+ * run a rung longer than their longest run.
+ */
+export function runsAtOwnPace(run: DatedRun): boolean {
+  if (run.activityType && SESSION_TYPES.has(run.activityType)) return false;
+  if (run.workPacePinned) return false;
+  const type = run.templateId
+    ? RUN_TEMPLATES.find((t) => t.id === run.templateId)?.type
+    : undefined;
+  return !type || !SESSION_TYPES.has(type);
 }
 
 /**
@@ -309,12 +343,12 @@ export function isWeekDone(
 /**
  * The runs of the `RECENT_RUN_DAYS` before `beforeKey`: the longest one's
  * minutes, the farthest one's km, the most minutes one of its four weeks
- * ran besides that week's longest run, and the pace of them all together
- * (seconds a km), each null with none; and whether the last of those weeks
- * was done (`isWeekDone`, for a plan of `runDays` run days a week). The
- * weeks are the seven days ending at `beforeKey`, the seven before them,
- * and so on. A pace outside 2:30 to 20:00 a km is a recording, not a run,
- * and is left out.
+ * ran besides that week's longest run, and the pace of those run at the
+ * runner's own pace together (`runsAtOwnPace`, seconds a km), each null
+ * with none; and whether the last of those weeks was done (`isWeekDone`,
+ * for a plan of `runDays` run days a week). The weeks are the seven days
+ * ending at `beforeKey`, the seven before them, and so on. A pace outside
+ * 2:30 to 20:00 a km is a recording, not a run, and is left out.
  */
 export function recentRunning(
   runs: readonly DatedRun[],
@@ -341,8 +375,10 @@ export function recentRunning(
       lastWeekDone,
     };
   const minutes = (run: DatedRun) => (run.duration ?? 0) / 60;
-  const seconds = recent.reduce((sum, run) => sum + (run.duration ?? 0), 0);
-  const km = recent.reduce((sum, run) => sum + (run.distance ?? 0), 0) / 1000;
+  // Run24 (2), (4): the pace of the runner's own running, not a session's.
+  const ownPace = recent.filter(runsAtOwnPace);
+  const seconds = ownPace.reduce((sum, run) => sum + (run.duration ?? 0), 0);
+  const km = ownPace.reduce((sum, run) => sum + (run.distance ?? 0), 0) / 1000;
   const pace = km > 0 ? seconds / km : NaN;
   const weeks = Array.from({ length: RECENT_RUN_DAYS / 7 }, (_, i) => {
     const start = shiftDays(beforeKey, -7 * (i + 1));

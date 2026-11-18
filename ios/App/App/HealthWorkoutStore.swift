@@ -37,6 +37,15 @@ final class HealthWorkoutStore {
 
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
+    /// HealthKit hides whether read access was given, but an app always
+    /// receives the samples it wrote itself (HKAuthorizationStatus). With
+    /// write access, then, a lookup for this app's own run workout that
+    /// finds none is a verified absence: the save never happened, or the
+    /// person removed it in Health. Without write access it proves nothing.
+    private var absenceIsVerifiable: Bool {
+        store.authorizationStatus(for: workoutType) == .sharingAuthorized
+    }
+
     var writeAuthorization: String {
         guard isAvailable else { return "notDetermined" }
         switch store.authorizationStatus(for: workoutType) {
@@ -69,12 +78,16 @@ final class HealthWorkoutStore {
                         "workoutId": workout.uuid.uuidString,
                         "revision": workout.metadata?[self.metadataRevision] as? String ?? ""
                     ]))
+                } else if self.absenceIsVerifiable {
+                    // A receipt kept for a workout no longer there is stale.
+                    self.forget(runId: runId)
+                    completion(.success(["status": "absent", "verified": true]))
                 } else if let localId = self.localMap()[runId] {
                     // A denied read grant looks like an empty query. Preserve
                     // the local receipt rather than reporting false absence.
                     completion(.success(["status": "unverified", "workoutId": localId]))
                 } else {
-                    completion(.success(["status": "absent"]))
+                    completion(.success(["status": "absent", "verified": false]))
                 }
             }
         }
@@ -139,11 +152,14 @@ final class HealthWorkoutStore {
                             )
                         }
                     }
-                } else if self.localMap()[runId] != nil {
+                } else if self.localMap()[runId] != nil && !self.absenceIsVerifiable {
                     // The user may have denied read access. An unverified
                     // "absent" result must not produce a duplicate workout.
                     finish(.failure(HealthWorkoutStoreError.unverifiedSample))
                 } else {
+                    // Write access is checked above, so none found is none
+                    // there: a receipt this phone kept is stale.
+                    self.forget(runId: runId)
                     self.save(
                         runId: runId, revision: revision, startMs: startMs, endMs: endMs,
                         durationSeconds: durationSeconds,
@@ -178,13 +194,11 @@ final class HealthWorkoutStore {
             case .failure(let error): finish(.failure(error))
             case .success(let workout):
                 guard let workout = workout else {
-                    // A prior local receipt with no readable Health sample is
-                    // not proof of deletion: keep it for a later retry.
-                    if self.localMap()[runId] != nil {
-                        finish(.failure(HealthWorkoutStoreError.permissionRequired))
-                    } else {
-                        finish(.success(["status": "absent"]))
-                    }
+                    // Write access is checked above, so none found is none
+                    // there: removed in Health already. Forget the receipt
+                    // and say so, rather than retry a deletion for ever.
+                    self.forget(runId: runId)
+                    finish(.success(["status": "absent", "verified": true]))
                     return
                 }
                 self.store.delete(workout) { deleted, error in

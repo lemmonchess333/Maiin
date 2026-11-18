@@ -41,7 +41,16 @@ const LIFT_PR_DEFAULT_LIMIT = 8;
    PR 7b layered the Recent + Indoor + cold-state design on top of
    PR 7a's lifetime-only skeleton. Cold-state return-link toast
    (PR-eligible save → toast → tap → PRs tab) lives in RunSummary
-   + workout-save flows, not here. */
+   + workout-save flows, not here.
+
+   App1 Q15 (13 November 2026), one record book: every best a finish
+   screen celebrates is a row here afterwards, from the same figures. A
+   lift's new best is its exercise's row (`bestSetPerExercise`); a run's
+   fastest 1K, 5K or 10K is its Fastest row; the longest run yet, and a
+   first 5K, 10K, half or marathon, which is always the longest yet, is
+   the Longest run row of its card, indoor runs included; and the run
+   finish screen's "New best" pace chip is a Best pace row.
+   `recordBook.test.ts` holds each of them. */
 
 interface RunningPR {
   label: string;

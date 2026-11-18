@@ -82,6 +82,7 @@ describe("getCurrentWeather", () => {
       { lat: 59.913868, lon: 10.752245 },
       CONTEXT
     );
+    const hourStart = Date.now() - (Date.now() % 3_600_000);
     expect(weather).toEqual({
       temperature: 3,
       // 3.4 °C in a 21.6 km/h wind: the wind chill.
@@ -90,6 +91,13 @@ describe("getCurrentWeather", () => {
       windSpeed: 22,
       weatherCode: 61,
       description: "Light rain",
+      // Run26 (5): the hours after now, from the same forecast. 3.4 °C at
+      // 88% is a dew point of 1.6 °C.
+      hours: [1, 2].map((i) => ({
+        time: new Date(hourStart + i * 3_600_000).toISOString(),
+        temperature: 3.4,
+        dewPoint: 1.6,
+      })),
     });
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0];

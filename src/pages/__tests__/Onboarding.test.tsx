@@ -70,7 +70,7 @@ const draft: OnboardingDraft = {
   raceTargetDate: "",
   injuries: ["none"],
   gender: "male",
-  ageRange: "25-34",
+  birthYearText: "1995",
   heightCm: 175,
   weightKg: 81.5,
   heightUnit: "cm",
@@ -87,10 +87,6 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
-      {/* The legacy offer is handed where "Continue with Free" goes. */}
-      {(location.state as { next?: string } | null)?.next
-        ? ` → ${(location.state as { next: string }).next}`
-        : ""}
     </output>
   );
 }
@@ -193,12 +189,25 @@ describe("onboarding chapters and commit", () => {
     expect(payload.profileData.goalWeightKg).toBe(81.5);
     expect(payload.profileData.weeklyRateKg).toBe(0);
     // The plan's `program` is merged in, not assigned over the map: the
-    // start weight and phase set beside the nutrition phase survive.
+    // phase set beside the nutrition phase survives.
     expect(payload.profileData.program).toEqual({
       goal: preview.profileUpdates.program.goal,
-      startWeight: 81.5,
       currentPhase: "base",
     });
+    // Retired profile fields (App1 Q24) are not sent: the email is Auth's,
+    // the streak is the streaks document's, and the day's carbs and fat
+    // are worked out from the calorie target.
+    for (const retired of [
+      "email",
+      "currentStreak",
+      "longestStreak",
+      "lastLogDate",
+      "tdeeBase",
+      "aiCalorieAdjustment",
+      "targetCarbs",
+      "targetFat",
+    ])
+      expect(payload.profileData).not.toHaveProperty(retired);
     resolve({ data: { success: true, activationJourneyVersion: 2 } });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     // The public profile seed leaves the photo alone: sign-up wrote the
@@ -217,20 +226,24 @@ describe("onboarding chapters and commit", () => {
     );
     builder.mockRestore();
   });
-  it("keeps the established offer when the server did not accept version 2", async () => {
-    saveOnboardingDraft("setup-test", draft);
-    complete.mockResolvedValue({
-      data: { success: true, activationJourneyVersion: null },
-    });
-    open();
-    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
-    await waitFor(() =>
-      expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        /^\/upgrade\?from=onboarding → \/$/
-      )
-    );
-    expect(complete.mock.calls[0][0].activationJourneyVersion).toBe(2);
-  });
+  /* App1 (whole-app grill Q27): setup ends on Today for every account.
+     The answer's journey version decides nothing, even one from a server
+     that still answered 1 or none for its comparison group. */
+  it.each([1, null, undefined])(
+    "lands on Today whatever journey version the server answers (%s)",
+    async (activationJourneyVersion) => {
+      saveOnboardingDraft("setup-test", draft);
+      complete.mockResolvedValue({
+        data: { success: true, activationJourneyVersion },
+      });
+      open();
+      fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+      await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/)
+      );
+    }
+  );
   it("shows a recoverable error and retains the intended answers after a failed commit", async () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });
@@ -296,7 +309,7 @@ describe("the review in the person's own units", () => {
     saveOnboardingDraft("setup-test", { ...draft, heightUnit: "ft" });
     open();
     expect(
-      screen.getByText("81.5 kg · 5 ft 9 in · age 25-34")
+      screen.getByText("81.5 kg · 5 ft 9 in · born 1995")
     ).toBeInTheDocument();
     expect(screen.queryByText(/175 cm/)).toBeNull();
   });
@@ -427,8 +440,8 @@ describe("activity-relevant setup", () => {
     expect(
       screen.queryByRole("heading", { name: "Equipment access" })
     ).not.toBeInTheDocument();
-    // Height, weight and the age range all feed the calorie estimate, so
-    // none of them may be taken from the control's starting position.
+    // Height, weight and the year of birth all feed the calorie estimate,
+    // so none of them may be taken from the control's starting position.
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "81.5" },
@@ -437,7 +450,9 @@ describe("activity-relevant setup", () => {
       target: { value: "175" },
     });
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
+    fireEvent.change(screen.getByLabelText(SETUP.birthYear), {
+      target: { value: "1995" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       screen.getByRole("region", { name: "First run preview" })
@@ -762,6 +777,63 @@ describe("a race needs a date", () => {
     });
   });
 
+  // Run26 (2): an ultra with its climb, from a setup's draft to the goal
+  // and the plan it builds.
+  it("saves an ultra and its climb on the goal, and plans for them", async () => {
+    await loadWordFilter();
+    const raceDay = localDateString(addLocalDays(new Date(), 140));
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      weeklyRunDays: 4,
+      raceDistance: "50k",
+      raceTargetDate: raceDay,
+      raceEntry: "race",
+      raceClimbM: 1500,
+      runningWeekMinutes: "240",
+      runningLongestMinutes: "120",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const { profileData, programState } = complete.mock.calls[0][0];
+    expect(profileData.raceGoal).toEqual({
+      distance: "50k",
+      targetDate: raceDay,
+      entry: "race",
+      climbM: 1500,
+    });
+    expect(programState.runPlan).toMatchObject({
+      mode: "race_prep",
+      raceGoal: { distance: "50k", climbM: 1500 },
+    });
+  });
+
+  it("offers the ultras under the road races, and says 100 miles isn't one", () => {
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(screen.getByText("No 100-mile plan yet.")).toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByRole("radiogroup", { name: "Ultra distance" })
+      ).getByRole("radio", { name: "100K" })
+    );
+    expect(
+      screen.getByText(
+        "An ultra plan works best on four runs a week, with both weekend days free for the long runs. Add a day, or choose a shorter race."
+      )
+    ).toBeInTheDocument();
+    // The climb is checked before the step goes on.
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: localDateString(addLocalDays(new Date(), 140)) },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "On my own" }));
+    fireEvent.change(screen.getByLabelText("Total climb (optional)"), {
+      target: { value: "lots" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
   it("begins the 30-minute goal today, with no race goal (Run9)", async () => {
     await loadWordFilter();
     saveOnboardingDraft("setup-test", {
@@ -817,7 +889,11 @@ describe("a race needs a date", () => {
   it("no longer calls the date optional", () => {
     reachRunningPlan();
     fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
-    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
+    // Run26 (2): the race's climb is optional, and the one field that says
+    // so (was: no field at all called optional).
+    expect(
+      screen.queryAllByLabelText(/optional/i).map((field) => field.id)
+    ).toEqual(["setup-race-climb"]);
   });
 });
 
@@ -1512,13 +1588,9 @@ describe("setup, by the names the journeys use", () => {
     fireEvent.click(
       within(group(SETUP.sex)).getByRole("radio", { name: "Male" })
     );
-    for (const age of SETUP_OPTIONS.ages)
-      expect(
-        within(group(SETUP.age)).getByRole("radio", { name: age })
-      ).toBeInTheDocument();
-    fireEvent.click(
-      within(group(SETUP.age)).getByRole("radio", { name: "25–34" })
-    );
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.birthYear }), {
+      target: { value: "1995" },
+    });
     next();
 
     fireEvent.change(screen.getByRole("textbox", { name: SETUP.name }), {
@@ -1539,6 +1611,93 @@ describe("setup, by the names the journeys use", () => {
         source: "self_reported",
       }
     );
+  });
+});
+
+/* App1 (grill Q57; the owner chose a year of birth, 13 November 2026):
+   setup asks the year of birth in place of the age range. The age gate
+   counts in the year's terms: this year less 16 or earlier passes, and a
+   later year is refused with the gate's line. The years come from the
+   clock. */
+describe("the year of birth", () => {
+  const year = Number(localDateString().slice(0, 4));
+  const yearField = () =>
+    screen.getByRole("textbox", { name: SETUP.birthYear });
+  const continueButton = () => screen.getByRole("button", { name: "Continue" });
+  const underSixteen = "You need to be at least 16 to use Tropos.";
+  const atAboutYou = () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      step: 5,
+      birthYearText: "",
+      bodyAnswered: true,
+    });
+    open();
+  };
+  const enter = (value: string) =>
+    fireEvent.change(yearField(), { target: { value } });
+
+  it("starts empty and holds the step until a year is given", () => {
+    atAboutYou();
+    expect(yearField()).toHaveValue("");
+    expect(yearField()).toHaveAttribute("inputmode", "numeric");
+    expect(continueButton()).toBeDisabled();
+    enter("19");
+    expect(continueButton()).toBeDisabled();
+    expect(screen.queryByRole("alert")).toBeNull();
+    enter("1995");
+    expect(continueButton()).toBeEnabled();
+  });
+
+  it("takes this year less 16, and refuses the year after with the gate's line", () => {
+    atAboutYou();
+    enter(String(year - 15));
+    expect(screen.getByRole("alert")).toHaveTextContent(underSixteen);
+    expect(continueButton()).toBeDisabled();
+    enter(String(year - 16));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(continueButton()).toBeEnabled();
+  });
+
+  it("keeps only the digits typed", () => {
+    atAboutYou();
+    enter("19a95");
+    expect(yearField()).toHaveValue("1995");
+  });
+
+  it("refuses a year over 120 or after this one", () => {
+    atAboutYou();
+    for (const value of [String(year - 121), String(year + 1)]) {
+      enter(value);
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Check the year you were born."
+      );
+      expect(continueButton()).toBeDisabled();
+    }
+  });
+
+  it("sends the year of birth, and neither an age nor an age range", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const sent = complete.mock.calls[0][0].profileData;
+    expect(sent.birthYear).toBe(1995);
+    expect(sent).not.toHaveProperty("age");
+    expect(sent).not.toHaveProperty("ageRange");
+  });
+
+  it("opens a draft saved with an age range on About you, then back to the review", () => {
+    const old: OnboardingDraft = { ...draft, ageRange: "25-34" };
+    delete old.birthYearText;
+    saveOnboardingDraft("setup-test", old);
+    open();
+    expect(yearField()).toHaveValue("");
+    enter("1995");
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    expect(
+      screen.getByRole("button", { name: "Start my plan" })
+    ).toBeInTheDocument();
   });
 });
 
@@ -1784,7 +1943,9 @@ describe("what each answer changes (FV3)", () => {
     fireEvent.change(screen.getByLabelText("Height (cm)"), {
       target: { value: "175" },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
+    fireEvent.change(screen.getByLabelText(SETUP.birthYear), {
+      target: { value: "1995" },
+    });
     const target = () =>
       screen.getByRole("region", { name: "Your daily target" });
     expect(target()).toHaveTextContent("kcal");

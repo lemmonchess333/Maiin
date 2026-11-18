@@ -15,6 +15,7 @@ import {
   shareRoute,
   routeSlug,
   resolveShareRoute,
+  exportTrace,
 } from "../shareRoute";
 import type { GPSPoint } from "../gps";
 import type { PrivacyZone } from "../privacyZones";
@@ -49,8 +50,10 @@ describe("resolveShareRoute (privacy trim)", () => {
     pt(51.5 + i * 0.001, -0.1)
   );
 
-  it("returns the route unchanged when there are no zones", () => {
-    expect(resolveShareRoute(line, [])).toBe(line);
+  it("returns the route's raw fixes when there are no zones", () => {
+    // A new array (`rawTrace`), the same points: these fixes' raw and
+    // smoothed positions are one place.
+    expect(resolveShareRoute(line, [])).toEqual(line);
   });
 
   it("trims start/end points inside a zone (fewer points, still ≥2)", () => {
@@ -186,5 +189,43 @@ describe("announceRouteShare", () => {
     announceRouteShare("cancelled");
     expect(toasts.success).toHaveBeenCalledOnce();
     expect(toasts.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("exportTrace — what a GPX export carries", () => {
+  const zone: PrivacyZone = {
+    id: "z",
+    name: "Home",
+    lat: 51.5,
+    lon: -0.1,
+    radiusMeters: 150,
+  };
+
+  it("writes each point at its raw fix, not its smoothed position", () => {
+    const smoothed = { ...pt(51.51, -0.1), rawLat: 51.5101, rawLon: -0.1002 };
+    const [out] = exportTrace([smoothed], []);
+    expect(out.lat).toBe(51.5101);
+    expect(out.lon).toBe(-0.1002);
+  });
+
+  it("keeps a point's own position when it has no raw fix", () => {
+    const imported = { ...pt(51.51, -0.1), rawLat: NaN, rawLon: NaN };
+    expect(exportTrace([imported], [])[0]).toEqual(imported);
+  });
+
+  it("cuts on the raw fixes: a raw fix inside a zone goes, though its smoothed point was outside", () => {
+    /* 160 m north of home the smoothed point is outside the 150 m zone;
+       its raw fix, 140 m north, is inside it. The map's cut keeps it; the
+       file's cut must not. */
+    const metres = (m: number) => 51.5 + m / 111_195;
+    const route = Array.from({ length: 40 }, (_, i) => ({
+      ...pt(metres(160 + i * 10), -0.1),
+      rawLat: metres(160 + i * 10),
+      rawLon: -0.1,
+    }));
+    route[0] = { ...route[0], rawLat: metres(140) };
+    const out = exportTrace(route, [zone]);
+    for (const p of out) expect((p.lat - 51.5) * 111_195).toBeGreaterThan(150);
+    expect(out.length).toBeLessThan(route.length);
   });
 });

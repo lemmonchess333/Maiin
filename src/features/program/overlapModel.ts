@@ -62,7 +62,7 @@ import {
   rescaleForSwap,
 } from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
-import { longRunDayOf } from "./runPlacement";
+import { longRunDaysOf } from "./runPlacement";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
 export const EXPENSIVE_PATTERNS: ReadonlySet<MovementCategory> = new Set([
@@ -421,31 +421,36 @@ function legSets(day: WorkoutDay): number {
 }
 
 /**
- * Which session, by its place in the week's order, falls the day before the
- * long run (Lift13), or null: no run day, or no lift that day. The long run's
- * day is the run plans' own pick (`longRunDayOf`); Sunday's lift is the day
- * before a Monday long run, as the week repeats.
+ * Which sessions, by their place in the week's order, fall the day before a
+ * long run (Lift13): none with no run day, or no lift the day before. The
+ * long run's day is the run plans' own pick (`longRunDaysOf`); Sunday's lift
+ * is the day before a Monday long run, as the week repeats. Run27 (19):
+ * in a plan whose weekend holds an ultra's back-to-back runs, the day
+ * before the back-to-back counts as the day before a long run.
  */
-export function sessionBeforeLongRun(
+export function sessionsBeforeLongRuns(
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
-  sessionCount: number
-): number | null {
-  if (!schedule || schedule.length === 0) return null;
-  const longDay = longRunDayOf(schedule);
-  if (longDay === null) return null;
+  sessionCount: number,
+  backToBacks = false
+): number[] {
+  if (!schedule || schedule.length === 0) return [];
   const liftDays = [...schedule]
     .filter((d) => d.type === "lift" || d.type === "both")
     .map((d) => weekPosition(d.day))
     .sort((a, b) => a - b)
     .slice(0, sessionCount);
-  const at = liftDays.indexOf((weekPosition(longDay) + 6) % 7);
-  return at >= 0 ? at : null;
+  return longRunDaysOf(schedule, backToBacks)
+    .map((day) => liftDays.indexOf((weekPosition(day) + 6) % 7))
+    .filter((at) => at >= 0);
 }
 
 /**
  * Reorder the week so the sessions that land on BACK-TO-BACK days aren't the
  * two that load the same posterior chain hardest (M6), and so the session the
  * day before the long run is the one with the least leg work in it (Lift13).
+ * With `backToBacks` (Run27 (19)), the day before an ultra's back-to-back
+ * run is weighed the same way, so its weekend's Friday is not heavy legs
+ * where the week has a lighter session to put there.
  *
  * Lift13: the default week can put a lift day the day before the long run
  * (two lift and four run days, three and three, four and two), and the order
@@ -470,19 +475,21 @@ export function sessionBeforeLongRun(
  */
 export function orderForAdjacency(
   workouts: WorkoutDay[],
-  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
+  backToBacks = false
 ): WorkoutDay[] {
   const n = workouts.length;
   if (n < 2) return workouts; // nothing to permute
   // Under three sessions no seam is worth a reorder; the long run's eve is.
   const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
   const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
-  const eve = sessionBeforeLongRun(schedule, n);
-  if (!adjacency.some(Boolean) && !wrapAdjacent && eve === null)
+  const eves = sessionsBeforeLongRuns(schedule, n, backToBacks);
+  if (!adjacency.some(Boolean) && !wrapAdjacent && eves.length === 0)
     return workouts;
 
   const cost = (order: number[]) => {
-    let total = eve === null ? 0 : legSets(workouts[order[eve]]);
+    let total = 0;
+    for (const eve of eves) total += legSets(workouts[order[eve]]);
     for (let i = 0; i + 1 < order.length; i += 1) {
       if (!adjacency[i]) continue; // only back-to-back seams are penalised
       total += posteriorChainOverlap(

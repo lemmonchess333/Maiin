@@ -3,17 +3,18 @@
  *
  * Pure reducer + types — no React, no GPS, no audio. Each test pins
  * one transition. Together they cover:
- *   1. Forward paths: GPS run (waiting → acquiring → countdown →
- *      active → paused → active → finished) and the non-GPS short-
- *      circuit (waiting → active → finished).
- *   2. Acquiring branches: GPS_ACQUIRED, GPS_FAILED, MANUAL_FALLBACK,
+ *   1. Forward paths: GPS run (waiting → countdown → acquiring →
+ *      active → paused → active → finished), a GPS run with its fix in
+ *      hand at Go and the non-GPS short-circuit (waiting → countdown →
+ *      active → finished).
+ *   2. Acquiring branches: GPS_ACQUIRED, START_ANYWAY, MANUAL_FALLBACK,
  *      CANCEL_ACQUIRING — each from acquiring only.
  *   3. Snapshot resume: RESUME_SNAPSHOT lands in the stored phase,
  *      and only from the initial waiting state.
  *   4. Defensive guards: every action is a no-op when dispatched
  *      from the wrong phase (stale UI events / double-taps).
- *   5. FINISH reachability: works from acquiring/countdown/active/
- *      paused; idempotent from finished.
+ *   5. FINISH reachability: works from active/paused; a no-op
+ *      elsewhere.
  *
  * When Run.tsx migrates from `useState<RunPhase>` + scattered
  * `setPhase` calls to `useReducer(runSessionReducer, ...)`, these
@@ -32,40 +33,62 @@ describe("runSessionReducer — initial state", () => {
   });
 });
 
-describe("runSessionReducer — START actions from waiting", () => {
-  it("START_MANUAL: waiting → active (skips acquiring)", () => {
-    expect(runSessionReducer("waiting", { type: "START_MANUAL" })).toBe(
+describe("runSessionReducer — Start, the countdown and Go", () => {
+  it("COUNTDOWN: waiting → countdown (Run27 (1): Start counts 3-2-1)", () => {
+    expect(runSessionReducer("waiting", { type: "COUNTDOWN" })).toBe(
+      "countdown"
+    );
+  });
+
+  it("START_MANUAL at Go: countdown → active (skips acquiring)", () => {
+    expect(runSessionReducer("countdown", { type: "START_MANUAL" })).toBe(
       "active"
     );
   });
 
-  it("START_GPS: waiting → acquiring", () => {
-    expect(runSessionReducer("waiting", { type: "START_GPS" })).toBe(
-      "acquiring"
-    );
+  it("START_GPS at Go without a fix in hand: countdown → acquiring (Finding GPS)", () => {
+    expect(
+      runSessionReducer("countdown", { type: "START_GPS", fixInHand: false })
+    ).toBe("acquiring");
+  });
+
+  it("START_GPS at Go with a fix in hand: countdown → active (Run25 call 2)", () => {
+    /* The run screen watched location before Start and through the
+       countdown, and a good fix was there: the clock starts at Go, with
+       no waiting screen. */
+    expect(
+      runSessionReducer("countdown", { type: "START_GPS", fixInHand: true })
+    ).toBe("active");
+  });
+
+  it("COUNTDOWN is ignored once a run is under way", () => {
+    const phases: RunPhase[] = [
+      "countdown",
+      "acquiring",
+      "active",
+      "paused",
+      "finished",
+    ];
+    for (const start of phases)
+      expect(runSessionReducer(start, { type: "COUNTDOWN" })).toBe(start);
   });
 });
 
 describe("runSessionReducer — acquiring branches", () => {
-  it("GPS_ACQUIRED: acquiring → countdown", () => {
+  it("GPS_ACQUIRED: acquiring → active (the first good fix starts the clock)", () => {
     expect(runSessionReducer("acquiring", { type: "GPS_ACQUIRED" })).toBe(
-      "countdown"
+      "active"
     );
   });
 
-  it("GPS_FAILED: acquiring → countdown (auto-skip on permission denial)", () => {
-    /* User denied geolocation permission or the device has no
-       provider. The run still gets to start; the trail is just empty.
-       Same target phase as GPS_ACQUIRED — the difference is what
-       Run.tsx does in the effect that fires on countdown entry. */
-    expect(runSessionReducer("acquiring", { type: "GPS_FAILED" })).toBe(
-      "countdown"
+  it("START_ANYWAY: acquiring → active (the clock starts at the tap)", () => {
+    expect(runSessionReducer("acquiring", { type: "START_ANYWAY" })).toBe(
+      "active"
     );
   });
 
   it("MANUAL_FALLBACK: acquiring → active (15s+ no-lock escape hatch)", () => {
-    /* The "Switch to manual" button on the acquiring screen. Skips
-       countdown because the user has already been waiting. */
+    /* "Track without GPS" or "On a treadmill" on the acquiring screen. */
     expect(runSessionReducer("acquiring", { type: "MANUAL_FALLBACK" })).toBe(
       "active"
     );
@@ -74,14 +97,6 @@ describe("runSessionReducer — acquiring branches", () => {
   it("CANCEL_ACQUIRING: acquiring → waiting (re-opens setup modal)", () => {
     expect(runSessionReducer("acquiring", { type: "CANCEL_ACQUIRING" })).toBe(
       "waiting"
-    );
-  });
-});
-
-describe("runSessionReducer — countdown → active", () => {
-  it("COUNTDOWN_DONE: countdown → active", () => {
-    expect(runSessionReducer("countdown", { type: "COUNTDOWN_DONE" })).toBe(
-      "active"
     );
   });
 });
@@ -106,8 +121,8 @@ describe("runSessionReducer — pause / resume cycle", () => {
 
 describe("runSessionReducer — FINISH from active / paused only", () => {
   /* The Finish control mounts in RunBottomSheet which only renders
-     for active|paused. acquiring/countdown use CANCEL_ACQUIRING to
-     bail out; waiting has no run; finished is terminal. */
+     for active|paused. acquiring uses CANCEL_ACQUIRING to bail out;
+     waiting has no run; finished is terminal. */
   it("FINISH from active → finished", () => {
     expect(runSessionReducer("active", { type: "FINISH" })).toBe("finished");
   });
@@ -116,13 +131,13 @@ describe("runSessionReducer — FINISH from active / paused only", () => {
     expect(runSessionReducer("paused", { type: "FINISH" })).toBe("finished");
   });
 
-  it("FINISH is a no-op from waiting / acquiring / countdown / finished", () => {
+  it("FINISH is a no-op from waiting / countdown / acquiring / finished", () => {
     /* The Finish button doesn't exist on those screens, but the
        reducer guards in case a stale event slips through. */
     const phases: RunPhase[] = [
       "waiting",
-      "acquiring",
       "countdown",
+      "acquiring",
       "finished",
     ];
     for (const start of phases) {
@@ -157,8 +172,8 @@ describe("runSessionReducer — snapshot resume", () => {
     /* The chooser overlays the setup modal and only ever fires from
        initial mount. If a stray dispatch lands later, ignore it. */
     const phases: RunPhase[] = [
-      "acquiring",
       "countdown",
+      "acquiring",
       "active",
       "paused",
       "finished",
@@ -175,27 +190,30 @@ describe("runSessionReducer — snapshot resume", () => {
 });
 
 describe("runSessionReducer — defensive guards", () => {
-  it("START_GPS / START_MANUAL are ignored from non-waiting phases", () => {
-    /* Double-tap defence: setup modal closes on first tap but the
-       button could re-fire in some browsers before the close
-       animation completes. */
+  it("START_GPS / START_MANUAL are ignored outside the countdown", () => {
+    /* Go comes once: a tap that skips the countdown and its last second
+       running out can land together, and Start itself only counts down. */
     const phases: RunPhase[] = [
+      "waiting",
       "acquiring",
-      "countdown",
       "active",
       "paused",
       "finished",
     ];
     for (const start of phases) {
-      expect(runSessionReducer(start, { type: "START_GPS" })).toBe(start);
+      expect(
+        runSessionReducer(start, { type: "START_GPS", fixInHand: false })
+      ).toBe(start);
+      expect(
+        runSessionReducer(start, { type: "START_GPS", fixInHand: true })
+      ).toBe(start);
       expect(runSessionReducer(start, { type: "START_MANUAL" })).toBe(start);
     }
   });
 
-  it("GPS_ACQUIRED / GPS_FAILED / MANUAL_FALLBACK / CANCEL_ACQUIRING are ignored outside acquiring", () => {
-    /* The GPS hook fires GPS_ACQUIRED whenever a fix lands — once
-       the run is active, those events should be no-ops, not flip
-       the phase back to countdown. */
+  it("GPS_ACQUIRED / START_ANYWAY / MANUAL_FALLBACK / CANCEL_ACQUIRING are ignored outside acquiring", () => {
+    /* A good fix and a tap of Start anyway can land together: whichever
+       comes second must not start the run a second time. */
     const phases: RunPhase[] = [
       "waiting",
       "countdown",
@@ -205,7 +223,7 @@ describe("runSessionReducer — defensive guards", () => {
     ];
     for (const start of phases) {
       expect(runSessionReducer(start, { type: "GPS_ACQUIRED" })).toBe(start);
-      expect(runSessionReducer(start, { type: "GPS_FAILED" })).toBe(start);
+      expect(runSessionReducer(start, { type: "START_ANYWAY" })).toBe(start);
       expect(runSessionReducer(start, { type: "MANUAL_FALLBACK" })).toBe(start);
       expect(runSessionReducer(start, { type: "CANCEL_ACQUIRING" })).toBe(
         start
@@ -213,24 +231,11 @@ describe("runSessionReducer — defensive guards", () => {
     }
   });
 
-  it("COUNTDOWN_DONE is ignored outside countdown", () => {
-    const phases: RunPhase[] = [
-      "waiting",
-      "acquiring",
-      "active",
-      "paused",
-      "finished",
-    ];
-    for (const start of phases) {
-      expect(runSessionReducer(start, { type: "COUNTDOWN_DONE" })).toBe(start);
-    }
-  });
-
   it("PAUSE is ignored outside active (already paused, no run, finished)", () => {
     const phases: RunPhase[] = [
       "waiting",
-      "acquiring",
       "countdown",
+      "acquiring",
       "paused",
       "finished",
     ];
@@ -242,8 +247,8 @@ describe("runSessionReducer — defensive guards", () => {
   it("RESUME is ignored outside paused", () => {
     const phases: RunPhase[] = [
       "waiting",
-      "acquiring",
       "countdown",
+      "acquiring",
       "active",
       "finished",
     ];
@@ -256,11 +261,11 @@ describe("runSessionReducer — defensive guards", () => {
 describe("runSessionReducer — end-to-end sequences", () => {
   it("happy path: GPS run from cold start through finish", () => {
     let state: RunPhase = initialRunPhase;
-    state = runSessionReducer(state, { type: "START_GPS" });
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
+    expect(state).toBe("countdown");
+    state = runSessionReducer(state, { type: "START_GPS", fixInHand: false });
     expect(state).toBe("acquiring");
     state = runSessionReducer(state, { type: "GPS_ACQUIRED" });
-    expect(state).toBe("countdown");
-    state = runSessionReducer(state, { type: "COUNTDOWN_DONE" });
     expect(state).toBe("active");
     state = runSessionReducer(state, { type: "PAUSE" });
     expect(state).toBe("paused");
@@ -270,8 +275,9 @@ describe("runSessionReducer — end-to-end sequences", () => {
     expect(state).toBe("finished");
   });
 
-  it("treadmill path: no GPS, straight to active", () => {
+  it("treadmill path: no GPS, the countdown, then straight to active", () => {
     let state: RunPhase = initialRunPhase;
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
     state = runSessionReducer(state, { type: "START_MANUAL" });
     expect(state).toBe("active");
     state = runSessionReducer(state, { type: "FINISH" });
@@ -280,18 +286,31 @@ describe("runSessionReducer — end-to-end sequences", () => {
 
   it("manual fallback path: started GPS, gave up after 15s, switched to manual", () => {
     let state: RunPhase = initialRunPhase;
-    state = runSessionReducer(state, { type: "START_GPS" });
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
+    state = runSessionReducer(state, { type: "START_GPS", fixInHand: false });
     state = runSessionReducer(state, { type: "MANUAL_FALLBACK" });
     expect(state).toBe("active");
   });
 
+  it("start anyway path: started GPS, no good fix, started the clock anyway", () => {
+    let state: RunPhase = initialRunPhase;
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
+    state = runSessionReducer(state, { type: "START_GPS", fixInHand: false });
+    state = runSessionReducer(state, { type: "START_ANYWAY" });
+    expect(state).toBe("active");
+    // The good fix that lands after is not a second start.
+    expect(runSessionReducer(state, { type: "GPS_ACQUIRED" })).toBe("active");
+  });
+
   it("cancel-and-restart: user cancels acquiring, reopens setup, starts again", () => {
     let state: RunPhase = initialRunPhase;
-    state = runSessionReducer(state, { type: "START_GPS" });
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
+    state = runSessionReducer(state, { type: "START_GPS", fixInHand: false });
     state = runSessionReducer(state, { type: "CANCEL_ACQUIRING" });
     expect(state).toBe("waiting");
-    state = runSessionReducer(state, { type: "START_GPS" });
-    expect(state).toBe("acquiring");
+    state = runSessionReducer(state, { type: "COUNTDOWN" });
+    state = runSessionReducer(state, { type: "START_GPS", fixInHand: true });
+    expect(state).toBe("active");
   });
 
   it("snapshot resume into paused, then user resumes and finishes", () => {

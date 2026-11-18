@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
+  ASSOCIATION_PATHS,
   appleAppSiteAssociation,
   universalLinksPlugin,
 } from "./universal-links";
 
 describe("iPhone invite association", () => {
-  it("names only the verified app and root invite URLs", () => {
+  it("names only the verified app, root invite URLs, shared posts and shared Spaces", () => {
     expect(appleAppSiteAssociation("A2B3C4D5E6")).toEqual({
       applinks: {
         details: [
@@ -18,6 +19,10 @@ describe("iPhone invite association", () => {
                 "?": { invite: "????????" },
                 comment: expect.any(String),
               },
+              // A shared post (App1 Q51): the app's own /activity/:id.
+              { "/": "/activity/*", comment: expect.any(String) },
+              // A shared Space (Run27 call 11): the app's own /space/:id.
+              { "/": "/space/*", comment: expect.any(String) },
             ],
           },
         ],
@@ -39,12 +44,16 @@ describe("iPhone invite association", () => {
     expect(entitlement).toContain("<string>applinks:troposfit.com</string>");
     expect(entitlement).not.toContain("applinks:*");
     const hosting = JSON.parse(readFileSync("firebase.json", "utf8")).hosting;
-    expect(
-      hosting.headers.find(
-        (rule: { source: string }) =>
-          rule.source === "/apple-app-site-association"
-      ).headers
-    ).toContainEqual({ key: "Content-Type", value: "application/json" });
+    // Both addresses the file is served at, the .well-known one being the
+    // one Apple's CDN reads first.
+    for (const path of ASSOCIATION_PATHS) {
+      expect(
+        hosting.headers.find(
+          (rule: { source: string }) => rule.source === `/${path}`
+        )?.headers,
+        path
+      ).toContainEqual({ key: "Content-Type", value: "application/json" });
+    }
     const config = readFileSync("vite.config.ts", "utf8");
     expect(config).toContain("isFirebaseHosting && !isCapacitor");
   });
@@ -60,13 +69,25 @@ function emit(prefix: string | undefined, hosting: boolean) {
   return emitFile;
 }
 
+/** The two files a configured Hosting build emits for a prefix: the same
+ *  association at `.well-known/`, which Apple's CDN reads first, and at the
+ *  root. */
+function emitted(prefix: string) {
+  const source = JSON.stringify(appleAppSiteAssociation(prefix));
+  return [
+    [
+      {
+        type: "asset",
+        fileName: ".well-known/apple-app-site-association",
+        source,
+      },
+    ],
+    [{ type: "asset", fileName: "apple-app-site-association", source }],
+  ];
+}
+
 it("emits a real JSON association only for a configured Hosting build", () => {
-  const emitFile = emit("A2B3C4D5E6", true);
-  expect(emitFile).toHaveBeenCalledExactlyOnceWith({
-    type: "asset",
-    fileName: "apple-app-site-association",
-    source: JSON.stringify(appleAppSiteAssociation("A2B3C4D5E6")),
-  });
+  expect(emit("A2B3C4D5E6", true).mock.calls).toEqual(emitted("A2B3C4D5E6"));
 });
 it.each([
   [undefined, true],
@@ -78,6 +99,12 @@ it.each([
     expect(emit(prefix, hosting)).not.toHaveBeenCalled();
   }
 );
+it("reads the prefix as the iPhone build reads the secret, whitespace stripped", () => {
+  expect(emit(" A2B3C4D5E6\n", true).mock.calls).toEqual(
+    emitted("A2B3C4D5E6")
+  );
+  expect(emit(" \n", true)).not.toHaveBeenCalled();
+});
 it("fails a configured Hosting build rather than emit an invalid association", () => {
   expect(() => emit("NOT_A_PREFIX", true)).toThrow("IOS_APP_ID_PREFIX");
 });

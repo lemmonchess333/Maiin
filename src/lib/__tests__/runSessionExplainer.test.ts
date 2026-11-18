@@ -8,8 +8,9 @@
  * no physiology-measurement claims, no safety promises.
  */
 import { describe, it, expect } from "vitest";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getPhaseForWeek } from "@/features/program/runScheduler";
+import type { RollingSessionContext } from "@/features/program/rollingWeeksAhead";
 import {
   isRecoveryRunDay,
   RECOVERY_RUN_WHY,
@@ -455,5 +456,129 @@ describe("physiology words stay out of the reasons (Run21 (2))", () => {
         }
       }
     }
+  });
+});
+
+describe("a run in a plan with no race date (Run24 (3), D7)", () => {
+  const rolling: RollingSessionContext = {
+    goal: "build_10k",
+    unit: "km",
+    opening: false,
+    lighter: false,
+    longRun: { topKm: 12, holding: false },
+  };
+  // A plan with no date carries no race plan counters or distance.
+  const plan = { currentWeek: 5, totalWeeks: undefined, distance: undefined };
+  const why = (
+    type: string,
+    templateId: string,
+    context: Partial<RollingSessionContext> = {},
+    weekHasQuality = true
+  ) =>
+    runSessionExplainer({
+      type,
+      templateId,
+      ...plan,
+      weekHasQuality,
+      rolling: { ...rolling, ...context },
+    });
+
+  it("gives the long run its climb to the plan's longest, then the hold", () => {
+    expect(why("long", "long_10k")).toBe(
+      "The week’s anchor run. It climbs a step at a time to 12 km, then holds there."
+    );
+    expect(
+      why("long", "long_12k", { longRun: { topKm: 12, holding: true } })
+    ).toBe(
+      "The week’s anchor run, at the plan’s longest: it holds at 12 km from here."
+    );
+    // In the reader's unit, as the long run's own name is.
+    expect(why("long", "long_10k", { unit: "mi" })).toMatch(/to 7\.5 mi,/);
+    // Where the weeks read show no hold, no distance is promised.
+    expect(why("long", "long_10k", { longRun: null })).toBe(
+      "The week’s anchor run. It climbs a step at a time, then holds."
+    );
+  });
+
+  it("says a lighter week is one, for its long run and its easy runs", () => {
+    expect(why("long", "long_8k", { lighter: true })).toMatch(
+      /^A lighter week, one in every four: the long run steps back/
+    );
+    for (const id of ["easy_30", "easy_40_strides"])
+      expect(why("easy", id, { lighter: true })).toMatch(
+        /^A lighter week, one in every four: easier runs/
+      );
+  });
+
+  it("gives the time trial and a run-walk their own reasons, in any week", () => {
+    for (const context of [{}, { lighter: true }, { opening: true }]) {
+      expect(why("intervals", "time_trial_5k", context)).toMatch(
+        /finds your paces/
+      );
+      expect(why("easy", "run_walk_2", context)).toMatch(/^Run-walk/);
+    }
+  });
+
+  it("names the week's session as the plan's, with no race in it", () => {
+    expect(why("tempo", "tempo_20")).toMatch(/take turns/);
+    expect(why("intervals", "5x1k")).toMatch(/^Fast repeats/);
+    expect(why("intervals", "8x400")).toMatch(/^Short, quick repeats/);
+    // Get faster at 5K says what the sessions are for.
+    expect(why("tempo", "tempo_20", { goal: "faster_5k" })).toMatch(
+      /faster 5K/
+    );
+    expect(why("intervals", "8x400", { goal: "faster_5k" })).toMatch(
+      /faster 5K/
+    );
+  });
+
+  it("gives the easy runs theirs: the first week, strides, the medium-long", () => {
+    expect(why("easy", "easy_30", { opening: true })).toBe(
+      "The plan’s first week: easy running to start from, before the weeks climb."
+    );
+    expect(why("easy", "easy_30_strides")).toMatch(/^Easy day with strides/);
+    expect(why("easy", "easy_60")).toMatch(/medium-long/);
+    expect(why("easy", "easy_30")).toMatch(/week’s session/);
+    expect(why("easy", "easy_30", {}, false)).toMatch(
+      /^Most of the plan is easy running/
+    );
+  });
+
+  it("names no race, phase or physiology, and no em dash, for any session", () => {
+    for (const t of RUN_TEMPLATES) {
+      if (t.type === "race") continue;
+      const contexts: Partial<RollingSessionContext>[] = [
+        {},
+        { lighter: true },
+        { opening: true },
+        { longRun: { topKm: 12, holding: true } },
+        { longRun: null },
+        { goal: "faster_5k" },
+      ];
+      for (const context of contexts) {
+        const line = why(t.type, t.id, context) ?? "";
+        expect(line, t.id).not.toMatch(
+          /\brace\b|race pace|taper|\bbase\b|\bbuild phase|\bpeak\b|aerobic|threshold|VO2|lactate|safe/i
+        );
+        // Run-walk's lines are the race plans' own, shared as they are.
+        if (!isRunWalkTemplateId(t.id)) expect(line, t.id).not.toMatch(/—/);
+      }
+    }
+    expect(why("race", "5k_race")).toBeNull();
+  });
+
+  it("shows no plan position, which a plan with no date has none of", () => {
+    expect(
+      runSessionPresentation({
+        type: "long",
+        templateId: "long_10k",
+        ...plan,
+        rolling,
+      })
+    ).toEqual({
+      purpose:
+        "The week’s anchor run. It climbs a step at a time to 12 km, then holds there.",
+      weekLabel: null,
+    });
   });
 });

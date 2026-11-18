@@ -294,10 +294,12 @@ describe("jobs that read release credentials name the production environment", (
 
   it("finds the deploys, the race-event writers and the rules checks", () => {
     expect(readers.map((r) => `${r.file} ${r.job}`).sort()).toEqual([
+      "app1-data-cleanup.yml cleanup",
       "backfill-block-mirror.yml backfill",
       "backfill-community-goal.yml backfill",
       "backfill-follow-counts.yml backfill",
       "backfill-medals.yml backfill",
+      "backfill-space-sessions.yml backfill",
       "deploy-firestore.yml deploy",
       "deploy-functions.yml deploy",
       "deploy-hosting.yml build-and-deploy",

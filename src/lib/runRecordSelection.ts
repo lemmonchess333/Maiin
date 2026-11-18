@@ -82,3 +82,20 @@ export function isAllTimeRecord<T extends RunRecordCandidate>(
 ): boolean {
   return allTime[kind] === run;
 }
+
+/**
+ * Whether `run` holds Best pace or Best pace · 5K+ once it joins `pool`,
+ * the runs Bests reads its outdoor records from (`isPaceEligible`), with
+ * `run` itself left out of it. A tie keeps the earlier run's record, as
+ * `selectRunRecords` does.
+ *
+ * App1 Q15: the finish screen says "New best" about a pace only for a run
+ * that this answers yes for, so the best it named is a row on Bests.
+ */
+export function holdsPaceRecord<T extends RunRecordCandidate>(
+  run: T,
+  pool: readonly T[]
+): boolean {
+  const records = selectRunRecords([...pool, run], { includeLongest: false });
+  return records.bestPace === run || records.bestSustainedPace === run;
+}

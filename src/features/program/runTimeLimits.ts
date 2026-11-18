@@ -2,6 +2,7 @@ import {
   isRunWalkTemplateId,
   RETIRED_RUN_TEMPLATE_IDS,
   RUN_TEMPLATES,
+  sameTimeOnFeetFamily,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
 import { shorteningRank } from "@/lib/planDeloadWeek";
@@ -86,7 +87,12 @@ export function fitRunToTimeLimit(
       // session, nor an interval session to a trial (Run24 (4)).
       Boolean(template.config.timeTrial) ===
         Boolean(original.config.timeTrial) &&
+      // Run26 (2): time on feet stays time on feet, a back-to-back a
+      // back-to-back, and no other run becomes either.
+      sameTimeOnFeetFamily(original, template) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
+      // Run24 (8): pick-ups stay pick-ups, as strides stay strides.
+      Boolean(template.config?.pickUps) === Boolean(original.config?.pickUps) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <
         plannedRunMinutes(original, easyPaceSPerKm)

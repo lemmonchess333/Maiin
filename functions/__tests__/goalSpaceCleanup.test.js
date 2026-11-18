@@ -292,6 +292,50 @@ describe("cleanupGoalSpacesForUser", () => {
     expect(warnings.some((w) => w.includes("s2"))).toBe(true);
   });
 
+  it("meet-ups (Run26 call 4): the member's own go, their uid leaves the others' going lists (unit::accountDeletion.goalSpaceMeetups)", async () => {
+    const db = makeFirestore({
+      ...seededCircle({ members: ["owner", "u2", "u3"] }),
+      "goalSpaces/s1/meetups/m1": {
+        organiserUid: "u2",
+        going: ["u2", "u3"],
+        startsAt: 5,
+      },
+      "goalSpaces/s1/meetups/m2": {
+        organiserUid: "owner",
+        going: ["owner", "u2", "u3"],
+        startsAt: 6,
+      },
+    });
+    await cleanupGoalSpacesForUser({
+      firestore: db,
+      uid: "u2",
+      logger: silent,
+    });
+    expect(db.__docs.has("goalSpaces/s1/meetups/m1")).toBe(false);
+    expect(db.__docs.get("goalSpaces/s1/meetups/m2").going).toEqual([
+      "owner",
+      "u3",
+    ]);
+  });
+
+  it("meet-ups (Run26 call 4): the owner's deletion ends the Circle and takes every meet-up", async () => {
+    const db = makeFirestore({
+      ...seededCircle({ members: ["owner", "u2"] }),
+      "goalSpaces/s1/meetups/m1": {
+        organiserUid: "u2",
+        going: ["u2"],
+        startsAt: 5,
+      },
+    });
+    await cleanupGoalSpacesForUser({
+      firestore: db,
+      uid: "owner",
+      logger: silent,
+    });
+    expect(db.__docs.get("goalSpaces/s1").active).toBe(false);
+    expect(db.__docs.has("goalSpaces/s1/meetups/m1")).toBe(false);
+  });
+
   it("no memberships is a clean no-op", async () => {
     const db = makeFirestore();
     await expect(

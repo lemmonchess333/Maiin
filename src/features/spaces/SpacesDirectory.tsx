@@ -17,8 +17,18 @@
  * stands in for it (Spc1c). How many posts a Space had this week is not
  * read here (the directory reads a member count and membership only), so
  * no card says it. No animation loops (WKWebView).
+ *
+ * Until Tropos has enough people to fill them (App1 Q6, `roomShown`), the
+ * directory offers nothing: it draws only the Spaces the person joined,
+ * under "Your spaces", and nothing at all when they joined none. No filter
+ * chips then, as there is nothing to browse, and no search.
+ *
+ * Search (Run27 call 11): a field over the directory finds Spaces by name,
+ * or a race by its city, among every Space and every race whatever the
+ * chips say (`spaceSearch.ts`, on the device: Spaces are the app's own
+ * config). While it holds a query, the results stand in for the rows.
  */
-import { useState } from "react";
+import { useId, useMemo, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import PhotoCaption from "@/components/ui/PhotoCaption";
@@ -38,16 +48,26 @@ import {
   Medal,
   Mountain,
   Plane,
+  Search,
   Sprout,
   Users,
+  X,
   Zap,
   type LucideIcon,
 } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
+import { IconButton } from "@/components/ui/IconButton";
+import {
+  SPACE_SEARCH_MIN_LENGTH,
+  searchKey,
+  searchSpaces,
+} from "./spaceSearch";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
+import { useEnoughPeople } from "@/hooks/useEnoughPeople";
+import { roomShown } from "@/lib/enoughPeople";
 import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
@@ -269,17 +289,180 @@ function CardRow({
   );
 }
 
+/** One Space found by a search: its picture, its name, and its race day
+ *  and city or its tagline. */
+function SpaceSearchRow({ def }: { def: SpaceDef }) {
+  const photo = spaceEditorialImage(def.id);
+  const accent = SPACE_ACCENT_HEX[def.accent];
+  const Icon = ICON_MAP[def.icon] ?? Users;
+  const event = def.kind === "race" ? def.event : undefined;
+  const past = event ? event.dateKey < localDateString() : false;
+  return (
+    <Link
+      to={`/space/${def.id}`}
+      className="flex items-center gap-3 min-h-14 rounded-xl bg-card card-shadow p-2.5 pr-3.5 active:scale-[0.98] transition-transform"
+    >
+      <span
+        className="relative size-11 shrink-0 overflow-hidden rounded-lg"
+        style={photo ? undefined : { background: `${accent}26` }}
+        aria-hidden
+      >
+        {photo ? (
+          <img src={photo} alt="" className="size-full object-cover" />
+        ) : (
+          <Icon
+            className="absolute inset-0 m-auto size-5"
+            style={{ color: accent }}
+          />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold leading-tight text-foreground line-clamp-2 break-words">
+          {def.name}
+        </span>
+        <span className="mt-0.5 block text-caption text-muted-foreground truncate">
+          {event ? (
+            <>
+              <span className={past ? undefined : "font-mono tabular-nums"}>
+                {past ? "Next date TBA" : formatRaceEventDate(event)}
+              </span>
+              {" · "}
+              {event.city} {event.countryFlag}
+            </>
+          ) : (
+            def.tagline
+          )}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/** The directory's search field: a query, and a way to clear it. */
+function SpaceSearchField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div className="relative" role="search">
+      <Search
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
+        aria-hidden="true"
+      />
+      <input
+        type="search"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="Search spaces"
+        aria-label="Search spaces"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="ds-input pl-10 pr-11 text-base text-foreground placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+      />
+      {value.length > 0 && (
+        <IconButton
+          onClick={() => onChange("")}
+          aria-label="Clear search"
+          icon={<X />}
+          className="absolute right-0.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function SpacesDirectory() {
   const [filters, setFilters] = useState(UK_RACE_FILTERS);
   const { entries, upcomingRaces } = useSpacesDirectory(true, filters);
+  const enough = useEnoughPeople();
+  const yoursId = useId();
+  const [query, setQuery] = useState("");
+  /* Every Space a search can find: every interest Space and every race,
+     whatever the chips say, in the directory's own order. */
+  const searchable = useMemo(
+    () => [
+      ...entries.filter((e) => e.def.kind !== "race").map((e) => e.def),
+      ...upcomingRaces,
+    ],
+    [entries, upcomingRaces]
+  );
+
+  if (!enough) {
+    const yours = entries.filter((e) => roomShown(e.joined, enough));
+    if (yours.length === 0) return null;
+    const yourRaces = yours.filter((e) => e.def.kind === "race");
+    const yourInterest = yours.filter((e) => e.def.kind !== "race");
+    return (
+      <section aria-labelledby={yoursId} className="space-y-3">
+        <SectionHeading id={yoursId}>Your spaces</SectionHeading>
+        {yourRaces.length > 0 && (
+          <CardRow
+            label="Your races"
+            entries={yourRaces}
+            size="regular"
+            hideLabel
+          />
+        )}
+        {yourInterest.length > 0 && (
+          <CardRow
+            label="Spaces"
+            entries={yourInterest}
+            size="small"
+            hideLabel
+          />
+        )}
+      </section>
+    );
+  }
+
   const interest = entries.filter((e) => e.def.kind !== "race");
   const races = entries.filter((e) => e.def.kind === "race");
   const showRaces = upcomingRaces.length > 0;
   if (entries.length === 0 && !showRaces) return null;
+  const searching = searchKey(query).length >= SPACE_SEARCH_MIN_LENGTH;
+  const results = searching ? searchSpaces(searchable, query) : [];
 
   return (
     <div className="space-y-4">
-      {showRaces && (
+      <SpaceSearchField value={query} onChange={setQuery} />
+      {/* Always in the page, so a screen reader hears each new count. */}
+      <p className="sr-only" aria-live="polite">
+        {searching
+          ? results.length === 1
+            ? "1 space found"
+            : `${results.length} spaces found`
+          : ""}
+      </p>
+      {searching ? (
+        results.length > 0 ? (
+          <div className="space-y-2" role="list" aria-label="Spaces found">
+            {results.map((def) => (
+              <div role="listitem" key={def.id}>
+                <SpaceSearchRow def={def} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            compact
+            icon={Search}
+            headline="No matching spaces"
+            sub="Try a race’s name or its city."
+            action={{
+              label: "Clear search",
+              variant: "secondary",
+              onClick: () => setQuery(""),
+            }}
+          />
+        )
+      ) : null}
+      {!searching && showRaces && (
         <section className="space-y-2" aria-label="Races & events">
           <SectionHeading as="h3" size="compact">
             Races & events
@@ -308,7 +491,7 @@ export default function SpacesDirectory() {
           )}
         </section>
       )}
-      {interest.length > 0 && (
+      {!searching && interest.length > 0 && (
         <CardRow label="Spaces" entries={interest} size="small" />
       )}
     </div>

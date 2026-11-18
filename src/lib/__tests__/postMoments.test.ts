@@ -187,6 +187,31 @@ describe("runHistoryOf", () => {
     });
   });
 
+  it("times an older run by its splits, as Bests does (App1 Q15)", () => {
+    // Saved before best efforts were kept: its fastest five whole
+    // kilometres in a row are its 5K, so a slower 5K is not the fastest
+    // yet, and a run Bests lists behind it is not called one.
+    const history = runHistoryOf([
+      { distance: 6000, kmSplitSeconds: [300, 290, 285, 290, 295, 310] },
+    ]);
+    expect(history.fastestSeconds).toEqual({ 1000: 285, 5000: 1460 });
+    expect(
+      fastestEffortMoments([{ distance: 5000, time: 1470 }], history)
+    ).toEqual([]);
+  });
+
+  it("compares the fastest times across the runs it is given to time", () => {
+    const counted = [
+      { distance: 5000, bestEfforts: [{ distance: 5000, time: 1300 }] },
+      { distance: 5000, bestEfforts: [{ distance: 5000, time: 1500 }] },
+    ];
+    expect(runHistoryOf(counted, [counted[1]])).toEqual({
+      count: 2,
+      longestMeters: 5000,
+      fastestSeconds: { 5000: 1500 },
+    });
+  });
+
   it("is empty with no earlier runs", () => {
     expect(runHistoryOf([])).toEqual({
       count: 0,

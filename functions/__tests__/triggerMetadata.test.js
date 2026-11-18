@@ -140,6 +140,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // A shared post's public page behind Hosting's /activity/** rewrite
+  // (App1 Q51). No key: it reads with the Admin SDK and needs no sign-in.
+  publicPostPage: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: [],
+  },
   analyzeFoodText: {
     kind: "http",
     maxInstances: 100,
@@ -206,6 +213,24 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // App1 Q18: a comment, a follow request, an invite joined and a league
+  // result push as their tray row is written; props once a day at 19:00
+  // local (lib/socialPush.js).
+  onNotificationItemWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/notifications/{uid}/items/{itemId}",
+  },
+  hourlyPropsBundle: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
   },
   dailyRaceReconciliationSweep: {
     kind: "schedule",
@@ -289,6 +314,49 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
+  // App1 Q33 — the badges no session trigger sees (lib/badgeAwards). A
+  // delete reaches the four write triggers too, during an account sweep,
+  // and each returns before reading anything.
+  onMealWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/meals/{mealId}",
+  },
+  onWaterLogWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/waterLog/{day}",
+  },
+  onDailyNutritionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/dailyNutrition/{day}",
+  },
+  onStreakWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/streaks/data",
+  },
+  onProgramStateWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/programState/current",
+  },
   // ADR-0012 — the delete halves. Same collections, same cap: they fire
   // once per document during an account deletion sweep, so an uncapped
   // pair would fan out across a user's entire logged history.
@@ -328,6 +396,37 @@ const EXPECTED = {
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
+  // Run27 call 11: a post created public, made public, narrowed, flagged or
+  // deleted moves its rows in the Spaces its author is in (lib/spaceFeed.js).
+  onActivitySpaceRows: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
+  // Run27 call 11: a join or a leave brings the member's public posts and
+  // their week into a Space or takes them out (lib/spaceFeed.js,
+  // lib/spaceWeeks.js).
+  onSpaceMemberWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/spaces/{spaceId}/members/{uid}",
+  },
+  // Run27 call 11: a restriction set or lifted takes a member out of every
+  // Space's sessions and weeks, or brings them back.
+  onRestrictionWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/globalRestrictedUids/{uid}",
   },
   onActivityDeleted: {
     kind: "event",
@@ -523,6 +622,26 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Run26 call 4: a Circle's meet-ups (plan, in, out, call off).
+  circleMeetup: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // Run27 call 10: a meet-up's reminder and its weekly repeat, each hour.
+  hourlyMeetupSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "30 * * * *",
+    timeoutSeconds: 540,
+  },
+  // Run27 call 11: the owner renames a Circle.
+  renameGoalSpace: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onGoalSpaceEventCreated: {
     kind: "event",
     maxInstances: 50,
@@ -545,6 +664,35 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: [],
+  },
+  // Segments (Run26 call 3, lib/segments.js). Making and deleting one match
+  // or sweep a run's worth of documents, past the 60 s default.
+  createSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  deleteSegment: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+    timeoutSeconds: 120,
+  },
+  getSegmentBoard: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // A zone drawn or removed recomputes every board entry its owner has.
+  onPrivacyZoneWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    timeoutSeconds: 300,
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/privacyZones/{zoneId}",
   },
   weeklyLeagueTurn: {
     kind: "schedule",

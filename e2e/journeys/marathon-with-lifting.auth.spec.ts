@@ -206,7 +206,7 @@ test("a marathon a year out, with lifting", async ({ page }) => {
       weightKg: 72,
       heightCm: 178,
       sex: "Male",
-      age: "35–44",
+      birthYear: 1985,
     });
     const profile =
       (await emulatorAdmin().db.doc(`users/${account.uid}`).get()).data() ?? {};
@@ -218,8 +218,9 @@ test("a marathon a year out, with lifting", async ({ page }) => {
 
     let previous: ReturnType<typeof planWeek> | null = null;
     // Run24 (3), D9: the rolling base before the block rotates a light
-    // tempo, strides and short reps, so quality before the build is the
-    // base's; the block's own base weeks hold none, as a block always has.
+    // tempo, a light session and short reps (Run24 (5)), so quality before
+    // the build is the base's; the block's own base weeks hold none, as a
+    // block always has.
     let sawBaseQuality = false;
     let sawBlockBaseQuality = false;
     let peakMinutes = 0;

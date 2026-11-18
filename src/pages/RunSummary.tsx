@@ -1,4 +1,7 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import RecoveryFoodButton from "@/components/workout/RecoveryFoodButton";
+import OptionalSummaryBoundary from "@/components/OptionalSummaryBoundary";
+import { recoveryFoodPath } from "@/lib/recoveryFood";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
 import {
@@ -8,8 +11,6 @@ import {
   useRef,
   useSyncExternalStore,
   Suspense,
-  Component,
-  type ReactNode,
 } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -34,7 +35,7 @@ import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
-import type { SessionShareAction } from "../lib/sessionPost";
+import { postedActivityId, type SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -113,7 +114,14 @@ import {
   runPostName,
 } from "@/lib/runName";
 import { racePaceWorkFor } from "@/lib/racePace";
-import { isPaceEligible } from "../lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "../lib/runStatsEligibility";
+import { startDayKey } from "@/lib/startDay";
+import type { FinishedSession } from "@/lib/anniversaries";
+import AnniversaryGate from "@/components/workout/AnniversaryGate";
+import { goalRaceRecord, isGoalRaceRun } from "@/lib/racePrediction";
+import { elapsedSecondsOf, raceSeconds, runTimeStat } from "@/lib/runElapsed";
+import { useRacePredictionLog } from "@/hooks/useRacePredictionLog";
+import RacePredictionResult from "@/components/run/RacePredictionResult";
 import { clearStoredRun, readStoredRun } from "../lib/runResumeStorage";
 import type { RunSessionIdentity } from "@/lib/runSessionIdentity";
 import { useConnectedTrainingPrefs } from "@/hooks/useConnectedTrainingPrefs";
@@ -121,11 +129,16 @@ import {
   clearHeartRateSession,
   getRecoveredHeartRateSession,
 } from "@/lib/heartRateSession";
-import { maxHrFromAge, summarizeHeartRate } from "@/lib/hrZones";
+import {
+  heartRateCoverageBand,
+  maxHrFromAge,
+  summarizeHeartRate,
+} from "@/lib/hrZones";
+import { profileAge } from "@/lib/age";
 import { queueHealthWorkoutExport } from "@/lib/healthWorkoutExport";
 import { clearWatchRunSession } from "@/lib/watchRunBridge";
 import { queueWatchRunSyncStatus } from "@/lib/watchRunSyncStatus";
-import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
+import { announceRouteShare, exportTrace, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import {
@@ -216,27 +229,10 @@ function RetryBanner({
 const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"), {
   reloadOnChunkError: false,
 });
-const SavedRunKudos = lazyRetry(
-  () => import("@/components/social/SavedRunKudos"),
+const SavedSessionKudos = lazyRetry(
+  () => import("@/components/social/SavedSessionKudos"),
   { reloadOnChunkError: false }
 );
-
-// Optional panels may disappear, but a failed import/render must never lose
-// the saved receipt or Done action. Lazy rejects are cached, so no dead Retry.
-class OptionalSummaryBoundary extends Component<
-  { children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
 
 interface InvalidRunReviewProps {
   unit: DistanceUnit;
@@ -453,14 +449,14 @@ export default function RunSummary() {
       : (routeState ?? recoveredState);
   const [heartRatePreview, setHeartRatePreview] =
     useState<ReturnType<typeof summarizeHeartRate>>(null);
+  // The age the zones' estimate reads: from the year of birth, else an
+  // older account's age (App1, Q57).
+  const ageYears = profileAge(profile);
   useEffect(() => {
-    if (
-      !user?.uid ||
-      !state?.identity ||
-      state.identity.uid !== user.uid ||
-      !state.watchCompanionUsed ||
-      !isOutdoorGpsRun(state.runConfig)
-    )
+    // Any run with a session: the Watch reads outdoor runs, and a paired
+    // Bluetooth sensor any run, the treadmill's too. With no readings the
+    // summary is null and no card shows, as the save below decides.
+    if (!user?.uid || !state?.identity || state.identity.uid !== user.uid)
       return;
     let active = true;
     void getRecoveredHeartRateSession(user.uid, state.identity.sessionId)
@@ -468,7 +464,7 @@ export default function RunSummary() {
         if (!active) return;
         const measuredMax = profile?.maxHeartRate ?? 0;
         const maxHr =
-          measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+          measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
         const summary = summarizeHeartRate(
           samples,
           activeIntervals,
@@ -478,7 +474,7 @@ export default function RunSummary() {
         if (summary) setHeartRatePreview(summary);
       })
       .catch((error) =>
-        logger.warn("[RunSummary] Watch heart rate unavailable", error)
+        logger.warn("[RunSummary] Heart rate unavailable", error)
       );
     return () => {
       active = false;
@@ -486,11 +482,9 @@ export default function RunSummary() {
   }, [
     user?.uid,
     state?.identity,
-    state?.watchCompanionUsed,
     state?.elapsed,
-    state?.runConfig,
     profile?.maxHeartRate,
-    profile?.age,
+    ageYears,
   ]);
   const unit = useDistanceUnit();
   // The basemap follows the theme on screen, not the profile field.
@@ -533,6 +527,10 @@ export default function RunSummary() {
     streak: StreakChange | null;
     firstSession: boolean;
   } | null>(null);
+  /* The run as an anniversary reads it (App1 Q58), once it is saved. */
+  const [anniversaryRun, setAnniversaryRun] = useState<FinishedSession | null>(
+    null
+  );
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -728,62 +726,16 @@ export default function RunSummary() {
         place: state.runConfig?.place,
         templateId: runTemplateIdOf(state.runConfig?.planMetadata),
       },
-      historyRead.runs
+      historyRead.runs,
+      /* "New best" only for a pace Bests lists (App1 Q15), and only
+         against the whole history, as the post's bests are claimed. */
+      {
+        records: historyRead.known
+          ? historyRead.runs.filter((run) => isPaceEligible(run))
+          : null,
+      }
     );
   }, [state, historyRead, uid]);
-
-  // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
-  // is the candidate that can cross the threshold; dedupe it out of the
-  // historical copy by document id. These hooks run BEFORE the `if (!state)`
-  // early return to keep hook order stable.
-  const currentPaceCandidate = useMemo<PaceInsightRun | null>(() => {
-    if (!state || !saved || !savedRunId) return null;
-    const distance = editedDistanceMeters ?? state.distance;
-    const duration = state.elapsed;
-    return {
-      id: savedRunId,
-      distance,
-      duration,
-      completedAt: new Date(),
-      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
-      activityType: state.runConfig?.activityType ?? "freerun",
-      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
-      place: state.runConfig?.place ?? null,
-      isInvalid: false,
-      savedAnyway: false,
-      // What decides whether it was an effort (Pgm8 R1): a tempo by its
-      // work segments, unless they were pinned to a goal pace.
-      workPortion: state.workPortion ?? null,
-      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
-      // Run24 (4): a time trial is read by its work as a race.
-      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
-    };
-  }, [state, saved, savedRunId, editedDistanceMeters]);
-
-  const paceInsightRuns = useMemo(
-    () =>
-      currentPaceCandidate
-        ? [
-            currentPaceCandidate,
-            ...paceHistory.filter((run) => run.id !== currentPaceCandidate.id),
-          ]
-        : paceHistory,
-    [currentPaceCandidate, paceHistory]
-  );
-
-  const paceInsight = usePaceInsightFromRuns(paceInsightRuns, {
-    // Only after a VALID outdoor run is saved — never the invalid/save-anyway
-    // review path.
-    enabled:
-      saved &&
-      currentPaceCandidate !== null &&
-      isPaceEligible(currentPaceCandidate),
-    loading: paceHistoryLoading,
-    // Run24 (4): worked out for every account. Slower paces are one tap
-    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
-    // account sees them `locked` with the Pro page one tap away.
-    everyAccount: true,
-  });
 
   /* Fun distance comparison. Two constraints shape this.
      MEMOISED because `getDistanceComparison` picks at RANDOM among the
@@ -838,6 +790,94 @@ export default function RunSummary() {
     };
   }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
+  /* The goal race (`isGoalRaceRun`, the server's rule for a race run): on
+     its date, valid, and at least 95% of its distance, however it was
+     started. Only then is the prediction log read, to compare the race
+     with what Tropos predicted and keep that on the saved run. */
+  const goalRace =
+    pendingWeekRun && profile
+      ? resolveRunPlan(
+          profile,
+          programState,
+          pendingWeekRun.date ?? localDateString()
+        ).raceGoal
+      : null;
+  // `=== true`: a plain boolean, which the pace candidate below can memo on
+  // (React Compiler reads a call's result as something that may change).
+  const isGoalRace =
+    !!goalRace &&
+    !!pendingWeekRun &&
+    isGoalRaceRun(
+      {
+        ...pendingWeekRun,
+        date: pendingWeekRun.date ?? localDateString(),
+      },
+      goalRace
+    ) === true;
+  const raceLog = useRacePredictionLog(user?.uid, isGoalRace);
+
+  // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
+  // is the candidate that can cross the threshold; dedupe it out of the
+  // historical copy by document id. These hooks run BEFORE the `if (!state)`
+  // early return to keep hook order stable.
+  const currentPaceCandidate = useMemo<PaceInsightRun | null>(() => {
+    if (!state || !saved || !savedRunId) return null;
+    const distance = editedDistanceMeters ?? state.distance;
+    const duration = state.elapsed;
+    const elapsedSeconds = elapsedSecondsOf(
+      state.recordingStartedAt,
+      state.finishedAt
+    );
+    return {
+      id: savedRunId,
+      distance,
+      duration,
+      completedAt: new Date(),
+      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
+      activityType: state.runConfig?.activityType ?? "freerun",
+      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
+      place: state.runConfig?.place ?? null,
+      isInvalid: false,
+      savedAnyway: false,
+      // What decides whether it was an effort (Pgm8 R1): a tempo by its
+      // work segments, unless they were pinned to a goal pace.
+      workPortion: state.workPortion ?? null,
+      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
+      // Run24 (4): a time trial is read by its work as a race.
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      // Run27 (14): a run started on a hot or extreme day never lowers
+      // the benchmark; a fast one still raises it.
+      ...(state.runConfig?.hotDay === true ? { hotDay: true } : {}),
+      // Run28 call 4: the goal race is read on its elapsed time.
+      ...(isGoalRace ? { goalRace: true } : {}),
+      ...(elapsedSeconds !== null ? { elapsedSeconds } : {}),
+    };
+  }, [state, saved, savedRunId, editedDistanceMeters, isGoalRace]);
+
+  const paceInsightRuns = useMemo(
+    () =>
+      currentPaceCandidate
+        ? [
+            currentPaceCandidate,
+            ...paceHistory.filter((run) => run.id !== currentPaceCandidate.id),
+          ]
+        : paceHistory,
+    [currentPaceCandidate, paceHistory]
+  );
+
+  const paceInsight = usePaceInsightFromRuns(paceInsightRuns, {
+    // Only after a VALID outdoor run is saved — never the invalid/save-anyway
+    // review path.
+    enabled:
+      saved &&
+      currentPaceCandidate !== null &&
+      isPaceEligible(currentPaceCandidate),
+    loading: paceHistoryLoading,
+    // Run24 (4): worked out for every account. Slower paces are one tap
+    // for anyone; faster ones are Pro (owner, 13 November 2026), so a free
+    // account sees them `locked` with the Pro page one tap away.
+    everyAccount: true,
+  });
 
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
@@ -865,6 +905,13 @@ export default function RunSummary() {
      reads from this so the edit propagates cleanly without
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
+  /* The goal race's record: the predictions made before it started. None
+     until the log has been read, so a race saved before then keeps none
+     rather than one that says Tropos predicted nothing. */
+  const raceRecord =
+    isGoalRace && goalRace && raceLog.loaded
+      ? goalRaceRecord(raceLog.log, goalRace, startedAt ?? null)
+      : null;
   /* Mile laps are recomputed from the trace rather than converted — a mile
      split is a different CUT of the run. They and the best efforts read
      the full trace: privacy zones hide where the run went, not how far
@@ -878,6 +925,15 @@ export default function RunSummary() {
   const avgPaceSeconds =
     elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(state.points, distance);
+  /* Elapsed time (Run28 call 2): from the clock's start to the finish.
+     `elapsed` is the moving time. A race, the goal race or a Race effort,
+     is timed on elapsed time (call 4 and its STATUS), as Strava times a
+     run tagged Race. */
+  const recordedElapsed = elapsedSecondsOf(
+    state.recordingStartedAt,
+    state.finishedAt
+  );
+  const raceTimeS = raceSeconds(elapsed, recordedElapsed);
 
   /* `distance` is metres throughout the run flow (useGPS.ts:118-120
      accumulates via Haversine in metres, RunSummary already converts
@@ -1046,6 +1102,10 @@ export default function RunSummary() {
         distance,
         runFitness: profile?.runFitness,
         unit,
+        // A hot day's run is never judged slow, and one adjusted for heat
+        // is judged against the paces it was set (heatAdjustment.ts).
+        hotDay: runConfig?.hotDay === true,
+        heatAdjustment: runConfig?.heatAdjustment ?? null,
       });
 
   // The context-aware primary stat, a card above the stats card of four.
@@ -1078,7 +1138,8 @@ export default function RunSummary() {
       };
     }
     if (activityType === "race") {
-      const secs = elapsed ?? 0;
+      // A race's time is its elapsed time (Run28 call 4 and its STATUS).
+      const secs = raceTimeS;
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
       const s = secs % 60;
@@ -1229,7 +1290,7 @@ export default function RunSummary() {
          writing a second run, which onRunCreated would credit twice
          (challenges, lifetime totals, weekly distance). */
       let heartRate: ReturnType<typeof summarizeHeartRate> = null;
-      if (state.identity && outdoorGps) {
+      if (state.identity) {
         try {
           const captured = await getRecoveredHeartRateSession(
             user.uid,
@@ -1241,7 +1302,7 @@ export default function RunSummary() {
           }
           const measuredMax = profile?.maxHeartRate ?? 0;
           const maxHr =
-            measuredMax > 0 ? measuredMax : maxHrFromAge(profile?.age ?? 0);
+            measuredMax > 0 ? measuredMax : maxHrFromAge(ageYears ?? 0);
           heartRate = summarizeHeartRate(
             captured.samples,
             captured.activeIntervals,
@@ -1250,7 +1311,7 @@ export default function RunSummary() {
           );
           if (heartRate) setHeartRatePreview(heartRate);
         } catch (error) {
-          logger.warn("[RunSave] Watch heart rate unavailable:", error);
+          logger.warn("[RunSave] Heart rate unavailable:", error);
         }
       }
       // Stage optional export before the durable run write. A process kill
@@ -1305,6 +1366,7 @@ export default function RunSummary() {
         shoeId: effectiveShoeId,
         bestEfforts,
         name: nameToSave,
+        racePrediction: raceRecord,
       };
       /* What the run's post says happened (Soc15): the earlier runs this
          screen read, the streak and whether it is the first session. A
@@ -1394,7 +1456,16 @@ export default function RunSummary() {
 
       // Activation funnel: a real saved run, once a run (a resumed save
       // has fired it). A run saved anyway is not one.
-      if (!isInvalid && !completion.resumed) trackLifecycle("run_completed");
+      // A Watch run also says how much of it the heart rate covered, as a
+      // band: the release's measurement of paired runs and coverage.
+      if (!isInvalid && !completion.resumed) {
+        if (state.watchCompanionUsed)
+          trackLifecycle("run_completed", {
+            watchCompanion: true,
+            heartRateCoverage: heartRateCoverageBand(heartRate),
+          });
+        else trackLifecycle("run_completed");
+      }
 
       // Sharing happens on the finish screen once the run is saved:
       // automatically when the user has said so, or from its share button.
@@ -1433,6 +1504,17 @@ export default function RunSummary() {
         ),
         history: finishedRun.moments?.history ?? null,
         firstOfSport: isFirstOfSport(earlierSessionRef.current, "run"),
+      });
+      setAnniversaryRun({
+        id: saveRunId,
+        sport: "run",
+        day: runDay(finishedRun),
+        counts: isVolumeEligible({
+          distance,
+          duration: elapsed,
+          isInvalid,
+        }),
+        metres: distance,
       });
       setSaveStatus("saved");
       setSaveError(null);
@@ -1490,7 +1572,11 @@ export default function RunSummary() {
     }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
-    const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(runDate)}`);
+    // The raw fixes, cut by the privacy zones on those coordinates.
+    const gpx = toGPX(
+      exportTrace(state?.points ?? [], privacyZones),
+      `Tropos Run ${formatDayMonthYear(runDate)}`
+    );
     /* The share sheet on the iPhone, where a blob download is dropped
        without a word, and a download on the web; the same handover and
        the same words as RunDetail's Export GPX. */
@@ -1736,9 +1822,10 @@ export default function RunSummary() {
           {saved && (
             <OptionalSummaryBoundary>
               <Suspense fallback={null}>
-                <SavedRunKudos
+                <SavedSessionKudos
                   uid={user?.uid}
                   fromName={profile?.displayName}
+                  className="mx-4 mb-4"
                 />
               </Suspense>
             </OptionalSummaryBoundary>
@@ -1937,6 +2024,13 @@ export default function RunSummary() {
             </div>
           )}
 
+          {/* The goal race against what Tropos predicted for it. */}
+          <RacePredictionResult
+            record={raceRecord}
+            actualS={raceTimeS}
+            className="mx-4 mb-3"
+          />
+
           {/* Stats (DS3): time, pace, calories and climb in one card of
               four, the distance having moved up to the headline. Each
               figure is plain: pace was the hydration teal and calories the
@@ -1944,7 +2038,7 @@ export default function RunSummary() {
           <div className="px-4 mb-4">
             <RunStatGrid
               stats={[
-                { label: "Time", value: formatTime(elapsed) },
+                runTimeStat(elapsed, recordedElapsed, formatTime),
                 {
                   label: "Average pace",
                   value: paceMinSec(avgPaceSeconds, unit),
@@ -2262,22 +2356,12 @@ export default function RunSummary() {
             )}
 
             {doneShown && (
-              /* FOOD-02: post-run → Food handoff, at the moment the runner
-                 has refuel intent. Secondary and skippable — routes into
-                 the EXISTING composer flow with a narrow context param
-                 (Food renders a dismissible refuel line); no separate
-                 recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. Logging
-                 food is the food orange on any page, tinted here because
-                 it is the skippable step and Done is the run's coral one
-                 (DESIGN_GUIDE §14i). */
-              <Button
-                variant="nutrition-tinted"
-                fullWidth
-                onClick={() => navigate("/food?context=post-run")}
-              >
-                Log recovery food
-              </Button>
+              /* FOOD-02: post-run → Food handoff, the same link the lift's
+                 finish has (App1 Q30). Only rendered in the valid-run path
+                 (this whole stack is), post-save. */
+              <RecoveryFoodButton
+                onClick={() => navigate(recoveryFoodPath("run"))}
+              />
             )}
 
             {canShowDiscard({ saveStatus }) && (
@@ -2375,6 +2459,23 @@ export default function RunSummary() {
         />
       )}
 
+      {/* The 50th or 100th session, a year of Tropos or 1,000 km, full
+          screen over the saved finish (App1 Q58). It counts from the
+          runs this screen already read, when it read them all. */}
+      {user && (
+        <AnniversaryGate
+          uid={user.uid}
+          session={anniversaryRun}
+          startDay={startDayKey(profile?.createdAt)}
+          runs={
+            historyRead?.known && historyRead.uid === user.uid
+              ? historyRead.runs
+              : null
+          }
+          held={shareOpen}
+        />
+      )}
+
       {/* S1 share-card system — customization sheet + new renderer */}
       <ShareCardSheet
         open={shareOpen}
@@ -2383,6 +2484,8 @@ export default function RunSummary() {
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",
+          // Posted to the feed: the card links to the post while public.
+          postId: postedActivityId(shareAction),
           // The finish screen's words and colour, on the card (DS4).
           headline: heroCopy,
           line: finishLine

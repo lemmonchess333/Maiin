@@ -42,7 +42,7 @@ function cutterProfile(): UserProfile {
     sex: "male",
     goalWeightKg: 78,
     weeklyRateKg: -0.5,
-    program: { goal: "cut", startWeight: 92, currentPhase: "build" },
+    program: { goal: "cut", currentPhase: "build" },
   } as unknown as UserProfile;
 }
 
@@ -86,12 +86,11 @@ describe("GoalReachedSheet", () => {
     // this choice on its next visit.
     expect(patch.goalWeightKg).toBe(76.5);
     expect(patch.weeklyRateKg).toBe(0);
-    expect((patch.program as { goal: string }).goal).toBe("recomp");
-    // Carried, not re-seeded.
-    expect((patch.program as { startWeight: number }).startWeight).toBe(92);
-    // The full target set comes with it — this is the Settings recipe, not
-    // a partial write that leaves macros pointing at the old deficit.
-    expect(typeof patch.tdeeBase).toBe("number");
+    // The phase is carried, not re-seeded.
+    expect(patch.program).toEqual({ goal: "recomp", currentPhase: "build" });
+    // The stored targets come with it — this is the Settings recipe, not
+    // a partial write that leaves them pointing at the old deficit.
+    expect(typeof patch.targetCalories).toBe("number");
     expect(typeof patch.targetProtein).toBe("number");
 
     // programState.goal mirror — same read-then-merge as SettingsNutrition.

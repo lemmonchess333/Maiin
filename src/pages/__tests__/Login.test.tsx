@@ -1,7 +1,8 @@
 /**
- * The signed-out screen: a first visit opens on the welcome screen, a
- * device that has had an account opens on Sign in, and each screen shown
- * is the first rung of the sign-up funnel (auth_screen_viewed).
+ * The signed-out screen: every signed-out visit opens on the welcome
+ * screen, a device that has had an account too (DS9 STATUS), and only a
+ * screen with a message to give opens on Sign in. Each screen shown is the
+ * first rung of the sign-up funnel (auth_screen_viewed).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
@@ -45,6 +46,12 @@ const show = () =>
       <Login />
     </MemoryRouter>
   );
+/** The sign-in form, by "Sign in" under Get started on the welcome. */
+const showSignIn = () => {
+  const view = show();
+  fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+  return view;
+};
 const screens = () =>
   vi
     .mocked(track)
@@ -75,6 +82,35 @@ describe("Login — after an email change", () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toHaveValue("new@example.com");
+    expect(screens()).toEqual(["sign_in"]);
+  });
+});
+
+describe("Login — after deleting the account", () => {
+  it("opens on Sign in, where it says the account is gone", () => {
+    // Set by AccountSection just before it signs the phone out.
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.account_deleted", "1");
+    show();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your account and all data have been deleted."
+    );
+    expect(
+      screen.getByRole("heading", { name: "Welcome back" })
+    ).toBeInTheDocument();
+    expect(screens()).toEqual(["sign_in"]);
+  });
+
+  it("says so once: the next visit opens on the welcome", () => {
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.account_deleted", "1");
+    show();
+    cleanup();
+    show();
+    expect(
+      screen.getByRole("button", { name: "Get started" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/account and all data/)).toBeNull();
   });
 });
 
@@ -109,14 +145,44 @@ describe("Login — who sees which screen", () => {
     expect(screens()).toEqual(["welcome", "sign_in"]);
   });
 
-  it("a device that has had an account opens straight on Sign in", () => {
+  /* DS9 STATUS (owner, on the TestFlight build): signed out on his own
+     phone, he never met the photographs, because a device that had had an
+     account opened on Sign in. Strava and Nike open on their welcome every
+     time no one is signed in. */
+  it("a device that has had an account opens on the welcome too", () => {
     h.signedInBefore = true;
     show();
     expect(
+      screen.getByRole("heading", {
+        name: "Your training and food, planned together",
+      })
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email/i)).toBeNull();
+    expect(screens()).toEqual(["welcome"]);
+  });
+
+  it("and its Sign in says Welcome back", () => {
+    h.signedInBefore = true;
+    showSignIn();
+    expect(
       screen.getByRole("heading", { name: "Welcome back" })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Get started" })).toBeNull();
-    expect(screens()).toEqual(["sign_in"]);
+    expect(screens()).toEqual(["welcome", "sign_in"]);
+  });
+
+  it("the funnel tells a device's first welcome from a returning one", () => {
+    show();
+    cleanup();
+    h.signedInBefore = true;
+    show();
+    const welcomes = vi
+      .mocked(track)
+      .mock.calls.filter(([event]) => event === "auth_screen_viewed")
+      .map(([, meta]) => meta);
+    expect(welcomes).toEqual([
+      { screen: "welcome", returningDevice: false },
+      { screen: "welcome", returningDevice: true },
+    ]);
   });
 });
 
@@ -140,8 +206,7 @@ describe("Login — what the signed-out screens show", () => {
   });
 
   it("sign-in and sign-up share one lifter, which is not drawn again on the way across", () => {
-    h.signedInBefore = true;
-    const { container } = show();
+    const { container } = showSignIn();
     expect(screen.getByText("Tropos")).toHaveClass("ds-wordmark");
     const lifter = container.querySelector(".signin-figure");
     expect(lifter).not.toBeNull();
@@ -193,8 +258,7 @@ describe("Login — agreeing to the Terms", () => {
   });
 
   it("is on the sign-in form, where Apple and Google can create an account too", () => {
-    h.signedInBefore = true;
-    show();
+    showSignIn();
     expectAgreementUnderEveryButton("Sign in");
   });
 
@@ -237,8 +301,7 @@ describe("Login — Apple and Google come before the email form (A1)", () => {
   });
 
   it("on Sign in", () => {
-    h.signedInBefore = true;
-    show();
+    showSignIn();
     expectOrder();
   });
 });
@@ -247,8 +310,7 @@ describe("Login — closing the Google or Apple sheet", () => {
   /* Only the web popup's code was silenced, so a cancel on the phone showed
      Google's or Apple's own sentence as an error. */
   const tap = async (name: string) => {
-    h.signedInBefore = true;
-    show();
+    showSignIn();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name }));
     });
@@ -312,9 +374,8 @@ describe("Login — closing the Google or Apple sheet", () => {
 
 describe("Login — the way in this phone last used (Polish2 call 3)", () => {
   it("marks it, and only it", () => {
-    h.signedInBefore = true;
     localStorage.setItem("tropos.last_sign_in_method", "apple");
-    show();
+    showSignIn();
     expect(
       screen.getByRole("button", { name: /Continue with Apple/ })
     ).toHaveTextContent("Last used");
@@ -327,17 +388,15 @@ describe("Login — the way in this phone last used (Polish2 call 3)", () => {
   });
 
   it("marks the email form for a password sign-in", () => {
-    h.signedInBefore = true;
     localStorage.setItem("tropos.last_sign_in_method", "password");
-    show();
+    showSignIn();
     expect(screen.getByRole("button", { name: /^Sign in/ })).toHaveTextContent(
       "Last used"
     );
   });
 
   it("marks nothing on a phone that has none", () => {
-    h.signedInBefore = true;
-    show();
+    showSignIn();
     expect(screen.queryByText("Last used")).toBeNull();
   });
 });
@@ -410,8 +469,7 @@ function BackLink() {
    the request itself, and its "Too many" line says when to try again. */
 describe("Login — Forgot password", () => {
   async function askForReset() {
-    h.signedInBefore = true;
-    show();
+    showSignIn();
     fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "alice@example.com" },
     });

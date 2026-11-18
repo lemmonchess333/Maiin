@@ -251,7 +251,8 @@ export function weekScheduleFor(
  */
 export function resolveTrainingDayForDate(args: {
   dateKey: string;
-  profile: UserProfile | null;
+  /** Read for its week schedule only (`weekScheduleFor`). */
+  profile: Parameters<typeof weekScheduleFor>[0];
   programState: ProgramState | null;
   currentWeekKey: string;
   /** PR-J Q3 chunk B3c — optional derived-completion source. When

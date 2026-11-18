@@ -76,7 +76,9 @@ const RESULTS = "leagueResults";
 const WEEKS = "leagueWeeks";
 const STATUS = "leagueStatus";
 const STATUS_DOC = "current";
-/** The sender a result notification names: the league, not a person. */
+/** Who a result notification is written by: the league, not a person. The
+ *  row is anonymous and stores no sender, so its push is checked for the
+ *  recipient alone (socialPush.js SYSTEM_PUSH_TYPES). */
 const LEAGUE_SENDER = "tropos-leagues";
 
 const DAY_MS = 86400000;
