@@ -133,7 +133,7 @@ export default function CircuitFinish({
               </div>
             </fieldset>
             {error && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-sm text-destructive-strong">
                 {error}
               </p>
             )}
