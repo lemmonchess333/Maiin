@@ -150,13 +150,15 @@ describe("MacroColumn — tap contract", () => {
 
 /**
  * The tile is a toggle shared with the calorie ring, so its accessible
- * name has to say what the tap DOES, not what the tile currently shows.
- * The visible number already carries the state; what a screen-reader
- * user cannot see is the destination.
+ * name has to say what the tap DOES as well as what the tile shows. It
+ * leads with the tile's own words, in their order, so a voice command
+ * that says them reaches it (WCAG 2.5.3, axe's
+ * label-content-name-mismatch); what a screen-reader user cannot see is
+ * the destination, which follows.
  *
- * Before this, the button had no `aria-label` at all — its accessible
- * name was the concatenated visible text ("42g logged 42 / 120g PROTEIN"),
- * which announces the state twice and the action never.
+ * Before the label, the button had no `aria-label` at all — its
+ * accessible name was the concatenated visible text ("42g logged 42 /
+ * 120g PROTEIN"), which announces the state twice and the action never.
  */
 describe("MacroColumn — accessible toggle label", () => {
   function renderIn(mode: "eaten" | "left") {
@@ -177,7 +179,7 @@ describe("MacroColumn — accessible toggle label", () => {
     renderIn("eaten");
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 42g logged of 120g",
+        name: "42g logged, Protein. Show protein remaining. 42g logged of 120g",
       })
     ).toBeInTheDocument();
   });
@@ -186,7 +188,7 @@ describe("MacroColumn — accessible toggle label", () => {
     renderIn("left");
     expect(
       screen.getByRole("button", {
-        name: "Show protein logged. 42g logged of 120g",
+        name: "78g left, Protein. Show protein logged. 42g logged of 120g",
       })
     ).toBeInTheDocument();
   });
@@ -207,7 +209,7 @@ describe("MacroColumn — accessible toggle label", () => {
     );
     expect(
       screen.getByRole("button", {
-        name: "Show carbs remaining. 10g logged of 200g",
+        name: "10g logged, Carbs. Show carbs remaining. 10g logged of 200g",
       })
     ).toBeInTheDocument();
   });
@@ -357,7 +359,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein logged. 0g logged of 150g",
+        name: "150g left, Protein. Show protein logged. 0g logged of 150g",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
@@ -367,7 +369,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("eaten", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 0g logged of 150g",
+        name: "0g logged, Protein. Show protein remaining. 0g logged of 150g",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
@@ -600,7 +602,7 @@ describe("MacroColumn — the row form", () => {
     drawRow("eaten");
     expect(
       screen.getByRole("button", {
-        name: "Show carbs remaining. 172g logged of 273g",
+        name: "Carbs 172g logged. Show carbs remaining. 172g logged of 273g",
       })
     ).toBeInTheDocument();
   });

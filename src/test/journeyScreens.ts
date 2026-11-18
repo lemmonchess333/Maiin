@@ -168,15 +168,16 @@ export const TRAIN = {
  *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
 export const runWeekLabel = runStripLabel;
 
-/** A day on Train's run week, by its name: the run's short label
- *  (`runWeekLabel`), and whether the day is today or the run done. Until
- *  its run is done its text is the date's day of the month, which tells
- *  apart days whose runs share a name. */
+/** A day on Train's run week, by its name: the date's day of the month,
+ *  which its circle shows until its run is done and which tells apart days
+ *  whose runs share a name, then the run's short label (`runWeekLabel`),
+ *  then whether the day is today or the run done. */
 export function runWeekTabName(
+  day: string,
   label: string,
   state?: "today" | "completed" | "skipped"
 ): string {
-  return state ? `${label}, ${state}` : label;
+  return [day, label, state].filter(Boolean).join(", ");
 }
 
 /** The banner over Train's lift week in the weeks a race plan turns

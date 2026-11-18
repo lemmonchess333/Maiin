@@ -120,7 +120,7 @@ describe("WeeklyChallengeCard — the challenge's own leaders", () => {
   it("someone who has not joined is shown no leaders", () => {
     card({ joined: false, progress: undefined });
     expect(
-      screen.getByRole("button", { name: "Join weekly challenge" })
+      screen.getByRole("button", { name: "Join challenge for this week" })
     ).toBeInTheDocument();
     expect(leaders()).toBeNull();
     expect(screen.queryByText("Ana")).toBeNull();

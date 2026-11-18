@@ -169,9 +169,11 @@ export default function WaterCard({
      completion haptic several times a day. */
   const wasMet = useRef(met);
 
-  /* ONE sentence, two readers — the button's accessible name and the
-     live region both take it, so they cannot drift apart. Past the
-     target it carries the only thing that still varies on this card. */
+  /* ONE sentence, two readers — the live region says it, and the
+     button's accessible name says the same words, "Water" from the tile's
+     label and the rest from `spokenVolume`, so they cannot drift apart.
+     Past the target it carries the only thing that still varies on this
+     card. */
   /* Just what has been logged. The card used to read "… of 2 litres.
      Target reached." — the same out-of-N framing the visible number
      dropped, and a screen reader should not be told about a goal the
@@ -375,10 +377,15 @@ export default function WaterCard({
               water tile was invisible while focus on the weight tile
               beside it drew a ring. The ring sits 4px outside a 12px
               inset, so the tile's `overflow-hidden` does not clip it. */}
+          {/* Named by its words, not an aria-label: "Water", then the
+              reading spoken ("250 millilitres logged", unseen) where the
+              figure and its unit are drawn, then what a tap does, then the
+              meta line. Under an aria-label of the reading, the meta line
+              was text the name did not hold (WCAG 2.5.3). The unit is
+              spelled for a screen reader, which reads "ml" as letters. */}
           <button
             type="button"
             onClick={openSheet}
-            aria-label={`${reading} Add water — choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
@@ -412,12 +419,17 @@ export default function WaterCard({
                 uses this treatment, so the compact one was the outlier
                 inside its own component too. */}
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
-              {splitWaterVolume(ml).value}
-              <span
-                className="ml-1 font-sans text-sm font-medium"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
-                {splitWaterVolume(ml).unit}
+              <span aria-hidden="true">
+                {splitWaterVolume(ml).value}
+                <span
+                  className="ml-1 font-sans text-sm font-medium"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
+                  {splitWaterVolume(ml).unit}
+                </span>
+              </span>
+              <span className="sr-only">
+                {spokenVolume(ml)} logged. Add water — choose a container size.
               </span>
             </p>
             {/* The meta line, where Weight keeps its date. At rest it
@@ -549,10 +561,11 @@ export default function WaterCard({
       {ml > 2 * GLASS_ML && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
         {/* Left cluster (icon + reading) opens the size sheet. */}
+        {/* Named by its words, as the tile's body is: "Water", then the
+            reading spoken where it is drawn, then what a tap does. */}
         <button
           type="button"
           onClick={openSheet}
-          aria-label="Add water — choose a container size"
           className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
@@ -567,12 +580,17 @@ export default function WaterCard({
           <div className="flex-1 min-w-0">
             <SectionLabel>Water</SectionLabel>
             <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
-              {splitWaterVolume(ml).value}
-              <span
-                className="ml-1 font-sans text-sm font-medium"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
-                {splitWaterVolume(ml).unit}
+              <span aria-hidden="true">
+                {splitWaterVolume(ml).value}
+                <span
+                  className="ml-1 font-sans text-sm font-medium"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
+                  {splitWaterVolume(ml).unit}
+                </span>
+              </span>
+              <span className="sr-only">
+                {spokenVolume(ml)} logged. Add water — choose a container size.
               </span>
             </p>
           </div>

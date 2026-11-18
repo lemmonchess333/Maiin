@@ -72,10 +72,15 @@ export default function RaceFilterChips({
   );
   const countryName =
     value.country === "all" ? "All countries" : RACE_COUNTRIES[value.country];
+  const shortName =
+    value.country === "all" ? undefined : SHORT_COUNTRY[value.country];
   const countryChip =
     value.country === "all"
       ? "All countries"
-      : `${countryFlag(value.country)} ${SHORT_COUNTRY[value.country] ?? countryName}`;
+      : `${countryFlag(value.country)} ${shortName ?? countryName}`;
+  /* The chip's own word leads the full name when the chip shortens it
+     ("UK"), so the name holds what the chip says (WCAG 2.5.3). */
+  const countryLabel = shortName ? `${shortName}, ${countryName}` : countryName;
 
   return (
     <>
@@ -86,7 +91,7 @@ export default function RaceFilterChips({
         <button
           type="button"
           aria-haspopup="dialog"
-          aria-label={`Country: ${countryName}`}
+          aria-label={`Country: ${countryLabel}`}
           onClick={() => {
             haptic("light");
             setCountryOpen(true);

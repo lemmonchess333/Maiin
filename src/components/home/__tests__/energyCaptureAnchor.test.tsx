@@ -16,11 +16,12 @@
  * minutes into a capture run. That is the failure this file exists to
  * convert into a two-second one.
  *
- * The anchor is the calorie ring's accessible name, "1889 of 2200
- * calories logged, …". It is built from raw numbers rather than
- * `formatCalories` (which follows the runtime's locale: "2,200", "2.200",
- * "2 200"), so it reads the same wherever CI runs, and the assertions
- * below hold it to that.
+ * The anchor is the calorie ring's accessible name, whose second
+ * sentence is "1889 of 2200 calories logged" (the first says what the
+ * ring shows, "311 kcal left"). That sentence is built from raw numbers
+ * rather than `formatCalories` (which follows the runtime's locale:
+ * "2,200", "2.200", "2 200"), so it reads the same wherever CI runs, and
+ * the assertions below hold it to that.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
@@ -110,9 +111,10 @@ describe("capture specs — Home food card readiness anchor", () => {
   });
 
   it("reads the same in every locale: plain digits, whatever the grouping", () => {
-    /* The ring's number is set with the runtime's grouping, but its name
-       is not: the spec's pattern allows no separator, so the name must
-       carry none, in this runtime or any other. */
+    /* The ring's number is set with the runtime's grouping, and so is
+       the name's first sentence, which says it; the sentence the anchor
+       reads is not: the spec's pattern allows no separator, so that
+       sentence must carry none, in this runtime or any other. */
     renderEnergy(2200);
     const ring = screen.getByRole("button", { name: anchor() });
     expect(ring.getAttribute("aria-label")).toContain("of 2200 calories");

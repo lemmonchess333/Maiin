@@ -51,8 +51,12 @@ interface FoodRowProps {
    * machinery is untouched, the row just grows a second line.
    */
   subLabel?: ReactNode;
-  /** Identifies a portion when the diary has several rows with the same name. */
+  /** Identifies a portion when the diary has several rows with the same
+   *  name: Delete's name, which says the row in full. */
   accessibleFoodName?: string;
+  /** What tells such a row apart that the row does not show (servings,
+   *  macros, the items), said after its words in the edit target's name. */
+  accessibleDetail?: string;
   /**
    * Optional captured-meal photo, the row's picture (Pol1), inside the
    * swipeable surface, so a photo meal keeps the same tap-to-edit and
@@ -123,6 +127,7 @@ export default function FoodRow({
   onEdit,
   subLabel,
   accessibleFoodName,
+  accessibleDetail,
   photoUrl,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
@@ -319,6 +324,24 @@ export default function FoodRow({
     rowBody
   );
 
+  /* The edit target is named by its words, after an unseen "Edit": "Edit
+     Salmon & veg Dinner · 19:31 540 kcal". An aria-label of the food's
+     name alone left out the time and calories the row shows (WCAG 2.5.3,
+     axe's label-content-name-mismatch). A row that shares its name with
+     another adds what tells it apart. The spaces are unseen in the flex
+     row and keep the words apart in the name. */
+  const editContent = (
+    <>
+      <span className="sr-only">Edit</span> {rowInner}
+      {accessibleDetail && (
+        <>
+          {" "}
+          <span className="sr-only">{accessibleDetail}</span>
+        </>
+      )}
+    </>
+  );
+
   // ── Reduced-motion fallback: no drag gesture. The row body is a tap
   //    target that opens the edit sheet (mirrors the swipe path's
   //    tap-to-edit); a single trailing Delete icon button stays for the
@@ -330,10 +353,9 @@ export default function FoodRow({
           <button
             type="button"
             onClick={onEdit}
-            aria-label={`Edit ${actionName}`}
             className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
-            {rowInner}
+            {editContent}
           </button>
         ) : (
           <div className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5">
@@ -415,7 +437,6 @@ export default function FoodRow({
         transition={SETTLE}
         role="button"
         tabIndex={0}
-        aria-label={`Edit ${actionName}`}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -426,7 +447,7 @@ export default function FoodRow({
           "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
         )}
       >
-        {rowInner}
+        {editContent}
       </motion.div>
     </motion.div>
   );

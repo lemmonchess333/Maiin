@@ -80,9 +80,11 @@ export default function ActivityCommentRows({
                         type="button"
                         onClick={() => react(c.id, k)}
                         aria-pressed={mine}
+                        /* The count the chip shows is in its name (WCAG
+                           2.5.3): "Add fire reaction, 2 so far". */
                         aria-label={`${mine ? "Remove" : "Add"} ${
                           k === "muscle" ? "strong" : "fire"
-                        } reaction`}
+                        } reaction${uids.length > 0 ? `, ${uids.length} so far` : ""}`}
                         className="p-2.5 -m-1.5"
                       >
                         <span

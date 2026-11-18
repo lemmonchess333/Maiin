@@ -2383,7 +2383,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
         }),
       ])
     );
-    expect(screen.getByRole("tab", { name: "Easy 30" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "12, Easy 30" })).toHaveAttribute(
       "aria-selected",
       "true"
     );
@@ -2467,7 +2467,9 @@ describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", ()
     );
     const strip = screen.getByRole("tablist", { name: "Run week" });
     expect(
-      within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
+      within(strip).getByRole("tab", {
+        name: `${today.getDate()}, Easy 30 + strides, today`,
+      })
     ).toBeInTheDocument();
     expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
   });
@@ -2600,19 +2602,19 @@ describe("ProgrammeRunSection — one run is up next", () => {
     expect(
       screen.getByRole("region", { name: /^Up next · Tue\s20\sOct/ })
     ).toBeVisible();
-    open("Easy 30");
+    open("20, Easy 30");
     expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();
-    open("Easy 30 + strides");
+    open("21, Easy 30 + strides");
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
-    open("Long 15K");
+    open("24, Long 15K");
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
   });
 
   it("moves Up next on when the run before is skipped", () => {
     renderSection(commonProps(), week("skipped"));
-    open("Easy 30 + strides");
+    open("21, Easy 30 + strides");
     expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();
-    open("Long 15K");
+    open("24, Long 15K");
     expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
   });
 });

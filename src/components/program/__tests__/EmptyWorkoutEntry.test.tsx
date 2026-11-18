@@ -14,10 +14,13 @@ describe("EmptyWorkoutEntry", () => {
         <EmptyWorkoutEntry />
       </MemoryRouter>
     );
-    const entry = screen.getByRole("link", { name: TRAIN.emptyWorkout });
+    const entry = screen.getByRole("link", {
+      name: new RegExp(`^${TRAIN.emptyWorkout} `),
+    });
     expect(entry).toHaveAttribute("href", "/empty-workout");
-    expect(entry).toHaveAccessibleDescription(
-      "Add exercises as you go. Your plan stays as it is."
+    // Named by everything it shows, its line included (WCAG 2.5.3).
+    expect(entry).toHaveAccessibleName(
+      "Empty workout Add exercises as you go. Your plan stays as it is."
     );
   });
 });

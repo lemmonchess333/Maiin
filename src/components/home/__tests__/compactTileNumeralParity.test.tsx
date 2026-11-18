@@ -79,7 +79,10 @@ describe("Home compact tiles share one numeral tier", () => {
         lastWeightDate="From profile"
       />
     );
-    const waterUnit = numeralOf(water, /0/).querySelector("span");
+    // The drawn unit; the figure's line also holds the reading spoken.
+    const waterUnit = Array.from(
+      numeralOf(water, /0/).querySelectorAll("span")
+    ).find((span) => span.textContent === "ml");
     expect(waterUnit).toHaveTextContent(/^ml$/);
     expect(waterUnit).toHaveClass("font-sans", "text-sm", "font-medium");
     expect(inWeight("kg")).toHaveClass("text-sm", "font-medium");

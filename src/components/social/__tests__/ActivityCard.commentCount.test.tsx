@@ -64,7 +64,7 @@ describe("the feed card's comment count", () => {
         <ActivityCard feedItem={feedItem(2)} />
       </MemoryRouter>
     );
-    const button = screen.getByRole("button", { name: "View comments" });
+    const button = screen.getByRole("button", { name: "View 2 comments" });
     expect(button).toHaveTextContent("2");
     act(() => sheet.onCountChange?.(1));
     expect(button).toHaveTextContent("3");

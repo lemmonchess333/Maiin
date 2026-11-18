@@ -52,8 +52,9 @@ function diary(meals: Meal[]) {
   );
 }
 
+/** A row's edit target, named "Edit", then the words the row shows. */
 const rowFor = (name: string) =>
-  screen.queryByRole("button", { name: `Edit ${name}` });
+  screen.queryByRole("button", { name: new RegExp(`^Edit ${name} `) });
 
 beforeEach(() => {
   motionPref.reduce = false;
@@ -205,7 +206,7 @@ describe("FoodTimeline — portion identity", () => {
           onEdit={onEdit}
         />
       );
-      const rows = screen.getAllByRole("button", { name: /^Edit Oats(?:,|$)/ });
+      const rows = screen.getAllByRole("button", { name: /^Edit Oats / });
       expect(rows).toHaveLength(2);
       rows.forEach((row) => fireEvent.keyDown(row, { key: "Enter" }));
       expect(
@@ -247,8 +248,19 @@ describe("FoodTimeline — portion identity", () => {
         "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats and berries (1 bowl)",
         "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (2 cups)",
       ];
+      /* The edit target says the row's words, then what the row does not
+         show: "Edit Oats 1 bowl · Lunch 100 kcal 1 serving, 20 g protein,
+         …". Delete says it all in its own words. */
+      const escape = (text: string) =>
+        text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const editName = (label: string) => {
+        const [, , kcal, ...detail] = label.split(", ");
+        return new RegExp(
+          `^Edit Oats .*${escape(kcal)} ${escape(detail.join(", "))}$`
+        );
+      };
       labels.forEach((label) => {
-        const edit = screen.getByRole("button", { name: `Edit ${label}` });
+        const edit = screen.getByRole("button", { name: editName(label) });
         if (reduce) fireEvent.click(edit);
         else fireEvent.keyDown(edit, { key: "Enter" });
       });
@@ -280,7 +292,7 @@ describe("FoodTimeline — portion identity", () => {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Oats" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Edit Oats / }), {
       key: "Enter",
     });
     expect(onEdit).toHaveBeenCalledWith(

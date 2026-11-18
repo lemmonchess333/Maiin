@@ -226,7 +226,9 @@ export default function WeeklyChallengeCard({
             fullWidth
             loading={busy}
             onClick={changeMembership}
-            aria-label="Join weekly challenge"
+            /* "Join challenge" first, as the button reads (WCAG 2.5.3),
+               then which one: a month's challenge sheet has its own. */
+            aria-label="Join challenge for this week"
             {...actionStyle}
           >
             Join challenge

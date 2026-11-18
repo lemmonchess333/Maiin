@@ -105,7 +105,11 @@ async function expectTrainExplains(
   await openTrainRun(page);
   await expect(
     page.getByRole("tablist", { name: TRAIN.runWeek }).getByRole("tab", {
-      name: runWeekTabName(runWeekLabel(template, "km"), "today"),
+      name: runWeekTabName(
+        String(Number(run.date!.slice(8))),
+        runWeekLabel(template, "km"),
+        "today"
+      ),
       exact: true,
     })
   ).toBeVisible();

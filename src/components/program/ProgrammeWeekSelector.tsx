@@ -244,16 +244,25 @@ export default function ProgrammeWeekSelector({
                 role="tab"
                 aria-selected={isSelected}
                 tabIndex={isSelected ? 0 : -1}
-                aria-label={
-                  `${cell.bottomLabel || cell.center}` +
-                  (isCompleted
-                    ? ", completed"
+                /* The circle's number, then the name under it, then the
+                   day's state: "1, Push A, today", "9, Easy 30". The
+                   number leads because it is what the button shows, so a
+                   voice command that says it reaches the tab (WCAG 2.5.3);
+                   the name is outside the button. A day the check or the
+                   ban stands in for keeps its number all the same. */
+                aria-label={[
+                  cell.center,
+                  cell.bottomLabel,
+                  isCompleted
+                    ? "completed"
                     : isSkipped
-                      ? ", skipped"
+                      ? "skipped"
                       : isToday
-                        ? ", today"
-                        : "")
-                }
+                        ? "today"
+                        : "",
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
                 onClick={() => {
                   haptic("light");
                   onSelect(cell.key);

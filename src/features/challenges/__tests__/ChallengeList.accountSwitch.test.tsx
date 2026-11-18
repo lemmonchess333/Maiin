@@ -122,7 +122,9 @@ describe("ChallengeList — the weekly card across an account switch", () => {
     // B has not joined and its own count has not landed: the card is the
     // challenge's offer, with no count and no place carried over.
     expect(
-      await screen.findByRole("button", { name: "Join weekly challenge" })
+      await screen.findByRole("button", {
+        name: "Join challenge for this week",
+      })
     ).toBeInTheDocument();
     expect(screen.queryByText("You’re on the board")).toBeNull();
     expect(screen.queryByText("1 of 2 sessions this week.")).toBeNull();

@@ -14,16 +14,18 @@ import { EMPTY_WORKOUT_PATH } from "@/features/program/emptyWorkout";
  * The icon, padding, gaps and chevron are px, so at large text they keep
  * their size and the words get the room: in rem they took half a 320 px
  * row and the title broke inside "workout".
+ *
+ * The link is named by its words, the title and then the line under it,
+ * so its name holds everything it shows (WCAG 2.5.3, axe's
+ * label-content-name-mismatch). Named by the title alone, with the line
+ * as its description, it showed words its name did not have.
  */
 export default function EmptyWorkoutEntry() {
   const titleId = useId();
-  const captionId = useId();
   return (
     <section className="pt-6" aria-labelledby={titleId}>
       <Link
         to={EMPTY_WORKOUT_PATH}
-        aria-labelledby={titleId}
-        aria-describedby={captionId}
         onClick={() => haptic("light")}
         className="flex min-h-[44px] items-center gap-[12px] rounded-xl bg-card p-[12px] card-shadow transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
@@ -41,7 +43,9 @@ export default function EmptyWorkoutEntry() {
           >
             Empty workout
           </span>
-          <span id={captionId} className="block text-xs text-muted-foreground">
+          {/* Between two blocks, so unseen; it keeps the name's two
+              sentences apart where no layout separates them. */}{" "}
+          <span className="block text-xs text-muted-foreground">
             Add exercises as you go. Your plan stays as it is.
           </span>
         </span>

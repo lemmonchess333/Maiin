@@ -60,7 +60,7 @@ describe("FoodHeroCard — before the account began", () => {
     expect(screen.getByText("Before you joined")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: RING })).toBeNull();
     expect(
-      screen.queryByRole("button", { name: /view nutrition breakdown/i })
+      screen.queryByRole("button", { name: /^details: nutrition breakdown$/i })
     ).toBeNull();
   });
 

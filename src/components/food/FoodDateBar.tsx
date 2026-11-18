@@ -96,6 +96,9 @@ function FoodDateBar({
               Today
             </span>
           )}
+          {/* A space the flex row does not draw, so the two stay two words
+              to anything that reads the text without its layout: axe's
+              label-in-name check read "TodayWed 18 Nov". */}{" "}
           <span
             className={
               isToday

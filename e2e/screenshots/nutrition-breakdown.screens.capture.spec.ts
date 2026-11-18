@@ -1,7 +1,7 @@
 /**
  * Nutrition breakdown sheet capture — now surfaces fiber / sugar / sodium
  * under an "Other nutrients" section (fiber = goal, sugar + sodium =
- * limits). Opens via the Food hero's "View nutrition breakdown" affordance.
+ * limits). Opens via the Food hero's "Details" button.
  * Light + dark.
  */
 import { test, type Page } from "@playwright/test";
@@ -53,7 +53,7 @@ test.describe("nutrition breakdown micros", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     await dismissSeal(page);
     await page
-      .getByRole("button", { name: /view nutrition breakdown/i })
+      .getByRole("button", { name: /^details: nutrition breakdown$/i })
       .click({ timeout: 10000 })
       .catch(() => console.log("[capture] breakdown affordance not clickable"));
     await page

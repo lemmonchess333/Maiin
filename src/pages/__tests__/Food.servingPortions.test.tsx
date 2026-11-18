@@ -110,7 +110,8 @@ function meal(id: string, calories: number): Meal {
 }
 function openPortion(calories: number) {
   const row = screen.getByRole("button", {
-    name: new RegExp(`^Edit Oats(?:, Breakfast, ${calories} kcal,.*)?$`),
+    // "Edit", then the row's words: "Edit Oats ×2 Breakfast 600 kcal".
+    name: new RegExp(`^Edit Oats .*\\b${calories} kcal\\b`),
   });
   fireEvent.keyDown(row, { key: "Enter" });
 }
@@ -172,7 +173,7 @@ describe("serving preview and saved portion", () => {
         <Food />
       </MemoryRouter>
     );
-    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Rice" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Edit Rice / }), {
       key: "Enter",
     });
     fireEvent.change(screen.getByLabelText("Grams"), {

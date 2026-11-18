@@ -129,7 +129,9 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onDelete={vi.fn()}
       />
     );
-    expect(screen.queryByLabelText("Edit Chicken salad")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Edit Chicken salad / })
+    ).toBeNull();
   });
 
   it("shows Edit button when onEdit is provided and invokes it on tap", function () {
@@ -143,7 +145,9 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.click(screen.getByLabelText("Edit Chicken salad"));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Edit Chicken salad / })
+    );
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
@@ -265,8 +269,8 @@ describe("FoodRow — swipe branch (motion path)", function () {
 
   it("exposes a single Delete action with the row body as the edit target", function () {
     /* Option A redesign: swipe reveals ONE red Delete; editing happens
-       by tapping the row body (which carries role=button + the Edit
-       aria-label). No separate in-swipe Edit button anymore. */
+       by tapping the row body (which carries role=button, named "Edit"
+       and the row's words). No separate in-swipe Edit button anymore. */
     reducedMotionMock.mockReturnValueOnce(false);
     render(
       <FoodRow
@@ -278,7 +282,9 @@ describe("FoodRow — swipe branch (motion path)", function () {
       />
     );
     expect(screen.getByLabelText("Delete Chicken salad")).toBeInTheDocument();
-    const editTarget = screen.getByLabelText("Edit Chicken salad");
+    const editTarget = screen.getByRole("button", {
+      name: /^Edit Chicken salad /,
+    });
     expect(editTarget).toHaveAttribute("role", "button");
     expect(editTarget).toHaveAttribute("tabindex", "0");
   });
@@ -295,9 +301,12 @@ describe("FoodRow — swipe branch (motion path)", function () {
         onEdit={onEdit}
       />
     );
-    fireEvent.keyDown(screen.getByLabelText("Edit Chicken salad"), {
-      key: "Enter",
-    });
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: /^Edit Chicken salad / }),
+      {
+        key: "Enter",
+      }
+    );
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 });

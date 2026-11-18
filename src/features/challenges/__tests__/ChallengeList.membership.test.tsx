@@ -87,7 +87,7 @@ async function openList() {
     </MemoryRouter>
   );
   await flushSnapshots();
-  return screen.findByRole("button", { name: "Join weekly challenge" });
+  return screen.findByRole("button", { name: "Join challenge for this week" });
 }
 
 describe("weekly challenge membership", () => {
@@ -110,7 +110,7 @@ describe("weekly challenge membership", () => {
       screen.getByRole("button", { name: /Start today’s session/ })
     ).toBeInTheDocument();
     fireEvent.click(leave);
-    await screen.findByRole("button", { name: "Join weekly challenge" });
+    await screen.findByRole("button", { name: "Join challenge for this week" });
     expect(readDoc(PATH)).toBeUndefined();
     expect(
       screen.queryByRole("button", { name: "Leave weekly challenge" })
@@ -150,7 +150,7 @@ describe("weekly challenge membership", () => {
     await waitFor(() => expect(leave).toBeEnabled());
     expect(readDoc(PATH)).toBeDefined();
     fireEvent.click(leave);
-    await screen.findByRole("button", { name: "Join weekly challenge" });
+    await screen.findByRole("button", { name: "Join challenge for this week" });
     expect(readDoc(PATH)).toBeUndefined();
   });
 
@@ -176,7 +176,7 @@ describe("weekly challenge membership", () => {
       await screen.findByRole("button", { name: "Leave weekly challenge" })
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
+      screen.queryByRole("button", { name: "Join challenge for this week" })
     ).toBeNull();
   });
 });
@@ -199,7 +199,7 @@ describe("the weekly challenge in its last day", () => {
       await screen.findByText("Ends tonight. The next one starts Monday.")
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
+      screen.queryByRole("button", { name: "Join challenge for this week" })
     ).toBeNull();
     // The line takes the countdown's place rather than sitting beside it.
     expect(screen.queryByText(/hours? left|min left/)).toBeNull();
@@ -376,7 +376,7 @@ describe("the featured monthly challenge", () => {
         /^Join/.test(b.getAttribute("aria-label") ?? b.textContent ?? "")
       );
     expect(joins.map((b) => b.getAttribute("aria-label"))).toEqual([
-      "Join weekly challenge",
+      "Join challenge for this week",
     ]);
     expect(discoverList().textContent).not.toMatch(
       /Running|Lifting|Run or lift/
@@ -391,7 +391,7 @@ describe("the featured monthly challenge", () => {
     );
     await flushSnapshots();
     const join = await screen.findByRole("button", {
-      name: "Join weekly challenge",
+      name: "Join challenge for this week",
     });
     expect(join.className).toContain("bg-muted");
     expect(join.className).not.toContain("bg-primary-strong");
@@ -550,7 +550,7 @@ describe("at small numbers", () => {
     expect(screen.queryByRole("heading", { name: "This week" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Discover" })).toBeNull();
     expect(
-      screen.queryByRole("button", { name: "Join weekly challenge" })
+      screen.queryByRole("button", { name: "Join challenge for this week" })
     ).toBeNull();
     expect(
       screen.queryByRole("list", { name: "Challenges to join" })
@@ -595,7 +595,9 @@ describe("at small numbers", () => {
       </MemoryRouter>
     );
     expect(
-      await screen.findByRole("button", { name: "Join weekly challenge" })
+      await screen.findByRole("button", {
+        name: "Join challenge for this week",
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Discover" })

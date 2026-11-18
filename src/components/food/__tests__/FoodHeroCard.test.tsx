@@ -104,7 +104,9 @@ describe("FoodHeroCard — single shared display mode", () => {
   it("defaults to 'left' for the ring and all three tiles", () => {
     const { container } = renderHero();
     expect(tileModes(container)).toEqual(["left", "left", "left"]);
-    expect(ringButton().getAttribute("aria-label")).toMatch(/remaining/i);
+    // The ring's label starts with what it shows: "1,000 kcal left of
+    // 2,000". (Its tap hint says "calories", so "kcal" is the view's.)
+    expect(ringButton().getAttribute("aria-label")).toMatch(/ kcal left of /);
   });
 
   it("tapping a macro tile flips the ring AND all three tiles to 'logged'", () => {
@@ -117,9 +119,10 @@ describe("FoodHeroCard — single shared display mode", () => {
 
     // All three tiles flipped together — not just the tapped one.
     expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
-    // The ring flipped too: its logged view names no remainder. (Its tap
-    // hint names both views, so matching the word alone proves nothing.)
-    expect(ringButton().getAttribute("aria-label")).not.toMatch(/remaining/i);
+    // The ring flipped too: its label says the logged view it shows. (Its
+    // tap hint names both views, as "calories", so it proves nothing.)
+    expect(ringButton().getAttribute("aria-label")).toMatch(/ kcal logged of /);
+    expect(ringButton().getAttribute("aria-label")).not.toMatch(/ kcal left/);
     // Persisted under the shared key.
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("eaten");
   });
@@ -214,7 +217,7 @@ describe("FoodHeroCard — the day's fuel label", () => {
     renderWithFuel(true);
     const line = screen.getByText("Long 20K tomorrow, fuel up today");
     const details = screen.getByRole("button", {
-      name: "View nutrition breakdown",
+      name: "Details: nutrition breakdown",
     });
     expect(
       ringButton().compareDocumentPosition(line) &
@@ -264,7 +267,7 @@ describe("FoodHeroCard — the wheel is on the page", () => {
     expect(hero).toBeTruthy();
     expect(
       within(hero as HTMLElement).getByRole("button", {
-        name: /view nutrition breakdown/i,
+        name: /^details: nutrition breakdown$/i,
       })
     ).toBeInTheDocument();
   });
@@ -273,7 +276,7 @@ describe("FoodHeroCard — the wheel is on the page", () => {
     // It sat in the card's bottom right corner at 12px.
     renderToday();
     const details = screen.getByRole("button", {
-      name: /view nutrition breakdown/i,
+      name: /^details: nutrition breakdown$/i,
     });
     expect(details).toHaveClass("min-h-[44px]", "text-sm");
     expect(details.className).not.toMatch(/\babsolute\b/);
@@ -307,18 +310,26 @@ describe("FoodHeroCard — the wheel waits for a logged food's flight", () => {
 
   it("keeps the old calories while held, then takes the new ones", () => {
     const { rerender } = render(hero(900, false));
-    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(
+      /\. 900 of 2000 calories logged\./
+    );
     // The log and the hold arrive in one commit.
     rerender(hero(1440, true));
-    expect(ringButton()).toHaveAccessibleName(/^900 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(
+      /\. 900 of 2000 calories logged\./
+    );
     rerender(hero(1440, false));
-    expect(ringButton()).toHaveAccessibleName(/^1440 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(
+      /\. 1440 of 2000 calories logged\./
+    );
   });
 
   it("follows the day's calories at once when nothing is in the air", () => {
     const { rerender } = render(hero(900, false));
     rerender(hero(700, false));
-    expect(ringButton()).toHaveAccessibleName(/^700 of 2000 calories logged/);
+    expect(ringButton()).toHaveAccessibleName(
+      /\. 700 of 2000 calories logged\./
+    );
   });
 
   it("grows in 350 ms with no wait of its own", () => {

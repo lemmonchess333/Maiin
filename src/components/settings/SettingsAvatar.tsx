@@ -129,35 +129,42 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
 
   return (
     <>
+      {/* Named by its unseen words, not an aria-label: the initials are
+          the photo's stand-in, a picture of the person rather than a
+          word about the button, so they are hidden from the name. Under
+          an aria-label they were text the name did not hold (WCAG 2.5.3,
+          axe's label-content-name-mismatch). */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Change profile photo"
         className="relative size-14 shrink-0 rounded-full active:scale-[0.97] transition-transform"
       >
-        {hasPhoto ? (
-          <Avatar
-            photoURL={profile.photoURL}
-            displayName={name || "You"}
-            fallbackInitial={initials || undefined}
-            size="xl"
-            className="size-14"
-          />
-        ) : (
-          // The brand /10 chip: on /20 the initials measured 4.13:1.
-          <div className="size-full rounded-full bg-primary/10 flex items-center justify-center">
-            {initials ? (
-              <span className="text-lg font-bold text-lifting-strong">
-                {initials}
-              </span>
-            ) : (
-              <Camera className="size-6 text-primary" />
-            )}
+        <span className="sr-only">Change profile photo</span>
+        <span aria-hidden="true" className="block size-full">
+          {hasPhoto ? (
+            <Avatar
+              photoURL={profile.photoURL}
+              displayName={name || "You"}
+              fallbackInitial={initials || undefined}
+              size="xl"
+              className="size-14"
+            />
+          ) : (
+            // The brand /10 chip: on /20 the initials measured 4.13:1.
+            <div className="size-full rounded-full bg-primary/10 flex items-center justify-center">
+              {initials ? (
+                <span className="text-lg font-bold text-lifting-strong">
+                  {initials}
+                </span>
+              ) : (
+                <Camera className="size-6 text-primary" />
+              )}
+            </div>
+          )}
+          <div className="absolute -bottom-0.5 -right-0.5 size-6 rounded-full bg-primary flex items-center justify-center border-2 border-card">
+            <Camera className="size-3 text-primary-foreground" />
           </div>
-        )}
-        <div className="absolute -bottom-0.5 -right-0.5 size-6 rounded-full bg-primary flex items-center justify-center border-2 border-card">
-          <Camera className="size-3 text-primary-foreground" />
-        </div>
+        </span>
       </button>
 
       {/* Hidden picker — controlled by the bottom-sheet "Choose new

@@ -83,7 +83,7 @@ describe("WeightTile", function () {
 
     // aria-label does NOT announce the raw figure.
     const tile = screen.getByRole("button", {
-      name: /Weight trending down, last logged Logged today/i,
+      name: /^Weight trending down, Logged today\. Tap to log weight\.$/,
     });
     expect(tile).toBeInTheDocument();
     expect(tile.getAttribute("aria-label") || "").not.toContain("75.4");
@@ -130,7 +130,9 @@ describe("WeightTile", function () {
     // Empty state em-dash and empty-state aria-label preserved.
     expect(screen.getByText("—")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Weight not yet logged/i })
+      screen.getByRole("button", {
+        name: /^Weight, Tap to log\. No weight logged yet/,
+      })
     ).toBeInTheDocument();
   });
 
@@ -178,7 +180,7 @@ describe("WeightTile", function () {
     expect(screen.getByText("\u2014")).toBeInTheDocument();
     expect(screen.getByText("Tap to log")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /not yet logged/i })
+      screen.getByRole("button", { name: /No weight logged yet/ })
     ).toBeInTheDocument();
   });
 });

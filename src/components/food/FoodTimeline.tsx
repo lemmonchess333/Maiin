@@ -247,30 +247,35 @@ export default function FoodTimeline({
             first paint: the day's rows are simply there. */}
         <AnimatePresence initial={false}>
           {entries.map((group) => {
-            // aria-label replaces the row's visible text. Name collisions
-            // therefore need the portion details in both action labels.
-            const accessibleFoodName =
-              (nameCounts.get(group.foodName.toLowerCase().trim()) ?? 0) > 1
-                ? [
-                    group.foodName,
-                    MEAL_LABELS[group.slot],
-                    `${formatCalories(group.totalCal)} ${CALORIE_UNIT}`,
-                    `${group.meals.length} ${group.meals.length === 1 ? "serving" : "servings"}`,
-                    `${formatMacro(group.totalPro)} g protein`,
-                    `${formatMacro(group.totalCarb)} g carbs`,
-                    `${formatMacro(group.totalFat)} g fat`,
-                    ...(group.meals[0].items ?? []).map((item) =>
-                      [
-                        item.name,
-                        item.portionSize ? `(${item.portionSize})` : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")
-                    ),
-                  ]
-                    .filter(Boolean)
-                    .join(", ")
-                : undefined;
+            // Rows that share a name need the portion's details in their
+            // action names. Delete's name says the row in full; the edit
+            // target is named by the words it shows, so it adds only what
+            // the row does not show (`accessibleDetail`).
+            const collides =
+              (nameCounts.get(group.foodName.toLowerCase().trim()) ?? 0) > 1;
+            const accessibleDetail = collides
+              ? [
+                  `${group.meals.length} ${group.meals.length === 1 ? "serving" : "servings"}`,
+                  `${formatMacro(group.totalPro)} g protein`,
+                  `${formatMacro(group.totalCarb)} g carbs`,
+                  `${formatMacro(group.totalFat)} g fat`,
+                  ...(group.meals[0].items ?? []).map((item) =>
+                    [item.name, item.portionSize ? `(${item.portionSize})` : ""]
+                      .filter(Boolean)
+                      .join(" ")
+                  ),
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : undefined;
+            const accessibleFoodName = collides
+              ? [
+                  group.foodName,
+                  MEAL_LABELS[group.slot],
+                  `${formatCalories(group.totalCal)} ${CALORIE_UNIT}`,
+                  accessibleDetail,
+                ].join(", ")
+              : undefined;
             const portionCaption = mealPortionCaption(group.meals[0]);
             const rowGroup: FoodRowGroup = {
               id: group.id,
@@ -290,6 +295,7 @@ export default function FoodTimeline({
                 key={group.id}
                 group={rowGroup}
                 accessibleFoodName={accessibleFoodName}
+                accessibleDetail={accessibleDetail}
                 photoUrl={photoUrlOf(group)}
                 subLabel={
                   <>

@@ -325,9 +325,9 @@ describe("a comment's row at large text", () => {
         hasMore: false,
       });
     });
-    const reaction = screen.getAllByRole("button", {
-      name: "Add fire reaction",
-    })[0];
+    const reaction = screen.getByRole("button", {
+      name: "Add fire reaction, 1 so far",
+    });
     expect(reaction.parentElement).toHaveClass("flex-wrap");
     for (const name of ["Delete comment", "More options for Priya’s comment"]) {
       expect(screen.getByRole("button", { name })).toHaveClass("size-[44px]");
@@ -396,7 +396,7 @@ describe("a restricted account (S4e)", () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: "Remove strong reaction" })
+        screen.getByRole("button", { name: "Remove strong reaction, 1 so far" })
       );
     });
     expect(H.toggleCommentReaction).toHaveBeenCalledWith(

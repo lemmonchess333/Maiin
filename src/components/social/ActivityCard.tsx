@@ -744,16 +744,23 @@ function ActivityCard({
                       ...structured,
                     })
                   }
-                  aria-label={`Compare your ${ex.name}`}
                   className="w-full flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
+                  {/* Named by what it shows, then what it does: "Bench
+                      Press 3×8×60 kg, compare with yours". An aria-label
+                      of the action alone left out the sets it shows
+                      (WCAG 2.5.3). The spaces are unseen in the flex row
+                      and keep the words apart in the name. */}
                   <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
-                  </span>
+                  </span>{" "}
                   {ex.superset !== undefined && (
-                    <SupersetTag group={ex.superset} />
+                    <>
+                      <SupersetTag group={ex.superset} />{" "}
+                    </>
                   )}
                   <span className={summaryClass}>{displaySummary}</span>
+                  <span className="sr-only">, compare with yours</span>
                 </button>
               );
             })}
@@ -1115,7 +1122,18 @@ function ActivityCard({
             onClick={() =>
               onComment ? onComment() : setShowCommentSheet(true)
             }
-            aria-label={onComment ? "Add a comment" : "View comments"}
+            /* The count it shows is in its name (WCAG 2.5.3): "View 2
+               comments", or on the post's own page, where it opens the
+               field, "Add a comment, 2 so far". */
+            aria-label={
+              commentTotal > 0
+                ? onComment
+                  ? `Add a comment, ${commentTotal.toLocaleString()} so far`
+                  : `View ${commentTotal.toLocaleString()} ${commentTotal === 1 ? "comment" : "comments"}`
+                : onComment
+                  ? "Add a comment"
+                  : "View comments"
+            }
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
             <MessageCircle className="size-5" />

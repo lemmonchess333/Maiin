@@ -333,6 +333,8 @@ export default function PerformanceSection({
         )}
       >
         Score details
+        {/* Unseen in the flex row; it keeps "Score details" and "Pro" two
+            words to axe's label-in-name check, which read "detailsPro". */}{" "}
         {detailsLocked ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Lock aria-hidden="true" className="size-3.5" />

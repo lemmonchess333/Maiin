@@ -363,7 +363,9 @@ export default function FoodHeroCard({
               haptic("light");
               onTapDrillDown();
             }}
-            aria-label="View nutrition breakdown"
+            /* The name starts with the word on the button, so a voice
+               command that says what it sees reaches it (WCAG 2.5.3). */
+            aria-label="Details: nutrition breakdown"
             className="relative flex min-h-[44px] items-center gap-1 rounded-full px-3 text-sm font-medium text-foreground hover:bg-muted/60 active:scale-95 transition-all"
           >
             <span>Details</span>

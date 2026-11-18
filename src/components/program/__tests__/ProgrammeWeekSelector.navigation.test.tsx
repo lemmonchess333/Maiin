@@ -75,7 +75,7 @@ describe("Train day navigation", () => {
     expect(tabs[2]).toHaveFocus();
     fireEvent.keyDown(tabs[2], { key: "Home" });
     expect(tabs[0]).toHaveFocus();
-    expect(tabs[0]).toHaveAccessibleName("Push, completed");
-    expect(tabs[1]).toHaveAccessibleName("Pull, today");
+    expect(tabs[0]).toHaveAccessibleName("1, Push, completed");
+    expect(tabs[1]).toHaveAccessibleName("2, Pull, today");
   });
 });

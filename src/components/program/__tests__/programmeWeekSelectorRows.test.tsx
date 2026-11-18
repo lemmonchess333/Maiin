@@ -101,8 +101,9 @@ describe("a run's name on the strip (Run21 (2))", () => {
     expect(run.className).not.toMatch(/hyphens|line-clamp/);
     // Two lines' height, whatever the day holds.
     expect(run.className).toMatch(/\bmin-h-7\b/);
-    // The tab's name is the whole name, whatever the strip shows.
-    expect(run.tabName).toBe("Easy 30 + strides");
+    // The tab's name is the day's number, then the whole name, whatever
+    // the strip shows.
+    expect(run.tabName).toBe("9, Easy 30 + strides");
   });
 
   it("keeps a lift's split name to one line", () => {

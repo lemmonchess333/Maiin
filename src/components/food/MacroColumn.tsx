@@ -256,6 +256,8 @@ export default function MacroColumn({
      as a subscript. It stays unspaced: grams on the food surface are
      "128g". */
   const FigureTag = row ? "span" : "p";
+  /* The figure as AnimatedNumber draws it once settled, for the label. */
+  const shownFigure = `${Math.round(displayValue).toLocaleString()}g`;
   const figure = (
     <FigureTag
       className={cn(
@@ -356,11 +358,16 @@ export default function MacroColumn({
       type="button"
       data-macro={macroKey}
       onClick={onTap}
-      /* Names the ACTION, not the current state. The visible number
-         already says what the tile shows; what a screen-reader user
-         cannot see is what tapping would do — and since the tap flips a
-         mode shared with the calorie ring, "toggle" would be too vague
-         to predict. So the label reads as the destination mode.
+      /* Says what the tile shows, in its order, then the ACTION: "Protein
+         15g left. Show protein logged. …" (the tile reads "15g left,
+         Protein"). The shown words lead so that a voice command that says
+         them reaches the tile (WCAG 2.5.3), and axe
+         (label-content-name-mismatch) checks they are all there in order;
+         the number is formatted as AnimatedNumber draws it. What a
+         screen-reader user cannot see is what tapping would do — and
+         since the tap flips a mode shared with the calorie ring, "toggle"
+         would be too vague to predict. So the action reads as the
+         destination mode.
 
          The goal-reached state is APPENDED rather than left to the
          sr-only span below, because an `aria-label` REPLACES the
@@ -370,7 +377,10 @@ export default function MacroColumn({
          state-independent proof of the halo. Nothing in the unit suite
          covered it, so it only surfaced in the screenshot CI run. */
       aria-label={
-        `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}` +
+        (row
+          ? `${label} ${shownFigure} ${displayLabel}`
+          : `${shownFigure} ${displayLabel}, ${label}`) +
+        `. Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}` +
         (goalReached ? `. ${label} goal reached` : "") +
         `. ${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
       }
@@ -398,11 +408,14 @@ export default function MacroColumn({
             {icon}
             <span className="min-w-0 truncate">{label}</span>
           </span>
+          {/* The spaces here and in the tile below are unseen in their
+              flex boxes and keep the words apart for anything that reads
+              the text without its layout: axe read "Protein15gleft". */}{" "}
           {/* The figure and its word on one line ("15g left"), wrapping
               the word under the figure when the column is too narrow
               for both ("logged" at larger text). */}
           <span className="mt-0.5 flex flex-wrap items-baseline gap-x-1">
-            {figure}
+            {figure}{" "}
             <span className="text-sm text-muted-foreground lowercase">
               {displayLabel}
             </span>
@@ -412,14 +425,14 @@ export default function MacroColumn({
       ) : (
         <>
           {icon}
-          {figure}
+          {figure}{" "}
           {/* Mode-aware label sits below the big number. Always-rendered
               rather than conditionally suppressed so the line height stays
               stable across mode toggles. */}
           <p className="text-xs text-muted-foreground mt-0.5 lowercase">
             {displayLabel}
           </p>
-          {bar}
+          {bar}{" "}
           {/* Macro label — intentionally muted (same tone as the
               `X / Yg` ratio line above) so the card's colour identity is
               carried by the icon + big number + progress bar, not duplicated

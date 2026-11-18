@@ -352,7 +352,11 @@ export default function SpacePostCard({
                 <button
                   type="button"
                   onClick={onToggleLike}
-                  aria-label={liked ? "Remove props" : "Give props"}
+                  /* The count it shows is in its name (WCAG 2.5.3):
+                     "Give props, 4 so far". */
+                  aria-label={`${liked ? "Remove props" : "Give props"}${
+                    displayLikeCount > 0 ? `, ${displayLikeCount} so far` : ""
+                  }`}
                   aria-pressed={liked}
                   className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   style={liked ? { color: THEME.running } : undefined}
@@ -381,7 +385,11 @@ export default function SpacePostCard({
                   <button
                     type="button"
                     onClick={onOpenComments}
-                    aria-label="Comments"
+                    aria-label={
+                      displayCommentCount > 0
+                        ? `View ${displayCommentCount} ${displayCommentCount === 1 ? "comment" : "comments"}`
+                        : "Comments"
+                    }
                     className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   >
                     <MessageCircle className="size-4" aria-hidden />

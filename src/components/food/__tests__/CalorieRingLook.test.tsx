@@ -132,7 +132,11 @@ describe("CalorieRing — the label is plain text", () => {
   it("says 'logged' to a screen reader too", () => {
     renderRing({ mode: "eaten" });
     const ring = screen.getByRole("button");
-    expect(ring).toHaveAccessibleName(/^1000 of 2000 calories logged\./);
+    // The ring's words first (\D? is the locale's thousands separator),
+    // then the day's total against its target.
+    expect(ring).toHaveAccessibleName(
+      /^1\D?000 kcal logged of 2\D?000\. 1000 of 2000 calories logged\./
+    );
     expect(ring.getAttribute("aria-label")).not.toMatch(/eaten|consumed/);
   });
 });

@@ -102,7 +102,6 @@ export default function CalorieRing({
   const settled = reduce || !drawIn;
 
   const hasTarget = target > 0;
-  const remaining = hasTarget ? target - consumed : 0;
 
   const isLeftMode = mode === "left";
 
@@ -145,12 +144,25 @@ export default function CalorieRing({
     delay: reduce ? 0 : ringDelaySec + 0.15,
   };
 
+  /* The words under the figure: "kcal left of 2,200" on Food's wheel,
+     "kcal left" on Home's. One string, drawn below and said in the
+     label, so the two cannot differ. */
+  const centreLine = hero
+    ? labelMode === "over"
+      ? `${CALORIE_UNIT} over ${formatCalories(target)}`
+      : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`
+    : `${CALORIE_UNIT} ${labelMode}`;
+  /* The label starts with what the ring shows, in its order, the figure
+     as AnimatedNumber draws it once settled: "410 kcal left of 2,200".
+     A voice command that says what it sees reaches the ring (WCAG
+     2.5.3), and axe (label-content-name-mismatch) checks the words are
+     all there in order. What the centre does not say follows: the
+     day's logged total against its target. The ring with no target
+     shows a dash, which says nothing to name. */
   const ariaLabel = hasTarget
-    ? isOver
-      ? `${consumed} of ${target} calories logged, ${Math.abs(remaining)} over target`
-      : isLeftMode
-        ? `${consumed} of ${target} calories logged, ${remaining} remaining`
-        : `${consumed} of ${target} calories logged`
+    ? `${Math.round(displayValue).toLocaleString()} ${centreLine}` +
+      (trajectoryLabel ? `, ${trajectoryLabel}` : "") +
+      `. ${consumed} of ${target} calories logged`
     : `${consumed} calories logged, no target set`;
 
   return (
@@ -287,6 +299,9 @@ export default function CalorieRing({
                 fromZero={drawIn}
               />
             </p>
+            {/* Unseen in the column; it keeps the figure and its words
+                apart for anything that reads the text without its
+                layout: axe read "410kcal left". */}{" "}
             {/* The label is the only mode indicator ("kcal left",
                   "kcal logged", "kcal over"), in the tiles' register:
                   plain text. The whole ring is the tap target, and the
@@ -313,9 +328,7 @@ export default function CalorieRing({
             >
               {hero ? (
                 <>
-                  {labelMode === "over"
-                    ? `${CALORIE_UNIT} over ${formatCalories(target)}`
-                    : `${CALORIE_UNIT} ${labelMode} of ${formatCalories(target)}`}
+                  {centreLine}
                   {/* In the line, so it stays beside the last word when
                       the label wraps, and sized from the text (13px at
                       the label's 14). */}
@@ -326,9 +339,9 @@ export default function CalorieRing({
                   />
                 </>
               ) : (
-                `${CALORIE_UNIT} ${labelMode}`
+                centreLine
               )}
-            </p>
+            </p>{" "}
             {trajectoryLabel && (
               <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                 {trajectoryLabel}
