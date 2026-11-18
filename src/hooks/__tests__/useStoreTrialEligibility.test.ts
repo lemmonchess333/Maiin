@@ -11,7 +11,7 @@ vi.mock("@/lib/revenuecat", () => ({
 }));
 
 import {
-  forgetStoreTrialEligibility,
+  __resetStoreTrialEligibilityForTests,
   offersTrial,
   useStoreTrialEligibility,
 } from "../useStoreTrialEligibility";
@@ -20,7 +20,7 @@ import { APPLE_PRODUCT_IDS } from "@/lib/purchaseProvider";
 beforeEach(() => {
   vi.clearAllMocks();
   enabledMock.mockReturnValue(true);
-  forgetStoreTrialEligibility();
+  __resetStoreTrialEligibilityForTests();
 });
 
 describe("useStoreTrialEligibility", () => {
