@@ -169,6 +169,7 @@ Support & legal.
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `trainingWeek.ts`       | The week done and planned, which every week count reads        |
+| `layOutWeek.ts`         | The week laid out: each session on a day, lifts that slide     |
 | `foodDay.ts`            | A food day: 800 kcal or more, the one rule every count reads   |
 | `trainingKind.ts`       | Lifts, runs or both, read from the plan, not setup's answer    |
 | `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
